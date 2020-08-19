@@ -6,6 +6,7 @@ import java.util.concurrent.CompletableFuture;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.support.fetching.MultipleCqlIndexValuesCriteria;
 import org.folio.circulation.support.http.client.CqlQuery;
+import org.folio.circulation.support.results.Result;
 
 public interface FindWithMultipleCqlIndexValues<T> {
     CompletableFuture<Result<MultipleRecords<T>>> findByIds(

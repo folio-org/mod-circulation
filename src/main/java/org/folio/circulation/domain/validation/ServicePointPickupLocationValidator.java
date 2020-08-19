@@ -1,6 +1,6 @@
 package org.folio.circulation.domain.validation;
 
-import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 
 import java.lang.invoke.MethodHandles;
@@ -8,7 +8,7 @@ import java.lang.invoke.MethodHandles;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.RequestFulfilmentPreference;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -6,7 +6,7 @@ import org.folio.circulation.domain.notice.PatronNoticePolicy;
 import org.folio.circulation.infrastructure.storage.CirculationPolicyRepository;
 import org.folio.circulation.rules.AppliedRuleConditions;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.json.JsonObject;
 

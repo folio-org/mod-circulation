@@ -4,7 +4,7 @@ import static org.folio.circulation.support.ValidationErrorFailure.singleValidat
 
 import java.util.Optional;
 
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 
 public final class GeneralNoteTypeValidator {
   public Result<NoteType> refuseIfNoteTypeNotFound(Result<Optional<NoteType>> result) {

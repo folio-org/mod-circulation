@@ -13,7 +13,7 @@ import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.anonymization.config.LoanAnonymizationConfiguration;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.GetManyRecordsClient;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.joda.time.DateTimeZone;

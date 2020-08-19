@@ -1,12 +1,12 @@
 package org.folio.circulation.domain.validation;
 
 import org.folio.circulation.domain.LoanAndRelatedRecords;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.ValidationErrorFailure;
 
 import java.util.function.Function;
 
-import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.results.Result.succeeded;
 
 public class AlreadyCheckedOutValidator {
   private final Function<String, ValidationErrorFailure> alreadyCheckedOutErrorFunction;

@@ -2,12 +2,12 @@ package org.folio.circulation.domain;
 
 import static org.folio.circulation.domain.LoanAction.RESOLVE_CLAIM_AS_FOUND_BY_LIBRARY;
 import static org.folio.circulation.domain.LoanAction.RESOLVE_CLAIM_AS_RETURNED_BY_PATRON;
-import static org.folio.circulation.support.Result.failed;
-import static org.folio.circulation.support.Result.of;
-import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.results.Result.failed;
+import static org.folio.circulation.support.results.Result.of;
+import static org.folio.circulation.support.results.Result.succeeded;
 
 import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.joda.time.DateTime;
 

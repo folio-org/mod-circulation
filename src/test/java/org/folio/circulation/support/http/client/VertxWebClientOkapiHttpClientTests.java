@@ -32,7 +32,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.VertxAssistant;
 import org.junit.AfterClass;

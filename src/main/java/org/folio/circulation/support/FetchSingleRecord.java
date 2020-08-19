@@ -6,6 +6,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 import org.folio.circulation.support.http.client.ResponseInterpreter;
+import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.json.JsonObject;
 

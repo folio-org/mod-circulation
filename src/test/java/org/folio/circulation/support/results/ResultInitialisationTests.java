@@ -1,8 +1,8 @@
 package org.folio.circulation.support.results;
 
 import static api.support.matchers.FailureMatcher.isErrorFailureContaining;
-import static org.folio.circulation.support.Result.of;
-import static org.folio.circulation.support.Result.ofAsync;
+import static org.folio.circulation.support.results.Result.of;
+import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.ResultExamples.*;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -12,7 +12,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.folio.circulation.support.Result;
 import org.junit.Test;
 
 public class ResultInitialisationTests {

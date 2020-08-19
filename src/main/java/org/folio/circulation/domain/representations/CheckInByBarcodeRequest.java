@@ -3,14 +3,14 @@ package org.folio.circulation.domain.representations;
 import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getUUIDProperty;
-import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 
 import java.util.Arrays;
 import java.util.UUID;
 
 import org.apache.commons.lang3.StringUtils;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;

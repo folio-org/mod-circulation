@@ -7,7 +7,7 @@ import java.util.concurrent.CompletableFuture;
 import org.folio.circulation.domain.CheckInRecord;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
 
 public class CheckInStorageRepository {

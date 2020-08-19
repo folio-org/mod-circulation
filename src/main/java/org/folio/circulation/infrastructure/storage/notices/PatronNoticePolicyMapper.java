@@ -4,8 +4,8 @@ import static java.lang.String.format;
 import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedObjectProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
-import static org.folio.circulation.support.Result.failed;
-import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.results.Result.failed;
+import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.List;
 import java.util.Objects;
@@ -20,7 +20,7 @@ import org.folio.circulation.domain.notice.PatronNoticePolicy;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.JsonArrayHelper;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.ServerErrorFailure;
 
 import io.vertx.core.json.JsonObject;

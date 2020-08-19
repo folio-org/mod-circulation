@@ -1,6 +1,6 @@
 package org.folio.circulation.resources;
 
-import static org.folio.circulation.support.ResultBinding.mapResult;
+import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
@@ -12,7 +12,7 @@ import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepo
 import org.folio.circulation.domain.notice.schedule.TriggeringEvent;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CqlSortBy;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;

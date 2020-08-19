@@ -1,8 +1,8 @@
 package org.folio.circulation.resources;
 
 import static org.apache.commons.lang3.exception.ExceptionUtils.getStackTrace;
-import static org.folio.circulation.support.Result.failed;
-import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.results.Result.failed;
+import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.http.server.ServerErrorResponse.internalError;
 
 import java.lang.invoke.MethodHandles;
@@ -17,7 +17,7 @@ import org.folio.circulation.rules.Text2Drools;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FetchSingleRecord;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.http.server.ClientErrorResponse;
 import org.folio.circulation.support.http.server.ForwardResponse;

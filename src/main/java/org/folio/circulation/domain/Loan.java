@@ -34,9 +34,9 @@ import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProper
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
-import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
+import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.Collection;
 import java.util.Objects;
@@ -48,7 +48,7 @@ import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.OverdueFinePolicy;
 import org.folio.circulation.domain.policy.lostitem.LostItemPolicy;
 import org.folio.circulation.domain.representations.LoanProperties;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;

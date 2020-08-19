@@ -1,11 +1,11 @@
 package org.folio.circulation.domain.policy.library;
 
 import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.failureForAbsentTimetable;
-import static org.folio.circulation.support.Result.failed;
-import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.results.Result.failed;
+import static org.folio.circulation.support.results.Result.succeeded;
 
 import org.folio.circulation.domain.policy.LoanPolicyPeriod;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Period;

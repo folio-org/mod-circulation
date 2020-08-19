@@ -1,6 +1,6 @@
 package org.folio.circulation.domain;
 
-import static org.folio.circulation.support.Result.of;
+import static org.folio.circulation.support.results.Result.of;
 
 import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
@@ -14,7 +14,7 @@ import org.folio.circulation.infrastructure.storage.AutomatedPatronBlocksReposit
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.resources.RequestNoticeSender;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.ValidationError;
 

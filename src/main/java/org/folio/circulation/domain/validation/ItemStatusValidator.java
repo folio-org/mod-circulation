@@ -4,14 +4,14 @@ import static org.folio.circulation.domain.ItemStatus.AGED_TO_LOST;
 import static org.folio.circulation.domain.ItemStatus.CLAIMED_RETURNED;
 import static org.folio.circulation.domain.ItemStatus.DECLARED_LOST;
 import static org.folio.circulation.domain.ItemStatus.MISSING;
-import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.function.Function;
 
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.ValidationErrorFailure;
 
 public class ItemStatusValidator {

@@ -1,10 +1,10 @@
 package org.folio.circulation.domain.policy.library;
 
 import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.END_OF_A_DAY;
-import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.results.Result.succeeded;
 
 import org.folio.circulation.AdjacentOpeningDays;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 

@@ -3,8 +3,8 @@ package org.folio.circulation.support;
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 import static java.util.function.Function.identity;
-import static org.folio.circulation.support.Result.succeeded;
-import static org.folio.circulation.support.ResultBinding.flatMapResult;
+import static org.folio.circulation.support.results.Result.succeeded;
+import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
 import static org.folio.circulation.support.logging.LogMessageSanitizer.sanitizeLogParameter;
 
@@ -15,6 +15,7 @@ import java.util.function.Function;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
 import org.folio.circulation.support.results.CommonFailures;
+import org.folio.circulation.support.results.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

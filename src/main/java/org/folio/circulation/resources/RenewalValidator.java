@@ -2,7 +2,7 @@ package org.folio.circulation.resources;
 
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.policy.LoanPolicy;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
 
@@ -11,7 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 
 public final class RenewalValidator {

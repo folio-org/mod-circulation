@@ -1,6 +1,6 @@
 package org.folio.circulation.domain.policy.library;
 
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
 import org.joda.time.DateTimeZone;

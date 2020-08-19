@@ -6,8 +6,6 @@ import static org.folio.circulation.support.results.CommonFailures.failedDueToSe
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
-import org.folio.circulation.support.Result;
-
 public class AsynchronousResultBindings {
   private AsynchronousResultBindings() { }
 

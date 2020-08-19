@@ -25,7 +25,7 @@ import java.util.stream.Stream;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.support.FindWithCqlQuery;
 import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.junit.Rule;
 import org.junit.Test;

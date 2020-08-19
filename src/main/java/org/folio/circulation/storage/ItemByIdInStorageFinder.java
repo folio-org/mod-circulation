@@ -1,6 +1,6 @@
 package org.folio.circulation.storage;
 
-import static org.folio.circulation.support.Result.of;
+import static org.folio.circulation.support.results.Result.of;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
@@ -8,7 +8,7 @@ import java.util.function.Supplier;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 
 public class ItemByIdInStorageFinder {
   private final ItemRepository itemRepository;

@@ -1,7 +1,7 @@
 package org.folio.circulation.resources.renewal;
 
 import static org.folio.circulation.domain.validation.CommonFailures.noItemFoundForIdFailure;
-import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 
 import java.util.concurrent.CompletableFuture;
@@ -14,7 +14,7 @@ import org.folio.circulation.domain.validation.UserNotFoundValidator;
 import org.folio.circulation.storage.ItemByIdInStorageFinder;
 import org.folio.circulation.storage.SingleOpenLoanForItemInStorageFinder;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;

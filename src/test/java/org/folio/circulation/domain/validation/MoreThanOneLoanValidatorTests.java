@@ -1,7 +1,7 @@
 package org.folio.circulation.domain.validation;
 
 import static api.support.matchers.FailureMatcher.isErrorFailureContaining;
-import static org.folio.circulation.support.Result.of;
+import static org.folio.circulation.support.results.Result.of;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -10,7 +10,7 @@ import java.util.List;
 
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.MultipleRecords;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.junit.Test;
 

@@ -14,7 +14,7 @@ import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.sessions.PatronExpiredSessionRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.ClockManager;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.server.NoContentResponse;
 import org.folio.circulation.support.http.server.WebContext;

@@ -2,8 +2,8 @@ package org.folio.circulation.support.http.client;
 
 import static java.time.temporal.ChronoUnit.SECONDS;
 import static org.apache.http.HttpHeaders.ACCEPT;
-import static org.folio.circulation.support.Result.failed;
-import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.results.Result.failed;
+import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.http.OkapiHeader.OKAPI_URL;
 import static org.folio.circulation.support.http.OkapiHeader.REQUEST_ID;
 import static org.folio.circulation.support.http.OkapiHeader.TENANT;
@@ -16,7 +16,7 @@ import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.ServerErrorFailure;
 
 import io.vertx.core.AsyncResult;

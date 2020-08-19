@@ -9,12 +9,11 @@ import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.notice.schedule.ScheduledNotice;
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.server.NoContentResponse;
 import org.folio.circulation.support.http.server.WebContext;
-import org.folio.circulation.support.results.AsynchronousResultBindings;
 import org.folio.circulation.support.results.CommonFailures;
 
 import io.vertx.core.http.HttpClient;

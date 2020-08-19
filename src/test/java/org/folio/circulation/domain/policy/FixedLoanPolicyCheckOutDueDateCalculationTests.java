@@ -7,7 +7,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import java.util.UUID;
 
 import org.folio.circulation.domain.Loan;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;

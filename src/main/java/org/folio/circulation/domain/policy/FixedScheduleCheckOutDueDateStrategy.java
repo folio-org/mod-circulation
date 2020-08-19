@@ -6,7 +6,7 @@ import static org.folio.circulation.support.results.CommonFailures.failedDueToSe
 import java.util.function.Function;
 
 import org.folio.circulation.domain.Loan;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
 

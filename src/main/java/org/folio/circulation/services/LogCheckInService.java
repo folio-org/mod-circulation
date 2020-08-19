@@ -7,7 +7,7 @@ import org.folio.circulation.domain.CheckInRecord;
 import org.folio.circulation.infrastructure.storage.CheckInStorageRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.ClockManager;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 
 public class LogCheckInService {
   private final CheckInStorageRepository checkInStorageRepository;

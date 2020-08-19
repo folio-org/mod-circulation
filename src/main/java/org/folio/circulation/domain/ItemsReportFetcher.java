@@ -1,6 +1,6 @@
 package org.folio.circulation.domain;
 
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 
 import java.util.List;
 

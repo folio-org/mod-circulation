@@ -2,7 +2,7 @@ package org.folio.circulation.support.results;
 
 import static api.support.matchers.FailureMatcher.isErrorFailureContaining;
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultExamples.actionFailed;
 import static org.folio.circulation.support.results.ResultExamples.alreadyFailed;
 import static org.folio.circulation.support.results.ResultExamples.shouldNotExecute;
@@ -12,7 +12,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.util.concurrent.ExecutionException;
 
-import org.folio.circulation.support.Result;
 import org.junit.Test;
 
 public class ResultCombineAfterTests {

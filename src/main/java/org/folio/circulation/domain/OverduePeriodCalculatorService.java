@@ -2,8 +2,8 @@ package org.folio.circulation.domain;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.apache.commons.lang3.ObjectUtils.allNotNull;
-import static org.folio.circulation.support.Result.succeeded;
-import static org.folio.circulation.support.ResultBinding.flatMapResult;
+import static org.folio.circulation.support.results.Result.succeeded;
+import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
 import static org.joda.time.DateTimeConstants.MINUTES_PER_HOUR;
 import static org.joda.time.DateTimeZone.UTC;
 import static org.joda.time.Minutes.minutesBetween;
@@ -14,7 +14,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
 import org.folio.circulation.infrastructure.storage.CalendarRepository;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDateTime;
 import org.joda.time.Period;

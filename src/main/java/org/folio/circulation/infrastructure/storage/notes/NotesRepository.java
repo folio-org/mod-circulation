@@ -1,10 +1,10 @@
 package org.folio.circulation.infrastructure.storage.notes;
 
 import static org.folio.circulation.support.JsonArrayHelper.toStream;
-import static org.folio.circulation.support.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
 import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
+import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -13,10 +13,10 @@ import org.folio.circulation.domain.notes.Note;
 import org.folio.circulation.domain.notes.NoteType;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
+import org.folio.circulation.support.results.Result;
 
 public class NotesRepository {
   private final CollectionResourceClient notesClient;

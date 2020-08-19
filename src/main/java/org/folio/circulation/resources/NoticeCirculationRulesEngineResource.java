@@ -2,7 +2,7 @@ package org.folio.circulation.resources;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 
-import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -13,7 +13,7 @@ import io.vertx.core.json.JsonArray;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.rules.CirculationRuleMatch;
 import org.folio.circulation.rules.Drools;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 
 /**
  * The circulation rules engine calculates the loan policy based on

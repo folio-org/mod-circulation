@@ -6,6 +6,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.folio.circulation.support.results.Result;
+
 public class AsyncCoordinationUtil {
 
   private AsyncCoordinationUtil() {

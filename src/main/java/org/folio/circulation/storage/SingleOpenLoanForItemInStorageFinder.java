@@ -3,7 +3,7 @@ package org.folio.circulation.storage;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Function.identity;
 import static org.folio.circulation.domain.validation.CommonFailures.moreThanOneOpenLoanFailure;
-import static org.folio.circulation.support.Result.of;
+import static org.folio.circulation.support.results.Result.of;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -17,7 +17,7 @@ import org.folio.circulation.domain.User;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.domain.validation.MoreThanOneLoanValidator;
 import org.folio.circulation.domain.validation.NoLoanValidator;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 
 public class SingleOpenLoanForItemInStorageFinder {
   private final LoanRepository loanRepository;

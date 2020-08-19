@@ -7,7 +7,7 @@ import static org.folio.circulation.support.JsonPropertyFetcher.getNestedInteger
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedObjectProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
-import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 
 import java.util.ArrayList;
@@ -25,7 +25,7 @@ import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.resources.RenewalValidator;
 import org.folio.circulation.rules.AppliedRuleConditions;
 import org.folio.circulation.support.ClockManager;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;

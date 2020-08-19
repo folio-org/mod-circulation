@@ -1,12 +1,12 @@
 package org.folio.circulation.domain.validation;
 
 import static org.folio.circulation.domain.ItemStatus.CLAIMED_RETURNED;
-import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Loan;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 
 public final class NotInItemStatusValidator {
 

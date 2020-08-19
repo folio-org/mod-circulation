@@ -4,7 +4,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.representations.StoredFeeFineAction.StoredFeeFineActionBuilder;
 import static org.folio.circulation.services.feefine.FeeRefundProcessor.createLostItemFeeRefundProcessor;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
-import static org.folio.circulation.support.Result.failed;
+import static org.folio.circulation.support.results.Result.failed;
 
 import java.util.Collection;
 import java.util.List;
@@ -24,7 +24,7 @@ import org.folio.circulation.services.feefine.FeeRefundProcessor;
 import org.folio.circulation.services.support.CreateAccountCommand;
 import org.folio.circulation.services.support.RefundAccountCommand;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.results.CommonFailures;
 

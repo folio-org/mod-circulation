@@ -1,6 +1,6 @@
 package org.folio.circulation.domain.validation;
 
-import static org.folio.circulation.support.Result.of;
+import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 
@@ -16,7 +16,7 @@ import org.folio.circulation.domain.UserManualBlock;
 import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.FindWithCqlQuery;
 import org.folio.circulation.support.HttpFailure;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
 

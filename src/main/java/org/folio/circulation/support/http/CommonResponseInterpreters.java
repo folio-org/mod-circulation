@@ -1,6 +1,6 @@
 package org.folio.circulation.support.http;
 
-import static org.folio.circulation.support.Result.of;
+import static org.folio.circulation.support.results.Result.of;
 
 import org.folio.circulation.support.http.client.ResponseInterpreter;
 

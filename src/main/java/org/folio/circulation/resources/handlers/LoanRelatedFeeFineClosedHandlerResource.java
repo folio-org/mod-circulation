@@ -4,8 +4,8 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.FeeFine.lostItemFeeTypes;
 import static org.folio.circulation.domain.subscribers.LoanRelatedFeeFineClosedEvent.fromJson;
 import static org.folio.circulation.support.Clients.create;
-import static org.folio.circulation.support.Result.failed;
-import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.results.Result.failed;
+import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.http.server.NoContentResponse.noContent;
 
@@ -20,7 +20,7 @@ import org.folio.circulation.infrastructure.storage.loans.LostItemPolicyReposito
 import org.folio.circulation.domain.subscribers.LoanRelatedFeeFineClosedEvent;
 import org.folio.circulation.resources.Resource;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.server.NoContentResponse;
 import org.folio.circulation.support.http.server.ValidationError;

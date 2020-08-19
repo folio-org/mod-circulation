@@ -1,12 +1,12 @@
 package org.folio.circulation.support.http;
 
-import static org.folio.circulation.support.Result.failed;
-import static org.folio.circulation.support.Result.of;
+import static org.folio.circulation.support.results.Result.failed;
+import static org.folio.circulation.support.results.Result.of;
 
 import java.util.function.Function;
 
 import org.folio.circulation.support.ForwardOnFailure;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.client.Response;
 
 import io.vertx.core.json.JsonObject;

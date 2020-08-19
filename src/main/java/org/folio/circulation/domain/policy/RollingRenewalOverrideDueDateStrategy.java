@@ -1,6 +1,6 @@
 package org.folio.circulation.domain.policy;
 
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
 

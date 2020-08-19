@@ -4,13 +4,13 @@ import static java.util.function.Function.identity;
 import static org.apache.http.entity.ContentType.APPLICATION_JSON;
 import static org.apache.http.entity.ContentType.TEXT_PLAIN;
 import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
-import static org.folio.circulation.support.Result.of;
+import static org.folio.circulation.support.results.Result.of;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.junit.Test;
 

@@ -1,8 +1,8 @@
 
 package org.folio.circulation.domain.representations.anonymization;
 
-import static org.folio.circulation.support.Result.failed;
-import static org.folio.circulation.support.Result.of;
+import static org.folio.circulation.support.results.Result.failed;
+import static org.folio.circulation.support.results.Result.of;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.anonymization.LoanAnonymizationRecords;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.json.JSONArray;
 
 import io.vertx.core.json.JsonObject;

@@ -6,7 +6,7 @@ import static java.lang.String.valueOf;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.toList;
 import static org.folio.circulation.support.CqlSortBy.none;
-import static org.folio.circulation.support.Result.of;
+import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
 import java.lang.invoke.MethodHandles;
@@ -17,7 +17,7 @@ import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.CqlSortBy;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

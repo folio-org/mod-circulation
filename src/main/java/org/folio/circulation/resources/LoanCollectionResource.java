@@ -2,8 +2,8 @@ package org.folio.circulation.resources;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.representations.LoanProperties.ITEM_ID;
-import static org.folio.circulation.support.Result.of;
-import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.results.Result.of;
+import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
@@ -38,7 +38,7 @@ import org.folio.circulation.domain.validation.ServicePointLoanLocationValidator
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.JsonHttpResponse;
 import org.folio.circulation.support.http.server.NoContentResponse;

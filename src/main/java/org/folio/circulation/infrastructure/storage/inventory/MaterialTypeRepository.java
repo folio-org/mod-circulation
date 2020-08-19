@@ -3,8 +3,8 @@ package org.folio.circulation.infrastructure.storage.inventory;
 import static java.util.Objects.isNull;
 import static java.util.function.Function.identity;
 import static org.folio.circulation.support.JsonKeys.byId;
-import static org.folio.circulation.support.Result.succeeded;
-import static org.folio.circulation.support.ResultBinding.mapResult;
+import static org.folio.circulation.support.results.Result.succeeded;
+import static org.folio.circulation.support.results.ResultBinding.mapResult;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 
 import java.util.Collection;
@@ -18,7 +18,7 @@ import org.folio.circulation.domain.Item;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.SingleRecordFetcher;
 
 import io.vertx.core.json.JsonObject;

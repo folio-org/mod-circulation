@@ -1,6 +1,6 @@
-package org.folio.circulation.support;
+package org.folio.circulation.support.results;
 
-import static org.folio.circulation.support.Result.ofAsync;
+import static org.folio.circulation.support.results.Result.ofAsync;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;

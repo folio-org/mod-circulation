@@ -6,7 +6,7 @@ import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProper
 import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getObjectProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
-import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.results.Result.succeeded;
 
 import org.folio.circulation.domain.notice.NoticeFormat;
 import org.folio.circulation.domain.notice.NoticeTiming;
@@ -16,7 +16,7 @@ import org.folio.circulation.domain.notice.schedule.ScheduledNoticeConfig;
 import org.folio.circulation.domain.notice.schedule.ScheduledNoticeConfigBuilder;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.HttpFailure;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.joda.time.DateTimeZone;
 

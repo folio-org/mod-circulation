@@ -1,14 +1,14 @@
 package org.folio.circulation.domain.validation;
 
 import static java.lang.String.format;
-import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.function.Function;
 
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.ValidationErrorFailure;
 
 public class RequestedByAnotherPatronValidator {

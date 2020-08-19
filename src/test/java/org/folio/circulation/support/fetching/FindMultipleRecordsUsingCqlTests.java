@@ -13,7 +13,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.support.FindWithCqlQuery;
 import org.folio.circulation.support.GetManyRecordsClient;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.Response;
 import org.junit.Rule;

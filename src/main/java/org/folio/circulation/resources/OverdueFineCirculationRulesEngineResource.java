@@ -6,11 +6,11 @@ import io.vertx.core.json.JsonArray;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.rules.CirculationRuleMatch;
 import org.folio.circulation.rules.Drools;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 
 import java.util.concurrent.CompletableFuture;
 
-import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.results.Result.succeeded;
 
 
 public class OverdueFineCirculationRulesEngineResource extends AbstractCirculationRulesEngineResource {

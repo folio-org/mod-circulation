@@ -10,7 +10,7 @@ import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.domain.representations.ChangeItemStatusRequest;
 import org.folio.circulation.domain.validation.LoanValidator;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 
 public class ChangeItemStatusService {
   private final LoanRepository loanRepository;

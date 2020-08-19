@@ -6,7 +6,7 @@ import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 
 public class MoveRequestProcessAdapter {
   private final ItemRepository itemRepository;
