@@ -16,6 +16,7 @@ import java.util.concurrent.CompletableFuture;
 import org.folio.circulation.StoreLoanAndItem;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.domain.policy.lostitem.LostItemPolicy;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.loans.LostItemPolicyRepository;
@@ -23,6 +24,7 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.PageLimit;
+import org.joda.time.DateTime;
 
 public class MarkOverdueLoansAsAgedLostService {
   private static final int DEFAULT_MAXIMUM_LOANS_TO_PROCESS = 1000;
@@ -57,8 +59,21 @@ public class MarkOverdueLoansAsAgedLostService {
   private Result<MultipleRecords<Loan>> markLoansAsAgedToLost(
     Result<MultipleRecords<Loan>> loanRecordsResult) {
 
-    return loanRecordsResult
-      .map(loanRecords -> loanRecords.mapRecords(Loan::ageOverdueItemToLost));
+    return loanRecordsResult.map(loanRecords -> loanRecords.mapRecords(this::ageItemToLost));
+  }
+
+  private Loan ageItemToLost(Loan loan) {
+    final LostItemPolicy lostItemPolicy = loan.getLostItemPolicy();
+    final DateTime loanDueDate = loan.getDueDate();
+
+    if (lostItemPolicy.shouldChargeFeesWhenAgedToLost()) {
+      final DateTime whenToBill = lostItemPolicy
+        .calculateDateTimeWhenPatronBilledForAgedToLost(loanDueDate);
+
+      loan.setAgedToLostDelayedBilling(false, whenToBill);
+    }
+
+    return loan.ageOverdueItemToLost();
   }
 
   private CompletableFuture<Result<Void>> updateLoansAndItemsInStorage(

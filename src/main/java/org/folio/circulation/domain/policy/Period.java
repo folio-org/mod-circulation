@@ -26,6 +26,8 @@ import org.joda.time.DateTime;
 import io.vertx.core.json.JsonObject;
 
 public class Period {
+  private static final Period ZERO_DURATION_PERIOD = minutes(0);
+
   private static final String MONTHS = "Months";
   private static final String WEEKS = "Weeks";
   private static final String DAYS = "Days";
@@ -199,5 +201,13 @@ public class Period {
     final DateTime startPlusPeriod = startDate.plus(timePeriod());
 
     return now.isEqual(startPlusPeriod);
+  }
+
+  public boolean hasZeroDuration() {
+    return duration == 0;
+  }
+
+  public static Period zeroDurationPeriod() {
+    return ZERO_DURATION_PERIOD;
   }
 }

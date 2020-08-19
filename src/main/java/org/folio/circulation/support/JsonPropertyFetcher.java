@@ -194,6 +194,5 @@ public class JsonPropertyFetcher {
     if (from.containsKey(propertyName)) {
       to.put(propertyName, from.getValue(propertyName));
     }
-
   }
 }

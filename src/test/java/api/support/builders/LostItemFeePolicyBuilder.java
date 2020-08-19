@@ -37,14 +37,14 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
       null,
       null,
       new JsonObject(),
-      5.00,
-      true,
-      true,
+      null,
+      false,
+      false,
       new JsonObject(),
-      true,
-      true,
-      1.00,
-      true,
+      false,
+      false,
+      0.0,
+      false,
       "Charge",
       null);
   }
@@ -72,9 +72,19 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
       .withChargeAmountItemPatron(true);
   }
 
+  public LostItemFeePolicyBuilder chargeItemAgedToLostProcessingFee(Double amount) {
+    return withLostItemProcessingFee(amount)
+      .withChargeAmountItemSystem(true);
+  }
+
   public LostItemFeePolicyBuilder doNotChargeProcessingFee() {
     return withLostItemProcessingFee(0.0)
       .withChargeAmountItemPatron(false);
+  }
+
+  public LostItemFeePolicyBuilder doNotChargeItemAgedToLostProcessingFee() {
+    return withLostItemProcessingFee(0.0)
+      .withChargeAmountItemSystem(false);
   }
 
   public LostItemFeePolicyBuilder refundProcessingFeeWhenReturned() {
@@ -103,6 +113,10 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
 
   public LostItemFeePolicyBuilder refundFeesWithinMinutes(int duration) {
     return withFeeRefundInterval(duration, "Minutes");
+  }
+
+  public LostItemFeePolicyBuilder billPatronImmediatelyWhenAgedToLost() {
+    return withPatronBilledAfterAgedLost(Period.minutes(0));
   }
 
   @Override
