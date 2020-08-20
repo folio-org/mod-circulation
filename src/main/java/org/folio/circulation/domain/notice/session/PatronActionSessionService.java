@@ -1,6 +1,7 @@
 package org.folio.circulation.domain.notice.session;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static java.util.stream.Collectors.groupingBy;
 import static org.folio.circulation.domain.notice.TemplateContextUtil.createLoanNoticeContextWithoutUser;
 import static org.folio.circulation.domain.notice.TemplateContextUtil.createUserContext;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
@@ -142,30 +143,14 @@ public class PatronActionSessionService {
   private CompletableFuture<Result<MultipleRecords<PatronSessionRecord>>> sendNoticesForAllUsers(
     MultipleRecords<PatronSessionRecord> records) {
 
-    if (records == null || records.isEmpty()) {
-      log.info("Records are null or empty");
-      return completedFuture(succeeded(null));
-    }
-
-    List<PatronSessionRecord> sessionRecordsWithLoans = records.getRecords().stream()
+    List<MultipleRecords<PatronSessionRecord>> recordsGroupedByUser = records.getRecords().stream()
       .filter(record -> record.getLoan() != null && record.getLoan().getUser() != null)
+      .collect(groupingBy(record -> record.getLoan().getUserId()))
+      .values().stream()
+      .map(recordsList -> new MultipleRecords<>(recordsList, recordsList.size()))
       .collect(Collectors.toList());
 
-    if (sessionRecordsWithLoans.isEmpty()) {
-      log.info("Loans were not fetched for the PatronSessionRecords. The notices will not be sent");
-      return completedFuture(succeeded(records));
-    }
-
-    Set<User> users = sessionRecordsWithLoans.stream()
-      .map(record -> record.getLoan().getUser())
-      .collect(Collectors.toSet());
-
-    List<PatronNoticeEvent> patronNoticeEvents = getPatronNoticeEvents(sessionRecordsWithLoans);
-
-    return patronNoticeService.acceptMultipleNoticeEvent(patronNoticeEvents,
-      loanContexts -> new JsonObject()
-        .put("user", createUsersContext(users))
-        .put("loans", loanContexts))
+    return allOf(recordsGroupedByUser, this::sendNotices)
       .thenApply(mapResult(v -> records));
   }
 
