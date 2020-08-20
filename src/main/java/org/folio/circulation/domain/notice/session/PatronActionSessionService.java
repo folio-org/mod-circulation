@@ -42,7 +42,6 @@ import io.vertx.core.json.JsonObject;
 
 public class PatronActionSessionService {
   private static final PageLimit DEFAULT_SESSION_SIZE_PAGE_LIMIT = limit(200);
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private static EnumMap<PatronActionType, NoticeEventType> actionToEventMap;
 
@@ -165,13 +164,6 @@ public class PatronActionSessionService {
         .withNoticeContext(createLoanNoticeContextWithoutUser(r.getLoan()))
         .build())
       .collect(Collectors.toList());
-  }
-
-  private JsonArray createUsersContext(Set<User> users) {
-    JsonArray jsonArray = new JsonArray();
-    users.forEach(user -> jsonArray.add(createUserContext(user)));
-
-    return jsonArray;
   }
 
   public CompletableFuture<Result<CheckInContext>> saveCheckInSessionRecord(CheckInContext context) {
