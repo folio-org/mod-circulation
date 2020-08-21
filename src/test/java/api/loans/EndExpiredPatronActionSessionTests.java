@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import api.support.fixtures.TemplateContextMatchers;
 import org.awaitility.Awaitility;
@@ -258,7 +259,19 @@ public class EndExpiredPatronActionSessionTests extends APITests {
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(patronSessionRecordsClient::getAll,  Matchers.hasSize(0));
+
+    List<JsonObject> patronNotices = patronNoticesClient.getAll();
+
     assertThat(patronNoticesClient.getAll(), hasSize(6));
+
+    Stream.of(CHECK_OUT_TEMPLATE_ID, CHECK_IN_TEMPLATE_ID).forEach(templateId ->
+      Stream.of(james, jessica, steve).forEach(patron ->
+        patronNotices.stream()
+          .filter(pn -> pn.getString("templateId").equals(templateId.toString()))
+          .filter(pn -> pn.getString("recipientId").equals(patron.getId().toString()))
+          .forEach(patronNotice ->
+            assertThat(patronNotice, hasEmailNoticeProperties(patron.getId(), templateId,
+              TemplateContextMatchers.getUserContextMatchers(patron))))));
   }
 
   @Test
