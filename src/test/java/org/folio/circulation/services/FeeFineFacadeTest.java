@@ -111,7 +111,7 @@ public class FeeFineFacadeTest {
     assertThat(((ServerErrorFailure) result.cause()).getReason(), is(expectedError));
   }
 
-  private CreateAccountCommand.Builder createCommandBuilder() {
+  private CreateAccountCommand.CreateAccountCommandBuilder createCommandBuilder() {
     final Item item = Item.from(new JsonObject())
       .withLocation(Location.from(new JsonObject().put("name", "Main library")));
 

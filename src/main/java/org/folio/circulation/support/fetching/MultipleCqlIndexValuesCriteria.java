@@ -3,22 +3,26 @@ package org.folio.circulation.support.fetching;
 import static org.folio.circulation.support.http.client.CqlQuery.noQuery;
 
 import java.util.Collection;
+import java.util.function.BiFunction;
 
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.client.CqlQuery;
 
+import lombok.Builder;
+import lombok.Getter;
+import lombok.Singular;
+
+@Builder
+@Getter
 public class MultipleCqlIndexValuesCriteria {
-  final String indexName;
-  final Collection<String> values;
-  final Result<CqlQuery> andQuery;
-
-  private MultipleCqlIndexValuesCriteria(String indexName,
-      Collection<String> values, Result<CqlQuery> andQuery) {
-
-    this.indexName = indexName;
-    this.values = values;
-    this.andQuery = andQuery;
-  }
+  private final String indexName;
+  @Singular
+  private final Collection<String> values;
+  @Builder.Default
+  private final Result<CqlQuery> andQuery = noQuery();
+  @Builder.Default
+  private final BiFunction<String, Collection<String>, Result<CqlQuery>> indexOperator
+    = CqlQuery::exactMatchAny;
 
   public static MultipleCqlIndexValuesCriteria byId(Collection<String> values) {
     return byIndex("id", values);
@@ -27,10 +31,10 @@ public class MultipleCqlIndexValuesCriteria {
   public static MultipleCqlIndexValuesCriteria byIndex(String indexName,
       Collection<String> values) {
 
-    return new MultipleCqlIndexValuesCriteria(indexName, values, noQuery());
+    return builder().indexName(indexName).values(values).build();
   }
 
   public MultipleCqlIndexValuesCriteria withQuery(Result<CqlQuery> andQuery) {
-    return new MultipleCqlIndexValuesCriteria(indexName, values, andQuery);
+    return new MultipleCqlIndexValuesCriteria(indexName, values, andQuery, indexOperator);
   }
 }

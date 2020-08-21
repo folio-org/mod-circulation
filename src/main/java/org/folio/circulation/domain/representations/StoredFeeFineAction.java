@@ -7,6 +7,7 @@ import java.util.UUID;
 
 import org.folio.circulation.domain.Account;
 import org.folio.circulation.domain.FeeAmount;
+import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.domain.User;
 import org.joda.time.DateTime;
 
@@ -20,7 +21,7 @@ public class StoredFeeFineAction extends JsonObject {
     this.put("userId", builder.userId);
     this.put("accountId", builder.accountId);
     this.put("source", builder.createdBy);
-    this.put("createdAt", builder.createdAt);
+    write(this, "createdAt", builder.createdAt);
     this.put("transactionInformation", builder.transactionInformation);
     this.put("balance", builder.balance.toDouble());
     this.put("amountAction", builder.amount.toDouble());
@@ -81,9 +82,17 @@ public class StoredFeeFineAction extends JsonObject {
         String.format("%s, %s", user.getLastName(), user.getFirstName()));
     }
 
+    public StoredFeeFineActionBuilder createdByAutomatedProcess() {
+      return withCreatedBy("System");
+    }
+
     public StoredFeeFineActionBuilder withCreatedAt(String createdAt) {
       this.createdAt = createdAt;
       return this;
+    }
+
+    public StoredFeeFineActionBuilder withCreatedAt(ServicePoint servicePoint) {
+      return withCreatedAt(servicePoint != null ? servicePoint.getName() : null);
     }
 
     public StoredFeeFineActionBuilder withBalance(FeeAmount balance) {

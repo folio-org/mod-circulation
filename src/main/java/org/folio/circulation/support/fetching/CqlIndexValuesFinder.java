@@ -7,7 +7,6 @@ import static org.folio.circulation.domain.MultipleRecords.empty;
 import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.fetching.MultipleCqlIndexValuesCriteria.byId;
 import static org.folio.circulation.support.fetching.MultipleCqlIndexValuesCriteria.byIndex;
-import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.http.client.PageLimit.maximumLimit;
 
 import java.util.ArrayList;
@@ -21,6 +20,8 @@ import org.folio.circulation.support.FindWithCqlQuery;
 import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.client.CqlQuery;
+
+import lombok.val;
 
 public class CqlIndexValuesFinder<T> implements FindWithMultipleCqlIndexValues<T> {
   private static final int DEFAULT_MAX_ID_VALUES_PER_CQL_SEARCH_QUERY = 50;
@@ -58,12 +59,12 @@ public class CqlIndexValuesFinder<T> implements FindWithMultipleCqlIndexValues<T
   public CompletableFuture<Result<MultipleRecords<T>>> find(
     MultipleCqlIndexValuesCriteria criteria) {
 
-    if (criteria.values.isEmpty()) {
+    if (criteria.getValues().isEmpty()) {
       return completedFuture(of(MultipleRecords::empty));
     }
 
-    return findByBatchQueriesAndQuery(buildBatchQueriesByIndexName(
-        criteria.values, criteria.indexName), criteria.andQuery);
+    return findByBatchQueriesAndQuery(buildBatchQueriesByIndexName(criteria),
+      criteria.getAndQuery());
   }
 
   private CompletableFuture<Result<MultipleRecords<T>>> findByBatchQueriesAndQuery(
@@ -74,12 +75,14 @@ public class CqlIndexValuesFinder<T> implements FindWithMultipleCqlIndexValues<T
       .collect(Collectors.toList()));
   }
 
-  private List<Result<CqlQuery>> buildBatchQueriesByIndexName(
-    Collection<String> ids, String indexName) {
+  private List<Result<CqlQuery>> buildBatchQueriesByIndexName(MultipleCqlIndexValuesCriteria criteria) {
+    val indexName = criteria.getIndexName();
+    val indexOperator = criteria.getIndexOperator();
+    val values = criteria.getValues();
 
-    return partition(new ArrayList<>(ids), maxValuesPerCqlSearchQuery)
+    return partition(new ArrayList<>(values), maxValuesPerCqlSearchQuery)
       .stream()
-      .map(partitionedIds -> exactMatchAny(indexName, partitionedIds))
+      .map(partitionedIds -> indexOperator.apply(indexName, values))
       .collect(Collectors.toList());
   }
 

@@ -13,7 +13,7 @@ public final class FeeFineOwnerFixture extends RecordCreator {
   private final ServicePointsFixture servicePointsFixture;
 
   public FeeFineOwnerFixture() {
-    super(forFeeFineOwners(), json -> json.getJsonArray("servicePointOwner").toString());
+    super(forFeeFineOwners(), json -> json.getString("owner"));
     this.servicePointsFixture = new ServicePointsFixture(forServicePoints());
   }
 
@@ -27,5 +27,9 @@ public final class FeeFineOwnerFixture extends RecordCreator {
     return createIfAbsent(new FeeFineOwnerBuilder()
       .withOwner("Test owner for service point" + servicePointId.toString())
       .withServicePointOwner(servicePointId));
+  }
+
+  public IndividualResource create(FeeFineOwnerBuilder builder) {
+    return createIfAbsent(builder);
   }
 }

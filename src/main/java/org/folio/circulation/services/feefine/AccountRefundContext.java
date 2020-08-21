@@ -42,10 +42,6 @@ public final class AccountRefundContext {
     return this;
   }
 
-  public String getServicePointName() {
-    return servicePoint != null ? servicePoint.getName() : "";
-  }
-
   public AccountRefundContext withServicePoint(ServicePoint servicePoint) {
     this.servicePoint = servicePoint;
     return this;
@@ -65,5 +61,9 @@ public final class AccountRefundContext {
 
   public List<StoredFeeFineAction> getActions() {
     return Collections.unmodifiableList(actions);
+  }
+
+  public ServicePoint getServicePoint() {
+    return servicePoint;
   }
 }

@@ -130,6 +130,14 @@ public class RestAssuredClient {
       .extract().response());
   }
 
+  public Response post(URL url, String requestId) {
+    return toResponse(beginRequest(requestId)
+      .when().post(url)
+      .then()
+      .log().all()
+      .extract().response());
+  }
+
   public Response post(Object representation, URL url, String requestId) {
     return toResponse(beginRequest(requestId)
       .body(representation)
