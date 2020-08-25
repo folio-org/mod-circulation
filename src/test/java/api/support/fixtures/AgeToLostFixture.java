@@ -1,20 +1,25 @@
 package api.support.fixtures;
 
 import static api.support.APITestContext.getOkapiHeadersFromContext;
+import static api.support.http.InterfaceUrls.scheduledAgeToLostFeeChargingUrl;
 import static api.support.http.InterfaceUrls.scheduledAgeToLostUrl;
 import static api.support.matchers.ItemMatchers.isAgedToLost;
 import static java.time.Clock.fixed;
 import static java.time.Instant.ofEpochMilli;
 import static org.folio.circulation.support.ClockManager.getClockManager;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.joda.time.DateTime.now;
 
+import java.time.Clock;
 import java.time.ZoneOffset;
 import java.util.UUID;
 
 import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.Response;
 
 import api.support.builders.ItemBuilder;
+import api.support.builders.LostItemFeePolicyBuilder;
 import api.support.fixtures.policies.PoliciesActivationFixture;
 import api.support.fixtures.policies.PoliciesToActivate;
 import api.support.http.TimedTaskClient;
@@ -55,8 +60,8 @@ public final class AgeToLostFixture {
     val item = itemsFixture.basedUponNod(ItemBuilder::withRandomBarcode);
     val loan = checkOutFixture.checkOutByBarcode(item, user);
 
-    // Go to the future
-    getClockManager().setClock(fixed(ofEpochMilli(now().plusMonths(6).getMillis()), ZoneOffset.UTC));
+    mockClocks();
+
     timedTaskClient.start(scheduledAgeToLostUrl(), 204, "scheduled-age-to-lost");
 
     final AgeToLostResult ageToLostResult = new AgeToLostResult(loansFixture.getLoanById(loan.getId()),
@@ -65,6 +70,44 @@ public final class AgeToLostFixture {
     assertThat(ageToLostResult.getItem().getJson(), isAgedToLost());
 
     return ageToLostResult;
+  }
+
+  public AgeToLostResult createLoanAgeToLostAndChargeFees(LostItemFeePolicyBuilder builder) {
+    return createLoanAgeToLostAndChargeFees(PoliciesToActivate.builder()
+      .lostItemPolicy(lostItemFeePoliciesFixture.create(builder)));
+  }
+
+  private AgeToLostResult createLoanAgeToLostAndChargeFees(
+    PoliciesToActivate.PoliciesToActivateBuilder policiesToUse) {
+
+    final AgeToLostResult result = createAgedToLostLoan(policiesToUse);
+
+    timedTaskClient.start(scheduledAgeToLostFeeChargingUrl(), 204,
+      "scheduled-age-to-lost-fee-charging");
+
+    return new AgeToLostResult(loansFixture.getLoanById(result.getLoanId()),
+      itemsFixture.getById(result.getItemId()), result.getUser());
+  }
+
+  public void ageToLostAndChargeFees() {
+    final Response response = ageToLostAndAttemptChargeFees();
+
+    assertThat(response.getStatusCode(), is(204));
+  }
+
+  public Response ageToLostAndAttemptChargeFees() {
+    mockClocks();
+
+    timedTaskClient.start(scheduledAgeToLostUrl(), 204, "scheduled-age-to-lost");
+    return timedTaskClient.attemptRun(scheduledAgeToLostFeeChargingUrl(),
+      "scheduled-age-to-lost-fee-charging");
+  }
+
+  private void mockClocks() {
+    final Clock fixedClocks = fixed(ofEpochMilli(now().plusMonths(6).getMillis()),
+      ZoneOffset.UTC);
+
+    getClockManager().setClock(fixedClocks);
   }
 
   @Getter

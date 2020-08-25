@@ -14,13 +14,16 @@ import static org.folio.circulation.domain.LoanAction.MISSING;
 import static org.folio.circulation.domain.LoanAction.RENEWED;
 import static org.folio.circulation.domain.LoanAction.RENEWED_THROUGH_OVERRIDE;
 import static org.folio.circulation.domain.representations.LoanProperties.ACTION_COMMENT;
+import static org.folio.circulation.domain.representations.LoanProperties.AGED_TO_LOST_DELAYED_BILLING;
 import static org.folio.circulation.domain.representations.LoanProperties.CHECKIN_SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.LoanProperties.CHECKOUT_SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.LoanProperties.CLAIMED_RETURNED_DATE;
+import static org.folio.circulation.domain.representations.LoanProperties.DATE_LOST_ITEM_SHOULD_BE_BILLED;
 import static org.folio.circulation.domain.representations.LoanProperties.DECLARED_LOST_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.DUE_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.ITEM_LOCATION_ID_AT_CHECKOUT;
 import static org.folio.circulation.domain.representations.LoanProperties.LOAN_POLICY_ID;
+import static org.folio.circulation.domain.representations.LoanProperties.LOST_ITEM_HAS_BEEN_BILLED;
 import static org.folio.circulation.domain.representations.LoanProperties.LOST_ITEM_POLICY_ID;
 import static org.folio.circulation.domain.representations.LoanProperties.OVERDUE_FINE_POLICY_ID;
 import static org.folio.circulation.domain.representations.LoanProperties.RETURN_DATE;
@@ -32,6 +35,7 @@ import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProper
 import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
+import static org.folio.circulation.support.JsonPropertyFetcher.getObjectProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
@@ -603,9 +607,17 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   public void setAgedToLostDelayedBilling(boolean hasBeenBilled, DateTime whenToBill) {
     final JsonObject delayedBilling = new JsonObject();
 
-    write(delayedBilling, "lostItemHasBeenBilled", hasBeenBilled);
-    write(delayedBilling, "dateLostItemShouldBeBilled", whenToBill);
+    write(delayedBilling, LOST_ITEM_HAS_BEEN_BILLED, hasBeenBilled);
+    write(delayedBilling, DATE_LOST_ITEM_SHOULD_BE_BILLED, whenToBill);
 
-    write(representation, "agedToLostDelayedBilling", delayedBilling);
+    write(representation, AGED_TO_LOST_DELAYED_BILLING, delayedBilling);
+  }
+
+  public Loan setLostItemHasBeenBilled() {
+    final JsonObject delayedBilling = getObjectProperty(representation, AGED_TO_LOST_DELAYED_BILLING);
+
+    write(delayedBilling, LOST_ITEM_HAS_BEEN_BILLED, true);
+
+    return this;
   }
 }
