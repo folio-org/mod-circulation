@@ -80,7 +80,6 @@ public class LoanAccountMatcher extends TypeSafeMatcher<IndividualResource> {
   }
 
   public static LoanAccountMatcher hasNoOverdueFine() {
-    return new LoanAccountMatcher("Overdue fine",
-      hasItems(iterableWithSize(0)));
+    return new LoanAccountMatcher("Overdue fine", iterableWithSize(0));
   }
 }

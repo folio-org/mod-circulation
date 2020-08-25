@@ -82,7 +82,7 @@ public class CqlIndexValuesFinder<T> implements FindWithMultipleCqlIndexValues<T
 
     return partition(new ArrayList<>(values), maxValuesPerCqlSearchQuery)
       .stream()
-      .map(partitionedIds -> indexOperator.apply(indexName, values))
+      .map(partitionedIds -> indexOperator.apply(indexName, partitionedIds))
       .collect(Collectors.toList());
   }
 
