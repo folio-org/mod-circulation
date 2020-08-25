@@ -8,12 +8,13 @@ import java.util.function.BiFunction;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.client.CqlQuery;
 
+import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Singular;
 
 @Builder
-@Getter
+@Getter(AccessLevel.PACKAGE)
 public class MultipleCqlIndexValuesCriteria {
   private final String indexName;
   @Singular
