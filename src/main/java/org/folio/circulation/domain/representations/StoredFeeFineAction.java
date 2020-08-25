@@ -17,16 +17,16 @@ public class StoredFeeFineAction extends JsonObject {
   public StoredFeeFineAction(StoredFeeFineActionBuilder builder) {
     super();
 
-    this.put("id", builder.id);
-    this.put("userId", builder.userId);
-    this.put("accountId", builder.accountId);
-    this.put("source", builder.createdBy);
+    write(this, "id", builder.id);
+    write(this, "userId", builder.userId);
+    write(this, "accountId", builder.accountId);
+    write(this, "source", builder.createdBy);
     write(this, "createdAt", builder.createdAt);
-    this.put("transactionInformation", builder.transactionInformation);
-    this.put("balance", builder.balance.toDouble());
-    this.put("amountAction", builder.amount.toDouble());
-    this.put("notify", builder.notify);
-    this.put("typeAction", builder.action);
+    write(this, "transactionInformation", builder.transactionInformation);
+    write(this, "balance", builder.balance.toDouble());
+    write(this, "amountAction", builder.amount.toDouble());
+    write(this, "notify", builder.notify);
+    write(this, "typeAction", builder.action);
 
     write(this, "paymentMethod", builder.paymentMethod);
     write(this, "dateAction", builder.actionDate);
