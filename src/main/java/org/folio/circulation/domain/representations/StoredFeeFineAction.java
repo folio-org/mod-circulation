@@ -7,6 +7,7 @@ import java.util.UUID;
 
 import org.folio.circulation.domain.Account;
 import org.folio.circulation.domain.FeeAmount;
+import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.domain.User;
 import org.joda.time.DateTime;
 
@@ -16,16 +17,16 @@ public class StoredFeeFineAction extends JsonObject {
   public StoredFeeFineAction(StoredFeeFineActionBuilder builder) {
     super();
 
-    this.put("id", builder.id);
-    this.put("userId", builder.userId);
-    this.put("accountId", builder.accountId);
-    this.put("source", builder.createdBy);
-    this.put("createdAt", builder.createdAt);
-    this.put("transactionInformation", builder.transactionInformation);
-    this.put("balance", builder.balance.toDouble());
-    this.put("amountAction", builder.amount.toDouble());
-    this.put("notify", builder.notify);
-    this.put("typeAction", builder.action);
+    write(this, "id", builder.id);
+    write(this, "userId", builder.userId);
+    write(this, "accountId", builder.accountId);
+    write(this, "source", builder.createdBy);
+    write(this, "createdAt", builder.createdAt);
+    write(this, "transactionInformation", builder.transactionInformation);
+    write(this, "balance", builder.balance.toDouble());
+    write(this, "amountAction", builder.amount.toDouble());
+    write(this, "notify", builder.notify);
+    write(this, "typeAction", builder.action);
 
     write(this, "paymentMethod", builder.paymentMethod);
     write(this, "dateAction", builder.actionDate);
@@ -81,9 +82,17 @@ public class StoredFeeFineAction extends JsonObject {
         String.format("%s, %s", user.getLastName(), user.getFirstName()));
     }
 
+    public StoredFeeFineActionBuilder createdByAutomatedProcess() {
+      return withCreatedBy("System");
+    }
+
     public StoredFeeFineActionBuilder withCreatedAt(String createdAt) {
       this.createdAt = createdAt;
       return this;
+    }
+
+    public StoredFeeFineActionBuilder withCreatedAt(ServicePoint servicePoint) {
+      return withCreatedAt(servicePoint != null ? servicePoint.getName() : null);
     }
 
     public StoredFeeFineActionBuilder withBalance(FeeAmount balance) {

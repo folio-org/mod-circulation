@@ -168,6 +168,10 @@ public class LostItemPolicy extends Policy {
       .plus(patronBilledAfterAgedToLostInterval.timePeriod());
   }
 
+  public AutomaticallyChargeableFee getAgeToLostProcessingFee() {
+    return ageToLostProcessingFee;
+  }
+
   public static LostItemPolicy unknown(String id) {
     return new UnknownLostItemPolicy(id);
   }

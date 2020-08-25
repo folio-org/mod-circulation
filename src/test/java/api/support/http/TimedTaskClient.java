@@ -7,14 +7,18 @@ import org.folio.circulation.support.http.client.Response;
 import api.support.RestAssuredClient;
 
 public class TimedTaskClient {
-  private final OkapiHeaders defaultHeaders;
+  private final RestAssuredClient restAssuredClient;
 
   public TimedTaskClient(OkapiHeaders defaultHeaders) {
-    this.defaultHeaders = defaultHeaders;
+    this.restAssuredClient = new RestAssuredClient(defaultHeaders);
   }
 
   public Response start(URL url, int expectedStatusCode, String requestId) {
-    return new RestAssuredClient(defaultHeaders)
+    return restAssuredClient
       .post(url, expectedStatusCode, requestId, 10000);
+  }
+
+  public Response attemptRun(URL url, String requestId) {
+    return restAssuredClient.post(url, requestId);
   }
 }

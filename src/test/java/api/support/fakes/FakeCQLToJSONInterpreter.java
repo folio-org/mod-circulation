@@ -36,6 +36,8 @@ public class FakeCQLToJSONInterpreter {
     operators.put("<>", operator((actual, expected) -> !actual.contains(expected)));
     operators.put(">", operator((actual, expected) -> actual.compareTo(expected) > 0));
     operators.put("<", operator((actual, expected) -> actual.compareTo(expected) < 0));
+    operators.put("<=", operator((actual, expected) -> actual.compareTo(expected) <= 0));
+    operators.put(">=", operator((actual, expected) -> actual.compareTo(expected) >= 0));
 
     return Collections.unmodifiableMap(operators);
   }
