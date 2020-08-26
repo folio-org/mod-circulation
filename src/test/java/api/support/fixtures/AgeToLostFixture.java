@@ -7,7 +7,6 @@ import static api.support.matchers.ItemMatchers.isAgedToLost;
 import static java.time.Clock.fixed;
 import static java.time.Instant.ofEpochMilli;
 import static org.folio.circulation.support.ClockManager.getClockManager;
-import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.joda.time.DateTime.now;
 
@@ -60,14 +59,14 @@ public final class AgeToLostFixture {
     val item = itemsFixture.basedUponNod(ItemBuilder::withRandomBarcode);
     val loan = checkOutFixture.checkOutByBarcode(item, user);
 
-    mockClocks();
-
-    timedTaskClient.start(scheduledAgeToLostUrl(), 204, "scheduled-age-to-lost");
+    ageToLost();
 
     final AgeToLostResult ageToLostResult = new AgeToLostResult(loansFixture.getLoanById(loan.getId()),
       itemsFixture.getById(item.getId()), user);
 
     assertThat(ageToLostResult.getItem().getJson(), isAgedToLost());
+
+    getClockManager().setDefaultClock();
 
     return ageToLostResult;
   }
@@ -82,25 +81,45 @@ public final class AgeToLostFixture {
 
     final AgeToLostResult result = createAgedToLostLoan(policiesToUse);
 
-    timedTaskClient.start(scheduledAgeToLostFeeChargingUrl(), 204,
-      "scheduled-age-to-lost-fee-charging");
+    chargeFees();
 
     return new AgeToLostResult(loansFixture.getLoanById(result.getLoanId()),
       itemsFixture.getById(result.getItemId()), result.getUser());
   }
 
-  public void ageToLostAndChargeFees() {
-    final Response response = ageToLostAndAttemptChargeFees();
-
-    assertThat(response.getStatusCode(), is(204));
-  }
-
-  public Response ageToLostAndAttemptChargeFees() {
+  public void ageToLost() {
     mockClocks();
 
     timedTaskClient.start(scheduledAgeToLostUrl(), 204, "scheduled-age-to-lost");
-    return timedTaskClient.attemptRun(scheduledAgeToLostFeeChargingUrl(),
+
+    getClockManager().setDefaultClock();
+  }
+
+  public void chargeFees() {
+    mockClocks();
+
+    timedTaskClient.start(scheduledAgeToLostFeeChargingUrl(), 204,
       "scheduled-age-to-lost-fee-charging");
+
+    getClockManager().setDefaultClock();
+  }
+
+  public void ageToLostAndChargeFees() {
+    ageToLost();
+    chargeFees();
+  }
+
+  public Response ageToLostAndAttemptChargeFees() {
+    ageToLost();
+
+    mockClocks();
+
+    final Response response = timedTaskClient.attemptRun(scheduledAgeToLostFeeChargingUrl(),
+      "scheduled-age-to-lost-fee-charging");
+
+    getClockManager().setDefaultClock();
+
+    return response;
   }
 
   private void mockClocks() {
