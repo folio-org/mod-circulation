@@ -109,7 +109,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
   }
 
   @Test
-  public void shouldSkipWhenActualCostIsUsed() {
+  public void shouldSkipAssigningFeesWhenActualCostFeeShouldBeIssued() {
     val policy = lostItemFeePoliciesFixture
       .ageToLostAfterOneMinutePolicy()
       .withSetCost(10.00)
@@ -121,7 +121,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
   }
 
   @Test
-  public void canAssignFeesForMultipleItems() {
+  public void shouldAssignFeesToMultipleItems() {
     val loanToFeeMap = checkoutTenItems();
 
     ageToLostFixture.ageToLostAndChargeFees();
@@ -137,12 +137,12 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
   }
 
   @Test
-  public void canProceedWithAssignFeesWhenSomeFailed() {
+  public void shouldContinueToProcessLoansAfterAssigningFeesForSomeHaveFailed() {
     val loanToFeeMap = checkoutTenItems();
-    val failedLoans = loanToFeeMap.entrySet().stream()
+    val loansExpectedToBeFailed = loanToFeeMap.entrySet().stream()
       .limit(2)
       .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-    val successfullyProcessedLoans = loanToFeeMap.entrySet().stream()
+    val loansExpectedToBeProcessedSuccessfully = loanToFeeMap.entrySet().stream()
       .skip(2)
       .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
@@ -154,11 +154,10 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
 
     ageToLostFixture.ageToLostAndAttemptChargeFees();
 
-    failedLoans.forEach((loan, fee) ->
-      assertThat(loansClient.get(loan).getJson(), isLostItemHasNotBeenBilled())
-    );
+    loansExpectedToBeFailed.forEach((loan, fee) ->
+        assertThat(loansClient.get(loan).getJson(), isLostItemHasNotBeenBilled()));
 
-    successfullyProcessedLoans.forEach((loan, fee) -> {
+    loansExpectedToBeProcessedSuccessfully.forEach((loan, fee) -> {
       val loanFromStorage = loansClient.get(loan);
       assertThat(loanFromStorage.getJson(), isLostItemHasBeenBilled());
 
@@ -184,7 +183,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     val response = ageToLostFixture.ageToLostAndAttemptChargeFees();
 
     assertThat(response.getJson(), hasErrorWith(
-      hasMessage("No automated Lost item processing fee found")));
+      hasMessage("No automated Lost item processing fee type found")));
   }
 
   @Test
@@ -204,7 +203,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     val response = ageToLostFixture.ageToLostAndAttemptChargeFees();
 
     assertThat(response.getJson(), hasErrorWith(
-      hasMessage("No automated Lost item fee found")));
+      hasMessage("No automated Lost item fee type found")));
   }
 
   @Test
@@ -242,13 +241,13 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     for (int itemIndex = 0; itemIndex < 10; itemIndex++) {
       val itemIndexFinal = itemIndex;
       val servicePoint = servicePointsFixture.create(new ServicePointBuilder(
-        "Circ Desk 1" + itemIndex, "cd1" + itemIndex,
-        "Circulation Desk -- Hallway 1" + itemIndex)
+        "Age to lost service point " + itemIndex, "agl-sp-" + itemIndex,
+        "Age to lost service point " + itemIndex)
         .withPickupLocation(TRUE));
 
       val location = locationsFixture.basedUponExampleLocation(builder -> builder
-        .withName("Location for sp 1" + itemIndexFinal)
-        .withCode("lsp1" + itemIndexFinal)
+        .withName("Location for sp " + itemIndexFinal)
+        .withCode("agl-loc-" + itemIndexFinal)
         .withPrimaryServicePoint(servicePoint.getId()));
 
       val item = itemsFixture.basedUponNod(itemBuilder -> itemBuilder

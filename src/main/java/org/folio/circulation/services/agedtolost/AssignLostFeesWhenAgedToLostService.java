@@ -222,7 +222,7 @@ public class AssignLostFeesWhenAgedToLostService {
       log.warn("No lost item fee type found, skipping loan {}",
         loanToAssignFees.getLoan().getId());
 
-      return failed(singleValidationError("No automated Lost item fee found",
+      return failed(singleValidationError("No automated Lost item fee type found",
         "feeFineType", LOST_ITEM_FEE_TYPE));
     }
 
@@ -232,7 +232,7 @@ public class AssignLostFeesWhenAgedToLostService {
       log.warn("No lost item processing fee type found, skipping loan {}",
         loanToAssignFees.getLoan().getId());
 
-      return failed(singleValidationError("No automated Lost item processing fee found",
+      return failed(singleValidationError("No automated Lost item processing fee type found",
         "feeFineType", LOST_ITEM_PROCESSING_FEE_TYPE));
     }
 
