@@ -67,6 +67,7 @@ public class ItemLimitValidator {
 
     return loanRepository.findOpenLoansByUserIdWithItem(LOANS_PAGE_LIMIT, records)
       .thenApply(r -> r.map(loanRecords -> loanRecords.getRecords().stream()
+        .filter(loanRecord -> !loanRecord.getItem().isClaimedReturned())
         .filter(loanRecord -> isMaterialTypeMatchInRetrievedLoan(
           materialTypeId, loanRecord, ruleConditions))
         .filter(loanRecord -> isLoanTypeMatchInRetrievedLoan(
