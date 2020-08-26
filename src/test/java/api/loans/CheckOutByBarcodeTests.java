@@ -1183,7 +1183,6 @@ public class CheckOutByBarcodeTests extends APITests {
 
   @Test
   public void canCheckOutWhenItemLimitWasReachedForBookMaterialAndItemIsClaimedReturned() {
-
     final UUID book = materialTypesFixture.book().getId();
 
     circulationRulesFixture.updateCirculationRules(createRules( "m " + book));
