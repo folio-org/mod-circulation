@@ -53,7 +53,6 @@ import org.slf4j.LoggerFactory;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.With;
 
 public class AssignLostFeesWhenAgedToLostService {
   private static final Logger log = LoggerFactory.getLogger(AssignLostFeesWhenAgedToLostService.class);
@@ -228,7 +227,6 @@ public class AssignLostFeesWhenAgedToLostService {
     return succeeded(loanToAssignFees);
   }
 
-  @With
   @Getter
   @AllArgsConstructor
   private static final class LoanToAssignFees {
@@ -268,11 +266,11 @@ public class AssignLostFeesWhenAgedToLostService {
       final Map<String, FeeFine> feeFineTypeToFeeFineMap = allFeeFines.stream()
         .collect(Collectors.toMap(FeeFine::getFeeFineType, identity()));
 
-      return withFeeFineTypes(feeFineTypeToFeeFineMap);
+      return new LoanToAssignFees(loan, owner, feeFineTypeToFeeFineMap);
     }
 
     public LoanToAssignFees withOwner(Map<String, FeeFineOwner> owners) {
-      return withOwner(owners.get(getOwnerServicePointId()));
+      return new LoanToAssignFees(loan, owners.get(getOwnerServicePointId()), feeFineTypes);
     }
 
     public static LoanToAssignFees usingLoan(Loan loan) {
