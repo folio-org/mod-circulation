@@ -29,11 +29,13 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.folio.circulation.domain.FeeFine;
 import org.folio.circulation.domain.FeeFineOwner;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.policy.lostitem.LostItemPolicy;
+import org.folio.circulation.domain.policy.lostitem.itemfee.AutomaticallyChargeableFee;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineOwnerRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
@@ -47,6 +49,8 @@ import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import lombok.val;
 
 public class AssignLostFeesWhenAgedToLostService {
   private static final Logger log = LoggerFactory.getLogger(AssignLostFeesWhenAgedToLostService.class);
@@ -106,22 +110,37 @@ public class AssignLostFeesWhenAgedToLostService {
 
   private Result<List<CreateAccountCommand>> createAccountsForLoan(LoanToAssignFees loanToAssignFees) {
     return validateCanCreateAccountForLoan(loanToAssignFees)
-      .map(notUsed -> {
-        final LostItemPolicy lostItemPolicy = loanToAssignFees.getLostItemPolicy();
+      .map(notUsed -> getChargeableLostFeeToTypePairs(loanToAssignFees)
+        .map(pair -> buildCreateAccountCommand(loanToAssignFees, pair))
+        .collect(Collectors.toList()));
+  }
 
-        return Stream.of(pair(lostItemPolicy.getSetCostFee(), loanToAssignFees.getLostItemFeeType()),
-            pair(lostItemPolicy.getProcessingFee(), loanToAssignFees.getLostItemProcessingFeeType()))
-          .filter(pair -> pair.getKey().isChargeable())
-          .map(pair -> CreateAccountCommand.builder()
-            .withAmount(pair.getKey().getAmount())
-            .withCreatedByAutomatedProcess(true)
-            .withFeeFine(pair.getValue())
-            .withFeeFineOwner(loanToAssignFees.getOwner())
-            .withLoan(loanToAssignFees.getLoan())
-            .withItem(loanToAssignFees.getLoan().getItem())
-            .build())
-          .collect(Collectors.toList());
-      });
+  private Stream<Pair<AutomaticallyChargeableFee, FeeFine>> getChargeableLostFeeToTypePairs(
+    LoanToAssignFees loan) {
+
+    final LostItemPolicy policy = loan.getLostItemPolicy();
+
+    val setCostPair = pair(policy.getSetCostFee(), loan.getLostItemFeeType());
+    val processingFeePair = pair(policy.getProcessingFee(), loan.getLostItemProcessingFeeType());
+
+    return Stream.of(setCostPair, processingFeePair)
+      .filter(pair -> pair.getKey().isChargeable());
+  }
+
+  private CreateAccountCommand buildCreateAccountCommand(LoanToAssignFees loan,
+    Pair<AutomaticallyChargeableFee, FeeFine> pair) {
+
+    final AutomaticallyChargeableFee feeToCharge = pair.getKey();
+    final FeeFine feeFineType = pair.getValue();
+
+    return CreateAccountCommand.builder()
+      .withAmount(feeToCharge.getAmount())
+      .withCreatedByAutomatedProcess(true)
+      .withFeeFine(feeFineType)
+      .withFeeFineOwner(loan.getOwner())
+      .withLoan(loan.getLoan())
+      .withItem(loan.getLoan().getItem())
+      .build();
   }
 
   private CompletableFuture<Result<List<LoanToAssignFees>>> fetchFeeFineTypes(
