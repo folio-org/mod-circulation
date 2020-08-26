@@ -291,4 +291,8 @@ public class InterfaceUrls {
   public static URL scheduledAgeToLostUrl() {
     return circulationModuleUrl("/circulation/scheduled-age-to-lost");
   }
+
+  public static URL scheduledAgeToLostFeeChargingUrl() {
+    return circulationModuleUrl("/circulation/scheduled-age-to-lost-fee-charging");
+  }
 }
