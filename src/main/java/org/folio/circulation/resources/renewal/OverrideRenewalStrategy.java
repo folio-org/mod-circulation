@@ -76,7 +76,7 @@ public class OverrideRenewalStrategy implements RenewalStrategy {
         return processRenewal(proposedDueDateResult, loan, comment);
       }
 
-      if (loan.isLoanWithLostItem()) {
+      if (loan.isItemLost()) {
         return processRenewal(proposedDueDateResult, loan, comment)
           .map(dueDate -> loan.changeItemStatusForItemAndLoan(CHECKED_OUT));
       }

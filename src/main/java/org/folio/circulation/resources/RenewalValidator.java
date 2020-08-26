@@ -42,7 +42,7 @@ public final class RenewalValidator {
   }
 
   public static Result<DateTime> errorWhenEarlierOrSameDueDate(Loan loan, DateTime proposedDueDate) {
-    if (isSameOrBefore(loan, proposedDueDate) && !loan.isLoanWithLostItem()) {
+    if (isSameOrBefore(loan, proposedDueDate) && !loan.isItemLost()) {
       return failedValidation(loanPolicyValidationError(loan.getLoanPolicy(),
         RENEWAL_WOULD_NOT_CHANGE_THE_DUE_DATE));
     }

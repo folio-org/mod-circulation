@@ -70,7 +70,7 @@ public class LoanRelatedFeeFineClosedHandlerResource extends Resource {
 
     return loanRepository.getById(event.getLoanId())
       .thenCompose(r -> r.after(loan -> {
-        if (loan.isLoanWithLostItem()) {
+        if (loan.isItemLost()) {
           return closeLoanWithLostItemIfLostFeesResolved(clients, loan);
         }
 
