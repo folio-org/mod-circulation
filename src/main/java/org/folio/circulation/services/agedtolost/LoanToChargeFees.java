@@ -22,7 +22,7 @@ import lombok.Getter;
 
 @Getter(AccessLevel.PACKAGE)
 @AllArgsConstructor(access = AccessLevel.PACKAGE)
-final class LoanToAssignFees {
+final class LoanToChargeFees {
   private final Loan loan;
   private final FeeFineOwner owner;
   private final Map<String, FeeFine> feeFineTypes;
@@ -55,24 +55,24 @@ final class LoanToAssignFees {
     return loan.getLostItemPolicy();
   }
 
-  LoanToAssignFees withFeeFineTypes(Collection<FeeFine> allFeeFines) {
+  LoanToChargeFees withFeeFineTypes(Collection<FeeFine> allFeeFines) {
     final Map<String, FeeFine> feeFineTypeToFeeFineMap = allFeeFines.stream()
       .collect(Collectors.toMap(FeeFine::getFeeFineType, identity()));
 
-    return new LoanToAssignFees(loan, owner, feeFineTypeToFeeFineMap);
+    return new LoanToChargeFees(loan, owner, feeFineTypeToFeeFineMap);
   }
 
-  LoanToAssignFees withOwner(Map<String, FeeFineOwner> owners) {
-    return new LoanToAssignFees(loan, owners.get(getOwnerServicePointId()), feeFineTypes);
+  LoanToChargeFees withOwner(Map<String, FeeFineOwner> owners) {
+    return new LoanToChargeFees(loan, owners.get(getOwnerServicePointId()), feeFineTypes);
   }
 
-  static LoanToAssignFees usingLoan(Loan loan) {
-    return new LoanToAssignFees(loan, null, Collections.emptyMap());
+  static LoanToChargeFees usingLoan(Loan loan) {
+    return new LoanToChargeFees(loan, null, Collections.emptyMap());
   }
 
-  static List<LoanToAssignFees> usingLoans(MultipleRecords<Loan> loans) {
+  static List<LoanToChargeFees> usingLoans(MultipleRecords<Loan> loans) {
     return loans.getRecords().stream()
-      .map(LoanToAssignFees::usingLoan)
+      .map(LoanToChargeFees::usingLoan)
       .collect(Collectors.toList());
   }
 }

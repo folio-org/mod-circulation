@@ -53,8 +53,8 @@ import org.slf4j.LoggerFactory;
 
 import lombok.val;
 
-public class AssignLostFeesWhenAgedToLostService {
-  private static final Logger log = LoggerFactory.getLogger(AssignLostFeesWhenAgedToLostService.class);
+public class ChargeLostFeesWhenAgedToLostService {
+  private static final Logger log = LoggerFactory.getLogger(ChargeLostFeesWhenAgedToLostService.class);
 
   private final LostItemPolicyRepository lostItemPolicyRepository;
   private final FeeFineOwnerRepository feeFineOwnerRepository;
@@ -63,7 +63,7 @@ public class AssignLostFeesWhenAgedToLostService {
   private final LoanRepository loanRepository;
   private final ItemRepository itemRepository;
 
-  public AssignLostFeesWhenAgedToLostService(Clients clients) {
+  public ChargeLostFeesWhenAgedToLostService(Clients clients) {
     this.lostItemPolicyRepository = new LostItemPolicyRepository(clients);
     this.feeFineOwnerRepository = new FeeFineOwnerRepository(clients);
     this.feeFineRepository = new FeeFineRepository(clients);
@@ -72,52 +72,52 @@ public class AssignLostFeesWhenAgedToLostService {
     this.itemRepository = new ItemRepository(clients, true, false, false);
   }
 
-  public CompletableFuture<Result<Void>> processFeeAssigning() {
+  public CompletableFuture<Result<Void>> chargeFees() {
     return fetchLoansAndItems()
       .thenCompose(r -> r.after(allLoans -> {
         if (allLoans.isEmpty()) {
-          log.info("No aged to lost loans to assign lost fees");
+          log.info("No aged to lost loans to charge lost fees");
           return completedFuture(succeeded(null));
         }
 
-        log.debug("Loans to assign fees [{}]", allLoans.getRecords().size());
+        log.debug("Loans to charge fees [{}]", allLoans.getRecords().size());
 
-        return succeeded(LoanToAssignFees.usingLoans(allLoans))
+        return succeeded(LoanToChargeFees.usingLoans(allLoans))
           .after(this::fetchFeeFineOwners)
           .thenComposeAsync(this::fetchFeeFineTypes)
-          .thenCompose(this::assignLostFeesForLoans);
+          .thenCompose(this::chargeLostFeesForLoans);
       }));
   }
 
-  private CompletableFuture<Result<Void>> assignLostFeesForLoans(
-    Result<List<LoanToAssignFees>> loansToAssignFeesResult) {
+  private CompletableFuture<Result<Void>> chargeLostFeesForLoans(
+    Result<List<LoanToChargeFees>> loansToChargeFeesResult) {
 
-    return loansToAssignFeesResult
-      .after(loansToAssignFees -> allOf(loansToAssignFees, this::assignLostFeesForLoan))
+    return loansToChargeFeesResult
+      .after(loansToChargeFees -> allOf(loansToChargeFees, this::chargeLostFeesForLoan))
       .thenApply(r -> r.map(notUsed -> null));
   }
 
-  private CompletableFuture<Result<Loan>> assignLostFeesForLoan(LoanToAssignFees loanToAssignFees) {
-    return createAccountsForLoan(loanToAssignFees)
+  private CompletableFuture<Result<Loan>> chargeLostFeesForLoan(LoanToChargeFees loanToChargeFees) {
+    return createAccountsForLoan(loanToChargeFees)
       .after(feeFineFacade::createAccounts)
-      .thenCompose(r -> r.after(notUsed -> updateLoanBillingInfo(loanToAssignFees)));
+      .thenCompose(r -> r.after(notUsed -> updateLoanBillingInfo(loanToChargeFees)));
   }
 
-  private CompletableFuture<Result<Loan>> updateLoanBillingInfo(LoanToAssignFees loanToAssignFees) {
-    final Loan updatedLoan = loanToAssignFees.getLoan().setLostItemHasBeenBilled();
+  private CompletableFuture<Result<Loan>> updateLoanBillingInfo(LoanToChargeFees loanToChargeFees) {
+    final Loan updatedLoan = loanToChargeFees.getLoan().setLostItemHasBeenBilled();
 
     return loanRepository.updateLoan(updatedLoan);
   }
 
-  private Result<List<CreateAccountCommand>> createAccountsForLoan(LoanToAssignFees loanToAssignFees) {
-    return validateCanCreateAccountForLoan(loanToAssignFees)
-      .map(notUsed -> getChargeableLostFeeToTypePairs(loanToAssignFees)
-        .map(pair -> buildCreateAccountCommand(loanToAssignFees, pair))
+  private Result<List<CreateAccountCommand>> createAccountsForLoan(LoanToChargeFees loanToChargeFees) {
+    return validateCanCreateAccountForLoan(loanToChargeFees)
+      .map(notUsed -> getChargeableLostFeeToTypePairs(loanToChargeFees)
+        .map(pair -> buildCreateAccountCommand(loanToChargeFees, pair))
         .collect(Collectors.toList()));
   }
 
   private Stream<Pair<AutomaticallyChargeableFee, FeeFine>> getChargeableLostFeeToTypePairs(
-    LoanToAssignFees loan) {
+    LoanToChargeFees loan) {
 
     final LostItemPolicy policy = loan.getLostItemPolicy();
 
@@ -128,7 +128,7 @@ public class AssignLostFeesWhenAgedToLostService {
       .filter(pair -> pair.getKey().isChargeable());
   }
 
-  private CreateAccountCommand buildCreateAccountCommand(LoanToAssignFees loan,
+  private CreateAccountCommand buildCreateAccountCommand(LoanToChargeFees loan,
     Pair<AutomaticallyChargeableFee, FeeFine> pair) {
 
     final AutomaticallyChargeableFee feeToCharge = pair.getKey();
@@ -144,33 +144,33 @@ public class AssignLostFeesWhenAgedToLostService {
       .build();
   }
 
-  private CompletableFuture<Result<List<LoanToAssignFees>>> fetchFeeFineTypes(
-    Result<List<LoanToAssignFees>> allLoansResult) {
+  private CompletableFuture<Result<List<LoanToChargeFees>>> fetchFeeFineTypes(
+    Result<List<LoanToChargeFees>> allLoansResult) {
 
     return feeFineRepository.getAutomaticFeeFines(lostItemFeeTypes())
       .thenApply(r -> r.combine(allLoansResult, this::mapFeeFineTypesToLoans));
   }
 
-  private List<LoanToAssignFees> mapFeeFineTypesToLoans(Collection<FeeFine> feeTypes,
-     List<LoanToAssignFees> allLoans) {
+  private List<LoanToChargeFees> mapFeeFineTypesToLoans(Collection<FeeFine> feeTypes,
+    List<LoanToChargeFees> allLoans) {
 
     return allLoans.stream()
-      .map(loanToAssignFees -> loanToAssignFees.withFeeFineTypes(feeTypes))
+      .map(loanToChargeFees -> loanToChargeFees.withFeeFineTypes(feeTypes))
       .collect(Collectors.toList());
   }
 
-  private CompletableFuture<Result<List<LoanToAssignFees>>> fetchFeeFineOwners(
-    List<LoanToAssignFees> allLoans) {
+  private CompletableFuture<Result<List<LoanToChargeFees>>> fetchFeeFineOwners(
+    List<LoanToChargeFees> allLoans) {
 
     final Set<String> ownerServicePoints = uniqueSetOf(allLoans,
-      LoanToAssignFees::getOwnerServicePointId);
+      LoanToChargeFees::getOwnerServicePointId);
 
     return feeFineOwnerRepository.findOwnersForServicePoints(ownerServicePoints)
       .thenApply(r -> r.map(owners -> mapOwnersToLoans(owners, allLoans)));
   }
 
-  private List<LoanToAssignFees> mapOwnersToLoans(Collection<FeeFineOwner> owners,
-    List<LoanToAssignFees> loans) {
+  private List<LoanToChargeFees> mapOwnersToLoans(Collection<FeeFineOwner> owners,
+    List<LoanToChargeFees> loans) {
 
     final Map<String, FeeFineOwner> servicePointToOwner = new HashMap<>();
 
@@ -178,7 +178,7 @@ public class AssignLostFeesWhenAgedToLostService {
       .forEach(servicePoint -> servicePointToOwner.put(servicePoint, owner)));
 
     return loans.stream()
-      .map(loanToAssignFees -> loanToAssignFees.withOwner(servicePointToOwner))
+      .map(loanToChargeFees -> loanToChargeFees.withOwner(servicePointToOwner))
       .collect(Collectors.toList());
   }
 
@@ -207,35 +207,35 @@ public class AssignLostFeesWhenAgedToLostService {
       .map(query -> query.sortBy(ascending(billingDateProperty)));
   }
 
-  private Result<LoanToAssignFees> validateCanCreateAccountForLoan(LoanToAssignFees loanToAssignFees) {
-    if (loanToAssignFees.hasNoFeeFineOwner()) {
+  private Result<LoanToChargeFees> validateCanCreateAccountForLoan(LoanToChargeFees loanToChargeFees) {
+    if (loanToChargeFees.hasNoFeeFineOwner()) {
       log.warn("No fee/fine owner present for service point {}, skipping loan {}",
-        loanToAssignFees.getOwnerServicePointId(), loanToAssignFees.getLoan().getId());
+        loanToChargeFees.getOwnerServicePointId(), loanToChargeFees.getLoan().getId());
 
       return failed(singleValidationError("No fee/fine owner found for item's effective location",
-        "servicePointId", loanToAssignFees.getOwnerServicePointId()));
+        "servicePointId", loanToChargeFees.getOwnerServicePointId()));
     }
 
-    final LostItemPolicy lostItemPolicy = loanToAssignFees.getLoan().getLostItemPolicy();
+    final LostItemPolicy lostItemPolicy = loanToChargeFees.getLoan().getLostItemPolicy();
 
-    if (lostItemPolicy.getSetCostFee().isChargeable() && loanToAssignFees.hasNoLostItemFee()) {
+    if (lostItemPolicy.getSetCostFee().isChargeable() && loanToChargeFees.hasNoLostItemFee()) {
       log.warn("No lost item fee type found, skipping loan {}",
-        loanToAssignFees.getLoan().getId());
+        loanToChargeFees.getLoan().getId());
 
       return failed(singleValidationError("No automated Lost item fee type found",
         "feeFineType", LOST_ITEM_FEE_TYPE));
     }
 
     if (lostItemPolicy.getAgeToLostProcessingFee().isChargeable()
-      && loanToAssignFees.hasNoLostItemProcessingFee()) {
+      && loanToChargeFees.hasNoLostItemProcessingFee()) {
 
       log.warn("No lost item processing fee type found, skipping loan {}",
-        loanToAssignFees.getLoan().getId());
+        loanToChargeFees.getLoan().getId());
 
       return failed(singleValidationError("No automated Lost item processing fee type found",
         "feeFineType", LOST_ITEM_PROCESSING_FEE_TYPE));
     }
 
-    return succeeded(loanToAssignFees);
+    return succeeded(loanToChargeFees);
   }
 }
