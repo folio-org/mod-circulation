@@ -49,7 +49,7 @@ public class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends APITes
   }
 
   @Test
-  public void shouldDisregardNonLostFeeTypes() {
+  public void shouldIgnoreFeesThatAreNotDueToLosingItem() {
     feeFineAccountFixture.payLostItemFee(loan.getId());
     feeFineAccountFixture.payLostItemProcessingFee(loan.getId());
 
