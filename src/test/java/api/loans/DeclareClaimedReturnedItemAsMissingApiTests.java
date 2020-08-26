@@ -130,6 +130,6 @@ public class DeclareClaimedReturnedItemAsMissingApiTests extends APITests {
     List<JsonObject> notes = notesClient.getAll();
     assertThat(notes.size(), is(1));
     assertThat(notes.get(0).getString("title"), is("Claimed returned item marked missing"));
-    assertThat(notes.get(0).getString("domain"), is("loans"));
+    assertThat(notes.get(0).getString("domain"), is("users"));
   }
 }
