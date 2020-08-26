@@ -1,7 +1,6 @@
 package org.folio.circulation.services.agedtolost;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static java.util.function.Function.identity;
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_FEE_TYPE;
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_PROCESSING_FEE_TYPE;
 import static org.folio.circulation.domain.FeeFine.lostItemFeeTypes;
@@ -22,7 +21,6 @@ import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.utils.CommonUtils.pair;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,9 +48,6 @@ import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 
 public class AssignLostFeesWhenAgedToLostService {
   private static final Logger log = LoggerFactory.getLogger(AssignLostFeesWhenAgedToLostService.class);
@@ -227,60 +222,4 @@ public class AssignLostFeesWhenAgedToLostService {
     return succeeded(loanToAssignFees);
   }
 
-  @Getter
-  @AllArgsConstructor
-  private static final class LoanToAssignFees {
-    private final Loan loan;
-    private final FeeFineOwner owner;
-    private final Map<String, FeeFine> feeFineTypes;
-
-    public boolean hasNoLostItemFee() {
-      return getLostItemFeeType() == null;
-    }
-
-    public boolean hasNoLostItemProcessingFee() {
-      return getLostItemProcessingFeeType() == null;
-    }
-
-    public boolean hasNoFeeFineOwner() {
-      return owner == null;
-    }
-
-    public String getOwnerServicePointId() {
-      return loan.getItem().getLocation().getPrimaryServicePointId().toString();
-    }
-
-    public FeeFine getLostItemFeeType() {
-      return feeFineTypes.get(LOST_ITEM_FEE_TYPE);
-    }
-
-    public FeeFine getLostItemProcessingFeeType() {
-      return feeFineTypes.get(LOST_ITEM_PROCESSING_FEE_TYPE);
-    }
-
-    public LostItemPolicy getLostItemPolicy() {
-      return loan.getLostItemPolicy();
-    }
-
-    public LoanToAssignFees withFeeFineTypes(Collection<FeeFine> allFeeFines) {
-      final Map<String, FeeFine> feeFineTypeToFeeFineMap = allFeeFines.stream()
-        .collect(Collectors.toMap(FeeFine::getFeeFineType, identity()));
-
-      return new LoanToAssignFees(loan, owner, feeFineTypeToFeeFineMap);
-    }
-
-    public LoanToAssignFees withOwner(Map<String, FeeFineOwner> owners) {
-      return new LoanToAssignFees(loan, owners.get(getOwnerServicePointId()), feeFineTypes);
-    }
-
-    public static LoanToAssignFees usingLoan(Loan loan) {
-      return new LoanToAssignFees(loan, null, Collections.emptyMap());
-    }
-
-    public static List<LoanToAssignFees> usingLoans(MultipleRecords<Loan> loans) {
-      return loans.getRecords().stream()
-        .map(LoanToAssignFees::usingLoan)
-        .collect(Collectors.toList());
-    }
-  }
 }
