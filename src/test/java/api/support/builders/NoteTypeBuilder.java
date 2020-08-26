@@ -20,7 +20,7 @@ public class NoteTypeBuilder extends JsonBuilder implements Builder {
   public JsonObject create() {
     JsonObject object = new JsonObject();
     write(object, "id", id);
-    write(object, "typeName", typeName);
+    write(object, "name", typeName);
     return object;
   }
 }

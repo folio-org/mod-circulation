@@ -45,7 +45,7 @@ public class NotesRepository {
   }
 
   public CompletableFuture<Result<Optional<NoteType>>> findGeneralNoteType() {
-    return exactMatch("typeName", "General note")
+    return exactMatch("name", "General note")
       .after(query -> noteTypesClient.getMany(query, PageLimit.one()))
       .thenApply(flatMapResult(NotesRepository::mapResponseToNoteTypes));
   }
