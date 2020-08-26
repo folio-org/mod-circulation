@@ -88,7 +88,7 @@ public final class AgeToLostFixture {
   }
 
   public void ageToLost() {
-    mockClocks();
+    moveTimeForwardSixMonths();
 
     timedTaskClient.start(scheduledAgeToLostUrl(), 204, "scheduled-age-to-lost");
 
@@ -96,7 +96,7 @@ public final class AgeToLostFixture {
   }
 
   public void chargeFees() {
-    mockClocks();
+    moveTimeForwardSixMonths();
 
     timedTaskClient.start(scheduledAgeToLostFeeChargingUrl(), 204,
       "scheduled-age-to-lost-fee-charging");
@@ -112,7 +112,7 @@ public final class AgeToLostFixture {
   public Response ageToLostAndAttemptChargeFees() {
     ageToLost();
 
-    mockClocks();
+    moveTimeForwardSixMonths();
 
     final Response response = timedTaskClient.attemptRun(scheduledAgeToLostFeeChargingUrl(),
       "scheduled-age-to-lost-fee-charging");
@@ -122,7 +122,7 @@ public final class AgeToLostFixture {
     return response;
   }
 
-  private void mockClocks() {
+  private void moveTimeForwardSixMonths() {
     final Clock fixedClocks = fixed(ofEpochMilli(now().plusMonths(6).getMillis()),
       ZoneOffset.UTC);
 

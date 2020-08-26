@@ -1,7 +1,6 @@
 package org.folio.circulation.services.agedtolost;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static java.util.function.Function.identity;
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_FEE_TYPE;
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_PROCESSING_FEE_TYPE;
 import static org.folio.circulation.domain.FeeFine.lostItemFeeTypes;
@@ -19,10 +18,10 @@ import static org.folio.circulation.support.http.client.CqlQuery.lessThanOrEqual
 import static org.folio.circulation.support.http.client.PageLimit.oneThousand;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.succeeded;
+import static org.folio.circulation.support.utils.CollectionUtil.uniqueSetOf;
 import static org.folio.circulation.support.utils.CommonUtils.pair;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,11 +30,13 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.folio.circulation.domain.FeeFine;
 import org.folio.circulation.domain.FeeFineOwner;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.policy.lostitem.LostItemPolicy;
+import org.folio.circulation.domain.policy.lostitem.itemfee.AutomaticallyChargeableFee;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineOwnerRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
@@ -45,23 +46,15 @@ import org.folio.circulation.services.FeeFineFacade;
 import org.folio.circulation.services.support.CreateAccountCommand;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.http.client.CqlQuery;
-import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.val;
 
 public class AssignLostFeesWhenAgedToLostService {
   private static final Logger log = LoggerFactory.getLogger(AssignLostFeesWhenAgedToLostService.class);
-  private static final PageLimit MAXIMUM_NUMBER_OF_LOANS_TO_PROCESS = oneThousand();
-
-  private static final String BILLING_DATE_PROPERTY
-    = AGED_TO_LOST_DELAYED_BILLING + "." + DATE_LOST_ITEM_SHOULD_BE_BILLED;
-  private static final String LOST_ITEM_HAS_BEEN_BILLED_PROPERTY
-    = AGED_TO_LOST_DELAYED_BILLING + "." + LOST_ITEM_HAS_BEEN_BILLED;
 
   private final LostItemPolicyRepository lostItemPolicyRepository;
   private final FeeFineOwnerRepository feeFineOwnerRepository;
@@ -118,22 +111,37 @@ public class AssignLostFeesWhenAgedToLostService {
 
   private Result<List<CreateAccountCommand>> createAccountsForLoan(LoanToAssignFees loanToAssignFees) {
     return validateCanCreateAccountForLoan(loanToAssignFees)
-      .map(notUsed -> {
-        final LostItemPolicy lostItemPolicy = loanToAssignFees.getLostItemPolicy();
+      .map(notUsed -> getChargeableLostFeeToTypePairs(loanToAssignFees)
+        .map(pair -> buildCreateAccountCommand(loanToAssignFees, pair))
+        .collect(Collectors.toList()));
+  }
 
-        return Stream.of(pair(lostItemPolicy.getSetCostFee(), loanToAssignFees.getLostItemFeeType()),
-            pair(lostItemPolicy.getProcessingFee(), loanToAssignFees.getLostItemProcessingFeeType()))
-          .filter(pair -> pair.getKey().isChargeable())
-          .map(pair -> CreateAccountCommand.builder()
-            .withAmount(pair.getKey().getAmount())
-            .withCreatedByAutomatedProcess(true)
-            .withFeeFine(pair.getValue())
-            .withFeeFineOwner(loanToAssignFees.getOwner())
-            .withLoan(loanToAssignFees.getLoan())
-            .withItem(loanToAssignFees.getLoan().getItem())
-            .build())
-          .collect(Collectors.toList());
-      });
+  private Stream<Pair<AutomaticallyChargeableFee, FeeFine>> getChargeableLostFeeToTypePairs(
+    LoanToAssignFees loan) {
+
+    final LostItemPolicy policy = loan.getLostItemPolicy();
+
+    val setCostPair = pair(policy.getSetCostFee(), loan.getLostItemFeeType());
+    val processingFeePair = pair(policy.getProcessingFee(), loan.getLostItemProcessingFeeType());
+
+    return Stream.of(setCostPair, processingFeePair)
+      .filter(pair -> pair.getKey().isChargeable());
+  }
+
+  private CreateAccountCommand buildCreateAccountCommand(LoanToAssignFees loan,
+    Pair<AutomaticallyChargeableFee, FeeFine> pair) {
+
+    final AutomaticallyChargeableFee feeToCharge = pair.getKey();
+    final FeeFine feeFineType = pair.getValue();
+
+    return CreateAccountCommand.builder()
+      .withAmount(feeToCharge.getAmount())
+      .withCreatedByAutomatedProcess(true)
+      .withFeeFine(feeFineType)
+      .withFeeFineOwner(loan.getOwner())
+      .withLoan(loan.getLoan())
+      .withItem(loan.getLoan().getItem())
+      .build();
   }
 
   private CompletableFuture<Result<List<LoanToAssignFees>>> fetchFeeFineTypes(
@@ -154,11 +162,10 @@ public class AssignLostFeesWhenAgedToLostService {
   private CompletableFuture<Result<List<LoanToAssignFees>>> fetchFeeFineOwners(
     List<LoanToAssignFees> allLoans) {
 
-    final Set<String> uniqueEffectiveLocationServicePoints = allLoans.stream()
-      .map(LoanToAssignFees::getOwnerServicePointId)
-      .collect(Collectors.toSet());
+    final Set<String> ownerServicePoints = uniqueSetOf(allLoans,
+      LoanToAssignFees::getOwnerServicePointId);
 
-    return feeFineOwnerRepository.findOwnersForServicePoints(uniqueEffectiveLocationServicePoints)
+    return feeFineOwnerRepository.findOwnersForServicePoints(ownerServicePoints)
       .thenApply(r -> r.map(owners -> mapOwnersToLoans(owners, allLoans)));
   }
 
@@ -177,22 +184,27 @@ public class AssignLostFeesWhenAgedToLostService {
 
   private CompletableFuture<Result<MultipleRecords<Loan>>> fetchLoansAndItems() {
     return loanFetchQuery()
-      .after(query -> loanRepository.findByQuery(query, MAXIMUM_NUMBER_OF_LOANS_TO_PROCESS))
+      .after(query -> loanRepository.findByQuery(query, oneThousand()))
       .thenComposeAsync(loansResult -> itemRepository.fetchItemsFor(loansResult, Loan::withItem))
       .thenComposeAsync(r -> r.after(lostItemPolicyRepository::findLostItemPoliciesForLoans));
   }
 
   private Result<CqlQuery> loanFetchQuery() {
+    final String billingDateProperty = AGED_TO_LOST_DELAYED_BILLING + "."
+      + DATE_LOST_ITEM_SHOULD_BE_BILLED;
+    final String lostItemHasBeenBilled = AGED_TO_LOST_DELAYED_BILLING + "."
+      + LOST_ITEM_HAS_BEEN_BILLED;
+
     final DateTime currentDate = getClockManager().getDateTime();
 
-    final Result<CqlQuery> billingDateQuery = lessThanOrEqualTo(BILLING_DATE_PROPERTY, currentDate);
+    final Result<CqlQuery> billingDateQuery = lessThanOrEqualTo(billingDateProperty, currentDate);
     final Result<CqlQuery> agedToLostQuery = exactMatch(ITEM_STATUS, AGED_TO_LOST.getValue());
     final Result<CqlQuery> hasNotBeenBilledQuery = exactMatch(
-      LOST_ITEM_HAS_BEEN_BILLED_PROPERTY, "false");
+      lostItemHasBeenBilled, "false");
 
     return Result.combine(billingDateQuery, agedToLostQuery, CqlQuery::and)
       .combine(hasNotBeenBilledQuery, CqlQuery::and)
-      .map(query -> query.sortBy(ascending(BILLING_DATE_PROPERTY)));
+      .map(query -> query.sortBy(ascending(billingDateProperty)));
   }
 
   private Result<LoanToAssignFees> validateCanCreateAccountForLoan(LoanToAssignFees loanToAssignFees) {
@@ -210,7 +222,7 @@ public class AssignLostFeesWhenAgedToLostService {
       log.warn("No lost item fee type found, skipping loan {}",
         loanToAssignFees.getLoan().getId());
 
-      return failed(singleValidationError("No automated Lost item fee found",
+      return failed(singleValidationError("No automated Lost item fee type found",
         "feeFineType", LOST_ITEM_FEE_TYPE));
     }
 
@@ -220,67 +232,10 @@ public class AssignLostFeesWhenAgedToLostService {
       log.warn("No lost item processing fee type found, skipping loan {}",
         loanToAssignFees.getLoan().getId());
 
-      return failed(singleValidationError("No automated Lost item processing fee found",
+      return failed(singleValidationError("No automated Lost item processing fee type found",
         "feeFineType", LOST_ITEM_PROCESSING_FEE_TYPE));
     }
 
     return succeeded(loanToAssignFees);
-  }
-
-  @Getter
-  @AllArgsConstructor
-  private static final class LoanToAssignFees {
-    private final Loan loan;
-    private final FeeFineOwner owner;
-    private final Map<String, FeeFine> feeFineTypes;
-
-    public boolean hasNoLostItemFee() {
-      return getLostItemFeeType() == null;
-    }
-
-    public boolean hasNoLostItemProcessingFee() {
-      return getLostItemProcessingFeeType() == null;
-    }
-
-    public boolean hasNoFeeFineOwner() {
-      return owner == null;
-    }
-
-    public String getOwnerServicePointId() {
-      return loan.getItem().getLocation().getPrimaryServicePointId().toString();
-    }
-
-    public FeeFine getLostItemFeeType() {
-      return feeFineTypes.get(LOST_ITEM_FEE_TYPE);
-    }
-
-    public FeeFine getLostItemProcessingFeeType() {
-      return feeFineTypes.get(LOST_ITEM_PROCESSING_FEE_TYPE);
-    }
-
-    public LostItemPolicy getLostItemPolicy() {
-      return loan.getLostItemPolicy();
-    }
-
-    public LoanToAssignFees withFeeFineTypes(Collection<FeeFine> allFeeFines) {
-      final Map<String, FeeFine> feeFineTypeToFeeFineMap = allFeeFines.stream()
-        .collect(Collectors.toMap(FeeFine::getFeeFineType, identity()));
-
-      return new LoanToAssignFees(loan, owner, feeFineTypeToFeeFineMap);
-    }
-
-    public LoanToAssignFees withOwner(Map<String, FeeFineOwner> owners) {
-      return new LoanToAssignFees(loan, owners.get(getOwnerServicePointId()), feeFineTypes);
-    }
-
-    public static LoanToAssignFees usingLoan(Loan loan) {
-      return new LoanToAssignFees(loan, null, Collections.emptyMap());
-    }
-
-    public static List<LoanToAssignFees> usingLoans(MultipleRecords<Loan> loans) {
-      return loans.getRecords().stream()
-        .map(LoanToAssignFees::usingLoan)
-        .collect(Collectors.toList());
-    }
   }
 }
