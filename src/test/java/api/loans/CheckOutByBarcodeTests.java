@@ -4,6 +4,7 @@ import static api.requests.RequestsAPICreationTests.setupMissingItem;
 import static api.support.APITestContext.END_OF_CURRENT_YEAR_DUE_DATE;
 import static api.support.builders.ItemBuilder.AVAILABLE;
 import static api.support.builders.ItemBuilder.CHECKED_OUT;
+import static api.support.builders.ItemBuilder.CLAIMED_RETURNED;
 import static api.support.fixtures.AutomatedPatronBlocksFixture.MAX_NUMBER_OF_ITEMS_CHARGED_OUT_MESSAGE;
 import static api.support.fixtures.AutomatedPatronBlocksFixture.MAX_OUTSTANDING_FEE_FINE_BALANCE_MESSAGE;
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasItemBarcodeParameter;
@@ -24,7 +25,6 @@ import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
 import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
-import static api.support.matchers.ValidationErrorMatchers.hasMessageContaining;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.domain.policy.Period.months;
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
@@ -64,7 +64,6 @@ import api.support.fakes.FakePubSub;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import lombok.val;
 
 public class CheckOutByBarcodeTests extends APITests {
   @Test
@@ -1180,6 +1179,38 @@ public class CheckOutByBarcodeTests extends APITests {
     checkOutFixture.checkOutByBarcode(videoTypeItem, steve);
     videoTypeItem = itemsClient.get(videoTypeItem);
     assertThat(videoTypeItem, hasItemStatus(CHECKED_OUT));
+  }
+
+  @Test
+  public void canCheckOutWhenItemLimitWasReachedForBookMaterialAndItemIsClaimedReturned() {
+
+    final UUID book = materialTypesFixture.book().getId();
+
+    circulationRulesFixture.updateCirculationRules(createRules( "m " + book));
+
+    IndividualResource firstBookTypeItem = itemsFixture.basedUponNod();
+    IndividualResource secondBookTypeItem = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource steve = usersFixture.steve();
+
+    IndividualResource firstLoan =
+      checkOutFixture.checkOutByBarcode(firstBookTypeItem, steve);
+    firstBookTypeItem = itemsClient.get(firstBookTypeItem);
+    assertThat(firstBookTypeItem, hasItemStatus(CHECKED_OUT));
+
+    Response response = checkOutFixture.attemptCheckOutByBarcode(secondBookTypeItem, steve);
+    assertThat(response.getJson(), hasErrorWith(hasMessage(
+      "Patron has reached maximum limit of 1 items for material type")));
+
+    secondBookTypeItem = itemsClient.get(secondBookTypeItem);
+    assertThat(secondBookTypeItem, hasItemStatus(AVAILABLE));
+
+    claimItemReturnedFixture.claimItemReturned(firstLoan.getId());
+    firstBookTypeItem = itemsClient.get(firstBookTypeItem);
+    assertThat(firstBookTypeItem, hasItemStatus(CLAIMED_RETURNED));
+
+    checkOutFixture.checkOutByBarcode(secondBookTypeItem, steve);
+    secondBookTypeItem = itemsClient.get(secondBookTypeItem);
+    assertThat(secondBookTypeItem, hasItemStatus(CHECKED_OUT));
   }
 
   @Test

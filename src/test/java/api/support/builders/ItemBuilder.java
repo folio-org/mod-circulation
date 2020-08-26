@@ -22,6 +22,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
   public static final String DECLARED_LOST = "Declared lost";
   public static final String ON_ORDER = "On order";
   public static final String IN_PROCESS = "In process";
+  public static final String CLAIMED_RETURNED = "Claimed returned";
 
   private final UUID id;
   private final UUID holdingId;
