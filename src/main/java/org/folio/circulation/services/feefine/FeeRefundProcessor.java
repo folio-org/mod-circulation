@@ -117,7 +117,7 @@ public class FeeRefundProcessor implements AccountRefundProcessor {
   private StoredFeeFineActionBuilder populateCommonAttributes(AccountRefundContext context) {
     return StoredFeeFineAction.builder()
       .useAccount(context.getAccount())
-      .withCreatedAt(context.getServicePointName())
+      .withCreatedAt(context.getServicePoint())
       .withCreatedBy(context.getUser())
       .withBalance(context.getAccount().getRemaining())
       .withActionDate(getActionDate(context));

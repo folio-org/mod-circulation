@@ -5,30 +5,29 @@ import static org.folio.circulation.domain.representations.StoredFeeFineAction.S
 import static org.folio.circulation.services.feefine.FeeRefundProcessor.createLostItemFeeRefundProcessor;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.results.Result.failed;
+import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Account;
-import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
-import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineActionRepository;
 import org.folio.circulation.domain.ServicePoint;
-import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.domain.User;
-import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.domain.representations.StoredAccount;
 import org.folio.circulation.domain.representations.StoredFeeFineAction;
+import org.folio.circulation.infrastructure.storage.ServicePointRepository;
+import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
+import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineActionRepository;
+import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.services.feefine.AccountRefundContext;
 import org.folio.circulation.services.feefine.FeeRefundProcessor;
 import org.folio.circulation.services.support.CreateAccountCommand;
 import org.folio.circulation.services.support.RefundAccountCommand;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.results.CommonFailures;
-
-import io.vertx.core.json.JsonObject;
+import org.folio.circulation.support.results.Result;
 
 public class FeeFineFacade {
   private final AccountRepository accountRepository;
@@ -69,16 +68,14 @@ public class FeeFineFacade {
     Account createdAccount, CreateAccountCommand creation) {
 
     final StoredFeeFineActionBuilder builder = StoredFeeFineAction.builder();
-    return fetchUser(creation.getStaffUserId())
-      .thenApply(r -> r.map(builder::withCreatedBy))
-      .thenCompose(r -> r.after(notUsed -> fetchServicePoint(creation.getCurrentServicePointId())))
-      .thenApply(r -> r.map(servicePoint -> builder
+    return populateCreatedBy(builder, creation)
+      .thenCompose(r -> r.after(updatedBuilder -> populateCreatedAt(updatedBuilder, creation)))
+      .thenApply(r -> r.map(updatedBuilder -> updatedBuilder
         .withBalance(createdAccount.getRemaining())
         .withAmount(createdAccount.getAmount())
         .withUserId(createdAccount.getUserId())
         .withAction(createdAccount.getFeeFineType())
         .withAccountId(createdAccount.getId())
-        .withCreatedAt(servicePoint.getName())
         .build()))
       .thenCompose(r -> r.after(feeFineActionRepository::create))
       .thenApply(r -> r.map(notUsed -> null));
@@ -150,13 +147,33 @@ public class FeeFineFacade {
     return feeFineActionRepository.createAll(context.getActions());
   }
 
+  private CompletableFuture<Result<StoredFeeFineActionBuilder>> populateCreatedBy(
+    StoredFeeFineActionBuilder builder, CreateAccountCommand command) {
+
+    if (command.isCreatedByAutomatedProcess()) {
+      return completedFuture(succeeded(builder.createdByAutomatedProcess()));
+    }
+
+    return userRepository.getUser(command.getStaffUserId())
+      .thenApply(r -> r.map(builder::withCreatedBy));
+  }
+
   private CompletableFuture<Result<User>> fetchUser(String userId) {
     return userRepository.getUser(userId);
   }
 
   private CompletableFuture<Result<ServicePoint>> fetchServicePoint(String servicePointId) {
-    return servicePointRepository.getServicePointById(servicePointId)
-      // To prevent NPE.
-      .thenApply(r -> r.map(sp -> sp == null ? new ServicePoint(new JsonObject()) : sp));
+    return servicePointRepository.getServicePointById(servicePointId);
+  }
+
+  private CompletableFuture<Result<StoredFeeFineActionBuilder>> populateCreatedAt(
+    StoredFeeFineActionBuilder builder, CreateAccountCommand command) {
+
+    if (command.isCreatedByAutomatedProcess()) {
+      return completedFuture(succeeded(builder));
+    }
+
+    return fetchServicePoint(command.getCurrentServicePointId())
+      .thenApply(r -> r.map(builder::withCreatedAt));
   }
 }
