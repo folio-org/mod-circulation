@@ -70,15 +70,15 @@ public class LoanRelatedFeeFineClosedHandlerResource extends Resource {
 
     return loanRepository.getById(event.getLoanId())
       .thenCompose(r -> r.after(loan -> {
-        if (loan.isDeclaredLost()) {
-          return closeDeclaredLostLoanIfLostFeesResolved(clients, loan);
+        if (loan.isItemLost()) {
+          return closeLoanWithLostItemIfLostFeesResolved(clients, loan);
         }
 
         return completedFuture(succeeded(loan));
       }));
   }
 
-  private CompletableFuture<Result<Loan>> closeDeclaredLostLoanIfLostFeesResolved(
+  private CompletableFuture<Result<Loan>> closeLoanWithLostItemIfLostFeesResolved(
     Clients clients, Loan loan) {
 
     final AccountRepository accountRepository = new AccountRepository(clients);

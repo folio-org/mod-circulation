@@ -7,10 +7,10 @@ import static org.folio.circulation.resources.RenewalValidator.errorForNotMatchi
 import static org.folio.circulation.resources.RenewalValidator.errorWhenEarlierOrSameDueDate;
 import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
-import static org.folio.circulation.support.results.Result.succeeded;
-import static org.folio.circulation.support.results.ResultBinding.mapResult;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
+import static org.folio.circulation.support.results.Result.succeeded;
+import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -76,7 +76,7 @@ public class OverrideRenewalStrategy implements RenewalStrategy {
         return processRenewal(proposedDueDateResult, loan, comment);
       }
 
-      if (itemLostWhilstOnLoan(loan)) {
+      if (loan.isItemLost()) {
         return processRenewal(proposedDueDateResult, loan, comment)
           .map(dueDate -> loan.changeItemStatusForItemAndLoan(CHECKED_OUT));
       }
@@ -99,9 +99,5 @@ public class OverrideRenewalStrategy implements RenewalStrategy {
     return calculatedDueDate
       .next(dueDate -> errorWhenEarlierOrSameDueDate(loan, dueDate))
       .map(dueDate -> loan.overrideRenewal(dueDate, loan.getLoanPolicyId(), comment));
-  }
-
-  private boolean itemLostWhilstOnLoan(Loan loan) {
-    return loan.isDeclaredLost() || loan.isAgedToLost();
   }
 }
