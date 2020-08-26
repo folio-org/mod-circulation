@@ -60,7 +60,7 @@ public final class AgeToLostFixture {
     val item = itemsFixture.basedUponNod(ItemBuilder::withRandomBarcode);
     val loan = checkOutFixture.checkOutByBarcode(item, user);
 
-    mockClocks();
+    moveTimeForwardSixMonths();
 
     timedTaskClient.start(scheduledAgeToLostUrl(), 204, "scheduled-age-to-lost");
 
@@ -96,14 +96,14 @@ public final class AgeToLostFixture {
   }
 
   public Response ageToLostAndAttemptChargeFees() {
-    mockClocks();
+    moveTimeForwardSixMonths();
 
     timedTaskClient.start(scheduledAgeToLostUrl(), 204, "scheduled-age-to-lost");
     return timedTaskClient.attemptRun(scheduledAgeToLostFeeChargingUrl(),
       "scheduled-age-to-lost-fee-charging");
   }
 
-  private void mockClocks() {
+  private void moveTimeForwardSixMonths() {
     final Clock fixedClocks = fixed(ofEpochMilli(now().plusMonths(6).getMillis()),
       ZoneOffset.UTC);
 

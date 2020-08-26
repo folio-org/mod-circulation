@@ -18,6 +18,7 @@ import static org.folio.circulation.support.http.client.CqlQuery.lessThanOrEqual
 import static org.folio.circulation.support.http.client.PageLimit.oneThousand;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.succeeded;
+import static org.folio.circulation.support.utils.CollectionUtil.uniqueSetOf;
 import static org.folio.circulation.support.utils.CommonUtils.pair;
 
 import java.util.Collection;
@@ -161,11 +162,10 @@ public class AssignLostFeesWhenAgedToLostService {
   private CompletableFuture<Result<List<LoanToAssignFees>>> fetchFeeFineOwners(
     List<LoanToAssignFees> allLoans) {
 
-    final Set<String> uniqueEffectiveLocationServicePoints = allLoans.stream()
-      .map(LoanToAssignFees::getOwnerServicePointId)
-      .collect(Collectors.toSet());
+    final Set<String> ownerServicePoints = uniqueSetOf(allLoans,
+      LoanToAssignFees::getOwnerServicePointId);
 
-    return feeFineOwnerRepository.findOwnersForServicePoints(uniqueEffectiveLocationServicePoints)
+    return feeFineOwnerRepository.findOwnersForServicePoints(ownerServicePoints)
       .thenApply(r -> r.map(owners -> mapOwnersToLoans(owners, allLoans)));
   }
 
