@@ -43,7 +43,6 @@ import org.folio.circulation.services.FeeFineFacade;
 import org.folio.circulation.services.support.CreateAccountCommand;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.http.client.CqlQuery;
-import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -51,12 +50,6 @@ import org.slf4j.LoggerFactory;
 
 public class AssignLostFeesWhenAgedToLostService {
   private static final Logger log = LoggerFactory.getLogger(AssignLostFeesWhenAgedToLostService.class);
-  private static final PageLimit MAXIMUM_NUMBER_OF_LOANS_TO_PROCESS = oneThousand();
-
-  private static final String BILLING_DATE_PROPERTY
-    = AGED_TO_LOST_DELAYED_BILLING + "." + DATE_LOST_ITEM_SHOULD_BE_BILLED;
-  private static final String LOST_ITEM_HAS_BEEN_BILLED_PROPERTY
-    = AGED_TO_LOST_DELAYED_BILLING + "." + LOST_ITEM_HAS_BEEN_BILLED;
 
   private final LostItemPolicyRepository lostItemPolicyRepository;
   private final FeeFineOwnerRepository feeFineOwnerRepository;
@@ -172,22 +165,27 @@ public class AssignLostFeesWhenAgedToLostService {
 
   private CompletableFuture<Result<MultipleRecords<Loan>>> fetchLoansAndItems() {
     return loanFetchQuery()
-      .after(query -> loanRepository.findByQuery(query, MAXIMUM_NUMBER_OF_LOANS_TO_PROCESS))
+      .after(query -> loanRepository.findByQuery(query, oneThousand()))
       .thenComposeAsync(loansResult -> itemRepository.fetchItemsFor(loansResult, Loan::withItem))
       .thenComposeAsync(r -> r.after(lostItemPolicyRepository::findLostItemPoliciesForLoans));
   }
 
   private Result<CqlQuery> loanFetchQuery() {
+    final String billingDateProperty = AGED_TO_LOST_DELAYED_BILLING + "."
+      + DATE_LOST_ITEM_SHOULD_BE_BILLED;
+    final String lostItemHasBeenBilled = AGED_TO_LOST_DELAYED_BILLING + "."
+      + LOST_ITEM_HAS_BEEN_BILLED;
+
     final DateTime currentDate = getClockManager().getDateTime();
 
-    final Result<CqlQuery> billingDateQuery = lessThanOrEqualTo(BILLING_DATE_PROPERTY, currentDate);
+    final Result<CqlQuery> billingDateQuery = lessThanOrEqualTo(billingDateProperty, currentDate);
     final Result<CqlQuery> agedToLostQuery = exactMatch(ITEM_STATUS, AGED_TO_LOST.getValue());
     final Result<CqlQuery> hasNotBeenBilledQuery = exactMatch(
-      LOST_ITEM_HAS_BEEN_BILLED_PROPERTY, "false");
+      lostItemHasBeenBilled, "false");
 
     return Result.combine(billingDateQuery, agedToLostQuery, CqlQuery::and)
       .combine(hasNotBeenBilledQuery, CqlQuery::and)
-      .map(query -> query.sortBy(ascending(BILLING_DATE_PROPERTY)));
+      .map(query -> query.sortBy(ascending(billingDateProperty)));
   }
 
   private Result<LoanToAssignFees> validateCanCreateAccountForLoan(LoanToAssignFees loanToAssignFees) {
@@ -221,5 +219,4 @@ public class AssignLostFeesWhenAgedToLostService {
 
     return succeeded(loanToAssignFees);
   }
-
 }
