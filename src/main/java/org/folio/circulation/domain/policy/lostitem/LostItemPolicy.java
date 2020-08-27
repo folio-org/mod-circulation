@@ -143,12 +143,6 @@ public class LostItemPolicy extends Policy {
     return getActualCostFee().isChargeable();
   }
 
-  public boolean shouldChargeFeesWhenAgedToLost() {
-    // i.e. we exclude immediate billings that have nothing to charge
-    return shouldDelayBillingForPatronWhenItemAgedToLost()
-      || setCostFee.isChargeable() || ageToLostProcessingFee.isChargeable();
-  }
-
   public boolean canAgeLoanToLost(DateTime loanDueDate) {
     if (agedToLostAfterOverdueInterval.hasZeroDuration()) {
       return false;
@@ -176,8 +170,12 @@ public class LostItemPolicy extends Policy {
     return new UnknownLostItemPolicy(id);
   }
 
-  private boolean shouldDelayBillingForPatronWhenItemAgedToLost() {
-    return !patronBilledAfterAgedToLostInterval.hasZeroDuration();
+  public boolean billPatronImmediatelyAfterAgeToLost() {
+    return patronBilledAfterAgedToLostInterval.hasZeroDuration();
+  }
+
+  public boolean hasNoLostItemFee() {
+    return !actualCostFee.isChargeable() && !setCostFee.isChargeable();
   }
 
   private static class UnknownLostItemPolicy extends LostItemPolicy {

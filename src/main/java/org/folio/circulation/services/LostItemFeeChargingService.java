@@ -79,8 +79,7 @@ public class LostItemFeeChargingService {
 
   private boolean shouldCloseLoan(LostItemPolicy policy) {
     return !policy.getProcessingFee().isChargeable()
-      && !policy.getSetCostFee().isChargeable()
-      && !policy.getActualCostFee().isChargeable();
+      && policy.hasNoLostItemFee();
   }
 
   private CompletableFuture<Result<ReferenceDataContext>> fetchFeeFineTypes(

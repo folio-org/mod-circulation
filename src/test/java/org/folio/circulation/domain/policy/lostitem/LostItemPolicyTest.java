@@ -1,8 +1,9 @@
 package org.folio.circulation.domain.policy.lostitem;
 
+import static java.time.Clock.fixed;
 import static org.folio.circulation.domain.policy.Period.from;
-import static org.folio.circulation.domain.policy.Period.hours;
 import static org.folio.circulation.domain.policy.Period.minutes;
+import static org.folio.circulation.support.ClockManager.getClockManager;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.joda.time.DateTime.now;
@@ -10,8 +11,12 @@ import static org.joda.time.DateTimeZone.UTC;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.time.Instant;
+import java.time.ZoneOffset;
+
 import org.folio.circulation.domain.policy.Period;
 import org.joda.time.DateTime;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -22,6 +27,11 @@ import junitparams.converters.Nullable;
 
 @RunWith(JUnitParamsRunner.class)
 public class LostItemPolicyTest {
+
+  @Before
+  public void useDefaultClocks() {
+    getClockManager().setDefaultClock();
+  }
 
   @Test
   @Parameters( {
@@ -117,7 +127,10 @@ public class LostItemPolicyTest {
 
     final LostItemPolicy lostItemPolicy = LostItemPolicy.from(builder.create());
 
-    final DateTime lostDateTime = now(UTC).minus(period.timePeriod());
+    final DateTime now = now(UTC);
+    getClockManager().setClock(fixed(Instant.ofEpochMilli(now.getMillis()), ZoneOffset.UTC));
+
+    final DateTime lostDateTime = now.minus(period.timePeriod());
     assertTrue(lostItemPolicy.shouldRefundFees(lostDateTime));
   }
 
@@ -149,98 +162,6 @@ public class LostItemPolicyTest {
     final LostItemPolicy lostItemPolicy = LostItemPolicy.from(builder.create());
 
     assertFalse(lostItemPolicy.canAgeLoanToLost(now(UTC)));
-  }
-
-  @Test
-  public void shouldNotChargeFeesWhenChargedImmediatelyAndNoFees() {
-    final LostItemFeePolicyBuilder builder = new LostItemFeePolicyBuilder()
-      .withItemAgedToLostAfterOverdue(minutes(1))
-      .withPatronBilledAfterAgedLost(null)
-      .withNoChargeAmountItem()
-      .doNotChargeItemAgedToLostProcessingFee();
-
-    final LostItemPolicy lostItemPolicy = LostItemPolicy.from(builder.create());
-
-    assertFalse(lostItemPolicy.shouldChargeFeesWhenAgedToLost());
-  }
-
-  @Test
-  public void shouldChargeFeesWhenDelayedBillingAndNoFees() {
-    final LostItemFeePolicyBuilder builder = new LostItemFeePolicyBuilder()
-      .withItemAgedToLostAfterOverdue(minutes(1))
-      .withPatronBilledAfterAgedLost(hours(2))
-      .withNoChargeAmountItem()
-      .doNotChargeItemAgedToLostProcessingFee();
-
-    final LostItemPolicy lostItemPolicy = LostItemPolicy.from(builder.create());
-
-    assertTrue(lostItemPolicy.shouldChargeFeesWhenAgedToLost());
-  }
-
-  @Test
-  public void shouldChargeFeesWhenDelayedBillingAndThereIsItemFee() {
-    final LostItemFeePolicyBuilder builder = new LostItemFeePolicyBuilder()
-      .withItemAgedToLostAfterOverdue(minutes(1))
-      .withPatronBilledAfterAgedLost(hours(2))
-      .withSetCost(10d)
-      .doNotChargeItemAgedToLostProcessingFee();
-
-    final LostItemPolicy lostItemPolicy = LostItemPolicy.from(builder.create());
-
-    assertTrue(lostItemPolicy.shouldChargeFeesWhenAgedToLost());
-  }
-
-  @Test
-  public void shouldChargeFeesWhenDelayedBillingAndThereIsProcessingFee() {
-    final LostItemFeePolicyBuilder builder = new LostItemFeePolicyBuilder()
-      .withItemAgedToLostAfterOverdue(minutes(1))
-      .withPatronBilledAfterAgedLost(hours(2))
-      .withNoChargeAmountItem()
-      .chargeItemAgedToLostProcessingFee(5d);
-
-    final LostItemPolicy lostItemPolicy = LostItemPolicy.from(builder.create());
-
-    assertTrue(lostItemPolicy.shouldChargeFeesWhenAgedToLost());
-  }
-
-  @Test
-  public void shouldChargeFeesWhenImmediateBillingAndThereIsItemFee() {
-    final LostItemFeePolicyBuilder builder = new LostItemFeePolicyBuilder()
-      .withItemAgedToLostAfterOverdue(minutes(1))
-      .billPatronImmediatelyWhenAgedToLost()
-      .withSetCost(10d)
-      .doNotChargeItemAgedToLostProcessingFee();
-
-    final LostItemPolicy lostItemPolicy = LostItemPolicy.from(builder.create());
-
-    assertTrue(lostItemPolicy.shouldChargeFeesWhenAgedToLost());
-  }
-
-  @Test
-  public void shouldChargeFeesWhenImmediateBillingAndThereIsProcessingFee() {
-    final LostItemFeePolicyBuilder builder = new LostItemFeePolicyBuilder()
-      .withItemAgedToLostAfterOverdue(minutes(1))
-      .billPatronImmediatelyWhenAgedToLost()
-      .withNoChargeAmountItem()
-      .chargeItemAgedToLostProcessingFee(5d);
-
-    final LostItemPolicy lostItemPolicy = LostItemPolicy.from(builder.create());
-
-    assertTrue(lostItemPolicy.shouldChargeFeesWhenAgedToLost());
-  }
-
-  @Test
-  public void shouldIgnoreLostItemProcessingFeeWhenEnabled() {
-    final LostItemFeePolicyBuilder builder = new LostItemFeePolicyBuilder()
-      .withItemAgedToLostAfterOverdue(minutes(1))
-      .withPatronBilledAfterAgedLost(null)
-      .withNoChargeAmountItem()
-      .doNotChargeItemAgedToLostProcessingFee()
-      .chargeProcessingFee(5d);
-
-    final LostItemPolicy lostItemPolicy = LostItemPolicy.from(builder.create());
-
-    assertFalse(lostItemPolicy.shouldChargeFeesWhenAgedToLost());
   }
 
   @Test
