@@ -224,20 +224,6 @@
       <version>${spring.version}</version>
       <scope>test</scope>
     </dependency>
-    <!-- Reinstate if we figure out a way to refer to schema that are compatible
-    with other tools, see FOLIO-1213 -->
-    <!--<dependency>-->
-      <!--<groupId>guru.nidi.raml</groupId>-->
-      <!--<artifactId>raml-tester</artifactId>-->
-      <!--<version>0.8.15</version>-->
-      <!--<scope>test</scope>-->
-      <!--<exclusions>-->
-        <!--<exclusion>-->
-          <!--<groupId>ch.qos.logback</groupId>-->
-          <!--<artifactId>logback-classic</artifactId>-->
-        <!--</exclusion>-->
-      <!--</exclusions>-->
-    <!--</dependency>-->
   </dependencies>
 
   <distributionManagement>
