@@ -1,6 +1,8 @@
 package api.loans.agetolost;
 
 import static api.support.matchers.AccountMatchers.isOpen;
+import static api.support.matchers.ItemMatchers.isAgedToLost;
+import static api.support.matchers.ItemMatchers.isLostAndPaid;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static api.support.matchers.LoanAccountActionsMatcher.hasLostItemFeeCreatedBySystemAction;
 import static api.support.matchers.LoanAccountActionsMatcher.hasLostItemProcessingFeeCreatedBySystemAction;
@@ -9,6 +11,7 @@ import static api.support.matchers.LoanAccountMatcher.hasLostItemFees;
 import static api.support.matchers.LoanAccountMatcher.hasLostItemProcessingFee;
 import static api.support.matchers.LoanAccountMatcher.hasNoLostItemFee;
 import static api.support.matchers.LoanAccountMatcher.hasNoLostItemProcessingFee;
+import static api.support.matchers.LoanMatchers.isClosed;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static java.lang.Boolean.TRUE;
@@ -28,6 +31,7 @@ import org.junit.Test;
 import api.support.builders.FeeFineOwnerBuilder;
 import api.support.builders.ItemBuilder;
 import api.support.builders.ServicePointBuilder;
+import api.support.matchers.LoanMatchers;
 import api.support.spring.SpringApiTest;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
@@ -233,6 +237,36 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     ageToLostFixture.ageToLostAndChargeFees();
 
     assertThat(result.getLoan(), hasLostItemFees(iterableWithSize(1)));
+  }
+
+  @Test
+  public void shouldCloseLoanWhenNoFeesToChargeForImmediateBilling() {
+    val policy = lostItemFeePoliciesFixture
+      .ageToLostAfterOneMinutePolicy()
+      .billPatronImmediatelyWhenAgedToLost()
+      .withNoChargeAmountItem()
+      .doNotChargeItemAgedToLostProcessingFee();
+
+    val result = ageToLostFixture.createLoanAgeToLostAndChargeFees(policy);
+
+    assertThat(result.getLoan().getJson(), isLostItemHasBeenBilled());
+    assertThat(result.getLoan().getJson(), isClosed());
+    assertThat(result.getItem().getJson(), isLostAndPaid());
+  }
+
+  @Test
+  public void shouldNotCloseLoanWhenNoFeesToChargeForDelayedBilling() {
+    val policy = lostItemFeePoliciesFixture
+      .ageToLostAfterOneMinutePolicy()
+      .withPatronBilledAfterAgedLost(Period.minutes(2))
+      .withNoChargeAmountItem()
+      .doNotChargeItemAgedToLostProcessingFee();
+
+    val result = ageToLostFixture.createLoanAgeToLostAndChargeFees(policy);
+
+    assertThat(result.getLoan().getJson(), isLostItemHasBeenBilled());
+    assertThat(result.getLoan().getJson(), LoanMatchers.isOpen());
+    assertThat(result.getItem().getJson(), isAgedToLost());
   }
 
   private Map<IndividualResource, Double> checkoutTenItems() {

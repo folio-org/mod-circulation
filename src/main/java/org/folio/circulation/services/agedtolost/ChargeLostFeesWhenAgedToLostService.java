@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.folio.circulation.StoreLoanAndItem;
 import org.folio.circulation.domain.FeeFine;
 import org.folio.circulation.domain.FeeFineOwner;
 import org.folio.circulation.domain.Loan;
@@ -62,6 +63,7 @@ public class ChargeLostFeesWhenAgedToLostService {
   private final FeeFineFacade feeFineFacade;
   private final LoanRepository loanRepository;
   private final ItemRepository itemRepository;
+  private final StoreLoanAndItem storeLoanAndItem;
 
   public ChargeLostFeesWhenAgedToLostService(Clients clients) {
     this.lostItemPolicyRepository = new LostItemPolicyRepository(clients);
@@ -70,6 +72,7 @@ public class ChargeLostFeesWhenAgedToLostService {
     this.feeFineFacade = new FeeFineFacade(clients);
     this.loanRepository = new LoanRepository(clients);
     this.itemRepository = new ItemRepository(clients, true, false, false);
+    this.storeLoanAndItem = new StoreLoanAndItem(loanRepository, itemRepository);
   }
 
   public CompletableFuture<Result<Void>> chargeFees() {
@@ -98,6 +101,15 @@ public class ChargeLostFeesWhenAgedToLostService {
   }
 
   private CompletableFuture<Result<Loan>> chargeLostFeesForLoan(LoanToChargeFees loanToChargeFees) {
+    // we can close loans that have no fee to charge
+    // and billed immediately
+    if (loanToChargeFees.shouldCloseLoan()) {
+      log.info("No age to lost fees/fines to charge immediately, closing loan [{}]",
+        loanToChargeFees.getLoan().getId());
+
+      return closeLoanAsLostAndPaid(loanToChargeFees);
+    }
+
     return createAccountsForLoan(loanToChargeFees)
       .after(feeFineFacade::createAccounts)
       .thenCompose(r -> r.after(notUsed -> updateLoanBillingInfo(loanToChargeFees)));
@@ -237,5 +249,14 @@ public class ChargeLostFeesWhenAgedToLostService {
     }
 
     return succeeded(loanToChargeFees);
+  }
+
+  private CompletableFuture<Result<Loan>> closeLoanAsLostAndPaid(LoanToChargeFees loanToChargeFees) {
+    final Loan loan = loanToChargeFees.getLoan();
+
+    loan.setLostItemHasBeenBilled();
+    loan.closeLoanAsLostAndPaid();
+
+    return storeLoanAndItem.updateLoanAndItemInStorage(loan);
   }
 }

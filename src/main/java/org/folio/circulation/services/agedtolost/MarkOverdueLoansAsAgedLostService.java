@@ -21,9 +21,9 @@ import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.loans.LostItemPolicyRepository;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.PageLimit;
+import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
 
 public class MarkOverdueLoansAsAgedLostService {
@@ -65,14 +65,10 @@ public class MarkOverdueLoansAsAgedLostService {
   private Loan ageItemToLost(Loan loan) {
     final LostItemPolicy lostItemPolicy = loan.getLostItemPolicy();
     final DateTime loanDueDate = loan.getDueDate();
+    final DateTime whenToBill = lostItemPolicy
+      .calculateDateTimeWhenPatronBilledForAgedToLost(loanDueDate);
 
-    if (lostItemPolicy.shouldChargeFeesWhenAgedToLost()) {
-      final DateTime whenToBill = lostItemPolicy
-        .calculateDateTimeWhenPatronBilledForAgedToLost(loanDueDate);
-
-      loan.setAgedToLostDelayedBilling(false, whenToBill);
-    }
-
+    loan.setAgedToLostDelayedBilling(false, whenToBill);
     return loan.ageOverdueItemToLost();
   }
 

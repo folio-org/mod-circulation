@@ -66,6 +66,12 @@ final class LoanToChargeFees {
     return new LoanToChargeFees(loan, owners.get(getOwnerServicePointId()), feeFineTypes);
   }
 
+  boolean shouldCloseLoan() {
+    return getLostItemPolicy().billPatronImmediatelyAfterAgeToLost()
+      && getLostItemPolicy().hasNoLostItemFee()
+      && !getLostItemPolicy().getAgeToLostProcessingFee().isChargeable();
+  }
+
   static LoanToChargeFees usingLoan(Loan loan) {
     return new LoanToChargeFees(loan, null, Collections.emptyMap());
   }
