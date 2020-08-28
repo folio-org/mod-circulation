@@ -4,12 +4,11 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
 import static org.folio.circulation.domain.ItemStatus.PAGED;
-import static org.folio.circulation.support.results.Result.of;
-import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.http.CommonResponseInterpreters.noContentRecordInterpreter;
+import static org.folio.circulation.support.results.Result.of;
+import static org.folio.circulation.support.results.Result.succeeded;
 
-import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -21,9 +20,7 @@ import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
 
-
 public class UpdateItem {
-
   private final CollectionResourceClient itemsStorageClient;
 
   public UpdateItem(Clients clients) {
@@ -43,9 +40,7 @@ public class UpdateItem {
       new LastCheckIn(dateTime, checkInServicePointId, loggedInUserId)));
   }
 
-  private Result<Item> changeItemOnCheckIn(
-    Item item,
-    RequestQueue requestQueue,
+  private Result<Item> changeItemOnCheckIn(Item item, RequestQueue requestQueue,
     UUID checkInServicePointId) {
 
     if (requestQueue.hasOutstandingFulfillableRequests()) {
@@ -62,9 +57,7 @@ public class UpdateItem {
     }
   }
 
-  private Result<Item> changeItemWithOutstandingRequest(
-    Item item,
-    RequestQueue requestQueue,
+  private Result<Item> changeItemWithOutstandingRequest(Item item, RequestQueue requestQueue,
     UUID checkInServicePointId) {
 
     Request req = requestQueue.getHighestPriorityFulfillableRequest();
@@ -85,9 +78,7 @@ public class UpdateItem {
     return itemResult;
   }
 
-  private Result<Item> changeItemWithHoldRequest(
-    Item item,
-    UUID checkInServicePointId,
+  private Result<Item> changeItemWithHoldRequest(Item item, UUID checkInServicePointId,
     Request request) {
 
     String pickupServicePointIdString = request.getPickupServicePointId();
@@ -198,21 +189,22 @@ public class UpdateItem {
 
     Item item = requestAndRelatedRecords.getRequest().getItem();
 
-    return (item.getStatus().equals(PAGED) && requestQueue.getRequests().isEmpty())
+    return (item.isPaged() && requestQueue.isEmpty())
       ? AVAILABLE
-      : (item.getStatus().equals(AVAILABLE) && type.equals(RequestType.PAGE))
-        ? PAGED
-        : item.getStatus();
+      : pagedWhenRequested(type, item);
   }
 
-  private ItemStatus itemStatusOnLoanUpdate(
-    Loan loan,
-    RequestQueue requestQueue) {
+  private ItemStatus pagedWhenRequested(RequestType type, Item item) {
+    return (item.isAvailable() && type.isPage())
+      ? PAGED
+      : item.getStatus();
+  }
 
+  private ItemStatus itemStatusOnLoanUpdate(Loan loan, RequestQueue requestQueue) {
     if(loan.isClosed()) {
       return itemStatusOnCheckIn(requestQueue);
     }
-    else if(Objects.equals(loan.getItem().getStatus(), ItemStatus.DECLARED_LOST)) {
+    else if(loan.getItem().isDeclaredLost()) {
       return loan.getItem().getStatus();
     }
     return CHECKED_OUT;
