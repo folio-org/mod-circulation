@@ -88,22 +88,6 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     this.policies = policies;
 
     this.originalDueDate = originalDueDate == null ? getDueDate() : originalDueDate;
-
-    // TODO: Refuse if ID does not match property in representation,
-    // and possibly convert isFound to unknown item class
-    if (item != null && item.isFound()) {
-      representation.put("itemId", item.getItemId());
-    }
-
-    // TODO: Refuse if ID does not match property in representation
-    if (user != null) {
-      representation.put("userId", user.getId());
-    }
-
-    // TODO: Refuse if ID does not match property in representation
-    if (proxy != null) {
-      representation.put("proxyUserId", proxy.getId());
-    }
   }
 
   public static Loan from(JsonObject representation) {
@@ -276,8 +260,14 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
       checkoutServicePoint, originalDueDate, policies, accounts);
   }
 
-  public Loan withItem(Item item) {
-    return new Loan(representation, item, user, proxy, checkinServicePoint,
+  public Loan withItem(Item newItem) {
+    JsonObject newRepresentation = representation.copy();
+
+    if (newItem != null && newItem.isFound()) {
+      newRepresentation.put("itemId", newItem.getItemId());
+    }
+
+    return new Loan(newRepresentation, newItem, user, proxy, checkinServicePoint,
       checkoutServicePoint, originalDueDate, policies, accounts);
   }
 
@@ -286,7 +276,13 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Loan withUser(User newUser) {
-    return new Loan(representation, item, newUser, proxy, checkinServicePoint,
+    JsonObject newRepresentation = representation.copy();
+
+    if (newUser != null) {
+      newRepresentation.put("userId", newUser.getId());
+    }
+
+    return new Loan(newRepresentation, item, newUser, proxy, checkinServicePoint,
       checkoutServicePoint, originalDueDate, policies, accounts);
   }
 
@@ -307,7 +303,13 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   Loan withProxy(User newProxy) {
-    return new Loan(representation, item, user, newProxy, checkinServicePoint,
+    JsonObject newRepresentation = representation.copy();
+
+    if (newProxy != null) {
+      newRepresentation.put("proxyUserId", newProxy.getId());
+    }
+
+    return new Loan(newRepresentation, item, user, newProxy, checkinServicePoint,
       checkoutServicePoint, originalDueDate, policies, accounts);
   }
 
