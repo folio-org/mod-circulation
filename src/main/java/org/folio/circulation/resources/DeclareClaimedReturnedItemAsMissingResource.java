@@ -68,7 +68,7 @@ public class DeclareClaimedReturnedItemAsMissingResource extends Resource {
     final ChangeItemStatusRequest request = ChangeItemStatusRequest.from(loanId, body);
     if (request.getComment() == null) {
       return failed(singleValidationError("Comment is a required field",
-        ChangeItemStatusRequest.COMMENT, null));
+              "comment", null));
     }
 
     return succeeded(request);
