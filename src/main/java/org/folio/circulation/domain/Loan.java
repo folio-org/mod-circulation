@@ -63,16 +63,12 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   private final User user;
   private final User proxy;
 
-  private final Collection<Account> accounts;
+  private final ServicePoint checkinServicePoint;
+  private final ServicePoint checkoutServicePoint;
 
   private final DateTime originalDueDate;
-
-  private final String checkoutServicePointId;
-  private final String checkinServicePointId;
-
-  private final ServicePoint checkoutServicePoint;
-  private final ServicePoint checkinServicePoint;
   private final Policies policies;
+  private final Collection<Account> accounts;
 
   private Loan(JsonObject representation, Item item, User user, User proxy,
     ServicePoint checkinServicePoint, ServicePoint checkoutServicePoint,
@@ -90,9 +86,6 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     this.checkinServicePoint = checkinServicePoint;
     this.checkoutServicePoint = checkoutServicePoint;
     this.policies = policies;
-
-    this.checkoutServicePointId = getProperty(representation, CHECKOUT_SERVICE_POINT_ID);
-    this.checkinServicePointId = getProperty(representation, CHECKIN_SERVICE_POINT_ID);
 
     this.originalDueDate = originalDueDate == null ? getDueDate() : originalDueDate;
 
@@ -495,11 +488,11 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public String getCheckoutServicePointId() {
-    return checkoutServicePointId;
+    return getProperty(representation, CHECKOUT_SERVICE_POINT_ID);
   }
 
   public String getCheckInServicePointId() {
-    return checkinServicePointId;
+    return getProperty(representation, CHECKIN_SERVICE_POINT_ID);
   }
 
   public boolean hasDueDateChanged() {
