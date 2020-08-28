@@ -31,7 +31,7 @@ public class AddressTypeRepository {
 
     return FetchSingleRecord.<AddressType>forRecord("address type")
       .using(addressTypesStorageClient)
-      .mapTo(AddressType::new)
+      .mapTo(AddressType::fromJson)
       .whenNotFound(succeeded(null))
       .fetch(id);
   }
@@ -40,7 +40,7 @@ public class AddressTypeRepository {
       Collection<String> ids) {
 
     return findWithMultipleCqlIndexValues(addressTypesStorageClient,
-        "addressTypes", AddressType::new)
+        "addressTypes", AddressType::fromJson)
       .findByIds(ids);
   }
 
