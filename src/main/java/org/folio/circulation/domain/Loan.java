@@ -45,6 +45,7 @@ import static org.folio.circulation.support.JsonPropertyWriter.writeByPath;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 import static org.folio.circulation.support.results.Result.succeeded;
+import static org.folio.circulation.support.utils.CommonUtils.executeIfNotNull;
 
 import java.util.Collection;
 import java.util.Objects;
@@ -135,11 +136,12 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Loan changeItemStatusForItemAndLoan(ItemStatus itemStatus) {
-    Item item = getItem();
-    if (item != null) {
-      item.changeStatus(itemStatus);
-    }
+    Item itemToChange = getItem();
+
+    executeIfNotNull(itemToChange, f -> f.changeStatus(itemStatus));
+
     changeItemStatus(itemStatus.getValue());
+
     return this;
   }
 
