@@ -3,6 +3,7 @@ package org.folio.circulation.domain;
 import static java.lang.Boolean.TRUE;
 import static java.util.Objects.nonNull;
 import static java.util.Objects.requireNonNull;
+import static lombok.AccessLevel.PRIVATE;
 import static org.folio.circulation.domain.FeeAmount.noFeeAmount;
 import static org.folio.circulation.domain.LoanAction.CHECKED_IN;
 import static org.folio.circulation.domain.LoanAction.CHECKED_OUT;
@@ -56,7 +57,9 @@ import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
+import lombok.AllArgsConstructor;
 
+@AllArgsConstructor(access = PRIVATE)
 public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   private final JsonObject representation;
   private final Item item;
@@ -70,26 +73,6 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   private final Policies policies;
   private final Collection<Account> accounts;
 
-  private Loan(JsonObject representation, Item item, User user, User proxy,
-    ServicePoint checkinServicePoint, ServicePoint checkoutServicePoint,
-    DateTime originalDueDate, Policies policies, Collection<Account> accounts) {
-
-    requireNonNull(policies.getLoanPolicy(), "loanPolicy cannot be null");
-    requireNonNull(policies.getOverdueFinePolicy(), "overdueFinePolicy cannot be null");
-    requireNonNull(policies.getLostItemPolicy(), "lostItemPolicy cannot be null");
-
-    this.representation = representation;
-    this.item = item;
-    this.user = user;
-    this.proxy = proxy;
-    this.accounts = accounts;
-    this.checkinServicePoint = checkinServicePoint;
-    this.checkoutServicePoint = checkoutServicePoint;
-    this.policies = policies;
-
-    this.originalDueDate = originalDueDate == null ? getDueDate() : originalDueDate;
-  }
-
   public static Loan from(JsonObject representation) {
     defaultStatusAndAction(representation);
     final LoanPolicy loanPolicy = LoanPolicy.unknown(
@@ -99,7 +82,8 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     final LostItemPolicy lostItemPolicy = LostItemPolicy.unknown(
       getProperty(representation, LOST_ITEM_POLICY_ID));
 
-    return new Loan(representation, null, null, null, null, null, null,
+    return new Loan(representation, null, null, null, null, null,
+      getDateTimeProperty(representation, DUE_DATE),
       new Policies(loanPolicy, overdueFinePolicy, lostItemPolicy), null);
   }
 
