@@ -35,17 +35,17 @@ public class User {
     return !representation.containsKey("active");
   }
 
-  public Boolean isInactive() {
+  public boolean isInactive() {
     return !isActive();
   }
 
-  Boolean isActive() {
-    final Boolean active = representation.getBoolean("active");
+  boolean isActive() {
+    final boolean active = representation.getBoolean("active");
 
     return active && !isExpired();
   }
 
-  private Boolean isExpired() {
+  private boolean isExpired() {
     if(representation.containsKey("expirationDate")) {
       final DateTime expirationDate = DateTime.parse(
         representation.getString("expirationDate"));
