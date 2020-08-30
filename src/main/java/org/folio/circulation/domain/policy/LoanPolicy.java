@@ -417,7 +417,7 @@ public class LoanPolicy extends Policy {
 
   public Result<Loan> recall(Loan loan) {
     final JsonObject recalls = representation
-        .getJsonObject("requestManagement", new JsonObject())
+        .getJsonObject(REQUEST_MANAGEMENT_KEY, new JsonObject())
         .getJsonObject("recalls", new JsonObject());
 
     final Result<DateTime> minimumDueDateResult =
