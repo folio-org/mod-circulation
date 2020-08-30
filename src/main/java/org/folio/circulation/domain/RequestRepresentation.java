@@ -19,6 +19,8 @@ import io.vertx.core.json.JsonObject;
 public class RequestRepresentation {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
+  private static final String PICKUP_SERVICE_POINT = "pickupServicePoint";
+
   public JsonObject extendedRepresentation(Request request) {
     final JsonObject requestRepresentation = request.asJson();
 
@@ -158,14 +160,15 @@ public class RequestRepresentation {
     request.put("loan", loanSummary);
   }
 
-  private static void addAdditionalServicePointProperties(JsonObject request, ServicePoint servicePoint) {
+  private static void addAdditionalServicePointProperties(JsonObject request,
+    ServicePoint servicePoint) {
     if (servicePoint == null) {
       String msg = "Unable to add servicepoint properties to request {}, servicepoint is null";
       log.info(msg, request.getString("id"));
       return;
     }
-    JsonObject spSummary = request.containsKey("pickupServicePoint")
-      ? request.getJsonObject("pickupServicePoint")
+    JsonObject spSummary = request.containsKey(PICKUP_SERVICE_POINT)
+      ? request.getJsonObject(PICKUP_SERVICE_POINT)
       : new JsonObject();
 
     spSummary.put("name", servicePoint.getName());
@@ -175,7 +178,7 @@ public class RequestRepresentation {
     spSummary.put("shelvingLagTime", servicePoint.getShelvingLagTime());
     spSummary.put("pickupLocation", servicePoint.getPickupLocation());
 
-    request.put("pickupServicePoint", spSummary);
+    request.put(PICKUP_SERVICE_POINT, spSummary);
   }
 
   private static JsonObject userSummary(User user) {
