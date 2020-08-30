@@ -21,7 +21,6 @@ import lombok.val;
 
 @RunWith(JUnitParamsRunner.class)
 public class RenewalValidatorTest {
-
   @Test
   @Parameters({
     "Declared lost",
@@ -37,6 +36,7 @@ public class RenewalValidatorTest {
     assertTrue(validationResult.succeeded());
   }
 
+  @Test
   public void shouldDisallowRenewalWhenDueDateIsEarlierOrSame() {
     val dueDate = now(UTC);
     val proposedDueDate = dueDate.minusWeeks(2);
