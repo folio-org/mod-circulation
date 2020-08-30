@@ -1,6 +1,7 @@
 package api.support.fixtures;
 
 import static api.support.OpeningDayPeriod.createDayPeriod;
+import static io.vertx.core.MultiMap.caseInsensitiveMultiMap;
 import static org.folio.circulation.domain.OpeningDay.createOpeningDay;
 
 import java.util.ArrayList;
@@ -19,7 +20,6 @@ import api.support.OpeningDayPeriod;
 import api.support.builders.CalendarBuilder;
 import api.support.builders.OpeningDayPeriodBuilder;
 import io.vertx.core.MultiMap;
-import io.vertx.core.http.CaseInsensitiveHeaders;
 
 public class CalendarExamples {
 
@@ -209,7 +209,7 @@ public class CalendarExamples {
 
   public static CalendarBuilder getCalendarById(String serviceId) {
     return getCalendarById(serviceId,
-      new CaseInsensitiveHeaders().add(REQUESTED_DATE_PARAM, "2019-01-01"));
+      caseInsensitiveMultiMap().add(REQUESTED_DATE_PARAM, "2019-01-01"));
   }
 
   public static CalendarBuilder getCalendarById(String serviceId, MultiMap queries) {

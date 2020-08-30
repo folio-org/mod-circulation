@@ -1,5 +1,6 @@
 package org.folio.circulation.support.http.client;
 
+import static io.vertx.core.MultiMap.caseInsensitiveMultiMap;
 import static java.util.function.Function.identity;
 import static org.apache.http.entity.ContentType.APPLICATION_JSON;
 import static org.apache.http.entity.ContentType.TEXT_PLAIN;
@@ -10,11 +11,10 @@ import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.ServerErrorFailure;
+import org.folio.circulation.support.results.Result;
 import org.junit.Test;
 
-import io.vertx.core.http.CaseInsensitiveHeaders;
 import io.vertx.core.json.JsonObject;
 
 public class ResponseInterpretationTests {
@@ -125,6 +125,6 @@ public class ResponseInterpretationTests {
 
   private Response serverError() {
     return new Response(500, "Something went wrong", TEXT_PLAIN.toString(),
-      new CaseInsensitiveHeaders(), "http://failing.com");
+      caseInsensitiveMultiMap(), "http://failing.com");
   }
 }
