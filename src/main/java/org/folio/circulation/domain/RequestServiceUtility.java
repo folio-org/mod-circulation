@@ -16,16 +16,16 @@ import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.server.ValidationError;
 
 public class RequestServiceUtility {
+  private static final String ITEM_ID = "itemId";
 
-  private RequestServiceUtility() {
-
-  }
+  private RequestServiceUtility() { }
 
   static Result<RequestAndRelatedRecords> refuseWhenItemDoesNotExist(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
     if (requestAndRelatedRecords.getRequest().getItem().isNotFound()) {
-      return failedValidation("Item does not exist", "itemId", requestAndRelatedRecords.getRequest().getItemId());
+      return failedValidation("Item does not exist", ITEM_ID,
+        requestAndRelatedRecords.getRequest().getItemId());
     } else {
       return succeeded(requestAndRelatedRecords);
     }
@@ -49,10 +49,10 @@ public class RequestServiceUtility {
 
     Request request = requestAndRelatedRecords.getRequest();
 
-    if (!request.allowedForItem()) {
-      return failureDisallowedForRequestType(request.getRequestType());
-    } else {
+    if (request.allowedForItem()) {
       return succeeded(requestAndRelatedRecords);
+    } else {
+      return failureDisallowedForRequestType(request.getRequestType());
     }
   }
 
@@ -61,7 +61,8 @@ public class RequestServiceUtility {
 
     final String requestTypeName = requestType.getValue();
 
-    return failedValidation(format("%s requests are not allowed for this patron and item combination", requestTypeName),
+    return failedValidation(
+      format("%s requests are not allowed for this patron and item combination", requestTypeName),
       REQUEST_TYPE, requestTypeName);
   }
 
@@ -71,8 +72,6 @@ public class RequestServiceUtility {
     Request request = requestAndRelatedRecords.getRequest();
     User requester = request.getRequester();
 
-    // TODO: Investigate whether the parameter used here is correct
-    // Should it be the userId for both of these failures?
     if (requester == null) {
       return failedValidation("A valid user and patron group are required. User is null", "userId", null);
     } else if (requester.getPatronGroupId() == null) {
@@ -91,7 +90,7 @@ public class RequestServiceUtility {
       Map<String, String> parameters = new HashMap<>();
 
       parameters.put("requesterId", request.getRequest().getUserId());
-      parameters.put("itemId", request.getRequest().getItemId());
+      parameters.put(ITEM_ID, request.getRequest().getItemId());
 
       String message = "Inactive users cannot make requests";
 
@@ -110,7 +109,7 @@ public class RequestServiceUtility {
     if (requestOptional.isPresent()) {
       Map<String, String> parameters = new HashMap<>();
       parameters.put("requesterId", request.getRequest().getUserId());
-      parameters.put("itemId", request.getRequest().getItemId());
+      parameters.put(ITEM_ID, request.getRequest().getItemId());
       parameters.put("requestId", requestOptional.get().getId());
       String message = "This requester already has an open request for this item";
       return failedValidation(new ValidationError(message, parameters));

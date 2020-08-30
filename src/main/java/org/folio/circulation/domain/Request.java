@@ -208,7 +208,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return RequestType.from(getProperty(requestRepresentation, REQUEST_TYPE));
   }
 
-  Boolean allowedForItem() {
+  boolean allowedForItem() {
     return RequestTypeItemStatusWhiteList.canCreateRequestForItem(getItem().getStatus(), getRequestType());
   }
 
