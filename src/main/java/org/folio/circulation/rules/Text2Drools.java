@@ -1,6 +1,8 @@
 package org.folio.circulation.rules;
 
-import java.util.Collections;
+import static java.util.Collections.emptySet;
+import static org.apache.commons.text.StringEscapeUtils.escapeJava;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -15,7 +17,6 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.antlr.v4.runtime.tree.TerminalNode;
-import org.apache.commons.lang3.StringEscapeUtils;
 import org.folio.circulation.rules.CirculationRulesParser.CirculationRulesFileContext;
 import org.folio.circulation.rules.CirculationRulesParser.CriteriumContext;
 import org.folio.circulation.rules.CirculationRulesParser.CriteriumPriorityContext;
@@ -77,55 +78,22 @@ public class Text2Drools extends CirculationRulesBaseListener {
 
   */
 
+  private static final Matcher defaultMatcher = new Matcher(0, emptySet(), 0, null);
 
-  private StringBuilder drools = new StringBuilder(
+  private final StringBuilder drools = new StringBuilder(
       "package circulationrules\n" +
       "import org.folio.circulation.rules.*\n" +
       "global Match match\n" +
-      "\n"
-      );
+      "\n");
 
-  private static class Matcher {
-    int indentation;
-    Set<String> criteriaUsed = new HashSet<>(4);
-    int maxCriteriumPriority;
-    StringBuilder drools;
-    public Matcher(int indentation, Set<String> criteriaUsed, int maxCriteriumPriority, StringBuilder drools) {
-      this.indentation = indentation;
-      this.criteriaUsed.addAll(criteriaUsed);
-      this.maxCriteriumPriority = maxCriteriumPriority;
-      this.drools = drools;
-    }
-  }
-  private LinkedList<Matcher> stack = new LinkedList<>();
-  private static Matcher defaultMatcher = new Matcher(0, Collections.emptySet(), 0, null);
-
-  private int indentation = 0;
-
-  private String[] policyTypes = {"l", "r", "n", "o", "i"};
+  private final LinkedList<Matcher> stack = new LinkedList<>();
+  private final String[] policyTypes = {"l", "r", "n", "o", "i"};
   private final PolicyValidator policyValidator;
-
-  private enum PriorityType {
-    NONE,
-    FIRST_LINE,
-    LAST_LINE,
-    NUMBER_OF_CRITERIA,
-    CRITERIUM;
-    public static PriorityType getPriorityType(String type) {
-      switch (type) {
-      case "":                   return NONE;
-      case "first-line":         return FIRST_LINE;
-      case "last-line":          return LAST_LINE;
-      case "number-of-criteria": return NUMBER_OF_CRITERIA;
-      case "criterium":          return CRITERIUM;
-      default: throw new IllegalArgumentException("Unknown type name: " + type);
-      }
-    }
-  }
-  private PriorityType [] priority =
+  private final Map<String,Integer> criteriumPriority = new HashMap<>(7);
+  private final PriorityType [] priority =
     { PriorityType.NONE, PriorityType.NONE, PriorityType.FIRST_LINE };
 
-  private Map<String,Integer> criteriumPriority = new HashMap<>(7);
+  private int indentation = 0;
 
   /** Private constructor to be invoked from convert(String) only
    *  with set of existing policies parameter.
@@ -152,7 +120,6 @@ public class Text2Drools extends CirculationRulesBaseListener {
    * @return Drools file
    */
   public static String convert(String text, PolicyValidator policyValidator) {
-
     Text2Drools text2drools = new Text2Drools(policyValidator);
 
     return getDroolsRepresentation(text, text2drools);
@@ -204,6 +171,7 @@ public class Text2Drools extends CirculationRulesBaseListener {
   @Override
   public void exitSevenCriteriumLetters(SevenCriteriumLettersContext letters) {
     int size = letters.CRITERIUM_LETTER().size();
+
     if (size != 7) {
       Token token = letters.getStart();
       String message = size < 7 ? "7 letters expected, found only " + size
@@ -214,6 +182,7 @@ public class Text2Drools extends CirculationRulesBaseListener {
 
     for (int i=0; i<7; i++) {
       String letter = letters.CRITERIUM_LETTER(i).getText();
+
       if (criteriumPriority.put(letter, 7 - i) != null) {
         Token token = letters.CRITERIUM_LETTER(i).getSymbol();
         throw new CirculationRulesException("Duplicate letter " + letter,
@@ -238,6 +207,7 @@ public class Text2Drools extends CirculationRulesBaseListener {
     for (String policyType : policyTypes) {
       List<PolicyContext> policies = filterPolicies(policiesContext, policyType);
       Token token = policiesContext.getStart();
+
       if (policies.size() > 1) {
         throw new CirculationRulesException(
           String.format("Only one policy of type %s allowed", policyType),
@@ -262,9 +232,9 @@ public class Text2Drools extends CirculationRulesBaseListener {
     Token token = ctx.getStart();
 
     for (String policyType: policyTypes) {
-      Long count = ctx.policies().policy().stream()
-      .filter(fbp -> fbp.POLICY_TYPE().toString().equals(policyType))
-      .collect(Collectors.counting());
+      long count = ctx.policies().policy().stream()
+        .filter(fbp -> fbp.POLICY_TYPE().toString().equals(policyType))
+        .count();
 
       // Make sure there is exactly one of each type of policy
       if (count > 1) {
@@ -322,9 +292,11 @@ public class Text2Drools extends CirculationRulesBaseListener {
     popObsoleteMatchers();
 
     Matcher previousMatcher = stack.peek();
+
     if (previousMatcher == null) {
       previousMatcher = defaultMatcher;
     }
+
     StringBuilder s = new StringBuilder();
     Matcher matcher = new Matcher(indentation,
         previousMatcher.criteriaUsed, previousMatcher.maxCriteriumPriority, s);
@@ -332,6 +304,7 @@ public class Text2Drools extends CirculationRulesBaseListener {
     for (CriteriumContext criteriumContext : expr.criterium()) {
       addCriterium(criteriumContext, matcher);
     }
+
     stack.push(matcher);
 
     generateRule(expr.policies());
@@ -440,6 +413,7 @@ public class Text2Drools extends CirculationRulesBaseListener {
 
     boolean not = false;
     TerminalNode terminal = criteriumContext.getChild(TerminalNode.class, 1);
+
     if (terminal != null && terminal.getText().equals("!")) {
       not = true;
     }
@@ -453,6 +427,7 @@ public class Text2Drools extends CirculationRulesBaseListener {
 
     matcher.drools.append(not ? "(id not in (" : "(id in (");
     boolean first = true;
+
     for (int i=0; i<criteriumContext.NAME().size(); i++) {
       if (first) {
         first = false;
@@ -490,7 +465,41 @@ public class Text2Drools extends CirculationRulesBaseListener {
    */
   private static void appendQuotedString(StringBuilder sb, String name) {
     sb.append('"');
-    sb.append(StringEscapeUtils.escapeJava(name));
+    sb.append(escapeJava(name));
     sb.append('"');
+  }
+
+  private static class Matcher {
+    int indentation;
+    Set<String> criteriaUsed = new HashSet<>(4);
+    int maxCriteriumPriority;
+    StringBuilder drools;
+
+    public Matcher(int indentation, Set<String> criteriaUsed,
+      int maxCriteriumPriority, StringBuilder drools) {
+
+      this.indentation = indentation;
+      this.criteriaUsed.addAll(criteriaUsed);
+      this.maxCriteriumPriority = maxCriteriumPriority;
+      this.drools = drools;
+    }
+  }
+
+  private enum PriorityType {
+    NONE,
+    FIRST_LINE,
+    LAST_LINE,
+    NUMBER_OF_CRITERIA,
+    CRITERIUM;
+    public static PriorityType getPriorityType(String type) {
+      switch (type) {
+        case "":                   return NONE;
+        case "first-line":         return FIRST_LINE;
+        case "last-line":          return LAST_LINE;
+        case "number-of-criteria": return NUMBER_OF_CRITERIA;
+        case "criterium":          return CRITERIUM;
+        default: throw new IllegalArgumentException("Unknown type name: " + type);
+      }
+    }
   }
 }
