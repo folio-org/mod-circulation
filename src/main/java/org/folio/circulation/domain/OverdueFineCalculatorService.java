@@ -102,7 +102,7 @@ public class OverdueFineCalculatorService {
       .thenApply(r -> r.map(loanToCharge::withLoan))
       .thenComposeAsync(r -> r.after(loanToChargeWithPolicy -> {
         if (!loanToChargeWithPolicy.wasDeclaredLost()) {
-          return ofAsync(() -> loanToCharge);
+          return ofAsync(() -> loanToChargeWithPolicy);
         }
 
         return lostItemPolicyRepository
@@ -151,14 +151,14 @@ public class OverdueFineCalculatorService {
   }
 
   private CompletableFuture<Result<LoanToChargeOverdueFine>> lookupItemRelatedRecords(
-    LoanToChargeOverdueFine loan) {
+    LoanToChargeOverdueFine loanToCharge) {
 
-    if (loan.getFeeFine() == null) {
-      return completedFuture(succeeded(loan));
+    if (loanToCharge.getFeeFine() == null) {
+      return completedFuture(succeeded(loanToCharge));
     }
 
-    return itemRepository.fetchItemRelatedRecords(succeeded(loan.getItem()))
-      .thenApply(mapResult(loan::withItem));
+    return itemRepository.fetchItemRelatedRecords(succeeded(loanToCharge.getLoan().getItem()))
+      .thenApply(mapResult(loanToCharge::withItem));
   }
 
   private CompletableFuture<Result<LoanToChargeOverdueFine>> lookupFeeFineOwner(
