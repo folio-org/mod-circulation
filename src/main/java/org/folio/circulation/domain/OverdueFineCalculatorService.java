@@ -36,7 +36,6 @@ import org.folio.circulation.support.results.ResultBinding;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 
-// Constructor required for tests
 @RequiredArgsConstructor(access = AccessLevel.PACKAGE)
 public class OverdueFineCalculatorService {
   private final OverdueFinePolicyRepository overdueFinePolicyRepository;
@@ -118,14 +117,14 @@ public class OverdueFineCalculatorService {
   }
 
   private CompletableFuture<Result<Double>> calculateOverdueFine(
-    LoanToChargeOverdueFine loan, Integer overdueMinutes) {
+    LoanToChargeOverdueFine loanToCharge, Integer overdueMinutes) {
 
     double overdueFine = 0.0;
 
-    OverdueFinePolicy overdueFinePolicy = loan.getOverdueFinePolicy();
+    OverdueFinePolicy overdueFinePolicy = loanToCharge.getOverdueFinePolicy();
     if (overdueMinutes > 0 && overdueFinePolicy != null) {
       OverdueFineCalculationParameters calculationParameters =
-        overdueFinePolicy.getCalculationParameters(loan.wasDueDateChangedByRecall());
+        overdueFinePolicy.getCalculationParameters(loanToCharge.wasDueDateChangedByRecall());
 
       if (calculationParameters != null) {
         Double finePerInterval = calculationParameters.getFinePerInterval();
@@ -160,36 +159,36 @@ public class OverdueFineCalculatorService {
   }
 
   private CompletableFuture<Result<LoanToChargeOverdueFine>> lookupFeeFineOwner(
-    LoanToChargeOverdueFine loan) {
+    LoanToChargeOverdueFine loanToCharge) {
 
-    return Optional.ofNullable(loan.getItem())
+    return Optional.ofNullable(loanToCharge.getItem())
       .map(Item::getLocation)
       .map(Location::getPrimaryServicePointId)
       .map(UUID::toString)
       .map(id -> feeFineOwnerRepository.findOwnerForServicePoint(id)
-        .thenApply(mapResult(loan::withFeeFineOwner)))
-      .orElse(completedFuture(succeeded(loan)));
+        .thenApply(mapResult(loanToCharge::withFeeFineOwner)))
+      .orElse(completedFuture(succeeded(loanToCharge)));
   }
 
   private CompletableFuture<Result<LoanToChargeOverdueFine>> lookupFeeFine(
-    LoanToChargeOverdueFine loan) {
+    LoanToChargeOverdueFine loanToCharge) {
 
     return feeFineRepository.getFeeFine(FeeFine.OVERDUE_FINE_TYPE, true)
-      .thenApply(mapResult(loan::withFeeFine));
+      .thenApply(mapResult(loanToCharge::withFeeFine));
   }
 
   private CompletableFuture<Result<LoanToChargeOverdueFine>> lookupLoggedInUser(
-    LoanToChargeOverdueFine loan) {
+    LoanToChargeOverdueFine loanToCharge) {
 
-    return userRepository.getUser(loan.getLoggedInUserId())
-      .thenApply(ResultBinding.mapResult(loan::withLoggedInUser));
+    return userRepository.getUser(loanToCharge.getLoggedInUserId())
+      .thenApply(ResultBinding.mapResult(loanToCharge::withLoggedInUser));
   }
 
   private CompletableFuture<Result<LoanToChargeOverdueFine>> lookupLoanServicePoints(
-    LoanToChargeOverdueFine loan) {
+    LoanToChargeOverdueFine loanToCharge) {
 
-    return servicePointRepository.findServicePointsForLoan(succeeded(loan.getLoan()))
-      .thenApply(mapResult(loan::withLoan));
+    return servicePointRepository.findServicePointsForLoan(succeeded(loanToCharge.getLoan()))
+      .thenApply(mapResult(loanToCharge::withLoan));
   }
 
   private CompletableFuture<Result<FeeFineAction>> createFeeFineRecord(
@@ -211,28 +210,28 @@ public class OverdueFineCalculatorService {
   }
 
   private CompletableFuture<Result<FeeFineAction>> createAccount(Double fineAmount,
-    LoanToChargeOverdueFine loan) {
+    LoanToChargeOverdueFine loanToCharge) {
 
-    if (!loan.canCreateOverdueFine()) {
+    if (!loanToCharge.canCreateOverdueFine()) {
       return completedFuture(succeeded(null));
     }
 
-    final StoredAccount accountRepresentation = new StoredAccount(
-      loan.getLoan(), loan.getItem(), loan.getFeeFineOwner(), loan.getFeeFine(),
+    final StoredAccount accountRepresentation = new StoredAccount(loanToCharge.getLoan(),
+      loanToCharge.getItem(), loanToCharge.getFeeFineOwner(), loanToCharge.getFeeFine(),
       new FeeAmount(fineAmount));
 
     return accountRepository.create(accountRepresentation)
-      .thenCompose(rac -> rac.after(account -> createFeeFineAction(account, loan)));
+      .thenCompose(rac -> rac.after(account -> createFeeFineAction(account, loanToCharge)));
   }
 
   private CompletableFuture<Result<FeeFineAction>> createFeeFineAction(
-    Account account, LoanToChargeOverdueFine loan) {
+    Account account, LoanToChargeOverdueFine loanToCharge) {
 
     return feeFineActionRepository.create(StoredFeeFineAction.builder()
       .useAccount(account)
       .withAction(account.getFeeFineType())
-      .withCreatedAt(loan.getLoan().getCheckinServicePoint())
-      .withCreatedBy(loan.getLoggedInUser())
+      .withCreatedAt(loanToCharge.getLoan().getCheckinServicePoint())
+      .withCreatedBy(loanToCharge.getLoggedInUser())
       .build());
   }
 }
