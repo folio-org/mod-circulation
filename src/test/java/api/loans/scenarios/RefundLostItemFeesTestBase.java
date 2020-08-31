@@ -36,7 +36,7 @@ import static org.joda.time.DateTime.parse;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.folio.circulation.support.ClockManager;
+import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -47,7 +47,10 @@ import api.support.APITests;
 import api.support.MultipleJsonRecords;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.DeclareItemLostRequestBuilder;
+import api.support.builders.LoanPolicyBuilder;
+import api.support.fixtures.policies.PoliciesToActivate;
 import io.vertx.core.json.JsonObject;
+import lombok.val;
 
 public abstract class RefundLostItemFeesTestBase extends APITests {
   private static final String DATE_ACTION_PROPERTY = "dateAction";
@@ -293,30 +296,46 @@ public abstract class RefundLostItemFeesTestBase extends APITests {
 
   @Test
   public void shouldChargeOverdueFineWhenStatedByPolicyAndLostFeesCanceled() {
+    final int overdueMonths = 3;
+    final double overdueFinePerMonth = 10.0;
+    final double expectedOverdueFine = overdueMonths * overdueFinePerMonth;
     final double processingFee = 12.99;
 
     // Create overdue fine type
     feeFineTypeFixture.overdueFine();
 
-    useLostItemPolicy(lostItemFeePoliciesFixture.create(
-      lostItemFeePoliciesFixture.facultyStandardPolicy()
-        .withName("Test check in")
-        .chargeProcessingFee(processingFee)
-        .withNoChargeAmountItem()
-        .chargeOverdueFineWhenReturned()).getId());
+    val loanPolicy = new LoanPolicyBuilder()
+      .withName("Loan policy for declared lost")
+      .rolling(Period.months(overdueMonths + 1));
+
+    val lostFeePolicy = lostItemFeePoliciesFixture.facultyStandardPolicy()
+      .withName("Test check in")
+      .withNoFeeRefundInterval()
+      .chargeProcessingFee(processingFee)
+      .withNoChargeAmountItem()
+      .chargeOverdueFineWhenReturned();
+
+    val overdueFinePolicy = overdueFinePoliciesFixture.facultyStandardPolicy()
+      .withName("Declared lost test policy")
+      .withOverdueFine(overdueFinePerMonth, "month");
+
+    use(PoliciesToActivate.builder()
+      .loanPolicy(loanPoliciesFixture.create(loanPolicy))
+      .lostItemPolicy(lostItemFeePoliciesFixture.create(lostFeePolicy))
+      .overduePolicy(overdueFinePoliciesFixture.create(overdueFinePolicy)));
 
     declareItemLost();
 
     checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(item)
       .at(servicePointsFixture.cd1())
-      .on(now().plusMonths(2)));
+      .on(now(DateTimeZone.UTC).plusMonths(overdueMonths)));
 
     assertThat(loan, hasLostItemProcessingFee(isClosedCancelledItemReturned(processingFee)));
     assertThat(loan, hasLostItemProcessingFeeActions(
       isCancelledItemReturnedActionCreated(processingFee)));
 
-    assertThat(loan, hasOverdueFine());
+    assertThat(loan, hasOverdueFine(hasJsonPath("amount", expectedOverdueFine)));
   }
 
   @Test

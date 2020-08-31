@@ -118,7 +118,7 @@ public class CheckInDeclaredLostItemTest extends RefundLostItemFeesTestBase {
   }
 
   @Test
-  public void lostFeeCancellationDoesNotTriggerMarkingItemAsLostAndPaaid() {
+  public void lostFeeCancellationDoesNotTriggerMarkingItemAsLostAndPaid() {
     useChargeableRefundableLostItemFee(15.00, 0.0);
 
     declareItemLost();

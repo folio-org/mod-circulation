@@ -20,72 +20,47 @@ public class OverdueFinePoliciesFixture {
   }
 
   public IndividualResource facultyStandard() {
+    return overdueFinePolicyRecordCreator.createIfAbsent(facultyStandardPolicy());
+  }
 
-    JsonObject overdueFine = new JsonObject();
-    overdueFine.put("quantity", 5.0);
-    overdueFine.put("intervalId", "day");
-
-    JsonObject overdueRecallFine = new JsonObject();
-    overdueRecallFine.put("quantity", 1.0);
-    overdueRecallFine.put("intervalId", "hour");
-
-
-    final OverdueFinePolicyBuilder facultyStandard = new OverdueFinePolicyBuilder()
+  public OverdueFinePolicyBuilder facultyStandardPolicy() {
+    return new OverdueFinePolicyBuilder()
       .withName("Faculty standard")
       .withDescription("This is description for Faculty standard")
-      .withOverdueFine(overdueFine)
+      .withOverdueFine(5, "day")
       .withCountClosed(true)
       .withMaxOverdueFine(50.00)
       .withForgiveOverdueFine(false)
-      .withOverdueRecallFine(overdueRecallFine)
+      .withOverdueRecallFine(1, "hour")
+      .withGracePeriodRecall(false)
+      .withMaxOverdueRecallFine(50.00);
+  }
+
+  public IndividualResource facultyStandardShouldForgiveFine() {
+    final OverdueFinePolicyBuilder facultyStandard = new OverdueFinePolicyBuilder()
+      .withName("Faculty standard (should forgive overdue fine for renewals)")
+      .withDescription("This is description for Faculty standard " +
+        "(should forgive overdue fine for renewals)")
+      .withOverdueFine(5, "day")
+      .withCountClosed(true)
+      .withMaxOverdueFine(50.00)
+      .withForgiveOverdueFine(true)
+      .withOverdueRecallFine(1, "hour")
       .withGracePeriodRecall(false)
       .withMaxOverdueRecallFine(50.00);
 
     return overdueFinePolicyRecordCreator.createIfAbsent(facultyStandard);
   }
 
-  public IndividualResource facultyStandardShouldForgiveFine() {
-
-    JsonObject overdueFine = new JsonObject();
-    overdueFine.put("quantity", 5.0);
-    overdueFine.put("intervalId", "day");
-
-    JsonObject overdueRecallFine = new JsonObject();
-    overdueRecallFine.put("quantity", 1.0);
-    overdueRecallFine.put("intervalId", "hour");
-
-
-    final OverdueFinePolicyBuilder facultyStandard = new OverdueFinePolicyBuilder()
-        .withName("Faculty standard (should forgive overdue fine for renewals)")
-        .withDescription("This is description for Faculty standard (should forgive overdue fine for renewals)")
-        .withOverdueFine(overdueFine)
-        .withCountClosed(true)
-        .withMaxOverdueFine(50.00)
-        .withForgiveOverdueFine(true)
-        .withOverdueRecallFine(overdueRecallFine)
-        .withGracePeriodRecall(false)
-        .withMaxOverdueRecallFine(50.00);
-
-    return overdueFinePolicyRecordCreator.createIfAbsent(facultyStandard);
-  }
-
   public IndividualResource facultyStandardDoNotCountClosed() {
-    JsonObject overdueFine = new JsonObject();
-    overdueFine.put("quantity", 5.0);
-    overdueFine.put("intervalId", "day");
-
-    JsonObject overdueRecallFine = new JsonObject();
-    overdueRecallFine.put("quantity", 1.0);
-    overdueRecallFine.put("intervalId", "hour");
-
     final OverdueFinePolicyBuilder overdueFinePolicyBuilder = new OverdueFinePolicyBuilder()
       .withName("Faculty standard (don't count closed)")
       .withDescription("This is description for Faculty standard (don't count closed)")
-      .withOverdueFine(overdueFine)
+      .withOverdueFine(5, "day")
       .withCountClosed(false)
       .withMaxOverdueFine(50.00)
       .withForgiveOverdueFine(false)
-      .withOverdueRecallFine(overdueRecallFine)
+      .withOverdueRecallFine(1, "hour")
       .withGracePeriodRecall(false)
       .withMaxOverdueRecallFine(50.00);
 

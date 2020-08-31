@@ -74,9 +74,12 @@ public class LoanAccountMatcher extends TypeSafeMatcher<IndividualResource> {
     return new LoanAccountMatcher("Lost item processing fee", accountMatcher);
   }
 
+  public static LoanAccountMatcher hasOverdueFine(Matcher<JsonObject> accountMatcher) {
+    return new LoanAccountMatcher("Overdue fine", hasItems(accountMatcher));
+  }
+
   public static LoanAccountMatcher hasOverdueFine() {
-    return new LoanAccountMatcher("Overdue fine",
-      hasItems(notNullValue(JsonObject.class)));
+    return hasOverdueFine(notNullValue(JsonObject.class));
   }
 
   public static LoanAccountMatcher hasNoOverdueFine() {
