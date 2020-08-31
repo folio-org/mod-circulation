@@ -31,32 +31,35 @@ public class OverduePeriodCalculatorService {
     this.loanPolicyRepository = loanPolicyRepository;
   }
 
-  public CompletableFuture<Result<Integer>> getMinutes(LoanToChargeOverdueFine loan) {
-    return loanPolicyRepository.lookupPolicy(loan.getLoan())
-      .thenApply(r -> r.map(loan::withLoanPolicy))
-      .thenCompose(r -> r.after(l -> getOverdueMinutes(loan)
-        .thenApply(flatMapResult(om -> adjustOverdueWithGracePeriod(loan.getLoan(), om)))));
+  public CompletableFuture<Result<Integer>> getMinutes(LoanToChargeOverdueFine loanToCharge) {
+    return loanPolicyRepository.lookupPolicy(loanToCharge.getLoan())
+      .thenApply(r -> r.map(loanToCharge::withLoanPolicy))
+      .thenCompose(r -> r.after(l -> getOverdueMinutes(loanToCharge)
+        .thenApply(flatMapResult(om -> adjustOverdueWithGracePeriod(loanToCharge.getLoan(), om)))));
   }
 
-  CompletableFuture<Result<Integer>> getOverdueMinutes(LoanToChargeOverdueFine loan) {
-    return loan.shouldCountClosedPeriods() || !loan.hasItemLocationPrimaryServicePoint()
-      ? minutesOverdueIncludingClosedPeriods(loan)
-      : minutesOverdueExcludingClosedPeriods(loan);
+  CompletableFuture<Result<Integer>> getOverdueMinutes(LoanToChargeOverdueFine loanToCharge) {
+    return loanToCharge.shouldCountClosedPeriods()
+      || !loanToCharge.hasItemLocationPrimaryServicePoint()
+      ? minutesOverdueIncludingClosedPeriods(loanToCharge)
+      : minutesOverdueExcludingClosedPeriods(loanToCharge);
   }
 
   private CompletableFuture<Result<Integer>> minutesOverdueIncludingClosedPeriods(
-    LoanToChargeOverdueFine loan) {
+    LoanToChargeOverdueFine loanToCharge) {
 
-    int overdueMinutes = minutesBetween(loan.getDueDate(), loan.getReturnDate()).getMinutes();
+    int overdueMinutes = minutesBetween(loanToCharge.getDueDate(),
+      loanToCharge.getReturnDate()).getMinutes();
+
     return completedFuture(succeeded(overdueMinutes));
   }
 
   private CompletableFuture<Result<Integer>> minutesOverdueExcludingClosedPeriods(
-    LoanToChargeOverdueFine loan) {
+    LoanToChargeOverdueFine loanToCharge) {
 
-    final String itemPrimaryServicePoint = loan.getItemPrimaryServicePoint();
-    final DateTime dueDate = loan.getDueDate();
-    final DateTime returnDate  = loan.getReturnDate();
+    final String itemPrimaryServicePoint = loanToCharge.getItemPrimaryServicePoint();
+    final DateTime dueDate = loanToCharge.getDueDate();
+    final DateTime returnDate  = loanToCharge.getReturnDate();
 
     return calendarRepository
       .fetchOpeningDaysBetweenDates(itemPrimaryServicePoint, dueDate, returnDate, false)
