@@ -1,157 +1,127 @@
 package org.folio.circulation.domain;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.apache.commons.lang3.BooleanUtils.isFalse;
-import static org.folio.circulation.domain.OverdueFineCalculatorService.Scenario.CHECKIN;
-import static org.folio.circulation.domain.OverdueFineCalculatorService.Scenario.RENEWAL;
+import static org.folio.circulation.domain.LoanToChargeOverdueFine.forCheckIn;
+import static org.folio.circulation.domain.LoanToChargeOverdueFine.forRenewal;
+import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
-import static org.folio.circulation.support.results.ResultBinding.toFutureResult;
+import static org.folio.circulation.support.utils.CommonUtils.pair;
 
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Predicate;
 
-import org.apache.commons.lang3.ObjectUtils;
-import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
-import org.apache.commons.lang3.StringUtils;
-import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
-import org.folio.circulation.infrastructure.storage.loans.LostItemPolicyRepository;
+import org.apache.commons.lang3.tuple.Pair;
 import org.folio.circulation.domain.policy.OverdueFineCalculationParameters;
 import org.folio.circulation.domain.policy.OverdueFineInterval;
 import org.folio.circulation.domain.policy.OverdueFinePolicy;
-import org.folio.circulation.infrastructure.storage.loans.OverdueFinePolicyRepository;
 import org.folio.circulation.domain.representations.StoredAccount;
 import org.folio.circulation.domain.representations.StoredFeeFineAction;
-import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
 import org.folio.circulation.infrastructure.storage.CalendarRepository;
+import org.folio.circulation.infrastructure.storage.ServicePointRepository;
+import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineActionRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineOwnerRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineRepository;
-import org.folio.circulation.infrastructure.storage.ServicePointRepository;
+import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
+import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
+import org.folio.circulation.infrastructure.storage.loans.LostItemPolicyRepository;
+import org.folio.circulation.infrastructure.storage.loans.OverdueFinePolicyRepository;
+import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.results.ResultBinding;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 
-import lombok.With;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
 
+// Constructor required for tests
+@RequiredArgsConstructor(access = AccessLevel.PACKAGE)
 public class OverdueFineCalculatorService {
-  public static OverdueFineCalculatorService using(Clients clients) {
-    return new OverdueFineCalculatorService(clients);
-  }
-
-  private final Repos repos;
+  private final OverdueFinePolicyRepository overdueFinePolicyRepository;
+  private final AccountRepository accountRepository;
+  private final ItemRepository itemRepository;
+  private final FeeFineOwnerRepository feeFineOwnerRepository;
+  private final FeeFineRepository feeFineRepository;
+  private final UserRepository userRepository;
+  private final FeeFineActionRepository feeFineActionRepository;
+  private final LostItemPolicyRepository lostItemPolicyRepository;
+  private final ScheduledNoticesRepository scheduledNoticesRepository;
+  private final ServicePointRepository servicePointRepository;
   private final OverduePeriodCalculatorService overduePeriodCalculatorService;
 
-  public OverdueFineCalculatorService(Repos repos,
-    OverduePeriodCalculatorService overduePeriodCalculatorService) {
-    this.repos = repos;
-    this.overduePeriodCalculatorService = overduePeriodCalculatorService;
+  public OverdueFineCalculatorService(Clients clients) {
+    overdueFinePolicyRepository = new OverdueFinePolicyRepository(clients);
+    accountRepository = new AccountRepository(clients);
+    itemRepository = new ItemRepository(clients, true, false, false);
+    feeFineOwnerRepository = new FeeFineOwnerRepository(clients);
+    feeFineRepository = new FeeFineRepository(clients);
+    userRepository = new UserRepository(clients);
+    feeFineActionRepository = new FeeFineActionRepository(clients);
+    lostItemPolicyRepository = new LostItemPolicyRepository(clients);
+    scheduledNoticesRepository = ScheduledNoticesRepository.using(clients);
+    servicePointRepository = new ServicePointRepository(clients);
+    overduePeriodCalculatorService = new OverduePeriodCalculatorService(
+      new CalendarRepository(clients), new LoanPolicyRepository(clients));
   }
 
-  private OverdueFineCalculatorService(Clients clients) {
-    this(
-      new Repos(new OverdueFinePolicyRepository(clients),
-        new AccountRepository(clients),
-        new ItemRepository(clients, true, false, false),
-        new FeeFineOwnerRepository(clients),
-        new FeeFineRepository(clients),
-        new UserRepository(clients),
-        new FeeFineActionRepository(clients),
-        new LostItemPolicyRepository(clients),
-        ScheduledNoticesRepository.using(clients),
-        new ServicePointRepository(clients)),
-      new OverduePeriodCalculatorService(new CalendarRepository(clients),
-        new LoanPolicyRepository(clients))
-    );
-  }
-
-  public CompletableFuture<Result<RenewalContext>> createOverdueFineIfNecessary(
-    RenewalContext context) {
-
-    final String loggedInUserId = context.getLoggedInUserId();
-    final Loan loanBeforeRenewal = context.getLoanBeforeRenewal();
-
-    return shouldChargeOverdueFineOnRenewal(context)
-      .thenCompose(r -> r.afterWhen(toFutureResult(),
-        b -> createOverdueFineIfNecessary(loanBeforeRenewal, RENEWAL, loggedInUserId),
-        b -> completedFuture(succeeded(null))))
+  public CompletableFuture<Result<RenewalContext>> createOverdueFineIfNecessary(RenewalContext context) {
+    return chargeOverdueFine(forRenewal(context))
       .thenApply(mapResult(context::withOverdueFeeFineAction));
   }
 
-  private CompletableFuture<Result<Boolean>> shouldChargeOverdueFineOnRenewal(
-    RenewalContext renewalContext) {
+  public CompletableFuture<Result<FeeFineAction>> createOverdueFineIfNecessary(CheckInContext context) {
+    return chargeOverdueFine(forCheckIn(context));
+  }
 
-    Loan loan = renewalContext.getLoanBeforeRenewal();
-    if (loan == null || !loan.isOverdue()) {
-      return completedFuture(succeeded(null));
+  private CompletableFuture<Result<FeeFineAction>> chargeOverdueFine(
+    LoanToChargeOverdueFine loanToCharge) {
+
+    if (loanToCharge.loanIsUndefined() || !loanToCharge.isOverdue()) {
+      return ofAsync(() -> null);
     }
 
-    if (isDeclaredLost(renewalContext.getItemStatusBeforeRenewal())) {
-      return repos.lostItemPolicyRepository.getLostItemPolicyById(loan.getLostItemPolicyId())
-        .thenApply(r -> r.map(policy -> policy.shouldChargeOverdueFee()
-          && renewalContext.isLostItemFeesRefundedOrCancelled()));
-    }
+    return fetchRequiredPolicies(loanToCharge)
+      .thenCompose(r -> r.after(loanToChargeWithPolicies -> {
+        if (!loanToChargeWithPolicies.shouldChargeOverdueFine()) {
+          return completedFuture(succeeded(null));
+        }
 
-    return completedFuture(succeeded(true));
+        return createOverdueFine(loanToChargeWithPolicies);
+      }));
   }
 
-  public CompletableFuture<Result<FeeFineAction>> createOverdueFineIfNecessary(
-    CheckInContext context, String userId) {
+  private CompletableFuture<Result<LoanToChargeOverdueFine>> fetchRequiredPolicies(
+    LoanToChargeOverdueFine loanToCharge) {
 
-    return shouldChargeOverdueFineOnCheckIn(context)
-      .thenCompose(r -> r.afterWhen(toFutureResult(),
-          b -> createOverdueFineIfNecessary(context.getLoan(), CHECKIN, userId),
-          b -> completedFuture(succeeded(null))));
+    return overdueFinePolicyRepository
+      .findOverdueFinePolicyForLoan(succeeded(loanToCharge.getLoan()))
+      .thenApply(r -> r.map(loanToCharge::withLoan))
+      .thenComposeAsync(r -> r.after(loanToChargeWithPolicy -> {
+        if (!loanToChargeWithPolicy.wasDeclaredLost()) {
+          return ofAsync(() -> loanToCharge);
+        }
+
+        return lostItemPolicyRepository
+          .findLostItemPolicyForLoan(succeeded(loanToChargeWithPolicy.getLoan()))
+          .thenApply(policyResult -> policyResult.map(loanToChargeWithPolicy::withLoan));
+      }));
   }
 
-  private CompletableFuture<Result<Boolean>> shouldChargeOverdueFineOnCheckIn(
-    CheckInContext context) {
+  private CompletableFuture<Result<FeeFineAction>> createOverdueFine(
+    LoanToChargeOverdueFine loanToCharge) {
 
-    final Loan loan = context.getLoan();
-    if (loan == null || !loan.isOverdue(loan.getReturnDate())) {
-      return completedFuture(succeeded(false));
-    }
-
-    if (isDeclaredLost(context.getItemStatusBeforeCheckIn())) {
-      return repos.lostItemPolicyRepository.getLostItemPolicyById(loan.getLostItemPolicyId())
-        .thenApply(r -> r.map(policy -> policy.shouldChargeOverdueFee()
-          && context.areLostItemFeesRefundedOrCancelled()));
-    }
-
-    return completedFuture(succeeded(true));
+    return overduePeriodCalculatorService.getMinutes(loanToCharge)
+      .thenCompose(r -> r.after(minutes -> calculateOverdueFine(loanToCharge, minutes)))
+      .thenCompose(r -> r.after(fine -> createFeeFineRecord(loanToCharge, fine)));
   }
 
-  private CompletableFuture<Result<FeeFineAction>> createOverdueFineIfNecessary(Loan loan,
-    Scenario scenario, String loggedInUserId) {
+  private CompletableFuture<Result<Double>> calculateOverdueFine(
+    LoanToChargeOverdueFine loan, Integer overdueMinutes) {
 
-    return repos.overdueFinePolicyRepository.findOverdueFinePolicyForLoan(succeeded(loan))
-    .thenCompose(r -> r.after(l -> scenario.shouldCreateFine(l.getOverdueFinePolicy())
-        ? createOverdueFine(l, loggedInUserId)
-        : completedFuture(succeeded(null))));
-  }
-
-  private CompletableFuture<Result<FeeFineAction>> createOverdueFine(Loan loan, String loggedInUserId) {
-    return getOverdueMinutes(loan)
-      .thenCompose(r -> r.after(minutes -> calculateOverdueFine(loan, minutes)))
-      .thenCompose(r -> r.after(fine -> createFeeFineRecord(loan, fine, loggedInUserId)));
-  }
-
-  private CompletableFuture<Result<Integer>> getOverdueMinutes(Loan loan) {
-    DateTime systemTime = loan.getReturnDate();
-    if (systemTime == null) {
-      systemTime = DateTime.now(DateTimeZone.UTC);
-    }
-    return overduePeriodCalculatorService.getMinutes(loan, systemTime);
-  }
-
-  private CompletableFuture<Result<Double>> calculateOverdueFine(Loan loan, Integer overdueMinutes) {
     double overdueFine = 0.0;
 
     OverdueFinePolicy overdueFinePolicy = loan.getOverdueFinePolicy();
@@ -180,181 +150,91 @@ public class OverdueFineCalculatorService {
     return CompletableFuture.completedFuture(succeeded(overdueFine));
   }
 
-  private CompletableFuture<Result<CalculationParameters>> lookupItemRelatedRecords(
-    CalculationParameters params) {
+  private CompletableFuture<Result<LoanToChargeOverdueFine>> lookupItemRelatedRecords(
+    LoanToChargeOverdueFine loan) {
 
-    if (params.feeFine == null) {
-      return completedFuture(succeeded(params));
+    if (loan.getFeeFine() == null) {
+      return completedFuture(succeeded(loan));
     }
 
-    return repos.itemRepository.fetchItemRelatedRecords(succeeded(params.loan.getItem()))
-      .thenApply(mapResult(params::withItem));
+    return itemRepository.fetchItemRelatedRecords(succeeded(loan.getItem()))
+      .thenApply(mapResult(loan::withItem));
   }
 
-  private CompletableFuture<Result<CalculationParameters>> lookupFeeFineOwner(
-    CalculationParameters params) {
+  private CompletableFuture<Result<LoanToChargeOverdueFine>> lookupFeeFineOwner(
+    LoanToChargeOverdueFine loan) {
 
-    return Optional.ofNullable(params.item)
+    return Optional.ofNullable(loan.getItem())
       .map(Item::getLocation)
       .map(Location::getPrimaryServicePointId)
       .map(UUID::toString)
-      .map(id -> repos.feeFineOwnerRepository.findOwnerForServicePoint(id)
-        .thenApply(mapResult(params::withFeeFineOwner)))
-      .orElse(completedFuture(succeeded(params)));
+      .map(id -> feeFineOwnerRepository.findOwnerForServicePoint(id)
+        .thenApply(mapResult(loan::withFeeFineOwner)))
+      .orElse(completedFuture(succeeded(loan)));
   }
 
-  private CompletableFuture<Result<CalculationParameters>> lookupFeeFine(
-    CalculationParameters params) {
+  private CompletableFuture<Result<LoanToChargeOverdueFine>> lookupFeeFine(
+    LoanToChargeOverdueFine loan) {
 
-    return repos.feeFineRepository.getFeeFine(FeeFine.OVERDUE_FINE_TYPE, true)
-      .thenApply(mapResult(params::withFeeFine));
+    return feeFineRepository.getFeeFine(FeeFine.OVERDUE_FINE_TYPE, true)
+      .thenApply(mapResult(loan::withFeeFine));
   }
 
-  private CompletableFuture<Result<CalculationParameters>> lookupLoggedInUser(
-    CalculationParameters params, String loggedInUserId) {
+  private CompletableFuture<Result<LoanToChargeOverdueFine>> lookupLoggedInUser(
+    LoanToChargeOverdueFine loan) {
 
-    return repos.userRepository.getUser(loggedInUserId)
-      .thenApply(ResultBinding.mapResult(params::withLoggedInUser));
+    return userRepository.getUser(loan.getLoggedInUserId())
+      .thenApply(ResultBinding.mapResult(loan::withLoggedInUser));
   }
 
-  private CompletableFuture<Result<CalculationParameters>> lookupLoanServicePoints(
-    CalculationParameters params) {
+  private CompletableFuture<Result<LoanToChargeOverdueFine>> lookupLoanServicePoints(
+    LoanToChargeOverdueFine loan) {
 
-    return repos.servicePointRepository.findServicePointsForLoan(succeeded(params.loan))
-      .thenApply(mapResult(params::withLoan));
+    return servicePointRepository.findServicePointsForLoan(succeeded(loan.getLoan()))
+      .thenApply(mapResult(loan::withLoan));
   }
 
-  private CompletableFuture<Result<FeeFineAction>> createFeeFineRecord(Loan loan, Double fineAmount,
-    String loggedInUserId) {
+  private CompletableFuture<Result<FeeFineAction>> createFeeFineRecord(
+    LoanToChargeOverdueFine loanToChargeOverdueFine, Double fineAmount) {
 
     if (fineAmount <= 0) {
       return completedFuture(succeeded(null));
     }
 
-    return completedFuture(succeeded(
-      new CalculationParameters(loan)))
-      .thenCompose(r -> r.after(this::lookupFeeFine))
+    return lookupFeeFine(loanToChargeOverdueFine)
       .thenCompose(r -> r.after(this::lookupItemRelatedRecords))
       .thenCompose(r -> r.after(this::lookupFeeFineOwner))
-      .thenCompose(r -> r.after(params -> this.lookupLoggedInUser(params, loggedInUserId)))
+      .thenCompose(r -> r.after(this::lookupLoggedInUser))
       .thenCompose(r -> r.after(this::lookupLoanServicePoints))
-      .thenCompose(r -> r.after(params -> createAccount(fineAmount, params)))
-      .thenCompose(r -> r.after(feeFineAction -> repos.scheduledNoticesRepository
-          .deleteOverdueNotices(loan.getId())
-          .thenApply(rs -> r)));
+      .thenCompose(r -> r.after(loanToCharge -> createAccount(fineAmount, loanToCharge)))
+      .thenCompose(r -> r.after(feeFineAction -> scheduledNoticesRepository
+        .deleteOverdueNotices(loanToChargeOverdueFine.getLoan().getId())
+        .thenApply(rs -> r)));
   }
 
   private CompletableFuture<Result<FeeFineAction>> createAccount(Double fineAmount,
-    CalculationParameters params) {
+    LoanToChargeOverdueFine loan) {
 
-    if (params.isIncomplete()) {
+    if (!loan.canCreateOverdueFine()) {
       return completedFuture(succeeded(null));
     }
 
-    StoredAccount accountRepresentation =
-      new StoredAccount(params.loan, params.item, params.feeFineOwner,
-        params.feeFine, new FeeAmount(fineAmount));
+    final StoredAccount accountRepresentation = new StoredAccount(
+      loan.getLoan(), loan.getItem(), loan.getFeeFineOwner(), loan.getFeeFine(),
+      new FeeAmount(fineAmount));
 
-    return repos.accountRepository.create(accountRepresentation)
-      .thenCompose(rac -> rac.after(account -> createFeeFineAction(account, params)));
+    return accountRepository.create(accountRepresentation)
+      .thenCompose(rac -> rac.after(account -> createFeeFineAction(account, loan)));
   }
 
   private CompletableFuture<Result<FeeFineAction>> createFeeFineAction(
-    Account account, CalculationParameters params) {
+    Account account, LoanToChargeOverdueFine loan) {
 
-    String checkInServicePoint = Optional.ofNullable(params.loan)
-      .map(Loan::getCheckinServicePoint)
-      .map(ServicePoint::getName)
-      .orElse(StringUtils.EMPTY);
-
-    return repos.feeFineActionRepository.create(StoredFeeFineAction.builder()
+    return feeFineActionRepository.create(StoredFeeFineAction.builder()
       .useAccount(account)
       .withAction(account.getFeeFineType())
-      .withCreatedAt(checkInServicePoint)
-      .withCreatedBy(params.loggedInUser)
+      .withCreatedAt(loan.getLoan().getCheckinServicePoint())
+      .withCreatedBy(loan.getLoggedInUser())
       .build());
-  }
-
-  private boolean isDeclaredLost(ItemStatus itemStatus) {
-    return itemStatus == ItemStatus.DECLARED_LOST;
-  }
-
-  @With
-  private static class CalculationParameters {
-    final Loan loan;
-    final Item item;
-    final FeeFineOwner feeFineOwner;
-    final FeeFine feeFine;
-    final User loggedInUser;
-
-    CalculationParameters(Loan loan) {
-      this(loan, null, null, null, null);
-    }
-
-    CalculationParameters(Loan loan, Item item, FeeFineOwner feeFineOwner, FeeFine feeFine,
-      User loggedInUser) {
-
-      this.loan = loan;
-      this.item = item;
-      this.feeFineOwner = feeFineOwner;
-      this.feeFine = feeFine;
-      this.loggedInUser = loggedInUser;
-    }
-
-    boolean isComplete() {
-      return ObjectUtils.allNotNull(loan, item, feeFineOwner, feeFine);
-    }
-
-    boolean isIncomplete() {
-      return !isComplete();
-    }
-  }
-
-  enum Scenario {
-    CHECKIN(policy -> !policy.isUnknown()),
-    RENEWAL(policy -> !policy.isUnknown() && isFalse(policy.getForgiveFineForRenewals()));
-
-    private final Predicate<OverdueFinePolicy> shouldCreateFine;
-
-    Scenario(Predicate<OverdueFinePolicy> shouldCreateFine) {
-      this.shouldCreateFine = shouldCreateFine;
-    }
-
-    private boolean shouldCreateFine(OverdueFinePolicy overdueFinePolicy) {
-      return shouldCreateFine.test(overdueFinePolicy);
-    }
-  }
-
-  public static class Repos {
-    private final OverdueFinePolicyRepository overdueFinePolicyRepository;
-    private final AccountRepository accountRepository;
-    private final ItemRepository itemRepository;
-    private final FeeFineOwnerRepository feeFineOwnerRepository;
-    private final FeeFineRepository feeFineRepository;
-    private final UserRepository userRepository;
-    private final FeeFineActionRepository feeFineActionRepository;
-    private final LostItemPolicyRepository lostItemPolicyRepository;
-    private final ScheduledNoticesRepository scheduledNoticesRepository;
-    private final ServicePointRepository servicePointRepository;
-
-    Repos(OverdueFinePolicyRepository overdueFinePolicyRepository,
-      AccountRepository accountRepository, ItemRepository itemRepository,
-      FeeFineOwnerRepository feeFineOwnerRepository, FeeFineRepository feeFineRepository,
-      UserRepository userRepository, FeeFineActionRepository feeFineActionRepository,
-      LostItemPolicyRepository lostItemPolicyRepository,
-      ScheduledNoticesRepository scheduledNoticesRepository,
-      ServicePointRepository servicePointRepository) {
-
-      this.overdueFinePolicyRepository = overdueFinePolicyRepository;
-      this.accountRepository = accountRepository;
-      this.itemRepository = itemRepository;
-      this.feeFineOwnerRepository = feeFineOwnerRepository;
-      this.feeFineRepository = feeFineRepository;
-      this.userRepository = userRepository;
-      this.feeFineActionRepository = feeFineActionRepository;
-      this.lostItemPolicyRepository = lostItemPolicyRepository;
-      this.scheduledNoticesRepository = scheduledNoticesRepository;
-      this.servicePointRepository = servicePointRepository;
-    }
   }
 }

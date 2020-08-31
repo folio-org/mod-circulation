@@ -8,8 +8,6 @@ import static org.joda.time.DateTimeConstants.MINUTES_PER_HOUR;
 import static org.joda.time.DateTimeConstants.MINUTES_PER_WEEK;
 import static org.joda.time.DateTimeZone.UTC;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -42,53 +40,24 @@ public class OverduePeriodCalculatorServiceTest {
     new OverduePeriodCalculatorService(null, null);
 
   @Test
-  public void preconditionsCheckLoanHasNoDueDate() {
-    DateTime systemTime = DateTime.now(UTC);
-    Loan loan = new LoanBuilder().asDomainObject();
-
-    assertFalse(calculator.preconditionsAreMet(loan, systemTime, true));
-  }
-
-  @Test
-  public void preconditionsCheckLoanDueDateIsInFuture() {
-    DateTime systemTime = DateTime.now(UTC);
-    Loan loan = new LoanBuilder()
-      .withDueDate(systemTime.plusDays(1))
-      .asDomainObject();
-
-    assertFalse(calculator.preconditionsAreMet(loan, systemTime, true));
-  }
-
-  @Test
-  public void preconditionsCheckCountClosedIsNull() {
-    DateTime systemTime = DateTime.now(UTC);
-    Loan loan = new LoanBuilder()
-      .withDueDate(systemTime.minusDays(1))
-      .asDomainObject();
-
-    assertFalse(calculator.preconditionsAreMet(loan, systemTime, null));
-  }
-
-  @Test
-  public void allPreconditionsAreMet() {
-    DateTime systemTime = DateTime.now(UTC);
-    Loan loan = new LoanBuilder()
-      .withDueDate(systemTime.minusDays(1))
-      .asDomainObject();
-
-    assertTrue(calculator.preconditionsAreMet(loan, systemTime, true));
-  }
-
-  @Test
   public void countOverdueMinutesWithClosedDays() throws ExecutionException, InterruptedException {
     int expectedResult = MINUTES_PER_WEEK + MINUTES_PER_DAY + MINUTES_PER_HOUR + 1;
     DateTime systemTime = DateTime.now(UTC);
 
+    final OverdueFinePolicy overdueFinePolicy = OverdueFinePolicy.from(
+      new OverdueFinePolicyBuilder()
+        .withCountClosed(true)
+        .create());
+
     Loan loan = new LoanBuilder()
       .withDueDate(systemTime.minusMinutes(expectedResult))
-      .asDomainObject();
+      .asDomainObject()
+      .withOverdueFinePolicy(overdueFinePolicy);
 
-    int actualResult = calculator.getOverdueMinutes(loan, systemTime, true).get().value();
+    LoanToChargeOverdueFine loanToChargeOverdueFine = new LoanToChargeOverdueFine(loan, null, policy -> true,
+      false, null, null, null, null, null);
+
+    int actualResult = calculator.getOverdueMinutes(loanToChargeOverdueFine).get().value();
 
     assertEquals(expectedResult, actualResult);
   }

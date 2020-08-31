@@ -9,11 +9,10 @@ import static org.joda.time.DateTimeZone.UTC;
 import static org.joda.time.Minutes.minutesBetween;
 
 import java.util.Collection;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
-import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
 import org.folio.circulation.infrastructure.storage.CalendarRepository;
+import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
 import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDateTime;
@@ -32,43 +31,67 @@ public class OverduePeriodCalculatorService {
     this.loanPolicyRepository = loanPolicyRepository;
   }
 
-  public CompletableFuture<Result<Integer>> getMinutes(Loan loan, DateTime systemTime) {
-    final Boolean shouldCountClosedPeriods = loan.getOverdueFinePolicy().getCountPeriodsWhenServicePointIsClosed();
-
-    if (preconditionsAreMet(loan, systemTime, shouldCountClosedPeriods)) {
-      return completedFuture(loan)
-        .thenComposeAsync(loanPolicyRepository::lookupPolicy)
-        .thenApply(r -> r.map(loan::withLoanPolicy))
-        .thenCompose(r -> r.after(l -> getOverdueMinutes(l, systemTime, shouldCountClosedPeriods)
-            .thenApply(flatMapResult(om -> adjustOverdueWithGracePeriod(l, om)))));
-    }
-
-    return completedFuture(succeeded(ZERO_MINUTES));
+  public CompletableFuture<Result<Integer>> getMinutes(LoanToChargeOverdueFine loan) {
+    return loanPolicyRepository.lookupPolicy(loan.getLoan())
+      .thenApply(r -> r.map(loan::withLoanPolicy))
+      .thenCompose(r -> r.after(l -> getOverdueMinutes(loan)
+        .thenApply(flatMapResult(om -> adjustOverdueWithGracePeriod(loan.getLoan(), om)))));
   }
 
-  boolean preconditionsAreMet(Loan loan, DateTime systemTime, Boolean shouldCountClosedPeriods) {
-    return shouldCountClosedPeriods != null && loan.isOverdue(systemTime);
+//  public CompletableFuture<Result<Integer>> getMinutes(Loan loan, DateTime systemTime) {
+//    final boolean shouldCountClosedPeriods = loan.getOverdueFinePolicy().getCountPeriodsWhenServicePointIsClosed();
+//
+//    return loanPolicyRepository.lookupPolicy(loan)
+//      .thenApply(r -> r.map(loan::withLoanPolicy))
+//      .thenCompose(r -> r.after(l -> getOverdueMinutes(l, systemTime, shouldCountClosedPeriods)
+//        .thenApply(flatMapResult(om -> adjustOverdueWithGracePeriod(l, om)))));
+//  }
+
+  CompletableFuture<Result<Integer>> getOverdueMinutes(LoanToChargeOverdueFine loan) {
+    return loan.shouldCountClosedPeriods() || !loan.hasItemLocationPrimaryServicePoint()
+      ? minutesOverdueIncludingClosedPeriods(loan)
+      : minutesOverdueExcludingClosedPeriods(loan);
   }
 
-  CompletableFuture<Result<Integer>> getOverdueMinutes(Loan loan, DateTime systemTime, boolean shouldCountClosedPeriods) {
-    return shouldCountClosedPeriods || getItemLocationPrimaryServicePoint(loan) == null
-      ? minutesOverdueIncludingClosedPeriods(loan, systemTime)
-      : minutesOverdueExcludingClosedPeriods(loan, systemTime);
-  }
+//  CompletableFuture<Result<Integer>> getOverdueMinutes(Loan loan, DateTime systemTime, boolean shouldCountClosedPeriods) {
+//    return shouldCountClosedPeriods || getItemLocationPrimaryServicePoint(loan) == null
+//      ? minutesOverdueIncludingClosedPeriods(loan, systemTime)
+//      : minutesOverdueExcludingClosedPeriods(loan, systemTime);
+//  }
 
-  private CompletableFuture<Result<Integer>> minutesOverdueIncludingClosedPeriods(Loan loan, DateTime systemTime) {
-    int overdueMinutes = minutesBetween(loan.getDueDate(), systemTime).getMinutes();
+  private CompletableFuture<Result<Integer>> minutesOverdueIncludingClosedPeriods(
+    LoanToChargeOverdueFine loan) {
+
+    int overdueMinutes = minutesBetween(loan.getDueDate(), loan.getReturnDate()).getMinutes();
     return completedFuture(succeeded(overdueMinutes));
   }
 
-  private CompletableFuture<Result<Integer>> minutesOverdueExcludingClosedPeriods(Loan loan, DateTime returnDate) {
-    DateTime dueDate = loan.getDueDate();
-    String itemLocationPrimaryServicePoint = getItemLocationPrimaryServicePoint(loan).toString();
+//  private CompletableFuture<Result<Integer>> minutesOverdueIncludingClosedPeriods(Loan loan, DateTime systemTime) {
+//    int overdueMinutes = minutesBetween(loan.getDueDate(), systemTime).getMinutes();
+//    return completedFuture(succeeded(overdueMinutes));
+//  }
+
+  private CompletableFuture<Result<Integer>> minutesOverdueExcludingClosedPeriods(
+    LoanToChargeOverdueFine loan) {
+
+    final String itemPrimaryServicePoint = loan.getItemPrimaryServicePoint();
+    final DateTime dueDate = loan.getDueDate();
+    final DateTime returnDate  = loan.getReturnDate();
+
     return calendarRepository
-      .fetchOpeningDaysBetweenDates(itemLocationPrimaryServicePoint, dueDate, returnDate, false)
+      .fetchOpeningDaysBetweenDates(itemPrimaryServicePoint, dueDate, returnDate, false)
       .thenApply(r -> r.next(openingDays -> getOpeningDaysDurationMinutes(
         openingDays, dueDate.toLocalDateTime(), returnDate.toLocalDateTime())));
   }
+
+//  private CompletableFuture<Result<Integer>> minutesOverdueExcludingClosedPeriods(Loan loan, DateTime returnDate) {
+//    DateTime dueDate = loan.getDueDate();
+//    String itemLocationPrimaryServicePoint = getItemLocationPrimaryServicePoint(loan).toString();
+//    return calendarRepository
+//      .fetchOpeningDaysBetweenDates(itemLocationPrimaryServicePoint, dueDate, returnDate, false)
+//      .thenApply(r -> r.next(openingDays -> getOpeningDaysDurationMinutes(
+//        openingDays, dueDate.toLocalDateTime(), returnDate.toLocalDateTime())));
+//  }
 
   Result<Integer> getOpeningDaysDurationMinutes(
     Collection<OpeningDay> openingDays, LocalDateTime dueDate, LocalDateTime returnDate) {
@@ -154,9 +177,5 @@ public class OverduePeriodCalculatorService {
 
   private int getGracePeriodMinutes(Loan loan) {
     return loan.getLoanPolicy().getGracePeriod().toMinutes();
-  }
-
-  private UUID getItemLocationPrimaryServicePoint(Loan loan) {
-    return loan.getItem().getLocation().getPrimaryServicePointId();
   }
 }

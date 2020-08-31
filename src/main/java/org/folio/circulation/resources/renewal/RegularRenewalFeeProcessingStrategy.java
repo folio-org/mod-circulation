@@ -1,7 +1,5 @@
 package org.folio.circulation.resources.renewal;
 
-import static org.folio.circulation.domain.OverdueFineCalculatorService.using;
-
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.OverdueFineCalculatorService;
@@ -14,7 +12,7 @@ public class RegularRenewalFeeProcessingStrategy implements RenewalFeeProcessing
   public CompletableFuture<Result<RenewalContext>> processFeesFines(
     RenewalContext renewalContext, Clients clients) {
 
-    final OverdueFineCalculatorService overdueFineService = using(clients);
+    final OverdueFineCalculatorService overdueFineService = new OverdueFineCalculatorService(clients);
     return overdueFineService.createOverdueFineIfNecessary(renewalContext);
   }
 }

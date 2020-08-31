@@ -22,22 +22,22 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 
-import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
-import org.folio.circulation.infrastructure.storage.loans.LostItemPolicyRepository;
 import org.folio.circulation.domain.policy.OverdueFinePolicy;
-import org.folio.circulation.infrastructure.storage.loans.OverdueFinePolicyRepository;
 import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
 import org.folio.circulation.domain.representations.StoredAccount;
 import org.folio.circulation.domain.representations.StoredFeeFineAction;
+import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineActionRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineOwnerRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineRepository;
-import org.folio.circulation.infrastructure.storage.ServicePointRepository;
+import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
+import org.folio.circulation.infrastructure.storage.loans.LostItemPolicyRepository;
+import org.folio.circulation.infrastructure.storage.loans.OverdueFinePolicyRepository;
+import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.ClockManager;
-import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Before;
@@ -173,10 +173,9 @@ public class OverdueFineCalculatorServiceTest {
     servicePointRepository = mock(ServicePointRepository.class);
 
     overdueFineCalculatorService = new OverdueFineCalculatorService(
-      new OverdueFineCalculatorService.Repos(
-        overdueFinePolicyRepository, accountRepository, itemRepository,
-        feeFineOwnerRepository, feeFineRepository, userRepository, feeFineActionRepository,
-        lostItemPolicyRepository, scheduledNoticesRepository, servicePointRepository),
+      overdueFinePolicyRepository, accountRepository, itemRepository,
+      feeFineOwnerRepository, feeFineRepository, userRepository, feeFineActionRepository,
+      lostItemPolicyRepository, scheduledNoticesRepository, servicePointRepository,
       overduePeriodCalculatorService);
 
     when(userRepository.getUser(any(String.class))).thenReturn(
@@ -193,10 +192,12 @@ public class OverdueFineCalculatorServiceTest {
       overdueFineCalculatorService.createOverdueFineIfNecessary(context).get();
     }
     else {
-      CheckInContext context = mock(CheckInContext.class);
-      when(context.getLoan()).thenReturn(null);
+      CheckInContext context = new CheckInContext(
+        CheckInByBarcodeRequest.from(createCheckInByBarcodeRequest()).value())
+        .withLoggedInUserId(LOGGED_IN_USER_ID)
+        .withLoan(null);
 
-      overdueFineCalculatorService.createOverdueFineIfNecessary(context, LOGGED_IN_USER_ID).get();
+      overdueFineCalculatorService.createOverdueFineIfNecessary(context).get();
     }
 
     verifyNoInteractions(accountRepository);
@@ -210,7 +211,7 @@ public class OverdueFineCalculatorServiceTest {
 
     when(overdueFinePolicyRepository.findOverdueFinePolicyForLoan(any()))
       .thenReturn(completedFuture(succeeded(loan)));
-    when(overduePeriodCalculatorService.getMinutes(any(), any()))
+    when(overduePeriodCalculatorService.getMinutes(any()))
       .thenReturn(completedFuture(succeeded(periodCalculatorResult)));
     when(itemRepository.fetchItemRelatedRecords(any()))
       .thenReturn(completedFuture(succeeded(createItem())));
@@ -230,9 +231,10 @@ public class OverdueFineCalculatorServiceTest {
     else {
       CheckInContext context = new CheckInContext(
         CheckInByBarcodeRequest.from(createCheckInByBarcodeRequest()).value())
+        .withLoggedInUserId(LOGGED_IN_USER_ID)
         .withLoan(loan);
 
-      overdueFineCalculatorService.createOverdueFineIfNecessary(context, LOGGED_IN_USER_ID).get();
+      overdueFineCalculatorService.createOverdueFineIfNecessary(context).get();
     }
 
     verify(accountRepository, times(1)).create(any());
@@ -283,7 +285,7 @@ public class OverdueFineCalculatorServiceTest {
 
     when(overdueFinePolicyRepository.findOverdueFinePolicyForLoan(any()))
       .thenReturn(completedFuture(succeeded(loan)));
-    when(overduePeriodCalculatorService.getMinutes(any(), any()))
+    when(overduePeriodCalculatorService.getMinutes(any()))
       .thenReturn(completedFuture(succeeded(0)));
 
     if (renewal) {
@@ -294,9 +296,10 @@ public class OverdueFineCalculatorServiceTest {
     else {
       CheckInContext context = new CheckInContext(
         CheckInByBarcodeRequest.from(createCheckInByBarcodeRequest()).value())
+        .withLoggedInUserId(LOGGED_IN_USER_ID)
         .withLoan(loan);
 
-      overdueFineCalculatorService.createOverdueFineIfNecessary(context, LOGGED_IN_USER_ID).get();
+      overdueFineCalculatorService.createOverdueFineIfNecessary(context).get();
     }
 
     verifyNoInteractions(accountRepository);
@@ -310,7 +313,7 @@ public class OverdueFineCalculatorServiceTest {
 
     when(overdueFinePolicyRepository.findOverdueFinePolicyForLoan(any()))
       .thenReturn(completedFuture(succeeded(loan)));
-    when(overduePeriodCalculatorService.getMinutes(any(), any()))
+    when(overduePeriodCalculatorService.getMinutes(any()))
       .thenReturn(completedFuture(succeeded(periodCalculatorResult)));
     when(itemRepository.fetchItemRelatedRecords(any()))
       .thenReturn(completedFuture(succeeded(null)));
@@ -327,9 +330,10 @@ public class OverdueFineCalculatorServiceTest {
     else {
       CheckInContext context = new CheckInContext(
         CheckInByBarcodeRequest.from(createCheckInByBarcodeRequest()).value())
+        .withLoggedInUserId(LOGGED_IN_USER_ID)
         .withLoan(loan);
 
-      overdueFineCalculatorService.createOverdueFineIfNecessary(context, LOGGED_IN_USER_ID).get();
+      overdueFineCalculatorService.createOverdueFineIfNecessary(context).get();
     }
 
     verifyNoInteractions(feeFineOwnerRepository);
@@ -344,7 +348,7 @@ public class OverdueFineCalculatorServiceTest {
 
     when(overdueFinePolicyRepository.findOverdueFinePolicyForLoan(any()))
       .thenReturn(completedFuture(succeeded(loan)));
-    when(overduePeriodCalculatorService.getMinutes(any(), any()))
+    when(overduePeriodCalculatorService.getMinutes(any()))
       .thenReturn(completedFuture(succeeded(5)));
     when(itemRepository.fetchItemRelatedRecords(any()))
       .thenReturn(completedFuture(succeeded(createItem())));
@@ -361,9 +365,10 @@ public class OverdueFineCalculatorServiceTest {
     else {
       CheckInContext context = new CheckInContext(
         CheckInByBarcodeRequest.from(createCheckInByBarcodeRequest()).value())
+        .withLoggedInUserId(LOGGED_IN_USER_ID)
         .withLoan(loan);
 
-      overdueFineCalculatorService.createOverdueFineIfNecessary(context, LOGGED_IN_USER_ID).get();
+      overdueFineCalculatorService.createOverdueFineIfNecessary(context).get();
     }
 
     verifyNoInteractions(accountRepository);
@@ -376,7 +381,7 @@ public class OverdueFineCalculatorServiceTest {
 
     when(overdueFinePolicyRepository.findOverdueFinePolicyForLoan(any()))
       .thenReturn(completedFuture(succeeded(loan)));
-    when(overduePeriodCalculatorService.getMinutes(any(), any()))
+    when(overduePeriodCalculatorService.getMinutes(any()))
       .thenReturn(completedFuture(succeeded(periodCalculatorResult)));
     when(itemRepository.fetchItemRelatedRecords(any()))
       .thenReturn(completedFuture(succeeded(createItem())));
@@ -393,9 +398,10 @@ public class OverdueFineCalculatorServiceTest {
     else {
       CheckInContext context = new CheckInContext(
         CheckInByBarcodeRequest.from(createCheckInByBarcodeRequest()).value())
+        .withLoggedInUserId(LOGGED_IN_USER_ID)
         .withLoan(loan);
 
-      overdueFineCalculatorService.createOverdueFineIfNecessary(context, LOGGED_IN_USER_ID).get();
+      overdueFineCalculatorService.createOverdueFineIfNecessary(context).get();
     }
 
     verifyNoInteractions(itemRepository);
@@ -407,7 +413,8 @@ public class OverdueFineCalculatorServiceTest {
   public void shouldNotCreateFeeFineRecordWhenOverduePolicyDoesNotExist()
     throws ExecutionException, InterruptedException {
 
-    final Loan loan = createLoan().withOverdueFinePolicy(OverdueFinePolicy.unknown(null));
+    final OverdueFinePolicy overdueFinePolicy = OverdueFinePolicy.unknown(null);
+    final Loan loan = createLoan().withOverdueFinePolicy(overdueFinePolicy);
 
     when(overdueFinePolicyRepository.findOverdueFinePolicyForLoan(any()))
       .thenReturn(completedFuture(succeeded(loan)));
@@ -420,9 +427,10 @@ public class OverdueFineCalculatorServiceTest {
     else {
       CheckInContext context = new CheckInContext(
         CheckInByBarcodeRequest.from(createCheckInByBarcodeRequest()).value())
+        .withLoggedInUserId(LOGGED_IN_USER_ID)
         .withLoan(loan);
 
-      overdueFineCalculatorService.createOverdueFineIfNecessary(context, LOGGED_IN_USER_ID).get();
+      overdueFineCalculatorService.createOverdueFineIfNecessary(context).get();
     }
 
     verifyNoInteractions(feeFineRepository);
@@ -443,9 +451,10 @@ public class OverdueFineCalculatorServiceTest {
     else {
       CheckInContext context = new CheckInContext(
         CheckInByBarcodeRequest.from(createCheckInByBarcodeRequest()).value())
+        .withLoggedInUserId(LOGGED_IN_USER_ID)
         .withLoan(null);
 
-      overdueFineCalculatorService.createOverdueFineIfNecessary(context, LOGGED_IN_USER_ID).get();
+      overdueFineCalculatorService.createOverdueFineIfNecessary(context).get();
     }
 
     verifyNoInteractions(feeFineRepository);
@@ -470,9 +479,10 @@ public class OverdueFineCalculatorServiceTest {
     else {
       CheckInContext context = new CheckInContext(
         CheckInByBarcodeRequest.from(createCheckInByBarcodeRequest()).value())
+        .withLoggedInUserId(LOGGED_IN_USER_ID)
         .withLoan(loan);
 
-      overdueFineCalculatorService.createOverdueFineIfNecessary(context, LOGGED_IN_USER_ID).get();
+      overdueFineCalculatorService.createOverdueFineIfNecessary(context).get();
     }
 
     verifyNoInteractions(feeFineRepository);
@@ -511,7 +521,7 @@ public class OverdueFineCalculatorServiceTest {
 
     when(overdueFinePolicyRepository.findOverdueFinePolicyForLoan(any()))
       .thenReturn(completedFuture(succeeded(loan)));
-    when(overduePeriodCalculatorService.getMinutes(any(), any()))
+    when(overduePeriodCalculatorService.getMinutes(any()))
       .thenReturn(completedFuture(succeeded(periodCalculatorResult)));
     when(itemRepository.fetchItemRelatedRecords(any()))
       .thenReturn(completedFuture(succeeded(createItem())));
@@ -535,9 +545,10 @@ public class OverdueFineCalculatorServiceTest {
     else {
       CheckInContext context = new CheckInContext(
         CheckInByBarcodeRequest.from(createCheckInByBarcodeRequest()).value())
+        .withLoggedInUserId(LOGGED_IN_USER_ID)
         .withLoan(loan);
 
-      overdueFineCalculatorService.createOverdueFineIfNecessary(context, LOGGED_IN_USER_ID).get();
+      overdueFineCalculatorService.createOverdueFineIfNecessary(context).get();
     }
 
     verify(scheduledNoticesRepository, times(1)).deleteOverdueNotices(any());

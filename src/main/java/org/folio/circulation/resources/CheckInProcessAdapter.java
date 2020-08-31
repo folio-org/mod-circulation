@@ -114,7 +114,7 @@ class CheckInProcessAdapter {
       userRepository,
       new AddressTypeRepository(clients),
       new LogCheckInService(clients),
-      OverdueFineCalculatorService.using(clients),
+      new OverdueFineCalculatorService(clients),
       FeeFineScheduledNoticeService.using(clients),
       new LostItemFeeRefundService(clients));
   }
@@ -271,10 +271,8 @@ class CheckInProcessAdapter {
     return logCheckInService.logCheckInOperation(checkInContext);
   }
 
-  CompletableFuture<Result<CheckInContext>> createOverdueFineIfNecessary(
-    CheckInContext records, WebContext context) {
-
-    return overdueFineCalculatorService.createOverdueFineIfNecessary(records, context.getUserId())
+  CompletableFuture<Result<CheckInContext>> createOverdueFineIfNecessary(CheckInContext records) {
+    return overdueFineCalculatorService.createOverdueFineIfNecessary(records)
       .thenApply(r -> r.next(action -> feeFineScheduledNoticeService.scheduleNotices(records, action)));
   }
 

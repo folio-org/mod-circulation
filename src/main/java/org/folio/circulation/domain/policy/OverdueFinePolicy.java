@@ -76,7 +76,7 @@ public class OverdueFinePolicy extends Policy {
     return flags.ignoreGracePeriodForRecalls;
   }
 
-  public Boolean getCountPeriodsWhenServicePointIsClosed() {
+  public boolean getCountPeriodsWhenServicePointIsClosed() {
     return flags.countPeriodsWhenServicePointIsClosed;
   }
 
