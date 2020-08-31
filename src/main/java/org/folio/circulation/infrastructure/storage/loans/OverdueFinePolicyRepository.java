@@ -94,7 +94,7 @@ public class OverdueFinePolicyRepository extends CirculationPolicyRepository<Ove
         .thenApply(result -> result.map(loan::withOverdueFinePolicy)));
   }
 
-  public CompletableFuture<Result<OverdueFinePolicy>> getOverdueFinePolicyById(
+  private CompletableFuture<Result<OverdueFinePolicy>> getOverdueFinePolicyById(
     String overdueFinePolicyId) {
 
     if (isNull(overdueFinePolicyId)) {

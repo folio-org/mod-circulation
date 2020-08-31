@@ -66,14 +66,6 @@ public final class LoanToChargeOverdueFine {
     return initialItemStatus == ItemStatus.DECLARED_LOST;
   }
 
-  public String getLostItemPolicyId() {
-    return loan.getLostItemPolicyId();
-  }
-
-  public String getOverdueFinePolicyId() {
-    return loan.getOverdueFinePolicyId();
-  }
-
   public OverdueFinePolicy getOverdueFinePolicy() {
     return loan.getOverdueFinePolicy();
   }
