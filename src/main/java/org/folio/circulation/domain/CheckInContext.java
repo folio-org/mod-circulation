@@ -7,6 +7,8 @@ import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
 import org.folio.circulation.support.ClockManager;
 import org.joda.time.DateTime;
 
+import lombok.AllArgsConstructor;
+
 /**
  * The loan captures a snapshot of the item status
  * in order to populate the loan action history.
@@ -17,6 +19,7 @@ import org.joda.time.DateTime;
  *
  * Which requires passing the records between processes.
  */
+@AllArgsConstructor
 public class CheckInContext {
   private final CheckInByBarcodeRequest checkInRequest;
   private final Item item;
@@ -31,32 +34,8 @@ public class CheckInContext {
   private final boolean lostItemFeesRefundedOrCancelled;
 
   public CheckInContext(CheckInByBarcodeRequest checkInRequest) {
-    this(checkInRequest, null, null, null, null, null, null, false, null, false);
-  }
-
-  private CheckInContext(
-    CheckInByBarcodeRequest checkInRequest,
-    Item item,
-    Loan loan,
-    RequestQueue requestQueue,
-    ServicePoint checkInServicePoint,
-    Request highestPriorityFulfillableRequest,
-    String loggedInUserId,
-    boolean inHouseUse,
-    ItemStatus itemStatusBeforeCheckIn,
-    boolean lostItemFeesRefundedOrCancelled) {
-
-    this.checkInRequest = checkInRequest;
-    this.item = item;
-    this.loan = loan;
-    this.requestQueue = requestQueue;
-    this.checkInServicePoint = checkInServicePoint;
-    this.highestPriorityFulfillableRequest = highestPriorityFulfillableRequest;
-    this.loggedInUserId = loggedInUserId;
-    checkInProcessedDateTime = ClockManager.getClockManager().getDateTime();
-    this.inHouseUse = inHouseUse;
-    this.itemStatusBeforeCheckIn = itemStatusBeforeCheckIn;
-    this.lostItemFeesRefundedOrCancelled = lostItemFeesRefundedOrCancelled;
+    this(checkInRequest, null, null, null, null, null, null,
+      ClockManager.getClockManager().getDateTime(), false, null, false);
   }
 
   public CheckInContext withItem(Item item) {
@@ -75,9 +54,10 @@ public class CheckInContext {
       this.checkInServicePoint,
       this.highestPriorityFulfillableRequest,
       this.loggedInUserId,
+      this.checkInProcessedDateTime,
       this.inHouseUse,
-      itemStatusBeforeCheckIn,
-      lostItemFeesRefundedOrCancelled);
+      this.itemStatusBeforeCheckIn,
+      this.lostItemFeesRefundedOrCancelled);
   }
 
   public CheckInContext withLoan(Loan loan) {
@@ -88,17 +68,20 @@ public class CheckInContext {
       this.requestQueue,
       this.checkInServicePoint,
       this.highestPriorityFulfillableRequest,
-      loggedInUserId,
+      this.loggedInUserId,
+      this.checkInProcessedDateTime,
       this.inHouseUse,
-      itemStatusBeforeCheckIn,
-      lostItemFeesRefundedOrCancelled);
+      this.itemStatusBeforeCheckIn,
+      this.lostItemFeesRefundedOrCancelled);
   }
 
   public CheckInContext withRequestQueue(RequestQueue requestQueue) {
     Request firstRequest = null;
+
     if (requestQueue.hasOutstandingFulfillableRequests()) {
       firstRequest = requestQueue.getHighestPriorityFulfillableRequest();
     }
+
     return new CheckInContext(
       this.checkInRequest,
       this.item,
@@ -106,10 +89,11 @@ public class CheckInContext {
       requestQueue,
       this.checkInServicePoint,
       firstRequest,
-      loggedInUserId,
+      this.loggedInUserId,
+      this.checkInProcessedDateTime,
       this.inHouseUse,
-      itemStatusBeforeCheckIn,
-      lostItemFeesRefundedOrCancelled);
+      this.itemStatusBeforeCheckIn,
+      this.lostItemFeesRefundedOrCancelled);
   }
 
   public CheckInContext withCheckInServicePoint(ServicePoint checkInServicePoint) {
@@ -120,10 +104,11 @@ public class CheckInContext {
       this.requestQueue,
       checkInServicePoint,
       this.highestPriorityFulfillableRequest,
-      loggedInUserId,
+      this.loggedInUserId,
+      this.checkInProcessedDateTime,
       this.inHouseUse,
-      itemStatusBeforeCheckIn,
-      lostItemFeesRefundedOrCancelled);
+      this.itemStatusBeforeCheckIn,
+      this.lostItemFeesRefundedOrCancelled);
   }
 
   public CheckInContext withHighestPriorityFulfillableRequest(Request request) {
@@ -135,9 +120,10 @@ public class CheckInContext {
       this.checkInServicePoint,
       request,
       loggedInUserId,
+      this.checkInProcessedDateTime,
       this.inHouseUse,
-      itemStatusBeforeCheckIn,
-      lostItemFeesRefundedOrCancelled);
+      this.itemStatusBeforeCheckIn,
+      this.lostItemFeesRefundedOrCancelled);
   }
 
   public CheckInContext withLoggedInUserId(String userId) {
@@ -149,9 +135,10 @@ public class CheckInContext {
       this.checkInServicePoint,
       this.highestPriorityFulfillableRequest,
       userId,
+      this.checkInProcessedDateTime,
       this.inHouseUse,
-      itemStatusBeforeCheckIn,
-      lostItemFeesRefundedOrCancelled);
+      this.itemStatusBeforeCheckIn,
+      this.lostItemFeesRefundedOrCancelled);
   }
 
   public CheckInContext withInHouseUse(boolean inHouseUse) {
@@ -163,9 +150,10 @@ public class CheckInContext {
       this.checkInServicePoint,
       this.highestPriorityFulfillableRequest,
       this.loggedInUserId,
+      this.checkInProcessedDateTime,
       inHouseUse,
-      itemStatusBeforeCheckIn,
-      lostItemFeesRefundedOrCancelled);
+      this.itemStatusBeforeCheckIn,
+      this.lostItemFeesRefundedOrCancelled);
   }
 
   public CheckInContext withItemStatusBeforeCheckIn(ItemStatus itemStatus) {
@@ -177,9 +165,10 @@ public class CheckInContext {
       this.checkInServicePoint,
       this.highestPriorityFulfillableRequest,
       this.loggedInUserId,
-      inHouseUse,
+      this.checkInProcessedDateTime,
+      this.inHouseUse,
       itemStatus,
-      lostItemFeesRefundedOrCancelled);
+      this.lostItemFeesRefundedOrCancelled);
   }
 
   public CheckInContext withLostItemFeesRefundedOrCancelled(boolean lostItemFeesRefunded) {
@@ -191,8 +180,9 @@ public class CheckInContext {
       this.checkInServicePoint,
       this.highestPriorityFulfillableRequest,
       this.loggedInUserId,
-      inHouseUse,
-      itemStatusBeforeCheckIn,
+      this.checkInProcessedDateTime,
+      this.inHouseUse,
+      this.itemStatusBeforeCheckIn,
       lostItemFeesRefunded);
   }
 
