@@ -10,13 +10,11 @@ import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ResultBinding.mapResult;
 import static org.folio.circulation.support.http.client.PageLimit.limit;
 
-import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -33,15 +31,11 @@ import org.folio.circulation.domain.notice.PatronNoticeService;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.client.PageLimit;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class PatronActionSessionService {
   private static final PageLimit DEFAULT_SESSION_SIZE_PAGE_LIMIT = limit(200);
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private static EnumMap<PatronActionType, NoticeEventType> actionToEventMap;
 
@@ -164,13 +158,6 @@ public class PatronActionSessionService {
         .withNoticeContext(createLoanNoticeContextWithoutUser(r.getLoan()))
         .build())
       .collect(Collectors.toList());
-  }
-
-  private JsonArray createUsersContext(Set<User> users) {
-    JsonArray jsonArray = new JsonArray();
-    users.forEach(user -> jsonArray.add(createUserContext(user)));
-
-    return jsonArray;
   }
 
   public CompletableFuture<Result<CheckInProcessRecords>> saveCheckInSessionRecord(CheckInProcessRecords records) {
