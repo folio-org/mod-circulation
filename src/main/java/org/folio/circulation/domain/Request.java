@@ -28,10 +28,13 @@ import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 import java.util.Objects;
 
-import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 
+import io.vertx.core.json.JsonObject;
+import lombok.AllArgsConstructor;
+
+@AllArgsConstructor
 public class Request implements ItemRelatedRecord, UserRelatedRecord {
   private final JsonObject requestRepresentation;
   private final JsonObject cancellationReasonRepresentation;
@@ -42,31 +45,11 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   private final Loan loan;
   private final ServicePoint pickupServicePoint;
 
-  private boolean changedPosition = false;
+  private boolean changedPosition;
   private Integer previousPosition;
 
-  public Request(
-    JsonObject requestRepresentation,
-    JsonObject cancellationReasonRepresentation,
-    Item item,
-    User requester,
-    User proxy,
-    AddressType addressType,
-    Loan loan,
-    ServicePoint pickupServicePoint) {
-
-    this.requestRepresentation = requestRepresentation;
-    this.cancellationReasonRepresentation = cancellationReasonRepresentation;
-    this.item = item;
-    this.requester = requester;
-    this.proxy = proxy;
-    this.addressType = addressType;
-    this.loan = loan;
-    this.pickupServicePoint = pickupServicePoint;
-  }
-
   public static Request from(JsonObject representation) {
-    return new Request(representation, null, null, null, null, null, null, null);
+    return new Request(representation, null, null, null, null, null, null, null, false, null);
   }
 
   public Request withRequestJsonRepresentation(JsonObject representation) {
@@ -77,7 +60,9 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
       getProxy(),
       getAddressType(),
       getLoan(),
-      getPickupServicePoint());
+      getPickupServicePoint(),
+      hasChangedPosition(),
+      getPreviousPosition());
   }
 
   public Request withCancellationReasonJsonRepresentation(JsonObject representation) {
@@ -88,7 +73,9 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
       getProxy(),
       getAddressType(),
       getLoan(),
-      getPickupServicePoint());
+      getPickupServicePoint(),
+      hasChangedPosition(),
+      getPreviousPosition());
   }
 
   public JsonObject asJson() {
@@ -167,32 +154,32 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
       requestRepresentation.put(ITEM_ID, newItem.getItemId());
     }
     return new Request(requestRepresentation, cancellationReasonRepresentation, newItem, requester, proxy, addressType,
-      loan == null ? null : loan.withItem(newItem), pickupServicePoint);
+      loan == null ? null : loan.withItem(newItem), pickupServicePoint, changedPosition, previousPosition);
   }
 
   public Request withRequester(User newRequester) {
     return new Request(requestRepresentation, cancellationReasonRepresentation, item, newRequester, proxy, addressType, loan,
-      pickupServicePoint);
+      pickupServicePoint, changedPosition, previousPosition);
   }
 
   public Request withProxy(User newProxy) {
     return new Request(requestRepresentation, cancellationReasonRepresentation, item, requester, newProxy, addressType, loan,
-      pickupServicePoint);
+      pickupServicePoint, changedPosition, previousPosition);
   }
 
   public Request withAddressType(AddressType addressType) {
     return new Request(requestRepresentation, cancellationReasonRepresentation, item, requester, proxy, addressType, loan,
-      pickupServicePoint);
+      pickupServicePoint, changedPosition, previousPosition);
   }
 
   public Request withLoan(Loan newLoan) {
     return new Request(requestRepresentation, cancellationReasonRepresentation, item, requester, proxy, addressType, newLoan,
-      pickupServicePoint);
+      pickupServicePoint, changedPosition, previousPosition);
   }
 
   public Request withPickupServicePoint(ServicePoint newPickupServicePoint) {
     return new Request(requestRepresentation, cancellationReasonRepresentation, item, requester, proxy, addressType, loan,
-      newPickupServicePoint);
+      newPickupServicePoint, changedPosition, previousPosition );
   }
 
   @Override
