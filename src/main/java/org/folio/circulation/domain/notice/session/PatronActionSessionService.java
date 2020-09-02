@@ -1,6 +1,7 @@
 package org.folio.circulation.domain.notice.session;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static java.util.stream.Collectors.groupingBy;
 import static org.folio.circulation.domain.notice.TemplateContextUtil.createLoanNoticeContextWithoutUser;
 import static org.folio.circulation.domain.notice.TemplateContextUtil.createUserContext;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
@@ -9,13 +10,11 @@ import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ResultBinding.mapResult;
 import static org.folio.circulation.support.http.client.PageLimit.limit;
 
-import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -32,15 +31,11 @@ import org.folio.circulation.domain.notice.PatronNoticeService;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.client.PageLimit;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class PatronActionSessionService {
   private static final PageLimit DEFAULT_SESSION_SIZE_PAGE_LIMIT = limit(200);
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private static EnumMap<PatronActionType, NoticeEventType> actionToEventMap;
 
@@ -141,30 +136,14 @@ public class PatronActionSessionService {
   private CompletableFuture<Result<MultipleRecords<PatronSessionRecord>>> sendNoticesForAllUsers(
     MultipleRecords<PatronSessionRecord> records) {
 
-    if (records == null || records.isEmpty()) {
-      log.info("Records are null or empty");
-      return completedFuture(succeeded(null));
-    }
-
-    List<PatronSessionRecord> sessionRecordsWithLoans = records.getRecords().stream()
+    List<MultipleRecords<PatronSessionRecord>> recordsGroupedByUser = records.getRecords().stream()
       .filter(record -> record.getLoan() != null && record.getLoan().getUser() != null)
+      .collect(groupingBy(record -> record.getLoan().getUserId()))
+      .values().stream()
+      .map(recordsList -> new MultipleRecords<>(recordsList, recordsList.size()))
       .collect(Collectors.toList());
 
-    if (sessionRecordsWithLoans.isEmpty()) {
-      log.info("Loans were not fetched for the PatronSessionRecords. The notices will not be sent");
-      return completedFuture(succeeded(records));
-    }
-
-    Set<User> users = sessionRecordsWithLoans.stream()
-      .map(record -> record.getLoan().getUser())
-      .collect(Collectors.toSet());
-
-    List<PatronNoticeEvent> patronNoticeEvents = getPatronNoticeEvents(sessionRecordsWithLoans);
-
-    return patronNoticeService.acceptMultipleNoticeEvent(patronNoticeEvents,
-      loanContexts -> new JsonObject()
-        .put("user", createUsersContext(users))
-        .put("loans", loanContexts))
+    return allOf(recordsGroupedByUser, this::sendNotices)
       .thenApply(mapResult(v -> records));
   }
 
@@ -179,13 +158,6 @@ public class PatronActionSessionService {
         .withNoticeContext(createLoanNoticeContextWithoutUser(r.getLoan()))
         .build())
       .collect(Collectors.toList());
-  }
-
-  private JsonArray createUsersContext(Set<User> users) {
-    JsonArray jsonArray = new JsonArray();
-    users.forEach(user -> jsonArray.add(createUserContext(user)));
-
-    return jsonArray;
   }
 
   public CompletableFuture<Result<CheckInProcessRecords>> saveCheckInSessionRecord(CheckInProcessRecords records) {

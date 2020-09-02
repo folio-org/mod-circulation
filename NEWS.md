@@ -1,3 +1,7 @@
+## 19.0.15 2020-09-01
+
+* Fixes user token values in notices for sessions closed by Okapi timer (CIRC-837)
+
 ## 19.0.14 2020-08-11
 
 * Ensures that scheduled task endpoints respond despite failures when triggered by Okapi (CIRC-850)

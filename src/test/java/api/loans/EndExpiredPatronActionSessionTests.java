@@ -1,5 +1,6 @@
 package api.loans;
 
+import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.ACTION_TYPE;
 import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.ID;
 import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.LOAN_ID;
@@ -13,7 +14,9 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
+import api.support.fixtures.TemplateContextMatchers;
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.notice.session.PatronActionType;
 import org.folio.circulation.support.http.client.IndividualResource;
@@ -32,17 +35,19 @@ public class EndExpiredPatronActionSessionTests extends APITests {
 
   private static final String CHECK_OUT = "Check-out";
   private static final String CHECK_IN = "Check-in";
+  private static final UUID CHECK_OUT_TEMPLATE_ID = UUID.randomUUID();
+  private static final UUID CHECK_IN_TEMPLATE_ID = UUID.randomUUID();
 
   @Before
   public void before() {
 
     JsonObject checkOutNoticeConfig = new NoticeConfigurationBuilder()
-      .withTemplateId(UUID.randomUUID())
+      .withTemplateId(CHECK_OUT_TEMPLATE_ID)
       .withCheckOutEvent()
       .create();
 
     JsonObject checkInNoticeConfig = new NoticeConfigurationBuilder()
-      .withTemplateId(UUID.randomUUID())
+      .withTemplateId(CHECK_IN_TEMPLATE_ID)
       .withCheckInEvent()
       .create();
 
@@ -254,7 +259,19 @@ public class EndExpiredPatronActionSessionTests extends APITests {
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(patronSessionRecordsClient::getAll,  Matchers.hasSize(0));
+
+    List<JsonObject> patronNotices = patronNoticesClient.getAll();
+
     assertThat(patronNoticesClient.getAll(), hasSize(6));
+
+    Stream.of(CHECK_OUT_TEMPLATE_ID, CHECK_IN_TEMPLATE_ID).forEach(templateId ->
+      Stream.of(james, jessica, steve).forEach(patron ->
+        patronNotices.stream()
+          .filter(pn -> pn.getString("templateId").equals(templateId.toString()))
+          .filter(pn -> pn.getString("recipientId").equals(patron.getId().toString()))
+          .forEach(patronNotice ->
+            assertThat(patronNotice, hasEmailNoticeProperties(patron.getId(), templateId,
+              TemplateContextMatchers.getUserContextMatchers(patron))))));
   }
 
   @Test
@@ -362,5 +379,29 @@ public class EndExpiredPatronActionSessionTests extends APITests {
     expiredEndSessionClient.create(new EndSessionBuilder()
       .withPatronId(patronId)
       .withActionType(actionType));
+  }
+
+  @Test
+  public void patronNoticeContextContainsUserTokensWhenNoticeIsTriggeredByExpiredSession() {
+    IndividualResource james = usersFixture.james();
+    InventoryItemResource nod = itemsFixture.basedUponNod();
+    checkOutFixture.checkOutByBarcode(nod, james);
+
+    patronSessionRecordsClient.getAll().stream()
+      .filter(session -> session.getMap().get(ACTION_TYPE)
+        .equals(PatronActionType.CHECK_OUT.getRepresentation()))
+      .map(session -> session.getString(PATRON_ID))
+      .forEach(patronId -> createExpiredEndSession(patronId, CHECK_OUT));
+
+    expiredSessionProcessingClient.runRequestExpiredSessionsProcessing(204);
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(patronSessionRecordsClient::getAll,  Matchers.hasSize(0));
+
+    assertThat(patronNoticesClient.getAll(), hasSize(1));
+
+    assertThat(patronNoticesClient.getAll().get(0),
+      hasEmailNoticeProperties(james.getId(), CHECK_OUT_TEMPLATE_ID,
+        TemplateContextMatchers.getUserContextMatchers(james)));
   }
 }
