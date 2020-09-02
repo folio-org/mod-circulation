@@ -51,10 +51,6 @@ public final class LoanToChargeOverdueFine {
   }
 
   public DateTime getDueDate() {
-    if (wasDeclaredLost()) {
-      return loan.getDeclareLostDateTime();
-    }
-
     return loan.getDueDate();
   }
 
