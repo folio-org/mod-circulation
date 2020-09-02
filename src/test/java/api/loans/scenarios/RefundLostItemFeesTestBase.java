@@ -296,17 +296,21 @@ public abstract class RefundLostItemFeesTestBase extends APITests {
 
   @Test
   public void shouldChargeOverdueFineWhenStatedByPolicyAndLostFeesCanceled() {
+    final int rollingPeriodMonths = 4;
     final int overdueMonths = 3;
     final double overdueFinePerMonth = 10.0;
-    final double expectedOverdueFine = overdueMonths * overdueFinePerMonth;
+    final double expectedOverdueFine = 30.0;
     final double processingFee = 12.99;
+    final DateTime checkInDate = now(DateTimeZone.UTC).plusMonths(rollingPeriodMonths + overdueMonths);
+    final DateTime declareLostDate = now(DateTimeZone.UTC);
+
 
     // Create overdue fine type
     feeFineTypeFixture.overdueFine();
 
     val loanPolicy = new LoanPolicyBuilder()
       .withName("Loan policy for declared lost")
-      .rolling(Period.months(overdueMonths + 1));
+      .rolling(Period.months(rollingPeriodMonths));
 
     val lostFeePolicy = lostItemFeePoliciesFixture.facultyStandardPolicy()
       .withName("Test check in")
@@ -324,12 +328,12 @@ public abstract class RefundLostItemFeesTestBase extends APITests {
       .lostItemPolicy(lostItemFeePoliciesFixture.create(lostFeePolicy))
       .overduePolicy(overdueFinePoliciesFixture.create(overdueFinePolicy)));
 
-    declareItemLost();
+    declareItemLost(declareLostDate);
 
     checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(item)
       .at(servicePointsFixture.cd1())
-      .on(now(DateTimeZone.UTC).plusMonths(overdueMonths)));
+      .on(checkInDate));
 
     assertThat(loan, hasLostItemProcessingFee(isClosedCancelledItemReturned(processingFee)));
     assertThat(loan, hasLostItemProcessingFeeActions(
@@ -417,15 +421,20 @@ public abstract class RefundLostItemFeesTestBase extends APITests {
     assertThat(loansFixture.getLoanById(loan.getId()).getJson(), isClosed());
   }
 
-  protected IndividualResource declareItemLost() {
+  protected IndividualResource declareItemLost(DateTime declareLostDate) {
     loan = checkOutFixture.checkOutByBarcode(item, usersFixture.charlotte());
 
     declareLostFixtures.declareItemLost(new DeclareItemLostRequestBuilder()
       .withServicePointId(servicePointsFixture.cd1().getId())
+      .on(declareLostDate)
       .forLoanId(loan.getId()));
 
     loan = loansFixture.getLoanById(loan.getId());
     return loan;
+  }
+
+  protected IndividualResource declareItemLost() {
+    return declareItemLost(now(DateTimeZone.UTC));
   }
 
   protected void declareItemLost(double setCostFee) {
