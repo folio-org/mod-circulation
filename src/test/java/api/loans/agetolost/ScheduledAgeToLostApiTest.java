@@ -7,6 +7,7 @@ import static api.support.matchers.ItemMatchers.isClaimedReturned;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static org.hamcrest.CoreMatchers.allOf;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.iterableWithSize;
@@ -58,6 +59,7 @@ public class ScheduledAgeToLostApiTest extends SpringApiTest {
     assertThat(itemsClient.get(overdueItem).getJson(), isAgedToLost());
     assertThat(getLoanActions(), hasAgedToLostAction());
     assertThat(loansClient.get(overdueLoan).getJson(), hasPatronBillingDate());
+    assertThat(loansClient.get(overdueLoan).getJson(), hasAgedToLostDate());
   }
 
   @Test
@@ -73,6 +75,7 @@ public class ScheduledAgeToLostApiTest extends SpringApiTest {
       assertThat(itemFromStorage.getJson(), isAgedToLost());
       assertThat(getLoanActions(loanFromStorage), hasAgedToLostAction());
       assertThat(loanFromStorage.getJson(), hasPatronBillingDate(loanFromStorage));
+      assertThat(loansClient.get(overdueLoan).getJson(), hasAgedToLostDate());
     });
   }
 
@@ -193,5 +196,9 @@ public class ScheduledAgeToLostApiTest extends SpringApiTest {
     return allOf(hasJsonPath("agedToLostDelayedBilling.lostItemHasBeenBilled", false),
       hasJsonPath("agedToLostDelayedBilling.dateLostItemShouldBeBilled",
         isEquivalentTo(expectedBillingDate)));
+  }
+
+  private Matcher<JsonObject> hasAgedToLostDate() {
+    return hasJsonPath("agedToLostDelayedBilling.agedToLostDate", notNullValue());
   }
 }

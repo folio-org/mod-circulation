@@ -26,6 +26,10 @@ public class LoanCheckInService {
           systemDateTime, request.getServicePointId()));
     }
 
+    if (loan.isAgedToLost()) {
+      loan.removeAgedToLostBillingInfo();
+    }
+
     return succeeded(loan.checkIn(request.getCheckInDate(), systemDateTime,
       request.getServicePointId()));
   }

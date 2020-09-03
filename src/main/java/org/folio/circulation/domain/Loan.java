@@ -15,6 +15,7 @@ import static org.folio.circulation.domain.LoanAction.MISSING;
 import static org.folio.circulation.domain.LoanAction.RENEWED;
 import static org.folio.circulation.domain.LoanAction.RENEWED_THROUGH_OVERRIDE;
 import static org.folio.circulation.domain.representations.LoanProperties.ACTION_COMMENT;
+import static org.folio.circulation.domain.representations.LoanProperties.AGED_TO_LOST_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.AGED_TO_LOST_DELAYED_BILLING;
 import static org.folio.circulation.domain.representations.LoanProperties.CHECKIN_SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.LoanProperties.CHECKOUT_SERVICE_POINT_ID;
@@ -34,11 +35,13 @@ import static org.folio.circulation.domain.representations.LoanProperties.USER_I
 import static org.folio.circulation.support.ClockManager.getClockManager;
 import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimeProperty;
+import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimePropertyByPath;
 import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getObjectProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.JsonPropertyWriter.remove;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
+import static org.folio.circulation.support.JsonPropertyWriter.writeByPath;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 import static org.folio.circulation.support.results.Result.succeeded;
@@ -505,6 +508,11 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return getDateTimeProperty(representation, DECLARED_LOST_DATE);
   }
 
+  public DateTime getAgedToLostDateTime() {
+    return getDateTimePropertyByPath(representation, AGED_TO_LOST_DELAYED_BILLING,
+      AGED_TO_LOST_DATE);
+  }
+
   public boolean isOverdue() {
     return isOverdue(getClockManager().getDateTime());
   }
@@ -579,28 +587,39 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
       checkoutServicePoint, originalDueDate, policies, accounts);
   }
 
-  public Loan ageOverdueItemToLost() {
+  public Loan ageOverdueItemToLost(DateTime ageToLostDate) {
     changeAction(ITEM_AGED_TO_LOST);
     removeActionComment();
     changeItemStatusForItemAndLoan(ItemStatus.AGED_TO_LOST);
+    setAgedToLostDate(ageToLostDate);
 
     return this;
   }
 
   public void setAgedToLostDelayedBilling(boolean hasBeenBilled, DateTime whenToBill) {
-    final JsonObject delayedBilling = new JsonObject();
-
-    write(delayedBilling, LOST_ITEM_HAS_BEEN_BILLED, hasBeenBilled);
-    write(delayedBilling, DATE_LOST_ITEM_SHOULD_BE_BILLED, whenToBill);
-
-    write(representation, AGED_TO_LOST_DELAYED_BILLING, delayedBilling);
+    writeByPath(representation, hasBeenBilled, AGED_TO_LOST_DELAYED_BILLING,
+      LOST_ITEM_HAS_BEEN_BILLED);
+    writeByPath(representation, whenToBill, AGED_TO_LOST_DELAYED_BILLING,
+      DATE_LOST_ITEM_SHOULD_BE_BILLED);
   }
 
   public Loan setLostItemHasBeenBilled() {
-    final JsonObject delayedBilling = getObjectProperty(representation, AGED_TO_LOST_DELAYED_BILLING);
-
-    write(delayedBilling, LOST_ITEM_HAS_BEEN_BILLED, true);
+    writeByPath(representation, true, AGED_TO_LOST_DELAYED_BILLING,
+      LOST_ITEM_HAS_BEEN_BILLED);
 
     return this;
+  }
+
+  public void removeAgedToLostBillingInfo() {
+    final JsonObject billingInfo = representation
+      .getJsonObject(AGED_TO_LOST_DELAYED_BILLING);
+
+    remove(billingInfo, LOST_ITEM_HAS_BEEN_BILLED);
+    remove(billingInfo, DATE_LOST_ITEM_SHOULD_BE_BILLED);
+  }
+
+  private void setAgedToLostDate(DateTime agedToLostDate) {
+    writeByPath(representation, agedToLostDate, AGED_TO_LOST_DELAYED_BILLING,
+      AGED_TO_LOST_DATE);
   }
 }

@@ -1,35 +1,26 @@
 package org.folio.circulation.services;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.domain.FeeFine.LOST_ITEM_PROCESSING_FEE_TYPE;
 import static org.folio.circulation.domain.FeeFine.lostItemFeeTypes;
-import static org.folio.circulation.domain.ItemStatus.DECLARED_LOST;
-import static org.folio.circulation.domain.ItemStatus.LOST_AND_PAID;
-import static org.folio.circulation.support.results.Result.failed;
-import static org.folio.circulation.support.results.Result.succeeded;
+import static org.folio.circulation.services.LostItemFeeRefundContext.using;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
+import static org.folio.circulation.support.results.Result.failed;
+import static org.folio.circulation.support.results.Result.succeeded;
 
-import java.util.Collection;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
-import org.folio.circulation.domain.Account;
-import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
 import org.folio.circulation.domain.CheckInContext;
-import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.policy.lostitem.LostItemPolicy;
+import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.loans.LostItemPolicyRepository;
-import org.folio.circulation.domain.policy.lostitem.LostItemPolicy;
 import org.folio.circulation.resources.context.RenewalContext;
-import org.folio.circulation.services.support.RefundAccountCommand;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.client.CqlQuery;
-import org.joda.time.DateTime;
+import org.folio.circulation.support.results.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,10 +42,7 @@ public class LostItemFeeRefundService {
   public CompletableFuture<Result<CheckInContext>> refundLostItemFees(
     CheckInContext context) {
 
-    final LostItemFeeRefundContext refundFeeContext = new LostItemFeeRefundContext(
-      context.getItemStatusBeforeCheckIn(), context.getItem().getItemId(),
-      context.getLoan(), context.getLoggedInUserId(),
-      context.getCheckInServicePointId().toString());
+    final LostItemFeeRefundContext refundFeeContext = using(context);
 
     return refundLostItemFees(refundFeeContext)
       .thenApply(r -> r.map(context::withLostItemFeesRefundedOrCancelled));
@@ -63,59 +51,60 @@ public class LostItemFeeRefundService {
   public CompletableFuture<Result<RenewalContext>> refundLostItemFees(
     RenewalContext renewalContext, String currentServicePointId) {
 
-    final LostItemFeeRefundContext refundFeeContext = new LostItemFeeRefundContext(
-      renewalContext.getItemStatusBeforeRenewal(), renewalContext.getLoan().getItemId(),
-      renewalContext.getLoan(), renewalContext.getLoggedInUserId(), currentServicePointId);
+    final LostItemFeeRefundContext refundFeeContext = using(renewalContext,
+      currentServicePointId);
 
     return refundLostItemFees(refundFeeContext)
       .thenApply(r -> r.map(renewalContext::withLostItemFeesRefundedOrCancelled));
   }
 
   private CompletableFuture<Result<Boolean>> refundLostItemFees(LostItemFeeRefundContext refundFeeContext) {
-    if (!isItemLost(refundFeeContext)) {
+    if (refundFeeContext.itemIsNotLost()) {
       return completedFuture(succeeded(false));
     }
 
     return lookupLoan(succeeded(refundFeeContext))
       .thenCompose(this::fetchLostItemPolicy)
       .thenCompose(contextResult -> contextResult.after(context -> {
-        final DateTime declaredLostDate = context.loan.getDeclareLostDateTime();
-        final LostItemPolicy lostItemPolicy = context.lostItemPolicy;
+        final LostItemPolicy lostItemPolicy = context.getLostItemPolicy();
 
-        if (!lostItemPolicy.shouldRefundFees(declaredLostDate)) {
-          log.debug("Refund interval has exceeded for loan [{}]", context.loan.getId());
+        if (!lostItemPolicy.shouldRefundFees(context.getItemLostDate())) {
+          log.info("Refund interval has exceeded for loan [{}]", context.getLoan().getId());
           return completedFuture(succeeded(false));
         }
 
         return fetchAccountsAndActionsForLoan(contextResult)
-          .thenCompose(r -> r.after(notUsed -> feeFineFacade
-            .refundAndCloseAccounts(context.accountRefundCommands())))
-          .thenApply(r -> r.map(notUsed -> context.anyAccountNeedsRefund()));
+          .thenCompose(r -> r.after(this::refundAccounts));
       }));
+  }
+
+  private CompletableFuture<Result<Boolean>> refundAccounts(LostItemFeeRefundContext context) {
+    return feeFineFacade.refundAndCloseAccounts(context.accountRefundCommands())
+      .thenApply(r -> r.map(notUsed -> context.anyAccountNeedsRefund()));
   }
 
   private CompletableFuture<Result<LostItemFeeRefundContext>> lookupLoan(
     Result<LostItemFeeRefundContext> contextResult) {
 
     return contextResult.after(context -> {
-      if (isOpenLoanAlreadyFound(context)) {
+      if (context.hasLoan()) {
         return completedFuture(succeeded(context));
       }
 
-      return loanRepository.findLastLoanForItem(context.itemId)
+      return loanRepository.findLastLoanForItem(context.getItemId())
         .thenApply(r -> r.next(loan -> {
           if (loan == null) {
-            log.error("There are no loans for lost item [{}]", context.itemId);
-            return noLoanFoundForLostItem(context.itemId);
+            log.error("There are no loans for lost item [{}]", context.getItemId());
+            return noLoanFoundForLostItem(context.getItemId());
           }
 
           if (loan.getDeclareLostDateTime() == null) {
             log.error("The last loan [{}] for lost item [{}] is not declared lost",
-              loan.getId(), context.itemId);
+              loan.getId(), context.getItemId());
             return lastLoanForLostItemIsNotDeclaredLost(loan);
           }
 
-          log.info("Loan [{}] retrieved for lost item [{}]", loan.getId(), context.itemId);
+          log.info("Loan [{}] retrieved for lost item [{}]", loan.getId(), context.getItemId());
           return succeeded(context.withLoan(loan));
         }));
     });
@@ -125,7 +114,7 @@ public class LostItemFeeRefundService {
     Result<LostItemFeeRefundContext> contextResult) {
 
     return contextResult.after(context -> {
-      final Result<CqlQuery> fetchQuery = exactMatch("loanId", context.loan.getId())
+      final Result<CqlQuery> fetchQuery = exactMatch("loanId", context.getLoan().getId())
         .combine(exactMatchAny("feeFineType", lostItemFeeTypes()), CqlQuery::and);
 
       return accountRepository.findAccountsAndActionsForLoanByQuery(fetchQuery)
@@ -137,16 +126,9 @@ public class LostItemFeeRefundService {
     Result<LostItemFeeRefundContext> contextResult) {
 
     return contextResult.combineAfter(
-      context -> lostItemPolicyRepository.getLostItemPolicyById(context.loan.getLostItemPolicyId()),
+      context -> lostItemPolicyRepository
+        .getLostItemPolicyById(context.getLoan().getLostItemPolicyId()),
       LostItemFeeRefundContext::withLostItemPolicy);
-  }
-
-  private boolean isItemLost(LostItemFeeRefundContext context) {
-    return context.itemStatus == DECLARED_LOST || context.itemStatus == LOST_AND_PAID;
-  }
-
-  private boolean isOpenLoanAlreadyFound(LostItemFeeRefundContext context) {
-    return context.loan != null;
   }
 
   private Result<LostItemFeeRefundContext> lastLoanForLostItemIsNotDeclaredLost(Loan loan) {
@@ -158,61 +140,5 @@ public class LostItemFeeRefundService {
     return failed(singleValidationError(
       "Item is lost however there is no declared lost loan found",
       "itemId", itemId));
-  }
-
-  private static final class LostItemFeeRefundContext {
-    private final ItemStatus itemStatus;
-    private final String itemId;
-    private final String staffUserId;
-    private final String servicePointId;
-    private final Loan loan;
-    private Collection<Account> accounts;
-    private LostItemPolicy lostItemPolicy;
-
-    private LostItemFeeRefundContext(ItemStatus itemStatus, String itemId, Loan loan,
-                                     String staffUserId, String servicePointId) {
-
-      this.itemStatus = itemStatus;
-      this.itemId = itemId;
-      this.loan = loan;
-      this.staffUserId = staffUserId;
-      this.servicePointId = servicePointId;
-    }
-
-    private LostItemFeeRefundContext withAccounts(Collection<Account> accounts) {
-      this.accounts = accounts;
-      return this;
-    }
-
-    private LostItemFeeRefundContext withLostItemPolicy(LostItemPolicy lostItemPolicy) {
-      this.lostItemPolicy = lostItemPolicy;
-      return this;
-    }
-
-    private LostItemFeeRefundContext withLoan(Loan loan) {
-      return new LostItemFeeRefundContext(itemStatus, itemId, loan, staffUserId, servicePointId)
-        .withAccounts(accounts)
-        .withLostItemPolicy(lostItemPolicy);
-    }
-
-    private Collection<Account> accountsNeedingRefunds() {
-      if (!lostItemPolicy.isRefundProcessingFeeWhenReturned()) {
-        return accounts.stream()
-          .filter(account -> !account.getFeeFineType().equals(LOST_ITEM_PROCESSING_FEE_TYPE))
-          .collect(Collectors.toList());
-      }
-
-      return accounts;
-    }
-
-    private List<RefundAccountCommand> accountRefundCommands() {
-      return accountsNeedingRefunds().stream()
-        .map(account -> new RefundAccountCommand(account, staffUserId, servicePointId))
-        .collect(Collectors.toList());
-    }
-
-    private boolean anyAccountNeedsRefund() {
-      return accountsNeedingRefunds().size() > 0;
-    }
   }
 }
