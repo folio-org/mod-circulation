@@ -61,6 +61,10 @@ final class LostItemFeeRefundContext {
       return loan.getDeclareLostDateTime();
     }
 
+    if(itemStatus == LOST_AND_PAID) {
+      return loan.getDeclareLostDateTime();
+    }
+
     if (itemStatus == AGED_TO_LOST) {
       return loan.getAgedToLostDateTime();
     }
