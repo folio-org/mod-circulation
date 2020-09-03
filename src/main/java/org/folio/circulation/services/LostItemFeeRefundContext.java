@@ -53,7 +53,7 @@ final class LostItemFeeRefundContext {
   }
 
   boolean anyAccountNeedsRefund() {
-    return accountsNeedingRefunds().size() > 0;
+    return !accountsNeedingRefunds().isEmpty();
   }
 
   DateTime getItemLostDate() {
