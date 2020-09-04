@@ -58,8 +58,8 @@ public class ScheduledAgeToLostApiTest extends SpringApiTest {
 
     assertThat(itemsClient.get(overdueItem).getJson(), isAgedToLost());
     assertThat(getLoanActions(), hasAgedToLostAction());
-    assertThat(loansClient.get(overdueLoan).getJson(), hasPatronBillingDate());
-    assertThat(loansClient.get(overdueLoan).getJson(), hasAgedToLostDate());
+    assertThat(loansStorageClient.get(overdueLoan).getJson(), hasPatronBillingDate());
+    assertThat(loansStorageClient.get(overdueLoan).getJson(), hasAgedToLostDate());
   }
 
   @Test
@@ -70,12 +70,12 @@ public class ScheduledAgeToLostApiTest extends SpringApiTest {
 
     loanToItemMap.forEach((loan, item) -> {
       val itemFromStorage = itemsClient.get(item);
-      val loanFromStorage = loansClient.get(loan);
+      val loanFromStorage = loansStorageClient.get(loan);
 
       assertThat(itemFromStorage.getJson(), isAgedToLost());
       assertThat(getLoanActions(loanFromStorage), hasAgedToLostAction());
       assertThat(loanFromStorage.getJson(), hasPatronBillingDate(loanFromStorage));
-      assertThat(loansClient.get(overdueLoan).getJson(), hasAgedToLostDate());
+      assertThat(loanFromStorage.getJson(), hasAgedToLostDate());
     });
   }
 
@@ -128,7 +128,7 @@ public class ScheduledAgeToLostApiTest extends SpringApiTest {
 
     assertThat(itemsClient.get(overdueItem).getJson(), isAgedToLost());
     assertThat(getLoanActions(), hasAgedToLostAction());
-    assertThat(loansClient.get(overdueLoan).getJson(), hasPatronBillingDate());
+    assertThat(loansStorageClient.get(overdueLoan).getJson(), hasPatronBillingDate());
 
     val agedToLostActions = getLoanActions().stream()
       .filter(json -> "itemAgedToLost".equals(json.getJsonObject("loan").getString("action")))
