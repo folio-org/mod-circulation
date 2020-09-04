@@ -6,7 +6,6 @@ import java.math.BigDecimal;
 import java.util.UUID;
 import java.util.function.BiFunction;
 
-import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 
