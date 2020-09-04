@@ -35,17 +35,8 @@ public class JsonPropertyWriterTest {
   public void shouldWriteStringByPath() {
     final String[] paths = {"1", "2", "3", "4", "5"};
     final String expectedString = "A string";
-    final String json = "{\n" +
-      "    \"1\": {\n" +
-      "        \"2\": {\n" +
-      "            \"3\": {\n" +
-      "                \"4\": {}\n" +
-      "            }\n" +
-      "        }\n" +
-      "    }\n" +
-      "}";
 
-    final JsonObject object = new JsonObject(json);
+    final JsonObject object = new JsonObject();
     writeByPath(object, expectedString, paths);
 
     assertThat(object, hasJsonPath("1.2.3.4.5", "A string"));
