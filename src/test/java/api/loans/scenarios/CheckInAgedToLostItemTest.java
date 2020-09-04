@@ -112,7 +112,7 @@ public class CheckInAgedToLostItemTest extends APITests {
       .refundFeesWithinMinutes(1);
 
     val result = ageToLostFixture.createLoanAgeToLostAndChargeFees(policy);
-    final IndividualResource loan = result.getLoan();
+    final IndividualResource loan = loansStorageClient.get(result.getLoan());
 
     feeFineAccountFixture.transferLostItemFee(result.getLoanId());
     feeFineAccountFixture.payLostItemProcessingFee(result.getLoanId());
