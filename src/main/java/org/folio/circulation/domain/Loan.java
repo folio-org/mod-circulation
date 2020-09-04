@@ -603,4 +603,10 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
     return this;
   }
+
+  public Loan useNoAction() {
+    representation.put(LoanProperties.ACTION, "");
+
+    return this;
+  }
 }
