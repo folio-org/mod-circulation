@@ -2,7 +2,8 @@ package org.folio.circulation.services;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.FeeFine.lostItemFeeTypes;
-import static org.folio.circulation.services.LostItemFeeRefundContext.using;
+import static org.folio.circulation.services.LostItemFeeRefundContext.forCheckIn;
+import static org.folio.circulation.services.LostItemFeeRefundContext.forRenewal;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
@@ -40,25 +41,22 @@ public class LostItemFeeRefundService {
   }
 
   public CompletableFuture<Result<CheckInContext>> refundLostItemFees(
-    CheckInContext context) {
+    CheckInContext checkInContext) {
 
-    final LostItemFeeRefundContext refundFeeContext = using(context);
-
-    return refundLostItemFees(refundFeeContext)
-      .thenApply(r -> r.map(context::withLostItemFeesRefundedOrCancelled));
+    return refundLostItemFees(forCheckIn(checkInContext))
+      .thenApply(r -> r.map(checkInContext::withLostItemFeesRefundedOrCancelled));
   }
 
   public CompletableFuture<Result<RenewalContext>> refundLostItemFees(
     RenewalContext renewalContext, String currentServicePointId) {
 
-    final LostItemFeeRefundContext refundFeeContext = using(renewalContext,
-      currentServicePointId);
-
-    return refundLostItemFees(refundFeeContext)
+    return refundLostItemFees(forRenewal(renewalContext, currentServicePointId))
       .thenApply(r -> r.map(renewalContext::withLostItemFeesRefundedOrCancelled));
   }
 
-  private CompletableFuture<Result<Boolean>> refundLostItemFees(LostItemFeeRefundContext refundFeeContext) {
+  private CompletableFuture<Result<Boolean>> refundLostItemFees(
+    LostItemFeeRefundContext refundFeeContext) {
+
     if (!refundFeeContext.shouldRefundFeesForItem()) {
       return completedFuture(succeeded(false));
     }

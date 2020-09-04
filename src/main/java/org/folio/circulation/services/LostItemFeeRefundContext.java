@@ -80,14 +80,14 @@ final class LostItemFeeRefundContext {
     return loan != null;
   }
 
-  public static LostItemFeeRefundContext using(CheckInContext context) {
+  public static LostItemFeeRefundContext forCheckIn(CheckInContext context) {
     return new LostItemFeeRefundContext(context.getItemStatusBeforeCheckIn(),
       context.getItem().getItemId(), context.getLoggedInUserId(),
       context.getCheckInServicePointId().toString(), context.getLoan(),
       emptyList(), null);
   }
 
-  public static LostItemFeeRefundContext using(RenewalContext context, String servicePointId) {
+  public static LostItemFeeRefundContext forRenewal(RenewalContext context, String servicePointId) {
     return new LostItemFeeRefundContext(context.getItemStatusBeforeRenewal(),
       context.getLoan().getItemId(), context.getLoggedInUserId(),
       servicePointId, context.getLoan(), emptyList(), null);
