@@ -34,44 +34,22 @@ import org.folio.circulation.support.JsonArrayHelper;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import lombok.AllArgsConstructor;
 
+@AllArgsConstructor
 public class Item {
-
   private final JsonObject itemRepresentation;
   private final JsonObject holdingRepresentation;
   private final JsonObject instanceRepresentation;
+  private final Location location;
+  private final JsonObject materialTypeRepresentation;
+  private final ServicePoint primaryServicePoint;
+  private final JsonObject loanTypeRepresentation;
   private final LastCheckIn lastCheckIn;
   private final CallNumberComponents callNumberComponents;
 
-  private Location location;
-  private JsonObject materialTypeRepresentation;
-  private ServicePoint primaryServicePoint;
   private ServicePoint inTransitDestinationServicePoint;
-  private JsonObject loanTypeRepresentation;
-
-  private boolean changed = false;
-
-  public Item(
-    JsonObject itemRepresentation,
-    JsonObject holdingRepresentation,
-    JsonObject instanceRepresentation,
-    Location location,
-    JsonObject materialTypeRepresentation,
-    ServicePoint servicePoint,
-    JsonObject loanTypeRepresentation,
-    LastCheckIn lastCheckIn,
-    CallNumberComponents callNumberComponents) {
-
-    this.itemRepresentation = itemRepresentation;
-    this.holdingRepresentation = holdingRepresentation;
-    this.instanceRepresentation = instanceRepresentation;
-    this.location = location;
-    this.materialTypeRepresentation = materialTypeRepresentation;
-    this.primaryServicePoint = servicePoint;
-    this.loanTypeRepresentation = loanTypeRepresentation;
-    this.lastCheckIn = lastCheckIn;
-    this.callNumberComponents = callNumberComponents;
-  }
+  private boolean changed;
 
   public static Item from(JsonObject representation) {
     return new Item(representation,
@@ -82,7 +60,9 @@ public class Item {
       null,
       null,
       LastCheckIn.fromItemJson(representation),
-      CallNumberComponents.fromItemJson(representation)
+      CallNumberComponents.fromItemJson(representation),
+      null,
+      false
     );
   }
 
@@ -381,8 +361,10 @@ public class Item {
       this.materialTypeRepresentation,
       this.primaryServicePoint,
       this.loanTypeRepresentation,
-      lastCheckIn,
-      this.callNumberComponents);
+      this.lastCheckIn,
+      this.callNumberComponents,
+      this.inTransitDestinationServicePoint,
+      this.changed);
   }
 
   public Item withMaterialType(JsonObject newMaterialType) {
@@ -394,8 +376,10 @@ public class Item {
       newMaterialType,
       this.primaryServicePoint,
       this.loanTypeRepresentation,
-      lastCheckIn,
-      this.callNumberComponents);
+      this.lastCheckIn,
+      this.callNumberComponents,
+      this.inTransitDestinationServicePoint,
+      this.changed);
   }
 
   public Item withHoldingsRecord(JsonObject newHoldingsRecordRepresentation) {
@@ -407,8 +391,10 @@ public class Item {
       this.materialTypeRepresentation,
       this.primaryServicePoint,
       this.loanTypeRepresentation,
-      lastCheckIn,
-      this.callNumberComponents);
+      this.lastCheckIn,
+      this.callNumberComponents,
+      this.inTransitDestinationServicePoint,
+      this.changed);
   }
 
   public Item withInstance(JsonObject newInstanceRepresentation) {
@@ -420,8 +406,10 @@ public class Item {
       this.materialTypeRepresentation,
       this.primaryServicePoint,
       this.loanTypeRepresentation,
-      lastCheckIn,
-      this.callNumberComponents);
+      this.lastCheckIn,
+      this.callNumberComponents,
+      this.inTransitDestinationServicePoint,
+      this.changed);
   }
 
   public Item withPrimaryServicePoint(ServicePoint servicePoint) {
@@ -433,8 +421,10 @@ public class Item {
       this.materialTypeRepresentation,
       servicePoint,
       this.loanTypeRepresentation,
-      lastCheckIn,
-      this.callNumberComponents);
+      this.lastCheckIn,
+      this.callNumberComponents,
+      this.inTransitDestinationServicePoint,
+      this.changed);
   }
 
   public Item withLoanType(JsonObject newLoanTypeRepresentation) {
@@ -446,22 +436,24 @@ public class Item {
       this.materialTypeRepresentation,
       this.primaryServicePoint,
       newLoanTypeRepresentation,
-      lastCheckIn,
-      this.callNumberComponents);
+      this.lastCheckIn,
+      this.callNumberComponents,
+      this.inTransitDestinationServicePoint,
+      this.changed);
   }
 
   public Item withLastCheckIn(LastCheckIn lastCheckIn) {
-    Item item = new Item(
-      itemRepresentation,
-      holdingRepresentation,
-      instanceRepresentation,
-      location,
-      materialTypeRepresentation,
-      primaryServicePoint,
-      loanTypeRepresentation,
+    return new Item(
+      this.itemRepresentation,
+      this.holdingRepresentation,
+      this.instanceRepresentation,
+      this.location,
+      this.materialTypeRepresentation,
+      this.primaryServicePoint,
+      this.loanTypeRepresentation,
       lastCheckIn,
-      this.callNumberComponents);
-    item.changed = this.changed;
-    return item;
+      this.callNumberComponents,
+      this.inTransitDestinationServicePoint,
+      this.changed);
   }
 }
