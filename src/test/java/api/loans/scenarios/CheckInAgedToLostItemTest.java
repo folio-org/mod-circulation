@@ -44,7 +44,7 @@ public class CheckInAgedToLostItemTest extends APITests {
   }
 
   @Test
-  public void shouldRefundPaidAmountAndCancelRemaining() {
+  public void shouldRefundPartiallyPaidAmountAndCancelRemaining() {
     final double setCostFee = 10.55;
     final double processingFee = 12.99;
 
@@ -72,7 +72,7 @@ public class CheckInAgedToLostItemTest extends APITests {
   }
 
   @Test
-  public void shouldAssignOverdueFine() {
+  public void shouldChargeOverdueFine() {
     final double processingFee = 12.99;
 
     val policy = lostItemFeePoliciesFixture.ageToLostAfterOneMinutePolicy()
