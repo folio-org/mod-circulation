@@ -19,7 +19,9 @@ import org.folio.circulation.support.JsonPropertyWriter;
 import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
+import lombok.AllArgsConstructor;
 
+@AllArgsConstructor
 public class Account {
   private final String id;
   private final AccountRelatedRecordsInfo relatedRecordsInfo;
@@ -29,20 +31,6 @@ public class Account {
   private final String paymentStatus;
   private final Collection<FeeFineAction> feeFineActions;
   private final DateTime creationDate;
-
-  public Account(String id, AccountRelatedRecordsInfo relatedRecordsInfo, FeeAmount amount,
-    FeeAmount remaining, String status, String paymentStatus, Collection<FeeFineAction> actions,
-    DateTime creationDate) {
-
-    this.id = id;
-    this.relatedRecordsInfo = relatedRecordsInfo;
-    this.amount = amount;
-    this.remaining = remaining;
-    this.status = status;
-    this.paymentStatus = paymentStatus;
-    this.feeFineActions = actions;
-    this.creationDate = creationDate;
-  }
 
   public static Account from(JsonObject representation) {
     return new Account(getProperty(representation, "id"),
