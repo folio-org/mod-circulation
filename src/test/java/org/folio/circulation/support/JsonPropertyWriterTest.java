@@ -10,9 +10,8 @@ import org.junit.Test;
 import io.vertx.core.json.JsonObject;
 
 public class JsonPropertyWriterTest {
-
   @Test
-  public void shouldCreateMissingObjects() {
+  public void shouldCreateMissingObjectsInThePath() {
     final String[] paths = {"1", "2", "3", "4", "5"};
     final JsonObject object2 = new JsonObject()
       .put("21", 2.1)
@@ -29,16 +28,5 @@ public class JsonPropertyWriterTest {
       hasJsonPath("11", "1.1"),
       hasJsonPath("1.21", 2.1)
     ));
-  }
-
-  @Test
-  public void shouldWriteStringByPath() {
-    final String[] paths = {"1", "2", "3", "4", "5"};
-    final String expectedString = "A string";
-
-    final JsonObject object = new JsonObject();
-    writeByPath(object, expectedString, paths);
-
-    assertThat(object, hasJsonPath("1.2.3.4.5", "A string"));
   }
 }

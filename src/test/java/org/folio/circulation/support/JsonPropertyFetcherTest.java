@@ -12,18 +12,6 @@ import org.junit.Test;
 import io.vertx.core.json.JsonObject;
 
 public class JsonPropertyFetcherTest {
-
-  @Test
-  public void shouldReturnNullIfSomeObjectsNotExistInPath() {
-    final String[] paths = {"1", "2", "3", "4", "5"};
-    final JsonObject object = new JsonObject()
-      .put("1", new JsonObject().put("2", new JsonObject()));
-
-    final DateTime actualValue = getDateTimePropertyByPath(object, paths);
-
-    assertThat(actualValue, nullValue());
-  }
-
   @Test
   public void shouldReturnDateTimePropertyByPath() {
     final String[] paths = {"1", "2", "3", "4", "5"};
@@ -34,5 +22,27 @@ public class JsonPropertyFetcherTest {
 
     final DateTime actualValue = getDateTimePropertyByPath(object, paths);
     assertThat(actualValue, is(expectedDate));
+  }
+
+  @Test
+  public void shouldReturnNullWhenObjectsInThePathAreNotPresent() {
+    final String[] paths = {"1", "2", "3", "4", "5"};
+    final JsonObject object = new JsonObject()
+      .put("1", new JsonObject().put("2", new JsonObject()));
+
+    final DateTime actualValue = getDateTimePropertyByPath(object, paths);
+
+    assertThat(actualValue, nullValue());
+  }
+
+  @Test
+  public void shouldReturnNullIfPropertyIsNull() {
+    final String[] paths = {"1", "2"};
+    final JsonObject object = new JsonObject()
+      .put("1", new JsonObject().put("2", (String) null));
+
+    final DateTime actualValue = getDateTimePropertyByPath(object, paths);
+
+    assertThat(actualValue, nullValue());
   }
 }

@@ -1,9 +1,12 @@
 package org.folio.circulation.support;
 
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
+
 import java.math.BigDecimal;
 import java.util.UUID;
 import java.util.function.BiFunction;
 
+import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 
@@ -79,7 +82,7 @@ public class JsonPropertyFetcher {
     JsonObject representation,
     String propertyName) {
 
-    if (representation != null && representation.containsKey(propertyName)) {
+    if (representation != null && isNotBlank(representation.getString(propertyName))) {
       return DateTime.parse(
         representation.getString(propertyName));
     } else {
