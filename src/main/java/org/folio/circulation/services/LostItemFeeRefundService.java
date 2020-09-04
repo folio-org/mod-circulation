@@ -59,7 +59,7 @@ public class LostItemFeeRefundService {
   }
 
   private CompletableFuture<Result<Boolean>> refundLostItemFees(LostItemFeeRefundContext refundFeeContext) {
-    if (refundFeeContext.itemIsNotLost()) {
+    if (!refundFeeContext.shouldRefundFeesForItem()) {
       return completedFuture(succeeded(false));
     }
 

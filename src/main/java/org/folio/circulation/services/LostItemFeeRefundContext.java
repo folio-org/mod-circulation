@@ -57,11 +57,11 @@ final class LostItemFeeRefundContext {
   }
 
   DateTime getItemLostDate() {
-    if(itemStatus == DECLARED_LOST) {
+    if (itemStatus == DECLARED_LOST) {
       return loan.getDeclareLostDateTime();
     }
 
-    if(itemStatus == LOST_AND_PAID) {
+    if (itemStatus == LOST_AND_PAID) {
       return loan.getDeclareLostDateTime();
     }
 
@@ -72,9 +72,8 @@ final class LostItemFeeRefundContext {
     return null;
   }
 
-  boolean itemIsNotLost() {
-    return itemStatus != DECLARED_LOST && itemStatus != AGED_TO_LOST
-      && itemStatus != LOST_AND_PAID;
+  boolean shouldRefundFeesForItem() {
+    return itemStatus.isLost() || itemStatus == LOST_AND_PAID;
   }
 
   boolean hasLoan() {
