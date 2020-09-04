@@ -604,7 +604,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return this;
   }
 
-  public Loan useNoAction() {
+  public Loan removePreviousAction() {
     representation.put(LoanProperties.ACTION, "");
 
     return this;
