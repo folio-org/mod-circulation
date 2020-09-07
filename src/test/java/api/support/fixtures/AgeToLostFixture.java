@@ -3,6 +3,7 @@ package api.support.fixtures;
 import static api.support.APITestContext.getOkapiHeadersFromContext;
 import static api.support.http.InterfaceUrls.scheduledAgeToLostFeeChargingUrl;
 import static api.support.http.InterfaceUrls.scheduledAgeToLostUrl;
+import static api.support.http.ResourceClient.forLoansStorage;
 import static api.support.matchers.ItemMatchers.isAgedToLost;
 import static java.time.Clock.fixed;
 import static java.time.Instant.ofEpochMilli;
@@ -21,6 +22,7 @@ import api.support.builders.ItemBuilder;
 import api.support.builders.LostItemFeePolicyBuilder;
 import api.support.fixtures.policies.PoliciesActivationFixture;
 import api.support.fixtures.policies.PoliciesToActivate;
+import api.support.http.ResourceClient;
 import api.support.http.TimedTaskClient;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -32,8 +34,8 @@ public final class AgeToLostFixture {
   private final ItemsFixture itemsFixture;
   private final CheckOutFixture checkOutFixture;
   private final UsersFixture usersFixture;
-  private final LoansFixture loansFixture;
   private final TimedTaskClient timedTaskClient;
+  private final ResourceClient loanStorageClient;
 
   public AgeToLostFixture(ItemsFixture itemsFixture, UsersFixture usersFixture,
     CheckOutFixture checkOutFixture) {
@@ -43,8 +45,8 @@ public final class AgeToLostFixture {
     this.itemsFixture = itemsFixture;
     this.usersFixture = usersFixture;
     this.checkOutFixture = checkOutFixture;
-    this.loansFixture = new LoansFixture();
     this.timedTaskClient = new TimedTaskClient(getOkapiHeadersFromContext());
+    this.loanStorageClient = forLoansStorage();
   }
 
   public AgeToLostResult createAgedToLostLoan() {
@@ -61,7 +63,7 @@ public final class AgeToLostFixture {
 
     ageToLost();
 
-    final AgeToLostResult ageToLostResult = new AgeToLostResult(loansFixture.getLoanById(loan.getId()),
+    final AgeToLostResult ageToLostResult = new AgeToLostResult(loanStorageClient.get(loan),
       itemsFixture.getById(item.getId()), user);
 
     assertThat(ageToLostResult.getItem().getJson(), isAgedToLost());
@@ -83,7 +85,7 @@ public final class AgeToLostFixture {
 
     chargeFees();
 
-    return new AgeToLostResult(loansFixture.getLoanById(result.getLoanId()),
+    return new AgeToLostResult(loanStorageClient.get(result.getLoanId()),
       itemsFixture.getById(result.getItemId()), result.getUser());
   }
 

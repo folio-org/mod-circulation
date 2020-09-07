@@ -93,7 +93,7 @@ public class OverdueFineCalculatorService {
       return completedFuture(succeeded(null));
     }
 
-    if (isDeclaredLost(renewalContext.getItemStatusBeforeRenewal())) {
+    if (isLost(renewalContext.getItemStatusBeforeRenewal())) {
       return repos.lostItemPolicyRepository.getLostItemPolicyById(loan.getLostItemPolicyId())
         .thenApply(r -> r.map(policy -> policy.shouldChargeOverdueFee()
           && renewalContext.isLostItemFeesRefundedOrCancelled()));
@@ -119,7 +119,7 @@ public class OverdueFineCalculatorService {
       return completedFuture(succeeded(false));
     }
 
-    if (isDeclaredLost(context.getItemStatusBeforeCheckIn())) {
+    if (isLost(context.getItemStatusBeforeCheckIn())) {
       return repos.lostItemPolicyRepository.getLostItemPolicyById(loan.getLostItemPolicyId())
         .thenApply(r -> r.map(policy -> policy.shouldChargeOverdueFee()
           && context.areLostItemFeesRefundedOrCancelled()));
@@ -275,8 +275,8 @@ public class OverdueFineCalculatorService {
       .build());
   }
 
-  private boolean isDeclaredLost(ItemStatus itemStatus) {
-    return itemStatus == ItemStatus.DECLARED_LOST;
+  private boolean isLost(ItemStatus itemStatus) {
+    return itemStatus == ItemStatus.DECLARED_LOST || itemStatus == ItemStatus.AGED_TO_LOST;
   }
 
   @With

@@ -79,6 +79,8 @@ public class LoanRepresentation {
         .createItemSummary(item));
     }
 
+    loan.remove(LoanProperties.AGED_TO_LOST_DELAYED_BILLING);
+
     return loan;
   }
 
