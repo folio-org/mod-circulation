@@ -143,7 +143,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     ageToLostFixture.ageToLostAndChargeFees();
 
     loanToFeeMap.forEach((loan, expectedFee) -> {
-      val loanFromStorage = loansClient.get(loan);
+      val loanFromStorage = loansStorageClient.get(loan);
 
       assertThat(loanFromStorage.getJson(), isLostItemHasBeenBilled());
 
@@ -171,10 +171,10 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     ageToLostFixture.ageToLostAndAttemptChargeFees();
 
     loansExpectedToBeFailed.forEach((loan, fee) ->
-        assertThat(loansClient.get(loan).getJson(), isLostItemHasNotBeenBilled()));
+        assertThat(loansStorageClient.get(loan).getJson(), isLostItemHasNotBeenBilled()));
 
     loansExpectedToBeProcessedSuccessfully.forEach((loan, fee) -> {
-      val loanFromStorage = loansClient.get(loan);
+      val loanFromStorage = loansStorageClient.get(loan);
       assertThat(loanFromStorage.getJson(), isLostItemHasBeenBilled());
 
       assertThat(loanFromStorage, hasLostItemFee(isOpen(fee)));

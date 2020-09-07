@@ -1,32 +1,32 @@
 package org.folio.circulation.rules;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.greaterThan;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.not;
-import static org.junit.Assert.fail;
-
 import static org.folio.circulation.resources.AbstractCirculationRulesEngineResource.ITEM_TYPE_ID_NAME;
 import static org.folio.circulation.resources.AbstractCirculationRulesEngineResource.LOAN_TYPE_ID_NAME;
 import static org.folio.circulation.resources.AbstractCirculationRulesEngineResource.LOCATION_ID_NAME;
 import static org.folio.circulation.resources.AbstractCirculationRulesEngineResource.PATRON_TYPE_ID_NAME;
 import static org.folio.circulation.rules.CirculationRulesExceptionMatcher.matches;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.UUID;
 
-import api.support.builders.LocationBuilder;
-import io.vertx.core.MultiMap;
-import io.vertx.core.http.CaseInsensitiveHeaders;
-import io.vertx.core.json.JsonArray;
+import org.folio.circulation.domain.Location;
+import org.hamcrest.Matcher;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.folio.circulation.domain.Location;
+import api.support.builders.LocationBuilder;
+import io.vertx.core.MultiMap;
+import io.vertx.core.json.JsonArray;
 
 public class Text2DroolsTest {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -39,17 +39,20 @@ public class Text2DroolsTest {
   private static final String FIRST_CAMPUS_ID = "692dbd8c-9804-4281-9fd1-8ce601d7c6a3";
   private static final String SECOND_CAMPUS_ID = "04163907-8f63-41f3-888d-f2d2888a4dd0";
 
+  @Rule
+  public ExpectedException exceptionRule = ExpectedException.none();
 
   @Test
   public void headerFallbackPolicy() {
     String droolsText = Text2Drools.convert(HEADER);
     Drools drools = new Drools(droolsText);
+
     assertThat(drools.loanPolicy(params("foo", "bar", "biz", "shelf"),
       createLocation(FIRST_INSTITUTION_ID, FIRST_LIBRARY_ID, FIRST_CAMPUS_ID)).getPolicyId(),
       is("no-loan"));
   }
 
-  private String test1 = String.join("\n",
+  private final String test1 = String.join("\n",
       "priority: t, s, c, b, a, m, g",
       "fallback-policy: l no-loan r no-hold n basic-notice o overdue i lost-item",
       "m book cd dvd: l policy-a r request-1 n notice-1 o overdue-1 i lost-item-1",
@@ -60,9 +63,9 @@ public class Text2DroolsTest {
       "m book cd dvd + t special-items: l in-house r request-6 n notice-6 o overdue-6 i lost-item-6",
       "t special-items: l policy-d r request-7 n notice-7 o overdue-7 i lost-item-7",
       "    g visitor alumni: l in-house r request-8 n notice-8 o overdue-8 i lost-item-8",
-      "a " + FIRST_INSTITUTION_ID + ": l in-university r request-9 n notice-9 o overdue-9 i lost-item-9"
-      );
-  private String [][] loanTestCases = new String[][] {
+      "a " + FIRST_INSTITUTION_ID + ": l in-university r request-9 n notice-9 o overdue-9 i lost-item-9");
+
+  private final String [][] loanTestCases = new String[][] {
     // item type,   loan type,      patron type, institution id,   loan policies
     { "foo",       "foo",           "foo",       SECOND_INSTITUTION_ID,                                                      "no-loan" },
     { "book",      "regular",       "undergrad", FIRST_INSTITUTION_ID,                        "in-university",   "policy-a", "no-loan" },
@@ -76,7 +79,7 @@ public class Text2DroolsTest {
     { "foo",       "foo",           "foo",       FIRST_INSTITUTION_ID,                                      "in-university", "no-loan" },
   };
 
-  private String[][] requestTestCases = new String[][] {
+  private final String[][] requestTestCases = new String[][] {
     // item type,   request type,   patron type, institution id,  request policies
     { "foo",        "foo",          "foo",       SECOND_INSTITUTION_ID,                                                     "no-hold" },
     { "book",       "regular",      "undergrad", FIRST_INSTITUTION_ID,                            "request-9", "request-1", "no-hold" },
@@ -88,7 +91,7 @@ public class Text2DroolsTest {
     { "foo",       "foo",           "foo",       FIRST_INSTITUTION_ID,                                         "request-9", "no-hold" },
   };
 
-  private String[][] overdueTestCases = new String[][] {
+  private final String[][] overdueTestCases = new String[][] {
     // item type,   request type,   patron type, institution id,   overdue policies
     { "foo",       "foo",           "foo",       SECOND_INSTITUTION_ID,                                                     "overdue" },
     { "book",      "regular",       "undergrad", FIRST_INSTITUTION_ID,                            "overdue-9", "overdue-1", "overdue" },
@@ -100,7 +103,7 @@ public class Text2DroolsTest {
     { "foo",       "foo",           "foo",       FIRST_INSTITUTION_ID,                                         "overdue-9", "overdue" },
   };
 
-  private String[][] lostItemTestCases = new String[][] {
+  private final String[][] lostItemTestCases = new String[][] {
     // item type,   request type,   patron type, institution id,   lost item policies
     { "foo",       "foo",           "foo",       SECOND_INSTITUTION_ID,                                                             "lost-item" },
     { "book",      "regular",       "undergrad", FIRST_INSTITUTION_ID,                                "lost-item-9", "lost-item-1", "lost-item" },
@@ -112,7 +115,6 @@ public class Text2DroolsTest {
     { "foo",       "foo",           "foo",       FIRST_INSTITUTION_ID,                                               "lost-item-9", "lost-item" },
   };
 
-
   /** @return s[0] + " " + s[1] + " " + s[2] + " " + s[3] */
   private String first4(String [] s) {
     return s[0] + " " + s[1] + " " + s[2] + " " + s[3];
@@ -121,7 +123,7 @@ public class Text2DroolsTest {
   @Test
   public void test1static() {
     String drools = Text2Drools.convert(test1);
-    log.debug("drools = {}" + drools);
+
     for (String [] s : loanTestCases) {
       assertThat(first4(s), Drools.loanPolicy(drools, params(s[0], s[1], s[2], s[3]),
         createLocation(s[3], SECOND_LIBRARY_ID, SECOND_CAMPUS_ID)),
@@ -132,6 +134,7 @@ public class Text2DroolsTest {
   @Test
   public void test1() {
     Drools drools = new Drools(Text2Drools.convert(test1));
+
     for (String [] s : loanTestCases) {
         assertThat(first4(s), drools.loanPolicy(params(s[0], s[1], s[2], s[3]),
           createLocation(s[3], SECOND_LIBRARY_ID, SECOND_CAMPUS_ID)).getPolicyId(), is(s[4]));
@@ -140,12 +143,13 @@ public class Text2DroolsTest {
 
   @Test
   public void testRequestPolicyList() {
-      testRequestPolicies(test1, requestTestCases);
+    testRequestPolicies(test1, requestTestCases);
   }
 
   @Test
   public void testRequestPolicy() {
     String drools = Text2Drools.convert(test1);
+
     for (String[] s : requestTestCases) {
       assertThat(first4(s), Drools.requestPolicy(drools, params(s[0], s[1], s[2], s[3]),
         createLocation(s[3], SECOND_LIBRARY_ID, SECOND_CAMPUS_ID)), is(s[4]));
@@ -162,72 +166,6 @@ public class Text2DroolsTest {
     testLostItemFeePolicies(test1, lostItemTestCases);
   }
 
-  /** s without the first 4 elements, converted to a String.
-   * <p>
-   * expected({"a", "b", "c", "d", "e", "f", "g"}) = "[e, f, g]"
-   * */
-  private String expected(String [] s) {
-    return Arrays.toString(Arrays.copyOfRange(s, 4, s.length));
-  }
-
-  /**
-   * Test that Drools.loanPolicies(...) with the circulationRules work for all cases.
-   * <p>
-   * The first 3 element of a case are the parameters for Drools.loanPolicies(...),
-   * the other parameters are the expected result.
-   */
-  private void testLoanPolicies(String circulationRules, String [][] cases) {
-    Drools drools = new Drools(Text2Drools.convert(circulationRules));
-    for (String [] s : cases) {
-      JsonArray array = drools.loanPolicies(params(s[0], s[1], s[2], s[3]),
-        createLocation(s[3], SECOND_LIBRARY_ID, SECOND_CAMPUS_ID));
-      String [] policies = new String[array.size()];
-      for (int i=0; i<array.size(); i++) {
-        policies[i] = array.getJsonObject(i).getString("loanPolicyId");
-      }
-      assertThat(first4(s), Arrays.toString(policies), is(expected(s)));
-    }
-  }
-
-  private void testRequestPolicies(String circulationRules, String[][] cases) {
-      Drools drools = new Drools(Text2Drools.convert(circulationRules));
-      for (String [] s : cases) {
-        JsonArray array = drools.requestPolicies(params(s[0], s[1], s[2], s[3]),
-          createLocation(s[3], SECOND_LIBRARY_ID, SECOND_CAMPUS_ID));
-        String [] policies = new String[array.size()];
-        for (int i=0; i<array.size(); i++) {
-          policies[i] = array.getJsonObject(i).getString("requestPolicyId");
-        }
-        assertThat(first4(s), Arrays.toString(policies), is(expected(s)));
-      }
-  }
-
-  private void testOverdueFinePolicies(String circulationRules, String[][] cases) {
-    Drools drools = new Drools(Text2Drools.convert(circulationRules));
-    for (String [] s : cases) {
-      JsonArray array = drools.overduePolicies(params(s[0], s[1], s[2], s[3]),
-        createLocation(s[3], SECOND_LIBRARY_ID, SECOND_CAMPUS_ID));
-      String [] policies = new String[array.size()];
-      for (int i=0; i<array.size(); i++) {
-        policies[i] = array.getJsonObject(i).getString("overduePolicyId");
-      }
-      assertThat(first4(s), Arrays.toString(policies), is(expected(s)));
-    }
-  }
-
-  private void testLostItemFeePolicies(String circulationRules, String[][] cases) {
-    Drools drools = new Drools(Text2Drools.convert(circulationRules));
-    for (String [] s : cases) {
-      JsonArray array = drools.lostItemPolicies(params(s[0], s[1], s[2], s[3]),
-        createLocation(s[3], SECOND_LIBRARY_ID, SECOND_CAMPUS_ID));
-      String [] policies = new String[array.size()];
-      for (int i=0; i<array.size(); i++) {
-        policies[i] = array.getJsonObject(i).getString("lostItemPolicyId");
-      }
-      assertThat(first4(s), Arrays.toString(policies), is(expected(s)));
-    }
-  }
-
   @Test
   public void test1list() {
     testLoanPolicies(test1, loanTestCases);
@@ -235,15 +173,11 @@ public class Text2DroolsTest {
 
   @Test
   public void firstLineMisplacedFallbackPolicy() {
-    try {
-      Text2Drools.convert(String.join("\n",
-          "priority: first-line",
-          "fallback-policy: l no-loan r no-hold n basic-notice o overdue i lost-item",
-          "m book: l policy-a r no-hold n basic-notice o overdue i lost-item"));
-      fail();
-    } catch (CirculationRulesException e) {
-      assertThat(e, matches("fallback-policy", 3, 1));
-    }
+    expectException(String.join("\n",
+        "priority: first-line",
+        "fallback-policy: l no-loan r no-hold n basic-notice o overdue i lost-item",
+        "m book: l policy-a r no-hold n basic-notice o overdue i lost-item"),
+      matches("fallback-policy", 3, 1));
   }
 
   @Test
@@ -267,62 +201,44 @@ public class Text2DroolsTest {
 
   @Test
   public void tab() {
-    try {
-      Text2Drools.convert(HEADER + "  \t m book: l policy-a r no-hold n basic-notice o overdue i lost-item");
-      fail();
-    } catch (CirculationRulesException e) {
-      assertThat(e, matches("Tab", 3, 4));
-    }
+    expectException(
+      HEADER + "  \t m book: l policy-a r no-hold n basic-notice o overdue i lost-item",
+      matches("Tab", 3, 4));
   }
 
   @Test
   public void missingPriority() {
-    try {
-      Text2Drools.convert("fallback-policy: l no-loan r no-hold n basic-notice o overdue i lost-item");
-      fail();
-    } catch (CirculationRulesException e) {
-      assertThat(e, matches("priority", 1, 1));
-    }
+    expectException(
+      "fallback-policy: l no-loan r no-hold n basic-notice o overdue i lost-item",
+      matches("priority", 1, 1));
   }
 
   @Test
   public void reject6CriteriumTypes() {
-    try {
-      Text2Drools.convert("priority: t g m a b c\nfallback-policy: l no-loan r no-hold n basic-notice o overdue i lost-item");
-      fail();
-    } catch (CirculationRulesException e) {
-      assertThat(e, matches("7 letters expected, found only 6", 1, 11));
-    }
+    expectException(
+      "priority: t g m a b c\nfallback-policy: l no-loan r no-hold n basic-notice o overdue i lost-item",
+      matches("7 letters expected, found only 6", 1, 11));
   }
 
   @Test
   public void reject8CriteriumTypes() {
-    try {
-      Text2Drools.convert("priority: t g m a b c s s\nfallback-policy: l no-loan r no-hold n basic-notice o overdue i lost-item");
-      fail();
-    } catch (CirculationRulesException e) {
-      assertThat(e, matches("Only 7 letters expected, found 8", 1, 11));
-    }
+    expectException(
+      "priority: t g m a b c s s\nfallback-policy: l no-loan r no-hold n basic-notice o overdue i lost-item",
+      matches("Only 7 letters expected, found 8", 1, 11));
   }
 
   @Test
   public void duplicateCriteriumType() {
-    try {
-      Text2Drools.convert("priority: t g m a b s s\nfallback-policy: l no-loan r no-hold n basic-notice r no-hold n basic-notice o overdue i lost-item");
-      fail();
-    } catch (CirculationRulesException e) {
-      assertThat(e, matches("Duplicate letter s", 1, 23));
-    }
+    expectException(
+      "priority: t g m a b s s\nfallback-policy: l no-loan r no-hold n basic-notice r no-hold n basic-notice o overdue i lost-item",
+      matches("Duplicate letter s", 1, 23));
   }
 
   @Test
   public void duplicatePriorityType() {
-    try {
-      Text2Drools.convert("priority: number-of-criteria, number-of-criteria, last-line\nfallback-policy: l no-loan r no-hold n basic-notice o overdue i lost-item");
-      fail();
-    } catch (CirculationRulesException e) {
-      assertThat(e, matches("Duplicate priority", 1, 31));
-    }
+    expectException(
+      "priority: number-of-criteria, number-of-criteria, last-line\nfallback-policy: l no-loan r no-hold n basic-notice o overdue i lost-item",
+      matches("Duplicate priority", 1, 31));
   }
 
   @Test
@@ -363,52 +279,37 @@ public class Text2DroolsTest {
 
   @Test
   public void missingFallbackPolicies() {
-    try {
-      Text2Drools.convert("priority: last-line\nm book: l policy-a r no-hold n basic-notice o overdue i lost-item");
-      fail();
-    } catch (CirculationRulesException e) {
-      assertThat(e, matches("fallback", 2, 1));
-    }
+    expectException(
+      "priority: last-line\nm book: l policy-a r no-hold n basic-notice o overdue i lost-item",
+      matches("fallback", 2, 1));
   }
 
   @Test
   public void missingFallbackPolicyFirstLine() {
-    try {
-      Text2Drools.convert("priority: first-line\nm book: l policy-a r no-hold n basic-notice o overdue i lost-item");
-      fail();
-    } catch (CirculationRulesException e) {
-      assertThat(e, matches("fallback", 2, 66));
-    }
+    expectException(
+      "priority: first-line\nm book: l policy-a r no-hold n basic-notice o overdue i lost-item",
+      matches("fallback", 2, 66));
   }
 
   @Test
   public void indentedFallbackPolicies() {
-    try {
-      Text2Drools.convert(HEADER + "m book\n  fallback-policy: l policy-b r no-hold n basic-notice o overdue i lost-item");
-      fail();
-    } catch (CirculationRulesException e) {
-      assertThat(e, matches("mismatched input 'fallback-policy'", 4, 3));
-    }
+    expectException(
+      HEADER + "m book\n  fallback-policy: l policy-b r no-hold n basic-notice o overdue i lost-item",
+      matches("mismatched input 'fallback-policy'", 4, 3));
   }
 
   @Test
   public void exclamationBeforePriority() {
-    try {
-      Text2Drools.convert("! fallback-policy: l policy-a r no-hold n basic-notice o overdue i lost-item");
-      fail();
-    } catch (CirculationRulesException e) {
-      assertThat(e, matches("mismatched input '!'", 1, 1));
-    }
+    expectException(
+      "! fallback-policy: l policy-a r no-hold n basic-notice o overdue i lost-item",
+      matches("mismatched input '!'", 1, 1));
   }
 
   @Test
   public void emptyNameList() {
-    try {
-      Text2Drools.convert(HEADER + "m: l policy-a r no-hold n basic-notice o overdue i lost-item");
-      fail();
-    } catch (CirculationRulesException e) {
-      assertThat(e, matches("Name missing", 3, 2));
-    }
+    expectException(
+      HEADER + "m: l policy-a r no-hold n basic-notice o overdue i lost-item",
+      matches("Name missing", 3, 2));
   }
 
   @Test
@@ -580,42 +481,26 @@ public class Text2DroolsTest {
 
   @Test
   public void missingLoanPolicy() {
-    try {
-      Text2Drools.convert(HEADER + "m book:");
-      fail();
-    } catch (CirculationRulesException e) {
-      assertThat(e, matches("Policy missing after ':'", 3, 8));
-    }
+    expectException(HEADER + "m book:",
+      matches("Policy missing after ':'", 3, 8));
   }
 
   @Test
   public void duplicateLoanPolicy() {
-    try {
-      Text2Drools.convert(HEADER + "m book: l policy-a l policy-b r no-hold n basic-notice o overdue i lost-item");
-      fail();
-    } catch (CirculationRulesException e) {
-      assertThat(e, matches("Only one policy of type l allowed", 3, 6));
-    }
+    expectException(HEADER + "m book: l policy-a l policy-b r no-hold n basic-notice o overdue i lost-item",
+      matches("Only one policy of type l allowed", 3, 6));
   }
 
   @Test
   public void duplicateOverdueFinePolicy() {
-    try {
-      Text2Drools.convert(HEADER + "m book: l policy-a r no-hold n basic-notice o overdue o overdue-1 i lost-item");
-      fail();
-    } catch (CirculationRulesException e) {
-      assertThat(e, matches("Only one policy of type o allowed", 3, 6));
-    }
+    expectException(HEADER + "m book: l policy-a r no-hold n basic-notice o overdue o overdue-1 i lost-item",
+      matches("Only one policy of type o allowed", 3, 6));
   }
 
   @Test
   public void duplicateLostItemFeePolicy() {
-    try {
-      Text2Drools.convert(HEADER + "m book: l policy-a r no-hold n basic-notice o overdue i lost-item i lost-item-1");
-      fail();
-    } catch (CirculationRulesException e) {
-      assertThat(e, matches("Only one policy of type i allowed", 3, 6));
-    }
+    expectException(HEADER + "m book: l policy-a r no-hold n basic-notice o overdue i lost-item i lost-item-1",
+      matches("Only one policy of type i allowed", 3, 6));
   }
 
   @Test
@@ -632,12 +517,7 @@ public class Text2DroolsTest {
 
   @Test
   public void invalidToken() {
-    try {
-      Text2Drools.convert("foo");
-      fail();
-    } catch (CirculationRulesException e) {
-      assertThat(e, matches("extraneous input 'foo'", 1, 1));
-    }
+    expectException("foo", matches("extraneous input 'foo'", 1, 1));
   }
 
   @Test
@@ -663,82 +543,143 @@ public class Text2DroolsTest {
     Method criteriumTypeClassnameMethod =
         Text2Drools.class.getDeclaredMethod("criteriumTypeClassname", String.class);
     criteriumTypeClassnameMethod.setAccessible(true);
+
+    //noinspection JavaReflectionInvocation
     criteriumTypeClassnameMethod.invoke("q");
   }
 
   @Test
   public void missingFallbackPolicy() {
-    try {
-      Text2Drools.convert("priority: last-line\nfallback-policy: l no-loan r no-hold o overdue i lost-item\n");
-    } catch (CirculationRulesException e) {
-      assertThat(e, matches("fallback", 2, 0));
-    }
+    expectException(
+      "priority: last-line\nfallback-policy: l no-loan r no-hold o overdue i lost-item\n",
+      matches("fallback", 2, 0));
   }
 
   @Test
   public void duplicateFallbackPolicy() {
-    try {
-      Text2Drools.convert("priority: last-line\nfallback-policy: l no-loan r no-hold n basic-notice r no-hold o overdue i lost-item");
-    } catch (CirculationRulesException e) {
-      assertThat(e, matches("Only one fallback policy of type r is allowed", 2, 0));
-    }
+    expectException(
+      "priority: last-line\nfallback-policy: l no-loan r no-hold n basic-notice r no-hold o overdue i lost-item",
+      matches("Only one fallback policy of type r is allowed", 2, 0));
   }
 
   @Test
   public void missingRequestPolicy() {
-    try {
-      Text2Drools.convert(HEADER + "m book: l no-loan n basic-notice o overdue i lost-item");
-    } catch (CirculationRulesException e) {
-      assertThat(e, matches("Must contain one of each policy type, missing type r", 3, 6));
-    }
+    expectException(HEADER + "m book: l no-loan n basic-notice o overdue i lost-item",
+      matches("Must contain one of each policy type, missing type r", 3, 6));
   }
 
   @Test
   public void missingOverduePolicy() {
-    try {
-      Text2Drools.convert(HEADER + "m book: l no-loan r basic-request n basic-notice i lost-item");
-    } catch (CirculationRulesException e) {
-      assertThat(e, matches("Must contain one of each policy type, missing type o", 3, 6));
-    }
+    expectException(HEADER + "m book: l no-loan r basic-request n basic-notice i lost-item",
+    matches("Must contain one of each policy type, missing type o", 3, 6));
   }
 
   @Test
   public void missingLostItemPolicy() {
-    try {
-      Text2Drools.convert(HEADER + "m book: l no-loan r basic-request n basic-notice o overdue");
-    } catch (CirculationRulesException e) {
-      assertThat(e, matches("Must contain one of each policy type, missing type i", 3, 6));
-    }
+    expectException(HEADER + "m book: l no-loan r basic-request n basic-notice o overdue",
+      matches("Must contain one of each policy type, missing type i", 3, 6));
   }
 
   @Test
   public void alternatePolicyOrder() {
-    try {
-      Text2Drools.convert(String.join("\n",
-        "priority: first-line",
-        "m book: r allow-hold n general-notice o overdue l two-week i lost-item",
-        "fallback-policy: l no-loan r no-hold n basic-notice o overdue i lost-item"
-      ));
-    } catch (CirculationRulesException e) {
-      fail("circulation rules should build correctly in any order");
+    Drools drools = new Drools(Text2Drools.convert(String.join("\n",
+      "priority: first-line",
+      "m book: r allow-hold n general-notice o overdue l two-week i lost-item",
+      "fallback-policy: l no-loan r no-hold n basic-notice o overdue i lost-item")));
+
+    assertThat(drools.loanPolicy(params("book", "regular", "student", "shelf"),
+      createLocation(SECOND_INSTITUTION_ID, SECOND_LIBRARY_ID, SECOND_CAMPUS_ID)).getPolicyId(), is("two-week"));
+  }
+
+  /** s without the first 4 elements, converted to a String.
+   * <p>
+   * expected({"a", "b", "c", "d", "e", "f", "g"}) = "[e, f, g]"
+   * */
+  private String expected(String [] s) {
+    return Arrays.toString(Arrays.copyOfRange(s, 4, s.length));
+  }
+
+  /**
+   * Test that Drools.loanPolicies(...) with the circulationRules work for all cases.
+   * <p>
+   * The first 3 element of a case are the parameters for Drools.loanPolicies(...),
+   * the other parameters are the expected result.
+   */
+  private void testLoanPolicies(String circulationRules, String [][] cases) {
+    Drools drools = new Drools(Text2Drools.convert(circulationRules));
+    for (String [] s : cases) {
+      JsonArray array = drools.loanPolicies(params(s[0], s[1], s[2], s[3]),
+        createLocation(s[3], SECOND_LIBRARY_ID, SECOND_CAMPUS_ID));
+      String [] policies = new String[array.size()];
+      for (int i=0; i<array.size(); i++) {
+        policies[i] = array.getJsonObject(i).getString("loanPolicyId");
+      }
+      assertThat(first4(s), Arrays.toString(policies), is(expected(s)));
+    }
+  }
+
+  private void testRequestPolicies(String circulationRules, String[][] cases) {
+    Drools drools = new Drools(Text2Drools.convert(circulationRules));
+    for (String [] s : cases) {
+      JsonArray array = drools.requestPolicies(params(s[0], s[1], s[2], s[3]),
+        createLocation(s[3], SECOND_LIBRARY_ID, SECOND_CAMPUS_ID));
+      String [] policies = new String[array.size()];
+      for (int i=0; i<array.size(); i++) {
+        policies[i] = array.getJsonObject(i).getString("requestPolicyId");
+      }
+      assertThat(first4(s), Arrays.toString(policies), is(expected(s)));
+    }
+  }
+
+  private void testOverdueFinePolicies(String circulationRules, String[][] cases) {
+    Drools drools = new Drools(Text2Drools.convert(circulationRules));
+    for (String [] s : cases) {
+      JsonArray array = drools.overduePolicies(params(s[0], s[1], s[2], s[3]),
+        createLocation(s[3], SECOND_LIBRARY_ID, SECOND_CAMPUS_ID));
+      String [] policies = new String[array.size()];
+      for (int i=0; i<array.size(); i++) {
+        policies[i] = array.getJsonObject(i).getString("overduePolicyId");
+      }
+      assertThat(first4(s), Arrays.toString(policies), is(expected(s)));
+    }
+  }
+
+  private void testLostItemFeePolicies(String circulationRules, String[][] cases) {
+    Drools drools = new Drools(Text2Drools.convert(circulationRules));
+    for (String [] s : cases) {
+      JsonArray array = drools.lostItemPolicies(params(s[0], s[1], s[2], s[3]),
+        createLocation(s[3], SECOND_LIBRARY_ID, SECOND_CAMPUS_ID));
+      String [] policies = new String[array.size()];
+      for (int i=0; i<array.size(); i++) {
+        policies[i] = array.getJsonObject(i).getString("lostItemPolicyId");
+      }
+      assertThat(first4(s), Arrays.toString(policies), is(expected(s)));
     }
   }
 
   private MultiMap params(String itId, String ltId, String ptId, String lId) {
-    MultiMap params = new CaseInsensitiveHeaders();
+    MultiMap params = MultiMap.caseInsensitiveMultiMap();
+
     params.add(ITEM_TYPE_ID_NAME, itId);
     params.add(LOAN_TYPE_ID_NAME, ltId);
     params.add(PATRON_TYPE_ID_NAME, ptId);
     params.add(LOCATION_ID_NAME, lId);
+
     return params;
   }
 
-  private Location createLocation(String institutionId, String libraryId,
-                                  String campusId){
+  private Location createLocation(String institutionId, String libraryId, String campusId) {
     return Location.from(new LocationBuilder()
       .forInstitution(UUID.fromString(institutionId))
       .forLibrary(UUID.fromString(libraryId))
       .forCampus(UUID.fromString(campusId))
       .create());
+  }
+
+  private void expectException(String rulesText, Matcher<CirculationRulesException> matches) {
+    exceptionRule.expect(CirculationRulesException.class);
+    exceptionRule.expect(matches);
+
+    Text2Drools.convert(rulesText);
   }
 }

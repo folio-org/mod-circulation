@@ -1,7 +1,10 @@
 package org.folio.circulation.support;
 
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
+
 import java.math.BigDecimal;
 import java.util.UUID;
+import java.util.function.BiFunction;
 
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
@@ -78,7 +81,7 @@ public class JsonPropertyFetcher {
     JsonObject representation,
     String propertyName) {
 
-    if (representation != null && representation.containsKey(propertyName)) {
+    if (representation != null && isNotBlank(representation.getString(propertyName))) {
       return DateTime.parse(
         representation.getString(propertyName));
     } else {
@@ -194,5 +197,24 @@ public class JsonPropertyFetcher {
     if (from.containsKey(propertyName)) {
       to.put(propertyName, from.getValue(propertyName));
     }
+  }
+
+  public static DateTime getDateTimePropertyByPath(JsonObject from, String... paths) {
+    return getByPath(from, JsonPropertyFetcher::getDateTimeProperty, paths);
+  }
+
+  private static <T> T getByPath(JsonObject from, BiFunction<JsonObject, String, T> getter,
+    String... paths) {
+
+    if (from == null || paths.length == 0) {
+      return null;
+    }
+
+    JsonObject currentObject = from;
+    for (int pathIndex = 0; pathIndex < paths.length - 1; pathIndex++) {
+      currentObject = currentObject.getJsonObject(paths[pathIndex], new JsonObject());
+    }
+
+    return getter.apply(currentObject, paths[paths.length - 1]);
   }
 }

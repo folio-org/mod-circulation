@@ -9,27 +9,29 @@ import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.commons.lang3.StringUtils;
-import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
-import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
-import org.folio.circulation.domain.notice.TemplateContextUtil;
 import org.folio.circulation.domain.notice.NoticeTiming;
 import org.folio.circulation.domain.notice.PatronNoticeService;
+import org.folio.circulation.domain.notice.TemplateContextUtil;
+import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
+import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.RecordNotFoundFailure;
-import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
-
-import io.vertx.core.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.vertx.core.json.JsonObject;
+import lombok.AllArgsConstructor;
+
+@AllArgsConstructor
 public class DueDateScheduledNoticeHandler {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
@@ -39,7 +41,6 @@ public class DueDateScheduledNoticeHandler {
   private static final String TEMPLATE_RECORD_TYPE = "template";
   static final String[] REQUIRED_RECORD_TYPES = {USER_RECORD_TYPE,
     ITEM_RECORD_TYPE, LOAN_RECORD_TYPE, TEMPLATE_RECORD_TYPE};
-  private final CollectionResourceClient templateNoticesClient;
 
   public static DueDateScheduledNoticeHandler using(Clients clients, DateTime systemTime) {
     return new DueDateScheduledNoticeHandler(
@@ -48,33 +49,20 @@ public class DueDateScheduledNoticeHandler {
       new ConfigurationRepository(clients),
       PatronNoticeService.using(clients),
       ScheduledNoticesRepository.using(clients),
-      systemTime, clients.templateNoticeClient());
+      clients.templateNoticeClient(), systemTime);
   }
 
-  private LoanRepository loanRepository;
-  private LoanPolicyRepository loanPolicyRepository;
-  private ConfigurationRepository configurationRepository;
-  private PatronNoticeService patronNoticeService;
-  private ScheduledNoticesRepository scheduledNoticesRepository;
-  private DateTime systemTime;
+  private final LoanRepository loanRepository;
+  private final LoanPolicyRepository loanPolicyRepository;
+  private final ConfigurationRepository configurationRepository;
+  private final PatronNoticeService patronNoticeService;
+  private final ScheduledNoticesRepository scheduledNoticesRepository;
+  private final CollectionResourceClient templateNoticesClient;
+  private final DateTime systemTime;
 
-  public DueDateScheduledNoticeHandler(
-    LoanRepository loanRepository, LoanPolicyRepository loanPolicyRepository,
-    ConfigurationRepository configurationRepository,
-    PatronNoticeService patronNoticeService,
-    ScheduledNoticesRepository scheduledNoticesRepository, DateTime systemTime,
-    CollectionResourceClient templateNoticesClient) {
+  public CompletableFuture<Result<Collection<ScheduledNotice>>> handleNotices(
+    Collection<ScheduledNotice> scheduledNotices) {
 
-    this.loanRepository = loanRepository;
-    this.loanPolicyRepository = loanPolicyRepository;
-    this.configurationRepository = configurationRepository;
-    this.patronNoticeService = patronNoticeService;
-    this.scheduledNoticesRepository = scheduledNoticesRepository;
-    this.systemTime = systemTime;
-    this.templateNoticesClient = templateNoticesClient;
-  }
-
-  public CompletableFuture<Result<Collection<ScheduledNotice>>> handleNotices(Collection<ScheduledNotice> scheduledNotices) {
     CompletableFuture<Result<ScheduledNotice>> future = completedFuture(succeeded(null));
     for (ScheduledNotice scheduledNotice : scheduledNotices) {
       future = future.thenCompose(r -> handleNotice(scheduledNotice));
@@ -90,7 +78,6 @@ public class DueDateScheduledNoticeHandler {
   }
 
   private CompletableFuture<Result<ScheduledNotice>> handleDueDateNotice(ScheduledNotice notice) {
-
     String templateId = notice.getConfiguration().getTemplateId();
 
     return templateNoticesClient.get(templateId)
@@ -105,9 +92,7 @@ public class DueDateScheduledNoticeHandler {
       .thenApply(r -> r.mapFailure(this::handleFailure));
   }
 
-  public Result<Response> failIfTemplateNotFound(
-    Response response, String templateId) {
-
+  public Result<Response> failIfTemplateNotFound(Response response, String templateId) {
     if (response.getStatusCode() == 404) {
       return failed(new RecordNotFoundFailure(TEMPLATE_RECORD_TYPE, templateId));
     } else {
@@ -171,6 +156,7 @@ public class DueDateScheduledNoticeHandler {
 
   public CompletableFuture<Result<ScheduledNotice>> updateNotice(
     LoanAndRelatedRecords relatedRecords, ScheduledNotice notice) {
+
     Loan loan = relatedRecords.getLoan();
     ScheduledNoticeConfig noticeConfig = notice.getConfiguration();
 
@@ -180,10 +166,12 @@ public class DueDateScheduledNoticeHandler {
 
     DateTime recurringNoticeNextRunTime = notice.getNextRunTime()
       .plus(noticeConfig.getRecurringPeriod().timePeriod());
+
     if (recurringNoticeNextRunTime.isBefore(systemTime)) {
       recurringNoticeNextRunTime =
         systemTime.plus(noticeConfig.getRecurringPeriod().timePeriod());
     }
+
     ScheduledNotice nextRecurringNotice = notice.withNextRunTime(recurringNoticeNextRunTime);
 
     if (nextRecurringNoticeIsNotRelevant(nextRecurringNotice, loan)) {
@@ -204,8 +192,7 @@ public class DueDateScheduledNoticeHandler {
       loan.getDueDate().isBefore(systemTime);
   }
 
-  private boolean nextRecurringNoticeIsNotRelevant(
-    ScheduledNotice notice, Loan loan) {
+  private boolean nextRecurringNoticeIsNotRelevant(ScheduledNotice notice, Loan loan) {
     ScheduledNoticeConfig noticeConfig = notice.getConfiguration();
 
     return noticeConfig.isRecurring() &&
@@ -213,7 +200,7 @@ public class DueDateScheduledNoticeHandler {
       notice.getNextRunTime().isAfter(loan.getDueDate());
   }
 
-  boolean failedToFindRecordOfType(Result result, String... recordTypes) {
+  <T> boolean failedToFindRecordOfType(Result<T> result, String... recordTypes) {
     return result.failed()
       && isRecordNotFoundFailureForType(result.cause(), recordTypes);
   }

@@ -102,4 +102,42 @@ public class JsonPropertyWriter {
 
     from.remove(propertyName);
   }
+
+  public static void writeByPath(JsonObject to, String value, String... paths) {
+    writeByPath(to, JsonPropertyWriter::write, value, paths);
+  }
+
+  public static void writeByPath(JsonObject to, DateTime value, String... paths) {
+    writeByPath(to, JsonPropertyWriter::write, value, paths);
+  }
+
+  public static void writeByPath(JsonObject to, boolean value, String... paths) {
+    writeByPath(to, JsonPropertyWriter::write, value, paths);
+  }
+
+  private static <T> void writeByPath(JsonObject to, JsonPropertySetter<T> setter,
+    T value, String... paths) {
+
+    if (to == null || value == null || paths.length == 0) {
+      return;
+    }
+
+    JsonObject currentObject = to;
+    for (int pathIndex = 0; pathIndex < paths.length - 1; pathIndex++) {
+      final String currentPath = paths[pathIndex];
+
+      if (!currentObject.containsKey(currentPath)) {
+        currentObject.put(currentPath, new JsonObject());
+      }
+
+      currentObject = currentObject.getJsonObject(currentPath);
+    }
+
+    setter.set(currentObject, paths[paths.length - 1], value);
+  }
+
+  @FunctionalInterface
+  private interface JsonPropertySetter<T> {
+    void set(JsonObject object, String path, T value);
+  }
 }

@@ -69,7 +69,7 @@ public class MarkOverdueLoansAsAgedLostService {
       .calculateDateTimeWhenPatronBilledForAgedToLost(loanDueDate);
 
     loan.setAgedToLostDelayedBilling(false, whenToBill);
-    return loan.ageOverdueItemToLost();
+    return loan.ageOverdueItemToLost(getClockManager().getDateTime());
   }
 
   private CompletableFuture<Result<Void>> updateLoansAndItemsInStorage(

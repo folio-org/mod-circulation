@@ -6,7 +6,6 @@ import static api.support.matchers.LoanMatchers.isClosed;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
-import static org.folio.circulation.domain.representations.ChangeItemStatusRequest.COMMENT;
 import static org.folio.circulation.domain.representations.LoanProperties.ACTION;
 import static org.folio.circulation.domain.representations.LoanProperties.ACTION_COMMENT;
 import static org.hamcrest.CoreMatchers.allOf;
@@ -95,7 +94,7 @@ public class DeclareClaimedReturnedItemAsMissingApiTests extends APITests {
     assertThat(response.getStatusCode(), is(422));
     assertThat(response.getJson(),
       hasErrorWith(hasMessage("Comment is a required field")));
-    assertThat(response.getJson(), hasErrorWith(hasParameter(COMMENT, null)));
+    assertThat(response.getJson(), hasErrorWith(hasParameter("comment", null)));
   }
 
   @Test
