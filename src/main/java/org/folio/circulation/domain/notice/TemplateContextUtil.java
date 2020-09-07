@@ -219,7 +219,7 @@ public class TemplateContextUtil {
       .ifPresent(value -> requestContext.put("reasonForCancellation", value));
     optionalRequest
       .map(Request::getAddressType)
-      .ifPresent(value -> requestContext.put("deliveryAddressType", value.getAddressType()));
+      .ifPresent(value -> requestContext.put("deliveryAddressType", value.getName()));
 
     return requestContext;
   }
