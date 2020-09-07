@@ -622,4 +622,10 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     writeByPath(representation, agedToLostDate, AGED_TO_LOST_DELAYED_BILLING,
       AGED_TO_LOST_DATE);
   }
+
+  public Loan removePreviousAction() {
+    representation.put(LoanProperties.ACTION, "");
+
+    return this;
+  }
 }
