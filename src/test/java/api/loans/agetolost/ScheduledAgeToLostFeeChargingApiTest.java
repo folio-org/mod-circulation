@@ -16,7 +16,7 @@ import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static java.lang.Boolean.TRUE;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasItems;
+import static org.hamcrest.Matchers.containsInRelativeOrder;
 import static org.hamcrest.Matchers.iterableWithSize;
 
 import java.util.LinkedHashMap;
@@ -65,7 +65,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     assertThat(result.getLoan(), hasLostItemFee(isOpen(expectedSetCost)));
     assertThat(result.getLoan(), hasLostItemFeeCreatedBySystemAction());
 
-    assertThat(result.getLoan(), hasLoanHistory(hasItems(
+    assertThat(result.getLoan(), hasLoanHistory(containsInRelativeOrder(
       hasJsonPath("loan.action", ""),
       hasJsonPath("loan.action", "itemAgedToLost"),
       hasJsonPath("loan.action", "checkedout")

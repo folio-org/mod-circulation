@@ -16,9 +16,9 @@ import io.vertx.core.json.JsonObject;
 
 public class LoanHistoryMatcher extends TypeSafeMatcher<IndividualResource> {
   private final ResourceClient loanHistoryClient;
-  private final Matcher<Iterable<JsonObject>> matcher;
+  private final Matcher<Iterable<? extends JsonObject>> matcher;
 
-  private LoanHistoryMatcher(Matcher<Iterable<JsonObject>> matcher) {
+  private LoanHistoryMatcher(Matcher<Iterable<? extends JsonObject>> matcher) {
     this.loanHistoryClient = forLoanHistoryStorage();
     this.matcher = matcher;
   }
@@ -39,7 +39,9 @@ public class LoanHistoryMatcher extends TypeSafeMatcher<IndividualResource> {
       .appendDescriptionOf(matcher);
   }
 
-  public static Matcher<IndividualResource> hasLoanHistory(Matcher<Iterable<JsonObject>> matcher) {
+  public static Matcher<IndividualResource> hasLoanHistory(
+    Matcher<Iterable<? extends JsonObject>> matcher) {
+
     return new LoanHistoryMatcher(matcher);
   }
 }
