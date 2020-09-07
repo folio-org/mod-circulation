@@ -1,6 +1,5 @@
 package api.support.builders;
 
-import static org.folio.circulation.domain.representations.ChangeItemStatusRequest.COMMENT;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 import io.vertx.core.json.JsonObject;
@@ -36,7 +35,7 @@ public class DeclareClaimedReturnedItemAsMissingRequestBuilder implements Builde
   public JsonObject create() {
     final JsonObject request = new JsonObject();
 
-    write(request, COMMENT, comment);
+    write(request, "comment", comment);
 
     return request;
   }

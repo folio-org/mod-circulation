@@ -14,7 +14,11 @@ import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
+@Getter
+@AllArgsConstructor
 public class CheckInByBarcodeRequest {
   private static final String ITEM_BARCODE = "itemBarcode";
   private static final String CHECK_IN_DATE = "checkInDate";
@@ -25,18 +29,6 @@ public class CheckInByBarcodeRequest {
   private final UUID servicePointId;
   private final DateTime checkInDate;
   private final ClaimedReturnedResolution claimedReturnedResolution;
-
-  private CheckInByBarcodeRequest(
-    String itemBarcode,
-    UUID servicePointId,
-    DateTime checkInDate,
-    ClaimedReturnedResolution claimedReturnedResolution) {
-
-    this.itemBarcode = itemBarcode;
-    this.servicePointId = servicePointId;
-    this.checkInDate = checkInDate;
-    this.claimedReturnedResolution = claimedReturnedResolution;
-  }
 
   public static Result<CheckInByBarcodeRequest> from(JsonObject json) {
     final String itemBarcode = getProperty(json, ITEM_BARCODE);
@@ -73,22 +65,6 @@ public class CheckInByBarcodeRequest {
 
     return succeeded(new CheckInByBarcodeRequest(itemBarcode, servicePointId,
       checkInDate, claimedReturnedResolution));
-  }
-
-  public String getItemBarcode() {
-    return itemBarcode;
-  }
-
-  public UUID getServicePointId() {
-    return servicePointId;
-  }
-
-  public DateTime getCheckInDate() {
-    return checkInDate;
-  }
-
-  public ClaimedReturnedResolution getClaimedReturnedResolution() {
-    return claimedReturnedResolution;
   }
 
   public enum ClaimedReturnedResolution {
