@@ -6,11 +6,15 @@ import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 
 import io.vertx.core.json.JsonObject;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
 import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
 
+@Getter
+@AllArgsConstructor
 public class DeclareItemLostRequest {
-  private static final String COMMENT = "comment";
   private static final String DECLARED_LOST_DATETIME  = "declaredLostDateTime";
 
   private final String loanId;
@@ -18,18 +22,9 @@ public class DeclareItemLostRequest {
   private final String comment;
   private final String servicePointId;
 
-  private DeclareItemLostRequest(String comment, DateTime declaredLostDateTime,
-    String loanId, String servicePointId) {
-
-    this.comment = comment;
-    this.declaredLostDateTime = declaredLostDateTime;
-    this.loanId = loanId;
-    this.servicePointId = servicePointId;
-  }
-
   public static Result<DeclareItemLostRequest> from(JsonObject json,
     String loanId) {
-    final String comment = getProperty(json, COMMENT);
+    final String comment = getProperty(json, "comment");
 
     final DateTime dateTime;
     try {
@@ -40,23 +35,7 @@ public class DeclareItemLostRequest {
           getProperty(json, DECLARED_LOST_DATETIME));
       }
 
-    return succeeded(new DeclareItemLostRequest(comment, dateTime, loanId,
+    return succeeded(new DeclareItemLostRequest(loanId, dateTime, comment,
       getProperty(json, "servicePointId")));
-  }
-
-  public String getComment() {
-    return comment;
-  }
-
-  public DateTime getDeclaredLostDateTime() {
-    return declaredLostDateTime;
-  }
-
-  public String getLoanId() {
-    return loanId;
-  }
-
-  public String getServicePointId() {
-    return servicePointId;
   }
 }

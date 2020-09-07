@@ -11,7 +11,11 @@ import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
+@Getter
+@AllArgsConstructor
 public class RequestByInstanceIdRequest {
   private static final String REQUEST_DATE = "requestDate";
   private static final String REQUESTER_ID = "requesterId";
@@ -24,19 +28,6 @@ public class RequestByInstanceIdRequest {
   private final UUID instanceId;
   private final DateTime requestExpirationDate;
   private final UUID pickupServicePointId;
-
-  private RequestByInstanceIdRequest(
-      DateTime requestDate,
-      UUID requesterId,
-      UUID instanceId,
-      DateTime requestExpirationDate,
-      UUID pickupServicePointId) {
-    this.requestDate = requestDate;
-    this.requesterId = requesterId;
-    this.instanceId = instanceId;
-    this.requestExpirationDate = requestExpirationDate;
-    this.pickupServicePointId = pickupServicePointId;
-  }
 
   public static Result<RequestByInstanceIdRequest> from(JsonObject json) {
     final DateTime requestDate = getDateTimeProperty(json, REQUEST_DATE);
@@ -62,25 +53,5 @@ public class RequestByInstanceIdRequest {
 
     return succeeded(new RequestByInstanceIdRequest(requestDate, requesterId, instanceId,
         requestExpirationDate, pickupServicePointId));
-  }
-
-  public DateTime getRequestDate() {
-    return requestDate;
-  }
-
-  public UUID getRequesterId() {
-    return requesterId;
-  }
-
-  public UUID getInstanceId() {
-    return instanceId;
-  }
-
-  public DateTime getRequestExpirationDate() {
-    return requestExpirationDate;
-  }
-
-  public UUID getPickupServicePointId() {
-    return pickupServicePointId;
   }
 }

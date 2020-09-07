@@ -1,14 +1,18 @@
 package org.folio.circulation.resources.renewal;
 
-import static org.folio.circulation.support.results.Result.succeeded;
+import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
+import static org.folio.circulation.support.results.Result.succeeded;
 
-import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.json.JsonObject;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
+@Getter
+@AllArgsConstructor
 public class RenewByIdRequest {
   static final String USER_ID = "userId";
   private static final String ITEM_ID = "itemId";
@@ -16,35 +20,21 @@ public class RenewByIdRequest {
   private final String itemId;
   private final String userId;
 
-  private RenewByIdRequest(String itemId, String userId) {
-    this.itemId = itemId;
-    this.userId = userId;
-  }
-
   public static Result<RenewByIdRequest> from(JsonObject json) {
-    final String itemBarcode = getProperty(json, ITEM_ID);
+    final String itemId = getProperty(json, ITEM_ID);
 
-    if(StringUtils.isBlank(itemBarcode)) {
+    if (isBlank(itemId)) {
       return failedValidation("Renewal request must have an item ID",
         ITEM_ID, null);
     }
 
-    final String userBarcode = getProperty(json, USER_ID);
+    final String userId = getProperty(json, USER_ID);
 
-    if(StringUtils.isBlank(userBarcode)) {
+    if (isBlank(userId)) {
       return failedValidation("Renewal request must have a user ID",
         USER_ID, null);
     }
 
-    return succeeded(new RenewByIdRequest(itemBarcode, userBarcode));
+    return succeeded(new RenewByIdRequest(itemId, userId));
   }
-
-  public String getItemId() {
-    return itemId;
-  }
-
-  public String getUserId() {
-    return userId;
-  }
-
 }
