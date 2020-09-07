@@ -443,7 +443,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public boolean isItemLost() {
-    return getItem().getStatus().isLost();
+    return getItem().getStatus().isLostNotResolved();
   }
 
   public boolean isClaimedReturned() {

@@ -55,7 +55,7 @@ public enum ItemStatus {
     return equalsIgnoreCase(getValue(), value);
   }
 
-  public boolean isLost() {
+  public boolean isLostNotResolved() {
     return this == DECLARED_LOST || this == AGED_TO_LOST;
   }
 }

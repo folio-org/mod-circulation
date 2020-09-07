@@ -73,7 +73,7 @@ final class LostItemFeeRefundContext {
   }
 
   boolean shouldRefundFeesForItem() {
-    return itemStatus.isLost() || itemStatus == LOST_AND_PAID;
+    return itemStatus.isLostNotResolved() || itemStatus == LOST_AND_PAID;
   }
 
   boolean hasLoan() {
