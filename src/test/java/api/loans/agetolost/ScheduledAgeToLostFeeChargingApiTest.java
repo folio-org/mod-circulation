@@ -10,11 +10,13 @@ import static api.support.matchers.LoanAccountMatcher.hasLostItemFees;
 import static api.support.matchers.LoanAccountMatcher.hasLostItemProcessingFee;
 import static api.support.matchers.LoanAccountMatcher.hasNoLostItemFee;
 import static api.support.matchers.LoanAccountMatcher.hasNoLostItemProcessingFee;
+import static api.support.matchers.LoanHistoryMatcher.hasLoanHistory;
 import static api.support.matchers.LoanMatchers.isClosed;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static java.lang.Boolean.TRUE;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInRelativeOrder;
 import static org.hamcrest.Matchers.iterableWithSize;
 
 import java.util.LinkedHashMap;
@@ -36,6 +38,11 @@ import io.vertx.core.json.JsonObject;
 import lombok.val;
 
 public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
+
+  public ScheduledAgeToLostFeeChargingApiTest() {
+    super(true, true);
+  }
+
   @Before
   public void createOwnersAndFeeFineTypes() {
     feeFineOwnerFixture.cd1Owner();
@@ -44,6 +51,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
   }
 
   @Test
+  @SuppressWarnings("unchecked")
   public void shouldChargeItemFee() {
     final double expectedSetCost = 12.88;
 
@@ -57,6 +65,12 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     assertThat(result.getLoan().getJson(), isLostItemHasBeenBilled());
     assertThat(result.getLoan(), hasLostItemFee(isOpen(expectedSetCost)));
     assertThat(result.getLoan(), hasLostItemFeeCreatedBySystemAction());
+
+    assertThat(result.getLoan(), hasLoanHistory(containsInRelativeOrder(
+      hasJsonPath("loan.action", ""),
+      hasJsonPath("loan.action", "itemAgedToLost"),
+      hasJsonPath("loan.action", "checkedout")
+    )));
   }
 
   @Test

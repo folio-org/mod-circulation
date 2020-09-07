@@ -5,7 +5,9 @@ import org.folio.circulation.support.JsonPropertyFetcher;
 import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
+import lombok.Getter;
 
+@Getter
 public class ClaimItemReturnedRequest extends ChangeItemStatusRequest {
   public static final String ITEM_CLAIMED_RETURNED_DATE = "itemClaimedReturnedDateTime";
   private final DateTime itemClaimedReturnedDateTime;
@@ -13,10 +15,6 @@ public class ClaimItemReturnedRequest extends ChangeItemStatusRequest {
   public ClaimItemReturnedRequest(String loanId, DateTime dateTime, String comment) {
     super(loanId, comment);
     this.itemClaimedReturnedDateTime = dateTime;
-  }
-
-  public DateTime getItemClaimedReturnedDateTime() {
-    return itemClaimedReturnedDateTime;
   }
 
   public static ClaimItemReturnedRequest from(String loanId, JsonObject body) {
