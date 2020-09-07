@@ -29,6 +29,7 @@ import org.junit.Test;
 
 import api.support.builders.FeeFineOwnerBuilder;
 import api.support.builders.ItemBuilder;
+import api.support.builders.LostItemFeePolicyBuilder;
 import api.support.builders.ServicePointBuilder;
 import api.support.spring.SpringApiTest;
 import io.vertx.core.json.JsonObject;
@@ -62,9 +63,12 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
   public void shouldChargeItemProcessingFee() {
     final double expectedProcessingFee = 99.54;
 
-    val policy = lostItemFeePoliciesFixture
-      .ageToLostAfterOneMinutePolicy()
+    val policy = new LostItemFeePolicyBuilder()
+      .withName("shouldChargeItemProcessingFee")
+      .withItemAgedToLostAfterOverdue(Period.weeks(1))
+      .withPatronBilledAfterAgedLost(Period.weeks(2))
       .withNoChargeAmountItem()
+      .doNotChargeProcessingFee()
       .chargeItemAgedToLostProcessingFee(expectedProcessingFee);
 
     val result = ageToLostFixture.createLoanAgeToLostAndChargeFees(policy);

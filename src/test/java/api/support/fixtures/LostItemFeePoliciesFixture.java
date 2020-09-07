@@ -81,6 +81,8 @@ public class LostItemFeePoliciesFixture {
       .withName("Age to lost after one minute overdue")
       .withItemAgedToLostAfterOverdue(minutes(1))
       .withPatronBilledAfterAgedLost(minutes(5))
+      // disable lost item processing fee
+      .withChargeAmountItemPatron(false)
       .withChargeAmountItemSystem(true);
   }
 

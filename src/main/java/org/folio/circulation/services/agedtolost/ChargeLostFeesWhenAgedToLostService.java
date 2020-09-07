@@ -129,18 +129,19 @@ public class ChargeLostFeesWhenAgedToLostService {
   }
 
   private Stream<Pair<AutomaticallyChargeableFee, FeeFine>> getChargeableLostFeeToTypePairs(
-    LoanToChargeFees loan) {
+    LoanToChargeFees loanToCharge) {
 
-    final LostItemPolicy policy = loan.getLostItemPolicy();
+    final LostItemPolicy policy = loanToCharge.getLostItemPolicy();
 
-    val setCostPair = pair(policy.getSetCostFee(), loan.getLostItemFeeType());
-    val processingFeePair = pair(policy.getProcessingFee(), loan.getLostItemProcessingFeeType());
+    val setCostPair = pair(policy.getSetCostFee(), loanToCharge.getLostItemFeeType());
+    val processingFeePair = pair(policy.getAgeToLostProcessingFee(),
+      loanToCharge.getLostItemProcessingFeeType());
 
     return Stream.of(setCostPair, processingFeePair)
       .filter(pair -> pair.getKey().isChargeable());
   }
 
-  private CreateAccountCommand buildCreateAccountCommand(LoanToChargeFees loan,
+  private CreateAccountCommand buildCreateAccountCommand(LoanToChargeFees loanToCharge,
     Pair<AutomaticallyChargeableFee, FeeFine> pair) {
 
     final AutomaticallyChargeableFee feeToCharge = pair.getKey();
@@ -150,46 +151,46 @@ public class ChargeLostFeesWhenAgedToLostService {
       .withAmount(feeToCharge.getAmount())
       .withCreatedByAutomatedProcess(true)
       .withFeeFine(feeFineType)
-      .withFeeFineOwner(loan.getOwner())
-      .withLoan(loan.getLoan())
-      .withItem(loan.getLoan().getItem())
+      .withFeeFineOwner(loanToCharge.getOwner())
+      .withLoan(loanToCharge.getLoan())
+      .withItem(loanToCharge.getLoan().getItem())
       .build();
   }
 
   private CompletableFuture<Result<List<LoanToChargeFees>>> fetchFeeFineTypes(
-    Result<List<LoanToChargeFees>> allLoansResult) {
+    Result<List<LoanToChargeFees>> allLoansToChargeResult) {
 
     return feeFineRepository.getAutomaticFeeFines(lostItemFeeTypes())
-      .thenApply(r -> r.combine(allLoansResult, this::mapFeeFineTypesToLoans));
+      .thenApply(r -> r.combine(allLoansToChargeResult, this::mapFeeFineTypesToLoans));
   }
 
   private List<LoanToChargeFees> mapFeeFineTypesToLoans(Collection<FeeFine> feeTypes,
-    List<LoanToChargeFees> allLoans) {
+    List<LoanToChargeFees> allLoansToCharge) {
 
-    return allLoans.stream()
+    return allLoansToCharge.stream()
       .map(loanToChargeFees -> loanToChargeFees.withFeeFineTypes(feeTypes))
       .collect(Collectors.toList());
   }
 
   private CompletableFuture<Result<List<LoanToChargeFees>>> fetchFeeFineOwners(
-    List<LoanToChargeFees> allLoans) {
+    List<LoanToChargeFees> allLoansToCharge) {
 
-    final Set<String> ownerServicePoints = uniqueSetOf(allLoans,
+    final Set<String> ownerServicePoints = uniqueSetOf(allLoansToCharge,
       LoanToChargeFees::getOwnerServicePointId);
 
     return feeFineOwnerRepository.findOwnersForServicePoints(ownerServicePoints)
-      .thenApply(r -> r.map(owners -> mapOwnersToLoans(owners, allLoans)));
+      .thenApply(r -> r.map(owners -> mapOwnersToLoans(owners, allLoansToCharge)));
   }
 
   private List<LoanToChargeFees> mapOwnersToLoans(Collection<FeeFineOwner> owners,
-    List<LoanToChargeFees> loans) {
+    List<LoanToChargeFees> loansToCharge) {
 
     final Map<String, FeeFineOwner> servicePointToOwner = new HashMap<>();
 
     owners.forEach(owner -> owner.getServicePoints()
       .forEach(servicePoint -> servicePointToOwner.put(servicePoint, owner)));
 
-    return loans.stream()
+    return loansToCharge.stream()
       .map(loanToChargeFees -> loanToChargeFees.withOwner(servicePointToOwner))
       .collect(Collectors.toList());
   }
