@@ -51,7 +51,7 @@ public class LostItemFeePoliciesFixture {
       .withItemAgedToLostAfterOverdue(itemAgedLostOverdue)
       .withPatronBilledAfterAgedLost(patronBilledAfterAgedLost)
       .withNoChargeAmountItem()
-      .doNotChargeProcessingFee()
+      .doNotChargeProcessingFeeWhenDeclaredLost()
       .withChargeAmountItemSystem(true)
       .refundProcessingFeeWhenReturned()
       .withReplacedLostItemProcessingFee(true)
@@ -68,7 +68,7 @@ public class LostItemFeePoliciesFixture {
       .withItemAgedToLostAfterOverdue(itemAgedLostOverdue)
       .withPatronBilledAfterAgedLost(patronBilledAfterAgedLost)
       .withSetCost(10.00)
-      .chargeProcessingFee(5.00)
+      .chargeProcessingFeeWhenDeclaredLost(5.00)
       .withChargeAmountItemSystem(true)
       .refundProcessingFeeWhenReturned()
       .withReplacedLostItemProcessingFee(true)
@@ -81,6 +81,8 @@ public class LostItemFeePoliciesFixture {
       .withName("Age to lost after one minute overdue")
       .withItemAgedToLostAfterOverdue(minutes(1))
       .withPatronBilledAfterAgedLost(minutes(5))
+      // disable lost item processing fee
+      .withChargeAmountItemPatron(false)
       .withChargeAmountItemSystem(true);
   }
 

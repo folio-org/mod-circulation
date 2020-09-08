@@ -188,7 +188,7 @@ public class LostItemPolicyTest {
         .withPatronBilledAfterAgedLost(billPatronInterval)
         .withItemAgedToLostAfterOverdue(ageToLostAfterPeriod)
         .withSetCost(10.0)
-        .doNotChargeItemAgedToLostProcessingFee()
+        .doNotChargeProcessingFeeWhenAgedToLost()
         .create());
 
     final DateTime actualBillingDate = lostItemPolicy
@@ -205,18 +205,42 @@ public class LostItemPolicyTest {
     final DateTime expectedBillingDate = loanDueDate.plus(ageToLostAfterPeriod.timePeriod())
       .plus(billPatronAfterPeriod.timePeriod());
 
-    final LostItemPolicy lostItemPolicy =  LostItemPolicy.from(
+    final LostItemPolicy lostItemPolicy = LostItemPolicy.from(
       new LostItemFeePolicyBuilder()
         .withPatronBilledAfterAgedLost(billPatronAfterPeriod)
         .withItemAgedToLostAfterOverdue(ageToLostAfterPeriod)
         .withSetCost(10.0)
-        .doNotChargeItemAgedToLostProcessingFee()
+        .doNotChargeProcessingFeeWhenAgedToLost()
         .create());
 
     final DateTime actualBillingDate = lostItemPolicy
       .calculateDateTimeWhenPatronBilledForAgedToLost(loanDueDate);
 
     assertThat(actualBillingDate, is(expectedBillingDate));
+  }
+
+  @Test
+  public void ageToLostProcessingFeeIsNotChargeableIfAmountIsSetButFlagIsFalse() {
+    final LostItemPolicy lostItemPolicy = LostItemPolicy.from(
+      new LostItemFeePolicyBuilder()
+        .doNotChargeProcessingFeeWhenAgedToLost()
+        .chargeProcessingFeeWhenDeclaredLost(10.0)
+        .create());
+
+    assertFalse(lostItemPolicy.getAgeToLostProcessingFee().isChargeable());
+    assertTrue(lostItemPolicy.getDeclareLostProcessingFee().isChargeable());
+  }
+
+  @Test
+  public void ageToLostProcessingFeeIsChargeableEvenIfDeclaredLostFlagIsFalse() {
+    final LostItemPolicy lostItemPolicy = LostItemPolicy.from(
+      new LostItemFeePolicyBuilder()
+        .doNotChargeProcessingFeeWhenDeclaredLost()
+        .chargeProcessingFeeWhenAgedToLost(10.00)
+        .create());
+
+    assertTrue(lostItemPolicy.getAgeToLostProcessingFee().isChargeable());
+    assertFalse(lostItemPolicy.getDeclareLostProcessingFee().isChargeable());
   }
 
   private LostItemPolicy lostItemPolicyWithAgePeriod(Period period) {

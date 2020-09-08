@@ -50,7 +50,7 @@ public class CheckInAgedToLostItemTest extends APITests {
 
     val policy = lostItemFeePoliciesFixture.ageToLostAfterOneMinutePolicy()
       .withName("Check in aged to lost loan")
-      .chargeItemAgedToLostProcessingFee(processingFee)
+      .chargeProcessingFeeWhenAgedToLost(processingFee)
       .withSetCost(setCostFee)
       .withNoFeeRefundInterval();
 
@@ -77,7 +77,7 @@ public class CheckInAgedToLostItemTest extends APITests {
 
     val policy = lostItemFeePoliciesFixture.ageToLostAfterOneMinutePolicy()
       .withName("Check in aged to lost loan")
-      .chargeItemAgedToLostProcessingFee(processingFee)
+      .chargeProcessingFeeWhenAgedToLost(processingFee)
       .chargeOverdueFineWhenReturned()
       .withNoFeeRefundInterval();
 
@@ -107,7 +107,7 @@ public class CheckInAgedToLostItemTest extends APITests {
 
     val policy = lostItemFeePoliciesFixture.ageToLostAfterOneMinutePolicy()
       .withName("Check in aged to lost loan")
-      .chargeItemAgedToLostProcessingFee(processingFee)
+      .chargeProcessingFeeWhenAgedToLost(processingFee)
       .withSetCost(setCostFee)
       .refundFeesWithinMinutes(1);
 
