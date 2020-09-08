@@ -219,6 +219,30 @@ public class LostItemPolicyTest {
     assertThat(actualBillingDate, is(expectedBillingDate));
   }
 
+  @Test
+  public void ageToLostProcessingFeeIsNotChargeableIfAmountIsSetButFlagIsFalse() {
+    final LostItemPolicy lostItemPolicy =  LostItemPolicy.from(
+      new LostItemFeePolicyBuilder()
+        .doNotChargeProcessingFeeWhenAgedToLost()
+        .chargeProcessingFeeWhenDeclaredLost(10.0)
+        .create());
+
+    assertFalse(lostItemPolicy.getAgeToLostProcessingFee().isChargeable());
+    assertTrue(lostItemPolicy.getDeclareLostProcessingFee().isChargeable());
+  }
+
+  @Test
+  public void ageToLostProcessingFeeIsChargeableEvenIfDeclaredLostFlagIsFalse() {
+    final LostItemPolicy lostItemPolicy =  LostItemPolicy.from(
+      new LostItemFeePolicyBuilder()
+        .doNotChargeProcessingFeeWhenDeclaredLost()
+        .chargeProcessingFeeWhenAgedToLost(10.00)
+        .create());
+
+    assertTrue(lostItemPolicy.getAgeToLostProcessingFee().isChargeable());
+    assertFalse(lostItemPolicy.getDeclareLostProcessingFee().isChargeable());
+  }
+
   private LostItemPolicy lostItemPolicyWithAgePeriod(Period period) {
     return LostItemPolicy.from(new LostItemFeePolicyBuilder()
       .withItemAgedToLostAfterOverdue(period)
