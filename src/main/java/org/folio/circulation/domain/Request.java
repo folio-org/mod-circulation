@@ -1,12 +1,12 @@
 package org.folio.circulation.domain;
 
+import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.folio.circulation.domain.RequestFulfilmentPreference.DELIVERY;
 import static org.folio.circulation.domain.RequestFulfilmentPreference.HOLD_SHELF;
 import static org.folio.circulation.domain.RequestStatus.CLOSED_CANCELLED;
 import static org.folio.circulation.domain.RequestStatus.CLOSED_FILLED;
 import static org.folio.circulation.domain.RequestStatus.CLOSED_PICKUP_EXPIRED;
 import static org.folio.circulation.domain.RequestStatus.CLOSED_UNFILLED;
-import static org.folio.circulation.domain.RequestStatus.OPEN_AWAITING_DELIVERY;
 import static org.folio.circulation.domain.RequestStatus.OPEN_AWAITING_PICKUP;
 import static org.folio.circulation.domain.RequestStatus.OPEN_IN_TRANSIT;
 import static org.folio.circulation.domain.RequestStatus.OPEN_NOT_YET_FILLED;
@@ -127,16 +127,11 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public boolean isClosed() {
-    //Alternatively, check status contains "Closed"
     return isCancelled() || isFulfilled() || isUnfilled() || isPickupExpired();
   }
 
   boolean isAwaitingPickup() {
     return getStatus() == OPEN_AWAITING_PICKUP;
-  }
-
-  boolean isAwaitingDelivery() {
-    return getStatus() == OPEN_AWAITING_DELIVERY;
   }
 
   boolean isFor(User user) {
@@ -221,7 +216,6 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   void changeStatus(RequestStatus status) {
-    //TODO: Check for null status
     status.writeTo(requestRepresentation);
   }
 
@@ -246,12 +240,8 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return requestRepresentation.getJsonObject("requester");
   }
 
-  public JsonObject getItemFromRepresentation() {
-    return requestRepresentation.getJsonObject("item");
-  }
-
   public String getRequesterBarcode() {
-    return getRequesterFromRepresentation().getString("barcode", StringUtils.EMPTY);
+    return getRequesterFromRepresentation().getString("barcode", EMPTY);
   }
 
   public User getProxy() {
@@ -301,10 +291,6 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return previousPosition;
   }
 
-  boolean hasPreviousPosition() {
-    return getPreviousPosition() != null;
-  }
-
   ItemStatus checkedInItemStatus() {
     return getFulfilmentPreference().toCheckedInItemStatus();
   }
@@ -313,11 +299,10 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return requestRepresentation.getString("deliveryAddressTypeId");
   }
 
-  Request changeHoldShelfExpirationDate(DateTime holdShelfExpirationDate) {
+  void changeHoldShelfExpirationDate(DateTime holdShelfExpirationDate) {
     write(requestRepresentation, HOLD_SHELF_EXPIRATION_DATE,
       holdShelfExpirationDate);
 
-    return this;
   }
 
   void removeHoldShelfExpirationDate() {

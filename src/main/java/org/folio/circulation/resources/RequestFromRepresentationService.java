@@ -34,12 +34,9 @@ class RequestFromRepresentationService {
   private final ServicePointPickupLocationValidator servicePointPickupLocationValidator;
 
 
-  RequestFromRepresentationService(
-    ItemRepository itemRepository,
-    RequestQueueRepository requestQueueRepository,
-    UserRepository userRepository,
-    LoanRepository loanRepository,
-    ServicePointRepository servicePointRepository,
+  RequestFromRepresentationService(ItemRepository itemRepository,
+    RequestQueueRepository requestQueueRepository, UserRepository userRepository,
+    LoanRepository loanRepository, ServicePointRepository servicePointRepository,
     ProxyRelationshipValidator proxyRelationshipValidator,
     ServicePointPickupLocationValidator servicePointPickupLocationValidator) {
 
@@ -52,9 +49,7 @@ class RequestFromRepresentationService {
     this.servicePointPickupLocationValidator = servicePointPickupLocationValidator;
   }
 
-  CompletableFuture<Result<RequestAndRelatedRecords>> getRequestFrom(
-    JsonObject representation) {
-
+  CompletableFuture<Result<RequestAndRelatedRecords>> getRequestFrom(JsonObject representation) {
     return completedFuture(succeeded(representation))
       .thenApply(r -> r.next(this::validateStatus))
       .thenApply(r -> r.map(this::removeRelatedRecordInformation))
@@ -92,9 +87,7 @@ class RequestFromRepresentationService {
   private Result<JsonObject> validateStatus(JsonObject representation) {
     RequestStatus status = RequestStatus.from(representation);
 
-    if(!status.isValid()) {
-      //TODO: Replace this with validation error
-      // (but don't want to change behaviour at the moment)
+    if (!status.isValid()) {
       return failed(new BadRequestFailure(RequestStatus.invalidStatusErrorMessage()));
     }
     else {

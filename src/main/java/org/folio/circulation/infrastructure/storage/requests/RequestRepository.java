@@ -148,7 +148,6 @@ public class RequestRepository {
       .fetch(id);
   }
 
-  //TODO: May need to fetch updated representation of request
   public CompletableFuture<Result<Request>> update(Request request) {
     final JsonObject representation
       = new StoredRequestRepresentation().storedRequest(request);
@@ -223,13 +222,11 @@ public class RequestRepository {
       .thenApply(interpreter::flatMap);
   }
 
-  //TODO: Check if need to request requester
   private CompletableFuture<Result<Request>> fetchRequester(Result<Request> result) {
     return result.combineAfter(request ->
       getUser(request.getUserId()), Request::withRequester);
   }
 
-  //TODO: Check if need to request proxy
   private CompletableFuture<Result<Request>> fetchProxy(Result<Request> result) {
     return result.combineAfter(request ->
       getUser(request.getProxyUserId()), Request::withProxy);
