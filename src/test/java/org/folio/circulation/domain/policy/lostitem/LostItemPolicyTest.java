@@ -205,7 +205,7 @@ public class LostItemPolicyTest {
     final DateTime expectedBillingDate = loanDueDate.plus(ageToLostAfterPeriod.timePeriod())
       .plus(billPatronAfterPeriod.timePeriod());
 
-    final LostItemPolicy lostItemPolicy =  LostItemPolicy.from(
+    final LostItemPolicy lostItemPolicy = LostItemPolicy.from(
       new LostItemFeePolicyBuilder()
         .withPatronBilledAfterAgedLost(billPatronAfterPeriod)
         .withItemAgedToLostAfterOverdue(ageToLostAfterPeriod)
@@ -221,7 +221,7 @@ public class LostItemPolicyTest {
 
   @Test
   public void ageToLostProcessingFeeIsNotChargeableIfAmountIsSetButFlagIsFalse() {
-    final LostItemPolicy lostItemPolicy =  LostItemPolicy.from(
+    final LostItemPolicy lostItemPolicy = LostItemPolicy.from(
       new LostItemFeePolicyBuilder()
         .doNotChargeProcessingFeeWhenAgedToLost()
         .chargeProcessingFeeWhenDeclaredLost(10.0)
@@ -233,7 +233,7 @@ public class LostItemPolicyTest {
 
   @Test
   public void ageToLostProcessingFeeIsChargeableEvenIfDeclaredLostFlagIsFalse() {
-    final LostItemPolicy lostItemPolicy =  LostItemPolicy.from(
+    final LostItemPolicy lostItemPolicy = LostItemPolicy.from(
       new LostItemFeePolicyBuilder()
         .doNotChargeProcessingFeeWhenDeclaredLost()
         .chargeProcessingFeeWhenAgedToLost(10.00)
