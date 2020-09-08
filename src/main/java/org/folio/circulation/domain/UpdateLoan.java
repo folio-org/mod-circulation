@@ -84,7 +84,6 @@ public class UpdateLoan {
     }
   }
 
-  //TODO: Possibly combine this with LoanRenewalService?
   private Result<LoanAndRelatedRecords> recall(LoanAndRelatedRecords loanAndRelatedRecords) {
     final Loan loan = loanAndRelatedRecords.getLoan();
     LoanPolicy loanPolicy = loan.getLoanPolicy();

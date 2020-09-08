@@ -135,7 +135,6 @@ public class LoanRepository {
   public CompletableFuture<Result<Loan>> findOpenLoanForItem(Item item) {
     return findOpenLoans(item.getItemId())
       .thenApply(loansResult -> loansResult.next(loans -> {
-        //TODO: Consider introducing an unknown loan class, instead of null
         if (loans.getTotalRecords() == 0) {
           return succeeded(null);
         }
@@ -178,7 +177,6 @@ public class LoanRepository {
     return result.combineAfter(itemRepository::fetchFor, Loan::withItem);
   }
 
-  //TODO: Check if user not found should result in failure?
   private CompletableFuture<Result<Loan>> fetchUser(Result<Loan> result) {
     return result.combineAfter(userRepository::getUser, Loan::withUser);
   }
@@ -210,7 +208,6 @@ public class LoanRepository {
   }
 
   public CompletableFuture<Result<MultipleRecords<Loan>>> findBy(String query) {
-    //TODO: Should fetch users for all loans
     return loansStorageClient.getManyWithRawQueryStringParameters(query)
       .thenApply(flatMapResult(this::mapResponseToLoans))
       .thenComposeAsync(loans -> itemRepository.fetchItemsFor(loans, Loan::withItem));
@@ -248,13 +245,11 @@ public class LoanRepository {
     return storageLoan;
   }
 
-  private static void removeProperty(JsonObject storageLoan,
-                                       String propertyName) {
+  private static void removeProperty(JsonObject storageLoan, String propertyName) {
     storageLoan.remove(propertyName);
   }
 
   private static void keepLatestItemStatus(Item item, JsonObject storageLoan) {
-    //TODO: Check for null item status
     storageLoan.remove(ITEM_STATUS);
     storageLoan.put(ITEM_STATUS, item.getStatus().getValue());
   }
@@ -281,7 +276,6 @@ public class LoanRepository {
         loan.getUser().getPatronGroup().getId());
     }
 
-    //TODO: Should this really be re-writing the value?
     if (storageLoan.containsKey(PATRON_GROUP_AT_CHECKOUT)) {
       write(storageLoan, PATRON_GROUP_ID_AT_CHECKOUT,
         storageLoan.getJsonObject(PATRON_GROUP_AT_CHECKOUT).getString("id"));
@@ -306,8 +300,6 @@ public class LoanRepository {
 
   public CompletableFuture<Result<MultipleRecords<Request>>> findOpenLoansFor(
     MultipleRecords<Request> multipleRequests) {
-
-    //TODO: Need to handle multiple open loans for same item (with failure?)
 
     Collection<Request> requests = multipleRequests.getRecords();
 

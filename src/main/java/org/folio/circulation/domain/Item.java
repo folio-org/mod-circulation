@@ -14,6 +14,7 @@ import static org.folio.circulation.domain.representations.ItemProperties.EFFECT
 import static org.folio.circulation.domain.representations.ItemProperties.IDENTIFIERS;
 import static org.folio.circulation.domain.representations.ItemProperties.IN_TRANSIT_DESTINATION_SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.ITEM_COPY_NUMBER_ID;
+import static org.folio.circulation.domain.representations.ItemProperties.STATUS_PROPERTY;
 import static org.folio.circulation.domain.representations.ItemProperties.TITLE;
 import static org.folio.circulation.support.JsonArrayHelper.mapToList;
 import static org.folio.circulation.support.JsonPropertyFetcher.getArrayProperty;
@@ -180,11 +181,11 @@ public class Item {
   }
 
   public String getStatusName() {
-    return getNestedStringProperty(getItem(), ItemProperties.STATUS_PROPERTY, "name");
+    return getNestedStringProperty(getItem(), STATUS_PROPERTY, "name");
   }
 
   private String getStatusDate() {
-    return getNestedStringProperty(getItem(), ItemProperties.STATUS_PROPERTY, "date");
+    return getNestedStringProperty(getItem(), STATUS_PROPERTY, "date");
   }
 
   public Location getLocation() {
@@ -268,13 +269,11 @@ public class Item {
 
 
   Item changeStatus(ItemStatus newStatus) {
-    //TODO: Check if status is null
-
     if (isNotSameStatus(newStatus)) {
       changed = true;
     }
 
-    write(itemRepresentation, ItemProperties.STATUS_PROPERTY,
+    write(itemRepresentation, STATUS_PROPERTY,
       new JsonObject().put("name", newStatus.getValue()));
 
     //TODO: Remove this hack to remove destination service point
@@ -340,7 +339,6 @@ public class Item {
   }
 
   public boolean isFound() {
-    //TODO: Possibly replace with unknown item when migrated
     return getItem() != null;
   }
 

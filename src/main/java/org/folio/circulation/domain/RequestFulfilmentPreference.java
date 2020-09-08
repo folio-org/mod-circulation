@@ -1,7 +1,6 @@
 package org.folio.circulation.domain;
 
 import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
-
 import static org.folio.circulation.domain.ItemStatus.AWAITING_DELIVERY;
 import static org.folio.circulation.domain.ItemStatus.AWAITING_PICKUP;
 
@@ -34,7 +33,6 @@ public enum RequestFulfilmentPreference {
         return AWAITING_DELIVERY;
 
       default:
-        //TODO: Need to add validation to stop this situation
         return ItemStatus.NONE;
     }
   }

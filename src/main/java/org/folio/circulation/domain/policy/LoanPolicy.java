@@ -80,7 +80,6 @@ public class LoanPolicy extends Policy {
     return new UnknownLoanPolicy(id);
   }
 
-  //TODO: make this have similar signature to renew
   public Result<DateTime> calculateInitialDueDate(Loan loan, RequestQueue requestQueue) {
     final DateTime systemTime = ClockManager.getClockManager().getDateTime();
     return determineStrategy(requestQueue, false, false, systemTime).calculateDueDate(loan);
@@ -138,7 +137,6 @@ public class LoanPolicy extends Policy {
     final JsonObject renewalsPolicy = getRenewalsPolicy();
     final JsonObject holds = getHolds();
 
-    //TODO: Temporary until have better logic for missing loans policy
     if(loansPolicy == null) {
       return new UnknownDueDateStrategy(getId(), getName(), "", isRenewal,
         this::loanPolicyValidationError);
@@ -307,7 +305,6 @@ public class LoanPolicy extends Policy {
       alternateRenewalFixedDueDateSchedules, ruleConditionsEntity);
   }
 
-  //TODO: potentially remove this, when builder can create class or JSON representation
   public LoanPolicy withDueDateSchedules(JsonObject fixedDueDateSchedules) {
     return withDueDateSchedules(FixedDueDateSchedules.from(fixedDueDateSchedules));
   }
@@ -317,7 +314,6 @@ public class LoanPolicy extends Policy {
       renewalSchedules, ruleConditionsEntity);
   }
 
-  //TODO: potentially remove this, when builder can create class or JSON representation
   public LoanPolicy withAlternateRenewalSchedules(JsonObject renewalSchedules) {
     return withAlternateRenewalSchedules(FixedDueDateSchedules.from(renewalSchedules));
   }
@@ -501,9 +497,7 @@ public class LoanPolicy extends Policy {
 
     return Collections.emptyList();
   }
-
-  //TODO: Improve this to be a proper null object
-  // requires significant rework of the loan policy interface
+  
   private static class UnknownLoanPolicy extends LoanPolicy {
     UnknownLoanPolicy(String id) {
       super(new JsonObject().put("id", id));

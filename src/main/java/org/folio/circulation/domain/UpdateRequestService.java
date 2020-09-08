@@ -14,15 +14,11 @@ public class UpdateRequestService {
   private final UpdateRequestQueue updateRequestQueue;
   private final ClosedRequestValidator closedRequestValidator;
   private final RequestNoticeSender requestNoticeSender;
-
   private final UpdateItem updateItem;
 
-  public UpdateRequestService(
-    RequestRepository requestRepository,
-    UpdateRequestQueue updateRequestQueue,
-    ClosedRequestValidator closedRequestValidator,
-    RequestNoticeSender requestNoticeSender,
-    UpdateItem updateItem) {
+  public UpdateRequestService(RequestRepository requestRepository,
+    UpdateRequestQueue updateRequestQueue, ClosedRequestValidator closedRequestValidator,
+    RequestNoticeSender requestNoticeSender, UpdateItem updateItem) {
 
     this.requestRepository = requestRepository;
     this.updateRequestQueue = updateRequestQueue;
@@ -47,7 +43,6 @@ public class UpdateRequestService {
 
     final Request request = requestAndRelatedRecords.getRequest();
 
-    //TODO: Extract to cancel method
     if(request.isCancelled()) {
       requestAndRelatedRecords.getRequestQueue().remove(request);
     }
