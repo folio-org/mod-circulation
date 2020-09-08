@@ -188,7 +188,7 @@ public class LostItemPolicyTest {
         .withPatronBilledAfterAgedLost(billPatronInterval)
         .withItemAgedToLostAfterOverdue(ageToLostAfterPeriod)
         .withSetCost(10.0)
-        .doNotChargeItemAgedToLostProcessingFee()
+        .doNotChargeProcessingFeeWhenAgedToLost()
         .create());
 
     final DateTime actualBillingDate = lostItemPolicy
@@ -210,7 +210,7 @@ public class LostItemPolicyTest {
         .withPatronBilledAfterAgedLost(billPatronAfterPeriod)
         .withItemAgedToLostAfterOverdue(ageToLostAfterPeriod)
         .withSetCost(10.0)
-        .doNotChargeItemAgedToLostProcessingFee()
+        .doNotChargeProcessingFeeWhenAgedToLost()
         .create());
 
     final DateTime actualBillingDate = lostItemPolicy

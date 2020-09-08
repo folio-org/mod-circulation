@@ -77,12 +77,12 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
       .withChargeAmountItemSystem(true);
   }
 
-  public LostItemFeePolicyBuilder doNotChargeProcessingFee() {
+  public LostItemFeePolicyBuilder doNotChargeProcessingFeeWhenDeclaredLost() {
     return withLostItemProcessingFee(0.0)
       .withChargeAmountItemPatron(false);
   }
 
-  public LostItemFeePolicyBuilder doNotChargeItemAgedToLostProcessingFee() {
+  public LostItemFeePolicyBuilder doNotChargeProcessingFeeWhenAgedToLost() {
     return withLostItemProcessingFee(0.0)
       .withChargeAmountItemSystem(false);
   }

@@ -58,7 +58,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     val policy = lostItemFeePoliciesFixture
       .ageToLostAfterOneMinutePolicy()
       .withSetCost(expectedSetCost)
-      .doNotChargeItemAgedToLostProcessingFee();
+      .doNotChargeProcessingFeeWhenAgedToLost();
 
     val result = ageToLostFixture.createLoanAgeToLostAndChargeFees(policy);
 
@@ -82,7 +82,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
       .withItemAgedToLostAfterOverdue(Period.weeks(1))
       .withPatronBilledAfterAgedLost(Period.weeks(2))
       .withNoChargeAmountItem()
-      .doNotChargeProcessingFee()
+      .doNotChargeProcessingFeeWhenDeclaredLost()
       .chargeItemAgedToLostProcessingFee(expectedProcessingFee);
 
     val result = ageToLostFixture.createLoanAgeToLostAndChargeFees(policy);
@@ -118,7 +118,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     val policy = lostItemFeePoliciesFixture
       .ageToLostAfterOneMinutePolicy()
       .withNoChargeAmountItem()
-      .doNotChargeItemAgedToLostProcessingFee();
+      .doNotChargeProcessingFeeWhenAgedToLost();
 
     val result = ageToLostFixture.createLoanAgeToLostAndChargeFees(policy);
 
@@ -133,7 +133,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     val policy = lostItemFeePoliciesFixture
       .ageToLostAfterOneMinutePolicy()
       .withSetCost(10.00)
-      .doNotChargeItemAgedToLostProcessingFee();
+      .doNotChargeProcessingFeeWhenAgedToLost();
 
     val result = ageToLostFixture.createLoanAgeToLostAndChargeFees(policy);
 
@@ -213,7 +213,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     val policy = lostItemFeePoliciesFixture
       .ageToLostAfterOneMinutePolicy()
       .withSetCost(11.00)
-      .doNotChargeItemAgedToLostProcessingFee();
+      .doNotChargeProcessingFeeWhenAgedToLost();
 
     useLostItemPolicy(lostItemFeePoliciesFixture.create(policy).getId());
 
@@ -261,7 +261,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
       .ageToLostAfterOneMinutePolicy()
       .billPatronImmediatelyWhenAgedToLost()
       .withNoChargeAmountItem()
-      .doNotChargeItemAgedToLostProcessingFee();
+      .doNotChargeProcessingFeeWhenAgedToLost();
 
     val result = ageToLostFixture.createLoanAgeToLostAndChargeFees(policy);
 
@@ -292,7 +292,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
       val setCostFee = 10.0 + itemIndex;
       val policyBuilder = lostItemFeePoliciesFixture.ageToLostAfterOneMinutePolicy()
         .withName("Age to lost item " + itemIndex)
-        .doNotChargeItemAgedToLostProcessingFee()
+        .doNotChargeProcessingFeeWhenAgedToLost()
         .withSetCost(setCostFee);
 
       useLostItemPolicy(lostItemFeePoliciesFixture.create(policyBuilder).getId());

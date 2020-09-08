@@ -36,7 +36,6 @@ import static org.joda.time.DateTime.parse;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -71,7 +70,7 @@ public abstract class RefundLostItemFeesTestBase extends APITests {
     useLostItemPolicy(lostItemFeePoliciesFixture.create(
       lostItemFeePoliciesFixture.facultyStandardPolicy()
         .withName("Test check in")
-        .doNotChargeProcessingFee()
+        .doNotChargeProcessingFeeWhenDeclaredLost()
         .withSetCost(itemFee)).getId());
 
     declareItemLost();
@@ -353,7 +352,7 @@ public abstract class RefundLostItemFeesTestBase extends APITests {
     useLostItemPolicy(lostItemFeePoliciesFixture.create(
       lostItemFeePoliciesFixture.facultyStandardPolicy()
         .withName("Test check in")
-        .doNotChargeProcessingFee()
+        .doNotChargeProcessingFeeWhenDeclaredLost()
         .withSetCost(itemFee)
         .refundFeesWithinMinutes(1)
         .chargeOverdueFineWhenReturned()).getId());
