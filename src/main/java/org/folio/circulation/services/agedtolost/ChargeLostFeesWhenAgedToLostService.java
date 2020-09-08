@@ -217,7 +217,7 @@ public class ChargeLostFeesWhenAgedToLostService {
     final Result<CqlQuery> hasNotBeenBilledQuery = exactMatch(
       lostItemHasBeenBilled, "false");
 
-    return Result.combine(billingDateQuery, agedToLostQuery, CqlQuery::and)
+    return billingDateQuery.combine(agedToLostQuery, CqlQuery::and)
       .combine(hasNotBeenBilledQuery, CqlQuery::and)
       .map(query -> query.sortBy(ascending(billingDateProperty)));
   }

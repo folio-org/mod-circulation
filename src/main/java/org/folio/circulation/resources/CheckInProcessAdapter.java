@@ -239,7 +239,7 @@ class CheckInProcessAdapter {
     servicePointRepository.getServicePointForRequest(firstRequest)
       .thenApply(r -> r.map(firstRequest::withPickupServicePoint))
       .thenCombine(userRepository.getUserByBarcode(firstRequest.getRequesterBarcode()),
-        (requestResult, userResult) -> Result.combine(requestResult, userResult,
+        (requestResult, userResult) -> requestResult.combine(userResult,
           (request, user) -> sendAvailableNotice(request, user, context)));
   }
 
