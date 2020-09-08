@@ -67,22 +67,22 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
     return withChargeAmountItem("actualCost", amount);
   }
 
-  public LostItemFeePolicyBuilder chargeProcessingFee(Double amount) {
+  public LostItemFeePolicyBuilder chargeProcessingFeeWhenDeclaredLost(Double amount) {
     return withLostItemProcessingFee(amount)
       .withChargeAmountItemPatron(true);
   }
 
-  public LostItemFeePolicyBuilder chargeItemAgedToLostProcessingFee(Double amount) {
+  public LostItemFeePolicyBuilder chargeProcessingFeeWhenAgedToLost(Double amount) {
     return withLostItemProcessingFee(amount)
       .withChargeAmountItemSystem(true);
   }
 
-  public LostItemFeePolicyBuilder doNotChargeProcessingFee() {
+  public LostItemFeePolicyBuilder doNotChargeProcessingFeeWhenDeclaredLost() {
     return withLostItemProcessingFee(0.0)
       .withChargeAmountItemPatron(false);
   }
 
-  public LostItemFeePolicyBuilder doNotChargeItemAgedToLostProcessingFee() {
+  public LostItemFeePolicyBuilder doNotChargeProcessingFeeWhenAgedToLost() {
     return withLostItemProcessingFee(0.0)
       .withChargeAmountItemSystem(false);
   }

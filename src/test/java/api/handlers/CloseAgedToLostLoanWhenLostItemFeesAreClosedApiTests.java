@@ -31,7 +31,7 @@ public class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends APITes
       lostItemFeePoliciesFixture.ageToLostAfterOneMinutePolicy()
         .withName("Age to lost policy")
         .withSetCost(10.0)
-        .chargeItemAgedToLostProcessingFee(15.00));
+        .chargeProcessingFeeWhenAgedToLost(15.00));
 
     item = result.getItem();
     loan = result.getLoan();

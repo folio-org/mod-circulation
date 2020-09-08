@@ -31,6 +31,7 @@ import org.junit.Test;
 
 import api.support.builders.FeeFineOwnerBuilder;
 import api.support.builders.ItemBuilder;
+import api.support.builders.LostItemFeePolicyBuilder;
 import api.support.builders.ServicePointBuilder;
 import api.support.spring.SpringApiTest;
 import io.vertx.core.json.JsonObject;
@@ -57,7 +58,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     val policy = lostItemFeePoliciesFixture
       .ageToLostAfterOneMinutePolicy()
       .withSetCost(expectedSetCost)
-      .doNotChargeItemAgedToLostProcessingFee();
+      .doNotChargeProcessingFeeWhenAgedToLost();
 
     val result = ageToLostFixture.createLoanAgeToLostAndChargeFees(policy);
 
@@ -76,10 +77,13 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
   public void shouldChargeItemProcessingFee() {
     final double expectedProcessingFee = 99.54;
 
-    val policy = lostItemFeePoliciesFixture
-      .ageToLostAfterOneMinutePolicy()
+    val policy = new LostItemFeePolicyBuilder()
+      .withName("shouldChargeItemProcessingFee")
+      .withItemAgedToLostAfterOverdue(Period.weeks(1))
+      .withPatronBilledAfterAgedLost(Period.weeks(2))
       .withNoChargeAmountItem()
-      .chargeItemAgedToLostProcessingFee(expectedProcessingFee);
+      .doNotChargeProcessingFeeWhenDeclaredLost()
+      .chargeProcessingFeeWhenAgedToLost(expectedProcessingFee);
 
     val result = ageToLostFixture.createLoanAgeToLostAndChargeFees(policy);
 
@@ -96,7 +100,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     val policy = lostItemFeePoliciesFixture
       .ageToLostAfterOneMinutePolicy()
       .withSetCost(expectedItemFee)
-      .chargeItemAgedToLostProcessingFee(expectedProcessingFee);
+      .chargeProcessingFeeWhenAgedToLost(expectedProcessingFee);
 
     val result = ageToLostFixture.createLoanAgeToLostAndChargeFees(policy);
 
@@ -114,7 +118,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     val policy = lostItemFeePoliciesFixture
       .ageToLostAfterOneMinutePolicy()
       .withNoChargeAmountItem()
-      .doNotChargeItemAgedToLostProcessingFee();
+      .doNotChargeProcessingFeeWhenAgedToLost();
 
     val result = ageToLostFixture.createLoanAgeToLostAndChargeFees(policy);
 
@@ -129,7 +133,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     val policy = lostItemFeePoliciesFixture
       .ageToLostAfterOneMinutePolicy()
       .withSetCost(10.00)
-      .doNotChargeItemAgedToLostProcessingFee();
+      .doNotChargeProcessingFeeWhenAgedToLost();
 
     val result = ageToLostFixture.createLoanAgeToLostAndChargeFees(policy);
 
@@ -189,7 +193,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     val policy = lostItemFeePoliciesFixture
       .ageToLostAfterOneMinutePolicy()
       .withNoChargeAmountItem()
-      .chargeItemAgedToLostProcessingFee(10.0);
+      .chargeProcessingFeeWhenAgedToLost(10.0);
 
     useLostItemPolicy(lostItemFeePoliciesFixture.create(policy).getId());
 
@@ -209,7 +213,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     val policy = lostItemFeePoliciesFixture
       .ageToLostAfterOneMinutePolicy()
       .withSetCost(11.00)
-      .doNotChargeItemAgedToLostProcessingFee();
+      .doNotChargeProcessingFeeWhenAgedToLost();
 
     useLostItemPolicy(lostItemFeePoliciesFixture.create(policy).getId());
 
@@ -257,7 +261,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
       .ageToLostAfterOneMinutePolicy()
       .billPatronImmediatelyWhenAgedToLost()
       .withNoChargeAmountItem()
-      .doNotChargeItemAgedToLostProcessingFee();
+      .doNotChargeProcessingFeeWhenAgedToLost();
 
     val result = ageToLostFixture.createLoanAgeToLostAndChargeFees(policy);
 
@@ -288,7 +292,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
       val setCostFee = 10.0 + itemIndex;
       val policyBuilder = lostItemFeePoliciesFixture.ageToLostAfterOneMinutePolicy()
         .withName("Age to lost item " + itemIndex)
-        .doNotChargeItemAgedToLostProcessingFee()
+        .doNotChargeProcessingFeeWhenAgedToLost()
         .withSetCost(setCostFee);
 
       useLostItemPolicy(lostItemFeePoliciesFixture.create(policyBuilder).getId());

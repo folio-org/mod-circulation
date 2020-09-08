@@ -87,7 +87,7 @@ public class CloseDeclaredLostLoanWhenLostItemFeesAreClosedApiTests extends APIT
   public void shouldNotCloseLoanIfActualCostFeeShouldBeCharged() {
     useLostItemPolicy(lostItemFeePoliciesFixture.create(
       lostItemFeePoliciesFixture.facultyStandardPolicy()
-        .chargeProcessingFee(10.00)
+        .chargeProcessingFeeWhenDeclaredLost(10.00)
         .withActualCost(10.0)).getId());
 
     feeFineAccountFixture.payLostItemProcessingFee(loan.getId());

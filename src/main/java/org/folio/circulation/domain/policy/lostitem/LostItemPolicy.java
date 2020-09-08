@@ -24,7 +24,7 @@ import org.joda.time.DateTime;
 import io.vertx.core.json.JsonObject;
 
 public class LostItemPolicy extends Policy {
-  private final AutomaticallyChargeableFee processingFee;
+  private final AutomaticallyChargeableFee declareLostProcessingFee;
   private final AutomaticallyChargeableFee setCostFee;
   private final ChargeableFee actualCostFee;
   private final Period feeRefundInterval;
@@ -37,14 +37,14 @@ public class LostItemPolicy extends Policy {
   // to simplify logic.
   private final AutomaticallyChargeableFee ageToLostProcessingFee;
 
-  private LostItemPolicy(String id, String name, AutomaticallyChargeableFee processingFee,
+  private LostItemPolicy(String id, String name, AutomaticallyChargeableFee declareLostProcessingFee,
     AutomaticallyChargeableFee setCostFee, ChargeableFee actualCostFee,
     Period feeRefundInterval, boolean refundProcessingFeeWhenFound, boolean chargeOverdueFine,
     Period agedToLostAfterOverdueInterval, Period patronBilledAfterAgedToLostInterval,
     AutomaticallyChargeableFee ageToLostProcessingFee) {
 
     super(id, name);
-    this.processingFee = processingFee;
+    this.declareLostProcessingFee = declareLostProcessingFee;
     this.setCostFee = setCostFee;
     this.actualCostFee = actualCostFee;
     this.feeRefundInterval = feeRefundInterval;
@@ -116,8 +116,8 @@ public class LostItemPolicy extends Policy {
     return setCostFee;
   }
 
-  public AutomaticallyChargeableFee getProcessingFee() {
-    return processingFee;
+  public AutomaticallyChargeableFee getDeclareLostProcessingFee() {
+    return declareLostProcessingFee;
   }
 
   public ChargeableFee getActualCostFee() {
