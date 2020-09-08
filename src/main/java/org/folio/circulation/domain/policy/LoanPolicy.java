@@ -45,14 +45,13 @@ public class LoanPolicy extends Policy {
   private static final String ALTERNATE_CHECKOUT_LOAN_PERIOD_KEY = "alternateCheckoutLoanPeriod";
   private static final String GRACE_PERIOD_KEY = "gracePeriod";
 
-  private static final String KEY_ERROR_TEXT = "the \"%s\" in the holds is not recognized";
   private static final String INTERVAL_ERROR_TEXT = "the interval \"%s\" in \"%s\" is not recognized";
   private static final String DURATION_ERROR_TEXT = "the duration \"%s\" in \"%s\" is invalid";
 
   private final JsonObject representation;
   private final FixedDueDateSchedules fixedDueDateSchedules;
   private final FixedDueDateSchedules alternateRenewalFixedDueDateSchedules;
-  private AppliedRuleConditions ruleConditionsEntity;
+  private final AppliedRuleConditions ruleConditionsEntity;
 
   private LoanPolicy(JsonObject representation) {
     this(representation, new NoFixedDueDateSchedules(), new NoFixedDueDateSchedules(),
@@ -414,7 +413,7 @@ public class LoanPolicy extends Policy {
 
   public Result<Loan> recall(Loan loan) {
     final JsonObject recalls = representation
-        .getJsonObject("requestManagement", new JsonObject())
+        .getJsonObject(REQUEST_MANAGEMENT_KEY, new JsonObject())
         .getJsonObject("recalls", new JsonObject());
 
     final Result<DateTime> minimumDueDateResult =

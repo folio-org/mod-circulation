@@ -7,6 +7,7 @@ import static org.folio.circulation.support.results.Result.of;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import org.folio.circulation.domain.Item;
@@ -24,10 +25,8 @@ public class SingleOpenLoanForItemInStorageFinder {
   private final UserRepository userRepository;
   private final Boolean allowNoLoanToBeFound;
 
-  public SingleOpenLoanForItemInStorageFinder(
-    LoanRepository loanRepository,
-    UserRepository userRepository,
-    boolean allowNoLoanToBeFound) {
+  public SingleOpenLoanForItemInStorageFinder(LoanRepository loanRepository,
+    UserRepository userRepository, boolean allowNoLoanToBeFound) {
 
     this.loanRepository = loanRepository;
     this.userRepository = userRepository;
@@ -51,18 +50,15 @@ public class SingleOpenLoanForItemInStorageFinder {
       .thenApply(loanResult -> loanResult.map(possibleLoan -> possibleLoan.orElse(null)));
   }
 
-  private Optional<Loan> mapPossibleSingleLoan(
-    Optional<Loan> optionalLoan,
-    Item item) {
-
+  private Optional<Loan> mapPossibleSingleLoan(Optional<Loan> optionalLoan, Item item) {
     return optionalLoan.map(loan -> loan.withItem(item));
   }
 
   //TODO: Improve how this is made optional
   private Function<Result<Optional<Loan>>, Result<Optional<Loan>>> checkForNoLoanIfNeeded(
-    NoLoanValidator noLoanValidator, Boolean allowNoLoan) {
+    NoLoanValidator noLoanValidator, boolean allowNoLoan) {
 
-    if(allowNoLoan) {
+    if (allowNoLoan) {
       return  identity();
     }
 
@@ -72,15 +68,15 @@ public class SingleOpenLoanForItemInStorageFinder {
   private CompletableFuture<Result<Optional<Loan>>> fetchUser(
     Result<Optional<Loan>> result) {
 
-    return result.combineAfter(this::fetchUser,
-      (possibleLoan, user) -> possibleLoan.map(
-        loan -> loan.withUser(user)));
+    return result.combineAfter(this::fetchUser, loanWithUser());
   }
 
-  private CompletableFuture<Result<User>> fetchUser(
-    Optional<Loan> possibleLoan) {
+  private BiFunction<Optional<Loan>, User, Optional<Loan>> loanWithUser() {
+    return (possibleLoan, user) -> possibleLoan.map(loan -> loan.withUser(user));
+  }
 
-    if(!possibleLoan.isPresent()) {
+  private CompletableFuture<Result<User>> fetchUser(Optional<Loan> possibleLoan) {
+    if (!possibleLoan.isPresent()) {
       return completedFuture(of(() -> null));
     }
 

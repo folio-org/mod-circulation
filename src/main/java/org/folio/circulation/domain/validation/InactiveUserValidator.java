@@ -20,10 +20,8 @@ public class InactiveUserValidator {
   private final String cannotDetermineMessage;
   private final Function<LoanAndRelatedRecords, User> userFunction;
 
-  InactiveUserValidator(
-    Function<LoanAndRelatedRecords, User> userFunction,
-    String inactiveUserMessage,
-    String cannotDetermineMessage,
+  InactiveUserValidator(Function<LoanAndRelatedRecords, User> userFunction,
+    String inactiveUserMessage, String cannotDetermineMessage,
     Function<String, ValidationErrorFailure> inactiveUserErrorFunction) {
 
     this.inactiveUserErrorFunction = inactiveUserErrorFunction;
@@ -33,8 +31,7 @@ public class InactiveUserValidator {
   }
 
   public static InactiveUserValidator forProxy(String proxyUserBarcode) {
-    return new InactiveUserValidator(
-      LoanAndRelatedRecords::getProxy,
+    return new InactiveUserValidator(LoanAndRelatedRecords::getProxy,
       "Cannot check out via inactive proxying user",
       "Cannot determine if proxying user is active or not",
       message -> singleValidationError(message,
@@ -42,8 +39,7 @@ public class InactiveUserValidator {
   }
 
   public static InactiveUserValidator forUser(String userBarcode) {
-    return new InactiveUserValidator(
-      records -> records.getLoan().getUser(),
+    return new InactiveUserValidator(records -> records.getLoan().getUser(),
       "Cannot check out to inactive user",
       "Cannot determine if user is active or not",
       message -> singleValidationError(message, USER_BARCODE, userBarcode));

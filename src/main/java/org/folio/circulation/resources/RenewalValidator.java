@@ -1,21 +1,20 @@
 package org.folio.circulation.resources;
 
-import org.folio.circulation.domain.Loan;
-import org.folio.circulation.domain.policy.LoanPolicy;
-import org.folio.circulation.support.results.Result;
-import org.folio.circulation.support.http.server.ValidationError;
-import org.joda.time.DateTime;
+import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
+import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.folio.circulation.support.results.Result.succeeded;
-import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
+import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.policy.LoanPolicy;
+import org.folio.circulation.support.http.server.ValidationError;
+import org.folio.circulation.support.results.Result;
+import org.joda.time.DateTime;
 
 public final class RenewalValidator {
-
   public static final String RENEWAL_WOULD_NOT_CHANGE_THE_DUE_DATE = "renewal would not change the due date";
   public static final String CAN_NOT_RENEW_ITEM_ERROR =
     "Items with this loan policy cannot be renewed when there is an active, pending hold request";
@@ -29,9 +28,7 @@ public final class RenewalValidator {
   public static final String DECLARED_LOST_ITEM_RENEWED_ERROR = "item is Declared lost";
   public static final String CLAIMED_RETURNED_RENEWED_ERROR = "item is Claimed returned";
 
-  private RenewalValidator() {
-
-  }
+  private RenewalValidator() { }
 
   public static void errorWhenEarlierOrSameDueDate(Loan loan,
     DateTime proposedDueDate, List<ValidationError> errors) {
@@ -76,7 +73,7 @@ public final class RenewalValidator {
       "reached number of renewals limit," +
       "renewal date falls outside of the date ranges in the loan policy, " +
       "items cannot be renewed when there is an active recall request, " +
-      "item is Declared lost";
+      DECLARED_LOST_ITEM_RENEWED_ERROR;
 
     return loanPolicyValidationError(loanPolicy, reason);
   }
