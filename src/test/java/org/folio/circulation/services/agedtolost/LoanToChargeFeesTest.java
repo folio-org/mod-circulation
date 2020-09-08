@@ -37,7 +37,7 @@ public class LoanToChargeFeesTest {
   public void shouldNotCloseLoanIfProcessingFeeIsCharged() {
     val lostItemPolicy = new LostItemFeePolicyBuilder()
       .billPatronImmediatelyWhenAgedToLost()
-      .chargeItemAgedToLostProcessingFee(10.00);
+      .chargeProcessingFeeWhenAgedToLost(10.00);
 
     assertFalse(loanForLostItemPolicy(lostItemPolicy).shouldCloseLoan());
   }
