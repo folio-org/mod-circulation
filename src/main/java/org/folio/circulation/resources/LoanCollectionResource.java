@@ -270,28 +270,22 @@ public class LoanCollectionResource extends CollectionResource {
       .thenAccept(context::writeResultToHttpResponse);
   }
 
-  private Result<LoanAndRelatedRecords> addItem(
-    Result<LoanAndRelatedRecords> loanResult,
+  private Result<LoanAndRelatedRecords> addItem(Result<LoanAndRelatedRecords> loanResult,
     Result<Item> item) {
 
-    return Result.combine(loanResult, item,
-      LoanAndRelatedRecords::withItem);
+    return loanResult.combine(item, LoanAndRelatedRecords::withItem);
   }
 
-  private Result<LoanAndRelatedRecords> addRequestQueue(
-    Result<LoanAndRelatedRecords> loanResult,
+  private Result<LoanAndRelatedRecords> addRequestQueue(Result<LoanAndRelatedRecords> loanResult,
     Result<RequestQueue> requestQueueResult) {
 
-    return Result.combine(loanResult, requestQueueResult,
-      LoanAndRelatedRecords::withRequestQueue);
+    return loanResult.combine(requestQueueResult, LoanAndRelatedRecords::withRequestQueue);
   }
 
-  private Result<LoanAndRelatedRecords> addUser(
-    Result<LoanAndRelatedRecords> loanResult,
+  private Result<LoanAndRelatedRecords> addUser(Result<LoanAndRelatedRecords> loanResult,
     Result<User> getUserResult) {
 
-    return Result.combine(loanResult, getUserResult,
-      LoanAndRelatedRecords::withRequestingUser);
+    return loanResult.combine(getUserResult, LoanAndRelatedRecords::withRequestingUser);
   }
 
   private Result<LoanAndRelatedRecords> refuseWhenHoldingDoesNotExist(

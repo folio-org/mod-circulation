@@ -195,28 +195,22 @@ public class CheckOutByBarcodeResource extends Resource {
     return String.format("/circulation/loans/%s", id);
   }
 
-  private Result<LoanAndRelatedRecords> addProxyUser(
-    Result<LoanAndRelatedRecords> loanResult,
+  private Result<LoanAndRelatedRecords> addProxyUser(Result<LoanAndRelatedRecords> loanResult,
     Result<User> getUserResult) {
 
-    return Result.combine(loanResult, getUserResult,
-      LoanAndRelatedRecords::withProxyingUser);
+    return loanResult.combine(getUserResult, LoanAndRelatedRecords::withProxyingUser);
   }
 
-  private Result<LoanAndRelatedRecords> addUser(
-    Result<LoanAndRelatedRecords> loanResult,
+  private Result<LoanAndRelatedRecords> addUser(Result<LoanAndRelatedRecords> loanResult,
     Result<User> getUserResult) {
 
-    return Result.combine(loanResult, getUserResult,
-      LoanAndRelatedRecords::withRequestingUser);
+    return loanResult.combine(getUserResult, LoanAndRelatedRecords::withRequestingUser);
   }
 
-  private Result<LoanAndRelatedRecords> addItem(
-    Result<LoanAndRelatedRecords> loanResult,
+  private Result<LoanAndRelatedRecords> addItem(Result<LoanAndRelatedRecords> loanResult,
     Result<Item> inventoryRecordsResult) {
 
-    return Result.combine(loanResult, inventoryRecordsResult,
-      LoanAndRelatedRecords::withItem);
+    return loanResult.combine(inventoryRecordsResult, LoanAndRelatedRecords::withItem);
   }
 
   private static ValidationErrorFailure errorWhenInIncorrectStatus(Item item) {

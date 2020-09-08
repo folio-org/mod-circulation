@@ -5,16 +5,16 @@ import static org.folio.circulation.infrastructure.storage.inventory.ItemReposit
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
+import java.util.concurrent.CompletableFuture;
+
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
+import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
-import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.client.Response;
-
-import java.util.concurrent.CompletableFuture;
+import org.folio.circulation.support.results.Result;
 
 public class StoreLoanAndItem {
   private final LoanRepository loanRepository;
@@ -41,7 +41,6 @@ public class StoreLoanAndItem {
       return completedFuture(succeeded(null));
     }
 
-    //TODO: What should happen if updating the item fails?
     return updateItem(loan.getItem())
       .thenComposeAsync(response -> loanRepository.updateLoan(loan));
   }
