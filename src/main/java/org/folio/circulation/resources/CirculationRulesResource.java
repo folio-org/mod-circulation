@@ -7,12 +7,11 @@ import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import static org.apache.commons.lang3.exception.ExceptionUtils.getStackTrace;
 import static org.folio.circulation.resources.AbstractCirculationRulesEngineResource.clearCache;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
-import static org.folio.circulation.support.results.Result.combine;
-import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.http.server.JsonHttpResponse.ok;
 import static org.folio.circulation.support.http.server.JsonHttpResponse.unprocessableEntity;
 import static org.folio.circulation.support.http.server.NoContentResponse.noContent;
 import static org.folio.circulation.support.http.server.ServerErrorResponse.internalError;
+import static org.folio.circulation.support.results.Result.of;
 
 import java.lang.invoke.MethodHandles;
 import java.util.HashMap;
@@ -31,11 +30,11 @@ import org.folio.circulation.rules.Text2Drools;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.ForwardOnFailure;
-import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.ForwardResponse;
 import org.folio.circulation.support.http.server.WebContext;
+import org.folio.circulation.support.results.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -193,24 +192,19 @@ public class CirculationRulesResource extends Resource {
     return Result.ofAsync(() -> ids)
       .thenCombineAsync(
         getPolicyIdsByType(loanPolicyClient, "loanPolicies", "l"),
-        (resultTotalIds, resultNewIds) -> combine(resultTotalIds, resultNewIds,
-          this::getTotalMap))
+        (resultTotalIds, resultNewIds) -> resultTotalIds.combine(resultNewIds, this::getTotalMap))
       .thenCombineAsync(
         getPolicyIdsByType(noticePolicyClient, "patronNoticePolicies", "n"),
-        (resultTotalIds, resultNewIds) -> combine(resultTotalIds, resultNewIds,
-          this::getTotalMap))
+        (resultTotalIds, resultNewIds) -> resultTotalIds.combine(resultNewIds, this::getTotalMap))
       .thenCombineAsync(
         getPolicyIdsByType(requestPolicyClient, "requestPolicies", "r"),
-        (resultTotalIds, resultNewIds) -> combine(resultTotalIds, resultNewIds,
-          this::getTotalMap))
+        (resultTotalIds, resultNewIds) -> resultTotalIds.combine(resultNewIds, this::getTotalMap))
       .thenCombineAsync(
         getPolicyIdsByType(overdueFinePolicyClient, "overdueFinePolicies", "o"),
-        (resultTotalIds, resultNewIds) -> combine(resultTotalIds, resultNewIds,
-          this::getTotalMap))
+        (resultTotalIds, resultNewIds) -> resultTotalIds.combine(resultNewIds, this::getTotalMap))
       .thenCombineAsync(
         getPolicyIdsByType(lostItemFeePolicyClient, "lostItemFeePolicies", "i"),
-        (resultTotalIds, resultNewIds) -> combine(resultTotalIds, resultNewIds,
-          this::getTotalMap));
+        (resultTotalIds, resultNewIds) -> resultTotalIds.combine(resultNewIds, this::getTotalMap));
   }
 
   private Map<String, Set<String>> getTotalMap(Map<String, Set<String>> totalMap,
