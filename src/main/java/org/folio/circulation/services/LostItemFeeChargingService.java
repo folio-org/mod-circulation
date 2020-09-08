@@ -78,7 +78,7 @@ public class LostItemFeeChargingService {
   }
 
   private boolean shouldCloseLoan(LostItemPolicy policy) {
-    return !policy.getProcessingFee().isChargeable()
+    return !policy.getDeclareLostProcessingFee().isChargeable()
       && policy.hasNoLostItemFee();
   }
 
@@ -108,12 +108,12 @@ public class LostItemFeeChargingService {
         accountsToCreate.add(lostItemFeeResult);
       }
 
-      if (policy.getProcessingFee().isChargeable()) {
+      if (policy.getDeclareLostProcessingFee().isChargeable()) {
         log.debug("Charging lost item processing fee");
 
         final Result<CreateAccountCommand> processingFeeResult =
           getFeeFineOfType(feeFines, LOST_ITEM_PROCESSING_FEE_TYPE)
-            .map(createAccountCreation(context, policy.getProcessingFee()));
+            .map(createAccountCreation(context, policy.getDeclareLostProcessingFee()));
 
         accountsToCreate.add(processingFeeResult);
       }

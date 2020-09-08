@@ -36,7 +36,6 @@ import static org.joda.time.DateTime.parse;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -71,7 +70,7 @@ public abstract class RefundLostItemFeesTestBase extends APITests {
     useLostItemPolicy(lostItemFeePoliciesFixture.create(
       lostItemFeePoliciesFixture.facultyStandardPolicy()
         .withName("Test check in")
-        .doNotChargeProcessingFee()
+        .doNotChargeProcessingFeeWhenDeclaredLost()
         .withSetCost(itemFee)).getId());
 
     declareItemLost();
@@ -89,7 +88,7 @@ public abstract class RefundLostItemFeesTestBase extends APITests {
     useLostItemPolicy(lostItemFeePoliciesFixture.create(
       lostItemFeePoliciesFixture.facultyStandardPolicy()
         .withName("Test check in")
-        .chargeProcessingFee(processingFee)
+        .chargeProcessingFeeWhenDeclaredLost(processingFee)
         .withNoChargeAmountItem()).getId());
 
     declareItemLost();
@@ -108,7 +107,7 @@ public abstract class RefundLostItemFeesTestBase extends APITests {
     useLostItemPolicy(lostItemFeePoliciesFixture.create(
       lostItemFeePoliciesFixture.facultyStandardPolicy()
         .withName("Test check in")
-        .chargeProcessingFee(processingFee)
+        .chargeProcessingFeeWhenDeclaredLost(processingFee)
         .doNotRefundProcessingFeeWhenReturned()
         .withNoChargeAmountItem()).getId());
 
@@ -156,7 +155,7 @@ public abstract class RefundLostItemFeesTestBase extends APITests {
     useLostItemPolicy(lostItemFeePoliciesFixture.create(
       lostItemFeePoliciesFixture.facultyStandardPolicy()
         .withName("Test check in")
-        .chargeProcessingFee(processingFee)
+        .chargeProcessingFeeWhenDeclaredLost(processingFee)
         .withSetCost(setCostFee)
         .withNoFeeRefundInterval()).getId());
 
@@ -301,7 +300,7 @@ public abstract class RefundLostItemFeesTestBase extends APITests {
     useLostItemPolicy(lostItemFeePoliciesFixture.create(
       lostItemFeePoliciesFixture.facultyStandardPolicy()
         .withName("Test check in")
-        .chargeProcessingFee(processingFee)
+        .chargeProcessingFeeWhenDeclaredLost(processingFee)
         .withNoChargeAmountItem()
         .chargeOverdueFineWhenReturned()).getId());
 
@@ -329,7 +328,7 @@ public abstract class RefundLostItemFeesTestBase extends APITests {
     useLostItemPolicy(lostItemFeePoliciesFixture.create(
       lostItemFeePoliciesFixture.facultyStandardPolicy()
         .withName("Test check in")
-        .chargeProcessingFee(processingFee)
+        .chargeProcessingFeeWhenDeclaredLost(processingFee)
         .withNoChargeAmountItem()
         .doNotChargeOverdueFineWhenReturned()).getId());
 
@@ -353,7 +352,7 @@ public abstract class RefundLostItemFeesTestBase extends APITests {
     useLostItemPolicy(lostItemFeePoliciesFixture.create(
       lostItemFeePoliciesFixture.facultyStandardPolicy()
         .withName("Test check in")
-        .doNotChargeProcessingFee()
+        .doNotChargeProcessingFeeWhenDeclaredLost()
         .withSetCost(itemFee)
         .refundFeesWithinMinutes(1)
         .chargeOverdueFineWhenReturned()).getId());
@@ -377,7 +376,7 @@ public abstract class RefundLostItemFeesTestBase extends APITests {
     useLostItemPolicy(lostItemFeePoliciesFixture.create(
       lostItemFeePoliciesFixture.facultyStandardPolicy()
         .withName("Test check in")
-        .chargeProcessingFee(processingFee)
+        .chargeProcessingFeeWhenDeclaredLost(processingFee)
         .withNoChargeAmountItem()
         .doNotRefundProcessingFeeWhenReturned()
         .chargeOverdueFineWhenReturned()).getId());
@@ -420,7 +419,7 @@ public abstract class RefundLostItemFeesTestBase extends APITests {
       lostItemFeePoliciesFixture.facultyStandardPolicy()
         .withName(String.format("Test lost policy processing fee %s, item fee %s",
           itemFee, processingFee))
-        .chargeProcessingFee(processingFee)
+        .chargeProcessingFeeWhenDeclaredLost(processingFee)
         .withSetCost(itemFee)
         .refundFeesWithinMinutes(1)).getId());
   }
