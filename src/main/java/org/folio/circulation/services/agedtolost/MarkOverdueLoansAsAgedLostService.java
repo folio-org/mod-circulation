@@ -103,7 +103,7 @@ public class MarkOverdueLoansAsAgedLostService {
     final Result<CqlQuery> claimedReturnedQuery = notEqual("itemStatus", CLAIMED_RETURNED.getValue());
     final Result<CqlQuery> agedToLostQuery = notEqual("itemStatus", AGED_TO_LOST.getValue());
 
-    return Result.combine(statusQuery, dueDateQuery, CqlQuery::and)
+    return statusQuery.combine(dueDateQuery, CqlQuery::and)
       .combine(claimedReturnedQuery, CqlQuery::and)
       .combine(agedToLostQuery, CqlQuery::and)
       .map(query -> query.sortBy(ascending("dueDate")));

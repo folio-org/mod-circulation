@@ -18,7 +18,6 @@ import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.ThrowingSupplier;
 
 public interface Result<T> {
-
   /**
    * Creates a successful result with the supplied value
    * unless an exception is thrown
@@ -41,31 +40,8 @@ public interface Result<T> {
    * @param supplier of the result value
    * @return completed future with successful result or failed result with error
    */
-  static <T> CompletableFuture<Result<T>> ofAsync(
-    ThrowingSupplier<T, Exception> supplier) {
-
+  static <T> CompletableFuture<Result<T>> ofAsync(ThrowingSupplier<T, Exception> supplier) {
     return completedFuture(of(supplier));
-  }
-
-  /**
-   * Combines two results together, if both succeed.
-   * Otherwise, returns either failure, first result takes precedence
-   *
-   * Deprecated, please use member method version
-   *
-   * @param firstResult the  first result
-   * @param secondResult the  second result
-   * @param combiner function to combine the values together
-   * @return either failure from the first result, failure from the second
-   * or successful result with the values combined
-   */
-  //TODO: Replace with member method below
-  static <T, U, V> Result<V> combine(
-    Result<T> firstResult,
-    Result<U> secondResult,
-    BiFunction<T, U, V> combiner) {
-
-    return firstResult.combine(secondResult, combiner);
   }
 
   /**
@@ -77,9 +53,7 @@ public interface Result<T> {
    * or successful result with values collected to list
    */
   @SafeVarargs
-  static <T> Result<List<T>> combineAll(
-    List<Result<T>>... results) {
-
+  static <T> Result<List<T>> combineAll(List<Result<T>>... results) {
     return Stream.of(results).flatMap(Collection::stream)
       .map(r -> r.map(Stream::of))
       .reduce(of(Stream::empty), Result::combineResultStream)
@@ -98,7 +72,7 @@ public interface Result<T> {
   static <T> Result<Stream<T>> combineResultStream(
     Result<Stream<T>> firstResult, Result<Stream<T>> secondResult) {
 
-    return Result.combine(firstResult, secondResult, Stream::concat);
+    return firstResult.combine(secondResult, Stream::concat);
   }
 
   /**
@@ -110,10 +84,7 @@ public interface Result<T> {
    * @return either failure from this result, failure from the other
    * or successful result with the values combined
    */
-  default <U, V> Result<V> combine(
-    Result<U> otherResult,
-    BiFunction<T, U, V> combiner) {
-
+  default <U, V> Result<V> combine(Result<U> otherResult, BiFunction<T, U, V> combiner) {
     return next(firstValue ->
       otherResult.map(secondValue ->
         combiner.apply(firstValue, secondValue)));
@@ -128,8 +99,7 @@ public interface Result<T> {
    * @return either failure from this result, failure from the other
    * or result of the combination
    */
-  default <U, V> Result<V> combineToResult(
-    Result<U> otherResult,
+  default <U, V> Result<V> combineToResult(Result<U> otherResult,
     BiFunction<T, U, Result<V>> combiner) {
 
     return next(firstValue ->
@@ -232,10 +202,8 @@ public interface Result<T> {
    * @param whenFalse executed when condition evaluates to false
    * @return Result of whenTrue or whenFalse, unless previous result failed
    */
-  default Result<T> nextWhen(
-    Function<T, Result<Boolean>> condition,
-    Function<T, Result<T>> whenTrue,
-    Function<T, Result<T>> whenFalse) {
+  default Result<T> nextWhen(Function<T, Result<Boolean>> condition,
+    Function<T, Result<T>> whenTrue, Function<T, Result<T>> whenFalse) {
 
     return next(value ->
       when(condition.apply(value),
@@ -256,10 +224,8 @@ public interface Result<T> {
    * @param whenFalse executed when condition evaluates to false
    * @return Result of whenTrue or whenFalse, unless previous result failed
    */
-  static <R> Result<R> when(
-    Result<Boolean> condition,
-    Supplier<Result<R>> whenTrue,
-    Supplier<Result<R>> whenFalse) {
+  static <R> Result<R> when(Result<Boolean> condition,
+    Supplier<Result<R>> whenTrue, Supplier<Result<R>> whenFalse) {
 
     return condition.next(result -> isTrue(result)
       ? whenTrue.get()
@@ -278,13 +244,10 @@ public interface Result<T> {
    * @param failure executed to create failure reason when condition evaluates to true
    * @return success when condition is false, failure otherwise
    */
-  default Result<T> failWhen(
-    Function<T, Result<Boolean>> condition,
+  default Result<T> failWhen(Function<T, Result<Boolean>> condition,
     Function<T, HttpFailure> failure) {
 
-    return nextWhen(condition,
-      value -> failed(failure.apply(value)),
-      Result::succeeded);
+    return nextWhen(condition, value -> failed(failure.apply(value)), Result::succeeded);
   }
 
   boolean failed();
