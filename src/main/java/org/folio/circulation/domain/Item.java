@@ -16,7 +16,7 @@ import static org.folio.circulation.domain.representations.ItemProperties.IN_TRA
 import static org.folio.circulation.domain.representations.ItemProperties.ITEM_COPY_NUMBER_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.STATUS_PROPERTY;
 import static org.folio.circulation.domain.representations.ItemProperties.TITLE;
-import static org.folio.circulation.support.json.JsonArrayHelper.mapToList;
+import static org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher.mapToList;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getArrayProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.representations.ItemProperties;
-import org.folio.circulation.support.json.JsonArrayHelper;
+import org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -137,7 +137,7 @@ public class Item {
   }
 
   public String getPrimaryContributorName() {
-    return JsonArrayHelper.toStream(instanceRepresentation, CONTRIBUTORS)
+    return JsonObjectArrayPropertyFetcher.toStream(instanceRepresentation, CONTRIBUTORS)
       .filter(c -> c.getBoolean("primary", false))
       .findFirst()
       .map(c -> c.getString("name"))

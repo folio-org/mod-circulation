@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.NoteLink;
 import org.folio.circulation.domain.notes.Note;
-import org.folio.circulation.support.json.JsonArrayHelper;
+import org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -41,7 +41,7 @@ public class NoteToJsonMapper {
   }
 
   public Note noteFrom(JsonObject json) {
-    List<NoteLink> noteLinks = JsonArrayHelper.toStream(json, "links")
+    List<NoteLink> noteLinks = JsonObjectArrayPropertyFetcher.toStream(json, "links")
       .map(NoteToJsonMapper::noteLinkFrom)
       .collect(Collectors.toList());
 

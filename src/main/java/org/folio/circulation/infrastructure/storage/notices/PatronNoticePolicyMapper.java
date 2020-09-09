@@ -19,7 +19,7 @@ import org.folio.circulation.domain.notice.NoticeTiming;
 import org.folio.circulation.domain.notice.PatronNoticePolicy;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.HttpFailure;
-import org.folio.circulation.support.json.JsonArrayHelper;
+import org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.ServerErrorFailure;
 
@@ -45,11 +45,11 @@ public class PatronNoticePolicyMapper implements Function<JsonObject, Result<Pat
   @Override
   public Result<PatronNoticePolicy> apply(JsonObject representation) {
     List<Result<NoticeConfiguration>> loanNoticeConfigurations =
-      JsonArrayHelper.mapToList(representation, LOAN_NOTICES, this::toNoticeConfiguration);
+      JsonObjectArrayPropertyFetcher.mapToList(representation, LOAN_NOTICES, this::toNoticeConfiguration);
     List<Result<NoticeConfiguration>> requestNoticeConfigurations =
-      JsonArrayHelper.mapToList(representation, REQUEST_NOTICES, this::toNoticeConfiguration);
+      JsonObjectArrayPropertyFetcher.mapToList(representation, REQUEST_NOTICES, this::toNoticeConfiguration);
     List<Result<NoticeConfiguration>> feeFineNoticeConfiguration =
-      JsonArrayHelper.mapToList(representation, FEE_FINE_NOTICES, this::toNoticeConfiguration);
+      JsonObjectArrayPropertyFetcher.mapToList(representation, FEE_FINE_NOTICES, this::toNoticeConfiguration);
 
     return Result.combineAll(loanNoticeConfigurations, requestNoticeConfigurations,
       feeFineNoticeConfiguration).map(PatronNoticePolicy::new);

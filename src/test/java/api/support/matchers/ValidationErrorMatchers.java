@@ -1,7 +1,7 @@
 package api.support.matchers;
 
-import static org.folio.circulation.support.json.JsonArrayHelper.mapToList;
-import static org.folio.circulation.support.json.JsonArrayHelper.toStream;
+import static org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher.mapToList;
+import static org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher.toStream;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.Matchers.equalTo;

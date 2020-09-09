@@ -8,7 +8,7 @@ import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import org.folio.circulation.support.json.JsonArrayHelper;
+import org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
@@ -28,7 +28,7 @@ public class FixedDueDateSchedules {
       return new NoFixedDueDateSchedules();
     } else {
       return new FixedDueDateSchedules(getProperty(representation, "id"),
-        JsonArrayHelper.toList(representation.getJsonArray("schedules")));
+        JsonObjectArrayPropertyFetcher.toList(representation.getJsonArray("schedules")));
     }
   }
 

@@ -6,7 +6,7 @@ import static api.support.http.Limit.limit;
 import static api.support.http.Limit.noLimit;
 import static api.support.http.Offset.noOffset;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
-import static org.folio.circulation.support.json.JsonArrayHelper.mapToList;
+import static org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher.mapToList;
 
 import java.net.URL;
 import java.util.List;

@@ -1,7 +1,7 @@
 package org.folio.circulation.domain;
 
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
-import static org.folio.circulation.support.json.JsonArrayHelper.toStream;
+import static org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher.toStream;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getBooleanProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedStringProperty;

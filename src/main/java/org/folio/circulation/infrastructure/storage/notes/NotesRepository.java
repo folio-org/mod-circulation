@@ -1,6 +1,6 @@
 package org.folio.circulation.infrastructure.storage.notes;
 
-import static org.folio.circulation.support.json.JsonArrayHelper.toStream;
+import static org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher.toStream;
 import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
 import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;

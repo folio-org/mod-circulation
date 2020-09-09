@@ -11,9 +11,8 @@ import java.util.stream.Stream;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
-//TODO: Rename to JsonObjectArrayHelper or consolidate with string version
-public class JsonArrayHelper {
-  private JsonArrayHelper() { }
+public class JsonObjectArrayPropertyFetcher {
+  private JsonObjectArrayPropertyFetcher() { }
 
   public static List<JsonObject> toList(JsonArray array) {
     if(array == null) {
