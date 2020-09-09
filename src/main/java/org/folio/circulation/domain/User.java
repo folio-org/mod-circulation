@@ -1,15 +1,19 @@
 package org.folio.circulation.domain;
 
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static org.folio.circulation.support.JsonArrayHelper.toStream;
+import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProperty;
+import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
+import static org.folio.circulation.support.JsonPropertyFetcher.getObjectProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
 import java.util.Objects;
 
-import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import lombok.val;
 
 public class User {
   private static final String PERSONAL_PROPERTY_NAME = "personal";
@@ -30,7 +34,6 @@ public class User {
     return new User(representation, newPatronGroup);
   }
 
-
   public boolean canDetermineStatus() {
     return !representation.containsKey("active");
   }
@@ -40,20 +43,19 @@ public class User {
   }
 
   boolean isActive() {
-    final boolean active = representation.getBoolean("active");
+    final boolean active = getBooleanProperty(representation,"active");
 
     return active && !isExpired();
   }
 
   private boolean isExpired() {
-    if(representation.containsKey("expirationDate")) {
-      final DateTime expirationDate = DateTime.parse(
-        representation.getString("expirationDate"));
+    val expirationDate = getDateTimeProperty(representation, "expirationDate", null);
 
-      return expirationDate.isBefore(DateTime.now());
+    if (expirationDate == null) {
+      return false;
     }
     else {
-      return false;
+      return expirationDate.isBefore(DateTime.now());
     }
   }
 
@@ -86,24 +88,15 @@ public class User {
   }
 
   public JsonObject getAddressByType(String type) {
-    JsonObject personal = representation.getJsonObject(PERSONAL_PROPERTY_NAME);
+    JsonObject personal = getObjectProperty(representation, PERSONAL_PROPERTY_NAME);
 
-    if(personal == null) { return null; }
+    val addresses = toStream(personal, "addresses");
 
-    JsonArray addresses = personal.getJsonArray("addresses");
-
-    if(addresses == null) { return null; }
-
-    for(Object ob : addresses) {
-      JsonObject address = (JsonObject)ob;
-      if (address != null
-        && Objects.equals(address.getString("addressTypeId"), (type))) {
-
-        return address;
-      }
-    }
-
-    return null;
+    return addresses
+      .filter(Objects::nonNull)
+      .filter(address -> Objects.equals(getProperty(address, "addressTypeId"), type))
+      .findFirst()
+      .orElse(null);
   }
 
   public PatronGroup getPatronGroup() {
@@ -111,9 +104,7 @@ public class User {
   }
 
   public String getPersonalName() {
-    if(StringUtils.isNotBlank(getFirstName()) &&
-      StringUtils.isNotBlank(getLastName())) {
-
+    if (isNotBlank(getFirstName()) && isNotBlank(getLastName())) {
       return String.format("%s, %s", getLastName(),
         getFirstName());
     }
