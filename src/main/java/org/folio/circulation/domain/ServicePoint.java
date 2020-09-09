@@ -15,7 +15,7 @@ public class ServicePoint {
   }
 
   public boolean isPickupLocation() {
-    return representation.getBoolean("pickupLocation");
+    return getBooleanProperty(representation, "pickupLocation");
   }
 
   public String getName() {
@@ -40,10 +40,6 @@ public class ServicePoint {
 
   public Integer getShelvingLagTime() {
     return getIntegerProperty(representation, "shelvingLagTime", null);
-  }
-
-  public Boolean getPickupLocation() {
-    return getBooleanProperty(representation, "pickupLocation");
   }
 
   public TimePeriod getHoldShelfExpiryPeriod() {

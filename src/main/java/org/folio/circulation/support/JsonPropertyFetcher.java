@@ -77,15 +77,18 @@ public class JsonPropertyFetcher {
     }
   }
 
-  public static DateTime getDateTimeProperty(
-    JsonObject representation,
-    String propertyName) {
+  public static DateTime getDateTimeProperty(JsonObject representation, String propertyName) {
+    return getDateTimeProperty(representation, propertyName, null);
+  }
+
+  public static DateTime getDateTimeProperty(JsonObject representation, String propertyName,
+    DateTime defaultValue) {
 
     if (representation != null && isNotBlank(representation.getString(propertyName))) {
       return DateTime.parse(
         representation.getString(propertyName));
     } else {
-      return null;
+      return defaultValue;
     }
   }
 
