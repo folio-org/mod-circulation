@@ -1,7 +1,10 @@
 package org.folio.circulation.support.json;
 
+import static java.util.Collections.emptyList;
+import static java.util.function.Function.identity;
+import static java.util.stream.Stream.empty;
+
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
@@ -15,7 +18,7 @@ public class JsonObjectArrayPropertyFetcher {
   private JsonObjectArrayPropertyFetcher() { }
 
   public static List<JsonObject> toList(JsonArray array) {
-    if(array == null) {
+    if (array == null) {
       return new ArrayList<>();
     }
 
@@ -23,11 +26,9 @@ public class JsonObjectArrayPropertyFetcher {
       .collect(Collectors.toList());
   }
 
-  public static <T> List<T> mapToList(JsonArray array,
-      Function<JsonObject, T> mapper) {
-
-    if(array == null) {
-      return Collections.emptyList();
+  public static <T> List<T> mapToList(JsonArray array, Function<JsonObject, T> mapper) {
+    if (array == null) {
+      return emptyList();
     }
 
     return toStream(array)
@@ -38,24 +39,20 @@ public class JsonObjectArrayPropertyFetcher {
   public static <T> List<T> mapToList(JsonObject within, String arrayPropertyName,
       Function<JsonObject, T> mapper) {
 
-    if(within == null || !within.containsKey(arrayPropertyName)) {
-      return Collections.emptyList();
+    if (within == null || !within.containsKey(arrayPropertyName)) {
+      return emptyList();
     }
 
     return mapToList(within.getJsonArray(arrayPropertyName), mapper);
   }
 
-  public static List<JsonObject> mapToList(JsonObject within,
-      String arrayPropertyName) {
-
-    return mapToList(within, arrayPropertyName, Function.identity());
+  public static List<JsonObject> mapToList(JsonObject within, String arrayPropertyName) {
+    return mapToList(within, arrayPropertyName, identity());
   }
 
-  public static Stream<JsonObject> toStream(JsonObject within,
-      String arrayPropertyName) {
-
-    if(within == null || !within.containsKey(arrayPropertyName)) {
-      return Stream.empty();
+  public static Stream<JsonObject> toStream(JsonObject within, String arrayPropertyName) {
+    if (within == null || !within.containsKey(arrayPropertyName)) {
+      return empty();
     }
 
     return toStream(within.getJsonArray(arrayPropertyName));
@@ -69,9 +66,9 @@ public class JsonObjectArrayPropertyFetcher {
   }
 
   private static Function<Object, JsonObject> castToJsonObject() {
-    return loan -> {
-      if(loan instanceof JsonObject) {
-        return (JsonObject)loan;
+    return entry -> {
+      if (entry instanceof JsonObject) {
+        return (JsonObject)entry;
       }
       else {
         return null;
