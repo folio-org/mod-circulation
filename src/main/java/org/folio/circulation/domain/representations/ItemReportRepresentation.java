@@ -138,7 +138,7 @@ public class ItemReportRepresentation {
     write(checkInServicePointJson, "discoveryDisplayName", servicePoint.getDiscoveryDisplayName());
     write(checkInServicePointJson, "description", servicePoint.getDescription());
     write(checkInServicePointJson, "shelvingLagTime", servicePoint.getShelvingLagTime());
-    write(checkInServicePointJson, "pickupLocation", servicePoint.getPickupLocation());
+    write(checkInServicePointJson, "pickupLocation", servicePoint.isPickupLocation());
     write(loanJson, "checkInServicePoint", checkInServicePointJson);
   }
 
