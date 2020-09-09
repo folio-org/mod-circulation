@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.RequestType;
-import org.folio.circulation.support.JsonStringArrayHelper;
+import org.folio.circulation.support.JsonStringArrayPropertyFetcher;
 
 import io.vertx.core.json.JsonObject;
 
@@ -16,7 +16,7 @@ public class RequestPolicy {
   }
 
   public static RequestPolicy from(JsonObject representation) {
-    return new RequestPolicy(JsonStringArrayHelper
+    return new RequestPolicy(JsonStringArrayPropertyFetcher
       .toStream(representation, "requestTypes")
       .collect(Collectors.toList()));
   }

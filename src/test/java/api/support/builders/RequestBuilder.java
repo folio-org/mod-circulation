@@ -6,7 +6,7 @@ import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProper
 import static org.folio.circulation.support.JsonPropertyFetcher.getLocalDateProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getUUIDProperty;
-import static org.folio.circulation.support.JsonStringArrayHelper.toStream;
+import static org.folio.circulation.support.JsonStringArrayPropertyFetcher.toStream;
 
 import java.util.List;
 import java.util.UUID;

@@ -11,8 +11,8 @@ import java.util.stream.Stream;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
-public class JsonStringArrayHelper {
-  private JsonStringArrayHelper() { }
+public class JsonStringArrayPropertyFetcher {
+  private JsonStringArrayPropertyFetcher() { }
 
   public static List<String> toList(JsonArray array) {
     return  toStream(array).collect(Collectors.toList());

@@ -2,7 +2,7 @@ package api.requests;
 
 import static api.support.JsonCollectionAssistant.getRecordById;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
-import static org.folio.circulation.support.JsonStringArrayHelper.toList;
+import static org.folio.circulation.support.JsonStringArrayPropertyFetcher.toList;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;

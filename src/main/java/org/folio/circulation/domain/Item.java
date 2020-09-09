@@ -22,7 +22,7 @@ import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringP
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.JsonPropertyWriter.remove;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
-import static org.folio.circulation.support.JsonStringArrayHelper.toStream;
+import static org.folio.circulation.support.JsonStringArrayPropertyFetcher.toStream;
 
 import java.util.List;
 import java.util.Optional;
