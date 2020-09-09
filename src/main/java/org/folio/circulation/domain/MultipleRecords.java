@@ -2,7 +2,7 @@ package org.folio.circulation.domain;
 
 import static java.util.function.Function.identity;
 import static java.util.stream.Stream.concat;
-import static org.folio.circulation.support.JsonArrayHelper.mapToList;
+import static org.folio.circulation.support.json.JsonArrayHelper.mapToList;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.ArrayList;

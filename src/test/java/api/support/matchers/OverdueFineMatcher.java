@@ -2,7 +2,7 @@ package api.support.matchers;
 
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath;
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasNoJsonPath;
-import static org.folio.circulation.support.JsonPropertyFetcher.getUUIDProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getUUIDProperty;
 import static org.hamcrest.core.Is.is;
 
 import java.util.ArrayList;

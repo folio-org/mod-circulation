@@ -8,7 +8,7 @@ import static api.support.fixtures.UserExamples.basedUponJessicaPontefract;
 import static api.support.fixtures.UserExamples.basedUponRebeccaStuart;
 import static api.support.fixtures.UserExamples.basedUponStevenJones;
 import static java.util.function.Function.identity;
-import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 
 import java.util.function.Function;
 

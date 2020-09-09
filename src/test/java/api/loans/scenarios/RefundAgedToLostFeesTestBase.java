@@ -14,7 +14,7 @@ import static api.support.matchers.LoanAccountMatcher.hasLostItemFee;
 import static api.support.matchers.LoanAccountMatcher.hasLostItemProcessingFee;
 import static api.support.matchers.LoanAccountMatcher.hasOverdueFine;
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasNoJsonPath;
-import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimePropertyByPath;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimePropertyByPath;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;

@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.RequestType;
-import org.folio.circulation.support.JsonStringArrayPropertyFetcher;
+import org.folio.circulation.support.json.JsonStringArrayPropertyFetcher;
 
 import io.vertx.core.json.JsonObject;
 

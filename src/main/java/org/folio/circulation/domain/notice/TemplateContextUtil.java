@@ -18,7 +18,7 @@ import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.policy.LoanPolicy;
-import org.folio.circulation.support.JsonArrayHelper;
+import org.folio.circulation.support.json.JsonArrayHelper;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 

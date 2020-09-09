@@ -1,8 +1,8 @@
 package org.folio.circulation.domain.anonymization.config;
 
-import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getNestedIntegerProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getBooleanProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedIntegerProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedStringProperty;
 
 import org.folio.circulation.domain.policy.Period;
 

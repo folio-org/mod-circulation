@@ -1,6 +1,6 @@
 package org.folio.circulation.domain;
 
-import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 
 import java.util.Optional;
 

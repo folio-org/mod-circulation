@@ -2,7 +2,7 @@ package api.support.fixtures;
 
 import static api.support.http.ResourceClient.forLostItemFeePolicies;
 import static org.folio.circulation.domain.policy.Period.minutes;
-import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 
 import java.util.UUID;
 

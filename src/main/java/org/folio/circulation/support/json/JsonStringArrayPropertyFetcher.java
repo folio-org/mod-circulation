@@ -1,4 +1,4 @@
-package org.folio.circulation.support;
+package org.folio.circulation.support.json;
 
 import static java.util.Optional.ofNullable;
 

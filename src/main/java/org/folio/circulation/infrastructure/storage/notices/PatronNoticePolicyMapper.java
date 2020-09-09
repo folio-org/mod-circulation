@@ -1,9 +1,9 @@
 package org.folio.circulation.infrastructure.storage.notices;
 
 import static java.lang.String.format;
-import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getNestedObjectProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getBooleanProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedObjectProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.succeeded;
 
@@ -19,7 +19,7 @@ import org.folio.circulation.domain.notice.NoticeTiming;
 import org.folio.circulation.domain.notice.PatronNoticePolicy;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.HttpFailure;
-import org.folio.circulation.support.JsonArrayHelper;
+import org.folio.circulation.support.json.JsonArrayHelper;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.ServerErrorFailure;
 

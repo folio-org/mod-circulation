@@ -4,7 +4,7 @@ import static java.util.Objects.isNull;
 import static java.util.Optional.ofNullable;
 import static org.folio.circulation.domain.representations.CallNumberComponentsRepresentation.createCallNumberComponents;
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
-import static org.folio.circulation.support.JsonPropertyFetcher.copyProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.copyProperty;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 import java.lang.invoke.MethodHandles;

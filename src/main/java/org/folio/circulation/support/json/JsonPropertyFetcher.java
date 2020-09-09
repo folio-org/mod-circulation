@@ -1,4 +1,4 @@
-package org.folio.circulation.support;
+package org.folio.circulation.support.json;
 
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.joda.time.DateTime.parse;

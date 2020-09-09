@@ -6,7 +6,7 @@ import static api.support.matchers.EventTypeMatchers.isItemClaimedReturnedEventT
 import static api.support.matchers.EventTypeMatchers.isItemDeclaredLostEventType;
 import static api.support.matchers.EventTypeMatchers.isLoanDueDateChangedEventType;
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath;
-import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getBooleanProperty;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.core.Is.is;
 

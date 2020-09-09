@@ -3,9 +3,9 @@ package org.folio.circulation.domain;
 import static org.folio.circulation.domain.FeeAmount.noFeeAmount;
 import static org.folio.circulation.domain.FeeAmount.zeroFeeAmount;
 import static org.folio.circulation.domain.representations.AccountStatus.CLOSED;
-import static org.folio.circulation.support.JsonPropertyFetcher.getNestedDateTimeProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedDateTimeProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedStringProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 
 import java.util.Collection;
 import java.util.Collections;

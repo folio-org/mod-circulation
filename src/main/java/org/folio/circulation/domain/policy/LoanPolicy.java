@@ -1,12 +1,12 @@
 package org.folio.circulation.domain.policy;
 
 import static java.lang.String.format;
-import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getNestedIntegerProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getNestedObjectProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getBooleanProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getIntegerProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedIntegerProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedObjectProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedStringProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 
@@ -496,7 +496,7 @@ public class LoanPolicy extends Policy {
 
     return Collections.emptyList();
   }
-  
+
   private static class UnknownLoanPolicy extends LoanPolicy {
     UnknownLoanPolicy(String id) {
       super(new JsonObject().put("id", id));

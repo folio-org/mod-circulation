@@ -1,6 +1,6 @@
 package org.folio.circulation.support;
 
-import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimePropertyByPath;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimePropertyByPath;
 import static org.folio.circulation.support.JsonPropertyWriter.writeByPath;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;

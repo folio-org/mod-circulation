@@ -1,6 +1,6 @@
 package org.folio.circulation.domain;
 
-import static org.folio.circulation.support.JsonPropertyFetcher.getBigDecimalProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getBigDecimalProperty;
 
 import java.math.BigDecimal;
 

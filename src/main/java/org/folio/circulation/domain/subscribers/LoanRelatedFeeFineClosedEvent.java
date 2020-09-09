@@ -1,6 +1,6 @@
 package org.folio.circulation.domain.subscribers;
 
-import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 
 import io.vertx.core.json.JsonObject;
 

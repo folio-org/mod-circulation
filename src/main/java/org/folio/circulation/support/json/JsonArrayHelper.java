@@ -1,4 +1,4 @@
-package org.folio.circulation.support;
+package org.folio.circulation.support.json;
 
 import java.util.ArrayList;
 import java.util.Collections;

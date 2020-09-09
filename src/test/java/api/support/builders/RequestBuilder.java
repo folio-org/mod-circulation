@@ -1,12 +1,12 @@
 package api.support.builders;
 
 import static java.util.stream.Collectors.toList;
-import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimeProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getLocalDateProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getUUIDProperty;
-import static org.folio.circulation.support.JsonStringArrayPropertyFetcher.toStream;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getIntegerProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getLocalDateProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getUUIDProperty;
+import static org.folio.circulation.support.json.JsonStringArrayPropertyFetcher.toStream;
 
 import java.util.List;
 import java.util.UUID;
