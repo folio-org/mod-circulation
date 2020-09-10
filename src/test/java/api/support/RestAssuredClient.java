@@ -7,6 +7,7 @@ import static api.support.RestAssuredConfiguration.timeoutConfig;
 import static api.support.RestAssuredResponseConversion.toResponse;
 import static io.restassured.RestAssured.given;
 import static java.util.Arrays.asList;
+import static org.hamcrest.Matchers.greaterThan;
 
 import java.net.URL;
 import java.util.Collection;
@@ -43,7 +44,7 @@ public class RestAssuredClient {
 
   public RequestSpecification beginRequest(String requestId) {
     return given()
-      .log().all()
+      .log().ifValidationFails()
       .config(config)
       .spec(standardHeaders(defaultHeaders.withRequestId(requestId)))
       .spec(timeoutConfig());
@@ -53,7 +54,7 @@ public class RestAssuredClient {
     return toResponse(beginRequest(requestId)
       .when().get(location)
       .then()
-      .log().all()
+      .log().ifStatusCodeMatches(greaterThan(300))
       .extract().response());
   }
 
@@ -61,7 +62,7 @@ public class RestAssuredClient {
     return beginRequest(requestId)
       .when().get(location)
       .then()
-      .log().all()
+      .log().ifStatusCodeMatches(greaterThan(300))
       .extract().body().as(type);
   }
 
@@ -77,13 +78,13 @@ public class RestAssuredClient {
 
     return toResponse(given()
       .config(config)
-      .log().all()
+      .log().ifValidationFails()
       .spec(standardHeaders(defaultHeaders.withRequestId(requestId)))
       .queryParams(toMap(parameters))
       .spec(timeoutConfig())
       .when().get(url)
       .then()
-      .log().all()
+      .log().ifValidationFails()
       .statusCode(expectedStatusCode)
       .extract().response());
   }
@@ -91,13 +92,13 @@ public class RestAssuredClient {
   public <T> List<T> getMany(URL url, Class<T> type, String collectionName, QueryStringParameter... parameters) {
     return given()
       .config(config)
-      .log().all()
+      .log().ifValidationFails()
       .spec(standardHeaders(defaultHeaders.withRequestId("get-many-" + collectionName)))
       .queryParams(toMap(asList(parameters)))
       .spec(timeoutConfig())
       .when().get(url)
       .then()
-      .log().all()
+      .log().ifValidationFails()
       .statusCode(200)
       .extract().jsonPath().getList(collectionName, type);
   }
@@ -106,7 +107,7 @@ public class RestAssuredClient {
     return toResponse(beginRequest(requestId)
       .when().get(url)
       .then()
-      .log().all()
+      .log().ifValidationFails()
       .statusCode(expectedStatusCode)
       .extract().response());
   }
@@ -120,12 +121,12 @@ public class RestAssuredClient {
 
     return toResponse(given()
       .config(config)
-      .log().all()
+      .log().ifValidationFails()
       .spec(standardHeaders(getOkapiHeadersFromContext().withRequestId(requestId)))
       .spec(timeoutConfig)
       .when().post(url)
       .then()
-      .log().all()
+      .log().ifValidationFails()
       .statusCode(expectedStatusCode)
       .extract().response());
   }
@@ -134,7 +135,7 @@ public class RestAssuredClient {
     return toResponse(beginRequest(requestId)
       .when().post(url)
       .then()
-      .log().all()
+      .log().ifStatusCodeMatches(greaterThan(300))
       .extract().response());
   }
 
@@ -143,7 +144,7 @@ public class RestAssuredClient {
       .body(representation)
       .when().post(url)
       .then()
-      .log().all()
+      .log().ifStatusCodeMatches(greaterThan(300))
       .extract().response());
   }
 
@@ -154,7 +155,7 @@ public class RestAssuredClient {
       .body(representation)
       .when().post(url)
       .then()
-      .log().all()
+      .log().ifValidationFails()
       .statusCode(expectedStatusCode)
       .extract().response());
   }
@@ -164,13 +165,13 @@ public class RestAssuredClient {
 
     return toResponse(given()
       .config(config)
-      .log().all()
+      .log().ifValidationFails()
       .spec(standardHeaders(okapiHeaders))
       .spec(timeoutConfig())
       .body(representation)
       .when().post(location)
       .then()
-      .log().all()
+      .log().ifValidationFails()
       .statusCode(expectedStatusCode)
       .extract().response());
   }
@@ -178,13 +179,13 @@ public class RestAssuredClient {
   public Response post(Object representation, URL location, OkapiHeaders okapiHeaders) {
     return toResponse(given()
       .config(config)
-      .log().all()
+      .log().ifValidationFails()
       .spec(standardHeaders(okapiHeaders))
       .spec(timeoutConfig())
       .body(representation)
       .when().post(location)
       .then()
-      .log().all()
+      .log().ifStatusCodeMatches(greaterThan(300))
       .extract().response());
   }
 
@@ -193,7 +194,7 @@ public class RestAssuredClient {
       .body(representation)
       .when().put(location)
       .then()
-      .log().all()
+      .log().ifStatusCodeMatches(greaterThan(300))
       .extract().response());
   }
 
@@ -204,7 +205,7 @@ public class RestAssuredClient {
       .body(representation)
       .when().put(location)
       .then()
-      .log().all()
+      .log().ifValidationFails()
       .statusCode(expectedStatusCode)
       .extract().response());
   }
@@ -213,7 +214,7 @@ public class RestAssuredClient {
     return toResponse(beginRequest(requestId)
       .when().delete(location)
       .then()
-      .log().all()
+      .log().ifValidationFails()
       .statusCode(expectedStatusCode)
       .extract().response());
   }
@@ -222,7 +223,7 @@ public class RestAssuredClient {
     return toResponse(beginRequest(requestId)
       .when().delete(location)
       .then()
-      .log().all()
+      .log().ifStatusCodeMatches(greaterThan(300))
       .extract().response());
   }
 

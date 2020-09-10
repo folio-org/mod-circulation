@@ -56,7 +56,7 @@ public class ResponseInterpreter<T> {
     }
 
     try {
-      log.info("Response received: {}", response);
+      log.debug("Response received: {}", response);
 
       final Integer statusCode = response.getStatusCode();
 
