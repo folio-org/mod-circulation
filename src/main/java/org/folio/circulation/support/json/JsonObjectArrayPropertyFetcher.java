@@ -1,12 +1,11 @@
 package org.folio.circulation.support.json;
 
 import static java.util.function.Function.identity;
+import static org.folio.circulation.support.StreamToListMapper.toList;
 
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Stream;
-
-import org.folio.circulation.support.StreamToListMapper;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -17,14 +16,10 @@ public class JsonObjectArrayPropertyFetcher {
 
   private JsonObjectArrayPropertyFetcher() { }
 
-  public static List<JsonObject> toList(JsonArray array) {
-    return StreamToListMapper.toList(toStream(array));
-  }
-
   public static <T> List<T> mapToList(JsonObject within, String arrayPropertyName,
       Function<JsonObject, T> mapper) {
 
-    return StreamToListMapper.toList(toStream(within, arrayPropertyName).map(mapper));
+    return toList(toStream(within, arrayPropertyName).map(mapper));
   }
 
   public static List<JsonObject> mapToList(JsonObject within, String arrayPropertyName) {

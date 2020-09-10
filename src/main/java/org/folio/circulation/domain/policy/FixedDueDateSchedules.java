@@ -1,17 +1,19 @@
 package org.folio.circulation.domain.policy;
 
-import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.StreamToListMapper.toList;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
+import static org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher.toStream;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher;
-import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.server.ValidationError;
+import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
+
 import io.vertx.core.json.JsonObject;
 
 public class FixedDueDateSchedules {
@@ -28,13 +30,12 @@ public class FixedDueDateSchedules {
       return new NoFixedDueDateSchedules();
     } else {
       return new FixedDueDateSchedules(getProperty(representation, "id"),
-        JsonObjectArrayPropertyFetcher.toList(representation.getJsonArray("schedules")));
+        toList(toStream(representation, "schedules")));
     }
   }
 
   public Optional<DateTime> findDueDateFor(DateTime date) {
-    return findScheduleFor(date)
-      .map(this::getDueDate);
+    return findScheduleFor(date).map(this::getDueDate);
   }
 
   private Optional<JsonObject> findScheduleFor(DateTime date) {

@@ -17,7 +17,7 @@ import static java.lang.String.format;
 import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 import static org.folio.circulation.domain.representations.LoanProperties.BORROWER;
-import static org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher.toList;
+import static org.folio.circulation.support.StreamToListMapper.toList;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -41,6 +41,7 @@ import java.util.stream.Stream;
 import org.awaitility.Awaitility;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher;
 import org.joda.time.DateTime;
 import org.joda.time.Period;
 import org.joda.time.format.ISODateTimeFormat;
@@ -56,6 +57,7 @@ import api.support.fixtures.ConfigurationExample;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import lombok.val;
 
 public class LoanAPITests extends APITests {
   @Test
@@ -1827,10 +1829,9 @@ public class LoanAPITests extends APITests {
 
     hasProperty("name", itemStatus, "item status");
 
-    List<JsonObject> contributors = toList(item.getJsonArray("contributors"));
+    val contributors = toList(JsonObjectArrayPropertyFetcher.toStream(item, "contributors"));
 
-    assertThat("Should have single contributor",
-      contributors.size(), is(1));
+    assertThat("Should have single contributor", contributors.size(), is(1));
 
     assertThat("Contributor has a name",
       contributors.get(0).containsKey("name"), is(true));
