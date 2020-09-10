@@ -298,12 +298,15 @@ public class OverdueFineCalculatorService {
     }
   }
 
-  @AllArgsConstructor(access = PRIVATE)
   enum Scenario {
     CHECKIN(policy -> !policy.isUnknown()),
     RENEWAL(policy -> !policy.isUnknown() && isFalse(policy.getForgiveFineForRenewals()));
 
     private final Predicate<OverdueFinePolicy> shouldCreateFine;
+
+    Scenario(Predicate<OverdueFinePolicy> shouldCreateFine) {
+      this.shouldCreateFine = shouldCreateFine;
+    }
 
     private boolean shouldCreateFine(OverdueFinePolicy overdueFinePolicy) {
       return shouldCreateFine.test(overdueFinePolicy);
