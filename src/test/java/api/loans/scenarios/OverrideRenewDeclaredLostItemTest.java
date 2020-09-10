@@ -15,7 +15,7 @@ import api.support.spring.TestSpringConfiguration;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = TestSpringConfiguration.class)
-public class OverrideRenewDeclaredLostItemTest extends RefundLostItemFeesTestBase {
+public class OverrideRenewDeclaredLostItemTest extends RefundDeclaredLostFeesTestBase {
   @Autowired
   private OverrideRenewalFixture overrideRenewalFixture;
 
