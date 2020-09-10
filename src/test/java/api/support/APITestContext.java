@@ -1,5 +1,7 @@
 package api.support;
 
+import static org.folio.rest.tools.utils.NetworkUtils.nextFreePort;
+
 import java.lang.invoke.MethodHandles;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -44,7 +46,7 @@ public class APITestContext {
 
   private static VertxAssistant vertxAssistant;
   private static Launcher launcher;
-  private static int port;
+  private static final int PORT = nextFreePort();
 
   private static String fakeOkapiDeploymentId;
   private static Boolean useOkapiForStorage;
@@ -71,7 +73,7 @@ public class APITestContext {
   }
 
   public static int circulationModulePort() {
-    return port;
+    return PORT;
   }
 
   public static URL circulationModuleUrl(String path) {
@@ -79,7 +81,7 @@ public class APITestContext {
       if (useOkapiForInitialRequests) {
         return URLHelper.joinPath(okapiUrl(), path);
       } else {
-        return new URL("http", "localhost", port, path);
+        return new URL("http", "localhost", PORT, path);
       }
     } catch (MalformedURLException ex) {
       return null;
@@ -107,7 +109,7 @@ public class APITestContext {
 
     final CompletableFuture<String> fakeStorageModuleDeployed = deployFakeStorageModules();
 
-    final CompletableFuture<Void> circulationModuleStarted = launcher.start(port);
+    final CompletableFuture<Void> circulationModuleStarted = launcher.start(PORT);
 
     fakeStorageModuleDeployed.thenAccept(result -> fakeOkapiDeploymentId = result);
 
@@ -122,7 +124,6 @@ public class APITestContext {
     useOkapiForInitialRequests = Boolean.parseBoolean(
       System.getProperty("use.okapi.initial.requests", "false"));
 
-    port = 9605;
     vertxAssistant = new VertxAssistant();
     launcher = new Launcher(vertxAssistant);
 

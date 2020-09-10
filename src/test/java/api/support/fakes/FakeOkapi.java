@@ -2,6 +2,7 @@ package api.support.fakes;
 
 import static api.support.APITestContext.circulationModulePort;
 import static api.support.APITestContext.createWebClient;
+import static api.support.fakes.Storage.getStorage;
 import static api.support.fakes.StorageSchema.validatorForCheckInStorageSchema;
 import static api.support.fakes.StorageSchema.validatorForLocationCampSchema;
 import static api.support.fakes.StorageSchema.validatorForLocationInstSchema;
@@ -9,12 +10,12 @@ import static api.support.fakes.StorageSchema.validatorForLocationLibSchema;
 import static api.support.fakes.StorageSchema.validatorForNoteSchema;
 import static api.support.fakes.StorageSchema.validatorForStorageItemSchema;
 import static api.support.fakes.StorageSchema.validatorForStorageLoanSchema;
-import static api.support.fakes.Storage.getStorage;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.folio.circulation.support.http.server.ForwardResponse.forward;
 import static org.folio.circulation.support.http.server.NoContentResponse.noContent;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
+import static org.folio.rest.tools.utils.NetworkUtils.nextFreePort;
 
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
@@ -22,9 +23,9 @@ import java.util.Collection;
 import java.util.Objects;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
+import org.folio.circulation.support.results.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,7 +40,7 @@ import io.vertx.ext.web.RoutingContext;
 public class FakeOkapi extends AbstractVerticle {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-  private static final int PORT_TO_USE = 9493;
+  private static final int PORT_TO_USE = nextFreePort();
   private static final String address =
     String.format("http://localhost:%s", PORT_TO_USE);
 
