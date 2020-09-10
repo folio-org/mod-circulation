@@ -1,6 +1,5 @@
 package org.folio.circulation.support.json;
 
-import static java.util.function.Function.identity;
 import static org.folio.circulation.support.StreamToListMapper.toList;
 
 import java.util.List;
@@ -22,10 +21,6 @@ public class JsonObjectArrayPropertyFetcher {
     return toList(toStream(within, arrayPropertyName).map(mapper));
   }
 
-  public static List<JsonObject> mapToList(JsonObject within, String arrayPropertyName) {
-    return mapToList(within, arrayPropertyName, identity());
-  }
-
   public static Stream<JsonObject> toStream(JsonArray array) {
     return streamMapper.toStream(array);
   }
@@ -39,5 +34,4 @@ public class JsonObjectArrayPropertyFetcher {
       ? (JsonObject) entry
       : null;
   }
-
 }
