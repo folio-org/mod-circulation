@@ -407,7 +407,7 @@
           <!-- 0.5 * 'number of available cores', i.e. 2 for quad core envs -->
           <forkCount>0.5C</forkCount>
           <reuseForks>true</reuseForks>
-          <argLine>-Xmx256m</argLine>
+          <argLine>@{argLine} -Xmx512m</argLine>
           <useSystemClassLoader>false</useSystemClassLoader>
         </configuration>
       </plugin>
