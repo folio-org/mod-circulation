@@ -28,7 +28,7 @@ import lombok.With;
 @Getter(AccessLevel.PACKAGE)
 @AllArgsConstructor(access = AccessLevel.PACKAGE)
 final class LostItemFeeRefundContext {
-  private final ItemStatus itemStatus;
+  private final ItemStatus initialItemStatus;
   private final String itemId;
   private final String staffUserId;
   private final String servicePointId;
@@ -57,15 +57,15 @@ final class LostItemFeeRefundContext {
   }
 
   DateTime getItemLostDate() {
-    if (itemStatus == DECLARED_LOST) {
+    if (initialItemStatus == DECLARED_LOST) {
       return loan.getDeclareLostDateTime();
     }
 
-    if (itemStatus == LOST_AND_PAID) {
+    if (initialItemStatus == LOST_AND_PAID) {
       return loan.getDeclareLostDateTime();
     }
 
-    if (itemStatus == AGED_TO_LOST) {
+    if (initialItemStatus == AGED_TO_LOST) {
       return loan.getAgedToLostDateTime();
     }
 
@@ -73,7 +73,7 @@ final class LostItemFeeRefundContext {
   }
 
   boolean shouldRefundFeesForItem() {
-    return itemStatus.isLostNotResolved() || itemStatus == LOST_AND_PAID;
+    return initialItemStatus.isLostNotResolved() || initialItemStatus == LOST_AND_PAID;
   }
 
   boolean hasLoan() {
