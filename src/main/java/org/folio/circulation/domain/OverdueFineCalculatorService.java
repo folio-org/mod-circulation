@@ -1,9 +1,11 @@
 package org.folio.circulation.domain;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static lombok.AccessLevel.PRIVATE;
 import static org.apache.commons.lang3.BooleanUtils.isFalse;
 import static org.folio.circulation.domain.OverdueFineCalculatorService.Scenario.CHECKIN;
 import static org.folio.circulation.domain.OverdueFineCalculatorService.Scenario.RENEWAL;
+import static org.folio.circulation.support.ClockManager.getClockManager;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 import static org.folio.circulation.support.results.ResultBinding.toFutureResult;
@@ -14,45 +16,40 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 
 import org.apache.commons.lang3.ObjectUtils;
-import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
 import org.apache.commons.lang3.StringUtils;
-import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
-import org.folio.circulation.infrastructure.storage.loans.LostItemPolicyRepository;
 import org.folio.circulation.domain.policy.OverdueFineCalculationParameters;
 import org.folio.circulation.domain.policy.OverdueFineInterval;
 import org.folio.circulation.domain.policy.OverdueFinePolicy;
-import org.folio.circulation.infrastructure.storage.loans.OverdueFinePolicyRepository;
 import org.folio.circulation.domain.representations.StoredAccount;
 import org.folio.circulation.domain.representations.StoredFeeFineAction;
-import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
 import org.folio.circulation.infrastructure.storage.CalendarRepository;
+import org.folio.circulation.infrastructure.storage.ServicePointRepository;
+import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineActionRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineOwnerRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineRepository;
-import org.folio.circulation.infrastructure.storage.ServicePointRepository;
+import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
+import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
+import org.folio.circulation.infrastructure.storage.loans.LostItemPolicyRepository;
+import org.folio.circulation.infrastructure.storage.loans.OverdueFinePolicyRepository;
+import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.results.ResultBinding;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 
+import lombok.AllArgsConstructor;
 import lombok.With;
 
+@AllArgsConstructor
 public class OverdueFineCalculatorService {
-  public static OverdueFineCalculatorService using(Clients clients) {
-    return new OverdueFineCalculatorService(clients);
-  }
-
   private final Repos repos;
   private final OverduePeriodCalculatorService overduePeriodCalculatorService;
 
-  public OverdueFineCalculatorService(Repos repos,
-    OverduePeriodCalculatorService overduePeriodCalculatorService) {
-    this.repos = repos;
-    this.overduePeriodCalculatorService = overduePeriodCalculatorService;
+  public static OverdueFineCalculatorService using(Clients clients) {
+    return new OverdueFineCalculatorService(clients);
   }
 
   private OverdueFineCalculatorService(Clients clients) {
@@ -93,7 +90,7 @@ public class OverdueFineCalculatorService {
       return completedFuture(succeeded(null));
     }
 
-    if (isLost(renewalContext.getItemStatusBeforeRenewal())) {
+    if (itemWasLost(renewalContext.getItemStatusBeforeRenewal())) {
       return repos.lostItemPolicyRepository.getLostItemPolicyById(loan.getLostItemPolicyId())
         .thenApply(r -> r.map(policy -> policy.shouldChargeOverdueFee()
           && renewalContext.isLostItemFeesRefundedOrCancelled()));
@@ -119,7 +116,7 @@ public class OverdueFineCalculatorService {
       return completedFuture(succeeded(false));
     }
 
-    if (isLost(context.getItemStatusBeforeCheckIn())) {
+    if (itemWasLost(context.getItemStatusBeforeCheckIn())) {
       return repos.lostItemPolicyRepository.getLostItemPolicyById(loan.getLostItemPolicyId())
         .thenApply(r -> r.map(policy -> policy.shouldChargeOverdueFee()
           && context.areLostItemFeesRefundedOrCancelled()));
@@ -146,7 +143,7 @@ public class OverdueFineCalculatorService {
   private CompletableFuture<Result<Integer>> getOverdueMinutes(Loan loan) {
     DateTime systemTime = loan.getReturnDate();
     if (systemTime == null) {
-      systemTime = DateTime.now(DateTimeZone.UTC);
+      systemTime = getClockManager().getDateTime();
     }
     return overduePeriodCalculatorService.getMinutes(loan, systemTime);
   }
@@ -275,11 +272,12 @@ public class OverdueFineCalculatorService {
       .build());
   }
 
-  private boolean isLost(ItemStatus itemStatus) {
-    return itemStatus == ItemStatus.DECLARED_LOST || itemStatus == ItemStatus.AGED_TO_LOST;
+  private boolean itemWasLost(ItemStatus itemStatus) {
+    return itemStatus != null && itemStatus.isLostNotResolved();
   }
 
   @With
+  @AllArgsConstructor(access = PRIVATE)
   private static class CalculationParameters {
     final Loan loan;
     final Item item;
@@ -291,16 +289,6 @@ public class OverdueFineCalculatorService {
       this(loan, null, null, null, null);
     }
 
-    CalculationParameters(Loan loan, Item item, FeeFineOwner feeFineOwner, FeeFine feeFine,
-      User loggedInUser) {
-
-      this.loan = loan;
-      this.item = item;
-      this.feeFineOwner = feeFineOwner;
-      this.feeFine = feeFine;
-      this.loggedInUser = loggedInUser;
-    }
-
     boolean isComplete() {
       return ObjectUtils.allNotNull(loan, item, feeFineOwner, feeFine);
     }
@@ -310,21 +298,19 @@ public class OverdueFineCalculatorService {
     }
   }
 
+  @AllArgsConstructor(access = PRIVATE)
   enum Scenario {
     CHECKIN(policy -> !policy.isUnknown()),
     RENEWAL(policy -> !policy.isUnknown() && isFalse(policy.getForgiveFineForRenewals()));
 
     private final Predicate<OverdueFinePolicy> shouldCreateFine;
 
-    Scenario(Predicate<OverdueFinePolicy> shouldCreateFine) {
-      this.shouldCreateFine = shouldCreateFine;
-    }
-
     private boolean shouldCreateFine(OverdueFinePolicy overdueFinePolicy) {
       return shouldCreateFine.test(overdueFinePolicy);
     }
   }
 
+  @AllArgsConstructor
   public static class Repos {
     private final OverdueFinePolicyRepository overdueFinePolicyRepository;
     private final AccountRepository accountRepository;
@@ -336,25 +322,5 @@ public class OverdueFineCalculatorService {
     private final LostItemPolicyRepository lostItemPolicyRepository;
     private final ScheduledNoticesRepository scheduledNoticesRepository;
     private final ServicePointRepository servicePointRepository;
-
-    Repos(OverdueFinePolicyRepository overdueFinePolicyRepository,
-      AccountRepository accountRepository, ItemRepository itemRepository,
-      FeeFineOwnerRepository feeFineOwnerRepository, FeeFineRepository feeFineRepository,
-      UserRepository userRepository, FeeFineActionRepository feeFineActionRepository,
-      LostItemPolicyRepository lostItemPolicyRepository,
-      ScheduledNoticesRepository scheduledNoticesRepository,
-      ServicePointRepository servicePointRepository) {
-
-      this.overdueFinePolicyRepository = overdueFinePolicyRepository;
-      this.accountRepository = accountRepository;
-      this.itemRepository = itemRepository;
-      this.feeFineOwnerRepository = feeFineOwnerRepository;
-      this.feeFineRepository = feeFineRepository;
-      this.userRepository = userRepository;
-      this.feeFineActionRepository = feeFineActionRepository;
-      this.lostItemPolicyRepository = lostItemPolicyRepository;
-      this.scheduledNoticesRepository = scheduledNoticesRepository;
-      this.servicePointRepository = servicePointRepository;
-    }
   }
 }
