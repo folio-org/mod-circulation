@@ -2,7 +2,8 @@ package api.requests;
 
 import static api.support.JsonCollectionAssistant.getRecordById;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
-import static org.folio.circulation.support.json.JsonStringArrayPropertyFetcher.toList;
+import static java.util.stream.Collectors.toList;
+import static org.folio.circulation.support.json.JsonStringArrayPropertyFetcher.toStream;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -16,8 +17,8 @@ import java.util.List;
 import java.util.UUID;
 
 import org.folio.circulation.domain.ItemStatus;
-import org.folio.circulation.support.json.JsonPropertyFetcher;
 import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.json.JsonPropertyFetcher;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 import org.junit.Assert;
@@ -544,7 +545,7 @@ public class ItemsInTransitReportTests extends APITests {
       isEquivalentTo(requestExpirationDate.toDateTimeAtStartOfDay()));
 
     assertThat(actualRequest.getString(REQUEST_PICKUP_SERVICE_POINT_NAME), is(pickupServicePoint));
-    assertThat(toList(actualRequest.getJsonArray(TAGS)), hasItems("tag1", "tag2"));
+    assertThat(toStream(actualRequest, TAGS).collect(toList()), hasItems("tag1", "tag2"));
   }
 
   private void verifyRequestWithSecondPickupServicePoint(JsonObject itemJson,
