@@ -12,7 +12,7 @@ public class RestAssuredResponseConversion {
       mappedHeaders.add(h.getName(), h.getValue());
     });
 
-    return new Response(response.statusCode(), response.body().print(),
+    return new Response(response.statusCode(), response.body().asString(),
       response.contentType(), mappedHeaders, null);
   }
 }
