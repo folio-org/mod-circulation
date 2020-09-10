@@ -21,12 +21,6 @@ public class JsonObjectArrayPropertyFetcher {
       .collect(Collectors.toList());
   }
 
-  public static <T> List<T> mapToList(JsonArray array, Function<JsonObject, T> mapper) {
-    return toStream(array)
-      .map(mapper)
-      .collect(Collectors.toList());
-  }
-
   public static <T> List<T> mapToList(JsonObject within, String arrayPropertyName,
       Function<JsonObject, T> mapper) {
 

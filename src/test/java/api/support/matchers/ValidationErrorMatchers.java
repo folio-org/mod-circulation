@@ -1,6 +1,5 @@
 package api.support.matchers;
 
-import static org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher.mapToList;
 import static org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher.toStream;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.hamcrest.CoreMatchers.containsString;
@@ -36,7 +35,7 @@ public class ValidationErrorMatchers {
       @Override
       protected boolean matchesSafely(JsonObject representation, Description description) {
         final Matcher<Iterable<? super ValidationError>> iterableMatcher = IsCollectionContaining.hasItem(matcher);
-        final List<ValidationError> errors = mapToList(representation, "errors", ValidationErrorMatchers::fromJson);
+        final List<ValidationError> errors = errorsFromJson(representation);
 
         iterableMatcher.describeMismatch(errors, description);
 
@@ -152,7 +151,13 @@ public class ValidationErrorMatchers {
         p -> p.getString("key"),
         p -> p.getString("value")));
 
-    return new ValidationError(
-      getProperty(representation, "message"), parameters);
+    return new ValidationError(getProperty(representation, "message"), parameters);
   }
+
+  private static List<ValidationError> errorsFromJson(JsonObject representation) {
+    return toStream(representation, "errors")
+      .map(ValidationErrorMatchers::fromJson)
+      .collect(Collectors.toList());
+  }
+
 }
