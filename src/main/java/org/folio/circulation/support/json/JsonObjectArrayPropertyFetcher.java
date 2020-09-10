@@ -4,8 +4,9 @@ import static java.util.function.Function.identity;
 
 import java.util.List;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import org.folio.circulation.support.StreamToListMapper;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -17,16 +18,13 @@ public class JsonObjectArrayPropertyFetcher {
   private JsonObjectArrayPropertyFetcher() { }
 
   public static List<JsonObject> toList(JsonArray array) {
-    return toStream(array)
-      .collect(Collectors.toList());
+    return StreamToListMapper.toList(toStream(array));
   }
 
   public static <T> List<T> mapToList(JsonObject within, String arrayPropertyName,
       Function<JsonObject, T> mapper) {
 
-    return toStream(within, arrayPropertyName)
-      .map(mapper)
-      .collect(Collectors.toList());
+    return StreamToListMapper.toList(toStream(within, arrayPropertyName).map(mapper));
   }
 
   public static List<JsonObject> mapToList(JsonObject within, String arrayPropertyName) {
@@ -46,4 +44,5 @@ public class JsonObjectArrayPropertyFetcher {
       ? (JsonObject) entry
       : null;
   }
+
 }
