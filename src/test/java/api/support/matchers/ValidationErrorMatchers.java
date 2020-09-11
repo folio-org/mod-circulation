@@ -1,5 +1,6 @@
 package api.support.matchers;
 
+import static org.folio.circulation.support.StreamToListMapper.toList;
 import static org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher.toStream;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.hamcrest.CoreMatchers.containsString;
@@ -155,9 +156,7 @@ public class ValidationErrorMatchers {
   }
 
   private static List<ValidationError> errorsFromJson(JsonObject representation) {
-    return toStream(representation, "errors")
-      .map(ValidationErrorMatchers::fromJson)
-      .collect(Collectors.toList());
+    return toList(toStream(representation, "errors")
+      .map(ValidationErrorMatchers::fromJson));
   }
-
 }
