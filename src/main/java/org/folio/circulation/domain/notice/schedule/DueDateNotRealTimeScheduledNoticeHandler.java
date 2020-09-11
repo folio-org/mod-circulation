@@ -1,6 +1,7 @@
 package org.folio.circulation.domain.notice.schedule;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.notice.PatronNoticeService.TRIGGERING_EVENT;
 import static org.folio.circulation.domain.notice.schedule.DueDateScheduledNoticeHandler.REQUIRED_RECORD_TYPES;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allResultsOf;
 import static org.folio.circulation.support.results.Result.succeeded;
@@ -120,10 +121,11 @@ public class DueDateNotRealTimeScheduledNoticeHandler {
     User user = noticeRelatedRecords.getLoan().getUser();
     JsonObject noticeContext = new JsonObject()
       .put("user", TemplateContextUtil.createUserContext(user))
-      .put("loans", new JsonArray(loanContexts));
+      .put("loans", new JsonArray(loanContexts))
+      .put(TRIGGERING_EVENT, scheduledNotice.getTriggeringEvent().getRepresentation());
 
     return patronNoticeService.acceptScheduledNoticeEvent(
-      scheduledNotice.getConfiguration(), user.getId(), noticeContext)
+      scheduledNotice.getConfiguration(), user.getId(), noticeContext, noticeRelatedRecords.getLoan())
       .thenApply(mapResult(v -> noticeGroup));
   }
 

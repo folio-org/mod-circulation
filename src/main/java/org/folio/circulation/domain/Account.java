@@ -110,6 +110,10 @@ public class Account {
     return relatedRecordsInfo.getFeeFineTypeInfo().getFeeFineType();
   }
 
+  public String getFeeFineId() {
+    return relatedRecordsInfo.getFeeFineTypeInfo().getFeeFineId();
+  }
+
   public String getFeeFineOwner() {
     return relatedRecordsInfo.getFeeFineOwnerInfo().getOwner();
   }

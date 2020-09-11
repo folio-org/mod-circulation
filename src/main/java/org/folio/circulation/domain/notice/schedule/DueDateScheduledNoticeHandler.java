@@ -1,6 +1,7 @@
 package org.folio.circulation.domain.notice.schedule;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.notice.PatronNoticeService.TRIGGERING_EVENT;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.succeeded;
 
@@ -148,9 +149,10 @@ public class DueDateScheduledNoticeHandler {
     }
 
     JsonObject loanNoticeContext = TemplateContextUtil.createLoanNoticeContext(loan);
+    loanNoticeContext.put(TRIGGERING_EVENT, notice.getTriggeringEvent().getRepresentation());
 
     return patronNoticeService.acceptScheduledNoticeEvent(
-      notice.getConfiguration(), relatedRecords.getUserId(), loanNoticeContext)
+      notice.getConfiguration(), relatedRecords.getUserId(), loanNoticeContext, loan)
       .thenApply(r -> r.map(v -> relatedRecords));
   }
 

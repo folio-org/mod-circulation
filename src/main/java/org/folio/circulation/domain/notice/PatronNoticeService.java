@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.tuple.Pair;
+import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.notice.schedule.ScheduledNoticeConfig;
 import org.folio.circulation.infrastructure.storage.notices.PatronNoticePolicyRepository;
 import org.folio.circulation.rules.AppliedRuleConditions;
@@ -30,6 +31,9 @@ import org.folio.circulation.support.http.client.ResponseInterpreter;
 import io.vertx.core.json.JsonObject;
 
 public class PatronNoticeService {
+  public static final String TRIGGERING_EVENT = "triggeringEvent";
+  private static final String NOTICE_POLICY_ID = "noticePolicyId";
+
   public static PatronNoticeService using(Clients clients) {
     return new PatronNoticeService(new PatronNoticePolicyRepository(clients), clients);
   }
@@ -48,7 +52,7 @@ public class PatronNoticeService {
   }
 
   public CompletableFuture<Result<Void>> acceptScheduledNoticeEvent(
-    ScheduledNoticeConfig noticeConfig, String recipientId, JsonObject context) {
+    ScheduledNoticeConfig noticeConfig, String recipientId, JsonObject context, Loan loan) {
 
     PatronNotice patronNotice = new PatronNotice();
     patronNotice.setRecipientId(recipientId);
@@ -57,7 +61,9 @@ public class PatronNoticeService {
     patronNotice.setOutputFormat(noticeConfig.getFormat().getOutputFormat());
     patronNotice.setContext(context);
 
-    return sendNotice(patronNotice);
+    return noticePolicyRepository.lookupPolicyId(loan.getItem(), loan.getUser())
+      .thenAccept(result -> patronNotice.getContext().put(NOTICE_POLICY_ID, result.value().getPolicyId()))
+      .thenCompose(vVoid -> sendNotice(patronNotice));
   }
 
   public CompletableFuture<Result<Void>> acceptMultipleNoticeEvent(
@@ -71,7 +77,10 @@ public class PatronNoticeService {
 
   private CompletableFuture<Result<Pair<PatronNoticeEvent, String>>> loadNoticePolicyId(PatronNoticeEvent event) {
     return noticePolicyRepository.lookupPolicyId(event.getItem(), event.getUser())
-      .thenApply(mapResult(circulationRuleMatchEntity -> Pair.of(event, circulationRuleMatchEntity.getPolicyId())));
+      .thenApply(mapResult(circulationRuleMatchEntity -> {
+        event.getNoticeContext().put(NOTICE_POLICY_ID, circulationRuleMatchEntity.getPolicyId());
+        return Pair.of(event, circulationRuleMatchEntity.getPolicyId());
+      }));
   }
 
   private Map<NoticeEventGroupDefinition, List<PatronNoticeEvent>> groupEvents(
@@ -119,6 +128,8 @@ public class PatronNoticeService {
     if (!matchingNoticeConfiguration.isPresent()) {
       return completedFuture(succeeded(null));
     }
+
+    noticeContext.put(TRIGGERING_EVENT, matchingNoticeConfiguration.get().getNoticeEventType().getRepresentation());
 
     return sendPatronNotice(matchingNoticeConfiguration.get(),
       eventGroupDefinition.recipientId, noticeContext);

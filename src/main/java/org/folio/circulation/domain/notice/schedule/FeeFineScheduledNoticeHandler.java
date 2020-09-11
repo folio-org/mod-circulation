@@ -1,6 +1,7 @@
 package org.folio.circulation.domain.notice.schedule;
 
 import static org.apache.commons.lang3.ObjectUtils.allNotNull;
+import static org.folio.circulation.domain.notice.PatronNoticeService.TRIGGERING_EVENT;
 import static org.folio.circulation.domain.notice.TemplateContextUtil.createFeeFineNoticeContext;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.ClockManager.getClockManager;
@@ -107,10 +108,11 @@ public class FeeFineScheduledNoticeHandler {
       log.warn(getInvalidContextMessage(notice, "associated fee/fine is already closed"));
     } else {
       JsonObject noticeContext = createFeeFineNoticeContext(context.getAccount(), context.getLoan());
+      noticeContext.put(TRIGGERING_EVENT, notice.getTriggeringEvent().getRepresentation());
       ScheduledNoticeConfig config = notice.getConfiguration();
 
       patronNoticeService.acceptScheduledNoticeEvent(
-        config, notice.getRecipientUserId(), noticeContext);
+        config, notice.getRecipientUserId(), noticeContext, context.getLoan());
 
       if (config.isRecurring()) {
         return scheduledNoticesRepository.update(getNextRecurringNotice(notice));

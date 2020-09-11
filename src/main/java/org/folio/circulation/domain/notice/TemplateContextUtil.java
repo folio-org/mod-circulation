@@ -139,6 +139,7 @@ public class TemplateContextUtil {
 
   public static JsonObject createUserContext(User user) {
     return new JsonObject()
+    .put("userId", user.getId())
     .put("firstName", user.getFirstName())
     .put("lastName", user.getLastName())
     .put("middleName", user.getMiddleName())
@@ -154,6 +155,9 @@ public class TemplateContextUtil {
     String copyNumber = item.getCopyNumber() != null ? item.getCopyNumber() : "";
 
     JsonObject itemContext = new JsonObject()
+      .put("itemId", item.getItemId())
+      .put("instanceId", item.getInstanceId())
+      .put("holdingsRecordId", item.getHoldingsRecordId())
       .put("title", item.getTitle())
       .put("barcode", item.getBarcode())
       .put("status", item.getStatus().getValue())
@@ -227,6 +231,7 @@ public class TemplateContextUtil {
   private static JsonObject createLoanContext(Loan loan) {
     JsonObject loanContext = new JsonObject();
 
+    write(loanContext, "loanId", loan.getId());
     write(loanContext, "initialBorrowDate", loan.getLoanDate());
     write(loanContext, "dueDate", loan.getDueDate());
     if (loan.getReturnDate() != null) {
@@ -258,6 +263,7 @@ public class TemplateContextUtil {
   private static JsonObject createFeeChargeContext(Account account) {
     JsonObject context = new JsonObject();
 
+    write(context, "feeFineId", account.getFeeFineId());
     write(context, "owner", account.getFeeFineOwner());
     write(context, "type", account.getFeeFineType());
     write(context, "paymentStatus", account.getPaymentStatus());
