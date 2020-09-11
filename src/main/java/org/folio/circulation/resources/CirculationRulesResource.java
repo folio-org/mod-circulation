@@ -137,10 +137,10 @@ public class CirculationRulesResource extends Resource {
         (policyType, policies, token) -> validatePolicy(
           existingPoliciesIds, policyType, policies, token));
     } catch (CirculationRulesException e) {
-      circulationRulesError(routingContext.response(), e);
+      processingError(routingContext.response(), e);
       return;
     } catch (DecodeException e) {
-      circulationRulesError(routingContext.response(), e);
+      decodingError(routingContext.response(), e);
       return;
     } catch (Exception e) {
       internalError(routingContext.response(), getStackTrace(e));
@@ -228,7 +228,7 @@ public class CirculationRulesResource extends Resource {
     return MultipleRecords.from(response, v -> getProperty(v, "id"), entityName);
   }
 
-  private static void circulationRulesError(HttpServerResponse response, CirculationRulesException e) {
+  private static void processingError(HttpServerResponse response, CirculationRulesException e) {
     JsonObject body = new JsonObject();
     body.put("message", e.getMessage());
     body.put("line", e.getLine());
@@ -236,7 +236,7 @@ public class CirculationRulesResource extends Resource {
     unprocessableEntity(body).writeTo(response);
   }
 
-  private static void circulationRulesError(HttpServerResponse response, DecodeException e) {
+  private static void decodingError(HttpServerResponse response, DecodeException e) {
     JsonObject body = new JsonObject();
     body.put("message", e.getMessage());  // already contains line and column number
     unprocessableEntity(body).writeTo(response);

@@ -97,4 +97,8 @@ public class RequestQueue {
   public Collection<Request> getRequests() {
     return requests;
   }
+
+  boolean isEmpty() {
+    return getRequests().isEmpty();
+  }
 }

@@ -29,7 +29,6 @@ import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
-import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FindWithCqlQuery;
 import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
@@ -44,6 +43,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.vertx.core.json.JsonObject;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 public class ItemRepository {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -61,38 +62,23 @@ public class ItemRepository {
 
   private static final String ITEMS_COLLECTION_PROPERTY_NAME = "items";
 
-  public ItemRepository(
-    Clients clients,
-    boolean fetchLocation,
-    boolean fetchMaterialType,
-    boolean fetchLoanType) {
+  public ItemRepository(org.folio.circulation.support.Clients clients,
+    boolean fetchLocation, boolean fetchMaterialType, boolean fetchLoanType) {
 
-    this(clients.itemsStorage(),
-      clients.holdingsStorage(),
-      clients.instancesStorage(),
-      clients.loanTypesStorage(),
-      LocationRepository.using(clients),
-      new MaterialTypeRepository(clients),
-      new ServicePointRepository(clients),
+    this(new Clients(clients.itemsStorage(), clients.holdingsStorage(),
+      clients.instancesStorage(), clients.loanTypesStorage()), LocationRepository.using(clients),
+      new MaterialTypeRepository(clients), new ServicePointRepository(clients),
       fetchLocation, fetchMaterialType, fetchLoanType);
   }
 
-  private ItemRepository(
-    CollectionResourceClient itemsClient,
-    CollectionResourceClient holdingsClient,
-    CollectionResourceClient instancesClient,
-    CollectionResourceClient loanTypesClient,
-    LocationRepository locationRepository,
-    MaterialTypeRepository materialTypeRepository,
-    ServicePointRepository servicePointRepository,
-    boolean fetchLocation,
-    boolean fetchMaterialType,
-    boolean fetchLoanType) {
+  private ItemRepository(Clients clients, LocationRepository locationRepository,
+    MaterialTypeRepository materialTypeRepository, ServicePointRepository servicePointRepository,
+    boolean fetchLocation, boolean fetchMaterialType, boolean fetchLoanType) {
 
-    this.itemsClient = itemsClient;
-    this.holdingsClient = holdingsClient;
-    this.instancesClient = instancesClient;
-    this.loanTypesClient = loanTypesClient;
+    this.itemsClient = clients.getItemsClient();
+    this.holdingsClient = clients.getHoldingsClient();
+    this.instancesClient = clients.getInstancesClient();
+    this.loanTypesClient = clients.getLoanTypesClient();
     this.locationRepository = locationRepository;
     this.materialTypeRepository = materialTypeRepository;
     this.servicePointRepository = servicePointRepository;
@@ -339,8 +325,7 @@ public class ItemRepository {
       }
     });
   }
-
-  //TODO: Try to remove includeItemMap without introducing unchecked exception
+  
   public <T extends ItemRelatedRecord> CompletableFuture<Result<MultipleRecords<T>>> fetchItemsFor(
     Result<MultipleRecords<T>> result,
     BiFunction<T, Item, T> includeItemMap) {
@@ -421,7 +406,16 @@ public class ItemRepository {
       .thenComposeAsync(this::fetchLoanType);
   }
 
-  public static ItemRepository noLocationMaterialTypeAndLoanTypeInstance(Clients clients) {
+  public static ItemRepository noLocationMaterialTypeAndLoanTypeInstance(org.folio.circulation.support.Clients clients) {
     return new ItemRepository(clients, false, false, false);
+  }
+
+  @AllArgsConstructor
+  @Getter
+  private static class Clients {
+    private final CollectionResourceClient itemsClient;
+    private final CollectionResourceClient holdingsClient;
+    private final CollectionResourceClient instancesClient;
+    private final CollectionResourceClient loanTypesClient;
   }
 }

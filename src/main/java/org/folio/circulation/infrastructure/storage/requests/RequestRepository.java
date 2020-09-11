@@ -25,7 +25,6 @@ import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.users.PatronGroupRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.storage.RequestBatch;
-import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.RecordNotFoundFailure;
@@ -37,6 +36,8 @@ import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
 
 import io.vertx.core.json.JsonObject;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 public class RequestRepository {
   private final CollectionResourceClient requestsStorageClient;
@@ -48,19 +49,14 @@ public class RequestRepository {
   private final ServicePointRepository servicePointRepository;
   private final PatronGroupRepository patronGroupRepository;
 
-  private RequestRepository(
-    CollectionResourceClient requestsStorageClient,
-    CollectionResourceClient requestsBatchStorageClient,
-    CollectionResourceClient cancellationReasonStorageClient,
-    ItemRepository itemRepository,
-    UserRepository userRepository,
-    LoanRepository loanRepository,
+  private RequestRepository(Clients clients, ItemRepository itemRepository,
+    UserRepository userRepository, LoanRepository loanRepository,
     ServicePointRepository servicePointRepository,
     PatronGroupRepository patronGroupRepository) {
 
-    this.requestsStorageClient = requestsStorageClient;
-    this.requestsBatchStorageClient = requestsBatchStorageClient;
-    this.cancellationReasonStorageClient = cancellationReasonStorageClient;
+    this.requestsStorageClient = clients.getRequestsStorageClient();
+    this.requestsBatchStorageClient = clients.getRequestsBatchStorageClient();
+    this.cancellationReasonStorageClient = clients.getCancellationReasonStorageClient();
     this.itemRepository = itemRepository;
     this.userRepository = userRepository;
     this.loanRepository = loanRepository;
@@ -68,15 +64,14 @@ public class RequestRepository {
     this.patronGroupRepository = patronGroupRepository;
   }
 
-  public static RequestRepository using(Clients clients) {
+  public static RequestRepository using(org.folio.circulation.support.Clients clients) {
     return using(clients, false);
   }
 
-  public static RequestRepository using(Clients clients, boolean fetchMaterialType) {
+  public static RequestRepository using(org.folio.circulation.support.Clients clients, boolean fetchMaterialType) {
     return new RequestRepository(
-      clients.requestsStorage(),
-      clients.requestsBatchStorage(),
-      clients.cancellationReasonStorage(),
+      new Clients(clients.requestsStorage(), clients.requestsBatchStorage(),
+        clients.cancellationReasonStorage()),
       new ItemRepository(clients, true, fetchMaterialType, true),
       new UserRepository(clients),
       new LoanRepository(clients),
@@ -257,5 +252,13 @@ public class RequestRepository {
     ResponseInterpreter<R> interpreter) {
 
     return new SingleRecordFetcher<>(requestsStorageClient, "request", interpreter);
+  }
+
+  @AllArgsConstructor
+  @Getter
+  private static class Clients {
+    private final CollectionResourceClient requestsStorageClient;
+    private final CollectionResourceClient requestsBatchStorageClient;
+    private final CollectionResourceClient cancellationReasonStorageClient;
   }
 }

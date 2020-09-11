@@ -314,8 +314,8 @@ public abstract class APITests {
     mockClockManagerToReturnDefaultDateTime();
   }
 
-  protected void loanHasFeeFinesProperties(JsonObject loan,
-    double remainingAmount) {
+  protected void assertLoanHasFeeFinesProperties(JsonObject loan,
+                                                 double remainingAmount) {
 
     hasProperty("amountRemainingToPay", loan.getJsonObject("feesAndFines"),
       "loan", remainingAmount);

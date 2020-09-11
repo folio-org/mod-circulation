@@ -37,4 +37,8 @@ public enum RequestType {
   public boolean nameMatches(String value) {
     return equalsIgnoreCase(getValue(), value);
   }
+
+    boolean isPage() {
+      return equals(PAGE);
+    }
 }

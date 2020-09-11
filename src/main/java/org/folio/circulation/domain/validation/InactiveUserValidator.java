@@ -2,17 +2,16 @@ package org.folio.circulation.domain.validation;
 
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.PROXY_USER_BARCODE;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.USER_BARCODE;
+import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.succeeded;
-import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
-import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
 import java.util.function.Function;
 
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.User;
-import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.ValidationErrorFailure;
+import org.folio.circulation.support.results.Result;
 
 public class InactiveUserValidator {
   private final Function<String, ValidationErrorFailure> inactiveUserErrorFunction;
@@ -49,13 +48,9 @@ public class InactiveUserValidator {
     Result<LoanAndRelatedRecords> loanAndRelatedRecords) {
 
     return loanAndRelatedRecords.next(records -> {
-      try {
         final User user = userFunction.apply(records);
 
         return refuseWhenUserIsInactive(user, records);
-      } catch (Exception e) {
-        return failedDueToServerError(e);
-      }
     });
   }
 

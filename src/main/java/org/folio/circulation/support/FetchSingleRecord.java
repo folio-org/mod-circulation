@@ -26,7 +26,7 @@ public class FetchSingleRecord<T> {
   }
 
   public static <T> FetchSingleRecord<T> forRecord(String recordType) {
-    return new FetchSingleRecord<>(recordType, null, new ResponseInterpreter<T>());
+    return new FetchSingleRecord<>(recordType, null, new ResponseInterpreter<>());
   }
 
   public FetchSingleRecord<T> using(CollectionResourceClient client) {

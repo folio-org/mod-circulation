@@ -5,7 +5,6 @@ import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
 import static api.support.http.CqlQuery.queryFromTemplate;
 import static api.support.http.Limit.limit;
 import static api.support.http.Offset.offset;
-import static api.support.matchers.EventMatchers.isValidItemCheckedOutEvent;
 import static api.support.matchers.EventMatchers.isValidLoanDueDateChangedEvent;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.UUIDMatcher.is;
@@ -20,15 +19,14 @@ import static org.folio.circulation.domain.representations.ItemProperties.CALL_N
 import static org.folio.circulation.domain.representations.LoanProperties.BORROWER;
 import static org.folio.circulation.support.JsonArrayHelper.toList;
 import static org.hamcrest.CoreMatchers.allOf;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.joda.time.DateTimeZone.UTC;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.net.HttpURLConnection;
@@ -222,7 +220,7 @@ public class LoanAPITests extends APITests {
 
     JsonObject loan = loansFixture.getLoanById(id).getJson();
 
-    loanHasFeeFinesProperties(loan, 0);
+    assertLoanHasFeeFinesProperties(loan, 0);
   }
 
   @Test
@@ -253,7 +251,7 @@ public class LoanAPITests extends APITests {
 
     JsonObject loan = loansFixture.getLoanById(id).getJson();
 
-    loanHasFeeFinesProperties(loan, 150d);
+    assertLoanHasFeeFinesProperties(loan, 150d);
 
     accountsClient.create(new AccountBuilder()
       .feeFineStatusOpen()
@@ -263,7 +261,7 @@ public class LoanAPITests extends APITests {
 
     loan = loansFixture.getLoanById(id).getJson();
 
-    loanHasFeeFinesProperties(loan, 300d);
+    assertLoanHasFeeFinesProperties(loan, 300d);
   }
 
   @Test
@@ -310,8 +308,8 @@ public class LoanAPITests extends APITests {
     JsonObject fetchedLoan1 = loans.getById(loan1.getId());
     JsonObject fetchedLoan2 = loans.getById(loan2.getId());
 
-    loanHasFeeFinesProperties(fetchedLoan1, 200);
-    loanHasFeeFinesProperties(fetchedLoan2, 1099);
+    assertLoanHasFeeFinesProperties(fetchedLoan1, 200);
+    assertLoanHasFeeFinesProperties(fetchedLoan2, 1099);
   }
 
   @Test
