@@ -67,8 +67,7 @@ final class LoanToChargeFees {
   }
 
   boolean shouldCloseLoan() {
-    return getLostItemPolicy().billPatronImmediatelyAfterAgeToLost()
-      && getLostItemPolicy().hasNoLostItemFee()
+    return getLostItemPolicy().hasNoLostItemFee()
       && !getLostItemPolicy().getAgeToLostProcessingFee().isChargeable();
   }
 

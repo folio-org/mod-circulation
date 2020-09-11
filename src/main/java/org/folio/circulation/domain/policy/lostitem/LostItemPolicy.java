@@ -170,10 +170,6 @@ public class LostItemPolicy extends Policy {
     return new UnknownLostItemPolicy(id);
   }
 
-  public boolean billPatronImmediatelyAfterAgeToLost() {
-    return patronBilledAfterAgedToLostInterval.hasZeroDuration();
-  }
-
   public boolean hasNoLostItemFee() {
     return !actualCostFee.isChargeable() && !setCostFee.isChargeable();
   }
