@@ -1,7 +1,7 @@
 package org.folio.circulation.domain.policy.lostitem;
 
 import static org.folio.circulation.domain.policy.lostitem.ChargeAmountType.forValue;
-import static org.folio.circulation.support.JsonPropertyFetcher.getBigDecimalProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getBigDecimalProperty;
 
 import java.math.BigDecimal;
 

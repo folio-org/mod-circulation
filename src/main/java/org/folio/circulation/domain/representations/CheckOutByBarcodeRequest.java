@@ -3,7 +3,7 @@ package org.folio.circulation.domain.representations;
 
 import static org.apache.commons.lang.StringUtils.isNotBlank;
 import static org.folio.circulation.domain.representations.LoanProperties.CHECKOUT_SERVICE_POINT_ID;
-import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.joda.time.format.ISODateTimeFormat.dateTime;
 
 import java.util.UUID;

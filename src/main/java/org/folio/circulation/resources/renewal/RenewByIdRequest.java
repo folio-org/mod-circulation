@@ -1,7 +1,7 @@
 package org.folio.circulation.resources.renewal;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
-import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.results.Result.succeeded;
 

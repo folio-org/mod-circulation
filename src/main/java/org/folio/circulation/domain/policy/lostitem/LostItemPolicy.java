@@ -6,11 +6,11 @@ import static org.folio.circulation.domain.policy.lostitem.ChargeAmountType.SET_
 import static org.folio.circulation.domain.policy.lostitem.ChargeAmountType.forValue;
 import static org.folio.circulation.domain.policy.lostitem.itemfee.ActualCostFee.noActualCostFee;
 import static org.folio.circulation.domain.policy.lostitem.itemfee.AutomaticallyChargeableFee.noAutomaticallyChargeableFee;
-import static org.folio.circulation.support.JsonPropertyFetcher.getBigDecimalProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getObjectProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getBigDecimalProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getBooleanProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedStringProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getObjectProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 
 import java.math.BigDecimal;
 

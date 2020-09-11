@@ -1,7 +1,7 @@
 package org.folio.circulation.domain;
 
 import org.folio.circulation.domain.representations.ChangeItemStatusRequest;
-import org.folio.circulation.support.JsonPropertyFetcher;
+import org.folio.circulation.support.json.JsonPropertyFetcher;
 import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;

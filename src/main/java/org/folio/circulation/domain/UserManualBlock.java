@@ -3,9 +3,9 @@ package org.folio.circulation.domain;
 import io.vertx.core.json.JsonObject;
 import org.joda.time.DateTime;
 
-import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimeProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getBooleanProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 
 public class UserManualBlock {
   private final String desc;

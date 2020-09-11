@@ -1,7 +1,7 @@
 package org.folio.circulation.infrastructure.storage.loans;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.support.JsonStringArrayHelper.toList;
+import static org.folio.circulation.support.json.JsonStringArrayPropertyFetcher.toList;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
 import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;

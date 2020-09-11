@@ -6,7 +6,6 @@ import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.fixtures.AgeToLostFixture;
 
 public class CheckInAgedToLostItemTest extends RefundAgedToLostFeesTestBase {
-
   @Override
   protected void performActionThatRequiresRefund(AgeToLostFixture.AgeToLostResult result,
     DateTime actionDate) {

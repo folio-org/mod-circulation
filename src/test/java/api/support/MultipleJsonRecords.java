@@ -1,7 +1,7 @@
 package api.support;
 
 import static api.support.JsonCollectionAssistant.getRecordById;
-import static org.folio.circulation.support.JsonArrayHelper.mapToList;
+import static org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher.mapToList;
 
 import java.util.Iterator;
 import java.util.List;

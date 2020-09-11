@@ -2,8 +2,8 @@ package api.requests;
 
 import static java.net.HttpURLConnection.HTTP_OK;
 import static java.util.stream.Collectors.joining;
-import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimeProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedStringProperty;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 import static org.joda.time.DateTimeZone.UTC;
@@ -29,7 +29,7 @@ import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.User;
-import org.folio.circulation.support.JsonArrayHelper;
+import org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -168,7 +168,7 @@ public class PickSlipsTests extends APITests {
       .withHoldingsRecord(itemResource.getHoldingsRecord().getJson())
       .withInstance(itemResource.getInstance().getJson());
 
-    String contributorNames = JsonArrayHelper.toStream(item.getContributorNames())
+    String contributorNames = JsonObjectArrayPropertyFetcher.toStream(item.getContributorNames())
       .map(this::getName)
       .collect(joining("; "));
 
@@ -435,7 +435,7 @@ public class PickSlipsTests extends APITests {
   }
 
   private Stream<JsonObject> getPickSlipsStream(Response response) {
-    return JsonArrayHelper.toStream(response.getJson(), PICK_SLIPS_KEY);
+    return JsonObjectArrayPropertyFetcher.toStream(response.getJson(), PICK_SLIPS_KEY);
   }
 
   private List<JsonObject> getPickSlipsList(Response response) {
