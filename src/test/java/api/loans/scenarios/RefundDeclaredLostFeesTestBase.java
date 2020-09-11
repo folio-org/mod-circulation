@@ -48,7 +48,7 @@ import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.DeclareItemLostRequestBuilder;
 import io.vertx.core.json.JsonObject;
 
-public abstract class RefundLostItemFeesTestBase extends APITests {
+public abstract class RefundDeclaredLostFeesTestBase extends APITests {
   private static final String DATE_ACTION_PROPERTY = "dateAction";
 
   protected final IndividualResource item = itemsFixture.basedUponNod();
