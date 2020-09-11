@@ -2258,9 +2258,9 @@
         "inventory-storage.holdings.item.get",
         "inventory-storage.instances.item.get",
         "users.item.get",
-        "notes.collection.get",
         "notes.item.post",
-        "note.types.collection.get"
+        "note.types.collection.get",
+        "notes.domain.all"
       ],
       "visible": false
     },
