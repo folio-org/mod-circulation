@@ -256,10 +256,10 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
   }
 
   @Test
-  public void shouldCloseLoanWhenNoFeesToChargeForImmediateBilling() {
+  public void shouldCloseLoanWhenNoFeesToCharge() {
     val policy = lostItemFeePoliciesFixture
       .ageToLostAfterOneMinutePolicy()
-      .billPatronImmediatelyWhenAgedToLost()
+      .withPatronBilledAfterAgedLost(Period.weeks(1))
       .withNoChargeAmountItem()
       .doNotChargeProcessingFeeWhenAgedToLost();
 
@@ -275,10 +275,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
 
     for (int itemIndex = 0; itemIndex < 10; itemIndex++) {
       val itemIndexFinal = itemIndex;
-      val servicePoint = servicePointsFixture.create(new ServicePointBuilder(
-        "Age to lost service point " + itemIndex, "agl-sp-" + itemIndex,
-        "Age to lost service point " + itemIndex)
-        .withPickupLocation(TRUE));
+      val servicePoint = createServicePointForItemIndex(itemIndex);
 
       val location = locationsFixture.basedUponExampleLocation(builder -> builder
         .withName("Location for sp " + itemIndexFinal)
@@ -305,6 +302,13 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     }
 
     return loanToFeeMap;
+  }
+
+  private IndividualResource createServicePointForItemIndex(int itemIndex) {
+    return servicePointsFixture.create(new ServicePointBuilder(
+      "Age to lost service point " + itemIndex, "agl-sp-" + itemIndex,
+      "Age to lost service point " + itemIndex)
+      .withPickupLocation(TRUE));
   }
 
   private Matcher<JsonObject> isLostItemHasBeenBilled() {
