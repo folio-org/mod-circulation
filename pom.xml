@@ -404,10 +404,9 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <version>2.22.2</version>
         <configuration>
-          <!-- 0.5 * 'number of available cores', i.e. 2 for quad core envs -->
-          <forkCount>0.5C</forkCount>
+          <forkCount>3</forkCount>
           <reuseForks>true</reuseForks>
-          <argLine>@{argLine} -Xmx512m</argLine>
+          <argLine>@{argLine} -Xmx256m</argLine>
           <useSystemClassLoader>false</useSystemClassLoader>
         </configuration>
       </plugin>
