@@ -1,0 +1,27 @@
+stages:
+- name: Build
+  steps:
+  - runScriptConfig:
+      image: maven:3-openjdk-8
+      shellScript: mvn package -DskipTests
+- name: Build Docker with DIND
+  steps:
+  - publishImageConfig:
+      dockerfilePath: ./Dockerfile
+      buildContext: .
+      tag: docker.dev.folio.org/mod-circulation:firebird-latest
+      pushRemote: true
+      registry: docker.dev.folio.org
+- name: Deploy
+  steps:
+  - applyAppConfig:
+      catalogTemplate: p-ngvqv:firebird-helmcharts-mod-circulation
+      version: 0.1.24
+      answers:
+        image.repository: docker.dev.folio.org/mod-circulation
+        image.tag: firebird-latest
+        postJob.enabled: true
+      targetNamespace: firebird
+      name: mod-circulation
+timeout: 60
+notification: {}
