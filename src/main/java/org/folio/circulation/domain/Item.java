@@ -127,12 +127,6 @@ public class Item {
     return getArrayProperty(instanceRepresentation, IDENTIFIERS);
   }
 
-  public JsonArray getContributorNames() {
-    return new JsonArray(getContributors()
-      .map(contributor -> new JsonObject().put("name", contributor.getString("name")))
-      .collect(Collectors.toList()));
-  }
-
   public String getPrimaryContributorName() {
     return getContributors()
       .filter(c -> c.getBoolean("primary", false))
@@ -141,7 +135,7 @@ public class Item {
       .orElse(null);
   }
 
-  private Stream<JsonObject> getContributors() {
+  public Stream<JsonObject> getContributors() {
     return JsonObjectArrayPropertyFetcher.toStream(instanceRepresentation, CONTRIBUTORS);
   }
 
