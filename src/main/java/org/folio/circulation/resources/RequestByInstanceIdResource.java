@@ -4,7 +4,7 @@ import static org.folio.circulation.domain.InstanceRequestItemsComparer.sortRequ
 import static org.folio.circulation.domain.representations.RequestProperties.ITEM_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.PROXY_USER_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUESTER_ID;
-import static org.folio.circulation.support.JsonPropertyWriter.write;
+import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;

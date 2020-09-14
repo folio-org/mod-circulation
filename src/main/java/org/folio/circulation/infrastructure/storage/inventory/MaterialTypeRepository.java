@@ -2,7 +2,7 @@ package org.folio.circulation.infrastructure.storage.inventory;
 
 import static java.util.Objects.isNull;
 import static java.util.function.Function.identity;
-import static org.folio.circulation.support.JsonKeys.byId;
+import static org.folio.circulation.support.json.JsonKeys.byId;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;

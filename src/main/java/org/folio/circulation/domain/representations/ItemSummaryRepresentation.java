@@ -4,7 +4,7 @@ import static org.folio.circulation.domain.representations.CallNumberComponentsR
 import static org.folio.circulation.domain.representations.ContributorsToNamesMapper.mapContributorsToNamesOnly;
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 import static org.folio.circulation.domain.representations.ItemProperties.LAST_CHECK_IN;
-import static org.folio.circulation.support.JsonPropertyWriter.write;
+import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Objects;

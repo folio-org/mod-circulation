@@ -1,7 +1,7 @@
 package api.support.builders;
 
 
-import static org.folio.circulation.support.JsonPropertyWriter.write;
+import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
 import java.util.UUID;
 
