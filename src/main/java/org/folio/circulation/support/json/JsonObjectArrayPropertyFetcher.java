@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class JsonObjectArrayPropertyFetcher {
@@ -19,10 +18,6 @@ public class JsonObjectArrayPropertyFetcher {
       Function<JsonObject, T> mapper) {
 
     return toList(toStream(within, arrayPropertyName).map(mapper));
-  }
-
-  public static Stream<JsonObject> toStream(JsonArray array) {
-    return streamMapper.toStream(array);
   }
 
   public static Stream<JsonObject> toStream(JsonObject within, String arrayPropertyName) {

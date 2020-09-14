@@ -17,7 +17,11 @@ public class JsonArrayPropertyFetcher <T> {
     this.entryMapper = entryMapper;
   }
 
-  public Stream<T> toStream(JsonArray array) {
+  public Stream<T> toStream(JsonObject within, String arrayPropertyName) {
+    return toStream(getArrayProperty(within, arrayPropertyName));
+  }
+
+  private Stream<T> toStream(JsonArray array) {
     if (array == null) {
       return empty();
     }
@@ -26,9 +30,5 @@ public class JsonArrayPropertyFetcher <T> {
       .stream()
       .map(entryMapper)
       .filter(Objects::nonNull);
-  }
-
-  public Stream<T> toStream(JsonObject within, String arrayPropertyName) {
-    return toStream(getArrayProperty(within, arrayPropertyName));
   }
 }
