@@ -51,11 +51,24 @@ public class DueDateNotRealTimeScheduledNoticeProcessingResource extends Schedul
     ScheduledNoticesRepository scheduledNoticesRepository, PageLimit pageLimit) {
 
     return configurationRepository.findTimeZoneConfiguration()
-      .thenApply(r -> r.map(tz -> ClockManager.getClockManager().getDateTime()
-        .withZone(tz).withTimeAtStartOfDay()))
-      .thenCompose(r -> r.after(timeLimit -> scheduledNoticesRepository.findNotices(timeLimit,
-        false, Collections.singletonList(TriggeringEvent.DUE_DATE),
-        FETCH_NOTICES_SORT_CLAUSE, pageLimit)));
+      .thenApply(r -> r.map(this::startOfTodayInTimeZone))
+      .thenCompose(r -> r.after(timeLimit -> findNotices(scheduledNoticesRepository,
+        pageLimit, timeLimit)));
+  }
+
+  private DateTime startOfTodayInTimeZone(DateTimeZone zone) {
+    return ClockManager.getClockManager().getDateTime()
+      .withZone(zone)
+      .withTimeAtStartOfDay();
+  }
+
+  private CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> findNotices(
+    ScheduledNoticesRepository scheduledNoticesRepository, PageLimit pageLimit,
+    DateTime timeLimit) {
+
+    return scheduledNoticesRepository.findNotices(timeLimit,
+      false, Collections.singletonList(TriggeringEvent.DUE_DATE),
+      FETCH_NOTICES_SORT_CLAUSE, pageLimit);
   }
 
   @Override
