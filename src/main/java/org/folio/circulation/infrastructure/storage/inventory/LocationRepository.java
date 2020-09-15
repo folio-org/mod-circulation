@@ -60,13 +60,21 @@ public class LocationRepository {
       return ofAsync(() -> null);
     }
 
-    return SingleRecordFetcher.json(locationsStorageClient, "location",
-      response -> succeeded(null))
-      .fetch(item.getLocationId())
-      .thenApply(r -> r.map(Location::from))
+    return fetchLocationById(item.getLocationId())
       .thenCompose(r -> r.after(this::loadLibrary))
       .thenCompose(r -> r.after(this::loadCampus))
       .thenCompose(r -> r.after(this::loadInstitution));
+  }
+
+  public CompletableFuture<Result<Location>> fetchLocationById(String id) {
+    if(StringUtils.isBlank(id)) {
+      return ofAsync(() -> null);
+    }
+
+    return SingleRecordFetcher.json(locationsStorageClient, "location",
+      response -> succeeded(null))
+      .fetch(id)
+      .thenApply(r -> r.map(Location::from));
   }
 
   public CompletableFuture<Result<Map<String, Location>>> getLocations(

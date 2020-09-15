@@ -14,6 +14,7 @@ import static org.folio.circulation.domain.representations.ItemProperties.EFFECT
 import static org.folio.circulation.domain.representations.ItemProperties.IDENTIFIERS;
 import static org.folio.circulation.domain.representations.ItemProperties.IN_TRANSIT_DESTINATION_SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.ITEM_COPY_NUMBER_ID;
+import static org.folio.circulation.domain.representations.ItemProperties.PERMANENT_LOCATION_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.STATUS_PROPERTY;
 import static org.folio.circulation.domain.representations.ItemProperties.TITLE;
 import static org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher.mapToList;
@@ -348,6 +349,13 @@ public class Item {
 
   public boolean doesNotHaveHolding() {
     return holdingRepresentation == null;
+  }
+
+  public String getPermanentLocationId() {
+    final String itemLocation = getProperty(itemRepresentation, PERMANENT_LOCATION_ID);
+    final String holdingsLocation = getProperty(holdingRepresentation, PERMANENT_LOCATION_ID);
+
+    return StringUtils.firstNonBlank(itemLocation, holdingsLocation);
   }
 
   public Item withLocation(Location newLocation) {

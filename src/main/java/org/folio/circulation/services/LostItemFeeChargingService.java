@@ -3,10 +3,10 @@ package org.folio.circulation.services;
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_FEE_TYPE;
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_PROCESSING_FEE_TYPE;
 import static org.folio.circulation.domain.FeeFine.lostItemFeeTypes;
+import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.results.Result.combineAll;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.succeeded;
-import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -18,13 +18,15 @@ import java.util.function.Function;
 import org.folio.circulation.StoreLoanAndItem;
 import org.folio.circulation.domain.FeeFine;
 import org.folio.circulation.domain.FeeFineOwner;
-import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineOwnerRepository;
-import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineRepository;
 import org.folio.circulation.domain.Loan;
-import org.folio.circulation.infrastructure.storage.loans.LostItemPolicyRepository;
+import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.policy.lostitem.LostItemPolicy;
 import org.folio.circulation.domain.policy.lostitem.itemfee.AutomaticallyChargeableFee;
 import org.folio.circulation.domain.representations.DeclareItemLostRequest;
+import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineOwnerRepository;
+import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineRepository;
+import org.folio.circulation.infrastructure.storage.inventory.LocationRepository;
+import org.folio.circulation.infrastructure.storage.loans.LostItemPolicyRepository;
 import org.folio.circulation.services.support.CreateAccountCommand;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
@@ -39,6 +41,7 @@ public class LostItemFeeChargingService {
   private final FeeFineRepository feeFineRepository;
   private final FeeFineFacade feeFineFacade;
   private final StoreLoanAndItem storeLoanAndItem;
+  private final LocationRepository locationRepository;
 
   public LostItemFeeChargingService(Clients clients) {
     this.lostItemPolicyRepository = new LostItemPolicyRepository(clients);
@@ -46,6 +49,7 @@ public class LostItemFeeChargingService {
     this.feeFineRepository = new FeeFineRepository(clients);
     this.feeFineFacade = new FeeFineFacade(clients);
     this.storeLoanAndItem = new StoreLoanAndItem(clients);
+    this.locationRepository = LocationRepository.using(clients);
   }
 
   public CompletableFuture<Result<Loan>> chargeLostItemFees(
@@ -123,10 +127,6 @@ public class LostItemFeeChargingService {
     });
   }
 
-  private UUID getOwnerServicePoint(Loan loan) {
-    return loan.getItem().getLocation().getPrimaryServicePointId();
-  }
-
   private Function<FeeFine, CreateAccountCommand> createAccountCreation(
     ReferenceDataContext context, AutomaticallyChargeableFee fee) {
 
@@ -142,9 +142,12 @@ public class LostItemFeeChargingService {
   }
 
   private CompletableFuture<Result<ReferenceDataContext>> fetchFeeFineOwner(ReferenceDataContext referenceData) {
-    final String servicePointId = getOwnerServicePoint(referenceData.loan).toString();
+    final String permanentLocationId = referenceData.loan.getItem().getPermanentLocationId();
 
-    return feeFineOwnerRepository.findOwnerForServicePoint(servicePointId)
+    return locationRepository.fetchLocationById(permanentLocationId)
+      .thenApply(r -> r.map(Location::getPrimaryServicePointId))
+      .thenApply(r -> r.map(UUID::toString))
+      .thenCompose(r -> r.after(feeFineOwnerRepository::findOwnerForServicePoint))
       .thenApply(ownerResult -> ownerResult.map(referenceData::withFeeFineOwner));
   }
 
@@ -166,8 +169,8 @@ public class LostItemFeeChargingService {
 
     return contextResult.failWhen(
       context -> succeeded(context.feeFineOwner == null),
-      context -> singleValidationError("No fee/fine owner found for item's effective location",
-        "servicePointId", getOwnerServicePoint(context.loan).toString()));
+      context -> singleValidationError("No fee/fine owner found for item's permanent location",
+        "locationId", context.loan.getItem().getPermanentLocationId()));
   }
 
   private static final class ReferenceDataContext {
