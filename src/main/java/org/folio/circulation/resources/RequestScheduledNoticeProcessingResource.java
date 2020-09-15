@@ -5,6 +5,7 @@ import static org.folio.circulation.support.ResultBinding.mapResult;
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 
+import org.folio.circulation.domain.ConfigurationRepository;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.notice.schedule.RequestScheduledNoticeHandler;
 import org.folio.circulation.domain.notice.schedule.ScheduledNotice;
@@ -27,6 +28,7 @@ public class RequestScheduledNoticeProcessingResource extends ScheduledNoticePro
 
   @Override
   protected CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> findNoticesToSend(
+    ConfigurationRepository configurationRepository,
     ScheduledNoticesRepository scheduledNoticesRepository, PageLimit pageLimit) {
 
     return scheduledNoticesRepository.findNotices(
