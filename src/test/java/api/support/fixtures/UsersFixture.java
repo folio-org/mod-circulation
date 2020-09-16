@@ -22,8 +22,7 @@ public class UsersFixture {
   private final RecordCreator userRecordCreator;
   private final PatronGroupsFixture patronGroupsFixture;
 
-  public UsersFixture(
-    ResourceClient usersClient,
+  public UsersFixture(ResourceClient usersClient,
     PatronGroupsFixture patronGroupsFixture) {
 
     this.userRecordCreator = new RecordCreator(usersClient,
@@ -33,93 +32,78 @@ public class UsersFixture {
   }
 
   public void cleanUp() {
-
     userRecordCreator.cleanUp();
   }
 
   public IndividualResource jessica() {
-
     return userRecordCreator.createIfAbsent(basedUponJessicaPontefract()
         .inGroupFor(patronGroupsFixture.regular()));
   }
 
   public IndividualResource james() {
-
     return userRecordCreator.createIfAbsent(basedUponJamesRodwell()
       .inGroupFor(patronGroupsFixture.regular()));
   }
 
   public IndividualResource rebecca() {
-
     return rebecca(identity());
   }
 
-  public IndividualResource rebecca(
-    Function<UserBuilder, UserBuilder> additionalProperties) {
-
+  public IndividualResource rebecca(Function<UserBuilder, UserBuilder> additionalConfiguration) {
     return userRecordCreator.createIfAbsent(
-      additionalProperties.apply(basedUponRebeccaStuart()
+      additionalConfiguration.apply(basedUponRebeccaStuart()
         .inGroupFor(patronGroupsFixture.regular())));
   }
 
   public IndividualResource steve() {
-
     return steve(identity());
   }
 
-  public IndividualResource steve(
-    Function<UserBuilder, UserBuilder> additionalUserProperties) {
-
+  public IndividualResource steve(Function<UserBuilder, UserBuilder> additionalConfiguration) {
     return userRecordCreator.createIfAbsent(
-      additionalUserProperties.apply(basedUponStevenJones()
+      additionalConfiguration.apply(basedUponStevenJones()
         .inGroupFor(patronGroupsFixture.regular())));
   }
 
   public IndividualResource charlotte() {
-
     return charlotte(identity());
   }
 
-  public IndividualResource charlotte(
-    Function<UserBuilder, UserBuilder> additionalConfiguration) {
-
+  public IndividualResource charlotte(Function<UserBuilder, UserBuilder> additionalConfiguration) {
     return userRecordCreator.createIfAbsent(
       additionalConfiguration.apply(basedUponCharlotteBroadwell()
         .inGroupFor(patronGroupsFixture.regular())));
   }
 
   public IndividualResource undergradHenry() {
-
     return undergradHenry(identity());
   }
 
   public IndividualResource undergradHenry(
-    Function<UserBuilder, UserBuilder> additionalUserProperties) {
+    Function<UserBuilder, UserBuilder> additionalConfiguration) {
 
     return userRecordCreator.createIfAbsent(
-      additionalUserProperties.apply(basedUponHenryHanks()
+      additionalConfiguration.apply(basedUponHenryHanks()
         .inGroupFor(patronGroupsFixture.undergrad())));
   }
 
   public IndividualResource noUserGroupBob() {
-
     return noUserGroupBob(identity());
   }
 
   public IndividualResource noUserGroupBob(
-    Function<UserBuilder, UserBuilder> additionalUserProperties) {
+    Function<UserBuilder, UserBuilder> additionalConfiguration) {
 
     return userRecordCreator.createIfAbsent(
-      additionalUserProperties.apply(basedUponBobbyBibbin()));
+      additionalConfiguration.apply(basedUponBobbyBibbin()));
   }
 
   public void remove(IndividualResource user) {
-
     userRecordCreator.delete(user);
   }
 
-  public IndividualResource defaultAdmin() {
-    return userRecordCreator.createIfAbsent(new UserBuilder()
+  public void defaultAdmin() {
+    userRecordCreator.createIfAbsent(new UserBuilder()
       .withName("Admin", "Admin")
       .withNoBarcode()
       .withId(APITestContext.getUserId()));
