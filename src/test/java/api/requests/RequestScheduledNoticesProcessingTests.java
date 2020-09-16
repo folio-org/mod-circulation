@@ -7,21 +7,18 @@ import static java.util.Collections.singletonList;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasSize;
 import static org.joda.time.DateTimeZone.UTC;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.policy.Period;
-import api.support.http.IndividualResource;
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
@@ -39,13 +36,13 @@ import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.fixtures.ItemExamples;
 import api.support.fixtures.TemplateContextMatchers;
+import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class RequestScheduledNoticesProcessingTests extends APITests {
-
-  private UUID templateId = UUID.randomUUID();
+  private final UUID templateId = UUID.randomUUID();
   private ItemResource item;
   private IndividualResource requester;
   private IndividualResource pickupServicePoint;
@@ -71,12 +68,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
    * FIXME: remove the cause that make this method fail when executed after the others of this class.
    */
   @Test
-  public void aUponAtRequestExpirationNoticeShouldBeSentAndDeletedWhenRequestExpirationDateHasPassed()
-    throws
-    InterruptedException,
-    TimeoutException,
-    ExecutionException {
-
+  public void aUponAtRequestExpirationNoticeShouldBeSentAndDeletedWhenRequestExpirationDateHasPassed() {
     JsonObject noticeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(templateId)
       .withRequestExpirationEvent()
@@ -113,12 +105,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void uponAtRequestExpirationNoticeShouldNotBeSentWhenRequestExpirationDateHasPassedAndRequestIsNotClosed()
-    throws
-    InterruptedException,
-    TimeoutException,
-    ExecutionException {
-
+  public void uponAtRequestExpirationNoticeShouldNotBeSentWhenRequestExpirationDateHasPassedAndRequestIsNotClosed() {
     JsonObject noticeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(templateId)
       .withRequestExpirationEvent()
@@ -128,7 +115,8 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
     setupNoticePolicyWithRequestNotice(noticeConfiguration);
 
     LocalDate requestExpiration = LocalDate.now(UTC).minusDays(1);
-    IndividualResource request = requestsFixture.place(new RequestBuilder().page()
+
+    requestsFixture.place(new RequestBuilder().page()
       .forItem(item)
       .withRequesterId(requester.getId())
       .withRequestDate(DateTime.now())
@@ -146,18 +134,14 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void uponAtHoldExpirationNoticeShouldBeSentAndDeletedWhenHoldExpirationDateHasPassed()
-    throws
-    InterruptedException,
-    TimeoutException,
-    ExecutionException {
-
+  public void uponAtHoldExpirationNoticeShouldBeSentAndDeletedWhenHoldExpirationDateHasPassed() {
     JsonObject noticeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(templateId)
       .withHoldShelfExpirationEvent()
       .withUponAtTiming()
       .sendInRealTime(true)
       .create();
+
     setupNoticePolicyWithRequestNotice(noticeConfiguration);
 
     IndividualResource request = requestsFixture.place(new RequestBuilder().page()
@@ -187,12 +171,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void uponAtHoldExpirationNoticeShouldNotBeSentWhenHoldExpirationDateHasPassedAndRequestIsNotClosed()
-    throws
-    InterruptedException,
-    TimeoutException,
-    ExecutionException {
-
+  public void uponAtHoldExpirationNoticeShouldNotBeSentWhenHoldExpirationDateHasPassedAndRequestIsNotClosed() {
     JsonObject noticeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(templateId)
       .withHoldShelfExpirationEvent()
@@ -225,12 +204,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void beforeRequestExpirationNoticeShouldBeSentAndDeletedWhenIsNotRecurring()
-    throws
-    InterruptedException,
-    TimeoutException,
-    ExecutionException {
-
+  public void beforeRequestExpirationNoticeShouldBeSentAndDeletedWhenIsNotRecurring() {
     JsonObject noticeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(templateId)
       .withRequestExpirationEvent()
@@ -260,12 +234,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void beforeRequestExpirationRecurringNoticeShouldBeSentAndUpdatedWhenFirstThreholdBeforeExpirationHasPassed()
-    throws
-    InterruptedException,
-    TimeoutException,
-    ExecutionException {
-
+  public void beforeRequestExpirationRecurringNoticeShouldBeSentAndUpdatedWhenFirstThreholdBeforeExpirationHasPassed() {
     JsonObject noticeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(templateId)
       .withRequestExpirationEvent()
@@ -304,12 +273,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void beforeHoldExpirationNoticeShouldBeSentAndDeletedWhenIsNotRecurring()
-    throws
-    InterruptedException,
-    TimeoutException,
-    ExecutionException {
-
+  public void beforeHoldExpirationNoticeShouldBeSentAndDeletedWhenIsNotRecurring() {
     JsonObject noticeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(templateId)
       .withHoldShelfExpirationEvent()
