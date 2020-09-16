@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.UUID;
 
 import org.folio.circulation.domain.ItemStatus;
-import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.json.JsonPropertyFetcher;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
@@ -28,6 +27,7 @@ import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.ItemBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.fixtures.ItemExamples;
+import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonArray;

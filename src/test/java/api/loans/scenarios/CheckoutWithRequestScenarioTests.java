@@ -10,7 +10,7 @@ import static org.joda.time.DateTimeConstants.SEPTEMBER;
 
 import java.util.UUID;
 
-import org.folio.circulation.support.http.client.IndividualResource;
+import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;

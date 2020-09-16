@@ -8,7 +8,7 @@ import static api.support.matchers.RequestMatchers.isOpenAwaitingPickup;
 import static api.support.matchers.RequestMatchers.isOpenInTransit;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-import org.folio.circulation.support.http.client.IndividualResource;
+import api.support.http.IndividualResource;
 import org.junit.Test;
 
 import api.support.APITests;

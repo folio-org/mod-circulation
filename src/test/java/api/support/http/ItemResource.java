@@ -2,8 +2,6 @@ package api.support.http;
 
 import java.util.UUID;
 
-import org.folio.circulation.support.http.client.IndividualResource;
-
 public class ItemResource extends IndividualResource {
   private final IndividualResource holdingsRecord;
   private final IndividualResource instance;

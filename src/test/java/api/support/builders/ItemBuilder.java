@@ -6,7 +6,7 @@ import java.util.Random;
 import java.util.UUID;
 
 import org.folio.circulation.domain.ItemStatus;
-import org.folio.circulation.support.http.client.IndividualResource;
+import api.support.http.IndividualResource;
 
 import io.vertx.core.json.JsonObject;
 

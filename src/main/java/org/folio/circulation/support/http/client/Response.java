@@ -67,7 +67,7 @@ public class Response {
     return contentType;
   }
 
-  String getHeader(String name) {
+  public String getHeader(String name) {
     return headers.get(name);
   }
 

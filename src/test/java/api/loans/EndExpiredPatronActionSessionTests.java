@@ -19,7 +19,7 @@ import java.util.stream.Stream;
 import api.support.fixtures.TemplateContextMatchers;
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.notice.session.PatronActionType;
-import org.folio.circulation.support.http.client.IndividualResource;
+import api.support.http.IndividualResource;
 import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;

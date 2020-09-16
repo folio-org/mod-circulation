@@ -2,7 +2,7 @@ package api.support.fixtures;
 
 import java.util.UUID;
 
-import org.folio.circulation.support.http.client.IndividualResource;
+import api.support.http.IndividualResource;
 
 import api.support.builders.FeeFineBuilder;
 import api.support.http.ResourceClient;

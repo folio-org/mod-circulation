@@ -2,7 +2,7 @@ package api.support.builders;
 
 import io.vertx.core.json.JsonObject;
 import java.util.UUID;
-import org.folio.circulation.support.http.client.IndividualResource;
+import api.support.http.IndividualResource;
 
 import static org.folio.circulation.support.json.JsonPropertyFetcher.*;
 

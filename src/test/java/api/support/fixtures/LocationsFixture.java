@@ -5,7 +5,7 @@ import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 import java.util.function.Function;
 
-import org.folio.circulation.support.http.client.IndividualResource;
+import api.support.http.IndividualResource;
 
 import api.support.builders.LocationBuilder;
 import api.support.examples.LocationExamples;

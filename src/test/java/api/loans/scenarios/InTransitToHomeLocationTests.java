@@ -11,7 +11,7 @@ import static org.hamcrest.core.IsNull.nullValue;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.folio.circulation.support.http.client.IndividualResource;
+import api.support.http.IndividualResource;
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;

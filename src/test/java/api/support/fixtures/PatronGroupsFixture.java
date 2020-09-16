@@ -1,7 +1,7 @@
 package api.support.fixtures;
 
 import org.folio.circulation.support.json.JsonPropertyFetcher;
-import org.folio.circulation.support.http.client.IndividualResource;
+import api.support.http.IndividualResource;
 
 import api.support.http.ResourceClient;
 

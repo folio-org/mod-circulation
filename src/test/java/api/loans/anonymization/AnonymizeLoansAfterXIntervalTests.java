@@ -13,7 +13,7 @@ import static org.joda.time.DateTimeZone.UTC;
 import java.util.UUID;
 
 import org.folio.circulation.domain.representations.anonymization.LoanAnonymizationAPIResponse;
-import org.folio.circulation.support.http.client.IndividualResource;
+import api.support.http.IndividualResource;
 import org.joda.time.DateTime;
 import org.junit.Test;
 

@@ -1,6 +1,8 @@
-package org.folio.circulation.support.http.client;
+package api.support.http;
 
 import java.util.UUID;
+
+import org.folio.circulation.support.http.client.Response;
 
 import io.vertx.core.json.JsonObject;
 

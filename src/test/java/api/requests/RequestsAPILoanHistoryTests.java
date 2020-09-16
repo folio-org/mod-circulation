@@ -6,7 +6,7 @@ import static org.hamcrest.Matchers.not;
 
 import java.util.UUID;
 
-import org.folio.circulation.support.http.client.IndividualResource;
+import api.support.http.IndividualResource;
 import org.junit.Test;
 
 import api.support.APITests;

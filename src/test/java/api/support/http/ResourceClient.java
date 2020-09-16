@@ -13,7 +13,6 @@ import java.net.URL;
 import java.util.List;
 import java.util.UUID;
 
-import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 
 import api.support.MultipleJsonRecords;

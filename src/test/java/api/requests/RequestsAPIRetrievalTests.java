@@ -25,7 +25,7 @@ import static org.junit.Assert.assertTrue;
 import java.net.HttpURLConnection;
 import java.util.UUID;
 
-import org.folio.circulation.support.http.client.IndividualResource;
+import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.CoreMatchers;
 import org.joda.time.DateTime;

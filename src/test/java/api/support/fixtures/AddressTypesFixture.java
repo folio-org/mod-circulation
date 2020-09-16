@@ -5,7 +5,7 @@ import static api.support.fixtures.AddressExamples.WORK_ADDRESS_TYPE;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 
-import org.folio.circulation.support.http.client.IndividualResource;
+import api.support.http.IndividualResource;
 
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;

@@ -12,7 +12,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.UUID;
 
-import org.folio.circulation.support.http.client.IndividualResource;
+import api.support.http.IndividualResource;
 import org.joda.time.Seconds;
 import org.junit.Test;
 
