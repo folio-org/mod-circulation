@@ -19,7 +19,6 @@ import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang3.tuple.Pair;
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.policy.Period;
-import api.support.http.IndividualResource;
 import org.hamcrest.Matcher;
 import org.hamcrest.MatcherAssert;
 import org.joda.time.DateTime;
@@ -32,8 +31,10 @@ import api.support.APITests;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.fixtures.ConfigurationExample;
+import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
+import lombok.val;
 
 public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests {
 
@@ -344,9 +345,9 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
 
     DateTime loanDate = new DateTime(2019, 8, 23, 10, 30);
 
-    IndividualResource james = usersFixture.james();
-    ItemResource nod = itemsFixture.basedUponNod();
-    IndividualResource nodToJamesLoan = checkOutFixture.checkOutByBarcode(nod, james, loanDate);
+    val james = usersFixture.james();
+    val nod = itemsFixture.basedUponNod();
+    val nodToJamesLoan = checkOutFixture.checkOutByBarcode(nod, james, loanDate);
 
     usersFixture.remove(james);
 
@@ -381,9 +382,9 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
     DateTime loanDate = new DateTime(2019, 8, 23, 10, 30);
 
     // users
-    IndividualResource james = usersFixture.james();
-    IndividualResource steve = usersFixture.steve();
-    IndividualResource jessica = usersFixture.jessica();
+    val james = usersFixture.james();
+    val steve = usersFixture.steve();
+    val jessica = usersFixture.jessica();
 
     // items
     ItemResource nod = itemsFixture.basedUponNod();

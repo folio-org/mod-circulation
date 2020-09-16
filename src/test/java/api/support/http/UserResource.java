@@ -1,10 +1,8 @@
 package api.support.http;
 
-import org.folio.circulation.support.http.client.Response;
-
 public class UserResource extends IndividualResource {
-  public UserResource(Response response) {
-    super(response);
+  public UserResource(IndividualResource resource) {
+    super(resource.getResponse());
   }
 
   public String getBarcode() {

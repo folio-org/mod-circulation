@@ -45,7 +45,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.Period;
-import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.hamcrest.Matcher;
@@ -75,6 +74,7 @@ import api.support.fakes.FakePubSub;
 import api.support.fixtures.ConfigurationExample;
 import api.support.fixtures.ItemExamples;
 import api.support.fixtures.TemplateContextMatchers;
+import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import api.support.matchers.OverdueFineMatcher;
 import io.vertx.core.json.JsonObject;
@@ -841,9 +841,8 @@ public abstract class RenewalAPITests extends APITests {
 
   @Test
   public void cannotRenewWhenLoaneeCannotBeFound() {
-
-    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    final IndividualResource steve = usersFixture.steve();
+    val smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    val steve = usersFixture.steve();
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, steve);
 

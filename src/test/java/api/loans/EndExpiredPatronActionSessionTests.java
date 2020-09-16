@@ -16,10 +16,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import api.support.fixtures.TemplateContextMatchers;
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.notice.session.PatronActionType;
-import api.support.http.IndividualResource;
 import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
@@ -28,8 +26,11 @@ import api.support.APITests;
 import api.support.builders.EndSessionBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
+import api.support.fixtures.TemplateContextMatchers;
+import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
+import lombok.val;
 
 public class EndExpiredPatronActionSessionTests extends APITests {
 
@@ -310,8 +311,8 @@ public class EndExpiredPatronActionSessionTests extends APITests {
 
   @Test
   public void expiredSessionWithNonExistentUserShouldBeEnded() {
-    IndividualResource steve = usersFixture.steve();
-    ItemResource nod = itemsFixture.basedUponNod();
+    val steve = usersFixture.steve();
+    val nod = itemsFixture.basedUponNod();
 
     checkOutFixture.checkOutByBarcode(nod, steve);
     expiredEndSessionClient.deleteAll();

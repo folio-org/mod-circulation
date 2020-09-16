@@ -31,7 +31,6 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import org.awaitility.Awaitility;
-import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matcher;
@@ -49,9 +48,11 @@ import api.support.builders.RequestBuilder;
 import api.support.builders.UserBuilder;
 import api.support.fakes.FakePubSub;
 import api.support.fixtures.TemplateContextMatchers;
+import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import lombok.val;
 
 public class RequestsAPIUpdatingTests extends APITests {
 
@@ -247,7 +248,7 @@ public class RequestsAPIUpdatingTests extends APITests {
 
     checkOutFixture.checkOutByBarcode(nod);
 
-    IndividualResource requester = usersFixture.steve();
+    val requester = usersFixture.steve();
 
     IndividualResource createdRequest = requestsClient.create(
       new RequestBuilder()

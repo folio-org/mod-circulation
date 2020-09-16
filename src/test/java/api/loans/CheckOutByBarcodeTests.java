@@ -44,7 +44,6 @@ import java.util.concurrent.TimeUnit;
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.Period;
-import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.joda.time.Seconds;
@@ -61,9 +60,11 @@ import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.builders.UserBuilder;
 import api.support.fakes.FakePubSub;
+import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import lombok.val;
 
 public class CheckOutByBarcodeTests extends APITests {
   @Test
@@ -336,9 +337,8 @@ public class CheckOutByBarcodeTests extends APITests {
 
   @Test
   public void cannotCheckOutWhenLoaneeCannotBeFound() {
-    //TODO: Review this to see if can simplify by not creating user at all?
-    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    final IndividualResource steve = usersFixture.steve();
+    val smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    val steve = usersFixture.steve();
 
     usersFixture.remove(steve);
 
