@@ -17,15 +17,12 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;
 
-import java.net.MalformedURLException;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.ItemStatus;
@@ -46,7 +43,7 @@ import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.MoveRequestBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.fakes.FakePubSub;
-import api.support.http.InventoryItemResource;
+import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 
 /**
@@ -918,10 +915,10 @@ public class MoveRequestTests extends APITests {
 
     final String stockholmTimeZone = "Europe/Stockholm";
 
-    final InventoryItemResource sourceItem =
+    final ItemResource sourceItem =
       itemsFixture.basedUponSmallAngryPlanet("65654345643");
 
-    final InventoryItemResource destinationItem =
+    final ItemResource destinationItem =
       itemsFixture.basedUponSmallAngryPlanet("75605832024");
 
     final IndividualResource requestServicePoint = servicePointsFixture.cd1();

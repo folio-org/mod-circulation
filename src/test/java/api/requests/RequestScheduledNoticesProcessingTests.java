@@ -39,14 +39,14 @@ import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.fixtures.ItemExamples;
 import api.support.fixtures.TemplateContextMatchers;
-import api.support.http.InventoryItemResource;
+import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class RequestScheduledNoticesProcessingTests extends APITests {
 
   private UUID templateId = UUID.randomUUID();
-  private InventoryItemResource item;
+  private ItemResource item;
   private IndividualResource requester;
   private IndividualResource pickupServicePoint;
 

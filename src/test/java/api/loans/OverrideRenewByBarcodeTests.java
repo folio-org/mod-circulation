@@ -2,7 +2,6 @@ package api.loans;
 
 import static api.support.builders.FixedDueDateSchedule.forDay;
 import static api.support.builders.FixedDueDateSchedule.wholeMonth;
-import static api.support.matchers.ItemMatchers.isCheckedOut;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
@@ -51,8 +50,7 @@ import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.fixtures.ItemExamples;
 import api.support.fixtures.TemplateContextMatchers;
-import api.support.fixtures.policies.PoliciesToActivate;
-import api.support.http.InventoryItemResource;
+import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
@@ -707,7 +705,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
       "ItemSuffix",
       "");
 
-    InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(itemBuilder, itemsFixture.thirdFloorHoldings());
+    ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(itemBuilder, itemsFixture.thirdFloorHoldings());
     final IndividualResource steve = usersFixture.steve();
 
     final DateTime loanDate = new DateTime(2018, 3, 18, 11, 43, 54, UTC);

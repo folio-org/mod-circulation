@@ -19,7 +19,7 @@ import org.junit.Test;
 import api.support.APITests;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.RequestBuilder;
-import api.support.http.InventoryItemResource;
+import api.support.http.ItemResource;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
@@ -53,7 +53,7 @@ public class HoldShelfClearanceReportTests extends APITests {
   @Test
   public void openUnfulfilledRequestNotIncludedInReport() {
 
-    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.james());
@@ -74,8 +74,8 @@ public class HoldShelfClearanceReportTests extends APITests {
   @Test
   public void requestsAwaitingPickupAreNotIncludedInReport() {
 
-    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
+    final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final ItemResource temeraire = itemsFixture.basedUponTemeraire();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     checkOutFixture.checkOutByBarcode(temeraire, usersFixture.charlotte());
@@ -105,10 +105,10 @@ public class HoldShelfClearanceReportTests extends APITests {
 
   @Test
   public void multipleClosedPickupExpiredRequest() {
-    final InventoryItemResource smallAngryPlanet = itemsFixture
+    final ItemResource smallAngryPlanet = itemsFixture
       .basedUponSmallAngryPlanet(itemsFixture.addCallNumberStringComponents());
 
-    final InventoryItemResource temeraire = itemsFixture
+    final ItemResource temeraire = itemsFixture
       .basedUponTemeraire(itemsFixture.addCallNumberStringComponents("tem"));
 
     final IndividualResource rebecca = usersFixture.rebecca();
@@ -162,9 +162,9 @@ public class HoldShelfClearanceReportTests extends APITests {
   @Test
   public void testClosedCancelledExpiredRequest() {
 
-    final InventoryItemResource smallAngryPlanet = itemsFixture
+    final ItemResource smallAngryPlanet = itemsFixture
       .basedUponSmallAngryPlanet(itemsFixture.addCallNumberStringComponents());
-    final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
+    final ItemResource temeraire = itemsFixture.basedUponTemeraire();
     final IndividualResource rebecca = usersFixture.rebecca();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
@@ -200,9 +200,9 @@ public class HoldShelfClearanceReportTests extends APITests {
   @Test
   public void testClosedPickupExpiredRequest() {
 
-    final InventoryItemResource smallAngryPlanet = itemsFixture
+    final ItemResource smallAngryPlanet = itemsFixture
       .basedUponSmallAngryPlanet(itemsFixture.addCallNumberStringComponents());
-    final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
+    final ItemResource temeraire = itemsFixture.basedUponTemeraire();
     final IndividualResource rebecca = usersFixture.rebecca();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
@@ -235,7 +235,7 @@ public class HoldShelfClearanceReportTests extends APITests {
   @Test
   public void checkThatResponseGetsRequestWithEarlierClosedDate() {
 
-    final InventoryItemResource smallAngryPlanet = itemsFixture
+    final ItemResource smallAngryPlanet = itemsFixture
       .basedUponSmallAngryPlanet(itemsFixture.addCallNumberStringComponents());
     final IndividualResource rebecca = usersFixture.rebecca();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -279,7 +279,7 @@ public class HoldShelfClearanceReportTests extends APITests {
   @Test
   public void checkWhenPickupRequestClosedDateIsEmptyForExpiredRequest() {
 
-    final InventoryItemResource smallAngryPlanet = itemsFixture
+    final ItemResource smallAngryPlanet = itemsFixture
       .basedUponSmallAngryPlanet(itemsFixture.addCallNumberStringComponents());
     final IndividualResource rebecca = usersFixture.rebecca();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -323,7 +323,7 @@ public class HoldShelfClearanceReportTests extends APITests {
   @Test
   public void itemIsCheckedOutAndRequestHasBeenChanged() {
 
-    final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
+    final ItemResource temeraire = itemsFixture.basedUponTemeraire();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     checkOutFixture.checkOutByBarcode(temeraire, usersFixture.charlotte());
@@ -346,7 +346,7 @@ public class HoldShelfClearanceReportTests extends APITests {
   @Test
   public void checkWhenPickupRequestsExpiredInDifferentServicePoints() {
 
-    final InventoryItemResource smallAngryPlanet = itemsFixture
+    final ItemResource smallAngryPlanet = itemsFixture
       .basedUponSmallAngryPlanet(itemsFixture.addCallNumberStringComponents());
 
     // init for SP1
@@ -428,8 +428,8 @@ public class HoldShelfClearanceReportTests extends APITests {
   @Test
   public void checkWhenPickupRequestsCancelledInDifferentServicePoints() {
 
-    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    final InventoryItemResource nod = itemsFixture.basedUponNod();
+    final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final ItemResource nod = itemsFixture.basedUponNod();
 
     // init for SP1
     final IndividualResource rebeca = usersFixture.rebecca();
@@ -546,7 +546,7 @@ public class HoldShelfClearanceReportTests extends APITests {
   }
 
   private void verifyResponse(
-    InventoryItemResource item, IndividualResource requester,
+    ItemResource item, IndividualResource requester,
     Response response, RequestStatus status) {
 
     assertThat(response.getStatusCode(), is(HTTP_OK));
@@ -560,7 +560,7 @@ public class HoldShelfClearanceReportTests extends APITests {
   }
 
   private void verifyRequest(
-    InventoryItemResource item, IndividualResource requester,
+    ItemResource item, IndividualResource requester,
     JsonObject requestJson, RequestStatus status) {
 
     assertThat(requestJson.getString(STATUS_KEY), is(status.getValue()));

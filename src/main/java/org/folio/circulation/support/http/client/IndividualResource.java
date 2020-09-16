@@ -31,7 +31,7 @@ public class IndividualResource {
     return response;
   }
 
-  //TODO: Possibly move this to own class
+//  TODO: Possibly move this to own class
   public String getBarcode() {
     return response.getJson().getString("barcode");
   }

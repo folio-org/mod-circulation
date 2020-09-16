@@ -79,7 +79,7 @@ import api.support.fixtures.ItemsFixture;
 import api.support.fixtures.RequestsFixture;
 import api.support.fixtures.TemplateContextMatchers;
 import api.support.fixtures.UsersFixture;
-import api.support.http.InventoryItemResource;
+import api.support.http.ItemResource;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -393,7 +393,7 @@ public class RequestsAPICreationTests extends APITests {
   })
   public void canCreateARequestWithValidStatus(String status) {
 
-    final InventoryItemResource smallAngryPlanet =
+    final ItemResource smallAngryPlanet =
       itemsFixture.basedUponSmallAngryPlanet(itemBuilder -> itemBuilder
         .withBarcode("036000291452"));
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -1409,7 +1409,7 @@ public class RequestsAPICreationTests extends APITests {
 
     UUID id = UUID.randomUUID();
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
-    InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+    ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource requester = usersFixture.steve();
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
     IndividualResource request = requestsFixture.place(new RequestBuilder()
@@ -1471,7 +1471,7 @@ public class RequestsAPICreationTests extends APITests {
       "Prefix",
       "Suffix",
       Collections.singletonList("CopyNumbers"));
-    InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet(itemBuilder, holdingBuilder);
+    ItemResource item = itemsFixture.basedUponSmallAngryPlanet(itemBuilder, holdingBuilder);
 
     IndividualResource requester = usersFixture.steve();
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
@@ -1553,7 +1553,7 @@ public class RequestsAPICreationTests extends APITests {
       "ItemSuffix",
       "CopyNumber");
 
-    InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet(itemBuilder, itemsFixture.thirdFloorHoldings());
+    ItemResource item = itemsFixture.basedUponSmallAngryPlanet(itemBuilder, itemsFixture.thirdFloorHoldings());
     IndividualResource requester = usersFixture.steve();
     IndividualResource loanOwner = usersFixture.jessica();
 
@@ -1862,7 +1862,7 @@ public class RequestsAPICreationTests extends APITests {
   @Test
   public void requestRefusedWhenAutomatedBlockExistsForPatron() {
     final IndividualResource steve = usersFixture.steve();
-    final InventoryItemResource item = itemsFixture.basedUponTemeraire();
+    final ItemResource item = itemsFixture.basedUponTemeraire();
 
     checkOutFixture.checkOutByBarcode(item);
     automatedPatronBlocksFixture.blockAction(steve.getId().toString(), false, false, true);

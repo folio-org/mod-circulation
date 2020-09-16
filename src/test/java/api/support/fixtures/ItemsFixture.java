@@ -16,7 +16,7 @@ import org.folio.circulation.support.http.client.IndividualResource;
 import api.support.builders.HoldingBuilder;
 import api.support.builders.InstanceBuilder;
 import api.support.builders.ItemBuilder;
-import api.support.http.InventoryItemResource;
+import api.support.http.ItemResource;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
 
@@ -58,7 +58,7 @@ public class ItemsFixture {
     contributorNameTypeRecordCreator.cleanUp();
   }
 
-  public InventoryItemResource basedUponDunkirk() {
+  public ItemResource basedUponDunkirk() {
 
     return create(
       InstanceExamples.basedUponDunkirk(booksInstanceTypeId(),
@@ -101,15 +101,15 @@ public class ItemsFixture {
     return itemsClient.create(item1);
   }
 
-  public InventoryItemResource basedUponSmallAngryPlanet() {
+  public ItemResource basedUponSmallAngryPlanet() {
     return basedUponSmallAngryPlanet(identity());
   }
 
-  public InventoryItemResource basedUponSmallAngryPlanet(String barcode) {
+  public ItemResource basedUponSmallAngryPlanet(String barcode) {
     return basedUponSmallAngryPlanet(item -> item.withBarcode(barcode));
   }
 
-  public InventoryItemResource basedUponSmallAngryPlanet(ItemBuilder itemBuilder,
+  public ItemResource basedUponSmallAngryPlanet(ItemBuilder itemBuilder,
     HoldingBuilder holdingBuilder) {
 
     return basedUponSmallAngryPlanet(
@@ -118,7 +118,7 @@ public class ItemsFixture {
       item -> itemBuilder);
   }
 
-  public InventoryItemResource basedUponSmallAngryPlanet(
+  public ItemResource basedUponSmallAngryPlanet(
     Function<ItemBuilder, ItemBuilder> additionalItemProperties) {
 
     return basedUponSmallAngryPlanet(
@@ -126,7 +126,7 @@ public class ItemsFixture {
       additionalItemProperties);
   }
 
-  public InventoryItemResource basedUponSmallAngryPlanet(
+  public ItemResource basedUponSmallAngryPlanet(
     Function<HoldingBuilder, HoldingBuilder> additionalHoldingsRecordProperties,
     Function<ItemBuilder, ItemBuilder> additionalItemProperties) {
 
@@ -134,7 +134,7 @@ public class ItemsFixture {
       identity(), additionalItemProperties);
   }
 
-  public InventoryItemResource basedUponSmallAngryPlanet(
+  public ItemResource basedUponSmallAngryPlanet(
     Function<HoldingBuilder, HoldingBuilder> additionalHoldingsRecordProperties,
     Function<InstanceBuilder, InstanceBuilder> additionalInstanceProperties,
     Function<ItemBuilder, ItemBuilder> additionalItemProperties) {
@@ -150,11 +150,11 @@ public class ItemsFixture {
         loanTypesFixture.canCirculate().getId()));
   }
 
-  public InventoryItemResource basedUponNod() {
+  public ItemResource basedUponNod() {
     return basedUponNod(identity());
   }
 
-  public InventoryItemResource basedUponNod(
+  public ItemResource basedUponNod(
     Function<ItemBuilder, ItemBuilder> additionalItemProperties) {
 
     return applyAdditionalProperties(
@@ -168,11 +168,11 @@ public class ItemsFixture {
         loanTypesFixture.canCirculate().getId()));
   }
 
-  public InventoryItemResource basedUponTemeraire() {
+  public ItemResource basedUponTemeraire() {
     return basedUponTemeraire(identity());
   }
 
-  public InventoryItemResource basedUponTemeraire(
+  public ItemResource basedUponTemeraire(
     Function<HoldingBuilder, HoldingBuilder> additionalHoldingsRecordProperties,
     Function<ItemBuilder, ItemBuilder> additionalItemProperties) {
 
@@ -187,18 +187,18 @@ public class ItemsFixture {
         loanTypesFixture.canCirculate().getId()));
   }
 
-  public InventoryItemResource basedUponTemeraire(
+  public ItemResource basedUponTemeraire(
     Function<ItemBuilder, ItemBuilder> additionalItemProperties) {
 
     return basedUponTemeraire(identity(), additionalItemProperties);
   }
 
-  public InventoryItemResource basedUponUprooted() {
+  public ItemResource basedUponUprooted() {
 
     return basedUponUprooted(identity());
   }
 
-  public InventoryItemResource basedUponUprooted(
+  public ItemResource basedUponUprooted(
     Function<ItemBuilder, ItemBuilder> additionalItemProperties) {
 
     return applyAdditionalProperties(
@@ -212,12 +212,12 @@ public class ItemsFixture {
         loanTypesFixture.canCirculate().getId()));
   }
 
-  public InventoryItemResource basedUponInterestingTimes() {
+  public ItemResource basedUponInterestingTimes() {
 
     return basedUponInterestingTimes(identity());
   }
 
-  public InventoryItemResource basedUponInterestingTimes(
+  public ItemResource basedUponInterestingTimes(
     Function<ItemBuilder, ItemBuilder> additionalItemProperties) {
 
     return applyAdditionalProperties(
@@ -231,7 +231,7 @@ public class ItemsFixture {
         loanTypesFixture.canCirculate().getId()));
   }
 
-  private InventoryItemResource applyAdditionalProperties(
+  private ItemResource applyAdditionalProperties(
     Function<HoldingBuilder, HoldingBuilder> additionalHoldingsRecordProperties,
     Function<InstanceBuilder, InstanceBuilder> additionalInstanceProperties,
     Function<ItemBuilder, ItemBuilder> additionalItemProperties,
@@ -245,7 +245,7 @@ public class ItemsFixture {
       additionalItemProperties.apply(itemBuilder));
   }
 
-  private InventoryItemResource create(
+  private ItemResource create(
     InstanceBuilder instanceBuilder,
     HoldingBuilder holdingsRecordBuilder,
     ItemBuilder itemBuilder) {
@@ -260,7 +260,7 @@ public class ItemsFixture {
       itemBuilder.forHolding(holding.getId())
         .create());
 
-    return new InventoryItemResource(item, holding, instance);
+    return new ItemResource(item, holding, instance);
   }
 
   public HoldingBuilder thirdFloorHoldings() {

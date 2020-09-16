@@ -61,7 +61,7 @@ import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.builders.UserBuilder;
 import api.support.fakes.FakePubSub;
-import api.support.http.InventoryItemResource;
+import api.support.http.ItemResource;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -474,7 +474,7 @@ public class CheckOutByBarcodeTests extends APITests {
   @Test
   public void shouldRejectCheckOutOfItemInDisallowedStatus() {
     final String barcode = String.valueOf(new Random().nextLong());
-    final InventoryItemResource claimedReturnedItem = itemsFixture
+    final ItemResource claimedReturnedItem = itemsFixture
       .basedUponSmallAngryPlanet((ItemBuilder itemBuilder) -> itemBuilder
         .withBarcode(barcode)
         .claimedReturned());
@@ -892,7 +892,7 @@ public class CheckOutByBarcodeTests extends APITests {
       overdueFinePoliciesFixture.facultyStandard().getId(),
       lostItemFeePoliciesFixture.facultyStandard().getId());
 
-    InventoryItemResource nod = itemsFixture.basedUponNod();
+    ItemResource nod = itemsFixture.basedUponNod();
     IndividualResource steve = usersFixture.steve();
     Response response = checkOutFixture.attemptCheckOutByBarcode(nod, steve);
 
@@ -967,8 +967,8 @@ public class CheckOutByBarcodeTests extends APITests {
       overdueFinePoliciesFixture.facultyStandard().getId(),
       lostItemFeePoliciesFixture.facultyStandard().getId());
 
-    InventoryItemResource firstItem = itemsFixture.basedUponNod();
-    InventoryItemResource secondItem = itemsFixture.basedUponDunkirk();
+    ItemResource firstItem = itemsFixture.basedUponNod();
+    ItemResource secondItem = itemsFixture.basedUponDunkirk();
     IndividualResource steve = usersFixture.steve();
 
     checkOutFixture.checkOutByBarcode(firstItem, steve);

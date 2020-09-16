@@ -11,14 +11,14 @@ import org.junit.Test;
 
 import api.support.APITests;
 import api.support.builders.RequestBuilder;
-import api.support.http.InventoryItemResource;
+import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 
 public class RequestsAPILoanHistoryTests extends APITests {
   @Test
   public void creatingRecallRequestChangesTheOpenLoanForTheSameItem() {
 
-    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     IndividualResource originalLoan = checkOutFixture.checkOutByBarcode(smallAngryPlanet);
@@ -102,8 +102,8 @@ public class RequestsAPILoanHistoryTests extends APITests {
   @Test
   public void creatingHoldRequestDoesNotChangeOpenLoanForDifferentItem() {
 
-    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    final InventoryItemResource nod = itemsFixture.basedUponNod();
+    final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final ItemResource nod = itemsFixture.basedUponNod();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet);
@@ -130,8 +130,8 @@ public class RequestsAPILoanHistoryTests extends APITests {
   @Test
   public void creatingRecallRequestDoesNotChangeOpenLoanForDifferentItem() {
 
-    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    final InventoryItemResource nod = itemsFixture.basedUponNod();
+    final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final ItemResource nod = itemsFixture.basedUponNod();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet);
@@ -158,7 +158,7 @@ public class RequestsAPILoanHistoryTests extends APITests {
   @Test
   public void creatingHoldRequestStillSucceedsWhenThereIsNoLoan() {
 
-    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     UUID loanId = checkOutFixture.checkOutByBarcode(smallAngryPlanet).getId();
@@ -175,7 +175,7 @@ public class RequestsAPILoanHistoryTests extends APITests {
   @Test
   public void creatingRecallRequestStillSucceedsWhenThereIsNoLoan() {
 
-    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     UUID loanId = checkOutFixture.checkOutByBarcode(smallAngryPlanet).getId();

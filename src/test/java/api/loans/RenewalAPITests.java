@@ -75,7 +75,7 @@ import api.support.fakes.FakePubSub;
 import api.support.fixtures.ConfigurationExample;
 import api.support.fixtures.ItemExamples;
 import api.support.fixtures.TemplateContextMatchers;
-import api.support.http.InventoryItemResource;
+import api.support.http.ItemResource;
 import api.support.matchers.OverdueFineMatcher;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
@@ -1292,7 +1292,7 @@ public abstract class RenewalAPITests extends APITests {
       "ItemSuffix",
       "");
 
-    InventoryItemResource smallAngryPlanet
+    ItemResource smallAngryPlanet
       = itemsFixture.basedUponSmallAngryPlanet(itemBuilder, itemsFixture.thirdFloorHoldings());
 
     final IndividualResource steve = usersFixture.steve();

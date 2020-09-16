@@ -47,7 +47,7 @@ import api.support.builders.ClaimItemReturnedRequestBuilder;
 import api.support.builders.DeclareItemLostRequestBuilder;
 import api.support.builders.LostItemFeePolicyBuilder;
 import api.support.fakes.FakePubSub;
-import api.support.http.InventoryItemResource;
+import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
@@ -115,7 +115,7 @@ public class DeclareLostAPITests extends APITests {
 
   @Test
   public void cannotDeclareItemLostForAClosedLoan() {
-    final InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+    final ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
 
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(item, usersFixture.jessica());
 
@@ -230,7 +230,7 @@ public class DeclareLostAPITests extends APITests {
 
   @Test
   public void shouldNotChargeFeesWhenPolicyIsUnknown() {
-    final InventoryItemResource item = itemsFixture.basedUponNod();
+    final ItemResource item = itemsFixture.basedUponNod();
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(item, usersFixture.charlotte());
 
     final JsonObject loanWithoutLostPolicy = loansStorageClient.getById(loan.getId())
@@ -253,7 +253,7 @@ public class DeclareLostAPITests extends APITests {
   public void cannotDeclareItemLostWhenPrimaryServicePointHasNoOwner() {
     feeFineOwnerFixture.delete(feeFineOwnerFixture.cd1Owner());
 
-    final InventoryItemResource item = itemsFixture.basedUponNod();
+    final ItemResource item = itemsFixture.basedUponNod();
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(item, usersFixture.charlotte());
 
     final Response response = declareLostFixtures.attemptDeclareItemLost(
@@ -270,7 +270,7 @@ public class DeclareLostAPITests extends APITests {
   public void cannotDeclareItemLostWhenNoAutomatedLostItemFeeTypeIsDefined() {
     feeFineTypeFixture.delete(feeFineTypeFixture.lostItemFee());
 
-    final InventoryItemResource item = itemsFixture.basedUponNod();
+    final ItemResource item = itemsFixture.basedUponNod();
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(item, usersFixture.charlotte());
 
     final Response response = declareLostFixtures.attemptDeclareItemLost(
@@ -288,7 +288,7 @@ public class DeclareLostAPITests extends APITests {
   public void cannotDeclareItemLostWhenNoAutomatedLostItemProcessingFeeTypeIsDefined() {
     feeFineTypeFixture.delete(feeFineTypeFixture.lostItemProcessingFee());
 
-    final InventoryItemResource item = itemsFixture.basedUponNod();
+    final ItemResource item = itemsFixture.basedUponNod();
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(item, usersFixture.charlotte());
 
     final Response response = declareLostFixtures.attemptDeclareItemLost(
@@ -441,7 +441,7 @@ public class DeclareLostAPITests extends APITests {
 
     assertThat(notesClient.getAll().size(), is(0));
 
-    InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+    ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
     UUID loanId = checkOutFixture.checkOutByBarcode(item, usersFixture.charlotte())
       .getId();
 
@@ -467,7 +467,7 @@ public class DeclareLostAPITests extends APITests {
   public void shouldNotCreateNoteWhenNotPreviouslyClaimedReturned() {
     String comment = "testing";
 
-    InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+    ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
     UUID loanId = checkOutFixture.checkOutByBarcode(item, usersFixture.charlotte())
       .getId();
 
@@ -494,7 +494,7 @@ public class DeclareLostAPITests extends APITests {
   }
 
   private IndividualResource declareItemLost() {
-    final InventoryItemResource item = itemsFixture.basedUponNod();
+    final ItemResource item = itemsFixture.basedUponNod();
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(item, usersFixture.charlotte());
 
     declareLostFixtures.declareItemLost(new DeclareItemLostRequestBuilder()

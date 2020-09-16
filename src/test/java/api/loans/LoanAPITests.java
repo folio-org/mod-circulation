@@ -54,7 +54,7 @@ import api.support.builders.ItemBuilder;
 import api.support.builders.LoanBuilder;
 import api.support.fakes.FakePubSub;
 import api.support.fixtures.ConfigurationExample;
-import api.support.http.InventoryItemResource;
+import api.support.http.ItemResource;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
@@ -270,7 +270,7 @@ public class LoanAPITests extends APITests {
   public void canGetMultipleFeesFinesForMultipleLoans() {
     configClient.create(ConfigurationExample.utcTimezoneConfiguration());
     IndividualResource item1 = itemsFixture.basedUponSmallAngryPlanet();
-    final InventoryItemResource item2 = itemsFixture.basedUponNod();
+    final ItemResource item2 = itemsFixture.basedUponNod();
 
     final IndividualResource user1 = usersFixture.jessica();
     final IndividualResource user2 = usersFixture.steve();
@@ -981,7 +981,7 @@ public class LoanAPITests extends APITests {
 
     configClient.create(ConfigurationExample.utcTimezoneConfiguration());
     IndividualResource item1 = itemsFixture.basedUponSmallAngryPlanet();
-    final InventoryItemResource item2 = itemsFixture.basedUponNod();
+    final ItemResource item2 = itemsFixture.basedUponNod();
 
     final IndividualResource user1 = usersFixture.jessica();
     final IndividualResource user2 = usersFixture.steve();
@@ -1007,7 +1007,7 @@ public class LoanAPITests extends APITests {
 
   @Test
   public void loanFoundByIdDoesNotProvideItemInformationForUnknownItem() {
-    final InventoryItemResource item = itemsFixture.basedUponNod();
+    final ItemResource item = itemsFixture.basedUponNod();
 
     final UUID loanId = loansFixture.createLoan(item, usersFixture.rebecca())
       .getId();
@@ -1062,7 +1062,7 @@ public class LoanAPITests extends APITests {
 
   @Test
   public void canRenewALoanByExtendingTheDueDate() {
-    final InventoryItemResource item = itemsFixture.basedUponNod();
+    final ItemResource item = itemsFixture.basedUponNod();
 
     IndividualResource loan = loansFixture.createLoan(item,
       usersFixture.rebecca());
@@ -1216,7 +1216,7 @@ public class LoanAPITests extends APITests {
 
   @Test
   public void updatingACurrentLoanDoesNotChangeItemStatus() {
-    final InventoryItemResource item = itemsFixture.basedUponNod();
+    final ItemResource item = itemsFixture.basedUponNod();
 
     final IndividualResource checkOutResponse = loansFixture.createLoan(item,
       usersFixture.jessica());
@@ -1243,7 +1243,7 @@ public class LoanAPITests extends APITests {
 
   @Test
   public void loanInCollectionDoesNotProvideItemInformationForUnknownItem() {
-    final InventoryItemResource item = itemsFixture.basedUponNod();
+    final ItemResource item = itemsFixture.basedUponNod();
 
     loansFixture.createLoan(item, usersFixture.jessica());
 
@@ -1485,7 +1485,7 @@ public class LoanAPITests extends APITests {
 
   @Test
   public void canDeleteALoan() {
-    final InventoryItemResource item = itemsFixture.basedUponNod();
+    final ItemResource item = itemsFixture.basedUponNod();
 
     final UUID loanId = loansFixture.createLoan(item, usersFixture.rebecca()).getId();
 
@@ -1661,7 +1661,7 @@ public class LoanAPITests extends APITests {
 
   @Test
   public void canGetAnonymizedLoan() {
-    InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+    ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource jessica = usersFixture.jessica();
 
     IndividualResource individualResource = checkOutFixture.checkOutByBarcode(item,
@@ -1681,12 +1681,12 @@ public class LoanAPITests extends APITests {
 
   @Test
   public void canGetMultipleAnonymizedLoans() {
-    InventoryItemResource firstItem = itemsFixture.basedUponSmallAngryPlanet();
+    ItemResource firstItem = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource jessica = usersFixture.jessica();
     IndividualResource firstLoan = checkOutFixture.checkOutByBarcode(firstItem,
       jessica, new DateTime(2018, 4, 21, 11, 21, 43, UTC));
 
-    InventoryItemResource secondItem = itemsFixture.basedUponNod();
+    ItemResource secondItem = itemsFixture.basedUponNod();
     IndividualResource henry = usersFixture.undergradHenry();
     IndividualResource secondLoan = checkOutFixture.checkOutByBarcode(secondItem,
       henry, new DateTime(2018, 4, 21, 11, 21, 43, UTC));
@@ -1753,7 +1753,7 @@ public class LoanAPITests extends APITests {
 
   @Test
   public void dueDateChangedEventIsPublishedOnReplace() {
-    final InventoryItemResource item = itemsFixture.basedUponNod();
+    final ItemResource item = itemsFixture.basedUponNod();
 
     final IndividualResource checkOutResponse = loansFixture.createLoan(item,
       usersFixture.jessica());

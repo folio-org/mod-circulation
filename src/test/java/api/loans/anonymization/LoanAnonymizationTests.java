@@ -17,12 +17,12 @@ import api.support.builders.AccountBuilder;
 import api.support.builders.ConfigRecordBuilder;
 import api.support.builders.FeefineActionsBuilder;
 import api.support.builders.LoanHistoryConfigurationBuilder;
-import api.support.http.InventoryItemResource;
+import api.support.http.ItemResource;
 import api.support.http.TimedTaskClient;
 
 abstract class LoanAnonymizationTests extends APITests {
   protected static final int ONE_MINUTE_AND_ONE = 60001;
-  protected InventoryItemResource item1;
+  protected ItemResource item1;
   protected IndividualResource user;
   protected IndividualResource servicePoint;
 

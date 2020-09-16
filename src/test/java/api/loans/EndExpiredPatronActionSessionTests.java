@@ -28,7 +28,7 @@ import api.support.APITests;
 import api.support.builders.EndSessionBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
-import api.support.http.InventoryItemResource;
+import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 
 public class EndExpiredPatronActionSessionTests extends APITests {
@@ -91,8 +91,8 @@ public class EndExpiredPatronActionSessionTests extends APITests {
   public void patronHasSomeSessionsAndOnlySessionsWithSameActionTypeShouldBeExpiredByTimeout() {
 
     IndividualResource james = usersFixture.james();
-    InventoryItemResource nod = itemsFixture.basedUponNod();
-    InventoryItemResource interestingTimes = itemsFixture.basedUponInterestingTimes();
+    ItemResource nod = itemsFixture.basedUponNod();
+    ItemResource interestingTimes = itemsFixture.basedUponInterestingTimes();
 
     checkOutFixture.checkOutByBarcode(nod, james);
     checkOutFixture.checkOutByBarcode(interestingTimes, james);
@@ -123,8 +123,8 @@ public class EndExpiredPatronActionSessionTests extends APITests {
   public void patronHasSeveralSessionsAndOnlyOneShouldBeExpiredByTimeout() {
 
     IndividualResource james = usersFixture.james();
-    InventoryItemResource nod = itemsFixture.basedUponNod();
-    InventoryItemResource interestingTimes = itemsFixture.basedUponInterestingTimes();
+    ItemResource nod = itemsFixture.basedUponNod();
+    ItemResource interestingTimes = itemsFixture.basedUponInterestingTimes();
 
     checkOutFixture.checkOutByBarcode(nod, james);
     checkOutFixture.checkOutByBarcode(interestingTimes, james);
@@ -173,8 +173,8 @@ public class EndExpiredPatronActionSessionTests extends APITests {
   public void noExpiredEndSessionAfterCheckIn() {
 
     IndividualResource james = usersFixture.james();
-    InventoryItemResource nod = itemsFixture.basedUponNod();
-    InventoryItemResource interestingTimes = itemsFixture.basedUponInterestingTimes();
+    ItemResource nod = itemsFixture.basedUponNod();
+    ItemResource interestingTimes = itemsFixture.basedUponInterestingTimes();
 
     checkOutFixture.checkOutByBarcode(nod, james);
     checkOutFixture.checkOutByBarcode(interestingTimes, james);
@@ -197,8 +197,8 @@ public class EndExpiredPatronActionSessionTests extends APITests {
   public void notFailEndSessionProcessingWhenServerIsNotResponding() {
 
     IndividualResource james = usersFixture.james();
-    InventoryItemResource nod = itemsFixture.basedUponNod();
-    InventoryItemResource interestingTimes = itemsFixture.basedUponInterestingTimes();
+    ItemResource nod = itemsFixture.basedUponNod();
+    ItemResource interestingTimes = itemsFixture.basedUponInterestingTimes();
     checkOutFixture.checkOutByBarcode(itemsFixture.basedUponNod(), james);
     checkOutFixture.checkOutByBarcode(itemsFixture.basedUponInterestingTimes(), james);
     checkInFixture.checkInByBarcode(nod);
@@ -221,9 +221,9 @@ public class EndExpiredPatronActionSessionTests extends APITests {
     IndividualResource james = usersFixture.james();
     IndividualResource jessica = usersFixture.jessica();
     IndividualResource steve = usersFixture.steve();
-    InventoryItemResource nod = itemsFixture.basedUponNod();
-    InventoryItemResource interestingTimes = itemsFixture.basedUponInterestingTimes();
-    InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    ItemResource nod = itemsFixture.basedUponNod();
+    ItemResource interestingTimes = itemsFixture.basedUponInterestingTimes();
+    ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
     checkOutFixture.checkOutByBarcode(nod, james);
     checkOutFixture.checkOutByBarcode(interestingTimes, jessica);
@@ -277,7 +277,7 @@ public class EndExpiredPatronActionSessionTests extends APITests {
   @Test
   public void expiredSessionWithNonExistentLoanShouldBeEnded() {
     IndividualResource james = usersFixture.james();
-    InventoryItemResource nod = itemsFixture.basedUponNod();
+    ItemResource nod = itemsFixture.basedUponNod();
 
     checkOutFixture.checkOutByBarcode(nod, james);
     expiredEndSessionClient.deleteAll();
@@ -311,7 +311,7 @@ public class EndExpiredPatronActionSessionTests extends APITests {
   @Test
   public void expiredSessionWithNonExistentUserShouldBeEnded() {
     IndividualResource steve = usersFixture.steve();
-    InventoryItemResource nod = itemsFixture.basedUponNod();
+    ItemResource nod = itemsFixture.basedUponNod();
 
     checkOutFixture.checkOutByBarcode(nod, steve);
     expiredEndSessionClient.deleteAll();
@@ -384,7 +384,7 @@ public class EndExpiredPatronActionSessionTests extends APITests {
   @Test
   public void patronNoticeContextContainsUserTokensWhenNoticeIsTriggeredByExpiredSession() {
     IndividualResource james = usersFixture.james();
-    InventoryItemResource nod = itemsFixture.basedUponNod();
+    ItemResource nod = itemsFixture.basedUponNod();
     checkOutFixture.checkOutByBarcode(nod, james);
 
     patronSessionRecordsClient.getAll().stream()

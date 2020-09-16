@@ -41,13 +41,13 @@ import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.fixtures.ItemExamples;
 import api.support.fixtures.TemplateContextMatchers;
-import api.support.http.InventoryItemResource;
+import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 
 public class ChangeDueDateByReplacingLoanTests extends APITests {
   @Test
   public void canManuallyChangeTheDueDateOfLoan() {
-    final InventoryItemResource item = itemsFixture.basedUponNod();
+    final ItemResource item = itemsFixture.basedUponNod();
 
     IndividualResource loan = checkOutFixture.checkOutByBarcode(item);
 
@@ -101,7 +101,7 @@ public class ChangeDueDateByReplacingLoanTests extends APITests {
 
   @Test
   public void canManuallyReapplyTheDueDateOfClaimedReturnedLoan() {
-    final InventoryItemResource item = itemsFixture.basedUponNod();
+    final ItemResource item = itemsFixture.basedUponNod();
 
     IndividualResource loan = checkOutFixture.checkOutByBarcode(item);
 
@@ -125,7 +125,7 @@ public class ChangeDueDateByReplacingLoanTests extends APITests {
 
   @Test
   public void canChangeDueDateOfLoanWithOpenRequest() {
-    final InventoryItemResource item = itemsFixture.basedUponNod();
+    final ItemResource item = itemsFixture.basedUponNod();
 
     IndividualResource loan = checkOutFixture.checkOutByBarcode(item);
 
@@ -224,7 +224,7 @@ public class ChangeDueDateByReplacingLoanTests extends APITests {
       "ItemPrefix",
       "ItemSuffix",
       "");
-    InventoryItemResource smallAngryPlanet =
+    ItemResource smallAngryPlanet =
       itemsFixture.basedUponSmallAngryPlanet(itemBuilder, itemsFixture.thirdFloorHoldings());
 
     IndividualResource steve = usersFixture.steve();

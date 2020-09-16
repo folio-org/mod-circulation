@@ -34,7 +34,7 @@ import api.support.APITests;
 import api.support.builders.Address;
 import api.support.builders.RequestBuilder;
 import api.support.fixtures.AddressExamples;
-import api.support.http.InventoryItemResource;
+import api.support.http.ItemResource;
 import api.support.http.ResourceClient;
 import api.support.matchers.UUIDMatcher;
 import io.vertx.core.json.JsonObject;
@@ -49,7 +49,7 @@ public class PickSlipsTests extends APITests {
   @Test
   public void responseContainsNoPickSlipsForNonExistentServicePointId() {
     UUID servicePointId = servicePointsFixture.cd1().getId();
-    InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+    ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
 
     requestsFixture.place(new RequestBuilder()
       .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
@@ -66,7 +66,7 @@ public class PickSlipsTests extends APITests {
   @Test
   public void responseContainsNoPickSlipsForWrongServicePointId() {
     UUID servicePointId = servicePointsFixture.cd1().getId();
-    InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+    ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
 
     requestsFixture.place(new RequestBuilder()
       .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
@@ -95,7 +95,7 @@ public class PickSlipsTests extends APITests {
   @Test
   public void responseContainsNoPickSlipsWhenItemHasOpenPageRequestWithWrongStatus() {
     UUID servicePointId = servicePointsFixture.cd1().getId();
-    InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+    ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
 
     requestsFixture.place(new RequestBuilder()
       .page()
@@ -125,7 +125,7 @@ public class PickSlipsTests extends APITests {
     IndividualResource materialTypeResource = materialTypesFixture.book();
     IndividualResource loanTypeResource = loanTypesFixture.canCirculate();
 
-    InventoryItemResource itemResource = itemsFixture.basedUponSmallAngryPlanet(
+    ItemResource itemResource = itemsFixture.basedUponSmallAngryPlanet(
       builder -> builder.withEnumeration("v.70:no.7-12")
         .withVolume("vol.1")
         .withChronology("1984:July-Dec.")
@@ -232,7 +232,7 @@ public class PickSlipsTests extends APITests {
   @Test
   public void responseContainsPickSlipsForRequestsOfTypePageOnly() {
     UUID servicePointId = servicePointsFixture.cd1().getId();
-    InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+    ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
 
     RequestBuilder firstRequestBuilder = new RequestBuilder()
@@ -265,7 +265,7 @@ public class PickSlipsTests extends APITests {
 
     // Circ desk 1: Second floor
     IndividualResource secondFloorCd1 = locationsFixture.secondFloorEconomics();
-    final InventoryItemResource temeraireSecondFloorCd1 = itemsFixture.basedUponTemeraire(
+    final ItemResource temeraireSecondFloorCd1 = itemsFixture.basedUponTemeraire(
       holdingBuilder -> holdingBuilder
         .withPermanentLocation(secondFloorCd1)
         .withNoTemporaryLocation(),
@@ -284,7 +284,7 @@ public class PickSlipsTests extends APITests {
 
     // Circ desk 1: Third floor
     IndividualResource thirdFloorCd1 = locationsFixture.thirdFloor();
-    final InventoryItemResource planetThirdFloorCd1 = itemsFixture.basedUponSmallAngryPlanet(
+    final ItemResource planetThirdFloorCd1 = itemsFixture.basedUponSmallAngryPlanet(
       holdingBuilder -> holdingBuilder
         .withPermanentLocation(thirdFloorCd1)
         .withNoTemporaryLocation(),
@@ -316,7 +316,7 @@ public class PickSlipsTests extends APITests {
 
     // Circ desk 1: Third floor
     IndividualResource thirdFloorCd1 = locationsFixture.thirdFloor();
-    final InventoryItemResource planetThirdFloorCd1 = itemsFixture.basedUponSmallAngryPlanet(
+    final ItemResource planetThirdFloorCd1 = itemsFixture.basedUponSmallAngryPlanet(
       holdingBuilder -> holdingBuilder
         .withPermanentLocation(thirdFloorCd1)
         .withNoTemporaryLocation(),
@@ -335,7 +335,7 @@ public class PickSlipsTests extends APITests {
 
     // Circ desk 4: Second floor
     IndividualResource secondFloorCd4 = locationsFixture.fourthServicePoint();
-    final InventoryItemResource planetSecondFloorCd4 = itemsFixture.basedUponSmallAngryPlanet(
+    final ItemResource planetSecondFloorCd4 = itemsFixture.basedUponSmallAngryPlanet(
       holdingBuilder -> holdingBuilder
         .withPermanentLocation(secondFloorCd4)
         .withNoTemporaryLocation(),
@@ -381,7 +381,7 @@ public class PickSlipsTests extends APITests {
     }
 
     final IndividualResource lastLocation = location;
-    InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet(builder -> builder
+    ItemResource item = itemsFixture.basedUponSmallAngryPlanet(builder -> builder
       .withPermanentLocation(lastLocation.getId())
       .withNoTemporaryLocation());
 
@@ -410,7 +410,7 @@ public class PickSlipsTests extends APITests {
     assertThat(responseJson.getInteger(TOTAL_RECORDS), is(itemsCount));
   }
 
-  private void assertResponseContains(Response response, InventoryItemResource item,
+  private void assertResponseContains(Response response, ItemResource item,
     IndividualResource request, IndividualResource requester) {
 
     long count = getPickSlipsStream(response)

@@ -5,25 +5,22 @@ import static api.support.matchers.UUIDMatcher.is;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-import java.net.MalformedURLException;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.junit.Test;
 
 import api.support.APITests;
-import api.support.http.InventoryItemResource;
+import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 
 public class LoanAPIRelatedRecordsTests extends APITests {
   @Test
   public void holdingIdAndInstanceIdIncludedWhenHoldingAndInstanceAreAvailable() {
 
-    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
     final IndividualResource checkOutResponse = loansFixture.createLoan(
       smallAngryPlanet, usersFixture.jessica());
@@ -69,8 +66,8 @@ public class LoanAPIRelatedRecordsTests extends APITests {
   @Test
   public void holdingAndInstanceIdComesFromMultipleRecordsForMultipleLoans() {
 
-    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
+    final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final ItemResource temeraire = itemsFixture.basedUponTemeraire();
 
     UUID firstLoanId = loansFixture.createLoan(smallAngryPlanet,
       usersFixture.jessica()).getId();

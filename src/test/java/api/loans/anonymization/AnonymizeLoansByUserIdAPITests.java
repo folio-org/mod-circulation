@@ -13,7 +13,7 @@ import org.joda.time.DateTime;
 import org.junit.Test;
 
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
-import api.support.http.InventoryItemResource;
+import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 
 public class AnonymizeLoansByUserIdAPITests extends LoanAnonymizationTests {
@@ -111,7 +111,7 @@ public class AnonymizeLoansByUserIdAPITests extends LoanAnonymizationTests {
       .to(user)
       .at(servicePoint.getId()));
 
-    InventoryItemResource item2 = itemsFixture.basedUponNod();
+    ItemResource item2 = itemsFixture.basedUponNod();
     IndividualResource loanResource2 = checkOutFixture.checkOutByBarcode(
         new CheckOutByBarcodeRequestBuilder().forItem(item2)
       .to(user)

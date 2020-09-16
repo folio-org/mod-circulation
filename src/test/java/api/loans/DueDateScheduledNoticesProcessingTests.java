@@ -40,7 +40,7 @@ import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.fixtures.ConfigurationExample;
 import api.support.fixtures.TemplateContextMatchers;
-import api.support.http.InventoryItemResource;
+import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 
 public class DueDateScheduledNoticesProcessingTests extends APITests {
@@ -64,7 +64,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
 
   private final DateTime loanDate = new DateTime(2018, 3, 18, 11, 43, 54, DateTimeZone.UTC);
 
-  private InventoryItemResource item;
+  private ItemResource item;
   private IndividualResource borrower;
   private IndividualResource loan;
   private DateTime dueDate;

@@ -8,14 +8,11 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-import java.net.MalformedURLException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 import org.awaitility.Awaitility;
@@ -35,13 +32,13 @@ import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.fixtures.ItemExamples;
-import api.support.http.InventoryItemResource;
+import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 
 public class RequestScheduledNoticesTests extends APITests {
 
   private UUID templateId = UUID.randomUUID();
-  private InventoryItemResource item;
+  private ItemResource item;
   private IndividualResource requester;
   private IndividualResource pickupServicePoint;
 

@@ -37,7 +37,7 @@ import api.support.MultipleJsonRecords;
 import api.support.builders.Address;
 import api.support.builders.ItemBuilder;
 import api.support.builders.RequestBuilder;
-import api.support.http.InventoryItemResource;
+import api.support.http.ItemResource;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -53,7 +53,7 @@ public class RequestsAPIRetrievalTests extends APITests {
     UUID isbnIdentifierId = identifierTypesFixture.isbn().getId();
     String isbnValue = "9780866989732";
 
-    final InventoryItemResource smallAngryPlanet = itemsFixture
+    final ItemResource smallAngryPlanet = itemsFixture
       .basedUponSmallAngryPlanet(
         identity(),
         instanceBuilder -> instanceBuilder.addIdentifier(isbnIdentifierId, isbnValue),
