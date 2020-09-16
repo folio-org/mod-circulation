@@ -1428,7 +1428,8 @@
         "overdue-fines-policies.collection.get",
         "lost-item-fees-policies.item.get",
         "lost-item-fees-policies.collection.get",
-        "pubsub.publish.post"
+        "pubsub.publish.post",
+        "audit-data.events.post"
       ],
       "visible": false
     },
@@ -1548,7 +1549,8 @@
         "feefineactions.item.post",
         "accounts.item.put",
         "pubsub.publish.post",
-        "scheduled-notice-storage.scheduled-notices.item.delete"
+        "scheduled-notice-storage.scheduled-notices.item.delete",
+        "audit-data.events.post"
       ],
       "visible": false
     },

@@ -32,6 +32,7 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <lombok.version>1.18.12</lombok.version>
     <spring.version>5.2.7.RELEASE</spring.version>
+    <mod-audit-client.version>0.0.5-SNAPSHOT</mod-audit-client.version>
   </properties>
 
   <dependencyManagement>
@@ -228,6 +229,11 @@
       <artifactId>spring-test</artifactId>
       <version>${spring.version}</version>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.folio</groupId>
+      <artifactId>mod-audit-client</artifactId>
+      <version>${mod-audit-client.version}</version>
     </dependency>
   </dependencies>
 

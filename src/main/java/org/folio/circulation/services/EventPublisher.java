@@ -8,6 +8,7 @@ import static org.folio.circulation.domain.EventType.ITEM_DECLARED_LOST;
 import static org.folio.circulation.domain.EventType.LOAN_DUE_DATE_CHANGED;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.folio.circulation.support.results.Result.succeeded;
+import static org.folio.util.PubSubLogPublisherUtil.sendLogRecordEvent;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -19,12 +20,14 @@ import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.RoutingContext;
+import org.folio.rest.util.OkapiConnectionParams;
 
 public class EventPublisher {
   private static final Logger logger = LoggerFactory.getLogger(EventPublisher.class);
@@ -36,11 +39,17 @@ public class EventPublisher {
   public static final String DUE_DATE_CHANGED_BY_RECALL_FIELD = "dueDateChangedByRecall";
   public static final String FAILED_TO_PUBLISH_LOG_TEMPLATE =
     "Failed to publish {} event: loan is null";
+  public static final String ITEM = "item";
+  public static final String LOAN = "loan";
+  public static final String UPDATED_REQUESTS = "updatedRequests";
 
   private final PubSubPublishingService pubSubPublishingService;
 
+  private final OkapiConnectionParams params;
+
   public EventPublisher(RoutingContext routingContext) {
     pubSubPublishingService = new PubSubPublishingService(routingContext);
+    params = buildOkapiConnectionParams(routingContext);
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> publishItemCheckedOutEvent(
@@ -56,6 +65,7 @@ public class EventPublisher {
 
       return pubSubPublishingService.publishEvent(
         ITEM_CHECKED_OUT.name(), payloadJsonObject.encode())
+        .thenApply(r -> sendLogRecordEvent(buildLogEventPayload(loanAndRelatedRecords).encode(), params))
         .thenApply(r -> succeeded(loanAndRelatedRecords));
     }
     else {
@@ -63,6 +73,13 @@ public class EventPublisher {
     }
 
     return completedFuture(succeeded(loanAndRelatedRecords));
+  }
+
+  private JsonObject buildLogEventPayload(LoanAndRelatedRecords loanAndRelatedRecords) {
+    JsonObject logPayloadJsonObject = new JsonObject();
+    write(logPayloadJsonObject, LOAN, loanAndRelatedRecords.getLoan().asJson());
+    write(logPayloadJsonObject, UPDATED_REQUESTS, JsonObject.mapFrom(loanAndRelatedRecords.getRequestQueue()));
+    return logPayloadJsonObject;
   }
 
   public CompletableFuture<Result<CheckInContext>> publishItemCheckedInEvent(
@@ -78,6 +95,7 @@ public class EventPublisher {
 
       return pubSubPublishingService.publishEvent(ITEM_CHECKED_IN.name(),
         payloadJsonObject.encode())
+        .thenApply(r -> sendLogRecordEvent(buildLogEventPayload(checkInContext).encode(), params))
         .thenApply(r -> succeeded(checkInContext));
     }
     else {
@@ -85,6 +103,14 @@ public class EventPublisher {
     }
 
     return completedFuture(succeeded(checkInContext));
+  }
+
+  private JsonObject buildLogEventPayload(CheckInContext checkInContext) {
+    JsonObject logPayloadJsonObject = new JsonObject();
+    write(logPayloadJsonObject, ITEM, JsonObject.mapFrom(checkInContext.getItem()));
+    write(logPayloadJsonObject, LOAN, checkInContext.getLoan().asJson());
+    write(logPayloadJsonObject, UPDATED_REQUESTS, JsonObject.mapFrom(checkInContext.getRequestQueue()));
+    return logPayloadJsonObject;
   }
 
   public CompletableFuture<Result<Loan>> publishDeclaredLostEvent(Loan loan) {
@@ -157,5 +183,9 @@ public class EventPublisher {
       .thenCompose(r -> r.after(this::publishDueDateChangedEvent));
 
     return completedFuture(succeeded(requestAndRelatedRecords));
+  }
+
+  public static OkapiConnectionParams buildOkapiConnectionParams(RoutingContext routingContext) {
+    return new OkapiConnectionParams(new WebContext(routingContext).getHeaders(), routingContext.vertx());
   }
 }
