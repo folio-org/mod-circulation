@@ -166,9 +166,7 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
     assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
   }
 
-  private void assertResponseContainsItemCantBeCheckedOutError(
-    UserResource user, Response response) {
-
+  private void assertResponseContainsItemCantBeCheckedOutError(UserResource user, Response response) {
     assertThat(response.getStatusCode(), equalTo(422));
     assertThat(response.getBody(), containsString("cannot be checked out to user"));
     assertThat(response.getBody(), containsString("because it has been requested by another patron"));
