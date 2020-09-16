@@ -31,10 +31,6 @@ public class UsersFixture {
     this.patronGroupsFixture = patronGroupsFixture;
   }
 
-  public void cleanUp() {
-    userRecordCreator.cleanUp();
-  }
-
   public IndividualResource jessica() {
     return userRecordCreator.createIfAbsent(basedUponJessicaPontefract()
         .inGroupFor(patronGroupsFixture.regular()));
