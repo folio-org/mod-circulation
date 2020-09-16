@@ -11,7 +11,6 @@ import static org.folio.circulation.support.results.Result.succeeded;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
@@ -146,7 +145,6 @@ public class LostItemFeeChargingService {
 
     return locationRepository.fetchLocationById(permanentLocationId)
       .thenApply(r -> r.map(Location::getPrimaryServicePointId))
-      .thenApply(r -> r.map(UUID::toString))
       .thenCompose(r -> r.after(feeFineOwnerRepository::findOwnerForServicePoint))
       .thenApply(ownerResult -> ownerResult.map(referenceData::withFeeFineOwner));
   }
