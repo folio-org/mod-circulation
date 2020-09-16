@@ -12,30 +12,30 @@ import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.Matchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 
-import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
 
 import api.support.APITests;
+import api.support.http.IndividualResource;
+import api.support.http.UserResource;
+import lombok.val;
 
 public class MultipleMixedFulfilmentRequestsTests extends APITests {
-
   private static final DateTime DATE_TIME_2017 = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
   private static final DateTime DATE_TIME_2018 = new DateTime(2018, 1, 10, 15, 34, 21, DateTimeZone.UTC);
 
   @Test
   public void itemCantBeCheckedOutToAnotherRequesterWhenStatusIsAwaitingDelivery() {
-
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    IndividualResource james = usersFixture.james();
-    IndividualResource jessica = usersFixture.jessica();
-    IndividualResource steve = usersFixture.steve();
-    IndividualResource rebecca = usersFixture.rebecca();
+    val james = usersFixture.james();
+    val jessica = usersFixture.jessica();
+    val steve = usersFixture.steve();
+    val rebecca = usersFixture.rebecca();
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
@@ -66,12 +66,11 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
 
   @Test
   public void deliveryRequestIsProcessedWhenItIsNextInQueueAndItemCheckedIn() {
-
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    IndividualResource james = usersFixture.james();
-    IndividualResource jessica = usersFixture.jessica();
-    IndividualResource steve = usersFixture.steve();
-    IndividualResource rebecca = usersFixture.rebecca();
+    val james = usersFixture.james();
+    val jessica = usersFixture.jessica();
+    val steve = usersFixture.steve();
+    val rebecca = usersFixture.rebecca();
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
@@ -103,12 +102,11 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
 
   @Test
   public void holdShelfRequestIsProcessedWhenItIsNextInQueueAndItemCheckedIn() {
-
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    IndividualResource james = usersFixture.james();
-    IndividualResource jessica = usersFixture.jessica();
-    IndividualResource steve = usersFixture.steve();
-    IndividualResource rebecca = usersFixture.rebecca();
+    val james = usersFixture.james();
+    val jessica = usersFixture.jessica();
+    val steve = usersFixture.steve();
+    val rebecca = usersFixture.rebecca();
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
@@ -136,12 +134,11 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
 
   @Test
   public void itemCanBeCheckedOutToDeliveryRequestRequester() {
-
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    IndividualResource james = usersFixture.james();
-    IndividualResource jessica = usersFixture.jessica();
-    IndividualResource steve = usersFixture.steve();
-    IndividualResource rebecca = usersFixture.rebecca();
+    val james = usersFixture.james();
+    val jessica = usersFixture.jessica();
+    val steve = usersFixture.steve();
+    val rebecca = usersFixture.rebecca();
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
@@ -169,7 +166,9 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
     assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
   }
 
-  private void assertResponseContainsItemCantBeCheckedOutError(IndividualResource user, Response response) {
+  private void assertResponseContainsItemCantBeCheckedOutError(
+    UserResource user, Response response) {
+
     assertThat(response.getStatusCode(), equalTo(422));
     assertThat(response.getBody(), containsString("cannot be checked out to user"));
     assertThat(response.getBody(), containsString("because it has been requested by another patron"));

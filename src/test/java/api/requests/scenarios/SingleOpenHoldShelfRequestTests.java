@@ -18,7 +18,6 @@ import static org.hamcrest.Matchers.is;
 
 import java.util.UUID;
 
-import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -27,16 +26,17 @@ import org.junit.Test;
 import api.support.APITests;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.RequestBuilder;
+import api.support.http.IndividualResource;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
+import lombok.val;
 
 public class SingleOpenHoldShelfRequestTests extends APITests {
   @Test
   public void statusChangesToAwaitingPickupWhenItemCheckedIn() {
-
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    IndividualResource james = usersFixture.james();
-    IndividualResource jessica = usersFixture.jessica();
+    val james = usersFixture.james();
+    val jessica = usersFixture.jessica();
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
@@ -59,10 +59,9 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
 
   @Test
   public void statusChangesToFulfilledWhenItemCheckedOutToRequester() {
-
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    IndividualResource james = usersFixture.james();
-    IndividualResource jessica = usersFixture.jessica();
+    val james = usersFixture.james();
+    val jessica = usersFixture.jessica();
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
@@ -81,16 +80,15 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
 
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
-      assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
+    assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
   }
 
   @Test
   public void itemCannotBeCheckedOutToOtherPatronWhenRequestIsAwaitingPickup() {
-
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    IndividualResource james = usersFixture.james();
-    IndividualResource jessica = usersFixture.jessica();
-    IndividualResource rebecca = usersFixture.rebecca();
+    val james = usersFixture.james();
+    val jessica = usersFixture.jessica();
+    val rebecca = usersFixture.rebecca();
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
@@ -120,10 +118,9 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
 
   @Test
   public void checkingInLoanThatFulfilsRequestShouldMakeItemAvailable() {
-
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    IndividualResource james = usersFixture.james();
-    IndividualResource jessica = usersFixture.jessica();
+    val james = usersFixture.james();
+    val jessica = usersFixture.jessica();
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
@@ -143,11 +140,10 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
 
   @Test
   public void closedRequestShouldNotAffectFurtherLoans() {
-
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    IndividualResource james = usersFixture.james();
-    IndividualResource jessica = usersFixture.jessica();
-    IndividualResource steve = usersFixture.steve();
+    val james = usersFixture.james();
+    val jessica = usersFixture.jessica();
+    val steve = usersFixture.steve();
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
@@ -175,11 +171,10 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
 
   @Test
   public void itemCannotBeCheckedInWhenRequestIsMissingPickupServicePoint() {
-
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    IndividualResource james = usersFixture.james();
-    IndividualResource jessica = usersFixture.jessica();
-    IndividualResource checkInServicePoint = servicePointsFixture.cd1();
+    val james = usersFixture.james();
+    val jessica = usersFixture.jessica();
+    val checkInServicePoint = servicePointsFixture.cd1();
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
@@ -201,7 +196,6 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
   }
 
   private void removeServicePoint(UUID requestId) {
-
     final ResourceClient requestsStorage = forRequestsStorage();
 
     final Response fetchedRequest = requestsStorage.getById(requestId);
