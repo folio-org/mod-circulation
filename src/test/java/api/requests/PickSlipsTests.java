@@ -16,6 +16,20 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.folio.circulation.domain.CallNumberComponents;
+import org.folio.circulation.domain.Item;
+import org.folio.circulation.domain.ItemStatus;
+import org.folio.circulation.domain.Location;
+import org.folio.circulation.domain.RequestStatus;
+import org.folio.circulation.domain.User;
+import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.LocalDate;
+import org.junit.Test;
+
 import api.support.APITests;
 import api.support.builders.Address;
 import api.support.builders.RequestBuilder;
@@ -24,20 +38,6 @@ import api.support.http.InventoryItemResource;
 import api.support.http.ResourceClient;
 import api.support.matchers.UUIDMatcher;
 import io.vertx.core.json.JsonObject;
-import org.folio.circulation.domain.CallNumberComponents;
-import org.folio.circulation.domain.Item;
-import org.folio.circulation.domain.ItemStatus;
-import org.folio.circulation.domain.Location;
-import org.folio.circulation.domain.User;
-import org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher;
-import org.folio.circulation.support.http.client.IndividualResource;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.LocalDate;
-import org.junit.Test;
-
-import org.folio.circulation.domain.RequestStatus;
-import org.folio.circulation.support.http.client.Response;
 
 public class PickSlipsTests extends APITests {
   private static final String TOTAL_RECORDS = "totalRecords";
@@ -168,7 +168,7 @@ public class PickSlipsTests extends APITests {
       .withHoldingsRecord(itemResource.getHoldingsRecord().getJson())
       .withInstance(itemResource.getInstance().getJson());
 
-    String contributorNames = JsonObjectArrayPropertyFetcher.toStream(item.getContributorNames())
+    String contributorNames = item.getContributors()
       .map(this::getName)
       .collect(joining("; "));
 

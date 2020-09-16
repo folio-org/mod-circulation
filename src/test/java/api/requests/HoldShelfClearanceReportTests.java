@@ -1,7 +1,8 @@
 package api.requests;
 
 import static java.net.HttpURLConnection.HTTP_OK;
-import static org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher.toList;
+import static org.folio.circulation.support.StreamToListMapper.toList;
+import static org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher.toStream;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
@@ -21,6 +22,7 @@ import api.support.builders.RequestBuilder;
 import api.support.http.InventoryItemResource;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
+import lombok.val;
 
 public class HoldShelfClearanceReportTests extends APITests {
 
@@ -145,7 +147,7 @@ public class HoldShelfClearanceReportTests extends APITests {
     assertThat(response.getStatusCode(), is(HTTP_OK));
 
     JsonObject responseJson = response.getJson();
-    List<JsonObject> requests = toList(response.getJson().getJsonArray("requests"));
+    val requests = toList(toStream(response.getJson(),"requests"));
 
     assertThat(responseJson.getInteger(TOTAL_RECORDS), is(2));
     assertThat(requests.size(), is(2));
