@@ -12,10 +12,10 @@ import api.support.builders.HoldingBuilder;
 import api.support.builders.ItemBuilder;
 import lombok.val;
 
-public class ItemTest {
+public class ItemPermanentLocationTest {
 
   @Test
-  public void itemPermanentLocationTakesPriorityOverHoldings() {
+  public void itemLocationTakesPriorityOverHoldings() {
     val itemLocation = UUID.randomUUID();
     val holdingsLocation = UUID.randomUUID();
 
@@ -28,7 +28,7 @@ public class ItemTest {
   }
 
   @Test
-  public void holdingsPermanentLocationIsReturnedByDefault() {
+  public void holdingsLocationIsReturnedByDefault() {
     val holdingsLocation = UUID.randomUUID();
 
     val itemJson = new ItemBuilder().withPermanentLocation((UUID) null).create();
