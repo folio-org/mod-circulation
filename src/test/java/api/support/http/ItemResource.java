@@ -29,4 +29,8 @@ public class ItemResource extends IndividualResource {
   public IndividualResource getHoldingsRecord() {
     return holdingsRecord;
   }
+
+  public String getBarcode() {
+    return response.getJson().getString("barcode");
+  }
 }
