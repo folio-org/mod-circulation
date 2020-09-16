@@ -1,4 +1,4 @@
-package org.folio.circulation.support;
+package org.folio.circulation.support.json;
 
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimePropertyByPath;
 import static org.folio.circulation.support.JsonPropertyWriter.writeByPath;
@@ -11,7 +11,7 @@ import org.junit.Test;
 
 import io.vertx.core.json.JsonObject;
 
-public class JsonPropertyFetcherTest {
+public class JsonPropertyFetcherTests {
   @Test
   public void shouldReturnDateTimePropertyByPath() {
     final String[] paths = {"1", "2", "3", "4", "5"};

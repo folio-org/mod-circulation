@@ -16,18 +16,18 @@ import static org.folio.circulation.domain.representations.ItemProperties.IN_TRA
 import static org.folio.circulation.domain.representations.ItemProperties.ITEM_COPY_NUMBER_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.STATUS_PROPERTY;
 import static org.folio.circulation.domain.representations.ItemProperties.TITLE;
-import static org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher.mapToList;
+import static org.folio.circulation.support.JsonPropertyWriter.remove;
+import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getArrayProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
-import static org.folio.circulation.support.JsonPropertyWriter.remove;
-import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.folio.circulation.support.json.JsonStringArrayPropertyFetcher.toStream;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.representations.ItemProperties;
@@ -127,21 +127,16 @@ public class Item {
     return getArrayProperty(instanceRepresentation, IDENTIFIERS);
   }
 
-  public JsonArray getContributorNames() {
-    if(instanceRepresentation == null) {
-      return new JsonArray();
-    }
-
-    return new JsonArray(mapToList(instanceRepresentation, CONTRIBUTORS,
-      contributor -> new JsonObject().put("name", contributor.getString("name"))));
-  }
-
   public String getPrimaryContributorName() {
-    return JsonObjectArrayPropertyFetcher.toStream(instanceRepresentation, CONTRIBUTORS)
+    return getContributors()
       .filter(c -> c.getBoolean("primary", false))
       .findFirst()
       .map(c -> c.getString("name"))
       .orElse(null);
+  }
+
+  public Stream<JsonObject> getContributors() {
+    return JsonObjectArrayPropertyFetcher.toStream(instanceRepresentation, CONTRIBUTORS);
   }
 
   public String getBarcode() {
