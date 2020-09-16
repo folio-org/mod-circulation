@@ -155,7 +155,7 @@ public class DeclareLostAPITests extends APITests {
   public void shouldChargeProcessingAndItemFeesWhenBothDefined() {
     final double expectedProcessingFee = 10.0;
     final double expectedItemFee = 20.0;
-    // permanent location SP
+    // permanent location SP is used, not effective location
     final String expectedOwnerId = feeFineOwnerFixture.ownerForServicePoint(
       servicePointsFixture.cd6().getId()).getId().toString();
 
@@ -167,8 +167,9 @@ public class DeclareLostAPITests extends APITests {
 
     useLostItemPolicy(lostItemFeePoliciesFixture.create(lostItemPolicy).getId());
 
-    final IndividualResource loan = declareItemLost(
-      itemBuilder -> itemBuilder.withPermanentLocation(locationsFixture.fourthFloor()));
+    final IndividualResource loan = declareItemLost(itemBuilder -> itemBuilder
+      .withPermanentLocation(locationsFixture.fourthFloor())
+      .withTemporaryLocation(locationsFixture.thirdFloor()));
 
     assertThat(loan.getJson(), isOpen());
 
