@@ -39,7 +39,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.awaitility.Awaitility;
-import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher;
 import org.joda.time.DateTime;
@@ -54,7 +53,9 @@ import api.support.builders.ItemBuilder;
 import api.support.builders.LoanBuilder;
 import api.support.fakes.FakePubSub;
 import api.support.fixtures.ConfigurationExample;
+import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
+import api.support.http.UserResource;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
@@ -72,7 +73,7 @@ public class LoanAPITests extends APITests {
 
     UUID itemId = smallAngryPlanet.getId();
 
-    IndividualResource user = usersFixture.charlotte();
+    val user = usersFixture.charlotte();
     UUID userId = user.getId();
 
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, UTC);
@@ -870,7 +871,7 @@ public class LoanAPITests extends APITests {
         .withCopyNumber("cp.1"))
       .getId();
 
-    IndividualResource user = usersFixture.charlotte();
+    val user = usersFixture.charlotte();
     UUID userId = user.getId();
 
     DateTime dueDate = new DateTime(2016, 11, 15, 8, 26, 53, UTC);
@@ -1257,7 +1258,7 @@ public class LoanAPITests extends APITests {
 
   @Test
   public void canPageLoans() {
-    IndividualResource user = usersFixture.steve();
+    val user = usersFixture.steve();
 
     checkOutFixture.checkOutByBarcode(itemsFixture.basedUponSmallAngryPlanet(), user);
     checkOutFixture.checkOutByBarcode(itemsFixture.basedUponNod(), user);
@@ -1284,9 +1285,9 @@ public class LoanAPITests extends APITests {
 
   @Test
   public void canSearchByUserId() {
-    IndividualResource firstUser = usersFixture.steve();
+    val firstUser = usersFixture.steve();
     UUID firstUserId = firstUser.getId();
-    IndividualResource secondUser = usersFixture.jessica();
+    val  secondUser = usersFixture.jessica();
     UUID secondUserId = secondUser.getId();
 
     loansFixture.createLoan(new LoanBuilder()
@@ -1349,7 +1350,7 @@ public class LoanAPITests extends APITests {
 
   @Test
   public void canFilterByLoanStatus() {
-    IndividualResource user = usersFixture.charlotte();
+    val user = usersFixture.charlotte();
     UUID userId = user.getId();
 
     loansFixture.createLoan(new LoanBuilder()
@@ -1450,7 +1451,7 @@ public class LoanAPITests extends APITests {
     UUID checkinServicePointId = servicePointsFixture.cd1().getId();
     UUID checkinServicePointId2 = servicePointsFixture.cd2().getId();
 
-    final IndividualResource steveUser = usersFixture.steve();
+    val steveUser = usersFixture.steve();
     final IndividualResource firstLoan = loansClient.createAtSpecificLocation(
       new LoanBuilder()
         .withItemId(smallAngryPlanetId)
@@ -1458,7 +1459,7 @@ public class LoanAPITests extends APITests {
         .closed()
         .withUserId(usersFixture.steve().getId()));
 
-    final IndividualResource jessicaUser = usersFixture.jessica();
+    val jessicaUser = usersFixture.jessica();
     final IndividualResource secondLoan = loansClient.createAtSpecificLocation(
       new LoanBuilder()
         .withItemId(nodId)
@@ -1777,9 +1778,7 @@ public class LoanAPITests extends APITests {
     assertThat(event, isValidLoanDueDateChangedEvent(loanFromStorage.getJson()));
   }
 
-  private void loanHasExpectedProperties(JsonObject loan,
-    IndividualResource user) {
-
+  private void loanHasExpectedProperties(JsonObject loan, UserResource user) {
     loanHasExpectedProperties(loan);
 
     if (user == null) {
