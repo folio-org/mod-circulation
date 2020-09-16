@@ -36,8 +36,10 @@ import api.support.fixtures.AddressExamples;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import api.support.http.ResourceClient;
+import api.support.http.UserResource;
 import api.support.matchers.UUIDMatcher;
 import io.vertx.core.json.JsonObject;
+import lombok.val;
 
 public class PickSlipsTests extends APITests {
   private static final String TOTAL_RECORDS = "totalRecords";
@@ -232,8 +234,8 @@ public class PickSlipsTests extends APITests {
   @Test
   public void responseContainsPickSlipsForRequestsOfTypePageOnly() {
     UUID servicePointId = servicePointsFixture.cd1().getId();
-    ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
-    IndividualResource james = usersFixture.james();
+    val item = itemsFixture.basedUponSmallAngryPlanet();
+    val james = usersFixture.james();
 
     RequestBuilder firstRequestBuilder = new RequestBuilder()
       .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
@@ -264,8 +266,8 @@ public class PickSlipsTests extends APITests {
     UUID circDesk1 = servicePointsFixture.cd1().getId();
 
     // Circ desk 1: Second floor
-    IndividualResource secondFloorCd1 = locationsFixture.secondFloorEconomics();
-    final ItemResource temeraireSecondFloorCd1 = itemsFixture.basedUponTemeraire(
+    val secondFloorCd1 = locationsFixture.secondFloorEconomics();
+    val temeraireSecondFloorCd1 = itemsFixture.basedUponTemeraire(
       holdingBuilder -> holdingBuilder
         .withPermanentLocation(secondFloorCd1)
         .withNoTemporaryLocation(),
@@ -273,9 +275,9 @@ public class PickSlipsTests extends APITests {
         .withNoPermanentLocation()
         .withNoTemporaryLocation());
 
-    IndividualResource james = usersFixture.james();
+    val james = usersFixture.james();
 
-    IndividualResource temeraireRequest = requestsFixture.place(new RequestBuilder()
+    val temeraireRequest = requestsFixture.place(new RequestBuilder()
       .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
       .page()
       .withPickupServicePointId(circDesk1)
@@ -283,8 +285,8 @@ public class PickSlipsTests extends APITests {
       .by(james));
 
     // Circ desk 1: Third floor
-    IndividualResource thirdFloorCd1 = locationsFixture.thirdFloor();
-    final ItemResource planetThirdFloorCd1 = itemsFixture.basedUponSmallAngryPlanet(
+    val thirdFloorCd1 = locationsFixture.thirdFloor();
+    val planetThirdFloorCd1 = itemsFixture.basedUponSmallAngryPlanet(
       holdingBuilder -> holdingBuilder
         .withPermanentLocation(thirdFloorCd1)
         .withNoTemporaryLocation(),
@@ -292,16 +294,16 @@ public class PickSlipsTests extends APITests {
         .withNoPermanentLocation()
         .withNoTemporaryLocation());
 
-    IndividualResource charlotte = usersFixture.charlotte();
+    val charlotte = usersFixture.charlotte();
 
-    IndividualResource planetRequest = requestsFixture.place(new RequestBuilder()
+    val planetRequest = requestsFixture.place(new RequestBuilder()
       .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
       .page()
       .withPickupServicePointId(circDesk1)
       .forItem(planetThirdFloorCd1)
       .by(charlotte));
 
-    Response response = ResourceClient.forPickSlips().getById(circDesk1);
+    val response = ResourceClient.forPickSlips().getById(circDesk1);
 
     assertThat(response.getStatusCode(), is(HTTP_OK));
     assertResponseHasItems(response, 2);
@@ -315,8 +317,8 @@ public class PickSlipsTests extends APITests {
     UUID circDesk4 = servicePointsFixture.cd4().getId();
 
     // Circ desk 1: Third floor
-    IndividualResource thirdFloorCd1 = locationsFixture.thirdFloor();
-    final ItemResource planetThirdFloorCd1 = itemsFixture.basedUponSmallAngryPlanet(
+    val thirdFloorCd1 = locationsFixture.thirdFloor();
+    val planetThirdFloorCd1 = itemsFixture.basedUponSmallAngryPlanet(
       holdingBuilder -> holdingBuilder
         .withPermanentLocation(thirdFloorCd1)
         .withNoTemporaryLocation(),
@@ -324,9 +326,9 @@ public class PickSlipsTests extends APITests {
         .withNoPermanentLocation()
         .withNoTemporaryLocation());
 
-    IndividualResource charlotte = usersFixture.charlotte();
+    val charlotte = usersFixture.charlotte();
 
-    IndividualResource requestForThirdFloorCd1 = requestsFixture.place(new RequestBuilder()
+    val requestForThirdFloorCd1 = requestsFixture.place(new RequestBuilder()
       .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
       .page()
       .withPickupServicePointId(circDesk1)
@@ -334,8 +336,8 @@ public class PickSlipsTests extends APITests {
       .by(charlotte));
 
     // Circ desk 4: Second floor
-    IndividualResource secondFloorCd4 = locationsFixture.fourthServicePoint();
-    final ItemResource planetSecondFloorCd4 = itemsFixture.basedUponSmallAngryPlanet(
+    val secondFloorCd4 = locationsFixture.fourthServicePoint();
+    val planetSecondFloorCd4 = itemsFixture.basedUponSmallAngryPlanet(
       holdingBuilder -> holdingBuilder
         .withPermanentLocation(secondFloorCd4)
         .withNoTemporaryLocation(),
@@ -343,9 +345,9 @@ public class PickSlipsTests extends APITests {
         .withNoPermanentLocation()
         .withNoTemporaryLocation());
 
-    IndividualResource jessica = usersFixture.jessica();
+    val jessica = usersFixture.jessica();
 
-    IndividualResource requestForSecondFloorCd4 = requestsFixture.place(new RequestBuilder()
+    val requestForSecondFloorCd4 = requestsFixture.place(new RequestBuilder()
       .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
       .page()
       .withPickupServicePointId(circDesk1)
@@ -353,13 +355,15 @@ public class PickSlipsTests extends APITests {
       .by(jessica));
 
     // response for Circ Desk 1
-    Response responseForCd1 = ResourceClient.forPickSlips().getById(circDesk1);
+    val responseForCd1 = ResourceClient.forPickSlips().getById(circDesk1);
+
     assertThat(responseForCd1.getStatusCode(), is(HTTP_OK));
     assertResponseHasItems(responseForCd1, 1);
     assertResponseContains(responseForCd1, planetThirdFloorCd1, requestForThirdFloorCd1, charlotte);
 
     // response for Circ Desk 4
-    Response responseForCd4 = ResourceClient.forPickSlips().getById(circDesk4);
+    val responseForCd4 = ResourceClient.forPickSlips().getById(circDesk4);
+
     assertThat(responseForCd4.getStatusCode(), is(HTTP_OK));
     assertResponseHasItems(responseForCd4, 1);
     assertResponseContains(responseForCd4, planetSecondFloorCd4, requestForSecondFloorCd4, jessica);
@@ -380,12 +384,13 @@ public class PickSlipsTests extends APITests {
           .withPrimaryServicePoint(servicePointId));
     }
 
-    final IndividualResource lastLocation = location;
-    ItemResource item = itemsFixture.basedUponSmallAngryPlanet(builder -> builder
+    val lastLocation = location;
+
+    val item = itemsFixture.basedUponSmallAngryPlanet(builder -> builder
       .withPermanentLocation(lastLocation.getId())
       .withNoTemporaryLocation());
 
-    IndividualResource james = usersFixture.james();
+    val james = usersFixture.james();
 
     RequestBuilder pageRequestBuilder = new RequestBuilder()
       .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
@@ -394,9 +399,9 @@ public class PickSlipsTests extends APITests {
       .forItem(item)
       .by(james);
 
-    IndividualResource pageRequest = requestsClient.create(pageRequestBuilder);
+    val pageRequest = requestsClient.create(pageRequestBuilder);
 
-    Response response = ResourceClient.forPickSlips().getById(servicePointId);
+    val response = ResourceClient.forPickSlips().getById(servicePointId);
 
     assertThat(response.getStatusCode(), is(HTTP_OK));
     assertResponseHasItems(response, 1);
@@ -411,7 +416,7 @@ public class PickSlipsTests extends APITests {
   }
 
   private void assertResponseContains(Response response, ItemResource item,
-    IndividualResource request, IndividualResource requester) {
+    IndividualResource request, UserResource requester) {
 
     long count = getPickSlipsStream(response)
       .filter(ps ->
