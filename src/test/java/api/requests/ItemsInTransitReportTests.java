@@ -2,7 +2,8 @@ package api.requests;
 
 import static api.support.JsonCollectionAssistant.getRecordById;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
-import static org.folio.circulation.support.json.JsonStringArrayPropertyFetcher.toList;
+import static org.folio.circulation.support.StreamToListMapper.toList;
+import static org.folio.circulation.support.json.JsonStringArrayPropertyFetcher.toStream;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -16,11 +17,10 @@ import java.util.List;
 import java.util.UUID;
 
 import org.folio.circulation.domain.ItemStatus;
-import org.folio.circulation.support.json.JsonPropertyFetcher;
 import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.json.JsonPropertyFetcher;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
-import org.junit.Assert;
 import org.junit.Test;
 
 import api.support.APITests;
@@ -34,7 +34,6 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class ItemsInTransitReportTests extends APITests {
-
   private static final String NAME = "name";
   private static final String CODE = "code";
   private static final String LIBRARY = "libraryName";
@@ -75,7 +74,6 @@ public class ItemsInTransitReportTests extends APITests {
 
   @Test
   public void reportIsEmptyWhenThereAreNoItemsInTransit() {
-
     List<JsonObject> items = ResourceClient.forItemsInTransitReport().getAll();
 
     assertTrue(items.isEmpty());
@@ -83,7 +81,6 @@ public class ItemsInTransitReportTests extends APITests {
 
   @Test
   public void reportIncludesItemInTransit() {
-
     final InventoryItemResource smallAngryPlanet = createSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
     final UUID firstServicePointId = servicePointsFixture.cd1().getId();
@@ -114,7 +111,6 @@ public class ItemsInTransitReportTests extends APITests {
 
   @Test
   public void reportIncludesMultipleDifferentItemsInTransit() {
-
     final InventoryItemResource smallAngryPlanet = createSmallAngryPlanet();
     final InventoryItemResource nod = createNod();
 
@@ -163,14 +159,14 @@ public class ItemsInTransitReportTests extends APITests {
     JsonObject secondItemJson = getRecordById(items, nod.getId()).get();
     verifyItem(secondItemJson, nod, secondServicePointId);
     verifyLocation(secondItemJson);
-    verifyRequest(secondItemJson, requestDate2, requestExpirationDate2, REQUEST_PATRON_GROUP_DESCRIPTION, SERVICE_POINT_NAME_2);
+    verifyRequest(secondItemJson, requestDate2, requestExpirationDate2,
+      SERVICE_POINT_NAME_2);
     verifyLoanInFirstServicePoint(secondItemJson, checkInDate2);
     verifyLastCheckIn(secondItemJson, checkInDate2, SERVICE_POINT_NAME_1);
   }
 
   @Test
   public void reportExcludesItemsThatAreNotInTransit() {
-
     final InventoryItemResource smallAngryPlanet = createSmallAngryPlanet();
     final InventoryItemResource nod = createNod();
     final DateTime checkInDate = new DateTime(2019, 8, 13, 5, 0, UTC);
@@ -205,7 +201,6 @@ public class ItemsInTransitReportTests extends APITests {
 
   @Test
   public void reportIncludesItemsInTransitToDifferentServicePoints() {
-
     final InventoryItemResource smallAngryPlanet = createSmallAngryPlanet();
     final InventoryItemResource nod = createNod();
 
@@ -246,7 +241,8 @@ public class ItemsInTransitReportTests extends APITests {
     JsonObject firstItemJson = getRecordById(items, smallAngryPlanet.getId()).get();
     verifyItem(firstItemJson, smallAngryPlanet, firstServicePointId);
     verifyLocation(firstItemJson);
-    verifyRequest(firstItemJson, requestDate1, requestExpirationDate1, REQUEST_PATRON_GROUP_DESCRIPTION, SERVICE_POINT_NAME_1);
+    verifyRequest(firstItemJson, requestDate1, requestExpirationDate1,
+      SERVICE_POINT_NAME_1);
     verifyLoan(firstItemJson, checkInDate1, SERVICE_POINT_NAME_2,
       SERVICE_POINT_CODE_2, "Circulation Desk -- Back Entrance");
     verifyLastCheckIn(firstItemJson, checkInDate1, SERVICE_POINT_NAME_2);
@@ -254,14 +250,14 @@ public class ItemsInTransitReportTests extends APITests {
     JsonObject secondItemJson = getRecordById(items, nod.getId()).get();
     verifyItem(secondItemJson, nod, secondServicePointId);
     verifyLocation(secondItemJson);
-    verifyRequest(secondItemJson, requestDate2, requestExpirationDate2, REQUEST_PATRON_GROUP_DESCRIPTION, SERVICE_POINT_NAME_2);
+    verifyRequest(secondItemJson, requestDate2, requestExpirationDate2,
+      SERVICE_POINT_NAME_2);
     verifyLoanInFirstServicePoint(secondItemJson, checkInDate2);
     verifyLastCheckIn(secondItemJson, checkInDate2, SERVICE_POINT_NAME_1);
   }
 
   @Test
   public void reportIncludesItemsInTransitWithMoreThanOneOpenRequestInQueue() {
-
     final InventoryItemResource smallAngryPlanet = createSmallAngryPlanet();
     final InventoryItemResource nod = createNod();
 
@@ -311,7 +307,8 @@ public class ItemsInTransitReportTests extends APITests {
     JsonObject firstItemJson = getRecordById(items, smallAngryPlanet.getId()).get();
     verifyItem(firstItemJson, smallAngryPlanet, firstServicePointId);
     verifyLocation(firstItemJson);
-    verifyRequest(firstItemJson, requestSmallAngryPlanetDate1, requestSmallAngryPlanetExpirationDate1, REQUEST_PATRON_GROUP_DESCRIPTION, SERVICE_POINT_NAME_1);
+    verifyRequest(firstItemJson, requestSmallAngryPlanetDate1, requestSmallAngryPlanetExpirationDate1,
+      SERVICE_POINT_NAME_1);
     verifyLoan(firstItemJson, checkInDate1, SERVICE_POINT_NAME_2,
       SERVICE_POINT_CODE_2, "Circulation Desk -- Back Entrance");
     verifyLastCheckIn(firstItemJson, checkInDate1, SERVICE_POINT_NAME_2);
@@ -319,14 +316,14 @@ public class ItemsInTransitReportTests extends APITests {
     JsonObject secondItemJson = getRecordById(items, nod.getId()).get();
     verifyItem(secondItemJson, nod, secondServicePointId);
     verifyLocation(secondItemJson);
-    verifyRequest(secondItemJson, requestNodeDate1, requestNodeExpirationDate1, REQUEST_PATRON_GROUP_DESCRIPTION, SERVICE_POINT_NAME_2);
+    verifyRequest(secondItemJson, requestNodeDate1, requestNodeExpirationDate1,
+      SERVICE_POINT_NAME_2);
     verifyLoanInFirstServicePoint(secondItemJson, checkInDate2);
     verifyLastCheckIn(secondItemJson, checkInDate2, SERVICE_POINT_NAME_1);
   }
 
   @Test
   public void reportIncludesItemsInTransitWithEmptyRequestQueue() {
-
     final InventoryItemResource smallAngryPlanet = createSmallAngryPlanet();
     final InventoryItemResource nod = createNod();
     final UUID firsServicePointId = servicePointsFixture.cd1().getId();
@@ -372,7 +369,6 @@ public class ItemsInTransitReportTests extends APITests {
 
   @Test
   public void reportItemsInTransitSortedByCheckInServicePoint() {
-
     final InventoryItemResource smallAngryPlanet = createSmallAngryPlanet();
     final InventoryItemResource nod = createNod();
     final InventoryItemResource smallAngryPlanetWithFourthCheckInServicePoint = itemsFixture
@@ -423,14 +419,16 @@ public class ItemsInTransitReportTests extends APITests {
     JsonObject firstItemJson = items.get(0);
     verifyItem(firstItemJson, nod, secondServicePointId);
     verifyLocation(firstItemJson);
-    verifyRequest(firstItemJson, requestDate2, requestExpirationDate2, REQUEST_PATRON_GROUP_DESCRIPTION, SERVICE_POINT_NAME_2);
+    verifyRequest(firstItemJson, requestDate2, requestExpirationDate2,
+      SERVICE_POINT_NAME_2);
     verifyLoanInFirstServicePoint(firstItemJson, checkInDate2);
     verifyLastCheckIn(firstItemJson, checkInDate2, SERVICE_POINT_NAME_1);
 
     JsonObject secondItemJson = items.get(1);
     verifyItem(secondItemJson, smallAngryPlanet, firstServicePointId);
     verifyLocation(secondItemJson);
-    verifyRequest(secondItemJson, requestDate1, requestExpirationDate1, REQUEST_PATRON_GROUP_DESCRIPTION, SERVICE_POINT_NAME_1);
+    verifyRequest(secondItemJson, requestDate1, requestExpirationDate1,
+      SERVICE_POINT_NAME_1);
     verifyLoan(secondItemJson, checkInDate1, SERVICE_POINT_NAME_2,
       SERVICE_POINT_CODE_2, "Circulation Desk -- Back Entrance");
     verifyLastCheckIn(secondItemJson, checkInDate1, SERVICE_POINT_NAME_2);
@@ -445,7 +443,6 @@ public class ItemsInTransitReportTests extends APITests {
 
   @Test
   public void reportWillNotFailWithUriTooLargeError() {
-
     final UUID firstServicePointId = servicePointsFixture.cd1().getId();
     final UUID forthServicePointLocationId = locationsFixture.fourthServicePoint().getId();
 
@@ -467,8 +464,9 @@ public class ItemsInTransitReportTests extends APITests {
   }
 
   private void createRequest(InventoryItemResource smallAngryPlanet,
-                             IndividualResource steve, UUID secondServicePointId,
-                             DateTime requestDate, LocalDate requestExpirationDate) {
+    IndividualResource steve, UUID secondServicePointId,
+    DateTime requestDate, LocalDate requestExpirationDate) {
+
     RequestBuilder.Tags tags = new RequestBuilder.Tags(Arrays.asList("tag1", "tag2"));
     RequestBuilder secondRequestBuilderOnItem = new RequestBuilder()
       .open()
@@ -532,26 +530,24 @@ public class ItemsInTransitReportTests extends APITests {
   }
 
   private void verifyRequest(JsonObject itemJson, DateTime requestDate,
-    LocalDate requestExpirationDate, String requestPatronGroup,
-    String pickupServicePoint) {
+    LocalDate requestExpirationDate, String pickupServicePoint) {
 
     JsonObject actualRequest = itemJson.getJsonObject(REQUEST);
     assertThat(actualRequest.getString(REQUEST_TYPE), is("Hold"));
-    assertThat(actualRequest.getString(REQUEST_PATRON_GROUP), is(requestPatronGroup));
+    assertThat(actualRequest.getString(REQUEST_PATRON_GROUP), is(REQUEST_PATRON_GROUP_DESCRIPTION));
     assertThat(actualRequest.getString(REQUEST_CREATION_DATE), isEquivalentTo(requestDate));
 
     assertThat(actualRequest.getString(REQUEST_EXPIRATION_DATE),
       isEquivalentTo(requestExpirationDate.toDateTimeAtStartOfDay()));
 
     assertThat(actualRequest.getString(REQUEST_PICKUP_SERVICE_POINT_NAME), is(pickupServicePoint));
-    assertThat(toList(actualRequest.getJsonArray(TAGS)), hasItems("tag1", "tag2"));
+    assertThat(toList(toStream(actualRequest, TAGS)), hasItems("tag1", "tag2"));
   }
 
   private void verifyRequestWithSecondPickupServicePoint(JsonObject itemJson,
     DateTime requestDate, LocalDate requestExpirationDate) {
 
-    verifyRequest(itemJson, requestDate, requestExpirationDate,
-      REQUEST_PATRON_GROUP_DESCRIPTION, SERVICE_POINT_NAME_2);
+    verifyRequest(itemJson, requestDate, requestExpirationDate, SERVICE_POINT_NAME_2);
   }
 
   private void verifyLoan(JsonObject itemJson, DateTime checkInDate,
@@ -582,7 +578,7 @@ public class ItemsInTransitReportTests extends APITests {
     JsonObject actualLastCheckIn = itemJson.getJsonObject("lastCheckIn");
     DateTime actualCheckinDateTime = JsonPropertyFetcher
       .getDateTimeProperty(actualLastCheckIn, "dateTime");
-    Assert.assertThat(actualCheckinDateTime, is(checkInDateTime));
+    assertThat(actualCheckinDateTime, is(checkInDateTime));
     assertThat(actualLastCheckIn.getJsonObject("servicePoint").getString(NAME), is(servicePointName));
   }
 
