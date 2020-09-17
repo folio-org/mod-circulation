@@ -1,6 +1,6 @@
 package api.support.fixtures;
 
-import static org.folio.circulation.support.JsonPropertyWriter.write;
+import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
 import api.support.builders.ConfigRecordBuilder;
 import io.vertx.core.json.JsonObject;

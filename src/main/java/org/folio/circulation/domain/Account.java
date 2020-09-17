@@ -15,7 +15,7 @@ import java.util.Optional;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.folio.circulation.domain.representations.AccountPaymentStatus;
 import org.folio.circulation.domain.representations.AccountStatus;
-import org.folio.circulation.support.JsonPropertyWriter;
+import org.folio.circulation.support.json.JsonPropertyWriter;
 import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;

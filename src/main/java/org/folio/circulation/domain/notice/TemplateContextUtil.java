@@ -2,7 +2,7 @@ package org.folio.circulation.domain.notice;
 
 import static java.lang.Math.max;
 import static java.util.stream.Collectors.joining;
-import static org.folio.circulation.support.JsonPropertyWriter.write;
+import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
 import java.util.Optional;
 
