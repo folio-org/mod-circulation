@@ -45,8 +45,8 @@ public abstract class ScheduledNoticeProcessingResource extends Resource {
       new ConfigurationRepository(clients);
 
     safelyInitialise(configurationRepository::lookupSchedulerNoticesProcessingLimit)
-      .thenCompose(r -> r.after(limit -> findNoticesToSend(scheduledNoticesRepository,
-        limit)))
+      .thenCompose(r -> r.after(limit -> findNoticesToSend(configurationRepository,
+        scheduledNoticesRepository, limit)))
       .thenCompose(r -> r.after(notices -> handleNotices(clients, notices)))
       .thenApply(r -> r.toFixedValue(NoContentResponse::noContent))
       .exceptionally(CommonFailures::failedDueToServerError)
@@ -54,6 +54,7 @@ public abstract class ScheduledNoticeProcessingResource extends Resource {
   }
 
   protected abstract CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> findNoticesToSend(
+    ConfigurationRepository configurationRepository,
     ScheduledNoticesRepository scheduledNoticesRepository, PageLimit pageLimit);
 
   protected abstract CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> handleNotices(
