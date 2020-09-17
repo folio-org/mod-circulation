@@ -22,6 +22,6 @@ public class LogMessageSanitizer {
       return null;
     }
 
-    return parameterValue.replaceAll("[\n|\r|\t]", "_");
+    return parameterValue.replaceAll("[\n\r\t]", "_");
   }
 }
