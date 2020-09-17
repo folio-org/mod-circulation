@@ -1,7 +1,7 @@
 package org.folio.circulation.resources;
 
 import static org.folio.circulation.domain.representations.RequestProperties.PROXY_USER_ID;
-import static org.folio.circulation.support.JsonPropertyWriter.write;
+import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQuery;
 

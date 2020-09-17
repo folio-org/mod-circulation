@@ -8,7 +8,7 @@ import static org.folio.circulation.domain.representations.ItemProperties.EFFECT
 import static org.folio.circulation.domain.representations.ItemProperties.HOLDINGS_RECORD_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.PERMANENT_LOCATION_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.TEMPORARY_LOCATION_ID;
-import static org.folio.circulation.support.JsonPropertyWriter.write;
+import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
 import java.util.Arrays;
 import java.util.List;

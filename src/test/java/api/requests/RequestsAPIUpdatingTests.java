@@ -13,7 +13,7 @@ import static org.folio.HttpStatus.HTTP_NO_CONTENT;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_NAME;
 import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_PUBLIC_DESCRIPTION;
-import static org.folio.circulation.support.JsonPropertyWriter.write;
+import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.MatcherAssert.assertThat;

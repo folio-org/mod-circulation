@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import static io.vertx.core.logging.LoggerFactory.getLogger;
-import static org.folio.circulation.support.JsonPropertyWriter.write;
+import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
 public class Launcher {
   private final VertxAssistant vertxAssistant;

@@ -1,7 +1,7 @@
 package org.folio.circulation.domain;
 
 import static java.util.Objects.isNull;
-import static org.folio.circulation.support.JsonPropertyWriter.write;
+import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
 import java.lang.invoke.MethodHandles;
 

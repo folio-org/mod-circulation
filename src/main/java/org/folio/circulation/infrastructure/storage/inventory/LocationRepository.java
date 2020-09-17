@@ -4,11 +4,12 @@ import static java.util.Objects.isNull;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
+import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
-import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 
 import java.util.Collection;
 import java.util.List;
@@ -23,8 +24,8 @@ import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
-import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.SingleRecordFetcher;
+import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.json.JsonObject;
 
@@ -60,13 +61,21 @@ public class LocationRepository {
       return ofAsync(() -> null);
     }
 
-    return SingleRecordFetcher.json(locationsStorageClient, "location",
-      response -> succeeded(null))
-      .fetch(item.getLocationId())
-      .thenApply(r -> r.map(Location::from))
+    return fetchLocationById(item.getLocationId())
       .thenCompose(r -> r.after(this::loadLibrary))
       .thenCompose(r -> r.after(this::loadCampus))
       .thenCompose(r -> r.after(this::loadInstitution));
+  }
+
+  public CompletableFuture<Result<Location>> fetchLocationById(String id) {
+    if (isBlank(id)) {
+      return ofAsync(() -> null);
+    }
+
+    return SingleRecordFetcher.json(locationsStorageClient, "location",
+      response -> succeeded(null))
+      .fetch(id)
+      .thenApply(r -> r.map(Location::from));
   }
 
   public CompletableFuture<Result<Map<String, Location>>> getLocations(

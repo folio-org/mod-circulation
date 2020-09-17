@@ -12,24 +12,16 @@ import org.folio.circulation.domain.Loan;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.joda.time.DateTime;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 import io.vertx.core.json.JsonObject;
-import junitparams.JUnitParamsRunner;
-import junitparams.Parameters;
 import lombok.val;
 
-@RunWith(JUnitParamsRunner.class)
 public class RenewalValidatorTest {
   @Test
-  @Parameters({
-    "Declared lost",
-    "Aged to lost"
-  })
-  public void shouldAllowRenewalWhenDueDateIsEarlierOrSameForLostItem(String itemStatus) {
+  public void shouldAllowRenewalWhenDueDateIsEarlierOrSameForDeclaredLostItem() {
     val dueDate = now(UTC);
     val proposedDueDate = dueDate.minusWeeks(2);
-    val loan = loanWithItemInStatus(itemStatus, dueDate);
+    val loan = loanWithItemInStatus("Declared lost", dueDate);
 
     val validationResult = errorWhenEarlierOrSameDueDate(loan, proposedDueDate);
 

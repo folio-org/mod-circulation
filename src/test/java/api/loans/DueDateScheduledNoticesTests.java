@@ -14,8 +14,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.policy.Period;
-import org.folio.circulation.support.JsonPropertyWriter;
-import api.support.http.IndividualResource;
+import org.folio.circulation.support.json.JsonPropertyWriter;
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
@@ -29,17 +28,16 @@ import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
+import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
 
 public class DueDateScheduledNoticesTests extends APITests {
-
   private static final String BEFORE_TIMING = "Before";
   private static final String UPON_AT_TIMING = "Upon At";
   private static final String AFTER_TIMING = "After";
 
   @Test
   public void allDueDateNoticesShouldBeScheduledOnCheckoutWhenPolicyDefinesDueDateNoticeConfiguration() {
-
     UUID beforeTemplateId = UUID.randomUUID();
     Period beforePeriod = Period.days(2);
     Period beforeRecurringPeriod = Period.hours(6);
@@ -117,7 +115,6 @@ public class DueDateScheduledNoticesTests extends APITests {
 
   @Test
   public void checkOutSchedulesDifferentBeforeDueDateNotices() {
-
     UUID firstBeforeTemplateId = UUID.randomUUID();
     Period firstBeforePeriod = Period.weeks(1);
     UUID secondBeforeTemplateId = UUID.randomUUID();
@@ -178,8 +175,7 @@ public class DueDateScheduledNoticesTests extends APITests {
 
   @Test
   public void noNoticesShouldBeScheduledOnCheckOutWhenPolicyDoesNotDefineTimeBasedNotices()
-    throws
-    InterruptedException {
+    throws InterruptedException {
 
     JsonObject checkOutNoticeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(UUID.randomUUID())
@@ -219,7 +215,6 @@ public class DueDateScheduledNoticesTests extends APITests {
 
   @Test
   public void noticesShouldBeRescheduledAfterRenewal() {
-
     UUID beforeTemplateId = UUID.randomUUID();
     Period beforePeriod = Period.days(2);
     Period beforeRecurringPeriod = Period.hours(6);
@@ -296,7 +291,6 @@ public class DueDateScheduledNoticesTests extends APITests {
 
   @Test
   public void noticesShouldBeRescheduledAfterRenewalOverride() {
-
     UUID beforeTemplateId = UUID.randomUUID();
     Period beforePeriod = Period.days(2);
     Period beforeRecurringPeriod = Period.hours(6);
@@ -380,7 +374,6 @@ public class DueDateScheduledNoticesTests extends APITests {
 
   @Test
   public void noticesShouldBeRescheduledAfterRecall() {
-
     UUID beforeTemplateId = UUID.randomUUID();
     Period beforePeriod = Period.days(2);
     Period beforeRecurringPeriod = Period.hours(6);
@@ -457,8 +450,7 @@ public class DueDateScheduledNoticesTests extends APITests {
       hasScheduledLoanNotice(
         loan.getId(), dueDateAfterRecall.plus(afterPeriod.timePeriod()),
         AFTER_TIMING, afterTemplateId,
-        afterRecurringPeriod, true)
-    );
+        afterRecurringPeriod, true));
 
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
@@ -468,7 +460,6 @@ public class DueDateScheduledNoticesTests extends APITests {
 
   @Test
   public void noticesShouldBeRescheduledAfterManualDueDateChange() {
-
     UUID beforeTemplateId = UUID.randomUUID();
     Period beforePeriod = Period.days(2);
     Period beforeRecurringPeriod = Period.hours(6);
@@ -538,8 +529,7 @@ public class DueDateScheduledNoticesTests extends APITests {
       hasScheduledLoanNotice(
         loan.getId(), updatedDueDate.plus(afterPeriod.timePeriod()),
         AFTER_TIMING, afterTemplateId,
-        afterRecurringPeriod, true)
-    );
+        afterRecurringPeriod, true));
 
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
@@ -613,8 +603,7 @@ public class DueDateScheduledNoticesTests extends APITests {
         hasScheduledLoanNotice(
           loan.getId(), dueDate.plus(afterPeriod.timePeriod()),
           AFTER_TIMING, afterTemplateId,
-          afterRecurringPeriod, true)
-      ));
+          afterRecurringPeriod, true)));
 
     UUID ownerId = feeFineOwnerFixture.ownerForServicePoint(
       UUID.fromString(homeLocation.getJson().getString("primaryServicePoint"))).getId();
