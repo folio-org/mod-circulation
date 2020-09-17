@@ -1,6 +1,6 @@
 package org.folio.circulation.domain;
 
-import static org.folio.circulation.support.JsonPropertyWriter.write;
+import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
 import org.apache.commons.lang3.ObjectUtils;
 import org.joda.time.DateTime;
