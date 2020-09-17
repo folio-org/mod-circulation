@@ -516,7 +516,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
       .withZoneRetainFields(DateTimeZone.forID(timeZoneId));
 
     IndividualResource james = usersFixture.james();
-    InventoryItemResource nod = itemsFixture.basedUponNod();
+    ItemResource nod = itemsFixture.basedUponNod();
 
     checkOutFixture.checkOutByBarcode(nod, james, loanDate);
 
