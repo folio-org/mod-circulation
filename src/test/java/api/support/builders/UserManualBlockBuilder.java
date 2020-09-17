@@ -5,7 +5,7 @@ import java.util.UUID;
 import io.vertx.core.json.JsonObject;
 import org.joda.time.DateTime;
 
-import static org.folio.circulation.support.JsonPropertyWriter.write;
+import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
 public class UserManualBlockBuilder extends JsonBuilder implements Builder {
 
