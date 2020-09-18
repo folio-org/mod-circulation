@@ -23,7 +23,7 @@ import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.isEmptyOrNullString;
+import static org.hamcrest.Matchers.emptyOrNullString;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -32,9 +32,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.VertxAssistant;
+import org.folio.circulation.support.results.Result;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -162,7 +162,7 @@ public class VertxWebClientOkapiHttpClientTests {
     final Response response = postCompleted.get(2, SECONDS).value();
 
     assertThat(response, hasStatus(HTTP_NO_CONTENT));
-    assertThat(response.getBody(), isEmptyOrNullString());
+    assertThat(response.getBody(), is(emptyOrNullString()));
   }
 
   @Test
