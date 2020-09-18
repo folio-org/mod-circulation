@@ -16,7 +16,7 @@ stages:
   steps:
   - applyAppConfig:
       catalogTemplate: p-ngvqv:firebird-helmcharts-mod-circulation
-      version: 0.1.24
+      version: 0.1.26
       answers:
         image.repository: docker.dev.folio.org/mod-circulation
         image.tag: firebird-latest

@@ -1265,7 +1265,7 @@ public class CheckOutByBarcodeTests extends APITests {
 
     List<JsonObject> publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(1));
+      .until(FakePubSub::getPublishedEvents, hasSize(2));
 
     JsonObject event = publishedEvents.get(0);
 

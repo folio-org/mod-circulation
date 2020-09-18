@@ -1086,12 +1086,12 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
 
     JsonObject checkedInLoan = checkInResponse.getLoan();
 
-    // There should be two events published - first one for "check out", second one for "check in"
+    // There should be four events published - first ones for "check out" and check out log event, second ones for "check in" and check in log event
     List<JsonObject> publishedEvents = Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(2));
+      .atMost(2, TimeUnit.SECONDS)
+      .until(FakePubSub::getPublishedEvents, hasSize(4));
 
-    JsonObject event = publishedEvents.get(1);
+    JsonObject event = publishedEvents.get(2);
 
     assertThat(event, isValidItemCheckedInEvent(checkedInLoan));
   }

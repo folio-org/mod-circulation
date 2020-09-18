@@ -15,10 +15,11 @@ import java.util.stream.Collectors;
 public class RequestQueue {
 
   private List<Request> requests;
-  private final Map<Request, Request> updated = new HashMap<>();
+  private final Map<Request, Request> updatedRequests;
 
   public RequestQueue(Collection<Request> requests) {
     this.requests = new ArrayList<>(requests);
+    updatedRequests = new HashMap<>();
 
     // Ordering requests by position, so we can add and remove them
     // without sorting and just re-sequence from 1 to n
@@ -67,7 +68,7 @@ public class RequestQueue {
   }
 
   public void update(Request original, Request updated) {
-    this.updated.put(original, updated);
+    updatedRequests.put(original, updated);
   }
 
   public void remove(Request request) {
@@ -103,6 +104,10 @@ public class RequestQueue {
   //TODO: Encapsulate this better
   public Collection<Request> getRequests() {
     return requests;
+  }
+
+  public Map<Request, Request> getUpdatedRequests() {
+    return updatedRequests;
   }
 
   boolean isEmpty() {

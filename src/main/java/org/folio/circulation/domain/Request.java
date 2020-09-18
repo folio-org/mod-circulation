@@ -28,6 +28,7 @@ import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 import java.util.Objects;
 
+import lombok.EqualsAndHashCode;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 
@@ -35,6 +36,7 @@ import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
+@EqualsAndHashCode
 public class Request implements ItemRelatedRecord, UserRelatedRecord {
   private final JsonObject requestRepresentation;
   private final JsonObject cancellationReasonRepresentation;
