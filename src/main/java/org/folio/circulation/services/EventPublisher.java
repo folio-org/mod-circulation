@@ -24,6 +24,7 @@ import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.Result;
+import org.folio.rest.jaxrs.model.LogEventPayload;
 import org.folio.rest.util.OkapiConnectionParams;
 
 import java.util.concurrent.CompletableFuture;
@@ -61,7 +62,10 @@ public class EventPublisher {
 
       return pubSubPublishingService.publishEvent(
         ITEM_CHECKED_OUT.name(), payloadJsonObject.encode())
-        .thenApply(r -> sendLogRecordEvent(loanAndRelatedRecords.asJson().encode(), params))
+        .thenApply(r -> sendLogRecordEvent(new LogEventPayload()
+          .withLoggedObjectType(LogEventPayload.LoggedObjectType.CHECK_IN_CHECK_OUT)
+          .withAction(LogEventPayload.Action.CHECK_OUT)
+          .withBody(loanAndRelatedRecords.asJson().encode()), params))
         .thenApply(r -> succeeded(loanAndRelatedRecords));
     }
     else {
@@ -84,7 +88,10 @@ public class EventPublisher {
 
       return pubSubPublishingService.publishEvent(ITEM_CHECKED_IN.name(),
         payloadJsonObject.encode())
-        .thenApply(r -> sendLogRecordEvent(checkInContext.asJson().encode(), params))
+        .thenApply(r -> sendLogRecordEvent(new LogEventPayload()
+          .withLoggedObjectType(LogEventPayload.LoggedObjectType.CHECK_IN_CHECK_OUT)
+          .withAction(LogEventPayload.Action.CHECK_IN)
+          .withBody(checkInContext.asJson().encode()), params))
         .thenApply(r -> succeeded(checkInContext));
     }
     else {
