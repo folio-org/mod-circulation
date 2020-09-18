@@ -416,13 +416,13 @@ public class DeclareLostAPITests extends APITests {
       .withNoComment();
     declareLostFixtures.declareItemLost(builder);
 
-    // There should be two events published - first one for "check out",
-    // second one for "declared lost"
+    // There should be three events published - first for "check out", second for "log event"
+    // third for "declared lost"
     List<JsonObject> publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(2));
+      .until(FakePubSub::getPublishedEvents, hasSize(3));
 
-    JsonObject event = publishedEvents.get(1);
+    JsonObject event = publishedEvents.get(2);
     JsonObject loan = loanIndividualResource.getJson();
 
     assertThat(event, isValidItemDeclaredLostEvent(loan));

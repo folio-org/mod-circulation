@@ -123,12 +123,12 @@ public class ClaimItemReturnedAPITests extends APITests {
 
     assertLoanAndItem(response, null, dateTime);
 
-    // Two events are expected: one for check-out and one for the claim
+    // Three events are expected: one for check-out one for log event and one for the claim
     List<JsonObject> publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(2));
+      .until(FakePubSub::getPublishedEvents, hasSize(3));
 
-    JsonObject event = publishedEvents.get(1);
+    JsonObject event = publishedEvents.get(2);
 
     assertThat(event, isValidItemClaimedReturnedEvent(loan.getJson()));
   }

@@ -755,12 +755,12 @@ public class RequestsAPIUpdatingTests extends APITests {
     Response response = loansClient.getById(loan.getId());
     JsonObject updatedLoan = response.getJson();
 
-    // There should be three events published - for "check out", for "recall" and for "replace"
+    // There should be four events published - for "check out", for "log event", for "recall" and for "replace"
     List<JsonObject> publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(3));
+      .until(FakePubSub::getPublishedEvents, hasSize(4));
 
-    JsonObject event = publishedEvents.get(2);
+    JsonObject event = publishedEvents.get(3);
 
     assertThat(event, isValidLoanDueDateChangedEvent(updatedLoan));
   }

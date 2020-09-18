@@ -11,6 +11,7 @@ import static api.support.matchers.EventTypeMatchers.isItemCheckedOutEventType;
 import static api.support.matchers.EventTypeMatchers.isItemClaimedReturnedEventType;
 import static api.support.matchers.EventTypeMatchers.isItemDeclaredLostEventType;
 import static api.support.matchers.EventTypeMatchers.isLoanDueDateChangedEventType;
+import static api.support.matchers.EventTypeMatchers.isLogRecordEventType;
 import static api.support.matchers.PubSubRegistrationMatchers.isValidPublishersRegistration;
 import static api.support.matchers.PubSubRegistrationMatchers.isValidSubscribersRegistration;
 import static org.folio.HttpStatus.HTTP_CREATED;
@@ -50,15 +51,16 @@ public class TenantActivationResourceTests extends APITests {
 
     assertThat(response.getStatusCode(), is(HTTP_CREATED.toInt()));
 
-    assertThat(getCreatedEventTypes().size(), is(5));
-    assertThat(getRegisteredPublishers().size(), is(1));
+    assertThat(getCreatedEventTypes().size(), is(6));
+    assertThat(getRegisteredPublishers().size(), is(2));
 
     assertThat(getCreatedEventTypes(), hasItems(
       isItemCheckedOutEventType(),
       isItemCheckedInEventType(),
       isItemDeclaredLostEventType(),
       isLoanDueDateChangedEventType(),
-      isItemClaimedReturnedEventType()
+      isItemClaimedReturnedEventType(),
+      isLogRecordEventType()
     ));
 
     assertThat(getRegisteredPublishers(), hasItem(isValidPublishersRegistration()));
