@@ -1,7 +1,7 @@
 package org.folio.circulation.domain;
 
-import static org.folio.circulation.support.JsonPropertyWriter.write;
-import static org.folio.circulation.support.JsonPropertyWriter.writeByPath;
+import static org.folio.circulation.support.json.JsonPropertyWriter.write;
+import static org.folio.circulation.support.json.JsonPropertyWriter.writeByPath;
 
 import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;

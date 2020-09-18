@@ -1,7 +1,8 @@
 package org.folio.circulation.domain;
 
+import static org.folio.circulation.support.json.JsonPropertyWriter.write;
+
 import io.vertx.core.json.JsonObject;
-import org.folio.circulation.support.JsonPropertyWriter;
 import org.joda.time.DateTimeZone;
 
 public class LoanAndRelatedRecords implements UserRelatedRecord {
@@ -55,9 +56,9 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
 
   public JsonObject asJson() {
     JsonObject json = new JsonObject();
-    JsonPropertyWriter.write(json, "loan", loan.asJson());
-    JsonPropertyWriter.write(json, "requestQue", JsonObject.mapFrom(requestQueue));
-    JsonPropertyWriter.write(json, "timeZone", JsonObject.mapFrom(timeZone));
+    write(json, "loan", loan.asJson());
+    write(json, "requestQueue", JsonObject.mapFrom(requestQueue));
+    write(json, "timeZone", JsonObject.mapFrom(timeZone));
     return json;
   }
 
