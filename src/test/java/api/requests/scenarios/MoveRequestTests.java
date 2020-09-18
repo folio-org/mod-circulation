@@ -12,20 +12,17 @@ import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyU
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_TYPE;
 import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;
 
-import java.net.MalformedURLException;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.ItemStatus;
@@ -34,8 +31,6 @@ import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.ClockManager;
-import org.folio.circulation.support.http.client.IndividualResource;
-import org.hamcrest.MatcherAssert;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.After;
@@ -46,8 +41,9 @@ import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.MoveRequestBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.fakes.FakePubSub;
-import api.support.http.InventoryItemResource;
+import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
+import lombok.val;
 
 /**
  * @see <a href="https://issues.folio.org/browse/UIREQ-269">UIREQ-269</a>
@@ -696,11 +692,10 @@ public class MoveRequestTests extends APITests {
   //This scenerio utilizes two items of the same instance, but the logic in question applies as well for two separate instances.
   @Test
   public void cannotDisplacePagedRequest() {
+      val secondFloorEconomics = locationsFixture.secondFloorEconomics();
+      val mezzanineDisplayCase = locationsFixture.mezzanineDisplayCase();
 
-      final IndividualResource secondFloorEconomics = locationsFixture.secondFloorEconomics();
-      final IndividualResource mezzanineDisplayCase = locationsFixture.mezzanineDisplayCase();
-
-      final IndividualResource itemCopyA = itemsFixture.basedUponTemeraire(
+      val itemCopyA = itemsFixture.basedUponTemeraire(
         holdingBuilder -> holdingBuilder
           .withPermanentLocation(secondFloorEconomics)
           .withNoTemporaryLocation(),
@@ -709,7 +704,7 @@ public class MoveRequestTests extends APITests {
           .withNoTemporaryLocation()
           .withBarcode("10203040506"));
 
-      final IndividualResource itemCopyB = itemsFixture.basedUponTemeraire(
+      val itemCopyB = itemsFixture.basedUponTemeraire(
         holdingBuilder -> holdingBuilder
           .withPermanentLocation(mezzanineDisplayCase)
           .withNoTemporaryLocation(),
@@ -718,9 +713,9 @@ public class MoveRequestTests extends APITests {
           .withNoTemporaryLocation()
           .withBarcode("90806050402"));
 
-    IndividualResource james = usersFixture.james();
-    IndividualResource steve = usersFixture.steve();
-    IndividualResource jessica = usersFixture.jessica();
+    val james = usersFixture.james();
+    val steve = usersFixture.steve();
+    val jessica = usersFixture.jessica();
 
     // James Checks out Item Copy A
     checkOutFixture.checkOutByBarcode(itemCopyA, james, DateTime.now(DateTimeZone.UTC));
@@ -745,10 +740,7 @@ public class MoveRequestTests extends APITests {
     assertThat(jessicasRequest.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
 
     // Move recallRequestForItemCopyA to Item Copy B
-    requestsFixture.move(new MoveRequestBuilder(
-      stevesRequest.getId(),
-      itemCopyB.getId()
-    ));
+    requestsFixture.move(new MoveRequestBuilder(stevesRequest.getId(), itemCopyB.getId()));
 
     // Confirm Jessica's request is first on Item Copy B and is a paged request
     jessicasRequest = requestsClient.get(jessicasRequest);
@@ -774,67 +766,59 @@ public class MoveRequestTests extends APITests {
 
   @Test
   public void checkoutItemStatusDoesNotChangeOnPagedRequest() {
+    val secondFloorEconomics = locationsFixture.secondFloorEconomics();
+    val mezzanineDisplayCase = locationsFixture.mezzanineDisplayCase();
 
-        final IndividualResource secondFloorEconomics = locationsFixture.secondFloorEconomics();
-        final IndividualResource mezzanineDisplayCase = locationsFixture.mezzanineDisplayCase();
+    val itemCopyA = itemsFixture.basedUponTemeraire(
+      holdingBuilder -> holdingBuilder
+        .withPermanentLocation(secondFloorEconomics)
+        .withNoTemporaryLocation(),
+      itemBuilder -> itemBuilder
+        .withNoPermanentLocation()
+        .withNoTemporaryLocation()
+        .withBarcode("10203040506"));
 
-        final IndividualResource itemCopyA = itemsFixture.basedUponTemeraire(
-          holdingBuilder -> holdingBuilder
-            .withPermanentLocation(secondFloorEconomics)
-            .withNoTemporaryLocation(),
-          itemBuilder -> itemBuilder
-            .withNoPermanentLocation()
-            .withNoTemporaryLocation()
-            .withBarcode("10203040506"));
+    val itemCopyB = itemsFixture.basedUponTemeraire(
+      holdingBuilder -> holdingBuilder
+        .withPermanentLocation(mezzanineDisplayCase)
+        .withNoTemporaryLocation(),
+      itemBuilder -> itemBuilder
+        .withNoPermanentLocation()
+        .withNoTemporaryLocation()
+        .withBarcode("90806050402"));
 
-        final IndividualResource itemCopyB = itemsFixture.basedUponTemeraire(
-          holdingBuilder -> holdingBuilder
-            .withPermanentLocation(mezzanineDisplayCase)
-            .withNoTemporaryLocation(),
-          itemBuilder -> itemBuilder
-            .withNoPermanentLocation()
-            .withNoTemporaryLocation()
-            .withBarcode("90806050402"));
+    assertThat(itemCopyA.getJson().getJsonObject("status").getString("name"), is(ItemStatus.AVAILABLE.getValue()));
+    assertThat(itemCopyB.getJson().getJsonObject("status").getString("name"), is(ItemStatus.AVAILABLE.getValue()));
 
-        assertThat(itemCopyA.getJson().getJsonObject("status").getString("name"), is(ItemStatus.AVAILABLE.getValue()));
-        assertThat(itemCopyB.getJson().getJsonObject("status").getString("name"), is(ItemStatus.AVAILABLE.getValue()));
+    IndividualResource james = usersFixture.james(); //cate
+    IndividualResource steve = usersFixture.steve(); //walker
+    IndividualResource jessica = usersFixture.jessica(); //McKenzie
 
-        IndividualResource james = usersFixture.james(); //cate
-        IndividualResource steve = usersFixture.steve(); //walker
-        IndividualResource jessica = usersFixture.jessica(); //McKenzie
+    checkOutFixture.checkOutByBarcode(itemCopyA, james, DateTime.now(DateTimeZone.UTC));
 
-        checkOutFixture.checkOutByBarcode(itemCopyA, james, DateTime.now(DateTimeZone.UTC));
+    assertThat(itemsClient.get(itemCopyA).getJson().getJsonObject("status").getString("name"), is(ItemStatus.CHECKED_OUT.getValue()));
 
-        assertThat(itemsClient.get(itemCopyA).getJson().getJsonObject("status").getString("name"), is(ItemStatus.CHECKED_OUT.getValue()));
+    // Steve requests Item Copy B
+    IndividualResource stevesRequest = requestsFixture.placeHoldShelfRequest(
+      itemCopyB, steve, DateTime.now(DateTimeZone.UTC).minusHours(2), RequestType.PAGE.getValue());
 
-        // Steve requests Item Copy B
-        IndividualResource stevesRequest = requestsFixture.placeHoldShelfRequest(
-          itemCopyB, steve, DateTime.now(DateTimeZone.UTC).minusHours(2), RequestType.PAGE.getValue());
+    assertThat(itemsClient.get(itemCopyB).getJson().getJsonObject("status").getString("name"), is(ItemStatus.PAGED.getValue()));
 
-        assertThat(itemsClient.get(itemCopyB).getJson().getJsonObject("status").getString("name"), is(ItemStatus.PAGED.getValue()));
+    // Jessica requests Item Copy A
+    IndividualResource jessicasRequest = requestsFixture.placeHoldShelfRequest(
+      itemCopyA, jessica, DateTime.now(DateTimeZone.UTC).minusHours(2), RequestType.RECALL.getValue());
 
-        // Jessica requests Item Copy A
-        IndividualResource jessicasRequest = requestsFixture.placeHoldShelfRequest(
-          itemCopyA, jessica, DateTime.now(DateTimeZone.UTC).minusHours(2), RequestType.RECALL.getValue());
+    requestsFixture.move(new MoveRequestBuilder(stevesRequest.getId(),
+      itemCopyA.getId(), RequestType.RECALL.getValue()));
 
-        requestsFixture.move(new MoveRequestBuilder(
-          stevesRequest.getId(),
-          itemCopyA.getId(),
-          RequestType.RECALL.getValue()
-        ));
+    stevesRequest = requestsClient.get(stevesRequest);
+    assertThat(stevesRequest.getJson().getInteger("position"), is(2));
+    assertThat(itemsClient.get(itemCopyB).getJson().getJsonObject("status").getString("name"), is(ItemStatus.AVAILABLE.getValue()));
 
-        stevesRequest = requestsClient.get(stevesRequest);
-        assertThat(stevesRequest.getJson().getInteger("position"), is(2));
-        assertThat(itemsClient.get(itemCopyB).getJson().getJsonObject("status").getString("name"), is(ItemStatus.AVAILABLE.getValue()));
+    requestsFixture.move(new MoveRequestBuilder(jessicasRequest.getId(), itemCopyB.getId()));
 
-        requestsFixture.move(new MoveRequestBuilder(
-          jessicasRequest.getId(),
-          itemCopyB.getId()
-        ));
-
-        // Ensure that itemCopyA is still CHECKED_OUT
-        assertThat(itemsClient.get(itemCopyA).getJson().getJsonObject("status").getString("name"), is(ItemStatus.CHECKED_OUT.getValue()));
-
+    // Ensure that itemCopyA is still CHECKED_OUT
+    assertThat(itemsClient.get(itemCopyA).getJson().getJsonObject("status").getString("name"), is(ItemStatus.CHECKED_OUT.getValue()));
   }
 
   /**
@@ -863,12 +847,12 @@ public class MoveRequestTests extends APITests {
     final Instant expectedJessicaLoanDueDate = LocalDateTime
         .now().plusHours(4).toInstant(ZoneOffset.UTC);
 
-    IndividualResource smallAngryPlanetItem = itemsFixture.basedUponSmallAngryPlanet();
-    IndividualResource interestingTimesItem = itemsFixture.basedUponInterestingTimes();
+    val smallAngryPlanetItem = itemsFixture.basedUponSmallAngryPlanet();
+    val interestingTimesItem = itemsFixture.basedUponInterestingTimes();
 
-    IndividualResource jamesUser = usersFixture.james();
-    IndividualResource jessicaUser = usersFixture.jessica();
-    IndividualResource steveUser = usersFixture.steve();
+    val jamesUser = usersFixture.james();
+    val jessicaUser = usersFixture.jessica();
+    val steveUser = usersFixture.steve();
 
     // James and Jessica check out items, so loans will be get created
     checkOutFixture.checkOutByBarcode(smallAngryPlanetItem, jamesUser);
@@ -891,9 +875,7 @@ public class MoveRequestTests extends APITests {
     freezeTime(expectedJessicaLoanDueDate);
     // Then move the 'smallAngryPlanet' recall request to the 'interestingTimes' item
     requestsFixture.move(new MoveRequestBuilder(recallRequestBySteve.getId(),
-      interestingTimesItem.getId(),
-      RequestType.RECALL.getValue()
-    ));
+      interestingTimesItem.getId(), RequestType.RECALL.getValue()));
 
     // EXPECT:
     // Loans for 1st and 2nd item has expected dueDate.
@@ -915,18 +897,14 @@ public class MoveRequestTests extends APITests {
 
   @Test
   public void changedDueDateAfterRecallingAnItemShouldRespectTenantTimezone() {
-
     final String stockholmTimeZone = "Europe/Stockholm";
 
-    final InventoryItemResource sourceItem =
-      itemsFixture.basedUponSmallAngryPlanet("65654345643");
+    val sourceItem = itemsFixture.basedUponSmallAngryPlanet("65654345643");
+    val destinationItem = itemsFixture.basedUponSmallAngryPlanet("75605832024");
 
-    final InventoryItemResource destinationItem =
-      itemsFixture.basedUponSmallAngryPlanet("75605832024");
-
-    final IndividualResource requestServicePoint = servicePointsFixture.cd1();
-    final IndividualResource steve = usersFixture.steve();
-    final IndividualResource jessica = usersFixture.jessica();
+    val requestServicePoint = servicePointsFixture.cd1();
+    val steve = usersFixture.steve();
+    val jessica = usersFixture.jessica();
 
     configClient.create(timezoneConfigurationFor(stockholmTimeZone));
 
@@ -973,7 +951,7 @@ public class MoveRequestTests extends APITests {
 
     final JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
 
-    MatcherAssert.assertThat("due date is the original date",
+    assertThat("due date is the original date",
       storedLoan.getString("dueDate"), not(originalDueDate));
 
     final DateTime expectedDueDate = loanDate.toLocalDate()
@@ -986,11 +964,10 @@ public class MoveRequestTests extends APITests {
 
   @Test
   public void dueDateChangedEventIsPublished() {
+    val secondFloorEconomics = locationsFixture.secondFloorEconomics();
+    val mezzanineDisplayCase = locationsFixture.mezzanineDisplayCase();
 
-    final IndividualResource secondFloorEconomics = locationsFixture.secondFloorEconomics();
-    final IndividualResource mezzanineDisplayCase = locationsFixture.mezzanineDisplayCase();
-
-    final IndividualResource itemCopyA = itemsFixture.basedUponTemeraire(
+    val itemCopyA = itemsFixture.basedUponTemeraire(
       holdingBuilder -> holdingBuilder
         .withPermanentLocation(secondFloorEconomics)
         .withNoTemporaryLocation(),
@@ -999,7 +976,7 @@ public class MoveRequestTests extends APITests {
         .withNoTemporaryLocation()
         .withBarcode("10203040506"));
 
-    final IndividualResource itemCopyB = itemsFixture.basedUponTemeraire(
+    val itemCopyB = itemsFixture.basedUponTemeraire(
       holdingBuilder -> holdingBuilder
         .withPermanentLocation(mezzanineDisplayCase)
         .withNoTemporaryLocation(),
@@ -1008,15 +985,15 @@ public class MoveRequestTests extends APITests {
         .withNoTemporaryLocation()
         .withBarcode("90806050402"));
 
-    IndividualResource james = usersFixture.james();
-    IndividualResource jessica = usersFixture.jessica();
-    IndividualResource steve = usersFixture.steve();
-    IndividualResource charlotte = usersFixture.charlotte();
+    val james = usersFixture.james();
+    val jessica = usersFixture.jessica();
+    val steve = usersFixture.steve();
+    val charlotte = usersFixture.charlotte();
 
     IndividualResource itemCopyALoan = checkOutFixture.checkOutByBarcode(itemCopyA, james,
       DateTime.now(DateTimeZone.UTC));
 
-    IndividualResource pageRequestForItemCopyB = requestsFixture.placeHoldShelfRequest(
+    requestsFixture.placeHoldShelfRequest(
       itemCopyB, jessica, DateTime.now(DateTimeZone.UTC).minusHours(3),
       RequestType.PAGE.getValue());
 
@@ -1024,14 +1001,14 @@ public class MoveRequestTests extends APITests {
       itemCopyB, steve, DateTime.now(DateTimeZone.UTC).minusHours(2),
       RequestType.RECALL.getValue());
 
-    IndividualResource holdRequestForItemCopyA = requestsFixture.placeHoldShelfRequest(
+    requestsFixture.placeHoldShelfRequest(
       itemCopyA, charlotte, DateTime.now(DateTimeZone.UTC).minusHours(1),
       RequestType.HOLD.getValue());
 
-    IndividualResource moveRecallRequestToItemCopyA = requestsFixture.move(new MoveRequestBuilder(
+    requestsFixture.move(new MoveRequestBuilder(
       recallRequestForItemCopyB.getId(),
-      itemCopyA.getId()
-    ));
+      itemCopyA.getId()));
+
     itemCopyALoan = loansClient.get(itemCopyALoan);
 
     // There should be three events published - for "check out", for "hold" and for "move"

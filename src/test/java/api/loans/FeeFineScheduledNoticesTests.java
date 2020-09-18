@@ -30,7 +30,6 @@ import org.folio.circulation.domain.notice.schedule.TriggeringEvent;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.json.JsonPropertyWriter;
-import org.folio.circulation.support.http.client.IndividualResource;
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
 import org.junit.Test;
@@ -44,6 +43,7 @@ import api.support.builders.FeeFineOwnerBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.fixtures.TemplateContextMatchers;
+import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
 
 @RunWith(value = Parameterized.class)

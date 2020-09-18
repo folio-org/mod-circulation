@@ -17,7 +17,7 @@ import static java.net.HttpURLConnection.HTTP_OK;
 import java.net.URL;
 import java.util.UUID;
 
-import org.folio.circulation.support.http.client.IndividualResource;
+import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 

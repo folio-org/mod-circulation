@@ -19,7 +19,6 @@ import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang3.tuple.Pair;
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.policy.Period;
-import org.folio.circulation.support.http.client.IndividualResource;
 import org.hamcrest.Matcher;
 import org.hamcrest.MatcherAssert;
 import org.joda.time.DateTime;
@@ -32,8 +31,10 @@ import api.support.APITests;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.fixtures.ConfigurationExample;
-import api.support.http.InventoryItemResource;
+import api.support.http.IndividualResource;
+import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
+import lombok.val;
 
 public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests {
 
@@ -61,15 +62,15 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
     DateTime loanDate = new DateTime(2019, 8, 23, 10, 30);
 
     IndividualResource james = usersFixture.james();
-    InventoryItemResource nod = itemsFixture.basedUponNod();
-    InventoryItemResource interestingTimes = itemsFixture.basedUponInterestingTimes();
+    ItemResource nod = itemsFixture.basedUponNod();
+    ItemResource interestingTimes = itemsFixture.basedUponInterestingTimes();
     IndividualResource nodToJamesLoan = checkOutFixture.checkOutByBarcode(nod, james, loanDate);
     IndividualResource interestingTimesToJamesLoan = checkOutFixture.checkOutByBarcode(interestingTimes, james, loanDate);
 
 
     IndividualResource rebecca = usersFixture.rebecca();
-    InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
-    InventoryItemResource dunkirk = itemsFixture.basedUponDunkirk();
+    ItemResource temeraire = itemsFixture.basedUponTemeraire();
+    ItemResource dunkirk = itemsFixture.basedUponDunkirk();
     IndividualResource temeraireToRebeccaLoan = checkOutFixture.checkOutByBarcode(temeraire, rebecca, loanDate);
     IndividualResource dunkirkToRebeccaLoan = checkOutFixture.checkOutByBarcode(dunkirk, rebecca, loanDate);
 
@@ -178,7 +179,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
     DateTime loanDate = new DateTime(2019, 8, 23, 10, 30);
 
     IndividualResource james = usersFixture.james();
-    InventoryItemResource nod = itemsFixture.basedUponNod();
+    ItemResource nod = itemsFixture.basedUponNod();
     IndividualResource nodToJamesLoan = checkOutFixture.checkOutByBarcode(nod, james, loanDate);
 
     Awaitility.await()
@@ -271,7 +272,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
     DateTime loanDate = new DateTime(2019, 8, 23, 10, 30);
 
     IndividualResource james = usersFixture.james();
-    InventoryItemResource nod = itemsFixture.basedUponNod();
+    ItemResource nod = itemsFixture.basedUponNod();
     IndividualResource nodToJamesLoan = checkOutFixture.checkOutByBarcode(nod, james, loanDate);
 
     loansStorageClient.delete(nodToJamesLoan);
@@ -309,7 +310,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
     DateTime loanDate = new DateTime(2019, 8, 23, 10, 30);
 
     IndividualResource james = usersFixture.james();
-    InventoryItemResource nod = itemsFixture.basedUponNod();
+    ItemResource nod = itemsFixture.basedUponNod();
     IndividualResource nodToJamesLoan = checkOutFixture.checkOutByBarcode(nod, james, loanDate);
 
     itemsClient.delete(nod);
@@ -346,9 +347,9 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
 
     DateTime loanDate = new DateTime(2019, 8, 23, 10, 30);
 
-    IndividualResource james = usersFixture.james();
-    InventoryItemResource nod = itemsFixture.basedUponNod();
-    IndividualResource nodToJamesLoan = checkOutFixture.checkOutByBarcode(nod, james, loanDate);
+    val james = usersFixture.james();
+    val nod = itemsFixture.basedUponNod();
+    val nodToJamesLoan = checkOutFixture.checkOutByBarcode(nod, james, loanDate);
 
     usersFixture.remove(james);
 
@@ -383,17 +384,17 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
     DateTime loanDate = new DateTime(2019, 8, 23, 10, 30);
 
     // users
-    IndividualResource james = usersFixture.james();
-    IndividualResource steve = usersFixture.steve();
-    IndividualResource jessica = usersFixture.jessica();
+    val james = usersFixture.james();
+    val steve = usersFixture.steve();
+    val jessica = usersFixture.jessica();
 
     // items
-    InventoryItemResource nod = itemsFixture.basedUponNod();
-    InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
-    InventoryItemResource planet = itemsFixture.basedUponSmallAngryPlanet();
-    InventoryItemResource times = itemsFixture.basedUponInterestingTimes();
-    InventoryItemResource uprooted = itemsFixture.basedUponUprooted();
-    InventoryItemResource dunkirk = itemsFixture.basedUponDunkirk();
+    ItemResource nod = itemsFixture.basedUponNod();
+    ItemResource temeraire = itemsFixture.basedUponTemeraire();
+    ItemResource planet = itemsFixture.basedUponSmallAngryPlanet();
+    ItemResource times = itemsFixture.basedUponInterestingTimes();
+    ItemResource uprooted = itemsFixture.basedUponUprooted();
+    ItemResource dunkirk = itemsFixture.basedUponDunkirk();
 
     // loans
     IndividualResource nodToJames = checkOutFixture.checkOutByBarcode(nod, james, loanDate.plusHours(1));
@@ -460,7 +461,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
     DateTime loanDate = new DateTime(2019, 8, 23, 10, 30);
 
     IndividualResource james = usersFixture.james();
-    InventoryItemResource nod = itemsFixture.basedUponNod();
+    ItemResource nod = itemsFixture.basedUponNod();
     IndividualResource nodToJamesLoan = checkOutFixture.checkOutByBarcode(nod, james, loanDate);
 
     templateFixture.delete(TEMPLATE_ID);
@@ -515,7 +516,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
       .withZoneRetainFields(DateTimeZone.forID(timeZoneId));
 
     IndividualResource james = usersFixture.james();
-    InventoryItemResource nod = itemsFixture.basedUponNod();
+    ItemResource nod = itemsFixture.basedUponNod();
 
     checkOutFixture.checkOutByBarcode(nod, james, loanDate);
 

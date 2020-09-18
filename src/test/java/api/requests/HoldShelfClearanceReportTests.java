@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.UUID;
 
 import org.folio.circulation.domain.RequestStatus;
-import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -19,8 +18,10 @@ import org.junit.Test;
 import api.support.APITests;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.RequestBuilder;
-import api.support.http.InventoryItemResource;
+import api.support.http.IndividualResource;
+import api.support.http.ItemResource;
 import api.support.http.ResourceClient;
+import api.support.http.UserResource;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
@@ -53,7 +54,7 @@ public class HoldShelfClearanceReportTests extends APITests {
   @Test
   public void openUnfulfilledRequestNotIncludedInReport() {
 
-    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.james());
@@ -74,8 +75,8 @@ public class HoldShelfClearanceReportTests extends APITests {
   @Test
   public void requestsAwaitingPickupAreNotIncludedInReport() {
 
-    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
+    final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final ItemResource temeraire = itemsFixture.basedUponTemeraire();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     checkOutFixture.checkOutByBarcode(temeraire, usersFixture.charlotte());
@@ -105,14 +106,14 @@ public class HoldShelfClearanceReportTests extends APITests {
 
   @Test
   public void multipleClosedPickupExpiredRequest() {
-    final InventoryItemResource smallAngryPlanet = itemsFixture
+    val smallAngryPlanet = itemsFixture
       .basedUponSmallAngryPlanet(itemsFixture.addCallNumberStringComponents());
 
-    final InventoryItemResource temeraire = itemsFixture
+    val temeraire = itemsFixture
       .basedUponTemeraire(itemsFixture.addCallNumberStringComponents("tem"));
 
-    final IndividualResource rebecca = usersFixture.rebecca();
-    final IndividualResource steve = usersFixture.steve();
+    val rebecca = usersFixture.rebecca();
+    val steve = usersFixture.steve();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     checkOutFixture.checkOutByBarcode(temeraire, usersFixture.charlotte());
@@ -161,11 +162,10 @@ public class HoldShelfClearanceReportTests extends APITests {
 
   @Test
   public void testClosedCancelledExpiredRequest() {
-
-    final InventoryItemResource smallAngryPlanet = itemsFixture
+    val smallAngryPlanet = itemsFixture
       .basedUponSmallAngryPlanet(itemsFixture.addCallNumberStringComponents());
-    final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
-    final IndividualResource rebecca = usersFixture.rebecca();
+    val temeraire = itemsFixture.basedUponTemeraire();
+    val rebecca = usersFixture.rebecca();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     checkOutFixture.checkOutByBarcode(temeraire, usersFixture.charlotte());
@@ -199,11 +199,10 @@ public class HoldShelfClearanceReportTests extends APITests {
 
   @Test
   public void testClosedPickupExpiredRequest() {
-
-    final InventoryItemResource smallAngryPlanet = itemsFixture
+    val smallAngryPlanet = itemsFixture
       .basedUponSmallAngryPlanet(itemsFixture.addCallNumberStringComponents());
-    final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
-    final IndividualResource rebecca = usersFixture.rebecca();
+    val temeraire = itemsFixture.basedUponTemeraire();
+    val rebecca = usersFixture.rebecca();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     checkOutFixture.checkOutByBarcode(temeraire, usersFixture.charlotte());
@@ -234,10 +233,9 @@ public class HoldShelfClearanceReportTests extends APITests {
 
   @Test
   public void checkThatResponseGetsRequestWithEarlierClosedDate() {
-
-    final InventoryItemResource smallAngryPlanet = itemsFixture
+    val smallAngryPlanet = itemsFixture
       .basedUponSmallAngryPlanet(itemsFixture.addCallNumberStringComponents());
-    final IndividualResource rebecca = usersFixture.rebecca();
+    val rebecca = usersFixture.rebecca();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     final String earlierAwaitingPickupRequestClosedDate = "2019-03-11T15:45:23.000+0000";
     final String laterAwaitingPickupRequestClosedDate = "2018-03-11T10:45:00.000+0000";
@@ -278,10 +276,9 @@ public class HoldShelfClearanceReportTests extends APITests {
 
   @Test
   public void checkWhenPickupRequestClosedDateIsEmptyForExpiredRequest() {
-
-    final InventoryItemResource smallAngryPlanet = itemsFixture
+    val smallAngryPlanet = itemsFixture
       .basedUponSmallAngryPlanet(itemsFixture.addCallNumberStringComponents());
-    final IndividualResource rebecca = usersFixture.rebecca();
+    val rebecca = usersFixture.rebecca();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     final String awaitingPickupRequestClosedDate = "2019-03-11T15:45:23.000+0000";
     final String emptyRequestClosedDate = "";
@@ -323,7 +320,7 @@ public class HoldShelfClearanceReportTests extends APITests {
   @Test
   public void itemIsCheckedOutAndRequestHasBeenChanged() {
 
-    final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
+    final ItemResource temeraire = itemsFixture.basedUponTemeraire();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     checkOutFixture.checkOutByBarcode(temeraire, usersFixture.charlotte());
@@ -345,17 +342,16 @@ public class HoldShelfClearanceReportTests extends APITests {
 
   @Test
   public void checkWhenPickupRequestsExpiredInDifferentServicePoints() {
-
-    final InventoryItemResource smallAngryPlanet = itemsFixture
+    val smallAngryPlanet = itemsFixture
       .basedUponSmallAngryPlanet(itemsFixture.addCallNumberStringComponents());
 
     // init for SP1
-    final IndividualResource rebeca = usersFixture.rebecca();
+    val rebecca = usersFixture.rebecca();
     final UUID firstServicePointId = servicePointsFixture.cd1().getId();
     final String firstAwaitingPickupRequestClosedDate = "2019-03-11T15:45:23.000+0000";
 
     // init for SP2
-    final IndividualResource steve = usersFixture.steve();
+    val steve = usersFixture.steve();
     final UUID secondServicePointId = servicePointsFixture.cd2().getId();
     final String secondAwaitingPickupRequestClosedDate = "2019-03-11T15:55:23.000+0000";
 
@@ -365,7 +361,7 @@ public class HoldShelfClearanceReportTests extends APITests {
       .page()
       .withPickupServicePointId(firstServicePointId)
       .forItem(smallAngryPlanet)
-      .by(rebeca);
+      .by(rebecca);
     IndividualResource firstRequest = requestsClient.create(firstRequestBuilderOnItem);
 
     // #2 create second request in SP2
@@ -387,7 +383,7 @@ public class HoldShelfClearanceReportTests extends APITests {
 
     // #5 get hold shelf expiration report in SP1 >>> not empty
     Response response = ResourceClient.forRequestReport().getById(firstServicePointId);
-    verifyResponse(smallAngryPlanet, rebeca, response, RequestStatus.CLOSED_PICKUP_EXPIRED);
+    verifyResponse(smallAngryPlanet, rebecca, response, RequestStatus.CLOSED_PICKUP_EXPIRED);
 
     // #6 get hold shelf expiration report report in SP2 >>> empty
     response = ResourceClient.forRequestReport().getById(secondServicePointId);
@@ -427,12 +423,11 @@ public class HoldShelfClearanceReportTests extends APITests {
 
   @Test
   public void checkWhenPickupRequestsCancelledInDifferentServicePoints() {
-
-    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    final InventoryItemResource nod = itemsFixture.basedUponNod();
+    val smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    val nod = itemsFixture.basedUponNod();
 
     // init for SP1
-    final IndividualResource rebeca = usersFixture.rebecca();
+    val rebecca = usersFixture.rebecca();
     final UUID firstServicePointId = servicePointsFixture.cd1().getId();
     final String firstAwaitingPickupRequestClosedDate = "2019-03-11T15:45:23.000+0000";
 
@@ -446,7 +441,7 @@ public class HoldShelfClearanceReportTests extends APITests {
       .page()
       .withPickupServicePointId(firstServicePointId)
       .forItem(smallAngryPlanet)
-      .by(rebeca);
+      .by(rebecca);
     IndividualResource firstRequest = requestsClient.create(firstRequestBuilderOnItem);
 
     // #2 create the second request in SP2
@@ -468,7 +463,7 @@ public class HoldShelfClearanceReportTests extends APITests {
 
     // #5 get hold shelf expiration report in SP1
     Response response = ResourceClient.forRequestReport().getById(firstServicePointId);
-    verifyResponse(smallAngryPlanet, rebeca, response, RequestStatus.CLOSED_CANCELLED);
+    verifyResponse(smallAngryPlanet, rebecca, response, RequestStatus.CLOSED_CANCELLED);
 
     // #6 get hold shelf expiration in SP2 >>> empty
     response = ResourceClient.forRequestReport().getById(secondServicePointId);
@@ -499,7 +494,7 @@ public class HoldShelfClearanceReportTests extends APITests {
       .page()
       .withPickupServicePointId(firstServicePointId)
       .forItem(nod)
-      .by(rebeca);
+      .by(rebecca);
     IndividualResource thirdRequest = requestsClient.create(thirdRequestBuilderOnItem);
 
     // #2 create the second request in SP2
@@ -521,7 +516,7 @@ public class HoldShelfClearanceReportTests extends APITests {
 
     // #5 get hold shelf expiration report in SP1
     response = ResourceClient.forRequestReport().getById(firstServicePointId);
-    verifyResponse(nod, rebeca, response, RequestStatus.CLOSED_CANCELLED);
+    verifyResponse(nod, rebecca, response, RequestStatus.CLOSED_CANCELLED);
 
     // #6 get hold shelf expiration in SP2 >>> empty
     response = ResourceClient.forRequestReport().getById(secondServicePointId);
@@ -545,8 +540,7 @@ public class HoldShelfClearanceReportTests extends APITests {
     assertThat(response.getJson().getInteger(TOTAL_RECORDS), is(0));
   }
 
-  private void verifyResponse(
-    InventoryItemResource item, IndividualResource requester,
+  private void verifyResponse(ItemResource item, UserResource requester,
     Response response, RequestStatus status) {
 
     assertThat(response.getStatusCode(), is(HTTP_OK));
@@ -559,8 +553,7 @@ public class HoldShelfClearanceReportTests extends APITests {
     verifyRequest(item, requester, requestJson, status);
   }
 
-  private void verifyRequest(
-    InventoryItemResource item, IndividualResource requester,
+  private void verifyRequest(ItemResource item, UserResource requester,
     JsonObject requestJson, RequestStatus status) {
 
     assertThat(requestJson.getString(STATUS_KEY), is(status.getValue()));

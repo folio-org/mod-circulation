@@ -8,7 +8,7 @@ import static api.support.fixtures.ServicePointExamples.basedUponCircDesk5;
 import static api.support.fixtures.ServicePointExamples.basedUponCircDesk6;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 
-import org.folio.circulation.support.http.client.IndividualResource;
+import api.support.http.IndividualResource;
 
 import api.support.builders.ServicePointBuilder;
 import api.support.http.ResourceClient;

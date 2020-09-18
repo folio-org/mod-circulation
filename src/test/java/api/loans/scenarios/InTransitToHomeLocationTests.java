@@ -11,7 +11,7 @@ import static org.hamcrest.core.IsNull.nullValue;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.folio.circulation.support.http.client.IndividualResource;
+import api.support.http.IndividualResource;
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -20,7 +20,7 @@ import org.junit.Test;
 import api.support.APITests;
 import api.support.CheckInByBarcodeResponse;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
-import api.support.http.InventoryItemResource;
+import api.support.http.ItemResource;
 import api.support.matchers.JsonObjectMatcher;
 import io.vertx.core.json.JsonObject;
 
@@ -37,7 +37,7 @@ public class InTransitToHomeLocationTests extends APITests {
 
     final IndividualResource james = usersFixture.james();
 
-    final InventoryItemResource nod = itemsFixture.basedUponNod(builder ->
+    final ItemResource nod = itemsFixture.basedUponNod(builder ->
       builder.withTemporaryLocation(homeLocation.getId()));
 
     final IndividualResource otherServicePoint = servicePointsFixture.cd2();

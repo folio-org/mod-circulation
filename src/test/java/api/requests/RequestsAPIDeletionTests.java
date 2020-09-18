@@ -14,16 +14,16 @@ import org.junit.Test;
 import api.support.APITests;
 import api.support.MultipleJsonRecords;
 import api.support.builders.RequestBuilder;
-import api.support.http.InventoryItemResource;
+import api.support.http.ItemResource;
 
 public class RequestsAPIDeletionTests extends APITests {
   @Test
   public void canDeleteAllRequests() {
     UUID requesterId = usersFixture.rebecca().getId();
 
-    final InventoryItemResource nod = itemsFixture.basedUponNod();
-    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
+    final ItemResource nod = itemsFixture.basedUponNod();
+    final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final ItemResource temeraire = itemsFixture.basedUponTemeraire();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     checkOutFixture.checkOutByBarcode(nod);
@@ -60,9 +60,9 @@ public class RequestsAPIDeletionTests extends APITests {
   public void canDeleteAnIndividualRequest() {
     UUID requesterId = usersFixture.rebecca().getId();
 
-    final InventoryItemResource nod = itemsFixture.basedUponNod();
-    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
+    final ItemResource nod = itemsFixture.basedUponNod();
+    final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final ItemResource temeraire = itemsFixture.basedUponTemeraire();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     checkOutFixture.checkOutByBarcode(nod);

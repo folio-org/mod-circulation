@@ -35,7 +35,7 @@ import java.util.concurrent.TimeUnit;
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.policy.Period;
-import org.folio.circulation.support.http.client.IndividualResource;
+import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.Matcher;
 import org.hamcrest.MatcherAssert;
@@ -60,7 +60,7 @@ import api.support.builders.RequestBuilder;
 import api.support.fakes.FakePubSub;
 import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.CqlQuery;
-import api.support.http.InventoryItemResource;
+import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
@@ -209,7 +209,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
 
   @Test
   public void canCreateStaffSlipContextOnCheckInByBarcode() {
-    InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+    ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
 
     DateTime requestDate = new DateTime(2019, 7, 22, 10, 22, 54, UTC);
     IndividualResource servicePoint = servicePointsFixture.cd1();
@@ -469,7 +469,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     final IndividualResource homeLocation = locationsFixture.basedUponExampleLocation(
       builder -> builder.withPrimaryServicePoint(checkInServicePointId));
 
-    final InventoryItemResource nod = itemsFixture.basedUponNod(
+    final ItemResource nod = itemsFixture.basedUponNod(
       builder -> builder.withTemporaryLocation(homeLocation.getId()));
 
     checkOutFixture.checkOutByBarcode(nod, james, loanDate);
@@ -531,7 +531,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
 
   @Test
   public void patronNoticeOnCheckInAfterCheckOutAndRequestToItem() {
-    InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+    ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
 
     checkOutFixture.checkOutByBarcode(item, usersFixture.jessica());
 
@@ -570,7 +570,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
 
   @Test
   public void patronNoticeOnCheckInAfterRequestToItem() {
-    InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+    ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
     DateTime requestDate = new DateTime(2019, 5, 5, 10, 22, 54, UTC);
     UUID servicePointId = servicePointsFixture.cd1().getId();
     IndividualResource requester = usersFixture.steve();
@@ -618,7 +618,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
 
     use(noticePolicy);
 
-    InventoryItemResource requestedItem = itemsFixture.basedUponNod();
+    ItemResource requestedItem = itemsFixture.basedUponNod();
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     DateTime requestDate = new DateTime(2019, 10, 9, 10, 0);
@@ -1044,7 +1044,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
 
   @Test
   public void canCheckInLostAndPaidItem() {
-    final InventoryItemResource item = itemsFixture.basedUponNod();
+    final ItemResource item = itemsFixture.basedUponNod();
 
     declareLostFixtures.declareItemLost(
       checkOutFixture.checkOutByBarcode(item, usersFixture.steve()).getJson());
@@ -1098,7 +1098,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
 
   private void checkPatronNoticeEvent(
     IndividualResource request, IndividualResource requester,
-    InventoryItemResource item, UUID expectedTemplateId) {
+    ItemResource item, UUID expectedTemplateId) {
 
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)

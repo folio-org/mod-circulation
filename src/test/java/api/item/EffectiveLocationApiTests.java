@@ -11,7 +11,7 @@ import org.junit.Test;
 import api.support.APITests;
 import api.support.builders.HoldingBuilder;
 import api.support.builders.InstanceBuilder;
-import api.support.http.InventoryItemResource;
+import api.support.http.ItemResource;
 
 public class EffectiveLocationApiTests extends APITests {
 
@@ -19,7 +19,7 @@ public class EffectiveLocationApiTests extends APITests {
   public void effectiveLocationReturnedWhenPresent() {
     final UUID popularReadingLocationId = UUID.randomUUID();
 
-    InventoryItemResource createdItem = itemsFixture
+    ItemResource createdItem = itemsFixture
       .basedUponNod(builder -> builder.withPermanentLocation(popularReadingLocationId));
 
     final Item item = Item.from(createdItem.getJson())
