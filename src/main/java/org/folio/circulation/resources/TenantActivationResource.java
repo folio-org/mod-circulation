@@ -30,7 +30,7 @@ public class TenantActivationResource {
     Vertx vertx = routingContext.vertx();
     HttpServerResponse response = routingContext.response();
     PubSubRegistrationService.registerModule(headers, vertx)
-      .thenAccept(x -> registerLogEventPublisher(headers, vertx)
+      .thenAccept(result -> registerLogEventPublisher(headers, vertx)
         .thenRun(() -> created(new JsonObject()).writeTo(response))
         .exceptionally(throwable -> {
           ServerErrorResponse.internalError(response, throwable.getLocalizedMessage());
