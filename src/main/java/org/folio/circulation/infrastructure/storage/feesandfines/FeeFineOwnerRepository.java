@@ -4,6 +4,7 @@ import static org.folio.circulation.support.fetching.RecordFetching.findWithMult
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.FeeFineOwner;
@@ -28,6 +29,10 @@ public class FeeFineOwnerRepository {
   public CompletableFuture<Result<FeeFineOwner>> findOwnerForServicePoint(String servicePointId) {
     return findOwnersForServicePoints(Collections.singleton(servicePointId))
       .thenApply(r -> r.map(CollectionUtil::firstOrNull));
+  }
+
+  public CompletableFuture<Result<FeeFineOwner>> findOwnerForServicePoint(UUID servicePointId) {
+    return findOwnerForServicePoint(servicePointId.toString());
   }
 
   public CompletableFuture<Result<Collection<FeeFineOwner>>> findOwnersForServicePoints(

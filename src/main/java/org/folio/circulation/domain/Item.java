@@ -1,5 +1,6 @@
 package org.folio.circulation.domain;
 
+import static org.apache.commons.lang3.StringUtils.firstNonBlank;
 import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
 import static org.folio.circulation.domain.ItemStatus.AWAITING_PICKUP;
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
@@ -14,10 +15,11 @@ import static org.folio.circulation.domain.representations.ItemProperties.EFFECT
 import static org.folio.circulation.domain.representations.ItemProperties.IDENTIFIERS;
 import static org.folio.circulation.domain.representations.ItemProperties.IN_TRANSIT_DESTINATION_SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.ITEM_COPY_NUMBER_ID;
+import static org.folio.circulation.domain.representations.ItemProperties.PERMANENT_LOCATION_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.STATUS_PROPERTY;
 import static org.folio.circulation.domain.representations.ItemProperties.TITLE;
-import static org.folio.circulation.support.JsonPropertyWriter.remove;
-import static org.folio.circulation.support.JsonPropertyWriter.write;
+import static org.folio.circulation.support.json.JsonPropertyWriter.remove;
+import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getArrayProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
@@ -29,7 +31,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.representations.ItemProperties;
 import org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher;
 
@@ -196,7 +197,7 @@ public class Item {
   }
 
   public String getCopyNumber() {
-    return StringUtils.firstNonBlank(
+    return firstNonBlank(
       getProperty(getItem(), ITEM_COPY_NUMBER_ID),
       getProperty(holdingRepresentation, COPY_NUMBER_ID)
     );
@@ -343,6 +344,13 @@ public class Item {
 
   public boolean doesNotHaveHolding() {
     return holdingRepresentation == null;
+  }
+
+  public String getPermanentLocationId() {
+    final String itemLocation = getProperty(itemRepresentation, PERMANENT_LOCATION_ID);
+    final String holdingsLocation = getProperty(holdingRepresentation, PERMANENT_LOCATION_ID);
+
+    return firstNonBlank(itemLocation, holdingsLocation);
   }
 
   public Item withLocation(Location newLocation) {

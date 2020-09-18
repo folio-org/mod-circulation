@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.policy.Period;
-import org.folio.circulation.support.JsonPropertyWriter;
+import org.folio.circulation.support.json.JsonPropertyWriter;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
