@@ -81,13 +81,14 @@ public class TenantActivationResourceTests extends APITests {
 
     assertThat(response.getStatusCode(), is(HTTP_NO_CONTENT.toInt()));
 
-    assertThat(getDeletedEventTypes().size(), is(5));
+    assertThat(getDeletedEventTypes().size(), is(6));
     assertThat(getDeletedEventTypes(), hasItems(
       EventTypeMatchers.ITEM_CHECKED_OUT,
       EventTypeMatchers.ITEM_CHECKED_IN,
       EventTypeMatchers.ITEM_DECLARED_LOST,
       EventTypeMatchers.ITEM_CLAIMED_RETURNED,
-      EventTypeMatchers.LOAN_DUE_DATE_CHANGED
+      EventTypeMatchers.LOAN_DUE_DATE_CHANGED,
+      EventTypeMatchers.LOG_RECORD
     ));
   }
 }
