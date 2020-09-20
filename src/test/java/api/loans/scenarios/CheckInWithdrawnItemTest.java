@@ -8,19 +8,19 @@ import static api.support.matchers.RequestMatchers.isOpenAwaitingPickup;
 import static api.support.matchers.RequestMatchers.isOpenInTransit;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-import org.folio.circulation.support.http.client.IndividualResource;
+import api.support.http.IndividualResource;
 import org.junit.Test;
 
 import api.support.APITests;
 import api.support.builders.ItemBuilder;
 import api.support.builders.RequestBuilder;
-import api.support.http.InventoryItemResource;
+import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 
 public class CheckInWithdrawnItemTest extends APITests {
   @Test
   public void canCheckInAtHomeLocation() {
-    final InventoryItemResource item = itemsFixture
+    final ItemResource item = itemsFixture
       .basedUponSmallAngryPlanet(ItemBuilder::withdrawn);
 
     assertThat(item.getJson(), isWithdrawn());
@@ -32,7 +32,7 @@ public class CheckInWithdrawnItemTest extends APITests {
 
   @Test
   public void canCheckInAtNonHomeLocation() {
-    final InventoryItemResource item = itemsFixture
+    final ItemResource item = itemsFixture
       .basedUponSmallAngryPlanet(ItemBuilder::withdrawn);
 
     assertThat(item.getJson(), isWithdrawn());
@@ -44,7 +44,7 @@ public class CheckInWithdrawnItemTest extends APITests {
 
   @Test
   public void shouldStartRequestFulfillmentIfCheckedInAtPickupLocation() {
-    final InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+    final ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
 
     final IndividualResource request = requestsFixture.place(new RequestBuilder()
       .forItem(item)
@@ -65,7 +65,7 @@ public class CheckInWithdrawnItemTest extends APITests {
 
   @Test
   public void shouldStartRequestFulfillmentIfCheckedInAtNotPickupLocation() {
-    final InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+    final ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
 
     final IndividualResource request = requestsFixture.place(new RequestBuilder()
       .forItem(item)

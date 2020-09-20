@@ -27,9 +27,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class DueDateNotRealTimeScheduledNoticeHandler {
-
   public static DueDateNotRealTimeScheduledNoticeHandler using(Clients clients, DateTime systemTime) {
-
     return new DueDateNotRealTimeScheduledNoticeHandler(
       DueDateScheduledNoticeHandler.using(clients, systemTime),
       new LoanRepository(clients),
@@ -144,5 +142,4 @@ public class DueDateNotRealTimeScheduledNoticeHandler {
     }
     return future.thenApply(mapResult(v -> noticeGroup));
   }
-
 }

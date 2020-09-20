@@ -12,13 +12,13 @@ import static org.hamcrest.core.Is.is;
 import java.util.List;
 import java.util.UUID;
 
-import org.folio.circulation.support.http.client.IndividualResource;
+import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.junit.Test;
 
 import api.support.APITests;
 import api.support.builders.RequestBuilder;
-import api.support.http.InventoryItemResource;
+import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 
 public class RequestsAPILocationTests extends APITests {
@@ -30,7 +30,7 @@ public class RequestsAPILocationTests extends APITests {
     final IndividualResource mezzanineDisplayCase = locationsFixture.mezzanineDisplayCase();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
+    final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
       holdingBuilder -> holdingBuilder
         .withPermanentLocation(thirdFloor)
         .withTemporaryLocation(mezzanineDisplayCase),
@@ -82,7 +82,7 @@ public class RequestsAPILocationTests extends APITests {
     final IndividualResource mezzanineDisplayCase = locationsFixture.mezzanineDisplayCase();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
+    final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
       holdingBuilder -> holdingBuilder
         .withPermanentLocation(secondFloorEconomics),
       itemBuilder -> itemBuilder
@@ -97,7 +97,7 @@ public class RequestsAPILocationTests extends APITests {
       .forItem(smallAngryPlanet)
       .by(usersFixture.rebecca()));
 
-    final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire(
+    final ItemResource temeraire = itemsFixture.basedUponTemeraire(
       holdingBuilder -> holdingBuilder
         .withPermanentLocation(mezzanineDisplayCase)
         .withNoTemporaryLocation(),

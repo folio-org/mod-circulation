@@ -36,7 +36,7 @@ import static org.joda.time.DateTime.parse;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.folio.circulation.support.http.client.IndividualResource;
+import api.support.http.IndividualResource;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Before;

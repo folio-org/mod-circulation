@@ -8,7 +8,7 @@ import static api.support.matchers.LoanMatchers.isOpen;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getUUIDProperty;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-import org.folio.circulation.support.http.client.IndividualResource;
+import api.support.http.IndividualResource;
 import org.junit.Before;
 import org.junit.Test;
 

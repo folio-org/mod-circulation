@@ -12,7 +12,7 @@ import java.util.UUID;
 
 import org.folio.circulation.domain.representations.ItemProperties;
 import org.folio.circulation.domain.representations.LoanProperties;
-import org.folio.circulation.support.http.client.IndividualResource;
+import api.support.http.IndividualResource;
 import org.hamcrest.Matcher;
 
 import io.vertx.core.json.JsonObject;

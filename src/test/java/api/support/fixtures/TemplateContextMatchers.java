@@ -20,10 +20,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.folio.circulation.domain.Account;
 import org.folio.circulation.domain.FeeFineAction;
-import org.folio.circulation.support.http.client.IndividualResource;
+import api.support.http.IndividualResource;
 import org.hamcrest.Matcher;
 
-import api.support.http.InventoryItemResource;
+import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 
 public class TemplateContextMatchers {
@@ -52,7 +52,8 @@ public class TemplateContextMatchers {
     return tokenMatchers;
   }
 
-  public static Map<String, Matcher<String>> getItemContextMatchers(InventoryItemResource itemResource,
+  public static Map<String, Matcher<String>> getItemContextMatchers(
+          ItemResource itemResource,
                                                                     boolean applyHoldingRecord) {
     JsonObject item = itemResource.getJson();
     String callNumber = findRepresentationCallNumbers(itemResource, applyHoldingRecord, "callNumber");
@@ -76,7 +77,7 @@ public class TemplateContextMatchers {
     return tokenMatchers;
   }
 
-  private static String findRepresentationCallNumbers(InventoryItemResource itemResource,
+  private static String findRepresentationCallNumbers(ItemResource itemResource,
                                                       boolean applyHoldingRecord,
                                                       String propertyName) {
     String itemPropertyName = String
@@ -91,7 +92,7 @@ public class TemplateContextMatchers {
       itemResource.getHoldingsRecord().getJson().getString(propertyName));
   }
 
-  private static String findRepresentationCopyNumber(InventoryItemResource itemResource,
+  private static String findRepresentationCopyNumber(ItemResource itemResource,
                                                      boolean applyHoldingRecord) {
     if (applyHoldingRecord) {
       return itemResource.getJson().containsKey("copyNumber")
@@ -102,7 +103,8 @@ public class TemplateContextMatchers {
     return findItemRepresentationCopyNumber(itemResource);
   }
 
-  private static String findHoldingRepresentationCopyNumber(InventoryItemResource itemResource) {
+  private static String findHoldingRepresentationCopyNumber(
+          ItemResource itemResource) {
     JsonObject holdingRepresentation = itemResource.getHoldingsRecord().getJson();
     String copyNumber = holdingRepresentation.getString("copyNumber");
     return StringUtils.isNotBlank(copyNumber)
@@ -110,7 +112,8 @@ public class TemplateContextMatchers {
       : StringUtils.EMPTY;
   }
 
-  private static String findItemRepresentationCopyNumber(InventoryItemResource itemResource) {
+  private static String findItemRepresentationCopyNumber(
+          ItemResource itemResource) {
     String copyNumber = itemResource.getResponse().getJson().getString("copyNumber");
     return StringUtils.isNotBlank(copyNumber)
       ? copyNumber
@@ -197,7 +200,7 @@ public class TemplateContextMatchers {
   @SuppressWarnings("unchecked")
   public static Matcher<? super String> getMultipleLoansContextMatcher(
     IndividualResource user,
-    Collection<Pair<IndividualResource, InventoryItemResource>> loansWithItems,
+    Collection<Pair<IndividualResource, ItemResource>> loansWithItems,
     Matcher<? super String> loanPolicyMatcher) {
 
     Matcher<? super String> userContextMatcher = toStringMatcher(getUserContextMatchers(user));
@@ -212,7 +215,7 @@ public class TemplateContextMatchers {
   }
 
   private static Matcher<? super String> getLoanWithItemContextMatcher(
-    IndividualResource loan, InventoryItemResource item,
+    IndividualResource loan, ItemResource item,
     Matcher<? super String> loanPolicyMatcher) {
 
     Matcher<? super String> loanContextMatcher =

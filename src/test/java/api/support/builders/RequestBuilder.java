@@ -11,7 +11,7 @@ import static org.folio.circulation.support.json.JsonStringArrayPropertyFetcher.
 import java.util.List;
 import java.util.UUID;
 
-import org.folio.circulation.support.http.client.IndividualResource;
+import api.support.http.IndividualResource;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;

@@ -25,7 +25,6 @@ import java.util.stream.Stream;
 
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.policy.Period;
-import org.folio.circulation.support.http.client.IndividualResource;
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -40,7 +39,9 @@ import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.fixtures.ConfigurationExample;
 import api.support.fixtures.TemplateContextMatchers;
-import api.support.http.InventoryItemResource;
+import api.support.http.IndividualResource;
+import api.support.http.ItemResource;
+import api.support.http.UserResource;
 import io.vertx.core.json.JsonObject;
 
 public class DueDateScheduledNoticesProcessingTests extends APITests {
@@ -64,8 +65,8 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
 
   private final DateTime loanDate = new DateTime(2018, 3, 18, 11, 43, 54, DateTimeZone.UTC);
 
-  private InventoryItemResource item;
-  private IndividualResource borrower;
+  private ItemResource item;
+  private UserResource borrower;
   private IndividualResource loan;
   private DateTime dueDate;
 
@@ -320,7 +321,6 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
 
   @Test
   public void testNoticeIsDeletedIfReferencedUserDoesNotExist() {
-
     scheduledNoticesClient.deleteAll();
     int expectedNumberOfUnprocessedNotices = 0;
 

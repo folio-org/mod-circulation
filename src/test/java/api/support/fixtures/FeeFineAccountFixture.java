@@ -6,7 +6,7 @@ import static api.support.http.ResourceClient.forFeeFineActions;
 
 import java.util.UUID;
 
-import org.folio.circulation.support.http.client.IndividualResource;
+import api.support.http.IndividualResource;
 
 import api.support.builders.AccountBuilder;
 import api.support.builders.FeefineActionsBuilder;

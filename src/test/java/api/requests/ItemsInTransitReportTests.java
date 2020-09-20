@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.UUID;
 
 import org.folio.circulation.domain.ItemStatus;
-import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.json.JsonPropertyFetcher;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
@@ -28,7 +27,8 @@ import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.ItemBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.fixtures.ItemExamples;
-import api.support.http.InventoryItemResource;
+import api.support.http.IndividualResource;
+import api.support.http.ItemResource;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -81,7 +81,8 @@ public class ItemsInTransitReportTests extends APITests {
 
   @Test
   public void reportIncludesItemInTransit() {
-    final InventoryItemResource smallAngryPlanet = createSmallAngryPlanet();
+    final ItemResource smallAngryPlanet = createSmallAngryPlanet();
+
     final IndividualResource steve = usersFixture.steve();
     final UUID firstServicePointId = servicePointsFixture.cd1().getId();
     final UUID secondServicePointId = servicePointsFixture.cd2().getId();
@@ -111,8 +112,8 @@ public class ItemsInTransitReportTests extends APITests {
 
   @Test
   public void reportIncludesMultipleDifferentItemsInTransit() {
-    final InventoryItemResource smallAngryPlanet = createSmallAngryPlanet();
-    final InventoryItemResource nod = createNod();
+    final ItemResource smallAngryPlanet = createSmallAngryPlanet();
+    final ItemResource nod = createNod();
 
     final IndividualResource steve = usersFixture.steve();
     final IndividualResource rebecca = usersFixture.rebecca();
@@ -167,8 +168,9 @@ public class ItemsInTransitReportTests extends APITests {
 
   @Test
   public void reportExcludesItemsThatAreNotInTransit() {
-    final InventoryItemResource smallAngryPlanet = createSmallAngryPlanet();
-    final InventoryItemResource nod = createNod();
+    final ItemResource smallAngryPlanet = createSmallAngryPlanet();
+    final ItemResource nod = createNod();
+
     final DateTime checkInDate = new DateTime(2019, 8, 13, 5, 0, UTC);
     final DateTime requestDate = new DateTime(2019, 7, 5, 10, 0);
     final LocalDate requestExpirationDate = new LocalDate(2019, 7, 11);
@@ -201,8 +203,8 @@ public class ItemsInTransitReportTests extends APITests {
 
   @Test
   public void reportIncludesItemsInTransitToDifferentServicePoints() {
-    final InventoryItemResource smallAngryPlanet = createSmallAngryPlanet();
-    final InventoryItemResource nod = createNod();
+    final ItemResource smallAngryPlanet = createSmallAngryPlanet();
+    final ItemResource nod = createNod();
 
     final IndividualResource steve = usersFixture.steve();
     final IndividualResource rebecca = usersFixture.rebecca();
@@ -258,8 +260,8 @@ public class ItemsInTransitReportTests extends APITests {
 
   @Test
   public void reportIncludesItemsInTransitWithMoreThanOneOpenRequestInQueue() {
-    final InventoryItemResource smallAngryPlanet = createSmallAngryPlanet();
-    final InventoryItemResource nod = createNod();
+    final ItemResource smallAngryPlanet = createSmallAngryPlanet();
+    final ItemResource nod = createNod();
 
     final IndividualResource steve = usersFixture.steve();
     final IndividualResource rebecca = usersFixture.rebecca();
@@ -324,8 +326,9 @@ public class ItemsInTransitReportTests extends APITests {
 
   @Test
   public void reportIncludesItemsInTransitWithEmptyRequestQueue() {
-    final InventoryItemResource smallAngryPlanet = createSmallAngryPlanet();
-    final InventoryItemResource nod = createNod();
+    final ItemResource smallAngryPlanet = createSmallAngryPlanet();
+    final ItemResource nod = createNod();
+
     final UUID firsServicePointId = servicePointsFixture.cd1().getId();
     final UUID secondServicePointId = servicePointsFixture.cd2().getId();
 
@@ -369,13 +372,15 @@ public class ItemsInTransitReportTests extends APITests {
 
   @Test
   public void reportItemsInTransitSortedByCheckInServicePoint() {
-    final InventoryItemResource smallAngryPlanet = createSmallAngryPlanet();
-    final InventoryItemResource nod = createNod();
-    final InventoryItemResource smallAngryPlanetWithFourthCheckInServicePoint = itemsFixture
+    final ItemResource smallAngryPlanet = createSmallAngryPlanet();
+    final ItemResource nod = createNod();
+    final ItemResource smallAngryPlanetWithFourthCheckInServicePoint = itemsFixture
       .basedUponSmallAngryPlanet(createSmallAngryPlanetItemBuilder()
         .withBarcode("34"), itemsFixture.thirdFloorHoldings());
+
     final IndividualResource steve = usersFixture.steve();
     final IndividualResource rebecca = usersFixture.rebecca();
+
     final UUID firstServicePointId = servicePointsFixture.cd1().getId();
     final UUID secondServicePointId = servicePointsFixture.cd2().getId();
     final UUID fourthServicePointId = servicePointsFixture.cd4().getId();
@@ -447,7 +452,7 @@ public class ItemsInTransitReportTests extends APITests {
     final UUID forthServicePointLocationId = locationsFixture.fourthServicePoint().getId();
 
     for (int i = 0; i < 200; i++) {
-      InventoryItemResource item = createSmallAngryPlanetCopy(forthServicePointLocationId,
+      ItemResource item = createSmallAngryPlanetCopy(forthServicePointLocationId,
         Integer.toString(i));
 
       checkOutFixture.checkOutByBarcode(item);
@@ -463,16 +468,15 @@ public class ItemsInTransitReportTests extends APITests {
     assertThat(itemsInTransitReport.size(), is(200));
   }
 
-  private void createRequest(InventoryItemResource smallAngryPlanet,
-    IndividualResource steve, UUID secondServicePointId,
-    DateTime requestDate, LocalDate requestExpirationDate) {
+  private void createRequest(ItemResource item, IndividualResource steve,
+    UUID secondServicePointId, DateTime requestDate, LocalDate requestExpirationDate) {
 
     RequestBuilder.Tags tags = new RequestBuilder.Tags(Arrays.asList("tag1", "tag2"));
     RequestBuilder secondRequestBuilderOnItem = new RequestBuilder()
       .open()
       .hold()
       .withPickupServicePointId(secondServicePointId)
-      .forItem(smallAngryPlanet)
+      .forItem(item)
       .withTags(tags)
       .withRequestDate(requestDate)
       .withRequestExpiration(requestExpirationDate)
@@ -481,7 +485,7 @@ public class ItemsInTransitReportTests extends APITests {
     requestsClient.create(secondRequestBuilderOnItem);
   }
 
-  private void verifyItem(JsonObject itemJson, InventoryItemResource item,
+  private void verifyItem(JsonObject itemJson, ItemResource item,
     UUID secondServicePointId) {
 
     assertThat(itemJson.getString(BARCODE_KEY), is(item.getBarcode()));
@@ -582,7 +586,7 @@ public class ItemsInTransitReportTests extends APITests {
     assertThat(actualLastCheckIn.getJsonObject("servicePoint").getString(NAME), is(servicePointName));
   }
 
-  private InventoryItemResource createNod() {
+  private ItemResource createNod() {
     final ItemBuilder nodItemBuilder = ItemExamples.basedUponNod(
       materialTypesFixture.book().getId(),
       loanTypesFixture.canCirculate().getId())
@@ -593,7 +597,7 @@ public class ItemsInTransitReportTests extends APITests {
     return itemsFixture.basedUponNod(builder -> nodItemBuilder);
   }
 
-  private InventoryItemResource createSmallAngryPlanet() {
+  private ItemResource createSmallAngryPlanet() {
 
     final ItemBuilder smallAngryPlanetItemBuilder = createSmallAngryPlanetItemBuilder();
 
@@ -601,7 +605,7 @@ public class ItemsInTransitReportTests extends APITests {
       itemsFixture.thirdFloorHoldings());
   }
 
-  private InventoryItemResource createSmallAngryPlanetCopy(UUID locationId, String barcode) {
+  private ItemResource createSmallAngryPlanetCopy(UUID locationId, String barcode) {
 
     final ItemBuilder smallAngryPlanetItemBuilder = new ItemBuilder()
       .withPermanentLoanType(materialTypesFixture.book().getId())

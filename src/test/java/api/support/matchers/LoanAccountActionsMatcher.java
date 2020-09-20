@@ -11,7 +11,7 @@ import static org.hamcrest.Matchers.allOf;
 import java.util.UUID;
 import java.util.function.Function;
 
-import org.folio.circulation.support.http.client.IndividualResource;
+import api.support.http.IndividualResource;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeDiagnosingMatcher;

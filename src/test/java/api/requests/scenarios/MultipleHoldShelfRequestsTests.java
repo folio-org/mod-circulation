@@ -9,14 +9,9 @@ import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static org.hamcrest.CoreMatchers.allOf;
-import static org.hamcrest.Matchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 
-import java.net.MalformedURLException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
-
-import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -24,19 +19,19 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import api.support.APITests;
+import api.support.http.IndividualResource;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
+import lombok.val;
 
 @RunWith(JUnitParamsRunner.class)
 public class MultipleHoldShelfRequestsTests extends APITests {
-
   @Test
   public void statusOfOldestRequestChangesToAwaitingPickupWhenItemCheckedIn() {
-
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    IndividualResource james = usersFixture.james();
-    IndividualResource jessica = usersFixture.jessica();
-    IndividualResource steve = usersFixture.steve();
+    val james = usersFixture.james();
+    val jessica = usersFixture.jessica();
+    val steve = usersFixture.steve();
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
@@ -67,13 +62,12 @@ public class MultipleHoldShelfRequestsTests extends APITests {
     "Recall|Checked out"
   })
   public void statusOfOldestHoldAndRecallRequestsChangeToFulfilledWhenItemCheckedOutToRequester(
-    String requestType,
-    String itemStatus) {
+    String requestType, String itemStatus) {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    IndividualResource james = usersFixture.james();
-    IndividualResource jessica = usersFixture.jessica();
-    IndividualResource steve = usersFixture.steve();
+    val james = usersFixture.james();
+    val jessica = usersFixture.jessica();
+    val steve = usersFixture.steve();
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
@@ -101,11 +95,10 @@ public class MultipleHoldShelfRequestsTests extends APITests {
 
   @Test
   public void checkingInLoanThatFulfilsRequestShouldMakeItemAvailableForPickupToNextRequester() {
-
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    IndividualResource james = usersFixture.james();
-    IndividualResource jessica = usersFixture.jessica();
-    IndividualResource steve = usersFixture.steve();
+    val james = usersFixture.james();
+    val jessica = usersFixture.jessica();
+    val steve = usersFixture.steve();
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
@@ -136,12 +129,11 @@ public class MultipleHoldShelfRequestsTests extends APITests {
 
   @Test
   public void itemCannotBeCheckedOutToOtherPatronWhenOldestRequestIsAwaitingPickup() {
-
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    IndividualResource james = usersFixture.james();
-    IndividualResource jessica = usersFixture.jessica();
-    IndividualResource steve = usersFixture.steve();
-    IndividualResource rebecca = usersFixture.rebecca();
+    val james = usersFixture.james();
+    val jessica = usersFixture.jessica();
+    val steve = usersFixture.steve();
+    val rebecca = usersFixture.rebecca();
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
@@ -176,11 +168,10 @@ public class MultipleHoldShelfRequestsTests extends APITests {
 
   @Test
   public void itemCannotBeCheckedOutToOtherRequesterWhenOldestRequestIsAwaitingPickup() {
-
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    IndividualResource james = usersFixture.james();
-    IndividualResource jessica = usersFixture.jessica();
-    IndividualResource steve = usersFixture.steve();
+    val james = usersFixture.james();
+    val jessica = usersFixture.jessica();
+    val steve = usersFixture.steve();
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 

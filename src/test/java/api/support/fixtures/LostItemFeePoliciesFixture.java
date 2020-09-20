@@ -7,7 +7,7 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty
 import java.util.UUID;
 
 import org.folio.circulation.domain.policy.Period;
-import org.folio.circulation.support.http.client.IndividualResource;
+import api.support.http.IndividualResource;
 
 import api.support.builders.LostItemFeePolicyBuilder;
 
