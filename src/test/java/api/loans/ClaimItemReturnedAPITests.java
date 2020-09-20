@@ -21,7 +21,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import org.awaitility.Awaitility;
-import org.folio.circulation.support.http.client.IndividualResource;
+import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.junit.Before;
@@ -30,11 +30,11 @@ import org.junit.Test;
 import api.support.APITests;
 import api.support.builders.ClaimItemReturnedRequestBuilder;
 import api.support.fakes.FakePubSub;
-import api.support.http.InventoryItemResource;
+import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 
 public class ClaimItemReturnedAPITests extends APITests {
-  private InventoryItemResource item;
+  private ItemResource item;
   private IndividualResource loan;
   private String loanId;
 

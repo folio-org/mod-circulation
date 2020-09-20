@@ -1,6 +1,6 @@
 package api.support.fixtures.policies;
 
-import org.folio.circulation.support.http.client.IndividualResource;
+import api.support.http.IndividualResource;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

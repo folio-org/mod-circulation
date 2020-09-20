@@ -1,7 +1,7 @@
 package api.support.builders;
 
 import io.vertx.core.json.JsonObject;
-import org.folio.circulation.support.http.client.IndividualResource;
+import api.support.http.IndividualResource;
 
 public class RenewByIdRequestBuilder extends JsonBuilder implements Builder {
   private final String itemId;

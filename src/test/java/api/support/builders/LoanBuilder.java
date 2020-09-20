@@ -7,7 +7,7 @@ import java.util.UUID;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Policies;
 import org.folio.circulation.domain.policy.LoanPolicy;
-import org.folio.circulation.support.http.client.IndividualResource;
+import api.support.http.IndividualResource;
 import org.joda.time.DateTime;
 import org.joda.time.Period;
 

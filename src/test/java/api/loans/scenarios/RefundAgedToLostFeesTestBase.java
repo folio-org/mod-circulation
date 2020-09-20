@@ -21,7 +21,7 @@ import static org.hamcrest.Matchers.allOf;
 import static org.joda.time.DateTime.now;
 import static org.joda.time.DateTimeZone.UTC;
 
-import org.folio.circulation.support.http.client.IndividualResource;
+import api.support.http.IndividualResource;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;

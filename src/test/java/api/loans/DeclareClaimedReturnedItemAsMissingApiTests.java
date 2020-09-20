@@ -23,13 +23,13 @@ import org.junit.Test;
 import api.support.APITests;
 import api.support.builders.ClaimItemReturnedRequestBuilder;
 import api.support.builders.DeclareClaimedReturnedItemAsMissingRequestBuilder;
-import api.support.http.InventoryItemResource;
+import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 
 public class DeclareClaimedReturnedItemAsMissingApiTests extends APITests {
   private static final String TESTING_COMMENT = "testing";
 
-  private InventoryItemResource item;
+  private ItemResource item;
   private String loanId;
 
   @Before

@@ -8,13 +8,13 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import java.util.List;
 import java.util.UUID;
 
-import org.folio.circulation.support.http.client.IndividualResource;
+import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.junit.Test;
 
 import api.support.APITests;
 import api.support.builders.RequestBuilder;
-import api.support.http.InventoryItemResource;
+import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 
 public class RequestsAPIRelatedRecordsTests extends APITests {
@@ -24,7 +24,7 @@ public class RequestsAPIRelatedRecordsTests extends APITests {
   @Test
   public void holdingIdAndInstanceIdIncludedWhenHoldingAndInstanceAreAvailable() {
 
-    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet);
@@ -74,11 +74,11 @@ public class RequestsAPIRelatedRecordsTests extends APITests {
   @Test
   public void checkRelatedRecordsForMultipleRequests() {
 
-    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
+    final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
       itemBuilder -> itemBuilder.withCopyNumber(TWO_COPY_NUMBER)
     );
 
-    final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
+    final ItemResource temeraire = itemsFixture.basedUponTemeraire();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet);

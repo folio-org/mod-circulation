@@ -2,7 +2,7 @@ package api.support.fixtures;
 
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 
-import org.folio.circulation.support.http.client.IndividualResource;
+import api.support.http.IndividualResource;
 
 import api.support.builders.NoticePolicyBuilder;
 import api.support.http.ResourceClient;

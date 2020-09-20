@@ -31,7 +31,6 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import org.awaitility.Awaitility;
-import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matcher;
@@ -49,9 +48,11 @@ import api.support.builders.RequestBuilder;
 import api.support.builders.UserBuilder;
 import api.support.fakes.FakePubSub;
 import api.support.fixtures.TemplateContextMatchers;
-import api.support.http.InventoryItemResource;
+import api.support.http.IndividualResource;
+import api.support.http.ItemResource;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import lombok.val;
 
 public class RequestsAPIUpdatingTests extends APITests {
 
@@ -60,7 +61,7 @@ public class RequestsAPIUpdatingTests extends APITests {
   @Test
   public void canReplaceAnExistingRequest() {
 
-    final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
+    final ItemResource temeraire = itemsFixture.basedUponTemeraire();
 
     checkOutFixture.checkOutByBarcode(temeraire);
 
@@ -147,7 +148,7 @@ public class RequestsAPIUpdatingTests extends APITests {
   @Test
   public void canReplaceAnExistingRequestWithDeliveryAddress() {
 
-    final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
+    final ItemResource temeraire = itemsFixture.basedUponTemeraire();
 
     checkOutFixture.checkOutByBarcode(temeraire);
 
@@ -208,7 +209,7 @@ public class RequestsAPIUpdatingTests extends APITests {
   @Test
   public void replacingAnExistingRequestRemovesItemInformationWhenItemDoesNotExist() {
 
-    final InventoryItemResource nod = itemsFixture.basedUponNod();
+    final ItemResource nod = itemsFixture.basedUponNod();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     checkOutFixture.checkOutByBarcode(nod);
@@ -242,12 +243,12 @@ public class RequestsAPIUpdatingTests extends APITests {
   @Test
   public void replacingAnExistingRequestRemovesRequesterInformationWhenUserDoesNotExist() {
 
-    final InventoryItemResource nod = itemsFixture.basedUponNod();
+    final ItemResource nod = itemsFixture.basedUponNod();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     checkOutFixture.checkOutByBarcode(nod);
 
-    IndividualResource requester = usersFixture.steve();
+    val requester = usersFixture.steve();
 
     IndividualResource createdRequest = requestsClient.create(
       new RequestBuilder()
@@ -273,7 +274,7 @@ public class RequestsAPIUpdatingTests extends APITests {
   @Test
   public void replacingAnExistingRequestRemovesRequesterBarcodeWhenNonePresent() {
 
-    final InventoryItemResource nod = itemsFixture.basedUponNod();
+    final ItemResource nod = itemsFixture.basedUponNod();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     checkOutFixture.checkOutByBarcode(nod);
@@ -320,7 +321,7 @@ public class RequestsAPIUpdatingTests extends APITests {
   @Test
   public void replacingAnExistingRequestIncludesRequesterMiddleNameWhenPresent() {
 
-    final InventoryItemResource nod = itemsFixture.basedUponNod();
+    final ItemResource nod = itemsFixture.basedUponNod();
 
     checkOutFixture.checkOutByBarcode(nod);
 
@@ -369,7 +370,7 @@ public class RequestsAPIUpdatingTests extends APITests {
   @Test
   public void replacingAnExistingRequestRemovesItemBarcodeWhenNonePresent() {
 
-    final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
+    final ItemResource temeraire = itemsFixture.basedUponTemeraire();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     checkOutFixture.checkOutByBarcode(temeraire);
@@ -409,7 +410,7 @@ public class RequestsAPIUpdatingTests extends APITests {
   @Test
   public void cannotReplaceAnExistingRequestWithServicePointThatIsNotForPickup() {
 
-    final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
+    final ItemResource temeraire = itemsFixture.basedUponTemeraire();
 
     checkOutFixture.checkOutByBarcode(temeraire);
 
@@ -435,7 +436,7 @@ public class RequestsAPIUpdatingTests extends APITests {
   @Test
   public void cannotReplaceAnExistingRequestWithUnknownPickupLocation() {
 
-    final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
+    final ItemResource temeraire = itemsFixture.basedUponTemeraire();
 
     checkOutFixture.checkOutByBarcode(temeraire);
 
@@ -480,7 +481,7 @@ public class RequestsAPIUpdatingTests extends APITests {
       overdueFinePoliciesFixture.facultyStandard().getId(),
       lostItemFeePoliciesFixture.facultyStandard().getId());
 
-    final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
+    final ItemResource temeraire = itemsFixture.basedUponTemeraire();
     final IndividualResource requester = usersFixture.steve();
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
     final IndividualResource exampleServicePoint = servicePointsFixture.cd1();
@@ -538,7 +539,7 @@ public class RequestsAPIUpdatingTests extends APITests {
       overdueFinePoliciesFixture.facultyStandard().getId(),
       lostItemFeePoliciesFixture.facultyStandard().getId());
 
-    final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
+    final ItemResource temeraire = itemsFixture.basedUponTemeraire();
     final IndividualResource requester = usersFixture.steve();
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
     final IndividualResource exampleServicePoint = servicePointsFixture.cd1();
@@ -581,7 +582,7 @@ public class RequestsAPIUpdatingTests extends APITests {
   @Test
   public void replacedRequestShouldOnlyIncludeStoredPropertiesInStorage() {
 
-    final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
+    final ItemResource temeraire = itemsFixture.basedUponTemeraire();
 
     checkOutFixture.checkOutByBarcode(temeraire);
 
@@ -647,7 +648,7 @@ public class RequestsAPIUpdatingTests extends APITests {
   @Test
   public void canReplaceRequestWithAnInactiveUser() {
 
-    final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
+    final ItemResource temeraire = itemsFixture.basedUponTemeraire();
 
     checkOutFixture.checkOutByBarcode(temeraire);
 
@@ -686,7 +687,7 @@ public class RequestsAPIUpdatingTests extends APITests {
     final UUID isbnIdentifierId = identifierTypesFixture.isbn().getId();
     final String isbnValue = "9780866989732";
 
-    final InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet(
+    final ItemResource item = itemsFixture.basedUponSmallAngryPlanet(
       identity(),
       instanceBuilder -> instanceBuilder.withId(instanceId),
       identity());
@@ -722,7 +723,7 @@ public class RequestsAPIUpdatingTests extends APITests {
   @Test
   public void dueDateChangedEventIsPublished() {
 
-    final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
+    final ItemResource temeraire = itemsFixture.basedUponTemeraire();
 
     IndividualResource loan = checkOutFixture.checkOutByBarcode(temeraire);
 

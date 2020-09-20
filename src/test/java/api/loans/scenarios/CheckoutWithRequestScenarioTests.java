@@ -10,7 +10,7 @@ import static org.joda.time.DateTimeConstants.SEPTEMBER;
 
 import java.util.UUID;
 
-import org.folio.circulation.support.http.client.IndividualResource;
+import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -21,14 +21,14 @@ import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.FixedDueDateSchedulesBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.RequestBuilder;
-import api.support.http.InventoryItemResource;
+import api.support.http.ItemResource;
 
 public class CheckoutWithRequestScenarioTests extends APITests {
 
   @Test
   public void canCheckoutPagedItem() {
 
-    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource charlotte = usersFixture.charlotte();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
@@ -49,7 +49,7 @@ public class CheckoutWithRequestScenarioTests extends APITests {
   @Test
   public void checkingOutWithHoldRequestAppliesAlternatePeriod() {
 
-    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource charlotte = usersFixture.charlotte();
     final IndividualResource james = usersFixture.james();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -103,7 +103,7 @@ public class CheckoutWithRequestScenarioTests extends APITests {
   @Test
   public void checkingOutWithHoldRequestAppliesAlternatePeriodAndScheduledForFixedPolicy() {
 
-    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource charlotte = usersFixture.charlotte();
     final IndividualResource james = usersFixture.james();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();

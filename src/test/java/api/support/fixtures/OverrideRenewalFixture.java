@@ -4,7 +4,7 @@ import static api.support.http.InterfaceUrls.overrideRenewalByBarcodeUrl;
 
 import java.util.UUID;
 
-import org.folio.circulation.support.http.client.IndividualResource;
+import api.support.http.IndividualResource;
 
 import api.support.RestAssuredClient;
 import api.support.dto.Item;
