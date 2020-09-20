@@ -245,7 +245,8 @@ public class CheckInContext {
   public JsonObject asJson() {
     JsonObject json = new JsonObject();
     write(json, "item", JsonObject.mapFrom(item));
-    write(json, "loan", loan.asJson());
+    write(json, "loan", loan.asJsonWithUserAndProxy());
+    write(json, "checkInRequest", JsonObject.mapFrom(checkInRequest));
     write(json, "requestQueue", JsonObject.mapFrom(requestQueue));
     write(json, "checkInServicePoint", JsonObject.mapFrom(checkInServicePoint));
     if (Objects.nonNull(highestPriorityFulfillableRequest)) {

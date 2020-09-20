@@ -29,6 +29,12 @@
       "description": "Due date for a loan has been changed",
       "eventTTL": 1,
       "signed": false
+    },
+    {
+      "eventType": "LOG_RECORD_EVENT",
+      "description": "Created log record event",
+      "eventTTL": 1,
+      "signed": false
     }
   ],
   "subscriptions": [

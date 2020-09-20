@@ -56,7 +56,7 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
 
   public JsonObject asJson() {
     JsonObject json = new JsonObject();
-    write(json, "loan", loan.asJson());
+    write(json, "loan", loan.asJsonWithUserAndProxy());
     write(json, "requestQueue", JsonObject.mapFrom(requestQueue));
     write(json, "timeZone", JsonObject.mapFrom(timeZone));
     return json;

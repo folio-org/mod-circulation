@@ -5,9 +5,7 @@ import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -15,11 +13,11 @@ import java.util.stream.Collectors;
 public class RequestQueue {
 
   private List<Request> requests;
-  private final Map<Request, Request> updatedRequests;
+  private final List<UpdatedRequestPair> updatedRequests;
 
   public RequestQueue(Collection<Request> requests) {
     this.requests = new ArrayList<>(requests);
-    updatedRequests = new HashMap<>();
+    updatedRequests = new ArrayList<>();
 
     // Ordering requests by position, so we can add and remove them
     // without sorting and just re-sequence from 1 to n
@@ -68,7 +66,7 @@ public class RequestQueue {
   }
 
   public void update(Request original, Request updated) {
-    updatedRequests.put(original, updated);
+    updatedRequests.add(new UpdatedRequestPair(original, updated));
   }
 
   public void remove(Request request) {
@@ -106,7 +104,7 @@ public class RequestQueue {
     return requests;
   }
 
-  public Map<Request, Request> getUpdatedRequests() {
+  public List<UpdatedRequestPair> getUpdatedRequests() {
     return updatedRequests;
   }
 
