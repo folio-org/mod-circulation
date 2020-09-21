@@ -16,11 +16,13 @@ import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static java.lang.Boolean.TRUE;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.containsInRelativeOrder;
 import static org.hamcrest.Matchers.iterableWithSize;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.policy.Period;
@@ -54,16 +56,22 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
   @SuppressWarnings("unchecked")
   public void shouldChargeItemFee() {
     final double expectedSetCost = 12.88;
+    final IndividualResource permanentLocation = locationsFixture.fourthFloor();
+    final UUID ownerServicePoint = servicePointsFixture.cd6().getId();
+    final String expectedOwnerId = feeFineOwnerFixture.ownerForServicePoint(ownerServicePoint)
+    .getId().toString();
 
     val policy = lostItemFeePoliciesFixture
       .ageToLostAfterOneMinutePolicy()
       .withSetCost(expectedSetCost)
       .doNotChargeProcessingFeeWhenAgedToLost();
 
-    val result = ageToLostFixture.createLoanAgeToLostAndChargeFees(policy);
+    val result = ageToLostFixture.createLoanAgeToLostAndChargeFees(
+      builder -> builder.withPermanentLocation(permanentLocation), policy);
 
     assertThat(result.getLoan().getJson(), isLostItemHasBeenBilled());
-    assertThat(result.getLoan(), hasLostItemFee(isOpen(expectedSetCost)));
+    assertThat(result.getLoan(), hasLostItemFee(allOf(isOpen(expectedSetCost),
+      hasJsonPath("ownerId", expectedOwnerId))));
     assertThat(result.getLoan(), hasLostItemFeeCreatedBySystemAction());
 
     assertThat(result.getLoan(), hasLoanHistory(containsInRelativeOrder(
@@ -284,7 +292,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
 
       val item = itemsFixture.basedUponNod(itemBuilder -> itemBuilder
         .withRandomBarcode()
-        .withTemporaryLocation(location.getId()));
+        .withPermanentLocation(location.getId()));
 
       val setCostFee = 10.0 + itemIndex;
       val policyBuilder = lostItemFeePoliciesFixture.ageToLostAfterOneMinutePolicy()

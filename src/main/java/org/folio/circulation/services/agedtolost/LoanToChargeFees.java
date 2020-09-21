@@ -40,7 +40,7 @@ final class LoanToChargeFees {
   }
 
   String getOwnerServicePointId() {
-    return loan.getItem().getLocation().getPrimaryServicePointId().toString();
+    return loan.getItem().getPermanentLocation().getPrimaryServicePointId().toString();
   }
 
   FeeFine getLostItemFeeType() {

@@ -14,10 +14,12 @@ import static org.joda.time.DateTime.now;
 import java.time.Clock;
 import java.time.ZoneOffset;
 import java.util.UUID;
+import java.util.function.UnaryOperator;
 
 import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 
+import api.support.builders.HoldingBuilder;
 import api.support.builders.ItemBuilder;
 import api.support.builders.LostItemFeePolicyBuilder;
 import api.support.fixtures.policies.PoliciesActivationFixture;
@@ -50,15 +52,18 @@ public final class AgeToLostFixture {
   }
 
   public AgeToLostResult createAgedToLostLoan() {
-    return createAgedToLostLoan(PoliciesToActivate.builder()
+    return createAgedToLostLoan(UnaryOperator.identity(), PoliciesToActivate.builder()
     .lostItemPolicy(lostItemFeePoliciesFixture.ageToLostAfterOneMinute()));
   }
 
-  public AgeToLostResult createAgedToLostLoan(PoliciesToActivate.PoliciesToActivateBuilder policiesToUse) {
+  public AgeToLostResult createAgedToLostLoan(UnaryOperator<HoldingBuilder> holdingsBuilder,
+    PoliciesToActivate.PoliciesToActivateBuilder policiesToUse) {
+
     policiesActivation.use(policiesToUse);
 
     val user = usersFixture.james();
-    val item = itemsFixture.basedUponNod(ItemBuilder::withRandomBarcode);
+    val item = itemsFixture.basedUponSmallAngryPlanet(holdingsBuilder,
+      ItemBuilder::withRandomBarcode);
     val loan = checkOutFixture.checkOutByBarcode(item, user);
 
     ageToLost();
@@ -74,14 +79,20 @@ public final class AgeToLostFixture {
   }
 
   public AgeToLostResult createLoanAgeToLostAndChargeFees(LostItemFeePolicyBuilder builder) {
-    return createLoanAgeToLostAndChargeFees(PoliciesToActivate.builder()
+    return createLoanAgeToLostAndChargeFees(UnaryOperator.identity(), builder);
+  }
+
+  public AgeToLostResult createLoanAgeToLostAndChargeFees(
+    UnaryOperator<HoldingBuilder> holdingsBuilder, LostItemFeePolicyBuilder builder) {
+
+    return createLoanAgeToLostAndChargeFees(holdingsBuilder, PoliciesToActivate.builder()
       .lostItemPolicy(lostItemFeePoliciesFixture.create(builder)));
   }
 
-  private AgeToLostResult createLoanAgeToLostAndChargeFees(
+  private AgeToLostResult createLoanAgeToLostAndChargeFees(UnaryOperator<HoldingBuilder> builder,
     PoliciesToActivate.PoliciesToActivateBuilder policiesToUse) {
 
-    final AgeToLostResult result = createAgedToLostLoan(policiesToUse);
+    final AgeToLostResult result = createAgedToLostLoan(builder, policiesToUse);
 
     chargeFees();
 

@@ -10,6 +10,7 @@ import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 import static org.folio.circulation.support.fetching.MultipleCqlIndexValuesCriteria.byIndex;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
+import static org.folio.circulation.support.utils.CollectionUtil.map;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
@@ -20,6 +21,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
@@ -154,17 +156,21 @@ public class ItemRepository {
   private CompletableFuture<Result<Collection<Item>>> fetchLocations(
     Result<Collection<Item>> result) {
 
-    if(fetchLocation) {
-      return result.after(items ->
-        locationRepository.getLocations(items)
-          .thenApply(r -> r.map(locations -> items.stream()
-              .map(item -> item.withLocation(locations
-                .getOrDefault(item.getLocationId(), null)))
-              .collect(Collectors.toList()))));
-    }
-    else {
+    if (fetchLocation) {
+      return result.after(items -> locationRepository.getAllItemLocations(items)
+        .thenApply(r -> r.map(locations -> map(items, populateItemLocations(locations)))));
+    } else {
       return completedFuture(result);
     }
+  }
+
+  private Function<Item, Item> populateItemLocations(Map<String, Location> locations) {
+    return item -> {
+      final Location permLocation = locations.get(item.getPermanentLocationId());
+      final Location location = locations.get(item.getLocationId());
+
+      return item.withLocation(location).withPermanentLocation(permLocation);
+    };
   }
 
   private CompletableFuture<Result<Collection<Item>>> fetchMaterialTypes(

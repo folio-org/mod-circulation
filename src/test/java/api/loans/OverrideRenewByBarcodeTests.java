@@ -2,6 +2,7 @@ package api.loans;
 
 import static api.support.builders.FixedDueDateSchedule.forDay;
 import static api.support.builders.FixedDueDateSchedule.wholeMonth;
+import static api.support.matchers.ItemMatchers.isCheckedOut;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
@@ -496,6 +497,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     verifyRenewedLoan(result.getItem(), result.getUser(), renewedLoan);
 
     assertThat(renewedLoan, hasJsonPath("item.status.name", "Checked out"));
+    assertThat(itemsClient.get(result.getItem()).getJson(), isCheckedOut());
     assertThat(renewedLoan.getString("dueDate"),
       withinSecondsAfter(seconds(2), approximateRenewalDate));
   }
