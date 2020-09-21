@@ -49,6 +49,7 @@ public class Item {
   private final JsonObject loanTypeRepresentation;
   private final LastCheckIn lastCheckIn;
   private final CallNumberComponents callNumberComponents;
+  private final Location permanentLocation;
 
   private ServicePoint inTransitDestinationServicePoint;
   private boolean changed;
@@ -63,6 +64,7 @@ public class Item {
       null,
       LastCheckIn.fromItemJson(representation),
       CallNumberComponents.fromItemJson(representation),
+      null,
       null,
       false
     );
@@ -186,6 +188,10 @@ public class Item {
 
   public Location getLocation() {
     return location;
+  }
+
+  public Location getPermanentLocation() {
+    return permanentLocation;
   }
 
   public JsonObject getMaterialType() {
@@ -364,6 +370,7 @@ public class Item {
       this.loanTypeRepresentation,
       this.lastCheckIn,
       this.callNumberComponents,
+      this.permanentLocation,
       this.inTransitDestinationServicePoint,
       this.changed);
   }
@@ -379,6 +386,7 @@ public class Item {
       this.loanTypeRepresentation,
       this.lastCheckIn,
       this.callNumberComponents,
+      this.permanentLocation,
       this.inTransitDestinationServicePoint,
       this.changed);
   }
@@ -394,6 +402,7 @@ public class Item {
       this.loanTypeRepresentation,
       this.lastCheckIn,
       this.callNumberComponents,
+      this.permanentLocation,
       this.inTransitDestinationServicePoint,
       this.changed);
   }
@@ -409,6 +418,7 @@ public class Item {
       this.loanTypeRepresentation,
       this.lastCheckIn,
       this.callNumberComponents,
+      this.permanentLocation,
       this.inTransitDestinationServicePoint,
       this.changed);
   }
@@ -424,6 +434,7 @@ public class Item {
       this.loanTypeRepresentation,
       this.lastCheckIn,
       this.callNumberComponents,
+      this.permanentLocation,
       this.inTransitDestinationServicePoint,
       this.changed);
   }
@@ -439,6 +450,7 @@ public class Item {
       newLoanTypeRepresentation,
       this.lastCheckIn,
       this.callNumberComponents,
+      this.permanentLocation,
       this.inTransitDestinationServicePoint,
       this.changed);
   }
@@ -454,6 +466,23 @@ public class Item {
       this.loanTypeRepresentation,
       lastCheckIn,
       this.callNumberComponents,
+      this.permanentLocation,
+      this.inTransitDestinationServicePoint,
+      this.changed);
+  }
+
+  public Item withPermanentLocation(Location permanentLocation) {
+    return new Item(
+      this.itemRepresentation,
+      this.holdingRepresentation,
+      this.instanceRepresentation,
+      this.location,
+      this.materialTypeRepresentation,
+      this.primaryServicePoint,
+      this.loanTypeRepresentation,
+      this.lastCheckIn,
+      this.callNumberComponents,
+      permanentLocation,
       this.inTransitDestinationServicePoint,
       this.changed);
   }
