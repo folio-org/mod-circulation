@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import api.support.fakes.FakePubSub;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.notice.NoticeEventType;
@@ -47,6 +48,7 @@ public class MoveRequestPolicyTests extends APITests {
   @BeforeClass
   public static void setUpBeforeClass() {
     clock = Clock.fixed(Instant.now(), ZoneOffset.UTC);
+    FakePubSub.clearPublishedEvents();
   }
 
   @Before
