@@ -97,14 +97,6 @@ public class NoticeLogContext {
     return this;
   }
 
-  public String getUserBarcode() {
-    return userBarcode;
-  }
-
-  public String getUserId() {
-    return userId;
-  }
-
   public List<NoticeLogContextItem> getItems() {
     return items;
   }
@@ -113,40 +105,16 @@ public class NoticeLogContext {
     this.items = items;
   }
 
-  public void setDate(DateTime date) {
-    this.date = date;
-  }
-
-  public DateTime getDate() {
-    return date;
-  }
-
-  public String getServicePointId() {
-    return servicePointId;
-  }
-
   public void setServicePointId(String servicePointId) {
     this.servicePointId = servicePointId;
-  }
-
-  public String getTemplateId() {
-    return templateId;
   }
 
   public void setTemplateId(String templateId) {
     this.templateId = templateId;
   }
 
-  public String getTriggeringEvent() {
-    return triggeringEvent;
-  }
-
   public void setTriggeringEvent(String triggeringEvent) {
     this.triggeringEvent = triggeringEvent;
-  }
-
-  public String getNoticePolicyId() {
-    return noticePolicyId;
   }
 
   public void setNoticePolicyId(String noticePolicyId) {

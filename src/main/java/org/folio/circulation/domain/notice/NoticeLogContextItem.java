@@ -18,14 +18,11 @@ public class NoticeLogContextItem {
   private String feeFineId;
 
   public static NoticeLogContextItem from(Item item) {
-    if (Objects.nonNull(item)) {
-      return new NoticeLogContextItem()
-        .withId(item.getItemId())
-        .withBarcode(item.getBarcode())
-        .withInstanceId(item.getInstanceId())
-        .withHoldingId(item.getHoldingsRecordId());
-    }
-    return new NoticeLogContextItem();
+    return new NoticeLogContextItem()
+      .withId(item.getItemId())
+      .withBarcode(item.getBarcode())
+      .withInstanceId(item.getInstanceId())
+      .withHoldingId(item.getHoldingsRecordId());
   }
 
   public static NoticeLogContextItem from(Loan loan) {
@@ -63,40 +60,8 @@ public class NoticeLogContextItem {
     return this;
   }
 
-  public void setRequestId(String requestId) {
-    this.requestId = requestId;
-  }
-
   public void setFeeFineId(String feeFineId) {
     this.feeFineId = feeFineId;
-  }
-
-  public String getId() {
-    return id;
-  }
-
-  public String getBarcode() {
-    return barcode;
-  }
-
-  public String getInstanceId() {
-    return instanceId;
-  }
-
-  public String getHoldingId() {
-    return holdingId;
-  }
-
-  public String getLoanId() {
-    return loanId;
-  }
-
-  public String getRequestId() {
-    return requestId;
-  }
-
-  public String getFeeFineId() {
-    return feeFineId;
   }
 
   public JsonObject asJson() {
