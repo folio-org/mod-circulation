@@ -26,9 +26,6 @@ public class NoticeLogContext {
   private String triggeringEvent;
   private String noticePolicyId;
 
-  public NoticeLogContext() {
-  }
-
   public static NoticeLogContext from(Loan loan) {
     return new NoticeLogContext()
       .withUser(loan.getUser())
