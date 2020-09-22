@@ -1437,6 +1437,7 @@ public class RequestsAPICreationTests extends APITests {
     MatcherAssert.assertThat(sentNotices,
       hasItems(
         hasEmailNoticeProperties(requester.getId(), pageConfirmationTemplateId, noticeContextMatchers)));
+    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
   }
 
   @Test
@@ -1503,6 +1504,7 @@ public class RequestsAPICreationTests extends APITests {
     MatcherAssert.assertThat(sentNotices,
       hasItems(
         hasEmailNoticeProperties(requester.getId(), holdConfirmationTemplateId, noticeContextMatchers)));
+    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
   }
 
   @Test
@@ -1597,6 +1599,7 @@ public class RequestsAPICreationTests extends APITests {
           recallConfirmationContextMatchers),
         hasEmailNoticeProperties(loanOwner.getId(), recallToLoaneeTemplateId,
           recallNotificationContextMatchers)));
+    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
   }
 
   @Test
@@ -1657,6 +1660,7 @@ public class RequestsAPICreationTests extends APITests {
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
     assertThat("Recall notice to loan owner shouldn't be sent when due date hasn't been changed",
       sentNotices, Matchers.empty());
+    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
   }
 
   @Test

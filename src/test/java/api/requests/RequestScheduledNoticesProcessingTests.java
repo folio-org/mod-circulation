@@ -19,6 +19,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import api.support.fakes.FakePubSub;
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.IndividualResource;
@@ -52,6 +53,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
 
   @Before
   public void beforeEach() {
+    FakePubSub.clearPublishedEvents();
 
     ItemBuilder itemBuilder = ItemExamples.basedUponSmallAngryPlanet(
       materialTypesFixture.book().getId(), loanTypesFixture.canCirculate().getId());
@@ -109,6 +111,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
 
     List<JsonObject> notices = patronNoticesClient.getAll();
     assertThat(notices, hasSize(1));
+    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
     assertThat(notices.get(0), getTemplateContextMatcher(templateId, request));
   }
 
@@ -256,6 +259,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
     List<JsonObject> notices = patronNoticesClient.getAll();
 
     assertThat(notices, hasSize(1));
+    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
     assertThat(notices.get(0), getTemplateContextMatcher(templateId, request));
   }
 
@@ -299,6 +303,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
       .get(0).getString("nextRunTime"));
 
     assertThat(notices, hasSize(1));
+    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
     assertThat(nextRunTimeBeforeProcessing, is(nextRunTimeAfterProcessing.minusDays(1)));
     assertThat(notices.get(0), getTemplateContextMatcher(templateId, request));
   }
@@ -342,6 +347,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
     List<JsonObject> notices = patronNoticesClient.getAll();
 
     assertThat(notices, hasSize(1));
+    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
     assertThat(notices.get(0), getTemplateContextMatcher(templateId, requestsClient.get(request.getId())));
     assertThat(scheduledNoticesClient.getAll(), hasSize(0));
   }

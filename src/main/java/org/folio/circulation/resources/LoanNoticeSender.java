@@ -8,12 +8,14 @@ import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
+import org.folio.circulation.domain.notice.NoticeLogContext;
 import org.folio.circulation.domain.notice.NoticeEventType;
 import org.folio.circulation.domain.notice.PatronNoticeEvent;
 import org.folio.circulation.domain.notice.PatronNoticeEventBuilder;
 import org.folio.circulation.domain.notice.PatronNoticeService;
 import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
 import org.folio.circulation.resources.context.RenewalContext;
+import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
 
@@ -21,9 +23,9 @@ import io.vertx.core.json.JsonObject;
 
 public class LoanNoticeSender {
 
-  public static LoanNoticeSender using(Clients clients) {
+  public static LoanNoticeSender using(Clients clients, EventPublisher eventPublisher) {
     return new LoanNoticeSender(
-      PatronNoticeService.using(clients),
+      PatronNoticeService.using(clients, eventPublisher),
       new LoanPolicyRepository(clients));
   }
 
@@ -64,6 +66,7 @@ public class LoanNoticeSender {
       .withUser(loan.getUser())
       .withEventType(eventType)
       .withNoticeContext(noticeContext)
+      .withAuditLogRecord(NoticeLogContext.from(loan))
       .build();
 
     patronNoticeService.acceptNoticeEvent(noticeEvent);

@@ -740,6 +740,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     assertThat(sentNotices, hasItems(
       hasEmailNoticeProperties(steve.getId(), renewalTemplateId, noticeContextMatchers)));
+    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
   }
 
   private Matcher<ValidationError> hasUserRelatedParameter(IndividualResource user) {

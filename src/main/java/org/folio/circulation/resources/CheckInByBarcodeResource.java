@@ -39,15 +39,15 @@ public class CheckInByBarcodeResource extends Resource {
     final Result<CheckInByBarcodeRequest> checkInRequestResult
       = CheckInByBarcodeRequest.from(routingContext.getBodyAsJson());
 
-    final CheckInProcessAdapter processAdapter = CheckInProcessAdapter.newInstance(clients);
+    final EventPublisher eventPublisher = new EventPublisher(routingContext);
+
+    final CheckInProcessAdapter processAdapter = CheckInProcessAdapter.newInstance(clients, eventPublisher);
 
     final RequestScheduledNoticeService requestScheduledNoticeService =
       RequestScheduledNoticeService.using(clients);
 
     final PatronActionSessionService patronActionSessionService =
-      PatronActionSessionService.using(clients);
-
-    final EventPublisher eventPublisher = new EventPublisher(routingContext);
+      PatronActionSessionService.using(clients, eventPublisher);
 
     refuseWhenLoggedInUserNotPresent(context)
       .next(notUsed -> checkInRequestResult)

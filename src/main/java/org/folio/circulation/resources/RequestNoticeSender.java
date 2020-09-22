@@ -10,6 +10,7 @@ import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
+import org.folio.circulation.domain.notice.NoticeLogContext;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
@@ -19,6 +20,7 @@ import org.folio.circulation.domain.notice.PatronNoticeEvent;
 import org.folio.circulation.domain.notice.PatronNoticeEventBuilder;
 import org.folio.circulation.domain.notice.PatronNoticeService;
 import org.folio.circulation.domain.notice.TemplateContextUtil;
+import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
 
@@ -34,8 +36,8 @@ public class RequestNoticeSender {
     requestTypeToEventMap = Collections.unmodifiableMap(map);
   }
 
-  public static RequestNoticeSender using(Clients clients) {
-    return new RequestNoticeSender(PatronNoticeService.using(clients), RequestRepository.using(clients));
+  public static RequestNoticeSender using(Clients clients, EventPublisher eventPublisher) {
+    return new RequestNoticeSender(PatronNoticeService.using(clients, eventPublisher), RequestRepository.using(clients));
   }
 
   private final PatronNoticeService patronNoticeService;
@@ -60,6 +62,7 @@ public class RequestNoticeSender {
       .withUser(requester)
       .withEventType(eventType)
       .withNoticeContext(createRequestNoticeContext(request))
+      .withAuditLogRecord(NoticeLogContext.from(request))
       .build();
     patronNoticeService.acceptNoticeEvent(requestCreatedEvent);
 
@@ -106,6 +109,7 @@ public class RequestNoticeSender {
       .withUser(requester)
       .withEventType(NoticeEventType.REQUEST_CANCELLATION)
       .withNoticeContext(createRequestNoticeContext(request))
+      .withAuditLogRecord(NoticeLogContext.from(request))
       .build();
     patronNoticeService.acceptNoticeEvent(requestCancelledEvent);
 
@@ -118,6 +122,7 @@ public class RequestNoticeSender {
       .withUser(loan.getUser())
       .withEventType(NoticeEventType.ITEM_RECALLED)
       .withNoticeContext(TemplateContextUtil.createLoanNoticeContext(loan))
+      .withAuditLogRecord(NoticeLogContext.from(loan))
       .build();
     patronNoticeService.acceptNoticeEvent(itemRecalledEvent);
     return Result.succeeded(null);

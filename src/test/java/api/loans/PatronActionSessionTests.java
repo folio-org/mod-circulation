@@ -128,6 +128,7 @@ public class PatronActionSessionTests extends APITests {
 
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
     assertThat(sentNotices, hasSize(1));
+    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
 
     Matcher<? super String> multipleLoansToJamesContextMatcher = getMultipleLoansContextMatcher(james,
       Arrays.asList(Pair.of(nodToJamesLoan, nod), Pair.of(interestingTimesToJamesLoan, interestingTimes)),
@@ -151,6 +152,7 @@ public class PatronActionSessionTests extends APITests {
     TimeUnit.SECONDS.sleep(1);
     assertThat(patronSessionRecordsClient.getAll(), hasSize(1));
     assertThat(patronNoticesClient.getAll(), empty());
+    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
   }
 
   @Test
@@ -168,6 +170,7 @@ public class PatronActionSessionTests extends APITests {
     TimeUnit.SECONDS.sleep(1);
     assertThat(patronSessionRecordsClient.getAll(), hasSize(1));
     assertThat(patronNoticesClient.getAll(), empty());
+    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
   }
 
   @Test
@@ -224,6 +227,7 @@ public class PatronActionSessionTests extends APITests {
     assertThat(checkInSessions, Matchers.hasSize(1));
 
     assertThat(patronNoticesClient.getAll(), empty());
+    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
     endPatronSessionClient.endCheckInSession(steve.getId());
 
     //Wait until session records are deleted
@@ -232,6 +236,7 @@ public class PatronActionSessionTests extends APITests {
       .until(this::getCheckInSessions, empty());
 
     assertThat(patronNoticesClient.getAll(), hasSize(1));
+    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
   }
 
   private List<JsonObject> getCheckInSessions() {

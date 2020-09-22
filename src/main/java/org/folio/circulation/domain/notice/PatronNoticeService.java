@@ -22,24 +22,28 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.folio.circulation.domain.notice.schedule.ScheduledNoticeConfig;
 import org.folio.circulation.infrastructure.storage.notices.PatronNoticePolicyRepository;
 import org.folio.circulation.rules.AppliedRuleConditions;
+import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
 
 import io.vertx.core.json.JsonObject;
+import org.joda.time.DateTime;
 
 public class PatronNoticeService {
-  public static PatronNoticeService using(Clients clients) {
-    return new PatronNoticeService(new PatronNoticePolicyRepository(clients), clients);
+  public static PatronNoticeService using(Clients clients, EventPublisher eventPublisher) {
+    return new PatronNoticeService(new PatronNoticePolicyRepository(clients), clients, eventPublisher);
   }
 
   private PatronNoticePolicyRepository noticePolicyRepository;
   private CollectionResourceClient patronNoticeClient;
+  private EventPublisher eventPublisher;
 
-  public PatronNoticeService(PatronNoticePolicyRepository noticePolicyRepository, Clients clients) {
+  public PatronNoticeService(PatronNoticePolicyRepository noticePolicyRepository, Clients clients, EventPublisher eventPublisher) {
     this.noticePolicyRepository = noticePolicyRepository;
     this.patronNoticeClient = clients.patronNoticeClient();
+    this.eventPublisher = eventPublisher;
   }
 
   public CompletableFuture<Result<Void>> acceptNoticeEvent(PatronNoticeEvent event) {
@@ -48,7 +52,8 @@ public class PatronNoticeService {
   }
 
   public CompletableFuture<Result<Void>> acceptScheduledNoticeEvent(
-    ScheduledNoticeConfig noticeConfig, String recipientId, JsonObject context) {
+    ScheduledNoticeConfig noticeConfig, String recipientId, JsonObject context,
+    NoticeLogContext noticeLogContext) {
 
     PatronNotice patronNotice = new PatronNotice();
     patronNotice.setRecipientId(recipientId);
@@ -57,7 +62,8 @@ public class PatronNoticeService {
     patronNotice.setOutputFormat(noticeConfig.getFormat().getOutputFormat());
     patronNotice.setContext(context);
 
-    return sendNotice(patronNotice);
+    return sendNotice(patronNotice)
+      .thenCompose(r -> r.after(v -> publishAuditLogEvent(noticeLogContext)));
   }
 
   public CompletableFuture<Result<Void>> acceptMultipleNoticeEvent(
@@ -97,6 +103,12 @@ public class PatronNoticeService {
     NoticeEventGroupDefinition eventGroupDefinition = groupedEvent.getKey();
     List<PatronNoticeEvent> events = groupedEvent.getValue();
 
+    List<NoticeLogContext> logRecords = events.stream()
+      .map(PatronNoticeEvent::getAuditLogRecord)
+      .collect(Collectors.toList());
+    NoticeLogContext combinedNoticeLogContext = combineAuditLogRecords(logRecords);
+    combinedNoticeLogContext.setNoticePolicyId(groupedEvent.getKey().noticePolicyId);
+
     List<JsonObject> noticeContexts = events.stream()
       .map(PatronNoticeEvent::getNoticeContext)
       .collect(Collectors.toList());
@@ -106,12 +118,13 @@ public class PatronNoticeService {
     return noticePolicyRepository.lookupPolicy(
       eventGroupDefinition.noticePolicyId,
       new AppliedRuleConditions(false, false, false))
-      .thenCompose(r -> r.after(policy ->
-        applyNoticePolicy(policy, eventGroupDefinition, combinedContext)));
+      .thenCompose(r -> r.after(policy -> applyNoticePolicy(policy, eventGroupDefinition,
+        combinedContext, combinedNoticeLogContext)));
   }
 
   private CompletableFuture<Result<Void>> applyNoticePolicy(
-    PatronNoticePolicy policy, NoticeEventGroupDefinition eventGroupDefinition, JsonObject noticeContext) {
+    PatronNoticePolicy policy, NoticeEventGroupDefinition eventGroupDefinition,
+    JsonObject noticeContext, NoticeLogContext noticeLogContext) {
 
     Optional<NoticeConfiguration> matchingNoticeConfiguration =
       policy.lookupNoticeConfiguration(eventGroupDefinition.eventType);
@@ -120,8 +133,14 @@ public class PatronNoticeService {
       return completedFuture(succeeded(null));
     }
 
+    matchingNoticeConfiguration.ifPresent(config -> {
+      noticeLogContext.setTemplateId(config.getTemplateId());
+      noticeLogContext.setTriggeringEvent(config.getNoticeEventType().getRepresentation());
+    });
+
     return sendPatronNotice(matchingNoticeConfiguration.get(),
-      eventGroupDefinition.recipientId, noticeContext);
+      eventGroupDefinition.recipientId, noticeContext)
+      .thenCompose(r -> r.after(v -> publishAuditLogEvent(noticeLogContext)));
   }
 
   private CompletableFuture<Result<Void>> sendPatronNotice(
@@ -144,6 +163,19 @@ public class PatronNoticeService {
 
     return patronNoticeClient.post(body)
       .thenApply(responseInterpreter::flatMap);
+  }
+
+  private NoticeLogContext combineAuditLogRecords(List<NoticeLogContext> records) {
+    NoticeLogContext groupedRecord = records.get(0);
+    groupedRecord.setItems(records.stream()
+      .map(NoticeLogContext::getItems)
+      .flatMap(Collection::stream)
+      .collect(Collectors.toList()));
+    return groupedRecord;
+  }
+
+  private CompletableFuture<Result<Void>> publishAuditLogEvent(NoticeLogContext noticeLogContext) {
+    return eventPublisher.publishSendNoticeEvent(noticeLogContext.withDate(DateTime.now()));
   }
 
   private static class NoticeEventGroupDefinition {

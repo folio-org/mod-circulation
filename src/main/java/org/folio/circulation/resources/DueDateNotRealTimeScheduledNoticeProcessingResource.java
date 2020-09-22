@@ -17,6 +17,7 @@ import org.folio.circulation.domain.notice.schedule.ScheduledNotice;
 import org.folio.circulation.domain.notice.schedule.ScheduledNoticeGroupDefinition;
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
 import org.folio.circulation.domain.notice.schedule.TriggeringEvent;
+import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CqlSortBy;
 import org.folio.circulation.support.CqlSortClause;
@@ -57,10 +58,10 @@ public class DueDateNotRealTimeScheduledNoticeProcessingResource extends Schedul
 
   @Override
   protected CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> handleNotices(
-    Clients clients, MultipleRecords<ScheduledNotice> notices) {
+    Clients clients, MultipleRecords<ScheduledNotice> notices, EventPublisher eventPublisher) {
 
     final DueDateNotRealTimeScheduledNoticeHandler dueDateNoticeHandler =
-      DueDateNotRealTimeScheduledNoticeHandler.using(clients, DateTime.now(DateTimeZone.UTC));
+      DueDateNotRealTimeScheduledNoticeHandler.using(clients, DateTime.now(DateTimeZone.UTC), eventPublisher);
 
     Map<ScheduledNoticeGroupDefinition, List<ScheduledNotice>> orderedGroups =
       notices.getRecords().stream().collect(Collectors.groupingBy(

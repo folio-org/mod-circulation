@@ -11,13 +11,16 @@ import java.util.concurrent.CompletableFuture;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
+import org.folio.circulation.domain.notice.NoticeLogContext;
 import org.folio.circulation.domain.notice.NoticeTiming;
 import org.folio.circulation.domain.notice.PatronNoticeService;
 import org.folio.circulation.domain.notice.TemplateContextUtil;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
+import org.folio.circulation.infrastructure.storage.notices.PatronNoticePolicyRepository;
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
+import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.HttpFailure;
@@ -42,12 +45,13 @@ public class DueDateScheduledNoticeHandler {
   static final String[] REQUIRED_RECORD_TYPES = {USER_RECORD_TYPE,
     ITEM_RECORD_TYPE, LOAN_RECORD_TYPE, TEMPLATE_RECORD_TYPE};
 
-  public static DueDateScheduledNoticeHandler using(Clients clients, DateTime systemTime) {
+  public static DueDateScheduledNoticeHandler using(Clients clients, DateTime systemTime, EventPublisher eventPublisher) {
     return new DueDateScheduledNoticeHandler(
       new LoanRepository(clients),
       new LoanPolicyRepository(clients),
       new ConfigurationRepository(clients),
-      PatronNoticeService.using(clients),
+      new PatronNoticePolicyRepository(clients),
+      PatronNoticeService.using(clients, eventPublisher),
       ScheduledNoticesRepository.using(clients),
       clients.templateNoticeClient(), systemTime);
   }
@@ -55,6 +59,7 @@ public class DueDateScheduledNoticeHandler {
   private final LoanRepository loanRepository;
   private final LoanPolicyRepository loanPolicyRepository;
   private final ConfigurationRepository configurationRepository;
+  private final PatronNoticePolicyRepository noticePolicyRepository;
   private final PatronNoticeService patronNoticeService;
   private final ScheduledNoticesRepository scheduledNoticesRepository;
   private final CollectionResourceClient templateNoticesClient;
@@ -149,8 +154,14 @@ public class DueDateScheduledNoticeHandler {
 
     JsonObject loanNoticeContext = TemplateContextUtil.createLoanNoticeContext(loan);
 
-    return patronNoticeService.acceptScheduledNoticeEvent(
-      notice.getConfiguration(), relatedRecords.getUserId(), loanNoticeContext)
+    NoticeLogContext noticeLogContext = NoticeLogContext.from(loan)
+      .withTemplateId(notice.getConfiguration().getTemplateId())
+      .withTriggeringEvent(notice.getTriggeringEvent().getRepresentation());
+
+    return noticePolicyRepository.lookupPolicyId(loan.getItem(), loan.getUser())
+      .thenCompose(r -> r.after(policy -> patronNoticeService.acceptScheduledNoticeEvent(
+        notice.getConfiguration(), relatedRecords.getUserId(), loanNoticeContext,
+        noticeLogContext.withNoticePolicyId(policy.getPolicyId()))))
       .thenApply(r -> r.map(v -> relatedRecords));
   }
 

@@ -24,11 +24,13 @@ import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.User;
+import org.folio.circulation.domain.notice.NoticeLogContext;
 import org.folio.circulation.domain.notice.NoticeEventType;
 import org.folio.circulation.domain.notice.PatronNoticeEvent;
 import org.folio.circulation.domain.notice.PatronNoticeEventBuilder;
 import org.folio.circulation.domain.notice.PatronNoticeService;
 import org.folio.circulation.infrastructure.storage.sessions.PatronActionSessionRepository;
+import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.client.PageLimit;
@@ -49,10 +51,10 @@ public class PatronActionSessionService {
   private final PatronActionSessionRepository patronActionSessionRepository;
   private final PatronNoticeService patronNoticeService;
 
-  public static PatronActionSessionService using(Clients clients) {
+  public static PatronActionSessionService using(Clients clients, EventPublisher eventPublisher) {
     return new PatronActionSessionService(
       PatronActionSessionRepository.using(clients),
-      PatronNoticeService.using(clients));
+      PatronNoticeService.using(clients, eventPublisher));
   }
 
   public PatronActionSessionService(
@@ -157,6 +159,7 @@ public class PatronActionSessionService {
         .withUser(r.getLoan().getUser())
         .withEventType(actionToEventMap.get(r.getActionType()))
         .withNoticeContext(createLoanNoticeContextWithoutUser(r.getLoan()))
+        .withAuditLogRecord(NoticeLogContext.from(r.getLoan()))
         .build())
       .collect(Collectors.toList());
   }

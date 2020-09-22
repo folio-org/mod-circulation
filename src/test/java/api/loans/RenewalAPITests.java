@@ -1325,6 +1325,7 @@ public abstract class RenewalAPITests extends APITests {
     MatcherAssert.assertThat(sentNotices,
       hasItems(
         hasEmailNoticeProperties(steve.getId(), renewalTemplateId, noticeContextMatchers)));
+    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
   }
 
   @Test

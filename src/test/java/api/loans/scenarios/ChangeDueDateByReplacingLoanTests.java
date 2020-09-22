@@ -255,6 +255,7 @@ public class ChangeDueDateByReplacingLoanTests extends APITests {
     MatcherAssert.assertThat(sentNotices,
       hasItems(
         hasEmailNoticeProperties(steve.getId(), manualDueDateChangeTemplateId, noticeContextMatchers)));
+    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
   }
 
   @Test

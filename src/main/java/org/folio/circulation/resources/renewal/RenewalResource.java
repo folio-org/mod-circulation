@@ -72,9 +72,9 @@ public abstract class RenewalResource extends Resource {
     final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
     final DueDateScheduledNoticeService scheduledNoticeService = DueDateScheduledNoticeService.using(clients);
 
-    final LoanNoticeSender loanNoticeSender = LoanNoticeSender.using(clients);
-
     final EventPublisher eventPublisher = new EventPublisher(routingContext);
+
+    final LoanNoticeSender loanNoticeSender = LoanNoticeSender.using(clients, eventPublisher);
 
     final AutomatedPatronBlocksRepository automatedPatronBlocksRepository =
       new AutomatedPatronBlocksRepository(clients);

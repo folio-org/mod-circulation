@@ -85,6 +85,7 @@ public class EndExpiredPatronActionSessionTests extends APITests {
       .atMost(1, TimeUnit.SECONDS)
       .until(patronSessionRecordsClient::getAll, empty());
     assertThat(patronNoticesClient.getAll(), hasSize(1));
+    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
   }
 
   @Test
@@ -117,6 +118,7 @@ public class EndExpiredPatronActionSessionTests extends APITests {
       .atMost(1, TimeUnit.SECONDS)
       .until(patronSessionRecordsClient::getAll,  Matchers.hasSize(2));
     assertThat(patronNoticesClient.getAll(), hasSize(1));
+    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
   }
 
   @Test
@@ -148,6 +150,7 @@ public class EndExpiredPatronActionSessionTests extends APITests {
       .atMost(1, TimeUnit.SECONDS)
       .until(patronSessionRecordsClient::getAll,  Matchers.hasSize(2));
     assertThat(patronNoticesClient.getAll(), hasSize(1));
+    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
   }
 
   @Test
@@ -263,6 +266,7 @@ public class EndExpiredPatronActionSessionTests extends APITests {
     List<JsonObject> patronNotices = patronNoticesClient.getAll();
 
     assertThat(patronNoticesClient.getAll(), hasSize(6));
+    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
 
     Stream.of(CHECK_OUT_TEMPLATE_ID, CHECK_IN_TEMPLATE_ID).forEach(templateId ->
       Stream.of(james, jessica, steve).forEach(patron ->
@@ -297,6 +301,7 @@ public class EndExpiredPatronActionSessionTests extends APITests {
       .atMost(1, TimeUnit.SECONDS)
       .until(patronSessionRecordsClient::getAll, empty());
     assertThat(patronNoticesClient.getAll(), hasSize(0));
+    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
   }
 
   @Test
@@ -306,6 +311,7 @@ public class EndExpiredPatronActionSessionTests extends APITests {
 
     assertThat(patronSessionRecordsClient.getAll(), hasSize(0));
     assertThat(patronNoticesClient.getAll(), hasSize(0));
+    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
   }
 
   @Test
@@ -330,6 +336,7 @@ public class EndExpiredPatronActionSessionTests extends APITests {
       .atMost(1, TimeUnit.SECONDS)
       .until(patronSessionRecordsClient::getAll, empty());
     assertThat(patronNoticesClient.getAll(), hasSize(0));
+    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
   }
 
   @Test
@@ -399,6 +406,7 @@ public class EndExpiredPatronActionSessionTests extends APITests {
       .until(patronSessionRecordsClient::getAll,  Matchers.hasSize(0));
 
     assertThat(patronNoticesClient.getAll(), hasSize(1));
+    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
 
     assertThat(patronNoticesClient.getAll().get(0),
       hasEmailNoticeProperties(james.getId(), CHECK_OUT_TEMPLATE_ID,

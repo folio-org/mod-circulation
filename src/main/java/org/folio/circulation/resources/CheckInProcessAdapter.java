@@ -10,6 +10,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.commons.lang3.StringUtils;
+import org.folio.circulation.domain.notice.NoticeLogContext;
 import org.folio.circulation.infrastructure.storage.users.AddressTypeRepository;
 import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.Item;
@@ -32,6 +33,7 @@ import org.folio.circulation.domain.notice.PatronNoticeEventBuilder;
 import org.folio.circulation.domain.notice.PatronNoticeService;
 import org.folio.circulation.domain.notice.schedule.FeeFineScheduledNoticeService;
 import org.folio.circulation.infrastructure.storage.notices.PatronNoticePolicyRepository;
+import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.services.LogCheckInService;
 import org.folio.circulation.services.LostItemFeeRefundService;
 import org.folio.circulation.storage.ItemByBarcodeInStorageFinder;
@@ -90,7 +92,7 @@ class CheckInProcessAdapter {
     this.lostItemFeeRefundService = lostItemFeeRefundService;
   }
 
-  public static CheckInProcessAdapter newInstance(Clients clients) {
+  public static CheckInProcessAdapter newInstance(Clients clients, EventPublisher eventPublisher) {
     final LoanRepository loanRepository = new LoanRepository(clients);
     final UserRepository userRepository = new UserRepository(clients);
 
@@ -110,7 +112,7 @@ class CheckInProcessAdapter {
       UpdateRequestQueue.using(clients),
       loanRepository,
       new ServicePointRepository(clients),
-      new PatronNoticeService(new PatronNoticePolicyRepository(clients), clients),
+      new PatronNoticeService(new PatronNoticePolicyRepository(clients), clients, eventPublisher),
       userRepository,
       new AddressTypeRepository(clients),
       new LogCheckInService(clients),
@@ -246,11 +248,13 @@ class CheckInProcessAdapter {
   private Result<CheckInContext> sendAvailableNotice(Request request, User user, CheckInContext context) {
     Item item = context.getItem();
     if (item.isAwaitingPickup() && item.hasChanged()) {
+      NoticeLogContext noticeLogContext = NoticeLogContext.from(item, user, request);
       PatronNoticeEvent noticeEvent = new PatronNoticeEventBuilder()
         .withItem(item)
         .withUser(user)
         .withEventType(NoticeEventType.AVAILABLE)
         .withNoticeContext(createAvailableNoticeContext(item, user, request))
+        .withAuditLogRecord(noticeLogContext)
         .build();
       patronNoticeService.acceptNoticeEvent(noticeEvent);
     }

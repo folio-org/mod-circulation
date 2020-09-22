@@ -11,6 +11,9 @@ import org.folio.circulation.support.http.server.WebContext;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
+import org.folio.util.PubSubModuleRegistrationUtil;
+
+import java.util.Map;
 
 public class TenantActivationResource {
 
@@ -21,8 +24,9 @@ public class TenantActivationResource {
   }
 
   public void enableModuleForTenant(RoutingContext routingContext) {
-    PubSubRegistrationService.registerModule(new WebContext(routingContext).getHeaders(),
-      routingContext.vertx())
+    Map<String, String> headers = new WebContext(routingContext).getHeaders();
+    PubSubRegistrationService.registerModule(headers,routingContext.vertx())
+      .thenCompose(b -> PubSubModuleRegistrationUtil.registerLogEventPublisher(headers, routingContext.vertx()))
       .thenRun(() -> created(new JsonObject()).writeTo(routingContext.response()))
       .exceptionally(throwable -> {
         ServerErrorResponse.internalError(routingContext.response(), throwable.getLocalizedMessage());

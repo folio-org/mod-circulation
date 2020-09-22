@@ -238,6 +238,7 @@ public class ChangeDueDateAPITests extends APITests {
 
     assertThat(sentNotices, hasItems(
       hasEmailNoticeProperties(steve.getId(), templateId, matchers)));
+    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
   }
 
   @Test

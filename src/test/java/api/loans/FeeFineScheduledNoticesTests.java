@@ -355,6 +355,7 @@ public class FeeFineScheduledNoticesTests extends APITests {
   private void assertThatNoticesWereSent(UUID... expectedTemplateIds) {
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
     assertThat(sentNotices, hasSize(expectedTemplateIds.length));
+    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
 
     Matcher<?> matcher = TemplateContextMatchers.getFeeFineContextMatcher(account, action);
 
@@ -369,6 +370,7 @@ public class FeeFineScheduledNoticesTests extends APITests {
 
   private void assertThatNoNoticesWereSent() {
     assertThat(patronNoticesClient.getAll(), hasSize(0));
+    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
   }
 
   private static DateTime rightAfter(DateTime dateTime) {

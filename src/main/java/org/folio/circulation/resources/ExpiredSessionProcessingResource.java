@@ -12,6 +12,7 @@ import org.folio.circulation.domain.notice.session.ExpiredSession;
 import org.folio.circulation.domain.notice.session.PatronActionSessionService;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.sessions.PatronExpiredSessionRepository;
+import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.results.Result;
@@ -46,8 +47,10 @@ public class ExpiredSessionProcessingResource extends Resource {
     final ConfigurationRepository configurationRepository
       = new ConfigurationRepository(clients);
 
+    final EventPublisher eventPublisher = new EventPublisher(routingContext);
+
     final PatronActionSessionService patronSessionService
-      = PatronActionSessionService.using(clients);
+      = PatronActionSessionService.using(clients, eventPublisher);
 
     final PatronExpiredSessionRepository patronExpiredSessionRepository
       = PatronExpiredSessionRepository.using(clients);

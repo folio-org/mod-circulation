@@ -518,6 +518,7 @@ public class RequestsAPIUpdatingTests extends APITests {
     assertThat(sentNotices,
       hasItems(
         hasEmailNoticeProperties(requester.getId(), requestCancellationTemplateId, noticeContextMatchers)));
+    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
   }
 
   @Test
@@ -576,6 +577,7 @@ public class RequestsAPIUpdatingTests extends APITests {
     assertThat(sentNotices,
       hasItems(
         hasEmailNoticeProperties(requester.getId(), requestCancellationTemplateId, noticeContextMatchers)));
+    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
   }
 
   @Test

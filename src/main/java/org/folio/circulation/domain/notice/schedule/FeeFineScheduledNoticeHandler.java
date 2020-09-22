@@ -12,13 +12,16 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Account;
+import org.folio.circulation.domain.notice.NoticeLogContext;
 import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
 import org.folio.circulation.domain.FeeFineAction;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineActionRepository;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.domain.notice.PatronNoticeService;
+import org.folio.circulation.infrastructure.storage.notices.PatronNoticePolicyRepository;
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
+import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
@@ -36,27 +39,31 @@ public class FeeFineScheduledNoticeHandler {
   private final FeeFineActionRepository actionRepository;
   private final AccountRepository accountRepository;
   private final LoanRepository loanRepository;
+  private PatronNoticePolicyRepository noticePolicyRepository;
 
   private FeeFineScheduledNoticeHandler(PatronNoticeService patronNoticeService,
     ScheduledNoticesRepository scheduledNoticesRepository,
     FeeFineActionRepository actionRepository,
     AccountRepository accountRepository,
-    LoanRepository loanRepository) {
+    LoanRepository loanRepository,
+    PatronNoticePolicyRepository noticePolicyRepository) {
 
     this.patronNoticeService = patronNoticeService;
     this.scheduledNoticesRepository = scheduledNoticesRepository;
     this.actionRepository = actionRepository;
     this.accountRepository = accountRepository;
     this.loanRepository = loanRepository;
+    this.noticePolicyRepository = noticePolicyRepository;
   }
 
-  public static FeeFineScheduledNoticeHandler using(Clients clients) {
+  public static FeeFineScheduledNoticeHandler using(Clients clients, EventPublisher eventPublisher) {
     return new FeeFineScheduledNoticeHandler(
-      PatronNoticeService.using(clients),
+      PatronNoticeService.using(clients, eventPublisher),
       ScheduledNoticesRepository.using(clients),
       new FeeFineActionRepository(clients),
       new AccountRepository(clients),
-      new LoanRepository(clients));
+      new LoanRepository(clients),
+      new PatronNoticePolicyRepository(clients));
   }
 
   public CompletableFuture<Result<List<ScheduledNotice>>> handleNotices(
@@ -109,12 +116,21 @@ public class FeeFineScheduledNoticeHandler {
       JsonObject noticeContext = createFeeFineNoticeContext(context.getAccount(), context.getLoan());
       ScheduledNoticeConfig config = notice.getConfiguration();
 
-      patronNoticeService.acceptScheduledNoticeEvent(
-        config, notice.getRecipientUserId(), noticeContext);
+      NoticeLogContext noticeLogContext = NoticeLogContext.from(context.getLoan(), context.getAccount())
+        .withTemplateId(notice.getConfiguration().getTemplateId())
+        .withTriggeringEvent(notice.getTriggeringEvent().getRepresentation());
 
-      if (config.isRecurring()) {
-        return scheduledNoticesRepository.update(getNextRecurringNotice(notice));
-      }
+      return noticePolicyRepository.lookupPolicyId(
+        context.getLoan().getItem(), context.getLoan().getUser())
+        .thenCompose(r -> r.after(policy -> patronNoticeService.acceptScheduledNoticeEvent(
+          config, notice.getRecipientUserId(), noticeContext,
+          noticeLogContext.withNoticePolicyId(policy.getPolicyId()))))
+        .thenCompose(r -> r.after(v -> {
+          if (config.isRecurring()) {
+            return scheduledNoticesRepository.update(getNextRecurringNotice(notice));
+          }
+          return scheduledNoticesRepository.delete(notice);
+        }));
     }
 
     return scheduledNoticesRepository.delete(notice);

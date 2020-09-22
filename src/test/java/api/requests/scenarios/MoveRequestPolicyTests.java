@@ -172,6 +172,7 @@ public class MoveRequestPolicyTests extends APITests {
       interestingTimes, jessica, DateTime.now(DateTimeZone.UTC), RequestType.RECALL.getValue());
 
     assertThat(patronNoticesClient.getAll().size(), is(0));
+    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
 
     // move jessica's recall request from interestingTimes to smallAngryPlanet
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
@@ -197,6 +198,7 @@ public class MoveRequestPolicyTests extends APITests {
 
     assertThat("move recall request notice has not been sent",
       patronNoticesClient.getAll().size(), is(2));
+    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
   }
 
   @Test
@@ -234,6 +236,7 @@ public class MoveRequestPolicyTests extends APITests {
       interestingTimes, jessica, DateTime.now(DateTimeZone.UTC), RequestType.RECALL.getValue());
 
     assertThat(patronNoticesClient.getAll().size(), is(1));
+    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
 
     // move jessica's recall request from interestingTimes to smallAngryPlanet
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
@@ -257,6 +260,7 @@ public class MoveRequestPolicyTests extends APITests {
 
     assertThat("move recall request unexpectedly sent another patron notice",
       patronNotices.size(), is(2));
+    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
   }
 
   @Test
@@ -297,6 +301,7 @@ public class MoveRequestPolicyTests extends APITests {
       interestingTimes, jessica, DateTime.now(DateTimeZone.UTC), RequestType.RECALL.getValue());
 
     assertThat(patronNoticesClient.getAll().size(), is(0));
+    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
 
     // move jessica's recall request from interestingTimes to smallAngryPlanet
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
@@ -322,6 +327,7 @@ public class MoveRequestPolicyTests extends APITests {
 
     assertThat("move recall request notice has not been sent",
       patronNoticesClient.getAll().size(), is(2));
+    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
   }
 
   @Test
@@ -375,6 +381,7 @@ public class MoveRequestPolicyTests extends APITests {
       interestingTimes, jessica, DateTime.now(DateTimeZone.UTC), RequestType.RECALL.getValue());
 
     assertThat(patronNoticesClient.getAll().size(), is(1));
+    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
 
     // move jessica's recall request from interestingTimes to smallAngryPlanet
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
@@ -396,6 +403,7 @@ public class MoveRequestPolicyTests extends APITests {
 
     assertThat("move recall request unexpectedly sent another patron notice",
       patronNoticesClient.getAll().size(), is(2));
+    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
   }
 
   private void setRules(String rules) {

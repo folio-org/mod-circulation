@@ -13,11 +13,15 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.tuple.Pair;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
+import org.folio.circulation.domain.notice.NoticeLogContextItem;
+import org.folio.circulation.domain.notice.NoticeLogContext;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.notice.PatronNoticeService;
 import org.folio.circulation.domain.notice.TemplateContextUtil;
 import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
+import org.folio.circulation.infrastructure.storage.notices.PatronNoticePolicyRepository;
+import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.results.Result;
@@ -28,13 +32,14 @@ import io.vertx.core.json.JsonObject;
 
 public class DueDateNotRealTimeScheduledNoticeHandler {
 
-  public static DueDateNotRealTimeScheduledNoticeHandler using(Clients clients, DateTime systemTime) {
+  public static DueDateNotRealTimeScheduledNoticeHandler using(Clients clients, DateTime systemTime, EventPublisher eventPublisher) {
 
     return new DueDateNotRealTimeScheduledNoticeHandler(
-      DueDateScheduledNoticeHandler.using(clients, systemTime),
+      DueDateScheduledNoticeHandler.using(clients, systemTime, eventPublisher),
       new LoanRepository(clients),
       new LoanPolicyRepository(clients),
-      PatronNoticeService.using(clients),
+      PatronNoticeService.using(clients, eventPublisher),
+      new PatronNoticePolicyRepository(clients),
       clients.templateNoticeClient());
   }
 
@@ -42,6 +47,7 @@ public class DueDateNotRealTimeScheduledNoticeHandler {
   private final LoanRepository loanRepository;
   private final LoanPolicyRepository loanPolicyRepository;
   private final PatronNoticeService patronNoticeService;
+  private final PatronNoticePolicyRepository noticePolicyRepository;
   private final CollectionResourceClient templateNoticesClient;
 
   public DueDateNotRealTimeScheduledNoticeHandler(
@@ -49,12 +55,14 @@ public class DueDateNotRealTimeScheduledNoticeHandler {
     LoanRepository loanRepository,
     LoanPolicyRepository loanPolicyRepository,
     PatronNoticeService patronNoticeService,
+    PatronNoticePolicyRepository noticePolicyRepository,
     CollectionResourceClient templateNoticesClient) {
 
     this.dueDateScheduledNoticeHandler = dueDateScheduledNoticeHandler;
     this.loanRepository = loanRepository;
     this.loanPolicyRepository = loanPolicyRepository;
     this.patronNoticeService = patronNoticeService;
+    this.noticePolicyRepository = noticePolicyRepository;
     this.templateNoticesClient = templateNoticesClient;
   }
 
@@ -116,14 +124,28 @@ public class DueDateNotRealTimeScheduledNoticeHandler {
     //All the notices have the same properties so we can get any of them
     ScheduledNotice scheduledNotice = relevantNotices.get(0).getLeft();
     LoanAndRelatedRecords noticeRelatedRecords = relevantNotices.get(0).getRight();
+    Loan loan = noticeRelatedRecords.getLoan();
 
     User user = noticeRelatedRecords.getLoan().getUser();
     JsonObject noticeContext = new JsonObject()
       .put("user", TemplateContextUtil.createUserContext(user))
       .put("loans", new JsonArray(loanContexts));
 
-    return patronNoticeService.acceptScheduledNoticeEvent(
-      scheduledNotice.getConfiguration(), user.getId(), noticeContext)
+    List<NoticeLogContextItem> noticeLogContextItems = relevantNotices.stream()
+      .map(Pair::getRight)
+      .map(LoanAndRelatedRecords::getLoan)
+      .map(NoticeLogContextItem::from)
+      .collect(Collectors.toList());
+    NoticeLogContext noticeLogContext = new NoticeLogContext()
+      .withUser(user)
+      .withItems(noticeLogContextItems)
+      .withTriggeringEvent(scheduledNotice.getTriggeringEvent().getRepresentation())
+      .withTemplateId(scheduledNotice.getConfiguration().getTemplateId());
+
+    return noticePolicyRepository.lookupPolicyId(loan.getItem(), loan.getUser())
+      .thenCompose(r -> r.after(policy -> patronNoticeService.acceptScheduledNoticeEvent(
+        scheduledNotice.getConfiguration(), user.getId(), noticeContext,
+        noticeLogContext.withNoticePolicyId(policy.getPolicyId()))))
       .thenApply(mapResult(v -> noticeGroup));
   }
 

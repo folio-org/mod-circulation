@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import api.support.fakes.FakePubSub;
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.IndividualResource;
@@ -71,6 +72,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
 
   @Before
   public void beforeEach() {
+    FakePubSub.clearPublishedEvents();
     setUpNoticePolicy();
 
     ItemBuilder itemBuilder = basedUponSmallAngryPlanet(
@@ -183,6 +185,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
     checkInFixture.checkInByBarcode(item);
     //Clear sent notices again
     patronNoticesClient.deleteAll();
+    FakePubSub.clearPublishedEvents();
 
     //Run after loan is closed
     scheduledNoticeProcessingClient.runDueDateNoticesProcessing(
@@ -488,6 +491,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
     assertThat(sentNotices, hasSize(expectedTemplateIds.length));
     assertThat(sentNotices, hasItems(matchers));
+    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
   }
 
   private List<JsonObject> createNoticesOverTime(

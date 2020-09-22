@@ -488,6 +488,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
 
     TimeUnit.SECONDS.sleep(1);
     assertThat(patronNoticesClient.getAll(), hasSize(0));
+    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
   }
 
   @Test
@@ -527,6 +528,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
     assertThat("Check-in notice shouldn't be sent if item isn't checked-out",
       sentNotices, Matchers.empty());
+    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
   }
 
   @Test
@@ -566,6 +568,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     checkInFixture.checkInByBarcode(item, checkInDate, servicePointId);
 
     checkPatronNoticeEvent(request, requester, item, availableNoticeTemplateId);
+    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
   }
 
   @Test
@@ -603,6 +606,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
       servicePointId);
 
     checkPatronNoticeEvent(request, requester, item, availableNoticeTemplateId);
+    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
   }
 
   @Test
@@ -635,13 +639,16 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(patronNoticesClient::getAll, hasSize(1));
+    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
     patronNoticesClient.deleteAll();
+    FakePubSub.clearPublishedEvents();
 
     //Check-in again and verify no notice are sent
     checkInFixture.checkInByBarcode(requestedItem, checkInDate, pickupServicePointId);
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(patronNoticesClient::getAll, empty());
+    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
   }
 
   @Test
@@ -1113,6 +1120,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     MatcherAssert.assertThat(sentNotices,
       hasItems(
         hasEmailNoticeProperties(requester.getId(), expectedTemplateId, noticeContextMatchers)));
+    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
   }
 
   private void verifyCheckInOperationRecorded(UUID itemId, UUID servicePoint) {
