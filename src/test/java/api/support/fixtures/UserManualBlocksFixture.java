@@ -1,15 +1,11 @@
 package api.support.fixtures;
 
-import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
-
-import java.net.MalformedURLException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 
 import api.support.builders.UserManualBlockBuilder;
 import api.support.http.ResourceClient;
 
-import org.folio.circulation.support.http.client.IndividualResource;
+import api.support.http.IndividualResource;
 
 public class UserManualBlocksFixture {
   private final RecordCreator userManualBlocksRecordCreator;

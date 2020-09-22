@@ -13,13 +13,13 @@ import static org.joda.time.DateTimeZone.UTC;
 import java.util.UUID;
 
 import org.folio.circulation.domain.representations.anonymization.LoanAnonymizationAPIResponse;
-import org.folio.circulation.support.http.client.IndividualResource;
+import api.support.http.IndividualResource;
 import org.joda.time.DateTime;
 import org.junit.Test;
 
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.LoanHistoryConfigurationBuilder;
-import api.support.http.InventoryItemResource;
+import api.support.http.ItemResource;
 
 public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
 
@@ -373,8 +373,8 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
   public void doNotAnonymizeLoansTwice() {
     createAnonymizeAfterIntervalConfiguration(1, "minute");
 
-    final InventoryItemResource nod = itemsFixture.basedUponNod();
-    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final ItemResource nod = itemsFixture.basedUponNod();
+    final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
     final IndividualResource firstLoan = checkOutFixture.checkOutByBarcode(smallAngryPlanet, user);
     final IndividualResource secondLoan = checkOutFixture.checkOutByBarcode(nod, usersFixture.rebecca());
@@ -399,10 +399,10 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
   public void ignoresAlreadyAnonymizedLoans() {
     createAnonymizeAfterIntervalConfiguration(1, "minute");
 
-    final InventoryItemResource nod = itemsFixture.basedUponNod();
-    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
-    final InventoryItemResource dunkirk = itemsFixture.basedUponDunkirk();
+    final ItemResource nod = itemsFixture.basedUponNod();
+    final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final ItemResource temeraire = itemsFixture.basedUponTemeraire();
+    final ItemResource dunkirk = itemsFixture.basedUponDunkirk();
 
     final IndividualResource firstLoan = checkOutFixture.checkOutByBarcode(smallAngryPlanet, user);
     final IndividualResource secondLoan = checkOutFixture.checkOutByBarcode(nod, usersFixture.rebecca());

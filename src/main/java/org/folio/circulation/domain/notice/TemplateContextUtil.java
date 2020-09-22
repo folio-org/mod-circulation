@@ -2,7 +2,7 @@ package org.folio.circulation.domain.notice;
 
 import static java.lang.Math.max;
 import static java.util.stream.Collectors.joining;
-import static org.folio.circulation.support.JsonPropertyWriter.write;
+import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
 import java.util.Optional;
 
@@ -18,7 +18,6 @@ import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.policy.LoanPolicy;
-import org.folio.circulation.support.JsonArrayHelper;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
@@ -146,7 +145,7 @@ public class TemplateContextUtil {
   }
 
   private static JsonObject createItemContext(Item item) {
-    String contributorNamesToken = JsonArrayHelper.toStream(item.getContributorNames())
+    String contributorNamesToken = item.getContributors()
       .map(o -> o.getString("name"))
       .collect(joining("; "));
 

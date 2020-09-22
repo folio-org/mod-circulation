@@ -3,13 +3,14 @@ package org.folio.circulation.infrastructure.storage.inventory;
 import static java.util.Objects.isNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Function.identity;
-import static org.folio.circulation.support.JsonKeys.byId;
+import static org.folio.circulation.support.json.JsonKeys.byId;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 import static org.folio.circulation.support.fetching.MultipleCqlIndexValuesCriteria.byIndex;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
+import static org.folio.circulation.support.utils.CollectionUtil.map;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
@@ -20,6 +21,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
@@ -29,7 +31,6 @@ import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
-import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FindWithCqlQuery;
 import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
@@ -44,6 +45,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.vertx.core.json.JsonObject;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 public class ItemRepository {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -61,38 +64,23 @@ public class ItemRepository {
 
   private static final String ITEMS_COLLECTION_PROPERTY_NAME = "items";
 
-  public ItemRepository(
-    Clients clients,
-    boolean fetchLocation,
-    boolean fetchMaterialType,
-    boolean fetchLoanType) {
+  public ItemRepository(org.folio.circulation.support.Clients clients,
+    boolean fetchLocation, boolean fetchMaterialType, boolean fetchLoanType) {
 
-    this(clients.itemsStorage(),
-      clients.holdingsStorage(),
-      clients.instancesStorage(),
-      clients.loanTypesStorage(),
-      LocationRepository.using(clients),
-      new MaterialTypeRepository(clients),
-      new ServicePointRepository(clients),
+    this(new Clients(clients.itemsStorage(), clients.holdingsStorage(),
+      clients.instancesStorage(), clients.loanTypesStorage()), LocationRepository.using(clients),
+      new MaterialTypeRepository(clients), new ServicePointRepository(clients),
       fetchLocation, fetchMaterialType, fetchLoanType);
   }
 
-  private ItemRepository(
-    CollectionResourceClient itemsClient,
-    CollectionResourceClient holdingsClient,
-    CollectionResourceClient instancesClient,
-    CollectionResourceClient loanTypesClient,
-    LocationRepository locationRepository,
-    MaterialTypeRepository materialTypeRepository,
-    ServicePointRepository servicePointRepository,
-    boolean fetchLocation,
-    boolean fetchMaterialType,
-    boolean fetchLoanType) {
+  private ItemRepository(Clients clients, LocationRepository locationRepository,
+    MaterialTypeRepository materialTypeRepository, ServicePointRepository servicePointRepository,
+    boolean fetchLocation, boolean fetchMaterialType, boolean fetchLoanType) {
 
-    this.itemsClient = itemsClient;
-    this.holdingsClient = holdingsClient;
-    this.instancesClient = instancesClient;
-    this.loanTypesClient = loanTypesClient;
+    this.itemsClient = clients.getItemsClient();
+    this.holdingsClient = clients.getHoldingsClient();
+    this.instancesClient = clients.getInstancesClient();
+    this.loanTypesClient = clients.getLoanTypesClient();
     this.locationRepository = locationRepository;
     this.materialTypeRepository = materialTypeRepository;
     this.servicePointRepository = servicePointRepository;
@@ -168,17 +156,21 @@ public class ItemRepository {
   private CompletableFuture<Result<Collection<Item>>> fetchLocations(
     Result<Collection<Item>> result) {
 
-    if(fetchLocation) {
-      return result.after(items ->
-        locationRepository.getLocations(items)
-          .thenApply(r -> r.map(locations -> items.stream()
-              .map(item -> item.withLocation(locations
-                .getOrDefault(item.getLocationId(), null)))
-              .collect(Collectors.toList()))));
-    }
-    else {
+    if (fetchLocation) {
+      return result.after(items -> locationRepository.getAllItemLocations(items)
+        .thenApply(r -> r.map(locations -> map(items, populateItemLocations(locations)))));
+    } else {
       return completedFuture(result);
     }
+  }
+
+  private Function<Item, Item> populateItemLocations(Map<String, Location> locations) {
+    return item -> {
+      final Location permLocation = locations.get(item.getPermanentLocationId());
+      final Location location = locations.get(item.getLocationId());
+
+      return item.withLocation(location).withPermanentLocation(permLocation);
+    };
   }
 
   private CompletableFuture<Result<Collection<Item>>> fetchMaterialTypes(
@@ -340,7 +332,6 @@ public class ItemRepository {
     });
   }
 
-  //TODO: Try to remove includeItemMap without introducing unchecked exception
   public <T extends ItemRelatedRecord> CompletableFuture<Result<MultipleRecords<T>>> fetchItemsFor(
     Result<MultipleRecords<T>> result,
     BiFunction<T, Item, T> includeItemMap) {
@@ -421,7 +412,16 @@ public class ItemRepository {
       .thenComposeAsync(this::fetchLoanType);
   }
 
-  public static ItemRepository noLocationMaterialTypeAndLoanTypeInstance(Clients clients) {
+  public static ItemRepository noLocationMaterialTypeAndLoanTypeInstance(org.folio.circulation.support.Clients clients) {
     return new ItemRepository(clients, false, false, false);
+  }
+
+  @AllArgsConstructor
+  @Getter
+  private static class Clients {
+    private final CollectionResourceClient itemsClient;
+    private final CollectionResourceClient holdingsClient;
+    private final CollectionResourceClient instancesClient;
+    private final CollectionResourceClient loanTypesClient;
   }
 }

@@ -11,14 +11,14 @@ import java.util.Collection;
 import java.util.UUID;
 
 import org.folio.circulation.domain.MultipleRecords;
-import org.folio.circulation.support.http.client.IndividualResource;
+import api.support.http.IndividualResource;
 import org.joda.time.DateTime;
 import org.junit.Test;
 
 import api.support.APITests;
 import api.support.MultipleJsonRecords;
 import api.support.builders.RequestBuilder;
-import api.support.http.InventoryItemResource;
+import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 
 public class CancelRequestTests extends APITests {
@@ -212,7 +212,7 @@ public class CancelRequestTests extends APITests {
   @Test
   public void shouldAllowToCancelRequestWithNoPosition() {
     IndividualResource requesterId = usersFixture.rebecca();
-    final InventoryItemResource nod = itemsFixture.basedUponNod();
+    final ItemResource nod = itemsFixture.basedUponNod();
 
     checkOutFixture.checkOutByBarcode(nod, requesterId);
 

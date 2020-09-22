@@ -8,7 +8,6 @@ import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.ACTION_TYPE;
-import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.ID;
 import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.LOAN_ID;
 import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.PATRON_ID;
 import static org.hamcrest.CoreMatchers.allOf;
@@ -27,9 +26,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.awaitility.Awaitility;
-import org.folio.circulation.domain.notice.session.PatronActionType;
-import org.folio.circulation.domain.notice.session.PatronSessionRecord;
-import org.folio.circulation.support.http.client.IndividualResource;
+import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.Matcher;
 import org.hamcrest.MatcherAssert;
@@ -41,7 +38,7 @@ import api.support.APITests;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
-import api.support.http.InventoryItemResource;
+import api.support.http.ItemResource;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -112,8 +109,8 @@ public class PatronActionSessionTests extends APITests {
   public void checkOutNoticeWithMultipleItemsIsSentWhenCorrespondingSessionIsEnded() {
 
     IndividualResource james = usersFixture.james();
-    InventoryItemResource nod = itemsFixture.basedUponNod();
-    InventoryItemResource interestingTimes = itemsFixture.basedUponInterestingTimes();
+    ItemResource nod = itemsFixture.basedUponNod();
+    ItemResource interestingTimes = itemsFixture.basedUponInterestingTimes();
     IndividualResource nodToJamesLoan = checkOutFixture.checkOutByBarcode(nod, james);
     IndividualResource interestingTimesToJamesLoan = checkOutFixture.checkOutByBarcode(interestingTimes, james);
 
@@ -178,7 +175,7 @@ public class PatronActionSessionTests extends APITests {
 
     IndividualResource james = usersFixture.james();
     UUID checkInServicePointId = servicePointsFixture.cd1().getId();
-    InventoryItemResource nod = itemsFixture.basedUponNod();
+    ItemResource nod = itemsFixture.basedUponNod();
 
     IndividualResource loan = checkOutFixture.checkOutByBarcode(nod, james);
     checkInFixture.checkInByBarcode(
@@ -200,7 +197,7 @@ public class PatronActionSessionTests extends APITests {
   public void checkInSessionShouldNotBeCreatedWhenItemWithoutOpenLoanIsCheckedInByBarcode() {
 
     UUID checkInServicePointId = servicePointsFixture.cd1().getId();
-    InventoryItemResource nod = itemsFixture.basedUponNod();
+    ItemResource nod = itemsFixture.basedUponNod();
 
     checkInFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
@@ -215,7 +212,7 @@ public class PatronActionSessionTests extends APITests {
 
     IndividualResource steve = usersFixture.steve();
     UUID checkInServicePointId = servicePointsFixture.cd1().getId();
-    InventoryItemResource nod = itemsFixture.basedUponNod();
+    ItemResource nod = itemsFixture.basedUponNod();
 
     checkOutFixture.checkOutByBarcode(nod, steve);
     checkInFixture.checkInByBarcode(

@@ -2,16 +2,12 @@ package api.support.http;
 
 import java.util.UUID;
 
-import org.folio.circulation.support.http.client.IndividualResource;
-
-public class InventoryItemResource extends IndividualResource {
+public class ItemResource extends IndividualResource {
   private final IndividualResource holdingsRecord;
   private final IndividualResource instance;
 
-  public InventoryItemResource(
-    IndividualResource item,
-    IndividualResource holdingsRecord,
-    IndividualResource instance) {
+  public ItemResource(IndividualResource item,
+    IndividualResource holdingsRecord, IndividualResource instance) {
 
     super(item.getResponse());
     this.holdingsRecord = holdingsRecord;
@@ -32,5 +28,9 @@ public class InventoryItemResource extends IndividualResource {
 
   public IndividualResource getHoldingsRecord() {
     return holdingsRecord;
+  }
+
+  public String getBarcode() {
+    return response.getJson().getString("barcode");
   }
 }

@@ -6,13 +6,9 @@ import static api.support.fixtures.ServicePointExamples.basedUponCircDesk3;
 import static api.support.fixtures.ServicePointExamples.basedUponCircDesk4;
 import static api.support.fixtures.ServicePointExamples.basedUponCircDesk5;
 import static api.support.fixtures.ServicePointExamples.basedUponCircDesk6;
-import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 
-import java.net.MalformedURLException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
-
-import org.folio.circulation.support.http.client.IndividualResource;
+import api.support.http.IndividualResource;
 
 import api.support.builders.ServicePointBuilder;
 import api.support.http.ResourceClient;

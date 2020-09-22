@@ -23,7 +23,7 @@ public class NoteCreator {
         .typeId(noteType.getId())
         .content(message)
         // The domain must be users otherwise it won't be found by the reference UI
-        // which uses a query like /note-links/domain/users/type/user/id/{userId}
+        // which uses a query like /note-links/domain/users/type/user/id/[userId]
         .domain("users")
         .link(new NoteLink(userId, NoteLinkType.USER.getValue()))
         .build())));

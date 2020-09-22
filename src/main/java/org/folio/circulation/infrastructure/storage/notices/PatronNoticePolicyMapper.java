@@ -1,9 +1,10 @@
 package org.folio.circulation.infrastructure.storage.notices;
 
 import static java.lang.String.format;
-import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getNestedObjectProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
+import static org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher.mapToList;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getBooleanProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedObjectProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.succeeded;
 
@@ -19,9 +20,8 @@ import org.folio.circulation.domain.notice.NoticeTiming;
 import org.folio.circulation.domain.notice.PatronNoticePolicy;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.HttpFailure;
-import org.folio.circulation.support.JsonArrayHelper;
-import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.ServerErrorFailure;
+import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.json.JsonObject;
 
@@ -45,16 +45,15 @@ public class PatronNoticePolicyMapper implements Function<JsonObject, Result<Pat
   @Override
   public Result<PatronNoticePolicy> apply(JsonObject representation) {
     List<Result<NoticeConfiguration>> loanNoticeConfigurations =
-      JsonArrayHelper.mapToList(representation, LOAN_NOTICES, this::toNoticeConfiguration);
+      mapToList(representation, LOAN_NOTICES, this::toNoticeConfiguration);
     List<Result<NoticeConfiguration>> requestNoticeConfigurations =
-      JsonArrayHelper.mapToList(representation, REQUEST_NOTICES, this::toNoticeConfiguration);
+      mapToList(representation, REQUEST_NOTICES, this::toNoticeConfiguration);
     List<Result<NoticeConfiguration>> feeFineNoticeConfiguration =
-      JsonArrayHelper.mapToList(representation, FEE_FINE_NOTICES, this::toNoticeConfiguration);
+      mapToList(representation, FEE_FINE_NOTICES, this::toNoticeConfiguration);
 
     return Result.combineAll(loanNoticeConfigurations, requestNoticeConfigurations,
       feeFineNoticeConfiguration).map(PatronNoticePolicy::new);
   }
-
 
   private Result<NoticeConfiguration> toNoticeConfiguration(JsonObject representation) {
     return succeeded(new NoticeConfigurationBuilder())
@@ -99,7 +98,7 @@ public class PatronNoticePolicyMapper implements Function<JsonObject, Result<Pat
     NoticeConfigurationBuilder builder, JsonObject representation) {
 
     if (getNoticeTiming(representation).requiresPeriod()) {
-      return getNestedPeriodProperty(representation, SEND_OPTIONS, SEND_BY)
+      return getNestedPeriodProperty(representation, SEND_BY)
         .map(builder::setTimingPeriod);
     }
     return succeeded(builder);
@@ -113,15 +112,14 @@ public class PatronNoticePolicyMapper implements Function<JsonObject, Result<Pat
     NoticeConfigurationBuilder builder, JsonObject representation) {
 
     if (getRecurring(representation)) {
-      return getNestedPeriodProperty(representation, SEND_OPTIONS, SEND_EVERY)
+      return getNestedPeriodProperty(representation, SEND_EVERY)
         .map(builder::setRecurringPeriod);
     }
     return succeeded(builder);
   }
 
-  private Result<Period> getNestedPeriodProperty(
-    JsonObject representation, String objectName, String propertyName) {
-    return Period.from(getNestedObjectProperty(representation, objectName, propertyName),
+  private Result<Period> getNestedPeriodProperty(JsonObject representation, String propertyName) {
+    return Period.from(getNestedObjectProperty(representation, SEND_OPTIONS, propertyName),
       () -> getPolicyParsingFailure("the loan period is not recognised"),
       interval -> getPolicyParsingFailure(format("the interval \"%s\" is not recognised", interval)),
       duration -> getPolicyParsingFailure(format("the duration \"%s\"  is invalid", duration)));

@@ -6,13 +6,13 @@ import static api.support.http.Limit.limit;
 import static api.support.http.Limit.noLimit;
 import static api.support.http.Offset.noOffset;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
-import static org.folio.circulation.support.JsonArrayHelper.mapToList;
+import static org.folio.circulation.support.StreamToListMapper.toList;
+import static org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher.toStream;
 
 import java.net.URL;
 import java.util.List;
 import java.util.UUID;
 
-import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 
 import api.support.MultipleJsonRecords;
@@ -359,11 +359,11 @@ public class ResourceClient {
     }
   }
 
-  //TODO: Replace return valu[e with MultipleJsonRecords
+  //TODO: Replace return value with MultipleJsonRecords
   public List<JsonObject> getAll() {
-    return mapToList(restAssuredClient
+    return toList(toStream(restAssuredClient
       .get(rootUrl(), noQuery(), limit(1000), noOffset(), 200, "get-all")
-      .getJson(), collectionArrayPropertyName);
+      .getJson(), collectionArrayPropertyName));
   }
 
   private URL recordUrl(Object id) {

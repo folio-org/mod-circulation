@@ -1,11 +1,13 @@
-package org.folio.circulation.support.http.client;
+package api.support.http;
 
 import java.util.UUID;
+
+import org.folio.circulation.support.http.client.Response;
 
 import io.vertx.core.json.JsonObject;
 
 public class IndividualResource {
-  private final Response response;
+  protected final Response response;
 
   public IndividualResource(Response response) {
     this.response = response;
@@ -29,10 +31,5 @@ public class IndividualResource {
 
   public Response getResponse() {
     return response;
-  }
-
-  //TODO: Possibly move this to own class
-  public String getBarcode() {
-    return response.getJson().getString("barcode");
   }
 }

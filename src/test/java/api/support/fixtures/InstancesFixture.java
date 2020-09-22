@@ -1,14 +1,11 @@
 package api.support.fixtures;
 
-import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
-import static org.folio.circulation.support.JsonPropertyWriter.write;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
-import java.net.MalformedURLException;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 
-import org.folio.circulation.support.http.client.IndividualResource;
+import api.support.http.IndividualResource;
 
 import api.support.builders.InstanceBuilder;
 import api.support.http.ResourceClient;

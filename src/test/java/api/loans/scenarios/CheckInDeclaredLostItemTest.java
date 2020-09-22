@@ -15,7 +15,7 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.joda.time.DateTime.now;
 
-import org.folio.circulation.support.http.client.IndividualResource;
+import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -24,7 +24,7 @@ import org.junit.Test;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
 import io.vertx.core.json.JsonObject;
 
-public class CheckInDeclaredLostItemTest extends RefundLostItemFeesTestBase {
+public class CheckInDeclaredLostItemTest extends RefundDeclaredLostFeesTestBase {
   @Override
   protected void performActionThatRequiresRefund() {
     checkInFixture.checkInByBarcode(item);

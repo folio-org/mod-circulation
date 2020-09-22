@@ -1,7 +1,8 @@
 package api.support;
 
 import static api.support.JsonCollectionAssistant.getRecordById;
-import static org.folio.circulation.support.JsonArrayHelper.mapToList;
+import static org.folio.circulation.support.StreamToListMapper.toList;
+import static org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher.toStream;
 
 import java.util.Iterator;
 import java.util.List;
@@ -27,7 +28,7 @@ public class MultipleJsonRecords implements Iterable<JsonObject> {
 
     final JsonObject json = response.getJson();
 
-    return new MultipleJsonRecords(mapToList(json, arrayPropertyName),
+    return new MultipleJsonRecords(toList(toStream(json, arrayPropertyName)),
       json.getInteger("totalRecords"));
   }
 

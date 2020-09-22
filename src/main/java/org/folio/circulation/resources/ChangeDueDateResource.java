@@ -2,7 +2,7 @@ package org.folio.circulation.resources;
 
 import static org.folio.circulation.domain.representations.ChangeDueDateRequest.DUE_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.ITEM_ID;
-import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimeProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;

@@ -29,11 +29,12 @@ import static org.junit.Assert.assertEquals;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.awaitility.Awaitility;
-import org.folio.circulation.support.http.client.IndividualResource;
+import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
@@ -45,9 +46,10 @@ import api.support.APITests;
 import api.support.MultipleJsonRecords;
 import api.support.builders.ClaimItemReturnedRequestBuilder;
 import api.support.builders.DeclareItemLostRequestBuilder;
+import api.support.builders.ItemBuilder;
 import api.support.builders.LostItemFeePolicyBuilder;
 import api.support.fakes.FakePubSub;
-import api.support.http.InventoryItemResource;
+import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
@@ -115,7 +117,7 @@ public class DeclareLostAPITests extends APITests {
 
   @Test
   public void cannotDeclareItemLostForAClosedLoan() {
-    final InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+    final ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
 
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(item, usersFixture.jessica());
 
@@ -153,7 +155,9 @@ public class DeclareLostAPITests extends APITests {
   public void shouldChargeProcessingAndItemFeesWhenBothDefined() {
     final double expectedProcessingFee = 10.0;
     final double expectedItemFee = 20.0;
-    final String expectedOwnerId = feeFineOwnerFixture.cd1Owner().getId().toString();
+    // permanent location SP is used, not effective location
+    final String expectedOwnerId = feeFineOwnerFixture.ownerForServicePoint(
+      servicePointsFixture.cd6().getId()).getId().toString();
 
     final LostItemFeePolicyBuilder lostItemPolicy = lostItemFeePoliciesFixture
       .facultyStandardPolicy()
@@ -163,7 +167,9 @@ public class DeclareLostAPITests extends APITests {
 
     useLostItemPolicy(lostItemFeePoliciesFixture.create(lostItemPolicy).getId());
 
-    final IndividualResource loan = declareItemLost();
+    final IndividualResource loan = declareItemLost(itemBuilder -> itemBuilder
+      .withPermanentLocation(locationsFixture.fourthFloor())
+      .withTemporaryLocation(locationsFixture.thirdFloor()));
 
     assertThat(loan.getJson(), isOpen());
 
@@ -230,7 +236,7 @@ public class DeclareLostAPITests extends APITests {
 
   @Test
   public void shouldNotChargeFeesWhenPolicyIsUnknown() {
-    final InventoryItemResource item = itemsFixture.basedUponNod();
+    final ItemResource item = itemsFixture.basedUponNod();
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(item, usersFixture.charlotte());
 
     final JsonObject loanWithoutLostPolicy = loansStorageClient.getById(loan.getId())
@@ -251,9 +257,12 @@ public class DeclareLostAPITests extends APITests {
 
   @Test
   public void cannotDeclareItemLostWhenPrimaryServicePointHasNoOwner() {
-    feeFineOwnerFixture.delete(feeFineOwnerFixture.cd1Owner());
+    feeFineOwnerFixture.cleanUp();
 
-    final InventoryItemResource item = itemsFixture.basedUponNod();
+    final IndividualResource permanentLocation = locationsFixture.thirdFloor();
+    final ItemResource item = itemsFixture.basedUponNod(
+      builder -> builder.withPermanentLocation(permanentLocation));
+
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(item, usersFixture.charlotte());
 
     final Response response = declareLostFixtures.attemptDeclareItemLost(
@@ -261,8 +270,8 @@ public class DeclareLostAPITests extends APITests {
         .forLoanId(loan.getId()));
 
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("No fee/fine owner found for item's effective location"),
-      hasParameter("servicePointId", servicePointsFixture.cd1().getId().toString())
+      hasMessage("No fee/fine owner found for item's permanent location"),
+      hasParameter("locationId", permanentLocation.getId().toString())
     )));
   }
 
@@ -270,7 +279,7 @@ public class DeclareLostAPITests extends APITests {
   public void cannotDeclareItemLostWhenNoAutomatedLostItemFeeTypeIsDefined() {
     feeFineTypeFixture.delete(feeFineTypeFixture.lostItemFee());
 
-    final InventoryItemResource item = itemsFixture.basedUponNod();
+    final ItemResource item = itemsFixture.basedUponNod();
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(item, usersFixture.charlotte());
 
     final Response response = declareLostFixtures.attemptDeclareItemLost(
@@ -288,7 +297,7 @@ public class DeclareLostAPITests extends APITests {
   public void cannotDeclareItemLostWhenNoAutomatedLostItemProcessingFeeTypeIsDefined() {
     feeFineTypeFixture.delete(feeFineTypeFixture.lostItemProcessingFee());
 
-    final InventoryItemResource item = itemsFixture.basedUponNod();
+    final ItemResource item = itemsFixture.basedUponNod();
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(item, usersFixture.charlotte());
 
     final Response response = declareLostFixtures.attemptDeclareItemLost(
@@ -441,7 +450,7 @@ public class DeclareLostAPITests extends APITests {
 
     assertThat(notesClient.getAll().size(), is(0));
 
-    InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+    ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
     UUID loanId = checkOutFixture.checkOutByBarcode(item, usersFixture.charlotte())
       .getId();
 
@@ -467,7 +476,7 @@ public class DeclareLostAPITests extends APITests {
   public void shouldNotCreateNoteWhenNotPreviouslyClaimedReturned() {
     String comment = "testing";
 
-    InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+    ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
     UUID loanId = checkOutFixture.checkOutByBarcode(item, usersFixture.charlotte())
       .getId();
 
@@ -493,8 +502,9 @@ public class DeclareLostAPITests extends APITests {
       .getFirst();
   }
 
-  private IndividualResource declareItemLost() {
-    final InventoryItemResource item = itemsFixture.basedUponNod();
+  private IndividualResource declareItemLost(UnaryOperator<ItemBuilder> itemBuilder) {
+    final ItemResource item = itemsFixture.basedUponSmallAngryPlanet(itemBuilder);
+
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(item, usersFixture.charlotte());
 
     declareLostFixtures.declareItemLost(new DeclareItemLostRequestBuilder()
@@ -502,6 +512,10 @@ public class DeclareLostAPITests extends APITests {
       .forLoanId(loan.getId()));
 
     return loansFixture.getLoanById(loan.getId());
+  }
+
+  private IndividualResource declareItemLost() {
+    return declareItemLost(UnaryOperator.identity());
   }
 
   private void assertNoFeeAssignedForLoan(UUID loan) {

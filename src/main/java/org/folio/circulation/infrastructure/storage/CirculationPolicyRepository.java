@@ -56,8 +56,8 @@ public abstract class CirculationPolicyRepository<T> {
   }
 
   private Result<T> mapToPolicy(JsonObject json, AppliedRuleConditions ruleConditionsEntity) {
-    if (log.isInfoEnabled()) {
-      log.info("Mapping json to policy {}", json.encodePrettily());
+    if (log.isDebugEnabled()) {
+      log.debug("Mapping json to policy {}", json.encodePrettily());
     }
 
     return toPolicy(json, ruleConditionsEntity);

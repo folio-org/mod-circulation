@@ -2,7 +2,7 @@ package org.folio.circulation.storage;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Function.identity;
-import static org.folio.circulation.support.JsonKeys.byId;
+import static org.folio.circulation.support.json.JsonKeys.byId;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQuery;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;

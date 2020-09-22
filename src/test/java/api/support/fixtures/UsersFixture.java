@@ -8,120 +8,94 @@ import static api.support.fixtures.UserExamples.basedUponJessicaPontefract;
 import static api.support.fixtures.UserExamples.basedUponRebeccaStuart;
 import static api.support.fixtures.UserExamples.basedUponStevenJones;
 import static java.util.function.Function.identity;
-import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 
 import java.util.function.Function;
 
-import org.folio.circulation.support.http.client.IndividualResource;
+import api.support.http.IndividualResource;
 
 import api.support.APITestContext;
 import api.support.builders.UserBuilder;
 import api.support.http.ResourceClient;
+import api.support.http.UserResource;
 
 public class UsersFixture {
   private final RecordCreator userRecordCreator;
   private final PatronGroupsFixture patronGroupsFixture;
 
-  public UsersFixture(
-    ResourceClient usersClient,
-    PatronGroupsFixture patronGroupsFixture) {
-
+  public UsersFixture(ResourceClient usersClient, PatronGroupsFixture patronGroupsFixture) {
     this.userRecordCreator = new RecordCreator(usersClient,
       user -> getProperty(user, "username"));
 
     this.patronGroupsFixture = patronGroupsFixture;
   }
 
-  public void cleanUp() {
-
-    userRecordCreator.cleanUp();
-  }
-
-  public IndividualResource jessica() {
-
-    return userRecordCreator.createIfAbsent(basedUponJessicaPontefract()
-        .inGroupFor(patronGroupsFixture.regular()));
-  }
-
-  public IndividualResource james() {
-
-    return userRecordCreator.createIfAbsent(basedUponJamesRodwell()
+  public UserResource jessica() {
+    return createIfAbsent(basedUponJessicaPontefract()
       .inGroupFor(patronGroupsFixture.regular()));
   }
 
-  public IndividualResource rebecca() {
+  public UserResource james() {
+    return createIfAbsent(basedUponJamesRodwell()
+      .inGroupFor(patronGroupsFixture.regular()));
+  }
 
+  public UserResource rebecca() {
     return rebecca(identity());
   }
 
-  public IndividualResource rebecca(
-    Function<UserBuilder, UserBuilder> additionalProperties) {
-
-    return userRecordCreator.createIfAbsent(
-      additionalProperties.apply(basedUponRebeccaStuart()
-        .inGroupFor(patronGroupsFixture.regular())));
+  public UserResource rebecca(Function<UserBuilder, UserBuilder> additionalConfiguration) {
+    return createIfAbsent(additionalConfiguration.apply(basedUponRebeccaStuart()
+      .inGroupFor(patronGroupsFixture.regular())));
   }
 
-  public IndividualResource steve() {
-
+  public UserResource steve() {
     return steve(identity());
   }
 
-  public IndividualResource steve(
-    Function<UserBuilder, UserBuilder> additionalUserProperties) {
-
-    return userRecordCreator.createIfAbsent(
-      additionalUserProperties.apply(basedUponStevenJones()
-        .inGroupFor(patronGroupsFixture.regular())));
+  public UserResource steve(Function<UserBuilder, UserBuilder> additionalConfiguration) {
+    return createIfAbsent(additionalConfiguration.apply(basedUponStevenJones()
+      .inGroupFor(patronGroupsFixture.regular())));
   }
 
-  public IndividualResource charlotte() {
-
+  public UserResource charlotte() {
     return charlotte(identity());
   }
 
-  public IndividualResource charlotte(
-    Function<UserBuilder, UserBuilder> additionalConfiguration) {
-
-    return userRecordCreator.createIfAbsent(
-      additionalConfiguration.apply(basedUponCharlotteBroadwell()
-        .inGroupFor(patronGroupsFixture.regular())));
+  public UserResource charlotte(Function<UserBuilder, UserBuilder> additionalConfiguration) {
+    return createIfAbsent(additionalConfiguration.apply(basedUponCharlotteBroadwell()
+      .inGroupFor(patronGroupsFixture.regular())));
   }
 
-  public IndividualResource undergradHenry() {
-
+  public UserResource undergradHenry() {
     return undergradHenry(identity());
   }
 
-  public IndividualResource undergradHenry(
-    Function<UserBuilder, UserBuilder> additionalUserProperties) {
-
-    return userRecordCreator.createIfAbsent(
-      additionalUserProperties.apply(basedUponHenryHanks()
-        .inGroupFor(patronGroupsFixture.undergrad())));
+  public UserResource undergradHenry(Function<UserBuilder, UserBuilder> additionalConfiguration) {
+    return createIfAbsent(additionalConfiguration.apply(basedUponHenryHanks()
+      .inGroupFor(patronGroupsFixture.undergrad())));
   }
 
   public IndividualResource noUserGroupBob() {
-
     return noUserGroupBob(identity());
   }
 
-  public IndividualResource noUserGroupBob(
-    Function<UserBuilder, UserBuilder> additionalUserProperties) {
-
-    return userRecordCreator.createIfAbsent(
-      additionalUserProperties.apply(basedUponBobbyBibbin()));
+  public UserResource noUserGroupBob(Function<UserBuilder, UserBuilder> additionalConfiguration) {
+    return createIfAbsent(additionalConfiguration.apply(basedUponBobbyBibbin()));
   }
 
-  public void remove(IndividualResource user) {
-
+  public void remove(UserResource user) {
     userRecordCreator.delete(user);
   }
 
-  public IndividualResource defaultAdmin() {
-    return userRecordCreator.createIfAbsent(new UserBuilder()
+  public void defaultAdmin() {
+    createIfAbsent(new UserBuilder()
       .withName("Admin", "Admin")
       .withNoBarcode()
       .withId(APITestContext.getUserId()));
+  }
+
+  private UserResource createIfAbsent(UserBuilder userBuilder) {
+    return new UserResource(userRecordCreator.createIfAbsent(userBuilder));
   }
 }

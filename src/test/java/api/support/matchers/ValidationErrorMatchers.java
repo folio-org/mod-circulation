@@ -1,8 +1,8 @@
 package api.support.matchers;
 
-import static org.folio.circulation.support.JsonArrayHelper.mapToList;
-import static org.folio.circulation.support.JsonArrayHelper.toStream;
-import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.StreamToListMapper.toList;
+import static org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher.toStream;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasProperty;
@@ -36,7 +36,7 @@ public class ValidationErrorMatchers {
       @Override
       protected boolean matchesSafely(JsonObject representation, Description description) {
         final Matcher<Iterable<? super ValidationError>> iterableMatcher = IsCollectionContaining.hasItem(matcher);
-        final List<ValidationError> errors = mapToList(representation, "errors", ValidationErrorMatchers::fromJson);
+        final List<ValidationError> errors = errorsFromJson(representation);
 
         iterableMatcher.describeMismatch(errors, description);
 
@@ -152,7 +152,11 @@ public class ValidationErrorMatchers {
         p -> p.getString("key"),
         p -> p.getString("value")));
 
-    return new ValidationError(
-      getProperty(representation, "message"), parameters);
+    return new ValidationError(getProperty(representation, "message"), parameters);
+  }
+
+  private static List<ValidationError> errorsFromJson(JsonObject representation) {
+    return toList(toStream(representation, "errors")
+      .map(ValidationErrorMatchers::fromJson));
   }
 }

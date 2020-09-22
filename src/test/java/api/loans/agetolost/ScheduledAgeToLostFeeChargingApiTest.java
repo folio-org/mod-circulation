@@ -16,15 +16,17 @@ import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static java.lang.Boolean.TRUE;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.containsInRelativeOrder;
 import static org.hamcrest.Matchers.iterableWithSize;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.policy.Period;
-import org.folio.circulation.support.http.client.IndividualResource;
+import api.support.http.IndividualResource;
 import org.hamcrest.Matcher;
 import org.junit.Before;
 import org.junit.Test;
@@ -54,16 +56,22 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
   @SuppressWarnings("unchecked")
   public void shouldChargeItemFee() {
     final double expectedSetCost = 12.88;
+    final IndividualResource permanentLocation = locationsFixture.fourthFloor();
+    final UUID ownerServicePoint = servicePointsFixture.cd6().getId();
+    final String expectedOwnerId = feeFineOwnerFixture.ownerForServicePoint(ownerServicePoint)
+    .getId().toString();
 
     val policy = lostItemFeePoliciesFixture
       .ageToLostAfterOneMinutePolicy()
       .withSetCost(expectedSetCost)
       .doNotChargeProcessingFeeWhenAgedToLost();
 
-    val result = ageToLostFixture.createLoanAgeToLostAndChargeFees(policy);
+    val result = ageToLostFixture.createLoanAgeToLostAndChargeFees(
+      builder -> builder.withPermanentLocation(permanentLocation), policy);
 
     assertThat(result.getLoan().getJson(), isLostItemHasBeenBilled());
-    assertThat(result.getLoan(), hasLostItemFee(isOpen(expectedSetCost)));
+    assertThat(result.getLoan(), hasLostItemFee(allOf(isOpen(expectedSetCost),
+      hasJsonPath("ownerId", expectedOwnerId))));
     assertThat(result.getLoan(), hasLostItemFeeCreatedBySystemAction());
 
     assertThat(result.getLoan(), hasLoanHistory(containsInRelativeOrder(
@@ -256,10 +264,10 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
   }
 
   @Test
-  public void shouldCloseLoanWhenNoFeesToChargeForImmediateBilling() {
+  public void shouldCloseLoanWhenNoFeesToCharge() {
     val policy = lostItemFeePoliciesFixture
       .ageToLostAfterOneMinutePolicy()
-      .billPatronImmediatelyWhenAgedToLost()
+      .withPatronBilledAfterAgedLost(Period.weeks(1))
       .withNoChargeAmountItem()
       .doNotChargeProcessingFeeWhenAgedToLost();
 
@@ -275,10 +283,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
 
     for (int itemIndex = 0; itemIndex < 10; itemIndex++) {
       val itemIndexFinal = itemIndex;
-      val servicePoint = servicePointsFixture.create(new ServicePointBuilder(
-        "Age to lost service point " + itemIndex, "agl-sp-" + itemIndex,
-        "Age to lost service point " + itemIndex)
-        .withPickupLocation(TRUE));
+      val servicePoint = createServicePointForItemIndex(itemIndex);
 
       val location = locationsFixture.basedUponExampleLocation(builder -> builder
         .withName("Location for sp " + itemIndexFinal)
@@ -287,7 +292,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
 
       val item = itemsFixture.basedUponNod(itemBuilder -> itemBuilder
         .withRandomBarcode()
-        .withTemporaryLocation(location.getId()));
+        .withPermanentLocation(location.getId()));
 
       val setCostFee = 10.0 + itemIndex;
       val policyBuilder = lostItemFeePoliciesFixture.ageToLostAfterOneMinutePolicy()
@@ -305,6 +310,13 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     }
 
     return loanToFeeMap;
+  }
+
+  private IndividualResource createServicePointForItemIndex(int itemIndex) {
+    return servicePointsFixture.create(new ServicePointBuilder(
+      "Age to lost service point " + itemIndex, "agl-sp-" + itemIndex,
+      "Age to lost service point " + itemIndex)
+      .withPickupLocation(TRUE));
   }
 
   private Matcher<JsonObject> isLostItemHasBeenBilled() {

@@ -1,9 +1,9 @@
 package org.folio.circulation.domain;
 
-import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getObjectProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getBooleanProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getIntegerProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getObjectProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 
 import io.vertx.core.json.JsonObject;
 

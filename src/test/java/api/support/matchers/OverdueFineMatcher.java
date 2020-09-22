@@ -2,7 +2,7 @@ package api.support.matchers;
 
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath;
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasNoJsonPath;
-import static org.folio.circulation.support.JsonPropertyFetcher.getUUIDProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getUUIDProperty;
 import static org.hamcrest.core.Is.is;
 
 import java.util.ArrayList;
@@ -12,7 +12,7 @@ import java.util.UUID;
 
 import org.folio.circulation.domain.representations.ItemProperties;
 import org.folio.circulation.domain.representations.LoanProperties;
-import org.folio.circulation.support.http.client.IndividualResource;
+import api.support.http.IndividualResource;
 import org.hamcrest.Matcher;
 
 import io.vertx.core.json.JsonObject;

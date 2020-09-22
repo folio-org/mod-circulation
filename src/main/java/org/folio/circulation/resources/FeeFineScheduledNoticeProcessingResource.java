@@ -8,6 +8,7 @@ import java.util.concurrent.CompletableFuture;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.notice.schedule.FeeFineScheduledNoticeHandler;
 import org.folio.circulation.domain.notice.schedule.ScheduledNotice;
+import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
 import org.folio.circulation.domain.notice.schedule.TriggeringEvent;
 import org.folio.circulation.services.EventPublisher;
@@ -27,6 +28,7 @@ public class FeeFineScheduledNoticeProcessingResource extends ScheduledNoticePro
 
   @Override
   protected CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> findNoticesToSend(
+    ConfigurationRepository configurationRepository,
     ScheduledNoticesRepository scheduledNoticesRepository, PageLimit pageLimit) {
 
     return scheduledNoticesRepository.findNotices(

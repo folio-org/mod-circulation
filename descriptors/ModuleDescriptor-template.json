@@ -2200,7 +2200,10 @@
         "accounts.item.post",
         "users.item.get",
         "feefineactions.item.post",
-        "pubsub.publish.post"
+        "pubsub.publish.post",
+        "note.types.collection.get",
+        "notes.item.post",
+        "notes.domain.all"
       ],
       "visible": false
     },
@@ -2255,9 +2258,9 @@
         "inventory-storage.holdings.item.get",
         "inventory-storage.instances.item.get",
         "users.item.get",
-        "notes.collection.get",
         "notes.item.post",
-        "note.types.collection.get"
+        "note.types.collection.get",
+        "notes.domain.all"
       ],
       "visible": false
     },

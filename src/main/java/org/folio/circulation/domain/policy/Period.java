@@ -1,8 +1,8 @@
 package org.folio.circulation.domain.policy;
 
 import static org.folio.circulation.support.ClockManager.getClockManager;
-import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getIntegerProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;

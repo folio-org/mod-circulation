@@ -15,7 +15,7 @@ import static java.util.function.Function.identity;
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.isEmptyString;
+import static org.hamcrest.Matchers.emptyString;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.core.Is.is;
@@ -25,7 +25,7 @@ import static org.junit.Assert.assertTrue;
 import java.net.HttpURLConnection;
 import java.util.UUID;
 
-import org.folio.circulation.support.http.client.IndividualResource;
+import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.CoreMatchers;
 import org.joda.time.DateTime;
@@ -37,7 +37,7 @@ import api.support.MultipleJsonRecords;
 import api.support.builders.Address;
 import api.support.builders.ItemBuilder;
 import api.support.builders.RequestBuilder;
-import api.support.http.InventoryItemResource;
+import api.support.http.ItemResource;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -53,7 +53,7 @@ public class RequestsAPIRetrievalTests extends APITests {
     UUID isbnIdentifierId = identifierTypesFixture.isbn().getId();
     String isbnValue = "9780866989732";
 
-    final InventoryItemResource smallAngryPlanet = itemsFixture
+    final ItemResource smallAngryPlanet = itemsFixture
       .basedUponSmallAngryPlanet(
         identity(),
         instanceBuilder -> instanceBuilder.addIdentifier(isbnIdentifierId, isbnValue),
@@ -242,7 +242,7 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     JsonObject representation = requestsFixture.getById(createdRequest.getId()).getJson();
 
-    assertThat(representation.getString("id"), is(not(isEmptyString())));
+    assertThat(representation.getString("id"), is(not(emptyString())));
     assertThat(representation.getString("requestType"), is("Recall"));
     assertThat(representation.getString("fulfilmentPreference"), is("Delivery"));
     assertThat(representation.getString("deliveryAddressTypeId"), is(workAddressType.getId()));
@@ -395,7 +395,7 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     JsonObject representation = allRequests.getFirst();
 
-    assertThat(representation.getString("id"), is(not(isEmptyString())));
+    assertThat(representation.getString("id"), is(not(emptyString())));
     assertThat(representation.getString("requestType"), is("Recall"));
     assertThat(representation.getString("fulfilmentPreference"), is("Delivery"));
     assertThat(representation.getString("deliveryAddressTypeId"), is(workAddressType.getId()));

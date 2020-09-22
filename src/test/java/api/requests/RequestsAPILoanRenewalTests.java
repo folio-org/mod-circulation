@@ -17,7 +17,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.domain.policy.Period;
-import org.folio.circulation.support.http.client.IndividualResource;
+import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -29,7 +29,7 @@ import api.support.builders.FixedDueDateSchedule;
 import api.support.builders.FixedDueDateSchedulesBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.RequestBuilder;
-import api.support.http.InventoryItemResource;
+import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 
 public class RequestsAPILoanRenewalTests extends APITests {
@@ -42,7 +42,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
   @Test
   public void forbidRenewalLoanByBarcodeWhenFirstRequestInQueueIsRecall() {
 
-    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
@@ -65,7 +65,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
 
     final DateTime expectedDueDate = DateTime.now(DateTimeZone.UTC)
       .plusWeeks(DEFAULT_HOLD_RENEWAL_PERIOD);
-    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
@@ -92,7 +92,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
   public void forbidRenewalLoanByBarcodeWhenProfileIsRollingFirstRequestInQueueIsHoldAndRenewingIsDisallowedInLoanPolicy()
     throws InterruptedException, TimeoutException, ExecutionException {
 
-    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
 
     loanPolicyWithRollingProfileAndRenewingIsForbiddenWhenHoldIsPending();
@@ -114,7 +114,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
   public void allowRenewalWithHoldsWhenProfileIsRollingUseLoanPeriod() {
     final int renewalPeriod = 90;
     final DateTime expectedDueDate = DateTime.now(DateTimeZone.UTC).plusWeeks(renewalPeriod);
-    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
@@ -149,7 +149,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
   public void allowRenewalWithHoldsWhenProfileIsRollingUseRenewalPeriod() {
     final int renewalPeriod = 60;
     final DateTime expectedDueDate = DateTime.now(DateTimeZone.UTC).plusWeeks(renewalPeriod);
-    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
@@ -186,7 +186,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
   public void forbidRenewalLoanByBarcodeWhenLoanProfileIsFixedFirstRequestInQueueIsHoldAndRenewingIsDisallowedInLoanPolicy()
     throws InterruptedException, TimeoutException, ExecutionException {
 
-    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
@@ -209,7 +209,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
   @Test
   public void forbidRenewalLoanByIdWhenFirstRequestInQueueIsRecall() {
 
-    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
@@ -232,7 +232,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
 
     final DateTime expectedDueDate = DateTime.now(DateTimeZone.UTC)
       .plusWeeks(DEFAULT_HOLD_RENEWAL_PERIOD);
-    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
@@ -260,7 +260,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
   public void forbidRenewalLoanByIdWhenLoanProfileIsRollingFirstRequestInQueueIsHoldAndRenewingIsDisallowedInLoanPolicy()
     throws InterruptedException, TimeoutException, ExecutionException {
 
-    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
@@ -284,7 +284,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
   public void forbidRenewalLoanByIdWhenLoanProfileIsFixedFirstRequestInQueueIsHoldAndRenewingIsDisallowedInLoanPolicy()
     throws InterruptedException, TimeoutException, ExecutionException {
 
-    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
@@ -310,7 +310,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
     final DateTime to = DateTime.now(DateTimeZone.UTC).plusMonths(3);
     final DateTime dueDate = to.plusDays(15);
 
-    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
@@ -353,7 +353,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
     final DateTime to = DateTime.now(DateTimeZone.UTC).plusMonths(3);
     final DateTime dueDate = to.plusDays(15);
 
-    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
@@ -392,7 +392,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
   @Test
   public void allowRenewalOverrideWhenFirstRequestIsRecall() {
 
-    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
 
     DateTime loanDate = new DateTime(2018, APRIL, 21, 11, 21, 43);
@@ -424,7 +424,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
   @Test
   public void forbidRenewalOverrideWhenFirstRequestIsNotRecall() {
 
-    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
 
     DateTime loanDate = new DateTime(2018, APRIL, 21, 11, 21, 43);
@@ -461,7 +461,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
   @Test
   public void multipleRenewalFailuresWhenItemHasOpenRecallRequestAndLoanIsNotRenewable() {
 
-    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
@@ -489,7 +489,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
   @Test
   public void multipleRenewalFailuresWhenItemHasOpenRecallRequestAndLoanIsNotLoanable() {
 
-    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
@@ -520,7 +520,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
     final DateTime to = DateTime.now(DateTimeZone.UTC).plusMonths(3);
     final DateTime dueDate = to.plusDays(15);
 
-    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
@@ -566,7 +566,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
     final DateTime to = DateTime.now(DateTimeZone.UTC).plusMonths(3);
     final DateTime dueDate = to.plusDays(15);
 
-    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, rebecca);

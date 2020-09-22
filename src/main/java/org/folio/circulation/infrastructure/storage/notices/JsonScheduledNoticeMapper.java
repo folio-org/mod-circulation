@@ -2,10 +2,10 @@ package org.folio.circulation.infrastructure.storage.notices;
 
 import static java.lang.String.format;
 import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.from;
-import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimeProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getObjectProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getBooleanProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getObjectProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import org.folio.circulation.domain.notice.NoticeFormat;

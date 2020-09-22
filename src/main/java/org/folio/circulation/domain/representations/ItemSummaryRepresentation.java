@@ -1,19 +1,21 @@
 package org.folio.circulation.domain.representations;
 
 import static org.folio.circulation.domain.representations.CallNumberComponentsRepresentation.createCallNumberComponents;
+import static org.folio.circulation.domain.representations.ContributorsToNamesMapper.mapContributorsToNamesOnly;
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 import static org.folio.circulation.domain.representations.ItemProperties.LAST_CHECK_IN;
-import static org.folio.circulation.support.JsonPropertyWriter.write;
+import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Objects;
 
-import io.vertx.core.json.JsonObject;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.ServicePoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import io.vertx.core.json.JsonObject;
 
 public class ItemSummaryRepresentation {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -30,13 +32,15 @@ public class ItemSummaryRepresentation {
     write(itemSummary, "instanceId", item.getInstanceId());
     write(itemSummary, "title", item.getTitle());
     write(itemSummary, "barcode", item.getBarcode());
-    write(itemSummary, "contributors", item.getContributorNames());
+    write(itemSummary, "contributors",
+      mapContributorsToNamesOnly(item.getContributors()));
     write(itemSummary, "callNumber", item.getCallNumber());
     write(itemSummary, "enumeration", item.getEnumeration());
     write(itemSummary, "chronology", item.getChronology());
     write(itemSummary, "volume", item.getVolume());
     write(itemSummary, "copyNumber", item.getCopyNumber());
-    write(itemSummary, CALL_NUMBER_COMPONENTS, createCallNumberComponents(item.getCallNumberComponents()));
+    write(itemSummary, CALL_NUMBER_COMPONENTS,
+      createCallNumberComponents(item.getCallNumberComponents()));
 
     JsonObject status = new JsonObject()
       .put("name", item.getStatus().getValue());

@@ -21,10 +21,10 @@ import static org.folio.circulation.domain.representations.RequestProperties.REQ
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_EXPIRATION_DATE;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_TYPE;
 import static org.folio.circulation.domain.representations.RequestProperties.STATUS;
-import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimeProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
-import static org.folio.circulation.support.JsonPropertyWriter.write;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getIntegerProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
 import java.util.Objects;
 

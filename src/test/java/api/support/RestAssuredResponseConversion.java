@@ -1,12 +1,14 @@
 package api.support;
 
+import static io.vertx.core.MultiMap.caseInsensitiveMultiMap;
+
 import org.folio.circulation.support.http.client.Response;
 
-import io.vertx.core.http.CaseInsensitiveHeaders;
+import lombok.val;
 
 public class RestAssuredResponseConversion {
   public static Response toResponse(io.restassured.response.Response response) {
-    final CaseInsensitiveHeaders mappedHeaders = new CaseInsensitiveHeaders();
+    val mappedHeaders = caseInsensitiveMultiMap();
 
     response.headers().iterator().forEachRemaining(h -> {
       mappedHeaders.add(h.getName(), h.getValue());

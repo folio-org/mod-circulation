@@ -1,6 +1,7 @@
-package org.folio.circulation.support;
+package org.folio.circulation.support.json;
 
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static org.joda.time.DateTime.parse;
 
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -13,14 +14,10 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class JsonPropertyFetcher {
-  private JsonPropertyFetcher() {
+  private JsonPropertyFetcher() { }
 
-  }
-
-  public static String getNestedStringProperty(
-    JsonObject representation,
-    String objectName,
-    String propertyName) {
+  public static String getNestedStringProperty(JsonObject representation,
+    String objectName, String propertyName) {
 
     if (representation == null) {
       return null;
@@ -31,10 +28,8 @@ public class JsonPropertyFetcher {
       : null;
   }
 
-  public static Integer getNestedIntegerProperty(
-    JsonObject representation,
-    String objectName,
-    String propertyName) {
+  public static Integer getNestedIntegerProperty(JsonObject representation,
+    String objectName, String propertyName) {
 
     if (representation == null) {
       return null;
@@ -45,10 +40,8 @@ public class JsonPropertyFetcher {
       : null;
   }
 
-  public static DateTime getNestedDateTimeProperty(
-    JsonObject representation,
-    String objectName,
-    String propertyName) {
+  public static DateTime getNestedDateTimeProperty(JsonObject representation,
+    String objectName, String propertyName) {
 
     if (representation.containsKey(objectName)) {
       final JsonObject object = representation.getJsonObject(objectName);
@@ -59,9 +52,7 @@ public class JsonPropertyFetcher {
     }
   }
 
-  public static JsonObject getNestedObjectProperty(
-    JsonObject representation,
-    String objectName,
+  public static JsonObject getNestedObjectProperty(JsonObject representation, String objectName,
     String propertyName) {
 
     if (representation == null) {
@@ -85,17 +76,13 @@ public class JsonPropertyFetcher {
     DateTime defaultValue) {
 
     if (representation != null && isNotBlank(representation.getString(propertyName))) {
-      return DateTime.parse(
-        representation.getString(propertyName));
+      return parse(representation.getString(propertyName));
     } else {
       return defaultValue;
     }
   }
 
-  public static LocalDate getLocalDateProperty(
-    JsonObject representation,
-    String propertyName) {
-
+  public static LocalDate getLocalDateProperty(JsonObject representation, String propertyName) {
     if (representation != null && representation.containsKey(propertyName)) {
       return LocalDate.parse(
         representation.getString(propertyName));
@@ -113,10 +100,7 @@ public class JsonPropertyFetcher {
     }
   }
 
-  public static JsonObject getObjectProperty(
-    JsonObject representation,
-    String propertyName) {
-
+  public static JsonObject getObjectProperty(JsonObject representation, String propertyName) {
     if (representation != null) {
       return representation.getJsonObject(propertyName);
     } else {
@@ -149,9 +133,7 @@ public class JsonPropertyFetcher {
     }
   }
 
-  public static Integer getIntegerProperty(
-    JsonObject representation,
-    String propertyName,
+  public static Integer getIntegerProperty(JsonObject representation, String propertyName,
     Integer defaultValue) {
 
     if (representation != null) {
@@ -161,9 +143,7 @@ public class JsonPropertyFetcher {
     }
   }
 
-  public static Double getDoubleProperty(
-    JsonObject representation,
-    String propertyName,
+  public static Double getDoubleProperty(JsonObject representation, String propertyName,
     Double defaultValue) {
 
     if (representation != null) {
@@ -173,9 +153,7 @@ public class JsonPropertyFetcher {
     }
   }
 
-  public static BigDecimal getBigDecimalProperty(
-    JsonObject representation, String propertyName) {
-
+  public static BigDecimal getBigDecimalProperty(JsonObject representation, String propertyName) {
     if (representation != null && representation.getValue(propertyName) != null) {
       // the property can be either a number or a string
       return new BigDecimal(representation.getValue(propertyName).toString());
@@ -184,11 +162,7 @@ public class JsonPropertyFetcher {
     }
   }
 
-  public static void copyProperty(
-    JsonObject from,
-    JsonObject to,
-    String propertyName) {
-
+  public static void copyProperty(JsonObject from, JsonObject to, String propertyName) {
     if (from == null) {
       return;
     }
@@ -214,6 +188,7 @@ public class JsonPropertyFetcher {
     }
 
     JsonObject currentObject = from;
+
     for (int pathIndex = 0; pathIndex < paths.length - 1; pathIndex++) {
       currentObject = currentObject.getJsonObject(paths[pathIndex], new JsonObject());
     }

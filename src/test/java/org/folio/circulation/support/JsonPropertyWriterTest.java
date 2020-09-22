@@ -1,7 +1,7 @@
 package org.folio.circulation.support;
 
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
-import static org.folio.circulation.support.JsonPropertyWriter.writeByPath;
+import static org.folio.circulation.support.json.JsonPropertyWriter.writeByPath;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 

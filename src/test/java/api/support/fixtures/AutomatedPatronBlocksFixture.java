@@ -2,7 +2,7 @@ package api.support.fixtures;
 
 import java.util.Arrays;
 
-import org.folio.circulation.support.http.client.IndividualResource;
+import api.support.http.IndividualResource;
 
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonArray;

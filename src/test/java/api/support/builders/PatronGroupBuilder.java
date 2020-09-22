@@ -1,10 +1,10 @@
 package api.support.builders;
 
-import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 
 import java.util.UUID;
 
-import org.folio.circulation.support.http.client.IndividualResource;
+import api.support.http.IndividualResource;
 
 import io.vertx.core.json.JsonObject;
 
@@ -22,11 +22,11 @@ public class PatronGroupBuilder extends JsonBuilder implements Builder {
     this.group = group;
     this.desc = desc;
   }
-  
+
   public PatronGroupBuilder(String group, String desc) {
     this(UUID.randomUUID(), group, desc);
   }
-  
+
   public static PatronGroupBuilder from(IndividualResource response) {
     JsonObject representation = response.getJson();
 
@@ -35,7 +35,7 @@ public class PatronGroupBuilder extends JsonBuilder implements Builder {
         getProperty(representation, "group"),
         getProperty(representation, "desc"));
   }
-  
+
   @Override
   public JsonObject create() {
     JsonObject patronGroup = new JsonObject();
@@ -43,10 +43,10 @@ public class PatronGroupBuilder extends JsonBuilder implements Builder {
     put(patronGroup, "id", this.id);
     put(patronGroup, "group", this.group);
     put(patronGroup, "desc", this.desc);
-    
+
     return patronGroup;
   }
-  
+
   public PatronGroupBuilder withId(UUID newId) {
     return new PatronGroupBuilder(newId, this.group, this.desc);
   }

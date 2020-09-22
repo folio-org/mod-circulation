@@ -40,7 +40,7 @@ final class LoanToChargeFees {
   }
 
   String getOwnerServicePointId() {
-    return loan.getItem().getLocation().getPrimaryServicePointId().toString();
+    return loan.getItem().getPermanentLocation().getPrimaryServicePointId().toString();
   }
 
   FeeFine getLostItemFeeType() {
@@ -67,8 +67,7 @@ final class LoanToChargeFees {
   }
 
   boolean shouldCloseLoan() {
-    return getLostItemPolicy().billPatronImmediatelyAfterAgeToLost()
-      && getLostItemPolicy().hasNoLostItemFee()
+    return getLostItemPolicy().hasNoLostItemFee()
       && !getLostItemPolicy().getAgeToLostProcessingFee().isChargeable();
   }
 

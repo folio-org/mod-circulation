@@ -1,11 +1,11 @@
 package api.support.builders;
 
 
-import static org.folio.circulation.support.JsonPropertyWriter.write;
+import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
 import java.util.UUID;
 
-import org.folio.circulation.support.http.client.IndividualResource;
+import api.support.http.IndividualResource;
 
 import io.vertx.core.json.JsonObject;
 

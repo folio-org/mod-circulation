@@ -8,7 +8,7 @@ import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static org.folio.HttpStatus.HTTP_NO_CONTENT;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
-import static org.folio.circulation.support.JsonPropertyWriter.write;
+import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -23,7 +23,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
 import org.awaitility.Awaitility;
-import org.folio.circulation.support.http.client.IndividualResource;
+import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.Matcher;
 import org.hamcrest.MatcherAssert;
@@ -41,13 +41,13 @@ import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.fixtures.ItemExamples;
 import api.support.fixtures.TemplateContextMatchers;
-import api.support.http.InventoryItemResource;
+import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 
 public class ChangeDueDateByReplacingLoanTests extends APITests {
   @Test
   public void canManuallyChangeTheDueDateOfLoan() {
-    final InventoryItemResource item = itemsFixture.basedUponNod();
+    final ItemResource item = itemsFixture.basedUponNod();
 
     IndividualResource loan = checkOutFixture.checkOutByBarcode(item);
 
@@ -101,7 +101,7 @@ public class ChangeDueDateByReplacingLoanTests extends APITests {
 
   @Test
   public void canManuallyReapplyTheDueDateOfClaimedReturnedLoan() {
-    final InventoryItemResource item = itemsFixture.basedUponNod();
+    final ItemResource item = itemsFixture.basedUponNod();
 
     IndividualResource loan = checkOutFixture.checkOutByBarcode(item);
 
@@ -125,7 +125,7 @@ public class ChangeDueDateByReplacingLoanTests extends APITests {
 
   @Test
   public void canChangeDueDateOfLoanWithOpenRequest() {
-    final InventoryItemResource item = itemsFixture.basedUponNod();
+    final ItemResource item = itemsFixture.basedUponNod();
 
     IndividualResource loan = checkOutFixture.checkOutByBarcode(item);
 
@@ -224,7 +224,7 @@ public class ChangeDueDateByReplacingLoanTests extends APITests {
       "ItemPrefix",
       "ItemSuffix",
       "");
-    InventoryItemResource smallAngryPlanet =
+    ItemResource smallAngryPlanet =
       itemsFixture.basedUponSmallAngryPlanet(itemBuilder, itemsFixture.thirdFloorHoldings());
 
     IndividualResource steve = usersFixture.steve();

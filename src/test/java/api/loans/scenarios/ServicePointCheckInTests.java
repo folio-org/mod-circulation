@@ -15,7 +15,7 @@ import static org.hamcrest.core.IsNull.notNullValue;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.folio.circulation.support.http.client.IndividualResource;
+import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
@@ -28,7 +28,7 @@ import api.support.APITests;
 import api.support.CheckInByBarcodeResponse;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.RequestBuilder;
-import api.support.http.InventoryItemResource;
+import api.support.http.ItemResource;
 import api.support.matchers.JsonObjectMatcher;
 import api.support.matchers.TextDateTimeMatcher;
 import io.vertx.core.json.JsonObject;
@@ -41,7 +41,7 @@ public class ServicePointCheckInTests extends APITests {
     final IndividualResource james = usersFixture.james();
     final IndividualResource jessica = usersFixture.jessica();
 
-    final InventoryItemResource nod = itemsFixture.basedUponNod();
+    final ItemResource nod = itemsFixture.basedUponNod();
 
     final IndividualResource requestServicePoint = checkInServicePoint;
 
@@ -137,7 +137,7 @@ public class ServicePointCheckInTests extends APITests {
           .servedBy(primaryServicePoint.getId())
           .withPrimaryServicePoint(primaryServicePoint.getId()));
 
-    final InventoryItemResource nod = itemsFixture.basedUponNod(builder ->
+    final ItemResource nod = itemsFixture.basedUponNod(builder ->
       builder.withPermanentLocation(homeLocation.getId()));
 
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(nod, james);

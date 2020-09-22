@@ -14,7 +14,7 @@ import static org.folio.HttpStatus.HTTP_OK;
 import static org.folio.circulation.support.utils.DateTimeUtil.atEndOfTheDay;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.isEmptyOrNullString;
+import static org.hamcrest.Matchers.emptyOrNullString;
 
 import java.lang.reflect.Method;
 import java.time.Clock;
@@ -25,7 +25,7 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 
 import org.folio.circulation.support.ClockManager;
-import org.folio.circulation.support.http.client.IndividualResource;
+import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -327,7 +327,7 @@ public class HoldShelfExpirationDateTests extends APITests{
       storedSecondCheckInRequest.getString("status"), is(OPEN_IN_TRANSIT));
 
     assertThat("request hold shelf expiration date is not set",
-      storedSecondCheckInRequest.getString("holdShelfExpirationDate"), isEmptyOrNullString());
+      storedSecondCheckInRequest.getString("holdShelfExpirationDate"), is(emptyOrNullString()));
   }
 
   @Test
@@ -401,7 +401,7 @@ public class HoldShelfExpirationDateTests extends APITests{
       storedRequest.getString("status"), is(OPEN_IN_TRANSIT));
 
     assertThat("request hold shelf expiration date is not set",
-      storedRequest.getString("holdShelfExpirationDate"), isEmptyOrNullString());
+      storedRequest.getString("holdShelfExpirationDate"), is(emptyOrNullString()));
   }
 
   @Test
@@ -439,7 +439,7 @@ public class HoldShelfExpirationDateTests extends APITests{
       storedRequest.getString("status"), is(OPEN_IN_TRANSIT));
 
     assertThat("request hold shelf expiration date is not set",
-      storedRequest.getString("holdShelfExpirationDate"), isEmptyOrNullString());
+      storedRequest.getString("holdShelfExpirationDate"), is(emptyOrNullString()));
   }
 
   @Test
@@ -474,7 +474,7 @@ public class HoldShelfExpirationDateTests extends APITests{
       storedRequest.getString("status"), is(OPEN_IN_TRANSIT));
 
     assertThat("request hold shelf expiration date is not set",
-      storedRequest.getString("holdShelfExpirationDate"), isEmptyOrNullString());
+      storedRequest.getString("holdShelfExpirationDate"), is(emptyOrNullString()));
 
     checkInFixture.checkInByBarcode(
         new CheckInByBarcodeRequestBuilder()
@@ -492,6 +492,6 @@ public class HoldShelfExpirationDateTests extends APITests{
       storedRequest.getString("status"), is(OPEN_IN_TRANSIT));
 
     assertThat("request hold shelf expiration date is not set",
-      storedRequest.getString("holdShelfExpirationDate"), isEmptyOrNullString());
+      storedRequest.getString("holdShelfExpirationDate"), is(emptyOrNullString()));
   }
 }

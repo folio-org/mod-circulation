@@ -6,7 +6,7 @@ import static org.folio.circulation.domain.EventType.ITEM_CHECKED_OUT;
 import static org.folio.circulation.domain.EventType.ITEM_CLAIMED_RETURNED;
 import static org.folio.circulation.domain.EventType.ITEM_DECLARED_LOST;
 import static org.folio.circulation.domain.EventType.LOAN_DUE_DATE_CHANGED;
-import static org.folio.circulation.support.JsonPropertyWriter.write;
+import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.util.PubSubLogPublisherUtil.sendLogRecordEvent;
 

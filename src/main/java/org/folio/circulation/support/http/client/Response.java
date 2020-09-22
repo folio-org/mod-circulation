@@ -1,28 +1,30 @@
 package org.folio.circulation.support.http.client;
 
+import static io.vertx.core.MultiMap.caseInsensitiveMultiMap;
 import static java.lang.String.format;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHeaders;
 
+import io.vertx.core.MultiMap;
 import io.vertx.core.buffer.Buffer;
-import io.vertx.core.http.CaseInsensitiveHeaders;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.HttpResponse;
+import lombok.val;
 
 public class Response {
   protected final String body;
   private final int statusCode;
   private final String contentType;
-  private final CaseInsensitiveHeaders headers;
+  private final MultiMap headers;
   private final String fromUrl;
 
   public Response(int statusCode, String body, String contentType) {
-    this(statusCode, body, contentType, new CaseInsensitiveHeaders(), null);
+    this(statusCode, body, contentType, caseInsensitiveMultiMap(), null);
   }
 
   public Response(int statusCode, String body, String contentType,
-    CaseInsensitiveHeaders headers, String fromUrl) {
+    MultiMap headers, String fromUrl) {
 
     this.statusCode = statusCode;
     this.body = body;
@@ -32,7 +34,7 @@ public class Response {
   }
 
   static Response responseFrom(String url, HttpResponse<Buffer> response) {
-    final CaseInsensitiveHeaders headers = new CaseInsensitiveHeaders();
+    val headers = caseInsensitiveMultiMap();
 
     headers.addAll(response.headers());
 
@@ -65,7 +67,7 @@ public class Response {
     return contentType;
   }
 
-  String getHeader(String name) {
+  public String getHeader(String name) {
     return headers.get(name);
   }
 

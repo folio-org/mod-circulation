@@ -36,7 +36,7 @@ import static org.joda.time.DateTime.parse;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.folio.circulation.support.http.client.IndividualResource;
+import api.support.http.IndividualResource;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Before;
@@ -48,7 +48,7 @@ import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.DeclareItemLostRequestBuilder;
 import io.vertx.core.json.JsonObject;
 
-public abstract class RefundLostItemFeesTestBase extends APITests {
+public abstract class RefundDeclaredLostFeesTestBase extends APITests {
   private static final String DATE_ACTION_PROPERTY = "dateAction";
 
   protected final IndividualResource item = itemsFixture.basedUponNod();

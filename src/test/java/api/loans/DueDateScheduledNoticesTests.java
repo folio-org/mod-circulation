@@ -1,22 +1,20 @@
 package api.loans;
 
 import static api.support.matchers.ScheduledNoticeMatchers.hasScheduledLoanNotice;
-import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimeProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.joda.time.DateTimeZone.UTC;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.policy.Period;
-import org.folio.circulation.support.JsonPropertyWriter;
-import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.json.JsonPropertyWriter;
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
@@ -26,23 +24,20 @@ import org.junit.Test;
 import api.support.APITests;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
-import api.support.builders.FeeFineBuilder;
-import api.support.builders.FeeFineOwnerBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
+import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
 
 public class DueDateScheduledNoticesTests extends APITests {
-
   private static final String BEFORE_TIMING = "Before";
   private static final String UPON_AT_TIMING = "Upon At";
   private static final String AFTER_TIMING = "After";
 
   @Test
   public void allDueDateNoticesShouldBeScheduledOnCheckoutWhenPolicyDefinesDueDateNoticeConfiguration() {
-
     UUID beforeTemplateId = UUID.randomUUID();
     Period beforePeriod = Period.days(2);
     Period beforeRecurringPeriod = Period.hours(6);
@@ -120,7 +115,6 @@ public class DueDateScheduledNoticesTests extends APITests {
 
   @Test
   public void checkOutSchedulesDifferentBeforeDueDateNotices() {
-
     UUID firstBeforeTemplateId = UUID.randomUUID();
     Period firstBeforePeriod = Period.weeks(1);
     UUID secondBeforeTemplateId = UUID.randomUUID();
@@ -181,8 +175,7 @@ public class DueDateScheduledNoticesTests extends APITests {
 
   @Test
   public void noNoticesShouldBeScheduledOnCheckOutWhenPolicyDoesNotDefineTimeBasedNotices()
-    throws
-    InterruptedException {
+    throws InterruptedException {
 
     JsonObject checkOutNoticeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(UUID.randomUUID())
@@ -222,7 +215,6 @@ public class DueDateScheduledNoticesTests extends APITests {
 
   @Test
   public void noticesShouldBeRescheduledAfterRenewal() {
-
     UUID beforeTemplateId = UUID.randomUUID();
     Period beforePeriod = Period.days(2);
     Period beforeRecurringPeriod = Period.hours(6);
@@ -299,7 +291,6 @@ public class DueDateScheduledNoticesTests extends APITests {
 
   @Test
   public void noticesShouldBeRescheduledAfterRenewalOverride() {
-
     UUID beforeTemplateId = UUID.randomUUID();
     Period beforePeriod = Period.days(2);
     Period beforeRecurringPeriod = Period.hours(6);
@@ -383,7 +374,6 @@ public class DueDateScheduledNoticesTests extends APITests {
 
   @Test
   public void noticesShouldBeRescheduledAfterRecall() {
-
     UUID beforeTemplateId = UUID.randomUUID();
     Period beforePeriod = Period.days(2);
     Period beforeRecurringPeriod = Period.hours(6);
@@ -460,8 +450,7 @@ public class DueDateScheduledNoticesTests extends APITests {
       hasScheduledLoanNotice(
         loan.getId(), dueDateAfterRecall.plus(afterPeriod.timePeriod()),
         AFTER_TIMING, afterTemplateId,
-        afterRecurringPeriod, true)
-    );
+        afterRecurringPeriod, true));
 
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
@@ -471,7 +460,6 @@ public class DueDateScheduledNoticesTests extends APITests {
 
   @Test
   public void noticesShouldBeRescheduledAfterManualDueDateChange() {
-
     UUID beforeTemplateId = UUID.randomUUID();
     Period beforePeriod = Period.days(2);
     Period beforeRecurringPeriod = Period.hours(6);
@@ -541,8 +529,7 @@ public class DueDateScheduledNoticesTests extends APITests {
       hasScheduledLoanNotice(
         loan.getId(), updatedDueDate.plus(afterPeriod.timePeriod()),
         AFTER_TIMING, afterTemplateId,
-        afterRecurringPeriod, true)
-    );
+        afterRecurringPeriod, true));
 
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
@@ -616,8 +603,7 @@ public class DueDateScheduledNoticesTests extends APITests {
         hasScheduledLoanNotice(
           loan.getId(), dueDate.plus(afterPeriod.timePeriod()),
           AFTER_TIMING, afterTemplateId,
-          afterRecurringPeriod, true)
-      ));
+          afterRecurringPeriod, true)));
 
     UUID ownerId = feeFineOwnerFixture.ownerForServicePoint(
       UUID.fromString(homeLocation.getJson().getString("primaryServicePoint"))).getId();

@@ -1,8 +1,9 @@
 package org.folio.circulation.domain.representations;
 
 import static org.folio.circulation.domain.representations.CallNumberComponentsRepresentation.createCallNumberComponents;
-import static org.folio.circulation.support.JsonPropertyWriter.write;
-import static org.folio.circulation.support.JsonPropertyWriter.writeNamedObject;
+import static org.folio.circulation.domain.representations.ContributorsToNamesMapper.mapContributorsToNamesOnly;
+import static org.folio.circulation.support.json.JsonPropertyWriter.write;
+import static org.folio.circulation.support.json.JsonPropertyWriter.writeNamedObject;
 
 import java.util.Optional;
 
@@ -21,7 +22,6 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class ItemReportRepresentation {
-
   public JsonObject createItemReport(InTransitReportEntry inTransitReportEntry) {
     if (inTransitReportEntry == null) {
       return new JsonObject();
@@ -36,14 +36,16 @@ public class ItemReportRepresentation {
     write(itemReport, "id", item.getItemId());
     write(itemReport, "title", item.getTitle());
     write(itemReport, "barcode", item.getBarcode());
-    write(itemReport, "contributors", item.getContributorNames());
+    write(itemReport, "contributors",
+      mapContributorsToNamesOnly(item.getContributors()));
     write(itemReport, "callNumber", item.getCallNumber());
     write(itemReport, "enumeration", item.getEnumeration());
     write(itemReport, "volume", item.getVolume());
     write(itemReport, "yearCaption", new JsonArray(item.getYearCaption()));
     writeNamedObject(itemReport, "status", Optional.ofNullable(item.getStatus())
       .map(ItemStatus::getValue).orElse(null));
-    write(itemReport, "inTransitDestinationServicePointId", item.getInTransitDestinationServicePointId());
+    write(itemReport, "inTransitDestinationServicePointId",
+      item.getInTransitDestinationServicePointId());
     write(itemReport, "copyNumber", item.getCopyNumber());
     write(itemReport, "effectiveCallNumberComponents",
       createCallNumberComponents(item.getCallNumberComponents()));

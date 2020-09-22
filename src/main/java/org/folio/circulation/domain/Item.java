@@ -1,5 +1,6 @@
 package org.folio.circulation.domain;
 
+import static org.apache.commons.lang3.StringUtils.firstNonBlank;
 import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
 import static org.folio.circulation.domain.ItemStatus.AWAITING_PICKUP;
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
@@ -14,24 +15,24 @@ import static org.folio.circulation.domain.representations.ItemProperties.EFFECT
 import static org.folio.circulation.domain.representations.ItemProperties.IDENTIFIERS;
 import static org.folio.circulation.domain.representations.ItemProperties.IN_TRANSIT_DESTINATION_SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.ITEM_COPY_NUMBER_ID;
+import static org.folio.circulation.domain.representations.ItemProperties.PERMANENT_LOCATION_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.STATUS_PROPERTY;
 import static org.folio.circulation.domain.representations.ItemProperties.TITLE;
-import static org.folio.circulation.support.JsonArrayHelper.mapToList;
-import static org.folio.circulation.support.JsonPropertyFetcher.getArrayProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
-import static org.folio.circulation.support.JsonPropertyWriter.remove;
-import static org.folio.circulation.support.JsonPropertyWriter.write;
-import static org.folio.circulation.support.JsonStringArrayHelper.toStream;
+import static org.folio.circulation.support.json.JsonPropertyWriter.remove;
+import static org.folio.circulation.support.json.JsonPropertyWriter.write;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getArrayProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedStringProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.json.JsonStringArrayPropertyFetcher.toStream;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.representations.ItemProperties;
-import org.folio.circulation.support.JsonArrayHelper;
+import org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -48,6 +49,7 @@ public class Item {
   private final JsonObject loanTypeRepresentation;
   private final LastCheckIn lastCheckIn;
   private final CallNumberComponents callNumberComponents;
+  private final Location permanentLocation;
 
   private ServicePoint inTransitDestinationServicePoint;
   private boolean changed;
@@ -62,6 +64,7 @@ public class Item {
       null,
       LastCheckIn.fromItemJson(representation),
       CallNumberComponents.fromItemJson(representation),
+      null,
       null,
       false
     );
@@ -127,21 +130,16 @@ public class Item {
     return getArrayProperty(instanceRepresentation, IDENTIFIERS);
   }
 
-  public JsonArray getContributorNames() {
-    if(instanceRepresentation == null) {
-      return new JsonArray();
-    }
-
-    return new JsonArray(mapToList(instanceRepresentation, CONTRIBUTORS,
-      contributor -> new JsonObject().put("name", contributor.getString("name"))));
-  }
-
   public String getPrimaryContributorName() {
-    return JsonArrayHelper.toStream(instanceRepresentation, CONTRIBUTORS)
+    return getContributors()
       .filter(c -> c.getBoolean("primary", false))
       .findFirst()
       .map(c -> c.getString("name"))
       .orElse(null);
+  }
+
+  public Stream<JsonObject> getContributors() {
+    return JsonObjectArrayPropertyFetcher.toStream(instanceRepresentation, CONTRIBUTORS);
   }
 
   public String getBarcode() {
@@ -192,6 +190,10 @@ public class Item {
     return location;
   }
 
+  public Location getPermanentLocation() {
+    return permanentLocation;
+  }
+
   public JsonObject getMaterialType() {
     return materialTypeRepresentation;
   }
@@ -201,7 +203,7 @@ public class Item {
   }
 
   public String getCopyNumber() {
-    return StringUtils.firstNonBlank(
+    return firstNonBlank(
       getProperty(getItem(), ITEM_COPY_NUMBER_ID),
       getProperty(holdingRepresentation, COPY_NUMBER_ID)
     );
@@ -350,6 +352,13 @@ public class Item {
     return holdingRepresentation == null;
   }
 
+  public String getPermanentLocationId() {
+    final String itemLocation = getProperty(itemRepresentation, PERMANENT_LOCATION_ID);
+    final String holdingsLocation = getProperty(holdingRepresentation, PERMANENT_LOCATION_ID);
+
+    return firstNonBlank(itemLocation, holdingsLocation);
+  }
+
   public Item withLocation(Location newLocation) {
     return new Item(
       this.itemRepresentation,
@@ -361,6 +370,7 @@ public class Item {
       this.loanTypeRepresentation,
       this.lastCheckIn,
       this.callNumberComponents,
+      this.permanentLocation,
       this.inTransitDestinationServicePoint,
       this.changed);
   }
@@ -376,6 +386,7 @@ public class Item {
       this.loanTypeRepresentation,
       this.lastCheckIn,
       this.callNumberComponents,
+      this.permanentLocation,
       this.inTransitDestinationServicePoint,
       this.changed);
   }
@@ -391,6 +402,7 @@ public class Item {
       this.loanTypeRepresentation,
       this.lastCheckIn,
       this.callNumberComponents,
+      this.permanentLocation,
       this.inTransitDestinationServicePoint,
       this.changed);
   }
@@ -406,6 +418,7 @@ public class Item {
       this.loanTypeRepresentation,
       this.lastCheckIn,
       this.callNumberComponents,
+      this.permanentLocation,
       this.inTransitDestinationServicePoint,
       this.changed);
   }
@@ -421,6 +434,7 @@ public class Item {
       this.loanTypeRepresentation,
       this.lastCheckIn,
       this.callNumberComponents,
+      this.permanentLocation,
       this.inTransitDestinationServicePoint,
       this.changed);
   }
@@ -436,6 +450,7 @@ public class Item {
       newLoanTypeRepresentation,
       this.lastCheckIn,
       this.callNumberComponents,
+      this.permanentLocation,
       this.inTransitDestinationServicePoint,
       this.changed);
   }
@@ -451,6 +466,23 @@ public class Item {
       this.loanTypeRepresentation,
       lastCheckIn,
       this.callNumberComponents,
+      this.permanentLocation,
+      this.inTransitDestinationServicePoint,
+      this.changed);
+  }
+
+  public Item withPermanentLocation(Location permanentLocation) {
+    return new Item(
+      this.itemRepresentation,
+      this.holdingRepresentation,
+      this.instanceRepresentation,
+      this.location,
+      this.materialTypeRepresentation,
+      this.primaryServicePoint,
+      this.loanTypeRepresentation,
+      this.lastCheckIn,
+      this.callNumberComponents,
+      permanentLocation,
       this.inTransitDestinationServicePoint,
       this.changed);
   }

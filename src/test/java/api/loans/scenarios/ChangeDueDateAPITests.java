@@ -29,7 +29,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import org.awaitility.Awaitility;
-import org.folio.circulation.support.http.client.IndividualResource;
+import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
@@ -49,11 +49,11 @@ import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.fakes.FakePubSub;
 import api.support.fixtures.ItemExamples;
-import api.support.http.InventoryItemResource;
+import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 
 public class ChangeDueDateAPITests extends APITests {
-  private InventoryItemResource item;
+  private ItemResource item;
   private IndividualResource loan;
   private DateTime dueDate;
 
@@ -208,7 +208,7 @@ public class ChangeDueDateAPITests extends APITests {
       materialTypesFixture.book().getId(), loanTypesFixture.canCirculate().getId(),
       EMPTY, "ItemPrefix", "ItemSuffix", "");
 
-    InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
+    ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
       itemBuilder, itemsFixture.thirdFloorHoldings());
 
     IndividualResource steve = usersFixture.steve();

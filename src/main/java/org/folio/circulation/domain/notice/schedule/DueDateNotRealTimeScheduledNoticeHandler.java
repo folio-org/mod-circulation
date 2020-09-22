@@ -33,7 +33,6 @@ import io.vertx.core.json.JsonObject;
 public class DueDateNotRealTimeScheduledNoticeHandler {
 
   public static DueDateNotRealTimeScheduledNoticeHandler using(Clients clients, DateTime systemTime, EventPublisher eventPublisher) {
-
     return new DueDateNotRealTimeScheduledNoticeHandler(
       DueDateScheduledNoticeHandler.using(clients, systemTime, eventPublisher),
       new LoanRepository(clients),
@@ -166,5 +165,4 @@ public class DueDateNotRealTimeScheduledNoticeHandler {
     }
     return future.thenApply(mapResult(v -> noticeGroup));
   }
-
 }
