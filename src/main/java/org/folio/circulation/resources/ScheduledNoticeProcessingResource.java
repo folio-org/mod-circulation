@@ -49,7 +49,7 @@ public abstract class ScheduledNoticeProcessingResource extends Resource {
     safelyInitialise(configurationRepository::lookupSchedulerNoticesProcessingLimit)
       .thenCompose(r -> r.after(limit -> findNoticesToSend(configurationRepository,
         scheduledNoticesRepository, limit)))
-      .thenCompose(r -> r.after(notices -> handleNotices(clients, notices)))
+      .thenCompose(r -> r.after(notices -> handleNotices(clients, notices, eventPublisher)))
       .thenApply(r -> r.toFixedValue(NoContentResponse::noContent))
       .exceptionally(CommonFailures::failedDueToServerError)
       .thenAccept(context::writeResultToHttpResponse);
