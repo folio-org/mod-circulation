@@ -5,7 +5,8 @@ import static api.support.matchers.ItemMatchers.isAgedToLost;
 import static api.support.matchers.ItemMatchers.isCheckedOut;
 import static api.support.matchers.ItemMatchers.isClaimedReturned;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
-import static api.support.matchers.TextDateTimeMatcher.withinSecondsBefore;
+import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimePropertyByPath;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -21,7 +22,6 @@ import java.util.stream.Collectors;
 
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
-import org.joda.time.Seconds;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -74,7 +74,7 @@ public class ScheduledAgeToLostApiTest extends SpringApiTest {
 
       assertThat(itemFromStorage.getJson(), isAgedToLost());
       assertThat(getLoanActions(loanFromStorage), hasAgedToLostAction());
-      assertThat(loanFromStorage.getJson(), hasPatronBillingDate());
+      assertThat(loanFromStorage.getJson(), hasPatronBillingDate(loanFromStorage));
       assertThat(loanFromStorage.getJson(), hasAgedToLostDate());
     });
   }
@@ -186,13 +186,22 @@ public class ScheduledAgeToLostApiTest extends SpringApiTest {
   }
 
   private Matcher<JsonObject> hasPatronBillingDate() {
-    val expectedBillingDate = DateTime.now(UTC)
+    return hasPatronBillingDate(overdueLoan);
+  }
+
+  private Matcher<JsonObject> hasPatronBillingDate(IndividualResource loan) {
+    final IndividualResource loanFromStorage = loansStorageClient.get(loan);
+    final DateTime agedToLostDate = getDateTimePropertyByPath(loanFromStorage.getJson(),
+      "agedToLostDelayedBilling", "agedToLostDate");
+
+    val expectedBillingDate = agedToLostDate != null
       // bill patron after age to lost interval, per default policy
-      .plusMinutes(5);
+      ? agedToLostDate.plusMinutes(5)
+      : null;
 
     return allOf(hasJsonPath("agedToLostDelayedBilling.lostItemHasBeenBilled", false),
       hasJsonPath("agedToLostDelayedBilling.dateLostItemShouldBeBilled",
-        withinSecondsBefore(Seconds.seconds(1), expectedBillingDate)));
+        isEquivalentTo(expectedBillingDate)));
   }
 
   private Matcher<JsonObject> hasAgedToLostDate() {
