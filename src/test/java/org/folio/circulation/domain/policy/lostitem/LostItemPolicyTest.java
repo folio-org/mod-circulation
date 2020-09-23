@@ -176,45 +176,39 @@ public class LostItemPolicyTest {
   public void canCalculateBillingDateWhenPatronIsBilledImmediately(
     @Nullable String interval, @Nullable Integer duration) {
 
-    final Period ageToLostAfterPeriod = Period.weeks(6);
     final Period billPatronInterval = duration == null && interval == null
       ? null : Period.from(duration, interval);
 
-    final DateTime loanDueDate = DateTime.now();
-    final DateTime expectedBillingDate = loanDueDate.plus(ageToLostAfterPeriod.timePeriod());
+    final DateTime agedToLostDate = DateTime.now();
 
     final LostItemPolicy lostItemPolicy = LostItemPolicy.from(
       new LostItemFeePolicyBuilder()
         .withPatronBilledAfterAgedLost(billPatronInterval)
-        .withItemAgedToLostAfterOverdue(ageToLostAfterPeriod)
         .withSetCost(10.0)
         .doNotChargeProcessingFeeWhenAgedToLost()
         .create());
 
     final DateTime actualBillingDate = lostItemPolicy
-      .calculateDateTimeWhenPatronBilledForAgedToLost(loanDueDate);
+      .calculateDateTimeWhenPatronBilledForAgedToLost(agedToLostDate);
 
-    assertThat(actualBillingDate, is(expectedBillingDate));
+    assertThat(actualBillingDate, is(agedToLostDate));
   }
 
   @Test
   public void canCalculateBillingDateWhenPatronBillingIsDelayed() {
-    final Period ageToLostAfterPeriod = Period.weeks(6);
     final Period billPatronAfterPeriod = Period.weeks(1);
-    final DateTime loanDueDate = DateTime.now();
-    final DateTime expectedBillingDate = loanDueDate.plus(ageToLostAfterPeriod.timePeriod())
-      .plus(billPatronAfterPeriod.timePeriod());
+    final DateTime ageToLostDate = DateTime.now();
+    final DateTime expectedBillingDate = ageToLostDate.plus(billPatronAfterPeriod.timePeriod());
 
     final LostItemPolicy lostItemPolicy = LostItemPolicy.from(
       new LostItemFeePolicyBuilder()
         .withPatronBilledAfterAgedLost(billPatronAfterPeriod)
-        .withItemAgedToLostAfterOverdue(ageToLostAfterPeriod)
         .withSetCost(10.0)
         .doNotChargeProcessingFeeWhenAgedToLost()
         .create());
 
     final DateTime actualBillingDate = lostItemPolicy
-      .calculateDateTimeWhenPatronBilledForAgedToLost(loanDueDate);
+      .calculateDateTimeWhenPatronBilledForAgedToLost(ageToLostDate);
 
     assertThat(actualBillingDate, is(expectedBillingDate));
   }
