@@ -18,6 +18,7 @@ import java.util.function.UnaryOperator;
 
 import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
+import org.joda.time.DateTime;
 
 import api.support.builders.HoldingBuilder;
 import api.support.builders.ItemBuilder;
@@ -73,8 +74,6 @@ public final class AgeToLostFixture {
 
     assertThat(ageToLostResult.getItem().getJson(), isAgedToLost());
 
-    getClockManager().setDefaultClock();
-
     return ageToLostResult;
   }
 
@@ -101,7 +100,7 @@ public final class AgeToLostFixture {
   }
 
   public void ageToLost() {
-    moveTimeForwardSixMonths();
+    moveTimeForwardForAgeToLost();
 
     timedTaskClient.start(scheduledAgeToLostUrl(), 204, "scheduled-age-to-lost");
 
@@ -109,7 +108,7 @@ public final class AgeToLostFixture {
   }
 
   public void chargeFees() {
-    moveTimeForwardSixMonths();
+    moveTimeForwardForChargeFee();
 
     timedTaskClient.start(scheduledAgeToLostFeeChargingUrl(), 204,
       "scheduled-age-to-lost-fee-charging");
@@ -125,7 +124,7 @@ public final class AgeToLostFixture {
   public Response ageToLostAndAttemptChargeFees() {
     ageToLost();
 
-    moveTimeForwardSixMonths();
+    moveTimeForwardForChargeFee();
 
     final Response response = timedTaskClient.attemptRun(scheduledAgeToLostFeeChargingUrl(),
       "scheduled-age-to-lost-fee-charging");
@@ -135,9 +134,17 @@ public final class AgeToLostFixture {
     return response;
   }
 
-  private void moveTimeForwardSixMonths() {
-    final Clock fixedClocks = fixed(ofEpochMilli(now().plusMonths(6).getMillis()),
-      ZoneOffset.UTC);
+  private void moveTimeForwardForAgeToLost() {
+    moveTimeForward(6);
+  }
+
+  private void moveTimeForwardForChargeFee() {
+    moveTimeForward(8);
+  }
+
+  private void moveTimeForward(int weeks) {
+    final DateTime newDateTime = now().plusWeeks(weeks);
+    final Clock fixedClocks = fixed(ofEpochMilli(newDateTime.getMillis()), ZoneOffset.UTC);
 
     getClockManager().setClock(fixedClocks);
   }
