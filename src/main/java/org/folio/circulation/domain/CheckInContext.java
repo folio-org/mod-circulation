@@ -1,17 +1,13 @@
 package org.folio.circulation.domain;
 
-import static org.folio.circulation.support.json.JsonPropertyWriter.write;
-import static org.folio.circulation.support.json.JsonPropertyWriter.writeByPath;
+import java.util.Optional;
+import java.util.UUID;
 
-import io.vertx.core.json.JsonObject;
-import lombok.AllArgsConstructor;
 import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
 import org.folio.circulation.support.ClockManager;
 import org.joda.time.DateTime;
 
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
+import lombok.AllArgsConstructor;
 
 /**
  * The loan captures a snapshot of the item status
@@ -240,24 +236,5 @@ public class CheckInContext {
 
   public boolean areLostItemFeesRefundedOrCancelled() {
     return lostItemFeesRefundedOrCancelled;
-  }
-
-  public JsonObject asJson() {
-    JsonObject json = new JsonObject();
-    write(json, "item", JsonObject.mapFrom(item));
-    write(json, "loan", loan.asJsonWithUserAndProxy());
-    write(json, "checkInRequest", JsonObject.mapFrom(checkInRequest));
-    write(json, "requestQueue", JsonObject.mapFrom(requestQueue));
-    write(json, "checkInServicePoint", JsonObject.mapFrom(checkInServicePoint));
-    if (Objects.nonNull(highestPriorityFulfillableRequest)) {
-      write(json, "highestPriorityFulfillableRequest", highestPriorityFulfillableRequest.asJson());
-    }
-    write(json, "loggedInUserId", loggedInUserId);
-    write(json, "checkInProcessedDateTime", checkInProcessedDateTime);
-    write(json, "inHouseUse", inHouseUse);
-    writeByPath(json, itemStatusBeforeCheckIn.getDate(), "itemStatusBeforeCheckIn", "date");
-    writeByPath(json, itemStatusBeforeCheckIn.getValue(), "itemStatusBeforeCheckIn", "value");
-    write(json, "lostItemFeesRefundedOrCancelled", lostItemFeesRefundedOrCancelled);
-    return json;
   }
 }

@@ -95,14 +95,6 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return representation.copy();
   }
 
-  public JsonObject asJsonWithUserAndProxy() {
-    JsonObject json = asJson();
-    write(json, "item", JsonObject.mapFrom(item));
-    write(json, "user", JsonObject.mapFrom(user));
-    write(json, "proxy", JsonObject.mapFrom(proxy));
-    return json;
-  }
-
   public boolean hasAssociatedFeesAndFines() {
     return !getAccounts().isEmpty();
   }

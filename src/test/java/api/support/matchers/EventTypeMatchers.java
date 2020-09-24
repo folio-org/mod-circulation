@@ -1,7 +1,6 @@
 package api.support.matchers;
 
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath;
-import static org.folio.util.EventType.LOG_RECORD_EVENT;
 import static org.hamcrest.core.Is.is;
 
 import org.hamcrest.Matcher;

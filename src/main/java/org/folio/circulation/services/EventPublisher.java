@@ -6,9 +6,11 @@ import static org.folio.circulation.domain.EventType.ITEM_CHECKED_OUT;
 import static org.folio.circulation.domain.EventType.ITEM_CLAIMED_RETURNED;
 import static org.folio.circulation.domain.EventType.ITEM_DECLARED_LOST;
 import static org.folio.circulation.domain.EventType.LOAN_DUE_DATE_CHANGED;
+import static org.folio.circulation.domain.EventType.LOG_RECORD_EVENT;
+import static org.folio.circulation.domain.representations.logs.CirculationCheckInCheckOutLogEventMapper.mapToCheckInLogEventJson;
+import static org.folio.circulation.domain.representations.logs.CirculationCheckInCheckOutLogEventMapper.mapToCheckOutLogEventJson;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.results.Result.succeeded;
-import static org.folio.util.PubSubLogPublisherUtil.sendLogRecordEvent;
 
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
@@ -22,10 +24,7 @@ import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.Result;
-import org.folio.rest.jaxrs.model.LogEventPayload;
-import org.folio.rest.util.OkapiConnectionParams;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -42,11 +41,8 @@ public class EventPublisher {
 
   private final PubSubPublishingService pubSubPublishingService;
 
-  private final OkapiConnectionParams params;
-
   public EventPublisher(RoutingContext routingContext) {
     pubSubPublishingService = new PubSubPublishingService(routingContext);
-    params = buildOkapiConnectionParams(routingContext);
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> publishItemCheckedOutEvent(
@@ -60,12 +56,10 @@ public class EventPublisher {
       write(payloadJsonObject, LOAN_ID_FIELD, loan.getId());
       write(payloadJsonObject, DUE_DATE_FIELD, loan.getDueDate());
 
-      return pubSubPublishingService.publishEvent(
-        ITEM_CHECKED_OUT.name(), payloadJsonObject.encode())
-        .thenApply(r -> sendLogRecordEvent(new LogEventPayload()
-          .withLoggedObjectType(LogEventPayload.LoggedObjectType.CHECK_IN_CHECK_OUT)
-          .withAction(LogEventPayload.Action.CHECK_OUT)
-          .withBody(loanAndRelatedRecords.asJson().encode()), params))
+      JsonObject logEventPayload = mapToCheckOutLogEventJson(loanAndRelatedRecords);
+      CompletableFuture.runAsync(() -> pubSubPublishingService.publishEvent(LOG_RECORD_EVENT.name(), logEventPayload.encode()));
+
+      return pubSubPublishingService.publishEvent(ITEM_CHECKED_OUT.name(), payloadJsonObject.encode())
         .thenApply(r -> succeeded(loanAndRelatedRecords));
     }
     else {
@@ -75,7 +69,7 @@ public class EventPublisher {
     return completedFuture(succeeded(loanAndRelatedRecords));
   }
 
-  public CompletableFuture<Result<CheckInContext>> publishItemCheckedInEvent(
+  public CompletableFuture<Result<CheckInContext>> publishItemCheckedInEvents(
     CheckInContext checkInContext) {
 
     if (checkInContext.getLoan() != null) {
@@ -86,12 +80,12 @@ public class EventPublisher {
       write(payloadJsonObject, LOAN_ID_FIELD, loan.getId());
       write(payloadJsonObject, RETURN_DATE_FIELD, loan.getReturnDate());
 
-      return pubSubPublishingService.publishEvent(ITEM_CHECKED_IN.name(),
+      JsonObject logEventPayload = mapToCheckInLogEventJson(checkInContext);
+      CompletableFuture.runAsync(() -> pubSubPublishingService.publishEvent(LOG_RECORD_EVENT.name(), logEventPayload.encode()));
+
+      return
+        pubSubPublishingService.publishEvent(ITEM_CHECKED_IN.name(),
         payloadJsonObject.encode())
-        .thenApply(r -> sendLogRecordEvent(new LogEventPayload()
-          .withLoggedObjectType(LogEventPayload.LoggedObjectType.CHECK_IN_CHECK_OUT)
-          .withAction(LogEventPayload.Action.CHECK_IN)
-          .withBody(checkInContext.asJson().encode()), params))
         .thenApply(r -> succeeded(checkInContext));
     }
     else {
@@ -171,9 +165,5 @@ public class EventPublisher {
       .thenCompose(r -> r.after(this::publishDueDateChangedEvent));
 
     return completedFuture(succeeded(requestAndRelatedRecords));
-  }
-
-  public static OkapiConnectionParams buildOkapiConnectionParams(RoutingContext routingContext) {
-    return new OkapiConnectionParams(new WebContext(routingContext).getHeaders(), routingContext.vertx());
   }
 }

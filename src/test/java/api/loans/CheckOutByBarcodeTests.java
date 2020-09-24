@@ -12,6 +12,7 @@ import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasLoanPoli
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasProxyUserBarcodeParameter;
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasServicePointParameter;
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasUserBarcodeParameter;
+import static api.support.matchers.EventMatchers.isValidCheckOutLogEvent;
 import static api.support.matchers.EventMatchers.isValidItemCheckedOutEvent;
 import static api.support.matchers.ItemMatchers.isCheckedOut;
 import static api.support.matchers.ItemMatchers.isLostAndPaid;
@@ -25,7 +26,10 @@ import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
 import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
+import static java.util.stream.Collectors.groupingBy;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
+import static org.folio.circulation.domain.EventType.ITEM_CHECKED_OUT;
+import static org.folio.circulation.domain.EventType.LOG_RECORD_EVENT;
 import static org.folio.circulation.domain.policy.Period.months;
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 import static org.hamcrest.CoreMatchers.allOf;
@@ -37,6 +41,7 @@ import static org.joda.time.DateTimeZone.UTC;
 import static org.junit.Assert.assertTrue;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -1267,9 +1272,10 @@ public class CheckOutByBarcodeTests extends APITests {
       .atMost(1, TimeUnit.SECONDS)
       .until(FakePubSub::getPublishedEvents, hasSize(2));
 
-    JsonObject event = publishedEvents.get(0);
+    Map<String, List<JsonObject>> events = publishedEvents.stream().collect(groupingBy(e -> e.getString("eventType")));
 
-    assertThat(event, isValidItemCheckedOutEvent(loan));
+    assertThat(events.get(ITEM_CHECKED_OUT.name()).get(0), isValidItemCheckedOutEvent(loan));
+    assertThat(events.get(LOG_RECORD_EVENT.name()).get(0), isValidCheckOutLogEvent(loan));
   }
 
   @Test
