@@ -412,7 +412,6 @@ public class LoanDueDatesAfterRecallTests extends APITests {
 
   @Test
   public void changedDueDateAfterRecallingAnItemShouldRespectTenantTimezone() {
-
     final String stockholmTimeZone = "Europe/Stockholm";
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
@@ -457,8 +456,9 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     assertThat("due date should not be the original due date",
       storedLoan.getString("dueDate"), not(originalDueDate));
 
-    final DateTime expectedDueDate = loanDate.toLocalDate()
-      .toDateTime(END_OF_A_DAY, DateTimeZone.forID(stockholmTimeZone))
+    final DateTime expectedDueDate = loanDate
+      .withZone(DateTimeZone.forID(stockholmTimeZone))
+      .withTime(END_OF_A_DAY)
       .plusDays(5);
 
     assertThat("due date should be end of the day, 5 days from loan date",
