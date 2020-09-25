@@ -47,9 +47,7 @@ public class LoanHistoryMatcher<T extends Iterable<?>> extends TypeSafeMatcher<I
   }
 
   @SafeVarargs
-  public static Matcher<IndividualResource> hasLoanHistoryInOrder(
-    Matcher<JsonObject> ... matchers) {
-
+  public static Matcher<IndividualResource> hasLoanHistoryInOrder(Matcher<JsonObject> ... matchers) {
     return new LoanHistoryMatcher<>(containsInRelativeOrder(matchers));
   }
 

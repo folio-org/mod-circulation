@@ -16,7 +16,6 @@ import api.support.builders.LoanPolicyBuilder;
 import lombok.val;
 
 public class RecallItemsTests extends APITests {
-
   public RecallItemsTests() {
     super(true,true);
   }
