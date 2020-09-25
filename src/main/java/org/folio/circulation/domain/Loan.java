@@ -1,6 +1,7 @@
 package org.folio.circulation.domain;
 
 import static java.lang.Boolean.TRUE;
+import static java.util.Collections.emptyList;
 import static java.util.Objects.nonNull;
 import static java.util.Objects.requireNonNull;
 import static lombok.AccessLevel.PRIVATE;
@@ -33,6 +34,7 @@ import static org.folio.circulation.domain.representations.LoanProperties.STATUS
 import static org.folio.circulation.domain.representations.LoanProperties.SYSTEM_RETURN_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.USER_ID;
 import static org.folio.circulation.support.ClockManager.getClockManager;
+import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getBooleanProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimePropertyByPath;
@@ -42,10 +44,10 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty
 import static org.folio.circulation.support.json.JsonPropertyWriter.remove;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.json.JsonPropertyWriter.writeByPath;
-import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.utils.CommonUtils.executeIfNotNull;
+import static org.folio.circulation.support.utils.DateTimeUtil.mostRecentDate;
 
 import java.util.Collection;
 import java.util.Objects;
@@ -88,7 +90,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
     return new Loan(representation, null, null, null, null, null,
       getDateTimeProperty(representation, DUE_DATE),
-      new Policies(loanPolicy, overdueFinePolicy, lostItemPolicy), null);
+      new Policies(loanPolicy, overdueFinePolicy, lostItemPolicy), emptyList());
   }
 
   public JsonObject asJson() {
@@ -510,7 +512,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return getDateTimeProperty(representation, DECLARED_LOST_DATE);
   }
 
-  public DateTime getAgedToLostDateTime() {
+  private DateTime getAgedToLostDateTime() {
     return getDateTimePropertyByPath(representation, AGED_TO_LOST_DELAYED_BILLING,
       AGED_TO_LOST_DATE);
   }
@@ -629,5 +631,9 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     representation.put(LoanProperties.ACTION, "");
 
     return this;
+  }
+
+  public DateTime getLostDate() {
+    return mostRecentDate(getDeclareLostDateTime(), getAgedToLostDateTime());
   }
 }

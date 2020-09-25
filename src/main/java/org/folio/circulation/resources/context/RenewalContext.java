@@ -19,7 +19,6 @@ public class RenewalContext {
   DateTimeZone timeZone;
   Loan loanBeforeRenewal;
   ItemStatus itemStatusBeforeRenewal;
-  boolean lostItemFeesRefundedOrCancelled;
   String loggedInUserId;
   JsonObject renewalRequest;
   FeeFineAction overdueFeeFineAction;
@@ -32,6 +31,6 @@ public class RenewalContext {
       ? loan.getItem().getStatus() : null;
 
     return new RenewalContext(loan, null, null, loanBeforeRenewal, itemStatusBeforeRenew,
-      false, loggedInUserId, renewalRequest, null);
+      loggedInUserId, renewalRequest, null);
   }
 }
