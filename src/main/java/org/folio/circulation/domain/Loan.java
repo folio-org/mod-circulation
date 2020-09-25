@@ -160,7 +160,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     representation.put(ACTION_COMMENT, comment);
   }
 
-  private void removeActionComment() {
+  public void removeActionComment() {
     representation.remove(ACTION_COMMENT);
   }
 
