@@ -60,6 +60,7 @@ public class UpdateLoan {
 
     if (action != null) {
       loan.changeAction(action);
+      loan.removeActionComment();
       loan.changeItemStatus(request.getItem().getStatus().getValue());
     }
 
