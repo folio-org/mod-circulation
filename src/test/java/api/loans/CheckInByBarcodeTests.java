@@ -17,7 +17,7 @@ import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.groupingBy;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
-import static org.folio.circulation.domain.representations.logs.CirculationCheckInCheckOutLogEventMapper.CHECK_IN;
+import static org.folio.circulation.domain.representations.logs.LogEventPayloadType.CHECK_IN;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -1102,7 +1102,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     Map<String, List<JsonObject>> logEvents = events.get(EventType.LOG_RECORD.name()).stream()
       .collect(groupingBy(e -> new JsonObject(e.getString("eventPayload")).getString("logEventType")));
 
-    JsonObject checkInLogEvent = logEvents.get(CHECK_IN).get(0);
+    JsonObject checkInLogEvent = logEvents.get(CHECK_IN.value()).get(0);
 
     assertThat(checkInLogEvent, isValidCheckInLogEvent(checkedInLoan));
   }
