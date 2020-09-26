@@ -6,7 +6,7 @@ import static org.folio.circulation.domain.EventType.ITEM_CHECKED_OUT;
 import static org.folio.circulation.domain.EventType.ITEM_CLAIMED_RETURNED;
 import static org.folio.circulation.domain.EventType.ITEM_DECLARED_LOST;
 import static org.folio.circulation.domain.EventType.LOAN_DUE_DATE_CHANGED;
-import static org.folio.circulation.domain.EventType.LOG_RECORD_EVENT;
+import static org.folio.circulation.domain.EventType.LOG_RECORD;
 import static org.folio.circulation.domain.representations.logs.CirculationCheckInCheckOutLogEventMapper.mapToCheckInLogEventJson;
 import static org.folio.circulation.domain.representations.logs.CirculationCheckInCheckOutLogEventMapper.mapToCheckOutLogEventJson;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
@@ -57,7 +57,7 @@ public class EventPublisher {
       write(payloadJsonObject, DUE_DATE_FIELD, loan.getDueDate());
 
       JsonObject logEventPayload = mapToCheckOutLogEventJson(loanAndRelatedRecords);
-      CompletableFuture.runAsync(() -> pubSubPublishingService.publishEvent(LOG_RECORD_EVENT.name(), logEventPayload.encode()));
+      CompletableFuture.runAsync(() -> pubSubPublishingService.publishEvent(LOG_RECORD.name(), logEventPayload.encode()));
 
       return pubSubPublishingService.publishEvent(ITEM_CHECKED_OUT.name(), payloadJsonObject.encode())
         .thenApply(r -> succeeded(loanAndRelatedRecords));
@@ -81,7 +81,7 @@ public class EventPublisher {
       write(payloadJsonObject, RETURN_DATE_FIELD, loan.getReturnDate());
 
       JsonObject logEventPayload = mapToCheckInLogEventJson(checkInContext);
-      CompletableFuture.runAsync(() -> pubSubPublishingService.publishEvent(LOG_RECORD_EVENT.name(), logEventPayload.encode()));
+      CompletableFuture.runAsync(() -> pubSubPublishingService.publishEvent(LOG_RECORD.name(), logEventPayload.encode()));
 
       return
         pubSubPublishingService.publishEvent(ITEM_CHECKED_IN.name(),

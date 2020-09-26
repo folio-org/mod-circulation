@@ -1,19 +1,11 @@
 package org.folio.circulation.domain;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
+@AllArgsConstructor
+@Getter
 public class UpdatedRequestPair {
   final Request original;
   final Request updated;
-
-  public UpdatedRequestPair(Request original, Request updated) {
-    this.original = original;
-    this.updated = updated;
-  }
-
-  public Request getOriginal() {
-    return original;
-  }
-
-  public Request getUpdated() {
-    return updated;
-  }
 }

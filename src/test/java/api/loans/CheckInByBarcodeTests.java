@@ -1099,7 +1099,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
 
     assertThat(events.get(EventType.ITEM_CHECKED_IN.name()).get(0), isValidItemCheckedInEvent(checkedInLoan));
 
-    Map<String, List<JsonObject>> logEvents = events.get(EventType.LOG_RECORD_EVENT.name()).stream()
+    Map<String, List<JsonObject>> logEvents = events.get(EventType.LOG_RECORD.name()).stream()
       .collect(groupingBy(e -> new JsonObject(e.getString("eventPayload")).getString("logEventType")));
 
     JsonObject checkInLogEvent = logEvents.get(CHECK_IN).get(0);

@@ -31,7 +31,7 @@
       "signed": false
     },
     {
-      "eventType": "LOG_RECORD_EVENT",
+      "eventType": "LOG_RECORD",
       "description": "Created log record event",
       "eventTTL": 1,
       "signed": false

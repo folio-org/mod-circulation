@@ -29,7 +29,7 @@ import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static java.util.stream.Collectors.groupingBy;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.domain.EventType.ITEM_CHECKED_OUT;
-import static org.folio.circulation.domain.EventType.LOG_RECORD_EVENT;
+import static org.folio.circulation.domain.EventType.LOG_RECORD;
 import static org.folio.circulation.domain.policy.Period.months;
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 import static org.hamcrest.CoreMatchers.allOf;
@@ -1275,7 +1275,7 @@ public class CheckOutByBarcodeTests extends APITests {
     Map<String, List<JsonObject>> events = publishedEvents.stream().collect(groupingBy(e -> e.getString("eventType")));
 
     assertThat(events.get(ITEM_CHECKED_OUT.name()).get(0), isValidItemCheckedOutEvent(loan));
-    assertThat(events.get(LOG_RECORD_EVENT.name()).get(0), isValidCheckOutLogEvent(loan));
+    assertThat(events.get(LOG_RECORD.name()).get(0), isValidCheckOutLogEvent(loan));
   }
 
   @Test
