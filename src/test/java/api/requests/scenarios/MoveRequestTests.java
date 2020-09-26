@@ -954,9 +954,10 @@ public class MoveRequestTests extends APITests {
     assertThat("due date is the original date",
       storedLoan.getString("dueDate"), not(originalDueDate));
 
-    final DateTime expectedDueDate = loanDate.toLocalDate()
-        .toDateTime(END_OF_A_DAY, DateTimeZone.forID(stockholmTimeZone))
-        .plusDays(5);
+    final DateTime expectedDueDate = loanDate
+      .withZone(DateTimeZone.forID(stockholmTimeZone))
+      .withTime(END_OF_A_DAY)
+      .plusDays(5);
 
     assertThat("due date should be end of the day, 5 days from loan date",
       storedLoan.getString("dueDate"), isEquivalentTo(expectedDueDate));

@@ -73,7 +73,8 @@ public final class RenewalValidator {
       "reached number of renewals limit," +
       "renewal date falls outside of the date ranges in the loan policy, " +
       "items cannot be renewed when there is an active recall request, " +
-      DECLARED_LOST_ITEM_RENEWED_ERROR;
+      DECLARED_LOST_ITEM_RENEWED_ERROR + ", " + CLAIMED_RETURNED_RENEWED_ERROR +
+      ", item is Aged to lost";
 
     return loanPolicyValidationError(loanPolicy, reason);
   }

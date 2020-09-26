@@ -2,23 +2,25 @@ package api.support.matchers;
 
 import static api.support.http.CqlQuery.queryFromTemplate;
 import static api.support.http.ResourceClient.forLoanHistoryStorage;
+import static org.hamcrest.Matchers.containsInRelativeOrder;
+import static org.hamcrest.Matchers.hasItem;
 
 import java.util.UUID;
 
-import api.support.http.IndividualResource;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
 
 import api.support.MultipleJsonRecords;
+import api.support.http.IndividualResource;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
 
-public class LoanHistoryMatcher extends TypeSafeMatcher<IndividualResource> {
+public class LoanHistoryMatcher<T extends Iterable<?>> extends TypeSafeMatcher<IndividualResource> {
   private final ResourceClient loanHistoryClient;
-  private final Matcher<Iterable<? extends JsonObject>> matcher;
+  private final Matcher<T> matcher;
 
-  private LoanHistoryMatcher(Matcher<Iterable<? extends JsonObject>> matcher) {
+  private LoanHistoryMatcher(Matcher<T> matcher) {
     this.loanHistoryClient = forLoanHistoryStorage();
     this.matcher = matcher;
   }
@@ -39,9 +41,19 @@ public class LoanHistoryMatcher extends TypeSafeMatcher<IndividualResource> {
       .appendDescriptionOf(matcher);
   }
 
-  public static Matcher<IndividualResource> hasLoanHistory(
-    Matcher<Iterable<? extends JsonObject>> matcher) {
+  @Override
+  protected void describeMismatchSafely(IndividualResource item, Description mismatchDescription) {
+    mismatchDescription.appendText("was ").appendText(item.getJson().toString());
+  }
 
-    return new LoanHistoryMatcher(matcher);
+  @SafeVarargs
+  public static Matcher<IndividualResource> hasLoanHistoryInOrder(Matcher<JsonObject> ... matchers) {
+    return new LoanHistoryMatcher<>(containsInRelativeOrder(matchers));
+  }
+
+  public static Matcher<IndividualResource> hasLoanHistoryRecord(
+    Matcher<JsonObject> matcher) {
+
+    return new LoanHistoryMatcher<>(hasItem(matcher));
   }
 }
