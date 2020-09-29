@@ -76,7 +76,6 @@ public class EventMatchers {
     return allOf(JsonObjectMatcher.allOfPaths(
       hasJsonPath("eventPayload", allOf(
         hasJsonPath("userId", is(loan.getString("userId"))),
-        hasJsonPath("userId", is(loan.getString("userId"))),
         hasJsonPath("loanId", is(loan.getString("id")))
       ))),
       isItemClaimedReturnedEventType());

@@ -70,7 +70,6 @@ public class CirculationCheckInCheckOutLogEventMapper {
         write(logEventPayload, ITEM_ID.value(), item.getItemId());
         write(logEventPayload, ITEM_BARCODE.value(), item.getBarcode());
         write(logEventPayload, ITEM_STATUS_NAME.value(), item.getStatusName());
-        write(logEventPayload, IS_CLAIMED_RETURNED.value(), item.isClaimedReturned());
         ofNullable(item.getInTransitDestinationServicePoint())
           .ifPresent(sp -> write(logEventPayload, DESTINATION_SERVICE_POINT.value(), sp.getName()));
         ofNullable(item.getMaterialType())

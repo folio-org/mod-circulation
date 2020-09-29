@@ -10,7 +10,6 @@ public enum LogEventPayloadField {
   ITEM_ID("itemId"),
   ITEM_BARCODE("itemBarcode"),
   ITEM_STATUS_NAME("itemStatusName"),
-  IS_CLAIMED_RETURNED("isClaimedReturned"),
   DESTINATION_SERVICE_POINT("destinationServicePoint"),
   SOURCE("source"),
   LOAN_ID("loanId"),
