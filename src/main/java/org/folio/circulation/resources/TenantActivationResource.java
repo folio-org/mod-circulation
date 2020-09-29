@@ -11,7 +11,6 @@ import org.folio.circulation.support.http.server.WebContext;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
-import org.folio.util.PubSubModuleRegistrationUtil;
 
 import java.util.Map;
 

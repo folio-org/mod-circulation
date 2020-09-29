@@ -7,7 +7,7 @@ import static org.folio.circulation.domain.representations.logs.LogEventPayloadF
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.FEE_FINE_ID;
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.ITEMS;
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.NOTICE_POLICY_ID;
-import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.REQUEST_ID;
+import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.REQ_ID;
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.TEMPLATE_ID;
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.TRIGGERING_EVENT;
@@ -99,7 +99,7 @@ public class NoticeLogContext {
     write(json, TRIGGERING_EVENT.value(), triggeringEvent);
     write(json, NOTICE_POLICY_ID.value(), noticePolicyId);
     ofNullable(requestId).ifPresent(s ->
-      write(json, REQUEST_ID.value(), requestId));
+      write(json, REQ_ID.value(), requestId));
     ofNullable(feeFineId).ifPresent(s ->
       write(json, FEE_FINE_ID.value(), feeFineId));
     return json;
