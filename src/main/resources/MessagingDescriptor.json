@@ -33,7 +33,7 @@
     {
       "eventType": "LOG_RECORD",
       "description": "Created log record event",
-      "eventTTL": 5,
+      "eventTTL": 1,
       "signed": false
     }
   ],

@@ -954,9 +954,10 @@ public class MoveRequestTests extends APITests {
     assertThat("due date is the original date",
       storedLoan.getString("dueDate"), not(originalDueDate));
 
-    final DateTime expectedDueDate = loanDate.toLocalDate()
-        .toDateTime(END_OF_A_DAY, DateTimeZone.forID(stockholmTimeZone))
-        .plusDays(5);
+    final DateTime expectedDueDate = loanDate
+      .withZone(DateTimeZone.forID(stockholmTimeZone))
+      .withTime(END_OF_A_DAY)
+      .plusDays(5);
 
     assertThat("due date should be end of the day, 5 days from loan date",
       storedLoan.getString("dueDate"), isEquivalentTo(expectedDueDate));
@@ -1011,12 +1012,12 @@ public class MoveRequestTests extends APITests {
 
     itemCopyALoan = loansClient.get(itemCopyALoan);
 
-    // There should be three events published - for "check out", for "hold" and for "move"
+    // There should be four events published - for "check out", for "log event", for "hold" and for "move"
     List<JsonObject> publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(3));
+      .until(FakePubSub::getPublishedEvents, hasSize(4));
 
-    JsonObject event = publishedEvents.get(2);
+    JsonObject event = publishedEvents.get(3);
 
     assertThat(event, isValidLoanDueDateChangedEvent(itemCopyALoan.getJson()));
   }

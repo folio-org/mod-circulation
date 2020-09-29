@@ -64,12 +64,13 @@ public class MarkOverdueLoansAsAgedLostService {
 
   private Loan ageItemToLost(Loan loan) {
     final LostItemPolicy lostItemPolicy = loan.getLostItemPolicy();
-    final DateTime loanDueDate = loan.getDueDate();
+    final DateTime ageToLostDate = getClockManager().getDateTime();
+
     final DateTime whenToBill = lostItemPolicy
-      .calculateDateTimeWhenPatronBilledForAgedToLost(loanDueDate);
+      .calculateDateTimeWhenPatronBilledForAgedToLost(ageToLostDate);
 
     loan.setAgedToLostDelayedBilling(false, whenToBill);
-    return loan.ageOverdueItemToLost(getClockManager().getDateTime());
+    return loan.ageOverdueItemToLost(ageToLostDate);
   }
 
   private CompletableFuture<Result<Void>> updateLoansAndItemsInStorage(

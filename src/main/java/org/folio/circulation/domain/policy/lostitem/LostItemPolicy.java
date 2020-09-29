@@ -155,10 +155,8 @@ public class LostItemPolicy extends Policy {
     return agedToLostAfterOverdueInterval.hasPassedSinceDateTillNow(loanDueDate);
   }
 
-  public DateTime calculateDateTimeWhenPatronBilledForAgedToLost(DateTime loanDueDate) {
-    // dueDate + age to lost after interval + patron billed after aged to lost interval
-    return loanDueDate
-      .plus(agedToLostAfterOverdueInterval.timePeriod())
+  public DateTime calculateDateTimeWhenPatronBilledForAgedToLost(DateTime ageToLostDate) {
+    return ageToLostDate
       .plus(patronBilledAfterAgedToLostInterval.timePeriod());
   }
 

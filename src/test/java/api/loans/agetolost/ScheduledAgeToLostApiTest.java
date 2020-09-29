@@ -6,6 +6,7 @@ import static api.support.matchers.ItemMatchers.isCheckedOut;
 import static api.support.matchers.ItemMatchers.isClaimedReturned;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimePropertyByPath;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -13,14 +14,12 @@ import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.iterableWithSize;
 import static org.hamcrest.Matchers.not;
 import static org.joda.time.DateTime.now;
-import static org.joda.time.DateTime.parse;
 import static org.joda.time.DateTimeZone.UTC;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import api.support.http.IndividualResource;
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
 import org.junit.Before;
@@ -30,6 +29,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import api.support.MultipleJsonRecords;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.ItemBuilder;
+import api.support.http.IndividualResource;
 import api.support.spring.SpringApiTest;
 import api.support.spring.clients.ScheduledJobClient;
 import io.vertx.core.json.JsonObject;
@@ -124,7 +124,10 @@ public class ScheduledAgeToLostApiTest extends SpringApiTest {
   @Test
   public void shouldNotProcessAgedToLostItemSecondTime() {
     scheduledAgeToLostClient.triggerJob();
+
+    mockClockManagerToReturnFixedDateTime(DateTime.now(UTC).plusMinutes(30));
     scheduledAgeToLostClient.triggerJob();
+    mockClockManagerToReturnDefaultDateTime();
 
     assertThat(itemsClient.get(overdueItem).getJson(), isAgedToLost());
     assertThat(getLoanActions(), hasAgedToLostAction());
@@ -187,11 +190,14 @@ public class ScheduledAgeToLostApiTest extends SpringApiTest {
   }
 
   private Matcher<JsonObject> hasPatronBillingDate(IndividualResource loan) {
-    val expectedBillingDate = parse(loan.getJson().getString("dueDate"))
-      // age to lost overdue interval, per default policy
-      .plusMinutes(1)
+    final IndividualResource loanFromStorage = loansStorageClient.get(loan);
+    final DateTime agedToLostDate = getDateTimePropertyByPath(loanFromStorage.getJson(),
+      "agedToLostDelayedBilling", "agedToLostDate");
+
+    val expectedBillingDate = agedToLostDate != null
       // bill patron after age to lost interval, per default policy
-      .plusMinutes(5);
+      ? agedToLostDate.plusMinutes(5)
+      : null;
 
     return allOf(hasJsonPath("agedToLostDelayedBilling.lostItemHasBeenBilled", false),
       hasJsonPath("agedToLostDelayedBilling.dateLostItemShouldBeBilled",
