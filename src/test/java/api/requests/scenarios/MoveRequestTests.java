@@ -1012,12 +1012,12 @@ public class MoveRequestTests extends APITests {
 
     itemCopyALoan = loansClient.get(itemCopyALoan);
 
-    // There should be three events published - for "check out", for "hold" and for "move"
+    // There should be four events published - for "check out", for "log event", for "hold" and for "move"
     List<JsonObject> publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(3));
+      .until(FakePubSub::getPublishedEvents, hasSize(4));
 
-    JsonObject event = publishedEvents.get(2);
+    JsonObject event = publishedEvents.get(3);
 
     assertThat(event, isValidLoanDueDateChangedEvent(itemCopyALoan.getJson()));
   }
