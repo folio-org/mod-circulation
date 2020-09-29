@@ -1,6 +1,8 @@
 package api.loans;
 
 import static api.support.APITestContext.getUserId;
+import static api.support.PubsubPublisherTestUtils.assertThatLogRecordEventsCountIsEqualTo;
+import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
 import static api.support.fixtures.AddressExamples.SiriusBlack;
 import static api.support.matchers.EventMatchers.isValidItemCheckedInEvent;
 import static api.support.matchers.ItemMatchers.isAvailable;
@@ -488,7 +490,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
 
     TimeUnit.SECONDS.sleep(1);
     assertThat(patronNoticesClient.getAll(), hasSize(0));
-    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
+    assertThatLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
   }
 
   @Test
@@ -528,7 +530,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
     assertThat("Check-in notice shouldn't be sent if item isn't checked-out",
       sentNotices, Matchers.empty());
-    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
+    assertThatLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
   }
 
   @Test
@@ -568,7 +570,6 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     checkInFixture.checkInByBarcode(item, checkInDate, servicePointId);
 
     checkPatronNoticeEvent(request, requester, item, availableNoticeTemplateId);
-    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
   }
 
   @Test
@@ -606,7 +607,6 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
       servicePointId);
 
     checkPatronNoticeEvent(request, requester, item, availableNoticeTemplateId);
-    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
   }
 
   @Test
@@ -639,7 +639,8 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(patronNoticesClient::getAll, hasSize(1));
-    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
+    assertThatLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+    assertThatPublishedLogRecordEventsAreValid();
     patronNoticesClient.deleteAll();
     FakePubSub.clearPublishedEvents();
 
@@ -648,7 +649,8 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(patronNoticesClient::getAll, empty());
-    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
+    assertThatLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+    assertThatPublishedLogRecordEventsAreValid();
   }
 
   @Test
@@ -1120,7 +1122,8 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     MatcherAssert.assertThat(sentNotices,
       hasItems(
         hasEmailNoticeProperties(requester.getId(), expectedTemplateId, noticeContextMatchers)));
-    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
+    assertThatLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+    assertThatPublishedLogRecordEventsAreValid();
   }
 
   private void verifyCheckInOperationRecorded(UUID itemId, UUID servicePoint) {

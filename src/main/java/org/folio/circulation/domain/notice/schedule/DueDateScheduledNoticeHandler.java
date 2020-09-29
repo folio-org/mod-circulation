@@ -11,7 +11,7 @@ import java.util.concurrent.CompletableFuture;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
-import org.folio.circulation.domain.notice.NoticeLogContext;
+import org.folio.circulation.domain.representations.logs.NoticeLogContext;
 import org.folio.circulation.domain.notice.NoticeTiming;
 import org.folio.circulation.domain.notice.PatronNoticeService;
 import org.folio.circulation.domain.notice.TemplateContextUtil;

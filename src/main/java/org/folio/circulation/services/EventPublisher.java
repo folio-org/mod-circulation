@@ -6,9 +6,12 @@ import static org.folio.circulation.domain.EventType.ITEM_CHECKED_OUT;
 import static org.folio.circulation.domain.EventType.ITEM_CLAIMED_RETURNED;
 import static org.folio.circulation.domain.EventType.ITEM_DECLARED_LOST;
 import static org.folio.circulation.domain.EventType.LOAN_DUE_DATE_CHANGED;
+import static org.folio.circulation.domain.EventType.LOG_RECORD;
+import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.LOG_EVENT_TYPE;
+import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.PAYLOAD;
+import static org.folio.circulation.domain.representations.logs.LogEventPayloadType.NOTICE;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.results.Result.succeeded;
-import static org.folio.util.PubSubLogPublisherUtil.sendLogRecordEvent;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -16,20 +19,17 @@ import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.EventType;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
-import org.folio.circulation.domain.notice.NoticeLogContext;
+import org.folio.circulation.domain.representations.logs.NoticeLogContext;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.RoutingContext;
-import org.folio.rest.jaxrs.model.LogEventPayload;
-import org.folio.rest.util.OkapiConnectionParams;
 
 public class EventPublisher {
   private static final Logger logger = LoggerFactory.getLogger(EventPublisher.class);
@@ -44,11 +44,8 @@ public class EventPublisher {
 
   private final PubSubPublishingService pubSubPublishingService;
 
-  private final OkapiConnectionParams params;
-
   public EventPublisher(RoutingContext routingContext) {
     pubSubPublishingService = new PubSubPublishingService(routingContext);
-    params = buildOkapiConnectionParams(routingContext);
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> publishItemCheckedOutEvent(
@@ -168,14 +165,11 @@ public class EventPublisher {
   }
 
   public CompletableFuture<Result<Void>> publishSendNoticeEvent(NoticeLogContext noticeLogContext) {
-    return sendLogRecordEvent(new LogEventPayload()
-      .withLoggedObjectType(LogEventPayload.LoggedObjectType.NOTICE)
-      .withAction(LogEventPayload.Action.SEND)
-      .withBody(noticeLogContext.asJson().encode()), params)
-      .thenApply(r -> succeeded(null));
-  }
+    JsonObject logEventPayload = new JsonObject();
+    write(logEventPayload, LOG_EVENT_TYPE.value(), NOTICE.value());
+    write(logEventPayload, PAYLOAD.value(), noticeLogContext.asJson().encode());
 
-  public static OkapiConnectionParams buildOkapiConnectionParams(RoutingContext routingContext) {
-    return new OkapiConnectionParams(new WebContext(routingContext).getHeaders(), routingContext.vertx());
+    return pubSubPublishingService.publishEvent(LOG_RECORD.name(), logEventPayload.encode())
+      .thenApply(r -> succeeded(null));
   }
 }

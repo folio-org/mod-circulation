@@ -106,10 +106,6 @@ public class Account {
     return remaining.hasAmount();
   }
 
-  public String getFeeFineId() {
-    return relatedRecordsInfo.getFeeFineTypeInfo().getFeeFineId();
-  }
-
   public String getFeeFineType() {
     return relatedRecordsInfo.getFeeFineTypeInfo().getFeeFineType();
   }

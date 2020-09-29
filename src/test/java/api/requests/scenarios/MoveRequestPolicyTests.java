@@ -1,5 +1,7 @@
 package api.requests.scenarios;
 
+import static api.support.PubsubPublisherTestUtils.assertThatLogRecordEventsCountIsEqualTo;
+import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
 import static java.util.Collections.singletonList;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_TYPE;
 import static org.hamcrest.Matchers.is;
@@ -171,7 +173,7 @@ public class MoveRequestPolicyTests extends APITests {
       interestingTimes, jessica, DateTime.now(DateTimeZone.UTC), RequestType.RECALL.getValue());
 
     assertThat(patronNoticesClient.getAll().size(), is(0));
-    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
+    assertThatLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
 
     // move jessica's recall request from interestingTimes to smallAngryPlanet
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
@@ -197,7 +199,8 @@ public class MoveRequestPolicyTests extends APITests {
 
     assertThat("move recall request notice has not been sent",
       patronNoticesClient.getAll().size(), is(2));
-    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
+    assertThatLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+    assertThatPublishedLogRecordEventsAreValid();
   }
 
   @Test
@@ -235,7 +238,8 @@ public class MoveRequestPolicyTests extends APITests {
       interestingTimes, jessica, DateTime.now(DateTimeZone.UTC), RequestType.RECALL.getValue());
 
     assertThat(patronNoticesClient.getAll().size(), is(1));
-    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
+    assertThatLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+    assertThatPublishedLogRecordEventsAreValid();
 
     // move jessica's recall request from interestingTimes to smallAngryPlanet
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
@@ -259,7 +263,8 @@ public class MoveRequestPolicyTests extends APITests {
 
     assertThat("move recall request unexpectedly sent another patron notice",
       patronNotices.size(), is(2));
-    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
+    assertThatLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+    assertThatPublishedLogRecordEventsAreValid();
   }
 
   @Test
@@ -300,7 +305,7 @@ public class MoveRequestPolicyTests extends APITests {
       interestingTimes, jessica, DateTime.now(DateTimeZone.UTC), RequestType.RECALL.getValue());
 
     assertThat(patronNoticesClient.getAll().size(), is(0));
-    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
+    assertThatLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
 
     // move jessica's recall request from interestingTimes to smallAngryPlanet
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
@@ -326,7 +331,8 @@ public class MoveRequestPolicyTests extends APITests {
 
     assertThat("move recall request notice has not been sent",
       patronNoticesClient.getAll().size(), is(2));
-    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
+    assertThatLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+    assertThatPublishedLogRecordEventsAreValid();
   }
 
   @Test
@@ -380,7 +386,8 @@ public class MoveRequestPolicyTests extends APITests {
       interestingTimes, jessica, DateTime.now(DateTimeZone.UTC), RequestType.RECALL.getValue());
 
     assertThat(patronNoticesClient.getAll().size(), is(1));
-    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
+    assertThatLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+    assertThatPublishedLogRecordEventsAreValid();
 
     // move jessica's recall request from interestingTimes to smallAngryPlanet
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
@@ -402,7 +409,8 @@ public class MoveRequestPolicyTests extends APITests {
 
     assertThat("move recall request unexpectedly sent another patron notice",
       patronNoticesClient.getAll().size(), is(2));
-    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
+    assertThatLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+    assertThatPublishedLogRecordEventsAreValid();
   }
 
   private void setRules(String rules) {

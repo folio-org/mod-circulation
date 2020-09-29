@@ -11,7 +11,6 @@ public class PatronNoticeEventBuilder {
   private User user;
   private NoticeEventType eventType;
   private JsonObject noticeContext;
-  private NoticeLogContext noticeLogContext;
 
   public PatronNoticeEventBuilder withItem(Item item) {
     this.item = item;
@@ -33,12 +32,7 @@ public class PatronNoticeEventBuilder {
     return this;
   }
 
-  public PatronNoticeEventBuilder withAuditLogRecord(NoticeLogContext noticeLogContext) {
-    this.noticeLogContext = noticeLogContext;
-    return this;
-  }
-
   public PatronNoticeEvent build() {
-    return new PatronNoticeEvent(item, user, eventType, noticeContext, noticeLogContext);
+    return new PatronNoticeEvent(item, user, eventType, noticeContext);
   }
 }

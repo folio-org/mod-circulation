@@ -1,5 +1,7 @@
 package api.loans;
 
+import static api.support.PubsubPublisherTestUtils.assertThatLogRecordEventsCountIsEqualTo;
+import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
 import static api.support.fixtures.ItemExamples.basedUponSmallAngryPlanet;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.ScheduledNoticeMatchers.hasScheduledLoanNotice;
@@ -491,7 +493,8 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
     assertThat(sentNotices, hasSize(expectedTemplateIds.length));
     assertThat(sentNotices, hasItems(matchers));
-    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
+    assertThatLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+    assertThatPublishedLogRecordEventsAreValid();
   }
 
   private List<JsonObject> createNoticesOverTime(

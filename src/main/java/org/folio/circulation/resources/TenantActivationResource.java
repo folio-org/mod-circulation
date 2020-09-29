@@ -26,7 +26,6 @@ public class TenantActivationResource {
   public void enableModuleForTenant(RoutingContext routingContext) {
     Map<String, String> headers = new WebContext(routingContext).getHeaders();
     PubSubRegistrationService.registerModule(headers,routingContext.vertx())
-      .thenCompose(b -> PubSubModuleRegistrationUtil.registerLogEventPublisher(headers, routingContext.vertx()))
       .thenRun(() -> created(new JsonObject()).writeTo(routingContext.response()))
       .exceptionally(throwable -> {
         ServerErrorResponse.internalError(routingContext.response(), throwable.getLocalizedMessage());

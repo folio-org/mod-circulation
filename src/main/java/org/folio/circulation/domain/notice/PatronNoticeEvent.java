@@ -11,16 +11,13 @@ public class PatronNoticeEvent {
   private final User user;
   private final NoticeEventType eventType;
   private final JsonObject noticeContext;
-  private final NoticeLogContext noticeLogContext;
 
   public PatronNoticeEvent(
-    Item item, User user, NoticeEventType eventType,
-    JsonObject noticeContext, NoticeLogContext noticeLogContext) {
+    Item item, User user, NoticeEventType eventType, JsonObject noticeContext) {
     this.item = item;
     this.user = user;
     this.eventType = eventType;
     this.noticeContext = noticeContext;
-    this.noticeLogContext = noticeLogContext;
   }
 
   public Item getItem() {
@@ -37,9 +34,5 @@ public class PatronNoticeEvent {
 
   public JsonObject getNoticeContext() {
     return noticeContext;
-  }
-
-  public NoticeLogContext getAuditLogRecord() {
-    return noticeLogContext;
   }
 }

@@ -388,10 +388,11 @@ public abstract class APITests {
     ClockManager.getClockManager().setDefaultClock();
   }
 
-  protected void assertThatSentNoticesCountIsEqualToLogRecordEventsCount() {
-    int logRecordEventsCount = FakePubSub.getPublishedEvents().stream()
-      .filter(json -> "LOG_RECORD_EVENT".equals(json.getString("eventType")))
-      .collect(Collectors.reducing(0, e -> 1, Integer::sum));
-    assertThat(patronNoticesClient.getAll().size(), equalTo(logRecordEventsCount));
-  }
+//  protected void assertThatSentNoticesCountIsEqualToLogRecordEventsCount() {
+//    int logRecordEventsCount = FakePubSub.getPublishedEvents().stream()
+//      .filter(json -> "LOG_RECORD_EVENT".equals(json.getString("eventType")))
+//      .map(e -> 1)
+//      .reduce(0, Integer::sum);
+//    assertThat(logRecordEventsCount, equalTo(patronNoticesClient.getAll().size()));
+//  }
 }

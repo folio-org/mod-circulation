@@ -13,7 +13,7 @@ public class EventTypeMatchers {
   public static final String ITEM_DECLARED_LOST = "ITEM_DECLARED_LOST";
   public static final String ITEM_CLAIMED_RETURNED = "ITEM_CLAIMED_RETURNED";
   public static final String LOAN_DUE_DATE_CHANGED = "LOAN_DUE_DATE_CHANGED";
-  public static final String LOG_RECORD_EVENT = "LOG_RECORD_EVENT";
+  public static final String LOG_RECORD = "LOG_RECORD";
 
   public static Matcher<JsonObject> isItemCheckedOutEventType() {
     return JsonObjectMatcher.allOfPaths(
@@ -45,9 +45,9 @@ public class EventTypeMatchers {
     );
   }
 
-  public static Matcher<JsonObject> isLogRecordEventEventType() {
+  public static Matcher<JsonObject> isLogRecordEventType() {
     return JsonObjectMatcher.allOfPaths(
-      hasJsonPath("eventType", is(LOG_RECORD_EVENT))
+      hasJsonPath("eventType", is(LOG_RECORD))
     );
   }
 }

@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Account;
-import org.folio.circulation.domain.notice.NoticeLogContext;
+import org.folio.circulation.domain.representations.logs.NoticeLogContext;
 import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
 import org.folio.circulation.domain.FeeFineAction;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineActionRepository;
@@ -116,7 +116,7 @@ public class FeeFineScheduledNoticeHandler {
       JsonObject noticeContext = createFeeFineNoticeContext(context.getAccount(), context.getLoan());
       ScheduledNoticeConfig config = notice.getConfiguration();
 
-      NoticeLogContext noticeLogContext = NoticeLogContext.from(context.getLoan(), context.getAccount())
+      NoticeLogContext noticeLogContext = NoticeLogContext.from(context.getLoan(), context.getAction())
         .withTemplateId(notice.getConfiguration().getTemplateId())
         .withTriggeringEvent(notice.getTriggeringEvent().getRepresentation());
 

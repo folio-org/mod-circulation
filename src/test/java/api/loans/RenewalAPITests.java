@@ -1,5 +1,7 @@
 package api.loans;
 
+import static api.support.PubsubPublisherTestUtils.assertThatLogRecordEventsCountIsEqualTo;
+import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
 import static api.support.builders.FixedDueDateSchedule.forDay;
 import static api.support.builders.FixedDueDateSchedule.todayOnly;
 import static api.support.builders.FixedDueDateSchedule.wholeMonth;
@@ -1324,7 +1326,8 @@ public abstract class RenewalAPITests extends APITests {
     MatcherAssert.assertThat(sentNotices,
       hasItems(
         hasEmailNoticeProperties(steve.getId(), renewalTemplateId, noticeContextMatchers)));
-    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
+    assertThatLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+    assertThatPublishedLogRecordEventsAreValid();
   }
 
   @Test

@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.tuple.Pair;
+import org.folio.circulation.domain.representations.logs.NoticeLogContext;
 import org.folio.circulation.domain.notice.schedule.ScheduledNoticeConfig;
 import org.folio.circulation.infrastructure.storage.notices.PatronNoticePolicyRepository;
 import org.folio.circulation.rules.AppliedRuleConditions;
@@ -46,9 +47,10 @@ public class PatronNoticeService {
     this.eventPublisher = eventPublisher;
   }
 
-  public CompletableFuture<Result<Void>> acceptNoticeEvent(PatronNoticeEvent event) {
-    return acceptMultipleNoticeEvent(Collections.singletonList(event),
-      contexts -> contexts.stream().findFirst().orElse(new JsonObject()));
+  public CompletableFuture<Result<Void>> acceptNoticeEvent(PatronNoticeEvent event, NoticeLogContext logContext) {
+    return acceptMultipleNoticeEvent(Collections.singletonList(new NoticeEventBundle(event, logContext)),
+      contexts -> contexts.stream().findFirst().orElse(new JsonObject()),
+      logContexts -> logContexts.stream().findFirst().orElse(new NoticeLogContext()));
   }
 
   public CompletableFuture<Result<Void>> acceptScheduledNoticeEvent(
@@ -67,21 +69,22 @@ public class PatronNoticeService {
   }
 
   public CompletableFuture<Result<Void>> acceptMultipleNoticeEvent(
-    Collection<PatronNoticeEvent> events,
-    Function<Collection<JsonObject>, JsonObject> contextCombiner) {
+    Collection<NoticeEventBundle> bundles,
+    Function<Collection<JsonObject>, JsonObject> contextCombiner,
+    Function<Collection<NoticeLogContext>, NoticeLogContext> logContextCombiner) {
 
-    return allOf(events, this::loadNoticePolicyId)
+    return allOf(bundles, this::loadNoticePolicyId)
       .thenApply(mapResult(this::groupEvents))
-      .thenCompose(r -> r.after(eventGroups -> handleGroupedEvents(eventGroups, contextCombiner)));
+      .thenCompose(r -> r.after(eventGroups -> handleGroupedEvents(eventGroups, contextCombiner, logContextCombiner)));
   }
 
-  private CompletableFuture<Result<Pair<PatronNoticeEvent, String>>> loadNoticePolicyId(PatronNoticeEvent event) {
-    return noticePolicyRepository.lookupPolicyId(event.getItem(), event.getUser())
-      .thenApply(mapResult(circulationRuleMatchEntity -> Pair.of(event, circulationRuleMatchEntity.getPolicyId())));
+  private CompletableFuture<Result<Pair<NoticeEventBundle, String>>> loadNoticePolicyId(NoticeEventBundle bundle) {
+    return noticePolicyRepository.lookupPolicyId(bundle.getEvent().getItem(), bundle.getEvent().getUser())
+      .thenApply(mapResult(circulationRuleMatchEntity -> Pair.of(bundle, circulationRuleMatchEntity.getPolicyId())));
   }
 
-  private Map<NoticeEventGroupDefinition, List<PatronNoticeEvent>> groupEvents(
-    List<Pair<PatronNoticeEvent, String>> eventsWithNoticePolicyId) {
+  private Map<NoticeEventGroupDefinition, List<NoticeEventBundle>> groupEvents(
+    List<Pair<NoticeEventBundle, String>> eventsWithNoticePolicyId) {
 
     return eventsWithNoticePolicyId.stream()
       .collect(groupingBy(NoticeEventGroupDefinition::from,
@@ -89,37 +92,37 @@ public class PatronNoticeService {
   }
 
   private CompletableFuture<Result<Void>> handleGroupedEvents(
-    Map<NoticeEventGroupDefinition, List<PatronNoticeEvent>> eventGroups,
-    Function<Collection<JsonObject>, JsonObject> contextCombiner) {
+    Map<NoticeEventGroupDefinition, List<NoticeEventBundle>> eventGroups,
+    Function<Collection<JsonObject>, JsonObject> contextCombiner,
+    Function<Collection<NoticeLogContext>, NoticeLogContext> logContextCombiner) {
 
-    return allOf(eventGroups.entrySet(), e -> handleGroupedEvent(e, contextCombiner))
+    return allOf(eventGroups.entrySet(), e -> handleGroupedEvent(e, contextCombiner, logContextCombiner))
       .thenApply(mapResult(v -> null));
   }
 
   private CompletableFuture<Result<Void>> handleGroupedEvent(
-    Map.Entry<NoticeEventGroupDefinition, List<PatronNoticeEvent>> groupedEvent,
-    Function<Collection<JsonObject>, JsonObject> contextCombiner) {
+    Map.Entry<NoticeEventGroupDefinition, List<NoticeEventBundle>> groupedEvent,
+    Function<Collection<JsonObject>, JsonObject> contextCombiner,
+    Function<Collection<NoticeLogContext>, NoticeLogContext> logContextCombiner) {
 
     NoticeEventGroupDefinition eventGroupDefinition = groupedEvent.getKey();
-    List<PatronNoticeEvent> events = groupedEvent.getValue();
+    List<NoticeEventBundle> bundles = groupedEvent.getValue();
 
-    List<NoticeLogContext> logRecords = events.stream()
-      .map(PatronNoticeEvent::getAuditLogRecord)
-      .collect(Collectors.toList());
-    NoticeLogContext combinedNoticeLogContext = combineAuditLogRecords(logRecords);
-    combinedNoticeLogContext.setNoticePolicyId(groupedEvent.getKey().noticePolicyId);
-
-    List<JsonObject> noticeContexts = events.stream()
+    JsonObject combinedContext = contextCombiner.apply(bundles.stream()
+      .map(NoticeEventBundle::getEvent)
       .map(PatronNoticeEvent::getNoticeContext)
-      .collect(Collectors.toList());
+      .collect(Collectors.toList()));
 
-    JsonObject combinedContext = contextCombiner.apply(noticeContexts);
+    NoticeLogContext combinedLogContext = logContextCombiner.apply(bundles.stream()
+      .map(NoticeEventBundle::getLogContext)
+      .collect(Collectors.toList()));
+    combinedLogContext.setNoticePolicyId(groupedEvent.getKey().noticePolicyId);
 
     return noticePolicyRepository.lookupPolicy(
       eventGroupDefinition.noticePolicyId,
       new AppliedRuleConditions(false, false, false))
       .thenCompose(r -> r.after(policy -> applyNoticePolicy(policy, eventGroupDefinition,
-        combinedContext, combinedNoticeLogContext)));
+        combinedContext, combinedLogContext)));
   }
 
   private CompletableFuture<Result<Void>> applyNoticePolicy(
@@ -165,15 +168,6 @@ public class PatronNoticeService {
       .thenApply(responseInterpreter::flatMap);
   }
 
-  private NoticeLogContext combineAuditLogRecords(List<NoticeLogContext> records) {
-    NoticeLogContext groupedRecord = records.get(0);
-    groupedRecord.setItems(records.stream()
-      .map(NoticeLogContext::getItems)
-      .flatMap(Collection::stream)
-      .collect(Collectors.toList()));
-    return groupedRecord;
-  }
-
   private CompletableFuture<Result<Void>> publishAuditLogEvent(NoticeLogContext noticeLogContext) {
     return eventPublisher.publishSendNoticeEvent(noticeLogContext.withDate(DateTime.now()));
   }
@@ -185,9 +179,9 @@ public class PatronNoticeService {
     private final NoticeEventType eventType;
 
     private static NoticeEventGroupDefinition from(
-      Pair<PatronNoticeEvent, String> noticeEventWithPolicyId) {
+      Pair<NoticeEventBundle, String> noticeEventWithPolicyId) {
 
-      PatronNoticeEvent event = noticeEventWithPolicyId.getLeft();
+      PatronNoticeEvent event = noticeEventWithPolicyId.getLeft().getEvent();
       String noticePolicyId = noticeEventWithPolicyId.getRight();
 
       return new NoticeEventGroupDefinition(

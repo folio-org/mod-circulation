@@ -1,6 +1,7 @@
 package org.folio.circulation.domain.notice.schedule;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static java.util.stream.Collectors.toList;
 import static org.folio.circulation.domain.notice.schedule.DueDateScheduledNoticeHandler.REQUIRED_RECORD_TYPES;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allResultsOf;
 import static org.folio.circulation.support.results.Result.succeeded;
@@ -8,13 +9,12 @@ import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
-import org.folio.circulation.domain.notice.NoticeLogContextItem;
-import org.folio.circulation.domain.notice.NoticeLogContext;
+import org.folio.circulation.domain.representations.logs.NoticeLogContext;
+import org.folio.circulation.domain.representations.logs.NoticeLogContextItem;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.notice.PatronNoticeService;
@@ -109,7 +109,7 @@ public class DueDateNotRealTimeScheduledNoticeHandler {
     List<Pair<ScheduledNotice, LoanAndRelatedRecords>> noticeGroup) {
 
     List<Pair<ScheduledNotice, LoanAndRelatedRecords>> relevantNotices =
-      noticeGroup.stream().filter(this::noticeIsRelevant).collect(Collectors.toList());
+      noticeGroup.stream().filter(this::noticeIsRelevant).collect(toList());
     if (relevantNotices.isEmpty()) {
       return completedFuture(succeeded(noticeGroup));
     }
@@ -118,7 +118,7 @@ public class DueDateNotRealTimeScheduledNoticeHandler {
       .map(Pair::getRight)
       .map(LoanAndRelatedRecords::getLoan)
       .map(TemplateContextUtil::createLoanNoticeContextWithoutUser)
-      .collect(Collectors.toList());
+      .collect(toList());
 
     //All the notices have the same properties so we can get any of them
     ScheduledNotice scheduledNotice = relevantNotices.get(0).getLeft();
@@ -130,22 +130,21 @@ public class DueDateNotRealTimeScheduledNoticeHandler {
       .put("user", TemplateContextUtil.createUserContext(user))
       .put("loans", new JsonArray(loanContexts));
 
-    List<NoticeLogContextItem> noticeLogContextItems = relevantNotices.stream()
-      .map(Pair::getRight)
-      .map(LoanAndRelatedRecords::getLoan)
-      .map(NoticeLogContextItem::from)
-      .collect(Collectors.toList());
-    NoticeLogContext noticeLogContext = new NoticeLogContext()
-      .withUser(user)
-      .withItems(noticeLogContextItems)
+    NoticeLogContext noticeLogContext = NoticeLogContext.from(loan)
+      .withItems(relevantNotices.stream()
+        .map(Pair::getRight)
+        .map(LoanAndRelatedRecords::getLoan)
+        .map(NoticeLogContextItem::from)
+        .collect(toList()))
       .withTriggeringEvent(scheduledNotice.getTriggeringEvent().getRepresentation())
       .withTemplateId(scheduledNotice.getConfiguration().getTemplateId());
 
     return noticePolicyRepository.lookupPolicyId(loan.getItem(), loan.getUser())
-      .thenCompose(r -> r.after(policy -> patronNoticeService.acceptScheduledNoticeEvent(
-        scheduledNotice.getConfiguration(), user.getId(), noticeContext,
-        noticeLogContext.withNoticePolicyId(policy.getPolicyId()))))
-      .thenApply(mapResult(v -> noticeGroup));
+      .thenCompose(r -> r.after(policy ->
+        patronNoticeService.acceptScheduledNoticeEvent(
+          scheduledNotice.getConfiguration(), user.getId(), noticeContext,
+          noticeLogContext.withNoticePolicyId(policy.getPolicyId()))
+      .thenApply(mapResult(v -> noticeGroup))));
   }
 
   private boolean noticeIsRelevant(Pair<ScheduledNotice, LoanAndRelatedRecords> noticeWithContext) {

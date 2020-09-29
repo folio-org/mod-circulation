@@ -1,5 +1,7 @@
 package api.loans.scenarios;
 
+import static api.support.PubsubPublisherTestUtils.assertThatLogRecordEventsCountIsEqualTo;
+import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
@@ -255,7 +257,8 @@ public class ChangeDueDateByReplacingLoanTests extends APITests {
     MatcherAssert.assertThat(sentNotices,
       hasItems(
         hasEmailNoticeProperties(steve.getId(), manualDueDateChangeTemplateId, noticeContextMatchers)));
-    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
+    assertThatLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+    assertThatPublishedLogRecordEventsAreValid();
   }
 
   @Test

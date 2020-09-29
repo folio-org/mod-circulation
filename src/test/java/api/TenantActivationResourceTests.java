@@ -11,7 +11,7 @@ import static api.support.matchers.EventTypeMatchers.isItemCheckedOutEventType;
 import static api.support.matchers.EventTypeMatchers.isItemClaimedReturnedEventType;
 import static api.support.matchers.EventTypeMatchers.isItemDeclaredLostEventType;
 import static api.support.matchers.EventTypeMatchers.isLoanDueDateChangedEventType;
-import static api.support.matchers.EventTypeMatchers.isLogRecordEventEventType;
+import static api.support.matchers.EventTypeMatchers.isLogRecordEventType;
 import static api.support.matchers.PubSubRegistrationMatchers.isValidPublishersRegistration;
 import static api.support.matchers.PubSubRegistrationMatchers.isValidSubscribersRegistration;
 import static org.folio.HttpStatus.HTTP_CREATED;
@@ -52,7 +52,7 @@ public class TenantActivationResourceTests extends APITests {
     assertThat(response.getStatusCode(), is(HTTP_CREATED.toInt()));
 
     assertThat(getCreatedEventTypes().size(), is(6));
-    assertThat(getRegisteredPublishers().size(), is(2));
+    assertThat(getRegisteredPublishers().size(), is(1));
 
     assertThat(getCreatedEventTypes(), hasItems(
       isItemCheckedOutEventType(),
@@ -60,7 +60,7 @@ public class TenantActivationResourceTests extends APITests {
       isItemDeclaredLostEventType(),
       isLoanDueDateChangedEventType(),
       isItemClaimedReturnedEventType(),
-      isLogRecordEventEventType()
+      isLogRecordEventType()
     ));
 
     assertThat(getRegisteredPublishers(), hasItem(isValidPublishersRegistration()));
@@ -81,13 +81,14 @@ public class TenantActivationResourceTests extends APITests {
 
     assertThat(response.getStatusCode(), is(HTTP_NO_CONTENT.toInt()));
 
-    assertThat(getDeletedEventTypes().size(), is(5));
+    assertThat(getDeletedEventTypes().size(), is(6));
     assertThat(getDeletedEventTypes(), hasItems(
       EventTypeMatchers.ITEM_CHECKED_OUT,
       EventTypeMatchers.ITEM_CHECKED_IN,
       EventTypeMatchers.ITEM_DECLARED_LOST,
       EventTypeMatchers.ITEM_CLAIMED_RETURNED,
-      EventTypeMatchers.LOAN_DUE_DATE_CHANGED
+      EventTypeMatchers.LOAN_DUE_DATE_CHANGED,
+      EventTypeMatchers.LOG_RECORD
     ));
   }
 }

@@ -1,5 +1,7 @@
 package api.loans;
 
+import static api.support.PubsubPublisherTestUtils.assertThatLogRecordEventsCountIsEqualTo;
+import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
 import static api.support.builders.FixedDueDateSchedule.forDay;
 import static api.support.builders.FixedDueDateSchedule.wholeMonth;
 import static api.support.matchers.ItemMatchers.isCheckedOut;
@@ -740,7 +742,8 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     assertThat(sentNotices, hasItems(
       hasEmailNoticeProperties(steve.getId(), renewalTemplateId, noticeContextMatchers)));
-    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
+    assertThatLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+    assertThatPublishedLogRecordEventsAreValid();
   }
 
   private Matcher<ValidationError> hasUserRelatedParameter(IndividualResource user) {

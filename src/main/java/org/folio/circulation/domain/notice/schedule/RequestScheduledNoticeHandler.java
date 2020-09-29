@@ -9,7 +9,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
-import org.folio.circulation.domain.notice.NoticeLogContext;
+import org.folio.circulation.domain.representations.logs.NoticeLogContext;
 import org.folio.circulation.infrastructure.storage.notices.PatronNoticePolicyRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.domain.notice.NoticeTiming;

@@ -1,5 +1,7 @@
 package api.requests;
 
+import static api.support.PubsubPublisherTestUtils.assertThatLogRecordEventsCountIsEqualTo;
+import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
 import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
@@ -103,8 +105,9 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
 
     List<JsonObject> notices = patronNoticesClient.getAll();
     assertThat(notices, hasSize(1));
-    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
     assertThat(notices.get(0), getTemplateContextMatcher(templateId, request));
+    assertThatLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+    assertThatPublishedLogRecordEventsAreValid();
   }
 
   @Test
@@ -233,8 +236,9 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
     List<JsonObject> notices = patronNoticesClient.getAll();
 
     assertThat(notices, hasSize(1));
-    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
     assertThat(notices.get(0), getTemplateContextMatcher(templateId, request));
+    assertThatLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+    assertThatPublishedLogRecordEventsAreValid();
   }
 
   @Test
@@ -272,9 +276,10 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
       .get(0).getString("nextRunTime"));
 
     assertThat(notices, hasSize(1));
-    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
     assertThat(nextRunTimeBeforeProcessing, is(nextRunTimeAfterProcessing.minusDays(1)));
     assertThat(notices.get(0), getTemplateContextMatcher(templateId, request));
+    assertThatLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+    assertThatPublishedLogRecordEventsAreValid();
   }
 
   @Test
@@ -311,8 +316,9 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
     List<JsonObject> notices = patronNoticesClient.getAll();
 
     assertThat(notices, hasSize(1));
-    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
     assertThat(notices.get(0), getTemplateContextMatcher(templateId, requestsClient.get(request.getId())));
+    assertThatLogRecordEventsCountIsEqualTo(notices.size());
+    assertThatPublishedLogRecordEventsAreValid();
     assertThat(scheduledNoticesClient.getAll(), hasSize(0));
   }
 

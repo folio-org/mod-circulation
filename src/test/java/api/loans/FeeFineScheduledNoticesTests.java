@@ -1,5 +1,7 @@
 package api.loans;
 
+import static api.support.PubsubPublisherTestUtils.assertThatLogRecordEventsCountIsEqualTo;
+import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
 import static api.support.matchers.PatronNoticeMatcher.hasNoticeProperties;
 import static api.support.matchers.ScheduledNoticeMatchers.hasScheduledFeeFineNotice;
 import static java.util.UUID.randomUUID;
@@ -355,7 +357,8 @@ public class FeeFineScheduledNoticesTests extends APITests {
   private void assertThatNoticesWereSent(UUID... expectedTemplateIds) {
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
     assertThat(sentNotices, hasSize(expectedTemplateIds.length));
-    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
+    assertThatLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+    assertThatPublishedLogRecordEventsAreValid();
 
     Matcher<?> matcher = TemplateContextMatchers.getFeeFineContextMatcher(account, action);
 
@@ -370,7 +373,7 @@ public class FeeFineScheduledNoticesTests extends APITests {
 
   private void assertThatNoNoticesWereSent() {
     assertThat(patronNoticesClient.getAll(), hasSize(0));
-    assertThatSentNoticesCountIsEqualToLogRecordEventsCount();
+    assertThatLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
   }
 
   private static DateTime rightAfter(DateTime dateTime) {

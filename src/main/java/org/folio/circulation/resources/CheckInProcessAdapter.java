@@ -10,7 +10,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.commons.lang3.StringUtils;
-import org.folio.circulation.domain.notice.NoticeLogContext;
+import org.folio.circulation.domain.representations.logs.NoticeLogContext;
 import org.folio.circulation.infrastructure.storage.users.AddressTypeRepository;
 import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.Item;
@@ -221,7 +221,7 @@ class CheckInProcessAdapter {
       .withEventType(NoticeEventType.CHECK_IN)
       .withNoticeContext(createLoanNoticeContext(context.getLoan()))
       .build();
-    patronNoticeService.acceptNoticeEvent(noticeEvent);
+    patronNoticeService.acceptNoticeEvent(noticeEvent, new NoticeLogContext());
     return succeeded(context);
   }
 
@@ -248,15 +248,13 @@ class CheckInProcessAdapter {
   private Result<CheckInContext> sendAvailableNotice(Request request, User user, CheckInContext context) {
     Item item = context.getItem();
     if (item.isAwaitingPickup() && item.hasChanged()) {
-      NoticeLogContext noticeLogContext = NoticeLogContext.from(item, user, request);
       PatronNoticeEvent noticeEvent = new PatronNoticeEventBuilder()
         .withItem(item)
         .withUser(user)
         .withEventType(NoticeEventType.AVAILABLE)
         .withNoticeContext(createAvailableNoticeContext(item, user, request))
-        .withAuditLogRecord(noticeLogContext)
         .build();
-      patronNoticeService.acceptNoticeEvent(noticeEvent);
+      patronNoticeService.acceptNoticeEvent(noticeEvent, NoticeLogContext.from(item, user, request));
     }
     return succeeded(context);
   }
