@@ -1,6 +1,6 @@
 package api.loans.scenarios;
 
-import static api.support.PubsubPublisherTestUtils.assertThatLogRecordEventsCountIsEqualTo;
+import static api.support.PubsubPublisherTestUtils.assertThatPublishedNoticeLogRecordEventsCountIsEqualTo;
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
 import static api.support.fixtures.TemplateContextMatchers.getItemContextMatchers;
 import static api.support.fixtures.TemplateContextMatchers.getLoanContextMatchers;
@@ -240,7 +240,7 @@ public class ChangeDueDateAPITests extends APITests {
 
     assertThat(sentNotices, hasItems(
       hasEmailNoticeProperties(steve.getId(), templateId, matchers)));
-    assertThatLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
     assertThatPublishedLogRecordEventsAreValid();
   }
 

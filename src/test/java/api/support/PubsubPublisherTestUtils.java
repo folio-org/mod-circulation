@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static api.support.matchers.EventTypeMatchers.LOG_RECORD;
+import static org.folio.circulation.domain.representations.logs.LogEventPayloadType.NOTICE;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
@@ -15,21 +16,18 @@ public class PubsubPublisherTestUtils {
   private PubsubPublisherTestUtils(){
   }
 
-  public static void assertThatLogRecordEventsCountIsEqualTo(int messagesCount) {
-    int logRecordEventsCount = FakePubSub.getPublishedEvents().stream()
-      .filter(json -> LOG_RECORD.equals(json.getString("eventType")))
-      .map(e -> 1)
-      .reduce(0, Integer::sum);
-    assertThat(logRecordEventsCount, equalTo(messagesCount));
+  public static void assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(int messagesCount) {
+    assertThat(getPublishedLogRecordEvents(NOTICE.value()).size(), equalTo(messagesCount));
   }
 
   public static void assertThatPublishedLogRecordEventsAreValid() {
-    getPublishedLogRecordEvents().forEach(EventMatchers::isValidNoticeLogRecordEvent);
+    getPublishedLogRecordEvents(NOTICE.value()).forEach(EventMatchers::isValidNoticeLogRecordEvent);
   }
 
-  private static List<JsonObject> getPublishedLogRecordEvents() {
+  private static List<JsonObject> getPublishedLogRecordEvents(String logEventType) {
     return FakePubSub.getPublishedEvents().stream()
-      .filter(json -> LOG_RECORD.equals(json.getString("eventType")))
+      .filter(json -> LOG_RECORD.equals(json.getString("eventType")) &&
+        json.getString("eventPayload").contains(logEventType))
       .collect(Collectors.toList());
   }
 }

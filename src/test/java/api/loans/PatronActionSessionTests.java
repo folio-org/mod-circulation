@@ -1,6 +1,6 @@
 package api.loans;
 
-import static api.support.PubsubPublisherTestUtils.assertThatLogRecordEventsCountIsEqualTo;
+import static api.support.PubsubPublisherTestUtils.assertThatPublishedNoticeLogRecordEventsCountIsEqualTo;
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
 import static api.support.fixtures.TemplateContextMatchers.getLoanPolicyContextMatchersForUnlimitedRenewals;
 import static api.support.fixtures.TemplateContextMatchers.getMultipleLoansContextMatcher;
@@ -127,7 +127,7 @@ public class PatronActionSessionTests extends APITests {
 
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
     assertThat(sentNotices, hasSize(1));
-    assertThatLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
     assertThatPublishedLogRecordEventsAreValid();
 
     Matcher<? super String> multipleLoansToJamesContextMatcher = getMultipleLoansContextMatcher(james,
@@ -152,7 +152,7 @@ public class PatronActionSessionTests extends APITests {
     TimeUnit.SECONDS.sleep(1);
     assertThat(patronSessionRecordsClient.getAll(), hasSize(1));
     assertThat(patronNoticesClient.getAll(), empty());
-    assertThatLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
     assertThatPublishedLogRecordEventsAreValid();
   }
 
@@ -171,7 +171,7 @@ public class PatronActionSessionTests extends APITests {
     TimeUnit.SECONDS.sleep(1);
     assertThat(patronSessionRecordsClient.getAll(), hasSize(1));
     assertThat(patronNoticesClient.getAll(), empty());
-    assertThatLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
   }
 
   @Test
@@ -228,7 +228,7 @@ public class PatronActionSessionTests extends APITests {
     assertThat(checkInSessions, Matchers.hasSize(1));
 
     assertThat(patronNoticesClient.getAll(), empty());
-    assertThatLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
     endPatronSessionClient.endCheckInSession(steve.getId());
 
     //Wait until session records are deleted
@@ -237,7 +237,7 @@ public class PatronActionSessionTests extends APITests {
       .until(this::getCheckInSessions, empty());
 
     assertThat(patronNoticesClient.getAll(), hasSize(1));
-    assertThatLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
     assertThatPublishedLogRecordEventsAreValid();
   }
 
