@@ -527,7 +527,8 @@ public class OverrideRenewByBarcodeTests extends APITests {
         "reached number of renewals limit," +
         "renewal date falls outside of the date ranges in the loan policy, " +
         "items cannot be renewed when there is an active recall request, " +
-        "item is Declared lost, item is Claimed returned, item is Aged to lost"))));
+        "item is Declared lost, item is Claimed returned, item is Aged to lost, " +
+        "renewal would not change the due date"))));
   }
 
   @Test
