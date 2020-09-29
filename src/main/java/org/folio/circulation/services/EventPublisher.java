@@ -26,7 +26,6 @@ import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.representations.logs.NoticeLogContext;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
-import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;

@@ -211,20 +211,6 @@ class CheckInProcessAdapter {
       .thenApply(r -> r.map(firstRequest::withAddressType));
   }
 
-  Result<CheckInContext> sendCheckInPatronNotice(CheckInContext context) {
-    if (context.getLoan() == null) {
-      return succeeded(context);
-    }
-    PatronNoticeEvent noticeEvent = new PatronNoticeEventBuilder()
-      .withItem(context.getItem())
-      .withUser(context.getLoan().getUser())
-      .withEventType(NoticeEventType.CHECK_IN)
-      .withNoticeContext(createLoanNoticeContext(context.getLoan()))
-      .build();
-    patronNoticeService.acceptNoticeEvent(noticeEvent, new NoticeLogContext());
-    return succeeded(context);
-  }
-
   Result<CheckInContext> sendItemStatusPatronNotice(CheckInContext context) {
     RequestQueue requestQueue = context.getRequestQueue();
     if (Objects.isNull(requestQueue)) {
