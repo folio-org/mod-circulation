@@ -3,6 +3,7 @@ package org.folio.circulation.resources.renewal;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singleton;
+import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
 import static org.folio.circulation.domain.policy.Period.weeks;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.json.JsonPropertyWriter.writeByPath;
@@ -15,7 +16,6 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 import org.folio.circulation.domain.Item;
-import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestQueue;
@@ -189,7 +189,7 @@ public class OverrideRenewalStrategyTest {
     final Result<Loan> renewedLoan = renew(loan, overrideDueDate);
 
     assertDueDate(overrideDueDate, renewedLoan);
-    assertEquals(renewedLoan.value().getItem().getStatus(), ItemStatus.CHECKED_OUT);
+    assertEquals(CHECKED_OUT, renewedLoan.value().getItem().getStatus());
   }
 
   @Test
@@ -211,7 +211,7 @@ public class OverrideRenewalStrategyTest {
     final Result<Loan> renewedLoan = renew(loan, null);
 
     assertDueDateWithinOneSecondAfter(estimatedDueDate, renewedLoan);
-    assertEquals(renewedLoan.value().getItem().getStatus(), ItemStatus.CHECKED_OUT);
+    assertEquals(CHECKED_OUT, renewedLoan.value().getItem().getStatus());
   }
 
   @Test
