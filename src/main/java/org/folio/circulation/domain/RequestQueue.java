@@ -13,9 +13,11 @@ import java.util.stream.Collectors;
 public class RequestQueue {
 
   private List<Request> requests;
+  private final List<UpdatedRequestPair> updatedRequests;
 
   public RequestQueue(Collection<Request> requests) {
     this.requests = new ArrayList<>(requests);
+    updatedRequests = new ArrayList<>();
 
     // Ordering requests by position, so we can add and remove them
     // without sorting and just re-sequence from 1 to n
@@ -63,6 +65,10 @@ public class RequestQueue {
     reSequenceRequests();
   }
 
+  public void update(Request original, Request updated) {
+    updatedRequests.add(new UpdatedRequestPair(original, updated));
+  }
+
   public void remove(Request request) {
     requests = requests.stream()
       .filter(r -> !r.getId().equals(request.getId()))
@@ -96,6 +102,10 @@ public class RequestQueue {
   //TODO: Encapsulate this better
   public Collection<Request> getRequests() {
     return requests;
+  }
+
+  public List<UpdatedRequestPair> getUpdatedRequests() {
+    return updatedRequests;
   }
 
   boolean isEmpty() {
