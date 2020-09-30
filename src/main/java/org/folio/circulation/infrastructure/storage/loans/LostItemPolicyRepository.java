@@ -28,7 +28,7 @@ import io.vertx.core.json.JsonObject;
 public class LostItemPolicyRepository extends CirculationPolicyRepository<LostItemPolicy> {
 
   public LostItemPolicyRepository(Clients clients) {
-    super(clients.circulationLostItemRules(), clients.lostItemPoliciesStorage());
+    super(clients.locationsStorage(), clients.lostItemPoliciesStorage());
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> lookupLostItemPolicy(

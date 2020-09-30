@@ -1,41 +1,47 @@
 package org.folio.circulation.infrastructure.storage;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.support.results.Result.failed;
-import static org.folio.circulation.support.results.Result.succeeded;
+import static org.folio.circulation.resources.AbstractCirculationRulesEngineResource.ITEM_TYPE_ID_NAME;
+import static org.folio.circulation.resources.AbstractCirculationRulesEngineResource.LOAN_TYPE_ID_NAME;
+import static org.folio.circulation.resources.AbstractCirculationRulesEngineResource.PATRON_TYPE_ID_NAME;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
+import static org.folio.circulation.support.results.Result.failed;
 
 import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.User;
+import org.folio.circulation.resources.LoanCirculationRulesProcessor;
 import org.folio.circulation.rules.AppliedRuleConditions;
 import org.folio.circulation.rules.CirculationRuleMatch;
-import org.folio.circulation.support.CirculationRulesClient;
+import org.folio.circulation.rules.Drools;
 import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.ForwardOnFailure;
-import org.folio.circulation.support.results.Result;
+import org.folio.circulation.support.FetchSingleRecord;
+import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.SingleRecordFetcher;
-import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.results.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.vertx.core.MultiMap;
 import io.vertx.core.json.JsonObject;
 
 public abstract class CirculationPolicyRepository<T> {
   private static final String APPLIED_RULE_CONDITIONS = "appliedRuleConditions";
+  public static final String LOCATION_ID_NAME = "location_id";
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-  private final CirculationRulesClient circulationRulesClient;
   protected final CollectionResourceClient policyStorageClient;
+  protected final CollectionResourceClient locationsStorageClient;
 
   protected CirculationPolicyRepository(
-    CirculationRulesClient circulationRulesClient,
+    CollectionResourceClient locationsStorageClient,
     CollectionResourceClient policyStorageClient) {
-    this.circulationRulesClient = circulationRulesClient;
+    this.locationsStorageClient = locationsStorageClient;
     this.policyStorageClient = policyStorageClient;
   }
 
@@ -88,42 +94,25 @@ public abstract class CirculationPolicyRepository<T> {
     String materialTypeId = item.getMaterialTypeId();
     String patronGroupId = user.getPatronGroupId();
 
+    MultiMap params = MultiMap.caseInsensitiveMultiMap();
+    params.add(ITEM_TYPE_ID_NAME, item.getItemId());
+    params.add(LOAN_TYPE_ID_NAME, item.determineLoanTypeForItem());
+    params.add(PATRON_TYPE_ID_NAME, user.getPatronGroupId());
+    params.add(LOCATION_ID_NAME, item.getLocationId());
+
     log.info(
       "Applying circulation rules for material type: {}, patron group: {}, loan type: {}, location: {}",
       materialTypeId, patronGroupId, loanTypeId, locationId);
 
-    final CompletableFuture<Result<Response>> circulationRulesResponse =
-      circulationRulesClient.applyRules(loanTypeId, locationId, materialTypeId, patronGroupId);
 
-    return circulationRulesResponse
-      .thenCompose(r -> r.after(this::processRulesResponse));
-  }
+    final CompletableFuture<Result<CirculationRuleMatch>> circulationRulesResponse = FetchSingleRecord.<Location>forRecord("location")
+    .using(locationsStorageClient)
+    .mapTo(Location::from)
+    .whenNotFound(failed(new ServerErrorFailure("Can`t find location")))
+    .fetch(locationId)
+    .thenCompose(r -> r.after(location -> CompletableFuture.completedFuture(Result.succeeded(LoanCirculationRulesProcessor.getLoanPolicyAndMatch(new Drools("we don't have the rules here"), params, location)))));
 
-  private CompletableFuture<Result<CirculationRuleMatch>> processRulesResponse(Response response) {
-    final CompletableFuture<Result<CirculationRuleMatch>> future = new CompletableFuture<>();
-
-    if (response.getStatusCode() == 404) {
-      future.complete(failedDueToServerError("Unable to apply circulation rules"));
-    } else if (response.getStatusCode() != 200) {
-      future.complete(failed(new ForwardOnFailure(response)));
-    } else {
-      log.info("Rules response {}", response.getBody());
-
-      String policyId = fetchPolicyId(response.getJson());
-      boolean isItemTypePresent = response.getJson().getJsonObject(APPLIED_RULE_CONDITIONS)
-        .getBoolean("materialTypeMatch");
-      boolean isLoanTypePresent = response.getJson().getJsonObject(APPLIED_RULE_CONDITIONS)
-        .getBoolean("loanTypeMatch");
-      boolean isPatronGroupPresent = response.getJson().getJsonObject(APPLIED_RULE_CONDITIONS)
-        .getBoolean("patronGroupMatch");
-
-      log.info("Policy to fetch based upon rules {}", policyId);
-
-      future.complete(succeeded(new CirculationRuleMatch(
-        policyId, new AppliedRuleConditions(isItemTypePresent, isLoanTypePresent, isPatronGroupPresent))));
-    }
-
-    return future;
+    return circulationRulesResponse;
   }
 
   protected abstract String getPolicyNotFoundErrorMessage(String policyId);

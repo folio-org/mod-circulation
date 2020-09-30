@@ -26,7 +26,7 @@ public class LoanCirculationRulesEngineResource extends AbstractCirculationRules
   @Override
   protected CompletableFuture<Result<CirculationRuleMatch>> getPolicyIdAndRuleMatch(
     MultiMap params, Drools drools, Location location) {
-    return CompletableFuture.completedFuture(Result.succeeded(drools.loanPolicy(params, location)));
+    return CompletableFuture.completedFuture(Result.succeeded(LoanCirculationRulesProcessor.getLoanPolicyAndMatch(drools, params, location)));
   }
 
   @Override
@@ -38,4 +38,5 @@ public class LoanCirculationRulesEngineResource extends AbstractCirculationRules
   protected CompletableFuture<Result<JsonArray>> getPolicies(MultiMap params, Drools drools, Location location) {
     return CompletableFuture.completedFuture(succeeded(drools.loanPolicies(params, location)));
   }
+
 }

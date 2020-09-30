@@ -258,6 +258,7 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
     if (invalidApplyParameters(request)) {
       return;
     }
+
     drools(routingContext, drools -> {
       try {
         final WebContext context = new WebContext(routingContext);

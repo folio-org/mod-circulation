@@ -70,6 +70,7 @@ public class CirculationRulesResource extends Resource {
    * Register the path set in the constructor.
    * @param router  where to register
    */
+  @Override
   public void register(Router router) {
     router.put(rootPath).handler(BodyHandler.create());
 
