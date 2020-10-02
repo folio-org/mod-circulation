@@ -71,7 +71,7 @@ public class Clients {
     this.httpClient = httpClient;
     this.routingContext = routingContext;
     WebContext context = new WebContext(routingContext);
-    OkapiHttpClient client = new WebContext(routingContext).createHttpClient(httpClient);
+    OkapiHttpClient client = context.createHttpClient(httpClient);
     try {
       requestsStorageClient = createRequestsStorageClient(client, context);
       requestsBatchStorageClient = createRequestsBatchStorageClient(client, context);
@@ -310,11 +310,11 @@ public class Clients {
     return noteTypesClient;
   }
 
-  public HttpClient getHttpClient() {
+  protected HttpClient getHttpClient() {
     return httpClient;
   }
 
-  public RoutingContext getRoutingContext() {
+  protected RoutingContext getRoutingContext() {
     return routingContext;
   }
 
