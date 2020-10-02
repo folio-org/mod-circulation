@@ -29,9 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.vertx.core.MultiMap;
-import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.RoutingContext;
 
 public abstract class CirculationPolicyRepository<T> {
   public static final String LOCATION_ID_NAME = "location_id";
@@ -39,8 +37,7 @@ public abstract class CirculationPolicyRepository<T> {
 
   protected final CollectionResourceClient policyStorageClient;
   protected final CollectionResourceClient locationsStorageClient;
-  protected final HttpClient client;
-  protected final RoutingContext routingContext;
+  protected final Clients clients;
 
   protected CirculationPolicyRepository(
     CollectionResourceClient locationsStorageClient,
@@ -48,8 +45,7 @@ public abstract class CirculationPolicyRepository<T> {
     Clients clients) {
     this.locationsStorageClient = locationsStorageClient;
     this.policyStorageClient = policyStorageClient;
-    this.client = clients.getHttpClient();
-    this.routingContext = clients.getRoutingContext();
+    this.clients = clients;
   }
 
   public CompletableFuture<Result<T>> lookupPolicy(Loan loan) {
@@ -111,7 +107,7 @@ public abstract class CirculationPolicyRepository<T> {
       "Applying circulation rules for material type: {}, patron group: {}, loan type: {}, location: {}",
       materialTypeId, patronGroupId, loanTypeId, locationId);
 
-    final CompletableFuture<Result<Drools>> droolsResponse = CirculationRulesProcessor.getInstance().getDrools(routingContext, client);
+    final CompletableFuture<Result<Drools>> droolsResponse = clients.getCirculationDrools();
     final CompletableFuture<Result<CirculationRuleMatch>> circulationRulesResponse = FetchSingleRecord.<Location>forRecord("location")
     .using(locationsStorageClient)
     .mapTo(Location::from)

@@ -1,9 +1,13 @@
 package org.folio.circulation.support;
 
 import java.net.MalformedURLException;
+import java.util.concurrent.CompletableFuture;
 
+import org.folio.circulation.resources.CirculationRulesProcessor;
+import org.folio.circulation.rules.Drools;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.server.WebContext;
+import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.ext.web.RoutingContext;
@@ -312,6 +316,10 @@ public class Clients {
 
   public RoutingContext getRoutingContext() {
     return routingContext;
+  }
+
+  public CompletableFuture<Result<Drools>> getCirculationDrools() {
+    return CirculationRulesProcessor.getInstance().getDrools(routingContext, httpClient);
   }
 
   private static CollectionResourceClient getCollectionResourceClient(

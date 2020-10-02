@@ -91,11 +91,13 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
       return;
     }
 
-    CompletableFuture<Result<Drools>> droolsFuture = CirculationRulesProcessor.getInstance().getDrools(routingContext, client);
+    Clients clients = Clients.create(routingContext, client);
+
+    CompletableFuture<Result<Drools>> droolsFuture = clients.getCirculationDrools();
 
     final WebContext context = new WebContext(routingContext);
     final CollectionResourceClient locationsStorageClient
-      = Clients.create(routingContext, client).locationsStorage();
+      = clients.locationsStorage();
     CompletableFuture<Result<Location>> locationFuture = FetchSingleRecord.<Location>forRecord("location")
       .using(locationsStorageClient)
       .mapTo(Location::from)
