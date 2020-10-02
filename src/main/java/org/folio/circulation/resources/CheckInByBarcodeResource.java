@@ -47,7 +47,7 @@ public class CheckInByBarcodeResource extends Resource {
       RequestScheduledNoticeService.using(clients);
 
     final PatronActionSessionService patronActionSessionService =
-      PatronActionSessionService.using(clients, eventPublisher);
+      PatronActionSessionService.using(clients);
 
     refuseWhenLoggedInUserNotPresent(context)
       .next(notUsed -> checkInRequestResult)

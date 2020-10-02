@@ -6,7 +6,6 @@ import java.util.List;
 
 import org.folio.circulation.domain.notice.session.PatronActionSessionService;
 import org.folio.circulation.domain.representations.EndPatronSessionRequest;
-import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.RouteRegistration;
@@ -33,10 +32,8 @@ public class EndPatronActionSessionResource extends Resource {
     WebContext context = new WebContext(routingContext);
     Clients clients = Clients.create(context, client);
 
-    final EventPublisher eventPublisher = new EventPublisher(routingContext);
-
     PatronActionSessionService patronActionSessionService =
-      PatronActionSessionService.using(clients, eventPublisher);
+      PatronActionSessionService.using(clients);
 
     List<Result<EndPatronSessionRequest>> resultListOfEndSessionRequestResult =
       EndPatronSessionRequest.from(routingContext.getBodyAsJson());

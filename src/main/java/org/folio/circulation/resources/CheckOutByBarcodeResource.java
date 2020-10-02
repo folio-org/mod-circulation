@@ -146,7 +146,7 @@ public class CheckOutByBarcodeResource extends Resource {
     final EventPublisher eventPublisher = new EventPublisher(routingContext);
 
     final PatronActionSessionService patronActionSessionService =
-      PatronActionSessionService.using(clients, eventPublisher);
+      PatronActionSessionService.using(clients);
 
     ofAsync(() -> new LoanAndRelatedRecords(request.toLoan()))
       .thenApply(servicePointOfCheckoutPresentValidator::refuseCheckOutWhenServicePointIsNotPresent)
