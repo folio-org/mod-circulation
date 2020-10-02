@@ -173,7 +173,7 @@ public class CirculationRulesProcessor {
   }
 
   public static JsonArray getOverduePolicies(Drools drools, MultiMap params, Location location) {
-    return drools.lostItemPolicies(params, location);
+    return drools.overduePolicies(params, location);
   }
 
   public static CirculationRuleMatch getRequestPolicyAndMatch(Drools drools, MultiMap params, Location location) {
