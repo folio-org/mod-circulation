@@ -15,7 +15,7 @@ import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.User;
-import org.folio.circulation.resources.LoanCirculationRulesProcessor;
+import org.folio.circulation.resources.CirculationRulesProcessor;
 import org.folio.circulation.rules.AppliedRuleConditions;
 import org.folio.circulation.rules.CirculationRuleMatch;
 import org.folio.circulation.rules.Drools;
@@ -110,7 +110,8 @@ public abstract class CirculationPolicyRepository<T> {
     .mapTo(Location::from)
     .whenNotFound(failed(new ServerErrorFailure("Can`t find location")))
     .fetch(locationId)
-    .thenCompose(r -> r.after(location -> CompletableFuture.completedFuture(Result.succeeded(LoanCirculationRulesProcessor.getLoanPolicyAndMatch(new Drools("we don't have the rules here"), params, location)))));
+    //TODO get the drools/rules here
+    .thenCompose(r -> r.after(location -> CompletableFuture.completedFuture(Result.succeeded(CirculationRulesProcessor.getLoanPolicyAndMatch(new Drools("we don't have the rules here"), params, location)))));
 
     return circulationRulesResponse;
   }

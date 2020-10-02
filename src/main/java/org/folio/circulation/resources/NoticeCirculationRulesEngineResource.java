@@ -26,9 +26,9 @@ public class NoticeCirculationRulesEngineResource extends AbstractCirculationRul
   }
 
   @Override
-  protected CompletableFuture<Result<CirculationRuleMatch>> getPolicyIdAndRuleMatch(
+  protected CirculationRuleMatch getPolicyIdAndRuleMatch(
     MultiMap params, Drools drools, Location location) {
-    return completedFuture(succeeded(drools.noticePolicy(params, location)));
+    return drools.noticePolicy(params, location);
   }
 
   @Override

@@ -20,9 +20,9 @@ public class OverdueFineCirculationRulesEngineResource extends AbstractCirculati
     }
 
     @Override
-    protected CompletableFuture<Result<CirculationRuleMatch>> getPolicyIdAndRuleMatch(
+    protected CirculationRuleMatch getPolicyIdAndRuleMatch(
       MultiMap params, Drools drools, Location location) {
-        return CompletableFuture.completedFuture(Result.succeeded(drools.overduePolicy(params, location)));
+        return drools.overduePolicy(params, location);
     }
 
     @Override

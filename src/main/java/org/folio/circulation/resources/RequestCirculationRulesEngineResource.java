@@ -24,9 +24,9 @@ public class RequestCirculationRulesEngineResource extends AbstractCirculationRu
   }
 
   @Override
-  public CompletableFuture<Result<CirculationRuleMatch>> getPolicyIdAndRuleMatch(
+  public CirculationRuleMatch getPolicyIdAndRuleMatch(
     MultiMap params, Drools drools, Location location) {
-    return CompletableFuture.completedFuture(succeeded(drools.requestPolicy(params, location)));
+    return drools.requestPolicy(params, location);
   }
 
   @Override

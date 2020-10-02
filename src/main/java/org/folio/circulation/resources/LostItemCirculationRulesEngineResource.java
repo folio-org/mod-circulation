@@ -19,8 +19,8 @@ public class LostItemCirculationRulesEngineResource extends AbstractCirculationR
     }
 
     @Override
-    protected CompletableFuture<Result<CirculationRuleMatch>> getPolicyIdAndRuleMatch(MultiMap params, Drools drools, Location location) {
-        return CompletableFuture.completedFuture(Result.succeeded(drools.lostItemPolicy(params, location)));
+    protected CirculationRuleMatch getPolicyIdAndRuleMatch(MultiMap params, Drools drools, Location location) {
+        return drools.lostItemPolicy(params, location);
     }
 
     @Override

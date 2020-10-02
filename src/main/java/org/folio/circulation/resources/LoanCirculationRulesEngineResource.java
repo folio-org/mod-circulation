@@ -24,9 +24,9 @@ public class LoanCirculationRulesEngineResource extends AbstractCirculationRules
   }
 
   @Override
-  protected CompletableFuture<Result<CirculationRuleMatch>> getPolicyIdAndRuleMatch(
+  protected CirculationRuleMatch getPolicyIdAndRuleMatch(
     MultiMap params, Drools drools, Location location) {
-    return CompletableFuture.completedFuture(Result.succeeded(LoanCirculationRulesProcessor.getLoanPolicyAndMatch(drools, params, location)));
+    return CirculationRulesProcessor.getLoanPolicyAndMatch(drools, params, location);
   }
 
   @Override
