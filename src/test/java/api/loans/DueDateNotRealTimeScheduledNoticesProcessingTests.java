@@ -111,6 +111,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
 
   @Test
   public void beforeRecurringNoticesAreRescheduled() {
+    configClient.create(ConfigurationExample.utcTimezoneConfiguration());
 
     Period beforePeriod = Period.weeks(1);
     Period recurringPeriod = Period.days(1);
@@ -239,6 +240,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
     //Should fetch 10 notices, when total records is 12
     //So that notices for one of the users should not be processed
     final DateTime runTime = DateTime.now(DateTimeZone.UTC).plusDays(15);
+    mockClockManagerToReturnFixedDateTime(runTime);
     scheduledNoticeProcessingClient.runDueDateNotRealTimeNoticesProcessing(runTime);
 
     List<JsonObject> scheduledNotices = scheduledNoticesClient.getAll();
@@ -473,5 +475,58 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
 
     assertThat(scheduledNoticesClient.getAll(), hasSize(0));
     assertThat(patronNoticesClient.getAll(), hasSize(0));
+  }
+
+  @Test
+  public void scheduledNotRealTimeNoticesIsSentAfterMidnightInTenantsTimeZone() {
+    // A notice should be sent when the processing is run one minute after
+    // midnight (in tenant's time zone)
+    scheduledNotRealTimeNoticesShouldBeSentAtMidnightInTenantsTimeZone(1, 0, 1);
+  }
+
+  @Test
+  public void scheduledNotRealTimeNoticesIsNotSentBeforeMidnightInTenantsTimeZone() {
+    scheduledNotRealTimeNoticesShouldBeSentAtMidnightInTenantsTimeZone(-1, 1, 0);
+  }
+
+  private void scheduledNotRealTimeNoticesShouldBeSentAtMidnightInTenantsTimeZone(
+    int plusMinutes, int scheduledNoticesNumber, int sentNoticesNumber) {
+
+    String timeZoneId = "America/New_York";
+    DateTime systemTime = new DateTime(2020, 6, 25, 0, 0)
+      .plusMinutes(plusMinutes)
+      .withZoneRetainFields(DateTimeZone.forID(timeZoneId));
+    mockClockManagerToReturnFixedDateTime(systemTime);
+    configClient.create(ConfigurationExample.timezoneConfigurationFor(timeZoneId));
+
+    JsonObject uponAtDueDateNoticeConfig = new NoticeConfigurationBuilder()
+      .withTemplateId(TEMPLATE_ID)
+      .withDueDateEvent()
+      .withUponAtTiming()
+      .sendInRealTime(false)
+      .create();
+
+    NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
+      .withName("Policy with due date notices")
+      .withLoanNotices(Collections.singletonList(uponAtDueDateNoticeConfig));
+    use(noticePolicy);
+
+    DateTime loanDate = new DateTime(2020, 6, 3, 6, 0)
+      .withZoneRetainFields(DateTimeZone.forID(timeZoneId));
+
+    IndividualResource james = usersFixture.james();
+    InventoryItemResource nod = itemsFixture.basedUponNod();
+
+    checkOutFixture.checkOutByBarcode(nod, james, loanDate);
+
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(scheduledNoticesClient::getAll, hasSize(1));
+
+    scheduledNoticeProcessingClient.runDueDateNotRealTimeNoticesProcessing(systemTime);
+
+    assertThat(scheduledNoticesClient.getAll(), hasSize(scheduledNoticesNumber));
+    List<JsonObject> sentNotices = patronNoticesClient.getAll();
+    assertThat(sentNotices, hasSize(sentNoticesNumber));
   }
 }

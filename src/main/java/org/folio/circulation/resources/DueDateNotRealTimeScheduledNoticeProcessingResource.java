@@ -11,6 +11,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.folio.circulation.domain.ConfigurationRepository;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.notice.schedule.DueDateNotRealTimeScheduledNoticeHandler;
 import org.folio.circulation.domain.notice.schedule.ScheduledNotice;
@@ -18,14 +19,13 @@ import org.folio.circulation.domain.notice.schedule.ScheduledNoticeGroupDefiniti
 import org.folio.circulation.domain.notice.schedule.ScheduledNoticesRepository;
 import org.folio.circulation.domain.notice.schedule.TriggeringEvent;
 import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.CqlSortBy;
 import org.folio.circulation.support.CqlSortClause;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.joda.time.LocalDate;
-import org.joda.time.LocalTime;
 
 import io.vertx.core.http.HttpClient;
 
@@ -47,11 +47,27 @@ public class DueDateNotRealTimeScheduledNoticeProcessingResource extends Schedul
 
   @Override
   protected CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> findNoticesToSend(
+    ConfigurationRepository configurationRepository,
     ScheduledNoticesRepository scheduledNoticesRepository, PageLimit pageLimit) {
 
-    DateTime timeLimit = LocalDate.now().toDateTime(LocalTime.MIDNIGHT);
-    return scheduledNoticesRepository.findNotices(timeLimit, false,
-      Collections.singletonList(TriggeringEvent.DUE_DATE),
+    return configurationRepository.findTimeZoneConfiguration()
+      .thenApply(r -> r.map(this::startOfTodayInTimeZone))
+      .thenCompose(r -> r.after(timeLimit -> findNotices(scheduledNoticesRepository,
+        pageLimit, timeLimit)));
+  }
+
+  private DateTime startOfTodayInTimeZone(DateTimeZone zone) {
+    return ClockManager.getClockManager().getDateTime()
+      .withZone(zone)
+      .withTimeAtStartOfDay();
+  }
+
+  private CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> findNotices(
+    ScheduledNoticesRepository scheduledNoticesRepository, PageLimit pageLimit,
+    DateTime timeLimit) {
+
+    return scheduledNoticesRepository.findNotices(timeLimit,
+      false, Collections.singletonList(TriggeringEvent.DUE_DATE),
       FETCH_NOTICES_SORT_CLAUSE, pageLimit);
   }
 
