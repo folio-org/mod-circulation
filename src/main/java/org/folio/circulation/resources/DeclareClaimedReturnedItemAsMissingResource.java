@@ -47,7 +47,7 @@ public class DeclareClaimedReturnedItemAsMissingResource extends Resource {
   private CompletableFuture<Result<Loan>> processDeclareClaimedReturnedItemAsMissing(
     RoutingContext routingContext, ChangeItemStatusRequest request) {
 
-    final Clients clients = Clients.create(new WebContext(routingContext), client);
+    final Clients clients = Clients.create(routingContext, client);
     final ChangeItemStatusService changeItemStatusService = new ChangeItemStatusService(clients);
 
     return changeItemStatusService.getOpenLoan(request)

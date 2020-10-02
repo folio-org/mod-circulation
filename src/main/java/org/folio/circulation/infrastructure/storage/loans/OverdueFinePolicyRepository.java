@@ -27,7 +27,7 @@ import io.vertx.core.json.JsonObject;
 
 public class OverdueFinePolicyRepository extends CirculationPolicyRepository<OverdueFinePolicy> {
   public OverdueFinePolicyRepository(Clients clients) {
-    super(clients.locationsStorage(), clients.overdueFinesPoliciesStorage());
+    super(clients.locationsStorage(), clients.overdueFinesPoliciesStorage(), clients);
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> lookupOverdueFinePolicy(

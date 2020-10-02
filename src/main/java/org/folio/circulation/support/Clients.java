@@ -6,6 +6,7 @@ import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.server.WebContext;
 
 import io.vertx.core.http.HttpClient;
+import io.vertx.ext.web.RoutingContext;
 
 public class Clients {
   private final CollectionResourceClient requestsStorageClient;
@@ -55,12 +56,18 @@ public class Clients {
   private final CollectionResourceClient automatedPatronBlocksClient;
   private final CollectionResourceClient notesClient;
   private final CollectionResourceClient noteTypesClient;
+  private final HttpClient httpClient;
+  private final RoutingContext routingContext;
 
-  public static Clients create(WebContext context, HttpClient httpClient) {
-    return new Clients(context.createHttpClient(httpClient), context);
+  public static Clients create(RoutingContext routingContext, HttpClient httpClient) {
+    return new Clients(routingContext, httpClient);
   }
 
-  private Clients(OkapiHttpClient client, WebContext context) {
+  private Clients(RoutingContext routingContext, HttpClient httpClient) {
+    this.httpClient = httpClient;
+    this.routingContext = routingContext;
+    WebContext context = new WebContext(routingContext);
+    OkapiHttpClient client = new WebContext(routingContext).createHttpClient(httpClient);
     try {
       requestsStorageClient = createRequestsStorageClient(client, context);
       requestsBatchStorageClient = createRequestsBatchStorageClient(client, context);
@@ -297,6 +304,14 @@ public class Clients {
 
   public CollectionResourceClient noteTypesClient() {
     return noteTypesClient;
+  }
+
+  public HttpClient getHttpClient() {
+    return httpClient;
+  }
+
+  public RoutingContext getRoutingContext() {
+    return routingContext;
   }
 
   private static CollectionResourceClient getCollectionResourceClient(

@@ -51,7 +51,7 @@ public class LoanRelatedFeeFineClosedHandlerResource extends Resource {
     final WebContext context = new WebContext(routingContext);
 
     createAndValidateRequest(routingContext)
-      .after(request -> processEvent(context, request))
+      .after(request -> processEvent(routingContext, request))
       .exceptionally(CommonFailures::failedDueToServerError)
       .thenApply(r -> r.toFixedValue(NoContentResponse::noContent))
       .thenAccept(result -> result.applySideEffect(context::write, failure -> {
@@ -63,9 +63,8 @@ public class LoanRelatedFeeFineClosedHandlerResource extends Resource {
   }
 
   private CompletableFuture<Result<Loan>> processEvent(
-    WebContext context, LoanRelatedFeeFineClosedEvent event) {
-
-    final Clients clients = create(context, client);
+    RoutingContext routingContext, LoanRelatedFeeFineClosedEvent event) {
+    final Clients clients = create(routingContext, client);
     final LoanRepository loanRepository = new LoanRepository(clients);
 
     return loanRepository.getById(event.getLoanId())

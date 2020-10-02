@@ -20,7 +20,7 @@ public class PatronNoticePolicyRepository extends CirculationPolicyRepository<Pa
   private PatronNoticePolicyRepository(
     Clients clients,
     Function<JsonObject, Result<PatronNoticePolicy>> patronNoticePolicyMapper) {
-    super(clients.locationsStorage(), clients.patronNoticePolicesStorageClient());
+    super(clients.locationsStorage(), clients.patronNoticePolicesStorageClient(), clients);
     this.patronNoticePolicyMapper = patronNoticePolicyMapper;
   }
 

@@ -43,7 +43,7 @@ public class DeclareLostResource extends Resource {
   private void declareLost(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
 
-    final Clients clients = Clients.create(context, client);
+    final Clients clients = Clients.create(routingContext, client);
     final EventPublisher eventPublisher = new EventPublisher(routingContext);
 
     validateDeclaredLostRequest(routingContext)

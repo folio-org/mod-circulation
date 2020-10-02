@@ -44,7 +44,7 @@ public class RequestQueueResource extends Resource {
 
   private void getMany(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
-    Clients clients = Clients.create(context, client);
+    Clients clients = Clients.create(routingContext, client);
 
     final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
     final RequestRepresentation requestRepresentation = new RequestRepresentation();
@@ -66,7 +66,7 @@ public class RequestQueueResource extends Resource {
       routingContext.getBodyAsJson().mapTo(ReorderQueueRequest.class));
 
     final WebContext context = new WebContext(routingContext);
-    final Clients clients = Clients.create(context, client);
+    final Clients clients = Clients.create(routingContext, client);
     final RequestRepository requestRepository = RequestRepository.using(clients);
     final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
 

@@ -98,7 +98,7 @@ public class RequestByInstanceIdResource extends Resource {
 
   private void createInstanceLevelRequests(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
-    final Clients clients = Clients.create(context, client);
+    final Clients clients = Clients.create(routingContext, client);
 
     final ItemRepository itemRepository = new ItemRepository(clients, true, true, true);
     final ItemByInstanceIdFinder finder = new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository);

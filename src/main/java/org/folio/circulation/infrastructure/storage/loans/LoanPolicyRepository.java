@@ -36,7 +36,7 @@ public class LoanPolicyRepository extends CirculationPolicyRepository<LoanPolicy
   private final GetManyRecordsClient fixedDueDateSchedulesStorageClient;
 
   public LoanPolicyRepository(Clients clients) {
-    super(clients.locationsStorage(), clients.loanPoliciesStorage());
+    super(clients.locationsStorage(), clients.loanPoliciesStorage(), clients);
     this.fixedDueDateSchedulesStorageClient = clients.fixedDueDateSchedules();
   }
 

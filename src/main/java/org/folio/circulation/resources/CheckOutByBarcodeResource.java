@@ -69,6 +69,7 @@ public class CheckOutByBarcodeResource extends Resource {
     this.checkOutStrategy = checkOutStrategy;
   }
 
+  @Override
   public void register(Router router) {
     RouteRegistration routeRegistration = new RouteRegistration(
       rootPath, router);
@@ -82,7 +83,7 @@ public class CheckOutByBarcodeResource extends Resource {
     CheckOutByBarcodeRequest request = CheckOutByBarcodeRequest.fromJson(
       routingContext.getBodyAsJson());
 
-    final Clients clients = Clients.create(context, client);
+    final Clients clients = Clients.create(routingContext, client);
 
     final UserRepository userRepository = new UserRepository(clients);
     final ItemRepository itemRepository = new ItemRepository(clients, true, true, true);

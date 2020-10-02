@@ -19,6 +19,7 @@ import org.folio.circulation.resources.CirculationRulesProcessor;
 import org.folio.circulation.rules.AppliedRuleConditions;
 import org.folio.circulation.rules.CirculationRuleMatch;
 import org.folio.circulation.rules.Drools;
+import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.ServerErrorFailure;
@@ -28,21 +29,27 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.vertx.core.MultiMap;
+import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.RoutingContext;
 
 public abstract class CirculationPolicyRepository<T> {
-  private static final String APPLIED_RULE_CONDITIONS = "appliedRuleConditions";
   public static final String LOCATION_ID_NAME = "location_id";
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   protected final CollectionResourceClient policyStorageClient;
   protected final CollectionResourceClient locationsStorageClient;
+  protected final HttpClient client;
+  protected final RoutingContext routingContext;
 
   protected CirculationPolicyRepository(
     CollectionResourceClient locationsStorageClient,
-    CollectionResourceClient policyStorageClient) {
+    CollectionResourceClient policyStorageClient,
+    Clients clients) {
     this.locationsStorageClient = locationsStorageClient;
     this.policyStorageClient = policyStorageClient;
+    this.client = clients.getHttpClient();
+    this.routingContext = clients.getRoutingContext();
   }
 
   public CompletableFuture<Result<T>> lookupPolicy(Loan loan) {
@@ -104,15 +111,15 @@ public abstract class CirculationPolicyRepository<T> {
       "Applying circulation rules for material type: {}, patron group: {}, loan type: {}, location: {}",
       materialTypeId, patronGroupId, loanTypeId, locationId);
 
-
+    final CompletableFuture<Result<Drools>> droolsResponse = CirculationRulesProcessor.getInstance().getDrools(routingContext, client);
     final CompletableFuture<Result<CirculationRuleMatch>> circulationRulesResponse = FetchSingleRecord.<Location>forRecord("location")
     .using(locationsStorageClient)
     .mapTo(Location::from)
     .whenNotFound(failed(new ServerErrorFailure("Can`t find location")))
     .fetch(locationId)
-    //TODO get the drools/rules here
-    .thenCompose(r -> r.after(location -> CompletableFuture.completedFuture(Result.succeeded(CirculationRulesProcessor.getLoanPolicyAndMatch(new Drools("we don't have the rules here"), params, location)))));
-
+    .thenCombine(droolsResponse, (locationResult, droolsResult) ->
+      locationResult.combine(droolsResult, (location, drools) ->
+        CirculationRulesProcessor.getLoanPolicyAndMatch(drools, params, location)));
     return circulationRulesResponse;
   }
 

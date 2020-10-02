@@ -77,7 +77,7 @@ public class PickSlipsResource extends Resource {
 
   private void getMany(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
-    final Clients clients = Clients.create(context, client);
+    final Clients clients = Clients.create(routingContext, client);
 
     final UserRepository userRepository = new UserRepository(clients);
     final AddressTypeRepository addressTypeRepository = new AddressTypeRepository(clients);

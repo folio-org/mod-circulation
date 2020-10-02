@@ -34,7 +34,7 @@ public class ScheduledAnonymizationProcessingResource extends Resource {
 
   private void scheduledAnonymizeLoans(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
-    final Clients clients = Clients.create(context, client);
+    final Clients clients = Clients.create(routingContext, client);
 
     ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
     LoanAnonymization loanAnonymization = new LoanAnonymization(clients);

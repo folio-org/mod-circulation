@@ -55,7 +55,7 @@ public class ChangeDueDateResource extends Resource {
     final ChangeDueDateRequest request, RoutingContext routingContext) {
 
     final WebContext context = new WebContext(routingContext);
-    final Clients clients = Clients.create(context, client);
+    final Clients clients = Clients.create(routingContext, client);
 
     final LoanRepository loanRepository = new LoanRepository(clients);
 

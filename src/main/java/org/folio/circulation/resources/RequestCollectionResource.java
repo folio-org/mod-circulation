@@ -58,12 +58,13 @@ public class RequestCollectionResource extends CollectionResource {
     router.post("/circulation/requests/:id/move").handler(this::move);
   }
 
+  @Override
   void create(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
 
     JsonObject representation = routingContext.getBodyAsJson();
 
-    final Clients clients = Clients.create(context, client);
+    final Clients clients = Clients.create(routingContext, client);
 
     final UserRepository userRepository = new UserRepository(clients);
     final LoanRepository loanRepository = new LoanRepository(clients);
@@ -114,13 +115,14 @@ public class RequestCollectionResource extends CollectionResource {
       .thenAccept(context::writeResultToHttpResponse);
   }
 
+  @Override
   void replace(RoutingContext routingContext) {
 
     JsonObject representation = routingContext.getBodyAsJson();
     write(representation, "id", getRequestId(routingContext));
 
     final WebContext context = new WebContext(routingContext);
-    final Clients clients = Clients.create(context, client);
+    final Clients clients = Clients.create(routingContext, client);
 
     final RequestRepository requestRepository = RequestRepository.using(clients);
     final UpdateRequestQueue updateRequestQueue = UpdateRequestQueue.using(clients);
@@ -182,9 +184,10 @@ public class RequestCollectionResource extends CollectionResource {
       .thenAccept(context::writeResultToHttpResponse);
   }
 
+  @Override
   void get(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
-    Clients clients = Clients.create(context, client);
+    Clients clients = Clients.create(routingContext, client);
 
     final RequestRepository requestRepository = RequestRepository.using(clients);
 
@@ -196,9 +199,10 @@ public class RequestCollectionResource extends CollectionResource {
       .thenAccept(context::writeResultToHttpResponse);
   }
 
+  @Override
   void delete(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
-    Clients clients = Clients.create(context, client);
+    Clients clients = Clients.create(routingContext, client);
 
     String id = getRequestId(routingContext);
 
@@ -218,9 +222,10 @@ public class RequestCollectionResource extends CollectionResource {
       .thenAccept(context::writeResultToHttpResponse);
   }
 
+  @Override
   void getMany(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
-    Clients clients = Clients.create(context, client);
+    Clients clients = Clients.create(routingContext, client);
 
     final RequestRepository requestRepository = RequestRepository.using(clients);
     final RequestRepresentation requestRepresentation = new RequestRepresentation();
@@ -232,9 +237,10 @@ public class RequestCollectionResource extends CollectionResource {
       .thenAccept(context::writeResultToHttpResponse);
   }
 
+  @Override
   void empty(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
-    Clients clients = Clients.create(context, client);
+    Clients clients = Clients.create(routingContext, client);
 
     clients.requestsStorage().delete()
       .thenApply(r -> r.toFixedValue(NoContentResponse::noContent))
@@ -243,7 +249,7 @@ public class RequestCollectionResource extends CollectionResource {
 
   void move(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
-    Clients clients = Clients.create(context, client);
+    Clients clients = Clients.create(routingContext, client);
 
     JsonObject representation = routingContext.getBodyAsJson();
 

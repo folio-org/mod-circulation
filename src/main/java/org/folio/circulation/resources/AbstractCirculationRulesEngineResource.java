@@ -70,12 +70,6 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
     router.get(applyAllPath).handler(this::applyAll);
   }
 
-  private String getTenantId(RoutingContext routingContext) {
-    return new WebContext(routingContext).getTenantId();
-  }
-
-
-
   private boolean invalidUuid(HttpServerRequest request, String paramName) {
     final String regex = "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$";
     String uuid = request.getParam(paramName);
@@ -97,11 +91,11 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
       return;
     }
 
-    CompletableFuture<Result<Drools>> droolsFuture = CirculationRulesProcessor.getInstance().getDrools(getTenantId(routingContext), routingContext, client);
+    CompletableFuture<Result<Drools>> droolsFuture = CirculationRulesProcessor.getInstance().getDrools(routingContext, client);
 
     final WebContext context = new WebContext(routingContext);
     final CollectionResourceClient locationsStorageClient
-      = Clients.create(context, client).locationsStorage();
+      = Clients.create(routingContext, client).locationsStorage();
     CompletableFuture<Result<Location>> locationFuture = FetchSingleRecord.<Location>forRecord("location")
       .using(locationsStorageClient)
       .mapTo(Location::from)
@@ -137,7 +131,7 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
     try {
       final WebContext context = new WebContext(routingContext);
       final CollectionResourceClient locationsStorageClient
-        = Clients.create(context, client).locationsStorage();
+        = Clients.create(routingContext, client).locationsStorage();
 
       FetchSingleRecord.<Location>forRecord("location")
         .using(locationsStorageClient)

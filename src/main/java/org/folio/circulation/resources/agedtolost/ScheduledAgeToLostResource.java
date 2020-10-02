@@ -26,7 +26,7 @@ public class ScheduledAgeToLostResource extends Resource {
   private void scheduledAgeToLost(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
     final MarkOverdueLoansAsAgedLostService ageToLostService =
-      new MarkOverdueLoansAsAgedLostService(create(context, client));
+      new MarkOverdueLoansAsAgedLostService(create(routingContext, client));
 
     ageToLostService.processAgeToLost()
       .thenApply(r -> r.toFixedValue(NoContentResponse::noContent))

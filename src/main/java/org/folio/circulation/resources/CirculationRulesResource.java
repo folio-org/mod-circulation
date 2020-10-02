@@ -6,11 +6,11 @@ import static java.util.stream.Collectors.toSet;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import static org.apache.commons.lang3.exception.ExceptionUtils.getStackTrace;
 import static org.folio.circulation.resources.AbstractCirculationRulesEngineResource.clearCache;
-import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.http.server.JsonHttpResponse.ok;
 import static org.folio.circulation.support.http.server.JsonHttpResponse.unprocessableEntity;
 import static org.folio.circulation.support.http.server.NoContentResponse.noContent;
 import static org.folio.circulation.support.http.server.ServerErrorResponse.internalError;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.results.Result.of;
 
 import java.lang.invoke.MethodHandles;
@@ -73,14 +73,13 @@ public class CirculationRulesResource extends Resource {
   @Override
   public void register(Router router) {
     router.put(rootPath).handler(BodyHandler.create());
-
     router.get(rootPath).handler(this::get);
     router.put(rootPath).handler(this::put);
   }
 
   private void get(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
-    final Clients clients = Clients.create(context, client);
+    final Clients clients = Clients.create(routingContext, client);
     CollectionResourceClient circulationRulesClient = clients.circulationRulesStorage();
 
     log.debug("get(RoutingContext) client={}", circulationRulesClient);
@@ -112,7 +111,7 @@ public class CirculationRulesResource extends Resource {
   //Cannot combine exception catching as cannot resolve overloaded method for error
   @SuppressWarnings("squid:S2147")
   private void put(RoutingContext routingContext) {
-    final Clients clients = Clients.create(new WebContext(routingContext), client);
+    final Clients clients = Clients.create(routingContext, client);
     CollectionResourceClient loansRulesClient = clients.circulationRulesStorage();
 
     if (loansRulesClient == null) {

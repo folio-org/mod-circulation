@@ -114,7 +114,7 @@ public class CirculationRulesProcessor {
    * @param routingContext - where to report any error
    */
   private CompletableFuture<Result<Rules>> reloadRules(Rules rules, RoutingContext routingContext, HttpClient client) {
-    final Clients clients = Clients.create(new WebContext(routingContext), client);
+    final Clients clients = Clients.create(routingContext, client);
     CollectionResourceClient circulationRulesClient = clients.circulationRulesStorage();
 
     return circulationRulesClient.get().thenCompose(r -> r.after(response -> {
@@ -147,7 +147,8 @@ public class CirculationRulesProcessor {
     return drools.loanPolicy(params, location);
   }
 
-  public CompletableFuture<Result<Drools>> getDrools(String tenantId, RoutingContext routingContext, HttpClient client) {
+  public CompletableFuture<Result<Drools>> getDrools(RoutingContext routingContext, HttpClient client) {
+    String tenantId = new WebContext(routingContext).getTenantId();
     CompletableFuture<Result<Drools>> cfDrools = new CompletableFuture<Result<Drools>>();
     Rules rules = rulesMap.get(tenantId);
     if (isCurrent(rules)) {
