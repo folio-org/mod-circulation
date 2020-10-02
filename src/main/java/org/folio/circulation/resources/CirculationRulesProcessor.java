@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import io.vertx.core.MultiMap;
 import io.vertx.core.http.HttpClient;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 
@@ -146,6 +147,43 @@ public class CirculationRulesProcessor {
   public static CirculationRuleMatch getLoanPolicyAndMatch(Drools drools, MultiMap params, Location location) {
     return drools.loanPolicy(params, location);
   }
+
+  public static JsonArray getLoanPolicies(Drools drools, MultiMap params, Location location) {
+    return drools.loanPolicies(params, location);
+  }
+
+  public static CirculationRuleMatch getLostItemPolicyAndMatch(Drools drools, MultiMap params, Location location) {
+    return drools.lostItemPolicy(params, location);
+  }
+
+  public static JsonArray getLostItemPolicies(Drools drools, MultiMap params, Location location) {
+    return drools.lostItemPolicies(params, location);
+  }
+
+  public static CirculationRuleMatch getNoticePolicyAndMatch(Drools drools, MultiMap params, Location location) {
+    return drools.noticePolicy(params, location);
+  }
+
+  public static JsonArray getNoticePolicies(Drools drools, MultiMap params, Location location) {
+    return drools.noticePolicies(params, location);
+  }
+
+  public static CirculationRuleMatch getOverduePolicyAndMatch(Drools drools, MultiMap params, Location location) {
+    return drools.overduePolicy(params, location);
+  }
+
+  public static JsonArray getOverduePolicies(Drools drools, MultiMap params, Location location) {
+    return drools.lostItemPolicies(params, location);
+  }
+
+  public static CirculationRuleMatch getRequestPolicyAndMatch(Drools drools, MultiMap params, Location location) {
+    return drools.requestPolicy(params, location);
+  }
+
+  public static JsonArray getRequestPolicies(Drools drools, MultiMap params, Location location) {
+    return drools.requestPolicies(params, location);
+  }
+
 
   public CompletableFuture<Result<Drools>> getDrools(RoutingContext routingContext, HttpClient client) {
     String tenantId = new WebContext(routingContext).getTenantId();

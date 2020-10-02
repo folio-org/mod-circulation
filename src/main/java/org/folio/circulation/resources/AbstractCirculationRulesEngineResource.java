@@ -125,55 +125,38 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
     ));
   }
 
-  private void applyAll(RoutingContext routingContext, Drools drools) {
+  private void applyAll(RoutingContext routingContext) {
     HttpServerRequest request = routingContext.request();
     if (invalidApplyParameters(request)) {
       return;
     }
-    try {
-      final WebContext context = new WebContext(routingContext);
-      final CollectionResourceClient locationsStorageClient
-        = Clients.create(routingContext, client).locationsStorage();
 
-      FetchSingleRecord.<Location>forRecord("location")
-        .using(locationsStorageClient)
-        .mapTo(Location::from)
-        .whenNotFound(failed(new ServerErrorFailure("Can`t find location")))
-        .fetch(request.params().get(LOCATION_ID_NAME))
-        .thenCompose(r -> r.after(location -> getPolicies(request.params(), drools, location)))
+    Clients clients = Clients.create(routingContext, client);
+
+    CompletableFuture<Result<Drools>> droolsFuture = clients.getCirculationDrools();
+
+    final WebContext context = new WebContext(routingContext);
+    final CollectionResourceClient locationsStorageClient
+      = clients.locationsStorage();
+    CompletableFuture<Result<Location>> locationFuture = FetchSingleRecord.<Location>forRecord("location")
+      .using(locationsStorageClient)
+      .mapTo(Location::from)
+      .whenNotFound(failed(new ServerErrorFailure("Can`t find location")))
+      .fetch(request.params().get(LOCATION_ID_NAME));
+
+    CompletableFuture<Result<JsonArray>> circulationRuleMatchFuture =
+        droolsFuture.thenCombine(locationFuture, (droolsResult, locationResult) ->
+          locationResult.combine(droolsResult, (location,drools) -> getPolicies(request.params(),drools,location)));
+
+    circulationRuleMatchFuture
         .thenCompose(r -> r.after(this::buildJsonResult))
         .thenApply(r -> r.map(JsonHttpResponse::ok))
         .thenAccept(context::writeResultToHttpResponse);
-    }
-    catch (Exception e) {
-      log.error("applyAll", e);
-      internalError(routingContext.response(), getStackTrace(e));
-    }
   }
 
   private CompletableFuture<Result<JsonObject>> buildJsonResult(JsonArray matches) {
     return CompletableFuture.completedFuture(succeeded(new JsonObject().put("circulationRuleMatches",
       matches)));
-  }
-
-  //TODO Convert to Drools completablefuture
-  private void applyAll(RoutingContext routingContext) {
-    String circulationRules = routingContext.pathParam("circulation_rules");
-    if (circulationRules == null) {
-//      drools(routingContext, drools -> applyAll(routingContext, drools));
-
-      return;
-    }
-
-    try {
-      String droolsFile = Text2Drools.convert(circulationRules);
-      Drools drools = new Drools(droolsFile);
-      applyAll(routingContext, drools);
-    }
-    catch (Exception e) {
-      log.error("applyAll", e);
-      internalError(routingContext.response(), getStackTrace(e));
-    }
   }
 
   private boolean invalidApplyParameters(HttpServerRequest request) {
@@ -201,6 +184,6 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
 
   protected abstract String getPolicyIdKey();
 
-  protected abstract CompletableFuture<Result<JsonArray>> getPolicies(MultiMap params,
+  protected abstract JsonArray getPolicies(MultiMap params,
     Drools drools, Location location);
 }

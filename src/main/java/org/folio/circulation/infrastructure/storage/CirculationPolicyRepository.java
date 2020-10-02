@@ -115,7 +115,7 @@ public abstract class CirculationPolicyRepository<T> {
     .fetch(locationId)
     .thenCombine(droolsResponse, (locationResult, droolsResult) ->
       locationResult.combine(droolsResult, (location, drools) ->
-        CirculationRulesProcessor.getLoanPolicyAndMatch(drools, params, location)));
+        getPolicyAndMatch(drools, params, location)));
     return circulationRulesResponse;
   }
 
@@ -124,4 +124,6 @@ public abstract class CirculationPolicyRepository<T> {
   protected abstract Result<T> toPolicy(JsonObject representation, AppliedRuleConditions ruleConditionsEntity);
 
   protected abstract String fetchPolicyId(JsonObject jsonObject);
+
+  protected abstract CirculationRuleMatch getPolicyAndMatch(Drools drools, MultiMap params, Location location);
 }

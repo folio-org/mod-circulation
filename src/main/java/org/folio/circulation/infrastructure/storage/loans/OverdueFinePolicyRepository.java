@@ -14,15 +14,20 @@ import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
+import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.policy.OverdueFinePolicy;
 import org.folio.circulation.infrastructure.storage.CirculationPolicyRepository;
+import org.folio.circulation.resources.CirculationRulesProcessor;
 import org.folio.circulation.rules.AppliedRuleConditions;
+import org.folio.circulation.rules.CirculationRuleMatch;
+import org.folio.circulation.rules.Drools;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
 import org.folio.circulation.support.results.Result;
 
+import io.vertx.core.MultiMap;
 import io.vertx.core.json.JsonObject;
 
 public class OverdueFinePolicyRepository extends CirculationPolicyRepository<OverdueFinePolicy> {
@@ -106,5 +111,10 @@ public class OverdueFinePolicyRepository extends CirculationPolicyRepository<Ove
       .mapTo(OverdueFinePolicy::from)
       .whenNotFound(succeeded(OverdueFinePolicy.unknown(overdueFinePolicyId)))
       .fetch(overdueFinePolicyId);
+  }
+
+  @Override
+  protected CirculationRuleMatch getPolicyAndMatch(Drools drools, MultiMap params, Location location) {
+    return CirculationRulesProcessor.getOverduePolicyAndMatch(drools, params, location);
   }
 }

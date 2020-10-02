@@ -1,17 +1,12 @@
 package org.folio.circulation.resources;
 
-import static org.folio.circulation.support.results.Result.succeeded;
-
-import java.util.concurrent.CompletableFuture;
+import org.folio.circulation.domain.Location;
+import org.folio.circulation.rules.CirculationRuleMatch;
+import org.folio.circulation.rules.Drools;
 
 import io.vertx.core.MultiMap;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonArray;
-
-import org.folio.circulation.domain.Location;
-import org.folio.circulation.rules.CirculationRuleMatch;
-import org.folio.circulation.rules.Drools;
-import org.folio.circulation.support.results.Result;
 
 /**
  * The circulation rules engine calculates the request policy based on
@@ -26,7 +21,7 @@ public class RequestCirculationRulesEngineResource extends AbstractCirculationRu
   @Override
   public CirculationRuleMatch getPolicyIdAndRuleMatch(
     MultiMap params, Drools drools, Location location) {
-    return drools.requestPolicy(params, location);
+    return CirculationRulesProcessor.getRequestPolicyAndMatch(drools, params, location);
   }
 
   @Override
@@ -35,7 +30,7 @@ public class RequestCirculationRulesEngineResource extends AbstractCirculationRu
   }
 
   @Override
-  protected CompletableFuture<Result<JsonArray>> getPolicies(MultiMap params, Drools drools, Location location) {
-    return CompletableFuture.completedFuture(succeeded(drools.requestPolicies(params, location)));
+  protected JsonArray getPolicies(MultiMap params, Drools drools, Location location) {
+    return CirculationRulesProcessor.getRequestPolicies(drools, params, location);
   }
 }

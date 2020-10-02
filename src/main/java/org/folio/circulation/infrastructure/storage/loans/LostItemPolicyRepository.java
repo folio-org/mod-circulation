@@ -14,15 +14,20 @@ import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
+import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.policy.lostitem.LostItemPolicy;
 import org.folio.circulation.infrastructure.storage.CirculationPolicyRepository;
+import org.folio.circulation.resources.CirculationRulesProcessor;
 import org.folio.circulation.rules.AppliedRuleConditions;
+import org.folio.circulation.rules.CirculationRuleMatch;
+import org.folio.circulation.rules.Drools;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
 import org.folio.circulation.support.results.Result;
 
+import io.vertx.core.MultiMap;
 import io.vertx.core.json.JsonObject;
 
 public class LostItemPolicyRepository extends CirculationPolicyRepository<LostItemPolicy> {
@@ -107,5 +112,10 @@ public class LostItemPolicyRepository extends CirculationPolicyRepository<LostIt
       .mapTo(LostItemPolicy::from)
       .whenNotFound(succeeded(LostItemPolicy.unknown(lostItemPolicyId)))
       .fetch(lostItemPolicyId);
+  }
+
+  @Override
+  protected CirculationRuleMatch getPolicyAndMatch(Drools drools, MultiMap params, Location location) {
+    return CirculationRulesProcessor.getLostItemPolicyAndMatch(drools, params, location);
   }
 }

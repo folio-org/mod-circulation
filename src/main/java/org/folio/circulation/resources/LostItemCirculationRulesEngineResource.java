@@ -1,16 +1,12 @@
 package org.folio.circulation.resources;
 
-import io.vertx.core.MultiMap;
-import io.vertx.core.http.HttpClient;
-import io.vertx.core.json.JsonArray;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.rules.CirculationRuleMatch;
 import org.folio.circulation.rules.Drools;
-import org.folio.circulation.support.results.Result;
 
-import java.util.concurrent.CompletableFuture;
-
-import static org.folio.circulation.support.results.Result.succeeded;
+import io.vertx.core.MultiMap;
+import io.vertx.core.http.HttpClient;
+import io.vertx.core.json.JsonArray;
 
 public class LostItemCirculationRulesEngineResource extends AbstractCirculationRulesEngineResource {
 
@@ -20,7 +16,7 @@ public class LostItemCirculationRulesEngineResource extends AbstractCirculationR
 
     @Override
     protected CirculationRuleMatch getPolicyIdAndRuleMatch(MultiMap params, Drools drools, Location location) {
-        return drools.lostItemPolicy(params, location);
+        return CirculationRulesProcessor.getLostItemPolicyAndMatch(drools, params, location);
     }
 
     @Override
@@ -29,7 +25,7 @@ public class LostItemCirculationRulesEngineResource extends AbstractCirculationR
     }
 
     @Override
-    protected CompletableFuture<Result<JsonArray>> getPolicies(MultiMap params, Drools drools, Location location) {
-        return CompletableFuture.completedFuture(succeeded(drools.loanPolicies(params, location)));
+    protected JsonArray getPolicies(MultiMap params, Drools drools, Location location) {
+        return CirculationRulesProcessor.getLostItemPolicies(drools, params, location);
     }
 }
