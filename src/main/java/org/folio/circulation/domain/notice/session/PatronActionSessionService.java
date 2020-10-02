@@ -53,7 +53,7 @@ public class PatronActionSessionService {
   private final PatronActionSessionRepository patronActionSessionRepository;
   private final PatronNoticeService patronNoticeService;
 
-  public static PatronActionSessionService using(Clients clients, EventPublisher eventPublisher) {
+  public static PatronActionSessionService using(Clients clients) {
     return new PatronActionSessionService(
       PatronActionSessionRepository.using(clients),
       PatronNoticeService.using(clients));

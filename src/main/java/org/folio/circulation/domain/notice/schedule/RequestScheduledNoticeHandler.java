@@ -6,7 +6,6 @@ import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Request;

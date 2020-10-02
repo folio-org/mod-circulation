@@ -113,7 +113,7 @@ public class RequestByInstanceIdResource extends Resource {
       .map(InstanceRequestRelatedRecords::new)
       .after(instanceRequest -> getPotentialItems(clients, finder, instanceRequest))
       .thenApply( r -> r.next(RequestByInstanceIdResource::instanceToItemRequests))
-      .thenCompose( r -> r.after( requests -> placeRequests(requests, clients, eventPublisher)))
+      .thenCompose( r -> r.after( requests -> placeRequests(requests, clients)))
       .thenApply(r -> r.map(RequestAndRelatedRecords::getRequest))
       .thenApply(r -> r.map(new RequestRepresentation()::extendedRepresentation))
       .thenApply(r -> r.map(JsonHttpResponse::created))
@@ -220,7 +220,7 @@ public class RequestByInstanceIdResource extends Resource {
   }
 
   private CompletableFuture<Result<RequestAndRelatedRecords>> placeRequests(
-    List<JsonObject> itemRequestRepresentations, Clients clients, EventPublisher eventPublisher) {
+    List<JsonObject> itemRequestRepresentations, Clients clients) {
 
     final RequestNoticeSender requestNoticeSender = RequestNoticeSender.using(clients);
     final LoanRepository loanRepository = new LoanRepository(clients);

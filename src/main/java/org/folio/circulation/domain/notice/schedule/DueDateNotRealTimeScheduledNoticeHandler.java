@@ -123,7 +123,6 @@ public class DueDateNotRealTimeScheduledNoticeHandler {
     //All the notices have the same properties so we can get any of them
     ScheduledNotice scheduledNotice = relevantNotices.get(0).getLeft();
     LoanAndRelatedRecords noticeRelatedRecords = relevantNotices.get(0).getRight();
-    Loan loan = noticeRelatedRecords.getLoan();
 
     User user = noticeRelatedRecords.getLoan().getUser();
     JsonObject noticeContext = new JsonObject()
