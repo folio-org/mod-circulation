@@ -10,14 +10,13 @@ import static api.support.matchers.LoanAccountMatcher.hasLostItemFees;
 import static api.support.matchers.LoanAccountMatcher.hasLostItemProcessingFee;
 import static api.support.matchers.LoanAccountMatcher.hasNoLostItemFee;
 import static api.support.matchers.LoanAccountMatcher.hasNoLostItemProcessingFee;
-import static api.support.matchers.LoanHistoryMatcher.hasLoanHistory;
+import static api.support.matchers.LoanHistoryMatcher.hasLoanHistoryInOrder;
 import static api.support.matchers.LoanMatchers.isClosed;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static java.lang.Boolean.TRUE;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
-import static org.hamcrest.Matchers.containsInRelativeOrder;
 import static org.hamcrest.Matchers.iterableWithSize;
 
 import java.util.LinkedHashMap;
@@ -26,7 +25,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.policy.Period;
-import api.support.http.IndividualResource;
 import org.hamcrest.Matcher;
 import org.junit.Before;
 import org.junit.Test;
@@ -35,6 +33,7 @@ import api.support.builders.FeeFineOwnerBuilder;
 import api.support.builders.ItemBuilder;
 import api.support.builders.LostItemFeePolicyBuilder;
 import api.support.builders.ServicePointBuilder;
+import api.support.http.IndividualResource;
 import api.support.spring.SpringApiTest;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
@@ -53,7 +52,6 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
   }
 
   @Test
-  @SuppressWarnings("unchecked")
   public void shouldChargeItemFee() {
     final double expectedSetCost = 12.88;
     final IndividualResource permanentLocation = locationsFixture.fourthFloor();
@@ -74,11 +72,11 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
       hasJsonPath("ownerId", expectedOwnerId))));
     assertThat(result.getLoan(), hasLostItemFeeCreatedBySystemAction());
 
-    assertThat(result.getLoan(), hasLoanHistory(containsInRelativeOrder(
+    assertThat(result.getLoan(), hasLoanHistoryInOrder(
       hasJsonPath("loan.action", ""),
       hasJsonPath("loan.action", "itemAgedToLost"),
       hasJsonPath("loan.action", "checkedout")
-    )));
+    ));
   }
 
   @Test

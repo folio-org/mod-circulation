@@ -250,13 +250,13 @@ public class ChangeDueDateAPITests extends APITests {
     Response response = loansClient.getById(loan.getId());
     JsonObject updatedLoan = response.getJson();
 
-    // There should be two events published - first one for "check out",
-    // second one for "change due date"
+    // There should be three events published - first one for "check out",
+    // second one for "log event" and third one for "change due date"
     List<JsonObject> publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(2));
+      .until(FakePubSub::getPublishedEvents, hasSize(3));
 
-    JsonObject event = publishedEvents.get(1);
+    JsonObject event = publishedEvents.get(2);
 
     assertThat(event, isValidLoanDueDateChangedEvent(updatedLoan));
   }

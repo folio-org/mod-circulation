@@ -204,4 +204,14 @@ public class RequestsFixture {
   private String pathToMoveRequest(JsonObject representation) {
     return String.format("/%s/move", representation.getString("id"));
   }
+
+  public void recallItem(IndividualResource item, IndividualResource user) {
+    place(new RequestBuilder()
+      .open()
+      .recall()
+      .forItem(item)
+      .by(user)
+      .fulfilToHoldShelf()
+      .withPickupServicePointId(servicePointsFixture.cd1().getId()));
+  }
 }

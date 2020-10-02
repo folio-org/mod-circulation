@@ -11,8 +11,10 @@ import org.hamcrest.CoreMatchers;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeDiagnosingMatcher;
+import org.hamcrest.TypeSafeMatcher;
 
 import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.matchers.JsonPathMatchers;
 
 import io.vertx.core.json.JsonObject;
 
@@ -46,6 +48,28 @@ public class JsonObjectMatcher {
       public void describeTo(Description description) {
         description.appendText("Json path [").appendValue(jsonPath)
           .appendText("] ").appendDescriptionOf(valueMatcher);
+      }
+    };
+  }
+
+  public static Matcher<JsonObject> hasNoJsonPath(String jsonPath) {
+    return new TypeSafeMatcher<JsonObject>() {
+      @Override
+      protected boolean matchesSafely(JsonObject item) {
+        return JsonPathMatchers.hasNoJsonPath(jsonPath)
+          .matches(item.toString());
+      }
+
+      @Override
+      public void describeTo(Description description) {
+        description.appendText("Json has no path [")
+          .appendValue(jsonPath).appendText("] ");
+      }
+
+      @Override
+      protected void describeMismatchSafely(JsonObject item, Description mismatchDescription) {
+        final Object actual = JsonPath.parse(item.toString()).read(jsonPath);
+        mismatchDescription.appendText("was [").appendValue(actual).appendText("]");
       }
     };
   }

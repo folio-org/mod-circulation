@@ -6,25 +6,27 @@ import static org.folio.circulation.domain.EventType.ITEM_CHECKED_OUT;
 import static org.folio.circulation.domain.EventType.ITEM_CLAIMED_RETURNED;
 import static org.folio.circulation.domain.EventType.ITEM_DECLARED_LOST;
 import static org.folio.circulation.domain.EventType.LOAN_DUE_DATE_CHANGED;
+import static org.folio.circulation.domain.EventType.LOG_RECORD;
+import static org.folio.circulation.domain.representations.logs.CirculationCheckInCheckOutLogEventMapper.mapToCheckInLogEventJson;
+import static org.folio.circulation.domain.representations.logs.CirculationCheckInCheckOutLogEventMapper.mapToCheckOutLogEventJson;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.results.Result.succeeded;
-
-import java.util.concurrent.CompletableFuture;
-
-import org.folio.circulation.domain.CheckInContext;
-import org.folio.circulation.domain.EventType;
-import org.folio.circulation.domain.Loan;
-import org.folio.circulation.domain.LoanAndRelatedRecords;
-import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
-import org.folio.circulation.domain.RequestAndRelatedRecords;
-import org.folio.circulation.resources.context.RenewalContext;
-import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.RoutingContext;
+import org.folio.circulation.domain.CheckInContext;
+import org.folio.circulation.domain.EventType;
+import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.LoanAndRelatedRecords;
+import org.folio.circulation.domain.RequestAndRelatedRecords;
+import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
+import org.folio.circulation.resources.context.RenewalContext;
+import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.results.Result;
+
+import java.util.concurrent.CompletableFuture;
 
 public class EventPublisher {
   private static final Logger logger = LoggerFactory.getLogger(EventPublisher.class);
@@ -54,8 +56,10 @@ public class EventPublisher {
       write(payloadJsonObject, LOAN_ID_FIELD, loan.getId());
       write(payloadJsonObject, DUE_DATE_FIELD, loan.getDueDate());
 
-      return pubSubPublishingService.publishEvent(
-        ITEM_CHECKED_OUT.name(), payloadJsonObject.encode())
+      JsonObject logEventPayload = mapToCheckOutLogEventJson(loanAndRelatedRecords);
+      CompletableFuture.runAsync(() -> pubSubPublishingService.publishEvent(LOG_RECORD.name(), logEventPayload.encode()));
+
+      return pubSubPublishingService.publishEvent(ITEM_CHECKED_OUT.name(), payloadJsonObject.encode())
         .thenApply(r -> succeeded(loanAndRelatedRecords));
     }
     else {
@@ -65,7 +69,7 @@ public class EventPublisher {
     return completedFuture(succeeded(loanAndRelatedRecords));
   }
 
-  public CompletableFuture<Result<CheckInContext>> publishItemCheckedInEvent(
+  public CompletableFuture<Result<CheckInContext>> publishItemCheckedInEvents(
     CheckInContext checkInContext) {
 
     if (checkInContext.getLoan() != null) {
@@ -76,7 +80,11 @@ public class EventPublisher {
       write(payloadJsonObject, LOAN_ID_FIELD, loan.getId());
       write(payloadJsonObject, RETURN_DATE_FIELD, loan.getReturnDate());
 
-      return pubSubPublishingService.publishEvent(ITEM_CHECKED_IN.name(),
+      JsonObject logEventPayload = mapToCheckInLogEventJson(checkInContext);
+      CompletableFuture.runAsync(() -> pubSubPublishingService.publishEvent(LOG_RECORD.name(), logEventPayload.encode()));
+
+      return
+        pubSubPublishingService.publishEvent(ITEM_CHECKED_IN.name(),
         payloadJsonObject.encode())
         .thenApply(r -> succeeded(checkInContext));
     }

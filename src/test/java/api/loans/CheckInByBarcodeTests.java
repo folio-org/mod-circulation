@@ -2,6 +2,7 @@ package api.loans;
 
 import static api.support.APITestContext.getUserId;
 import static api.support.fixtures.AddressExamples.SiriusBlack;
+import static api.support.matchers.EventMatchers.isValidCheckInLogEvent;
 import static api.support.matchers.EventMatchers.isValidItemCheckedInEvent;
 import static api.support.matchers.ItemMatchers.isAvailable;
 import static api.support.matchers.LoanMatchers.isClosed;
@@ -14,7 +15,9 @@ import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static java.util.Arrays.asList;
+import static java.util.stream.Collectors.groupingBy;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
+import static org.folio.circulation.domain.representations.logs.LogEventPayloadType.CHECK_IN;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -33,6 +36,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import org.awaitility.Awaitility;
+import org.folio.circulation.domain.EventType;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.policy.Period;
 import api.support.http.IndividualResource;
@@ -1086,14 +1090,21 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
 
     JsonObject checkedInLoan = checkInResponse.getLoan();
 
-    // There should be two events published - first one for "check out", second one for "check in"
+    // There should be four events published - first ones for "check out" and check out log event, second ones for "check in" and check in log event
     List<JsonObject> publishedEvents = Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(2));
+      .atMost(2, TimeUnit.SECONDS)
+      .until(FakePubSub::getPublishedEvents, hasSize(4));
 
-    JsonObject event = publishedEvents.get(1);
+    Map<String, List<JsonObject>> events = publishedEvents.stream().collect(groupingBy(e -> e.getString("eventType")));
 
-    assertThat(event, isValidItemCheckedInEvent(checkedInLoan));
+    assertThat(events.get(EventType.ITEM_CHECKED_IN.name()).get(0), isValidItemCheckedInEvent(checkedInLoan));
+
+    Map<String, List<JsonObject>> logEvents = events.get(EventType.LOG_RECORD.name()).stream()
+      .collect(groupingBy(e -> new JsonObject(e.getString("eventPayload")).getString("logEventType")));
+
+    JsonObject checkInLogEvent = logEvents.get(CHECK_IN.value()).get(0);
+
+    assertThat(checkInLogEvent, isValidCheckInLogEvent(checkedInLoan));
   }
 
   private void checkPatronNoticeEvent(

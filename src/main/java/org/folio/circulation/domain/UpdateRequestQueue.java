@@ -83,6 +83,8 @@ public class UpdateRequestQueue {
 
     Request requestBeingFulfilled = requestQueue.getHighestPriorityFulfillableRequest();
 
+    Request originalRequest = Request.from(requestBeingFulfilled.asJson());
+
     CompletableFuture<Result<Request>> updatedReq;
 
     switch (requestBeingFulfilled.getFulfilmentPreference()) {
@@ -101,6 +103,9 @@ public class UpdateRequestQueue {
         throw new IllegalStateException("Unexpected value: " +
           requestBeingFulfilled.getFulfilmentPreference());
     }
+
+    Request updatedRequest = Request.from(requestBeingFulfilled.asJson());
+    requestQueue.update(originalRequest, updatedRequest);
 
     return updatedReq
       .thenComposeAsync(r -> r.after(requestRepository::update))
@@ -175,11 +180,17 @@ public class UpdateRequestQueue {
     if (requestQueue.hasOutstandingFulfillableRequests()) {
       Request firstRequest = requestQueue.getHighestPriorityFulfillableRequest();
 
+      Request originalRequest = Request.from(firstRequest.asJson());
+
       log.info("Closing request '{}'", firstRequest.getId());
       firstRequest.changeStatus(RequestStatus.CLOSED_FILLED);
 
       log.info("Removing request '{}' from queue", firstRequest.getId());
       requestQueue.remove(firstRequest);
+
+      Request updatedRequest = Request.from(firstRequest.asJson());
+
+      requestQueue.update(originalRequest, updatedRequest);
 
       return requestRepository.update(firstRequest)
         .thenComposeAsync(r -> r.after(v ->
