@@ -20,7 +20,6 @@ import org.folio.circulation.domain.notice.PatronNoticeEvent;
 import org.folio.circulation.domain.notice.PatronNoticeEventBuilder;
 import org.folio.circulation.domain.notice.PatronNoticeService;
 import org.folio.circulation.domain.notice.TemplateContextUtil;
-import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
 
@@ -36,8 +35,8 @@ public class RequestNoticeSender {
     requestTypeToEventMap = Collections.unmodifiableMap(map);
   }
 
-  public static RequestNoticeSender using(Clients clients, EventPublisher eventPublisher) {
-    return new RequestNoticeSender(PatronNoticeService.using(clients, eventPublisher), RequestRepository.using(clients));
+  public static RequestNoticeSender using(Clients clients) {
+    return new RequestNoticeSender(PatronNoticeService.using(clients), RequestRepository.using(clients));
   }
 
   private final PatronNoticeService patronNoticeService;

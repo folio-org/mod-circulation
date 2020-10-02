@@ -8,11 +8,13 @@ import static org.folio.circulation.support.results.Result.ofAsync;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Account;
 import org.folio.circulation.domain.representations.logs.NoticeLogContext;
+import org.folio.circulation.domain.representations.logs.NoticeLogContextItem;
 import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
 import org.folio.circulation.domain.FeeFineAction;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineActionRepository;
@@ -21,7 +23,6 @@ import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.domain.notice.PatronNoticeService;
 import org.folio.circulation.infrastructure.storage.notices.PatronNoticePolicyRepository;
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
-import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
@@ -56,9 +57,9 @@ public class FeeFineScheduledNoticeHandler {
     this.noticePolicyRepository = noticePolicyRepository;
   }
 
-  public static FeeFineScheduledNoticeHandler using(Clients clients, EventPublisher eventPublisher) {
+  public static FeeFineScheduledNoticeHandler using(Clients clients) {
     return new FeeFineScheduledNoticeHandler(
-      PatronNoticeService.using(clients, eventPublisher),
+      PatronNoticeService.using(clients),
       ScheduledNoticesRepository.using(clients),
       new FeeFineActionRepository(clients),
       new AccountRepository(clients),
@@ -116,7 +117,7 @@ public class FeeFineScheduledNoticeHandler {
       JsonObject noticeContext = createFeeFineNoticeContext(context.getAccount(), context.getLoan());
       ScheduledNoticeConfig config = notice.getConfiguration();
 
-      NoticeLogContext noticeLogContext = NoticeLogContext.from(context.getLoan(), context.getAction())
+      NoticeLogContextItem logContextItem = NoticeLogContextItem.from(context.getLoan())
         .withTemplateId(notice.getConfiguration().getTemplateId())
         .withTriggeringEvent(notice.getTriggeringEvent().getRepresentation());
 
@@ -124,7 +125,9 @@ public class FeeFineScheduledNoticeHandler {
         context.getLoan().getItem(), context.getLoan().getUser())
         .thenCompose(r -> r.after(policy -> patronNoticeService.acceptScheduledNoticeEvent(
           config, notice.getRecipientUserId(), noticeContext,
-          noticeLogContext.withNoticePolicyId(policy.getPolicyId()))))
+          new NoticeLogContext().withUser(context.getLoan().getUser())
+            .withFeeFineAction(context.getAction())
+            .withItems(Collections.singletonList(logContextItem.withNoticePolicyId(policy.getPolicyId()))))))
         .thenCompose(r -> r.after(v -> {
           if (config.isRecurring()) {
             return scheduledNoticesRepository.update(getNextRecurringNotice(notice));

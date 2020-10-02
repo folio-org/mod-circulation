@@ -40,9 +40,9 @@ public class RequestScheduledNoticeProcessingResource extends ScheduledNoticePro
 
   @Override
   protected CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> handleNotices(
-    Clients clients, MultipleRecords<ScheduledNotice> scheduledNotices, EventPublisher eventPublisher) {
+    Clients clients, MultipleRecords<ScheduledNotice> scheduledNotices) {
 
-    return RequestScheduledNoticeHandler.using(clients, eventPublisher)
+    return RequestScheduledNoticeHandler.using(clients)
       .handleNotices(scheduledNotices.getRecords())
       .thenApply(mapResult(v -> scheduledNotices));
   }

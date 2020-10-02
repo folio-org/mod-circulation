@@ -15,7 +15,6 @@ import org.folio.circulation.domain.notice.PatronNoticeEventBuilder;
 import org.folio.circulation.domain.notice.PatronNoticeService;
 import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
 import org.folio.circulation.resources.context.RenewalContext;
-import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
 
@@ -23,9 +22,9 @@ import io.vertx.core.json.JsonObject;
 
 public class LoanNoticeSender {
 
-  public static LoanNoticeSender using(Clients clients, EventPublisher eventPublisher) {
+  public static LoanNoticeSender using(Clients clients) {
     return new LoanNoticeSender(
-      PatronNoticeService.using(clients, eventPublisher),
+      PatronNoticeService.using(clients),
       new LoanPolicyRepository(clients));
   }
 

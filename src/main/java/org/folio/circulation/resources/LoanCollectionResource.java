@@ -158,7 +158,7 @@ public class LoanCollectionResource extends CollectionResource {
 
     final EventPublisher eventPublisher = new EventPublisher(routingContext);
 
-    final LoanNoticeSender loanNoticeSender = LoanNoticeSender.using(clients, eventPublisher);
+    final LoanNoticeSender loanNoticeSender = LoanNoticeSender.using(clients);
 
     completedFuture(succeeded(new LoanAndRelatedRecords(loan)))
       .thenCompose(larrResult ->

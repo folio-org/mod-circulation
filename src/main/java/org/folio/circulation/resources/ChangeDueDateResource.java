@@ -67,9 +67,9 @@ public class ChangeDueDateResource extends Resource {
 
     final EventPublisher eventPublisher = new EventPublisher(routingContext);
 
-    final LoanNoticeSender loanNoticeSender = LoanNoticeSender.using(clients, eventPublisher);
+    final LoanNoticeSender loanNoticeSender = LoanNoticeSender.using(clients);
 
-        return succeeded(request)
+    return succeeded(request)
       .after(r -> loanRepository.getById(r.getLoanId()))
       .thenApply(LoanValidator::refuseWhenLoanIsClosed)
       .thenApply(this::toLoanAndRelatedRecords)

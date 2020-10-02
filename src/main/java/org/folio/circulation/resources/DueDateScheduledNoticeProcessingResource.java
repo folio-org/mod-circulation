@@ -11,7 +11,6 @@ import org.folio.circulation.domain.notice.schedule.ScheduledNotice;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
 import org.folio.circulation.domain.notice.schedule.TriggeringEvent;
-import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CqlSortBy;
 import org.folio.circulation.support.results.Result;
@@ -40,10 +39,10 @@ public class DueDateScheduledNoticeProcessingResource extends ScheduledNoticePro
 
   @Override
   protected CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> handleNotices(
-    Clients clients, MultipleRecords<ScheduledNotice> noticesResult, EventPublisher eventPublisher) {
+    Clients clients, MultipleRecords<ScheduledNotice> noticesResult) {
 
     final DueDateScheduledNoticeHandler dueDateNoticeHandler =
-      DueDateScheduledNoticeHandler.using(clients, DateTime.now(DateTimeZone.UTC), eventPublisher);
+      DueDateScheduledNoticeHandler.using(clients, DateTime.now(DateTimeZone.UTC));
 
     return dueDateNoticeHandler.handleNotices(noticesResult.getRecords())
       .thenApply(mapResult(v -> noticesResult));

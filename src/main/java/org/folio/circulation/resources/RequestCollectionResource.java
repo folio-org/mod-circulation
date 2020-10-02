@@ -69,7 +69,7 @@ public class RequestCollectionResource extends CollectionResource {
     final UserRepository userRepository = new UserRepository(clients);
     final LoanRepository loanRepository = new LoanRepository(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
-    final RequestNoticeSender requestNoticeSender = RequestNoticeSender.using(clients, eventPublisher);
+    final RequestNoticeSender requestNoticeSender = RequestNoticeSender.using(clients);
     final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
     final FindWithCqlQuery<UserManualBlock> userManualBlocksValidator
       = findWithCqlQuery(clients.userManualBlocksStorageClient(),
@@ -126,7 +126,7 @@ public class RequestCollectionResource extends CollectionResource {
     final LoanRepository loanRepository = new LoanRepository(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
     final EventPublisher eventPublisher = new EventPublisher(routingContext);
-    final RequestNoticeSender requestNoticeSender = RequestNoticeSender.using(clients, eventPublisher);
+    final RequestNoticeSender requestNoticeSender = RequestNoticeSender.using(clients);
     final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
     final FindWithCqlQuery<UserManualBlock> userManualBlocksValidator
         = findWithCqlQuery(clients.userManualBlocksStorageClient(),
@@ -275,7 +275,7 @@ public class RequestCollectionResource extends CollectionResource {
         updateUponRequest,
         moveRequestProcessAdapter,
         new RequestLoanValidator(loanRepository),
-        RequestNoticeSender.using(clients, eventPublisher), configurationRepository);
+        RequestNoticeSender.using(clients), configurationRepository);
 
     requestRepository.getById(id)
       .thenApply(r -> r.map(RequestAndRelatedRecords::new))

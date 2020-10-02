@@ -5,18 +5,20 @@ import static org.folio.circulation.domain.notice.NoticeTiming.UPON_AT;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.representations.logs.NoticeLogContext;
+import org.folio.circulation.domain.representations.logs.NoticeLogContextItem;
 import org.folio.circulation.infrastructure.storage.notices.PatronNoticePolicyRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.domain.notice.NoticeTiming;
 import org.folio.circulation.domain.notice.PatronNoticeService;
 import org.folio.circulation.domain.notice.TemplateContextUtil;
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
-import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
@@ -26,10 +28,10 @@ import io.vertx.core.json.JsonObject;
 
 public class RequestScheduledNoticeHandler {
 
-  public static RequestScheduledNoticeHandler using(Clients clients, EventPublisher eventPublisher) {
+  public static RequestScheduledNoticeHandler using(Clients clients) {
     return new RequestScheduledNoticeHandler(
       RequestRepository.using(clients, true),
-      PatronNoticeService.using(clients, eventPublisher),
+      PatronNoticeService.using(clients),
       ScheduledNoticesRepository.using(clients),
       new PatronNoticePolicyRepository(clients));
   }
@@ -75,14 +77,16 @@ public class RequestScheduledNoticeHandler {
 
     JsonObject requestNoticeContext = TemplateContextUtil.createRequestNoticeContext(request);
 
-    NoticeLogContext noticeLogContext = NoticeLogContext.from(request)
+    NoticeLogContextItem logContextItem = NoticeLogContextItem.from(request)
       .withTemplateId(notice.getConfiguration().getTemplateId())
       .withTriggeringEvent(notice.getTriggeringEvent().getRepresentation());
 
     return noticePolicyRepository.lookupPolicyId(request.getItem(), request.getRequester())
       .thenCompose(r -> r.after(policy -> patronNoticeService.acceptScheduledNoticeEvent(
         notice.getConfiguration(), relatedRecords.getUserId(), requestNoticeContext,
-        noticeLogContext.withNoticePolicyId(policy.getPolicyId()))))
+        new NoticeLogContext().withUser(request.getRequester())
+          .withRequestId(request.getId())
+          .withItems(Collections.singletonList(logContextItem.withNoticePolicyId(policy.getPolicyId()))))))
       .thenApply(r -> r.map(v -> relatedRecords));
   }
 

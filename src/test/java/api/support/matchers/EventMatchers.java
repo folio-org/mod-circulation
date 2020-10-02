@@ -113,13 +113,13 @@ public class EventMatchers {
           hasJsonPath("itemId", is(notice.getString("itemId"))),
           hasJsonPath("itemBarcode", is(notice.getString("barcode"))),
           hasJsonPath("instanceId", is(notice.getString("instanceId"))),
-          hasJsonPath("holdingsRecordId", is(notice.getString("holdingsRecordId")))
+          hasJsonPath("holdingsRecordId", is(notice.getString("holdingsRecordId"))),
+          hasJsonPath("servicePointId", is(notice.getString("servicePointId"))),
+          hasJsonPath("templateId", is(notice.getString("templateId"))),
+          hasJsonPath("triggeringEvent", is(notice.getString("triggeringEvent"))),
+          hasJsonPath("noticePolicyId", is(notice.getString("noticePolicyId")))
         )),
-        hasJsonPath("date", is(notice.getString("date"))),
-        hasJsonPath("servicePointId", is(notice.getString("servicePointId"))),
-        hasJsonPath("templateId", is(notice.getString("templateId"))),
-        hasJsonPath("triggeringEvent", is(notice.getString("triggeringEvent"))),
-        hasJsonPath("noticePolicyId", is(notice.getString("noticePolicyId")))
+        hasJsonPath("date", is(notice.getString("date")))
       ))),
       isLogRecordEventType());
   }

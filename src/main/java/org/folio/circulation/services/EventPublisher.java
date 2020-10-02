@@ -9,7 +9,6 @@ import static org.folio.circulation.domain.EventType.LOAN_DUE_DATE_CHANGED;
 import static org.folio.circulation.domain.EventType.LOG_RECORD;
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.LOG_EVENT_TYPE;
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.PAYLOAD;
-import static org.folio.circulation.domain.representations.logs.LogEventPayloadType.NOTICE;
 import static org.folio.circulation.domain.representations.logs.CirculationCheckInCheckOutLogEventMapper.mapToCheckInLogEventJson;
 import static org.folio.circulation.domain.representations.logs.CirculationCheckInCheckOutLogEventMapper.mapToCheckOutLogEventJson;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
@@ -23,7 +22,7 @@ import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.EventType;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
-import org.folio.circulation.domain.representations.logs.NoticeLogContext;
+import org.folio.circulation.domain.representations.logs.LogEventPayloadType;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.resources.context.RenewalContext;
@@ -47,6 +46,10 @@ public class EventPublisher {
 
   public EventPublisher(RoutingContext routingContext) {
     pubSubPublishingService = new PubSubPublishingService(routingContext);
+  }
+
+  public EventPublisher(PubSubPublishingService pubSubPublishingService) {
+    this.pubSubPublishingService = pubSubPublishingService;
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> publishItemCheckedOutEvent(
@@ -171,10 +174,10 @@ public class EventPublisher {
     return completedFuture(succeeded(requestAndRelatedRecords));
   }
 
-  public CompletableFuture<Result<Void>> publishSendNoticeEvent(NoticeLogContext noticeLogContext) {
+  public CompletableFuture<Result<Void>> publishLogRecord(JsonObject payload, LogEventPayloadType payloadType) {
     JsonObject logEventPayload = new JsonObject();
-    write(logEventPayload, LOG_EVENT_TYPE.value(), NOTICE.value());
-    write(logEventPayload, PAYLOAD.value(), noticeLogContext.asJson().encode());
+    write(logEventPayload, LOG_EVENT_TYPE.value(), payloadType.value());
+    write(logEventPayload, PAYLOAD.value(), payload.encode());
 
     return pubSubPublishingService.publishEvent(LOG_RECORD.name(), logEventPayload.encode())
       .thenApply(r -> succeeded(null));

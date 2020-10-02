@@ -222,7 +222,7 @@ public class RequestByInstanceIdResource extends Resource {
   private CompletableFuture<Result<RequestAndRelatedRecords>> placeRequests(
     List<JsonObject> itemRequestRepresentations, Clients clients, EventPublisher eventPublisher) {
 
-    final RequestNoticeSender requestNoticeSender = RequestNoticeSender.using(clients, eventPublisher);
+    final RequestNoticeSender requestNoticeSender = RequestNoticeSender.using(clients);
     final LoanRepository loanRepository = new LoanRepository(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
     final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);

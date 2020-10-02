@@ -56,7 +56,7 @@ public class PatronActionSessionService {
   public static PatronActionSessionService using(Clients clients, EventPublisher eventPublisher) {
     return new PatronActionSessionService(
       PatronActionSessionRepository.using(clients),
-      PatronNoticeService.using(clients, eventPublisher));
+      PatronNoticeService.using(clients));
   }
 
   public PatronActionSessionService(
@@ -142,14 +142,12 @@ public class PatronActionSessionService {
       loanContexts -> new JsonObject()
         .put("user", createUserContext(user))
         .put("loans", loanContexts),
-      logContexts -> {
-        NoticeLogContext combinedContext = logContexts.stream()
-          .findFirst().orElse(new NoticeLogContext());
-        return combinedContext.withItems(logContexts.stream()
+      logContexts -> new NoticeLogContext()
+        .withUser(user)
+        .withItems(logContexts.stream()
           .map(NoticeLogContext::getItems)
           .flatMap(Collection::stream)
-          .collect(toList()));
-      })
+          .collect(toList())))
       .thenApply(mapResult(v -> records));
   }
 

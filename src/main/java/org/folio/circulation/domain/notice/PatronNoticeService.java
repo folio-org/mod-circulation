@@ -2,6 +2,7 @@ package org.folio.circulation.domain.notice;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.stream.Collectors.groupingBy;
+import static org.folio.circulation.domain.representations.logs.LogEventPayloadType.NOTICE;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
@@ -33,18 +34,18 @@ import io.vertx.core.json.JsonObject;
 import org.joda.time.DateTime;
 
 public class PatronNoticeService {
-  public static PatronNoticeService using(Clients clients, EventPublisher eventPublisher) {
-    return new PatronNoticeService(new PatronNoticePolicyRepository(clients), clients, eventPublisher);
+  public static PatronNoticeService using(Clients clients) {
+    return new PatronNoticeService(new PatronNoticePolicyRepository(clients), clients);
   }
 
   private PatronNoticePolicyRepository noticePolicyRepository;
   private CollectionResourceClient patronNoticeClient;
   private EventPublisher eventPublisher;
 
-  public PatronNoticeService(PatronNoticePolicyRepository noticePolicyRepository, Clients clients, EventPublisher eventPublisher) {
+  public PatronNoticeService(PatronNoticePolicyRepository noticePolicyRepository, Clients clients) {
     this.noticePolicyRepository = noticePolicyRepository;
     this.patronNoticeClient = clients.patronNoticeClient();
-    this.eventPublisher = eventPublisher;
+    this.eventPublisher = new EventPublisher(clients.pubSubPublishingService());
   }
 
   public CompletableFuture<Result<Void>> acceptNoticeEvent(PatronNoticeEvent event, NoticeLogContext logContext) {
@@ -169,7 +170,7 @@ public class PatronNoticeService {
   }
 
   private CompletableFuture<Result<Void>> publishAuditLogEvent(NoticeLogContext noticeLogContext) {
-    return eventPublisher.publishSendNoticeEvent(noticeLogContext.withDate(DateTime.now()));
+    return eventPublisher.publishLogRecord(noticeLogContext.withDate(DateTime.now()).asJson(), NOTICE);
   }
 
   private static class NoticeEventGroupDefinition {

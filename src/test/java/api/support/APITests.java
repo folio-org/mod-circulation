@@ -17,7 +17,6 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
-import java.util.stream.Collectors;
 
 import org.folio.circulation.support.ClockManager;
 import api.support.http.IndividualResource;
@@ -387,12 +386,4 @@ public abstract class APITests {
   protected void mockClockManagerToReturnDefaultDateTime() {
     ClockManager.getClockManager().setDefaultClock();
   }
-
-//  protected void assertThatSentNoticesCountIsEqualToLogRecordEventsCount() {
-//    int logRecordEventsCount = FakePubSub.getPublishedEvents().stream()
-//      .filter(json -> "LOG_RECORD_EVENT".equals(json.getString("eventType")))
-//      .map(e -> 1)
-//      .reduce(0, Integer::sum);
-//    assertThat(logRecordEventsCount, equalTo(patronNoticesClient.getAll().size()));
-//  }
 }

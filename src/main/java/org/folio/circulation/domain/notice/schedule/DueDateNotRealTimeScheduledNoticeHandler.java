@@ -3,6 +3,7 @@ package org.folio.circulation.domain.notice.schedule;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.stream.Collectors.toList;
 import static org.folio.circulation.domain.notice.schedule.DueDateScheduledNoticeHandler.REQUIRED_RECORD_TYPES;
+import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allResultsOf;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
@@ -21,7 +22,6 @@ import org.folio.circulation.domain.notice.PatronNoticeService;
 import org.folio.circulation.domain.notice.TemplateContextUtil;
 import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
 import org.folio.circulation.infrastructure.storage.notices.PatronNoticePolicyRepository;
-import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.results.Result;
@@ -32,12 +32,12 @@ import io.vertx.core.json.JsonObject;
 
 public class DueDateNotRealTimeScheduledNoticeHandler {
 
-  public static DueDateNotRealTimeScheduledNoticeHandler using(Clients clients, DateTime systemTime, EventPublisher eventPublisher) {
+  public static DueDateNotRealTimeScheduledNoticeHandler using(Clients clients, DateTime systemTime) {
     return new DueDateNotRealTimeScheduledNoticeHandler(
-      DueDateScheduledNoticeHandler.using(clients, systemTime, eventPublisher),
+      DueDateScheduledNoticeHandler.using(clients, systemTime),
       new LoanRepository(clients),
       new LoanPolicyRepository(clients),
-      PatronNoticeService.using(clients, eventPublisher),
+      PatronNoticeService.using(clients),
       new PatronNoticePolicyRepository(clients),
       clients.templateNoticeClient());
   }
@@ -130,21 +130,16 @@ public class DueDateNotRealTimeScheduledNoticeHandler {
       .put("user", TemplateContextUtil.createUserContext(user))
       .put("loans", new JsonArray(loanContexts));
 
-    NoticeLogContext noticeLogContext = NoticeLogContext.from(loan)
-      .withItems(relevantNotices.stream()
-        .map(Pair::getRight)
-        .map(LoanAndRelatedRecords::getLoan)
-        .map(NoticeLogContextItem::from)
-        .collect(toList()))
-      .withTriggeringEvent(scheduledNotice.getTriggeringEvent().getRepresentation())
-      .withTemplateId(scheduledNotice.getConfiguration().getTemplateId());
-
-    return noticePolicyRepository.lookupPolicyId(loan.getItem(), loan.getUser())
-      .thenCompose(r -> r.after(policy ->
-        patronNoticeService.acceptScheduledNoticeEvent(
-          scheduledNotice.getConfiguration(), user.getId(), noticeContext,
-          noticeLogContext.withNoticePolicyId(policy.getPolicyId()))
-      .thenApply(mapResult(v -> noticeGroup))));
+    return allOf(relevantNotices, pair -> noticePolicyRepository.lookupPolicyId(
+      pair.getRight().getLoan().getItem(), pair.getRight().getLoan().getUser())
+      .thenApply(r -> r.map(policy -> NoticeLogContextItem.from(pair.getRight().getLoan())
+        .withNoticePolicyId(policy.getPolicyId())
+        .withTriggeringEvent(pair.getLeft().getTriggeringEvent().getRepresentation())
+        .withTemplateId(pair.getLeft().getConfiguration().getTemplateId()))))
+      .thenApply(r -> r.map(items -> new NoticeLogContext().withUser(user).withItems(items)))
+      .thenCompose(r -> r.after(logContext -> patronNoticeService.acceptScheduledNoticeEvent(
+        scheduledNotice.getConfiguration(), user.getId(), noticeContext, logContext)))
+      .thenApply(mapResult(v -> noticeGroup));
   }
 
   private boolean noticeIsRelevant(Pair<ScheduledNotice, LoanAndRelatedRecords> noticeWithContext) {

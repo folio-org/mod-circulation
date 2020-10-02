@@ -2,7 +2,6 @@ package org.folio.circulation.resources;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.notice.TemplateContextUtil.createAvailableNoticeContext;
-import static org.folio.circulation.domain.notice.TemplateContextUtil.createLoanNoticeContext;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.Objects;
@@ -33,7 +32,6 @@ import org.folio.circulation.domain.notice.PatronNoticeEventBuilder;
 import org.folio.circulation.domain.notice.PatronNoticeService;
 import org.folio.circulation.domain.notice.schedule.FeeFineScheduledNoticeService;
 import org.folio.circulation.infrastructure.storage.notices.PatronNoticePolicyRepository;
-import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.services.LogCheckInService;
 import org.folio.circulation.services.LostItemFeeRefundService;
 import org.folio.circulation.storage.ItemByBarcodeInStorageFinder;
@@ -92,7 +90,7 @@ class CheckInProcessAdapter {
     this.lostItemFeeRefundService = lostItemFeeRefundService;
   }
 
-  public static CheckInProcessAdapter newInstance(Clients clients, EventPublisher eventPublisher) {
+  public static CheckInProcessAdapter newInstance(Clients clients) {
     final LoanRepository loanRepository = new LoanRepository(clients);
     final UserRepository userRepository = new UserRepository(clients);
 
@@ -112,7 +110,7 @@ class CheckInProcessAdapter {
       UpdateRequestQueue.using(clients),
       loanRepository,
       new ServicePointRepository(clients),
-      new PatronNoticeService(new PatronNoticePolicyRepository(clients), clients, eventPublisher),
+      new PatronNoticeService(new PatronNoticePolicyRepository(clients), clients),
       userRepository,
       new AddressTypeRepository(clients),
       new LogCheckInService(clients),

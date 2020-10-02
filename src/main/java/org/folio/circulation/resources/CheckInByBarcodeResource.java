@@ -41,7 +41,7 @@ public class CheckInByBarcodeResource extends Resource {
 
     final EventPublisher eventPublisher = new EventPublisher(routingContext);
 
-    final CheckInProcessAdapter processAdapter = CheckInProcessAdapter.newInstance(clients, eventPublisher);
+    final CheckInProcessAdapter processAdapter = CheckInProcessAdapter.newInstance(clients);
 
     final RequestScheduledNoticeService requestScheduledNoticeService =
       RequestScheduledNoticeService.using(clients);
