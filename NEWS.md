@@ -1,3 +1,7 @@
+## 19.0.16 2020-10-02
+
+* Changes overnight scheduled notices processing time to midnight in the tenant's timezone (CIRC-919)
+
 ## 19.0.15 2020-09-01
 
 * Fixes user token values in notices for sessions closed by Okapi timer (CIRC-837)
