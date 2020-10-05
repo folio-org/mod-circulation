@@ -1276,7 +1276,7 @@ public class CheckOutByBarcodeTests extends APITests {
     Map<String, List<JsonObject>> events = publishedEvents.stream().collect(groupingBy(e -> e.getString("eventType")));
 
     assertThat(events.get(ITEM_CHECKED_OUT.name()).get(0), isValidItemCheckedOutEvent(loan));
-    assertThat(events.get(LOG_RECORD.name()).get(1), isValidCheckOutLogEvent(loan));
+    assertThat(events.get(LOG_RECORD.name()).get(0), isValidCheckOutLogEvent(loan));
     assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
