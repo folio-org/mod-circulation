@@ -6,6 +6,7 @@ import static api.support.matchers.ItemMatchers.isCheckedOut;
 import static api.support.matchers.ItemMatchers.isClaimedReturned;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
+import static api.support.spring.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimePropertyByPath;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -60,6 +61,7 @@ public class ScheduledAgeToLostApiTest extends SpringApiTest {
     assertThat(getLoanActions(), hasAgedToLostAction());
     assertThat(loansStorageClient.get(overdueLoan).getJson(), hasPatronBillingDate());
     assertThat(loansStorageClient.get(overdueLoan).getJson(), hasAgedToLostDate());
+    assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
   @Test
@@ -77,6 +79,7 @@ public class ScheduledAgeToLostApiTest extends SpringApiTest {
       assertThat(loanFromStorage.getJson(), hasPatronBillingDate(loanFromStorage));
       assertThat(loanFromStorage.getJson(), hasAgedToLostDate());
     });
+    assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
   @Test
@@ -103,6 +106,7 @@ public class ScheduledAgeToLostApiTest extends SpringApiTest {
 
     assertThat(itemsClient.get(overdueItem).getJson(), isCheckedOut());
     assertThat(loansClient.get(overdueLoan).getJson(), not(hasPatronBillingDate()));
+    assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
   @Test
@@ -119,6 +123,7 @@ public class ScheduledAgeToLostApiTest extends SpringApiTest {
 
     assertThat(itemsClient.get(overdueItem).getJson(), isCheckedOut());
     assertThat(loansClient.get(overdueLoan).getJson(), not(hasPatronBillingDate()));
+    assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
   @Test
@@ -138,6 +143,7 @@ public class ScheduledAgeToLostApiTest extends SpringApiTest {
       .collect(Collectors.toList());
 
     assertThat(agedToLostActions, iterableWithSize(1));
+    assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
   private DateTime getLoanOverdueDate() {

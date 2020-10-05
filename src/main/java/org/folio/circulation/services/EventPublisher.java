@@ -7,8 +7,16 @@ import static org.folio.circulation.domain.EventType.ITEM_CLAIMED_RETURNED;
 import static org.folio.circulation.domain.EventType.ITEM_DECLARED_LOST;
 import static org.folio.circulation.domain.EventType.LOAN_DUE_DATE_CHANGED;
 import static org.folio.circulation.domain.EventType.LOG_RECORD;
+import static org.folio.circulation.domain.LoanAction.CHANGED_DUE_DATE;
+import static org.folio.circulation.domain.LoanAction.CHECKED_IN;
+import static org.folio.circulation.domain.LoanAction.CHECKED_OUT;
+import static org.folio.circulation.domain.LoanAction.CLOSED_LOAN;
 import static org.folio.circulation.domain.representations.logs.CirculationCheckInCheckOutLogEventMapper.mapToCheckInLogEventJson;
 import static org.folio.circulation.domain.representations.logs.CirculationCheckInCheckOutLogEventMapper.mapToCheckOutLogEventJson;
+import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.LOG_EVENT_TYPE;
+import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.PAYLOAD;
+import static org.folio.circulation.domain.representations.logs.LogEventPayloadType.LOAN;
+import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.results.Result.succeeded;
 
@@ -21,6 +29,9 @@ import org.folio.circulation.domain.EventType;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
+import org.folio.circulation.domain.anonymization.LoanAnonymizationRecords;
+import org.folio.circulation.domain.representations.logs.LoanLogContext;
+import org.folio.circulation.domain.representations.logs.LogEventPayloadType;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.Clients;
@@ -45,6 +56,10 @@ public class EventPublisher {
     pubSubPublishingService = new PubSubPublishingService(routingContext);
   }
 
+  public EventPublisher(PubSubPublishingService pubSubPublishingService) {
+    this.pubSubPublishingService = pubSubPublishingService;
+  }
+
   public CompletableFuture<Result<LoanAndRelatedRecords>> publishItemCheckedOutEvent(
     LoanAndRelatedRecords loanAndRelatedRecords) {
 
@@ -58,6 +73,14 @@ public class EventPublisher {
 
       JsonObject logEventPayload = mapToCheckOutLogEventJson(loanAndRelatedRecords);
       CompletableFuture.runAsync(() -> pubSubPublishingService.publishEvent(LOG_RECORD.name(), logEventPayload.encode()));
+
+      LoanLogContext loanLogContext = LoanLogContext.from(loan)
+        .withServicePointId(loan.getCheckoutServicePointId())
+        .withDescription(CHECKED_OUT.getValue().equalsIgnoreCase(loan.getAction()) ?
+          "Checked out to proxy." :
+          String.format("Originally failed: %s. Additional information: %s",
+            loan.getReasonToOverride(), loan.getActionComment()));
+      CompletableFuture.runAsync(() -> publishLogRecord(JsonObject.mapFrom(loanLogContext), LOAN));
 
       return pubSubPublishingService.publishEvent(ITEM_CHECKED_OUT.name(), payloadJsonObject.encode())
         .thenApply(r -> succeeded(loanAndRelatedRecords));
@@ -82,6 +105,7 @@ public class EventPublisher {
 
       JsonObject logEventPayload = mapToCheckInLogEventJson(checkInContext);
       CompletableFuture.runAsync(() -> pubSubPublishingService.publishEvent(LOG_RECORD.name(), logEventPayload.encode()));
+      CompletableFuture.runAsync(() -> publishClosedLoanEvent(loan));
 
       return
         pubSubPublishingService.publishEvent(ITEM_CHECKED_IN.name(),
@@ -111,6 +135,10 @@ public class EventPublisher {
       return completedFuture(succeeded(null));
     }
 
+    LoanLogContext loanLogContext = LoanLogContext.from(loan)
+      .withDescription(String.format("Additional information: %s", loan.getActionComment()));
+    CompletableFuture.runAsync(() -> publishLogRecord(JsonObject.mapFrom(loanLogContext), LOAN));
+
     JsonObject payloadJson = new JsonObject();
     write(payloadJson, USER_ID_FIELD, loan.getUserId());
     write(payloadJson, LOAN_ID_FIELD, loan.getId());
@@ -126,6 +154,13 @@ public class EventPublisher {
       write(payloadJsonObject, LOAN_ID_FIELD, loan.getId());
       write(payloadJsonObject, DUE_DATE_FIELD, loan.getDueDate());
       write(payloadJsonObject, DUE_DATE_CHANGED_BY_RECALL_FIELD, loan.wasDueDateChangedByRecall());
+
+      if (CHANGED_DUE_DATE.getValue().equalsIgnoreCase(loan.getAction())) {
+        LoanLogContext loanLogContext = LoanLogContext.from(loan)
+          .withDescription(String.format("New due date: %s (from %s)",
+            loan.getDueDate(), loan.getPreviousDueDate()));
+        CompletableFuture.runAsync(() -> publishLogRecord(JsonObject.mapFrom(loanLogContext), LOAN));
+      }
 
       return pubSubPublishingService.publishEvent(LOAN_DUE_DATE_CHANGED.name(),
         payloadJsonObject.encode())
@@ -152,6 +187,11 @@ public class EventPublisher {
   public CompletableFuture<Result<RenewalContext>> publishDueDateChangedEvent(
     RenewalContext renewalContext) {
 
+    LoanLogContext loanLogContext = LoanLogContext.from(renewalContext.getLoan())
+      .withDescription(String.format("New due date: %s (from %s)", renewalContext.getLoan().getDueDate(),
+        renewalContext.getLoanBeforeRenewal().getDueDate()));
+    CompletableFuture.runAsync(() -> publishLogRecord(JsonObject.mapFrom(loanLogContext), LOAN));
+
     publishDueDateChangedEvent(renewalContext.getLoan());
 
     return completedFuture(succeeded(renewalContext));
@@ -165,5 +205,53 @@ public class EventPublisher {
       .thenCompose(r -> r.after(this::publishDueDateChangedEvent));
 
     return completedFuture(succeeded(requestAndRelatedRecords));
+  }
+
+  public CompletableFuture<Result<Void>> publishAgedToLostEvent(Loan loan) {
+    return publishLogRecord(LoanLogContext.from(loan)
+      .withDescription(String.format("Due date: %s", loan.getAgedToLostDateTime())).asJson(), LOAN);
+  }
+
+  public CompletableFuture<Result<Void>> publishClosedLoanEvent(Loan loan) {
+    if (CHECKED_IN.getValue().equalsIgnoreCase(loan.getAction())) {
+      return publishLogRecord(JsonObject.mapFrom(LoanLogContext.from(loan)
+        .withAction(CLOSED_LOAN.getValue())
+        .withServicePointId(loan.getCheckInServicePointId())), LOAN);
+    }
+    return publishLogRecord(LoanLogContext.from(loan)
+      .withServicePointId(loan.getCheckoutServicePointId()).asJson(), LOAN);
+  }
+
+  public CompletableFuture<Result<Loan>> publishMarkedAsMissingLoanEvent(Loan loan) {
+    return publishLogRecord(LoanLogContext.from(loan)
+      .withDescription(String.format("Additional information: %s", loan.getActionComment())).asJson(), LOAN)
+      .thenApply(r -> r.map(v -> loan));
+  }
+
+  public CompletableFuture<Result<LoanAnonymizationRecords>> publishAnonymizedEvents(LoanAnonymizationRecords records, Clients clients) {
+    LoanRepository loanRepository = new LoanRepository(clients);
+    return loanRepository.findByIds(records.getAnonymizedLoans())
+      .thenCompose(r -> r.after(loanMultipleRecords ->
+        allOf(loanMultipleRecords.getRecords(), this::publishAnonymizedEvent)))
+      .thenApply(r -> succeeded(records));
+  }
+
+  public CompletableFuture<Result<Void>> publishAnonymizedEvent(Loan loan) {
+    return publishLogRecord(JsonObject.mapFrom(LoanLogContext.from(loan).withAction("Anonimized").withDescription("")), LOAN);
+  }
+
+  public CompletableFuture<Result<Void>> publishRecallRequestedEvent(Loan loan) {
+    return publishLogRecord(JsonObject.mapFrom(LoanLogContext.from(loan)
+      .withAction("Recall requested")
+      .withDescription(String.format("New due date: %s (from %s)", loan.getDueDate(), loan.getPreviousDueDate()))), LOAN);
+  }
+
+  public CompletableFuture<Result<Void>> publishLogRecord(JsonObject context, LogEventPayloadType payloadType) {
+    JsonObject logEventPayload = new JsonObject();
+    write(logEventPayload, LOG_EVENT_TYPE.value(), payloadType.value());
+    write(logEventPayload, PAYLOAD.value(), context.encode());
+
+    return pubSubPublishingService.publishEvent(LOG_RECORD.name(), logEventPayload.encode())
+      .thenApply(r -> succeeded(null));
   }
 }

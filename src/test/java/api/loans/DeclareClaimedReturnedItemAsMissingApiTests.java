@@ -6,6 +6,7 @@ import static api.support.matchers.LoanMatchers.isClosed;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
+import static api.support.spring.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
 import static org.folio.circulation.domain.representations.LoanProperties.ACTION;
 import static org.folio.circulation.domain.representations.LoanProperties.ACTION_COMMENT;
 import static org.hamcrest.CoreMatchers.allOf;
@@ -53,6 +54,7 @@ public class DeclareClaimedReturnedItemAsMissingApiTests extends APITests {
     assertLoanIsClosed(TESTING_COMMENT);
     assertItemIsMissing();
     assertNoteHasBeenCreated();
+    assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
   @Test

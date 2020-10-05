@@ -102,4 +102,19 @@ public class EventMatchers {
       isLoanDueDateChangedEventType());
   }
 
+  public static Matcher<JsonObject> isValidLoanLogRecordEvent(JsonObject loanCtx) {
+    return allOf(JsonObjectMatcher.allOfPaths(
+      hasJsonPath("eventPayload", allOf(
+        hasJsonPath("logEventType", is("LOAN")),
+        hasJsonPath("itemBarcode", is(loanCtx.getString("itemBarcode"))),
+        hasJsonPath("itemId", is(loanCtx.getString("itemId"))),
+        hasJsonPath("instanceId", is(loanCtx.getString("itemBarcode"))),
+        hasJsonPath("holdingsRecordId", is(loanCtx.getString("itemId"))),
+        hasJsonPath("action", is(loanCtx.getString("action"))),
+        hasJsonPath("date", is(loanCtx.getString("date"))),
+        hasJsonPath("description", is(loanCtx.getString("description"))),
+        hasJsonPath("loanId", is(loanCtx.getString("loanId")))
+      ))),
+      isLogRecordEventType());
+  }
 }

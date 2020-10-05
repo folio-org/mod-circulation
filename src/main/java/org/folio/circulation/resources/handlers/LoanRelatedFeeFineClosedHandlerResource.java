@@ -19,6 +19,7 @@ import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.loans.LostItemPolicyRepository;
 import org.folio.circulation.domain.subscribers.LoanRelatedFeeFineClosedEvent;
 import org.folio.circulation.resources.Resource;
+import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.RouteRegistration;
@@ -49,9 +50,11 @@ public class LoanRelatedFeeFineClosedHandlerResource extends Resource {
 
   private void handleFeeFineClosedEvent(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
+    final EventPublisher eventPublisher = new EventPublisher(routingContext);
 
     createAndValidateRequest(routingContext)
       .after(request -> processEvent(context, request))
+      .thenCompose(r -> r.after(eventPublisher::publishClosedLoanEvent))
       .exceptionally(CommonFailures::failedDueToServerError)
       .thenApply(r -> r.toFixedValue(NoContentResponse::noContent))
       .thenAccept(result -> result.applySideEffect(context::write, failure -> {

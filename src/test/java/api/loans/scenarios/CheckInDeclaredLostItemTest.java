@@ -10,6 +10,7 @@ import static api.support.matchers.LoanAccountMatcher.hasLostItemFee;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
+import static api.support.spring.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -62,6 +63,7 @@ public class CheckInDeclaredLostItemTest extends RefundDeclaredLostFeesTestBase 
 
     assertThat(loan, hasLostItemFee(isRefundedFully(secondFee)));
     assertThat(loan, hasLostItemFeeActions(arePaymentRefundActionsCreated(secondFee)));
+    assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
   @Test
@@ -82,6 +84,7 @@ public class CheckInDeclaredLostItemTest extends RefundDeclaredLostFeesTestBase 
     assertThat(checkInResponse.getJson(), hasErrorWith(allOf(
       hasMessage("Item is lost however there is no declared lost loan found"),
       hasParameter("itemId", item.getId().toString()))));
+    assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
   @Test
@@ -115,6 +118,7 @@ public class CheckInDeclaredLostItemTest extends RefundDeclaredLostFeesTestBase 
 
     assertThat(loan, hasLostItemFee(isRefundedFully(setCostFee)));
     assertThat(loan, hasLostItemFeeActions(arePaymentRefundActionsCreated(setCostFee)));
+    assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
   @Test

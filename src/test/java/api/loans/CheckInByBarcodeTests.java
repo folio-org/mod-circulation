@@ -14,6 +14,7 @@ import static api.support.matchers.TextDateTimeMatcher.withinSecondsBeforeNow;
 import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
+import static api.support.spring.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.groupingBy;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
@@ -1056,6 +1057,10 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     checkInFixture.checkInByBarcode(item);
 
     assertThat(itemsClient.getById(item.getId()).getJson(), isAvailable());
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(FakePubSub::getPublishedEvents, hasSize(4));
+    assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
   @Test
@@ -1066,6 +1071,10 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
 
     assertThat(itemsFixture.getById(ageToLostResult.getItemId()).getJson(), isAvailable());
     assertThat(loansFixture.getLoanById(ageToLostResult.getLoanId()).getJson(), isClosed());
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(FakePubSub::getPublishedEvents, hasSize(5));
+    assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
   @Test

@@ -24,6 +24,7 @@ import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
+import static api.support.spring.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.END_OF_A_DAY;
 import static org.hamcrest.CoreMatchers.allOf;
@@ -783,6 +784,10 @@ public abstract class RenewalAPITests extends APITests {
       hasMessage("item is not loanable"),
       hasLoanPolicyIdParameter(notLoanablePolicyId),
       hasLoanPolicyNameParameter("Non loanable policy"))));
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(FakePubSub::getPublishedEvents, hasSize(2));
+    assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
   @Test
@@ -837,6 +842,10 @@ public abstract class RenewalAPITests extends APITests {
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("item is Aged to lost"),
       hasUUIDParameter("itemId", result.getItem().getId()))));
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(FakePubSub::getPublishedEvents, hasSize(3));
+    assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
   @Test

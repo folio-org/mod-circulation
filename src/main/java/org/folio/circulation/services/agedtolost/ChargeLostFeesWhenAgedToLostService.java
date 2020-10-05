@@ -43,6 +43,7 @@ import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineReposito
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.loans.LostItemPolicyRepository;
+import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.services.FeeFineFacade;
 import org.folio.circulation.services.support.CreateAccountCommand;
 import org.folio.circulation.support.Clients;
@@ -64,6 +65,7 @@ public class ChargeLostFeesWhenAgedToLostService {
   private final LoanRepository loanRepository;
   private final ItemRepository itemRepository;
   private final StoreLoanAndItem storeLoanAndItem;
+  private final EventPublisher eventPublisher;
 
   public ChargeLostFeesWhenAgedToLostService(Clients clients) {
     this.lostItemPolicyRepository = new LostItemPolicyRepository(clients);
@@ -73,6 +75,7 @@ public class ChargeLostFeesWhenAgedToLostService {
     this.loanRepository = new LoanRepository(clients);
     this.itemRepository = new ItemRepository(clients, true, false, false);
     this.storeLoanAndItem = new StoreLoanAndItem(loanRepository, itemRepository);
+    this.eventPublisher = new EventPublisher(clients.pubSubPublishingService());
   }
 
   public CompletableFuture<Result<Void>> chargeFees() {
@@ -88,16 +91,16 @@ public class ChargeLostFeesWhenAgedToLostService {
         return succeeded(LoanToChargeFees.usingLoans(allLoans))
           .after(this::fetchFeeFineOwners)
           .thenComposeAsync(this::fetchFeeFineTypes)
-          .thenCompose(this::chargeLostFeesForLoans);
+          .thenCompose(this::chargeLostFeesForLoans)
+          .thenCompose(this::publishClosedLoansLogEvents);
       }));
   }
 
-  private CompletableFuture<Result<Void>> chargeLostFeesForLoans(
+  private CompletableFuture<Result<List<Loan>>> chargeLostFeesForLoans(
     Result<List<LoanToChargeFees>> loansToChargeFeesResult) {
 
     return loansToChargeFeesResult
-      .after(loansToChargeFees -> allOf(loansToChargeFees, this::chargeLostFeesForLoan))
-      .thenApply(r -> r.map(notUsed -> null));
+      .after(loansToChargeFees -> allOf(loansToChargeFees, this::chargeLostFeesForLoan));
   }
 
   private CompletableFuture<Result<Loan>> chargeLostFeesForLoan(LoanToChargeFees loanToChargeFees) {
@@ -144,7 +147,7 @@ public class ChargeLostFeesWhenAgedToLostService {
   }
 
   private CreateAccountCommand buildCreateAccountCommand(LoanToChargeFees loanToCharge,
-    Pair<AutomaticallyChargeableFee, FeeFine> pair) {
+                                                         Pair<AutomaticallyChargeableFee, FeeFine> pair) {
 
     final AutomaticallyChargeableFee feeToCharge = pair.getKey();
     final FeeFine feeFineType = pair.getValue();
@@ -167,7 +170,7 @@ public class ChargeLostFeesWhenAgedToLostService {
   }
 
   private List<LoanToChargeFees> mapFeeFineTypesToLoans(Collection<FeeFine> feeTypes,
-    List<LoanToChargeFees> allLoansToCharge) {
+                                                        List<LoanToChargeFees> allLoansToCharge) {
 
     return allLoansToCharge.stream()
       .map(loanToChargeFees -> loanToChargeFees.withFeeFineTypes(feeTypes))
@@ -185,7 +188,7 @@ public class ChargeLostFeesWhenAgedToLostService {
   }
 
   private List<LoanToChargeFees> mapOwnersToLoans(Collection<FeeFineOwner> owners,
-    List<LoanToChargeFees> loansToCharge) {
+                                                  List<LoanToChargeFees> loansToCharge) {
 
     final Map<String, FeeFineOwner> servicePointToOwner = new HashMap<>();
 
@@ -261,5 +264,10 @@ public class ChargeLostFeesWhenAgedToLostService {
     loan.closeLoanAsLostAndPaid();
 
     return storeLoanAndItem.updateLoanAndItemInStorage(loan);
+  }
+
+  private CompletableFuture<Result<Void>> publishClosedLoansLogEvents(Result<List<Loan>> loansResult) {
+    return loansResult.after(loans -> allOf(loans, eventPublisher::publishClosedLoanEvent))
+      .thenApply(r -> r.map(v -> null));
   }
 }

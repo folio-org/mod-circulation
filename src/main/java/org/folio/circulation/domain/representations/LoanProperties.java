@@ -9,6 +9,7 @@ public class LoanProperties {
   public static final String ACTION = "action";
   public static final String ITEM_STATUS = "itemStatus";
   public static final String DUE_DATE = "dueDate";
+  public static final String PREVIOUS_DUE_DATE = "dueDate";
   public static final String RETURN_DATE = "returnDate";
   public static final String SYSTEM_RETURN_DATE = "systemReturnDate";
   public static final String CHECKIN_SERVICE_POINT_ID = "checkinServicePointId";
@@ -32,4 +33,5 @@ public class LoanProperties {
   public static final String AGED_TO_LOST_DELAYED_BILLING = "agedToLostDelayedBilling";
   public static final String LOST_ITEM_HAS_BEEN_BILLED = "lostItemHasBeenBilled";
   public static final String DATE_LOST_ITEM_SHOULD_BE_BILLED = "dateLostItemShouldBeBilled";
+  public static final String REASON_TO_OVERRIDE = "reasonToOverride";
 }

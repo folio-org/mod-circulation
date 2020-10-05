@@ -14,6 +14,7 @@ import static org.folio.circulation.domain.LoanAction.ITEM_AGED_TO_LOST;
 import static org.folio.circulation.domain.LoanAction.MISSING;
 import static org.folio.circulation.domain.LoanAction.RENEWED;
 import static org.folio.circulation.domain.LoanAction.RENEWED_THROUGH_OVERRIDE;
+import static org.folio.circulation.domain.representations.LoanProperties.ACTION;
 import static org.folio.circulation.domain.representations.LoanProperties.ACTION_COMMENT;
 import static org.folio.circulation.domain.representations.LoanProperties.AGED_TO_LOST_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.AGED_TO_LOST_DELAYED_BILLING;
@@ -28,6 +29,8 @@ import static org.folio.circulation.domain.representations.LoanProperties.LOAN_P
 import static org.folio.circulation.domain.representations.LoanProperties.LOST_ITEM_HAS_BEEN_BILLED;
 import static org.folio.circulation.domain.representations.LoanProperties.LOST_ITEM_POLICY_ID;
 import static org.folio.circulation.domain.representations.LoanProperties.OVERDUE_FINE_POLICY_ID;
+import static org.folio.circulation.domain.representations.LoanProperties.PREVIOUS_DUE_DATE;
+import static org.folio.circulation.domain.representations.LoanProperties.REASON_TO_OVERRIDE;
 import static org.folio.circulation.domain.representations.LoanProperties.RETURN_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.STATUS;
 import static org.folio.circulation.domain.representations.LoanProperties.SYSTEM_RETURN_DATE;
@@ -104,6 +107,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Loan changeDueDate(DateTime newDueDate) {
+    write(representation, PREVIOUS_DUE_DATE, getDueDate());
     write(representation, DUE_DATE, newDueDate);
 
     return this;
@@ -129,6 +133,10 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public void changeAction(String action) {
     write(representation, LoanProperties.ACTION, action);
+  }
+
+  public String getAction() {
+    return getProperty(representation, ACTION);
   }
 
   private void changeCheckInServicePointId(UUID servicePointId) {
@@ -160,6 +168,10 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public void removeActionComment() {
     representation.remove(ACTION_COMMENT);
+  }
+
+  public String getActionComment() {
+    return getProperty(representation, ACTION_COMMENT);
   }
 
   public Result<Void> isValidStatus() {
@@ -468,6 +480,10 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return getDateTimeProperty(representation, DUE_DATE);
   }
 
+  public DateTime getPreviousDueDate() {
+    return getDateTimeProperty(representation, PREVIOUS_DUE_DATE);
+  }
+
   private static void defaultStatusAndAction(JsonObject loan) {
     if (!loan.containsKey(STATUS)) {
       loan.put(STATUS, new JsonObject().put("name", "Open"));
@@ -629,5 +645,13 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     representation.put(LoanProperties.ACTION, "");
 
     return this;
+  }
+
+  public void setReasonToOverride(String reason) {
+    write(representation, REASON_TO_OVERRIDE, reason);
+  }
+
+  public String getReasonToOverride() {
+    return getProperty(representation, REASON_TO_OVERRIDE);
   }
 }
