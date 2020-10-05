@@ -3,6 +3,7 @@ package api.loans;
 import static api.support.http.CqlQuery.exactMatch;
 import static api.support.http.CqlQuery.queryFromTemplate;
 import static api.support.matchers.EventMatchers.isValidItemDeclaredLostEvent;
+import static api.support.matchers.EventTypeMatchers.ITEM_DECLARED_LOST;
 import static api.support.matchers.ItemMatchers.isDeclaredLost;
 import static api.support.matchers.ItemMatchers.isLostAndPaid;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
@@ -421,16 +422,19 @@ public class DeclareLostAPITests extends APITests {
       .withNoComment();
     declareLostFixtures.declareItemLost(builder);
 
-    // There should be three events published - first for "check out", second for "log event"
-    // third for "declared lost"
+    // There should be five events published - "check out", "log event", "declared lost"
+    // and two "log record"
     List<JsonObject> publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(3));
+      .until(FakePubSub::getPublishedEvents, hasSize(5));
 
-    JsonObject event = publishedEvents.get(2);
+    JsonObject event = publishedEvents.stream()
+      .filter(evt -> ITEM_DECLARED_LOST.equalsIgnoreCase(evt.getString("eventType")))
+      .findFirst().orElse(new JsonObject());
     JsonObject loan = loanIndividualResource.getJson();
 
     assertThat(event, isValidItemDeclaredLostEvent(loan));
+    assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
   @Test

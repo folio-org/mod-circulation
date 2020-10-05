@@ -1,10 +1,12 @@
 package api.requests.scenarios;
 
+import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
 import static api.support.builders.ItemBuilder.AVAILABLE;
 import static api.support.builders.ItemBuilder.PAGED;
 import static api.support.builders.RequestBuilder.OPEN_AWAITING_PICKUP;
 import static api.support.fixtures.ConfigurationExample.timezoneConfigurationFor;
 import static api.support.matchers.EventMatchers.isValidLoanDueDateChangedEvent;
+import static api.support.matchers.EventTypeMatchers.LOAN_DUE_DATE_CHANGED;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static org.folio.circulation.domain.policy.DueDateManagement.KEEP_THE_CURRENT_DUE_DATE;
@@ -23,6 +25,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.ItemStatus;
@@ -1012,14 +1015,18 @@ public class MoveRequestTests extends APITests {
 
     itemCopyALoan = loansClient.get(itemCopyALoan);
 
-    // There should be four events published - for "check out", for "log event", for "hold" and for "move"
+    // There should be six events published - for "check out", for "log event", for "hold", for "move"
+    // and two for "log record"
     List<JsonObject> publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(4));
+      .until(FakePubSub::getPublishedEvents, hasSize(6));
 
-    JsonObject event = publishedEvents.get(3);
+    JsonObject event = publishedEvents.stream()
+      .filter(evt -> LOAN_DUE_DATE_CHANGED.equalsIgnoreCase(evt.getString("eventType")))
+      .collect(Collectors.toList()).get(1);
 
     assertThat(event, isValidLoanDueDateChangedEvent(itemCopyALoan.getJson()));
+    assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
   private void freezeTime(DateTime dateTime) {

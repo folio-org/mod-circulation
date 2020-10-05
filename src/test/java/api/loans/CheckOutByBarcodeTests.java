@@ -2,6 +2,7 @@ package api.loans;
 
 import static api.requests.RequestsAPICreationTests.setupMissingItem;
 import static api.support.APITestContext.END_OF_CURRENT_YEAR_DUE_DATE;
+import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
 import static api.support.builders.ItemBuilder.AVAILABLE;
 import static api.support.builders.ItemBuilder.CHECKED_OUT;
 import static api.support.builders.ItemBuilder.CLAIMED_RETURNED;
@@ -1270,12 +1271,13 @@ public class CheckOutByBarcodeTests extends APITests {
 
     List<JsonObject> publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(2));
+      .until(FakePubSub::getPublishedEvents, hasSize(3));
 
     Map<String, List<JsonObject>> events = publishedEvents.stream().collect(groupingBy(e -> e.getString("eventType")));
 
     assertThat(events.get(ITEM_CHECKED_OUT.name()).get(0), isValidItemCheckedOutEvent(loan));
-    assertThat(events.get(LOG_RECORD.name()).get(0), isValidCheckOutLogEvent(loan));
+    assertThat(events.get(LOG_RECORD.name()).get(1), isValidCheckOutLogEvent(loan));
+    assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
   @Test

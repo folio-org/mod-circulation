@@ -15,6 +15,7 @@ import static api.support.fixtures.CalendarExamples.START_TIME_FIRST_PERIOD;
 import static api.support.fixtures.CalendarExamples.START_TIME_SECOND_PERIOD;
 import static api.support.fixtures.CalendarExamples.WEDNESDAY_DATE;
 import static api.support.matchers.EventMatchers.isValidLoanDueDateChangedEvent;
+import static api.support.matchers.EventTypeMatchers.LOAN_DUE_DATE_CHANGED;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
@@ -786,7 +787,7 @@ public abstract class RenewalAPITests extends APITests {
       hasLoanPolicyNameParameter("Non loanable policy"))));
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(2));
+      .until(FakePubSub::getPublishedEvents, hasSize(3));
     assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
@@ -844,7 +845,7 @@ public abstract class RenewalAPITests extends APITests {
       hasUUIDParameter("itemId", result.getItem().getId()))));
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(3));
+      .until(FakePubSub::getPublishedEvents, hasSize(4));
     assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
@@ -1461,15 +1462,19 @@ public abstract class RenewalAPITests extends APITests {
 
     final JsonObject renewedLoan = renew(smallAngryPlanet, jessica).getJson();
 
-    // There should be three events published - first for "check out",
-    // second one for log event and third for "change due date"
+    // There should be five events published - first for "check out",
+    // second one for log event, third for "change due date"
+    // and two "log record"
     List<JsonObject> publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(3));
+      .until(FakePubSub::getPublishedEvents, hasSize(5));
 
-    JsonObject event = publishedEvents.get(2);
+    JsonObject event = publishedEvents.stream()
+      .filter(evt -> LOAN_DUE_DATE_CHANGED.equalsIgnoreCase(evt.getString("eventType")))
+      .findFirst().orElse(new JsonObject());
 
     assertThat(event, isValidLoanDueDateChangedEvent(renewedLoan));
+    assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
   @Test

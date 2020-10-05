@@ -1,6 +1,8 @@
 package api.requests;
 
+import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
 import static api.support.matchers.EventMatchers.isValidLoanDueDateChangedEvent;
+import static api.support.matchers.EventTypeMatchers.LOAN_DUE_DATE_CHANGED;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
@@ -756,13 +758,17 @@ public class RequestsAPIUpdatingTests extends APITests {
     Response response = loansClient.getById(loan.getId());
     JsonObject updatedLoan = response.getJson();
 
-    // There should be four events published - for "check out", for "log event", for "recall" and for "replace"
+    // There should be siz events published - for "check out", for "log event", for "recall", for "replace"
+    // and two for "log record"
     List<JsonObject> publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(4));
+      .until(FakePubSub::getPublishedEvents, hasSize(6));
 
-    JsonObject event = publishedEvents.get(3);
+    JsonObject event = publishedEvents.stream()
+      .filter(evt -> LOAN_DUE_DATE_CHANGED.equalsIgnoreCase(evt.getString("eventType")))
+      .findFirst().orElse(new JsonObject());
 
     assertThat(event, isValidLoanDueDateChangedEvent(updatedLoan));
+    assertThatPublishedLoanLogRecordEventsAreValid();
   }
 }
