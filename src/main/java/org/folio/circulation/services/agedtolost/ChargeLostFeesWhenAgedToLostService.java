@@ -147,7 +147,7 @@ public class ChargeLostFeesWhenAgedToLostService {
   }
 
   private CreateAccountCommand buildCreateAccountCommand(LoanToChargeFees loanToCharge,
-                                                         Pair<AutomaticallyChargeableFee, FeeFine> pair) {
+    Pair<AutomaticallyChargeableFee, FeeFine> pair) {
 
     final AutomaticallyChargeableFee feeToCharge = pair.getKey();
     final FeeFine feeFineType = pair.getValue();
@@ -170,7 +170,7 @@ public class ChargeLostFeesWhenAgedToLostService {
   }
 
   private List<LoanToChargeFees> mapFeeFineTypesToLoans(Collection<FeeFine> feeTypes,
-                                                        List<LoanToChargeFees> allLoansToCharge) {
+    List<LoanToChargeFees> allLoansToCharge) {
 
     return allLoansToCharge.stream()
       .map(loanToChargeFees -> loanToChargeFees.withFeeFineTypes(feeTypes))
@@ -188,7 +188,7 @@ public class ChargeLostFeesWhenAgedToLostService {
   }
 
   private List<LoanToChargeFees> mapOwnersToLoans(Collection<FeeFineOwner> owners,
-                                                  List<LoanToChargeFees> loansToCharge) {
+    List<LoanToChargeFees> loansToCharge) {
 
     final Map<String, FeeFineOwner> servicePointToOwner = new HashMap<>();
 

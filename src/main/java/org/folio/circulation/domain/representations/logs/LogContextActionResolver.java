@@ -1,7 +1,5 @@
 package org.folio.circulation.domain.representations.logs;
 
-import java.util.HashMap;
-
 import static java.util.Optional.ofNullable;
 import static org.folio.circulation.domain.LoanAction.CHANGED_DUE_DATE;
 import static org.folio.circulation.domain.LoanAction.CHECKED_OUT;
@@ -14,6 +12,8 @@ import static org.folio.circulation.domain.LoanAction.MISSING;
 import static org.folio.circulation.domain.LoanAction.RECALLREQUESTED;
 import static org.folio.circulation.domain.LoanAction.RENEWED;
 import static org.folio.circulation.domain.LoanAction.RENEWED_THROUGH_OVERRIDE;
+
+import java.util.HashMap;
 
 public class LogContextActionResolver {
   private static HashMap<String, String> loanLogActions = new HashMap<>();
