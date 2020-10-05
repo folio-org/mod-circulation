@@ -2,7 +2,6 @@ package org.folio.circulation.support;
 
 import java.net.MalformedURLException;
 
-import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.services.PubSubPublishingService;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.server.WebContext;

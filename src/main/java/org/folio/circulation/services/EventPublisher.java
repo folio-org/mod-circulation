@@ -31,6 +31,7 @@ import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.anonymization.LoanAnonymizationRecords;
 import org.folio.circulation.domain.representations.logs.LoanLogContext;
+import org.folio.circulation.domain.representations.logs.LogContextActionResolver;
 import org.folio.circulation.domain.representations.logs.LogEventPayloadType;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.resources.context.RenewalContext;
@@ -80,7 +81,7 @@ public class EventPublisher {
           "Checked out to proxy." :
           String.format("Originally failed: %s. Additional information: %s",
             loan.getReasonToOverride(), loan.getActionComment()));
-      CompletableFuture.runAsync(() -> publishLogRecord(JsonObject.mapFrom(loanLogContext), LOAN));
+      CompletableFuture.runAsync(() -> publishLogRecord(loanLogContext.asJson(), LOAN));
 
       return pubSubPublishingService.publishEvent(ITEM_CHECKED_OUT.name(), payloadJsonObject.encode())
         .thenApply(r -> succeeded(loanAndRelatedRecords));
@@ -137,7 +138,7 @@ public class EventPublisher {
 
     LoanLogContext loanLogContext = LoanLogContext.from(loan)
       .withDescription(String.format("Additional information: %s", loan.getActionComment()));
-    CompletableFuture.runAsync(() -> publishLogRecord(JsonObject.mapFrom(loanLogContext), LOAN));
+    CompletableFuture.runAsync(() -> publishLogRecord(loanLogContext.asJson(), LOAN));
 
     JsonObject payloadJson = new JsonObject();
     write(payloadJson, USER_ID_FIELD, loan.getUserId());
@@ -159,7 +160,7 @@ public class EventPublisher {
         LoanLogContext loanLogContext = LoanLogContext.from(loan)
           .withDescription(String.format("New due date: %s (from %s)",
             loan.getDueDate(), loan.getPreviousDueDate()));
-        CompletableFuture.runAsync(() -> publishLogRecord(JsonObject.mapFrom(loanLogContext), LOAN));
+        CompletableFuture.runAsync(() -> publishLogRecord(loanLogContext.asJson(), LOAN));
       }
 
       return pubSubPublishingService.publishEvent(LOAN_DUE_DATE_CHANGED.name(),
@@ -190,7 +191,7 @@ public class EventPublisher {
     LoanLogContext loanLogContext = LoanLogContext.from(renewalContext.getLoan())
       .withDescription(String.format("New due date: %s (from %s)", renewalContext.getLoan().getDueDate(),
         renewalContext.getLoanBeforeRenewal().getDueDate()));
-    CompletableFuture.runAsync(() -> publishLogRecord(JsonObject.mapFrom(loanLogContext), LOAN));
+    CompletableFuture.runAsync(() -> publishLogRecord(loanLogContext.asJson(), LOAN));
 
     publishDueDateChangedEvent(renewalContext.getLoan());
 
@@ -214,9 +215,9 @@ public class EventPublisher {
 
   public CompletableFuture<Result<Void>> publishClosedLoanEvent(Loan loan) {
     if (CHECKED_IN.getValue().equalsIgnoreCase(loan.getAction())) {
-      return publishLogRecord(JsonObject.mapFrom(LoanLogContext.from(loan)
-        .withAction(CLOSED_LOAN.getValue())
-        .withServicePointId(loan.getCheckInServicePointId())), LOAN);
+      return publishLogRecord(LoanLogContext.from(loan)
+        .withAction(LogContextActionResolver.resolveAction(CLOSED_LOAN.getValue()))
+        .withServicePointId(loan.getCheckInServicePointId()).asJson(), LOAN);
     }
     return publishLogRecord(LoanLogContext.from(loan)
       .withServicePointId(loan.getCheckoutServicePointId()).asJson(), LOAN);
@@ -228,22 +229,22 @@ public class EventPublisher {
       .thenApply(r -> r.map(v -> loan));
   }
 
-  public CompletableFuture<Result<LoanAnonymizationRecords>> publishAnonymizedEvents(LoanAnonymizationRecords records, Clients clients) {
+  public CompletableFuture<Result<LoanAnonymizationRecords>> publishAnonymizeEvents(LoanAnonymizationRecords records, Clients clients) {
     LoanRepository loanRepository = new LoanRepository(clients);
     return loanRepository.findByIds(records.getAnonymizedLoans())
       .thenCompose(r -> r.after(loanMultipleRecords ->
-        allOf(loanMultipleRecords.getRecords(), this::publishAnonymizedEvent)))
+        allOf(loanMultipleRecords.getRecords(), this::publishAnonymizeEvent)))
       .thenApply(r -> succeeded(records));
   }
 
-  public CompletableFuture<Result<Void>> publishAnonymizedEvent(Loan loan) {
-    return publishLogRecord(JsonObject.mapFrom(LoanLogContext.from(loan).withAction("Anonimized").withDescription("")), LOAN);
+  public CompletableFuture<Result<Void>> publishAnonymizeEvent(Loan loan) {
+    return publishLogRecord(LoanLogContext.from(loan).withAction("Anonymize").withDescription("").asJson(), LOAN);
   }
 
   public CompletableFuture<Result<Void>> publishRecallRequestedEvent(Loan loan) {
-    return publishLogRecord(JsonObject.mapFrom(LoanLogContext.from(loan)
+    return publishLogRecord(LoanLogContext.from(loan)
       .withAction("Recall requested")
-      .withDescription(String.format("New due date: %s (from %s)", loan.getDueDate(), loan.getPreviousDueDate()))), LOAN);
+      .withDescription(String.format("New due date: %s (from %s)", loan.getDueDate(), loan.getPreviousDueDate())).asJson(), LOAN);
   }
 
   public CompletableFuture<Result<Void>> publishLogRecord(JsonObject context, LogEventPayloadType payloadType) {

@@ -37,7 +37,7 @@ public class DefaultLoanAnonymizationService implements LoanAnonymizationService
       .thenApply(r -> r.map(new LoanAnonymizationRecords()::withLoansFound))
       .thenCompose(this::segregateLoanRecords)
       .thenCompose(r -> r.after(anonymizeStorageLoansRepository::postAnonymizeStorageLoans))
-      .thenCompose(r -> r.after(l -> eventPublisher.publishAnonymizedEvents(l, clients)));
+      .thenCompose(r -> r.after(l -> eventPublisher.publishAnonymizeEvents(l, clients)));
   }
 
   private CompletableFuture<Result<LoanAnonymizationRecords>> segregateLoanRecords(

@@ -1,4 +1,4 @@
-package api.support.spring;
+package api.support;
 
 import static api.support.matchers.EventTypeMatchers.LOG_RECORD;
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadType.LOAN;
@@ -15,10 +15,18 @@ public class PubsubPublisherTestUtils {
     getPublishedLogRecordEvents(LOAN.value()).forEach(EventMatchers::isValidLoanLogRecordEvent);
   }
 
-  private static List<JsonObject> getPublishedLogRecordEvents(String logEventType) {
+  public static List<JsonObject> getPublishedLogRecordEvents(String logEventType) {
     return FakePubSub.getPublishedEvents().stream()
       .filter(json -> LOG_RECORD.equals(json.getString("eventType")) &&
         json.getString("eventPayload").contains(logEventType))
+      .collect(Collectors.toList());
+  }
+
+  public static List<JsonObject> getPublishedLogRecordEvents(String logEventType, String action) {
+    return FakePubSub.getPublishedEvents().stream()
+      .filter(json -> LOG_RECORD.equals(json.getString("eventType")) &&
+        json.getString("eventPayload").contains(logEventType) &&
+        json.getString("eventPayload").contains(action))
       .collect(Collectors.toList());
   }
 }
