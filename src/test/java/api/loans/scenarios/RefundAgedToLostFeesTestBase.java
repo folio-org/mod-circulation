@@ -12,6 +12,8 @@ import static api.support.matchers.LoanAccountActionsMatcher.hasLostItemFeeActio
 import static api.support.matchers.LoanAccountActionsMatcher.hasLostItemProcessingFeeActions;
 import static api.support.matchers.LoanAccountMatcher.hasLostItemFee;
 import static api.support.matchers.LoanAccountMatcher.hasLostItemProcessingFee;
+import static api.support.matchers.LoanAccountMatcher.hasNoLostItemFee;
+import static api.support.matchers.LoanAccountMatcher.hasNoLostItemProcessingFee;
 import static api.support.matchers.LoanAccountMatcher.hasOverdueFine;
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasNoJsonPath;
@@ -22,12 +24,12 @@ import static org.hamcrest.Matchers.allOf;
 import static org.joda.time.DateTime.now;
 import static org.joda.time.DateTimeZone.UTC;
 
-import api.support.http.IndividualResource;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 
 import api.support.fixtures.AgeToLostFixture;
+import api.support.http.IndividualResource;
 import api.support.spring.SpringApiTest;
 import lombok.val;
 
@@ -102,6 +104,26 @@ public abstract class RefundAgedToLostFeesTestBase extends SpringApiTest {
 
     assertThatBillingInformationRemoved(loan);
     assertThatPublishedLoanLogRecordEventsAreValid();
+  }
+
+  @Test
+  public void shouldChargeOverdueFineIfNoFeesChargedYet() {
+    val policy = lostItemFeePoliciesFixture.ageToLostAfterOneMinutePolicy()
+      .withName("shouldChargeOverdueFine")
+      .chargeProcessingFeeWhenAgedToLost(12.99)
+      .chargeOverdueFineWhenReturned()
+      .withNoFeeRefundInterval();
+
+    val result = ageToLostFixture.createAgedToLostLoan(policy);
+
+    performActionThatRequiresRefund(result, now(UTC).plusMonths(8));
+
+    final IndividualResource loan = result.getLoan();
+    assertThat(loan, hasOverdueFine());
+    assertThat(result.getLoan(), hasNoLostItemFee());
+    assertThat(result.getLoan(), hasNoLostItemProcessingFee());
+
+    assertThatBillingInformationRemoved(loan);
   }
 
   @Test
