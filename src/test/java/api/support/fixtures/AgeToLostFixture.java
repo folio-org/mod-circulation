@@ -52,6 +52,11 @@ public final class AgeToLostFixture {
     this.loanStorageClient = forLoansStorage();
   }
 
+  public AgeToLostResult createAgedToLostLoan(LostItemFeePolicyBuilder builder) {
+    return createAgedToLostLoan(UnaryOperator.identity(), PoliciesToActivate.builder()
+      .lostItemPolicy(lostItemFeePoliciesFixture.create(builder)));
+  }
+
   public AgeToLostResult createAgedToLostLoan() {
     return createAgedToLostLoan(UnaryOperator.identity(), PoliciesToActivate.builder()
     .lostItemPolicy(lostItemFeePoliciesFixture.ageToLostAfterOneMinute()));
