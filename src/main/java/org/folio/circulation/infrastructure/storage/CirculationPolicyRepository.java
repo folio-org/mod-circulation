@@ -98,7 +98,7 @@ public abstract class CirculationPolicyRepository<T> {
     String patronGroupId = user.getPatronGroupId();
 
     MultiMap params = MultiMap.caseInsensitiveMultiMap();
-    params.add(ITEM_TYPE_ID_NAME, item.getItemId());
+    params.add(ITEM_TYPE_ID_NAME, item.getMaterialTypeId());
     params.add(LOAN_TYPE_ID_NAME, item.determineLoanTypeForItem());
     params.add(PATRON_TYPE_ID_NAME, user.getPatronGroupId());
     params.add(LOCATION_ID_NAME, item.getLocationId());
