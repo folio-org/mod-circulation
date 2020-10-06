@@ -1,5 +1,7 @@
 package api.requests.scenarios;
 
+import static api.support.PubsubPublisherTestUtils.assertThatPublishedNoticeLogRecordEventsCountIsEqualTo;
+import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
 import static java.util.Collections.singletonList;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_TYPE;
 import static org.hamcrest.Matchers.is;
@@ -13,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import api.support.fakes.FakePubSub;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.notice.NoticeEventType;
@@ -47,6 +50,7 @@ public class MoveRequestPolicyTests extends APITests {
   @BeforeClass
   public static void setUpBeforeClass() {
     clock = Clock.fixed(Instant.now(), ZoneOffset.UTC);
+    FakePubSub.clearPublishedEvents();
   }
 
   @Before
@@ -169,6 +173,7 @@ public class MoveRequestPolicyTests extends APITests {
       interestingTimes, jessica, DateTime.now(DateTimeZone.UTC), RequestType.RECALL.getValue());
 
     assertThat(patronNoticesClient.getAll().size(), is(0));
+    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
 
     // move jessica's recall request from interestingTimes to smallAngryPlanet
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
@@ -194,6 +199,8 @@ public class MoveRequestPolicyTests extends APITests {
 
     assertThat("move recall request notice has not been sent",
       patronNoticesClient.getAll().size(), is(2));
+    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+    assertThatPublishedLogRecordEventsAreValid();
   }
 
   @Test
@@ -231,6 +238,8 @@ public class MoveRequestPolicyTests extends APITests {
       interestingTimes, jessica, DateTime.now(DateTimeZone.UTC), RequestType.RECALL.getValue());
 
     assertThat(patronNoticesClient.getAll().size(), is(1));
+    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+    assertThatPublishedLogRecordEventsAreValid();
 
     // move jessica's recall request from interestingTimes to smallAngryPlanet
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
@@ -254,6 +263,8 @@ public class MoveRequestPolicyTests extends APITests {
 
     assertThat("move recall request unexpectedly sent another patron notice",
       patronNotices.size(), is(2));
+    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+    assertThatPublishedLogRecordEventsAreValid();
   }
 
   @Test
@@ -294,6 +305,7 @@ public class MoveRequestPolicyTests extends APITests {
       interestingTimes, jessica, DateTime.now(DateTimeZone.UTC), RequestType.RECALL.getValue());
 
     assertThat(patronNoticesClient.getAll().size(), is(0));
+    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
 
     // move jessica's recall request from interestingTimes to smallAngryPlanet
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
@@ -319,6 +331,8 @@ public class MoveRequestPolicyTests extends APITests {
 
     assertThat("move recall request notice has not been sent",
       patronNoticesClient.getAll().size(), is(2));
+    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+    assertThatPublishedLogRecordEventsAreValid();
   }
 
   @Test
@@ -372,6 +386,8 @@ public class MoveRequestPolicyTests extends APITests {
       interestingTimes, jessica, DateTime.now(DateTimeZone.UTC), RequestType.RECALL.getValue());
 
     assertThat(patronNoticesClient.getAll().size(), is(1));
+    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+    assertThatPublishedLogRecordEventsAreValid();
 
     // move jessica's recall request from interestingTimes to smallAngryPlanet
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
@@ -393,6 +409,8 @@ public class MoveRequestPolicyTests extends APITests {
 
     assertThat("move recall request unexpectedly sent another patron notice",
       patronNoticesClient.getAll().size(), is(2));
+    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+    assertThatPublishedLogRecordEventsAreValid();
   }
 
   private void setRules(String rules) {

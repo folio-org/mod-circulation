@@ -144,10 +144,10 @@ public class CheckOutByBarcodeResource extends Resource {
 
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
 
+    final EventPublisher eventPublisher = new EventPublisher(routingContext);
+
     final PatronActionSessionService patronActionSessionService =
       PatronActionSessionService.using(clients);
-
-    final EventPublisher eventPublisher = new EventPublisher(routingContext);
 
     ofAsync(() -> new LoanAndRelatedRecords(request.toLoan()))
       .thenApply(servicePointOfCheckoutPresentValidator::refuseCheckOutWhenServicePointIsNotPresent)

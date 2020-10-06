@@ -60,9 +60,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
   }
 
   @Test
-  public void allowRenewalLoanByBarcodeWhenProfileIsRollingFirstRequestInQueueIsHoldAndRenewingIsAllowedInLoanPolicy()
-    throws InterruptedException, TimeoutException, ExecutionException {
-
+  public void allowRenewalLoanByBarcodeWhenProfileIsRollingFirstRequestInQueueIsHoldAndRenewingIsAllowedInLoanPolicy() {
     final DateTime expectedDueDate = DateTime.now(DateTimeZone.UTC)
       .plusWeeks(DEFAULT_HOLD_RENEWAL_PERIOD);
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
@@ -89,9 +87,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
   }
 
   @Test
-  public void forbidRenewalLoanByBarcodeWhenProfileIsRollingFirstRequestInQueueIsHoldAndRenewingIsDisallowedInLoanPolicy()
-    throws InterruptedException, TimeoutException, ExecutionException {
-
+  public void forbidRenewalLoanByBarcodeWhenProfileIsRollingFirstRequestInQueueIsHoldAndRenewingIsDisallowedInLoanPolicy() {
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
 
@@ -183,9 +179,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
 
 
   @Test
-  public void forbidRenewalLoanByBarcodeWhenLoanProfileIsFixedFirstRequestInQueueIsHoldAndRenewingIsDisallowedInLoanPolicy()
-    throws InterruptedException, TimeoutException, ExecutionException {
-
+  public void forbidRenewalLoanByBarcodeWhenLoanProfileIsFixedFirstRequestInQueueIsHoldAndRenewingIsDisallowedInLoanPolicy() {
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
 
@@ -227,9 +221,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
   }
 
   @Test
-  public void allowRenewalLoanByIdWhenProfileIsRollingFirstRequestInQueueIsHoldAndRenewingIsAllowedInLoanPolicy()
-    throws InterruptedException, TimeoutException, ExecutionException {
-
+  public void allowRenewalLoanByIdWhenProfileIsRollingFirstRequestInQueueIsHoldAndRenewingIsAllowedInLoanPolicy() {
     final DateTime expectedDueDate = DateTime.now(DateTimeZone.UTC)
       .plusWeeks(DEFAULT_HOLD_RENEWAL_PERIOD);
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
@@ -257,9 +249,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
   }
 
   @Test
-  public void forbidRenewalLoanByIdWhenLoanProfileIsRollingFirstRequestInQueueIsHoldAndRenewingIsDisallowedInLoanPolicy()
-    throws InterruptedException, TimeoutException, ExecutionException {
-
+  public void forbidRenewalLoanByIdWhenLoanProfileIsRollingFirstRequestInQueueIsHoldAndRenewingIsDisallowedInLoanPolicy() {
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
 
@@ -281,9 +271,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
   }
 
   @Test
-  public void forbidRenewalLoanByIdWhenLoanProfileIsFixedFirstRequestInQueueIsHoldAndRenewingIsDisallowedInLoanPolicy()
-    throws InterruptedException, TimeoutException, ExecutionException {
-
+  public void forbidRenewalLoanByIdWhenLoanProfileIsFixedFirstRequestInQueueIsHoldAndRenewingIsDisallowedInLoanPolicy() {
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
 
@@ -455,7 +443,8 @@ public class RequestsAPILoanRenewalTests extends APITests {
         "reached number of renewals limit," +
         "renewal date falls outside of the date ranges in the loan policy, " +
         "items cannot be renewed when there is an active recall request, " +
-        "item is Declared lost, item is Claimed returned, item is Aged to lost"))));
+        "item is Declared lost, item is Claimed returned, item is Aged to lost, " +
+        "renewal would not change the due date"))));
   }
 
   @Test

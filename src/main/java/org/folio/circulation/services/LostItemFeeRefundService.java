@@ -44,21 +44,21 @@ public class LostItemFeeRefundService {
     CheckInContext checkInContext) {
 
     return refundLostItemFees(forCheckIn(checkInContext))
-      .thenApply(r -> r.map(checkInContext::withLostItemFeesRefundedOrCancelled));
+      .thenApply(r -> r.map(context -> checkInContext.withLoan(context.getLoan())));
   }
 
   public CompletableFuture<Result<RenewalContext>> refundLostItemFees(
     RenewalContext renewalContext, String currentServicePointId) {
 
     return refundLostItemFees(forRenewal(renewalContext, currentServicePointId))
-      .thenApply(r -> r.map(renewalContext::withLostItemFeesRefundedOrCancelled));
+      .thenApply(r -> r.map(context -> renewalContext.withLoan(context.getLoan())));
   }
 
-  private CompletableFuture<Result<Boolean>> refundLostItemFees(
+  private CompletableFuture<Result<LostItemFeeRefundContext>> refundLostItemFees(
     LostItemFeeRefundContext refundFeeContext) {
 
     if (!refundFeeContext.shouldRefundFeesForItem()) {
-      return completedFuture(succeeded(false));
+      return completedFuture(succeeded(refundFeeContext));
     }
 
     return lookupLoan(succeeded(refundFeeContext))
@@ -68,7 +68,7 @@ public class LostItemFeeRefundService {
 
         if (!lostItemPolicy.shouldRefundFees(context.getItemLostDate())) {
           log.info("Refund interval has exceeded for loan [{}]", context.getLoan().getId());
-          return completedFuture(succeeded(false));
+          return completedFuture(succeeded(context));
         }
 
         return fetchAccountsAndActionsForLoan(contextResult)
@@ -76,9 +76,9 @@ public class LostItemFeeRefundService {
       }));
   }
 
-  private CompletableFuture<Result<Boolean>> refundAccounts(LostItemFeeRefundContext context) {
+  private CompletableFuture<Result<LostItemFeeRefundContext>> refundAccounts(LostItemFeeRefundContext context) {
     return feeFineFacade.refundAndCloseAccounts(context.accountRefundCommands())
-      .thenApply(r -> r.map(notUsed -> context.anyAccountNeedsRefund()));
+      .thenApply(r -> r.map(notUsed -> context));
   }
 
   private CompletableFuture<Result<LostItemFeeRefundContext>> lookupLoan(
