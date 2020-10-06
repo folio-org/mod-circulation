@@ -1,8 +1,16 @@
 package org.folio.circulation.domain.representations.logs;
 
-
 public enum LogEventPayloadField {
-
+  DATE("date"),
+  FEE_FINE_ID("feeFineId"),
+  HOLDINGS_RECORD_ID("holdingsRecordId"),
+  INSTANCE_ID("instanceId"),
+  ITEMS("items"),
+  NOTICE_POLICY_ID("noticePolicyId"),
+  TEMPLATE_ID("templateId"),
+  TRIGGERING_EVENT("triggeringEvent"),
+  PAYLOAD("payload"),
+  REQ_ID("requestId"),
   LOG_EVENT_TYPE("logEventType"),
   CLAIMED_RETURNED_RESOLUTION("claimedReturnedResolution"),
   SERVICE_POINT_ID("servicePointId"),
@@ -36,5 +44,4 @@ public enum LogEventPayloadField {
   public String value() {
     return this.value;
   }
-
 }

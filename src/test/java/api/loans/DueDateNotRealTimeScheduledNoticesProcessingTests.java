@@ -1,5 +1,7 @@
 package api.loans;
 
+import static api.support.PubsubPublisherTestUtils.assertThatPublishedNoticeLogRecordEventsCountIsEqualTo;
+import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
 import static api.support.fixtures.TemplateContextMatchers.getLoanPolicyContextMatchersForUnlimitedRenewals;
 import static api.support.fixtures.TemplateContextMatchers.getMultipleLoansContextMatcher;
 import static api.support.matchers.JsonObjectMatcher.toStringMatcher;
@@ -86,6 +88,8 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
     assertThat(scheduledNoticesClient.getAll(), hasSize(0));
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
     assertThat(sentNotices, hasSize(2));
+    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+    assertThatPublishedLogRecordEventsAreValid();
 
     Matcher<? super String> loanPolicyMatcher = toStringMatcher(getLoanPolicyContextMatchersForUnlimitedRenewals());
 
@@ -156,6 +160,8 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
       .allMatch(newNextRunTime::isEqual));
 
     assertThat(patronNoticesClient.getAll(), hasSize(1));
+    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+    assertThatPublishedLogRecordEventsAreValid();
   }
 
   @Test
@@ -195,6 +201,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
     scheduledNoticeProcessingClient.runDueDateNotRealTimeNoticesProcessing(nextDayAfterBeforeNoticeShouldBeSend);
 
     assertThat(patronNoticesClient.getAll(), hasSize(0));
+    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
   }
 
   @Test
@@ -287,6 +294,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
 
     assertThat(scheduledNoticesClient.getAll(), hasSize(0));
     assertThat(patronNoticesClient.getAll(), hasSize(0));
+    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
   }
 
   @Test
@@ -325,6 +333,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
 
     assertThat(scheduledNoticesClient.getAll(), hasSize(0));
     assertThat(patronNoticesClient.getAll(), hasSize(0));
+    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
   }
 
   @Test
@@ -363,6 +372,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
 
     assertThat(scheduledNoticesClient.getAll(), hasSize(0));
     assertThat(patronNoticesClient.getAll(), hasSize(0));
+    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
   }
 
   @Test
@@ -419,6 +429,8 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
 
     assertThat(scheduledNoticesClient.getAll(), hasSize(0));
     assertThat(sentNotices, hasSize(2));
+    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+    assertThatPublishedLogRecordEventsAreValid();
 
     Matcher<? super String> loanPolicyMatcher = toStringMatcher(getLoanPolicyContextMatchersForUnlimitedRenewals());
 
@@ -476,6 +488,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
 
     assertThat(scheduledNoticesClient.getAll(), hasSize(0));
     assertThat(patronNoticesClient.getAll(), hasSize(0));
+    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
   }
 
   @Test

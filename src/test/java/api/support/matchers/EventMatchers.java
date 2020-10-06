@@ -11,6 +11,7 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getBooleanP
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.core.Is.is;
 
+import io.vertx.core.json.JsonArray;
 import org.hamcrest.Matcher;
 
 import io.vertx.core.json.JsonObject;
@@ -102,4 +103,24 @@ public class EventMatchers {
       isLoanDueDateChangedEventType());
   }
 
+  public static Matcher<JsonObject> isValidNoticeLogRecordEvent(JsonObject notice) {
+    return allOf(JsonObjectMatcher.allOfPaths(
+      hasJsonPath("eventPayload", allOf(
+        hasJsonPath("logEventType", is("NOTICE")),
+        hasJsonPath("userBarcode", is(notice.getString("userBarcode"))),
+        hasJsonPath("userId", is(notice.getString("userId"))),
+        hasJsonPath("items", allOf(
+          hasJsonPath("itemId", is(notice.getString("itemId"))),
+          hasJsonPath("itemBarcode", is(notice.getString("barcode"))),
+          hasJsonPath("instanceId", is(notice.getString("instanceId"))),
+          hasJsonPath("holdingsRecordId", is(notice.getString("holdingsRecordId"))),
+          hasJsonPath("servicePointId", is(notice.getString("servicePointId"))),
+          hasJsonPath("templateId", is(notice.getString("templateId"))),
+          hasJsonPath("triggeringEvent", is(notice.getString("triggeringEvent"))),
+          hasJsonPath("noticePolicyId", is(notice.getString("noticePolicyId")))
+        )),
+        hasJsonPath("date", is(notice.getString("date")))
+      ))),
+      isLogRecordEventType());
+  }
 }

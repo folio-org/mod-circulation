@@ -156,9 +156,9 @@ public class LoanCollectionResource extends CollectionResource {
     final DueDateScheduledNoticeService scheduledNoticeService
         = DueDateScheduledNoticeService.using(clients);
 
-    final LoanNoticeSender loanNoticeSender = LoanNoticeSender.using(clients);
-
     final EventPublisher eventPublisher = new EventPublisher(routingContext);
+
+    final LoanNoticeSender loanNoticeSender = LoanNoticeSender.using(clients);
 
     completedFuture(succeeded(new LoanAndRelatedRecords(loan)))
       .thenCompose(larrResult ->
