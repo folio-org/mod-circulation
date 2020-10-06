@@ -1,6 +1,10 @@
 package org.folio.circulation.resources.renewal;
 
+import static api.support.matchers.ResultMatchers.hasValidationError;
+import static api.support.matchers.ResultMatchers.succeeded;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
+import static api.support.matchers.ValidationErrorMatchers.hasMessage;
+import static api.support.matchers.ValidationErrorMatchers.hasMessageContaining;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singleton;
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
@@ -11,9 +15,7 @@ import static org.joda.time.DateTime.now;
 import static org.joda.time.DateTimeZone.UTC;
 import static org.joda.time.Seconds.seconds;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
 
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
@@ -22,7 +24,6 @@ import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.ServerErrorFailure;
-import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
 import org.junit.Test;
@@ -31,6 +32,10 @@ import api.support.builders.LoanPolicyBuilder;
 import io.vertx.core.json.JsonObject;
 
 public class OverrideRenewalStrategyTest {
+  private static final String NEW_DUE_DATE_IS_REQUIRED_ERROR =
+    "New due date is required when renewal would not change the due date";
+  private static final String OVERRIDE_DUE_DATE_MUST_BE_SPECIFIED_ERROR =
+    "New due date must be specified when due date calculation fails";
 
   @Test
   public void shouldUseOverrideDateWhenLoanIsNotLoanable() {
@@ -64,8 +69,7 @@ public class OverrideRenewalStrategyTest {
 
     final Result<Loan> renewedLoan = renew(LoanPolicy.from(loanPolicyJson), null);
 
-    assertValidationError(renewedLoan,
-      "New due date must be specified when due date calculation fails");
+    assertThat(renewedLoan, hasValidationError(hasMessage(OVERRIDE_DUE_DATE_MUST_BE_SPECIFIED_ERROR)));
   }
 
   @Test
@@ -76,8 +80,7 @@ public class OverrideRenewalStrategyTest {
 
     final Result<Loan> renewedLoan = renew(LoanPolicy.from(loanPolicyJson), null);
 
-    assertValidationError(renewedLoan,
-      "New due date must be specified when due date calculation fails");
+    assertThat(renewedLoan, hasValidationError(hasMessage(OVERRIDE_DUE_DATE_MUST_BE_SPECIFIED_ERROR)));
   }
 
   @Test
@@ -101,8 +104,7 @@ public class OverrideRenewalStrategyTest {
 
     final Result<Loan> renewedLoan = renew(LoanPolicy.from(loanPolicyJson), null);
 
-    assertValidationError(renewedLoan,
-      "New due date must be specified when due date calculation fails");
+    assertThat(renewedLoan, hasValidationError(hasMessage(OVERRIDE_DUE_DATE_MUST_BE_SPECIFIED_ERROR)));
   }
 
   @Test
@@ -147,7 +149,7 @@ public class OverrideRenewalStrategyTest {
 
     final Result<Loan> renewedLoan = renew(loan, null);
 
-    assertOverrideDateIsRequiredFailure(renewedLoan);
+    assertThat(renewedLoan, hasValidationError(hasMessage(NEW_DUE_DATE_IS_REQUIRED_ERROR)));
   }
 
   @Test
@@ -166,7 +168,7 @@ public class OverrideRenewalStrategyTest {
 
     final Result<Loan> renewedLoan = renewWithRecall(loan, null);
 
-    assertOverrideDateIsRequiredFailure(renewedLoan);
+    assertThat(renewedLoan, hasValidationError(hasMessage(NEW_DUE_DATE_IS_REQUIRED_ERROR)));
   }
 
   @Test
@@ -199,7 +201,7 @@ public class OverrideRenewalStrategyTest {
 
     final Result<Loan> renewedLoan = renew(loan, null);
 
-    assertOverrideDateIsRequiredFailure(renewedLoan);
+    assertThat(renewedLoan, hasValidationError(hasMessage(NEW_DUE_DATE_IS_REQUIRED_ERROR)));
   }
 
   @Test
@@ -230,7 +232,7 @@ public class OverrideRenewalStrategyTest {
 
     final Result<Loan> renewedLoan = renew(loan, null);
 
-    assertOverrideDateIsRequiredFailure(renewedLoan);
+    assertThat(renewedLoan, hasValidationError(hasMessage(NEW_DUE_DATE_IS_REQUIRED_ERROR)));
   }
 
   @Test
@@ -239,8 +241,8 @@ public class OverrideRenewalStrategyTest {
 
     final Result<Loan> renewedLoan = renew(loan, now(UTC).plusDays(9));
 
-    assertValidationError(renewedLoan,
-      "Override renewal does not match any of expected cases");
+    assertThat(renewedLoan, hasValidationError(
+      hasMessageContaining("Override renewal does not match any of expected cases")));
   }
 
   @Test
@@ -250,7 +252,7 @@ public class OverrideRenewalStrategyTest {
 
     final Result<Loan> renewedLoan = renew(loan, overrideDate);
 
-    assertValidationError(renewedLoan, "renewal would not change the due date");
+    assertThat(renewedLoan, hasValidationError(hasMessage("renewal would not change the due date")));
   }
 
   private LoanPolicyBuilder rollingPolicy() {
@@ -327,35 +329,12 @@ public class OverrideRenewalStrategyTest {
   }
 
   private void assertDueDate(DateTime expected, Result<Loan> actual) {
-    assertTrue(actual.succeeded());
-    assertNotNull(actual.value());
-    assertNotNull(actual.value().getDueDate());
-
+    assertThat(actual, succeeded());
     assertEquals(expected.getMillis(), actual.value().getDueDate().getMillis());
   }
 
   private void assertDueDateWithinOneSecondAfter(DateTime after, Result<Loan> actual) {
-    assertTrue(actual.succeeded());
-    assertNotNull(actual.value());
-    assertNotNull(actual.value().getDueDate());
-
+    assertThat(actual, succeeded());
     assertThat(actual.value().getDueDate().toString(), withinSecondsAfter(seconds(1), after));
-  }
-
-  private void assertValidationError(Result<Loan> renewResult, String expectedMessage) {
-    assertTrue(renewResult.failed());
-    assertTrue(renewResult.cause() instanceof ValidationErrorFailure);
-
-    final ValidationErrorFailure failure = (ValidationErrorFailure) renewResult.cause();
-    if (!failure.hasErrorWithReason(expectedMessage)) {
-      System.out.println("Expected: " + expectedMessage);
-      System.out.println("Actual: " + failure.getErrors().iterator().next().getMessage());
-    }
-    assertTrue(failure.toString().contains(expectedMessage));
-  }
-
-  private void assertOverrideDateIsRequiredFailure(Result<Loan> renewResult) {
-    assertValidationError(renewResult,
-      "New due date is required when renewal would not change the due date");
   }
 }
