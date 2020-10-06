@@ -39,6 +39,8 @@ public class CheckInByBarcodeResource extends Resource {
     final Result<CheckInByBarcodeRequest> checkInRequestResult
       = CheckInByBarcodeRequest.from(routingContext.getBodyAsJson());
 
+    final EventPublisher eventPublisher = new EventPublisher(routingContext);
+
     final CheckInProcessAdapter processAdapter = CheckInProcessAdapter.newInstance(clients);
 
     final RequestScheduledNoticeService requestScheduledNoticeService =
@@ -46,8 +48,6 @@ public class CheckInByBarcodeResource extends Resource {
 
     final PatronActionSessionService patronActionSessionService =
       PatronActionSessionService.using(clients);
-
-    final EventPublisher eventPublisher = new EventPublisher(routingContext);
 
     refuseWhenLoggedInUserNotPresent(context)
       .next(notUsed -> checkInRequestResult)
@@ -88,7 +88,7 @@ public class CheckInByBarcodeResource extends Resource {
       .thenComposeAsync(r -> r.after(processAdapter::refundLostItemFees))
       .thenComposeAsync(r -> r.after(
         records -> processAdapter.createOverdueFineIfNecessary(records, context)))
-      .thenComposeAsync(r -> r.after(eventPublisher::publishItemCheckedInEvent))
+      .thenComposeAsync(r -> r.after(eventPublisher::publishItemCheckedInEvents))
       .thenApply(r -> r.next(requestScheduledNoticeService::rescheduleRequestNotices))
       .thenApply(r -> r.map(CheckInByBarcodeResponse::fromRecords))
       .thenApply(r -> r.map(CheckInByBarcodeResponse::toHttpResponse))

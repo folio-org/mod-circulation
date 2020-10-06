@@ -1,9 +1,6 @@
 package org.folio.circulation.services;
 
-import static java.util.Collections.emptyList;
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_PROCESSING_FEE_TYPE;
-import static org.folio.circulation.domain.ItemStatus.AGED_TO_LOST;
-import static org.folio.circulation.domain.ItemStatus.DECLARED_LOST;
 import static org.folio.circulation.domain.ItemStatus.LOST_AND_PAID;
 
 import java.util.Collection;
@@ -33,17 +30,23 @@ final class LostItemFeeRefundContext {
   private final String staffUserId;
   private final String servicePointId;
   private final Loan loan;
-  private final Collection<Account> accounts;
-  private final LostItemPolicy lostItemPolicy;
 
   private Collection<Account> accountsNeedingRefunds() {
-    if (!lostItemPolicy.isRefundProcessingFeeWhenReturned()) {
-      return accounts.stream()
+    if (!getLostItemPolicy().isRefundProcessingFeeWhenReturned()) {
+      return loan.getAccounts().stream()
         .filter(account -> !account.getFeeFineType().equals(LOST_ITEM_PROCESSING_FEE_TYPE))
         .collect(Collectors.toList());
     }
 
-    return accounts;
+    return loan.getAccounts();
+  }
+
+  LostItemFeeRefundContext withAccounts(Collection<Account> accounts) {
+    return withLoan(loan.withAccounts(accounts));
+  }
+
+  LostItemFeeRefundContext withLostItemPolicy(LostItemPolicy lostItemPolicy) {
+    return withLoan(loan.withLostItemPolicy(lostItemPolicy));
   }
 
   List<RefundAccountCommand> accountRefundCommands() {
@@ -52,24 +55,8 @@ final class LostItemFeeRefundContext {
       .collect(Collectors.toList());
   }
 
-  boolean anyAccountNeedsRefund() {
-    return !accountsNeedingRefunds().isEmpty();
-  }
-
   DateTime getItemLostDate() {
-    if (initialItemStatus == DECLARED_LOST) {
-      return loan.getDeclareLostDateTime();
-    }
-
-    if (initialItemStatus == LOST_AND_PAID) {
-      return loan.getDeclareLostDateTime();
-    }
-
-    if (initialItemStatus == AGED_TO_LOST) {
-      return loan.getAgedToLostDateTime();
-    }
-
-    return null;
+    return loan.getLostDate();
   }
 
   boolean shouldRefundFeesForItem() {
@@ -80,16 +67,19 @@ final class LostItemFeeRefundContext {
     return loan != null;
   }
 
+  LostItemPolicy getLostItemPolicy() {
+    return loan.getLostItemPolicy();
+  }
+
   public static LostItemFeeRefundContext forCheckIn(CheckInContext context) {
     return new LostItemFeeRefundContext(context.getItemStatusBeforeCheckIn(),
       context.getItem().getItemId(), context.getLoggedInUserId(),
-      context.getCheckInServicePointId().toString(), context.getLoan(),
-      emptyList(), null);
+      context.getCheckInServicePointId().toString(), context.getLoan());
   }
 
   public static LostItemFeeRefundContext forRenewal(RenewalContext context, String servicePointId) {
     return new LostItemFeeRefundContext(context.getItemStatusBeforeRenewal(),
       context.getLoan().getItemId(), context.getLoggedInUserId(),
-      servicePointId, context.getLoan(), emptyList(), null);
+      servicePointId, context.getLoan());
   }
 }

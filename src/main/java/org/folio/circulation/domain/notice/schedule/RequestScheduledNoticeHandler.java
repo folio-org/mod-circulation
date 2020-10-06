@@ -5,10 +5,14 @@ import static org.folio.circulation.domain.notice.NoticeTiming.UPON_AT;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
+import org.folio.circulation.domain.representations.logs.NoticeLogContext;
+import org.folio.circulation.domain.representations.logs.NoticeLogContextItem;
+import org.folio.circulation.infrastructure.storage.notices.PatronNoticePolicyRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.domain.notice.NoticeTiming;
 import org.folio.circulation.domain.notice.PatronNoticeService;
@@ -27,20 +31,24 @@ public class RequestScheduledNoticeHandler {
     return new RequestScheduledNoticeHandler(
       RequestRepository.using(clients, true),
       PatronNoticeService.using(clients),
-      ScheduledNoticesRepository.using(clients));
+      ScheduledNoticesRepository.using(clients),
+      new PatronNoticePolicyRepository(clients));
   }
 
   private RequestRepository requestRepository;
   private PatronNoticeService patronNoticeService;
   private ScheduledNoticesRepository scheduledNoticesRepository;
+  private PatronNoticePolicyRepository noticePolicyRepository;
 
   private RequestScheduledNoticeHandler(RequestRepository requestRepository,
                                         PatronNoticeService patronNoticeService,
-                                        ScheduledNoticesRepository scheduledNoticesRepository) {
+                                        ScheduledNoticesRepository scheduledNoticesRepository,
+                                        PatronNoticePolicyRepository noticePolicyRepository) {
 
     this.requestRepository = requestRepository;
     this.patronNoticeService = patronNoticeService;
     this.scheduledNoticesRepository = scheduledNoticesRepository;
+    this.noticePolicyRepository = noticePolicyRepository;
   }
 
   public CompletableFuture<Result<Collection<ScheduledNotice>>> handleNotices(Collection<ScheduledNotice> scheduledNotices) {
@@ -68,8 +76,16 @@ public class RequestScheduledNoticeHandler {
 
     JsonObject requestNoticeContext = TemplateContextUtil.createRequestNoticeContext(request);
 
-    return patronNoticeService.acceptScheduledNoticeEvent(
-      notice.getConfiguration(), relatedRecords.getUserId(), requestNoticeContext)
+    NoticeLogContextItem logContextItem = NoticeLogContextItem.from(request)
+      .withTemplateId(notice.getConfiguration().getTemplateId())
+      .withTriggeringEvent(notice.getTriggeringEvent().getRepresentation());
+
+    return noticePolicyRepository.lookupPolicyId(request.getItem(), request.getRequester())
+      .thenCompose(r -> r.after(policy -> patronNoticeService.acceptScheduledNoticeEvent(
+        notice.getConfiguration(), relatedRecords.getUserId(), requestNoticeContext,
+        new NoticeLogContext().withUser(request.getRequester())
+          .withRequestId(request.getId())
+          .withItems(Collections.singletonList(logContextItem.withNoticePolicyId(policy.getPolicyId()))))))
       .thenApply(r -> r.map(v -> relatedRecords));
   }
 

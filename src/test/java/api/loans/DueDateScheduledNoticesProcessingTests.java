@@ -1,5 +1,7 @@
 package api.loans;
 
+import static api.support.PubsubPublisherTestUtils.assertThatPublishedNoticeLogRecordEventsCountIsEqualTo;
+import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
 import static api.support.fixtures.ItemExamples.basedUponSmallAngryPlanet;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.ScheduledNoticeMatchers.hasScheduledLoanNotice;
@@ -23,6 +25,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import api.support.fakes.FakePubSub;
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.policy.Period;
 import org.hamcrest.Matcher;
@@ -72,6 +75,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
 
   @Before
   public void beforeEach() {
+    FakePubSub.clearPublishedEvents();
     setUpNoticePolicy();
 
     ItemBuilder itemBuilder = basedUponSmallAngryPlanet(
@@ -184,6 +188,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
     checkInFixture.checkInByBarcode(item);
     //Clear sent notices again
     patronNoticesClient.deleteAll();
+    FakePubSub.clearPublishedEvents();
 
     //Run after loan is closed
     scheduledNoticeProcessingClient.runDueDateNoticesProcessing(
@@ -488,6 +493,8 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
     assertThat(sentNotices, hasSize(expectedTemplateIds.length));
     assertThat(sentNotices, hasItems(matchers));
+    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+    assertThatPublishedLogRecordEventsAreValid();
   }
 
   private List<JsonObject> createNoticesOverTime(

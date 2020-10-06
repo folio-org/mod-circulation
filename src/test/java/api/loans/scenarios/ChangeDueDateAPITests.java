@@ -1,5 +1,7 @@
 package api.loans.scenarios;
 
+import static api.support.PubsubPublisherTestUtils.assertThatPublishedNoticeLogRecordEventsCountIsEqualTo;
+import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
 import static api.support.fixtures.TemplateContextMatchers.getItemContextMatchers;
 import static api.support.fixtures.TemplateContextMatchers.getLoanContextMatchers;
 import static api.support.fixtures.TemplateContextMatchers.getLoanPolicyContextMatchers;
@@ -238,6 +240,8 @@ public class ChangeDueDateAPITests extends APITests {
 
     assertThat(sentNotices, hasItems(
       hasEmailNoticeProperties(steve.getId(), templateId, matchers)));
+    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+    assertThatPublishedLogRecordEventsAreValid();
   }
 
   @Test
@@ -250,13 +254,13 @@ public class ChangeDueDateAPITests extends APITests {
     Response response = loansClient.getById(loan.getId());
     JsonObject updatedLoan = response.getJson();
 
-    // There should be two events published - first one for "check out",
-    // second one for "change due date"
+    // There should be three events published - first one for "check out",
+    // second one for "log event" and third one for "change due date"
     List<JsonObject> publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(2));
+      .until(FakePubSub::getPublishedEvents, hasSize(3));
 
-    JsonObject event = publishedEvents.get(1);
+    JsonObject event = publishedEvents.get(2);
 
     assertThat(event, isValidLoanDueDateChangedEvent(updatedLoan));
   }

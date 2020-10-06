@@ -1,5 +1,7 @@
 package api.loans;
 
+import static api.support.PubsubPublisherTestUtils.assertThatPublishedNoticeLogRecordEventsCountIsEqualTo;
+import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
 import static api.support.builders.FixedDueDateSchedule.forDay;
 import static api.support.builders.FixedDueDateSchedule.todayOnly;
 import static api.support.builders.FixedDueDateSchedule.wholeMonth;
@@ -1324,6 +1326,8 @@ public abstract class RenewalAPITests extends APITests {
     MatcherAssert.assertThat(sentNotices,
       hasItems(
         hasEmailNoticeProperties(steve.getId(), renewalTemplateId, noticeContextMatchers)));
+    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+    assertThatPublishedLogRecordEventsAreValid();
   }
 
   @Test
@@ -1452,13 +1456,13 @@ public abstract class RenewalAPITests extends APITests {
 
     final JsonObject renewedLoan = renew(smallAngryPlanet, jessica).getJson();
 
-    // There should be two events published - first one for "check out",
-    // second one for "change due date"
+    // There should be three events published - first for "check out",
+    // second one for log event and third for "change due date"
     List<JsonObject> publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(2));
+      .until(FakePubSub::getPublishedEvents, hasSize(3));
 
-    JsonObject event = publishedEvents.get(1);
+    JsonObject event = publishedEvents.get(2);
 
     assertThat(event, isValidLoanDueDateChangedEvent(renewedLoan));
   }
