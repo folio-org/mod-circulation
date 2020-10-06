@@ -2,6 +2,7 @@ package org.folio.circulation.domain.notice.session;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.toList;
 import static org.folio.circulation.domain.notice.TemplateContextUtil.createLoanNoticeContextWithoutUser;
 import static org.folio.circulation.domain.notice.TemplateContextUtil.createUserContext;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
@@ -11,6 +12,7 @@ import static org.folio.circulation.support.results.ResultBinding.mapResult;
 import static org.folio.circulation.support.http.client.PageLimit.limit;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
@@ -24,8 +26,9 @@ import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.User;
+import org.folio.circulation.domain.representations.logs.NoticeLogContext;
 import org.folio.circulation.domain.notice.NoticeEventType;
-import org.folio.circulation.domain.notice.PatronNoticeEvent;
+import org.folio.circulation.domain.notice.NoticeEventBundle;
 import org.folio.circulation.domain.notice.PatronNoticeEventBuilder;
 import org.folio.circulation.domain.notice.PatronNoticeService;
 import org.folio.circulation.infrastructure.storage.sessions.PatronActionSessionRepository;
@@ -124,13 +127,26 @@ public class PatronActionSessionService {
     //The user is the same for all records
     User user = recordSample.getLoan().getUser();
 
-    List<PatronNoticeEvent> patronNoticeEvents = getPatronNoticeEvents(sessionRecords);
+    List<NoticeEventBundle> bundles = sessionRecords.stream()
+      .map(r -> new NoticeEventBundle(new PatronNoticeEventBuilder()
+        .withItem(r.getLoan().getItem())
+        .withUser(r.getLoan().getUser())
+        .withEventType(actionToEventMap.get(r.getActionType()))
+        .withNoticeContext(createLoanNoticeContextWithoutUser(r.getLoan()))
+        .build(),
+        NoticeLogContext.from(r.getLoan())))
+      .collect(Collectors.toList());
 
-    return patronNoticeService.acceptMultipleNoticeEvent(patronNoticeEvents,
+    return patronNoticeService.acceptMultipleNoticeEvent(bundles,
       loanContexts -> new JsonObject()
         .put("user", createUserContext(user))
-        .put("loans", loanContexts)
-    )
+        .put("loans", loanContexts),
+      logContexts -> new NoticeLogContext()
+        .withUser(user)
+        .withItems(logContexts.stream()
+          .map(NoticeLogContext::getItems)
+          .flatMap(Collection::stream)
+          .collect(toList())))
       .thenApply(mapResult(v -> records));
   }
 
@@ -146,19 +162,6 @@ public class PatronActionSessionService {
 
     return allOf(recordsGroupedByUser, this::sendNotices)
       .thenApply(mapResult(v -> records));
-  }
-
-  private List<PatronNoticeEvent> getPatronNoticeEvents(
-    List<PatronSessionRecord> sessionRecords) {
-
-    return sessionRecords.stream()
-      .map(r -> new PatronNoticeEventBuilder()
-        .withItem(r.getLoan().getItem())
-        .withUser(r.getLoan().getUser())
-        .withEventType(actionToEventMap.get(r.getActionType()))
-        .withNoticeContext(createLoanNoticeContextWithoutUser(r.getLoan()))
-        .build())
-      .collect(Collectors.toList());
   }
 
   public CompletableFuture<Result<CheckInContext>> saveCheckInSessionRecord(CheckInContext context) {

@@ -2,7 +2,6 @@ package org.folio.circulation.resources;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.notice.TemplateContextUtil.createAvailableNoticeContext;
-import static org.folio.circulation.domain.notice.TemplateContextUtil.createLoanNoticeContext;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.Objects;
@@ -10,6 +9,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.commons.lang3.StringUtils;
+import org.folio.circulation.domain.representations.logs.NoticeLogContext;
 import org.folio.circulation.infrastructure.storage.users.AddressTypeRepository;
 import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.Item;
@@ -209,20 +209,6 @@ class CheckInProcessAdapter {
       .thenApply(r -> r.map(firstRequest::withAddressType));
   }
 
-  Result<CheckInContext> sendCheckInPatronNotice(CheckInContext context) {
-    if (context.getLoan() == null) {
-      return succeeded(context);
-    }
-    PatronNoticeEvent noticeEvent = new PatronNoticeEventBuilder()
-      .withItem(context.getItem())
-      .withUser(context.getLoan().getUser())
-      .withEventType(NoticeEventType.CHECK_IN)
-      .withNoticeContext(createLoanNoticeContext(context.getLoan()))
-      .build();
-    patronNoticeService.acceptNoticeEvent(noticeEvent);
-    return succeeded(context);
-  }
-
   Result<CheckInContext> sendItemStatusPatronNotice(CheckInContext context) {
     RequestQueue requestQueue = context.getRequestQueue();
     if (Objects.isNull(requestQueue)) {
@@ -252,7 +238,7 @@ class CheckInProcessAdapter {
         .withEventType(NoticeEventType.AVAILABLE)
         .withNoticeContext(createAvailableNoticeContext(item, user, request))
         .build();
-      patronNoticeService.acceptNoticeEvent(noticeEvent);
+      patronNoticeService.acceptNoticeEvent(noticeEvent, NoticeLogContext.from(item, user, request));
     }
     return succeeded(context);
   }

@@ -1,6 +1,7 @@
 package api.requests;
 
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
+import static api.support.PubsubPublisherTestUtils.assertThatPublishedNoticeLogRecordEventsCountIsEqualTo;
 import static api.support.matchers.EventMatchers.isValidLoanDueDateChangedEvent;
 import static api.support.matchers.EventTypeMatchers.LOAN_DUE_DATE_CHANGED;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
@@ -521,6 +522,7 @@ public class RequestsAPIUpdatingTests extends APITests {
     assertThat(sentNotices,
       hasItems(
         hasEmailNoticeProperties(requester.getId(), requestCancellationTemplateId, noticeContextMatchers)));
+    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
   }
 
   @Test
@@ -579,6 +581,7 @@ public class RequestsAPIUpdatingTests extends APITests {
     assertThat(sentNotices,
       hasItems(
         hasEmailNoticeProperties(requester.getId(), requestCancellationTemplateId, noticeContextMatchers)));
+    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
   }
 
   @Test

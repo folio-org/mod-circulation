@@ -1,6 +1,8 @@
 package api.loans;
 
 import static api.support.APITestContext.getUserId;
+import static api.support.PubsubPublisherTestUtils.assertThatPublishedNoticeLogRecordEventsCountIsEqualTo;
+import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
 import static api.support.fixtures.AddressExamples.SiriusBlack;
 import static api.support.matchers.EventMatchers.isValidCheckInLogEvent;
 import static api.support.matchers.EventMatchers.isValidItemCheckedInEvent;
@@ -493,6 +495,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
 
     TimeUnit.SECONDS.sleep(1);
     assertThat(patronNoticesClient.getAll(), hasSize(0));
+    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
   }
 
   @Test
@@ -532,6 +535,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
     assertThat("Check-in notice shouldn't be sent if item isn't checked-out",
       sentNotices, Matchers.empty());
+    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
   }
 
   @Test
@@ -640,13 +644,18 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(patronNoticesClient::getAll, hasSize(1));
+    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+    assertThatPublishedLogRecordEventsAreValid();
     patronNoticesClient.deleteAll();
+    FakePubSub.clearPublishedEvents();
 
     //Check-in again and verify no notice are sent
     checkInFixture.checkInByBarcode(requestedItem, checkInDate, pickupServicePointId);
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(patronNoticesClient::getAll, empty());
+    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+    assertThatPublishedLogRecordEventsAreValid();
   }
 
   @Test
@@ -1134,6 +1143,8 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     MatcherAssert.assertThat(sentNotices,
       hasItems(
         hasEmailNoticeProperties(requester.getId(), expectedTemplateId, noticeContextMatchers)));
+    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+    assertThatPublishedLogRecordEventsAreValid();
   }
 
   private void verifyCheckInOperationRecorded(UUID itemId, UUID servicePoint) {

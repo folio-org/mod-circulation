@@ -1,6 +1,5 @@
 package org.folio.circulation.domain.representations.logs;
 
-
 public enum LogEventPayloadField {
 
   UPDATED_BY_USER_ID("updatedByUserId"),
@@ -49,5 +48,4 @@ public enum LogEventPayloadField {
   public String value() {
     return this.value;
   }
-
 }

@@ -11,6 +11,8 @@ import static org.folio.circulation.domain.LoanAction.CHANGED_DUE_DATE;
 import static org.folio.circulation.domain.LoanAction.CHECKED_IN;
 import static org.folio.circulation.domain.LoanAction.CHECKED_OUT;
 import static org.folio.circulation.domain.LoanAction.CLOSED_LOAN;
+import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.LOG_EVENT_TYPE;
+import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.PAYLOAD;
 import static org.folio.circulation.domain.representations.logs.CirculationCheckInCheckOutLogEventMapper.mapToCheckInLogEventJson;
 import static org.folio.circulation.domain.representations.logs.CirculationCheckInCheckOutLogEventMapper.mapToCheckOutLogEventJson;
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.LOG_EVENT_TYPE;
@@ -28,12 +30,14 @@ import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.EventType;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
+
 import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.anonymization.LoanAnonymizationRecords;
 import org.folio.circulation.domain.representations.logs.LoanLogContext;
 import org.folio.circulation.domain.representations.logs.LogContextActionResolver;
 import org.folio.circulation.domain.representations.logs.LogEventPayloadType;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
+import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
@@ -251,7 +255,7 @@ public class EventPublisher {
     JsonObject logEventPayload = new JsonObject();
     write(logEventPayload, LOG_EVENT_TYPE.value(), payloadType.value());
     write(logEventPayload, PAYLOAD.value(), context.encode());
-
+    
     return pubSubPublishingService.publishEvent(LOG_RECORD.name(), logEventPayload.encode())
       .thenApply(r -> succeeded(null));
   }

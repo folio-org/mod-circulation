@@ -66,9 +66,9 @@ public class ChangeDueDateResource extends Resource {
     final ItemStatusValidator itemStatusValidator = new ItemStatusValidator(
         ChangeDueDateResource::errorWhenInIncorrectStatus);
 
-    final LoanNoticeSender loanNoticeSender = LoanNoticeSender.using(clients);
-
     final EventPublisher eventPublisher = new EventPublisher(routingContext);
+
+    final LoanNoticeSender loanNoticeSender = LoanNoticeSender.using(clients);
 
     return succeeded(request)
       .after(r -> loanRepository.getById(r.getLoanId()))
