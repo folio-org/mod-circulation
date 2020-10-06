@@ -4,6 +4,8 @@ package org.folio.circulation.support.utils;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.Objects;
+import java.util.stream.Stream;
 
 import org.joda.time.DateTime;
 
@@ -23,5 +25,12 @@ public class DateTimeUtil {
   public static ZonedDateTime toJavaDateTime(DateTime dateTime) {
     return Instant.ofEpochMilli(dateTime.getMillis())
       .atZone(ZoneId.of(dateTime.getZone().getID()));
+  }
+
+  public static DateTime mostRecentDate(DateTime... dates) {
+    return Stream.of(dates)
+      .filter(Objects::nonNull)
+      .max(DateTime::compareTo)
+      .orElse(null);
   }
 }
