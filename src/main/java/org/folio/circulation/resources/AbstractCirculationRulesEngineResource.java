@@ -1,7 +1,5 @@
 package org.folio.circulation.resources;
 
-import static org.apache.commons.lang3.exception.ExceptionUtils.getStackTrace;
-import static org.folio.circulation.support.http.server.ServerErrorResponse.internalError;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.succeeded;
 
@@ -11,7 +9,6 @@ import java.util.concurrent.CompletableFuture;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.rules.CirculationRuleMatch;
 import org.folio.circulation.rules.Drools;
-import org.folio.circulation.rules.Text2Drools;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FetchSingleRecord;

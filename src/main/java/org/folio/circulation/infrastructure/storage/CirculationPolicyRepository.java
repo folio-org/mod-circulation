@@ -15,7 +15,6 @@ import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.User;
-import org.folio.circulation.resources.CirculationRulesProcessor;
 import org.folio.circulation.rules.AppliedRuleConditions;
 import org.folio.circulation.rules.CirculationRuleMatch;
 import org.folio.circulation.rules.Drools;
