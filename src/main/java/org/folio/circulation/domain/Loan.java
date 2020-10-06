@@ -29,12 +29,14 @@ import static org.folio.circulation.domain.representations.LoanProperties.ITEM_L
 import static org.folio.circulation.domain.representations.LoanProperties.LOAN_POLICY_ID;
 import static org.folio.circulation.domain.representations.LoanProperties.LOST_ITEM_HAS_BEEN_BILLED;
 import static org.folio.circulation.domain.representations.LoanProperties.LOST_ITEM_POLICY_ID;
+import static org.folio.circulation.domain.representations.LoanProperties.METADATA;
 import static org.folio.circulation.domain.representations.LoanProperties.OVERDUE_FINE_POLICY_ID;
 import static org.folio.circulation.domain.representations.LoanProperties.PREVIOUS_DUE_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.REASON_TO_OVERRIDE;
 import static org.folio.circulation.domain.representations.LoanProperties.RETURN_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.STATUS;
 import static org.folio.circulation.domain.representations.LoanProperties.SYSTEM_RETURN_DATE;
+import static org.folio.circulation.domain.representations.LoanProperties.UPDATED_BY_USER_ID;
 import static org.folio.circulation.domain.representations.LoanProperties.USER_ID;
 import static org.folio.circulation.support.ClockManager.getClockManager;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
@@ -528,7 +530,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return getDateTimeProperty(representation, DECLARED_LOST_DATE);
   }
 
-  private DateTime getAgedToLostDateTime() {
+  public DateTime getAgedToLostDateTime() {
     return getDateTimePropertyByPath(representation, AGED_TO_LOST_DELAYED_BILLING,
       AGED_TO_LOST_DATE);
   }
@@ -659,5 +661,9 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public DateTime getLostDate() {
     return mostRecentDate(getDeclareLostDateTime(), getAgedToLostDateTime());
+  }
+
+  public String getUpdatedByUserId() {
+    return getNestedStringProperty(representation, METADATA, UPDATED_BY_USER_ID);
   }
 }

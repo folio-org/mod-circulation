@@ -3,6 +3,7 @@ package org.folio.circulation.domain.representations.logs;
 
 public enum LogEventPayloadField {
 
+  UPDATED_BY_USER_ID("updatedByUserId"),
   DESCRIPTION("description"),
   ACTION("action"),
   DATE("date"),

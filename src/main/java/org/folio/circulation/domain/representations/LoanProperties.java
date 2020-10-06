@@ -34,4 +34,6 @@ public class LoanProperties {
   public static final String LOST_ITEM_HAS_BEEN_BILLED = "lostItemHasBeenBilled";
   public static final String DATE_LOST_ITEM_SHOULD_BE_BILLED = "dateLostItemShouldBeBilled";
   public static final String REASON_TO_OVERRIDE = "reasonToOverride";
+  public static final String METADATA = "metadata";
+  public static final String UPDATED_BY_USER_ID = "updatedByUserId";
 }

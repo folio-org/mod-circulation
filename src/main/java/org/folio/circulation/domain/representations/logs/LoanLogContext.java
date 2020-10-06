@@ -10,7 +10,7 @@ import static org.folio.circulation.domain.representations.logs.LogEventPayloadF
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.ITEM_ID;
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.LOAN_ID;
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.SERVICE_POINT_ID;
-import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.SOURCE;
+import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.UPDATED_BY_USER_ID;
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.USER_BARCODE;
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.USER_ID;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
@@ -38,7 +38,7 @@ public class LoanLogContext {
   private String action;
   private DateTime date;
   @Setter private String servicePointId;
-  @Setter private String source;
+  @Setter private String updatedByUserId;
   private String description;
   private String loanId;
 
@@ -49,7 +49,7 @@ public class LoanLogContext {
       .withAction(LogContextActionResolver.resolveAction(loan.getAction()))
       .withDate(DateTime.now())
       .withLoanId(loan.getId());
-    ofNullable(loan.getProxy()).ifPresent(user -> loanLogContext.setSource(user.getPersonalName()));
+    ofNullable(loan.getUpdatedByUserId()).ifPresent(loanLogContext::setUpdatedByUserId);
     ofNullable(loan.getCheckoutServicePointId()).ifPresent(loanLogContext::setServicePointId);
     return loanLogContext;
   }
@@ -81,7 +81,7 @@ public class LoanLogContext {
     write(json, ACTION.value(), action);
     write(json, DATE.value(), date);
     ofNullable(servicePointId).ifPresent(spId -> write(json, SERVICE_POINT_ID.value(), spId));
-    ofNullable(source).ifPresent(source -> write(json, SOURCE.value(), source));
+    ofNullable(updatedByUserId).ifPresent(userId -> write(json, UPDATED_BY_USER_ID.value(), userId));
     write(json, DESCRIPTION.value(), description);
     write(json, LOAN_ID.value(), loanId);
     return json;
