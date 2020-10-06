@@ -39,7 +39,7 @@ public final class RenewalValidator {
   }
 
   public static Result<DateTime> errorWhenEarlierOrSameDueDate(Loan loan, DateTime proposedDueDate) {
-    if (isSameOrBefore(loan, proposedDueDate) && !loan.isDeclaredLost()) {
+    if (isSameOrBefore(loan, proposedDueDate)) {
       return failedValidation(loanPolicyValidationError(loan.getLoanPolicy(),
         RENEWAL_WOULD_NOT_CHANGE_THE_DUE_DATE));
     }
@@ -74,7 +74,7 @@ public final class RenewalValidator {
       "renewal date falls outside of the date ranges in the loan policy, " +
       "items cannot be renewed when there is an active recall request, " +
       DECLARED_LOST_ITEM_RENEWED_ERROR + ", " + CLAIMED_RETURNED_RENEWED_ERROR +
-      ", item is Aged to lost";
+      ", item is Aged to lost, renewal would not change the due date";
 
     return loanPolicyValidationError(loanPolicy, reason);
   }
@@ -82,6 +82,12 @@ public final class RenewalValidator {
   public static ValidationError errorForDueDate() {
     return new ValidationError(
       "New due date must be specified when due date calculation fails",
+      "dueDate", "null");
+  }
+
+  public static ValidationError overrideDueDateIsRequiredError() {
+    return new ValidationError(
+      "New due date is required when renewal would not change the due date",
       "dueDate", "null");
   }
 

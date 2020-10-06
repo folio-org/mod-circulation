@@ -155,7 +155,7 @@ public class ValidationErrorMatchers {
     return new ValidationError(getProperty(representation, "message"), parameters);
   }
 
-  private static List<ValidationError> errorsFromJson(JsonObject representation) {
+  public static List<ValidationError> errorsFromJson(JsonObject representation) {
     return toList(toStream(representation, "errors")
       .map(ValidationErrorMatchers::fromJson));
   }
