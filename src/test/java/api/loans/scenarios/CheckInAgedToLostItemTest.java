@@ -26,7 +26,7 @@ public class CheckInAgedToLostItemTest extends RefundAgedToLostFeesTestBase {
   }
 
   @Test
-  public void canRefundFeesForLostAndPaidItemsThatWasAgedToLost() {
+  public void shouldRefundFeesForLostAndPaidItemsThatWasAgedToLost() {
     final double processingFee = 12.99;
     final double itemFee = 12.99;
 
