@@ -96,10 +96,10 @@ public class LostItemFeeRefundService {
             return noLoanFoundForLostItem(context.getItemId());
           }
 
-          if (loan.getDeclareLostDateTime() == null) {
-            log.error("The last loan [{}] for lost item [{}] is not declared lost",
+          if (loan.getLostDate() == null) {
+            log.error("The last loan [{}] for lost item [{}] is neither aged to lost not declared lost",
               loan.getId(), context.getItemId());
-            return lastLoanForLostItemIsNotDeclaredLost(loan);
+            return lastLoanForLostItemIsNotLost(loan);
           }
 
           log.info("Loan [{}] retrieved for lost item [{}]", loan.getId(), context.getItemId());
@@ -129,14 +129,15 @@ public class LostItemFeeRefundService {
       LostItemFeeRefundContext::withLostItemPolicy);
   }
 
-  private Result<LostItemFeeRefundContext> lastLoanForLostItemIsNotDeclaredLost(Loan loan) {
+  private Result<LostItemFeeRefundContext> lastLoanForLostItemIsNotLost(Loan loan) {
     return failed(singleValidationError(
-      "Last loan for lost item is not declared lost", "loanId", loan.getId()));
+      "Last loan for lost item is neither aged to lost nor declared lost",
+      "loanId", loan.getId()));
   }
 
   private Result<LostItemFeeRefundContext> noLoanFoundForLostItem(String itemId) {
     return failed(singleValidationError(
-      "Item is lost however there is no declared lost loan found",
+      "Item is lost however there is no aged to lost nor declared lost loan found",
       "itemId", itemId));
   }
 }
