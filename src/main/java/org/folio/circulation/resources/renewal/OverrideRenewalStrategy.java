@@ -80,14 +80,7 @@ public class OverrideRenewalStrategy implements RenewalStrategy {
       }
 
       if (loan.isItemLost()) {
-        return processRenewal(newDueDateResult, loan, comment)
-          .map(dueDate -> {
-            if (loan.isAgedToLost()) {
-              loan.removeAgedToLostBillingInfo();
-            }
-
-            return loan.changeItemStatusForItemAndLoan(CHECKED_OUT);
-          });
+        return processRenewal(newDueDateResult, loan, comment);
       }
 
       if (proposedDueDateIsSameOrEarlier(loan, systemDate)) {
@@ -105,13 +98,22 @@ public class OverrideRenewalStrategy implements RenewalStrategy {
     if (overrideDueDate == null) {
       return failedValidation(errorForDueDate());
     }
-    return succeeded(loan.overrideRenewal(overrideDueDate, loan.getLoanPolicyId(), comment));
+    return succeeded(overrideRenewLoan(overrideDueDate, loan, comment));
   }
 
   private Result<Loan> processRenewal(Result<DateTime> calculatedDueDate, Loan loan, String comment) {
     return calculatedDueDate
       .next(dueDate -> errorWhenEarlierOrSameDueDate(loan, dueDate))
-      .map(dueDate -> loan.overrideRenewal(dueDate, loan.getLoanPolicyId(), comment));
+      .map(dueDate -> overrideRenewLoan(dueDate, loan, comment));
+  }
+
+  private Loan overrideRenewLoan(DateTime dueDate, Loan loan, String comment) {
+    if (loan.isAgedToLost()) {
+      loan.removeAgedToLostBillingInfo();
+    }
+
+    return loan.overrideRenewal(dueDate, loan.getLoanPolicyId(), comment)
+      .changeItemStatusForItemAndLoan(CHECKED_OUT);
   }
 
   private Result<DateTime> calculateNewDueDate(DateTime overrideDueDate, Loan loan, DateTime systemDate) {
