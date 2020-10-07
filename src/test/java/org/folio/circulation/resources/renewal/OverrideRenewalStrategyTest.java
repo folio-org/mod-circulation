@@ -1,5 +1,6 @@
 package org.folio.circulation.resources.renewal;
 
+import static api.support.matchers.JsonObjectMatcher.hasNoJsonPath;
 import static api.support.matchers.ResultMatchers.hasValidationError;
 import static api.support.matchers.ResultMatchers.succeeded;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
@@ -11,6 +12,7 @@ import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
 import static org.folio.circulation.domain.policy.Period.weeks;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.json.JsonPropertyWriter.writeByPath;
+import static org.hamcrest.Matchers.allOf;
 import static org.joda.time.DateTime.now;
 import static org.joda.time.DateTimeZone.UTC;
 import static org.joda.time.Seconds.seconds;
@@ -47,6 +49,7 @@ public class OverrideRenewalStrategyTest {
     final Result<Loan> renewedLoan = renew(LoanPolicy.from(loanPolicyJson), overrideDate);
 
     assertDueDate(overrideDate, renewedLoan);
+    assertEquals(CHECKED_OUT, renewedLoan.value().getItem().getStatus());
   }
 
   @Test
@@ -59,6 +62,7 @@ public class OverrideRenewalStrategyTest {
     final Result<Loan> renewedLoan = renew(LoanPolicy.from(loanPolicyJson), overrideDate);
 
     assertDueDate(overrideDate, renewedLoan);
+    assertEquals(CHECKED_OUT, renewedLoan.value().getItem().getStatus());
   }
 
   @Test
@@ -94,6 +98,7 @@ public class OverrideRenewalStrategyTest {
     final Result<Loan> renewedLoan = renew(LoanPolicy.from(loanPolicyJson), overrideDate);
 
     assertDueDate(overrideDate, renewedLoan);
+    assertEquals(CHECKED_OUT, renewedLoan.value().getItem().getStatus());
   }
 
   @Test
@@ -116,11 +121,13 @@ public class OverrideRenewalStrategyTest {
 
     final Loan loan = Loan.from(new JsonObject().put("renewalCount", 2))
       .changeDueDate(now(UTC).plusWeeks(1).plusSeconds(1))
+      .withItem(createCheckedOutItem())
       .withLoanPolicy(loanPolicy);
 
     final Result<Loan> renewedLoan = renew(loan, overrideDueDate);
 
     assertDueDate(overrideDueDate, renewedLoan);
+    assertEquals(CHECKED_OUT, renewedLoan.value().getItem().getStatus());
   }
 
   @Test
@@ -131,11 +138,13 @@ public class OverrideRenewalStrategyTest {
       .create());
 
     final Loan loan = Loan.from(new JsonObject().put("renewalCount", 2))
+      .withItem(createCheckedOutItem())
       .withLoanPolicy(loanPolicy);
 
     final Result<Loan> renewedLoan = renew(loan, null);
 
     assertDueDateWithinOneSecondAfter(estimatedDueDate, renewedLoan);
+    assertEquals(CHECKED_OUT, renewedLoan.value().getItem().getStatus());
   }
 
   @Test
@@ -160,6 +169,7 @@ public class OverrideRenewalStrategyTest {
     final Result<Loan> renewedLoan = renewWithRecall(loan, overrideDueDate);
 
     assertDueDate(overrideDueDate, renewedLoan);
+    assertEquals(CHECKED_OUT, renewedLoan.value().getItem().getStatus());
   }
 
   @Test
@@ -179,6 +189,7 @@ public class OverrideRenewalStrategyTest {
     final Result<Loan> renewedLoan = renewWithRecall(loan, null);
 
     assertDueDateWithinOneSecondAfter(estimatedDueDate, renewedLoan);
+    assertEquals(CHECKED_OUT, renewedLoan.value().getItem().getStatus());
   }
 
   @Test
@@ -224,6 +235,7 @@ public class OverrideRenewalStrategyTest {
     final Result<Loan> renewedLoan = renew(loan, overrideDate);
 
     assertDueDate(overrideDate, renewedLoan);
+    assertEquals(CHECKED_OUT, renewedLoan.value().getItem().getStatus());
   }
 
   @Test
@@ -255,6 +267,33 @@ public class OverrideRenewalStrategyTest {
     assertThat(renewedLoan, hasValidationError(hasMessage("renewal would not change the due date")));
   }
 
+  @Test
+  public void nonLoanableAgedToLostItemShouldBeProperlyRenewed() {
+    final DateTime newDueDate = now(UTC).plusWeeks(1);
+    final DateTime ageToLostDate = now(UTC);
+
+    final LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
+      .withLoanable(false)
+      .create());
+
+    final Loan loan = Loan.from(new JsonObject())
+      .withItem(createCheckedOutItem())
+      .withLoanPolicy(loanPolicy);
+
+    loan.ageOverdueItemToLost(ageToLostDate)
+      .setAgedToLostDelayedBilling(false, ageToLostDate.plusDays(1));
+
+    final Result<Loan> renewedLoan = renew(loan, newDueDate);
+
+    assertDueDate(newDueDate, renewedLoan);
+    assertEquals(CHECKED_OUT, renewedLoan.value().getItem().getStatus());
+
+    assertThat(renewedLoan.value().asJson(), allOf(
+      hasNoJsonPath("agedToLostDelayedBilling.lostItemHasBeenBilled"),
+      hasNoJsonPath("agedToLostDelayedBilling.dateLostItemShouldBeBilled")
+    ));
+  }
+
   private LoanPolicyBuilder rollingPolicy() {
     return new LoanPolicyBuilder()
       .rolling(weeks(2))
@@ -264,7 +303,9 @@ public class OverrideRenewalStrategyTest {
   }
 
   private Result<Loan> renew(LoanPolicy loanPolicy, DateTime overrideDueDate) {
-    final Loan loan = Loan.from(new JsonObject()).withLoanPolicy(loanPolicy);
+    final Loan loan = Loan.from(new JsonObject())
+      .withItem(createCheckedOutItem())
+      .withLoanPolicy(loanPolicy);
 
     return renew(loan, overrideDueDate);
   }
@@ -306,12 +347,20 @@ public class OverrideRenewalStrategyTest {
     return json;
   }
 
-  private Item createDeclaredLostItem() {
+  private Item createItemWithStatus(String status) {
     final JsonObject json = new JsonObject();
 
-    writeByPath(json, "Declared lost", "status", "name");
+    writeByPath(json, status, "status", "name");
 
     return Item.from(json);
+  }
+
+  private Item createDeclaredLostItem() {
+    return createItemWithStatus("Declared lost");
+  }
+
+  private Item createCheckedOutItem() {
+    return createItemWithStatus("Checked out");
   }
 
   private Loan createLoanWithDueDateAfterCalculated() {
@@ -320,11 +369,8 @@ public class OverrideRenewalStrategyTest {
   }
 
   private Loan createLoanWithDefaultPolicy() {
-    final Item checkedOutItem = Item.from(new JsonObject()
-      .put("status", new JsonObject().put("name", "Checked out")));
-
     return Loan.from(new JsonObject())
-      .withItem(checkedOutItem)
+      .withItem(createCheckedOutItem())
       .withLoanPolicy(LoanPolicy.from(rollingPolicy().create()));
   }
 
