@@ -1,15 +1,14 @@
 package org.folio.circulation.resources;
 
+import static api.support.matchers.ResultMatchers.hasValidationError;
+import static api.support.matchers.ResultMatchers.succeeded;
+import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static org.folio.circulation.resources.RenewalValidator.errorWhenEarlierOrSameDueDate;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.instanceOf;
 import static org.joda.time.DateTime.now;
 import static org.joda.time.DateTimeZone.UTC;
-import static org.junit.Assert.assertTrue;
 
-import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
-import org.folio.circulation.support.ValidationErrorFailure;
 import org.joda.time.DateTime;
 import org.junit.Test;
 
@@ -18,35 +17,30 @@ import lombok.val;
 
 public class RenewalValidatorTest {
   @Test
-  public void shouldAllowRenewalWhenDueDateIsEarlierOrSameForDeclaredLostItem() {
-    val dueDate = now(UTC);
-    val proposedDueDate = dueDate.minusWeeks(2);
-    val loan = loanWithItemInStatus("Declared lost", dueDate);
-
-    val validationResult = errorWhenEarlierOrSameDueDate(loan, proposedDueDate);
-
-    assertTrue(validationResult.succeeded());
-  }
-
-  @Test
   public void shouldDisallowRenewalWhenDueDateIsEarlierOrSame() {
     val dueDate = now(UTC);
     val proposedDueDate = dueDate.minusWeeks(2);
-    val loan = loanWithItemInStatus("Checked out", dueDate);
+    val loan = createLoan(dueDate);
 
     val validationResult = errorWhenEarlierOrSameDueDate(loan, proposedDueDate);
 
-    assertTrue(validationResult.failed());
-    assertThat(validationResult.cause(), instanceOf(ValidationErrorFailure.class));
+    assertThat(validationResult, hasValidationError(
+      hasMessage("renewal would not change the due date")));
   }
 
-  private Loan loanWithItemInStatus(String itemStatus, DateTime dueDate) {
-    val itemRepresentation = new JsonObject()
-      .put("status", new JsonObject().put("name", itemStatus));
-    val loanRepresentation = new JsonObject()
-      .put("dueDate", dueDate.toString());
+  @Test
+  public void shouldAllowRenewalWhenDueDateAfterCurrentDueDate() {
+    val dueDate = now(UTC);
+    val proposedDueDate = dueDate.plusWeeks(1);
+    val loan = createLoan(dueDate);
 
-    val item = Item.from(itemRepresentation);
-    return Loan.from(loanRepresentation).withItem(item);
+    val validationResult = errorWhenEarlierOrSameDueDate(loan, proposedDueDate);
+
+    assertThat(validationResult, succeeded());
+  }
+
+  private Loan createLoan(DateTime dueDate) {
+    return Loan.from(new JsonObject())
+      .changeDueDate(dueDate);
   }
 }

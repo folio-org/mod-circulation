@@ -34,7 +34,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.policy.Period;
-import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.hamcrest.Matcher;
@@ -44,7 +43,6 @@ import org.joda.time.DateTimeConstants;
 import org.junit.Test;
 
 import api.support.APITests;
-import api.support.builders.ChangeDueDateRequestBuilder;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.FixedDueDateSchedulesBuilder;
 import api.support.builders.ItemBuilder;
@@ -443,52 +441,6 @@ public class OverrideRenewByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canOverrideRenewalWhenDueDateIsEarlierOrSameAsCurrentLoanDueDateAndItemIsLost() {
-    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    final IndividualResource jessica = usersFixture.jessica();
-
-    final LoanPolicyBuilder loanablePolicy = new LoanPolicyBuilder()
-      .withName("Loanable Policy")
-      .withLoanable(true)
-      .rolling(Period.weeks(1))
-      .renewFromSystemDate();
-
-    use(defaultRollingPolicies()
-      .loanPolicy(loanPoliciesFixture.create(loanablePolicy))
-      // Have to charge a fine otherwise the loan is closed when item is declared lost
-      .lostItemPolicy(lostItemFeePoliciesFixture.chargeFee()));
-
-    final IndividualResource loan = checkOutAWeekAgo(smallAngryPlanet);
-
-    changeDueDateFixture.changeDueDate(new ChangeDueDateRequestBuilder()
-      .forLoan(loan.getId())
-      .withDueDate(twoWeeksFromNow()));
-
-    declareLostFixtures.declareItemLost(loan.getJson());
-
-    loansFixture.attemptRenewal(422, smallAngryPlanet, jessica);
-
-    final DateTime approximateRenewalDate = ClockManager.getClockManager().getDateTime();
-
-    final IndividualResource overriddenRenewalResponse =
-      loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica,
-        OVERRIDE_COMMENT, null);
-
-    JsonObject renewedLoan = overriddenRenewalResponse.getJson();
-
-    assertThat("item status should be changed",
-      renewedLoan.getJsonObject("item").getJsonObject("status").getString("name"),
-      is(CHECKED_OUT.getValue()));
-
-    assertThat("renewal count should be incremented",
-      renewedLoan.getInteger("renewalCount"), is(1));
-
-    assertThat("due date should be 2 weeks later",
-      renewedLoan.getString("dueDate"),
-      withinSecondsAfter(seconds(5), approximateRenewalDate.plusWeeks(1)));
-  }
-
-  @Test
   public void canOverrideRenewalWhenItemIsAgedToLost() {
     final DateTime approximateRenewalDate = DateTime.now(UTC).plusWeeks(3);
     val result = ageToLostFixture.createAgedToLostLoan();
@@ -531,7 +483,8 @@ public class OverrideRenewByBarcodeTests extends APITests {
         "reached number of renewals limit," +
         "renewal date falls outside of the date ranges in the loan policy, " +
         "items cannot be renewed when there is an active recall request, " +
-        "item is Declared lost, item is Claimed returned, item is Aged to lost"))));
+        "item is Declared lost, item is Claimed returned, item is Aged to lost, " +
+        "renewal would not change the due date"))));
   }
 
   @Test
@@ -794,14 +747,5 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     assertThat("'actionComment' field should contain comment specified for override",
       renewedLoan.getString(ACTION_COMMENT_KEY), is(OVERRIDE_COMMENT));
-  }
-
-  private DateTime twoWeeksFromNow() {
-    return ClockManager.getClockManager().getDateTime().plusWeeks(2);
-  }
-
-  private IndividualResource checkOutAWeekAgo(IndividualResource smallAngryPlanet) {
-    return checkOutFixture.checkOutByBarcode(smallAngryPlanet,
-      usersFixture.jessica(), DateTime.now(UTC).minusWeeks(1));
   }
 }
