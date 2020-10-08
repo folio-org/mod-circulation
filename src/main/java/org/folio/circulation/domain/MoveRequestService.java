@@ -1,15 +1,17 @@
 package org.folio.circulation.domain;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.representations.logs.RequestUpdateLogEventMapper.mapToRequestMoveLogEventJson;
 import static org.folio.circulation.support.results.Result.of;
 
 import java.util.concurrent.CompletableFuture;
 
-import org.folio.circulation.infrastructure.storage.requests.RequestPolicyRepository;
 import org.folio.circulation.domain.validation.RequestLoanValidator;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
+import org.folio.circulation.infrastructure.storage.requests.RequestPolicyRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.resources.RequestNoticeSender;
+import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.results.Result;
 
 public class MoveRequestService {
@@ -20,6 +22,7 @@ public class MoveRequestService {
   private final RequestLoanValidator requestLoanValidator;
   private final RequestNoticeSender requestNoticeSender;
   private final ConfigurationRepository configurationRepository;
+  private final EventPublisher eventPublisher;
 
   public MoveRequestService(RequestRepository requestRepository,
                             RequestPolicyRepository requestPolicyRepository,
@@ -27,7 +30,8 @@ public class MoveRequestService {
                             MoveRequestProcessAdapter moveRequestHelper,
                             RequestLoanValidator requestLoanValidator,
                             RequestNoticeSender requestNoticeSender,
-                            ConfigurationRepository configurationRepository) {
+                            ConfigurationRepository configurationRepository,
+                            EventPublisher eventPublisher) {
 
     this.requestRepository = requestRepository;
     this.requestPolicyRepository = requestPolicyRepository;
@@ -36,28 +40,36 @@ public class MoveRequestService {
     this.requestLoanValidator = requestLoanValidator;
     this.requestNoticeSender = requestNoticeSender;
     this.configurationRepository = configurationRepository;
+    this.eventPublisher = eventPublisher;
   }
 
-  public CompletableFuture<Result<RequestAndRelatedRecords>> moveRequest(
-      RequestAndRelatedRecords requestAndRelatedRecords) {
-    return completedFuture(of(() -> requestAndRelatedRecords))
-      .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::findDestinationItem))
-      .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::getDestinationRequestQueue))
-      .thenApply(r -> r.map(this::pagedRequestIfDestinationItemAvailable))
-      .thenCompose(r -> r.after(this::validateUpdateRequest))
-      .thenComposeAsync(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
-        RequestAndRelatedRecords::withTimeZone))
-      .thenCompose(r -> r.after(updateUponRequest.updateRequestQueue::onMovedTo))
-      .thenComposeAsync(r -> r.after(this::updateRelatedObjects))
-      .thenCompose(r -> r.after(requestRepository::update))
-      .thenApply(r -> r.next(requestNoticeSender::sendNoticeOnRequestMoved))
-      .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::findSourceItem))
-      .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::getSourceRequestQueue))
-      .thenCompose(r -> r.after(updateUponRequest.updateRequestQueue::onMovedFrom))
-      .thenComposeAsync(r -> r.after(this::updateRelatedObjects))
-      .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::findDestinationItem))
-      .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::getDestinationRequestQueue))
-      .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::getRequest));
+  public CompletableFuture<Result<RequestAndRelatedRecords>> moveRequest(RequestAndRelatedRecords requestAndRelatedRecords) {
+
+    return moveRequestProcessAdapter.getRequest(requestAndRelatedRecords)
+      .thenCompose(original -> completedFuture(of(() -> requestAndRelatedRecords))
+        .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::findDestinationItem))
+        .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::getDestinationRequestQueue))
+        .thenApply(r -> r.map(this::pagedRequestIfDestinationItemAvailable))
+        .thenCompose(r -> r.after(this::validateUpdateRequest))
+        .thenComposeAsync(
+            r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration, RequestAndRelatedRecords::withTimeZone))
+        .thenCompose(r -> r.after(updateUponRequest.updateRequestQueue::onMovedTo))
+        .thenComposeAsync(r -> r.after(this::updateRelatedObjects))
+        .thenCompose(r -> r.after(requestRepository::update))
+        .thenApply(r -> r.next(requestNoticeSender::sendNoticeOnRequestMoved))
+        .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::findSourceItem))
+        .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::getSourceRequestQueue))
+        .thenCompose(r -> r.after(updateUponRequest.updateRequestQueue::onMovedFrom))
+        .thenComposeAsync(r -> r.after(this::updateRelatedObjects))
+        .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::findDestinationItem))
+        .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::getDestinationRequestQueue))
+        .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::getRequest)
+          .thenApply(v -> {
+            CompletableFuture.runAsync(() -> eventPublisher.publishLogRecordEvent(mapToRequestMoveLogEventJson(new UpdatedRequestPair(original.value().getRequest(), r.value().getRequest()))));
+            return r;
+          })
+        )
+      );
   }
 
   private RequestAndRelatedRecords pagedRequestIfDestinationItemAvailable(

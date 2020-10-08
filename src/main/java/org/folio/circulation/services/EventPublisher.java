@@ -166,4 +166,9 @@ public class EventPublisher {
 
     return completedFuture(succeeded(requestAndRelatedRecords));
   }
+
+  public CompletableFuture<Result<RequestAndRelatedRecords>> publishLogRecordEvent(JsonObject logEventPayload) {
+    pubSubPublishingService.publishEvent(LOG_RECORD.name(), logEventPayload.encode());
+    return completedFuture(succeeded(null));
+  }
 }

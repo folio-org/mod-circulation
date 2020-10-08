@@ -79,6 +79,8 @@ public class RequestCollectionResource extends CollectionResource {
         new UpdateLoan(clients, loanRepository, loanPolicyRepository),
         UpdateRequestQueue.using(clients));
 
+    final EventPublisher eventPublisher = new EventPublisher(routingContext);
+
     final CreateRequestService createRequestService = new CreateRequestService(
       new CreateRequestRepositories(RequestRepository.using(clients),
         new RequestPolicyRepository(clients), configurationRepository,
@@ -86,7 +88,8 @@ public class RequestCollectionResource extends CollectionResource {
       updateUponRequest,
       new RequestLoanValidator(loanRepository),
       requestNoticeSender,
-      new UserManualBlocksValidator(userManualBlocksValidator));
+      new UserManualBlocksValidator(userManualBlocksValidator),
+      eventPublisher);
 
     final RequestFromRepresentationService requestFromRepresentationService =
       new RequestFromRepresentationService(
@@ -101,7 +104,6 @@ public class RequestCollectionResource extends CollectionResource {
 
     final RequestScheduledNoticeService scheduledNoticeService = RequestScheduledNoticeService.using(clients);
 
-    final EventPublisher eventPublisher = new EventPublisher(routingContext);
 
     requestFromRepresentationService.getRequestFrom(representation)
       .thenComposeAsync(r -> r.after(createRequestService::createRequest))
@@ -139,6 +141,8 @@ public class RequestCollectionResource extends CollectionResource {
         new UpdateLoan(clients, loanRepository, loanPolicyRepository),
         updateRequestQueue);
 
+    final EventPublisher eventPublisher = new EventPublisher(routingContext);
+
     final CreateRequestService createRequestService = new CreateRequestService(
       new CreateRequestRepositories(RequestRepository.using(clients),
         new RequestPolicyRepository(clients), configurationRepository,
@@ -146,14 +150,16 @@ public class RequestCollectionResource extends CollectionResource {
       updateUponRequest,
       new RequestLoanValidator(loanRepository),
       requestNoticeSender,
-      new UserManualBlocksValidator(userManualBlocksValidator));
+      new UserManualBlocksValidator(userManualBlocksValidator),
+      eventPublisher);
 
     final UpdateRequestService updateRequestService = new UpdateRequestService(
         requestRepository,
         updateRequestQueue,
         new ClosedRequestValidator(RequestRepository.using(clients)),
         requestNoticeSender,
-        updateItem);
+        updateItem,
+        eventPublisher);
 
     final RequestFromRepresentationService requestFromRepresentationService =
       new RequestFromRepresentationService(
@@ -169,16 +175,19 @@ public class RequestCollectionResource extends CollectionResource {
     final RequestScheduledNoticeService requestScheduledNoticeService =
       RequestScheduledNoticeService.using(clients);
 
-    final EventPublisher eventPublisher = new EventPublisher(routingContext);
-
     requestFromRepresentationService.getRequestFrom(representation)
       .thenComposeAsync(r -> r.afterWhen(requestRepository::exists,
+
         updateRequestService::replaceRequest,
         createRequestService::createRequest))
+
       .thenComposeAsync(r -> r.after(
         records -> eventPublisher.publishDueDateChangedEvent(records, clients)))
+
       .thenApply(r -> r.next(requestScheduledNoticeService::rescheduleRequestNotices))
       .thenApply(r -> r.toFixedValue(NoContentResponse::noContent))
+
+
       .thenAccept(context::writeResultToHttpResponse);
   }
 
@@ -269,15 +278,17 @@ public class RequestCollectionResource extends CollectionResource {
           requestRepository,
           requestQueueRepository);
 
+    final EventPublisher eventPublisher = new EventPublisher(routingContext);
+
     final MoveRequestService moveRequestService = new MoveRequestService(
         RequestRepository.using(clients),
         new RequestPolicyRepository(clients),
         updateUponRequest,
         moveRequestProcessAdapter,
         new RequestLoanValidator(loanRepository),
-        RequestNoticeSender.using(clients), configurationRepository);
-
-    final EventPublisher eventPublisher = new EventPublisher(routingContext);
+        RequestNoticeSender.using(clients), configurationRepository,
+        eventPublisher
+      );
 
     requestRepository.getById(id)
       .thenApply(r -> r.map(RequestAndRelatedRecords::new))

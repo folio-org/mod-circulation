@@ -1,5 +1,7 @@
 package org.folio.circulation.domain;
 
+import static java.util.Optional.ofNullable;
+import static org.folio.circulation.domain.representations.logs.RequestUpdateLogEventMapper.mapToRequestCreatedLogEventJson;
 import static org.folio.circulation.support.results.Result.of;
 
 import java.util.HashMap;
@@ -14,6 +16,7 @@ import org.folio.circulation.infrastructure.storage.AutomatedPatronBlocksReposit
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.resources.RequestNoticeSender;
+import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.ValidationError;
@@ -24,16 +27,23 @@ public class CreateRequestService {
   private final RequestLoanValidator requestLoanValidator;
   private final RequestNoticeSender requestNoticeSender;
   private final UserManualBlocksValidator userManualBlocksValidator;
+  private final EventPublisher eventPublisher;
 
   public CreateRequestService(CreateRequestRepositories repositories,
-    UpdateUponRequest updateUponRequest, RequestLoanValidator requestLoanValidator,
-    RequestNoticeSender requestNoticeSender, UserManualBlocksValidator userManualBlocksValidator) {
-
+                              UpdateUponRequest updateUponRequest, RequestLoanValidator requestLoanValidator,
+                              RequestNoticeSender requestNoticeSender, UserManualBlocksValidator userManualBlocksValidator, EventPublisher eventPublisher) {
     this.repositories = repositories;
     this.updateUponRequest = updateUponRequest;
     this.requestLoanValidator = requestLoanValidator;
     this.requestNoticeSender = requestNoticeSender;
     this.userManualBlocksValidator = userManualBlocksValidator;
+    this.eventPublisher = eventPublisher;
+  }
+
+  public CreateRequestService(CreateRequestRepositories repositories,
+    UpdateUponRequest updateUponRequest, RequestLoanValidator requestLoanValidator,
+    RequestNoticeSender requestNoticeSender, UserManualBlocksValidator userManualBlocksValidator) {
+    this(repositories, updateUponRequest, requestLoanValidator, requestNoticeSender, userManualBlocksValidator, null);
   }
 
   public CompletableFuture<Result<RequestAndRelatedRecords>> createRequest(
@@ -68,7 +78,12 @@ public class CreateRequestService {
       .thenComposeAsync(r -> r.after(updateUponRequest.updateLoan::onRequestCreateOrUpdate))
       .thenComposeAsync(r -> r.after(requestRepository::create))
       .thenComposeAsync(r -> r.after(updateUponRequest.updateRequestQueue::onCreate))
-      .thenApply(r -> r.next(requestNoticeSender::sendNoticeOnRequestCreated));
+      .thenApplyAsync(r -> {
+        ofNullable(eventPublisher).ifPresent(publisher ->
+          requestRepository.getById(requestAndRelatedRecords.getRequest().getId())
+          .thenAcceptAsync(resp -> resp.after(t -> publisher.publishLogRecordEvent(mapToRequestCreatedLogEventJson(t)))));
+        return r.next(requestNoticeSender::sendNoticeOnRequestCreated);
+      });
   }
 
 }
