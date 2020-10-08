@@ -29,6 +29,8 @@ import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.results.CommonFailures;
 import org.folio.circulation.support.results.Result;
 
+import lombok.val;
+
 public class FeeFineFacade {
   private final AccountRepository accountRepository;
   private final FeeFineActionRepository feeFineActionRepository;
@@ -88,7 +90,8 @@ public class FeeFineFacade {
   }
 
   private CompletableFuture<Result<Void>> refundAndCloseAccount(RefundAccountCommand refund) {
-    final AccountRefundContext context = new AccountRefundContext(refund.getAccountToRefund());
+    val context = new AccountRefundContext(refund.getAccountToRefund(),
+      refund.getCancellationReason());
 
     return fetchUser(refund.getStaffUserId())
       .thenApply(r -> r.map(context::withUser))
