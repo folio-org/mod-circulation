@@ -175,17 +175,12 @@ public class RequestCollectionResource extends CollectionResource {
 
     requestFromRepresentationService.getRequestFrom(representation)
       .thenComposeAsync(r -> r.afterWhen(requestRepository::exists,
-
         updateRequestService::replaceRequest,
         createRequestService::createRequest))
-
       .thenComposeAsync(r -> r.after(
         records -> eventPublisher.publishDueDateChangedEvent(records, clients)))
-
       .thenApply(r -> r.next(requestScheduledNoticeService::rescheduleRequestNotices))
       .thenApply(r -> r.toFixedValue(NoContentResponse::noContent))
-
-
       .thenAccept(context::writeResultToHttpResponse);
   }
 
