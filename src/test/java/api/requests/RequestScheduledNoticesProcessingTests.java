@@ -1,5 +1,7 @@
 package api.requests;
 
+import static api.support.PubsubPublisherTestUtils.assertThatPublishedNoticeLogRecordEventsCountIsEqualTo;
+import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
 import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
@@ -17,6 +19,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import api.support.fakes.FakePubSub;
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.policy.Period;
 import org.hamcrest.Matcher;
@@ -49,6 +52,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
 
   @Before
   public void beforeEach() {
+    FakePubSub.clearPublishedEvents();
 
     ItemBuilder itemBuilder = ItemExamples.basedUponSmallAngryPlanet(
       materialTypesFixture.book().getId(), loanTypesFixture.canCirculate().getId());
@@ -102,6 +106,8 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
     List<JsonObject> notices = patronNoticesClient.getAll();
     assertThat(notices, hasSize(1));
     assertThat(notices.get(0), getTemplateContextMatcher(templateId, request));
+    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+    assertThatPublishedLogRecordEventsAreValid();
   }
 
   @Test
@@ -231,6 +237,8 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
 
     assertThat(notices, hasSize(1));
     assertThat(notices.get(0), getTemplateContextMatcher(templateId, request));
+    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+    assertThatPublishedLogRecordEventsAreValid();
   }
 
   @Test
@@ -270,6 +278,8 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
     assertThat(notices, hasSize(1));
     assertThat(nextRunTimeBeforeProcessing, is(nextRunTimeAfterProcessing.minusDays(1)));
     assertThat(notices.get(0), getTemplateContextMatcher(templateId, request));
+    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+    assertThatPublishedLogRecordEventsAreValid();
   }
 
   @Test
@@ -307,6 +317,8 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
 
     assertThat(notices, hasSize(1));
     assertThat(notices.get(0), getTemplateContextMatcher(templateId, requestsClient.get(request.getId())));
+    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(notices.size());
+    assertThatPublishedLogRecordEventsAreValid();
     assertThat(scheduledNoticesClient.getAll(), hasSize(0));
   }
 

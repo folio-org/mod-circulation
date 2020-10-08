@@ -1,6 +1,7 @@
 package org.folio.circulation.domain;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.representations.logs.LogEventPayloadType.REQUEST_MOVED;
 import static org.folio.circulation.domain.representations.logs.RequestUpdateLogEventMapper.mapToRequestMoveLogEventJson;
 import static org.folio.circulation.support.results.Result.of;
 
@@ -65,7 +66,7 @@ public class MoveRequestService {
         .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::getDestinationRequestQueue))
         .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::getRequest)
           .thenApply(v -> {
-            CompletableFuture.runAsync(() -> eventPublisher.publishLogRecordEvent(mapToRequestMoveLogEventJson(new UpdatedRequestPair(original.value().getRequest(), r.value().getRequest()))));
+            CompletableFuture.runAsync(() -> eventPublisher.publishLogRecord(mapToRequestMoveLogEventJson(new UpdatedRequestPair(original.value().getRequest(), r.value().getRequest())), REQUEST_MOVED));
             return r;
           })
         )

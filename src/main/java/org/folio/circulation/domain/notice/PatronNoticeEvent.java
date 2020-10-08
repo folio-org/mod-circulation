@@ -13,8 +13,7 @@ public class PatronNoticeEvent {
   private final JsonObject noticeContext;
 
   public PatronNoticeEvent(
-    Item item, User user, NoticeEventType eventType,
-    JsonObject noticeContext) {
+    Item item, User user, NoticeEventType eventType, JsonObject noticeContext) {
     this.item = item;
     this.user = user;
     this.eventType = eventType;

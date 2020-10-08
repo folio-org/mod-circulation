@@ -5,9 +5,10 @@ import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
 import static org.folio.circulation.resources.RenewalValidator.errorForDueDate;
 import static org.folio.circulation.resources.RenewalValidator.errorForNotMatchingOverrideCases;
 import static org.folio.circulation.resources.RenewalValidator.errorWhenEarlierOrSameDueDate;
+import static org.folio.circulation.resources.RenewalValidator.overrideDueDateIsRequiredError;
+import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
-import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
@@ -56,35 +57,34 @@ public class OverrideRenewalStrategy implements RenewalStrategy {
 
   private Result<Loan> overrideRenewal(Loan loan, DateTime systemDate,
     DateTime overrideDueDate, String comment, boolean hasRecallRequest) {
-    LoanPolicy loanPolicy = loan.getLoanPolicy();
+
     try {
+      final LoanPolicy loanPolicy = loan.getLoanPolicy();
+
       if (loanPolicy.isNotLoanable() || loanPolicy.isNotRenewable()) {
         return overrideRenewalForDueDate(loan, overrideDueDate, comment);
       }
-      final Result<DateTime> proposedDueDateResult =
-        loanPolicy.determineStrategy(null, true, false, systemDate).calculateDueDate(loan);
 
-      if (proposedDueDateResult.failed()) {
+      if (unableToCalculateProposedDueDate(loan, systemDate)) {
         return overrideRenewalForDueDate(loan, overrideDueDate, comment);
       }
 
+      final Result<DateTime> newDueDateResult = calculateNewDueDate(overrideDueDate, loan, systemDate);
+
       if (loanPolicy.hasReachedRenewalLimit(loan)) {
-        return processRenewal(proposedDueDateResult, loan, comment);
+        return processRenewal(newDueDateResult, loan, comment);
       }
 
       if (hasRecallRequest) {
-        return processRenewal(proposedDueDateResult, loan, comment);
+        return processRenewal(newDueDateResult, loan, comment);
       }
 
       if (loan.isItemLost()) {
-        return processRenewal(proposedDueDateResult, loan, comment)
-          .map(dueDate -> {
-            if (loan.isAgedToLost()) {
-              loan.removeAgedToLostBillingInfo();
-            }
+        return processRenewal(newDueDateResult, loan, comment);
+      }
 
-            return loan.changeItemStatusForItemAndLoan(CHECKED_OUT);
-          });
+      if (proposedDueDateIsSameOrEarlier(loan, systemDate)) {
+        return processRenewal(newDueDateResult, loan, comment);
       }
 
       return failedValidation(errorForNotMatchingOverrideCases(loanPolicy));
@@ -98,12 +98,53 @@ public class OverrideRenewalStrategy implements RenewalStrategy {
     if (overrideDueDate == null) {
       return failedValidation(errorForDueDate());
     }
-    return succeeded(loan.overrideRenewal(overrideDueDate, loan.getLoanPolicyId(), comment));
+    return succeeded(overrideRenewLoan(overrideDueDate, loan, comment));
   }
 
   private Result<Loan> processRenewal(Result<DateTime> calculatedDueDate, Loan loan, String comment) {
     return calculatedDueDate
       .next(dueDate -> errorWhenEarlierOrSameDueDate(loan, dueDate))
-      .map(dueDate -> loan.overrideRenewal(dueDate, loan.getLoanPolicyId(), comment));
+      .map(dueDate -> overrideRenewLoan(dueDate, loan, comment));
+  }
+
+  private Loan overrideRenewLoan(DateTime dueDate, Loan loan, String comment) {
+    if (loan.isAgedToLost()) {
+      loan.removeAgedToLostBillingInfo();
+    }
+
+    return loan.overrideRenewal(dueDate, loan.getLoanPolicyId(), comment)
+      .changeItemStatusForItemAndLoan(CHECKED_OUT);
+  }
+
+  private Result<DateTime> calculateNewDueDate(DateTime overrideDueDate, Loan loan, DateTime systemDate) {
+    final Result<DateTime> proposedDateTimeResult = calculateProposedDueDate(loan, systemDate);
+
+    if (newDueDateAfterCurrentDueDate(loan, proposedDateTimeResult)) {
+      return proposedDateTimeResult;
+    }
+
+    if (overrideDueDate == null && proposedDueDateIsSameOrEarlier(loan, systemDate)) {
+      return failedValidation(overrideDueDateIsRequiredError());
+    }
+
+    return succeeded(overrideDueDate);
+  }
+
+  private Result<DateTime> calculateProposedDueDate(Loan loan, DateTime systemDate) {
+    return loan.getLoanPolicy()
+      .determineStrategy(null, true, false, systemDate).calculateDueDate(loan);
+  }
+
+  private boolean newDueDateAfterCurrentDueDate(Loan loan, Result<DateTime> proposedDueDateResult) {
+    return proposedDueDateResult.map(proposedDueDate -> proposedDueDate.isAfter(loan.getDueDate()))
+      .orElse(false);
+  }
+
+  private boolean unableToCalculateProposedDueDate(Loan loan, DateTime systemDate) {
+    return calculateProposedDueDate(loan, systemDate).failed();
+  }
+
+  private boolean proposedDueDateIsSameOrEarlier(Loan loan, DateTime systemDate) {
+    return !newDueDateAfterCurrentDueDate(loan, calculateProposedDueDate(loan, systemDate));
   }
 }

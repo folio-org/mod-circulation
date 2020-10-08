@@ -2,6 +2,7 @@ package org.folio.circulation.support;
 
 import java.net.MalformedURLException;
 
+import org.folio.circulation.services.PubSubPublishingService;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.server.WebContext;
 
@@ -55,6 +56,7 @@ public class Clients {
   private final CollectionResourceClient automatedPatronBlocksClient;
   private final CollectionResourceClient notesClient;
   private final CollectionResourceClient noteTypesClient;
+  private final PubSubPublishingService pubSubPublishingService;
 
   public static Clients create(WebContext context, HttpClient httpClient) {
     return new Clients(context.createHttpClient(httpClient), context);
@@ -109,6 +111,7 @@ public class Clients {
       automatedPatronBlocksClient = createAutomatedPatronBlocksClient(client, context);
       notesClient = createNotesClient(client, context);
       noteTypesClient = createNoteTypesClient(client, context);
+      pubSubPublishingService = createPubSubPublishingService(context);
     }
     catch(MalformedURLException e) {
       throw new InvalidOkapiLocationException(context.getOkapiLocation(), e);
@@ -297,6 +300,10 @@ public class Clients {
 
   public CollectionResourceClient noteTypesClient() {
     return noteTypesClient;
+  }
+
+  public PubSubPublishingService pubSubPublishingService() {
+    return pubSubPublishingService;
   }
 
   private static CollectionResourceClient getCollectionResourceClient(
@@ -664,5 +671,9 @@ public class Clients {
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context, "/note-types");
+  }
+
+  private PubSubPublishingService createPubSubPublishingService(WebContext context) {
+    return new PubSubPublishingService(context);
   }
 }

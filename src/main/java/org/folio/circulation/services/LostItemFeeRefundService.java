@@ -44,21 +44,21 @@ public class LostItemFeeRefundService {
     CheckInContext checkInContext) {
 
     return refundLostItemFees(forCheckIn(checkInContext))
-      .thenApply(r -> r.map(checkInContext::withLostItemFeesRefundedOrCancelled));
+      .thenApply(r -> r.map(context -> checkInContext.withLoan(context.getLoan())));
   }
 
   public CompletableFuture<Result<RenewalContext>> refundLostItemFees(
     RenewalContext renewalContext, String currentServicePointId) {
 
     return refundLostItemFees(forRenewal(renewalContext, currentServicePointId))
-      .thenApply(r -> r.map(renewalContext::withLostItemFeesRefundedOrCancelled));
+      .thenApply(r -> r.map(context -> renewalContext.withLoan(context.getLoan())));
   }
 
-  private CompletableFuture<Result<Boolean>> refundLostItemFees(
+  private CompletableFuture<Result<LostItemFeeRefundContext>> refundLostItemFees(
     LostItemFeeRefundContext refundFeeContext) {
 
     if (!refundFeeContext.shouldRefundFeesForItem()) {
-      return completedFuture(succeeded(false));
+      return completedFuture(succeeded(refundFeeContext));
     }
 
     return lookupLoan(succeeded(refundFeeContext))
@@ -68,7 +68,7 @@ public class LostItemFeeRefundService {
 
         if (!lostItemPolicy.shouldRefundFees(context.getItemLostDate())) {
           log.info("Refund interval has exceeded for loan [{}]", context.getLoan().getId());
-          return completedFuture(succeeded(false));
+          return completedFuture(succeeded(context));
         }
 
         return fetchAccountsAndActionsForLoan(contextResult)
@@ -76,9 +76,9 @@ public class LostItemFeeRefundService {
       }));
   }
 
-  private CompletableFuture<Result<Boolean>> refundAccounts(LostItemFeeRefundContext context) {
+  private CompletableFuture<Result<LostItemFeeRefundContext>> refundAccounts(LostItemFeeRefundContext context) {
     return feeFineFacade.refundAndCloseAccounts(context.accountRefundCommands())
-      .thenApply(r -> r.map(notUsed -> context.anyAccountNeedsRefund()));
+      .thenApply(r -> r.map(notUsed -> context));
   }
 
   private CompletableFuture<Result<LostItemFeeRefundContext>> lookupLoan(
@@ -96,10 +96,10 @@ public class LostItemFeeRefundService {
             return noLoanFoundForLostItem(context.getItemId());
           }
 
-          if (loan.getDeclareLostDateTime() == null) {
-            log.error("The last loan [{}] for lost item [{}] is not declared lost",
+          if (loan.getLostDate() == null) {
+            log.error("The last loan [{}] for lost item [{}] is neither aged to lost not declared lost",
               loan.getId(), context.getItemId());
-            return lastLoanForLostItemIsNotDeclaredLost(loan);
+            return lastLoanForLostItemIsNotLost(loan);
           }
 
           log.info("Loan [{}] retrieved for lost item [{}]", loan.getId(), context.getItemId());
@@ -129,14 +129,15 @@ public class LostItemFeeRefundService {
       LostItemFeeRefundContext::withLostItemPolicy);
   }
 
-  private Result<LostItemFeeRefundContext> lastLoanForLostItemIsNotDeclaredLost(Loan loan) {
+  private Result<LostItemFeeRefundContext> lastLoanForLostItemIsNotLost(Loan loan) {
     return failed(singleValidationError(
-      "Last loan for lost item is not declared lost", "loanId", loan.getId()));
+      "Last loan for lost item is neither aged to lost nor declared lost",
+      "loanId", loan.getId()));
   }
 
   private Result<LostItemFeeRefundContext> noLoanFoundForLostItem(String itemId) {
     return failed(singleValidationError(
-      "Item is lost however there is no declared lost loan found",
+      "Item is lost however there is no aged to lost nor declared lost loan found",
       "itemId", itemId));
   }
 }

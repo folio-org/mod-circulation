@@ -1,5 +1,6 @@
 package org.folio.circulation.domain;
 
+import static org.folio.circulation.domain.representations.logs.LogEventPayloadType.REQUEST_UPDATED;
 import static org.folio.circulation.domain.representations.logs.RequestUpdateLogEventMapper.mapToRequestMoveLogEventJson;
 import static org.folio.circulation.domain.representations.logs.RequestUpdateLogEventMapper.mapToRequestUpdateLogEventJson;
 import static org.folio.circulation.support.results.Result.succeeded;
@@ -46,7 +47,7 @@ public class UpdateRequestService {
         .thenApplyAsync(r -> r.next(p -> {
           CompletableFuture.runAsync(() -> requestRepository.getById(updated.getId())
             .thenComposeAsync(v -> v.after(s -> eventPublisher
-              .publishLogRecordEvent(mapToRequestUpdateLogEventJson(new UpdatedRequestPair(original.value(), s))))));
+              .publishLogRecord(mapToRequestUpdateLogEventJson(new UpdatedRequestPair(original.value(), s)), REQUEST_UPDATED))));
           return requestNoticeSender.sendNoticeOnRequestUpdated(p);
         })));
   }
