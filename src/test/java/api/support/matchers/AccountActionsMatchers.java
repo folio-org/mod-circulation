@@ -80,13 +80,19 @@ public final class AccountActionsMatchers {
     );
   }
 
-  public static Matcher<Iterable<JsonObject>> isCancelledItemReturnedActionCreated(double amount) {
+  public static Matcher<Iterable<JsonObject>> isCancelledActionCreated(
+    String cancellationReason, double amount) {
+
     return hasItems(allOf(
       hasJsonPath("createdAt", startsWith("Circ Desk")),
       hasJsonPath("source", "Admin, Admin"),
       hasJsonPath("amountAction", amount),
       hasJsonPath("balance", 0.0),
-      hasJsonPath("typeAction", CANCELLED_ITEM_RETURNED))
+      hasJsonPath("typeAction", cancellationReason))
     );
+  }
+
+  public static Matcher<Iterable<JsonObject>> isCancelledItemReturnedActionCreated(double amount) {
+    return isCancelledActionCreated(CANCELLED_ITEM_RETURNED, amount);
   }
 }

@@ -3,7 +3,6 @@ package org.folio.circulation.services.feefine;
 import static org.folio.circulation.domain.AccountRefundReason.LOST_ITEM_FOUND;
 import static org.folio.circulation.domain.FeeAmount.zeroFeeAmount;
 import static org.folio.circulation.domain.FeeFine.lostItemFeeTypes;
-import static org.folio.circulation.domain.representations.AccountPaymentStatus.CANCELLED_ITEM_RETURNED;
 import static org.folio.circulation.domain.representations.AccountPaymentStatus.CREDITED_FULLY;
 import static org.folio.circulation.domain.representations.AccountPaymentStatus.REFUNDED_FULLY;
 import static org.folio.circulation.domain.representations.StoredFeeFineAction.StoredFeeFineActionBuilder;
@@ -16,19 +15,14 @@ import java.util.Set;
 import org.folio.circulation.domain.Account;
 import org.folio.circulation.domain.AccountRefundReason;
 import org.folio.circulation.domain.FeeAmount;
-import org.folio.circulation.domain.representations.AccountPaymentStatus;
 import org.folio.circulation.domain.representations.StoredFeeFineAction;
 import org.joda.time.DateTime;
 
 public class FeeRefundProcessor implements AccountRefundProcessor {
-  private final AccountPaymentStatus closedAccountPaymentStatus;
   private final AccountRefundReason refundReason;
   private final Set<String> supportedFeeFineTypes;
 
-  private FeeRefundProcessor(AccountPaymentStatus closedAccountPaymentStatus,
-    AccountRefundReason refundReason, Collection<String> supportedFeeFineTypes) {
-
-    this.closedAccountPaymentStatus = closedAccountPaymentStatus;
+  private FeeRefundProcessor(AccountRefundReason refundReason, Collection<String> supportedFeeFineTypes) {
     this.refundReason = refundReason;
     this.supportedFeeFineTypes = new HashSet<>(supportedFeeFineTypes);
   }
@@ -81,7 +75,7 @@ public class FeeRefundProcessor implements AccountRefundProcessor {
   @Override
   public void onHasRemainingAmount(AccountRefundContext context) {
     context.addActions(populateCommonAttributes(context)
-      .withAction(closedAccountPaymentStatus)
+      .withAction(context.getCancellationReason())
       .withBalance(zeroFeeAmount())
       .withAmount(context.getAccount().getRemaining())
       .build());
@@ -89,7 +83,7 @@ public class FeeRefundProcessor implements AccountRefundProcessor {
 
   @Override
   public void onRemainingAmountActionSaved(AccountRefundContext context) {
-    context.closeAccount(closedAccountPaymentStatus);
+    context.closeAccount(context.getCancellationReason());
   }
 
   private StoredFeeFineAction buildCreditAction(AccountRefundReason refundReason,
@@ -140,7 +134,6 @@ public class FeeRefundProcessor implements AccountRefundProcessor {
   }
 
   public static FeeRefundProcessor createLostItemFeeRefundProcessor() {
-    return new FeeRefundProcessor(CANCELLED_ITEM_RETURNED, LOST_ITEM_FOUND,
-      lostItemFeeTypes());
+    return new FeeRefundProcessor(LOST_ITEM_FOUND, lostItemFeeTypes());
   }
 }

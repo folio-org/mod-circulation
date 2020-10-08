@@ -25,12 +25,12 @@ public final class AccountMatchers {
       hasJsonPath("paymentStatus.name", "Refunded fully"));
   }
 
-  public static Matcher<JsonObject> isClosedCancelledItemReturned(double amount) {
+  public static Matcher<JsonObject> isClosedCancelled(String cancellationReason, double amount) {
     return allOf(
       hasJsonPath("amount", amount),
       hasJsonPath("remaining", 0.0),
       hasJsonPath("status.name", "Closed"),
-      hasJsonPath("paymentStatus.name", "Cancelled item returned"));
+      hasJsonPath("paymentStatus.name", cancellationReason));
   }
 
   public static Matcher<JsonObject> isTransferredFully(double amount) {
