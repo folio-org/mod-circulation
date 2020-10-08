@@ -2,6 +2,8 @@ package org.folio.circulation.services;
 
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_PROCESSING_FEE_TYPE;
 import static org.folio.circulation.domain.ItemStatus.LOST_AND_PAID;
+import static org.folio.circulation.domain.representations.AccountPaymentStatus.CANCELLED_ITEM_RENEWED;
+import static org.folio.circulation.domain.representations.AccountPaymentStatus.CANCELLED_ITEM_RETURNED;
 
 import java.util.Collection;
 import java.util.List;
@@ -12,6 +14,7 @@ import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.policy.lostitem.LostItemPolicy;
+import org.folio.circulation.domain.representations.AccountPaymentStatus;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.services.support.RefundAccountCommand;
 import org.joda.time.DateTime;
@@ -30,6 +33,7 @@ final class LostItemFeeRefundContext {
   private final String staffUserId;
   private final String servicePointId;
   private final Loan loan;
+  private final AccountPaymentStatus cancellationReason;
 
   private Collection<Account> accountsNeedingRefunds() {
     if (!getLostItemPolicy().isRefundProcessingFeeWhenReturned()) {
@@ -51,7 +55,8 @@ final class LostItemFeeRefundContext {
 
   List<RefundAccountCommand> accountRefundCommands() {
     return accountsNeedingRefunds().stream()
-      .map(account -> new RefundAccountCommand(account, staffUserId, servicePointId))
+      .map(account -> new RefundAccountCommand(account, staffUserId, servicePointId,
+        cancellationReason))
       .collect(Collectors.toList());
   }
 
@@ -71,15 +76,15 @@ final class LostItemFeeRefundContext {
     return loan.getLostItemPolicy();
   }
 
-  public static LostItemFeeRefundContext forCheckIn(CheckInContext context) {
+  static LostItemFeeRefundContext forCheckIn(CheckInContext context) {
     return new LostItemFeeRefundContext(context.getItemStatusBeforeCheckIn(),
       context.getItem().getItemId(), context.getLoggedInUserId(),
-      context.getCheckInServicePointId().toString(), context.getLoan());
+      context.getCheckInServicePointId().toString(), context.getLoan(), CANCELLED_ITEM_RETURNED);
   }
 
-  public static LostItemFeeRefundContext forRenewal(RenewalContext context, String servicePointId) {
+  static LostItemFeeRefundContext forRenewal(RenewalContext context, String servicePointId) {
     return new LostItemFeeRefundContext(context.getItemStatusBeforeRenewal(),
       context.getLoan().getItemId(), context.getLoggedInUserId(),
-      servicePointId, context.getLoan());
+      servicePointId, context.getLoan(), CANCELLED_ITEM_RENEWED);
   }
 }

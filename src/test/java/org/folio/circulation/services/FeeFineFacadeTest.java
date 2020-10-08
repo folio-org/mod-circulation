@@ -3,6 +3,7 @@ package org.folio.circulation.services;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.representations.AccountPaymentStatus.CANCELLED_ITEM_RETURNED;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.hamcrest.CoreMatchers.instanceOf;
@@ -29,9 +30,9 @@ import org.folio.circulation.services.support.CreateAccountCommand;
 import org.folio.circulation.services.support.RefundAccountCommand;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.results.Result;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -133,7 +134,7 @@ public class FeeFineFacadeTest {
       .put("id", UUID.randomUUID().toString());
 
     return new RefundAccountCommand(Account.from(account)
-      .withFeeFineActions(emptyList()), "user-id", "sp-id");
+      .withFeeFineActions(emptyList()), "user-id", "sp-id", CANCELLED_ITEM_RETURNED);
   }
 
   private Response jsonResponse(int status, JsonObject json) {
@@ -145,7 +146,7 @@ public class FeeFineFacadeTest {
   }
 
   private Answer<CompletableFuture<Result<Response>>> postRespondWithRequestAndFail() {
-    return new Answer<CompletableFuture<Result<Response>>>() {
+    return new Answer<>() {
       private int requestNumber = 0;
 
       @Override
@@ -160,7 +161,7 @@ public class FeeFineFacadeTest {
   }
 
   private Answer<CompletableFuture<Result<Response>>> putRespondAndFail() {
-    return new Answer<CompletableFuture<Result<Response>>>() {
+    return new Answer<>() {
       private int requestNumber = 0;
 
       @Override
