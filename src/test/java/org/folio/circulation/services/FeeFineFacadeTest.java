@@ -146,7 +146,7 @@ public class FeeFineFacadeTest {
   }
 
   private Answer<CompletableFuture<Result<Response>>> postRespondWithRequestAndFail() {
-    return new Answer<CompletableFuture<Result<Response>>>() {
+    return new Answer<>() {
       private int requestNumber = 0;
 
       @Override
@@ -161,7 +161,7 @@ public class FeeFineFacadeTest {
   }
 
   private Answer<CompletableFuture<Result<Response>>> putRespondAndFail() {
-    return new Answer<CompletableFuture<Result<Response>>>() {
+    return new Answer<>() {
       private int requestNumber = 0;
 
       @Override
