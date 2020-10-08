@@ -15,23 +15,24 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.joda.time.DateTime.now;
 
-import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
 
 import api.support.builders.CheckInByBarcodeRequestBuilder;
+import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
 
 public class CheckInDeclaredLostItemTest extends RefundDeclaredLostFeesTestBase {
-  @Override
-  protected void performActionThatRequiresRefund() {
-    checkInFixture.checkInByBarcode(item);
+  public CheckInDeclaredLostItemTest() {
+    super("Cancelled item returned");
   }
 
   @Override
   protected void performActionThatRequiresRefund(DateTime actionDate) {
+    mockClockManagerToReturnFixedDateTime(actionDate);
+
     checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(item)
       .at(servicePointsFixture.cd1())
@@ -80,7 +81,7 @@ public class CheckInDeclaredLostItemTest extends RefundDeclaredLostFeesTestBase 
         .forItem(item));
 
     assertThat(checkInResponse.getJson(), hasErrorWith(allOf(
-      hasMessage("Item is lost however there is no declared lost loan found"),
+      hasMessage("Item is lost however there is no aged to lost nor declared lost loan found"),
       hasParameter("itemId", item.getId().toString()))));
   }
 
@@ -100,7 +101,7 @@ public class CheckInDeclaredLostItemTest extends RefundDeclaredLostFeesTestBase 
         .forItem(item));
 
     assertThat(checkInResponse.getJson(), hasErrorWith(allOf(
-      hasMessage("Last loan for lost item is not declared lost"),
+      hasMessage("Last loan for lost item is neither aged to lost nor declared lost"),
       hasParameter("loanId", loan.getId().toString()))));
   }
 

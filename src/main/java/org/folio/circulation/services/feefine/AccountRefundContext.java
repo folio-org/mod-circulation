@@ -16,9 +16,11 @@ public final class AccountRefundContext {
   private User user;
   private ServicePoint servicePoint;
   private final List<StoredFeeFineAction> actions = new ArrayList<>();
+  private final AccountPaymentStatus cancellationReason;
 
-  public AccountRefundContext(Account account) {
+  public AccountRefundContext(Account account, AccountPaymentStatus cancellationReason) {
     this.account = account;
+    this.cancellationReason = cancellationReason;
   }
 
   public Account getAccount() {
@@ -65,5 +67,9 @@ public final class AccountRefundContext {
 
   public ServicePoint getServicePoint() {
     return servicePoint;
+  }
+
+  public AccountPaymentStatus getCancellationReason() {
+    return cancellationReason;
   }
 }

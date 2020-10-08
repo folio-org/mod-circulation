@@ -2,8 +2,8 @@ package api.loans.scenarios;
 
 import static api.support.matchers.AccountActionsMatchers.arePaymentRefundActionsCreated;
 import static api.support.matchers.AccountActionsMatchers.areTransferRefundActionsCreated;
-import static api.support.matchers.AccountActionsMatchers.isCancelledItemReturnedActionCreated;
-import static api.support.matchers.AccountMatchers.isClosedCancelledItemReturned;
+import static api.support.matchers.AccountActionsMatchers.isCancelledActionCreated;
+import static api.support.matchers.AccountMatchers.isClosedCancelled;
 import static api.support.matchers.AccountMatchers.isOpen;
 import static api.support.matchers.AccountMatchers.isPaidFully;
 import static api.support.matchers.AccountMatchers.isRefundedFully;
@@ -38,6 +38,12 @@ import lombok.val;
  * for {@code Declared lost} items.
  */
 public abstract class RefundAgedToLostFeesTestBase extends SpringApiTest {
+  private final String cancellationReason;
+
+  protected RefundAgedToLostFeesTestBase(String cancellationReason) {
+    this.cancellationReason = cancellationReason;
+  }
+
   @Before
   public void createOwnerAndFeeTypes() {
     feeFineOwnerFixture.cd1Owner();
@@ -70,9 +76,9 @@ public abstract class RefundAgedToLostFeesTestBase extends SpringApiTest {
     assertThat(loan, hasLostItemFee(isRefundedFully(setCostFee)));
     assertThat(loan, hasLostItemFeeActions(areTransferRefundActionsCreated(setCostFee)));
 
-    assertThat(loan, hasLostItemProcessingFee(isClosedCancelledItemReturned(processingFee)));
+    assertThat(loan, hasLostItemProcessingFee(isClosedCancelled(cancellationReason, processingFee)));
     assertThat(loan, hasLostItemProcessingFeeActions(
-      isCancelledItemReturnedActionCreated(processingFee)));
+      isCancelledActionCreated(cancellationReason, processingFee)));
 
     assertThatBillingInformationRemoved(loan);
   }

@@ -10,6 +10,10 @@ public class OverrideRenewAgedToLostItemTest extends RefundAgedToLostFeesTestBas
   @Autowired
   private OverrideRenewalFixture overrideRenewalFixture;
 
+  public OverrideRenewAgedToLostItemTest() {
+    super("Cancelled item renewed");
+  }
+
   @Override
   protected void performActionThatRequiresRefund(AgeToLostFixture.AgeToLostResult result,
      DateTime actionDate) {

@@ -1,7 +1,6 @@
 package api.loans.scenarios;
 
 import static api.support.http.CqlQuery.queryFromTemplate;
-import static api.support.matchers.AccountActionsMatchers.CANCELLED_ITEM_RETURNED;
 import static api.support.matchers.AccountActionsMatchers.CREDITED_FULLY;
 import static api.support.matchers.AccountActionsMatchers.CREDITED_TO_BURSAR;
 import static api.support.matchers.AccountActionsMatchers.CREDITED_TO_PATRON;
@@ -10,8 +9,6 @@ import static api.support.matchers.AccountActionsMatchers.REFUNDED_TO_BURSAR;
 import static api.support.matchers.AccountActionsMatchers.REFUNDED_TO_PATRON;
 import static api.support.matchers.AccountActionsMatchers.arePaymentRefundActionsCreated;
 import static api.support.matchers.AccountActionsMatchers.areTransferRefundActionsCreated;
-import static api.support.matchers.AccountActionsMatchers.isCancelledItemReturnedActionCreated;
-import static api.support.matchers.AccountMatchers.isClosedCancelledItemReturned;
 import static api.support.matchers.AccountMatchers.isOpen;
 import static api.support.matchers.AccountMatchers.isPaidFully;
 import static api.support.matchers.AccountMatchers.isRefundedFully;
@@ -32,29 +29,38 @@ import static org.hamcrest.Matchers.containsInRelativeOrder;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.joda.time.DateTime.now;
 import static org.joda.time.DateTime.parse;
+import static org.joda.time.DateTimeZone.UTC;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
-import api.support.http.IndividualResource;
+import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.junit.Before;
 import org.junit.Test;
 
-import api.support.APITests;
 import api.support.MultipleJsonRecords;
-import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.DeclareItemLostRequestBuilder;
+import api.support.http.IndividualResource;
+import api.support.matchers.AccountActionsMatchers;
+import api.support.matchers.AccountMatchers;
+import api.support.spring.SpringApiTest;
 import io.vertx.core.json.JsonObject;
 
-public abstract class RefundDeclaredLostFeesTestBase extends APITests {
+public abstract class RefundDeclaredLostFeesTestBase extends SpringApiTest {
   private static final String DATE_ACTION_PROPERTY = "dateAction";
 
   protected final IndividualResource item = itemsFixture.basedUponNod();
+  private final String cancellationReason;
   protected IndividualResource loan;
 
-  protected abstract void performActionThatRequiresRefund();
+  public RefundDeclaredLostFeesTestBase(String cancellationReason) {
+    this.cancellationReason = cancellationReason;
+  }
+
+  protected void performActionThatRequiresRefund() {
+    performActionThatRequiresRefund(DateTime.now(UTC));
+  }
 
   protected abstract void performActionThatRequiresRefund(DateTime actionDate);
 
@@ -77,8 +83,8 @@ public abstract class RefundDeclaredLostFeesTestBase extends APITests {
 
     performActionThatRequiresRefund();
 
-    assertThat(loan, hasLostItemFee(isClosedCancelledItemReturned(itemFee)));
-    assertThat(loan, hasLostItemFeeActions(isCancelledItemReturnedActionCreated(itemFee)));
+    assertThat(loan, hasLostItemFee(isClosedCancelled(itemFee)));
+    assertThat(loan, hasLostItemFeeActions(isClosedCancelledActionCreated(itemFee)));
   }
 
   @Test
@@ -95,9 +101,9 @@ public abstract class RefundDeclaredLostFeesTestBase extends APITests {
 
     performActionThatRequiresRefund();
 
-    assertThat(loan, hasLostItemProcessingFee(isClosedCancelledItemReturned(processingFee)));
+    assertThat(loan, hasLostItemProcessingFee(isClosedCancelled(processingFee)));
     assertThat(loan, hasLostItemProcessingFeeActions(
-      isCancelledItemReturnedActionCreated(processingFee)));
+      isClosedCancelledActionCreated(processingFee)));
   }
 
   @Test
@@ -134,9 +140,7 @@ public abstract class RefundDeclaredLostFeesTestBase extends APITests {
     feeFineAccountFixture.transferLostItemFee(loan.getId());
     feeFineAccountFixture.payLostItemProcessingFee(loan.getId());
 
-    mockClockManagerToReturnFixedDateTime(now(DateTimeZone.UTC).plusMinutes(2));
-
-    performActionThatRequiresRefund();
+    performActionThatRequiresRefund(now(UTC).plusMinutes(2));
 
     assertThat(loan, hasLostItemFee(isTransferredFully(setCostFee)));
     assertThat(loan, hasLostItemFeeActions(
@@ -183,12 +187,12 @@ public abstract class RefundDeclaredLostFeesTestBase extends APITests {
 
     performActionThatRequiresRefund();
 
-    assertThat(loan, hasLostItemFee(isClosedCancelledItemReturned(itemFee)));
-    assertThat(loan, hasLostItemFeeActions(isCancelledItemReturnedActionCreated(itemFee)));
+    assertThat(loan, hasLostItemFee(isClosedCancelled(itemFee)));
+    assertThat(loan, hasLostItemFeeActions(isClosedCancelledActionCreated(itemFee)));
 
-    assertThat(loan, hasLostItemProcessingFee(isClosedCancelledItemReturned(processingFee)));
+    assertThat(loan, hasLostItemProcessingFee(isClosedCancelled(processingFee)));
     assertThat(loan, hasLostItemProcessingFeeActions(
-      isCancelledItemReturnedActionCreated(processingFee)));
+      isClosedCancelledActionCreated(processingFee)));
   }
 
   @Test
@@ -207,9 +211,9 @@ public abstract class RefundDeclaredLostFeesTestBase extends APITests {
     assertThat(loan, hasLostItemFee(isRefundedFully(setCostFee)));
     assertThat(loan, hasLostItemFeeActions(areTransferRefundActionsCreated(setCostFee)));
 
-    assertThat(loan, hasLostItemProcessingFee(isClosedCancelledItemReturned(processingFee)));
+    assertThat(loan, hasLostItemProcessingFee(isClosedCancelled(processingFee)));
     assertThat(loan, hasLostItemProcessingFeeActions(
-      isCancelledItemReturnedActionCreated(processingFee)));
+      isClosedCancelledActionCreated(processingFee)));
   }
 
   @Test
@@ -228,9 +232,9 @@ public abstract class RefundDeclaredLostFeesTestBase extends APITests {
     assertThat(loan, hasLostItemFee(isRefundedFully(setCostFee)));
     assertThat(loan, hasLostItemFeeActions(arePaymentRefundActionsCreated(setCostFee)));
 
-    assertThat(loan, hasLostItemProcessingFee(isClosedCancelledItemReturned(processingFee)));
+    assertThat(loan, hasLostItemProcessingFee(isClosedCancelled(processingFee)));
     assertThat(loan, hasLostItemProcessingFeeActions(
-      isCancelledItemReturnedActionCreated(processingFee)));
+      isClosedCancelledActionCreated(processingFee)));
   }
 
   @Test
@@ -255,9 +259,9 @@ public abstract class RefundDeclaredLostFeesTestBase extends APITests {
       arePaymentRefundActionsCreated(paymentAmount)
     )));
 
-    assertThat(loan, hasLostItemProcessingFee(isClosedCancelledItemReturned(processingFee)));
+    assertThat(loan, hasLostItemProcessingFee(isClosedCancelled(processingFee)));
     assertThat(loan, hasLostItemProcessingFeeActions(
-      isCancelledItemReturnedActionCreated(processingFee)));
+      isClosedCancelledActionCreated(processingFee)));
   }
 
   @Test
@@ -277,17 +281,17 @@ public abstract class RefundDeclaredLostFeesTestBase extends APITests {
 
     performActionThatRequiresRefund();
 
-    assertThat(loan, hasLostItemFee(isClosedCancelledItemReturned(setCostFee)));
+    assertThat(loan, hasLostItemFee(isClosedCancelled(setCostFee)));
     assertThat(loan, hasLostItemFeeActions(allOf(
-      isCancelledItemReturnedActionCreated(remainingAmount),
+      isClosedCancelledActionCreated(remainingAmount),
       areTransferRefundActionsCreated(remainingAmount, transferAmount),
       arePaymentRefundActionsCreated(remainingAmount, paymentAmount)
     )));
     lostItemFeeActionsOrderedHistorically();
 
-    assertThat(loan, hasLostItemProcessingFee(isClosedCancelledItemReturned(processingFee)));
+    assertThat(loan, hasLostItemProcessingFee(isClosedCancelled(processingFee)));
     assertThat(loan, hasLostItemProcessingFeeActions(
-      isCancelledItemReturnedActionCreated(processingFee)));
+      isClosedCancelledActionCreated(processingFee)));
   }
 
   @Test
@@ -306,14 +310,11 @@ public abstract class RefundDeclaredLostFeesTestBase extends APITests {
 
     declareItemLost();
 
-    checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
-      .forItem(item)
-      .at(servicePointsFixture.cd1())
-      .on(now().plusMonths(2)));
+    performActionThatRequiresRefund(now().plusMonths(2));
 
-    assertThat(loan, hasLostItemProcessingFee(isClosedCancelledItemReturned(processingFee)));
+    assertThat(loan, hasLostItemProcessingFee(isClosedCancelled(processingFee)));
     assertThat(loan, hasLostItemProcessingFeeActions(
-      isCancelledItemReturnedActionCreated(processingFee)));
+      isClosedCancelledActionCreated(processingFee)));
 
     assertThat(loan, hasOverdueFine());
   }
@@ -336,9 +337,9 @@ public abstract class RefundDeclaredLostFeesTestBase extends APITests {
 
     performActionThatRequiresRefund(now().plusMonths(2));
 
-    assertThat(loan, hasLostItemProcessingFee(isClosedCancelledItemReturned(processingFee)));
+    assertThat(loan, hasLostItemProcessingFee(isClosedCancelled(processingFee)));
     assertThat(loan, hasLostItemProcessingFeeActions(
-      isCancelledItemReturnedActionCreated(processingFee)));
+      isClosedCancelledActionCreated(processingFee)));
 
     assertThat(loan, hasNoOverdueFine());
   }
@@ -359,9 +360,7 @@ public abstract class RefundDeclaredLostFeesTestBase extends APITests {
 
     declareItemLost();
 
-    mockClockManagerToReturnFixedDateTime(DateTime.now(DateTimeZone.UTC).plusMinutes(2));
-
-    performActionThatRequiresRefund();
+    performActionThatRequiresRefund(DateTime.now(UTC).plusMinutes(2));
 
     assertThat(loan, hasLostItemFee(isOpen(itemFee)));
     assertThat(loan, hasNoOverdueFine());
@@ -444,7 +443,7 @@ public abstract class RefundDeclaredLostFeesTestBase extends APITests {
 
     assertThat(accountsOrdered, containsInRelativeOrder(
       allOf(
-        hasJsonPath("typeAction", CANCELLED_ITEM_RETURNED),
+        hasJsonPath("typeAction", cancellationReason),
         hasJsonPath("transactionInformation", "-")),
       allOf(
         hasJsonPath("typeAction", REFUNDED_FULLY),
@@ -468,5 +467,13 @@ public abstract class RefundDeclaredLostFeesTestBase extends APITests {
       assertThat(parse(previousAction.getString(DATE_ACTION_PROPERTY)),
         greaterThan(parse(currentAction.getString(DATE_ACTION_PROPERTY))));
     }
+  }
+
+  private Matcher<JsonObject> isClosedCancelled(double amount) {
+    return AccountMatchers.isClosedCancelled(cancellationReason, amount);
+  }
+
+  private Matcher<Iterable<JsonObject>> isClosedCancelledActionCreated(double amount) {
+    return AccountActionsMatchers.isCancelledActionCreated(cancellationReason, amount);
   }
 }
