@@ -88,7 +88,8 @@ public class FeeFineFacade {
   }
 
   private CompletableFuture<Result<Void>> refundAndCloseAccount(RefundAccountCommand refund) {
-    final AccountRefundContext context = new AccountRefundContext(refund.getAccountToRefund());
+    final var context = new AccountRefundContext(refund.getAccountToRefund(),
+      refund.getCancellationReason());
 
     return fetchUser(refund.getStaffUserId())
       .thenApply(r -> r.map(context::withUser))
