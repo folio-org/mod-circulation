@@ -31,11 +31,10 @@ public class CheckInContext {
   private final DateTime checkInProcessedDateTime;
   private final boolean inHouseUse;
   private final ItemStatus itemStatusBeforeCheckIn;
-  private final boolean lostItemFeesRefundedOrCancelled;
 
   public CheckInContext(CheckInByBarcodeRequest checkInRequest) {
     this(checkInRequest, null, null, null, null, null, null,
-      ClockManager.getClockManager().getDateTime(), false, null, false);
+      ClockManager.getClockManager().getDateTime(), false, null);
   }
 
   public CheckInContext withItem(Item item) {
@@ -56,8 +55,7 @@ public class CheckInContext {
       this.loggedInUserId,
       this.checkInProcessedDateTime,
       this.inHouseUse,
-      this.itemStatusBeforeCheckIn,
-      this.lostItemFeesRefundedOrCancelled);
+      this.itemStatusBeforeCheckIn);
   }
 
   public CheckInContext withLoan(Loan loan) {
@@ -71,8 +69,7 @@ public class CheckInContext {
       this.loggedInUserId,
       this.checkInProcessedDateTime,
       this.inHouseUse,
-      this.itemStatusBeforeCheckIn,
-      this.lostItemFeesRefundedOrCancelled);
+      this.itemStatusBeforeCheckIn);
   }
 
   public CheckInContext withRequestQueue(RequestQueue requestQueue) {
@@ -92,8 +89,7 @@ public class CheckInContext {
       this.loggedInUserId,
       this.checkInProcessedDateTime,
       this.inHouseUse,
-      this.itemStatusBeforeCheckIn,
-      this.lostItemFeesRefundedOrCancelled);
+      this.itemStatusBeforeCheckIn);
   }
 
   public CheckInContext withCheckInServicePoint(ServicePoint checkInServicePoint) {
@@ -107,8 +103,7 @@ public class CheckInContext {
       this.loggedInUserId,
       this.checkInProcessedDateTime,
       this.inHouseUse,
-      this.itemStatusBeforeCheckIn,
-      this.lostItemFeesRefundedOrCancelled);
+      this.itemStatusBeforeCheckIn);
   }
 
   public CheckInContext withHighestPriorityFulfillableRequest(Request request) {
@@ -122,8 +117,7 @@ public class CheckInContext {
       loggedInUserId,
       this.checkInProcessedDateTime,
       this.inHouseUse,
-      this.itemStatusBeforeCheckIn,
-      this.lostItemFeesRefundedOrCancelled);
+      this.itemStatusBeforeCheckIn);
   }
 
   public CheckInContext withLoggedInUserId(String userId) {
@@ -137,8 +131,7 @@ public class CheckInContext {
       userId,
       this.checkInProcessedDateTime,
       this.inHouseUse,
-      this.itemStatusBeforeCheckIn,
-      this.lostItemFeesRefundedOrCancelled);
+      this.itemStatusBeforeCheckIn);
   }
 
   public CheckInContext withInHouseUse(boolean inHouseUse) {
@@ -152,8 +145,7 @@ public class CheckInContext {
       this.loggedInUserId,
       this.checkInProcessedDateTime,
       inHouseUse,
-      this.itemStatusBeforeCheckIn,
-      this.lostItemFeesRefundedOrCancelled);
+      this.itemStatusBeforeCheckIn);
   }
 
   public CheckInContext withItemStatusBeforeCheckIn(ItemStatus itemStatus) {
@@ -167,23 +159,7 @@ public class CheckInContext {
       this.loggedInUserId,
       this.checkInProcessedDateTime,
       this.inHouseUse,
-      itemStatus,
-      this.lostItemFeesRefundedOrCancelled);
-  }
-
-  public CheckInContext withLostItemFeesRefundedOrCancelled(boolean lostItemFeesRefunded) {
-    return new CheckInContext(
-      this.checkInRequest,
-      this.item,
-      this.loan,
-      this.requestQueue,
-      this.checkInServicePoint,
-      this.highestPriorityFulfillableRequest,
-      this.loggedInUserId,
-      this.checkInProcessedDateTime,
-      this.inHouseUse,
-      this.itemStatusBeforeCheckIn,
-      lostItemFeesRefunded);
+      itemStatus);
   }
 
   public boolean isInHouseUse() {
@@ -232,9 +208,5 @@ public class CheckInContext {
 
   public ItemStatus getItemStatusBeforeCheckIn() {
     return itemStatusBeforeCheckIn;
-  }
-
-  public boolean areLostItemFeesRefundedOrCancelled() {
-    return lostItemFeesRefundedOrCancelled;
   }
 }

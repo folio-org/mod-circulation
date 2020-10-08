@@ -64,6 +64,7 @@ public class RequestCollectionResource extends CollectionResource {
     JsonObject representation = routingContext.getBodyAsJson();
 
     final Clients clients = Clients.create(context, client);
+    final EventPublisher eventPublisher = new EventPublisher(routingContext);
 
     final UserRepository userRepository = new UserRepository(clients);
     final LoanRepository loanRepository = new LoanRepository(clients);
@@ -78,8 +79,6 @@ public class RequestCollectionResource extends CollectionResource {
         new UpdateItem(clients),
         new UpdateLoan(clients, loanRepository, loanPolicyRepository),
         UpdateRequestQueue.using(clients));
-
-    final EventPublisher eventPublisher = new EventPublisher(routingContext);
 
     final CreateRequestService createRequestService = new CreateRequestService(
       new CreateRequestRepositories(RequestRepository.using(clients),
@@ -128,6 +127,7 @@ public class RequestCollectionResource extends CollectionResource {
     final UpdateRequestQueue updateRequestQueue = UpdateRequestQueue.using(clients);
     final LoanRepository loanRepository = new LoanRepository(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
+    final EventPublisher eventPublisher = new EventPublisher(routingContext);
     final RequestNoticeSender requestNoticeSender = RequestNoticeSender.using(clients);
     final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
     final FindWithCqlQuery<UserManualBlock> userManualBlocksValidator
@@ -140,8 +140,6 @@ public class RequestCollectionResource extends CollectionResource {
         updateItem,
         new UpdateLoan(clients, loanRepository, loanPolicyRepository),
         updateRequestQueue);
-
-    final EventPublisher eventPublisher = new EventPublisher(routingContext);
 
     final CreateRequestService createRequestService = new CreateRequestService(
       new CreateRequestRepositories(RequestRepository.using(clients),
@@ -286,9 +284,7 @@ public class RequestCollectionResource extends CollectionResource {
         updateUponRequest,
         moveRequestProcessAdapter,
         new RequestLoanValidator(loanRepository),
-        RequestNoticeSender.using(clients), configurationRepository,
-        eventPublisher
-      );
+        RequestNoticeSender.using(clients), configurationRepository, eventPublisher);
 
     requestRepository.getById(id)
       .thenApply(r -> r.map(RequestAndRelatedRecords::new))

@@ -10,6 +10,7 @@ import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
+import org.folio.circulation.domain.representations.logs.NoticeLogContext;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
@@ -61,7 +62,7 @@ public class RequestNoticeSender {
       .withEventType(eventType)
       .withNoticeContext(createRequestNoticeContext(request))
       .build();
-    patronNoticeService.acceptNoticeEvent(requestCreatedEvent);
+    patronNoticeService.acceptNoticeEvent(requestCreatedEvent, NoticeLogContext.from(request));
 
     Loan loan = request.getLoan();
     if (request.getRequestType() == RequestType.RECALL &&
@@ -107,7 +108,7 @@ public class RequestNoticeSender {
       .withEventType(NoticeEventType.REQUEST_CANCELLATION)
       .withNoticeContext(createRequestNoticeContext(request))
       .build();
-    patronNoticeService.acceptNoticeEvent(requestCancelledEvent);
+    patronNoticeService.acceptNoticeEvent(requestCancelledEvent, NoticeLogContext.from(request));
 
     return Result.succeeded(null);
   }
@@ -119,7 +120,7 @@ public class RequestNoticeSender {
       .withEventType(NoticeEventType.ITEM_RECALLED)
       .withNoticeContext(TemplateContextUtil.createLoanNoticeContext(loan))
       .build();
-    patronNoticeService.acceptNoticeEvent(itemRecalledEvent);
+    patronNoticeService.acceptNoticeEvent(itemRecalledEvent, NoticeLogContext.from(loan));
     return Result.succeeded(null);
   }
 

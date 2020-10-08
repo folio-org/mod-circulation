@@ -11,7 +11,6 @@ import org.folio.circulation.support.http.server.WebContext;
 import org.folio.rest.client.PubsubClient;
 import org.folio.rest.jaxrs.model.Event;
 import org.folio.rest.jaxrs.model.EventMetadata;
-import org.folio.rest.util.OkapiConnectionParams;
 import org.folio.util.pubsub.PubSubClientUtils;
 import org.folio.util.pubsub.exceptions.EventSendingException;
 
@@ -26,10 +25,13 @@ public class PubSubPublishingService {
   private final PubsubClient pubSubClient;
 
   public PubSubPublishingService(RoutingContext routingContext) {
-    okapiHeaders = new WebContext(routingContext).getHeaders();
+    this(new WebContext(routingContext));
+  }
 
-    OkapiConnectionParams params = new OkapiConnectionParams(okapiHeaders, routingContext.vertx());
-    pubSubClient = new PubsubClient(params.getOkapiUrl(), params.getTenantId(), params.getToken());
+  public PubSubPublishingService(WebContext context) {
+    this.pubSubClient = new PubsubClient(context.getOkapiLocation(), context.getTenantId(),
+      context.getOkapiToken());
+    this.okapiHeaders = context.getHeaders();
   }
 
   public CompletableFuture<Boolean> publishEvent(String eventType, String payload) {
