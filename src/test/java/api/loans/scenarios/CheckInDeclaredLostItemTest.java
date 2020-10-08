@@ -82,7 +82,7 @@ public class CheckInDeclaredLostItemTest extends RefundDeclaredLostFeesTestBase 
         .forItem(item));
 
     assertThat(checkInResponse.getJson(), hasErrorWith(allOf(
-      hasMessage("Item is lost however there is no declared lost loan found"),
+      hasMessage("Item is lost however there is no aged to lost nor declared lost loan found"),
       hasParameter("itemId", item.getId().toString()))));
     assertThatPublishedLoanLogRecordEventsAreValid();
   }
@@ -103,7 +103,7 @@ public class CheckInDeclaredLostItemTest extends RefundDeclaredLostFeesTestBase 
         .forItem(item));
 
     assertThat(checkInResponse.getJson(), hasErrorWith(allOf(
-      hasMessage("Last loan for lost item is not declared lost"),
+      hasMessage("Last loan for lost item is neither aged to lost nor declared lost"),
       hasParameter("loanId", loan.getId().toString()))));
   }
 
