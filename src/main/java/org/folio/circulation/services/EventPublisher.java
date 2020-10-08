@@ -174,12 +174,6 @@ public class EventPublisher {
     return completedFuture(succeeded(requestAndRelatedRecords));
   }
 
-//  public CompletableFuture<Result<RequestAndRelatedRecords>> publishLogRecord(JsonObject logEventPayload) {
-//    pubSubPublishingService.publishEvent(LOG_RECORD.name(), logEventPayload.encode());
-//    return completedFuture(succeeded(null));
-//  }
-
-
   public CompletableFuture<Result<Void>> publishLogRecord(JsonObject payload, LogEventPayloadType payloadType) {
     JsonObject logEventPayload = new JsonObject();
     write(logEventPayload, LOG_EVENT_TYPE.value(), payloadType.value());
