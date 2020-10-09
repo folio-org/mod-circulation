@@ -20,7 +20,7 @@ FOLIO compatible circulation capabilities, including loan items from the invento
 
 ### Required
 
-- Java 8 JDK
+- Java 11 JDK
 - Maven 3.5.0
 - Drools 7.0.0 (later versions seem to be incompatible with Alpine Linux, used for the Docker container)
 - Implementations of the interfaces described in the [module descriptor](descriptors/ModuleDescriptor-template.json)
