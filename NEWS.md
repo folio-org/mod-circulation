@@ -1,3 +1,19 @@
+## 19.1.0 2020-10-09
+
+* Ages overdue items to lost (CIRC-851, CIRC-852, CIRC-854, CIRC-877, CIRC-878, CIRC-889) 
+* Refunds set cost fees for lost items (CIRC-716, CIRC-844, CIRC-845, CIRC-934)
+* Records a note for the patron when a claimed returned item is resolved (CIRC-742)
+* Overdue notices are sent until the item is returned or the patron is charged (CIRC-722)
+* Restricts access to processes (e.g. check out, renewal) for aged to lost items (CIRC-668, CIRC-669, CIRC-670, CIRC-671, CIRC-672, CIRC-881)
+* Renewals that do not change the due date can be overridden (CIRC-937)
+* Publishes audit log events for check in and check out (CIRC-924)
+* Publishes audit log events for sent notices (CIRC-929)
+* Requires JDK 11 (CIRC-883)
+* Provides `circulation 9.4`
+* Requires `loan-storage 7.1`
+* Requires `item-storage 8.5`
+* Requires `notes 1.0`
+
 ## 19.0.0 2020-06-12
 
 * Charges fees for lost items (CIRC-707, CIRC-715, CIRC-717, CIRC-743, CIRC-746, CIRC-747, CIRC-748, CIRC-749, CIRC-765)
