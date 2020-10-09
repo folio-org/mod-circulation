@@ -176,7 +176,8 @@ public class MoveRequestPolicyTests extends APITests {
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       interestingTimes, jessica, DateTime.now(DateTimeZone.UTC), RequestType.RECALL.getValue());
 
-    assertThat(patronNoticesClient.getAll().size(), is(0));
+    // notice for the recall is expected
+    await().until(() -> patronNoticesClient.getAll().size(), is(1));
     assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
 
     // move jessica's recall request from interestingTimes to smallAngryPlanet
@@ -241,7 +242,12 @@ public class MoveRequestPolicyTests extends APITests {
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       interestingTimes, jessica, DateTime.now(DateTimeZone.UTC), RequestType.RECALL.getValue());
 
-    assertThat(patronNoticesClient.getAll().size(), is(1));
+    // There should be 2 notices for each recall
+    await().until(() -> patronNoticesClient
+      .getMany(exactMatch("recipientId", steve.getId().toString())).size(), is(1));
+    await().until(() -> patronNoticesClient
+      .getMany(exactMatch("recipientId", charlotte.getId().toString())).size(), is(1));
+
     assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
     assertThatPublishedLogRecordEventsAreValid();
 
@@ -308,7 +314,8 @@ public class MoveRequestPolicyTests extends APITests {
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       interestingTimes, jessica, DateTime.now(DateTimeZone.UTC), RequestType.RECALL.getValue());
 
-    assertThat(patronNoticesClient.getAll().size(), is(0));
+    // One notice for the recall is expected
+    await().until(() -> patronNoticesClient.getAll().size(), is(1));
     assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
 
     // move jessica's recall request from interestingTimes to smallAngryPlanet
@@ -389,7 +396,7 @@ public class MoveRequestPolicyTests extends APITests {
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       interestingTimes, jessica, DateTime.now(DateTimeZone.UTC), RequestType.RECALL.getValue());
 
-    // There will be 2 notices for each check out
+    // There should be 2 notices for each recall
     await().until(() -> patronNoticesClient
       .getMany(exactMatch("recipientId", steve.getId().toString())).size(), is(1));
     await().until(() -> patronNoticesClient
