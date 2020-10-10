@@ -2,7 +2,9 @@ package api.requests.scenarios;
 
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedNoticeLogRecordEventsCountIsEqualTo;
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
+import static api.support.http.CqlQuery.exactMatch;
 import static java.util.Collections.singletonList;
+import static org.awaitility.Awaitility.await;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_TYPE;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
@@ -16,11 +18,13 @@ import java.util.List;
 import java.util.UUID;
 
 import api.support.fakes.FakePubSub;
+
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.notice.NoticeEventType;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.ClockManager;
+
 import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
@@ -172,7 +176,8 @@ public class MoveRequestPolicyTests extends APITests {
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       interestingTimes, jessica, DateTime.now(DateTimeZone.UTC), RequestType.RECALL.getValue());
 
-    assertThat(patronNoticesClient.getAll().size(), is(0));
+    // notice for the recall is expected
+    await().until(() -> patronNoticesClient.getAll().size(), is(1));
     assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
 
     // move jessica's recall request from interestingTimes to smallAngryPlanet
@@ -237,7 +242,12 @@ public class MoveRequestPolicyTests extends APITests {
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       interestingTimes, jessica, DateTime.now(DateTimeZone.UTC), RequestType.RECALL.getValue());
 
-    assertThat(patronNoticesClient.getAll().size(), is(1));
+    // There should be 2 notices for each recall
+    await().until(() -> patronNoticesClient
+      .getMany(exactMatch("recipientId", steve.getId().toString())).size(), is(1));
+    await().until(() -> patronNoticesClient
+      .getMany(exactMatch("recipientId", charlotte.getId().toString())).size(), is(1));
+
     assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
     assertThatPublishedLogRecordEventsAreValid();
 
@@ -304,7 +314,8 @@ public class MoveRequestPolicyTests extends APITests {
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       interestingTimes, jessica, DateTime.now(DateTimeZone.UTC), RequestType.RECALL.getValue());
 
-    assertThat(patronNoticesClient.getAll().size(), is(0));
+    // One notice for the recall is expected
+    await().until(() -> patronNoticesClient.getAll().size(), is(1));
     assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
 
     // move jessica's recall request from interestingTimes to smallAngryPlanet
@@ -385,7 +396,12 @@ public class MoveRequestPolicyTests extends APITests {
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       interestingTimes, jessica, DateTime.now(DateTimeZone.UTC), RequestType.RECALL.getValue());
 
-    assertThat(patronNoticesClient.getAll().size(), is(1));
+    // There should be 2 notices for each recall
+    await().until(() -> patronNoticesClient
+      .getMany(exactMatch("recipientId", steve.getId().toString())).size(), is(1));
+    await().until(() -> patronNoticesClient
+      .getMany(exactMatch("recipientId", charlotte.getId().toString())).size(), is(1));
+
     assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
     assertThatPublishedLogRecordEventsAreValid();
 
