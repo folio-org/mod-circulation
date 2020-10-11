@@ -283,11 +283,11 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return getPosition() != null;
   }
 
-  boolean hasChangedPosition() {
+  public boolean hasChangedPosition() {
     return changedPosition;
   }
 
-  Integer getPreviousPosition() {
+  public Integer getPreviousPosition() {
     return previousPosition;
   }
 

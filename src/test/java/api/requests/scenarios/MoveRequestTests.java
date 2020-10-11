@@ -14,7 +14,7 @@ import static org.folio.circulation.domain.policy.DueDateManagement.KEEP_THE_CUR
 import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.END_OF_A_DAY;
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_TYPE;
-import static org.folio.circulation.domain.representations.logs.LogEventPayloadType.REQUEST_MOVED;
+import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_MOVED;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;

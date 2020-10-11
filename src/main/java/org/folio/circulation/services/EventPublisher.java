@@ -22,7 +22,7 @@ import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.EventType;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
-import org.folio.circulation.domain.representations.logs.LogEventPayloadType;
+import org.folio.circulation.domain.representations.logs.LogEventType;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.resources.context.RenewalContext;
@@ -174,7 +174,7 @@ public class EventPublisher {
     return completedFuture(succeeded(requestAndRelatedRecords));
   }
 
-  public CompletableFuture<Result<Void>> publishLogRecord(JsonObject payload, LogEventPayloadType payloadType) {
+  public CompletableFuture<Result<Void>> publishLogRecord(JsonObject payload, LogEventType payloadType) {
     JsonObject logEventPayload = new JsonObject();
     write(logEventPayload, LOG_EVENT_TYPE.value(), payloadType.value());
     write(logEventPayload, PAYLOAD.value(), payload);

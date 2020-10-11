@@ -5,18 +5,18 @@ import static org.folio.circulation.domain.representations.logs.LogEventPayloadF
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.ITEM_BARCODE;
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.ITEM_ID;
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.ITEM_STATUS_NAME;
-import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.LOG_EVENT_TYPE;
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.REQUESTS;
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.SOURCE;
-import static org.folio.circulation.domain.representations.logs.LogEventPayloadType.REQUEST_CREATED;
-import static org.folio.circulation.domain.representations.logs.LogEventPayloadType.REQUEST_MOVED;
-import static org.folio.circulation.domain.representations.logs.LogEventPayloadType.REQUEST_UPDATED;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.UpdatedRequestPair;
 
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class RequestUpdateLogEventMapper {
@@ -25,47 +25,31 @@ public class RequestUpdateLogEventMapper {
   private RequestUpdateLogEventMapper() {
   }
 
-  public static JsonObject mapToRequestCreatedLogEventJson(Request request) {
+  public static JsonObject mapToRequestLogEventJson(Request request) {
     JsonObject logEventPayload = new JsonObject();
-
-    write(logEventPayload, LOG_EVENT_TYPE.value(), REQUEST_CREATED.value());
     write(logEventPayload, SERVICE_POINT_ID.value(), request.getItem()
       .getLastCheckInServicePointId());
-
     populateItemData(request, logEventPayload);
-
     write(logEventPayload, REQUESTS.value(), mapCreatedRequestToJson(request));
-
     return logEventPayload;
   }
 
-  public static JsonObject mapToRequestUpdateLogEventJson(UpdatedRequestPair pair) {
+  public static JsonObject mapToRequestLogEventJson(Request original, Request updated) {
     JsonObject logEventPayload = new JsonObject();
-
-    write(logEventPayload, LOG_EVENT_TYPE.value(), REQUEST_UPDATED.value());
-    write(logEventPayload, SERVICE_POINT_ID.value(), pair.getOriginal()
-      .getItem()
+    write(logEventPayload, SERVICE_POINT_ID.value(), original.getItem()
       .getLastCheckInServicePointId());
-
-    populateItemData(pair.getOriginal(), logEventPayload);
-
-    write(logEventPayload, REQUESTS.value(), mapUpdatedRequestPairToJson(pair));
-
+    populateItemData(original, logEventPayload);
+    write(logEventPayload, REQUESTS.value(), mapUpdatedRequestPairToJson(new UpdatedRequestPair(original, updated)));
     return logEventPayload;
   }
 
-  public static JsonObject mapToRequestMoveLogEventJson(UpdatedRequestPair pair) {
+  public static JsonObject mapToRequestLogEventJson(List<Request> requests) {
     JsonObject logEventPayload = new JsonObject();
-
-    write(logEventPayload, LOG_EVENT_TYPE.value(), REQUEST_MOVED.value());
-    write(logEventPayload, SERVICE_POINT_ID.value(), pair.getOriginal()
+    write(logEventPayload, SERVICE_POINT_ID.value(), requests.get(0)
       .getItem()
       .getLastCheckInServicePointId());
-
-    populateItemData(pair.getOriginal(), logEventPayload);
-
-    write(logEventPayload, REQUESTS.value(), mapUpdatedRequestPairToJson(pair));
-
+    populateItemData(requests.get(0), logEventPayload);
+    write(logEventPayload, REQUESTS.value(), mapReorderedRequestsToJsonArray(requests));
     return logEventPayload;
   }
 
@@ -90,6 +74,14 @@ public class RequestUpdateLogEventMapper {
   private static JsonObject mapCreatedRequestToJson(Request request) {
     JsonObject requestPayload = new JsonObject();
     requestPayload.put("created", request.asJson());
+    return requestPayload;
+  }
+
+  private static JsonObject mapReorderedRequestsToJsonArray(List<Request> requests) {
+    JsonObject requestPayload = new JsonObject();
+    requestPayload.put("reordered", new JsonArray(requests.stream()
+      .map(r -> r.asJson().put("previousPosition", r.getPreviousPosition()))
+      .collect(Collectors.toList())));
     return requestPayload;
   }
 }

@@ -2,8 +2,8 @@ package org.folio.circulation.domain.representations.logs;
 
 import static java.util.Optional.ofNullable;
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.*;
-import static org.folio.circulation.domain.representations.logs.LogEventPayloadType.CHECK_IN;
-import static org.folio.circulation.domain.representations.logs.LogEventPayloadType.CHECK_OUT;
+import static org.folio.circulation.domain.representations.logs.LogEventType.CHECK_IN;
+import static org.folio.circulation.domain.representations.logs.LogEventType.CHECK_OUT;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
 import io.vertx.core.json.JsonArray;

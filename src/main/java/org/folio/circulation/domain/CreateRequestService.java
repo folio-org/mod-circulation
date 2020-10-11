@@ -1,8 +1,8 @@
 package org.folio.circulation.domain;
 
 import static java.util.Optional.ofNullable;
-import static org.folio.circulation.domain.representations.logs.LogEventPayloadType.REQUEST_CREATED;
-import static org.folio.circulation.domain.representations.logs.RequestUpdateLogEventMapper.mapToRequestCreatedLogEventJson;
+import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_CREATED;
+import static org.folio.circulation.domain.representations.logs.RequestUpdateLogEventMapper.mapToRequestLogEventJson;
 import static org.folio.circulation.support.results.Result.of;
 
 import java.util.HashMap;
@@ -82,7 +82,7 @@ public class CreateRequestService {
       .thenApplyAsync(r -> {
         ofNullable(eventPublisher).ifPresent(publisher ->
           requestRepository.getById(requestAndRelatedRecords.getRequest().getId())
-          .thenAcceptAsync(resp -> resp.after(t -> publisher.publishLogRecord(mapToRequestCreatedLogEventJson(t), REQUEST_CREATED))));
+          .thenAcceptAsync(c -> c.after(t -> publisher.publishLogRecord(mapToRequestLogEventJson(t), REQUEST_CREATED))));
         return r.next(requestNoticeSender::sendNoticeOnRequestCreated);
       });
   }

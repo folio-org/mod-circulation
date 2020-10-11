@@ -1,8 +1,8 @@
 package org.folio.circulation.domain;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.domain.representations.logs.LogEventPayloadType.REQUEST_MOVED;
-import static org.folio.circulation.domain.representations.logs.RequestUpdateLogEventMapper.mapToRequestMoveLogEventJson;
+import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_MOVED;
+import static org.folio.circulation.domain.representations.logs.RequestUpdateLogEventMapper.mapToRequestLogEventJson;
 import static org.folio.circulation.support.results.Result.of;
 
 import java.util.concurrent.CompletableFuture;
@@ -47,7 +47,7 @@ public class MoveRequestService {
   public CompletableFuture<Result<RequestAndRelatedRecords>> moveRequest(RequestAndRelatedRecords requestAndRelatedRecords) {
 
     return moveRequestProcessAdapter.getRequest(requestAndRelatedRecords)
-      .thenCompose(original -> completedFuture(of(() -> requestAndRelatedRecords))
+      .thenCompose(original -> original.after(o -> completedFuture(of(() -> requestAndRelatedRecords))
         .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::findDestinationItem))
         .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::getDestinationRequestQueue))
         .thenApply(r -> r.map(this::pagedRequestIfDestinationItemAvailable))
@@ -64,11 +64,12 @@ public class MoveRequestService {
         .thenComposeAsync(r -> r.after(this::updateRelatedObjects))
         .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::findDestinationItem))
         .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::getDestinationRequestQueue))
-        .thenComposeAsync(r -> r.after(x -> moveRequestProcessAdapter.getRequest(x)
-          .thenApply(z -> {
-            CompletableFuture.runAsync(() -> eventPublisher.publishLogRecord(mapToRequestMoveLogEventJson(new UpdatedRequestPair(original.value().getRequest(), r.value().getRequest())), REQUEST_MOVED));
-            return z;
-          }))));
+        .thenComposeAsync(r -> r.after(p -> moveRequestProcessAdapter.getRequest(p)
+          .thenApplyAsync(resp -> {
+            CompletableFuture.runAsync(() -> eventPublisher.publishLogRecord(mapToRequestLogEventJson(o.getRequest(), p.getRequest()), REQUEST_MOVED));
+            return resp;
+          }))
+        )));
   }
 
   private RequestAndRelatedRecords pagedRequestIfDestinationItemAvailable(

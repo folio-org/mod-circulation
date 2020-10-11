@@ -1,8 +1,7 @@
 package org.folio.circulation.domain;
 
-import static org.folio.circulation.domain.representations.logs.LogEventPayloadType.REQUEST_UPDATED;
-import static org.folio.circulation.domain.representations.logs.RequestUpdateLogEventMapper.mapToRequestMoveLogEventJson;
-import static org.folio.circulation.domain.representations.logs.RequestUpdateLogEventMapper.mapToRequestUpdateLogEventJson;
+import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_UPDATED;
+import static org.folio.circulation.domain.representations.logs.RequestUpdateLogEventMapper.mapToRequestLogEventJson;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.concurrent.CompletableFuture;
@@ -39,7 +38,7 @@ public class UpdateRequestService {
     Request updated = requestAndRelatedRecords.getRequest();
 
     return requestRepository.getById(updated.getId())
-      .thenCompose(original -> closedRequestValidator.refuseWhenAlreadyClosed(requestAndRelatedRecords)
+      .thenCompose(original -> original.after(o -> closedRequestValidator.refuseWhenAlreadyClosed(requestAndRelatedRecords)
         .thenApply(r -> r.next(this::removeRequestQueuePositionWhenCancelled))
         .thenComposeAsync(r -> r.after(requestRepository::update))
         .thenComposeAsync(r -> r.after(updateRequestQueue::onCancellation))
@@ -47,9 +46,11 @@ public class UpdateRequestService {
         .thenApplyAsync(r -> r.next(p -> {
           CompletableFuture.runAsync(() -> requestRepository.getById(updated.getId())
             .thenComposeAsync(v -> v.after(s -> eventPublisher
-              .publishLogRecord(mapToRequestUpdateLogEventJson(new UpdatedRequestPair(original.value(), s)), REQUEST_UPDATED))));
+              .publishLogRecord(mapToRequestLogEventJson(o, s), REQUEST_UPDATED))));
           return requestNoticeSender.sendNoticeOnRequestUpdated(p);
-        })));
+        }))
+        )
+      );
   }
 
   private Result<RequestAndRelatedRecords> removeRequestQueuePositionWhenCancelled(
