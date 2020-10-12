@@ -27,6 +27,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
+import lombok.val;
 
 /**
  * The circulation rules engine calculates the loan policy based on
@@ -90,7 +91,7 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
 
     Clients clients = Clients.create(routingContext, client);
 
-    CompletableFuture<Result<Drools>> droolsFuture = clients.getCirculationDrools();
+    val droolsFuture = CirculationRulesProcessor.getInstance().getDrools(routingContext, client);
 
     final WebContext context = new WebContext(routingContext);
     final CollectionResourceClient locationsStorageClient
@@ -130,7 +131,7 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
 
     Clients clients = Clients.create(routingContext, client);
 
-    CompletableFuture<Result<Drools>> droolsFuture = clients.getCirculationDrools();
+    val droolsFuture = CirculationRulesProcessor.getInstance().getDrools(routingContext, client);
 
     final WebContext context = new WebContext(routingContext);
     final CollectionResourceClient locationsStorageClient
@@ -143,7 +144,7 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
 
     CompletableFuture<Result<JsonArray>> circulationRuleMatchFuture =
         droolsFuture.thenCombine(locationFuture, (droolsResult, locationResult) ->
-          locationResult.combine(droolsResult, (location,drools) -> getPolicies(request.params(),drools,location)));
+          locationResult.combine(droolsResult, (location, drools) -> getPolicies(request.params(),drools,location)));
 
     circulationRuleMatchFuture
         .thenCompose(r -> r.after(this::buildJsonResult))
