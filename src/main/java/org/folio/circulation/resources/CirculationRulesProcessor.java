@@ -12,19 +12,14 @@ import org.folio.circulation.domain.Location;
 import org.folio.circulation.rules.CirculationRuleMatch;
 import org.folio.circulation.rules.Drools;
 import org.folio.circulation.rules.Text2Drools;
-import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.vertx.core.MultiMap;
-import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.RoutingContext;
-import lombok.val;
 
 public class CirculationRulesProcessor {
   protected static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -180,15 +175,6 @@ public class CirculationRulesProcessor {
 
   public static JsonArray getRequestPolicies(Drools drools, MultiMap params, Location location) {
     return drools.requestPolicies(params, location);
-  }
-
-  public CompletableFuture<Result<Drools>> getDrools(RoutingContext routingContext,
-    HttpClient client) {
-
-    val clients = Clients.create(routingContext, client);
-    val webContext = new WebContext(routingContext);
-
-    return getDrools(webContext.getTenantId(), clients.circulationRulesStorage());
   }
 
   public CompletableFuture<Result<Drools>> getDrools(String tenantId,

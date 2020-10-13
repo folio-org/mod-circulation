@@ -322,7 +322,8 @@ public class Clients {
   }
 
   public CompletableFuture<Result<Drools>> getCirculationDrools() {
-    return CirculationRulesProcessor.getInstance().getDrools(routingContext, httpClient);
+    return CirculationRulesProcessor.getInstance()
+      .getDrools(new WebContext(routingContext).getTenantId(), circulationRulesStorage());
   }
 
   public PubSubPublishingService pubSubPublishingService() {
