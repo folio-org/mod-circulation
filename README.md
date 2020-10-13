@@ -1,6 +1,6 @@
 # mod-circulation
 
-Copyright (C) 2017-2019 The Open Library Foundation
+Copyright (C) 2017-2020 The Open Library Foundation
 
 This software is distributed under the terms of the Apache License,
 Version 2.0. See the file "[LICENSE](LICENSE)" for more information.
@@ -20,7 +20,7 @@ FOLIO compatible circulation capabilities, including loan items from the invento
 
 ### Required
 
-- Java 8 JDK
+- Java 11 JDK
 - Maven 3.5.0
 - Drools 7.0.0 (later versions seem to be incompatible with Alpine Linux, used for the Docker container)
 - Implementations of the interfaces described in the [module descriptor](descriptors/ModuleDescriptor-template.json)
