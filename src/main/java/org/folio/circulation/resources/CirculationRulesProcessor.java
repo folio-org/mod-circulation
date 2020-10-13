@@ -24,6 +24,7 @@ import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
+import lombok.val;
 
 public class CirculationRulesProcessor {
   protected static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -184,10 +185,14 @@ public class CirculationRulesProcessor {
   public CompletableFuture<Result<Drools>> getDrools(RoutingContext routingContext,
     HttpClient client) {
 
-    String tenantId = new WebContext(routingContext).getTenantId();
+    val clients = Clients.create(routingContext, client);
+    val webContext = new WebContext(routingContext);
 
-    final Clients clients = Clients.create(routingContext, client);
-    CollectionResourceClient circulationRulesClient = clients.circulationRulesStorage();
+    return getDrools(webContext.getTenantId(), clients.circulationRulesStorage());
+  }
+
+  public CompletableFuture<Result<Drools>> getDrools(String tenantId,
+    CollectionResourceClient circulationRulesClient) {
 
     CompletableFuture<Result<Drools>> cfDrools = new CompletableFuture<>();
 
