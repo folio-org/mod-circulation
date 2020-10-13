@@ -785,8 +785,8 @@ public class RequestsAPIUpdatingTests extends APITests {
     Request originalCreatedFromEventPayload = Request.from(new JsonObject(logEvents.get(REQUEST_UPDATED.value()).get(0).getString("eventPayload")).getJsonObject("payload").getJsonObject("requests").getJsonObject("original"));
     Request updatedCreatedFromEventPayload = Request.from(new JsonObject(logEvents.get(REQUEST_UPDATED.value()).get(0).getString("eventPayload")).getJsonObject("payload").getJsonObject("requests").getJsonObject("updated"));
 
-    assertThat(requestCreatedFromEventPayload.asJson(), equalTo(originalCreatedFromEventPayload.asJson()));
-    assertThat(originalCreatedFromEventPayload.asJson(), not(equalTo(updatedCreatedFromEventPayload.asJson())));
+    assertThat(requestCreatedFromEventPayload.getRequestType(), equalTo(originalCreatedFromEventPayload.getRequestType()));
+    assertThat(originalCreatedFromEventPayload.getRequestType(), not(equalTo(updatedCreatedFromEventPayload.getRequestType())));
 
     assertThat(events.get(LOAN_DUE_DATE_CHANGED.name()).get(0), isValidLoanDueDateChangedEvent(updatedLoan));
   }

@@ -1,10 +1,10 @@
 package org.folio.circulation.domain;
 
+import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_UPDATED;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.concurrent.CompletableFuture;
 
-import org.folio.circulation.domain.representations.logs.LogEventType;
 import org.folio.circulation.domain.validation.ClosedRequestValidator;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.resources.RequestNoticeSender;
@@ -34,13 +34,16 @@ public class UpdateRequestService {
   public CompletableFuture<Result<RequestAndRelatedRecords>> replaceRequest(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
-    return closedRequestValidator.refuseWhenAlreadyClosed(requestAndRelatedRecords)
-      .thenApply(r -> r.next(this::removeRequestQueuePositionWhenCancelled))
-      .thenComposeAsync(r -> r.after(requestRepository::update))
-      .thenComposeAsync(r -> r.after(updateRequestQueue::onCancellation))
-      .thenComposeAsync(r -> r.after(updateItem::onRequestCreateOrUpdate))
-      .thenApplyAsync(x -> x.map(u -> eventPublisher.publishLogRecordAsync(u, u.getOriginalRequest(), LogEventType.REQUEST_UPDATED)))
-      .thenApply(r -> r.next(requestNoticeSender::sendNoticeOnRequestUpdated));
+    Request updated = requestAndRelatedRecords.getRequest();
+
+    return requestRepository.getById(updated.getId())
+      .thenCompose(original -> original.after(o -> closedRequestValidator.refuseWhenAlreadyClosed(requestAndRelatedRecords)
+        .thenApply(r -> r.next(this::removeRequestQueuePositionWhenCancelled))
+        .thenComposeAsync(r -> r.after(requestRepository::update))
+        .thenComposeAsync(r -> r.after(updateRequestQueue::onCancellation))
+        .thenComposeAsync(r -> r.after(updateItem::onRequestCreateOrUpdate))
+        .thenApplyAsync(r -> r.map(p -> eventPublisher.publishLogRecordAsync(p, o, REQUEST_UPDATED)))
+        .thenApply(r -> r.next(requestNoticeSender::sendNoticeOnRequestUpdated))));
   }
 
   private Result<RequestAndRelatedRecords> removeRequestQueuePositionWhenCancelled(
