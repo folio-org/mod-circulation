@@ -128,21 +128,20 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
 
     Clients clients = Clients.create(routingContext, client);
 
-    val droolsFuture = CirculationRulesProcessor.getInstance().getDrools(
-      routingContext, client);
-
     final WebContext context = new WebContext(routingContext);
-    final CollectionResourceClient locationsStorageClient
-      = clients.locationsStorage();
+    final CollectionResourceClient locationsStorageClient = clients.locationsStorage();
+
+    val droolsFuture = CirculationRulesProcessor.getInstance()
+      .getDrools(context.getTenantId(), clients.circulationRulesStorage());
+
     CompletableFuture<Result<Location>> locationFuture = FetchSingleRecord.<Location>forRecord("location")
       .using(locationsStorageClient)
       .mapTo(Location::from)
       .whenNotFound(failed(new ServerErrorFailure("Can`t find location")))
       .fetch(request.params().get(LOCATION_ID_NAME));
 
-    val circulationRuleMatchFuture =
-      droolsFuture.thenCombine(locationFuture, (droolsResult, locationResult) ->
-        locationResult.combine(droolsResult, interpretMatches));
+    val circulationRuleMatchFuture = droolsFuture.thenCombine(locationFuture,
+      (droolsResult, locationResult) -> locationResult.combine(droolsResult, interpretMatches));
 
     circulationRuleMatchFuture.thenCompose(r -> r.after(mapToJson))
       .thenApply(r -> r.map(JsonHttpResponse::ok))
