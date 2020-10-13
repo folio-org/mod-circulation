@@ -47,7 +47,7 @@ public class ClaimItemReturnedResource extends Resource {
   private CompletableFuture<Result<Loan>> processClaimItemReturned(
     RoutingContext routingContext, ClaimItemReturnedRequest request) {
 
-    final Clients clients = Clients.create(routingContext, client);
+    final Clients clients = Clients.create(new WebContext(routingContext), client);
     final ChangeItemStatusService changeItemStatusService =
       new ChangeItemStatusService(clients);
 

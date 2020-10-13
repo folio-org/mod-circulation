@@ -83,7 +83,7 @@ public class CheckOutByBarcodeResource extends Resource {
     CheckOutByBarcodeRequest request = CheckOutByBarcodeRequest.fromJson(
       routingContext.getBodyAsJson());
 
-    final Clients clients = Clients.create(routingContext, client);
+    final Clients clients = Clients.create(context, client);
 
     final UserRepository userRepository = new UserRepository(clients);
     final ItemRepository itemRepository = new ItemRepository(clients, true, true, true);

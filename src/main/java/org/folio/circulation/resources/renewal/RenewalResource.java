@@ -59,7 +59,7 @@ public abstract class RenewalResource extends Resource {
 
   private void renew(RoutingContext routingContext) {
     final WebContext webContext = new WebContext(routingContext);
-    final Clients clients = Clients.create(routingContext, client);
+    final Clients clients = Clients.create(webContext, client);
 
     final LoanRepository loanRepository = new LoanRepository(clients);
     final ItemRepository itemRepository = new ItemRepository(clients, true, true, true);

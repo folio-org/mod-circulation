@@ -30,7 +30,7 @@ public class EndPatronActionSessionResource extends Resource {
 
   private void process(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
-    Clients clients = Clients.create(routingContext, client);
+    Clients clients = Clients.create(context, client);
 
     PatronActionSessionService patronActionSessionService =
       PatronActionSessionService.using(clients);

@@ -126,9 +126,9 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
       return;
     }
 
-    Clients clients = Clients.create(routingContext, client);
-
     final WebContext context = new WebContext(routingContext);
+    Clients clients = Clients.create(context, client);
+
     final CollectionResourceClient locationsStorageClient = clients.locationsStorage();
 
     val droolsFuture = CirculationRulesProcessor.getInstance()

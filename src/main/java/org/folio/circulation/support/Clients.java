@@ -11,7 +11,6 @@ import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.http.HttpClient;
-import io.vertx.ext.web.RoutingContext;
 
 public class Clients {
   private final CollectionResourceClient requestsStorageClient;
@@ -64,14 +63,12 @@ public class Clients {
   private final PubSubPublishingService pubSubPublishingService;
   private final WebContext context;
 
-  public static Clients create(RoutingContext routingContext, HttpClient httpClient) {
-    return new Clients(routingContext, httpClient);
+  public static Clients create(WebContext context, HttpClient httpClient) {
+    return new Clients(context.createHttpClient(httpClient), context);
   }
 
-  private Clients(RoutingContext routingContext, HttpClient httpClient) {
-    this.context = new WebContext(routingContext);
-
-    OkapiHttpClient client = context.createHttpClient(httpClient);
+  private Clients(OkapiHttpClient client, WebContext context) {
+    this.context = context;
 
     try {
       requestsStorageClient = createRequestsStorageClient(client, context);
