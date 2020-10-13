@@ -61,7 +61,6 @@ public class Clients {
   private final CollectionResourceClient automatedPatronBlocksClient;
   private final CollectionResourceClient notesClient;
   private final CollectionResourceClient noteTypesClient;
-  private final HttpClient httpClient;
   private final RoutingContext routingContext;
   private final PubSubPublishingService pubSubPublishingService;
 
@@ -70,7 +69,6 @@ public class Clients {
   }
 
   private Clients(RoutingContext routingContext, HttpClient httpClient) {
-    this.httpClient = httpClient;
     this.routingContext = routingContext;
     WebContext context = new WebContext(routingContext);
     OkapiHttpClient client = context.createHttpClient(httpClient);
@@ -311,10 +309,6 @@ public class Clients {
 
   public CollectionResourceClient noteTypesClient() {
     return noteTypesClient;
-  }
-
-  protected HttpClient getHttpClient() {
-    return httpClient;
   }
 
   protected RoutingContext getRoutingContext() {
