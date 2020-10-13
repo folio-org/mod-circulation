@@ -1,6 +1,5 @@
 package org.folio.circulation.resources;
 
-import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
@@ -115,33 +114,39 @@ public class CirculationRulesProcessor {
    * @param client - an HttpClient
    * @param routingContext - where to report any error
    */
-  private CompletableFuture<Result<Rules>> reloadRules(Rules rules, RoutingContext routingContext, HttpClient client) {
+  private CompletableFuture<Result<Rules>> reloadRules(Rules rules,
+    RoutingContext routingContext, HttpClient client) {
+
     final Clients clients = Clients.create(routingContext, client);
     CollectionResourceClient circulationRulesClient = clients.circulationRulesStorage();
 
-    return circulationRulesClient.get().thenCompose(r -> r.after(response -> {
-      JsonObject circulationRules = new JsonObject(response.getBody());
+    return circulationRulesClient.get()
+      .thenCompose(r -> r.after(response -> {
+        JsonObject circulationRules = new JsonObject(response.getBody());
 
+        rules.reloadTimestamp = System.currentTimeMillis();
+        rules.reloadInitiated = false;
 
-      rules.reloadTimestamp = System.currentTimeMillis();
-      rules.reloadInitiated = false;
+        if (log.isDebugEnabled()) {
+          log.debug("circulationRules = {}", circulationRules.encodePrettily());
+        }
 
-      if (log.isDebugEnabled()) {
-        log.debug("circulationRules = {}", circulationRules.encodePrettily());
-      }
+        String rulesAsText = circulationRules.getString("rulesAsText");
 
-      String rulesAsText = circulationRules.getString("rulesAsText");
-      if (rulesAsText == null) {
-        throw new NullPointerException("rulesAsText");
-      }
-      if (rules.rulesAsText.equals(rulesAsText)) {
-        return completedFuture(succeeded(rules));
-      }
-      rules.rulesAsText = rulesAsText;
-      rules.rulesAsDrools = Text2Drools.convert(rulesAsText);
-      log.debug("rulesAsDrools = {}", rules.rulesAsDrools);
-      rules.drools = new Drools(rules.rulesAsDrools);
-      return completedFuture(succeeded(rules));
+        if (rulesAsText == null) {
+          throw new NullPointerException("rulesAsText");
+        }
+
+        if (rules.rulesAsText.equals(rulesAsText)) {
+          return ofAsync(() -> rules);
+        }
+
+        rules.rulesAsText = rulesAsText;
+        rules.rulesAsDrools = Text2Drools.convert(rulesAsText);
+        log.debug("rulesAsDrools = {}", rules.rulesAsDrools);
+        rules.drools = new Drools(rules.rulesAsDrools);
+
+        return ofAsync(() -> rules);
     }));
   }
 
