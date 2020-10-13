@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static api.support.matchers.EventTypeMatchers.LOG_RECORD;
-import static org.folio.circulation.domain.representations.logs.LogEventPayloadType.NOTICE;
+import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 

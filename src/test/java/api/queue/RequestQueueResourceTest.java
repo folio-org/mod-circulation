@@ -1,16 +1,23 @@
 package api.queue;
 
+import static java.util.stream.Collectors.toList;
+import static org.folio.circulation.domain.EventType.LOG_RECORD;
+import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_REORDERED;
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertEquals;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasSize;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import api.support.http.IndividualResource;
+import org.awaitility.Awaitility;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.Matcher;
 import org.junit.Before;
@@ -20,6 +27,8 @@ import org.junit.runner.RunWith;
 import api.support.APITests;
 import api.support.builders.ReorderQueueBuilder;
 import api.support.builders.RequestBuilder;
+import api.support.fakes.FakePubSub;
+import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import junitparams.JUnitParamsRunner;
@@ -211,6 +220,58 @@ public class RequestQueueResourceTest extends APITests {
       .reorderQueue(item.getId().toString(), reorderQueue);
 
     verifyQueueUpdated(reorderQueue, response);
+  }
+
+  @Test
+  public void logRecordEventIsPublished() {
+
+    checkOutFixture.checkOutByBarcode(item, rebecca);
+
+    IndividualResource firstHoldRequest = holdRequest(steve);
+    IndividualResource secondHoldRequest = holdRequest(james);
+    IndividualResource firstRecallRequest = recallRequest(charlotte);
+    IndividualResource secondRecallRequest = recallRequest(jessica);
+
+    JsonObject reorderQueue = new ReorderQueueBuilder()
+      .addReorderRequest(firstHoldRequest.getId().toString(), 1)
+      .addReorderRequest(secondHoldRequest.getId().toString(), 4)
+      .addReorderRequest(firstRecallRequest.getId().toString(), 2)
+      .addReorderRequest(secondRecallRequest.getId().toString(), 3)
+      .create();
+
+    JsonObject response = requestQueueFixture.reorderQueue(item.getId()
+      .toString(), reorderQueue);
+
+    verifyQueueUpdated(reorderQueue, response);
+
+    List<JsonObject> publishedEvents = Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(FakePubSub::getPublishedEvents, hasSize(11));
+
+    List<JsonObject> reorderedLogEvents = publishedEvents.stream()
+      .filter(o -> o.getString("eventType")
+        .equals(LOG_RECORD.name())
+          && new JsonObject(o.getString("eventPayload")).getString("logEventType")
+            .equals(REQUEST_REORDERED.value()))
+      .collect(toList());
+
+    assertThat(reorderedLogEvents, hasSize(1));
+
+    List<JsonObject> reorderedRequests = new JsonObject(JsonObject.mapFrom(reorderedLogEvents.get(0))
+      .getString("eventPayload")).getJsonObject("payload")
+        .getJsonObject("requests")
+        .getJsonArray("reordered")
+        .stream()
+        .map(o -> (JsonObject) o)
+        .collect(toList());
+
+    assertThat(reorderedRequests, hasSize(3));
+
+    reorderedRequests.forEach(r -> {
+      assertNotNull(r.getInteger("position"));
+      assertNotNull(r.getInteger("previousPosition"));
+      assertNotEquals(r.getInteger("position"), r.getInteger("previousPosition"));
+    });
   }
 
   @Test
