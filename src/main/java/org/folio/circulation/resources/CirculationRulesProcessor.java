@@ -108,17 +108,8 @@ public class CirculationRulesProcessor {
     return rules.reloadTimestamp + triggerAgeInMilliseconds < System.currentTimeMillis();
   }
 
-  /**
-   * Load the circulation rules from the storage module.
-   * @param rules - where to store the rules and reload information
-   * @param client - an HttpClient
-   * @param routingContext - where to report any error
-   */
   private CompletableFuture<Result<Rules>> reloadRules(Rules rules,
-    RoutingContext routingContext, HttpClient client) {
-
-    final Clients clients = Clients.create(routingContext, client);
-    CollectionResourceClient circulationRulesClient = clients.circulationRulesStorage();
+    CollectionResourceClient circulationRulesClient) {
 
     return circulationRulesClient.get()
       .thenCompose(r -> r.after(response -> {
@@ -195,6 +186,9 @@ public class CirculationRulesProcessor {
 
     String tenantId = new WebContext(routingContext).getTenantId();
 
+    final Clients clients = Clients.create(routingContext, client);
+    CollectionResourceClient circulationRulesClient = clients.circulationRulesStorage();
+
     CompletableFuture<Result<Drools>> cfDrools = new CompletableFuture<>();
 
     Rules rules = rulesMap.get(tenantId);
@@ -204,7 +198,7 @@ public class CirculationRulesProcessor {
 
       if (reloadNeeded(rules)) {
         rules.reloadInitiated = true;
-        reloadRules(rules, routingContext, client)
+        reloadRules(rules, circulationRulesClient)
           .thenCompose(r -> r.after(updatedRules -> ofAsync(() -> updatedRules.drools)));
       }
 
@@ -216,7 +210,7 @@ public class CirculationRulesProcessor {
       rulesMap.put(tenantId, rules);
     }
 
-    return reloadRules(rules, routingContext, client)
+    return reloadRules(rules, circulationRulesClient)
       .thenCompose(r -> r.after(updatedRules -> ofAsync(() -> updatedRules.drools)));
   }
 }
