@@ -283,11 +283,11 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return getPosition() != null;
   }
 
-  boolean hasChangedPosition() {
+  public boolean hasChangedPosition() {
     return changedPosition;
   }
 
-  Integer getPreviousPosition() {
+  public Integer getPreviousPosition() {
     return previousPosition;
   }
 
@@ -335,5 +335,9 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
 
   public String getCancellationReasonPublicDescription() {
     return getProperty(cancellationReasonRepresentation, CANCELLATION_REASON_PUBLIC_DESCRIPTION);
+  }
+
+  public Request copy() {
+    return withRequestJsonRepresentation(requestRepresentation.copy());
   }
 }

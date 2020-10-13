@@ -1,15 +1,17 @@
 package org.folio.circulation.domain;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_MOVED;
 import static org.folio.circulation.support.results.Result.of;
 
 import java.util.concurrent.CompletableFuture;
 
-import org.folio.circulation.infrastructure.storage.requests.RequestPolicyRepository;
 import org.folio.circulation.domain.validation.RequestLoanValidator;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
+import org.folio.circulation.infrastructure.storage.requests.RequestPolicyRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.resources.RequestNoticeSender;
+import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.results.Result;
 
 public class MoveRequestService {
@@ -20,6 +22,7 @@ public class MoveRequestService {
   private final RequestLoanValidator requestLoanValidator;
   private final RequestNoticeSender requestNoticeSender;
   private final ConfigurationRepository configurationRepository;
+  private final EventPublisher eventPublisher;
 
   public MoveRequestService(RequestRepository requestRepository,
                             RequestPolicyRepository requestPolicyRepository,
@@ -27,7 +30,8 @@ public class MoveRequestService {
                             MoveRequestProcessAdapter moveRequestHelper,
                             RequestLoanValidator requestLoanValidator,
                             RequestNoticeSender requestNoticeSender,
-                            ConfigurationRepository configurationRepository) {
+                            ConfigurationRepository configurationRepository,
+                            EventPublisher eventPublisher) {
 
     this.requestRepository = requestRepository;
     this.requestPolicyRepository = requestPolicyRepository;
@@ -36,10 +40,11 @@ public class MoveRequestService {
     this.requestLoanValidator = requestLoanValidator;
     this.requestNoticeSender = requestNoticeSender;
     this.configurationRepository = configurationRepository;
+    this.eventPublisher = eventPublisher;
   }
 
   public CompletableFuture<Result<RequestAndRelatedRecords>> moveRequest(
-      RequestAndRelatedRecords requestAndRelatedRecords) {
+      RequestAndRelatedRecords requestAndRelatedRecords, Request originalRequest) {
     return completedFuture(of(() -> requestAndRelatedRecords))
       .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::findDestinationItem))
       .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::getDestinationRequestQueue))
@@ -57,7 +62,8 @@ public class MoveRequestService {
       .thenComposeAsync(r -> r.after(this::updateRelatedObjects))
       .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::findDestinationItem))
       .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::getDestinationRequestQueue))
-      .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::getRequest));
+      .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::getRequest))
+      .thenApplyAsync(r -> r.map(u -> eventPublisher.publishLogRecordAsync(u, originalRequest, REQUEST_MOVED)));
   }
 
   private RequestAndRelatedRecords pagedRequestIfDestinationItemAvailable(

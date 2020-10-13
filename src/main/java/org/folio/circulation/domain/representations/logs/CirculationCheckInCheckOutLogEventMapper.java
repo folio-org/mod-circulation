@@ -2,8 +2,8 @@ package org.folio.circulation.domain.representations.logs;
 
 import static java.util.Optional.ofNullable;
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.*;
-import static org.folio.circulation.domain.representations.logs.LogEventPayloadType.CHECK_IN;
-import static org.folio.circulation.domain.representations.logs.LogEventPayloadType.CHECK_OUT;
+import static org.folio.circulation.domain.representations.logs.LogEventType.CHECK_IN;
+import static org.folio.circulation.domain.representations.logs.LogEventType.CHECK_OUT;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
 import io.vertx.core.json.JsonArray;
@@ -69,7 +69,9 @@ public class CirculationCheckInCheckOutLogEventMapper {
       .ifPresent(item -> {
         write(logEventPayload, ITEM_ID.value(), item.getItemId());
         write(logEventPayload, ITEM_BARCODE.value(), item.getBarcode());
-        write(logEventPayload, ITEM_STATUS_NAME.value(), item.getStatusName());
+        write(logEventPayload, ITEM_STATUS_NAME.value(), item.getStatus().getValue());
+        write(logEventPayload, HOLDINGS_RECORD_ID.value(), item.getHoldingsRecordId());
+        write(logEventPayload, INSTANCE_ID.value(), item.getInstanceId());
         ofNullable(item.getInTransitDestinationServicePoint())
           .ifPresent(sp -> write(logEventPayload, DESTINATION_SERVICE_POINT.value(), sp.getName()));
         ofNullable(item.getMaterialType())
@@ -83,6 +85,8 @@ public class CirculationCheckInCheckOutLogEventMapper {
         write(logEventPayload, ITEM_ID.value(), item.getItemId());
         write(logEventPayload, ITEM_BARCODE.value(), item.getBarcode());
         write(logEventPayload, ITEM_STATUS_NAME.value(), item.getStatusName());
+        write(logEventPayload, HOLDINGS_RECORD_ID.value(), item.getHoldingsRecordId());
+        write(logEventPayload, INSTANCE_ID.value(), item.getInstanceId());
         ofNullable(item.getMaterialType())
           .ifPresent(mt -> write(logEventPayload, SOURCE.value(), mt.getString(ITEM_SOURCE)));
       });
