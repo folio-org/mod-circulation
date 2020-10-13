@@ -1,6 +1,7 @@
 package org.folio.circulation.resources;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.lang.invoke.MethodHandles;
@@ -184,27 +185,33 @@ public class CirculationRulesProcessor {
     return drools.requestPolicies(params, location);
   }
 
+  public CompletableFuture<Result<Drools>> getDrools(RoutingContext routingContext,
+    HttpClient client) {
 
-  public CompletableFuture<Result<Drools>> getDrools(RoutingContext routingContext, HttpClient client) {
     String tenantId = new WebContext(routingContext).getTenantId();
-    CompletableFuture<Result<Drools>> cfDrools = new CompletableFuture<Result<Drools>>();
+
+    CompletableFuture<Result<Drools>> cfDrools = new CompletableFuture<>();
+
     Rules rules = rulesMap.get(tenantId);
+
     if (isCurrent(rules)) {
-      cfDrools.complete(Result.succeeded(rules.drools));
+      cfDrools.complete(succeeded(rules.drools));
+
       if (reloadNeeded(rules)) {
         rules.reloadInitiated = true;
-        reloadRules(rules, routingContext, client).thenCompose(r -> r.after(updatedRules -> {
-          return completedFuture(succeeded(updatedRules.drools));
-        }));
+        reloadRules(rules, routingContext, client)
+          .thenCompose(r -> r.after(updatedRules -> ofAsync(() -> updatedRules.drools)));
       }
+
       return cfDrools;
     }
+
     if (rules == null) {
       rules = new Rules();
       rulesMap.put(tenantId, rules);
     }
-    return reloadRules(rules, routingContext, client).thenCompose(r -> r.after(updatedRules -> {
-      return completedFuture(succeeded(updatedRules.drools));
-    }));
+
+    return reloadRules(rules, routingContext, client)
+      .thenCompose(r -> r.after(updatedRules -> ofAsync(() -> updatedRules.drools)));
   }
 }
