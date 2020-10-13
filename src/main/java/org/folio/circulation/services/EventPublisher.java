@@ -11,6 +11,8 @@ import static org.folio.circulation.domain.representations.logs.LogEventPayloadF
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.PAYLOAD;
 import static org.folio.circulation.domain.representations.logs.CirculationCheckInCheckOutLogEventMapper.mapToCheckInLogEventJson;
 import static org.folio.circulation.domain.representations.logs.CirculationCheckInCheckOutLogEventMapper.mapToCheckOutLogEventJson;
+import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_MOVED;
+import static org.folio.circulation.domain.representations.logs.RequestUpdateLogEventMapper.mapToRequestLogEventJson;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.results.Result.succeeded;
 
@@ -22,6 +24,7 @@ import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.EventType;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
+import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.representations.logs.LogEventType;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
@@ -182,4 +185,10 @@ public class EventPublisher {
     return pubSubPublishingService.publishEvent(LOG_RECORD.name(), logEventPayload.encode())
       .thenApply(r -> succeeded(null));
   }
+
+  public RequestAndRelatedRecords publishLogRecordAsync(RequestAndRelatedRecords requestAndRelatedRecords, Request originalRequest, LogEventType logEventType) {
+    CompletableFuture.runAsync(() -> publishLogRecord(mapToRequestLogEventJson(originalRequest, requestAndRelatedRecords.getRequest()), logEventType));
+    return requestAndRelatedRecords;
+  }
+
 }

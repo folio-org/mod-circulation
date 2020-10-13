@@ -2,7 +2,6 @@ package org.folio.circulation.domain;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_MOVED;
-import static org.folio.circulation.domain.representations.logs.RequestUpdateLogEventMapper.mapToRequestLogEventJson;
 import static org.folio.circulation.support.results.Result.of;
 
 import java.util.concurrent.CompletableFuture;
@@ -44,32 +43,27 @@ public class MoveRequestService {
     this.eventPublisher = eventPublisher;
   }
 
-  public CompletableFuture<Result<RequestAndRelatedRecords>> moveRequest(RequestAndRelatedRecords requestAndRelatedRecords) {
-
-    return moveRequestProcessAdapter.getRequest(requestAndRelatedRecords)
-      .thenCompose(original -> original.after(o -> completedFuture(of(() -> requestAndRelatedRecords))
-        .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::findDestinationItem))
-        .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::getDestinationRequestQueue))
-        .thenApply(r -> r.map(this::pagedRequestIfDestinationItemAvailable))
-        .thenCompose(r -> r.after(this::validateUpdateRequest))
-        .thenComposeAsync(
-            r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration, RequestAndRelatedRecords::withTimeZone))
-        .thenCompose(r -> r.after(updateUponRequest.updateRequestQueue::onMovedTo))
-        .thenComposeAsync(r -> r.after(this::updateRelatedObjects))
-        .thenCompose(r -> r.after(requestRepository::update))
-        .thenApply(r -> r.next(requestNoticeSender::sendNoticeOnRequestMoved))
-        .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::findSourceItem))
-        .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::getSourceRequestQueue))
-        .thenCompose(r -> r.after(updateUponRequest.updateRequestQueue::onMovedFrom))
-        .thenComposeAsync(r -> r.after(this::updateRelatedObjects))
-        .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::findDestinationItem))
-        .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::getDestinationRequestQueue))
-        .thenComposeAsync(r -> r.after(p -> moveRequestProcessAdapter.getRequest(p)
-          .thenApplyAsync(resp -> {
-            CompletableFuture.runAsync(() -> eventPublisher.publishLogRecord(mapToRequestLogEventJson(o.getRequest(), p.getRequest()), REQUEST_MOVED));
-            return resp;
-          }))
-        )));
+  public CompletableFuture<Result<RequestAndRelatedRecords>> moveRequest(
+      RequestAndRelatedRecords requestAndRelatedRecords, Request originalRequest) {
+    return completedFuture(of(() -> requestAndRelatedRecords))
+      .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::findDestinationItem))
+      .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::getDestinationRequestQueue))
+      .thenApply(r -> r.map(this::pagedRequestIfDestinationItemAvailable))
+      .thenCompose(r -> r.after(this::validateUpdateRequest))
+      .thenComposeAsync(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
+        RequestAndRelatedRecords::withTimeZone))
+      .thenCompose(r -> r.after(updateUponRequest.updateRequestQueue::onMovedTo))
+      .thenComposeAsync(r -> r.after(this::updateRelatedObjects))
+      .thenCompose(r -> r.after(requestRepository::update))
+      .thenApply(r -> r.next(requestNoticeSender::sendNoticeOnRequestMoved))
+      .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::findSourceItem))
+      .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::getSourceRequestQueue))
+      .thenCompose(r -> r.after(updateUponRequest.updateRequestQueue::onMovedFrom))
+      .thenComposeAsync(r -> r.after(this::updateRelatedObjects))
+      .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::findDestinationItem))
+      .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::getDestinationRequestQueue))
+      .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::getRequest))
+      .thenApplyAsync(r -> r.map(u -> eventPublisher.publishLogRecordAsync(u, originalRequest, REQUEST_MOVED)));
   }
 
   private RequestAndRelatedRecords pagedRequestIfDestinationItemAvailable(

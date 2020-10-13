@@ -92,19 +92,21 @@ public class RequestQueueResource extends Resource {
       .thenApply(RequestQueueValidation::fulfillingRequestHasFirstPosition)
       // Business logic block
       .thenCompose(updateRequestQueue::onReorder)
-      .thenApply(q -> {
-        q.after(z -> {
-          CompletableFuture.runAsync(() -> {
-            List<Request> reordered = z.getReorderRequestToRequestMap().values().stream().filter(Request::hasChangedPosition).collect(Collectors.toList());
-            eventPublisher.publishLogRecord(mapToRequestLogEventJson(reordered), LogEventType.REQUEST_REORDERED);
-          });
-          return null;
-        });
-        return q;
-      })
+      .thenApply(q -> publishReorderedQueue(eventPublisher, q))
       .thenCompose(r -> r.after(this::toRepresentation))
       .thenApply(r -> r.map(JsonHttpResponse::ok))
       .thenAccept(context::writeResultToHttpResponse);
+  }
+
+  private Result<ReorderRequestContext> publishReorderedQueue(EventPublisher eventPublisher, Result<ReorderRequestContext> reorderRequestContext) {
+    reorderRequestContext.after(r -> {
+      CompletableFuture.runAsync(() -> {
+        List<Request> reordered = r.getReorderRequestToRequestMap().values().stream().filter(Request::hasChangedPosition).collect(Collectors.toList());
+        eventPublisher.publishLogRecord(mapToRequestLogEventJson(reordered), LogEventType.REQUEST_REORDERED);
+      });
+      return null;
+    });
+    return reorderRequestContext;
   }
 
   private CompletableFuture<Result<JsonObject>> toRepresentation(ReorderRequestContext context) {

@@ -284,7 +284,7 @@ public class RequestCollectionResource extends CollectionResource {
     requestRepository.getById(id)
       .thenApply(r -> r.map(RequestAndRelatedRecords::new))
       .thenApply(r -> r.map(rr -> asMove(rr, representation)))
-      .thenComposeAsync(r -> r.after(moveRequestService::moveRequest))
+      .thenComposeAsync(r -> r.after(u -> moveRequestService.moveRequest(u, u.getOriginalRequest())))
       .thenComposeAsync(r -> r.after(
         records -> eventPublisher.publishDueDateChangedEvent(records, clients)))
       .thenApply(r -> r.map(RequestAndRelatedRecords::getRequest))

@@ -1,6 +1,5 @@
 package org.folio.circulation.domain;
 
-import static java.util.Optional.ofNullable;
 import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_CREATED;
 import static org.folio.circulation.domain.representations.logs.RequestUpdateLogEventMapper.mapToRequestLogEventJson;
 import static org.folio.circulation.support.results.Result.of;
@@ -41,12 +40,6 @@ public class CreateRequestService {
     this.eventPublisher = eventPublisher;
   }
 
-  public CreateRequestService(CreateRequestRepositories repositories,
-    UpdateUponRequest updateUponRequest, RequestLoanValidator requestLoanValidator,
-    RequestNoticeSender requestNoticeSender, UserManualBlocksValidator userManualBlocksValidator) {
-    this(repositories, updateUponRequest, requestLoanValidator, requestNoticeSender, userManualBlocksValidator, null);
-  }
-
   public CompletableFuture<Result<RequestAndRelatedRecords>> createRequest(
       RequestAndRelatedRecords requestAndRelatedRecords) {
 
@@ -80,9 +73,7 @@ public class CreateRequestService {
       .thenComposeAsync(r -> r.after(requestRepository::create))
       .thenComposeAsync(r -> r.after(updateUponRequest.updateRequestQueue::onCreate))
       .thenApplyAsync(r -> {
-        ofNullable(eventPublisher).ifPresent(publisher ->
-          requestRepository.getById(requestAndRelatedRecords.getRequest().getId())
-          .thenAcceptAsync(c -> c.after(t -> publisher.publishLogRecord(mapToRequestLogEventJson(t), REQUEST_CREATED))));
+        r.after(t -> eventPublisher.publishLogRecord(mapToRequestLogEventJson(t.getRequest()), REQUEST_CREATED));
         return r.next(requestNoticeSender::sendNoticeOnRequestCreated);
       });
   }

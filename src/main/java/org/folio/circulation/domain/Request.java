@@ -336,4 +336,8 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   public String getCancellationReasonPublicDescription() {
     return getProperty(cancellationReasonRepresentation, CANCELLATION_REASON_PUBLIC_DESCRIPTION);
   }
+
+  public Request copy() {
+    return withRequestJsonRepresentation(requestRepresentation.copy());
+  }
 }

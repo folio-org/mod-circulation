@@ -54,6 +54,7 @@ import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.RequestLoanValidator;
 import org.folio.circulation.domain.validation.ServicePointPickupLocationValidator;
 import org.folio.circulation.domain.validation.UserManualBlocksValidator;
+import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.storage.ItemByInstanceIdFinder;
 import org.folio.circulation.support.BadRequestFailure;
 import org.folio.circulation.support.Clients;
@@ -106,11 +107,13 @@ public class RequestByInstanceIdResource extends Resource {
     final Result<RequestByInstanceIdRequest> requestByInstanceIdRequestResult =
       RequestByInstanceIdRequest.from(routingContext.getBodyAsJson());
 
+    final EventPublisher eventPublisher = new EventPublisher(routingContext);
+
     requestByInstanceIdRequestResult
       .map(InstanceRequestRelatedRecords::new)
       .after(instanceRequest -> getPotentialItems(clients, finder, instanceRequest))
       .thenApply( r -> r.next(RequestByInstanceIdResource::instanceToItemRequests))
-      .thenCompose( r -> r.after( requests -> placeRequests(requests, clients)))
+      .thenCompose( r -> r.after( requests -> placeRequests(requests, clients, eventPublisher)))
       .thenApply(r -> r.map(RequestAndRelatedRecords::getRequest))
       .thenApply(r -> r.map(new RequestRepresentation()::extendedRepresentation))
       .thenApply(r -> r.map(JsonHttpResponse::created))
@@ -217,7 +220,7 @@ public class RequestByInstanceIdResource extends Resource {
   }
 
   private CompletableFuture<Result<RequestAndRelatedRecords>> placeRequests(
-    List<JsonObject> itemRequestRepresentations, Clients clients) {
+    List<JsonObject> itemRequestRepresentations, Clients clients, EventPublisher eventPublisher) {
 
     final RequestNoticeSender requestNoticeSender = RequestNoticeSender.using(clients);
     final LoanRepository loanRepository = new LoanRepository(clients);
@@ -239,7 +242,8 @@ public class RequestByInstanceIdResource extends Resource {
       updateUponRequest,
       new RequestLoanValidator(loanRepository),
       requestNoticeSender,
-      new UserManualBlocksValidator(userManualBlocksValidator));
+      new UserManualBlocksValidator(userManualBlocksValidator),
+      eventPublisher);
 
     return placeRequest(itemRequestRepresentations, 0, createRequestService,
                         clients, loanRepository, new ArrayList<>());
