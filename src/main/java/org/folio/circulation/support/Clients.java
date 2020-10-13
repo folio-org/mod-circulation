@@ -61,17 +61,18 @@ public class Clients {
   private final CollectionResourceClient automatedPatronBlocksClient;
   private final CollectionResourceClient notesClient;
   private final CollectionResourceClient noteTypesClient;
-  private final RoutingContext routingContext;
   private final PubSubPublishingService pubSubPublishingService;
+  private final WebContext context;
 
   public static Clients create(RoutingContext routingContext, HttpClient httpClient) {
     return new Clients(routingContext, httpClient);
   }
 
   private Clients(RoutingContext routingContext, HttpClient httpClient) {
-    this.routingContext = routingContext;
-    WebContext context = new WebContext(routingContext);
+    this.context = new WebContext(routingContext);
+
     OkapiHttpClient client = context.createHttpClient(httpClient);
+
     try {
       requestsStorageClient = createRequestsStorageClient(client, context);
       requestsBatchStorageClient = createRequestsBatchStorageClient(client, context);
@@ -311,13 +312,9 @@ public class Clients {
     return noteTypesClient;
   }
 
-  protected RoutingContext getRoutingContext() {
-    return routingContext;
-  }
-
   public CompletableFuture<Result<Drools>> getCirculationDrools() {
     return CirculationRulesProcessor.getInstance()
-      .getDrools(new WebContext(routingContext).getTenantId(), circulationRulesStorage());
+      .getDrools(context.getTenantId(), circulationRulesStorage());
   }
 
   public PubSubPublishingService pubSubPublishingService() {
