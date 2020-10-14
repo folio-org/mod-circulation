@@ -14,6 +14,7 @@ import static api.support.matchers.LoanHistoryMatcher.hasLoanHistoryInOrder;
 import static api.support.matchers.LoanMatchers.isClosed;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
+import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
 import static java.lang.Boolean.TRUE;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
@@ -77,6 +78,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
       hasJsonPath("loan.action", "itemAgedToLost"),
       hasJsonPath("loan.action", "checkedout")
     ));
+    assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
   @Test
@@ -96,6 +98,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     assertThat(result.getLoan().getJson(), isLostItemHasBeenBilled());
     assertThat(result.getLoan(), hasLostItemProcessingFee(isOpen(expectedProcessingFee)));
     assertThat(result.getLoan(), hasLostItemProcessingFeeCreatedBySystemAction());
+    assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
   @Test
@@ -117,6 +120,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
 
     assertThat(result.getLoan(), hasLostItemProcessingFee(isOpen(expectedProcessingFee)));
     assertThat(result.getLoan(), hasLostItemProcessingFeeCreatedBySystemAction());
+    assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
   @Test
@@ -132,6 +136,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
 
     assertThat(result.getLoan(), hasNoLostItemFee());
     assertThat(result.getLoan(), hasNoLostItemProcessingFee());
+    assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
   @Test
@@ -144,6 +149,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     val result = ageToLostFixture.createLoanAgeToLostAndChargeFees(policy);
 
     assertThat(result.getLoan().getJson(), isLostItemHasBeenBilled());
+    assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
   @Test
@@ -160,6 +166,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
       assertThat(loanFromStorage, hasLostItemFee(isOpen(expectedFee)));
       assertThat(loanFromStorage, hasLostItemFeeCreatedBySystemAction());
     });
+    assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
   @Test
@@ -190,6 +197,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
       assertThat(loanFromStorage, hasLostItemFee(isOpen(fee)));
       assertThat(loanFromStorage, hasLostItemFeeCreatedBySystemAction());
     });
+    assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
   @Test
@@ -210,6 +218,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
 
     assertThat(response.getJson(), hasErrorWith(
       hasMessage("No automated Lost item processing fee type found")));
+    assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
   @Test
@@ -230,6 +239,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
 
     assertThat(response.getJson(), hasErrorWith(
       hasMessage("No automated Lost item fee type found")));
+    assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
   @Test
@@ -243,6 +253,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
 
     assertThat(result.getLoan().getJson(), isLostItemHasNotBeenBilled());
     assertThat(result.getLoan(), hasNoLostItemFee());
+    assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
   @Test
@@ -259,6 +270,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     ageToLostFixture.ageToLostAndChargeFees();
 
     assertThat(result.getLoan(), hasLostItemFees(iterableWithSize(1)));
+    assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
   @Test
@@ -274,6 +286,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     assertThat(result.getLoan().getJson(), isLostItemHasBeenBilled());
     assertThat(result.getLoan().getJson(), isClosed());
     assertThat(result.getItem().getJson(), isLostAndPaid());
+    assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
   private Map<IndividualResource, Double> checkoutTenItems() {

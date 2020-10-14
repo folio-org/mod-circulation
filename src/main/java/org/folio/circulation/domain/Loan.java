@@ -15,6 +15,7 @@ import static org.folio.circulation.domain.LoanAction.ITEM_AGED_TO_LOST;
 import static org.folio.circulation.domain.LoanAction.MISSING;
 import static org.folio.circulation.domain.LoanAction.RENEWED;
 import static org.folio.circulation.domain.LoanAction.RENEWED_THROUGH_OVERRIDE;
+import static org.folio.circulation.domain.representations.LoanProperties.ACTION;
 import static org.folio.circulation.domain.representations.LoanProperties.ACTION_COMMENT;
 import static org.folio.circulation.domain.representations.LoanProperties.AGED_TO_LOST_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.AGED_TO_LOST_DELAYED_BILLING;
@@ -28,10 +29,12 @@ import static org.folio.circulation.domain.representations.LoanProperties.ITEM_L
 import static org.folio.circulation.domain.representations.LoanProperties.LOAN_POLICY_ID;
 import static org.folio.circulation.domain.representations.LoanProperties.LOST_ITEM_HAS_BEEN_BILLED;
 import static org.folio.circulation.domain.representations.LoanProperties.LOST_ITEM_POLICY_ID;
+import static org.folio.circulation.domain.representations.LoanProperties.METADATA;
 import static org.folio.circulation.domain.representations.LoanProperties.OVERDUE_FINE_POLICY_ID;
 import static org.folio.circulation.domain.representations.LoanProperties.RETURN_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.STATUS;
 import static org.folio.circulation.domain.representations.LoanProperties.SYSTEM_RETURN_DATE;
+import static org.folio.circulation.domain.representations.LoanProperties.UPDATED_BY_USER_ID;
 import static org.folio.circulation.domain.representations.LoanProperties.USER_ID;
 import static org.folio.circulation.support.ClockManager.getClockManager;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
@@ -133,6 +136,10 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     write(representation, LoanProperties.ACTION, action);
   }
 
+  public String getAction() {
+    return getProperty(representation, ACTION);
+  }
+
   private void changeCheckInServicePointId(UUID servicePointId) {
     write(representation, "checkinServicePointId", servicePointId);
   }
@@ -162,6 +169,10 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public void removeActionComment() {
     representation.remove(ACTION_COMMENT);
+  }
+
+  public String getActionComment() {
+    return getProperty(representation, ACTION_COMMENT);
   }
 
   public Result<Void> isValidStatus() {
@@ -512,7 +523,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return getDateTimeProperty(representation, DECLARED_LOST_DATE);
   }
 
-  private DateTime getAgedToLostDateTime() {
+  public DateTime getAgedToLostDateTime() {
     return getDateTimePropertyByPath(representation, AGED_TO_LOST_DELAYED_BILLING,
       AGED_TO_LOST_DATE);
   }
@@ -635,5 +646,13 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public DateTime getLostDate() {
     return mostRecentDate(getDeclareLostDateTime(), getAgedToLostDateTime());
+  }
+
+  public String getUpdatedByUserId() {
+    return getNestedStringProperty(representation, METADATA, UPDATED_BY_USER_ID);
+  }
+
+  public DateTime getOriginalDueDate() {
+    return originalDueDate;
   }
 }

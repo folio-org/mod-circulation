@@ -1,5 +1,6 @@
 package api.loans.scenarios;
 
+import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedNoticeLogRecordEventsCountIsEqualTo;
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
 import static api.support.fixtures.TemplateContextMatchers.getItemContextMatchers;
@@ -7,6 +8,7 @@ import static api.support.fixtures.TemplateContextMatchers.getLoanContextMatcher
 import static api.support.fixtures.TemplateContextMatchers.getLoanPolicyContextMatchers;
 import static api.support.fixtures.TemplateContextMatchers.getUserContextMatchers;
 import static api.support.matchers.EventMatchers.isValidLoanDueDateChangedEvent;
+import static api.support.matchers.EventTypeMatchers.LOAN_DUE_DATE_CHANGED;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
@@ -254,15 +256,19 @@ public class ChangeDueDateAPITests extends APITests {
     Response response = loansClient.getById(loan.getId());
     JsonObject updatedLoan = response.getJson();
 
-    // There should be three events published - first one for "check out",
-    // second one for "log event" and third one for "change due date"
+    // There should be three five published - first one for "check out",
+    // second one for "log event", third one for "change due date"
+    // and two "log record"
     List<JsonObject> publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(3));
+      .until(FakePubSub::getPublishedEvents, hasSize(5));
 
-    JsonObject event = publishedEvents.get(2);
+    JsonObject event = publishedEvents.stream()
+      .filter(evt -> LOAN_DUE_DATE_CHANGED.equalsIgnoreCase(evt.getString("eventType")))
+      .findFirst().orElse(new JsonObject());
 
     assertThat(event, isValidLoanDueDateChangedEvent(updatedLoan));
+    assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
   private void chargeFeesForLostItemToKeepLoanOpen() {

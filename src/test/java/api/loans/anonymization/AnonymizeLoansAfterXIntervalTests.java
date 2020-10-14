@@ -1,7 +1,10 @@
 package api.loans.anonymization;
 
+import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
+import static api.support.PubsubPublisherTestUtils.getPublishedLogRecordEvents;
 import static api.support.matchers.LoanMatchers.isOpen;
 import static api.support.matchers.LoanMatchers.isAnonymized;
+import static org.folio.circulation.domain.representations.logs.LogEventType.LOAN;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.hasSize;
@@ -10,8 +13,11 @@ import static org.hamcrest.Matchers.not;
 import static org.joda.time.DateTime.now;
 import static org.joda.time.DateTimeZone.UTC;
 
+import java.util.List;
 import java.util.UUID;
 
+import api.support.fakes.FakePubSub;
+import io.vertx.core.json.JsonObject;
 import org.folio.circulation.domain.representations.anonymization.LoanAnonymizationAPIResponse;
 import api.support.http.IndividualResource;
 import org.joda.time.DateTime;
@@ -128,6 +134,8 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
 
     assertThat(loansStorageClient.getById(loanID)
       .getJson(), isAnonymized());
+
+    assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
   /**
@@ -235,6 +243,8 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
 
     assertThat(loansStorageClient.getById(loanID)
       .getJson(), isAnonymized());
+
+    assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
   /**
@@ -367,6 +377,8 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
         .getJson(), isAnonymized());
     assertThat(loansStorageClient.getById(loanResource2.getId())
         .getJson(), not(isAnonymized()));
+
+    assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
   @Test
@@ -388,11 +400,16 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
     assertThat(firstAnonymization.getAnonymizedLoans().size(), is(2));
     assertThat(loansStorageClient.getById(firstLoan.getId()).getJson(), isAnonymized());
     assertThat(loansStorageClient.getById(secondLoan.getId()).getJson(), isAnonymized());
+    List<JsonObject> events = getPublishedLogRecordEvents(LOAN.value());
+    assertThat(getPublishedLogRecordEvents(LOAN.value(), "Anonymize").size(), is(2));
+    assertThatPublishedLoanLogRecordEventsAreValid();
+    FakePubSub.clearPublishedEvents();
 
     setNextAnonymizationDateTime(ONE_MINUTE_AND_ONE);
 
     LoanAnonymizationAPIResponse secondAnonymization = anonymizeLoansInTenant();
     assertThat(secondAnonymization.getAnonymizedLoans().size(), is(0));
+    assertThat(getPublishedLogRecordEvents(LOAN.value(), "Anonymize").size(), is(0));
   }
 
   @Test

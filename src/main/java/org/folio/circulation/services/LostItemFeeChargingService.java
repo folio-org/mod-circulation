@@ -41,6 +41,7 @@ public class LostItemFeeChargingService {
   private final FeeFineFacade feeFineFacade;
   private final StoreLoanAndItem storeLoanAndItem;
   private final LocationRepository locationRepository;
+  private final EventPublisher eventPublisher;
 
   public LostItemFeeChargingService(Clients clients) {
     this.lostItemPolicyRepository = new LostItemPolicyRepository(clients);
@@ -49,6 +50,7 @@ public class LostItemFeeChargingService {
     this.feeFineFacade = new FeeFineFacade(clients);
     this.storeLoanAndItem = new StoreLoanAndItem(clients);
     this.locationRepository = LocationRepository.using(clients);
+    this.eventPublisher = new EventPublisher(clients.pubSubPublishingService());
   }
 
   public CompletableFuture<Result<Loan>> chargeLostItemFees(
@@ -62,7 +64,9 @@ public class LostItemFeeChargingService {
       .thenCompose(refDataResult -> refDataResult.after(referenceData -> {
         if (shouldCloseLoan(referenceData.lostItemPolicy)) {
           log.debug("Loan [{}] can be closed because no fee will be charged", loan.getId());
-          return closeLoanAndUpdateInStorage(loan);
+          return closeLoanAndUpdateInStorage(loan)
+            .thenCompose(r -> r.after(eventPublisher::publishClosedLoanEvent))
+            .thenApply(r -> r.map(v -> loan));
         }
 
         return fetchFeeFineOwner(referenceData)

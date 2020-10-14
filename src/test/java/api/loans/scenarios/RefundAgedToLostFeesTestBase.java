@@ -15,6 +15,7 @@ import static api.support.matchers.LoanAccountMatcher.hasLostItemProcessingFee;
 import static api.support.matchers.LoanAccountMatcher.hasNoLostItemFee;
 import static api.support.matchers.LoanAccountMatcher.hasNoLostItemProcessingFee;
 import static api.support.matchers.LoanAccountMatcher.hasOverdueFine;
+import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasNoJsonPath;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimePropertyByPath;
 import static org.hamcrest.CoreMatchers.not;
@@ -81,6 +82,7 @@ public abstract class RefundAgedToLostFeesTestBase extends SpringApiTest {
       isCancelledActionCreated(cancellationReason, processingFee)));
 
     assertThatBillingInformationRemoved(loan);
+    assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
   @Test
@@ -107,6 +109,7 @@ public abstract class RefundAgedToLostFeesTestBase extends SpringApiTest {
     assertThat(loan, hasOverdueFine());
 
     assertThatBillingInformationRemoved(loan);
+    assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
   @Test
@@ -162,6 +165,7 @@ public abstract class RefundAgedToLostFeesTestBase extends SpringApiTest {
       not(arePaymentRefundActionsCreated(processingFee))));
 
     assertThatBillingInformationRemoved(loan);
+    assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
   @Test
@@ -187,6 +191,8 @@ public abstract class RefundAgedToLostFeesTestBase extends SpringApiTest {
 
     // make sure fees are not assigned for the loan again
     assertThat(loan, not(hasLostItemProcessingFee(isOpen(processingFee))));
+
+    assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
   private void assertThatBillingInformationRemoved(IndividualResource loan) {

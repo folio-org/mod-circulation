@@ -13,6 +13,8 @@ import org.folio.circulation.domain.representations.ChangeItemStatusRequest;
 import org.folio.circulation.domain.validation.NotInItemStatusValidator;
 import org.folio.circulation.infrastructure.storage.notes.NotesRepository;
 import org.folio.circulation.services.ChangeItemStatusService;
+import org.folio.circulation.services.EventPublisher;
+import org.folio.circulation.services.PubSubPublishingService;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.RouteRegistration;
@@ -37,9 +39,11 @@ public class DeclareClaimedReturnedItemAsMissingResource extends Resource {
 
   private void declareClaimedReturnedItemAsMissing(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
+    final EventPublisher eventPublisher = new EventPublisher(new PubSubPublishingService(context));
 
     createRequest(routingContext)
       .after(request -> processDeclareClaimedReturnedItemAsMissing(routingContext, request))
+      .thenCompose(r -> r.after(eventPublisher::publishMarkedAsMissingLoanEvent))
       .thenApply(r -> r.toFixedValue(NoContentResponse::noContent))
       .thenAccept(context::writeResultToHttpResponse);
   }
