@@ -5,6 +5,7 @@ import org.joda.time.DateTimeZone;
 
 public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedRecord {
   private final Request request;
+  private final Request originalRequest;
   private final RequestQueue requestQueue;
   private final RequestPolicy requestPolicy;
   private final DateTimeZone timeZone;
@@ -19,6 +20,7 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
     DateTimeZone timeZone) {
 
     this.request = request;
+    this.originalRequest = request.copy();
     this.requestQueue = requestQueue;
     this.requestPolicy = requestPolicy;
     this.timeZone = timeZone;
@@ -138,5 +140,9 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
 
   DateTimeZone getTimeZone() {
     return timeZone;
+  }
+
+  public Request getOriginalRequest() {
+    return originalRequest;
   }
 }
