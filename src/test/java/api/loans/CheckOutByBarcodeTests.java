@@ -27,6 +27,7 @@ import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
 import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
+import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static java.util.stream.Collectors.groupingBy;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.domain.EventType.ITEM_CHECKED_OUT;
@@ -407,6 +408,23 @@ public class CheckOutByBarcodeTests extends APITests {
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Cannot check out item via proxy when relationship is invalid"),
       hasProxyUserBarcodeParameter(james))));
+  }
+
+  @Test
+  public void cannotCheckOutByProxyToThemself() {
+    val smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    val james = usersFixture.james();
+
+    final Response response = checkOutFixture.attemptCheckOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(smallAngryPlanet)
+        .to(james)
+        .proxiedBy(james)
+        .at(UUID.randomUUID()));
+
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("User cannot be proxy for themself"),
+      hasUUIDParameter("proxyUserId", james.getId()))));
   }
 
   @Test
