@@ -244,14 +244,6 @@ public class EventPublisher {
       .withDescription(String.format("New due date: %s (from %s)", loan.getDueDate(), loan.getOriginalDueDate())).asJson(), LOAN);
   }
 
-//  public CompletableFuture<Result<Void>> publishLogRecord(JsonObject payload, LogEventType payloadType) {
-//    JsonObject logEventPayload = new JsonObject();
-//    write(logEventPayload, LOG_EVENT_TYPE.value(), payloadType.value());
-//    write(logEventPayload, PAYLOAD.value(), payload);
-//    return pubSubPublishingService.publishEvent(LOG_RECORD.name(), logEventPayload.encode())
-//      .thenApply(r -> succeeded(null));
-//  }
-//
   public CompletableFuture<Result<Void>> publishLogRecord(JsonObject context, LogEventType payloadType) {
     write(context, LOG_EVENT_TYPE.value(), payloadType.value());
     return pubSubPublishingService.publishEvent(LOG_RECORD.name(), context.encode())

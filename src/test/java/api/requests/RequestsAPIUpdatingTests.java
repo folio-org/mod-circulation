@@ -768,22 +768,23 @@ public class RequestsAPIUpdatingTests extends APITests {
     Response response = loansClient.getById(loan.getId());
     JsonObject updatedLoan = response.getJson();
 
-    // There should be six events published - for "check out", for "log event: check out",
+    // There should be ten events published - for "check out", for "log event: check out",
     // for "log event: request created", for "log event: request updated" for "recall" and for "replace"
+    // and four log events for loans
     List<JsonObject> publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(6));
+      .until(FakePubSub::getPublishedEvents, hasSize(10));
 
     Map<String, List<JsonObject>> events = publishedEvents.stream().collect(groupingBy(o -> o.getString("eventType")));
 
     Map<String, List<JsonObject>> logEvents = events.get(LOG_RECORD.name()).stream()
       .collect(groupingBy(e -> new JsonObject(e.getString("eventPayload")).getString("logEventType")));
 
-    Request requestCreatedFromEventPayload = Request.from(new JsonObject(logEvents.get(REQUEST_CREATED.value()).get(0).getString("eventPayload")).getJsonObject("payload").getJsonObject("requests").getJsonObject("created"));
+    Request requestCreatedFromEventPayload = Request.from(new JsonObject(logEvents.get(REQUEST_CREATED.value()).get(0).getString("eventPayload")).getJsonObject("requests").getJsonObject("created"));
     assertThat(requestCreatedFromEventPayload, notNullValue());
 
-    Request originalCreatedFromEventPayload = Request.from(new JsonObject(logEvents.get(REQUEST_UPDATED.value()).get(0).getString("eventPayload")).getJsonObject("payload").getJsonObject("requests").getJsonObject("original"));
-    Request updatedCreatedFromEventPayload = Request.from(new JsonObject(logEvents.get(REQUEST_UPDATED.value()).get(0).getString("eventPayload")).getJsonObject("payload").getJsonObject("requests").getJsonObject("updated"));
+    Request originalCreatedFromEventPayload = Request.from(new JsonObject(logEvents.get(REQUEST_UPDATED.value()).get(0).getString("eventPayload")).getJsonObject("requests").getJsonObject("original"));
+    Request updatedCreatedFromEventPayload = Request.from(new JsonObject(logEvents.get(REQUEST_UPDATED.value()).get(0).getString("eventPayload")).getJsonObject("requests").getJsonObject("updated"));
 
     assertThat(requestCreatedFromEventPayload.getRequestType(), equalTo(originalCreatedFromEventPayload.getRequestType()));
     assertThat(originalCreatedFromEventPayload.getRequestType(), not(equalTo(updatedCreatedFromEventPayload.getRequestType())));

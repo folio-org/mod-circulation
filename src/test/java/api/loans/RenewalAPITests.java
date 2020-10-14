@@ -1466,12 +1466,12 @@ public abstract class RenewalAPITests extends APITests {
 
     final JsonObject renewedLoan = renew(smallAngryPlanet, jessica).getJson();
 
-    // There should be five events published - first for "check out",
+    // There should be six events published - first for "check out",
     // second one for log event, third for "change due date"
-    // and two "log record"
+    // and three "log record"
     List<JsonObject> publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(5));
+      .until(FakePubSub::getPublishedEvents, hasSize(6));
 
     JsonObject event = publishedEvents.stream()
       .filter(evt -> LOAN_DUE_DATE_CHANGED.equalsIgnoreCase(evt.getString("eventType")))
