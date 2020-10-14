@@ -66,11 +66,13 @@ public class LoanLogContext {
   }
 
   public LoanLogContext withItem(Item item) {
-      itemBarcode = item.getBarcode();
-      itemId = item.getItemId();
-      instanceId = item.getInstanceId();
-      holdingsRecordId = item.getHoldingsRecordId();
-      return this;
+    ofNullable(item).ifPresent(i -> {
+      itemBarcode = i.getBarcode();
+      itemId = i.getItemId();
+      instanceId = i.getInstanceId();
+      holdingsRecordId = i.getHoldingsRecordId();
+    });
+    return this;
   }
 
   public JsonObject asJson() {
