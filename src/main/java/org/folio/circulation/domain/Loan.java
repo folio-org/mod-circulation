@@ -31,8 +31,6 @@ import static org.folio.circulation.domain.representations.LoanProperties.LOST_I
 import static org.folio.circulation.domain.representations.LoanProperties.LOST_ITEM_POLICY_ID;
 import static org.folio.circulation.domain.representations.LoanProperties.METADATA;
 import static org.folio.circulation.domain.representations.LoanProperties.OVERDUE_FINE_POLICY_ID;
-import static org.folio.circulation.domain.representations.LoanProperties.PREVIOUS_DUE_DATE;
-import static org.folio.circulation.domain.representations.LoanProperties.REASON_TO_OVERRIDE;
 import static org.folio.circulation.domain.representations.LoanProperties.RETURN_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.STATUS;
 import static org.folio.circulation.domain.representations.LoanProperties.SYSTEM_RETURN_DATE;
@@ -111,7 +109,6 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Loan changeDueDate(DateTime newDueDate) {
-    write(representation, PREVIOUS_DUE_DATE, getDueDate());
     write(representation, DUE_DATE, newDueDate);
 
     return this;
@@ -484,10 +481,6 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return getDateTimeProperty(representation, DUE_DATE);
   }
 
-  public DateTime getPreviousDueDate() {
-    return getDateTimeProperty(representation, PREVIOUS_DUE_DATE);
-  }
-
   private static void defaultStatusAndAction(JsonObject loan) {
     if (!loan.containsKey(STATUS)) {
       loan.put(STATUS, new JsonObject().put("name", "Open"));
@@ -651,19 +644,15 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return this;
   }
 
-  public void setReasonToOverride(String reason) {
-    write(representation, REASON_TO_OVERRIDE, reason);
-  }
-
-  public String getReasonToOverride() {
-    return getProperty(representation, REASON_TO_OVERRIDE);
-  }
-
   public DateTime getLostDate() {
     return mostRecentDate(getDeclareLostDateTime(), getAgedToLostDateTime());
   }
 
   public String getUpdatedByUserId() {
     return getNestedStringProperty(representation, METADATA, UPDATED_BY_USER_ID);
+  }
+
+  public DateTime getOriginalDueDate() {
+    return originalDueDate;
   }
 }

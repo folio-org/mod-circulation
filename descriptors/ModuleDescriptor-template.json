@@ -2260,7 +2260,8 @@
         "users.item.get",
         "notes.item.post",
         "note.types.collection.get",
-        "notes.domain.all"
+        "notes.domain.all",
+        "pubsub.publish.post"
       ],
       "visible": false
     },

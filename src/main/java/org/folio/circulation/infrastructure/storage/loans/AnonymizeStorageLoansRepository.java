@@ -40,14 +40,14 @@ public class AnonymizeStorageLoansRepository {
 
   private static JsonObject createRequestPayload(LoanAnonymizationRecords records) {
     JsonObject jsonObject = new JsonObject();
-    jsonObject.put("loanIds", new JsonArray(records.getAnonymizedLoans()));
+    jsonObject.put("loanIds", new JsonArray(records.getAnonymizedLoanIds()));
     return jsonObject;
   }
 
   public CompletableFuture<Result<LoanAnonymizationRecords>>
     postAnonymizeStorageLoans(LoanAnonymizationRecords records) {
 
-    if (records.getAnonymizedLoans().isEmpty()) {
+    if (records.getAnonymizedLoanIds().isEmpty()) {
       return completedFuture(succeeded(records));
     }
     return loanStorageClient.post(createRequestPayload(records))

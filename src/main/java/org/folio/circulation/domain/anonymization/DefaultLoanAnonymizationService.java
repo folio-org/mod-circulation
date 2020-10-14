@@ -16,7 +16,6 @@ import org.folio.circulation.support.results.Result;
 
 public class DefaultLoanAnonymizationService implements LoanAnonymizationService {
 
-  private final Clients clients;
   private final AnonymizeStorageLoansRepository anonymizeStorageLoansRepository;
   private final AnonymizationCheckersService anonymizationCheckersService;
   private final LoanAnonymizationFinderService loansFinder;
@@ -24,7 +23,6 @@ public class DefaultLoanAnonymizationService implements LoanAnonymizationService
 
   DefaultLoanAnonymizationService(Clients clients, AnonymizationCheckersService anonymizationCheckersService,
       LoanAnonymizationFinderService loansFinderService) {
-    this.clients = clients;
     this.anonymizationCheckersService = anonymizationCheckersService;
     this.loansFinder = loansFinderService;
     anonymizeStorageLoansRepository = new AnonymizeStorageLoansRepository(clients);
@@ -37,7 +35,7 @@ public class DefaultLoanAnonymizationService implements LoanAnonymizationService
       .thenApply(r -> r.map(new LoanAnonymizationRecords()::withLoansFound))
       .thenCompose(this::segregateLoanRecords)
       .thenCompose(r -> r.after(anonymizeStorageLoansRepository::postAnonymizeStorageLoans))
-      .thenCompose(r -> r.after(l -> eventPublisher.publishAnonymizeEvents(l, clients)));
+      .thenCompose(r -> r.after(eventPublisher::publishAnonymizeEvents));
   }
 
   private CompletableFuture<Result<LoanAnonymizationRecords>> segregateLoanRecords(

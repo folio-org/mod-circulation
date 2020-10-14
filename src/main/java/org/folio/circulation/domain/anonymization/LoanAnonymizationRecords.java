@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 
 import java.util.Set;
+import java.util.stream.Collectors;
+
 import org.apache.commons.collections4.CollectionUtils;
 import org.folio.circulation.domain.Loan;
 
@@ -54,8 +56,14 @@ public class LoanAnonymizationRecords {
     return newRecords;
   }
 
-  public List<String> getAnonymizedLoans() {
+  public List<String> getAnonymizedLoanIds() {
     return anonymizedLoans;
+  }
+
+  public List<Loan> getAnonymizedLoans() {
+    return loansFound.stream()
+      .filter(loan -> anonymizedLoans.contains(loan.getId()))
+      .collect(Collectors.toList());
   }
 
   public Map<String, Collection<String>> getNotAnonymizedLoans() {

@@ -1080,8 +1080,11 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
 
     assertThat(itemsFixture.getById(ageToLostResult.getItemId()).getJson(), isAvailable());
     assertThat(loansFixture.getLoanById(ageToLostResult.getLoanId()).getJson(), isClosed());
-    Awaitility.await()
+    List<JsonObject> events = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
+      // there should be 7 events published: ITEM_CHECKED_OUT, LOG_RECORDs: CHECK_OUT_EVENT, LOAN (checked out)
+      // LOG_RECORD: LOAN (aged to lost)
+      // ITEM_CHECKED_IN, LOG_RECORDs: CHECK_IN_EVENT, LOAN (Closed loan)
       .until(FakePubSub::getPublishedEvents, hasSize(7));
     assertThatPublishedLoanLogRecordEventsAreValid();
   }

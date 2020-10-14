@@ -59,7 +59,7 @@ public class MarkOverdueLoansAsAgedLostService {
       .thenCompose(loansResult -> itemRepository.fetchItemsFor(loansResult, Loan::withItem))
       .thenApply(this::markLoansAsAgedToLost)
       .thenCompose(this::updateLoansAndItemsInStorage)
-      .thenApply(r -> r.map(loans -> allOf(loans, eventPublisher::publishAgedToLostEvent)))
+      .thenCompose(r -> r.after(loans -> allOf(loans, eventPublisher::publishAgedToLostEvent)))
       .thenApply(mapResult(v -> null));
   }
 
@@ -86,7 +86,6 @@ public class MarkOverdueLoansAsAgedLostService {
     return loanRecordsResult
       .map(MultipleRecords::getRecords)
       .after(loans -> allOf(loans, storeLoanAndItem::updateLoanAndItemInStorage));
-//      .thenApply(r -> r.map(notUsed -> loanRecordsResult));
   }
 
   private CompletableFuture<Result<MultipleRecords<Loan>>> fetchOverdueLoans() {

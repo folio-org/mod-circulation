@@ -1,7 +1,9 @@
 package org.folio.circulation.resources;
 
+import static java.util.Objects.nonNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.LoanAction.CHECKED_OUT_THROUGH_OVERRIDE;
+import static org.folio.circulation.domain.LoanAndRelatedRecords.REASON_TO_OVERRIDE;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE;
 import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_PUBLIC_DESCRIPTION;
 import static org.folio.circulation.support.results.Result.failed;
@@ -30,14 +32,12 @@ public class OverrideCheckOutStrategy implements CheckOutStrategy {
   private static final String DUE_DATE = "dueDate";
   private static final String COMMENT = "comment";
 
-
   @Override
   public CompletableFuture<Result<LoanAndRelatedRecords>> checkOut(LoanAndRelatedRecords relatedRecords,
                                                                    JsonObject request,
                                                                    Clients clients) {
     String comment = request.getString(COMMENT);
     String dueDateParameter = request.getString(DUE_DATE);
-    String cancellationReason = getProperty(request, CANCELLATION_REASON_PUBLIC_DESCRIPTION);
 
     if (comment == null) {
       ValidationError error = new ValidationError(
@@ -59,11 +59,15 @@ public class OverrideCheckOutStrategy implements CheckOutStrategy {
       return completedFuture(failed(singleValidationError(error)));
     }
 
+    relatedRecords.getLogContextProperties().put(REASON_TO_OVERRIDE,
+      nonNull(getProperty(request, CANCELLATION_REASON_PUBLIC_DESCRIPTION)) ?
+        getProperty(request, CANCELLATION_REASON_PUBLIC_DESCRIPTION) :
+        "");
+
     return completedFuture(succeeded(relatedRecords))
       .thenApply(r -> r.next(this::refuseWhenItemIsLoanable))
       .thenApply(r -> r.next(records -> setDueDate(records, dueDate)))
-      .thenApply(r -> r.next(records -> setLoanAction(records, comment)))
-      .thenApply(r -> r.next(records -> setReasonToOverride(records, cancellationReason)));
+      .thenApply(r -> r.next(records -> setLoanAction(records, comment)));
   }
 
   private Result<LoanAndRelatedRecords> refuseWhenItemIsLoanable(LoanAndRelatedRecords relatedRecords) {
@@ -87,11 +91,6 @@ public class OverrideCheckOutStrategy implements CheckOutStrategy {
     Loan loan = loanAndRelatedRecords.getLoan();
     loan.changeAction(CHECKED_OUT_THROUGH_OVERRIDE);
     loan.changeActionComment(comment);
-    return succeeded(loanAndRelatedRecords);
-  }
-
-  private Result<LoanAndRelatedRecords> setReasonToOverride(LoanAndRelatedRecords loanAndRelatedRecords, String reason) {
-    loanAndRelatedRecords.getLoan().setReasonToOverride(reason);
     return succeeded(loanAndRelatedRecords);
   }
 }

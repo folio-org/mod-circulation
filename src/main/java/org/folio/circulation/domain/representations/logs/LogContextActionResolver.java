@@ -1,7 +1,6 @@
 package org.folio.circulation.domain.representations.logs;
 
 import static java.util.Optional.ofNullable;
-import static org.folio.circulation.domain.LoanAction.CHANGED_DUE_DATE;
 import static org.folio.circulation.domain.LoanAction.CHECKED_OUT;
 import static org.folio.circulation.domain.LoanAction.CHECKED_OUT_THROUGH_OVERRIDE;
 import static org.folio.circulation.domain.LoanAction.CLAIMED_RETURNED;
@@ -29,7 +28,7 @@ public class LogContextActionResolver {
     loanLogActions.put(MISSING.getValue(), "Marked as missing");
     loanLogActions.put(CLOSED_LOAN.getValue(), "Closed loan");
     loanLogActions.put(ITEM_AGED_TO_LOST.getValue(), "Age to lost");
-    loanLogActions.put(CHANGED_DUE_DATE.getValue(), "Changed due date");
+    loanLogActions.put("dueDateChanged", "Changed due date");
   }
 
   public static String resolveAction(String action) {

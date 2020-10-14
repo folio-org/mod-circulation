@@ -1,6 +1,5 @@
 package org.folio.circulation.resources;
 
-import static org.folio.circulation.domain.LoanAction.CHANGED_DUE_DATE;
 import static org.folio.circulation.domain.representations.ChangeDueDateRequest.DUE_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.ITEM_ID;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
@@ -92,7 +91,6 @@ public class ChangeDueDateResource extends Resource {
     DateTime dueDate) {
 
     loanAndRelatedRecords.getLoan().changeDueDate(dueDate);
-    loanAndRelatedRecords.getLoan().changeAction(CHANGED_DUE_DATE);
     return loanAndRelatedRecords;
   }
 

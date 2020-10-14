@@ -2,6 +2,7 @@ package org.folio.circulation.domain.representations.logs;
 
 import static java.util.Optional.ofNullable;
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.ACTION;
+import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.ACTION_COMMENT;
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.DATE;
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.DESCRIPTION;
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.HOLDINGS_RECORD_ID;
@@ -36,6 +37,7 @@ public class LoanLogContext {
   private String instanceId;
   private String holdingsRecordId;
   private String action;
+  @Setter private String actionComment;
   private DateTime date;
   @Setter private String servicePointId;
   @Setter private String updatedByUserId;
@@ -49,6 +51,7 @@ public class LoanLogContext {
       .withAction(LogContextActionResolver.resolveAction(loan.getAction()))
       .withDate(DateTime.now())
       .withLoanId(loan.getId());
+    ofNullable(loan.getActionComment()).ifPresent(loanLogContext::setActionComment);
     ofNullable(loan.getUpdatedByUserId()).ifPresent(loanLogContext::setUpdatedByUserId);
     ofNullable(loan.getCheckoutServicePointId()).ifPresent(loanLogContext::setServicePointId);
     return loanLogContext;
@@ -79,6 +82,7 @@ public class LoanLogContext {
     write(json, INSTANCE_ID.value(), instanceId);
     write(json, HOLDINGS_RECORD_ID.value(), holdingsRecordId);
     write(json, ACTION.value(), action);
+    ofNullable(actionComment).ifPresent(comment -> write(json, ACTION_COMMENT.value(), actionComment));
     write(json, DATE.value(), date);
     ofNullable(servicePointId).ifPresent(spId -> write(json, SERVICE_POINT_ID.value(), spId));
     ofNullable(updatedByUserId).ifPresent(userId -> write(json, UPDATED_BY_USER_ID.value(), userId));
