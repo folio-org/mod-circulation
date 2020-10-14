@@ -1,9 +1,14 @@
 package org.folio.circulation.resources;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.representations.logs.RequestUpdateLogEventMapper.mapToRequestLogEventJson;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
+import org.folio.circulation.domain.Request;
+import org.folio.circulation.domain.representations.logs.LogEventType;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
@@ -14,6 +19,7 @@ import org.folio.circulation.domain.UpdateRequestQueue;
 import org.folio.circulation.domain.reorder.ReorderQueueRequest;
 import org.folio.circulation.domain.validation.RequestQueueValidation;
 import org.folio.circulation.resources.context.ReorderRequestContext;
+import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.RouteRegistration;
@@ -65,6 +71,8 @@ public class RequestQueueResource extends Resource {
       routingContext.request().getParam("itemId"),
       routingContext.getBodyAsJson().mapTo(ReorderQueueRequest.class));
 
+    final EventPublisher eventPublisher = new EventPublisher(routingContext);
+
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context, client);
     final RequestRepository requestRepository = RequestRepository.using(clients);
@@ -84,9 +92,21 @@ public class RequestQueueResource extends Resource {
       .thenApply(RequestQueueValidation::fulfillingRequestHasFirstPosition)
       // Business logic block
       .thenCompose(updateRequestQueue::onReorder)
+      .thenApply(q -> publishReorderedQueue(eventPublisher, q))
       .thenCompose(r -> r.after(this::toRepresentation))
       .thenApply(r -> r.map(JsonHttpResponse::ok))
       .thenAccept(context::writeResultToHttpResponse);
+  }
+
+  private Result<ReorderRequestContext> publishReorderedQueue(EventPublisher eventPublisher, Result<ReorderRequestContext> reorderRequestContext) {
+    reorderRequestContext.after(r -> {
+      CompletableFuture.runAsync(() -> {
+        List<Request> reordered = r.getReorderRequestToRequestMap().values().stream().filter(Request::hasChangedPosition).collect(Collectors.toList());
+        eventPublisher.publishLogRecord(mapToRequestLogEventJson(reordered), LogEventType.REQUEST_REORDERED);
+      });
+      return null;
+    });
+    return reorderRequestContext;
   }
 
   private CompletableFuture<Result<JsonObject>> toRepresentation(ReorderRequestContext context) {

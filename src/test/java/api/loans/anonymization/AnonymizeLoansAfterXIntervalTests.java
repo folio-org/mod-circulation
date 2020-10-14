@@ -4,7 +4,7 @@ import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRec
 import static api.support.PubsubPublisherTestUtils.getPublishedLogRecordEvents;
 import static api.support.matchers.LoanMatchers.isOpen;
 import static api.support.matchers.LoanMatchers.isAnonymized;
-import static org.folio.circulation.domain.representations.logs.LogEventPayloadType.LOAN;
+import static org.folio.circulation.domain.representations.logs.LogEventType.LOAN;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.hasSize;

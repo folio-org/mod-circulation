@@ -1,18 +1,21 @@
 package api.requests.scenarios;
 
-import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
 import static api.support.builders.ItemBuilder.AVAILABLE;
 import static api.support.builders.ItemBuilder.PAGED;
 import static api.support.builders.RequestBuilder.OPEN_AWAITING_PICKUP;
 import static api.support.fixtures.ConfigurationExample.timezoneConfigurationFor;
 import static api.support.matchers.EventMatchers.isValidLoanDueDateChangedEvent;
-import static api.support.matchers.EventTypeMatchers.LOAN_DUE_DATE_CHANGED;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
+import static java.util.stream.Collectors.groupingBy;
+import static org.folio.circulation.domain.EventType.LOAN_DUE_DATE_CHANGED;
+import static org.folio.circulation.domain.EventType.LOG_RECORD;
 import static org.folio.circulation.domain.policy.DueDateManagement.KEEP_THE_CURRENT_DUE_DATE;
 import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.END_OF_A_DAY;
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_TYPE;
+import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_MOVED;
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
@@ -24,16 +27,18 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.ClockManager;
+import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.After;
@@ -695,26 +700,26 @@ public class MoveRequestTests extends APITests {
   //This scenerio utilizes two items of the same instance, but the logic in question applies as well for two separate instances.
   @Test
   public void cannotDisplacePagedRequest() {
-      val secondFloorEconomics = locationsFixture.secondFloorEconomics();
-      val mezzanineDisplayCase = locationsFixture.mezzanineDisplayCase();
+    val secondFloorEconomics = locationsFixture.secondFloorEconomics();
+    val mezzanineDisplayCase = locationsFixture.mezzanineDisplayCase();
 
-      val itemCopyA = itemsFixture.basedUponTemeraire(
-        holdingBuilder -> holdingBuilder
-          .withPermanentLocation(secondFloorEconomics)
-          .withNoTemporaryLocation(),
-        itemBuilder -> itemBuilder
-          .withNoPermanentLocation()
-          .withNoTemporaryLocation()
-          .withBarcode("10203040506"));
+    val itemCopyA = itemsFixture.basedUponTemeraire(
+      holdingBuilder -> holdingBuilder
+        .withPermanentLocation(secondFloorEconomics)
+        .withNoTemporaryLocation(),
+      itemBuilder -> itemBuilder
+        .withNoPermanentLocation()
+        .withNoTemporaryLocation()
+        .withBarcode("10203040506"));
 
-      val itemCopyB = itemsFixture.basedUponTemeraire(
-        holdingBuilder -> holdingBuilder
-          .withPermanentLocation(mezzanineDisplayCase)
-          .withNoTemporaryLocation(),
-        itemBuilder -> itemBuilder
-          .withNoPermanentLocation()
-          .withNoTemporaryLocation()
-          .withBarcode("90806050402"));
+    val itemCopyB = itemsFixture.basedUponTemeraire(
+      holdingBuilder -> holdingBuilder
+        .withPermanentLocation(mezzanineDisplayCase)
+        .withNoTemporaryLocation(),
+      itemBuilder -> itemBuilder
+        .withNoPermanentLocation()
+        .withNoTemporaryLocation()
+        .withBarcode("90806050402"));
 
     val james = usersFixture.james();
     val steve = usersFixture.steve();
@@ -845,10 +850,10 @@ public class MoveRequestTests extends APITests {
   public void canUpdateSourceAndDestinationLoanDueDateOnMoveRecallRequest() {
     // Recall placed 2 hours from now
     final Instant expectedJamesLoanDueDate = LocalDateTime
-        .now().plusHours(2).toInstant(ZoneOffset.UTC);
+      .now().plusHours(2).toInstant(ZoneOffset.UTC);
     // Move placed 4 hours from now
     final Instant expectedJessicaLoanDueDate = LocalDateTime
-        .now().plusHours(4).toInstant(ZoneOffset.UTC);
+      .now().plusHours(4).toInstant(ZoneOffset.UTC);
 
     val smallAngryPlanetItem = itemsFixture.basedUponSmallAngryPlanet();
     val interestingTimesItem = itemsFixture.basedUponInterestingTimes();
@@ -1015,18 +1020,24 @@ public class MoveRequestTests extends APITests {
 
     itemCopyALoan = loansClient.get(itemCopyALoan);
 
-    // There should be six events published - for "check out", for "log event", for "hold", for "move"
-    // and two for "log record"
+    // There should be four events published - for "check out", for "log event", for "hold" and for "move"
     List<JsonObject> publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(6));
+      .until(FakePubSub::getPublishedEvents, hasSize(8));
 
-    JsonObject event = publishedEvents.stream()
-      .filter(evt -> LOAN_DUE_DATE_CHANGED.equalsIgnoreCase(evt.getString("eventType")))
-      .collect(Collectors.toList()).get(1);
+    Map<String, List<JsonObject>> events = publishedEvents.stream().collect(groupingBy(o -> o.getString("eventType")));
 
-    assertThat(event, isValidLoanDueDateChangedEvent(itemCopyALoan.getJson()));
-    assertThatPublishedLoanLogRecordEventsAreValid();
+    Map<String, List<JsonObject>> logEvents = events.get(LOG_RECORD.name()).stream()
+      .collect(groupingBy(e -> new JsonObject(e.getString("eventPayload")).getString("logEventType")));
+
+    Request originalCreatedFromEventPayload = Request.from(new JsonObject(logEvents.get(REQUEST_MOVED.value()).get(0).getString("eventPayload")).getJsonObject("payload").getJsonObject("requests").getJsonObject("original"));
+    Request updatedCreatedFromEventPayload = Request.from(new JsonObject(logEvents.get(REQUEST_MOVED.value()).get(0).getString("eventPayload")).getJsonObject("payload").getJsonObject("requests").getJsonObject("updated"));
+    assertThat(originalCreatedFromEventPayload.asJson(), Matchers.not(equalTo(updatedCreatedFromEventPayload.asJson())));
+
+    assertThat(originalCreatedFromEventPayload.getItemId(), not(equalTo(updatedCreatedFromEventPayload.getItemId())));
+    assertThat(updatedCreatedFromEventPayload.getItemId(), equalTo(itemCopyA.getId().toString()));
+
+    assertThat(events.get(LOAN_DUE_DATE_CHANGED.name()).get(1), isValidLoanDueDateChangedEvent(itemCopyALoan.getJson()));
   }
 
   private void freezeTime(DateTime dateTime) {

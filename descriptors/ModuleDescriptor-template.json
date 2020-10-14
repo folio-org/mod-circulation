@@ -2119,7 +2119,8 @@
         "users.item.get",
         "users.collection.get",
         "usergroups.collection.get",
-        "usergroups.item.get"
+        "usergroups.item.get",
+        "pubsub.publish.post"
       ],
       "visible": false
     },

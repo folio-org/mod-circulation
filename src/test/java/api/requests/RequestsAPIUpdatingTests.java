@@ -1,9 +1,7 @@
 package api.requests;
 
-import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedNoticeLogRecordEventsCountIsEqualTo;
 import static api.support.matchers.EventMatchers.isValidLoanDueDateChangedEvent;
-import static api.support.matchers.EventTypeMatchers.LOAN_DUE_DATE_CHANGED;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
@@ -12,16 +10,24 @@ import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.groupingBy;
 import static org.folio.HttpStatus.HTTP_NO_CONTENT;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
+import static org.folio.circulation.domain.EventType.LOAN_DUE_DATE_CHANGED;
+import static org.folio.circulation.domain.EventType.LOG_RECORD;
 import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_NAME;
 import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_PUBLIC_DESCRIPTION;
+import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_CREATED;
+import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_UPDATED;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.hamcrest.CoreMatchers.allOf;
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItems;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.core.Is.is;
 
 import java.net.HttpURLConnection;
@@ -34,6 +40,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import org.awaitility.Awaitility;
+import org.folio.circulation.domain.Request;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matcher;
@@ -76,14 +83,14 @@ public class RequestsAPIUpdatingTests extends APITests {
 
     IndividualResource createdRequest = requestsClient.create(
       new RequestBuilder()
-      .recall()
-      .withRequestDate(requestDate)
-      .forItem(temeraire)
-      .by(steve)
-      .fulfilToHoldShelf()
-      .withPickupServicePointId(exampleServicePoint.getId())
-      .withRequestExpiration(new LocalDate(2017, 7, 30))
-      .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
+        .recall()
+        .withRequestDate(requestDate)
+        .forItem(temeraire)
+        .by(steve)
+        .fulfilToHoldShelf()
+        .withPickupServicePointId(exampleServicePoint.getId())
+        .withRequestExpiration(new LocalDate(2017, 7, 30))
+        .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
 
     final IndividualResource charlotte = usersFixture.charlotte();
 
@@ -425,15 +432,15 @@ public class RequestsAPIUpdatingTests extends APITests {
       .by(usersFixture.steve())
       .fulfilToHoldShelf(exampleServicePoint.getId()));
 
-     UUID badServicePointId = servicePointsFixture.cd3().getId();
+    UUID badServicePointId = servicePointsFixture.cd3().getId();
 
     final Response putResponse = requestsClient.attemptReplace(createdRequest.getId(),
       RequestBuilder.from(createdRequest)
         .withPickupServicePointId(badServicePointId));
 
     assertThat(putResponse.getJson(), hasErrorWith(allOf(
-     hasMessage("Service point is not a pickup location"),
-     hasUUIDParameter("pickupServicePointId", badServicePointId))));
+      hasMessage("Service point is not a pickup location"),
+      hasUUIDParameter("pickupServicePointId", badServicePointId))));
   }
 
   @Test
@@ -665,20 +672,20 @@ public class RequestsAPIUpdatingTests extends APITests {
 
     IndividualResource createdRequest = requestsClient.create(
       new RequestBuilder()
-      .recall()
-      .withRequestDate(requestDate)
-      .forItem(temeraire)
-      .by(steve)
-      .fulfilToHoldShelf()
-      .withPickupServicePointId(exampleServicePoint.getId())
-      .withRequestExpiration(new LocalDate(2017, 7, 30))
-      .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
+        .recall()
+        .withRequestDate(requestDate)
+        .forItem(temeraire)
+        .by(steve)
+        .fulfilToHoldShelf()
+        .withPickupServicePointId(exampleServicePoint.getId())
+        .withRequestExpiration(new LocalDate(2017, 7, 30))
+        .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
 
     final IndividualResource inactiveCharlotte
       = usersFixture.charlotte(UserBuilder::inactive);
 
     final Response putResponse = requestsClient.attemptReplace(createdRequest.getId(),
-        RequestBuilder.from(createdRequest)
+      RequestBuilder.from(createdRequest)
         .hold()
         .by(inactiveCharlotte)
         .withTags(new RequestBuilder.Tags(Arrays.asList("new", "important"))));
@@ -761,17 +768,26 @@ public class RequestsAPIUpdatingTests extends APITests {
     Response response = loansClient.getById(loan.getId());
     JsonObject updatedLoan = response.getJson();
 
-    // There should be siz events published - for "check out", for "log event", for "recall", for "replace"
-    // and two for "log record"
+    // There should be six events published - for "check out", for "log event: check out",
+    // for "log event: request created", for "log event: request updated" for "recall" and for "replace"
     List<JsonObject> publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(FakePubSub::getPublishedEvents, hasSize(6));
 
-    JsonObject event = publishedEvents.stream()
-      .filter(evt -> LOAN_DUE_DATE_CHANGED.equalsIgnoreCase(evt.getString("eventType")))
-      .findFirst().orElse(new JsonObject());
+    Map<String, List<JsonObject>> events = publishedEvents.stream().collect(groupingBy(o -> o.getString("eventType")));
 
-    assertThat(event, isValidLoanDueDateChangedEvent(updatedLoan));
-    assertThatPublishedLoanLogRecordEventsAreValid();
+    Map<String, List<JsonObject>> logEvents = events.get(LOG_RECORD.name()).stream()
+      .collect(groupingBy(e -> new JsonObject(e.getString("eventPayload")).getString("logEventType")));
+
+    Request requestCreatedFromEventPayload = Request.from(new JsonObject(logEvents.get(REQUEST_CREATED.value()).get(0).getString("eventPayload")).getJsonObject("payload").getJsonObject("requests").getJsonObject("created"));
+    assertThat(requestCreatedFromEventPayload, notNullValue());
+
+    Request originalCreatedFromEventPayload = Request.from(new JsonObject(logEvents.get(REQUEST_UPDATED.value()).get(0).getString("eventPayload")).getJsonObject("payload").getJsonObject("requests").getJsonObject("original"));
+    Request updatedCreatedFromEventPayload = Request.from(new JsonObject(logEvents.get(REQUEST_UPDATED.value()).get(0).getString("eventPayload")).getJsonObject("payload").getJsonObject("requests").getJsonObject("updated"));
+
+    assertThat(requestCreatedFromEventPayload.getRequestType(), equalTo(originalCreatedFromEventPayload.getRequestType()));
+    assertThat(originalCreatedFromEventPayload.getRequestType(), not(equalTo(updatedCreatedFromEventPayload.getRequestType())));
+
+    assertThat(events.get(LOAN_DUE_DATE_CHANGED.name()).get(0), isValidLoanDueDateChangedEvent(updatedLoan));
   }
 }

@@ -1,5 +1,7 @@
 package org.folio.circulation.domain;
 
+import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_CREATED;
+import static org.folio.circulation.domain.representations.logs.RequestUpdateLogEventMapper.mapToRequestLogEventJson;
 import static org.folio.circulation.support.results.Result.of;
 
 import java.util.HashMap;
@@ -14,6 +16,7 @@ import org.folio.circulation.infrastructure.storage.AutomatedPatronBlocksReposit
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.resources.RequestNoticeSender;
+import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.ValidationError;
@@ -24,16 +27,17 @@ public class CreateRequestService {
   private final RequestLoanValidator requestLoanValidator;
   private final RequestNoticeSender requestNoticeSender;
   private final UserManualBlocksValidator userManualBlocksValidator;
+  private final EventPublisher eventPublisher;
 
   public CreateRequestService(CreateRequestRepositories repositories,
-    UpdateUponRequest updateUponRequest, RequestLoanValidator requestLoanValidator,
-    RequestNoticeSender requestNoticeSender, UserManualBlocksValidator userManualBlocksValidator) {
-
+                              UpdateUponRequest updateUponRequest, RequestLoanValidator requestLoanValidator,
+                              RequestNoticeSender requestNoticeSender, UserManualBlocksValidator userManualBlocksValidator, EventPublisher eventPublisher) {
     this.repositories = repositories;
     this.updateUponRequest = updateUponRequest;
     this.requestLoanValidator = requestLoanValidator;
     this.requestNoticeSender = requestNoticeSender;
     this.userManualBlocksValidator = userManualBlocksValidator;
+    this.eventPublisher = eventPublisher;
   }
 
   public CompletableFuture<Result<RequestAndRelatedRecords>> createRequest(
@@ -68,7 +72,10 @@ public class CreateRequestService {
       .thenComposeAsync(r -> r.after(updateUponRequest.updateLoan::onRequestCreateOrUpdate))
       .thenComposeAsync(r -> r.after(requestRepository::create))
       .thenComposeAsync(r -> r.after(updateUponRequest.updateRequestQueue::onCreate))
-      .thenApply(r -> r.next(requestNoticeSender::sendNoticeOnRequestCreated));
+      .thenApplyAsync(r -> {
+        r.after(t -> eventPublisher.publishLogRecord(mapToRequestLogEventJson(t.getRequest()), REQUEST_CREATED));
+        return r.next(requestNoticeSender::sendNoticeOnRequestCreated);
+      });
   }
 
 }

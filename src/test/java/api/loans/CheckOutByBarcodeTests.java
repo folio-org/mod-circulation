@@ -34,7 +34,7 @@ import static org.folio.circulation.domain.EventType.ITEM_CHECKED_OUT;
 import static org.folio.circulation.domain.EventType.LOG_RECORD;
 import static org.folio.circulation.domain.policy.Period.months;
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
-import static org.folio.circulation.domain.representations.logs.LogEventPayloadType.CHECK_OUT;
+import static org.folio.circulation.domain.representations.logs.LogEventType.CHECK_OUT;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;

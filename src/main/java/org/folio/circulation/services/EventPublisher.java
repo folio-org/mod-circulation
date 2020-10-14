@@ -14,8 +14,9 @@ import static org.folio.circulation.domain.LoanAndRelatedRecords.REASON_TO_OVERR
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.LOG_EVENT_TYPE;
 import static org.folio.circulation.domain.representations.logs.CirculationCheckInCheckOutLogEventMapper.mapToCheckInLogEventJson;
 import static org.folio.circulation.domain.representations.logs.CirculationCheckInCheckOutLogEventMapper.mapToCheckOutLogEventJson;
-import static org.folio.circulation.domain.representations.logs.LogEventPayloadType.LOAN;
+import static org.folio.circulation.domain.representations.logs.LogEventType.LOAN;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
+import static org.folio.circulation.domain.representations.logs.RequestUpdateLogEventMapper.mapToRequestLogEventJson;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.results.Result.succeeded;
 
@@ -27,12 +28,12 @@ import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.EventType;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
-
 import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.anonymization.LoanAnonymizationRecords;
 import org.folio.circulation.domain.representations.logs.LoanLogContext;
 import org.folio.circulation.domain.representations.logs.LogContextActionResolver;
-import org.folio.circulation.domain.representations.logs.LogEventPayloadType;
+import org.folio.circulation.domain.representations.logs.LogEventType;
+import org.folio.circulation.domain.Request;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.Clients;
@@ -243,9 +244,22 @@ public class EventPublisher {
       .withDescription(String.format("New due date: %s (from %s)", loan.getDueDate(), loan.getOriginalDueDate())).asJson(), LOAN);
   }
 
-  public CompletableFuture<Result<Void>> publishLogRecord(JsonObject context, LogEventPayloadType payloadType) {
+//  public CompletableFuture<Result<Void>> publishLogRecord(JsonObject payload, LogEventType payloadType) {
+//    JsonObject logEventPayload = new JsonObject();
+//    write(logEventPayload, LOG_EVENT_TYPE.value(), payloadType.value());
+//    write(logEventPayload, PAYLOAD.value(), payload);
+//    return pubSubPublishingService.publishEvent(LOG_RECORD.name(), logEventPayload.encode())
+//      .thenApply(r -> succeeded(null));
+//  }
+//
+  public CompletableFuture<Result<Void>> publishLogRecord(JsonObject context, LogEventType payloadType) {
     write(context, LOG_EVENT_TYPE.value(), payloadType.value());
     return pubSubPublishingService.publishEvent(LOG_RECORD.name(), context.encode())
       .thenApply(r -> succeeded(null));
+  }
+
+  public RequestAndRelatedRecords publishLogRecordAsync(RequestAndRelatedRecords requestAndRelatedRecords, Request originalRequest, LogEventType logEventType) {
+    CompletableFuture.runAsync(() -> publishLogRecord(mapToRequestLogEventJson(originalRequest, requestAndRelatedRecords.getRequest()), logEventType));
+    return requestAndRelatedRecords;
   }
 }

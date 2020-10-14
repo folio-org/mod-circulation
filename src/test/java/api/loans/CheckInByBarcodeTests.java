@@ -20,7 +20,7 @@ import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRec
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.groupingBy;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
-import static org.folio.circulation.domain.representations.logs.LogEventPayloadType.CHECK_IN;
+import static org.folio.circulation.domain.representations.logs.LogEventType.CHECK_IN;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
