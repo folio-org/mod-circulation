@@ -60,9 +60,7 @@ public class OverrideCheckOutStrategy implements CheckOutStrategy {
     }
 
     relatedRecords.getLogContextProperties().put(REASON_TO_OVERRIDE,
-      nonNull(getProperty(request, CANCELLATION_REASON_PUBLIC_DESCRIPTION)) ?
-        getProperty(request, CANCELLATION_REASON_PUBLIC_DESCRIPTION) :
-        "");
+      getProperty(request, CANCELLATION_REASON_PUBLIC_DESCRIPTION));
 
     return completedFuture(succeeded(relatedRecords))
       .thenApply(r -> r.next(this::refuseWhenItemIsLoanable))
