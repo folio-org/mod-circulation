@@ -79,7 +79,7 @@ public class CirculationRulesResource extends Resource {
 
   private void get(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
-    final Clients clients = Clients.create(routingContext, client);
+    final Clients clients = Clients.create(context, client);
     CollectionResourceClient circulationRulesClient = clients.circulationRulesStorage();
 
     log.debug("get(RoutingContext) client={}", circulationRulesClient);
@@ -111,7 +111,7 @@ public class CirculationRulesResource extends Resource {
   //Cannot combine exception catching as cannot resolve overloaded method for error
   @SuppressWarnings("squid:S2147")
   private void put(RoutingContext routingContext) {
-    final Clients clients = Clients.create(routingContext, client);
+    final Clients clients = Clients.create(new WebContext(routingContext), client);
     CollectionResourceClient loansRulesClient = clients.circulationRulesStorage();
 
     if (loansRulesClient == null) {

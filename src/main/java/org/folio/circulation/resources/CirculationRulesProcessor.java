@@ -1,6 +1,6 @@
 package org.folio.circulation.resources;
 
-import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.lang.invoke.MethodHandles;
@@ -12,18 +12,14 @@ import org.folio.circulation.domain.Location;
 import org.folio.circulation.rules.CirculationRuleMatch;
 import org.folio.circulation.rules.Drools;
 import org.folio.circulation.rules.Text2Drools;
-import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.vertx.core.MultiMap;
-import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.RoutingContext;
 
 public class CirculationRulesProcessor {
   protected static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -108,39 +104,36 @@ public class CirculationRulesProcessor {
     return rules.reloadTimestamp + triggerAgeInMilliseconds < System.currentTimeMillis();
   }
 
-  /**
-   * Load the circulation rules from the storage module.
-   * @param rules - where to store the rules and reload information
-   * @param client - an HttpClient
-   * @param routingContext - where to report any error
-   */
-  private CompletableFuture<Result<Rules>> reloadRules(Rules rules, RoutingContext routingContext, HttpClient client) {
-    final Clients clients = Clients.create(routingContext, client);
-    CollectionResourceClient circulationRulesClient = clients.circulationRulesStorage();
+  private CompletableFuture<Result<Rules>> reloadRules(Rules rules,
+    CollectionResourceClient circulationRulesClient) {
 
-    return circulationRulesClient.get().thenCompose(r -> r.after(response -> {
-      JsonObject circulationRules = new JsonObject(response.getBody());
+    return circulationRulesClient.get()
+      .thenCompose(r -> r.after(response -> {
+        JsonObject circulationRules = new JsonObject(response.getBody());
 
+        rules.reloadTimestamp = System.currentTimeMillis();
+        rules.reloadInitiated = false;
 
-      rules.reloadTimestamp = System.currentTimeMillis();
-      rules.reloadInitiated = false;
+        if (log.isDebugEnabled()) {
+          log.debug("circulationRules = {}", circulationRules.encodePrettily());
+        }
 
-      if (log.isDebugEnabled()) {
-        log.debug("circulationRules = {}", circulationRules.encodePrettily());
-      }
+        String rulesAsText = circulationRules.getString("rulesAsText");
 
-      String rulesAsText = circulationRules.getString("rulesAsText");
-      if (rulesAsText == null) {
-        throw new NullPointerException("rulesAsText");
-      }
-      if (rules.rulesAsText.equals(rulesAsText)) {
-        return completedFuture(succeeded(rules));
-      }
-      rules.rulesAsText = rulesAsText;
-      rules.rulesAsDrools = Text2Drools.convert(rulesAsText);
-      log.debug("rulesAsDrools = {}", rules.rulesAsDrools);
-      rules.drools = new Drools(rules.rulesAsDrools);
-      return completedFuture(succeeded(rules));
+        if (rulesAsText == null) {
+          throw new NullPointerException("rulesAsText");
+        }
+
+        if (rules.rulesAsText.equals(rulesAsText)) {
+          return ofAsync(() -> rules);
+        }
+
+        rules.rulesAsText = rulesAsText;
+        rules.rulesAsDrools = Text2Drools.convert(rulesAsText);
+        log.debug("rulesAsDrools = {}", rules.rulesAsDrools);
+        rules.drools = new Drools(rules.rulesAsDrools);
+
+        return ofAsync(() -> rules);
     }));
   }
 
@@ -184,27 +177,31 @@ public class CirculationRulesProcessor {
     return drools.requestPolicies(params, location);
   }
 
+  public CompletableFuture<Result<Drools>> getDrools(String tenantId,
+    CollectionResourceClient circulationRulesClient) {
 
-  public CompletableFuture<Result<Drools>> getDrools(RoutingContext routingContext, HttpClient client) {
-    String tenantId = new WebContext(routingContext).getTenantId();
-    CompletableFuture<Result<Drools>> cfDrools = new CompletableFuture<Result<Drools>>();
+    CompletableFuture<Result<Drools>> cfDrools = new CompletableFuture<>();
+
     Rules rules = rulesMap.get(tenantId);
+
     if (isCurrent(rules)) {
-      cfDrools.complete(Result.succeeded(rules.drools));
+      cfDrools.complete(succeeded(rules.drools));
+
       if (reloadNeeded(rules)) {
         rules.reloadInitiated = true;
-        reloadRules(rules, routingContext, client).thenCompose(r -> r.after(updatedRules -> {
-          return completedFuture(succeeded(updatedRules.drools));
-        }));
+        reloadRules(rules, circulationRulesClient)
+          .thenCompose(r -> r.after(updatedRules -> ofAsync(() -> updatedRules.drools)));
       }
+
       return cfDrools;
     }
+
     if (rules == null) {
       rules = new Rules();
       rulesMap.put(tenantId, rules);
     }
-    return reloadRules(rules, routingContext, client).thenCompose(r -> r.after(updatedRules -> {
-      return completedFuture(succeeded(updatedRules.drools));
-    }));
+
+    return reloadRules(rules, circulationRulesClient)
+      .thenCompose(r -> r.after(updatedRules -> ofAsync(() -> updatedRules.drools)));
   }
 }

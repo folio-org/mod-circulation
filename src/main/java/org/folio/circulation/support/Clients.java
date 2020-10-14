@@ -11,7 +11,6 @@ import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.http.HttpClient;
-import io.vertx.ext.web.RoutingContext;
 
 public class Clients {
   private final CollectionResourceClient requestsStorageClient;
@@ -61,19 +60,16 @@ public class Clients {
   private final CollectionResourceClient automatedPatronBlocksClient;
   private final CollectionResourceClient notesClient;
   private final CollectionResourceClient noteTypesClient;
-  private final HttpClient httpClient;
-  private final RoutingContext routingContext;
   private final PubSubPublishingService pubSubPublishingService;
+  private final WebContext context;
 
-  public static Clients create(RoutingContext routingContext, HttpClient httpClient) {
-    return new Clients(routingContext, httpClient);
+  public static Clients create(WebContext context, HttpClient httpClient) {
+    return new Clients(context.createHttpClient(httpClient), context);
   }
 
-  private Clients(RoutingContext routingContext, HttpClient httpClient) {
-    this.httpClient = httpClient;
-    this.routingContext = routingContext;
-    WebContext context = new WebContext(routingContext);
-    OkapiHttpClient client = context.createHttpClient(httpClient);
+  private Clients(OkapiHttpClient client, WebContext context) {
+    this.context = context;
+
     try {
       requestsStorageClient = createRequestsStorageClient(client, context);
       requestsBatchStorageClient = createRequestsBatchStorageClient(client, context);
@@ -313,16 +309,9 @@ public class Clients {
     return noteTypesClient;
   }
 
-  protected HttpClient getHttpClient() {
-    return httpClient;
-  }
-
-  protected RoutingContext getRoutingContext() {
-    return routingContext;
-  }
-
   public CompletableFuture<Result<Drools>> getCirculationDrools() {
-    return CirculationRulesProcessor.getInstance().getDrools(routingContext, httpClient);
+    return CirculationRulesProcessor.getInstance()
+      .getDrools(context.getTenantId(), circulationRulesStorage());
   }
 
   public PubSubPublishingService pubSubPublishingService() {

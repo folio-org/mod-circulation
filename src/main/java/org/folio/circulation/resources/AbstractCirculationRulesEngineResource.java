@@ -5,6 +5,8 @@ import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.rules.CirculationRuleMatch;
@@ -27,6 +29,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
+import lombok.val;
 
 /**
  * The circulation rules engine calculates the loan policy based on
@@ -42,8 +45,6 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
 
   private final String applyPath;
   private final String applyAllPath;
-
-
 
   /**
    * Create a circulation rules engine that listens at applyPath and applyAllPath.
@@ -84,30 +85,10 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
 
   private void apply(RoutingContext routingContext) {
     HttpServerRequest request = routingContext.request();
-    if (invalidApplyParameters(request)) {
-      return;
-    }
 
-    Clients clients = Clients.create(routingContext, client);
-
-    CompletableFuture<Result<Drools>> droolsFuture = clients.getCirculationDrools();
-
-    final WebContext context = new WebContext(routingContext);
-    final CollectionResourceClient locationsStorageClient
-      = clients.locationsStorage();
-    CompletableFuture<Result<Location>> locationFuture = FetchSingleRecord.<Location>forRecord("location")
-      .using(locationsStorageClient)
-      .mapTo(Location::from)
-      .whenNotFound(failed(new ServerErrorFailure("Can`t find location")))
-      .fetch(request.params().get(LOCATION_ID_NAME));
-
-    CompletableFuture<Result<CirculationRuleMatch>> circulationRuleMatchFuture =
-        droolsFuture.thenCombine(locationFuture, (droolsResult, locationResult) ->
-          locationResult.combine(droolsResult, (location,drools) -> getPolicyIdAndRuleMatch(request.params(),drools,location)));
-
-    circulationRuleMatchFuture.thenCompose(r -> r.after(this::buildJsonResult))
-    .thenApply(r -> r.map(JsonHttpResponse::ok))
-    .thenAccept(context::writeResultToHttpResponse);
+    applyRules(routingContext,
+      (location, drools) -> getPolicyIdAndRuleMatch(request.params(), drools, location),
+      this::buildJsonResult);
   }
 
   private CompletableFuture<Result<JsonObject>> buildJsonResult(CirculationRuleMatch entity) {
@@ -124,36 +105,47 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
 
   private void applyAll(RoutingContext routingContext) {
     HttpServerRequest request = routingContext.request();
+
+    applyRules(routingContext,
+      (location, drools) -> getPolicies(request.params(), drools, location),
+      this::buildJsonResult);
+  }
+
+  private CompletableFuture<Result<JsonObject>> buildJsonResult(JsonArray matches) {
+    return CompletableFuture.completedFuture(succeeded(new JsonObject().put("circulationRuleMatches",
+      matches)));
+  }
+
+  private <T> void applyRules(RoutingContext routingContext,
+    BiFunction<Location, Drools, T> interpretMatches,
+    Function<T, CompletableFuture<Result<JsonObject>>> mapToJson) {
+
+    val request = routingContext.request();
+
     if (invalidApplyParameters(request)) {
       return;
     }
 
-    Clients clients = Clients.create(routingContext, client);
-
-    CompletableFuture<Result<Drools>> droolsFuture = clients.getCirculationDrools();
-
     final WebContext context = new WebContext(routingContext);
-    final CollectionResourceClient locationsStorageClient
-      = clients.locationsStorage();
+    Clients clients = Clients.create(context, client);
+
+    final CollectionResourceClient locationsStorageClient = clients.locationsStorage();
+
+    val droolsFuture = CirculationRulesProcessor.getInstance()
+      .getDrools(context.getTenantId(), clients.circulationRulesStorage());
+
     CompletableFuture<Result<Location>> locationFuture = FetchSingleRecord.<Location>forRecord("location")
       .using(locationsStorageClient)
       .mapTo(Location::from)
       .whenNotFound(failed(new ServerErrorFailure("Can`t find location")))
       .fetch(request.params().get(LOCATION_ID_NAME));
 
-    CompletableFuture<Result<JsonArray>> circulationRuleMatchFuture =
-        droolsFuture.thenCombine(locationFuture, (droolsResult, locationResult) ->
-          locationResult.combine(droolsResult, (location,drools) -> getPolicies(request.params(),drools,location)));
+    val circulationRuleMatchFuture = droolsFuture.thenCombine(locationFuture,
+      (droolsResult, locationResult) -> locationResult.combine(droolsResult, interpretMatches));
 
-    circulationRuleMatchFuture
-        .thenCompose(r -> r.after(this::buildJsonResult))
-        .thenApply(r -> r.map(JsonHttpResponse::ok))
-        .thenAccept(context::writeResultToHttpResponse);
-  }
-
-  private CompletableFuture<Result<JsonObject>> buildJsonResult(JsonArray matches) {
-    return CompletableFuture.completedFuture(succeeded(new JsonObject().put("circulationRuleMatches",
-      matches)));
+    circulationRuleMatchFuture.thenCompose(r -> r.after(mapToJson))
+      .thenApply(r -> r.map(JsonHttpResponse::ok))
+      .thenAccept(context::writeResultToHttpResponse);
   }
 
   private boolean invalidApplyParameters(HttpServerRequest request) {

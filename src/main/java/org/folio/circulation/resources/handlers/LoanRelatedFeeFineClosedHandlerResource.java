@@ -4,28 +4,28 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.FeeFine.lostItemFeeTypes;
 import static org.folio.circulation.domain.subscribers.LoanRelatedFeeFineClosedEvent.fromJson;
 import static org.folio.circulation.support.Clients.create;
-import static org.folio.circulation.support.results.Result.failed;
-import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.http.server.NoContentResponse.noContent;
+import static org.folio.circulation.support.results.Result.failed;
+import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.StoreLoanAndItem;
 import org.folio.circulation.domain.Account;
-import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
 import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.subscribers.LoanRelatedFeeFineClosedEvent;
+import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.loans.LostItemPolicyRepository;
-import org.folio.circulation.domain.subscribers.LoanRelatedFeeFineClosedEvent;
 import org.folio.circulation.resources.Resource;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.server.NoContentResponse;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.CommonFailures;
+import org.folio.circulation.support.results.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,7 +51,7 @@ public class LoanRelatedFeeFineClosedHandlerResource extends Resource {
     final WebContext context = new WebContext(routingContext);
 
     createAndValidateRequest(routingContext)
-      .after(request -> processEvent(routingContext, request))
+      .after(request -> processEvent(context, request))
       .exceptionally(CommonFailures::failedDueToServerError)
       .thenApply(r -> r.toFixedValue(NoContentResponse::noContent))
       .thenAccept(result -> result.applySideEffect(context::write, failure -> {
@@ -63,8 +63,9 @@ public class LoanRelatedFeeFineClosedHandlerResource extends Resource {
   }
 
   private CompletableFuture<Result<Loan>> processEvent(
-    RoutingContext routingContext, LoanRelatedFeeFineClosedEvent event) {
-    final Clients clients = create(routingContext, client);
+    WebContext context, LoanRelatedFeeFineClosedEvent event) {
+
+    final Clients clients = create(context, client);
     final LoanRepository loanRepository = new LoanRepository(clients);
 
     return loanRepository.getById(event.getLoanId())

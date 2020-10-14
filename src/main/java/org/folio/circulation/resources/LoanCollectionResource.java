@@ -61,7 +61,7 @@ public class LoanCollectionResource extends CollectionResource {
 
     final Loan loan = Loan.from(incomingRepresentation);
 
-    final Clients clients = Clients.create(routingContext, client);
+    final Clients clients = Clients.create(context, client);
 
     final ItemRepository itemRepository = new ItemRepository(clients, true, true, false);
     final ServicePointRepository servicePointRepository = new ServicePointRepository(clients);
@@ -133,7 +133,7 @@ public class LoanCollectionResource extends CollectionResource {
 
     final Loan loan = Loan.from(incomingRepresentation);
 
-    final Clients clients = Clients.create(routingContext, client);
+    final Clients clients = Clients.create(context, client);
     final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
     final ServicePointRepository servicePointRepository = new ServicePointRepository(clients);
     final ItemRepository itemRepository = new ItemRepository(clients, true, true, true);
@@ -191,7 +191,7 @@ public class LoanCollectionResource extends CollectionResource {
   @Override
   void get(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
-    final Clients clients = Clients.create(routingContext, client);
+    final Clients clients = Clients.create(context, client);
 
     final LoanRepository loanRepository = new LoanRepository(clients);
     final ServicePointRepository servicePointRepository = new ServicePointRepository(clients);
@@ -221,7 +221,7 @@ public class LoanCollectionResource extends CollectionResource {
   @Override
   void delete(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
-    Clients clients = Clients.create(routingContext, client);
+    Clients clients = Clients.create(context, client);
 
     String id = routingContext.request().getParam("id");
 
@@ -233,7 +233,7 @@ public class LoanCollectionResource extends CollectionResource {
   @Override
   void getMany(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
-    Clients clients = Clients.create(routingContext, client);
+    Clients clients = Clients.create(context, client);
 
     final LoanRepository loanRepository = new LoanRepository(clients);
     final ServicePointRepository servicePointRepository = new ServicePointRepository(clients);
@@ -269,7 +269,7 @@ public class LoanCollectionResource extends CollectionResource {
   @Override
   void empty(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
-    Clients clients = Clients.create(routingContext, client);
+    Clients clients = Clients.create(context, client);
 
     clients.loansStorage().delete()
       .thenApply(r -> r.toFixedValue(NoContentResponse::noContent))

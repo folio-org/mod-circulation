@@ -67,7 +67,7 @@ public class ItemsInTransitResource extends Resource {
 
   private void getMany(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
-    final Clients clients = Clients.create(routingContext, client);
+    final Clients clients = Clients.create(context, client);
 
     final GetManyRecordsClient loansStorageClient = clients.loansStorage();
     final GetManyRecordsClient requestsStorageClient = clients.requestsStorage();

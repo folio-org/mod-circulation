@@ -26,7 +26,7 @@ public class ScheduledAgeToLostFeeChargingResource extends Resource {
   private void scheduledAgeToLostFeeCharging(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
     final ChargeLostFeesWhenAgedToLostService chargingService =
-      new ChargeLostFeesWhenAgedToLostService(create(routingContext, client));
+      new ChargeLostFeesWhenAgedToLostService(create(context, client));
 
     chargingService.chargeFees()
       .thenApply(r -> r.toFixedValue(NoContentResponse::noContent))
