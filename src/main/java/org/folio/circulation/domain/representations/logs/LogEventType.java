@@ -1,6 +1,7 @@
 package org.folio.circulation.domain.representations.logs;
 
 public enum LogEventType {
+  LOAN("LOAN"),
   NOTICE("NOTICE"),
   CHECK_IN("CHECK_IN_EVENT"),
   CHECK_OUT("CHECK_OUT_EVENT"),

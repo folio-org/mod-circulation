@@ -700,26 +700,26 @@ public class MoveRequestTests extends APITests {
   //This scenerio utilizes two items of the same instance, but the logic in question applies as well for two separate instances.
   @Test
   public void cannotDisplacePagedRequest() {
-      val secondFloorEconomics = locationsFixture.secondFloorEconomics();
-      val mezzanineDisplayCase = locationsFixture.mezzanineDisplayCase();
+    val secondFloorEconomics = locationsFixture.secondFloorEconomics();
+    val mezzanineDisplayCase = locationsFixture.mezzanineDisplayCase();
 
-      val itemCopyA = itemsFixture.basedUponTemeraire(
-        holdingBuilder -> holdingBuilder
-          .withPermanentLocation(secondFloorEconomics)
-          .withNoTemporaryLocation(),
-        itemBuilder -> itemBuilder
-          .withNoPermanentLocation()
-          .withNoTemporaryLocation()
-          .withBarcode("10203040506"));
+    val itemCopyA = itemsFixture.basedUponTemeraire(
+      holdingBuilder -> holdingBuilder
+        .withPermanentLocation(secondFloorEconomics)
+        .withNoTemporaryLocation(),
+      itemBuilder -> itemBuilder
+        .withNoPermanentLocation()
+        .withNoTemporaryLocation()
+        .withBarcode("10203040506"));
 
-      val itemCopyB = itemsFixture.basedUponTemeraire(
-        holdingBuilder -> holdingBuilder
-          .withPermanentLocation(mezzanineDisplayCase)
-          .withNoTemporaryLocation(),
-        itemBuilder -> itemBuilder
-          .withNoPermanentLocation()
-          .withNoTemporaryLocation()
-          .withBarcode("90806050402"));
+    val itemCopyB = itemsFixture.basedUponTemeraire(
+      holdingBuilder -> holdingBuilder
+        .withPermanentLocation(mezzanineDisplayCase)
+        .withNoTemporaryLocation(),
+      itemBuilder -> itemBuilder
+        .withNoPermanentLocation()
+        .withNoTemporaryLocation()
+        .withBarcode("90806050402"));
 
     val james = usersFixture.james();
     val steve = usersFixture.steve();
@@ -850,10 +850,10 @@ public class MoveRequestTests extends APITests {
   public void canUpdateSourceAndDestinationLoanDueDateOnMoveRecallRequest() {
     // Recall placed 2 hours from now
     final Instant expectedJamesLoanDueDate = LocalDateTime
-        .now().plusHours(2).toInstant(ZoneOffset.UTC);
+      .now().plusHours(2).toInstant(ZoneOffset.UTC);
     // Move placed 4 hours from now
     final Instant expectedJessicaLoanDueDate = LocalDateTime
-        .now().plusHours(4).toInstant(ZoneOffset.UTC);
+      .now().plusHours(4).toInstant(ZoneOffset.UTC);
 
     val smallAngryPlanetItem = itemsFixture.basedUponSmallAngryPlanet();
     val interestingTimesItem = itemsFixture.basedUponInterestingTimes();
@@ -1023,15 +1023,15 @@ public class MoveRequestTests extends APITests {
     // There should be four events published - for "check out", for "log event", for "hold" and for "move"
     List<JsonObject> publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(8));
+      .until(FakePubSub::getPublishedEvents, hasSize(12));
 
     Map<String, List<JsonObject>> events = publishedEvents.stream().collect(groupingBy(o -> o.getString("eventType")));
 
     Map<String, List<JsonObject>> logEvents = events.get(LOG_RECORD.name()).stream()
       .collect(groupingBy(e -> new JsonObject(e.getString("eventPayload")).getString("logEventType")));
 
-    Request originalCreatedFromEventPayload = Request.from(new JsonObject(logEvents.get(REQUEST_MOVED.value()).get(0).getString("eventPayload")).getJsonObject("payload").getJsonObject("requests").getJsonObject("original"));
-    Request updatedCreatedFromEventPayload = Request.from(new JsonObject(logEvents.get(REQUEST_MOVED.value()).get(0).getString("eventPayload")).getJsonObject("payload").getJsonObject("requests").getJsonObject("updated"));
+    Request originalCreatedFromEventPayload = Request.from(new JsonObject(logEvents.get(REQUEST_MOVED.value()).get(0).getString("eventPayload")).getJsonObject("requests").getJsonObject("original"));
+    Request updatedCreatedFromEventPayload = Request.from(new JsonObject(logEvents.get(REQUEST_MOVED.value()).get(0).getString("eventPayload")).getJsonObject("requests").getJsonObject("updated"));
     assertThat(originalCreatedFromEventPayload.asJson(), Matchers.not(equalTo(updatedCreatedFromEventPayload.asJson())));
 
     assertThat(originalCreatedFromEventPayload.getItemId(), not(equalTo(updatedCreatedFromEventPayload.getItemId())));

@@ -1,5 +1,6 @@
 package api.loans.anonymization;
 
+import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
 import static api.support.matchers.LoanMatchers.isAnonymized;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -76,6 +77,7 @@ public class AnonymizeLoansImmediatelyAPITests extends LoanAnonymizationTests {
 
     assertThat(loansStorageClient.getById(loanID)
       .getJson(), isAnonymized());
+    assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
   /**
@@ -203,5 +205,6 @@ public class AnonymizeLoansImmediatelyAPITests extends LoanAnonymizationTests {
 
     assertThat(loansStorageClient.getById(loanID).getJson(),
       isAnonymized());
+    assertThatPublishedLoanLogRecordEventsAreValid();
   }
 }

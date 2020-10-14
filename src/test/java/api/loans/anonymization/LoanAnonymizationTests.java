@@ -7,6 +7,7 @@ import static api.support.http.InterfaceUrls.circulationAnonymizeLoansURL;
 import java.net.URL;
 import java.util.UUID;
 
+import api.support.fakes.FakePubSub;
 import org.folio.circulation.domain.representations.anonymization.LoanAnonymizationAPIResponse;
 import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
@@ -40,6 +41,7 @@ abstract class LoanAnonymizationTests extends APITests {
     super.afterEach();
 
     mockClockManagerToReturnDefaultDateTime();
+    FakePubSub.clearPublishedEvents();
   }
 
   LoanAnonymizationAPIResponse anonymizeLoansInTenant() {

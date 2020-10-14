@@ -1,6 +1,8 @@
 package api.loans;
 
+import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
 import static api.support.matchers.EventMatchers.isValidItemClaimedReturnedEvent;
+import static api.support.matchers.EventTypeMatchers.ITEM_CLAIMED_RETURNED;
 import static api.support.matchers.LoanMatchers.hasLoanProperty;
 import static api.support.matchers.LoanMatchers.isOpen;
 import static api.support.matchers.LoanMatchers.hasStatus;
@@ -123,14 +125,18 @@ public class ClaimItemReturnedAPITests extends APITests {
 
     assertLoanAndItem(response, null, dateTime);
 
-    // Three events are expected: one for check-out one for log event and one for the claim
+    // Five events are expected: one for check-out one for log event, one for the claim
+    // and two for log records
     List<JsonObject> publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(3));
+      .until(FakePubSub::getPublishedEvents, hasSize(5));
 
-    JsonObject event = publishedEvents.get(2);
+    JsonObject event = publishedEvents.stream()
+      .filter(evt -> ITEM_CLAIMED_RETURNED.equalsIgnoreCase(evt.getString("eventType")))
+      .findFirst().orElse(new JsonObject());
 
     assertThat(event, isValidItemClaimedReturnedEvent(loan.getJson()));
+    assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
   private void assertLoanAndItem(Response response, String comment, DateTime dateTime) {

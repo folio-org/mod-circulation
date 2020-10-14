@@ -32,4 +32,6 @@ public class LoanProperties {
   public static final String AGED_TO_LOST_DELAYED_BILLING = "agedToLostDelayedBilling";
   public static final String LOST_ITEM_HAS_BEEN_BILLED = "lostItemHasBeenBilled";
   public static final String DATE_LOST_ITEM_SHOULD_BE_BILLED = "dateLostItemShouldBeBilled";
+  public static final String METADATA = "metadata";
+  public static final String UPDATED_BY_USER_ID = "updatedByUserId";
 }

@@ -1,16 +1,21 @@
 package org.folio.circulation.domain;
 
+import io.vertx.core.json.JsonObject;
 import org.joda.time.DateTimeZone;
 
 public class LoanAndRelatedRecords implements UserRelatedRecord {
+  public static final String REASON_TO_OVERRIDE = "reasonToOverride";
+
   private final Loan loan;
   private final RequestQueue requestQueue;
   private final DateTimeZone timeZone;
+  private final JsonObject logContextProperties;
 
-  private LoanAndRelatedRecords(Loan loan, RequestQueue requestQueue, DateTimeZone timeZone) {
+  private LoanAndRelatedRecords(Loan loan, RequestQueue requestQueue, DateTimeZone timeZone, JsonObject logContextProperties) {
     this.loan = loan;
     this.requestQueue = requestQueue;
     this.timeZone = timeZone;
+    this.logContextProperties = logContextProperties;
   }
 
   public LoanAndRelatedRecords(Loan loan) {
@@ -18,11 +23,11 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
   }
 
   public LoanAndRelatedRecords(Loan loan, DateTimeZone timeZone) {
-    this(loan, null, timeZone);
+    this(loan, null, timeZone, new JsonObject());
   }
 
   public LoanAndRelatedRecords withLoan(Loan newLoan) {
-    return new LoanAndRelatedRecords(newLoan, requestQueue, timeZone);
+    return new LoanAndRelatedRecords(newLoan, requestQueue, timeZone, logContextProperties);
   }
 
   public LoanAndRelatedRecords withRequestingUser(User newUser) {
@@ -35,7 +40,7 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
 
   public LoanAndRelatedRecords withRequestQueue(RequestQueue newRequestQueue) {
     return new LoanAndRelatedRecords(loan, newRequestQueue,
-      timeZone);
+      timeZone, logContextProperties);
   }
 
   public LoanAndRelatedRecords withItem(Item newItem) {
@@ -48,7 +53,7 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
   }
 
   public LoanAndRelatedRecords withTimeZone(DateTimeZone newTimeZone) {
-    return new LoanAndRelatedRecords(loan, requestQueue, newTimeZone);
+    return new LoanAndRelatedRecords(loan, requestQueue, newTimeZone, logContextProperties);
   }
 
   public Loan getLoan() {
@@ -75,5 +80,9 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
   @Override
   public String getProxyUserId() {
     return loan.getProxyUserId();
+  }
+
+  public JsonObject getLogContextProperties() {
+    return logContextProperties;
   }
 }
