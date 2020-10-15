@@ -20,10 +20,10 @@ public final class CirculationRulesCache {
   private static final Logger log = getLogger(CirculationRulesCache.class);
   private static final CirculationRulesCache instance = new CirculationRulesCache();
   /** after this time the rules get loaded before executing the circulation rules engine */
-  private static long maxAgeInMilliseconds = 5000;
+  private static volatile long maxAgeInMilliseconds = 5000;
   /** after this time the circulation rules engine is executed first for a fast reply
    * and then the circulation rules get reloaded */
-  private static long triggerAgeInMilliseconds = 4000;
+  private static volatile long triggerAgeInMilliseconds = 4000;
   /** rules and Drools for each tenantId */
   private static final Map<String, Rules> rulesMap = new ConcurrentHashMap<>();
 
@@ -141,11 +141,11 @@ public final class CirculationRulesCache {
   }
 
   private static class Rules {
-    private String rulesAsText = "";
-    private String rulesAsDrools = "";
-    private Drools drools;
+    private volatile String rulesAsText = "";
+    private volatile String rulesAsDrools = "";
+    private volatile Drools drools;
     /** System.currentTimeMillis() of the last load/reload of the rules from the storage */
-    private long reloadTimestamp;
-    private boolean reloadInitiated = false;
+    private volatile long reloadTimestamp;
+    private volatile boolean reloadInitiated = false;
   }
 }
