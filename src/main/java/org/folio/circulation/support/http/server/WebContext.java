@@ -64,7 +64,7 @@ public class WebContext {
     return value != null ? value : defaultValue;
   }
 
-  public String getParameter(String name) {
+  public String getStringParameter(String name) {
     return getStringParameter(name, null);
   }
 
