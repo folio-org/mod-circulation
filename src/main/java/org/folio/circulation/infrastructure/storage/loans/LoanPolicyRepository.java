@@ -17,31 +17,28 @@ import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
-import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.policy.FixedDueDateSchedules;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.NoFixedDueDateSchedules;
 import org.folio.circulation.infrastructure.storage.CirculationPolicyRepository;
-import org.folio.circulation.resources.CirculationRulesProcessor;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.rules.AppliedRuleConditions;
+import org.folio.circulation.rules.RulesExecutionParameters;
 import org.folio.circulation.rules.CirculationRuleMatch;
-import org.folio.circulation.rules.Drools;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
 import org.folio.circulation.support.GetManyRecordsClient;
 import org.folio.circulation.support.results.Result;
 
-import io.vertx.core.MultiMap;
 import io.vertx.core.json.JsonObject;
 
 public class LoanPolicyRepository extends CirculationPolicyRepository<LoanPolicy> {
   private final GetManyRecordsClient fixedDueDateSchedulesStorageClient;
 
   public LoanPolicyRepository(Clients clients) {
-    super(clients.locationsStorage(), clients.loanPoliciesStorage(), clients);
+    super(clients.loanPoliciesStorage(), clients);
     this.fixedDueDateSchedulesStorageClient = clients.fixedDueDateSchedules();
   }
 
@@ -172,7 +169,9 @@ public class LoanPolicyRepository extends CirculationPolicyRepository<LoanPolicy
   }
 
   @Override
-  protected CirculationRuleMatch getPolicyAndMatch(Drools drools, MultiMap params, Location location) {
-    return CirculationRulesProcessor.getLoanPolicyAndMatch(drools, params, location);
+  protected CompletableFuture<Result<CirculationRuleMatch>> getPolicyAndMatch(
+    RulesExecutionParameters rulesExecutionParameters) {
+
+    return circulationRulesProcessor.getLoanPolicyAndMatch(rulesExecutionParameters);
   }
 }

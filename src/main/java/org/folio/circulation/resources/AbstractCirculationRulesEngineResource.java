@@ -1,6 +1,6 @@
 package org.folio.circulation.resources;
 
-import static org.folio.circulation.support.results.Result.failed;
+import static org.folio.circulation.rules.RulesExecutionParameters.forRequest;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.lang.invoke.MethodHandles;
@@ -8,13 +8,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-import org.folio.circulation.domain.Location;
+import org.folio.circulation.rules.RulesExecutionParameters;
 import org.folio.circulation.rules.CirculationRuleMatch;
-import org.folio.circulation.rules.Drools;
+import org.folio.circulation.rules.CirculationRulesProcessor;
+import org.folio.circulation.rules.cache.CirculationRulesCache;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.FetchSingleRecord;
-import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.http.server.ClientErrorResponse;
 import org.folio.circulation.support.http.server.JsonHttpResponse;
 import org.folio.circulation.support.http.server.WebContext;
@@ -22,7 +20,6 @@ import org.folio.circulation.support.results.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.vertx.core.MultiMap;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonArray;
@@ -46,16 +43,23 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
   private final String applyPath;
   private final String applyAllPath;
 
+  private final GetSinglePolicy singlePolicyGetter;
+  private final GetAllPolicies allPoliciesGetter;
+
   /**
    * Create a circulation rules engine that listens at applyPath and applyAllPath.
    * @param applyPath  URL path for circulation rules triggering that returns the first match
    * @param applyAllPath  URL path for circulation rules triggering that returns all matches
    * @param client  the HttpClient to use for requests via Okapi
    */
-  AbstractCirculationRulesEngineResource(String applyPath, String applyAllPath, HttpClient client) {
+  AbstractCirculationRulesEngineResource(String applyPath, String applyAllPath, HttpClient client,
+    GetSinglePolicy getSinglePolicy, GetAllPolicies getAllPolicies) {
+
     super(client);
     this.applyPath = applyPath;
     this.applyAllPath = applyAllPath;
+    this.allPoliciesGetter = getAllPolicies;
+    this.singlePolicyGetter = getSinglePolicy;
   }
 
   /**
@@ -84,11 +88,7 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
   }
 
   private void apply(RoutingContext routingContext) {
-    HttpServerRequest request = routingContext.request();
-
-    applyRules(routingContext,
-      (location, drools) -> getPolicyIdAndRuleMatch(request.params(), drools, location),
-      this::buildJsonResult);
+    applyRules(routingContext, singlePolicyGetter::getPolicyIdAndRuleMatch, this::buildJsonResult);
   }
 
   private CompletableFuture<Result<JsonObject>> buildJsonResult(CirculationRuleMatch entity) {
@@ -104,11 +104,7 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
   }
 
   private void applyAll(RoutingContext routingContext) {
-    HttpServerRequest request = routingContext.request();
-
-    applyRules(routingContext,
-      (location, drools) -> getPolicies(request.params(), drools, location),
-      this::buildJsonResult);
+    applyRules(routingContext, allPoliciesGetter::getPolicies, this::buildJsonResult);
   }
 
   private CompletableFuture<Result<JsonObject>> buildJsonResult(JsonArray matches) {
@@ -117,7 +113,7 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
   }
 
   private <T> void applyRules(RoutingContext routingContext,
-    BiFunction<Location, Drools, T> interpretMatches,
+    BiFunction<CirculationRulesProcessor, RulesExecutionParameters, CompletableFuture<Result<T>>> triggerFunction,
     Function<T, CompletableFuture<Result<JsonObject>>> mapToJson) {
 
     val request = routingContext.request();
@@ -127,23 +123,10 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
     }
 
     final WebContext context = new WebContext(routingContext);
-    Clients clients = Clients.create(context, client);
+    final Clients clients = Clients.create(context, client);
 
-    final CollectionResourceClient locationsStorageClient = clients.locationsStorage();
-
-    val droolsFuture = CirculationRulesProcessor.getInstance()
-      .getDrools(context.getTenantId(), clients.circulationRulesStorage());
-
-    CompletableFuture<Result<Location>> locationFuture = FetchSingleRecord.<Location>forRecord("location")
-      .using(locationsStorageClient)
-      .mapTo(Location::from)
-      .whenNotFound(failed(new ServerErrorFailure("Can`t find location")))
-      .fetch(request.params().get(LOCATION_ID_NAME));
-
-    val circulationRuleMatchFuture = droolsFuture.thenCombine(locationFuture,
-      (droolsResult, locationResult) -> locationResult.combine(droolsResult, interpretMatches));
-
-    circulationRuleMatchFuture.thenCompose(r -> r.after(mapToJson))
+    triggerFunction.apply(clients.circulationRulesProcessor(), forRequest(context))
+      .thenCompose(r -> r.after(mapToJson))
       .thenApply(r -> r.map(JsonHttpResponse::ok))
       .thenAccept(context::writeResultToHttpResponse);
   }
@@ -157,22 +140,28 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
   }
 
   public static void setCacheTime(long triggerAgeInMilliseconds, long maxAgeInMilliseconds) {
-    CirculationRulesProcessor.setCacheTime(triggerAgeInMilliseconds, maxAgeInMilliseconds);
+    CirculationRulesCache.setCacheTime(triggerAgeInMilliseconds, maxAgeInMilliseconds);
   }
 
   public static void dropCache() {
-    CirculationRulesProcessor.dropCache();
+    CirculationRulesCache.dropCache();
   }
 
   static void clearCache(String tenantId) {
-    CirculationRulesProcessor.clearCache(tenantId);
+    CirculationRulesCache.clearCache(tenantId);
   }
-
-  protected abstract CirculationRuleMatch getPolicyIdAndRuleMatch(
-    MultiMap params, Drools drools, Location location);
 
   protected abstract String getPolicyIdKey();
 
-  protected abstract JsonArray getPolicies(MultiMap params,
-    Drools drools, Location location);
+  @FunctionalInterface
+  protected interface GetSinglePolicy {
+    CompletableFuture<Result<CirculationRuleMatch>> getPolicyIdAndRuleMatch(
+      CirculationRulesProcessor rulesProcessor, RulesExecutionParameters rulesExecutionParameters);
+  }
+
+  @FunctionalInterface
+  protected interface GetAllPolicies {
+    CompletableFuture<Result<JsonArray>> getPolicies(
+      CirculationRulesProcessor rulesProcessor, RulesExecutionParameters rulesExecutionParameters);
+  }
 }

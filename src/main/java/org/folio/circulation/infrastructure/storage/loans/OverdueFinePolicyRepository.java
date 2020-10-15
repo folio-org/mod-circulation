@@ -1,10 +1,10 @@
 package org.folio.circulation.infrastructure.storage.loans;
 
 import static java.util.Objects.isNull;
+import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
-import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 
 import java.util.Collection;
 import java.util.Map;
@@ -14,25 +14,22 @@ import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
-import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.policy.OverdueFinePolicy;
 import org.folio.circulation.infrastructure.storage.CirculationPolicyRepository;
-import org.folio.circulation.resources.CirculationRulesProcessor;
 import org.folio.circulation.rules.AppliedRuleConditions;
+import org.folio.circulation.rules.RulesExecutionParameters;
 import org.folio.circulation.rules.CirculationRuleMatch;
-import org.folio.circulation.rules.Drools;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
 import org.folio.circulation.support.results.Result;
 
-import io.vertx.core.MultiMap;
 import io.vertx.core.json.JsonObject;
 
 public class OverdueFinePolicyRepository extends CirculationPolicyRepository<OverdueFinePolicy> {
   public OverdueFinePolicyRepository(Clients clients) {
-    super(clients.locationsStorage(), clients.overdueFinesPoliciesStorage(), clients);
+    super(clients.overdueFinesPoliciesStorage(), clients);
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> lookupOverdueFinePolicy(
@@ -114,7 +111,9 @@ public class OverdueFinePolicyRepository extends CirculationPolicyRepository<Ove
   }
 
   @Override
-  protected CirculationRuleMatch getPolicyAndMatch(Drools drools, MultiMap params, Location location) {
-    return CirculationRulesProcessor.getOverduePolicyAndMatch(drools, params, location);
+  protected CompletableFuture<Result<CirculationRuleMatch>> getPolicyAndMatch(
+    RulesExecutionParameters rulesExecutionParameters) {
+
+    return circulationRulesProcessor.getOverduePolicyAndMatch(rulesExecutionParameters);
   }
 }

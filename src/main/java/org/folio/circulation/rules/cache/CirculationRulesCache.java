@@ -1,66 +1,48 @@
-package org.folio.circulation.resources;
+package org.folio.circulation.rules.cache;
 
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
+import static org.slf4j.LoggerFactory.getLogger;
 
-import java.lang.invoke.MethodHandles;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 
-import org.folio.circulation.domain.Location;
-import org.folio.circulation.rules.CirculationRuleMatch;
 import org.folio.circulation.rules.Drools;
 import org.folio.circulation.rules.Text2Drools;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.results.Result;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import io.vertx.core.MultiMap;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
-public class CirculationRulesProcessor {
-  protected static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-
-  private static CirculationRulesProcessor circulationRulesProcessor = new CirculationRulesProcessor();
-
+public final class CirculationRulesCache {
+  private static final Logger log = getLogger(CirculationRulesCache.class);
+  private static final CirculationRulesCache instance = new CirculationRulesCache();
   /** after this time the rules get loaded before executing the circulation rules engine */
-  private static long maxAgeInMilliseconds = 5000;
+  private static volatile long maxAgeInMilliseconds = 5000;
   /** after this time the circulation rules engine is executed first for a fast reply
    * and then the circulation rules get reloaded */
-  private static long triggerAgeInMilliseconds = 4000;
-
-  private class Rules {
-    String rulesAsText = "";
-    String rulesAsDrools = "";
-    Drools drools;
-    /** System.currentTimeMillis() of the last load/reload of the rules from the storage */
-    long reloadTimestamp;
-    boolean reloadInitiated = false;
-  }
+  private static volatile long triggerAgeInMilliseconds = 4000;
   /** rules and Drools for each tenantId */
-  private static Map<String,Rules> rulesMap = new HashMap<>();
+  private static final Map<String, Rules> rulesMap = new ConcurrentHashMap<>();
 
-  public static CirculationRulesProcessor getInstance() {
-    return circulationRulesProcessor;
+  public static CirculationRulesCache getInstance() {
+    return instance;
   }
 
-  private CirculationRulesProcessor() {
-
-  }
-
+  private CirculationRulesCache() {}
 
   /**
    * Set the cache time.
-   * @param triggerAgeInMilliseconds  after this time the circulation rules engine is executed first for a fast reply
-   *                                  and then the circulation rules get reloaded
-   * @param maxAgeInMilliseconds  after this time the rules get loaded before executing the circulation rules engine
+   *
+   * @param triggerAgeInMs after this time the circulation rules engine is executed first for a fast reply
+   *                       and then the circulation rules get reloaded
+   * @param maxAgeInMs     after this time the rules get loaded before executing the circulation rules engine
    */
-  public static void setCacheTime(long triggerAgeInMilliseconds, long maxAgeInMilliseconds) {
-    CirculationRulesProcessor.triggerAgeInMilliseconds = triggerAgeInMilliseconds;
-    CirculationRulesProcessor.maxAgeInMilliseconds = maxAgeInMilliseconds;
+  public static void setCacheTime(long triggerAgeInMs, long maxAgeInMs) {
+    triggerAgeInMilliseconds = triggerAgeInMs;
+    maxAgeInMilliseconds = maxAgeInMs;
   }
 
   /**
@@ -76,7 +58,7 @@ public class CirculationRulesProcessor {
    * This doesn't rebuild the drools rules if the circulation rules haven't changed.
    * @param tenantId  id of the tenant
    */
-  static void clearCache(String tenantId) {
+  public static void clearCache(String tenantId) {
     Rules rules = rulesMap.get(tenantId);
     if (rules == null) {
       return;
@@ -134,54 +116,13 @@ public class CirculationRulesProcessor {
         rules.drools = new Drools(rules.rulesAsDrools);
 
         return ofAsync(() -> rules);
-    }));
-  }
-
-  public static CirculationRuleMatch getLoanPolicyAndMatch(Drools drools, MultiMap params, Location location) {
-    return drools.loanPolicy(params, location);
-  }
-
-  public static JsonArray getLoanPolicies(Drools drools, MultiMap params, Location location) {
-    return drools.loanPolicies(params, location);
-  }
-
-  public static CirculationRuleMatch getLostItemPolicyAndMatch(Drools drools, MultiMap params, Location location) {
-    return drools.lostItemPolicy(params, location);
-  }
-
-  public static JsonArray getLostItemPolicies(Drools drools, MultiMap params, Location location) {
-    return drools.lostItemPolicies(params, location);
-  }
-
-  public static CirculationRuleMatch getNoticePolicyAndMatch(Drools drools, MultiMap params, Location location) {
-    return drools.noticePolicy(params, location);
-  }
-
-  public static JsonArray getNoticePolicies(Drools drools, MultiMap params, Location location) {
-    return drools.noticePolicies(params, location);
-  }
-
-  public static CirculationRuleMatch getOverduePolicyAndMatch(Drools drools, MultiMap params, Location location) {
-    return drools.overduePolicy(params, location);
-  }
-
-  public static JsonArray getOverduePolicies(Drools drools, MultiMap params, Location location) {
-    return drools.overduePolicies(params, location);
-  }
-
-  public static CirculationRuleMatch getRequestPolicyAndMatch(Drools drools, MultiMap params, Location location) {
-    return drools.requestPolicy(params, location);
-  }
-
-  public static JsonArray getRequestPolicies(Drools drools, MultiMap params, Location location) {
-    return drools.requestPolicies(params, location);
+      }));
   }
 
   public CompletableFuture<Result<Drools>> getDrools(String tenantId,
     CollectionResourceClient circulationRulesClient) {
 
-    CompletableFuture<Result<Drools>> cfDrools = new CompletableFuture<>();
-
+    final CompletableFuture<Result<Drools>> cfDrools = new CompletableFuture<>();
     Rules rules = rulesMap.get(tenantId);
 
     if (isCurrent(rules)) {
@@ -203,5 +144,14 @@ public class CirculationRulesProcessor {
 
     return reloadRules(rules, circulationRulesClient)
       .thenCompose(r -> r.after(updatedRules -> ofAsync(() -> updatedRules.drools)));
+  }
+
+  private static class Rules {
+    private volatile String rulesAsText = "";
+    private volatile String rulesAsDrools = "";
+    private volatile Drools drools;
+    /** System.currentTimeMillis() of the last load/reload of the rules from the storage */
+    private volatile long reloadTimestamp;
+    private volatile boolean reloadInitiated = false;
   }
 }
