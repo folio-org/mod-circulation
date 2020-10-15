@@ -28,7 +28,7 @@ public class AnonymizeLoansRepresentation {
   private static Result<JsonObject> mapToJson(LoanAnonymizationRecords records) {
     LoanAnonymizationAPIResponse response = new LoanAnonymizationAPIResponse();
     response
-        .withAnonymizedLoans(records.getAnonymizedLoans())
+        .withAnonymizedLoans(records.getAnonymizedLoanIds())
         .withErrors(mapToErrors(records.getNotAnonymizedLoans()));
 
     return of(() -> JsonObject.mapFrom(response));

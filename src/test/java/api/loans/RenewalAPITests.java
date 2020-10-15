@@ -17,6 +17,7 @@ import static api.support.fixtures.CalendarExamples.START_TIME_FIRST_PERIOD;
 import static api.support.fixtures.CalendarExamples.START_TIME_SECOND_PERIOD;
 import static api.support.fixtures.CalendarExamples.WEDNESDAY_DATE;
 import static api.support.matchers.EventMatchers.isValidLoanDueDateChangedEvent;
+import static api.support.matchers.EventTypeMatchers.LOAN_DUE_DATE_CHANGED;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
@@ -26,6 +27,7 @@ import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
+import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.END_OF_A_DAY;
 import static org.hamcrest.CoreMatchers.allOf;
@@ -785,6 +787,10 @@ public abstract class RenewalAPITests extends APITests {
       hasMessage("item is not loanable"),
       hasLoanPolicyIdParameter(notLoanablePolicyId),
       hasLoanPolicyNameParameter("Non loanable policy"))));
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(FakePubSub::getPublishedEvents, hasSize(3));
+    assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
   @Test
@@ -839,6 +845,10 @@ public abstract class RenewalAPITests extends APITests {
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("item is Aged to lost"),
       hasUUIDParameter("itemId", result.getItem().getId()))));
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(FakePubSub::getPublishedEvents, hasSize(4));
+    assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
   @Test
@@ -1456,15 +1466,19 @@ public abstract class RenewalAPITests extends APITests {
 
     final JsonObject renewedLoan = renew(smallAngryPlanet, jessica).getJson();
 
-    // There should be three events published - first for "check out",
-    // second one for log event and third for "change due date"
+    // There should be six events published - first for "check out",
+    // second one for log event, third for "change due date"
+    // and three "log record"
     List<JsonObject> publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(3));
+      .until(FakePubSub::getPublishedEvents, hasSize(6));
 
-    JsonObject event = publishedEvents.get(2);
+    JsonObject event = publishedEvents.stream()
+      .filter(evt -> LOAN_DUE_DATE_CHANGED.equalsIgnoreCase(evt.getString("eventType")))
+      .findFirst().orElse(new JsonObject());
 
     assertThat(event, isValidLoanDueDateChangedEvent(renewedLoan));
+    assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
   @Test

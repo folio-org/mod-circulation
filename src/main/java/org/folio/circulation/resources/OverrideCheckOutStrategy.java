@@ -1,11 +1,15 @@
 package org.folio.circulation.resources;
 
+import static java.util.Objects.nonNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.LoanAction.CHECKED_OUT_THROUGH_OVERRIDE;
+import static org.folio.circulation.domain.LoanAndRelatedRecords.REASON_TO_OVERRIDE;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE;
+import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_PUBLIC_DESCRIPTION;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -27,7 +31,6 @@ public class OverrideCheckOutStrategy implements CheckOutStrategy {
 
   private static final String DUE_DATE = "dueDate";
   private static final String COMMENT = "comment";
-
 
   @Override
   public CompletableFuture<Result<LoanAndRelatedRecords>> checkOut(LoanAndRelatedRecords relatedRecords,
@@ -55,6 +58,9 @@ public class OverrideCheckOutStrategy implements CheckOutStrategy {
         "Due date should be later than loan date", DUE_DATE, dueDateParameter);
       return completedFuture(failed(singleValidationError(error)));
     }
+
+    relatedRecords.getLogContextProperties().put(REASON_TO_OVERRIDE,
+      getProperty(request, CANCELLATION_REASON_PUBLIC_DESCRIPTION));
 
     return completedFuture(succeeded(relatedRecords))
       .thenApply(r -> r.next(this::refuseWhenItemIsLoanable))
@@ -85,5 +91,4 @@ public class OverrideCheckOutStrategy implements CheckOutStrategy {
     loan.changeActionComment(comment);
     return succeeded(loanAndRelatedRecords);
   }
-
 }

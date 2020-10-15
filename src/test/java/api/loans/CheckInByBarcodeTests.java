@@ -16,6 +16,7 @@ import static api.support.matchers.TextDateTimeMatcher.withinSecondsBeforeNow;
 import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
+import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.groupingBy;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
@@ -1065,6 +1066,10 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     checkInFixture.checkInByBarcode(item);
 
     assertThat(itemsClient.getById(item.getId()).getJson(), isAvailable());
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(FakePubSub::getPublishedEvents, hasSize(9));
+    assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
   @Test
@@ -1075,6 +1080,13 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
 
     assertThat(itemsFixture.getById(ageToLostResult.getItemId()).getJson(), isAvailable());
     assertThat(loansFixture.getLoanById(ageToLostResult.getLoanId()).getJson(), isClosed());
+    List<JsonObject> events = Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      // there should be 7 events published: ITEM_CHECKED_OUT, LOG_RECORDs: CHECK_OUT_EVENT, LOAN (checked out)
+      // LOG_RECORD: LOAN (aged to lost)
+      // ITEM_CHECKED_IN, LOG_RECORDs: CHECK_IN_EVENT, LOAN (Closed loan)
+      .until(FakePubSub::getPublishedEvents, hasSize(7));
+    assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
   @Test
@@ -1102,7 +1114,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     // There should be four events published - first ones for "check out" and check out log event, second ones for "check in" and check in log event
     List<JsonObject> publishedEvents = Awaitility.await()
       .atMost(2, TimeUnit.SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(4));
+      .until(FakePubSub::getPublishedEvents, hasSize(6));
 
     Map<String, List<JsonObject>> events = publishedEvents.stream().collect(groupingBy(e -> e.getString("eventType")));
 
@@ -1114,6 +1126,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     JsonObject checkInLogEvent = logEvents.get(CHECK_IN.value()).get(0);
 
     assertThat(checkInLogEvent, isValidCheckInLogEvent(checkedInLoan));
+    assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
   private void checkPatronNoticeEvent(

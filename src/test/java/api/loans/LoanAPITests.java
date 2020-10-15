@@ -1745,9 +1745,12 @@ public class LoanAPITests extends APITests {
 
     List<JsonObject> publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(1));
+      .until(FakePubSub::getPublishedEvents, hasSize(2));
 
-    JsonObject event = publishedEvents.get(0);
+    JsonObject event = publishedEvents.stream()
+      .filter(e -> "LOAN_DUE_DATE_CHANGED".equalsIgnoreCase(e.getString("eventType")))
+      .findFirst()
+      .orElse(new JsonObject());
 
     assertThat(event, isValidLoanDueDateChangedEvent(loan));
   }
@@ -1767,13 +1770,16 @@ public class LoanAPITests extends APITests {
     itemsClient.getById(item.getId()).getJson();
     Response loanFromStorage = loansStorageClient.getById(checkOutResponse.getId());
 
-    // There should be two events published - first one for "create",
-    // second one for "replace"
+    // There should be four events published - "create", "replace"
+    // and two "log_record"
     List<JsonObject> publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(2));
+      .until(FakePubSub::getPublishedEvents, hasSize(4));
 
-    JsonObject event = publishedEvents.get(1);
+    JsonObject event = publishedEvents.stream()
+      .filter(e -> "LOAN_DUE_DATE_CHANGED".equalsIgnoreCase(e.getString("eventType")))
+      .findFirst()
+      .orElse(new JsonObject());
 
     assertThat(event, isValidLoanDueDateChangedEvent(loanFromStorage.getJson()));
   }

@@ -20,6 +20,7 @@ import org.folio.circulation.domain.notice.PatronNoticeEvent;
 import org.folio.circulation.domain.notice.PatronNoticeEventBuilder;
 import org.folio.circulation.domain.notice.PatronNoticeService;
 import org.folio.circulation.domain.notice.TemplateContextUtil;
+import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
 
@@ -36,15 +37,21 @@ public class RequestNoticeSender {
   }
 
   public static RequestNoticeSender using(Clients clients) {
-    return new RequestNoticeSender(PatronNoticeService.using(clients), RequestRepository.using(clients));
+    return new RequestNoticeSender(PatronNoticeService.using(clients),
+      RequestRepository.using(clients),
+      new EventPublisher(clients.pubSubPublishingService()));
   }
 
   private final PatronNoticeService patronNoticeService;
   private final RequestRepository requestRepository;
+  private final EventPublisher eventPublisher;
 
-  public RequestNoticeSender(PatronNoticeService patronNoticeService, RequestRepository requestRepository) {
+  public RequestNoticeSender(PatronNoticeService patronNoticeService,
+                             RequestRepository requestRepository,
+                             EventPublisher eventPublisher) {
     this.patronNoticeService = patronNoticeService;
     this.requestRepository = requestRepository;
+    this.eventPublisher = eventPublisher;
   }
 
   public Result<RequestAndRelatedRecords> sendNoticeOnRequestCreated(
@@ -120,7 +127,8 @@ public class RequestNoticeSender {
       .withEventType(NoticeEventType.ITEM_RECALLED)
       .withNoticeContext(TemplateContextUtil.createLoanNoticeContext(loan))
       .build();
-    patronNoticeService.acceptNoticeEvent(itemRecalledEvent, NoticeLogContext.from(loan));
+    patronNoticeService.acceptNoticeEvent(itemRecalledEvent, NoticeLogContext.from(loan))
+      .thenCompose(r -> r.after(v -> eventPublisher.publishRecallRequestedEvent(loan)));
     return Result.succeeded(null);
   }
 
