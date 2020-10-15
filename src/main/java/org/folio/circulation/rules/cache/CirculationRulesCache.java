@@ -123,17 +123,23 @@ public final class CirculationRulesCache {
     CollectionResourceClient circulationRulesClient) {
 
     final CompletableFuture<Result<Drools>> cfDrools = new CompletableFuture<>();
-    final Rules rules = rulesMap.computeIfAbsent(tenantId, key -> new Rules());
+    Rules rules = rulesMap.get(tenantId);
 
     if (isCurrent(rules)) {
       cfDrools.complete(succeeded(rules.drools));
 
       if (reloadNeeded(rules)) {
         rules.reloadInitiated = true;
-        reloadRules(rules, circulationRulesClient);
+        reloadRules(rules, circulationRulesClient)
+          .thenCompose(r -> r.after(updatedRules -> ofAsync(() -> updatedRules.drools)));
       }
 
       return cfDrools;
+    }
+
+    if (rules == null) {
+      rules = new Rules();
+      rulesMap.put(tenantId, rules);
     }
 
     return reloadRules(rules, circulationRulesClient)
