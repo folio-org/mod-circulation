@@ -6,7 +6,7 @@ import java.util.function.Function;
 import org.folio.circulation.domain.notice.PatronNoticePolicy;
 import org.folio.circulation.infrastructure.storage.CirculationPolicyRepository;
 import org.folio.circulation.rules.AppliedRuleConditions;
-import org.folio.circulation.rules.ApplyCondition;
+import org.folio.circulation.rules.RulesExecutionParameters;
 import org.folio.circulation.rules.CirculationRuleMatch;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
@@ -46,8 +46,8 @@ public class PatronNoticePolicyRepository extends CirculationPolicyRepository<Pa
 
   @Override
   protected CompletableFuture<Result<CirculationRuleMatch>> getPolicyAndMatch(
-    ApplyCondition applyCondition) {
+    RulesExecutionParameters rulesExecutionParameters) {
 
-    return circulationRulesProcessor.getNoticePolicyAndMatch(applyCondition);
+    return circulationRulesProcessor.getNoticePolicyAndMatch(rulesExecutionParameters);
   }
 }

@@ -24,7 +24,7 @@ import org.folio.circulation.domain.policy.NoFixedDueDateSchedules;
 import org.folio.circulation.infrastructure.storage.CirculationPolicyRepository;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.rules.AppliedRuleConditions;
-import org.folio.circulation.rules.ApplyCondition;
+import org.folio.circulation.rules.RulesExecutionParameters;
 import org.folio.circulation.rules.CirculationRuleMatch;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.FetchSingleRecord;
@@ -170,8 +170,8 @@ public class LoanPolicyRepository extends CirculationPolicyRepository<LoanPolicy
 
   @Override
   protected CompletableFuture<Result<CirculationRuleMatch>> getPolicyAndMatch(
-    ApplyCondition applyCondition) {
+    RulesExecutionParameters rulesExecutionParameters) {
 
-    return circulationRulesProcessor.getLoanPolicyAndMatch(applyCondition);
+    return circulationRulesProcessor.getLoanPolicyAndMatch(rulesExecutionParameters);
   }
 }

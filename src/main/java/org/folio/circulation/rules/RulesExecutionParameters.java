@@ -20,7 +20,7 @@ import lombok.With;
 @Getter
 @ToString
 @AllArgsConstructor
-public final class ApplyCondition {
+public final class RulesExecutionParameters {
   private final String loanTypeId;
   private final String locationId;
   private final String materialTypeId;
@@ -36,14 +36,14 @@ public final class ApplyCondition {
     .add(LOCATION_ID_NAME, locationId);
   }
 
-  public static ApplyCondition forItem(Item item, User user) {
-    return new ApplyCondition(item.determineLoanTypeForItem(), item.getLocationId(),
+  public static RulesExecutionParameters forItem(Item item, User user) {
+    return new RulesExecutionParameters(item.determineLoanTypeForItem(), item.getLocationId(),
       item.getMaterialTypeId(), user.getPatronGroupId(), item.getLocation());
   }
 
-  public static ApplyCondition forRequest(WebContext context) {
-    return new ApplyCondition(context.getParameter(LOAN_TYPE_ID_NAME),
-      context.getParameter(LOCATION_ID_NAME), context.getParameter(ITEM_TYPE_ID_NAME),
-      context.getParameter(PATRON_TYPE_ID_NAME), null);
+  public static RulesExecutionParameters forRequest(WebContext context) {
+    return new RulesExecutionParameters(context.getStringParameter(LOAN_TYPE_ID_NAME),
+      context.getStringParameter(LOCATION_ID_NAME), context.getStringParameter(ITEM_TYPE_ID_NAME),
+      context.getStringParameter(PATRON_TYPE_ID_NAME), null);
   }
 }

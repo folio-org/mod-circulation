@@ -18,7 +18,7 @@ import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.policy.OverdueFinePolicy;
 import org.folio.circulation.infrastructure.storage.CirculationPolicyRepository;
 import org.folio.circulation.rules.AppliedRuleConditions;
-import org.folio.circulation.rules.ApplyCondition;
+import org.folio.circulation.rules.RulesExecutionParameters;
 import org.folio.circulation.rules.CirculationRuleMatch;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.FetchSingleRecord;
@@ -112,8 +112,8 @@ public class OverdueFinePolicyRepository extends CirculationPolicyRepository<Ove
 
   @Override
   protected CompletableFuture<Result<CirculationRuleMatch>> getPolicyAndMatch(
-    ApplyCondition applyCondition) {
+    RulesExecutionParameters rulesExecutionParameters) {
 
-    return circulationRulesProcessor.getOverduePolicyAndMatch(applyCondition);
+    return circulationRulesProcessor.getOverduePolicyAndMatch(rulesExecutionParameters);
   }
 }

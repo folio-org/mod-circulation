@@ -1,6 +1,6 @@
 package org.folio.circulation.resources;
 
-import static org.folio.circulation.rules.ApplyCondition.forRequest;
+import static org.folio.circulation.rules.RulesExecutionParameters.forRequest;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.lang.invoke.MethodHandles;
@@ -8,7 +8,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-import org.folio.circulation.rules.ApplyCondition;
+import org.folio.circulation.rules.RulesExecutionParameters;
 import org.folio.circulation.rules.CirculationRuleMatch;
 import org.folio.circulation.rules.CirculationRulesProcessor;
 import org.folio.circulation.rules.cache.CirculationRulesCache;
@@ -113,7 +113,7 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
   }
 
   private <T> void applyRules(RoutingContext routingContext,
-    BiFunction<CirculationRulesProcessor, ApplyCondition, CompletableFuture<Result<T>>> triggerFunction,
+    BiFunction<CirculationRulesProcessor, RulesExecutionParameters, CompletableFuture<Result<T>>> triggerFunction,
     Function<T, CompletableFuture<Result<JsonObject>>> mapToJson) {
 
     val request = routingContext.request();
@@ -156,12 +156,12 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
   @FunctionalInterface
   protected interface GetSinglePolicy {
     CompletableFuture<Result<CirculationRuleMatch>> getPolicyIdAndRuleMatch(
-      CirculationRulesProcessor rulesProcessor, ApplyCondition applyCondition);
+      CirculationRulesProcessor rulesProcessor, RulesExecutionParameters rulesExecutionParameters);
   }
 
   @FunctionalInterface
   protected interface GetAllPolicies {
     CompletableFuture<Result<JsonArray>> getPolicies(
-      CirculationRulesProcessor rulesProcessor, ApplyCondition condition);
+      CirculationRulesProcessor rulesProcessor, RulesExecutionParameters rulesExecutionParameters);
   }
 }
