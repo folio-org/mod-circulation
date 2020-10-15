@@ -1,7 +1,7 @@
 package org.folio.circulation.infrastructure.storage;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.rules.ApplyCondition.forItem;
+import static org.folio.circulation.rules.RulesExecutionParameters.forItem;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
 import java.lang.invoke.MethodHandles;
@@ -12,7 +12,7 @@ import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.rules.AppliedRuleConditions;
-import org.folio.circulation.rules.ApplyCondition;
+import org.folio.circulation.rules.RulesExecutionParameters;
 import org.folio.circulation.rules.CirculationRuleMatch;
 import org.folio.circulation.rules.CirculationRulesProcessor;
 import org.folio.circulation.support.Clients;
@@ -82,10 +82,7 @@ public abstract class CirculationPolicyRepository<T> {
         "Unable to apply circulation rules for unknown holding"));
     }
 
-    final var applyCondition = forItem(item, user);
-
-    log.info("Applying circulation rules for conditions: {}", applyCondition);
-    return getPolicyAndMatch(applyCondition);
+    return getPolicyAndMatch(forItem(item, user));
   }
 
   protected abstract String getPolicyNotFoundErrorMessage(String policyId);
@@ -95,5 +92,5 @@ public abstract class CirculationPolicyRepository<T> {
   protected abstract String fetchPolicyId(JsonObject jsonObject);
 
   protected abstract CompletableFuture<Result<CirculationRuleMatch>> getPolicyAndMatch(
-    ApplyCondition applyCondition);
+    RulesExecutionParameters rulesExecutionParameters);
 }

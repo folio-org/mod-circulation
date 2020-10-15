@@ -4,6 +4,7 @@ import static org.folio.circulation.support.results.Result.combined;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
@@ -14,10 +15,13 @@ import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.results.Result;
+import org.slf4j.Logger;
 
 import io.vertx.core.json.JsonArray;
 
 public class CirculationRulesProcessor {
+  private static final Logger log = getLogger(CirculationRulesProcessor.class);
+
   private final String tenantId;
   private final CollectionResourceClient circulationRulesStorage;
   private final CollectionResourceClient locationStorageClient;
@@ -31,85 +35,88 @@ public class CirculationRulesProcessor {
   }
 
   public CompletableFuture<Result<CirculationRuleMatch>> getLoanPolicyAndMatch(
-    ApplyCondition condition) {
+    RulesExecutionParameters params) {
 
-    return triggerRules(condition,
-      (drools, cond) -> drools.loanPolicy(cond.toMap(), cond.getLocation()));
+    return triggerRules(params,
+      (drools, newParams) -> drools.loanPolicy(newParams.toMap(), newParams.getLocation()));
   }
 
-  public CompletableFuture<Result<JsonArray>> getLoanPolicies(ApplyCondition condition) {
-    return triggerRules(condition,
-      (drools, cond) -> drools.loanPolicies(cond.toMap(), cond.getLocation()));
+  public CompletableFuture<Result<JsonArray>> getLoanPolicies(RulesExecutionParameters params) {
+    return triggerRules(params,
+      (drools, newParams) -> drools.loanPolicies(newParams.toMap(), newParams.getLocation()));
   }
 
   public CompletableFuture<Result<CirculationRuleMatch>> getLostItemPolicyAndMatch(
-    ApplyCondition condition) {
+    RulesExecutionParameters params) {
 
-    return triggerRules(condition,
-      (drools, cond) -> drools.lostItemPolicy(cond.toMap(), cond.getLocation()));
+    return triggerRules(params,
+      (drools, newParams) -> drools.lostItemPolicy(newParams.toMap(), newParams.getLocation()));
   }
 
-  public CompletableFuture<Result<JsonArray>> getLostItemPolicies(ApplyCondition condition) {
-    return triggerRules(condition,
-      (drools, cond) -> drools.lostItemPolicies(cond.toMap(), cond.getLocation()));
+  public CompletableFuture<Result<JsonArray>> getLostItemPolicies(RulesExecutionParameters params) {
+    return triggerRules(params,
+      (drools, newParams) -> drools.lostItemPolicies(newParams.toMap(), newParams.getLocation()));
   }
 
   public CompletableFuture<Result<CirculationRuleMatch>> getNoticePolicyAndMatch(
-    ApplyCondition condition) {
+    RulesExecutionParameters params) {
 
-    return triggerRules(condition,
-      (drools, cond) -> drools.noticePolicy(cond.toMap(), cond.getLocation()));
+    return triggerRules(params,
+      (drools, newParams) -> drools.noticePolicy(newParams.toMap(), newParams.getLocation()));
   }
 
-  public CompletableFuture<Result<JsonArray>> getNoticePolicies(ApplyCondition condition) {
-    return triggerRules(condition,
-      (drools, cond) -> drools.noticePolicies(cond.toMap(), cond.getLocation()));
+  public CompletableFuture<Result<JsonArray>> getNoticePolicies(RulesExecutionParameters params) {
+    return triggerRules(params,
+      (drools, newParams) -> drools.noticePolicies(newParams.toMap(), newParams.getLocation()));
   }
 
   public CompletableFuture<Result<CirculationRuleMatch>> getOverduePolicyAndMatch(
-    ApplyCondition condition) {
+    RulesExecutionParameters params) {
 
-    return triggerRules(condition,
-      (drools, cond) -> drools.overduePolicy(cond.toMap(), cond.getLocation()));
+    return triggerRules(params,
+      (drools, newParams) -> drools.overduePolicy(newParams.toMap(), newParams.getLocation()));
   }
 
-  public CompletableFuture<Result<JsonArray>> getOverduePolicies(ApplyCondition condition) {
-    return triggerRules(condition,
-      (drools, cond) -> drools.overduePolicies(cond.toMap(), cond.getLocation()));
+  public CompletableFuture<Result<JsonArray>> getOverduePolicies(RulesExecutionParameters params) {
+    return triggerRules(params,
+      (drools, newParams) -> drools.overduePolicies(newParams.toMap(), newParams.getLocation()));
   }
 
   public CompletableFuture<Result<CirculationRuleMatch>> getRequestPolicyAndMatch(
-    ApplyCondition condition) {
+    RulesExecutionParameters params) {
 
-    return triggerRules(condition,
-      (drools, cond) -> drools.requestPolicy(cond.toMap(), cond.getLocation()));
+    return triggerRules(params,
+      (drools, newParams) -> drools.requestPolicy(newParams.toMap(), newParams.getLocation()));
   }
 
-  public CompletableFuture<Result<JsonArray>> getRequestPolicies(ApplyCondition condition) {
-    return triggerRules(condition,
-      (drools, cond) -> drools.requestPolicies(cond.toMap(), cond.getLocation()));
+  public CompletableFuture<Result<JsonArray>> getRequestPolicies(RulesExecutionParameters params) {
+    return triggerRules(params,
+      (drools, newParams) -> drools.requestPolicies(newParams.toMap(), newParams.getLocation()));
   }
 
-  private <T> CompletableFuture<Result<T>> triggerRules(ApplyCondition condition,
-    BiFunction<Drools, ApplyCondition, T> droolsFunction) {
+  private <T> CompletableFuture<Result<T>> triggerRules(RulesExecutionParameters params,
+    BiFunction<Drools, RulesExecutionParameters, T> droolsFunction) {
 
     final var droolsFuture = CirculationRulesCache.getInstance()
       .getDrools(tenantId, circulationRulesStorage);
 
-    return fetchLocation(condition).thenCombine(droolsFuture, combined(
-      (newConditions, drools) -> succeeded(droolsFunction.apply(drools, newConditions))));
+    return fetchLocation(params).thenCombine(droolsFuture, combined(
+      (newParams, drools) -> {
+        log.info("Applying circulation rules with parameters: {}", newParams);
+        return succeeded(droolsFunction.apply(drools, newParams));
+      }));
   }
 
-  private CompletableFuture<Result<ApplyCondition>> fetchLocation(ApplyCondition condition) {
-    if (condition.getLocation() != null) {
-      return ofAsync(() -> condition);
+  private CompletableFuture<Result<RulesExecutionParameters>> fetchLocation(RulesExecutionParameters params) {
+    if (params.getLocation() != null) {
+      return ofAsync(() -> params);
     }
 
     return FetchSingleRecord.<Location>forRecord("location")
       .using(locationStorageClient)
       .mapTo(Location::from)
       .whenNotFound(failed(new ServerErrorFailure("Can`t find location")))
-      .fetch(condition.getLocationId())
-      .thenApply(r -> r.map(condition::withLocation));
+      .fetch(params.getLocationId())
+      .thenApply(r -> r.map(params::withLocation));
   }
 }
