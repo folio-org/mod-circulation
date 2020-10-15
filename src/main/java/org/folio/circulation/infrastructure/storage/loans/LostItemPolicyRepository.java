@@ -1,10 +1,10 @@
 package org.folio.circulation.infrastructure.storage.loans;
 
 import static java.util.Objects.isNull;
+import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
-import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 
 import java.util.Collection;
 import java.util.Map;
@@ -18,6 +18,8 @@ import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.policy.lostitem.LostItemPolicy;
 import org.folio.circulation.infrastructure.storage.CirculationPolicyRepository;
 import org.folio.circulation.rules.AppliedRuleConditions;
+import org.folio.circulation.rules.RulesExecutionParameters;
+import org.folio.circulation.rules.CirculationRuleMatch;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
@@ -28,7 +30,7 @@ import io.vertx.core.json.JsonObject;
 public class LostItemPolicyRepository extends CirculationPolicyRepository<LostItemPolicy> {
 
   public LostItemPolicyRepository(Clients clients) {
-    super(clients.circulationLostItemRules(), clients.lostItemPoliciesStorage());
+    super(clients.lostItemPoliciesStorage(), clients);
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> lookupLostItemPolicy(
@@ -107,5 +109,12 @@ public class LostItemPolicyRepository extends CirculationPolicyRepository<LostIt
       .mapTo(LostItemPolicy::from)
       .whenNotFound(succeeded(LostItemPolicy.unknown(lostItemPolicyId)))
       .fetch(lostItemPolicyId);
+  }
+
+  @Override
+  protected CompletableFuture<Result<CirculationRuleMatch>> getPolicyAndMatch(
+    RulesExecutionParameters rulesExecutionParameters) {
+
+    return circulationRulesProcessor.getLostItemPolicyAndMatch(rulesExecutionParameters);
   }
 }

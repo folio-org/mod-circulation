@@ -69,6 +69,7 @@ public class CheckOutByBarcodeResource extends Resource {
     this.checkOutStrategy = checkOutStrategy;
   }
 
+  @Override
   public void register(Router router) {
     RouteRegistration routeRegistration = new RouteRegistration(
       rootPath, router);

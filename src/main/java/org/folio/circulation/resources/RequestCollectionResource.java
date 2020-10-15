@@ -58,6 +58,7 @@ public class RequestCollectionResource extends CollectionResource {
     router.post("/circulation/requests/:id/move").handler(this::move);
   }
 
+  @Override
   void create(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
 
@@ -115,6 +116,7 @@ public class RequestCollectionResource extends CollectionResource {
       .thenAccept(context::writeResultToHttpResponse);
   }
 
+  @Override
   void replace(RoutingContext routingContext) {
 
     JsonObject representation = routingContext.getBodyAsJson();
@@ -184,6 +186,7 @@ public class RequestCollectionResource extends CollectionResource {
       .thenAccept(context::writeResultToHttpResponse);
   }
 
+  @Override
   void get(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
     Clients clients = Clients.create(context, client);
@@ -198,6 +201,7 @@ public class RequestCollectionResource extends CollectionResource {
       .thenAccept(context::writeResultToHttpResponse);
   }
 
+  @Override
   void delete(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
     Clients clients = Clients.create(context, client);
@@ -220,6 +224,7 @@ public class RequestCollectionResource extends CollectionResource {
       .thenAccept(context::writeResultToHttpResponse);
   }
 
+  @Override
   void getMany(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
     Clients clients = Clients.create(context, client);
@@ -234,6 +239,7 @@ public class RequestCollectionResource extends CollectionResource {
       .thenAccept(context::writeResultToHttpResponse);
   }
 
+  @Override
   void empty(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
     Clients clients = Clients.create(context, client);

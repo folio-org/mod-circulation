@@ -53,6 +53,7 @@ public class LoanCollectionResource extends CollectionResource {
     super(client, "/circulation/loans");
   }
 
+  @Override
   void create(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
 
@@ -122,6 +123,7 @@ public class LoanCollectionResource extends CollectionResource {
       .thenAccept(context::writeResultToHttpResponse);
   }
 
+  @Override
   void replace(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
 
@@ -186,6 +188,7 @@ public class LoanCollectionResource extends CollectionResource {
       .thenAccept(context::writeResultToHttpResponse);
   }
 
+  @Override
   void get(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context, client);
@@ -215,6 +218,7 @@ public class LoanCollectionResource extends CollectionResource {
       .thenAccept(context::writeResultToHttpResponse);
   }
 
+  @Override
   void delete(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
     Clients clients = Clients.create(context, client);
@@ -226,6 +230,7 @@ public class LoanCollectionResource extends CollectionResource {
       .thenAccept(context::writeResultToHttpResponse);
   }
 
+  @Override
   void getMany(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
     Clients clients = Clients.create(context, client);
@@ -261,6 +266,7 @@ public class LoanCollectionResource extends CollectionResource {
       .thenAccept(context::writeResultToHttpResponse);
   }
 
+  @Override
   void empty(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
     Clients clients = Clients.create(context, client);

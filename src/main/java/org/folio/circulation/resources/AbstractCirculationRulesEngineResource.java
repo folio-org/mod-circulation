@@ -1,39 +1,32 @@
 package org.folio.circulation.resources;
 
-import static org.apache.commons.lang3.exception.ExceptionUtils.getStackTrace;
-import static org.folio.circulation.support.results.Result.failed;
+import static org.folio.circulation.rules.RulesExecutionParameters.forRequest;
 import static org.folio.circulation.support.results.Result.succeeded;
-import static org.folio.circulation.support.http.server.ServerErrorResponse.internalError;
 
 import java.lang.invoke.MethodHandles;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
-import org.folio.circulation.domain.Location;
+import org.folio.circulation.rules.RulesExecutionParameters;
 import org.folio.circulation.rules.CirculationRuleMatch;
-import org.folio.circulation.rules.Drools;
-import org.folio.circulation.rules.Text2Drools;
+import org.folio.circulation.rules.CirculationRulesProcessor;
+import org.folio.circulation.rules.cache.CirculationRulesCache;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.FetchSingleRecord;
-import org.folio.circulation.support.results.Result;
-import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.http.server.ClientErrorResponse;
-import org.folio.circulation.support.http.server.ForwardResponse;
 import org.folio.circulation.support.http.server.JsonHttpResponse;
 import org.folio.circulation.support.http.server.WebContext;
+import org.folio.circulation.support.results.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.vertx.core.Handler;
-import io.vertx.core.MultiMap;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
+import lombok.val;
 
 /**
  * The circulation rules engine calculates the loan policy based on
@@ -50,54 +43,8 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
   private final String applyPath;
   private final String applyAllPath;
 
-  /** after this time the rules get loaded before executing the circulation rules engine */
-  private static long maxAgeInMilliseconds = 5000;
-  /** after this time the circulation rules engine is executed first for a fast reply
-   * and then the circulation rules get reloaded */
-  private static long triggerAgeInMilliseconds = 4000;
-
-  private class Rules {
-    String rulesAsText = "";
-    String rulesAsDrools = "";
-    Drools drools;
-    /** System.currentTimeMillis() of the last load/reload of the rules from the storage */
-    long reloadTimestamp;
-    boolean reloadInitiated = false;
-  }
-  /** rules and Drools for each tenantId */
-  private static Map<String,Rules> rulesMap = new HashMap<>();
-
-  /**
-   * Set the cache time.
-   * @param triggerAgeInMilliseconds  after this time the circulation rules engine is executed first for a fast reply
-   *                                  and then the circulation rules get reloaded
-   * @param maxAgeInMilliseconds  after this time the rules get loaded before executing the circulation rules engine
-   */
-  public static void setCacheTime(long triggerAgeInMilliseconds, long maxAgeInMilliseconds) {
-    AbstractCirculationRulesEngineResource.triggerAgeInMilliseconds = triggerAgeInMilliseconds;
-    AbstractCirculationRulesEngineResource.maxAgeInMilliseconds = maxAgeInMilliseconds;
-  }
-
-  /**
-   * Completely drop the cache. This enforces rebuilding the drools rules
-   * even when the circulation rules haven't changed.
-   */
-  public static void dropCache() {
-    rulesMap.clear();
-  }
-
-  /**
-   * Enforce reload of the tenant's circulation rules.
-   * This doesn't rebuild the drools rules if the circulation rules haven't changed.
-   * @param tenantId  id of the tenant
-   */
-  static void clearCache(String tenantId) {
-    Rules rules = rulesMap.get(tenantId);
-    if (rules == null) {
-      return;
-    }
-    rules.reloadTimestamp = 0;
-  }
+  private final GetSinglePolicy singlePolicyGetter;
+  private final GetAllPolicies allPoliciesGetter;
 
   /**
    * Create a circulation rules engine that listens at applyPath and applyAllPath.
@@ -105,10 +52,14 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
    * @param applyAllPath  URL path for circulation rules triggering that returns all matches
    * @param client  the HttpClient to use for requests via Okapi
    */
-  AbstractCirculationRulesEngineResource(String applyPath, String applyAllPath, HttpClient client) {
+  AbstractCirculationRulesEngineResource(String applyPath, String applyAllPath, HttpClient client,
+    GetSinglePolicy getSinglePolicy, GetAllPolicies getAllPolicies) {
+
     super(client);
     this.applyPath = applyPath;
     this.applyAllPath = applyAllPath;
+    this.allPoliciesGetter = getAllPolicies;
+    this.singlePolicyGetter = getSinglePolicy;
   }
 
   /**
@@ -119,123 +70,6 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
   public void register(Router router) {
     router.get(applyPath   ).handler(this::apply);
     router.get(applyAllPath).handler(this::applyAll);
-  }
-
-  private String getTenantId(RoutingContext routingContext) {
-    return new WebContext(routingContext).getTenantId();
-  }
-
-  private boolean isCurrent(Rules rules) {
-    if (rules == null) {
-      return false;
-    }
-    return rules.reloadTimestamp + maxAgeInMilliseconds > System.currentTimeMillis();
-  }
-
-  /**
-   * Reload is needed if the last reload is TRIGGER_AGE_IN_MILLISECONDS old
-   * and a reload hasn't been initiated yet.
-   * @param rules - rules to reload
-   * @return whether reload is needed
-   */
-  private boolean reloadNeeded(Rules rules) {
-    if (rules.reloadInitiated) {
-      return false;
-    }
-    return rules.reloadTimestamp + triggerAgeInMilliseconds < System.currentTimeMillis();
-  }
-
-  /**
-   * Load the circulation rules from the storage module.
-   * @param rules - where to store the rules and reload information
-   * @param routingContext - where to report any error
-   * @param done - invoked after success
-   */
-  private void reloadRules(Rules rules, RoutingContext routingContext, Handler<Void> done) {
-    final Clients clients = Clients.create(new WebContext(routingContext), client);
-    CollectionResourceClient circulationRulesClient = clients.circulationRulesStorage();
-
-    if (circulationRulesClient == null) {
-      return;
-    }
-
-    circulationRulesClient.get()
-      .thenAccept(result -> result
-        .applySideEffect(response -> {
-          try {
-            if (response.getStatusCode() != 200) {
-              ForwardResponse.forward(routingContext.response(), response);
-              log.error("{} {}", response.getStatusCode(), response.getBody());
-              return;
-            }
-
-            rules.reloadTimestamp = System.currentTimeMillis();
-            rules.reloadInitiated = false;
-            JsonObject circulationRules = new JsonObject(response.getBody());
-            if (log.isDebugEnabled()) {
-              log.debug("circulationRules = {}", circulationRules.encodePrettily());
-            }
-            String rulesAsText = circulationRules.getString("rulesAsText");
-            if (rulesAsText == null) {
-              throw new NullPointerException("rulesAsText");
-            }
-            if (rules.rulesAsText.equals(rulesAsText)) {
-              done.handle(null);
-              return;
-            }
-            rules.rulesAsText = rulesAsText;
-            rules.rulesAsDrools = Text2Drools.convert(rulesAsText);
-            log.debug("rulesAsDrools = {}", rules.rulesAsDrools);
-            rules.drools = new Drools(rules.rulesAsDrools);
-            done.handle(null);
-          }
-          catch (Exception e) {
-            log.error("reloadRules", e);
-            if (routingContext.response().ended()) {
-              return;
-            }
-            internalError(routingContext.response(), getStackTrace(e));
-          }
-    }, cause -> cause.writeTo(routingContext.response())));
-  }
-
-  /**
-   * Return a Drools for the tenantId of the routingContext. On error send the
-   * error message via the routingContext's response.
-   * @param routingContext - where to get the tenantId and send any error message
-   * @param droolsHandler - where to provide the Drools
-   */
-  protected void drools(RoutingContext routingContext, Handler<Drools> droolsHandler) {
-    try {
-      String tenantId = getTenantId(routingContext);
-      Rules rules = rulesMap.get(tenantId);
-      if (isCurrent(rules)) {
-        droolsHandler.handle(rules.drools);
-        if (reloadNeeded(rules)) {
-          rules.reloadInitiated = true;
-          reloadRules(rules, routingContext, done -> {});
-        }
-        return;
-      }
-
-      if (rules == null) {
-        rules = new Rules();
-        rulesMap.put(tenantId, rules);
-      }
-      Rules finalRules = rules;
-
-      reloadRules(rules, routingContext, done -> {
-        try {
-          droolsHandler.handle(finalRules.drools);
-        } catch (Exception e) {
-          log.error("drools droolsHandler", e);
-          internalError(routingContext.response(), getStackTrace(e));
-        }
-      });
-    } catch (Exception e) {
-      log.error("drools", e);
-      internalError(routingContext.response(), getStackTrace(e));
-    }
   }
 
   private boolean invalidUuid(HttpServerRequest request, String paramName) {
@@ -254,31 +88,7 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
   }
 
   private void apply(RoutingContext routingContext) {
-    HttpServerRequest request = routingContext.request();
-    if (invalidApplyParameters(request)) {
-      return;
-    }
-    drools(routingContext, drools -> {
-      try {
-        final WebContext context = new WebContext(routingContext);
-        final CollectionResourceClient locationsStorageClient
-          = Clients.create(context, client).locationsStorage();
-
-        FetchSingleRecord.<Location>forRecord("location")
-          .using(locationsStorageClient)
-          .mapTo(Location::from)
-          .whenNotFound(failed(new ServerErrorFailure("Can`t find location")))
-          .fetch(request.params().get(LOCATION_ID_NAME))
-          .thenCompose(r -> r.after(location -> getPolicyIdAndRuleMatch(request.params(), drools, location)))
-          .thenCompose(r -> r.after(this::buildJsonResult))
-          .thenApply(r -> r.map(JsonHttpResponse::ok))
-          .thenAccept(context::writeResultToHttpResponse);
-      }
-      catch (Exception e) {
-        log.error("apply notice policy", e);
-        internalError(routingContext.response(), getStackTrace(e));
-      }
-    });
+    applyRules(routingContext, singlePolicyGetter::getPolicyIdAndRuleMatch, this::buildJsonResult);
   }
 
   private CompletableFuture<Result<JsonObject>> buildJsonResult(CirculationRuleMatch entity) {
@@ -293,30 +103,8 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
     ));
   }
 
-  private void applyAll(RoutingContext routingContext, Drools drools) {
-    HttpServerRequest request = routingContext.request();
-    if (invalidApplyParameters(request)) {
-      return;
-    }
-    try {
-      final WebContext context = new WebContext(routingContext);
-      final CollectionResourceClient locationsStorageClient
-        = Clients.create(context, client).locationsStorage();
-
-      FetchSingleRecord.<Location>forRecord("location")
-        .using(locationsStorageClient)
-        .mapTo(Location::from)
-        .whenNotFound(failed(new ServerErrorFailure("Can`t find location")))
-        .fetch(request.params().get(LOCATION_ID_NAME))
-        .thenCompose(r -> r.after(location -> getPolicies(request.params(), drools, location)))
-        .thenCompose(r -> r.after(this::buildJsonResult))
-        .thenApply(r -> r.map(JsonHttpResponse::ok))
-        .thenAccept(context::writeResultToHttpResponse);
-    }
-    catch (Exception e) {
-      log.error("applyAll", e);
-      internalError(routingContext.response(), getStackTrace(e));
-    }
+  private void applyAll(RoutingContext routingContext) {
+    applyRules(routingContext, allPoliciesGetter::getPolicies, this::buildJsonResult);
   }
 
   private CompletableFuture<Result<JsonObject>> buildJsonResult(JsonArray matches) {
@@ -324,22 +112,23 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
       matches)));
   }
 
-  private void applyAll(RoutingContext routingContext) {
-    String circulationRules = routingContext.pathParam("circulation_rules");
-    if (circulationRules == null) {
-      drools(routingContext, drools -> applyAll(routingContext, drools));
+  private <T> void applyRules(RoutingContext routingContext,
+    BiFunction<CirculationRulesProcessor, RulesExecutionParameters, CompletableFuture<Result<T>>> triggerFunction,
+    Function<T, CompletableFuture<Result<JsonObject>>> mapToJson) {
+
+    val request = routingContext.request();
+
+    if (invalidApplyParameters(request)) {
       return;
     }
 
-    try {
-      String droolsFile = Text2Drools.convert(circulationRules);
-      Drools drools = new Drools(droolsFile);
-      applyAll(routingContext, drools);
-    }
-    catch (Exception e) {
-      log.error("applyAll", e);
-      internalError(routingContext.response(), getStackTrace(e));
-    }
+    final WebContext context = new WebContext(routingContext);
+    final Clients clients = Clients.create(context, client);
+
+    triggerFunction.apply(clients.circulationRulesProcessor(), forRequest(context))
+      .thenCompose(r -> r.after(mapToJson))
+      .thenApply(r -> r.map(JsonHttpResponse::ok))
+      .thenAccept(context::writeResultToHttpResponse);
   }
 
   private boolean invalidApplyParameters(HttpServerRequest request) {
@@ -350,11 +139,29 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
         invalidUuid(request, LOCATION_ID_NAME);
   }
 
-  protected abstract CompletableFuture<Result<CirculationRuleMatch>> getPolicyIdAndRuleMatch(
-    MultiMap params, Drools drools, Location location);
+  public static void setCacheTime(long triggerAgeInMilliseconds, long maxAgeInMilliseconds) {
+    CirculationRulesCache.setCacheTime(triggerAgeInMilliseconds, maxAgeInMilliseconds);
+  }
+
+  public static void dropCache() {
+    CirculationRulesCache.dropCache();
+  }
+
+  static void clearCache(String tenantId) {
+    CirculationRulesCache.clearCache(tenantId);
+  }
 
   protected abstract String getPolicyIdKey();
 
-  protected abstract CompletableFuture<Result<JsonArray>> getPolicies(MultiMap params,
-    Drools drools, Location location);
+  @FunctionalInterface
+  protected interface GetSinglePolicy {
+    CompletableFuture<Result<CirculationRuleMatch>> getPolicyIdAndRuleMatch(
+      CirculationRulesProcessor rulesProcessor, RulesExecutionParameters rulesExecutionParameters);
+  }
+
+  @FunctionalInterface
+  protected interface GetAllPolicies {
+    CompletableFuture<Result<JsonArray>> getPolicies(
+      CirculationRulesProcessor rulesProcessor, RulesExecutionParameters rulesExecutionParameters);
+  }
 }

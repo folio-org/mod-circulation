@@ -4,29 +4,29 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.FeeFine.lostItemFeeTypes;
 import static org.folio.circulation.domain.subscribers.LoanRelatedFeeFineClosedEvent.fromJson;
 import static org.folio.circulation.support.Clients.create;
-import static org.folio.circulation.support.results.Result.failed;
-import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.http.server.NoContentResponse.noContent;
+import static org.folio.circulation.support.results.Result.failed;
+import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.StoreLoanAndItem;
 import org.folio.circulation.domain.Account;
-import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
 import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.subscribers.LoanRelatedFeeFineClosedEvent;
+import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.loans.LostItemPolicyRepository;
-import org.folio.circulation.domain.subscribers.LoanRelatedFeeFineClosedEvent;
 import org.folio.circulation.resources.Resource;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.server.NoContentResponse;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.CommonFailures;
+import org.folio.circulation.support.results.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

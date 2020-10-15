@@ -1,17 +1,8 @@
 package org.folio.circulation.resources;
 
-import static org.folio.circulation.support.results.Result.succeeded;
+import org.folio.circulation.rules.CirculationRulesProcessor;
 
-import java.util.concurrent.CompletableFuture;
-
-import io.vertx.core.MultiMap;
 import io.vertx.core.http.HttpClient;
-import io.vertx.core.json.JsonArray;
-
-import org.folio.circulation.domain.Location;
-import org.folio.circulation.rules.CirculationRuleMatch;
-import org.folio.circulation.rules.Drools;
-import org.folio.circulation.support.results.Result;
 
 /**
  * The circulation rules engine calculates the request policy based on
@@ -20,22 +11,13 @@ import org.folio.circulation.support.results.Result;
 public class RequestCirculationRulesEngineResource extends AbstractCirculationRulesEngineResource {
 
   public RequestCirculationRulesEngineResource(String applyPath, String applyAllPath, HttpClient client) {
-    super(applyPath, applyAllPath, client);
-  }
-
-  @Override
-  protected CompletableFuture<Result<CirculationRuleMatch>> getPolicyIdAndRuleMatch(
-    MultiMap params, Drools drools, Location location) {
-    return CompletableFuture.completedFuture(succeeded(drools.requestPolicy(params, location)));
+    super(applyPath, applyAllPath, client,
+      CirculationRulesProcessor::getRequestPolicyAndMatch,
+      CirculationRulesProcessor::getRequestPolicies);
   }
 
   @Override
   protected String getPolicyIdKey() {
     return "requestPolicyId";
-  }
-
-  @Override
-  protected CompletableFuture<Result<JsonArray>> getPolicies(MultiMap params, Drools drools, Location location) {
-    return CompletableFuture.completedFuture(succeeded(drools.requestPolicies(params, location)));
   }
 }

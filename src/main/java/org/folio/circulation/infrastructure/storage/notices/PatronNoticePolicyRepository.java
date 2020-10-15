@@ -1,10 +1,13 @@
 package org.folio.circulation.infrastructure.storage.notices;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 import org.folio.circulation.domain.notice.PatronNoticePolicy;
 import org.folio.circulation.infrastructure.storage.CirculationPolicyRepository;
 import org.folio.circulation.rules.AppliedRuleConditions;
+import org.folio.circulation.rules.RulesExecutionParameters;
+import org.folio.circulation.rules.CirculationRuleMatch;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
 
@@ -20,7 +23,7 @@ public class PatronNoticePolicyRepository extends CirculationPolicyRepository<Pa
   private PatronNoticePolicyRepository(
     Clients clients,
     Function<JsonObject, Result<PatronNoticePolicy>> patronNoticePolicyMapper) {
-    super(clients.circulationNoticeRules(), clients.patronNoticePolicesStorageClient());
+    super(clients.patronNoticePolicesStorageClient(), clients);
     this.patronNoticePolicyMapper = patronNoticePolicyMapper;
   }
 
@@ -39,5 +42,12 @@ public class PatronNoticePolicyRepository extends CirculationPolicyRepository<Pa
   @Override
   protected String fetchPolicyId(JsonObject jsonObject) {
     return jsonObject.getString("noticePolicyId");
+  }
+
+  @Override
+  protected CompletableFuture<Result<CirculationRuleMatch>> getPolicyAndMatch(
+    RulesExecutionParameters rulesExecutionParameters) {
+
+    return circulationRulesProcessor.getNoticePolicyAndMatch(rulesExecutionParameters);
   }
 }

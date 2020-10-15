@@ -2,6 +2,7 @@ package org.folio.circulation.support;
 
 import java.net.MalformedURLException;
 
+import org.folio.circulation.rules.CirculationRulesProcessor;
 import org.folio.circulation.services.PubSubPublishingService;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.server.WebContext;
@@ -57,6 +58,7 @@ public class Clients {
   private final CollectionResourceClient notesClient;
   private final CollectionResourceClient noteTypesClient;
   private final PubSubPublishingService pubSubPublishingService;
+  private final CirculationRulesProcessor circulationRulesProcessor;
 
   public static Clients create(WebContext context, HttpClient httpClient) {
     return new Clients(context.createHttpClient(httpClient), context);
@@ -112,6 +114,8 @@ public class Clients {
       notesClient = createNotesClient(client, context);
       noteTypesClient = createNoteTypesClient(client, context);
       pubSubPublishingService = createPubSubPublishingService(context);
+      circulationRulesProcessor = new CirculationRulesProcessor(context.getTenantId(),
+        circulationRulesStorageClient, locationsStorageClient);
     }
     catch(MalformedURLException e) {
       throw new InvalidOkapiLocationException(context.getOkapiLocation(), e);
@@ -300,6 +304,10 @@ public class Clients {
 
   public CollectionResourceClient noteTypesClient() {
     return noteTypesClient;
+  }
+
+  public CirculationRulesProcessor circulationRulesProcessor() {
+    return circulationRulesProcessor;
   }
 
   public PubSubPublishingService pubSubPublishingService() {
