@@ -1,6 +1,11 @@
+## 19.2.0 2020-10-15
+
+* Publishes audit log events for loans (CIRC-933)
+* Publishes audit log events for requests (CIRC-930)
+
 ## 19.1.0 2020-10-09
 
-* Ages overdue items to lost (CIRC-851, CIRC-852, CIRC-854, CIRC-877, CIRC-878, CIRC-889) 
+* Ages overdue items to lost (CIRC-851, CIRC-852, CIRC-854, CIRC-877, CIRC-878, CIRC-889)
 * Refunds set cost fees for lost items (CIRC-716, CIRC-844, CIRC-845, CIRC-934)
 * Records a note for the patron when a claimed returned item is resolved (CIRC-742)
 * Overdue notices are sent until the item is returned or the patron is charged (CIRC-722)
