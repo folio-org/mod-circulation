@@ -64,6 +64,10 @@ public class WebContext {
     return value != null ? value : defaultValue;
   }
 
+  public String getParameter(String name) {
+    return getStringParameter(name, null);
+  }
+
   public URL getOkapiBasedUrl(String path) throws MalformedURLException {
     URL currentRequestUrl = new URL(getOkapiLocation());
 

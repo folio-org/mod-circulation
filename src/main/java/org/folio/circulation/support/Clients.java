@@ -1,14 +1,11 @@
 package org.folio.circulation.support;
 
 import java.net.MalformedURLException;
-import java.util.concurrent.CompletableFuture;
 
-import org.folio.circulation.resources.CirculationRulesProcessor;
-import org.folio.circulation.rules.Drools;
+import org.folio.circulation.rules.CirculationRulesProcessor;
 import org.folio.circulation.services.PubSubPublishingService;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.server.WebContext;
-import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.http.HttpClient;
 
@@ -61,15 +58,13 @@ public class Clients {
   private final CollectionResourceClient notesClient;
   private final CollectionResourceClient noteTypesClient;
   private final PubSubPublishingService pubSubPublishingService;
-  private final WebContext context;
+  private final CirculationRulesProcessor circulationRulesProcessor;
 
   public static Clients create(WebContext context, HttpClient httpClient) {
     return new Clients(context.createHttpClient(httpClient), context);
   }
 
   private Clients(OkapiHttpClient client, WebContext context) {
-    this.context = context;
-
     try {
       requestsStorageClient = createRequestsStorageClient(client, context);
       requestsBatchStorageClient = createRequestsBatchStorageClient(client, context);
@@ -119,6 +114,8 @@ public class Clients {
       notesClient = createNotesClient(client, context);
       noteTypesClient = createNoteTypesClient(client, context);
       pubSubPublishingService = createPubSubPublishingService(context);
+      circulationRulesProcessor = new CirculationRulesProcessor(context.getTenantId(),
+        circulationRulesStorageClient, locationsStorageClient);
     }
     catch(MalformedURLException e) {
       throw new InvalidOkapiLocationException(context.getOkapiLocation(), e);
@@ -309,9 +306,8 @@ public class Clients {
     return noteTypesClient;
   }
 
-  public CompletableFuture<Result<Drools>> getCirculationDrools() {
-    return CirculationRulesProcessor.getInstance()
-      .getDrools(context.getTenantId(), circulationRulesStorage());
+  public CirculationRulesProcessor circulationRulesProcessor() {
+    return circulationRulesProcessor;
   }
 
   public PubSubPublishingService pubSubPublishingService() {

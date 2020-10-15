@@ -1,33 +1,27 @@
 package org.folio.circulation.infrastructure.storage;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.resources.AbstractCirculationRulesEngineResource.ITEM_TYPE_ID_NAME;
-import static org.folio.circulation.resources.AbstractCirculationRulesEngineResource.LOAN_TYPE_ID_NAME;
-import static org.folio.circulation.resources.AbstractCirculationRulesEngineResource.PATRON_TYPE_ID_NAME;
+import static org.folio.circulation.rules.ApplyCondition.forItem;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
-import static org.folio.circulation.support.results.Result.failed;
 
 import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
-import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.rules.AppliedRuleConditions;
+import org.folio.circulation.rules.ApplyCondition;
 import org.folio.circulation.rules.CirculationRuleMatch;
-import org.folio.circulation.rules.Drools;
+import org.folio.circulation.rules.CirculationRulesProcessor;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.FetchSingleRecord;
-import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.SingleRecordFetcher;
 import org.folio.circulation.support.results.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.vertx.core.MultiMap;
 import io.vertx.core.json.JsonObject;
 
 public abstract class CirculationPolicyRepository<T> {
@@ -35,16 +29,13 @@ public abstract class CirculationPolicyRepository<T> {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   protected final CollectionResourceClient policyStorageClient;
-  protected final CollectionResourceClient locationsStorageClient;
-  protected final Clients clients;
+  protected final CirculationRulesProcessor circulationRulesProcessor;
 
-  protected CirculationPolicyRepository(
-    CollectionResourceClient locationsStorageClient,
-    CollectionResourceClient policyStorageClient,
+  protected CirculationPolicyRepository(CollectionResourceClient policyStorageClient,
     Clients clients) {
-    this.locationsStorageClient = locationsStorageClient;
+
     this.policyStorageClient = policyStorageClient;
-    this.clients = clients;
+    this.circulationRulesProcessor = clients.circulationRulesProcessor();
   }
 
   public CompletableFuture<Result<T>> lookupPolicy(Loan loan) {
@@ -91,31 +82,10 @@ public abstract class CirculationPolicyRepository<T> {
         "Unable to apply circulation rules for unknown holding"));
     }
 
-    String loanTypeId = item.determineLoanTypeForItem();
-    String locationId = item.getLocationId();
-    String materialTypeId = item.getMaterialTypeId();
-    String patronGroupId = user.getPatronGroupId();
+    final var applyCondition = forItem(item, user);
 
-    MultiMap params = MultiMap.caseInsensitiveMultiMap();
-    params.add(ITEM_TYPE_ID_NAME, item.getMaterialTypeId());
-    params.add(LOAN_TYPE_ID_NAME, item.determineLoanTypeForItem());
-    params.add(PATRON_TYPE_ID_NAME, user.getPatronGroupId());
-    params.add(LOCATION_ID_NAME, item.getLocationId());
-
-    log.info(
-      "Applying circulation rules for material type: {}, patron group: {}, loan type: {}, location: {}",
-      materialTypeId, patronGroupId, loanTypeId, locationId);
-
-    final CompletableFuture<Result<Drools>> droolsResponse = clients.getCirculationDrools();
-    final CompletableFuture<Result<CirculationRuleMatch>> circulationRulesResponse = FetchSingleRecord.<Location>forRecord("location")
-    .using(locationsStorageClient)
-    .mapTo(Location::from)
-    .whenNotFound(failed(new ServerErrorFailure("Can`t find location")))
-    .fetch(locationId)
-    .thenCombine(droolsResponse, (locationResult, droolsResult) ->
-      locationResult.combine(droolsResult, (location, drools) ->
-        getPolicyAndMatch(drools, params, location)));
-    return circulationRulesResponse;
+    log.info("Applying circulation rules for conditions: {}", applyCondition);
+    return getPolicyAndMatch(applyCondition);
   }
 
   protected abstract String getPolicyNotFoundErrorMessage(String policyId);
@@ -124,5 +94,6 @@ public abstract class CirculationPolicyRepository<T> {
 
   protected abstract String fetchPolicyId(JsonObject jsonObject);
 
-  protected abstract CirculationRuleMatch getPolicyAndMatch(Drools drools, MultiMap params, Location location);
+  protected abstract CompletableFuture<Result<CirculationRuleMatch>> getPolicyAndMatch(
+    ApplyCondition applyCondition);
 }
