@@ -18,7 +18,9 @@ import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static java.util.Arrays.asList;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.function.Function.identity;
+import static org.awaitility.Awaitility.await;
 import static org.folio.HttpStatus.HTTP_BAD_REQUEST;
 import static org.folio.HttpStatus.HTTP_CREATED;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
@@ -31,6 +33,7 @@ import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.emptyString;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.core.Is.is;
@@ -42,11 +45,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import org.awaitility.Awaitility;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.RequestStatus;
@@ -89,7 +90,8 @@ import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
 
 @RunWith(JUnitParamsRunner.class)
-public class RequestsAPICreationTests extends APITests {
+public class
+RequestsAPICreationTests extends APITests {
   private static final String PAGING_REQUEST_EVENT = "Paging request";
   private static final String HOLD_REQUEST_EVENT = "Hold request";
   private static final String RECALL_REQUEST_EVENT = "Recall request";
@@ -1384,8 +1386,8 @@ public class RequestsAPICreationTests extends APITests {
       .withPickupServicePointId(pickupServicePointId)
       .withTags(new RequestBuilder.Tags(asList("new", "important"))));
 
-    Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
+    await()
+      .atMost(1, SECONDS)
       .until(patronNoticesClient::getAll, Matchers.hasSize(1));
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
 
@@ -1451,8 +1453,8 @@ public class RequestsAPICreationTests extends APITests {
       .withPickupServicePointId(pickupServicePointId)
       .withTags(new RequestBuilder.Tags(asList("new", "important"))));
 
-    Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
+    await()
+      .atMost(1, SECONDS)
       .until(patronNoticesClient::getAll, Matchers.hasSize(1));
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
 
@@ -1538,8 +1540,8 @@ public class RequestsAPICreationTests extends APITests {
       .withTags(new RequestBuilder.Tags(asList("new", "important"))));
     IndividualResource loanAfterRecall = loansClient.get(loan.getId());
 
-    Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
+    await()
+      .atMost(1, SECONDS)
       .until(patronNoticesClient::getAll, Matchers.hasSize(2));
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
 
@@ -1563,7 +1565,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void recallNoticeToLoanOwnerIsNotSendWhenDueDateIsNotChanged() throws InterruptedException {
+  public void recallNoticeToLoanOwnerIsNotSendWhenDueDateIsNotChanged() {
     UUID recallToLoanOwnerTemplateId = UUID.randomUUID();
     JsonObject recallToLoanOwnerNoticeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(recallToLoanOwnerTemplateId)
@@ -1614,10 +1616,11 @@ public class RequestsAPICreationTests extends APITests {
       .withPickupServicePointId(pickupServicePointId)
       .withTags(new RequestBuilder.Tags(asList("new", "important"))));
 
-    TimeUnit.SECONDS.sleep(1);
-    List<JsonObject> sentNotices = patronNoticesClient.getAll();
-    assertThat("Recall notice to loan owner shouldn't be sent when due date hasn't been changed",
-      sentNotices, Matchers.empty());
+    // Recall notice to loan owner shouldn't be sent when due date hasn't been changed
+    await()
+      .pollDelay(1, SECONDS)
+      .until(patronNoticesClient::getAll, empty());
+
     assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
     assertThatPublishedLogRecordEventsAreValid();
   }
