@@ -1272,80 +1272,6 @@ RequestsAPICreationTests extends APITests {
     assertThat(response, hasStatus(HTTP_CREATED));
   }
 
-  public static IndividualResource setupPagedItem(IndividualResource requestPickupServicePoint, ItemsFixture itemsFixture,
-    ResourceClient requestClient, UsersFixture usersFixture) {
-
-    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-
-    final IndividualResource pagedRequest = requestClient.create(new RequestBuilder()
-      .page()
-      .forItem(smallAngryPlanet)
-      .withPickupServicePointId(requestPickupServicePoint.getId())
-      .by(usersFixture.james()));
-
-    JsonObject requestedItem = pagedRequest.getJson().getJsonObject("item");
-    assertThat(requestedItem.getString("status"), is(ItemStatus.PAGED.getValue()));
-
-    return smallAngryPlanet;
-  }
-
-  public static IndividualResource setupItemAwaitingPickup(IndividualResource requestPickupServicePoint, ResourceClient requestsClient, ResourceClient itemsClient,
-    ItemsFixture itemsFixture, UsersFixture usersFixture, CheckInFixture checkInFixture) {
-
-    //Setting up an item with AWAITING_PICKUP status
-    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-
-    requestsClient.create(new RequestBuilder()
-      .page()
-      .forItem(smallAngryPlanet)
-      .withPickupServicePointId(requestPickupServicePoint.getId())
-      .by(usersFixture.james()));
-
-    checkInFixture.checkInByBarcode(smallAngryPlanet, DateTime.now(DateTimeZone.UTC), requestPickupServicePoint.getId());
-
-    Response pagedRequestRecord = itemsClient.getById(smallAngryPlanet.getId());
-    assertThat(pagedRequestRecord.getJson().getJsonObject("status").getString("name"), is(ItemStatus.AWAITING_PICKUP.getValue()));
-
-    return smallAngryPlanet;
-  }
-
-  public static IndividualResource setupItemInTransit(IndividualResource requestPickupServicePoint, IndividualResource pickupServicePoint, ItemsFixture itemsFixture,
-    ResourceClient requestsClient, UsersFixture usersFixture, RequestsFixture requestsFixture, CheckInFixture checkInFixture) {
-
-    //In order to get the item into the IN_TRANSIT state, for now we need to go the round-about route of delivering it to the unintended pickup location first
-    //then check it in at the intended pickup location.
-    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-
-    final IndividualResource firstRequest = requestsClient.create(new RequestBuilder()
-      .page()
-      .forItem(smallAngryPlanet)
-      .withPickupServicePointId(requestPickupServicePoint.getId())
-      .by(usersFixture.james()));
-
-    JsonObject requestItem = firstRequest.getJson().getJsonObject("item");
-    assertThat(requestItem.getString("status"), is(ItemStatus.PAGED.getValue()));
-    assertThat(firstRequest.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
-
-    //check it it at the "wrong" or unintended pickup location
-    checkInFixture.checkInByBarcode(smallAngryPlanet, DateTime.now(DateTimeZone.UTC), pickupServicePoint.getId());
-
-    MultipleRecords<JsonObject> requests = requestsFixture.getQueueFor(smallAngryPlanet);
-    JsonObject pagedRequestRecord = requests.getRecords().iterator().next();
-
-    assertThat(pagedRequestRecord.getJsonObject("item").getString("status"), is(ItemStatus.IN_TRANSIT.getValue()));
-    assertThat(pagedRequestRecord.getString("status"), is(RequestStatus.OPEN_IN_TRANSIT.getValue()));
-
-    return smallAngryPlanet;
-  }
-
-
-  public static IndividualResource setupMissingItem(ItemsFixture itemsFixture) {
-    IndividualResource missingItem = itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::missing);
-    assertThat(missingItem.getResponse().getJson().getJsonObject("status").getString("name"), is(ItemStatus.MISSING.getValue()));
-
-    return missingItem;
-  }
-
   @Test
   public void pageRequestNoticeIsSentWhenPolicyDefinesPageRequestNoticeConfiguration() {
     UUID pageConfirmationTemplateId = UUID.randomUUID();
@@ -1366,7 +1292,6 @@ RequestsAPICreationTests extends APITests {
       noticePoliciesFixture.create(noticePolicy).getId(),
       overdueFinePoliciesFixture.facultyStandard().getId(),
       lostItemFeePoliciesFixture.facultyStandard().getId());
-
 
     UUID id = UUID.randomUUID();
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -1899,5 +1824,81 @@ RequestsAPICreationTests extends APITests {
       .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
       .withPickupServicePointId(pickupServicePointId)
       .withTags(new RequestBuilder.Tags(asList("new", "important")));
+  }
+
+  public static IndividualResource setupPagedItem(IndividualResource requestPickupServicePoint,
+    ItemsFixture itemsFixture, ResourceClient requestClient, UsersFixture usersFixture) {
+
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+
+    final IndividualResource pagedRequest = requestClient.create(new RequestBuilder()
+      .page()
+      .forItem(smallAngryPlanet)
+      .withPickupServicePointId(requestPickupServicePoint.getId())
+      .by(usersFixture.james()));
+
+    JsonObject requestedItem = pagedRequest.getJson().getJsonObject("item");
+    assertThat(requestedItem.getString("status"), is(ItemStatus.PAGED.getValue()));
+
+    return smallAngryPlanet;
+  }
+
+  public static IndividualResource setupItemAwaitingPickup(
+    IndividualResource requestPickupServicePoint, ResourceClient requestsClient,
+    ResourceClient itemsClient, ItemsFixture itemsFixture, UsersFixture usersFixture,
+    CheckInFixture checkInFixture) {
+
+    //Setting up an item with AWAITING_PICKUP status
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+
+    requestsClient.create(new RequestBuilder()
+      .page()
+      .forItem(smallAngryPlanet)
+      .withPickupServicePointId(requestPickupServicePoint.getId())
+      .by(usersFixture.james()));
+
+    checkInFixture.checkInByBarcode(smallAngryPlanet, DateTime.now(DateTimeZone.UTC), requestPickupServicePoint.getId());
+
+    Response pagedRequestRecord = itemsClient.getById(smallAngryPlanet.getId());
+    assertThat(pagedRequestRecord.getJson().getJsonObject("status").getString("name"), is(ItemStatus.AWAITING_PICKUP.getValue()));
+
+    return smallAngryPlanet;
+  }
+
+  public static IndividualResource setupItemInTransit(IndividualResource requestPickupServicePoint,
+    IndividualResource pickupServicePoint, ItemsFixture itemsFixture, ResourceClient requestsClient,
+    UsersFixture usersFixture, RequestsFixture requestsFixture, CheckInFixture checkInFixture) {
+
+    //In order to get the item into the IN_TRANSIT state, for now we need to go the round-about route of delivering it to the unintended pickup location first
+    //then check it in at the intended pickup location.
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+
+    final IndividualResource firstRequest = requestsClient.create(new RequestBuilder()
+      .page()
+      .forItem(smallAngryPlanet)
+      .withPickupServicePointId(requestPickupServicePoint.getId())
+      .by(usersFixture.james()));
+
+    JsonObject requestItem = firstRequest.getJson().getJsonObject("item");
+    assertThat(requestItem.getString("status"), is(ItemStatus.PAGED.getValue()));
+    assertThat(firstRequest.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
+
+    //check it it at the "wrong" or unintended pickup location
+    checkInFixture.checkInByBarcode(smallAngryPlanet, DateTime.now(DateTimeZone.UTC), pickupServicePoint.getId());
+
+    MultipleRecords<JsonObject> requests = requestsFixture.getQueueFor(smallAngryPlanet);
+    JsonObject pagedRequestRecord = requests.getRecords().iterator().next();
+
+    assertThat(pagedRequestRecord.getJsonObject("item").getString("status"), is(ItemStatus.IN_TRANSIT.getValue()));
+    assertThat(pagedRequestRecord.getString("status"), is(RequestStatus.OPEN_IN_TRANSIT.getValue()));
+
+    return smallAngryPlanet;
+  }
+
+  public static IndividualResource setupMissingItem(ItemsFixture itemsFixture) {
+    IndividualResource missingItem = itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::missing);
+    assertThat(missingItem.getResponse().getJson().getJsonObject("status").getString("name"), is(ItemStatus.MISSING.getValue()));
+
+    return missingItem;
   }
 }
