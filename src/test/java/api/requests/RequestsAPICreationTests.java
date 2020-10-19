@@ -361,7 +361,7 @@ RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void cannotCreateRequestItemAlreadyCheckedOutToRequestor() {
+  public void cannotCreateRequestItemAlreadyCheckedOutToRequester() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -985,7 +985,7 @@ RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void cannotCreatePagedRequestWhenItemStatusIsIntransit() {
+  public void cannotCreatePagedRequestWhenItemStatusIsInTransit() {
     final IndividualResource requestPickupServicePoint = servicePointsFixture.cd1();
 
     final IndividualResource intransitItem = setupItemInTransit(requestPickupServicePoint, servicePointsFixture.cd2(),
@@ -1672,7 +1672,7 @@ RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void cannotCreateRequestWhenRequestorHasActiveRequestManualBlocks() {
+  public void cannotCreateRequestWhenRequesterHasActiveRequestManualBlocks() {
     final IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requester = usersFixture.rebecca();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -1697,7 +1697,7 @@ RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void canCreateRequestWhenRequestorNotHaveActiveManualBlocks() {
+  public void canCreateRequestWhenRequesterNotHaveActiveManualBlocks() {
     final IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requester = usersFixture.rebecca();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -1719,7 +1719,7 @@ RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void canCreateRequestWhenRequestorHasManualExpiredBlock() {
+  public void canCreateRequestWhenRequesterHasManualExpiredBlock() {
     final IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requester = usersFixture.rebecca();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -1741,7 +1741,7 @@ RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void canCreateRequestWhenRequestorNoHaveRequestBlockAndHaveBorrowingRenewalsBlock() {
+  public void canCreateRequestWhenRequesterNoHaveRequestBlockAndHaveBorrowingRenewalsBlock() {
     final IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requester = usersFixture.rebecca();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -1769,7 +1769,7 @@ RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void cannotCreateRequestWhenRequestorHasSomeActiveRequestManualBlocks() {
+  public void cannotCreateRequestWhenRequesterHasSomeActiveRequestManualBlocks() {
     final IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requester = usersFixture.rebecca();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
