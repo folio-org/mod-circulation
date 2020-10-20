@@ -3,7 +3,7 @@
 #remove log output
 rm tests.log
 
-mvnTargets="clean test surefire-report:report jacoco:report"
+mvnTargets="clean test surefire-report:report jacoco:report site"
 teeCommand="tee -a tests.log"
 
 if [ -z "$1" ]
