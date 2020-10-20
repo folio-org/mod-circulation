@@ -126,10 +126,10 @@ public class ClaimItemReturnedAPITests extends APITests {
     assertLoanAndItem(response, null, dateTime);
 
     // Five events are expected: one for check-out one for log event, one for the claim
-    // and two for log records
+    // and one for log records
     List<JsonObject> publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(5));
+      .until(FakePubSub::getPublishedEvents, hasSize(4));
 
     JsonObject event = publishedEvents.stream()
       .filter(evt -> ITEM_CLAIMED_RETURNED.equalsIgnoreCase(evt.getString("eventType")))
