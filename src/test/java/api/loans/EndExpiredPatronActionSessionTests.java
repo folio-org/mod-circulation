@@ -361,40 +361,6 @@ public class EndExpiredPatronActionSessionTests extends APITests {
     checkThatBunchOfExpiredSessionsWereAddedAndRemovedByTimer(100, "");
   }
 
-  private void checkThatBunchOfExpiredSessionsWereAddedAndRemovedByTimer(
-    int numberOfSessions, String actionType) {
-
-    IntStream.range(0, numberOfSessions).forEach(
-      notUsed -> {
-        String patronId = UUID.randomUUID().toString();
-        patronSessionRecordsClient.create(
-          new JsonObject()
-            .put(ID, UUID.randomUUID().toString())
-            .put(PATRON_ID, patronId)
-            .put(LOAN_ID, UUID.randomUUID().toString())
-            .put(ACTION_TYPE, actionType));
-        expiredEndSessionClient.create(
-          new JsonObject()
-            .put(PATRON_ID, patronId)
-            .put(ACTION_TYPE, actionType));
-      });
-
-    List<JsonObject> sessions = patronSessionRecordsClient.getAll();
-    assertThat(sessions, Matchers.hasSize(numberOfSessions));
-
-    expiredSessionProcessingClient.runRequestExpiredSessionsProcessing(204);
-
-    Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
-      .until(patronSessionRecordsClient::getAll, empty());
-  }
-
-  private void createExpiredEndSession(String patronId, String actionType) {
-    expiredEndSessionClient.create(new EndSessionBuilder()
-      .withPatronId(patronId)
-      .withActionType(actionType));
-  }
-
   @Test
   public void patronNoticeContextContainsUserTokensWhenNoticeIsTriggeredByExpiredSession() {
     IndividualResource james = usersFixture.james();
@@ -445,5 +411,39 @@ public class EndExpiredPatronActionSessionTests extends APITests {
       .until(patronSessionRecordsClient::getAll, empty());
     assertThat(patronNoticesClient.getAll(), hasSize(0));
     assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+  }
+
+  private void checkThatBunchOfExpiredSessionsWereAddedAndRemovedByTimer(
+    int numberOfSessions, String actionType) {
+
+    IntStream.range(0, numberOfSessions).forEach(
+      notUsed -> {
+        String patronId = UUID.randomUUID().toString();
+        patronSessionRecordsClient.create(
+          new JsonObject()
+            .put(ID, UUID.randomUUID().toString())
+            .put(PATRON_ID, patronId)
+            .put(LOAN_ID, UUID.randomUUID().toString())
+            .put(ACTION_TYPE, actionType));
+        expiredEndSessionClient.create(
+          new JsonObject()
+            .put(PATRON_ID, patronId)
+            .put(ACTION_TYPE, actionType));
+      });
+
+    List<JsonObject> sessions = patronSessionRecordsClient.getAll();
+    assertThat(sessions, Matchers.hasSize(numberOfSessions));
+
+    expiredSessionProcessingClient.runRequestExpiredSessionsProcessing(204);
+
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(patronSessionRecordsClient::getAll, empty());
+  }
+
+  private void createExpiredEndSession(String patronId, String actionType) {
+    expiredEndSessionClient.create(new EndSessionBuilder()
+      .withPatronId(patronId)
+      .withActionType(actionType));
   }
 }
