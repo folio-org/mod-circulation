@@ -8,9 +8,7 @@ import static org.folio.circulation.domain.EventType.ITEM_DECLARED_LOST;
 import static org.folio.circulation.domain.EventType.LOAN_DUE_DATE_CHANGED;
 import static org.folio.circulation.domain.EventType.LOG_RECORD;
 import static org.folio.circulation.domain.LoanAction.CHECKED_IN;
-import static org.folio.circulation.domain.LoanAction.CHECKED_OUT;
 import static org.folio.circulation.domain.LoanAction.CLOSED_LOAN;
-import static org.folio.circulation.domain.LoanAndRelatedRecords.REASON_TO_OVERRIDE;
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.LOG_EVENT_TYPE;
 import static org.folio.circulation.domain.representations.logs.CirculationCheckInCheckOutLogEventMapper.mapToCheckInLogEventJson;
 import static org.folio.circulation.domain.representations.logs.CirculationCheckInCheckOutLogEventMapper.mapToCheckOutLogEventJson;
@@ -75,13 +73,6 @@ public class EventPublisher {
 
       JsonObject logEventPayload = mapToCheckOutLogEventJson(loanAndRelatedRecords);
       CompletableFuture.runAsync(() -> pubSubPublishingService.publishEvent(LOG_RECORD.name(), logEventPayload.encode()));
-      LoanLogContext loanLogContext = LoanLogContext.from(loan)
-        .withServicePointId(loan.getCheckoutServicePointId())
-        .withDescription(CHECKED_OUT.getValue().equalsIgnoreCase(loan.getAction()) ?
-          "Checked out to proxy." :
-          String.format("Originally failed: %s. Additional information: %s",
-            loanAndRelatedRecords.getLogContextProperties().getString(REASON_TO_OVERRIDE), loan.getActionComment()));
-      CompletableFuture.runAsync(() -> publishLogRecord(loanLogContext.asJson(), LOAN));
 
       return pubSubPublishingService.publishEvent(ITEM_CHECKED_OUT.name(), payloadJsonObject.encode())
         .thenApply(r -> succeeded(loanAndRelatedRecords));
@@ -106,7 +97,6 @@ public class EventPublisher {
 
       JsonObject logEventPayload = mapToCheckInLogEventJson(checkInContext);
       CompletableFuture.runAsync(() -> pubSubPublishingService.publishEvent(LOG_RECORD.name(), logEventPayload.encode()));
-      CompletableFuture.runAsync(() -> publishClosedLoanEvent(loan));
 
       return
         pubSubPublishingService.publishEvent(ITEM_CHECKED_IN.name(),
