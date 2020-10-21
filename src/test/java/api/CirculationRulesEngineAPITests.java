@@ -1,12 +1,13 @@
 package api;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.StringContains.containsString;
 
 import java.util.UUID;
 
-import org.folio.circulation.resources.LoanCirculationRulesEngineResource;
 import org.folio.circulation.rules.Campus;
 import org.folio.circulation.rules.Institution;
 import org.folio.circulation.rules.ItemLocation;
@@ -15,7 +16,7 @@ import org.folio.circulation.rules.Library;
 import org.folio.circulation.rules.LoanType;
 import org.folio.circulation.rules.PatronGroup;
 import org.folio.circulation.rules.Policy;
-import api.support.http.IndividualResource;
+import org.folio.circulation.rules.cache.CirculationRulesCache;
 import org.folio.circulation.support.http.client.Response;
 import org.junit.Before;
 import org.junit.Test;
@@ -25,6 +26,7 @@ import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.LostItemFeePolicyBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.OverdueFinePolicyBuilder;
+import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -113,8 +115,7 @@ public class CirculationRulesEngineAPITests extends APITests {
 
   @Before
   public void setUp() {
-    LoanCirculationRulesEngineResource.dropCache();
-    LoanCirculationRulesEngineResource.setCacheTime(1000000, 1000000);  // 1000 seconds
+    CirculationRulesCache.dropCache();
     setPoliciesIdsToTheFixture();
   }
 
@@ -362,7 +363,7 @@ public class CirculationRulesEngineAPITests extends APITests {
   }
 
   @Test
-  public void cache() {
+  public void cachedRulesAreUsedEvenWhenRulesInStorageHaveBeenChanged() {
     setRules(rulesFallback);
     assertThat(applyRulesForLoanPolicy(m1, t1, g1, s1), is(lp6));
 
@@ -370,11 +371,23 @@ public class CirculationRulesEngineAPITests extends APITests {
       rulesFallback2);
 
     assertThat(applyRulesForLoanPolicy(m1, t1, g1, s1), is(lp6));
+  }
 
-    // reduce cache time to trigger reload from storage backend
-    LoanCirculationRulesEngineResource.setCacheTime(0, 0);
+  @Test
+  public void cacheIsInvalidatedAfterFiveSeconds() {
+    setRules(rulesFallback);
+    assertThat(applyRulesForLoanPolicy(m1, t1, g1, s1), is(lp6));
 
-    assertThat(applyRulesForLoanPolicy(m1, t1, g1, s1), is(lp7));
+    circulationRulesFixture.updateCirculationRulesWithoutInvalidatingCache(
+      rulesFallback2);
+
+    // Poll until the cached rules should have been replaced
+    await()
+      .atLeast(4, SECONDS)
+      .atMost(6, SECONDS)
+      .pollDelay(1, SECONDS)
+      .pollInterval(1, SECONDS)
+      .until(() -> applyRulesForLoanPolicy(m1, t1, g1, s1), is(lp7));
   }
 
   private Policy applyRulesForLoanPolicy(ItemType itemType, LoanType loanType,

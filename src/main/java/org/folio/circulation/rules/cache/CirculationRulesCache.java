@@ -18,12 +18,13 @@ import io.vertx.core.json.JsonObject;
 
 public final class CirculationRulesCache {
   private static final Logger log = getLogger(CirculationRulesCache.class);
+
   private static final CirculationRulesCache instance = new CirculationRulesCache();
   /** after this time the rules get loaded before executing the circulation rules engine */
-  private static volatile long maxAgeInMilliseconds = 5000;
+  private static final long MAX_AGE_IN_MILLISECONDS = 5000;
   /** after this time the circulation rules engine is executed first for a fast reply
    * and then the circulation rules get reloaded */
-  private static volatile long triggerAgeInMilliseconds = 4000;
+  private static final long TRIGGER_AGE_IN_MILLISECONDS = 4000;
   /** rules and Drools for each tenantId */
   private static final Map<String, Rules> rulesMap = new ConcurrentHashMap<>();
 
@@ -32,18 +33,6 @@ public final class CirculationRulesCache {
   }
 
   private CirculationRulesCache() {}
-
-  /**
-   * Set the cache time.
-   *
-   * @param triggerAgeInMs after this time the circulation rules engine is executed first for a fast reply
-   *                       and then the circulation rules get reloaded
-   * @param maxAgeInMs     after this time the rules get loaded before executing the circulation rules engine
-   */
-  public static void setCacheTime(long triggerAgeInMs, long maxAgeInMs) {
-    triggerAgeInMilliseconds = triggerAgeInMs;
-    maxAgeInMilliseconds = maxAgeInMs;
-  }
 
   /**
    * Completely drop the cache. This enforces rebuilding the drools rules
@@ -70,7 +59,7 @@ public final class CirculationRulesCache {
     if (rules == null) {
       return false;
     }
-    return rules.reloadTimestamp + maxAgeInMilliseconds > System.currentTimeMillis();
+    return rules.reloadTimestamp + MAX_AGE_IN_MILLISECONDS > System.currentTimeMillis();
   }
 
   /**
@@ -83,7 +72,7 @@ public final class CirculationRulesCache {
     if (rules.reloadInitiated) {
       return false;
     }
-    return rules.reloadTimestamp + triggerAgeInMilliseconds < System.currentTimeMillis();
+    return rules.reloadTimestamp + TRIGGER_AGE_IN_MILLISECONDS < System.currentTimeMillis();
   }
 
   private CompletableFuture<Result<Rules>> reloadRules(Rules rules,
