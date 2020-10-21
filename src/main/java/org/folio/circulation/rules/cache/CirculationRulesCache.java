@@ -9,6 +9,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.folio.circulation.rules.Drools;
+import org.folio.circulation.rules.ExecutableRules;
 import org.folio.circulation.rules.Text2Drools;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.results.Result;
@@ -106,6 +107,14 @@ public final class CirculationRulesCache {
 
         return ofAsync(() -> rules);
       }));
+  }
+
+  public CompletableFuture<Result<ExecutableRules>> getExecutableRules(String tenantId,
+    CollectionResourceClient circulationRulesClient) {
+
+    return getDrools(tenantId, circulationRulesClient)
+      .thenApply(r -> r.map(drools ->
+        new ExecutableRules(rulesMap.get(tenantId).rulesAsText, drools)));
   }
 
   public CompletableFuture<Result<Drools>> getDrools(String tenantId,

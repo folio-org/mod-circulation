@@ -18,6 +18,7 @@ import org.folio.circulation.support.results.Result;
 import org.slf4j.Logger;
 
 import io.vertx.core.json.JsonArray;
+import lombok.val;
 
 public class CirculationRulesProcessor {
   private static final Logger log = getLogger(CirculationRulesProcessor.class);
@@ -37,8 +38,7 @@ public class CirculationRulesProcessor {
   public CompletableFuture<Result<CirculationRuleMatch>> getLoanPolicyAndMatch(
     RulesExecutionParameters params) {
 
-    return triggerRules(params,
-      (drools, newParams) -> drools.loanPolicy(newParams.toMap(), newParams.getLocation()));
+    return executeRules(params, ExecutableRules::determineLoanPolicy);
   }
 
   public CompletableFuture<Result<JsonArray>> getLoanPolicies(RulesExecutionParameters params) {
@@ -49,8 +49,7 @@ public class CirculationRulesProcessor {
   public CompletableFuture<Result<CirculationRuleMatch>> getLostItemPolicyAndMatch(
     RulesExecutionParameters params) {
 
-    return triggerRules(params,
-      (drools, newParams) -> drools.lostItemPolicy(newParams.toMap(), newParams.getLocation()));
+    return executeRules(params, ExecutableRules::determineLostItemPolicy);
   }
 
   public CompletableFuture<Result<JsonArray>> getLostItemPolicies(RulesExecutionParameters params) {
@@ -61,8 +60,7 @@ public class CirculationRulesProcessor {
   public CompletableFuture<Result<CirculationRuleMatch>> getNoticePolicyAndMatch(
     RulesExecutionParameters params) {
 
-    return triggerRules(params,
-      (drools, newParams) -> drools.noticePolicy(newParams.toMap(), newParams.getLocation()));
+    return executeRules(params, ExecutableRules::determineNoticePolicy);
   }
 
   public CompletableFuture<Result<JsonArray>> getNoticePolicies(RulesExecutionParameters params) {
@@ -73,8 +71,7 @@ public class CirculationRulesProcessor {
   public CompletableFuture<Result<CirculationRuleMatch>> getOverduePolicyAndMatch(
     RulesExecutionParameters params) {
 
-    return triggerRules(params,
-      (drools, newParams) -> drools.overduePolicy(newParams.toMap(), newParams.getLocation()));
+    return executeRules(params, ExecutableRules::determineOverduePolicy);
   }
 
   public CompletableFuture<Result<JsonArray>> getOverduePolicies(RulesExecutionParameters params) {
@@ -85,8 +82,7 @@ public class CirculationRulesProcessor {
   public CompletableFuture<Result<CirculationRuleMatch>> getRequestPolicyAndMatch(
     RulesExecutionParameters params) {
 
-    return triggerRules(params,
-      (drools, newParams) -> drools.requestPolicy(newParams.toMap(), newParams.getLocation()));
+    return executeRules(params, ExecutableRules::determineRequestPolicy);
   }
 
   public CompletableFuture<Result<JsonArray>> getRequestPolicies(RulesExecutionParameters params) {
@@ -97,14 +93,25 @@ public class CirculationRulesProcessor {
   private <T> CompletableFuture<Result<T>> triggerRules(RulesExecutionParameters params,
     BiFunction<Drools, RulesExecutionParameters, T> droolsFunction) {
 
-    final var droolsFuture = CirculationRulesCache.getInstance()
+    val rulesFuture = CirculationRulesCache.getInstance()
       .getDrools(tenantId, circulationRulesStorage);
 
-    return fetchLocation(params).thenCombine(droolsFuture, combined(
+    return fetchLocation(params).thenCombine(rulesFuture, combined(
       (newParams, drools) -> {
         log.info("Applying circulation rules with parameters: {}", newParams);
         return succeeded(droolsFunction.apply(drools, newParams));
       }));
+  }
+
+  private <T> CompletableFuture<Result<T>> executeRules(RulesExecutionParameters params,
+    BiFunction<ExecutableRules, RulesExecutionParameters, Result<T>> rulesExecutor) {
+
+    val rulesFuture = CirculationRulesCache.getInstance()
+      .getExecutableRules(tenantId, circulationRulesStorage);
+
+    return fetchLocation(params)
+      .thenCombine(rulesFuture, combined((parametersWithLocation, rules) ->
+        rulesExecutor.apply(rules, parametersWithLocation)));
   }
 
   private CompletableFuture<Result<RulesExecutionParameters>> fetchLocation(RulesExecutionParameters params) {
