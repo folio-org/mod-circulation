@@ -246,7 +246,7 @@ public class RequestQueueResourceTest extends APITests {
 
     List<JsonObject> publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(17));
+      .until(FakePubSub::getPublishedEvents, hasSize(16));
 
     List<JsonObject> reorderedLogEvents = publishedEvents.stream()
       .filter(o -> o.getString("eventType")
