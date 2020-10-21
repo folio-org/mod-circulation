@@ -4,6 +4,7 @@ import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -18,7 +19,7 @@ import org.slf4j.Logger;
 import io.vertx.core.json.JsonObject;
 
 public final class CirculationRulesCache {
-  private static final Logger log = getLogger(CirculationRulesCache.class);
+  private static final Logger log = getLogger(MethodHandles.lookup().lookupClass());
 
   private static final CirculationRulesCache instance = new CirculationRulesCache();
   /** after this time the rules get loaded before executing the circulation rules engine */
