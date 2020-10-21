@@ -115,7 +115,7 @@ public class CirculationRulesEngineAPITests extends APITests {
 
   @Before
   public void setUp() {
-    CirculationRulesCache.dropCache();
+    CirculationRulesCache.getInstance().dropCache();
     setPoliciesIdsToTheFixture();
   }
 

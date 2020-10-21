@@ -26,7 +26,7 @@ public final class CirculationRulesCache {
    * and then the circulation rules get reloaded */
   private static final long TRIGGER_AGE_IN_MILLISECONDS = 4000;
   /** rules and Drools for each tenantId */
-  private static final Map<String, Rules> rulesMap = new ConcurrentHashMap<>();
+  private final Map<String, Rules> rulesMap = new ConcurrentHashMap<>();
 
   public static CirculationRulesCache getInstance() {
     return instance;
@@ -38,7 +38,7 @@ public final class CirculationRulesCache {
    * Completely drop the cache. This enforces rebuilding the drools rules
    * even when the circulation rules haven't changed.
    */
-  public static void dropCache() {
+  public void dropCache() {
     rulesMap.clear();
   }
 
@@ -47,7 +47,7 @@ public final class CirculationRulesCache {
    * This doesn't rebuild the drools rules if the circulation rules haven't changed.
    * @param tenantId  id of the tenant
    */
-  public static void clearCache(String tenantId) {
+  public void clearCache(String tenantId) {
     Rules rules = rulesMap.get(tenantId);
     if (rules == null) {
       return;
@@ -135,7 +135,7 @@ public final class CirculationRulesCache {
       .thenCompose(r -> r.after(updatedRules -> ofAsync(() -> updatedRules.drools)));
   }
 
-  private static class Rules {
+  private class Rules {
     private volatile String rulesAsText = "";
     private volatile String rulesAsDrools = "";
     private volatile Drools drools;
