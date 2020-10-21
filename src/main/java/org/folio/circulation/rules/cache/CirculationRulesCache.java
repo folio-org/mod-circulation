@@ -1,5 +1,8 @@
 package org.folio.circulation.rules.cache;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -13,6 +16,7 @@ import org.folio.circulation.rules.Drools;
 import org.folio.circulation.rules.ExecutableRules;
 import org.folio.circulation.rules.Text2Drools;
 import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.results.Result;
 import org.slf4j.Logger;
 
@@ -87,14 +91,15 @@ public final class CirculationRulesCache {
         rules.reloadTimestamp = System.currentTimeMillis();
         rules.reloadInitiated = false;
 
-        if (log.isDebugEnabled()) {
-          log.debug("circulationRules = {}", circulationRules.encodePrettily());
+        if (log.isInfoEnabled()) {
+          log.info("circulationRules = {}", circulationRules.encodePrettily());
         }
 
         String rulesAsText = circulationRules.getString("rulesAsText");
 
-        if (rulesAsText == null) {
-          throw new NullPointerException("rulesAsText");
+        if (isBlank(rulesAsText)) {
+          return completedFuture(failed(new ServerErrorFailure(
+            "Cannot apply blank circulation rules")));
         }
 
         if (rules.rulesAsText.equals(rulesAsText)) {
@@ -103,7 +108,8 @@ public final class CirculationRulesCache {
 
         rules.rulesAsText = rulesAsText;
         rules.rulesAsDrools = Text2Drools.convert(rulesAsText);
-        log.debug("rulesAsDrools = {}", rules.rulesAsDrools);
+
+        log.info("rulesAsDrools = {}", rules.rulesAsDrools);
         rules.drools = new Drools(rules.rulesAsDrools);
 
         return ofAsync(() -> rules);
