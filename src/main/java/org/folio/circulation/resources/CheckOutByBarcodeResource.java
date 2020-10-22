@@ -62,11 +62,15 @@ public class CheckOutByBarcodeResource extends Resource {
 
   private final String rootPath;
   private final CheckOutStrategy checkOutStrategy;
+  private final ItemLimitValidationStrategy itemLimitValidationStrategy;
 
-  public CheckOutByBarcodeResource(String rootPath, HttpClient client, CheckOutStrategy checkOutStrategy) {
+  public CheckOutByBarcodeResource(String rootPath, HttpClient client, CheckOutStrategy checkOutStrategy,
+    ItemLimitValidationStrategy itemLimitValidationStrategy) {
+
     super(client);
     this.rootPath = rootPath;
     this.checkOutStrategy = checkOutStrategy;
+    this.itemLimitValidationStrategy = itemLimitValidationStrategy;
   }
 
   @Override
@@ -131,7 +135,7 @@ public class CheckOutByBarcodeResource extends Resource {
       loanRepository, message -> singleValidationError(message, ITEM_BARCODE, request.getItemBarcode()));
 
     final ItemLimitValidator itemLimitValidator = new ItemLimitValidator(
-      message -> singleValidationError(message, ITEM_BARCODE, request.getItemBarcode()), loanRepository);
+      itemLimitValidationStrategy, clients);
 
     final AutomatedPatronBlocksValidator automatedPatronBlocksValidator =
       new AutomatedPatronBlocksValidator(automatedPatronBlocksRepository,
@@ -168,7 +172,7 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenCompose(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
         LoanAndRelatedRecords::withTimeZone))
       .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
-      .thenComposeAsync(r -> r.after(itemLimitValidator::refuseWhenItemLimitIsReached))
+      .thenComposeAsync(r -> r.after(itemLimitValidator::validate))
       .thenComposeAsync(r -> r.after(overdueFinePolicyRepository::lookupOverdueFinePolicy))
       .thenComposeAsync(r -> r.after(lostItemPolicyRepository::lookupLostItemPolicy))
       .thenApply(r -> r.next(this::setItemLocationIdAtCheckout))

@@ -1,6 +1,6 @@
 #%RAML 1.0
 title: Circulation
-version: v9.4
+version: v9.5
 protocols: [ HTTP, HTTPS ]
 baseUri: http://localhost:9130
 
@@ -27,9 +27,7 @@ resourceTypes:
   collection: !include raml-util/rtypes/collection.raml
   collection-get: !include raml-util/rtypes/collection-get.raml
   collection-item: !include raml-util/rtypes/item-collection.raml
-
-/circulation:
-  /check-out-by-barcode:
+  check-out-by-barcode:
     displayName: Check out using barcode for item and loanee
     post:
       description: Creates a loan by checking out an item to a loanee
@@ -52,6 +50,12 @@ resourceTypes:
           body:
             text/plain:
               example: "Internal server error"
+
+/circulation:
+  /check-out-by-barcode:
+    type: check-out-by-barcode
+  /check-out-by-barcode-override-item-blocks:
+    type: check-out-by-barcode
   /override-check-out-by-barcode:
     displayName: Check out override using barcode for item and loanee
     post:

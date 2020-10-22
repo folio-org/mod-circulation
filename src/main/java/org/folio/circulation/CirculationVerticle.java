@@ -22,8 +22,10 @@ import org.folio.circulation.resources.LostItemCirculationRulesEngineResource;
 import org.folio.circulation.resources.NoticeCirculationRulesEngineResource;
 import org.folio.circulation.resources.OverdueFineCirculationRulesEngineResource;
 import org.folio.circulation.resources.OverrideCheckOutStrategy;
+import org.folio.circulation.resources.OverrideItemLimitValidationStrategy;
 import org.folio.circulation.resources.PickSlipsResource;
 import org.folio.circulation.resources.RegularCheckOutStrategy;
+import org.folio.circulation.resources.RegularItemLimitValidationStrategy;
 import org.folio.circulation.resources.RequestByInstanceIdResource;
 import org.folio.circulation.resources.RequestCirculationRulesEngineResource;
 import org.folio.circulation.resources.RequestCollectionResource;
@@ -69,10 +71,15 @@ public class CirculationVerticle extends AbstractVerticle {
 
     new TenantActivationResource().register(router);
 
-    new CheckOutByBarcodeResource("/circulation/check-out-by-barcode",
-      client, new RegularCheckOutStrategy()).register(router);
-    new CheckOutByBarcodeResource("/circulation/override-check-out-by-barcode",
-      client, new OverrideCheckOutStrategy()).register(router);
+    new CheckOutByBarcodeResource("/circulation/check-out-by-barcode", client,
+      new RegularCheckOutStrategy(), new RegularItemLimitValidationStrategy())
+      .register(router);
+    new CheckOutByBarcodeResource("/circulation/override-check-out-by-barcode", client,
+      new OverrideCheckOutStrategy(), new RegularItemLimitValidationStrategy())
+      .register(router);
+    new CheckOutByBarcodeResource("/circulation/check-out-by-barcode-override-item-blocks", client,
+      new RegularCheckOutStrategy(), new OverrideItemLimitValidationStrategy())
+      .register(router);
     new CheckInByBarcodeResource(client).register(router);
 
     new RenewByBarcodeResource(client).register(router);
