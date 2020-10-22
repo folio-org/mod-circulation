@@ -51,7 +51,7 @@ public class RegularRenewalStrategyTest {
   }
 
   @Test
-  public void canCollectErrorsWhenRecallRequestedAndPolicyNorLoanableAndItemLost() {
+  public void cannotRenewWhenRecallRequestedAndPolicyNorLoanableAndItemLost() {
     final var recallRequest = new RequestBuilder().recall().asDomainObject();
     final var loanPolicy = new LoanPolicyBuilder()
       .withLoanable(false).withRenewable(false).asDomainObject();
