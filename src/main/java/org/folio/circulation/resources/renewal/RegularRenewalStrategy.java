@@ -14,7 +14,7 @@ import static org.folio.circulation.resources.RenewalValidator.errorWhenEarlierO
 import static org.folio.circulation.resources.RenewalValidator.itemByIdValidationError;
 import static org.folio.circulation.resources.RenewalValidator.loanPolicyValidationError;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
-import static org.folio.circulation.support.results.Result.succeeded;
+import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -29,6 +29,7 @@ import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.library.ClosedLibraryStrategyService;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
@@ -58,10 +59,34 @@ public class RegularRenewalStrategy implements RenewalStrategy {
   }
 
   public Result<Loan> renew(Loan loan, DateTime systemDate, RequestQueue requestQueue) {
-    return refuseWhenRenewIsNotAllowed(loan, requestQueue)
-      .next(notUsed -> calculateNewDueDate(loan, requestQueue, systemDate))
-      .next(newDueDate -> errorWhenEarlierOrSameDueDate(loan, newDueDate))
-      .map(dueDate ->  loan.renew(dueDate, loan.getLoanPolicy().getId()));
+    //TODO: Create HttpResult wrapper that traps exceptions
+    try {
+      final List<ValidationError> errors = validateIfRenewIsAllowed(loan, requestQueue);
+      final LoanPolicy loanPolicy = loan.getLoanPolicy();
+
+      final Result<DateTime> proposedDueDateResult =
+        calculateNewDueDate(loan, requestQueue, systemDate);
+
+      //TODO: Need a more elegent way of combining validation errors
+      if (proposedDueDateResult.failed()) {
+        if (proposedDueDateResult.cause() instanceof ValidationErrorFailure) {
+          ValidationErrorFailure failureCause =
+            (ValidationErrorFailure) proposedDueDateResult.cause();
+
+          errors.addAll(failureCause.getErrors());
+        }
+      } else {
+        errorWhenEarlierOrSameDueDate(loan, proposedDueDateResult.value(), errors);
+      }
+
+      if (errors.isEmpty()) {
+        return proposedDueDateResult.map(dueDate -> loan.renew(dueDate, loanPolicy.getId()));
+      } else {
+        return failedValidation(errors);
+      }
+    } catch (Exception e) {
+      return failedDueToServerError(e);
+    }
   }
 
   private Result<DateTime> calculateNewDueDate(Loan loan, RequestQueue requestQueue, DateTime systemDate) {
@@ -72,7 +97,7 @@ public class RegularRenewalStrategy implements RenewalStrategy {
         .calculateDueDate(loan);
   }
 
-  private Result<Void> refuseWhenRenewIsNotAllowed(Loan loan, RequestQueue requestQueue) {
+  private List<ValidationError> validateIfRenewIsAllowed(Loan loan, RequestQueue requestQueue) {
     final List<ValidationError> errors = new ArrayList<>();
     final LoanPolicy loanPolicy = loan.getLoanPolicy();
     final Request firstRequest = getFirstRequestInQueue(requestQueue);
@@ -117,7 +142,7 @@ public class RegularRenewalStrategy implements RenewalStrategy {
       errors.add(loanPolicyValidationError(loanPolicy, "loan at maximum renewal number"));
     }
 
-    return errors.isEmpty() ? succeeded(null) : failedValidation(errors);
+    return errors;
   }
 
   private Request getFirstRequestInQueue(RequestQueue requestQueue) {
