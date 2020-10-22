@@ -5,7 +5,6 @@ import static java.util.stream.Collectors.mapping;
 import static java.util.stream.Collectors.toSet;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import static org.apache.commons.lang3.exception.ExceptionUtils.getStackTrace;
-import static org.folio.circulation.resources.AbstractCirculationRulesEngineResource.clearCache;
 import static org.folio.circulation.support.http.server.JsonHttpResponse.ok;
 import static org.folio.circulation.support.http.server.JsonHttpResponse.unprocessableEntity;
 import static org.folio.circulation.support.http.server.NoContentResponse.noContent;
@@ -27,6 +26,7 @@ import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.rules.CirculationRulesException;
 import org.folio.circulation.rules.CirculationRulesParser;
 import org.folio.circulation.rules.Text2Drools;
+import org.folio.circulation.rules.cache.CirculationRulesCache;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.ForwardOnFailure;
@@ -147,13 +147,12 @@ public class CirculationRulesResource extends Resource {
       return;
     }
 
-    clearCache(webContext.getTenantId());
-    clearCache(webContext.getTenantId());
-
     clients.circulationRulesStorage().put(rulesInput.copy())
       .thenApply(this::failWhenResponseOtherThanNoContent)
       .thenApply(result -> result.map(response -> noContent()))
       .thenAccept(webContext::writeResultToHttpResponse);
+
+    CirculationRulesCache.getInstance().clearCache(webContext.getTenantId());
   }
 
   private Result<Response> failWhenResponseOtherThanNoContent(Result<Response> result) {
