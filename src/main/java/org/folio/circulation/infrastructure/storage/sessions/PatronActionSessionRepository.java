@@ -6,23 +6,24 @@ import static org.folio.circulation.domain.notice.session.PatronActionSessionPro
 import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.LOAN_ID;
 import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.PATRON_ACTION_SESSIONS;
 import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.PATRON_ID;
-import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
-import static org.folio.circulation.support.json.JsonPropertyWriter.write;
-import static org.folio.circulation.support.results.Result.of;
-import static org.folio.circulation.support.results.Result.succeeded;
-import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
-import static org.folio.circulation.support.results.ResultBinding.mapResult;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.http.ResponseMapping.flatMapUsingJson;
 import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.CqlQuery.noQuery;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
+import static org.folio.circulation.support.results.Result.of;
+import static org.folio.circulation.support.results.Result.succeeded;
+import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
+import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
 import java.lang.invoke.MethodHandles;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -31,22 +32,22 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
-import org.folio.circulation.domain.notice.session.ExpiredSession;
-import org.folio.circulation.domain.notice.session.PatronActionType;
-import org.folio.circulation.domain.notice.session.PatronSessionRecord;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.User;
+import org.folio.circulation.domain.notice.session.ExpiredSession;
+import org.folio.circulation.domain.notice.session.PatronActionType;
+import org.folio.circulation.domain.notice.session.PatronSessionRecord;
+import org.folio.circulation.infrastructure.storage.inventory.LocationRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
-import org.folio.circulation.infrastructure.storage.inventory.LocationRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
+import org.folio.circulation.support.results.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -230,11 +231,13 @@ public class PatronActionSessionRepository {
       .thenApply(mapResult(loans -> setLoansForSessionRecords(sessionRecords, loans)));
   }
 
-  private CompletableFuture<Result<MultipleRecords<Loan>>> fetchCampusesForLoanItems(MultipleRecords<Loan> loans) {
-    List<Location> locations = loans.getRecords().stream()
-      .map(Loan::getItem)
-      .map(Item::getLocation)
-      .collect(Collectors.toList());
+  private CompletableFuture<Result<MultipleRecords<Loan>>> fetchCampusesForLoanItems(
+    MultipleRecords<Loan> loans) {
+
+    List<Location> locations = getLocations(loans);
+    if (locations.isEmpty()) {
+      return Result.ofAsync(() -> loans);
+    }
 
     return locationRepository.getCampuses(locations)
       .thenApply(mapResult(campuses ->
@@ -251,11 +254,13 @@ public class PatronActionSessionRepository {
     return loan.withItem(item.withLocation(locationWithCampus));
   }
 
-  private CompletableFuture<Result<MultipleRecords<Loan>>> fetchInstitutionsForLoanItems(MultipleRecords<Loan> loans) {
-    List<Location> locations = loans.getRecords().stream()
-      .map(Loan::getItem)
-      .map(Item::getLocation)
-      .collect(Collectors.toList());
+  private CompletableFuture<Result<MultipleRecords<Loan>>> fetchInstitutionsForLoanItems(
+    MultipleRecords<Loan> loans) {
+
+    List<Location> locations = getLocations(loans);
+    if (locations.isEmpty()) {
+      return Result.ofAsync(() -> loans);
+    }
 
     return locationRepository.getInstitutions(locations)
       .thenApply(mapResult(institutions ->
@@ -279,5 +284,13 @@ public class PatronActionSessionRepository {
 
     return sessionRecords.mapRecords(r ->
       r.withLoan(loanMap.get(r.getLoanId().toString())));
+  }
+
+  private List<Location> getLocations(MultipleRecords<Loan> loans) {
+    return loans.getRecords().stream()
+      .map(Loan::getItem)
+      .map(Item::getLocation)
+      .filter(Objects::nonNull)
+      .collect(Collectors.toList());
   }
 }
