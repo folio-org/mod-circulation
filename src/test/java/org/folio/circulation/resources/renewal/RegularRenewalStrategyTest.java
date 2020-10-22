@@ -44,7 +44,7 @@ public class RegularRenewalStrategyTest {
     final var loan = new LoanBuilder().asDomainObject().changeDueDate(currentDueDate)
       .withLoanPolicy(loanPolicy);
 
-    final var renewResult = renew(loan, null);
+    final var renewResult = renew(loan);
 
     assertThat(renewResult.succeeded(), is(true));
     assertThat(renewResult.value().getDueDate().getMillis(), is(expectedDueDate.getMillis()));
@@ -158,7 +158,7 @@ public class RegularRenewalStrategyTest {
       .withLoanPolicy(loanPolicy)
       .changeItemStatusForItemAndLoan(ItemStatus.from(itemStatus));
 
-    final var renewResult = renew(loan, null);
+    final var renewResult = renew(loan);
 
     assertThat(renewResult, hasValidationError(hasMessage("item is " + itemStatus)));
   }
@@ -171,7 +171,7 @@ public class RegularRenewalStrategyTest {
     final var loan = Loan.from(new JsonObject().put("renewalCount", renewalLimit + 1))
       .withLoanPolicy(loanPolicy);
 
-    final var renewResult = renew(loan, null);
+    final var renewResult = renew(loan);
 
     assertThat(renewResult, hasValidationError(hasMessage("loan at maximum renewal number")));
   }
@@ -198,15 +198,20 @@ public class RegularRenewalStrategyTest {
       .changeDueDate(now(UTC).plusMinutes(rollingPeriod.toMinutes() * 2))
       .withLoanPolicy(loanPolicy);
 
-    final var renewResult = renew(loan, null);
+    final var renewResult = renew(loan);
 
     assertThat(renewResult, hasValidationError(hasMessage("renewal would not change the due date")));
   }
 
   private Result<Loan> renew(Loan loan, Request topRequest) {
-    final List<Request> queueList = topRequest != null ? singletonList(topRequest)
-      : emptyList();
-    final var requestQueue = new RequestQueue(queueList);
+    final var requestQueue = new RequestQueue(singletonList(topRequest));
+    final var systemDate = now(UTC);
+
+    return new RegularRenewalStrategy().renew(loan, systemDate, requestQueue);
+  }
+
+  private Result<Loan> renew(Loan loan) {
+    final var requestQueue = new RequestQueue(emptyList());
     final var systemDate = now(UTC);
 
     return new RegularRenewalStrategy().renew(loan, systemDate, requestQueue);
@@ -219,6 +224,7 @@ public class RegularRenewalStrategyTest {
   }
 
   private Result<Loan> renew(LoanPolicy loanPolicy) {
-    return renew(loanPolicy, null);
+    final var loan = new LoanBuilder().asDomainObject().withLoanPolicy(loanPolicy);
+    return renew(loan);
   }
 }
