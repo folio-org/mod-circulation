@@ -655,4 +655,24 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   public DateTime getOriginalDueDate() {
     return originalDueDate;
   }
+
+  public ItemStatus getItemStatus() {
+    if (item != null) {
+      return item.getStatus();
+    }
+
+   return ItemStatus.from(getItemStatusName());
+  }
+
+  public String getItemStatusName() {
+    if (item != null) {
+      return item.getStatusName();
+    }
+
+    if (representation.containsKey(LoanProperties.ITEM_STATUS)) {
+      return representation.getString(LoanProperties.ITEM_STATUS);
+    }
+
+    return null;
+  }
 }
