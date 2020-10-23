@@ -423,10 +423,10 @@ public class DeclareLostAPITests extends APITests {
     declareLostFixtures.declareItemLost(builder);
 
     // There should be five events published - "check out", "log event", "declared lost"
-    // and two "log record"
+    // and one "log record"
     List<JsonObject> publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(5));
+      .until(FakePubSub::getPublishedEvents, hasSize(4));
 
     JsonObject event = publishedEvents.stream()
       .filter(evt -> ITEM_DECLARED_LOST.equalsIgnoreCase(evt.getString("eventType")))

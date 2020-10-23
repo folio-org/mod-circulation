@@ -1,7 +1,7 @@
 package api.loans;
 
-import static api.support.PubsubPublisherTestUtils.assertThatPublishedNoticeLogRecordEventsCountIsEqualTo;
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
+import static api.support.PubsubPublisherTestUtils.assertThatPublishedNoticeLogRecordEventsCountIsEqualTo;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.ACTION_TYPE;
 import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.ID;
@@ -361,6 +361,58 @@ public class EndExpiredPatronActionSessionTests extends APITests {
     checkThatBunchOfExpiredSessionsWereAddedAndRemovedByTimer(100, "");
   }
 
+  @Test
+  public void patronNoticeContextContainsUserTokensWhenNoticeIsTriggeredByExpiredSession() {
+    IndividualResource james = usersFixture.james();
+    ItemResource nod = itemsFixture.basedUponNod();
+    checkOutFixture.checkOutByBarcode(nod, james);
+
+    patronSessionRecordsClient.getAll().stream()
+      .filter(session -> session.getMap().get(ACTION_TYPE)
+        .equals(PatronActionType.CHECK_OUT.getRepresentation()))
+      .map(session -> session.getString(PATRON_ID))
+      .forEach(patronId -> createExpiredEndSession(patronId, CHECK_OUT));
+
+    expiredSessionProcessingClient.runRequestExpiredSessionsProcessing(204);
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(patronSessionRecordsClient::getAll,  Matchers.hasSize(0));
+
+    assertThat(patronNoticesClient.getAll(), hasSize(1));
+    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+    assertThatPublishedLogRecordEventsAreValid();
+
+    assertThat(patronNoticesClient.getAll().get(0),
+      hasEmailNoticeProperties(james.getId(), CHECK_OUT_TEMPLATE_ID,
+        TemplateContextMatchers.getUserContextMatchers(james)));
+  }
+
+  @Test
+  public void expiredSessionWithNonExistentItemIdShouldBeEnded() {
+    IndividualResource james = usersFixture.james();
+    ItemResource nod = itemsFixture.basedUponNod();
+
+    checkOutFixture.checkOutByBarcode(nod, james);
+    expiredEndSessionClient.deleteAll();
+
+    List<JsonObject> sessions = patronSessionRecordsClient.getAll();
+    assertThat(sessions, Matchers.hasSize(1));
+
+    UUID loanId = UUID.fromString(sessions.get(0).getString(LOAN_ID));
+    String patronId = sessions.get(0).getString(PATRON_ID);
+    IndividualResource loan = loansFixture.getLoanById(loanId);
+    itemsClient.delete(UUID.fromString(loan.getJson().getString("itemId")));
+
+    createExpiredEndSession(patronId, CHECK_OUT);
+    expiredSessionProcessingClient.runRequestExpiredSessionsProcessing(204);
+
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(patronSessionRecordsClient::getAll, empty());
+    assertThat(patronNoticesClient.getAll(), hasSize(0));
+    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+  }
+
   private void checkThatBunchOfExpiredSessionsWereAddedAndRemovedByTimer(
     int numberOfSessions, String actionType) {
 
@@ -393,31 +445,5 @@ public class EndExpiredPatronActionSessionTests extends APITests {
     expiredEndSessionClient.create(new EndSessionBuilder()
       .withPatronId(patronId)
       .withActionType(actionType));
-  }
-
-  @Test
-  public void patronNoticeContextContainsUserTokensWhenNoticeIsTriggeredByExpiredSession() {
-    IndividualResource james = usersFixture.james();
-    ItemResource nod = itemsFixture.basedUponNod();
-    checkOutFixture.checkOutByBarcode(nod, james);
-
-    patronSessionRecordsClient.getAll().stream()
-      .filter(session -> session.getMap().get(ACTION_TYPE)
-        .equals(PatronActionType.CHECK_OUT.getRepresentation()))
-      .map(session -> session.getString(PATRON_ID))
-      .forEach(patronId -> createExpiredEndSession(patronId, CHECK_OUT));
-
-    expiredSessionProcessingClient.runRequestExpiredSessionsProcessing(204);
-    Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
-      .until(patronSessionRecordsClient::getAll,  Matchers.hasSize(0));
-
-    assertThat(patronNoticesClient.getAll(), hasSize(1));
-    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
-    assertThatPublishedLogRecordEventsAreValid();
-
-    assertThat(patronNoticesClient.getAll().get(0),
-      hasEmailNoticeProperties(james.getId(), CHECK_OUT_TEMPLATE_ID,
-        TemplateContextMatchers.getUserContextMatchers(james)));
   }
 }

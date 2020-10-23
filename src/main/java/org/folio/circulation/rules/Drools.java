@@ -6,12 +6,13 @@ import static org.folio.circulation.resources.AbstractCirculationRulesEngineReso
 import static org.folio.circulation.resources.AbstractCirculationRulesEngineResource.PATRON_TYPE_ID_NAME;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
-import java.util.List;
+import java.util.Collections;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.drools.core.definitions.rule.impl.RuleImpl;
 import org.drools.core.event.DefaultAgendaEventListener;
-import org.drools.core.rule.RuleConditionElement;
+import org.folio.circulation.domain.Location;
 import org.kie.api.KieServices;
 import org.kie.api.builder.KieBuilder;
 import org.kie.api.builder.KieFileSystem;
@@ -19,8 +20,6 @@ import org.kie.api.builder.Message.Level;
 import org.kie.api.event.rule.AfterMatchFiredEvent;
 import org.kie.api.runtime.KieContainer;
 import org.kie.api.runtime.KieSession;
-
-import org.folio.circulation.domain.Location;
 
 import io.vertx.core.MultiMap;
 import io.vertx.core.json.JsonArray;
@@ -33,8 +32,7 @@ public class Drools {
   // https://docs.jboss.org/drools/release/6.2.0.CR1/drools-docs/html/ch19.html
   // http://www.deepakgaikwad.net/index.php/2016/05/16/drools-tutorial-beginners.html
 
-  private Match match = new Match();
-  private KieContainer kieContainer;
+  private final KieContainer kieContainer;
 
   /**
    * Create the Drools kieSession based on a String containing a drools file.
@@ -52,14 +50,13 @@ public class Drools {
     kieContainer = kieServices.newKieContainer(kieServices.getRepository().getDefaultReleaseId());
   }
 
-  private KieSession createSession(MultiMap params, Location location) {
+  private KieSession createSession(MultiMap params, Location location, Match match) {
     String itemTypeId = params.get(ITEM_TYPE_ID_NAME);
     String loanTypeId = params.get(LOAN_TYPE_ID_NAME);
     String patronGroupId = params.get(PATRON_TYPE_ID_NAME);
     String locationId = params.get(LOCATION_ID_NAME);
 
     KieSession kieSession = kieContainer.newKieSession();
-    match.loanPolicyId = null;
     kieSession.setGlobal("match", match);
     kieSession.insert(new ItemType(itemTypeId));
     kieSession.insert(new LoanType(loanTypeId));
@@ -68,6 +65,7 @@ public class Drools {
     kieSession.insert(new Institution(location.getInstitutionId()));
     kieSession.insert(new Campus(location.getCampusId()));
     kieSession.insert(new Library(location.getLibraryId()));
+
     return kieSession;
   }
 
@@ -78,12 +76,15 @@ public class Drools {
    * @return CirculationRuleMatch object with the name of the loan policy and rule conditions
    */
   public CirculationRuleMatch loanPolicy(MultiMap params, Location location) {
-    KieSession kieSession = createSession(params, location);
-    RuleEventListener ruleEventListener = new RuleEventListener();
+    final var match = new Match();
+    final KieSession kieSession = createSession(params, location, match);
+    final RuleEventListener ruleEventListener = new RuleEventListener();
+
     kieSession.addEventListener(ruleEventListener);
     kieSession.fireAllRules();
     kieSession.dispose();
-    List<String> appliedRuleConditions = ruleEventListener.getRuleConditions();
+
+    final Set<String> appliedRuleConditions = ruleEventListener.getRuleConditions();
 
     return new CirculationRuleMatch(match.loanPolicyId, new AppliedRuleConditions(
       isRuleItemTypePresent(appliedRuleConditions),
@@ -99,7 +100,8 @@ public class Drools {
    * @return matches, each match has a loanPolicyId and a circulationRuleLine field
    */
   public JsonArray loanPolicies(MultiMap params, Location location) {
-    KieSession kieSession = createSession(params, location);
+    final var match = new Match();
+    final KieSession kieSession = createSession(params, location, match);
 
     JsonArray array = new JsonArray();
 
@@ -107,8 +109,7 @@ public class Drools {
       JsonObject json = new JsonObject();
 
       write(json, "loanPolicyId", match.loanPolicyId);
-
-      writeLineMatch(json);
+      write(json, "circulationRuleLine", match.lineNumber);
 
       array.add(json);
     }
@@ -124,9 +125,12 @@ public class Drools {
    * @return CirculationRuleMatch object with the name of the loan policy and rule conditions
    */
   public CirculationRuleMatch requestPolicy(MultiMap params, Location location) {
-    KieSession kieSession = createSession(params, location);
+    final var match = new Match();
+    final KieSession kieSession = createSession(params, location, match);
+
     kieSession.fireAllRules();
     kieSession.dispose();
+
     return new CirculationRuleMatch(match.requestPolicyId,
       new AppliedRuleConditions(false, false, false));
   }
@@ -139,7 +143,8 @@ public class Drools {
    * @return matches, each match has a requestPolicyId and a circulationRuleLine field
    */
   public JsonArray requestPolicies(MultiMap params, Location location) {
-    KieSession kieSession = createSession(params, location);
+    final var match = new Match();
+    final KieSession kieSession = createSession(params, location, match);
 
     JsonArray array = new JsonArray();
 
@@ -147,7 +152,7 @@ public class Drools {
       JsonObject json = new JsonObject();
 
       write(json, "requestPolicyId", match.requestPolicyId);
-      writeLineMatch(json);
+      write(json, "circulationRuleLine", match.lineNumber);
 
       array.add(json);
     }
@@ -164,9 +169,12 @@ public class Drools {
    * @return CirculationRuleMatch object with the name of the loan policy and rule conditions
    */
   public CirculationRuleMatch noticePolicy(MultiMap params, Location location) {
-    KieSession kieSession = createSession(params, location);
+    final var match = new Match();
+    final KieSession kieSession = createSession(params, location, match);
+
     kieSession.fireAllRules();
     kieSession.dispose();
+
     return new CirculationRuleMatch(match.noticePolicyId,
       new AppliedRuleConditions(false, false, false));
   }
@@ -179,7 +187,8 @@ public class Drools {
    * @return matches, each match has a noticePolicyId and a circulationRuleLine field
    */
   public JsonArray noticePolicies(MultiMap params, Location location) {
-    KieSession kieSession = createSession(params, location);
+    final var match = new Match();
+    final KieSession kieSession = createSession(params, location, match);
 
     JsonArray array = new JsonArray();
 
@@ -187,7 +196,7 @@ public class Drools {
       JsonObject json = new JsonObject();
 
       json.put("noticePolicyId", match.noticePolicyId);
-      writeLineMatch(json);
+      write(json, "circulationRuleLine", match.lineNumber);
 
       array.add(json);
     }
@@ -204,9 +213,12 @@ public class Drools {
    * @return CirculationRuleMatch object with the name of the loan policy and rule conditions
    */
   public CirculationRuleMatch overduePolicy(MultiMap params, Location location) {
-    KieSession kieSession = createSession(params, location);
+    final var match = new Match();
+    final KieSession kieSession = createSession(params, location, match);
+
     kieSession.fireAllRules();
     kieSession.dispose();
+
     return new CirculationRuleMatch(match.overduePolicyId,
       new AppliedRuleConditions(false, false, false));
   }
@@ -219,7 +231,8 @@ public class Drools {
    * @return matches, each match has a overduePolicyId and a circulationRuleLine field
    */
   public JsonArray overduePolicies(MultiMap params, Location location) {
-    KieSession kieSession = createSession(params, location);
+    final var match = new Match();
+    final KieSession kieSession = createSession(params, location, match);
 
     JsonArray array = new JsonArray();
 
@@ -227,7 +240,7 @@ public class Drools {
       JsonObject json = new JsonObject();
 
       write(json, "overduePolicyId", match.overduePolicyId);
-      writeLineMatch(json);
+      write(json, "circulationRuleLine", match.lineNumber);
 
       array.add(json);
     }
@@ -243,9 +256,12 @@ public class Drools {
    * @return CirculationRuleMatch object with the name of the loan policy and rule conditions
    */
   public CirculationRuleMatch lostItemPolicy(MultiMap params, Location location) {
-    KieSession kieSession = createSession(params, location);
+    final var match = new Match();
+    final KieSession kieSession = createSession(params, location, match);
+
     kieSession.fireAllRules();
     kieSession.dispose();
+
     return new CirculationRuleMatch(match.lostItemPolicyId,
       new AppliedRuleConditions(false, false, false));
   }
@@ -258,7 +274,8 @@ public class Drools {
    * @return matches, each match has a lostItemPolicyId and a circulationRuleLine field
    */
   public JsonArray lostItemPolicies(MultiMap params, Location location) {
-    KieSession kieSession = createSession(params, location);
+    final var match = new Match();
+    final KieSession kieSession = createSession(params, location, match);
 
     JsonArray array = new JsonArray();
 
@@ -266,17 +283,13 @@ public class Drools {
       JsonObject json = new JsonObject();
 
       write(json, "lostItemPolicyId", match.lostItemPolicyId);
-      writeLineMatch(json);
+      write(json, "circulationRuleLine", match.lineNumber);
 
       array.add(json);
     }
 
     kieSession.dispose();
     return array;
-  }
-
-  private void writeLineMatch(JsonObject json) {
-    write(json, "circulationRuleLine", match.lineNumber);
   }
 
   // NOTE: methods below used for testing
@@ -303,34 +316,35 @@ public class Drools {
     return new Drools(droolsFile).requestPolicy(params, location).getPolicyId();
   }
 
-  private boolean isRuleItemTypePresent(List<String> conditions) {
+  private boolean isRuleItemTypePresent(Set<String> conditions) {
     return conditions.contains("ItemType");
   }
 
-  private boolean isRuleLoanTypePresent(List<String> conditions) {
+  private boolean isRuleLoanTypePresent(Set<String> conditions) {
     return conditions.contains("LoanType");
   }
 
-  private boolean isRulePatronGroupPresent(List<String> conditions) {
+  private boolean isRulePatronGroupPresent(Set<String> conditions) {
     return conditions.contains("PatronGroup");
   }
 
-  private class RuleEventListener extends DefaultAgendaEventListener {
-
-    private List<RuleConditionElement> ruleConditionElements;
+  private static class RuleEventListener extends DefaultAgendaEventListener {
+    private Set<String> ruleConditionElements = Collections.emptySet();
 
     @Override
     public void afterMatchFired(AfterMatchFiredEvent event) {
       RuleImpl rule = (RuleImpl) event.getMatch().getRule();
-      ruleConditionElements = rule.getLhs().getChildren();
+
+      if (rule.getLhs() != null && rule.getLhs().getChildren() != null) {
+        ruleConditionElements = rule.getLhs().getChildren().stream()
+          .map(Object::toString)
+          .map(this::getRuleConditionFromStringRuleRepresentation)
+          .collect(Collectors.toSet());
+      }
     }
 
-    public List<String> getRuleConditions() {
-
-      return ruleConditionElements.stream()
-        .map(Object::toString)
-        .map(this::getRuleConditionFromStringRuleRepresentation)
-        .collect(Collectors.toList());
+    public Set<String> getRuleConditions() {
+      return Collections.unmodifiableSet(ruleConditionElements);
     }
 
     private String getRuleConditionFromStringRuleRepresentation(String stringRepresentation) {

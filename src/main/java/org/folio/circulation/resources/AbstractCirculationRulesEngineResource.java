@@ -8,10 +8,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-import org.folio.circulation.rules.RulesExecutionParameters;
 import org.folio.circulation.rules.CirculationRuleMatch;
 import org.folio.circulation.rules.CirculationRulesProcessor;
-import org.folio.circulation.rules.cache.CirculationRulesCache;
+import org.folio.circulation.rules.RulesExecutionParameters;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.http.server.ClientErrorResponse;
 import org.folio.circulation.support.http.server.JsonHttpResponse;
@@ -137,18 +136,6 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
         invalidUuid(request, LOAN_TYPE_ID_NAME) ||
         invalidUuid(request, PATRON_TYPE_ID_NAME) ||
         invalidUuid(request, LOCATION_ID_NAME);
-  }
-
-  public static void setCacheTime(long triggerAgeInMilliseconds, long maxAgeInMilliseconds) {
-    CirculationRulesCache.setCacheTime(triggerAgeInMilliseconds, maxAgeInMilliseconds);
-  }
-
-  public static void dropCache() {
-    CirculationRulesCache.dropCache();
-  }
-
-  static void clearCache(String tenantId) {
-    CirculationRulesCache.clearCache(tenantId);
   }
 
   protected abstract String getPolicyIdKey();

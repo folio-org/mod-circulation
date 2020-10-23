@@ -770,10 +770,10 @@ public class RequestsAPIUpdatingTests extends APITests {
 
     // There should be ten events published - for "check out", for "log event: check out",
     // for "log event: request created", for "log event: request updated" for "recall" and for "replace"
-    // and four log events for loans
+    // and three log events for loans
     List<JsonObject> publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(10));
+      .until(FakePubSub::getPublishedEvents, hasSize(9));
 
     Map<String, List<JsonObject>> events = publishedEvents.stream().collect(groupingBy(o -> o.getString("eventType")));
 
