@@ -2,10 +2,9 @@ package org.folio.circulation.resources;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Predicate.not;
-import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
+import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.http.client.PageLimit.limit;
 import static org.folio.circulation.support.results.Result.ofAsync;
-import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
 import java.util.Collection;
@@ -19,26 +18,19 @@ import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.rules.AppliedRuleConditions;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.results.Result;
 
-public class RegularItemLimitValidationStrategy implements ItemLimitValidationStrategy {
+import io.vertx.core.json.JsonObject;
+
+public abstract class ItemLimitHandlingStrategy {
   private static final PageLimit LOANS_PAGE_LIMIT = limit(10000);
   private static final String ITEM_BARCODE = "itemBarcode";
 
-  @Override
-  public CompletableFuture<Result<Void>> validate(Loan loan, Clients clients) {
-    if (loan.getLoanPolicy().getItemLimit() == null) {
-      return completedFuture(succeeded(null));
-    }
+  public abstract CompletableFuture<Result<Void>> handle(Loan loan, JsonObject request,
+    Clients clients);
 
-    return succeeded(loan)
-      .failAfter(l -> isLimitReached(loan, clients), this::buildValidationFailure)
-      .thenApply(mapResult(v -> null));
-  }
-
-  private CompletableFuture<Result<Boolean>> isLimitReached(Loan loan, Clients clients) {
+  protected CompletableFuture<Result<Boolean>> isLimitReached(Loan loan, Clients clients) {
     LoanPolicy loanPolicy = loan.getLoanPolicy();
     AppliedRuleConditions appliedRuleConditions = loanPolicy.getRuleConditions();
 
@@ -88,16 +80,17 @@ public class RegularItemLimitValidationStrategy implements ItemLimitValidationSt
       && expectedLoanType.equals(item.determineLoanTypeForItem());
   }
 
-  private ValidationErrorFailure buildValidationFailure(Loan loan) {
+  protected CompletableFuture<Result<Void>> fail(Loan loan, boolean limitIsReached) {
     LoanPolicy loanPolicy = loan.getLoanPolicy();
+    String itemBarcode = loan.getItem().getBarcode();
 
-    String errorMessage = String.format("Patron has reached maximum limit of %d items %s",
-      loanPolicy.getItemLimit(), buildErrorMessage(loanPolicy));
+    String errorMessage = String.format("Patron %s reached maximum limit of %d items %s",
+      limitIsReached ? "has" : "has not", loanPolicy.getItemLimit(), buildErrorMessage(loanPolicy));
 
-    return singleValidationError(errorMessage, ITEM_BARCODE, loan.getItem().getBarcode());
+    return completedFuture(failedValidation(errorMessage, ITEM_BARCODE, itemBarcode));
   }
 
-  private static String buildErrorMessage(LoanPolicy loanPolicy) {
+  private String buildErrorMessage(LoanPolicy loanPolicy) {
     AppliedRuleConditions ruleConditions = loanPolicy.getRuleConditions();
 
     boolean isRuleMaterialTypePresent = ruleConditions.isItemTypePresent();
@@ -120,4 +113,11 @@ public class RegularItemLimitValidationStrategy implements ItemLimitValidationSt
     return StringUtils.EMPTY;
   }
 
+  protected static boolean itemLimitIsNotSet(Loan loan) {
+    return loan.getLoanPolicy().getItemLimit() == null;
+  }
+
+  protected CompletableFuture<Result<Void>> doNothing() {
+    return ofAsync(() -> null);
+  }
 }

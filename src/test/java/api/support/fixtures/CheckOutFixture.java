@@ -1,11 +1,13 @@
 package api.support.fixtures;
 
 import static api.support.APITestContext.getOkapiHeadersFromContext;
+import static api.support.http.InterfaceUrls.checkOutByBarcodeOverrideItemBlocksUrl;
 import static api.support.http.InterfaceUrls.checkOutByBarcodeUrl;
 import static api.support.http.InterfaceUrls.overrideCheckOutByBarcodeUrl;
 
 import java.util.UUID;
 
+import api.support.builders.CheckOutByBarcodeOverrideItemBlocksRequestBuilder;
 import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
@@ -101,6 +103,22 @@ public class CheckOutFixture {
 
     return restAssuredClient.post(request, overrideCheckOutByBarcodeUrl(),
       expectedStatusCode, "override-check-out-by-barcode-request");
+  }
+
+  public IndividualResource checkOutByBarcodeOverrideItemBlocks(
+    CheckOutByBarcodeOverrideItemBlocksRequestBuilder builder) {
+
+    return attemptCheckOutByBarcodeOverrideItemBlocks(201, builder);
+  }
+
+  public IndividualResource attemptCheckOutByBarcodeOverrideItemBlocks(int expectedStatusCode,
+    CheckOutByBarcodeOverrideItemBlocksRequestBuilder builder) {
+
+    JsonObject request = builder.create();
+
+    return new IndividualResource(
+      restAssuredClient.post(request, checkOutByBarcodeOverrideItemBlocksUrl(), expectedStatusCode,
+        "check-out-by-barcode-override-item-blocks-request"));
   }
 
   private IndividualResource defaultServicePoint() {

@@ -141,6 +141,10 @@ public class InterfaceUrls {
     return circulationModuleUrl("/circulation/override-check-out-by-barcode");
   }
 
+  public static URL checkOutByBarcodeOverrideItemBlocksUrl() {
+    return circulationModuleUrl("/circulation/check-out-by-barcode-override-item-blocks");
+  }
+
   public static URL checkInByBarcodeUrl() {
     return circulationModuleUrl("/circulation/check-in-by-barcode");
   }

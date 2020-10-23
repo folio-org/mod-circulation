@@ -26,7 +26,7 @@ import org.folio.circulation.domain.validation.AlreadyCheckedOutValidator;
 import org.folio.circulation.domain.validation.AutomatedPatronBlocksValidator;
 import org.folio.circulation.domain.validation.ExistingOpenLoanValidator;
 import org.folio.circulation.domain.validation.InactiveUserValidator;
-import org.folio.circulation.domain.validation.ItemLimitValidator;
+import org.folio.circulation.domain.validation.ItemLimitHandler;
 import org.folio.circulation.domain.validation.ItemNotFoundValidator;
 import org.folio.circulation.domain.validation.ItemStatusValidator;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
@@ -62,15 +62,15 @@ public class CheckOutByBarcodeResource extends Resource {
 
   private final String rootPath;
   private final CheckOutStrategy checkOutStrategy;
-  private final ItemLimitValidationStrategy itemLimitValidationStrategy;
+  private final ItemLimitHandlingStrategy itemLimitHandlingStrategy;
 
   public CheckOutByBarcodeResource(String rootPath, HttpClient client, CheckOutStrategy checkOutStrategy,
-    ItemLimitValidationStrategy itemLimitValidationStrategy) {
+    ItemLimitHandlingStrategy itemLimitHandlingStrategy) {
 
     super(client);
     this.rootPath = rootPath;
     this.checkOutStrategy = checkOutStrategy;
-    this.itemLimitValidationStrategy = itemLimitValidationStrategy;
+    this.itemLimitHandlingStrategy = itemLimitHandlingStrategy;
   }
 
   @Override
@@ -84,8 +84,8 @@ public class CheckOutByBarcodeResource extends Resource {
   private void checkOut(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
 
-    CheckOutByBarcodeRequest request = CheckOutByBarcodeRequest.fromJson(
-      routingContext.getBodyAsJson());
+    JsonObject requestJson = routingContext.getBodyAsJson();
+    CheckOutByBarcodeRequest request = CheckOutByBarcodeRequest.fromJson(requestJson);
 
     final Clients clients = Clients.create(context, client);
 
@@ -134,8 +134,8 @@ public class CheckOutByBarcodeResource extends Resource {
     final ExistingOpenLoanValidator openLoanValidator = new ExistingOpenLoanValidator(
       loanRepository, message -> singleValidationError(message, ITEM_BARCODE, request.getItemBarcode()));
 
-    final ItemLimitValidator itemLimitValidator = new ItemLimitValidator(
-      itemLimitValidationStrategy, clients);
+    final ItemLimitHandler itemLimitHandler = new ItemLimitHandler(
+      itemLimitHandlingStrategy, requestJson, clients);
 
     final AutomatedPatronBlocksValidator automatedPatronBlocksValidator =
       new AutomatedPatronBlocksValidator(automatedPatronBlocksRepository,
@@ -172,12 +172,12 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenCompose(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
         LoanAndRelatedRecords::withTimeZone))
       .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
-      .thenComposeAsync(r -> r.after(itemLimitValidator::validate))
+      .thenComposeAsync(r -> r.after(itemLimitHandler::handle))
       .thenComposeAsync(r -> r.after(overdueFinePolicyRepository::lookupOverdueFinePolicy))
       .thenComposeAsync(r -> r.after(lostItemPolicyRepository::lookupLostItemPolicy))
       .thenApply(r -> r.next(this::setItemLocationIdAtCheckout))
       .thenComposeAsync(r -> r.after(relatedRecords -> checkOutStrategy.checkOut(relatedRecords,
-        routingContext.getBodyAsJson(), clients)))
+        requestJson, clients)))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
       .thenComposeAsync(r -> r.after(updateItem::onCheckOut))
       .thenComposeAsync(r -> r.after(loanService::truncateLoanWhenItemRecalled))

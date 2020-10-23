@@ -27,7 +27,9 @@ resourceTypes:
   collection: !include raml-util/rtypes/collection.raml
   collection-get: !include raml-util/rtypes/collection-get.raml
   collection-item: !include raml-util/rtypes/item-collection.raml
-  check-out-by-barcode:
+
+/circulation:
+  /check-out-by-barcode:
     displayName: Check out using barcode for item and loanee
     post:
       description: Creates a loan by checking out an item to a loanee
@@ -50,12 +52,6 @@ resourceTypes:
           body:
             text/plain:
               example: "Internal server error"
-
-/circulation:
-  /check-out-by-barcode:
-    type: check-out-by-barcode
-  /check-out-by-barcode-override-item-blocks:
-    type: check-out-by-barcode
   /override-check-out-by-barcode:
     displayName: Check out override using barcode for item and loanee
     post:
@@ -79,6 +75,29 @@ resourceTypes:
           body:
             text/plain:
               example: "Internal server error"
+  /check-out-by-barcode-override-item-blocks:
+      displayName: Override item blocks and check out using barcode for item and loanee
+      post:
+        description: Creates a loan by overriding item blocks and checking out an item to a loanee
+        is: [
+          language,
+          validate
+        ]
+        body:
+          application/json:
+            type: !include check-out-by-barcode-override-item-blocks-request.json
+            example: !include examples/check-out-by-barcode-override-item-blocks-request.json
+        responses:
+          201:
+            body:
+              application/json:
+                type: loan
+                example: !include examples/loan.json
+          500:
+            description: "Internal server error"
+            body:
+              text/plain:
+                example: "Internal server error"
   /renew-by-barcode:
     displayName: Renew an existing loan using barcode for item and loanee
     post:
