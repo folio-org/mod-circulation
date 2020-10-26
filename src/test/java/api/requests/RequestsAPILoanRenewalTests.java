@@ -541,12 +541,10 @@ public class RequestsAPILoanRenewalTests extends APITests {
       .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .by(usersFixture.charlotte()));
 
-    Response response = loansFixture.attemptRenewal(500, smallAngryPlanet, rebecca);
+    Response response = loansFixture.attemptRenewal(422, smallAngryPlanet, rebecca);
 
-    assertThat(
-      response.getBody(),
-      is("Item's loan policy has fixed profile but alternative renewal period for holds is specified")
-    );
+    assertThat(response.getJson(), hasErrorWith(
+      hasMessage("Item's loan policy has fixed profile but alternative renewal period for holds is specified")));
   }
 
   @Test
@@ -585,12 +583,10 @@ public class RequestsAPILoanRenewalTests extends APITests {
       .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .by(usersFixture.charlotte()));
 
-    Response response = loansFixture.attemptRenewal(500, smallAngryPlanet, rebecca);
+    Response response = loansFixture.attemptRenewal(422, smallAngryPlanet, rebecca);
 
-    assertThat(
-      response.getBody(),
-      is("Item's loan policy has fixed profile but renewal period is specified")
-    );
+    assertThat(response.getJson(), hasErrorWith(
+      hasMessage("Item's loan policy has fixed profile but renewal period is specified")));
   }
 
   private void loanPolicyWithRollingProfileAndRenewingIsForbiddenWhenHoldIsPending() {
