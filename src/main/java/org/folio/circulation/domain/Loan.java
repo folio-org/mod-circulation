@@ -26,6 +26,7 @@ import static org.folio.circulation.domain.representations.LoanProperties.DATE_L
 import static org.folio.circulation.domain.representations.LoanProperties.DECLARED_LOST_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.DUE_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.ITEM_LOCATION_ID_AT_CHECKOUT;
+import static org.folio.circulation.domain.representations.LoanProperties.ITEM_STATUS;
 import static org.folio.circulation.domain.representations.LoanProperties.LOAN_POLICY_ID;
 import static org.folio.circulation.domain.representations.LoanProperties.LOST_ITEM_HAS_BEEN_BILLED;
 import static org.folio.circulation.domain.representations.LoanProperties.LOST_ITEM_POLICY_ID;
@@ -654,5 +655,21 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public DateTime getOriginalDueDate() {
     return originalDueDate;
+  }
+
+  public ItemStatus getItemStatus() {
+    if (item != null) {
+      return item.getStatus();
+    }
+
+   return ItemStatus.from(getItemStatusName());
+  }
+
+  public String getItemStatusName() {
+    if (item != null) {
+      return item.getStatusName();
+    }
+
+    return getProperty(representation, ITEM_STATUS);
   }
 }
