@@ -2,6 +2,7 @@ package api.support.builders;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Function;
 
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
@@ -80,6 +81,14 @@ public class JsonBuilder {
   protected void put(JsonObject representation, String property, JsonArray value) {
     if(value != null) {
       representation.put(property, value);
+    }
+  }
+
+  protected <T, V> void putIfNotNull(JsonObject representation, String property,
+    T value, Function<T, V> toJsonMapper) {
+
+    if(value != null) {
+      representation.put(property, toJsonMapper.apply(value));
     }
   }
 
