@@ -1,7 +1,7 @@
 package api.support.matchers;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.hasItems;
 
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.ValidationError;
@@ -33,14 +33,17 @@ public final class ResultMatchers {
     };
   }
 
-  public static <T> Matcher<Result<T>> hasValidationError(Matcher<ValidationError> errorMatcher) {
+  @SafeVarargs
+  public static <T> Matcher<Result<T>> hasValidationErrors(
+    Matcher<ValidationError>... errorMatchers) {
+
     return new TypeSafeMatcher<>() {
       @Override
       protected boolean matchesSafely(Result<T> item) {
         if (item.failed() && item.cause() instanceof ValidationErrorFailure) {
           final var validationFailure = (ValidationErrorFailure) item.cause();
 
-          return hasItem(errorMatcher).matches(validationFailure.getErrors());
+          return hasItems(errorMatchers).matches(validationFailure.getErrors());
         }
 
         return false;
@@ -48,9 +51,13 @@ public final class ResultMatchers {
 
       @Override
       public void describeTo(Description description) {
-        description.appendText("Result has validation error matches: ")
-          .appendDescriptionOf(errorMatcher);
+        description.appendText("Result has validation errors matching: ")
+          .appendDescriptionOf(hasItems(errorMatchers));
       }
     };
+  }
+
+  public static <T> Matcher<Result<T>> hasValidationError(Matcher<ValidationError> errorMatcher) {
+    return hasValidationErrors(errorMatcher);
   }
 }

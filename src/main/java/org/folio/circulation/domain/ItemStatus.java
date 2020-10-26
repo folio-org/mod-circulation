@@ -21,6 +21,13 @@ public enum ItemStatus {
   LOST_AND_PAID("Lost and paid"),
   AGED_TO_LOST("Aged to lost");
 
+  public static ItemStatus from(String value) {
+    return Arrays.stream(values())
+      .filter(status -> status.valueMatches(value))
+      .findFirst()
+      .orElse(NONE);
+  }
+
   public static ItemStatus from(String value, String date) {
     return Arrays.stream(values())
       .filter(status -> status.valueMatches(value))
@@ -32,7 +39,7 @@ public enum ItemStatus {
   }
 
   private final String value;
-
+  // FIXME: Enum constants are singletons, date must not be associated with it
   private String date;
 
   ItemStatus(String value) {
