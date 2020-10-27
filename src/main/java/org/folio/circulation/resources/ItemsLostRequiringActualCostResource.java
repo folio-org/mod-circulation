@@ -125,7 +125,7 @@ public class ItemsLostRequiringActualCostResource extends Resource {
         }
       }
     }
-    
+
     return true;
   }
 
