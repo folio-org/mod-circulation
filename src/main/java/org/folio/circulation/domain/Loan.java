@@ -43,6 +43,7 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getBooleanP
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimePropertyByPath;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getIntegerProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedBooleanProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.json.JsonPropertyWriter.remove;
@@ -139,6 +140,10 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public String getAction() {
     return getProperty(representation, ACTION);
+  }
+
+  public boolean getLostItemHasBeenBilled() {
+    return getNestedBooleanProperty(representation, AGED_TO_LOST_DELAYED_BILLING, LOST_ITEM_HAS_BEEN_BILLED);
   }
 
   private void changeCheckInServicePointId(UUID servicePointId) {

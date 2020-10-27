@@ -1,0 +1,73 @@
+{
+  "items": [
+    {
+      "id": "0b96a642-5e7f-452d-9cae-9cee66c9a892",
+      "title": "Uprooted",
+      "contributorNames": [{ "name": "Novik, Naomi" }],
+      "callNumber": "D11.J54 A3 2011",
+      "barcode": "645398607547",
+      "status": {
+        "name": "Declared lost"
+      },
+      "materialType": {
+        "id": "fcf3d3dc-b27f-4ce4-a530-542ea53cacb5",
+        "name": "Book"
+      },
+      "permanentLoanType": {
+        "id": "8e570d0d-931c-43d1-9ca1-221e693ea8d2",
+        "name": "Can Circulate"
+      },
+      "temporaryLoanType": {
+        "id": "74c25903-4019-4d8a-9360-5cb7761f44e5",
+        "name": "Course Reserve"
+      },
+      "permanentLocation": {
+        "id": "d9cd0bed-1b49-4b5e-a7bd-064b8d177231",
+        "name": "Main Library"
+      },
+      "tags": {
+        "tagList" : [
+          "important"
+        ]
+      },
+      "loan": {
+        "id": "cf23adf0-61ba-4887-bf82-956c4aae2260",
+        "userId": "df7f4993-8c14-4a0f-ab63-93975ab01c76",
+        "proxyUserId": "346ad017-dac1-417d-9ed8-0ac7eeb886aa",
+        "itemId": "cb20f34f-b773-462f-a091-b233cc96b9e6",
+        "loanPolicyId" : "e9af4ba4-6801-4722-be45-d7a49d13564d",
+        "loanPolicy": {
+          "name" : "Can Circulate Rolling"
+        },
+        "overdueFinePolicyId": "b59fe39f-efdc-4a88-993a-04fb405e5ecc",
+        "overdueFinePolicy": {
+          "name": "Overdue fine policy"
+        },
+        "lostItemPolicyId": "ea77439c-9ff5-4c37-8c92-0df02576c873",
+        "lostItemPolicy": {
+          "name": "Lost item policy"
+        },
+        "agedToLostDelayedBilling": {
+          "lostItemHasBeenBilled": true,
+          "dateLostItemShouldBeBilled": "2017-04-12T23:11:00.000Z",
+          "agedToLostDate": "2017-04-02T23:11:00.000Z"
+        },
+        "borrower" : {
+          "firstName" : "FirstName",
+          "lastName" : "LastName",
+          "middleName" : "MiddleName",
+          "barcode" : "102322966933815"
+        },
+        "loanDate": "2017-03-01T23:11:00.000Z",
+        "dueDate": "2017-04-01T23:11:00.000Z",
+        "checkoutServicePointId": "e9af4ba4-6801-4722-bf45-d7a49d54564d",
+        "checkinServicePointId": "e9af4ba4-6801-4722-bf45-d7a49d54564d",
+        "status": {
+          "name": "Open"
+        },
+        "action": "checkedout",
+        "renewalCount": 0
+      }
+  ],
+  "totalRecords": 1
+}

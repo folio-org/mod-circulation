@@ -10,10 +10,11 @@ import io.vertx.core.json.JsonObject;
 public class FeeFine {
   public static final String OVERDUE_FINE_TYPE = "Overdue fine";
   public static final String LOST_ITEM_FEE_TYPE = "Lost item fee";
+  public static final String LOST_ITEM_FEE_ACTUAL_COSTS_TYPE = "Lost item fee (actual costs)";
   public static final String LOST_ITEM_PROCESSING_FEE_TYPE = "Lost item processing fee";
 
   private static final Set<String> LOST_ITEM_FEE_TYPES =
-    unmodifiableSet(hashSet(LOST_ITEM_FEE_TYPE, LOST_ITEM_PROCESSING_FEE_TYPE));
+    unmodifiableSet(hashSet(LOST_ITEM_FEE_TYPE, LOST_ITEM_FEE_ACTUAL_COSTS_TYPE, LOST_ITEM_PROCESSING_FEE_TYPE));
 
   private final String id;
   private final String ownerId;

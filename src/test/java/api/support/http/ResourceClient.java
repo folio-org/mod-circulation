@@ -49,6 +49,10 @@ public class ResourceClient {
     return new ResourceClient(InterfaceUrls::itemsInTransitReportUrl, "items");
   }
 
+  public static ResourceClient forItemsLostRequiringActualCosts() {
+    return new ResourceClient(InterfaceUrls::itemsLostRequringActualCostsUrl, "items");
+  }
+
   public static ResourceClient forPickSlips() {
     return new ResourceClient(InterfaceUrls::pickSlipsUrl, "pickSlips");
   }

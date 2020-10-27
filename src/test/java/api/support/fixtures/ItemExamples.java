@@ -59,7 +59,7 @@ public class ItemExamples {
       .withBarcode("232142443432");
   }
 
-  static ItemBuilder basedUponInterestingTimes(
+  public static ItemBuilder basedUponInterestingTimes(
     UUID bookMaterialTypeId,
     UUID loanTypeId) {
 
@@ -69,7 +69,7 @@ public class ItemExamples {
       .withBarcode("56454543534");
   }
 
-  static ItemBuilder basedUponDunkirk(
+  public static ItemBuilder basedUponDunkirk(
     UUID videoRecordingMaterialTypeId,
     UUID loanTypeId) {
 

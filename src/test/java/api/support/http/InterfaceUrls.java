@@ -125,6 +125,10 @@ public class InterfaceUrls {
     return circulationModuleUrl("/inventory-reports/items-in-transit" + subPath);
   }
 
+  public static URL itemsLostRequringActualCostsUrl(String subPath) {
+    return circulationModuleUrl("/inventory-reports/items-lost-requiring-actual-costs" + subPath);
+  }
+
    static URL pickSlipsUrl(String servicePointId) {
     return circulationModuleUrl("/circulation/pick-slips"  + servicePointId);
   }

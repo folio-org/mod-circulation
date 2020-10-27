@@ -16,6 +16,18 @@ import io.vertx.core.json.JsonObject;
 public class JsonPropertyFetcher {
   private JsonPropertyFetcher() { }
 
+  public static boolean getNestedBooleanProperty(JsonObject representation,
+    String objectName, String propertyName) {
+
+    if (representation == null) {
+      return false;
+    }
+
+    return representation.containsKey(objectName)
+      ? representation.getJsonObject(objectName).getBoolean(propertyName)
+      : false;
+  }
+
   public static String getNestedStringProperty(JsonObject representation,
     String objectName, String propertyName) {
 
