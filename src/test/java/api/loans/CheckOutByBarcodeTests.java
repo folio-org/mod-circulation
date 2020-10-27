@@ -37,6 +37,7 @@ import static org.folio.circulation.domain.policy.Period.months;
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 import static org.folio.circulation.domain.representations.logs.LogEventType.CHECK_OUT;
 import static org.hamcrest.CoreMatchers.allOf;
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -1319,20 +1320,21 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void checkOutSucceedsWhenEventPublishingFailsWithNoSubscribersError() {
+  public void checkOutFailsWhenEventPublishingFailsWithBadRequestError() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
 
-    FakePubSub.setFailPublishingWithNoSubscribersError(true);
+    FakePubSub.setFailPublishingWithBadRequestError(true);
 
-    checkOutFixture.checkOutByBarcode(
+    Response response = checkOutFixture.attemptCheckOutByBarcode(500,
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
         .on(DateTime.now(UTC))
         .at(UUID.randomUUID()));
 
-    assertThat(itemsClient.getById(smallAngryPlanet.getId()).getJson(), isCheckedOut());
+    assertThat(response.getBody(), containsString(
+      "Error during publishing Event Message in PubSub. Status code: 400"));
   }
 
   @Test
