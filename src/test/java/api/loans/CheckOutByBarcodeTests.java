@@ -8,6 +8,7 @@ import static api.support.builders.ItemBuilder.CHECKED_OUT;
 import static api.support.builders.ItemBuilder.CLAIMED_RETURNED;
 import static api.support.fixtures.AutomatedPatronBlocksFixture.MAX_NUMBER_OF_ITEMS_CHARGED_OUT_MESSAGE;
 import static api.support.fixtures.AutomatedPatronBlocksFixture.MAX_OUTSTANDING_FEE_FINE_BALANCE_MESSAGE;
+import static api.support.fixtures.CalendarExamples.CASE_IN_ONE_DAY_IS_OPEN_NEXT_TWO_DAYS_CLOSED;
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasItemBarcodeParameter;
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasLoanPolicyParameters;
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasProxyUserBarcodeParameter;
@@ -1332,6 +1333,26 @@ public class CheckOutByBarcodeTests extends APITests {
         .at(UUID.randomUUID()));
 
     assertThat(itemsClient.getById(smallAngryPlanet.getId()).getJson(), isCheckedOut());
+  }
+
+  @Test
+  public void dueDateShouldBeTruncatedToTheEndOfLastWorkingDayBeforePatronExpiration() {
+    final UUID book = materialTypesFixture.book().getId();
+
+    circulationRulesFixture.updateCirculationRules(
+      createRulesWithFixedDueDateInLoanPolicy( "m " + book));
+
+    IndividualResource firstBookTypeItem = itemsFixture.basedUponNod();
+    IndividualResource steve = usersFixture.steve(user -> user.expires(
+      DateTime.now().plusDays(3)));
+
+    JsonObject response = checkOutFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(firstBookTypeItem)
+        .to(steve)
+        .at(CASE_IN_ONE_DAY_IS_OPEN_NEXT_TWO_DAYS_CLOSED)).getJson();
+
+    assertThat(response.getString("dueDate"), is("2020-10-29T23:59:59.000Z"));
   }
 
   private IndividualResource prepareLoanPolicyWithItemLimit(int itemLimit) {
