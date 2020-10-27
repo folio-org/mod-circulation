@@ -304,7 +304,7 @@ public abstract class APITests {
     noteTypeFixture.generalNoteType();
 
     FakePubSub.clearPublishedEvents();
-    FakePubSub.setFailPublishingWithNoSubscribersError(false);
+    FakePubSub.setFailPublishingWithBadRequestError(false);
   }
 
   @After
