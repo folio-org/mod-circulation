@@ -64,8 +64,7 @@ public final class PageableFetcher<T> {
   private CompletableFuture<Result<Void>> itemCountLimitHasBeenReached() {
     return completedFuture(failed(new ServerErrorFailure(
       "Maximum allowed item count is set to " + maxAllowedRecordsToFetchLimit
-        + " and it has been reached"
-    )));
+        + " and it has been reached")));
   }
 
   private boolean hasReachedRecordsLimit(Offset currentOffset, MultipleRecords<T> latestPage) {
@@ -85,7 +84,7 @@ public final class PageableFetcher<T> {
       return true;
     }
 
-    return latestPage.getRecords().size() < pageSize.getLimit();
+    return latestPage.size() < pageSize.getLimit();
   }
 
   @FunctionalInterface
