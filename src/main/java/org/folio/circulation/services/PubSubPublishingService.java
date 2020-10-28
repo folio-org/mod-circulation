@@ -99,4 +99,8 @@ public class PubSubPublishingService {
       return result;
     }
   }
+
+  public PubsubClient getPubSubClient() {
+    return pubSubClient;
+  }
 }
