@@ -1,17 +1,18 @@
 package org.folio.circulation.domain;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.results.Result.succeeded;
+
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.library.ClosedLibraryStrategyService;
+import org.folio.circulation.domain.policy.library.EndOfPreviousDayStrategy;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-
-import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.support.results.Result.succeeded;
 
 public class LoanService {
 
@@ -52,5 +53,19 @@ public class LoanService {
       .recall(loanToRecall)
       .map(records::withLoan))
       .thenCompose(r -> r.after(closedLibraryStrategyService::applyClosedLibraryDueDateManagement));
+  }
+
+  public CompletableFuture<Result<LoanAndRelatedRecords>> truncateLoanDueDateIfPatronExpiresEarlier(
+    LoanAndRelatedRecords records) {
+
+    Loan loan = records.getLoan();
+    DateTime userExpirationDate = loan.getUser().getExpirationDate();
+
+    if (userExpirationDate != null && userExpirationDate.isBefore(loan.getDueDate())) {
+      return closedLibraryStrategyService.applyStrategyForExpiredPatron(records,
+        new EndOfPreviousDayStrategy(records.getTimeZone()));
+    }
+
+    return Result.ofAsync(() -> records);
   }
 }
