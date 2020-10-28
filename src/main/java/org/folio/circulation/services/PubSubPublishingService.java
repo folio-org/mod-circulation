@@ -77,7 +77,7 @@ public class PubSubPublishingService {
     CompletableFuture<Boolean> result = new CompletableFuture<>();
 
     try {
-      pubSubClient.postPubsubPublish(eventMessage, ar -> {
+      getPubSubClient().postPubsubPublish(eventMessage, ar -> {
         if (ar.statusCode() == HttpStatus.HTTP_NO_CONTENT.toInt()) {
           result.complete(true);
         } else {
