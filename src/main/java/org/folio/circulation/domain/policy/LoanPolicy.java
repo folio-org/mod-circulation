@@ -104,13 +104,11 @@ public class LoanPolicy extends Policy {
     return !getBooleanProperty(representation, "renewable");
   }
 
-  public void errorWhenReachedRenewalLimit(Loan loan, List<ValidationError> errors) {
-    if (hasReachedRenewalLimit(loan)) {
-      errors.add(loanPolicyValidationError("loan at maximum renewal number"));
-    }
-  }
-
   public boolean hasReachedRenewalLimit(Loan loan) {
+    if (isNotRenewable()) {
+      return false;
+    }
+
     return reachedNumberOfRenewalsLimit(loan) && !unlimitedRenewals();
   }
 
