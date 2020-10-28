@@ -8,6 +8,8 @@ import static api.support.builders.ItemBuilder.CHECKED_OUT;
 import static api.support.builders.ItemBuilder.CLAIMED_RETURNED;
 import static api.support.fixtures.AutomatedPatronBlocksFixture.MAX_NUMBER_OF_ITEMS_CHARGED_OUT_MESSAGE;
 import static api.support.fixtures.AutomatedPatronBlocksFixture.MAX_OUTSTANDING_FEE_FINE_BALANCE_MESSAGE;
+import static api.support.fixtures.CalendarExamples.CASE_ONE_DAY_IS_OPEN_NEXT_TWO_DAYS_CLOSED;
+import static api.support.fixtures.CalendarExamples.FIRST_DAY_OPEN;
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasItemBarcodeParameter;
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasLoanPolicyParameters;
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasProxyUserBarcodeParameter;
@@ -1334,6 +1336,28 @@ public class CheckOutByBarcodeTests extends APITests {
 
     assertThat(response.getBody(), containsString(
       "Error during publishing Event Message in PubSub. Status code: 400"));
+  }
+
+  @Test
+  public void dueDateShouldBeTruncatedToTheEndOfLastWorkingDayBeforePatronExpiration() {
+    mockClockManagerToReturnFixedDateTime(new DateTime(2020, 10, 27, 10, 0, UTC));
+    final UUID book = materialTypesFixture.book().getId();
+
+    circulationRulesFixture.updateCirculationRules(
+      createRulesWithFixedDueDateInLoanPolicy("m " + book));
+
+    IndividualResource item = itemsFixture.basedUponNod();
+    IndividualResource steve = usersFixture.steve(user -> user.expires(
+      DateTime.now().plusDays(3)));
+
+    JsonObject response = checkOutFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(item)
+        .to(steve)
+        .at(CASE_ONE_DAY_IS_OPEN_NEXT_TWO_DAYS_CLOSED)).getJson();
+
+    mockClockManagerToReturnDefaultDateTime();
+    assertThat(DateTime.parse(response.getString("dueDate")).toLocalDate(), is(FIRST_DAY_OPEN));
   }
 
   private IndividualResource prepareLoanPolicyWithItemLimit(int itemLimit) {
