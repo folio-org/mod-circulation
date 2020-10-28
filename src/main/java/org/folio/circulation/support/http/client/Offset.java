@@ -21,4 +21,12 @@ public class Offset implements QueryParameter {
       consumer.consume("offset", value.toString());
     }
   }
+
+  public int getOffset() {
+    return value != null ? value : 0;
+  }
+
+  public Offset nextPage(PageLimit pageLimit) {
+    return offset(getOffset() + pageLimit.getLimit());
+  }
 }
