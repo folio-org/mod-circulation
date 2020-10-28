@@ -9,8 +9,8 @@ import static org.folio.circulation.support.CqlSortBy.ascending;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.CqlQuery.lessThan;
 import static org.folio.circulation.support.http.client.CqlQuery.notEqual;
-import static org.folio.circulation.support.http.client.PageLimit.limit;
-import static org.folio.circulation.support.results.ResultBinding.mapResult;
+import static org.folio.circulation.support.results.Result.ofAsync;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -24,43 +24,52 @@ import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.loans.LostItemPolicyRepository;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.fetching.PageableFetcher;
 import org.folio.circulation.support.http.client.CqlQuery;
-import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
+import org.slf4j.Logger;
 
 public class MarkOverdueLoansAsAgedLostService {
-  private static final int DEFAULT_MAXIMUM_LOANS_TO_PROCESS = 1000;
+  private static final Logger log = getLogger(MarkOverdueLoansAsAgedLostService.class);
 
-  private final LoanRepository loanRepository;
   private final LostItemPolicyRepository lostItemPolicyRepository;
   private final ItemRepository itemRepository;
   private final StoreLoanAndItem storeLoanAndItem;
-  private final PageLimit maximumNumberOfLoansToProcess;
   private final EventPublisher eventPublisher;
+  private final PageableFetcher<Loan> loanPageableFetcher;
 
-  public MarkOverdueLoansAsAgedLostService(Clients clients, int maximumNumberOfLoansToProcess) {
-    this.loanRepository = new LoanRepository(clients);
+  public MarkOverdueLoansAsAgedLostService(Clients clients) {
     this.lostItemPolicyRepository = new LostItemPolicyRepository(clients);
     this.itemRepository = noLocationMaterialTypeAndLoanTypeInstance(clients);
     this.storeLoanAndItem = new StoreLoanAndItem(clients);
-    this.maximumNumberOfLoansToProcess = limit(maximumNumberOfLoansToProcess);
     this.eventPublisher = new EventPublisher(clients.pubSubPublishingService());
-  }
-
-  public MarkOverdueLoansAsAgedLostService(Clients clients) {
-    this(clients, DEFAULT_MAXIMUM_LOANS_TO_PROCESS);
+    this.loanPageableFetcher = new PageableFetcher<>(new LoanRepository(clients));
   }
 
   public CompletableFuture<Result<Void>> processAgeToLost() {
-    return fetchOverdueLoans()
-      .thenCompose(r -> r.after(lostItemPolicyRepository::findLostItemPoliciesForLoans))
+    log.info("Running mark overdue loans as aged to lost process...");
+
+    return loanPageableFetcher.processPages(loanFetchQuery(), this::processAgeToLost);
+  }
+
+  public CompletableFuture<Result<Void>> processAgeToLost(MultipleRecords<Loan> loans) {
+    if (loans.isEmpty()) {
+      log.info("No overdue loans to age to lost found");
+      return ofAsync(() -> null);
+    }
+
+    return lostItemPolicyRepository.findLostItemPoliciesForLoans(loans)
       .thenApply(this::getLoansThatHaveToBeAgedToLost)
       .thenCompose(loansResult -> itemRepository.fetchItemsFor(loansResult, Loan::withItem))
       .thenApply(this::markLoansAsAgedToLost)
       .thenCompose(this::updateLoansAndItemsInStorage)
-      .thenCompose(r -> r.after(loans -> allOf(loans, eventPublisher::publishAgedToLostEvent)))
-      .thenApply(mapResult(v -> null));
+      .thenCompose(this::publishAgedToLostEvent);
+  }
+
+  private CompletableFuture<Result<Void>> publishAgedToLostEvent(Result<List<Loan>> allLoansResult) {
+    return allLoansResult.after(allLoans -> allOf(allLoans, eventPublisher::publishAgedToLostEvent))
+      .thenApply(r -> r.map(results -> null));
   }
 
   private Result<MultipleRecords<Loan>> markLoansAsAgedToLost(
@@ -88,23 +97,23 @@ public class MarkOverdueLoansAsAgedLostService {
       .after(loans -> allOf(loans, storeLoanAndItem::updateLoanAndItemInStorage));
   }
 
-  private CompletableFuture<Result<MultipleRecords<Loan>>> fetchOverdueLoans() {
-    return loanFetchQuery().after(
-      query -> loanRepository.findByQuery(query, maximumNumberOfLoansToProcess));
-  }
-
   private Result<MultipleRecords<Loan>> getLoansThatHaveToBeAgedToLost(
-    Result<MultipleRecords<Loan>> loans) {
+    Result<MultipleRecords<Loan>> loansResult) {
 
-    return loans.map(multipleRecords ->
-      multipleRecords.filter(this::shouldAgeLoanToLost));
+    return loansResult.map(loans -> {
+      final var loansToAgeToLost = loans.filter(this::shouldAgeLoanToLost);
+      log.info("{} out of {} loans is going to be aged to lost", loansToAgeToLost.size(),
+        loans.size());
+
+      return loansToAgeToLost;
+    });
   }
 
   private boolean shouldAgeLoanToLost(Loan loan) {
     return loan.getLostItemPolicy().canAgeLoanToLost(loan.getDueDate());
   }
 
-  private Result<CqlQuery> loanFetchQuery() {
+  private CqlQuery loanFetchQuery() {
     final Result<CqlQuery> statusQuery = exactMatch("status.name", "Open");
     final Result<CqlQuery> dueDateQuery = lessThan("dueDate", getClockManager().getDateTime());
     final Result<CqlQuery> claimedReturnedQuery = notEqual("itemStatus", CLAIMED_RETURNED.getValue());
@@ -113,6 +122,7 @@ public class MarkOverdueLoansAsAgedLostService {
     return statusQuery.combine(dueDateQuery, CqlQuery::and)
       .combine(claimedReturnedQuery, CqlQuery::and)
       .combine(agedToLostQuery, CqlQuery::and)
-      .map(query -> query.sortBy(ascending("dueDate")));
+      .map(query -> query.sortBy(ascending("dueDate")))
+      .value();
   }
 }
