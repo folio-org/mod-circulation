@@ -185,12 +185,6 @@
             "id": "loan",
             "type": "object",
             "$ref": "loan.json"
-          },
-          "feeFineAction": {
-            "description": "The Fees Fines Action associated with the item",
-            "id": "feeFineAction",
-            "type": "object",
-            "$ref": "feeFineAction.json"
           }
         },
         "additionalProperties": false
