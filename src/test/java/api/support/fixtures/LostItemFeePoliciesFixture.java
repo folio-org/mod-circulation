@@ -40,18 +40,6 @@ public class LostItemFeePoliciesFixture {
     return create(ageToLostAfterOneMinutePolicy());
   }
 
-  public IndividualResource ageToLostAndBilledAfterOneMinute() {
-    createReferenceData();
-
-    return create(ageToLostAndBilledAfterOneMinutePolicy());
-  }
-
-  public IndividualResource ageToLostAndBilledWithActualCostAfterOneMinute() {
-    createReferenceData();
-
-    return create(ageToLostAndBilledWithActualCostAfterOneMinutePolicy());
-  }
-
   public LostItemFeePolicyBuilder facultyStandardPolicy() {
     final Period itemAgedLostOverdue = Period.months(12);
     final Period patronBilledAfterAgedLost = Period.months(12);
@@ -95,18 +83,6 @@ public class LostItemFeePoliciesFixture {
       // disable lost item processing fee
       .withChargeAmountItemPatron(false)
       .withChargeAmountItemSystem(true);
-  }
-
-  public LostItemFeePolicyBuilder ageToLostAndBilledAfterOneMinutePolicy() {
-    return ageToLostAfterOneMinutePolicy()
-      .withName("Age to lost and billed after one minute overdue")
-      .billPatronImmediatelyWhenAgedToLost();
-  }
-
-  public LostItemFeePolicyBuilder ageToLostAndBilledWithActualCostAfterOneMinutePolicy() {
-    return ageToLostAndBilledAfterOneMinutePolicy()
-      .withName("Age to lost and billed after one minute overdue, with actual cost")
-      .withActualCost(20.0);
   }
 
   public IndividualResource create(UUID id, String name) {

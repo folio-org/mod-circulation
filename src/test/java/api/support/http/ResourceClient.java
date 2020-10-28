@@ -50,7 +50,7 @@ public class ResourceClient {
   }
 
   public static ResourceClient forItemsLostRequiringActualCosts() {
-    return new ResourceClient(InterfaceUrls::itemsLostRequringActualCostsUrl, "items");
+    return new ResourceClient(InterfaceUrls::itemsLostRequiringActualCostsUrl, "items");
   }
 
   public static ResourceClient forPickSlips() {

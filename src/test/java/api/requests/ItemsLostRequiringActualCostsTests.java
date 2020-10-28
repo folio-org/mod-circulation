@@ -19,6 +19,7 @@ import org.junit.Test;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.DeclareItemLostRequestBuilder;
 import api.support.builders.ItemBuilder;
+import api.support.builders.LostItemFeePolicyBuilder;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import api.support.http.ResourceClient;
@@ -50,7 +51,7 @@ public class ItemsLostRequiringActualCostsTests extends SpringApiTest {
     final ItemResource openItem = createOpenItem();
     final ItemResource declaredLostItem = createDeclaredLostItem();
 
-    useLostItemPolicy(lostItemFeePoliciesFixture.ageToLostAndBilledAfterOneMinute().getId());
+    useLostItemPolicy(ageToLostAndBilledAfterOneMinute().getId());
 
     final ItemResource agedToLostItem = createAgedToLostItem();
 
@@ -82,7 +83,7 @@ public class ItemsLostRequiringActualCostsTests extends SpringApiTest {
 
   @Test
   public void hasItemAgedToLost() {
-    useLostItemPolicy(lostItemFeePoliciesFixture.ageToLostAndBilledAfterOneMinute().getId());
+    useLostItemPolicy(ageToLostAndBilledAfterOneMinute().getId());
 
     final ItemResource agedToLostItem = createAgedToLostItem();
 
@@ -108,7 +109,7 @@ public class ItemsLostRequiringActualCostsTests extends SpringApiTest {
 
   @Test
   public void hasNoBilledWithActualCostItemAgedToLost() {
-    useLostItemPolicy(lostItemFeePoliciesFixture.ageToLostAndBilledWithActualCostAfterOneMinute().getId());
+    useLostItemPolicy(ageToLostAndBilledWithActualCostAfterOneMinute().getId());
 
     createAgedToLostItem();
 
@@ -185,6 +186,26 @@ public class ItemsLostRequiringActualCostsTests extends SpringApiTest {
   private void validateItemInItemsIsAgedToLost(Collection<JsonObject> items, ItemResource item) {
     JsonObject itemJson = getRecordById(items, item.getId()).get();
     assertThat(itemJson, ItemMatchers.isAgedToLost());
+  }
+
+  private IndividualResource ageToLostAndBilledAfterOneMinute() {
+    return lostItemFeePoliciesFixture.create(ageToLostAndBilledAfterOneMinutePolicy());
+  }
+
+  private IndividualResource ageToLostAndBilledWithActualCostAfterOneMinute() {
+    return lostItemFeePoliciesFixture.create(ageToLostAndBilledWithActualCostAfterOneMinutePolicy());
+  }
+
+  public LostItemFeePolicyBuilder ageToLostAndBilledAfterOneMinutePolicy() {
+    return lostItemFeePoliciesFixture.ageToLostAfterOneMinutePolicy()
+      .withName("Age to lost and billed after one minute overdue")
+      .billPatronImmediatelyWhenAgedToLost();
+  }
+
+  public LostItemFeePolicyBuilder ageToLostAndBilledWithActualCostAfterOneMinutePolicy() {
+    return ageToLostAndBilledAfterOneMinutePolicy()
+      .withName("Age to lost and billed after one minute overdue, with actual cost")
+      .withActualCost(20.0);
   }
 
 }
