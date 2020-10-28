@@ -14,7 +14,7 @@ import org.joda.time.Seconds;
 
 public class TextDateTimeMatcher {
   public static Matcher<String> isEquivalentTo(DateTime expected) {
-    return new TypeSafeMatcher<String>() {
+    return new TypeSafeMatcher<>() {
       @Override
       public void describeTo(Description description) {
         description.appendText(String.format(
@@ -36,7 +36,7 @@ public class TextDateTimeMatcher {
   }
 
   public static Matcher<String> isEquivalentTo(Instant expected) {
-    return new TypeSafeMatcher<String>() {
+    return new TypeSafeMatcher<>() {
       @Override
       public void describeTo(Description description) {
         description.appendText(String.format(
@@ -58,7 +58,7 @@ public class TextDateTimeMatcher {
   }
 
   public static Matcher<String> withinSecondsAfter(Seconds seconds, DateTime after) {
-    return new TypeSafeMatcher<String>() {
+    return new TypeSafeMatcher<>() {
       @Override
       public void describeTo(Description description) {
         description.appendText(String.format(
@@ -78,7 +78,7 @@ public class TextDateTimeMatcher {
   }
 
   public static Matcher<String> withinSecondsBefore(Seconds seconds, DateTime before) {
-    return new TypeSafeMatcher<String>() {
+    return new TypeSafeMatcher<>() {
       @Override
       public void describeTo(Description description) {
         description.appendText(String.format(

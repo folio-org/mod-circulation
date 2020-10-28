@@ -203,6 +203,20 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       .withPickupServicePointId(newPickupServicePointId);
   }
 
+  public RequestBuilder withRequestExpirationJavaDate(java.time.LocalDate requestExpiration) {
+    return withRequestExpiration(new LocalDate(requestExpiration.getYear(),
+      requestExpiration.getMonthValue(), requestExpiration.getDayOfMonth()));
+  }
+
+  public RequestBuilder withNoRequestExpiration() {
+    return withRequestExpiration(null);
+  }
+
+  public RequestBuilder withHoldShelfExpirationJavaDate(java.time.LocalDate holdShelfExpiration) {
+    return withHoldShelfExpiration(new LocalDate(holdShelfExpiration.getYear(),
+      holdShelfExpiration.getMonthValue(), holdShelfExpiration.getDayOfMonth()));
+  }
+
   public RequestBuilder open() {
     return withStatus(OPEN_NOT_YET_FILLED);
   }

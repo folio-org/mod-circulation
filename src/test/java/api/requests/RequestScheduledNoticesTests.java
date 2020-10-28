@@ -154,7 +154,7 @@ public class RequestScheduledNoticesTests extends APITests {
       .withRequestDate(DateTime.now())
       .withStatus(OPEN_NOT_YET_FILLED)
       .withPickupServicePoint(pickupServicePoint)
-      .withRequestExpiration(null));
+      .withNoRequestExpiration());
 
     TimeUnit.SECONDS.sleep(1);
 
@@ -320,7 +320,7 @@ public class RequestScheduledNoticesTests extends APITests {
     assertThat(noticeConfig.getString("format"), is("Email"));
     assertThat(noticeConfig.getBoolean("sendInRealTime"), is(true));
 
-    requestsClient.replace(request.getId(), requestBuilder.withRequestExpiration(null));
+    requestsClient.replace(request.getId(), requestBuilder.withNoRequestExpiration());
 
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
