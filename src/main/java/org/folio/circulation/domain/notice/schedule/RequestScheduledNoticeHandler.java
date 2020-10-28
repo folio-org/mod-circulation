@@ -1,31 +1,38 @@
 package org.folio.circulation.domain.notice.schedule;
 
+import static java.lang.String.format;
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.RequestStatus.CLOSED_FILLED;
 import static org.folio.circulation.domain.notice.NoticeTiming.UPON_AT;
+import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.HOLD_EXPIRATION;
 import static org.folio.circulation.support.results.Result.succeeded;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
-import org.folio.circulation.domain.representations.logs.NoticeLogContext;
-import org.folio.circulation.domain.representations.logs.NoticeLogContextItem;
-import org.folio.circulation.infrastructure.storage.notices.PatronNoticePolicyRepository;
-import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.domain.notice.NoticeTiming;
 import org.folio.circulation.domain.notice.PatronNoticeService;
 import org.folio.circulation.domain.notice.TemplateContextUtil;
+import org.folio.circulation.domain.representations.logs.NoticeLogContext;
+import org.folio.circulation.domain.representations.logs.NoticeLogContextItem;
+import org.folio.circulation.infrastructure.storage.notices.PatronNoticePolicyRepository;
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
+import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import io.vertx.core.json.JsonObject;
 
 public class RequestScheduledNoticeHandler {
+  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   public static RequestScheduledNoticeHandler using(Clients clients) {
     return new RequestScheduledNoticeHandler(
@@ -61,9 +68,33 @@ public class RequestScheduledNoticeHandler {
 
   private CompletableFuture<Result<ScheduledNotice>> handleRequestNotice(ScheduledNotice notice) {
     return requestRepository.getById(notice.getRequestId())
-      .thenApply(r -> r.map(RequestAndRelatedRecords::new))
-      .thenCompose(r -> r.after(records -> sendNotice(records, notice)))
-      .thenCompose(r -> r.after(records -> updateNotice(records, notice)));
+      .thenCompose(r -> r.afterWhen(
+        request -> noticeIsIrrelevant(request, notice),
+        request -> scheduledNoticesRepository.delete(notice),
+        request -> sendAndUpdateNotice(request, notice)));
+  }
+
+  private CompletableFuture<Result<Boolean>> noticeIsIrrelevant(
+    Request request, ScheduledNotice notice) {
+
+    if (HOLD_EXPIRATION.equals(notice.getTriggeringEvent()) &&
+      CLOSED_FILLED.equals(request.getStatus())) {
+
+      log.info(format("Request %s is filled, deleting hold shelf expiration scheduled notice %s",
+        request.getId(), notice.getId()));
+
+      return completedFuture(succeeded(true));
+    }
+
+    return completedFuture(succeeded(false));
+  }
+
+  private CompletableFuture<Result<ScheduledNotice>> sendAndUpdateNotice(Request request,
+    ScheduledNotice notice) {
+
+    return completedFuture(succeeded(new RequestAndRelatedRecords(request)))
+      .thenCompose(res -> res.after(records -> sendNotice(records, notice)))
+      .thenCompose(res -> res.after(records -> updateNotice(records, notice)));
   }
 
   private CompletableFuture<Result<RequestAndRelatedRecords>> sendNotice(
