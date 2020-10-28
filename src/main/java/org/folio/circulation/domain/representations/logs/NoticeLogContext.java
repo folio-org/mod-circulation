@@ -3,8 +3,8 @@ package org.folio.circulation.domain.representations.logs;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.toList;
+import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.ACCOUNT_ID;
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.DATE;
-import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.FEE_FINE_ID;
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.ITEMS;
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.REQ_ID;
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.USER_BARCODE;
@@ -16,7 +16,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.With;
-import org.folio.circulation.domain.FeeFineAction;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Request;
@@ -37,7 +36,7 @@ public class NoticeLogContext {
   @Getter private List<NoticeLogContextItem> items = new ArrayList<>();
   private DateTime date;
   private String requestId;
-  private String feeFineId;
+  private String accountId;
 
   public static NoticeLogContext from(Loan loan) {
     return new NoticeLogContext()
@@ -62,11 +61,6 @@ public class NoticeLogContext {
   public NoticeLogContext withUser(User user) {
     userBarcode = user.getBarcode();
     userId = user.getId();
-    return this;
-  }
-
-  public NoticeLogContext withFeeFineAction(FeeFineAction action) {
-    feeFineId = action.getId();
     return this;
   }
 
@@ -98,8 +92,7 @@ public class NoticeLogContext {
     write(json, DATE.value(), date);
     ofNullable(requestId).ifPresent(s ->
       write(json, REQ_ID.value(), requestId));
-    ofNullable(feeFineId).ifPresent(s ->
-      write(json, FEE_FINE_ID.value(), feeFineId));
+    write(json, ACCOUNT_ID.value(), accountId);
     return json;
   }
 }
