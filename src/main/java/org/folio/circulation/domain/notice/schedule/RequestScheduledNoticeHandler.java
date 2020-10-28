@@ -69,12 +69,12 @@ public class RequestScheduledNoticeHandler {
   private CompletableFuture<Result<ScheduledNotice>> handleRequestNotice(ScheduledNotice notice) {
     return requestRepository.getById(notice.getRequestId())
       .thenCompose(r -> r.afterWhen(
-        request -> noticeShouldBeDeleted(request, notice),
+        request -> noticeIsIrrelevant(request, notice),
         request -> scheduledNoticesRepository.delete(notice),
         request -> sendAndUpdateNotice(request, notice)));
   }
 
-  private CompletableFuture<Result<Boolean>> noticeShouldBeDeleted(
+  private CompletableFuture<Result<Boolean>> noticeIsIrrelevant(
     Request request, ScheduledNotice notice) {
 
     if (HOLD_EXPIRATION.equals(notice.getTriggeringEvent()) &&
