@@ -7,6 +7,7 @@ import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static java.util.Collections.singletonList;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -207,6 +208,49 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
       LocalDate.now(UTC).plusDays(31).toDateTimeAtStartOfDay());
 
     assertThat(scheduledNoticesClient.getAll(), hasSize(1));
+  }
+
+  @Test
+  public void uponAtHoldExpirationNoticeShouldNotBeSentWhenHoldExpirationDateHasPassedAndItemCheckedOut() {
+    JsonObject noticeConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(templateId)
+      .withHoldShelfExpirationEvent()
+      .withUponAtTiming()
+      .sendInRealTime(true)
+      .create();
+    setupNoticePolicyWithRequestNotice(noticeConfiguration);
+
+    IndividualResource request = requestsFixture.place(new RequestBuilder().page()
+      .forItem(item)
+      .withRequesterId(requester.getId())
+      .withRequestDate(DateTime.now())
+      .withStatus(OPEN_NOT_YET_FILLED)
+      .withPickupServicePoint(pickupServicePoint));
+
+    CheckInByBarcodeRequestBuilder builder = new CheckInByBarcodeRequestBuilder()
+      .forItem(item)
+      .withItemBarcode(item.getBarcode())
+      .at(pickupServicePoint);
+    checkInFixture.checkInByBarcode(builder);
+
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(scheduledNoticesClient::getAll, hasSize(1));
+
+    assertThat(patronNoticesClient.getAll(), hasSize(0));
+
+    checkOutFixture.checkOutByBarcode(item, requester);
+
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(() -> requestsClient.get(request.getId()).getJson().getString("status"),
+        equalTo("Closed - Filled"));
+
+    scheduledNoticeProcessingClient.runRequestNoticesProcessing(
+      LocalDate.now(UTC).plusDays(100).toDateTimeAtStartOfDay());
+
+    assertThat(scheduledNoticesClient.getAll(), hasSize(0));
+    assertThat(patronNoticesClient.getAll(), hasSize(0));
   }
 
   @Test
