@@ -8,11 +8,12 @@ import static org.folio.circulation.domain.EventType.ITEM_DECLARED_LOST;
 import static org.folio.circulation.domain.EventType.LOAN_DUE_DATE_CHANGED;
 import static org.folio.circulation.domain.EventType.LOG_RECORD;
 import static org.folio.circulation.domain.LoanAction.CHECKED_IN;
-import static org.folio.circulation.domain.LoanAction.CLOSED_LOAN;
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.LOG_EVENT_TYPE;
 import static org.folio.circulation.domain.representations.logs.CirculationCheckInCheckOutLogEventMapper.mapToCheckInLogEventJson;
 import static org.folio.circulation.domain.representations.logs.CirculationCheckInCheckOutLogEventMapper.mapToCheckOutLogEventJson;
+import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.PAYLOAD;
 import static org.folio.circulation.domain.representations.logs.LogEventType.LOAN;
+import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.domain.representations.logs.RequestUpdateLogEventMapper.mapToRequestLogEventJson;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
@@ -146,11 +147,11 @@ public class EventPublisher {
       write(payloadJsonObject, DUE_DATE_FIELD, loan.getDueDate());
       write(payloadJsonObject, DUE_DATE_CHANGED_BY_RECALL_FIELD, loan.wasDueDateChangedByRecall());
 
-        LoanLogContext loanLogContext = LoanLogContext.from(loan)
-          .withAction(LogContextActionResolver.resolveAction(loan.getAction()))
-          .withDescription(String.format("New due date: %s (from %s)",
-            loan.getDueDate(), loan.getOriginalDueDate()));
-        CompletableFuture.runAsync(() -> publishLogRecord(loanLogContext.asJson(), LOAN));
+      LoanLogContext loanLogContext = LoanLogContext.from(loan)
+        .withAction(LogContextActionResolver.resolveAction(loan.getAction()))
+        .withDescription(String.format("New due date: %s (from %s)",
+          loan.getDueDate(), loan.getOriginalDueDate()));
+      CompletableFuture.runAsync(() -> publishLogRecord(loanLogContext.asJson(), LOAN));
 
       return pubSubPublishingService.publishEvent(LOAN_DUE_DATE_CHANGED.name(),
         payloadJsonObject.encode())
@@ -177,12 +178,6 @@ public class EventPublisher {
   public CompletableFuture<Result<RenewalContext>> publishDueDateChangedEvent(
     RenewalContext renewalContext) {
 
-    LoanLogContext loanLogContext = LoanLogContext.from(renewalContext.getLoan())
-      .withAction(LogContextActionResolver.resolveAction(renewalContext.getLoan().getAction()))
-      .withDescription(String.format("New due date: %s (from %s)", renewalContext.getLoan().getDueDate(),
-        renewalContext.getLoanBeforeRenewal().getDueDate()));
-    CompletableFuture.runAsync(() -> publishLogRecord(loanLogContext.asJson(), LOAN));
-
     publishDueDateChangedEvent(renewalContext.getLoan());
 
     return completedFuture(succeeded(renewalContext));
@@ -204,13 +199,11 @@ public class EventPublisher {
   }
 
   public CompletableFuture<Result<Void>> publishClosedLoanEvent(Loan loan) {
-    if (CHECKED_IN.getValue().equalsIgnoreCase(loan.getAction())) {
+    if (!CHECKED_IN.getValue().equalsIgnoreCase(loan.getAction())) {
       return publishLogRecord(LoanLogContext.from(loan)
-        .withAction(LogContextActionResolver.resolveAction(CLOSED_LOAN.getValue()))
-        .withServicePointId(loan.getCheckInServicePointId()).asJson(), LOAN);
+        .withServicePointId(loan.getCheckoutServicePointId()).asJson(), LOAN);
     }
-    return publishLogRecord(LoanLogContext.from(loan)
-      .withServicePointId(loan.getCheckoutServicePointId()).asJson(), LOAN);
+    return CompletableFuture.completedFuture(succeeded(null));
   }
 
   public CompletableFuture<Result<Loan>> publishMarkedAsMissingLoanEvent(Loan loan) {
@@ -235,6 +228,9 @@ public class EventPublisher {
   }
 
   public CompletableFuture<Result<Void>> publishLogRecord(JsonObject context, LogEventType payloadType) {
+    if (NOTICE.equals(payloadType)) {
+      context = new JsonObject().put(PAYLOAD.value(), context.encode());
+    }
     write(context, LOG_EVENT_TYPE.value(), payloadType.value());
     return pubSubPublishingService.publishEvent(LOG_RECORD.name(), context.encode())
       .thenApply(r -> succeeded(null));
