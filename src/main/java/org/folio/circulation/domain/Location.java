@@ -12,7 +12,6 @@ import java.util.stream.Collectors;
 import io.vertx.core.json.JsonObject;
 
 public class Location {
-
   private final JsonObject representation;
   private final JsonObject libraryRepresentation;
   private final JsonObject campusRepresentation;
@@ -107,5 +106,11 @@ public class Location {
     return getServicePointIds().stream()
       .map(UUID::fromString)
       .anyMatch(id -> Objects.equals(servicePointId, id));
+  }
+
+  @Override
+  public String toString() {
+    return String.format("Institution: `%s`, Campus: `%s`, Library: `%s` Location: `%s`",
+      getInstitutionId(), getCampusId(), getLibraryId(), getId());
   }
 }
