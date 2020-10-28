@@ -68,7 +68,6 @@ public class PubSubRegistrationService {
       logger.error("Module's publishers were not unregistered from PubSub.", exception);
     }
 
-    return allOf(list.toArray(new CompletableFuture[0])).thenApply(r -> true)
-      .whenComplete((r, e) -> client.close());
+    return allOf(list.toArray(new CompletableFuture[0])).thenApply(r -> true);
   }
 }

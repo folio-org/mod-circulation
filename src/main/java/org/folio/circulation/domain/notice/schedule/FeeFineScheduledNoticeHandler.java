@@ -126,7 +126,7 @@ public class FeeFineScheduledNoticeHandler {
         .thenCompose(r -> r.after(policy -> patronNoticeService.acceptScheduledNoticeEvent(
           config, notice.getRecipientUserId(), noticeContext,
           new NoticeLogContext().withUser(context.getLoan().getUser())
-            .withFeeFineAction(context.getAction())
+            .withAccountId(context.getAccount().getId())
             .withItems(Collections.singletonList(logContextItem.withNoticePolicyId(policy.getPolicyId()))))))
         .thenCompose(r -> r.after(v -> {
           if (config.isRecurring()) {
