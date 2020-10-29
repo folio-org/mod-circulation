@@ -57,6 +57,16 @@ public class LoanLogContext {
     return loanLogContext;
   }
 
+  public static LoanLogContext fromAnonymize(Loan loan) {
+    return new LoanLogContext()
+      .withItemId(loan.getItemId())
+      .withAction("Anonymize")
+      .withDate(DateTime.now())
+      .withLoanId(loan.getId())
+      .withServicePointId(ofNullable(loan.getCheckInServicePointId())
+        .orElse(loan.getCheckoutServicePointId()));
+  }
+
   public LoanLogContext withUser(User user) {
     ofNullable(user).ifPresent(usr -> {
       userBarcode = usr.getBarcode();
