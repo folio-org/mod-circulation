@@ -42,6 +42,10 @@ import lombok.Getter;
 
 public class ItemsLostRequiringActualCostResource extends Resource {
 
+  public final static Collection<String> FIELD_VALUES = List.of(
+    DECLARED_LOST.getValue(),
+    AGED_TO_LOST.getValue());
+
   private final String rootPath;
 
   public ItemsLostRequiringActualCostResource(String rootPath, HttpClient client) {
@@ -62,11 +66,7 @@ public class ItemsLostRequiringActualCostResource extends Resource {
     final ItemLostRequiringActualCostsRepresentation itemRepresentation =
       new ItemLostRequiringActualCostsRepresentation();
 
-    final Collection<String> fieldValues = List.of(
-      DECLARED_LOST.getValue(),
-      AGED_TO_LOST.getValue());
-
-    repositories.getItem().findByQuery(matchAny("status.name", fieldValues))
+    repositories.getItem().findByQuery(matchAny("status.name", FIELD_VALUES))
       .thenCompose(r -> r.after(items -> 
         allOf(items, item -> fetchItemLoanAndFeeFine(
           new ItemLostRequiringCostsEntry(item), repositories, itemRepresentation)
