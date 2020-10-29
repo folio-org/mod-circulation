@@ -12,15 +12,14 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsNull.notNullValue;
 
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 
-import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.joda.time.LocalDate;
 import org.joda.time.Seconds;
 import org.junit.Test;
 
@@ -28,6 +27,7 @@ import api.support.APITests;
 import api.support.CheckInByBarcodeResponse;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.RequestBuilder;
+import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import api.support.matchers.JsonObjectMatcher;
 import api.support.matchers.TextDateTimeMatcher;
@@ -43,8 +43,6 @@ public class ServicePointCheckInTests extends APITests {
 
     final ItemResource nod = itemsFixture.basedUponNod();
 
-    final IndividualResource requestServicePoint = checkInServicePoint;
-
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(nod, james);
 
     final IndividualResource request = requestsFixture.place(
@@ -52,9 +50,9 @@ public class ServicePointCheckInTests extends APITests {
         .hold()
         .forItem(nod)
         .by(jessica)
-        .withPickupServicePoint(requestServicePoint)
+        .withPickupServicePoint(checkInServicePoint)
         .withRequestDate(new DateTime(2019, 7, 5, 10, 0))
-        .withRequestExpiration(new LocalDate(2019, 7, 11)));
+        .withRequestExpirationJavaDate(LocalDate.of(2019, 7, 11)));
 
     final DateTime beforeCheckIn = DateTime.now(DateTimeZone.UTC);
 

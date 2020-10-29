@@ -31,6 +31,7 @@ import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNot.not;
 import static org.joda.time.DateTimeZone.UTC;
 
+import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
@@ -50,7 +51,6 @@ import org.hamcrest.Matcher;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
-import org.joda.time.LocalDate;
 import org.joda.time.Seconds;
 import org.junit.Test;
 
@@ -559,8 +559,8 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
       .by(requester)
       .withRequestDate(requestDate)
       .fulfilToHoldShelf()
-      .withRequestExpiration(new LocalDate(2019, 7, 30))
-      .withHoldShelfExpiration(new LocalDate(2019, 8, 31))
+      .withRequestExpirationJavaDate(LocalDate.of(2019, 7, 30))
+      .withHoldShelfExpirationJavaDate(LocalDate.of(2019, 8, 31))
       .withPickupServicePointId(servicePointId)
       .withTags(new RequestBuilder.Tags(asList("new", "important"))));
 
@@ -595,8 +595,8 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
       .by(requester)
       .withRequestDate(requestDate)
       .fulfilToHoldShelf()
-      .withRequestExpiration(new LocalDate(2019, 5, 1))
-      .withHoldShelfExpiration(new LocalDate(2019, 6, 1))
+      .withRequestExpirationJavaDate(LocalDate.of(2019, 5, 1))
+      .withHoldShelfExpirationJavaDate(LocalDate.of(2019, 6, 1))
       .withPickupServicePointId(servicePointId)
       .withTags(new RequestBuilder.Tags(asList("new", "important"))));
 
@@ -888,8 +888,8 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
       .forItem(nod)
       .by(requester)
       .fulfilToHoldShelf()
-      .withRequestExpiration(new LocalDate(recallRequestExpirationDate))
-      .withHoldShelfExpiration(new LocalDate(recallRequestExpirationDate))
+      .withRequestExpirationJavaDate(toLocalDate(recallRequestExpirationDate))
+      .withHoldShelfExpirationJavaDate(toLocalDate(recallRequestExpirationDate))
       .withPickupServicePointId(UUID.fromString(homeLocation.getJson().getString("primaryServicePoint")))
       .withTags(new RequestBuilder.Tags(asList("new", "important"))));
 
@@ -1167,9 +1167,13 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     });
   }
 
-  private ZonedDateTime toZonedStartOfDay(java.time.LocalDate date) {
+  private ZonedDateTime toZonedStartOfDay(LocalDate date) {
     final var startOfDay = date.atStartOfDay();
 
     return ZonedDateTime.of(startOfDay, ZoneId.systemDefault().normalized());
+  }
+
+  private LocalDate toLocalDate(DateTime dateTime) {
+    return LocalDate.of(dateTime.getYear(), dateTime.getMonthOfYear(), dateTime.getDayOfMonth());
   }
 }
