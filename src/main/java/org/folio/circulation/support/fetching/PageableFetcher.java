@@ -22,15 +22,16 @@ import lombok.AllArgsConstructor;
 public final class PageableFetcher<T> {
   private static final Logger log = getLogger(PageableFetcher.class);
 
+  // This limit needed to prevent stack overflow for recursive fetch
   private static final int DEFAULT_MAX_ALLOWED_RECORDS_LIMIT = 1_000_000;
-  private static final PageLimit DEFAULT_PAGE_SIZE = limit(500);
+  private static final PageLimit DEFAULT_PAGE_SIZE_LIMIT = limit(500);
 
   private final GetManyRecordsRepository<T> repository;
   private final PageLimit pageSize;
   private final int maxAllowedRecordsToFetchLimit;
 
   public PageableFetcher(GetManyRecordsRepository<T> repository) {
-    this(repository, DEFAULT_PAGE_SIZE, DEFAULT_MAX_ALLOWED_RECORDS_LIMIT);
+    this(repository, DEFAULT_PAGE_SIZE_LIMIT, DEFAULT_MAX_ALLOWED_RECORDS_LIMIT);
   }
 
   public CompletableFuture<Result<Void>> processPages(CqlQuery query, PageProcessor<T> pageProcessor) {
@@ -87,8 +88,4 @@ public final class PageableFetcher<T> {
     return latestPage.size() < pageSize.getLimit();
   }
 
-  @FunctionalInterface
-  public interface PageProcessor<T> {
-    CompletableFuture<Result<Void>> processPage(MultipleRecords<T> records);
-  }
 }
