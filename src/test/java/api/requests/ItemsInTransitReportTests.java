@@ -11,6 +11,9 @@ import static org.joda.time.DateTimeZone.UTC;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -19,7 +22,6 @@ import java.util.UUID;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.support.json.JsonPropertyFetcher;
 import org.joda.time.DateTime;
-import org.joda.time.LocalDate;
 import org.junit.Test;
 
 import api.support.APITests;
@@ -88,7 +90,7 @@ public class ItemsInTransitReportTests extends APITests {
     final UUID secondServicePointId = servicePointsFixture.cd2().getId();
     final DateTime checkInDate = new DateTime(2019, 8, 13, 5, 0, UTC);
     final DateTime requestDate = new DateTime(2019, 7, 5, 10, 0, UTC);
-    final LocalDate requestExpirationDate = new LocalDate(2019, 7, 11);
+    final LocalDate requestExpirationDate = LocalDate.of(2019, 7, 11);
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet);
     createRequest(smallAngryPlanet, steve, secondServicePointId, requestDate, requestExpirationDate);
@@ -124,10 +126,10 @@ public class ItemsInTransitReportTests extends APITests {
     final DateTime checkInDate1 = new DateTime(2019, 8, 13, 5, 0, UTC);
     final DateTime checkInDate2 = new DateTime(2019, 4, 3, 2, 10, UTC);
     final DateTime requestDate1 = new DateTime(2019, 7, 5, 10, 0);
-    final LocalDate requestExpirationDate1 = new LocalDate(2019, 7, 11);
+    final LocalDate requestExpirationDate1 = LocalDate.of(2019, 7, 11);
 
     final DateTime requestDate2 = new DateTime(2019, 10, 8, 11, 0);
-    final LocalDate requestExpirationDate2 = new LocalDate(2020, 1, 12);
+    final LocalDate requestExpirationDate2 = LocalDate.of(2020, 1, 12);
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet);
     checkOutFixture.checkOutByBarcode(nod);
@@ -173,7 +175,7 @@ public class ItemsInTransitReportTests extends APITests {
 
     final DateTime checkInDate = new DateTime(2019, 8, 13, 5, 0, UTC);
     final DateTime requestDate = new DateTime(2019, 7, 5, 10, 0);
-    final LocalDate requestExpirationDate = new LocalDate(2019, 7, 11);
+    final LocalDate requestExpirationDate = LocalDate.of(2019, 7, 11);
 
     final IndividualResource steve = usersFixture.steve();
     final UUID firstServicePointId = servicePointsFixture.cd1().getId();
@@ -216,8 +218,8 @@ public class ItemsInTransitReportTests extends APITests {
     final DateTime checkInDate2 = new DateTime(2019, 4, 3, 2, 10, UTC);
     final DateTime requestDate1 = new DateTime(2019, 7, 5, 10, 0);
     final DateTime requestDate2 = new DateTime(2019, 10, 8, 11, 0);
-    final LocalDate requestExpirationDate1 = new LocalDate(2019, 7, 11);
-    final LocalDate requestExpirationDate2 = new LocalDate(2020, 1, 12);
+    final LocalDate requestExpirationDate1 = LocalDate.of(2019, 7, 11);
+    final LocalDate requestExpirationDate2 = LocalDate.of(2020, 1, 12);
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet);
     checkOutFixture.checkOutByBarcode(nod);
@@ -274,13 +276,13 @@ public class ItemsInTransitReportTests extends APITests {
 
     final DateTime requestSmallAngryPlanetDate1 = new DateTime(2019, 7, 5, 10, 0);
     final DateTime requestSmallAngryPlanetDate2 = new DateTime(2019, 10, 1, 12, 0);
-    final LocalDate requestSmallAngryPlanetExpirationDate1 = new LocalDate(2019, 7, 11);
-    final LocalDate requestSmallAngryPlanetExpirationDate2 = new LocalDate(2019, 11, 12);
+    final LocalDate requestSmallAngryPlanetExpirationDate1 = LocalDate.of(2019, 7, 11);
+    final LocalDate requestSmallAngryPlanetExpirationDate2 = LocalDate.of(2019, 11, 12);
 
     final DateTime requestNodeDate1 = new DateTime(2019, 5, 11, 1, 0);
     final DateTime requestNodeDate2 = new DateTime(2019, 10, 8, 11, 0);
-    final LocalDate requestNodeExpirationDate1 = new LocalDate(2020, 1, 12);
-    final LocalDate requestNodeExpirationDate2 = new LocalDate(2020, 10, 10);
+    final LocalDate requestNodeExpirationDate1 = LocalDate.of(2020, 1, 12);
+    final LocalDate requestNodeExpirationDate2 = LocalDate.of(2020, 10, 10);
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet);
     checkOutFixture.checkOutByBarcode(nod);
@@ -389,8 +391,8 @@ public class ItemsInTransitReportTests extends APITests {
     final DateTime checkInDate3 = new DateTime(2019, 10, 10, 3, 0, UTC);
     final DateTime requestDate1 = new DateTime(2019, 7, 5, 10, 0);
     final DateTime requestDate2 = new DateTime(2019, 10, 8, 11, 0);
-    final LocalDate requestExpirationDate1 = new LocalDate(2019, 7, 11);
-    final LocalDate requestExpirationDate2 = new LocalDate(2020, 1, 12);
+    final LocalDate requestExpirationDate1 = LocalDate.of(2019, 7, 11);
+    final LocalDate requestExpirationDate2 = LocalDate.of(2020, 1, 12);
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet);
     checkOutFixture.checkOutByBarcode(nod);
@@ -479,7 +481,7 @@ public class ItemsInTransitReportTests extends APITests {
       .forItem(item)
       .withTags(tags)
       .withRequestDate(requestDate)
-      .withRequestExpiration(requestExpirationDate)
+      .withRequestExpirationJavaDate(requestExpirationDate)
       .by(steve);
 
     requestsClient.create(secondRequestBuilderOnItem);
@@ -542,7 +544,7 @@ public class ItemsInTransitReportTests extends APITests {
     assertThat(actualRequest.getString(REQUEST_CREATION_DATE), isEquivalentTo(requestDate));
 
     assertThat(actualRequest.getString(REQUEST_EXPIRATION_DATE),
-      isEquivalentTo(requestExpirationDate.toDateTimeAtStartOfDay()));
+      isEquivalentTo(toZonedStartOfDay(requestExpirationDate)));
 
     assertThat(actualRequest.getString(REQUEST_PICKUP_SERVICE_POINT_NAME), is(pickupServicePoint));
     assertThat(toList(toStream(actualRequest, TAGS)), hasItems("tag1", "tag2"));
@@ -578,7 +580,6 @@ public class ItemsInTransitReportTests extends APITests {
   }
 
   private void verifyLastCheckIn(JsonObject itemJson, DateTime checkInDateTime, String servicePointName) {
-
     JsonObject actualLastCheckIn = itemJson.getJsonObject("lastCheckIn");
     DateTime actualCheckinDateTime = JsonPropertyFetcher
       .getDateTimeProperty(actualLastCheckIn, "dateTime");
@@ -598,7 +599,6 @@ public class ItemsInTransitReportTests extends APITests {
   }
 
   private ItemResource createSmallAngryPlanet() {
-
     final ItemBuilder smallAngryPlanetItemBuilder = createSmallAngryPlanetItemBuilder();
 
     return itemsFixture.basedUponSmallAngryPlanet(smallAngryPlanetItemBuilder,
@@ -606,7 +606,6 @@ public class ItemsInTransitReportTests extends APITests {
   }
 
   private ItemResource createSmallAngryPlanetCopy(UUID locationId, String barcode) {
-
     final ItemBuilder smallAngryPlanetItemBuilder = new ItemBuilder()
       .withPermanentLoanType(materialTypesFixture.book().getId())
       .withMaterialType(loanTypesFixture.canCirculate().getId())
@@ -619,7 +618,6 @@ public class ItemsInTransitReportTests extends APITests {
   }
 
   private ItemBuilder createSmallAngryPlanetItemBuilder() {
-
     return ItemExamples.basedUponSmallAngryPlanet(
       materialTypesFixture.book().getId(),
       loanTypesFixture.canCirculate().getId(),
@@ -627,5 +625,11 @@ public class ItemsInTransitReportTests extends APITests {
       .withEnumeration("smallAngryPlanetEnumeration")
       .withVolume("smallAngryPlanetVolume")
       .withYearCaption(Collections.singletonList("2019"));
+  }
+
+  private ZonedDateTime toZonedStartOfDay(LocalDate date) {
+    final var startOfDay = date.atStartOfDay();
+
+    return ZonedDateTime.of(startOfDay, ZoneId.systemDefault().normalized());
   }
 }
