@@ -59,6 +59,10 @@ public class User {
     }
   }
 
+  public DateTime getExpirationDate() {
+    return getDateTimeProperty(representation, "expirationDate", null);
+  }
+
   public String getBarcode() {
     return getProperty(representation, "barcode");
   }
