@@ -14,6 +14,7 @@ import static org.folio.circulation.domain.representations.logs.LogEventPayloadF
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.UPDATED_BY_USER_ID;
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.USER_BARCODE;
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.USER_ID;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
 import io.vertx.core.json.JsonObject;
@@ -55,6 +56,15 @@ public class LoanLogContext {
     ofNullable(loan.getUpdatedByUserId()).ifPresent(loanLogContext::setUpdatedByUserId);
     ofNullable(loan.getCheckoutServicePointId()).ifPresent(loanLogContext::setServicePointId);
     return loanLogContext;
+  }
+
+  public static LoanLogContext fromAnonymize(Loan loan) {
+    return new LoanLogContext()
+      .withItemId(getProperty(loan.asJson(), ITEM_ID.value()))
+      .withAction("Anonymize")
+      .withDate(DateTime.now())
+      .withLoanId(getProperty(loan.asJson(), "id"))
+      .withServicePointId(getProperty(loan.asJson(), "checkinServicePointId"));
   }
 
   public LoanLogContext withUser(User user) {
