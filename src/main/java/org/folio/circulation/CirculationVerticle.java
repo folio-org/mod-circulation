@@ -90,7 +90,7 @@ public class CirculationVerticle extends AbstractVerticle {
       .register(router);
     new ItemsInTransitResource("/inventory-reports/items-in-transit", client)
       .register(router);
-    new ItemsLostRequiringActualCostResource("/inventory-reports/items-lost-requiring-actual-costs", client)
+    new ItemsLostRequiringActualCostResource("/circulation/items-lost-requiring-actual-costs", client)
       .register(router);
     new PickSlipsResource("/circulation/pick-slips/:servicePointId", client)
       .register(router);
