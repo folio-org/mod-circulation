@@ -23,13 +23,12 @@ import static org.joda.time.DateTimeZone.UTC;
 import static org.junit.Assert.assertTrue;
 
 import java.net.HttpURLConnection;
+import java.time.LocalDate;
 import java.util.UUID;
 
-import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.CoreMatchers;
 import org.joda.time.DateTime;
-import org.joda.time.LocalDate;
 import org.junit.Test;
 
 import api.support.APITests;
@@ -37,6 +36,7 @@ import api.support.MultipleJsonRecords;
 import api.support.builders.Address;
 import api.support.builders.ItemBuilder;
 import api.support.builders.RequestBuilder;
+import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -88,8 +88,8 @@ public class RequestsAPIRetrievalTests extends APITests {
         .by(sponsor)
         .proxiedBy(proxy)
         .fulfilToHoldShelf()
-        .withRequestExpiration(new LocalDate(2017, 7, 30))
-        .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
+        .withRequestExpirationJavaDate(LocalDate.of(2017, 7, 30))
+        .withHoldShelfExpirationJavaDate(LocalDate.of(2017, 8, 31))
         .withPickupServicePointId(pickupServicePointId)
         .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG))));
 
