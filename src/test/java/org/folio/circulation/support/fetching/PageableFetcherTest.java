@@ -3,7 +3,7 @@ package org.folio.circulation.support.fetching;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.IntStream.range;
-import static org.folio.circulation.support.fetching.PageableFetcher.PageProcessor;
+
 import static org.folio.circulation.support.http.client.CqlQuery.noQuery;
 import static org.folio.circulation.support.http.client.PageLimit.limit;
 import static org.folio.circulation.support.results.Result.failed;
