@@ -97,8 +97,7 @@ public class ItemsLostRequiringActualCostResource extends Resource {
       .thenComposeAsync(repositories.getOverdueFinePolicy()::findOverdueFinePolicyForLoan)
       .thenComposeAsync(repositories.getLostItemPolicy()::findLostItemPolicyForLoan)
       .thenComposeAsync(repositories.getPatronGroup()::findGroupForLoan)
-      .thenCompose(r -> r.after(loan -> 
-        CompletableFuture.completedFuture(Result.succeeded(entry.withLoan(loan)))));
+      .thenApply(r -> r.map(loan -> entry.withLoan(loan)));
   }
 
   private CompletableFuture<Result<JsonObject>> mapEntryToJson(ItemLostRequiringCostsEntry entry,
