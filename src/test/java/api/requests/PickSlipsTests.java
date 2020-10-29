@@ -1,5 +1,6 @@
 package api.requests;
 
+import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static java.util.stream.Collectors.joining;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
@@ -10,6 +11,9 @@ import static org.joda.time.DateTimeZone.UTC;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -26,7 +30,6 @@ import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.joda.time.LocalDate;
 import org.junit.Test;
 
 import api.support.APITests;
@@ -122,8 +125,8 @@ public class PickSlipsTests extends APITests {
     IndividualResource requesterResource =
       usersFixture.steve(builder -> builder.withAddress(address));
     DateTime requestDate = new DateTime(2019, 7, 22, 10, 22, 54, DateTimeZone.UTC);
-    LocalDate requestExpiration = new LocalDate(2019, 7, 30);
-    LocalDate holdShelfExpiration = new LocalDate(2019, 8, 31);
+    final var requestExpiration = LocalDate.of(2019, 7, 30);
+    final var holdShelfExpiration = LocalDate.of(2019, 8, 31);
     IndividualResource materialTypeResource = materialTypesFixture.book();
     IndividualResource loanTypeResource = loanTypesFixture.canCirculate();
 
@@ -151,8 +154,8 @@ public class PickSlipsTests extends APITests {
       .open()
       .page()
       .withRequestDate(requestDate)
-      .withRequestExpiration(requestExpiration)
-      .withHoldShelfExpiration(holdShelfExpiration)
+      .withRequestExpirationJavaDate(requestExpiration)
+      .withHoldShelfExpirationJavaDate(holdShelfExpiration)
       .withPickupServicePointId(servicePointId)
       .withDeliveryAddressType(addressTypeResource.getId())
       .forItem(itemResource)
@@ -222,9 +225,9 @@ public class PickSlipsTests extends APITests {
     assertThat(requestContext.getString("deliveryAddressType"),
       is(addressTypeResource.getJson().getString("addressType")));
     assertThat(requestContext.getString("requestExpirationDate"),
-      is(requestExpiration.toDateTimeAtStartOfDay().toString()));
+      isEquivalentTo(toZonedStartOfDay(requestExpiration)));
     assertThat(requestContext.getString("holdShelfExpirationDate"),
-      is(holdShelfExpiration.toDateTimeAtStartOfDay().toString()));
+      isEquivalentTo(toZonedStartOfDay(holdShelfExpiration)));
     assertThat(requestContext.getString("requestID"),
       UUIDMatcher.is(requestResource.getId()));
     assertThat(requestContext.getString("servicePointPickup"),
@@ -452,4 +455,9 @@ public class PickSlipsTests extends APITests {
     return jsonObject.getString("name");
   }
 
+  private ZonedDateTime toZonedStartOfDay(LocalDate date) {
+    final var startOfDay = date.atStartOfDay();
+
+    return ZonedDateTime.of(startOfDay, ZoneId.systemDefault().normalized());
+  }
 }
