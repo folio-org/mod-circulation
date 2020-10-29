@@ -118,7 +118,7 @@ public class LostItemPolicyTest {
     "Hours, 6",
     "Days, 98",
     "Weeks, 43",
-    "Months, 44",
+    "Months, 5",
   })
   public void shouldRefundLostFeesIfPeriodIsPassing(String interval, int duration) {
     final Period period = from(duration, interval);
