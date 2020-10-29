@@ -333,6 +333,22 @@ RequestsAPICreationTests extends APITests {
   }
 
   @Test
+  public void cannotCreateRequestWithNoItemReference() {
+    UUID patronId = usersFixture.charlotte().getId();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+
+    Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
+      .recall()
+      .withNoItemId()
+      .withPickupServicePointId(pickupServicePointId)
+      .withRequesterId(patronId));
+
+    assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(postResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("Cannot create a request with no item ID"))));
+  }
+
+  @Test
   public void cannotCreateRecallRequestWhenItemIsNotCheckedOut() {
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet(
       ItemBuilder::available)

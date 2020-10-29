@@ -171,6 +171,10 @@ public class RequestBuilder extends JsonBuilder implements Builder {
     return withRequestType("Recall");
   }
 
+  public RequestBuilder withNoItemId() {
+    return withItemId(null);
+  }
+
   public RequestBuilder forItem(IndividualResource item) {
     return withItemId(item.getId());
   }
