@@ -50,7 +50,8 @@ public class MarkOverdueLoansAsAgedLostService {
   public CompletableFuture<Result<Void>> processAgeToLost() {
     log.info("Running mark overdue loans as aged to lost process...");
 
-    return loanPageableFetcher.processPages(loanFetchQuery(), this::processAgeToLost);
+    return loanFetchQuery()
+      .after(query -> loanPageableFetcher.processPages(query, this::processAgeToLost));
   }
 
   public CompletableFuture<Result<Void>> processAgeToLost(MultipleRecords<Loan> loans) {
@@ -113,7 +114,7 @@ public class MarkOverdueLoansAsAgedLostService {
     return loan.getLostItemPolicy().canAgeLoanToLost(loan.getDueDate());
   }
 
-  private CqlQuery loanFetchQuery() {
+  private Result<CqlQuery> loanFetchQuery() {
     final Result<CqlQuery> statusQuery = exactMatch("status.name", "Open");
     final Result<CqlQuery> dueDateQuery = lessThan("dueDate", getClockManager().getDateTime());
     final Result<CqlQuery> claimedReturnedQuery = notEqual("itemStatus", CLAIMED_RETURNED.getValue());
@@ -122,7 +123,6 @@ public class MarkOverdueLoansAsAgedLostService {
     return statusQuery.combine(dueDateQuery, CqlQuery::and)
       .combine(claimedReturnedQuery, CqlQuery::and)
       .combine(agedToLostQuery, CqlQuery::and)
-      .map(query -> query.sortBy(ascending("dueDate")))
-      .value();
+      .map(query -> query.sortBy(ascending("dueDate")));
   }
 }
