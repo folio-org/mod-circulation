@@ -49,6 +49,8 @@ import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
 import org.folio.circulation.support.RecordNotFoundFailure;
+import org.folio.circulation.support.fetching.GetManyRecordsRepository;
+import org.folio.circulation.support.http.client.Offset;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.SingleRecordFetcher;
 import org.folio.circulation.support.http.client.CqlQuery;
@@ -62,7 +64,7 @@ import org.slf4j.LoggerFactory;
 
 import io.vertx.core.json.JsonObject;
 
-public class LoanRepository {
+public class LoanRepository implements GetManyRecordsRepository<Loan> {
   private static final String RECORDS_PROPERTY_NAME = "loans";
 
   private final CollectionResourceClient loansStorageClient;
@@ -382,10 +384,11 @@ public class LoanRepository {
       });
   }
 
-  public CompletableFuture<Result<MultipleRecords<Loan>>> findByQuery(CqlQuery query,
-    PageLimit limit) {
+  @Override
+  public CompletableFuture<Result<MultipleRecords<Loan>>> getMany(CqlQuery cqlQuery,
+    PageLimit pageLimit, Offset offset) {
 
-    return loansStorageClient.getMany(query, limit)
+    return loansStorageClient.getMany(cqlQuery, pageLimit, offset)
       .thenApply(flatMapResult(this::mapResponseToLoans));
   }
 }

@@ -133,4 +133,8 @@ public class MultipleRecords<T> {
   public boolean isEmpty() {
     return records.isEmpty();
   }
+
+  public int size() {
+    return records.size();
+  }
 }
