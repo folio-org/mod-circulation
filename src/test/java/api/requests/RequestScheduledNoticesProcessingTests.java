@@ -1,11 +1,12 @@
 package api.requests;
 
-import static api.support.PubsubPublisherTestUtils.assertThatPublishedNoticeLogRecordEventsCountIsEqualTo;
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
+import static api.support.PubsubPublisherTestUtils.assertThatPublishedNoticeLogRecordEventsCountIsEqualTo;
 import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static java.util.Collections.singletonList;
+import static org.folio.circulation.support.ClockManager.getClockManager;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
@@ -14,18 +15,17 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.joda.time.DateTimeZone.UTC;
 
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import api.support.fakes.FakePubSub;
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.policy.Period;
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
-import org.joda.time.LocalDate;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
@@ -38,6 +38,7 @@ import api.support.builders.ItemBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
+import api.support.fakes.FakePubSub;
 import api.support.fixtures.ItemExamples;
 import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.IndividualResource;
@@ -82,14 +83,15 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
       .create();
     setupNoticePolicyWithRequestNotice(noticeConfiguration);
 
-    LocalDate requestExpiration = LocalDate.now(UTC).minusDays(1);
+    final var requestExpiration = LocalDate.now(getClockManager().getClock()).minusDays(1);
+
     IndividualResource request = requestsFixture.place(new RequestBuilder().page()
       .forItem(item)
       .withRequesterId(requester.getId())
       .withRequestDate(DateTime.now())
       .withStatus(OPEN_NOT_YET_FILLED)
       .withPickupServicePoint(pickupServicePoint)
-      .withRequestExpiration(requestExpiration));
+      .withRequestExpirationJavaDate(requestExpiration));
 
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
@@ -121,7 +123,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
       .create();
     setupNoticePolicyWithRequestNotice(noticeConfiguration);
 
-    LocalDate requestExpiration = LocalDate.now(UTC).minusDays(1);
+    final var requestExpiration = LocalDate.now(getClockManager().getClock()).minusDays(1);
 
     requestsFixture.place(new RequestBuilder().page()
       .forItem(item)
@@ -129,7 +131,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
       .withRequestDate(DateTime.now())
       .withStatus(OPEN_NOT_YET_FILLED)
       .withPickupServicePoint(pickupServicePoint)
-      .withRequestExpiration(requestExpiration));
+      .withRequestExpirationJavaDate(requestExpiration));
 
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
@@ -172,7 +174,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
     requestsClient.replace(request.getId(),
       request.getJson().put("status", "Closed - Pickup expired"));
     scheduledNoticeProcessingClient.runRequestNoticesProcessing(
-      LocalDate.now(UTC).plusDays(31).toDateTimeAtStartOfDay());
+      org.joda.time.LocalDate.now(UTC).plusDays(31).toDateTimeAtStartOfDay());
 
     assertThat(scheduledNoticesClient.getAll(), hasSize(0));
   }
@@ -205,7 +207,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
       .until(scheduledNoticesClient::getAll, hasSize(1));
 
     scheduledNoticeProcessingClient.runRequestNoticesProcessing(
-      LocalDate.now(UTC).plusDays(31).toDateTimeAtStartOfDay());
+      org.joda.time.LocalDate.now(UTC).plusDays(31).toDateTimeAtStartOfDay());
 
     assertThat(scheduledNoticesClient.getAll(), hasSize(1));
   }
@@ -247,7 +249,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
         equalTo("Closed - Filled"));
 
     scheduledNoticeProcessingClient.runRequestNoticesProcessing(
-      LocalDate.now(UTC).plusDays(100).toDateTimeAtStartOfDay());
+      org.joda.time.LocalDate.now(UTC).plusDays(100).toDateTimeAtStartOfDay());
 
     assertThat(scheduledNoticesClient.getAll(), hasSize(0));
     assertThat(patronNoticesClient.getAll(), hasSize(0));
@@ -263,14 +265,15 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
       .create();
     setupNoticePolicyWithRequestNotice(noticeConfiguration);
 
-    LocalDate requestExpiration = LocalDate.now(UTC).plusDays(4);
+    final var requestExpiration = LocalDate.now(getClockManager().getClock()).plusDays(4);
+
     IndividualResource request = requestsFixture.place(new RequestBuilder().page()
       .forItem(item)
       .withRequesterId(requester.getId())
       .withRequestDate(DateTime.now())
       .withStatus(OPEN_NOT_YET_FILLED)
       .withPickupServicePoint(pickupServicePoint)
-      .withRequestExpiration(requestExpiration));
+      .withRequestExpirationJavaDate(requestExpiration));
 
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
@@ -296,14 +299,15 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
       .create();
     setupNoticePolicyWithRequestNotice(noticeConfiguration);
 
-    LocalDate requestExpiration = LocalDate.now(UTC).plusDays(3);
+    final var requestExpiration = LocalDate.now(getClockManager().getClock()).plusDays(3);
+
     IndividualResource request = requestsFixture.place(new RequestBuilder().page()
       .forItem(item)
       .withRequesterId(requester.getId())
       .withRequestDate(DateTime.now())
       .withStatus(OPEN_NOT_YET_FILLED)
       .withPickupServicePoint(pickupServicePoint)
-      .withRequestExpiration(requestExpiration));
+      .withRequestExpirationJavaDate(requestExpiration));
 
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
@@ -336,14 +340,15 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
       .create();
     setupNoticePolicyWithRequestNotice(noticeConfiguration);
 
-    LocalDate requestExpiration = LocalDate.now(UTC).plusMonths(3);
+    final var requestExpiration = LocalDate.now(getClockManager().getClock()).plusMonths(3);
+
     IndividualResource request = requestsFixture.place(new RequestBuilder().page()
       .forItem(item)
       .withRequesterId(requester.getId())
       .withRequestDate(DateTime.now())
       .withStatus(OPEN_NOT_YET_FILLED)
       .withPickupServicePoint(pickupServicePoint)
-      .withRequestExpiration(requestExpiration));
+      .withRequestExpirationJavaDate(requestExpiration));
 
     CheckInByBarcodeRequestBuilder builder = new CheckInByBarcodeRequestBuilder()
       .forItem(item)
@@ -356,7 +361,8 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
       .until(scheduledNoticesClient::getAll, hasSize(1));
 
     scheduledNoticeProcessingClient.runRequestNoticesProcessing(
-      LocalDate.now(UTC).plusDays(28).toDateTimeAtStartOfDay());
+      org.joda.time.LocalDate.now(UTC).plusDays(28).toDateTimeAtStartOfDay());
+
     List<JsonObject> notices = patronNoticesClient.getAll();
 
     assertThat(notices, hasSize(1));

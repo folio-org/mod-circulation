@@ -3,11 +3,14 @@ package api.requests;
 import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static org.folio.circulation.domain.representations.RequestProperties.HOLD_SHELF_EXPIRATION_DATE;
+import static org.folio.circulation.support.ClockManager.getClockManager;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -43,7 +46,6 @@ public class RequestScheduledNoticesTests extends APITests {
 
   @Before
   public void beforeEach() {
-
     ItemBuilder itemBuilder = ItemExamples.basedUponSmallAngryPlanet(
       materialTypesFixture.book().getId(), loanTypesFixture.canCirculate().getId());
     HoldingBuilder holdingBuilder = itemsFixture.applyCallNumberHoldings(
@@ -60,7 +62,6 @@ public class RequestScheduledNoticesTests extends APITests {
 
   @Test
   public void requestExpirationUponAtNoticeShouldBeScheduledWhenCreatedRequestIsSetToExpire() {
-
     JsonObject requestNotice = new NoticeConfigurationBuilder()
       .withTemplateId(templateId)
       .withRequestExpirationEvent()
@@ -74,14 +75,15 @@ public class RequestScheduledNoticesTests extends APITests {
 
     useDefaultRollingPoliciesAndOnlyAllowPageRequests(noticePolicyBuilder);
 
-    LocalDate requestExpiration = LocalDate.now().plusMonths(3);
+    final var requestExpiration = java.time.LocalDate.now(getClockManager().getClock()).plusMonths(3);
+
     IndividualResource request = requestsFixture.place(new RequestBuilder().page()
       .forItem(item)
       .withRequesterId(requester.getId())
       .withRequestDate(DateTime.now())
       .withStatus(OPEN_NOT_YET_FILLED)
       .withPickupServicePoint(pickupServicePoint)
-      .withRequestExpiration(requestExpiration));
+      .withRequestExpirationJavaDate(requestExpiration));
 
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
@@ -96,7 +98,7 @@ public class RequestScheduledNoticesTests extends APITests {
     assertThat(scheduledNotice.getString("requestId"), is(request.getId().toString()));
     assertThat(scheduledNotice.getString("triggeringEvent"), is("Request expiration"));
     assertThat(scheduledNotice.getString("nextRunTime"),
-      isEquivalentTo(requestExpiration.toDateTimeAtStartOfDay()));
+      isEquivalentTo(toZonedStartOfDay(requestExpiration)));
     assertThat(noticeConfig.getString("timing"), is("Upon At"));
     assertThat(noticeConfig.getString("templateId"), is(templateId.toString()));
     assertThat(noticeConfig.getString("format"), is("Email"));
@@ -105,7 +107,6 @@ public class RequestScheduledNoticesTests extends APITests {
 
   @Test
   public void requestExpirationUponAtNoticeShouldNotBeScheduledWhenCreatedRequestIsNotSetToExpire() {
-
     JsonObject requestNotice = new NoticeConfigurationBuilder()
       .withTemplateId(templateId)
       .withRequestExpirationEvent()
@@ -164,7 +165,6 @@ public class RequestScheduledNoticesTests extends APITests {
 
   @Test
   public void requestExpirationBeforeNoticeShouldBeScheduledWhenCreatedRequestIsSetToExpire() {
-
     JsonObject requestNotice = new NoticeConfigurationBuilder()
       .withTemplateId(templateId)
       .withRequestExpirationEvent()
@@ -178,14 +178,15 @@ public class RequestScheduledNoticesTests extends APITests {
 
     useDefaultRollingPoliciesAndOnlyAllowPageRequests(noticePolicyBuilder);
 
-    LocalDate requestExpiration = LocalDate.now().plusMonths(3);
+    final var requestExpiration = java.time.LocalDate.now(getClockManager().getClock()).plusMonths(3);
+
     IndividualResource request = requestsFixture.place(new RequestBuilder().page()
       .forItem(item)
       .withRequesterId(requester.getId())
       .withRequestDate(DateTime.now())
       .withStatus(OPEN_NOT_YET_FILLED)
       .withPickupServicePoint(pickupServicePoint)
-      .withRequestExpiration(requestExpiration));
+      .withRequestExpirationJavaDate(requestExpiration));
 
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
@@ -200,7 +201,7 @@ public class RequestScheduledNoticesTests extends APITests {
     assertThat(scheduledNotice.getString("requestId"), is(request.getId().toString()));
     assertThat(scheduledNotice.getString("triggeringEvent"), is("Request expiration"));
     assertThat(scheduledNotice.getString("nextRunTime"),
-      isEquivalentTo(requestExpiration.toDateTimeAtStartOfDay().minusDays(3)));
+      isEquivalentTo(toZonedStartOfDay(requestExpiration).minusDays(3)));
     assertThat(noticeConfig.getString("timing"), is("Before"));
     assertThat(noticeConfig.getString("templateId"), is(templateId.toString()));
     assertThat(noticeConfig.getString("format"), is("Email"));
@@ -209,7 +210,6 @@ public class RequestScheduledNoticesTests extends APITests {
 
   @Test
   public void requestExpirationUponAtNoticeShouldBeRescheduledWhenUpdatedRequestIsSetToExpire() {
-
     JsonObject requestNotice = new NoticeConfigurationBuilder()
       .withTemplateId(templateId)
       .withRequestExpirationEvent()
@@ -276,7 +276,6 @@ public class RequestScheduledNoticesTests extends APITests {
 
   @Test
   public void recurringRequestExpirationNoticeShouldBeDeletedWhenExpirationDateIsRemovedDuringUpdate() {
-
     JsonObject requestNotice = new NoticeConfigurationBuilder()
       .withTemplateId(templateId)
       .withRequestExpirationEvent()
@@ -291,14 +290,15 @@ public class RequestScheduledNoticesTests extends APITests {
 
     useDefaultRollingPoliciesAndOnlyAllowPageRequests(noticePolicyBuilder);
 
-    LocalDate requestExpiration = LocalDate.now(DateTimeZone.UTC).plusMonths(3);
+    final var requestExpiration = java.time.LocalDate.now(getClockManager().getClock()).plusMonths(3);
+
     RequestBuilder requestBuilder = new RequestBuilder().page()
       .forItem(item)
       .withRequesterId(requester.getId())
       .withRequestDate(DateTime.now())
       .withStatus(OPEN_NOT_YET_FILLED)
       .withPickupServicePoint(pickupServicePoint)
-      .withRequestExpiration(requestExpiration);
+      .withRequestExpirationJavaDate(requestExpiration);
     IndividualResource request = requestsFixture.place(requestBuilder);
 
     Awaitility.await()
@@ -314,7 +314,7 @@ public class RequestScheduledNoticesTests extends APITests {
     assertThat(scheduledNotice.getString("requestId"), is(request.getId().toString()));
     assertThat(scheduledNotice.getString("triggeringEvent"), is("Request expiration"));
     assertThat(scheduledNotice.getString("nextRunTime"),
-      isEquivalentTo(requestExpiration.toDateTimeAtStartOfDay().minusDays(3)));
+      isEquivalentTo(toZonedStartOfDay(requestExpiration).minusDays(3)));
     assertThat(noticeConfig.getString("timing"), is("Before"));
     assertThat(noticeConfig.getString("templateId"), is(templateId.toString()));
     assertThat(noticeConfig.getString("format"), is("Email"));
@@ -329,7 +329,6 @@ public class RequestScheduledNoticesTests extends APITests {
 
   @Test
   public void holdShelfExpirationNoticeShouldBeScheduledOnCheckIn() {
-
     JsonObject requestNotice = new NoticeConfigurationBuilder()
       .withTemplateId(templateId)
       .withHoldShelfExpirationEvent()
@@ -343,14 +342,15 @@ public class RequestScheduledNoticesTests extends APITests {
 
     useDefaultRollingPoliciesAndOnlyAllowPageRequests(noticePolicyBuilder);
 
-    LocalDate requestExpiration = LocalDate.now().plusMonths(3);
+    final var requestExpiration = java.time.LocalDate.now(getClockManager().getClock()).plusMonths(3);
+
     RequestBuilder requestBuilder = new RequestBuilder().page()
       .forItem(item)
       .withRequesterId(requester.getId())
       .withRequestDate(DateTime.now())
       .withStatus(OPEN_NOT_YET_FILLED)
       .withPickupServicePoint(pickupServicePoint)
-      .withRequestExpiration(requestExpiration);
+      .withRequestExpirationJavaDate(requestExpiration);
     IndividualResource request = requestsFixture.place(requestBuilder);
 
     CheckInByBarcodeRequestBuilder checkInByBarcodeRequestBuilder =
@@ -386,7 +386,6 @@ public class RequestScheduledNoticesTests extends APITests {
 
   @Test
   public void requestExpirationAndHoldShelfExpirationNoticesAreCreatedWhenPickupReminderIsFirstInPolicy() {
-
     JsonObject pickupReminder = new NoticeConfigurationBuilder()
       .withTemplateId(templateId)
       .withAvailableEvent()
@@ -413,14 +412,15 @@ public class RequestScheduledNoticesTests extends APITests {
 
     useDefaultRollingPoliciesAndOnlyAllowPageRequests(noticePolicyBuilder);
 
-    LocalDate requestExpirationLocalDate = LocalDate.now().plusMonths(3);
+    final var requestExpiration = java.time.LocalDate.now(getClockManager().getClock()).plusMonths(3);
+
     RequestBuilder requestBuilder = new RequestBuilder().page()
       .forItem(item)
       .withRequesterId(requester.getId())
       .withRequestDate(DateTime.now())
       .withStatus(OPEN_NOT_YET_FILLED)
       .withPickupServicePoint(pickupServicePoint)
-      .withRequestExpiration(requestExpirationLocalDate);
+      .withRequestExpirationJavaDate(requestExpiration);
 
     requestsFixture.place(requestBuilder);
 
@@ -444,5 +444,11 @@ public class RequestScheduledNoticesTests extends APITests {
       .collect(Collectors.toList());
 
     assertThat(triggeringEvents, containsInAnyOrder("Request expiration", "Hold expiration"));
+  }
+
+  private ZonedDateTime toZonedStartOfDay(java.time.LocalDate date) {
+    final var startOfDay = date.atStartOfDay();
+
+    return ZonedDateTime.of(startOfDay, ZoneId.systemDefault().normalized());
   }
 }
