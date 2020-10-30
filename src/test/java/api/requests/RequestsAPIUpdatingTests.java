@@ -31,6 +31,7 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.core.Is.is;
 
 import java.net.HttpURLConnection;
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -47,7 +48,6 @@ import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.joda.time.LocalDate;
 import org.junit.Test;
 
 import api.support.APITests;
@@ -65,12 +65,10 @@ import io.vertx.core.json.JsonObject;
 import lombok.val;
 
 public class RequestsAPIUpdatingTests extends APITests {
-
   private static final String REQUEST_CANCELLATION = "Request cancellation";
 
   @Test
   public void canReplaceAnExistingRequest() {
-
     final ItemResource temeraire = itemsFixture.basedUponTemeraire();
 
     checkOutFixture.checkOutByBarcode(temeraire);
@@ -89,8 +87,8 @@ public class RequestsAPIUpdatingTests extends APITests {
         .by(steve)
         .fulfilToHoldShelf()
         .withPickupServicePointId(exampleServicePoint.getId())
-        .withRequestExpiration(new LocalDate(2017, 7, 30))
-        .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
+        .withRequestExpirationJavaDate(LocalDate.of(2017, 7, 30))
+        .withHoldShelfExpirationJavaDate(LocalDate.of(2017, 8, 31)));
 
     final IndividualResource charlotte = usersFixture.charlotte();
 
@@ -503,8 +501,8 @@ public class RequestsAPIUpdatingTests extends APITests {
         .by(requester)
         .fulfilToHoldShelf()
         .withPickupServicePointId(exampleServicePoint.getId())
-        .withRequestExpiration(new LocalDate(2017, 7, 30))
-        .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
+        .withRequestExpirationJavaDate(LocalDate.of(2017, 7, 30))
+        .withHoldShelfExpirationJavaDate(LocalDate.of(2017, 8, 31)));
 
     final IndividualResource itemNotAvailable = cancellationReasonsFixture.itemNotAvailable();
     JsonObject updatedRequest = RequestBuilder.from(createdRequest)
@@ -562,8 +560,8 @@ public class RequestsAPIUpdatingTests extends APITests {
         .by(requester)
         .fulfilToHoldShelf()
         .withPickupServicePointId(exampleServicePoint.getId())
-        .withRequestExpiration(new LocalDate(2017, 7, 30))
-        .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
+        .withRequestExpirationJavaDate(LocalDate.of(2017, 7, 30))
+        .withHoldShelfExpirationJavaDate(LocalDate.of(2017, 8, 31)));
 
     final IndividualResource courseReserves = cancellationReasonsFixture.courseReserves();
     JsonObject updatedRequest = RequestBuilder.from(createdRequest)
@@ -616,8 +614,8 @@ public class RequestsAPIUpdatingTests extends APITests {
         .proxiedBy(charlotte)
         .fulfilToHoldShelf()
         .withPickupServicePointId(exampleServicePoint.getId())
-        .withRequestExpiration(new LocalDate(2017, 7, 30))
-        .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
+        .withRequestExpirationJavaDate(LocalDate.of(2017, 7, 30))
+        .withHoldShelfExpirationJavaDate(LocalDate.of(2017, 8, 31)));
 
     requestsClient.replace(createdRequest.getId(), createdRequest.copyJson());
 
@@ -678,8 +676,8 @@ public class RequestsAPIUpdatingTests extends APITests {
         .by(steve)
         .fulfilToHoldShelf()
         .withPickupServicePointId(exampleServicePoint.getId())
-        .withRequestExpiration(new LocalDate(2017, 7, 30))
-        .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
+        .withRequestExpirationJavaDate(LocalDate.of(2017, 7, 30))
+        .withHoldShelfExpirationJavaDate(LocalDate.of(2017, 8, 31)));
 
     final IndividualResource inactiveCharlotte
       = usersFixture.charlotte(UserBuilder::inactive);
@@ -753,8 +751,8 @@ public class RequestsAPIUpdatingTests extends APITests {
         .by(steve)
         .fulfilToHoldShelf()
         .withPickupServicePointId(exampleServicePoint.getId())
-        .withRequestExpiration(new LocalDate(2017, 7, 30))
-        .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
+        .withRequestExpirationJavaDate(LocalDate.of(2017, 7, 30))
+        .withHoldShelfExpirationJavaDate(LocalDate.of(2017, 8, 31)));
 
     final IndividualResource charlotte = usersFixture.charlotte();
 
