@@ -1569,6 +1569,7 @@
         "circulation-storage.loans.item.put",
         "circulation-storage.loans.item.get",
         "circulation-storage.loans.collection.get",
+        "circulation-storage.circulation-rules.get",
         "circulation.rules.loan-policy.get",
         "circulation.rules.request-policy.get",
         "circulation-storage.requests.collection.get",
