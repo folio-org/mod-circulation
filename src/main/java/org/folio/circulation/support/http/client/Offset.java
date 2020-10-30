@@ -11,6 +11,10 @@ public class Offset implements QueryParameter {
     return new Offset(null);
   }
 
+  public static Offset zeroOffset() {
+    return new Offset(0);
+  }
+
   private Offset(Integer value) {
     this.value = value;
   }
