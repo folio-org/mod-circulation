@@ -35,28 +35,29 @@ public final class PageableFetcher<T> {
   }
 
   public CompletableFuture<Result<Void>> processPages(CqlQuery query, PageProcessor<T> pageProcessor) {
-    return processPagesRecursively(query, pageProcessor, noOffset());
+    return processPagesRecursively(query, pageProcessor, noOffset(), 0);
   }
 
   private CompletableFuture<Result<Void>> processPagesRecursively(CqlQuery query,
-    PageProcessor<T> pageProcessor, Offset currentOffset) {
+    PageProcessor<T> pageProcessor, Offset currentOffset, int recordsFetchedOnPreviousIteration) {
 
     return repository.getMany(query, pageSize, currentOffset)
       .thenCompose(r -> r.after(records -> pageProcessor.processPage(records)
           .thenCompose(processResult -> processResult.after(unused -> {
+            final int recordsFetchedSoFar = recordsFetchedOnPreviousIteration + records.size();
+
             if (hasFetchedAllPages(records)) {
-              log.info("All pages have been fetched, total records fetched {}",
-                getRecordsFetched(currentOffset, records));
+              log.info("All pages have been fetched, total records fetched {}", recordsFetchedSoFar);
 
               return completedFuture(processResult);
-            } else if (hasReachedRecordsLimit(currentOffset, records)) {
+            } else if (hasReachedRecordsLimit(recordsFetchedSoFar)) {
               log.warn("Terminating fetching because records limit in {} has been reached",
                 maxAllowedRecordsToFetchLimit);
 
               return itemCountLimitHasBeenReached();
             } else {
-              final var nextOffset = calculateNextOffset(currentOffset);
-              return processPagesRecursively(query, pageProcessor, nextOffset);
+              final var nextOffset = currentOffset.nextPage(pageSize);
+              return processPagesRecursively(query, pageProcessor, nextOffset, recordsFetchedSoFar);
             }
           }))
       ));
@@ -68,16 +69,8 @@ public final class PageableFetcher<T> {
         + " and it has been reached")));
   }
 
-  private boolean hasReachedRecordsLimit(Offset currentOffset, MultipleRecords<T> latestPage) {
-    return getRecordsFetched(currentOffset, latestPage) > maxAllowedRecordsToFetchLimit;
-  }
-
-  private int getRecordsFetched(Offset currentOffset, MultipleRecords<T> latestPage) {
-    return pageSize.getLimit() * currentOffset.getOffset() + latestPage.size();
-  }
-
-  private Offset calculateNextOffset(Offset currentOffset) {
-    return currentOffset.nextPage(pageSize);
+  private boolean hasReachedRecordsLimit(int recordFetchedSoFar) {
+    return recordFetchedSoFar >= maxAllowedRecordsToFetchLimit;
   }
 
   private boolean hasFetchedAllPages(MultipleRecords<T> latestPage) {
@@ -87,5 +80,4 @@ public final class PageableFetcher<T> {
 
     return latestPage.size() < pageSize.getLimit();
   }
-
 }
