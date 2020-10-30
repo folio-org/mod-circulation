@@ -24,16 +24,16 @@ public class FakePubSub {
 
   private static boolean failPubSubRegistration;
   private static boolean failPubSubUnregistering;
-  private static boolean failPublishingWithNoSubscribersError;
+  private static boolean failPublishingWithBadRequestError;
 
   public static void register(Router router) {
     router.route().handler(BodyHandler.create());
 
     router.post("/pubsub/publish")
       .handler(routingContext -> {
-        if (failPublishingWithNoSubscribersError) {
+        if (failPublishingWithBadRequestError) {
           Buffer buffer = Buffer.buffer(
-            "There is no SUBSCRIBERS registered for event type EVENT_TYPE", "UTF-8");
+            "Bad request error message", "UTF-8");
           routingContext.response()
             .setStatusCode(HTTP_BAD_REQUEST.toInt())
             .putHeader("content-type", "text/plain; charset=utf-8")
@@ -132,9 +132,9 @@ public class FakePubSub {
     FakePubSub.failPubSubUnregistering = failPubSubUnregistering;
   }
 
-  public static void setFailPublishingWithNoSubscribersError(
-    boolean failPublishingWithNoSubscribersError) {
+  public static void setFailPublishingWithBadRequestError(
+    boolean failPublishingWithBadRequestError) {
 
-    FakePubSub.failPublishingWithNoSubscribersError = failPublishingWithNoSubscribersError;
+    FakePubSub.failPublishingWithBadRequestError = failPublishingWithBadRequestError;
   }
 }
