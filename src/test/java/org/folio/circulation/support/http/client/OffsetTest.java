@@ -13,27 +13,27 @@ public class OffsetTest {
   public void shouldCalculateOffsetWhenPageLimitAndOffsetValuesNonNull() {
     final Offset offset = offset(14).nextPage(limit(7));
 
-    assertEquals(offset.getOffset(), 21);
+    assertEquals(21, offset.getOffset());
   }
 
   @Test
   public void shouldCalculateOffsetWhenOffsetValueIsNull() {
     final Offset offset = noOffset().nextPage(limit(10));
 
-    assertEquals(offset.getOffset(), 10);
+    assertEquals(10, offset.getOffset());
   }
 
   @Test
   public void shouldCalculateOffsetWhenPageLimitValueIsNull() {
     final Offset offset = offset(11).nextPage(noLimit());
 
-    assertEquals(offset.getOffset(), 11);
+    assertEquals(11, offset.getOffset());
   }
 
   @Test
   public void shouldCalculateOffsetWhenPageLimitAndOffsetValuesAreNull() {
     final Offset offset = noOffset().nextPage(noLimit());
 
-    assertEquals(offset.getOffset(), 0);
+    assertEquals(0, offset.getOffset());
   }
 }
