@@ -83,7 +83,8 @@ public class ChargeLostFeesWhenAgedToLostService {
   public CompletableFuture<Result<Void>> chargeFees() {
     log.info("Starting aged to lost items charging...");
 
-    return loanPageableFetcher.processPages(loanFetchQuery(), this::chargeFees);
+    return loanFetchQuery()
+      .after(query -> loanPageableFetcher.processPages(query, this::chargeFees));
   }
 
   public CompletableFuture<Result<Void>> chargeFees(MultipleRecords<Loan> loans) {
@@ -215,7 +216,7 @@ public class ChargeLostFeesWhenAgedToLostService {
       .thenComposeAsync(r -> r.after(lostItemPolicyRepository::findLostItemPoliciesForLoans));
   }
 
-  private CqlQuery loanFetchQuery() {
+  private Result<CqlQuery> loanFetchQuery() {
     final String billingDateProperty = AGED_TO_LOST_DELAYED_BILLING + "."
       + DATE_LOST_ITEM_SHOULD_BE_BILLED;
     final String lostItemHasBeenBilled = AGED_TO_LOST_DELAYED_BILLING + "."
@@ -230,8 +231,7 @@ public class ChargeLostFeesWhenAgedToLostService {
 
     return billingDateQuery.combine(agedToLostQuery, CqlQuery::and)
       .combine(hasNotBeenBilledQuery, CqlQuery::and)
-      .map(query -> query.sortBy(ascending(billingDateProperty)))
-      .value();
+      .map(query -> query.sortBy(ascending(billingDateProperty)));
   }
 
   private Result<LoanToChargeFees> validateCanCreateAccountForLoan(LoanToChargeFees loanToChargeFees) {
