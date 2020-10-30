@@ -1609,6 +1609,7 @@
         "feefines.item.post",
         "owners.collection.get",
         "accounts.item.post",
+        "feefineactions.item.post",
         "pubsub.publish.post",
         "automated-patron-blocks.collection.get",
         "scheduled-notice-storage.scheduled-notices.item.delete",
