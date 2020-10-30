@@ -1,14 +1,14 @@
 package org.folio.circulation.domain;
 
 import static java.lang.Boolean.TRUE;
-import static org.hamcrest.core.Is.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
 
+import java.time.LocalDate;
 import java.util.UUID;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.joda.time.LocalDate;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -21,7 +21,6 @@ import junitparams.JUnitParamsRunner;
 
 @RunWith(JUnitParamsRunner.class)
 public class RequestRepresentationTests {
-
   private static final UUID REQUEST_ID = UUID.randomUUID();
   private static final UUID ITEM_ID = UUID.randomUUID();
   private static final UUID ADDRESS_ID = UUID.randomUUID();
@@ -93,7 +92,7 @@ public class RequestRepresentationTests {
       .withRequesterId(requesterId)
       .fulfilToHoldShelf()
       .withPickupServicePointId(SERVICE_POINT_ID)
-      .withRequestExpiration(new LocalDate(2017, 7, 30))
+      .withRequestExpirationJavaDate(LocalDate.of(2017, 7, 30))
       .deliverToAddress(ADDRESS_ID)
       .create();
 
@@ -101,5 +100,4 @@ public class RequestRepresentationTests {
       .withRequester(requester)
       .withPickupServicePoint(servicePoint);
   }
-
 }
