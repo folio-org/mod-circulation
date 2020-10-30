@@ -1,7 +1,7 @@
 package org.folio.circulation.support.fetching;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.support.http.client.Offset.noOffset;
+import static org.folio.circulation.support.http.client.Offset.zeroOffset;
 import static org.folio.circulation.support.http.client.PageLimit.limit;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -35,7 +35,7 @@ public final class PageableFetcher<T> {
   }
 
   public CompletableFuture<Result<Void>> processPages(CqlQuery query, PageProcessor<T> pageProcessor) {
-    return processPagesRecursively(query, pageProcessor, noOffset(), 0);
+    return processPagesRecursively(query, pageProcessor, zeroOffset(), 0);
   }
 
   private CompletableFuture<Result<Void>> processPagesRecursively(CqlQuery query,
