@@ -129,8 +129,8 @@ RequestsAPICreationTests extends APITests {
       .by(requester)
       .withRequestDate(requestDate)
       .fulfilToHoldShelf()
-      .withRequestExpirationJavaDate(LocalDate.of(2017, 7, 30))
-      .withHoldShelfExpirationJavaDate(LocalDate.of(2017, 8, 31))
+      .withRequestExpiration(LocalDate.of(2017, 7, 30))
+      .withHoldShelfExpiration(LocalDate.of(2017, 8, 31))
       .withPickupServicePointId(pickupServicePointId)
       .withTags(new RequestBuilder.Tags(asList("new", "important"))));
 
@@ -242,8 +242,8 @@ RequestsAPICreationTests extends APITests {
       .by(requester)
       .withRequestDate(requestDate)
       .fulfilToHoldShelf()
-      .withRequestExpirationJavaDate(LocalDate.of(2017, 7, 30))
-      .withHoldShelfExpirationJavaDate(LocalDate.of(2017, 8, 31))
+      .withRequestExpiration(LocalDate.of(2017, 7, 30))
+      .withHoldShelfExpiration(LocalDate.of(2017, 8, 31))
       .withPickupServicePointId(pickupServicePointId)
       .withTags(new RequestBuilder.Tags(asList("new", "important"))));
 
@@ -853,8 +853,8 @@ RequestsAPICreationTests extends APITests {
       .by(requester)
       .withRequestDate(requestDate)
       .fulfilToHoldShelf()
-      .withRequestExpirationJavaDate(LocalDate.of(2017, 7, 30))
-      .withHoldShelfExpirationJavaDate(LocalDate.of(2017, 8, 31)));
+      .withRequestExpiration(LocalDate.of(2017, 7, 30))
+      .withHoldShelfExpiration(LocalDate.of(2017, 8, 31)));
 
     assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
 
@@ -881,8 +881,8 @@ RequestsAPICreationTests extends APITests {
       .by(requester)
       .withRequestDate(requestDate)
       .fulfilToHoldShelf()
-      .withRequestExpirationJavaDate(LocalDate.of(2017, 7, 30))
-      .withHoldShelfExpirationJavaDate(LocalDate.of(2017, 8, 31))
+      .withRequestExpiration(LocalDate.of(2017, 7, 30))
+      .withHoldShelfExpiration(LocalDate.of(2017, 8, 31))
       .withPickupServicePointId(pickupServicePointId));
 
     assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
@@ -911,8 +911,8 @@ RequestsAPICreationTests extends APITests {
       .by(requester)
       .withRequestDate(requestDate)
       .fulfilToHoldShelf()
-      .withRequestExpirationJavaDate(LocalDate.of(2017, 7, 30))
-      .withHoldShelfExpirationJavaDate(LocalDate.of(2017, 8, 31))
+      .withRequestExpiration(LocalDate.of(2017, 7, 30))
+      .withHoldShelfExpiration(LocalDate.of(2017, 8, 31))
       .withPickupServicePointId(pickupServicePointId));
 
     assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
@@ -1322,8 +1322,8 @@ RequestsAPICreationTests extends APITests {
       .by(requester)
       .withRequestDate(requestDate)
       .fulfilToHoldShelf()
-      .withRequestExpirationJavaDate(LocalDate.of(2017, 7, 30))
-      .withHoldShelfExpirationJavaDate(LocalDate.of(2017, 8, 31))
+      .withRequestExpiration(LocalDate.of(2017, 7, 30))
+      .withHoldShelfExpiration(LocalDate.of(2017, 8, 31))
       .withPickupServicePointId(pickupServicePointId)
       .withTags(new RequestBuilder.Tags(asList("new", "important"))));
 
@@ -1389,8 +1389,8 @@ RequestsAPICreationTests extends APITests {
       .by(requester)
       .withRequestDate(requestDate)
       .fulfilToHoldShelf()
-      .withRequestExpirationJavaDate(LocalDate.of(2017, 7, 30))
-      .withHoldShelfExpirationJavaDate(LocalDate.of(2017, 8, 31))
+      .withRequestExpiration(LocalDate.of(2017, 7, 30))
+      .withHoldShelfExpiration(LocalDate.of(2017, 8, 31))
       .withPickupServicePointId(pickupServicePointId)
       .withTags(new RequestBuilder.Tags(asList("new", "important"))));
 
@@ -1475,8 +1475,8 @@ RequestsAPICreationTests extends APITests {
       .by(requester)
       .withRequestDate(requestDate)
       .fulfilToHoldShelf()
-      .withRequestExpirationJavaDate(LocalDate.of(2017, 7, 30))
-      .withHoldShelfExpirationJavaDate(LocalDate.of(2017, 8, 31))
+      .withRequestExpiration(LocalDate.of(2017, 7, 30))
+      .withHoldShelfExpiration(LocalDate.of(2017, 8, 31))
       .withPickupServicePointId(pickupServicePointId)
       .withTags(new RequestBuilder.Tags(asList("new", "important"))));
     IndividualResource loanAfterRecall = loansClient.get(loan.getId());
@@ -1552,8 +1552,8 @@ RequestsAPICreationTests extends APITests {
       .by(requester)
       .withRequestDate(requestDate)
       .fulfilToHoldShelf()
-      .withRequestExpirationJavaDate(LocalDate.of(2017, 7, 30))
-      .withHoldShelfExpirationJavaDate(LocalDate.of(2017, 8, 31))
+      .withRequestExpiration(LocalDate.of(2017, 7, 30))
+      .withHoldShelfExpiration(LocalDate.of(2017, 8, 31))
       .withPickupServicePointId(pickupServicePointId)
       .withTags(new RequestBuilder.Tags(asList("new", "important"))));
 
@@ -1836,8 +1836,8 @@ RequestsAPICreationTests extends APITests {
       .by(requester)
       .withRequestDate(requestDate)
       .fulfilToHoldShelf()
-      .withRequestExpirationJavaDate(LocalDate.of(2017, 7, 30))
-      .withHoldShelfExpirationJavaDate(LocalDate.of(2017, 8, 31))
+      .withRequestExpiration(LocalDate.of(2017, 7, 30))
+      .withHoldShelfExpiration(LocalDate.of(2017, 8, 31))
       .withPickupServicePointId(pickupServicePointId)
       .withTags(new RequestBuilder.Tags(asList("new", "important")));
   }

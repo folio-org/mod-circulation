@@ -1,12 +1,12 @@
 package api.support.builders;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Function;
 
 import org.joda.time.DateTime;
-import org.joda.time.LocalDate;
-import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.ISODateTimeFormat;
 
 import io.vertx.core.json.JsonArray;
@@ -93,6 +93,6 @@ public class JsonBuilder {
   }
 
   private String formatDateOnly(LocalDate date) {
-    return date.toString(DateTimeFormat.forPattern("yyyy-MM-dd"));
+    return date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
   }
 }

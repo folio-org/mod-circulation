@@ -21,8 +21,6 @@ import java.util.stream.Collectors;
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.policy.Period;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.LocalDate;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -83,7 +81,7 @@ public class RequestScheduledNoticesTests extends APITests {
       .withRequestDate(DateTime.now())
       .withStatus(OPEN_NOT_YET_FILLED)
       .withPickupServicePoint(pickupServicePoint)
-      .withRequestExpirationJavaDate(requestExpiration));
+      .withRequestExpiration(requestExpiration));
 
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
@@ -186,7 +184,7 @@ public class RequestScheduledNoticesTests extends APITests {
       .withRequestDate(DateTime.now())
       .withStatus(OPEN_NOT_YET_FILLED)
       .withPickupServicePoint(pickupServicePoint)
-      .withRequestExpirationJavaDate(requestExpiration));
+      .withRequestExpiration(requestExpiration));
 
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
@@ -223,7 +221,8 @@ public class RequestScheduledNoticesTests extends APITests {
 
     useDefaultRollingPoliciesAndOnlyAllowPageRequests(noticePolicyBuilder);
 
-    LocalDate requestExpiration = LocalDate.now(DateTimeZone.UTC).plusMonths(3);
+    final var requestExpiration = java.time.LocalDate.now(getClockManager().getClock()).plusMonths(3);
+
     RequestBuilder requestBuilder = new RequestBuilder().page()
       .forItem(item)
       .withRequesterId(requester.getId())
@@ -246,13 +245,14 @@ public class RequestScheduledNoticesTests extends APITests {
     assertThat(scheduledNotice.getString("requestId"), is(request.getId().toString()));
     assertThat(scheduledNotice.getString("triggeringEvent"), is("Request expiration"));
     assertThat(scheduledNotice.getString("nextRunTime"),
-      isEquivalentTo(requestExpiration.toDateTimeAtStartOfDay()));
+      isEquivalentTo(toZonedStartOfDay(requestExpiration)));
     assertThat(noticeConfig.getString("timing"), is("Upon At"));
     assertThat(noticeConfig.getString("templateId"), is(templateId.toString()));
     assertThat(noticeConfig.getString("format"), is("Email"));
     assertThat(noticeConfig.getBoolean("sendInRealTime"), is(true));
 
-    requestsClient.replace(request.getId(), requestBuilder.withRequestExpiration(requestExpiration.plusDays(1)));
+    requestsClient.replace(request.getId(), requestBuilder
+      .withRequestExpiration(requestExpiration.plusDays(1)));
 
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
@@ -267,7 +267,7 @@ public class RequestScheduledNoticesTests extends APITests {
     assertThat(scheduledNotice.getString("requestId"), is(request.getId().toString()));
     assertThat(scheduledNotice.getString("triggeringEvent"), is("Request expiration"));
     assertThat(scheduledNotice.getString("nextRunTime"),
-      isEquivalentTo(requestExpiration.toDateTimeAtStartOfDay().plusDays(1)));
+      isEquivalentTo(toZonedStartOfDay(requestExpiration).plusDays(1)));
     assertThat(noticeConfig.getString("timing"), is("Upon At"));
     assertThat(noticeConfig.getString("templateId"), is(templateId.toString()));
     assertThat(noticeConfig.getString("format"), is("Email"));
@@ -298,7 +298,7 @@ public class RequestScheduledNoticesTests extends APITests {
       .withRequestDate(DateTime.now())
       .withStatus(OPEN_NOT_YET_FILLED)
       .withPickupServicePoint(pickupServicePoint)
-      .withRequestExpirationJavaDate(requestExpiration);
+      .withRequestExpiration(requestExpiration);
     IndividualResource request = requestsFixture.place(requestBuilder);
 
     Awaitility.await()
@@ -350,7 +350,7 @@ public class RequestScheduledNoticesTests extends APITests {
       .withRequestDate(DateTime.now())
       .withStatus(OPEN_NOT_YET_FILLED)
       .withPickupServicePoint(pickupServicePoint)
-      .withRequestExpirationJavaDate(requestExpiration);
+      .withRequestExpiration(requestExpiration);
     IndividualResource request = requestsFixture.place(requestBuilder);
 
     CheckInByBarcodeRequestBuilder checkInByBarcodeRequestBuilder =
@@ -420,7 +420,7 @@ public class RequestScheduledNoticesTests extends APITests {
       .withRequestDate(DateTime.now())
       .withStatus(OPEN_NOT_YET_FILLED)
       .withPickupServicePoint(pickupServicePoint)
-      .withRequestExpirationJavaDate(requestExpiration);
+      .withRequestExpiration(requestExpiration);
 
     requestsFixture.place(requestBuilder);
 

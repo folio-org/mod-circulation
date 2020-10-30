@@ -52,7 +52,7 @@ public class ServicePointCheckInTests extends APITests {
         .by(jessica)
         .withPickupServicePoint(checkInServicePoint)
         .withRequestDate(new DateTime(2019, 7, 5, 10, 0))
-        .withRequestExpirationJavaDate(LocalDate.of(2019, 7, 11)));
+        .withRequestExpiration(LocalDate.of(2019, 7, 11)));
 
     final DateTime beforeCheckIn = DateTime.now(DateTimeZone.UTC);
 

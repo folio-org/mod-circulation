@@ -8,13 +8,13 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getUUIDProperty;
 import static org.folio.circulation.support.json.JsonStringArrayPropertyFetcher.toStream;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
 import org.folio.circulation.domain.Request;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.joda.time.LocalDate;
 
 import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
@@ -203,18 +203,8 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       .withPickupServicePointId(newPickupServicePointId);
   }
 
-  public RequestBuilder withRequestExpirationJavaDate(java.time.LocalDate requestExpiration) {
-    return withRequestExpiration(new LocalDate(requestExpiration.getYear(),
-      requestExpiration.getMonthValue(), requestExpiration.getDayOfMonth()));
-  }
-
   public RequestBuilder withNoRequestExpiration() {
     return withRequestExpiration(null);
-  }
-
-  public RequestBuilder withHoldShelfExpirationJavaDate(java.time.LocalDate holdShelfExpiration) {
-    return withHoldShelfExpiration(new LocalDate(holdShelfExpiration.getYear(),
-      holdShelfExpiration.getMonthValue(), holdShelfExpiration.getDayOfMonth()));
   }
 
   public RequestBuilder open() {

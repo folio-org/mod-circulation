@@ -481,7 +481,7 @@ public class ItemsInTransitReportTests extends APITests {
       .forItem(item)
       .withTags(tags)
       .withRequestDate(requestDate)
-      .withRequestExpirationJavaDate(requestExpirationDate)
+      .withRequestExpiration(requestExpirationDate)
       .by(steve);
 
     requestsClient.create(secondRequestBuilderOnItem);

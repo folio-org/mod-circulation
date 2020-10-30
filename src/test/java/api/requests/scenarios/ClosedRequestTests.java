@@ -79,7 +79,7 @@ public class ClosedRequestTests extends APITests {
     Response response = requestsClient.attemptReplace(request.getId(),
       RequestBuilder.from(request)
         .open()
-        .withRequestExpirationJavaDate(LocalDate.of(2018, 3, 14)));
+        .withRequestExpiration(LocalDate.of(2018, 3, 14)));
 
     assertThat(response.getStatusCode(), is(422));
 
@@ -111,7 +111,7 @@ public class ClosedRequestTests extends APITests {
     Response response = requestsClient.attemptReplace(request.getId(),
       RequestBuilder.from(request)
         .open()
-        .withRequestExpirationJavaDate(LocalDate.of(2018, 3, 14)));
+        .withRequestExpiration(LocalDate.of(2018, 3, 14)));
 
     assertThat(response.getStatusCode(), is(422));
 

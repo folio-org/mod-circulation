@@ -92,7 +92,7 @@ public class RequestRepresentationTests {
       .withRequesterId(requesterId)
       .fulfilToHoldShelf()
       .withPickupServicePointId(SERVICE_POINT_ID)
-      .withRequestExpirationJavaDate(LocalDate.of(2017, 7, 30))
+      .withRequestExpiration(LocalDate.of(2017, 7, 30))
       .deliverToAddress(ADDRESS_ID)
       .create();
 

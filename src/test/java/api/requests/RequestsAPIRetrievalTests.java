@@ -88,8 +88,8 @@ public class RequestsAPIRetrievalTests extends APITests {
         .by(sponsor)
         .proxiedBy(proxy)
         .fulfilToHoldShelf()
-        .withRequestExpirationJavaDate(LocalDate.of(2017, 7, 30))
-        .withHoldShelfExpirationJavaDate(LocalDate.of(2017, 8, 31))
+        .withRequestExpiration(LocalDate.of(2017, 7, 30))
+        .withHoldShelfExpiration(LocalDate.of(2017, 8, 31))
         .withPickupServicePointId(pickupServicePointId)
         .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG))));
 

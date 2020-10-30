@@ -91,7 +91,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
       .withRequestDate(DateTime.now())
       .withStatus(OPEN_NOT_YET_FILLED)
       .withPickupServicePoint(pickupServicePoint)
-      .withRequestExpirationJavaDate(requestExpiration));
+      .withRequestExpiration(requestExpiration));
 
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
@@ -131,7 +131,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
       .withRequestDate(DateTime.now())
       .withStatus(OPEN_NOT_YET_FILLED)
       .withPickupServicePoint(pickupServicePoint)
-      .withRequestExpirationJavaDate(requestExpiration));
+      .withRequestExpiration(requestExpiration));
 
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
@@ -273,7 +273,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
       .withRequestDate(DateTime.now())
       .withStatus(OPEN_NOT_YET_FILLED)
       .withPickupServicePoint(pickupServicePoint)
-      .withRequestExpirationJavaDate(requestExpiration));
+      .withRequestExpiration(requestExpiration));
 
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
@@ -307,7 +307,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
       .withRequestDate(DateTime.now())
       .withStatus(OPEN_NOT_YET_FILLED)
       .withPickupServicePoint(pickupServicePoint)
-      .withRequestExpirationJavaDate(requestExpiration));
+      .withRequestExpiration(requestExpiration));
 
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
@@ -348,7 +348,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
       .withRequestDate(DateTime.now())
       .withStatus(OPEN_NOT_YET_FILLED)
       .withPickupServicePoint(pickupServicePoint)
-      .withRequestExpirationJavaDate(requestExpiration));
+      .withRequestExpiration(requestExpiration));
 
     CheckInByBarcodeRequestBuilder builder = new CheckInByBarcodeRequestBuilder()
       .forItem(item)

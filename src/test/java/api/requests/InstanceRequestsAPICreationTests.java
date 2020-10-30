@@ -883,7 +883,7 @@ public class InstanceRequestsAPICreationTests extends APITests {
         .hold()
         .forItem(item)
         .withPickupServicePointId(requestPickupServicePointId)
-        .withRequestExpirationJavaDate(requestExpirationDate)
+        .withRequestExpiration(requestExpirationDate)
         .by(patron));
 
     JsonObject requestedItem = (holdRequest != null)

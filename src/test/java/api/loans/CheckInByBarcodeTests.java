@@ -236,8 +236,8 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
       .by(requester)
       .withRequestDate(requestDate)
       .fulfilToHoldShelf()
-      .withRequestExpirationJavaDate(requestExpiration)
-      .withHoldShelfExpirationJavaDate(holdShelfExpiration)
+      .withRequestExpiration(requestExpiration)
+      .withHoldShelfExpiration(holdShelfExpiration)
       .withPickupServicePointId(servicePoint.getId())
       .withDeliveryAddressType(addressTypesFixture.home().getId())
       .withTags(new RequestBuilder.Tags(asList("new", "important"))));
@@ -559,8 +559,8 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
       .by(requester)
       .withRequestDate(requestDate)
       .fulfilToHoldShelf()
-      .withRequestExpirationJavaDate(LocalDate.of(2019, 7, 30))
-      .withHoldShelfExpirationJavaDate(LocalDate.of(2019, 8, 31))
+      .withRequestExpiration(LocalDate.of(2019, 7, 30))
+      .withHoldShelfExpiration(LocalDate.of(2019, 8, 31))
       .withPickupServicePointId(servicePointId)
       .withTags(new RequestBuilder.Tags(asList("new", "important"))));
 
@@ -595,8 +595,8 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
       .by(requester)
       .withRequestDate(requestDate)
       .fulfilToHoldShelf()
-      .withRequestExpirationJavaDate(LocalDate.of(2019, 5, 1))
-      .withHoldShelfExpirationJavaDate(LocalDate.of(2019, 6, 1))
+      .withRequestExpiration(LocalDate.of(2019, 5, 1))
+      .withHoldShelfExpiration(LocalDate.of(2019, 6, 1))
       .withPickupServicePointId(servicePointId)
       .withTags(new RequestBuilder.Tags(asList("new", "important"))));
 
@@ -888,8 +888,8 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
       .forItem(nod)
       .by(requester)
       .fulfilToHoldShelf()
-      .withRequestExpirationJavaDate(toLocalDate(recallRequestExpirationDate))
-      .withHoldShelfExpirationJavaDate(toLocalDate(recallRequestExpirationDate))
+      .withRequestExpiration(toLocalDate(recallRequestExpirationDate))
+      .withHoldShelfExpiration(toLocalDate(recallRequestExpirationDate))
       .withPickupServicePointId(UUID.fromString(homeLocation.getJson().getString("primaryServicePoint")))
       .withTags(new RequestBuilder.Tags(asList("new", "important"))));
 
