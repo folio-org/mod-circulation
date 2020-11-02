@@ -5,6 +5,7 @@ import static api.support.matchers.ItemMatchers.isLostAndPaid;
 import static api.support.matchers.LoanAccountMatcher.hasLostItemFee;
 import static api.support.matchers.LoanAccountMatcher.hasLostItemProcessingFee;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 
 import org.joda.time.DateTime;
@@ -31,7 +32,7 @@ public class CheckInAgedToLostItemTest extends RefundAgedToLostFeesTestBase {
       .on(actionDate))
       .getLoan();
 
-    assertThat(loan, nullValue());
+    assertThat(loan, notNullValue());
   }
 
   @Test
