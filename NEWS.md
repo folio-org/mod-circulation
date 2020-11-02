@@ -1,6 +1,7 @@
 ## 19.2.2 2020-11-02
 
 * Iterates over all open loans to age items to lost or charge lost fees (CIRC-965).
+* Sessions with references to non-existant items can expire (CIRC-926) 
 
 ## 19.2.1 2020-10-30
 
