@@ -30,13 +30,13 @@ public class AutomatedPatronBlocksFixture {
       .put("automatedPatronBlocks", new JsonArray(Arrays.asList(
         new JsonObject().put("patronBlockConditionId", "2149fff5-a64c-4943-aa79-bb1d09511382")
           .put("blockBorrowing", blockBorrowing)
-          .put("blockRenewal", blockRenewal)
-          .put("blockRequest", blockRequest)
+          .put("blockRenewals", blockRenewal)
+          .put("blockRequests", blockRequest)
           .put("message", MAX_NUMBER_OF_ITEMS_CHARGED_OUT_MESSAGE),
         new JsonObject().put("patronBlockConditionId", "ac13a725-b25f-48fa-84a6-4af021d13afe")
           .put("blockBorrowing", blockBorrowing)
-          .put("blockRenewal", blockRenewal)
-          .put("blockRequest", blockRequest)
+          .put("blockRenewals", blockRenewal)
+          .put("blockRequests", blockRequest)
           .put("message", MAX_OUTSTANDING_FEE_FINE_BALANCE_MESSAGE)
       )));
 
