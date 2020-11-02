@@ -5,12 +5,14 @@ import static api.support.matchers.ItemMatchers.isLostAndPaid;
 import static api.support.matchers.LoanAccountMatcher.hasLostItemFee;
 import static api.support.matchers.LoanAccountMatcher.hasLostItemProcessingFee;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.nullValue;
 
 import org.joda.time.DateTime;
 import org.junit.Test;
 
 import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.fixtures.AgeToLostFixture;
+import io.vertx.core.json.JsonObject;
 
 public class CheckInAgedToLostItemTest extends RefundAgedToLostFeesTestBase {
   public CheckInAgedToLostItemTest() {
@@ -23,10 +25,13 @@ public class CheckInAgedToLostItemTest extends RefundAgedToLostFeesTestBase {
 
     mockClockManagerToReturnFixedDateTime(actionDate);
 
-    checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
-      .on(actionDate)
+    final JsonObject loan = checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+      .forItem(result.getItem())
       .at(servicePointsFixture.cd1())
-      .forItem(result.getItem()));
+      .on(actionDate))
+      .getLoan();
+
+    assertThat(loan, nullValue());
   }
 
   @Test
@@ -48,8 +53,9 @@ public class CheckInAgedToLostItemTest extends RefundAgedToLostFeesTestBase {
 
     assertThat(itemsClient.get(result.getItem()).getJson(), isLostAndPaid());
 
-    checkInFixture.checkInByBarcode(result.getItem());
+    final var response = checkInFixture.checkInByBarcode(result.getItem());
 
+    assertThat(response.getLoan(), nullValue());
     assertThat(result.getLoan(), hasLostItemFee(isRefundedFully(itemFee)));
     assertThat(result.getLoan(), hasLostItemProcessingFee(isRefundedFully(processingFee)));
   }
