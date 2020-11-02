@@ -258,10 +258,10 @@ public class ChangeDueDateAPITests extends APITests {
 
     // There should be three five published - first one for "check out",
     // second one for "log event", third one for "change due date"
-    // and two "log record"
+    // and one "log record"
     List<JsonObject> publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(5));
+      .until(FakePubSub::getPublishedEvents, hasSize(4));
 
     JsonObject event = publishedEvents.stream()
       .filter(evt -> LOAN_DUE_DATE_CHANGED.equalsIgnoreCase(evt.getString("eventType")))
