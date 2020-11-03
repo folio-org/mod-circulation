@@ -75,14 +75,14 @@ public final class CqlPredicate implements Predicate<JsonObject> {
   }
 
   private static Map<String, CqlBinaryOperator> initOperatorsTable() {
-   return Map.of(
-     "==", operator(Objects::equals),
-    "=", operator((expected, actual) -> actual.contains(expected)),
-    "<>", operator((expected, actual) -> !actual.contains(expected)),
-    ">", operator((expected, actual) -> actual.compareTo(expected) > 0),
-    "<", operator((expected, actual) -> actual.compareTo(expected) < 0),
-    "<=", operator((expected, actual) -> actual.compareTo(expected) <= 0),
-    ">=", operator((expected, actual) -> actual.compareTo(expected) >= 0));
+    return Map.of(
+      "==", operator(Objects::equals),
+      "=", operator((expected, actual) -> actual.contains(expected)),
+      "<>", operator((expected, actual) -> !actual.contains(expected)),
+      ">", operator((expected, actual) -> actual.compareTo(expected) > 0),
+      "<", operator((expected, actual) -> actual.compareTo(expected) < 0),
+      "<=", operator((expected, actual) -> actual.compareTo(expected) <= 0),
+      ">=", operator((expected, actual) -> actual.compareTo(expected) >= 0));
   }
 
   private static CqlBinaryOperator operator(
