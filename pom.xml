@@ -239,6 +239,12 @@
       <version>${spring.version}</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.z3950.zing</groupId>
+      <artifactId>cql-java</artifactId>
+      <version>1.13</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <distributionManagement>

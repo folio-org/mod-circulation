@@ -195,4 +195,8 @@ public class JsonPropertyFetcher {
 
     return getter.apply(currentObject, paths[paths.length - 1]);
   }
+
+  public static Object getValueByPath(JsonObject record, String... paths) {
+    return getByPath(record, JsonObject::getValue, paths);
+  }
 }
