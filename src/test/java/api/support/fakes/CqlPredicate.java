@@ -17,7 +17,9 @@ import io.vertx.core.json.JsonObject;
 import lombok.SneakyThrows;
 
 public final class CqlPredicate implements Predicate<JsonObject> {
-  public static final String MATCH_ALL_RECORDS = "cql.allRecords";
+  private static final String MATCH_ALL_RECORDS_INDEX = "cql.allRecords";
+  public static final String MATCH_ALL_RECORDS = MATCH_ALL_RECORDS_INDEX + "=1";
+
   private static final Map<CQLBoolean, CqlLogicalOperator> supportedLogicalOperators = initLogicalOperators();
   private static final Map<String, CqlBinaryOperator> supportedOperators = initOperatorsTable();
   private final CQLNode entryNode;
@@ -68,7 +70,7 @@ public final class CqlPredicate implements Predicate<JsonObject> {
   }
 
   private boolean isMatchAllRecordsTerm(CQLTermNode node) {
-    return MATCH_ALL_RECORDS.equals(node.getIndex());
+    return MATCH_ALL_RECORDS_INDEX.equals(node.getIndex());
   }
 
   private static Map<String, CqlBinaryOperator> initOperatorsTable() {
