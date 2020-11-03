@@ -26,6 +26,7 @@ public final class CqlPredicate implements Predicate<JsonObject> {
 
   @SneakyThrows
   public CqlPredicate(String cql) {
+    Objects.requireNonNull(cql, "CQL query must be not null");
     this.entryNode = new CQLParser().parse(cql);
   }
 
