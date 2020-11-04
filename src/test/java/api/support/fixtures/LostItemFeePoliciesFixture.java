@@ -58,7 +58,7 @@ public class LostItemFeePoliciesFixture {
       .chargeOverdueFineWhenReturned();
   }
 
-  private LostItemFeePolicyBuilder chargeFeePolicy() {
+  public LostItemFeePolicyBuilder chargeFeePolicy() {
     Period itemAgedLostOverdue = Period.months(12);
     Period patronBilledAfterAgedLost = Period.months(12);
 
@@ -99,7 +99,7 @@ public class LostItemFeePoliciesFixture {
     lostItemFeePolicyRecordCreator.cleanUp();
   }
 
-  private void createReferenceData() {
+  public void createReferenceData() {
     feeFineTypeFixture.lostItemProcessingFee();
     feeFineTypeFixture.lostItemFee();
     feeFineOwnerFixture.cd1Owner();

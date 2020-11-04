@@ -1,0 +1,38 @@
+{
+  "lostItems": [
+    {
+      "id": "0b96a642-5e7f-452d-9cae-9cee66c9a892",
+      "title": "Uprooted",
+      "status": {
+        "name": "Declared lost"
+      },
+      "instance": {
+        "id": "2d159b25-55ed-4465-a46e-77d4333ce7f4"
+      },
+      "permanentLocation": {
+        "id": "d9cd0bed-1b49-4b5e-a7bd-064b8d177231",
+        "name": "Main Library"
+      },
+      "materialType": {
+        "id": "fcf3d3dc-b27f-4ce4-a530-542ea53cacb5",
+        "name": "Book"
+      },
+      "loan": {
+        "id": "cf23adf0-61ba-4887-bf82-956c4aae2260",
+        "loanDate": "2017-03-01T23:11:00.000Z",
+        "dueDate": "2017-04-01T23:11:00.000Z"
+      },
+      "patron": {
+        "id": "6c7cb3dc-6df9-4c18-a7ad-3ad280c82402",
+        "lastName": "Broadwell",
+        "middleName": null,
+        "firstName": "Charlotte"
+      },
+      "feeFineOwner": {
+        "id": "5389c10f-01ea-4582-b70b-1b6cb7c71f12",
+        "owner": "Wilson"
+      }
+    }
+  ],
+  "totalRecords": 1
+}

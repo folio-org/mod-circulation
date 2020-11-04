@@ -126,7 +126,7 @@ public class InterfaceUrls {
   }
 
   public static URL itemsLostRequiringActualCostsUrl(String subPath) {
-    return circulationModuleUrl("/circulation/items-lost-requiring-actual-costs" + subPath);
+    return circulationModuleUrl("/circulation/reports/lost-items-requiring-actual-cost-fees" + subPath);
   }
 
    static URL pickSlipsUrl(String servicePointId) {

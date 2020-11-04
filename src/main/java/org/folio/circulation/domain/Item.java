@@ -6,6 +6,7 @@ import static org.folio.circulation.domain.ItemStatus.AWAITING_PICKUP;
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
 import static org.folio.circulation.domain.ItemStatus.CLAIMED_RETURNED;
 import static org.folio.circulation.domain.ItemStatus.DECLARED_LOST;
+import static org.folio.circulation.domain.ItemStatus.AGED_TO_LOST;
 import static org.folio.circulation.domain.ItemStatus.IN_TRANSIT;
 import static org.folio.circulation.domain.ItemStatus.MISSING;
 import static org.folio.circulation.domain.ItemStatus.PAGED;
@@ -100,6 +101,10 @@ public class Item {
 
   public boolean isDeclaredLost() {
     return isInStatus(DECLARED_LOST);
+  }
+
+  public boolean isAgedToLost() {
+    return isInStatus(AGED_TO_LOST);
   }
 
   boolean isNotSameStatus(ItemStatus prospectiveStatus) {

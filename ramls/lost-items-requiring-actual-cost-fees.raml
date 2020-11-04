@@ -1,0 +1,25 @@
+#%RAML 1.0
+title: Lost Items Requiring Actual Costs
+version: v0.1
+protocols: [ HTTP, HTTPS ]
+baseUri: http://localhost:9130
+
+documentation:
+  - title: API for fetching lost items requiring actual cost fees
+    content: <b>API for lost items requiring actual cost fees generation</b>
+
+types:
+  lost-items-requiring-actual-cost-fees: !include lost-items-requiring-actual-cost-fees.json
+
+traits:
+  language: !include raml-util/traits/language.raml
+
+resourceTypes:
+  collection-get: !include raml-util/rtypes/collection-get.raml
+
+/circulation:
+  /reports/lost-items-requiring-actual-cost-fees:
+    type:
+      collection-get:
+        exampleCollection: !include examples/lost-items-requiring-actual-cost-fees.json
+        schemaCollection: lost-items-requiring-actual-cost-fees

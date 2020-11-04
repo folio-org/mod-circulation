@@ -19,13 +19,8 @@ public class JsonPropertyFetcher {
   public static boolean getNestedBooleanProperty(JsonObject representation,
     String objectName, String propertyName) {
 
-    if (representation == null) {
-      return false;
-    }
-
-    return representation.containsKey(objectName)
-      ? representation.getJsonObject(objectName).getBoolean(propertyName)
-      : false;
+    return getByPath(representation, JsonPropertyFetcher::getBooleanProperty,
+      objectName, propertyName);
   }
 
   public static String getNestedStringProperty(JsonObject representation,

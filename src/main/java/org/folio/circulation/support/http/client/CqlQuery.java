@@ -101,6 +101,30 @@ public class CqlQuery implements QueryParameter {
     return new CqlQuery(format("%s and %s", asText(), other.asText()), sortBy);
   }
 
+  public CqlQuery or(CqlQuery other) {
+    if (StringUtils.isBlank(other.asText())) {
+      return this;
+    }
+
+    return new CqlQuery(format("%s or %s", asText(), other.asText()), sortBy);
+  }
+
+  public CqlQuery andGroup(CqlQuery other) {
+    if (StringUtils.isBlank(other.asText())) {
+      return this;
+    }
+
+    return new CqlQuery(format("%s and (%s)", asText(), other.asText()), sortBy);
+  }
+
+  public CqlQuery orGroup(CqlQuery other) {
+    if (StringUtils.isBlank(other.asText())) {
+      return this;
+    }
+
+    return new CqlQuery(format("%s or (%s)", asText(), other.asText()), sortBy);
+  }
+
   public CqlQuery sortBy(CqlSortBy sortBy) {
     return new CqlQuery(query, sortBy);
   }

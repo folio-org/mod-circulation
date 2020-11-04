@@ -1,0 +1,161 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Collection of lost items requiring actual cost fees",
+  "description": "Collection of lost items requiring actual cost fees",
+  "type": "object",
+  "properties": {
+    "lostItems": {
+      "description": "Paged collection of items",
+      "id": "lostItems",
+      "type": "array",
+      "lostItems": {
+        "title": "A lost item",
+        "description": "Relevant information about a lost item",
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "description": "UUID of the item",
+            "type": "string",
+            "$ref": "uuid.json"
+          },
+          "title": {
+            "description": "title of the item (stored)",
+            "type": "string"
+          },
+          "status": {
+            "description": "The status for an item (should be either Declared lost or Age to lost for all items in report)",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "description": "The name of the status",
+                "type": "string"
+              }
+            }
+          },
+          "instance": {
+            "description": "The instance of the item",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "description": "UUID of the instance",
+                "type": "string",
+                "$ref": "uuid.json"
+              }
+            }
+          },
+          "permanentLocation": {
+            "description": "The effective permanent location of the item",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "description": "The name of the location",
+                "type": "string"
+              },
+              "libraryName": {
+                "description": "The name of the library of the location",
+                "type": "string"
+              },
+              "code": {
+                "description": "The location code",
+                "type": "string"
+              }
+            }
+          },
+          "materialType": {
+            "description": "The material type of the item",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "description": "UUID of the material type",
+                "type": "string",
+                "$ref": "uuid.json"
+              },
+              "name": {
+                "description": "The name of the material type",
+                "type": "string"
+              }
+            }
+          },
+          "loan": {
+            "description": "The loan associated with the item",
+            "id": "loan",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "description": "UUID of the loan",
+                "type": "string",
+                "$ref": "uuid.json"
+              },
+              "loanDate": {
+                "description": "Date and time when the loan began",
+                "type": "string",
+                "format": "date-time"
+              },
+              "dueDate": {
+                "description": "Date and time when the item is due to be returned",
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          },
+          "patron": {
+            "description": "The patron associated with the item",
+            "id": "patron",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "description": "UUID of the patron",
+                "type": "string",
+                "$ref": "uuid.json"
+              },
+              "lastName": {
+                "description": "The last name of the patron",
+                "type": "string"
+              },
+              "middleName": {
+                "description": "The middle name of the patron",
+                "type": "string"
+              },
+              "firstName": {
+                "description": "The first name of the patron",
+                "type": "string"
+              }
+            }
+          },
+          "feeFineOwner": {
+            "description": "The fee fine owner associated with the item",
+            "id": "feeFineOwner",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "description": "UUID of the fee fine owner",
+                "type": "string",
+                "$ref": "uuid.json"
+              },
+              "owner": {
+                "description": "The name of the fee fine owner",
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "totalRecords": {
+      "description": "Total number of lost items",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "items",
+    "totalRecords"
+  ]
+}

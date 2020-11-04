@@ -567,6 +567,24 @@
       ]
     },
     {
+      "id": "lost-items-requiring-actual-cost-fees",
+      "version": "0.1",
+      "handlers": [
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/circulation/reports/lost-items-requiring-actual-cost-fees",
+          "permissionsRequired": [
+            "circulation.report.lost-items-requiring-actual-cost-fees.get"
+          ],
+          "modulePermissions": [
+            "modperms.circulation.report.lost-items-requiring-actual-cost-fees.get"
+          ]
+        }
+      ]
+    },
+    {
       "id": "patron-action-session",
       "version": "0.2",
       "handlers": [
@@ -1244,6 +1262,11 @@
       "description": "get items for pick slips generation"
     },
     {
+      "permissionName": "circulation.report.lost-items-requiring-actual-cost-fees.get",
+      "displayName": "circulation - items in transit report",
+      "description": "get all lost items requiring actual cost fees generating a report"
+    },
+    {
       "permissionName": "circulation.end-patron-action-session.post",
       "displayName": "circulation - end patron action session",
       "description": "end patron action session"
@@ -1293,7 +1316,8 @@
         "circulation.requests.instances.item.post",
         "circulation.requests.hold-shelf-clearance-report.get",
         "circulation.inventory.items-in-transit-report.get",
-        "circulation.pick-slips.get"
+        "circulation.pick-slips.get",
+        "circulation.report.lost-items-requiring-actual-cost-fees.get"
       ]
     },
     {
@@ -2387,6 +2411,40 @@
         "users.collection.get",
         "addresstypes.item.get",
         "addresstypes.collection.get"
+      ],
+      "visible": false
+    },
+    {
+      "permissionName": "modperms.lost-items-requiring-actual-cost-fees.get",
+      "displayName": "module permissions for one op",
+      "description": "to reduce X-Okapi-Token size",
+      "subPermissions": [
+        "circulation-storage.loan-policies.item.get",
+        "circulation-storage.loan-policies.collection.get",
+        "circulation-storage.loans.item.get",
+        "circulation-storage.loans.collection.get",
+        "inventory-storage.items.item.get",
+        "inventory-storage.items.collection.get",
+        "inventory-storage.locations.item.get",
+        "inventory-storage.locations.collection.get",
+        "inventory-storage.holdings.item.get",
+        "inventory-storage.holdings.collection.get",
+        "inventory-storage.instances.item.get",
+        "inventory-storage.instances.collection.get",
+        "inventory-storage.material-types.item.get",
+        "inventory-storage.material-types.collection.get",
+        "inventory-storage.service-points.item.get",
+        "inventory-storage.service-points.collection.get",
+        "inventory-storage.loan-types.item.get",
+        "inventory-storage.loan-types.collection.get",
+        "lost-item-fees-policies.item.get",
+        "lost-item-fees-policies.collection.get",
+        "users.item.get",
+        "users.collection.get",
+        "owners.item.get",
+        "owners.collection.get",
+        "feefines.item.get",
+        "feefines.collection.get"
       ],
       "visible": false
     },
