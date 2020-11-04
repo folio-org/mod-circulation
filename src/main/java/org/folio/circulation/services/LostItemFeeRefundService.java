@@ -45,8 +45,9 @@ public class LostItemFeeRefundService {
 
     return refundLostItemFees(forCheckIn(checkInContext))
       .thenApply(r -> r.map(context -> {
-        // check-in of item without an open loan
-        // for such check-in we should not set loan in response.
+        // Refunds may operate on open or closed loans,
+        // closed loans are not affected during check in
+        // so should not be included in the API response
         if (checkInContext.getLoan() == null) {
           return checkInContext;
         }
