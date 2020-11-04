@@ -4,11 +4,11 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.joda.time.DateTime.parse;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.UUID;
 import java.util.function.BiFunction;
 
 import org.joda.time.DateTime;
-import org.joda.time.LocalDate;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -91,13 +91,11 @@ public class JsonPropertyFetcher {
 
   public static LocalDate getLocalDateProperty(JsonObject representation, String propertyName) {
     if (representation != null && representation.containsKey(propertyName)) {
-      return LocalDate.parse(
-        representation.getString(propertyName));
+      return LocalDate.parse(representation.getString(propertyName));
     } else {
       return null;
     }
   }
-
 
   public static UUID getUUIDProperty(JsonObject representation, String propertyName) {
     if (representation != null && representation.containsKey(propertyName)) {
@@ -201,5 +199,9 @@ public class JsonPropertyFetcher {
     }
 
     return getter.apply(currentObject, paths[paths.length - 1]);
+  }
+
+  public static Object getValueByPath(JsonObject record, String... paths) {
+    return getByPath(record, JsonObject::getValue, paths);
   }
 }
