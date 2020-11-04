@@ -240,9 +240,9 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.z3950.zing</groupId>
-      <artifactId>cql-java</artifactId>
-      <version>1.13</version>
+      <groupId>org.folio</groupId>
+      <artifactId>cql2pgjson</artifactId>
+      <version>${rmb.version}</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
