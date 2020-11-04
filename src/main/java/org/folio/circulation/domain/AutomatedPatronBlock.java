@@ -26,8 +26,8 @@ public class AutomatedPatronBlock {
     return new AutomatedPatronBlock(
       getProperty(representation, "patronBlockConditionId"),
       getBooleanProperty(representation, "blockBorrowing"),
-      getBooleanProperty(representation, "blockRenewal"),
-      getBooleanProperty(representation, "blockRequest"),
+      getBooleanProperty(representation, "blockRenewals"),
+      getBooleanProperty(representation, "blockRequests"),
       getProperty(representation, "message")
     );
   }
