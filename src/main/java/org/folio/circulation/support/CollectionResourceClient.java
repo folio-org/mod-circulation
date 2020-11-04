@@ -1,5 +1,6 @@
 package org.folio.circulation.support;
 
+import static java.lang.String.format;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.folio.circulation.support.http.client.Offset.noOffset;
 
@@ -22,6 +23,11 @@ public class CollectionResourceClient implements GetManyRecordsClient {
   public CollectionResourceClient(OkapiHttpClient client, URL collectionRoot) {
     this.collectionRoot = collectionRoot;
     this.client = client;
+  }
+
+  public CompletableFuture<Result<Response>> post(JsonObject representation, Object... pathVariables) {
+    final String url = format(collectionRoot.toString(), pathVariables);
+    return client.post(url, representation);
   }
 
   public CompletableFuture<Result<Response>> post(JsonObject representation) {
@@ -75,7 +81,7 @@ public class CollectionResourceClient implements GetManyRecordsClient {
     String rawQueryString) {
 
     String url = isNotBlank(rawQueryString)
-      ? String.format("%s?%s", collectionRoot, rawQueryString)
+      ? format("%s?%s", collectionRoot, rawQueryString)
       : collectionRoot.toString();
 
     return client.get(url);
@@ -96,6 +102,6 @@ public class CollectionResourceClient implements GetManyRecordsClient {
   }
 
   private String individualRecordUrl(String id) {
-    return String.format("%s/%s", collectionRoot, id);
+    return format("%s/%s", collectionRoot, id);
   }
 }

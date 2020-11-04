@@ -1557,7 +1557,9 @@
         "feefineactions.item.post",
         "accounts.item.put",
         "pubsub.publish.post",
-        "scheduled-notice-storage.scheduled-notices.item.delete"
+        "scheduled-notice-storage.scheduled-notices.item.delete",
+        "accounts.refund.post",
+        "accounts.cancel.post"
       ],
       "visible": false
     },
@@ -1667,7 +1669,9 @@
         "automated-patron-blocks.collection.get",
         "overdue-fines-policies.item.get",
         "lost-item-fees-policies.item.get",
-        "pubsub.publish.post"
+        "pubsub.publish.post",
+        "accounts.refund.post",
+        "accounts.cancel.post"
       ],
       "visible": false
     },
