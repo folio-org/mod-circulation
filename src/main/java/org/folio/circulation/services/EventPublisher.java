@@ -218,7 +218,7 @@ public class EventPublisher {
   }
 
   public CompletableFuture<Result<Void>> publishAnonymizeEvent(Loan loan) {
-    return publishLogRecord(LoanLogContext.from(loan).withAction("Anonymize").withDescription("").asJson(), LOAN);
+    return publishLogRecord(LoanLogContext.from(loan).withAction("Anonymize").asJson(), LOAN);
   }
 
   public CompletableFuture<Result<Void>> publishRecallRequestedEvent(Loan loan) {

@@ -1,6 +1,5 @@
 package org.folio.circulation.services.agedtolost;
 
-import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_FEE_TYPE;
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_PROCESSING_FEE_TYPE;
 import static org.folio.circulation.domain.FeeFine.lostItemFeeTypes;
@@ -15,8 +14,8 @@ import static org.folio.circulation.support.CqlSortBy.ascending;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.CqlQuery.lessThanOrEqualTo;
-import static org.folio.circulation.support.http.client.PageLimit.oneThousand;
 import static org.folio.circulation.support.results.Result.failed;
+import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.utils.CollectionUtil.uniqueSetOf;
 import static org.folio.circulation.support.utils.CommonUtils.pair;
@@ -47,6 +46,7 @@ import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.services.FeeFineFacade;
 import org.folio.circulation.services.support.CreateAccountCommand;
 import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.fetching.PageableFetcher;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
@@ -66,6 +66,7 @@ public class ChargeLostFeesWhenAgedToLostService {
   private final ItemRepository itemRepository;
   private final StoreLoanAndItem storeLoanAndItem;
   private final EventPublisher eventPublisher;
+  private final PageableFetcher<Loan> loanPageableFetcher;
 
   public ChargeLostFeesWhenAgedToLostService(Clients clients) {
     this.lostItemPolicyRepository = new LostItemPolicyRepository(clients);
@@ -76,17 +77,25 @@ public class ChargeLostFeesWhenAgedToLostService {
     this.itemRepository = new ItemRepository(clients, true, false, false);
     this.storeLoanAndItem = new StoreLoanAndItem(loanRepository, itemRepository);
     this.eventPublisher = new EventPublisher(clients.pubSubPublishingService());
+    this.loanPageableFetcher = new PageableFetcher<>(loanRepository);
   }
 
   public CompletableFuture<Result<Void>> chargeFees() {
-    return fetchLoansAndItems()
-      .thenCompose(r -> r.after(allLoans -> {
-        if (allLoans.isEmpty()) {
-          log.info("No aged to lost loans to charge lost fees");
-          return completedFuture(succeeded(null));
-        }
+    log.info("Starting aged to lost items charging...");
 
-        log.debug("Loans to charge fees [{}]", allLoans.getRecords().size());
+    return loanFetchQuery()
+      .after(query -> loanPageableFetcher.processPages(query, this::chargeFees));
+  }
+
+  public CompletableFuture<Result<Void>> chargeFees(MultipleRecords<Loan> loans) {
+    if (loans.isEmpty()) {
+      log.info("No aged to lost loans to charge lost fees");
+      return ofAsync(() -> null);
+    }
+
+    return fetchItemsAndRelatedRecords(loans)
+      .thenCompose(r -> r.after(allLoans -> {
+        log.info("Loans to charge fees {}", allLoans.size());
 
         return succeeded(LoanToChargeFees.usingLoans(allLoans))
           .after(this::fetchFeeFineOwners)
@@ -200,10 +209,10 @@ public class ChargeLostFeesWhenAgedToLostService {
       .collect(Collectors.toList());
   }
 
-  private CompletableFuture<Result<MultipleRecords<Loan>>> fetchLoansAndItems() {
-    return loanFetchQuery()
-      .after(query -> loanRepository.findByQuery(query, oneThousand()))
-      .thenComposeAsync(loansResult -> itemRepository.fetchItemsFor(loansResult, Loan::withItem))
+  private CompletableFuture<Result<MultipleRecords<Loan>>> fetchItemsAndRelatedRecords(
+    MultipleRecords<Loan> loans) {
+
+    return itemRepository.fetchItemsFor(succeeded(loans), Loan::withItem)
       .thenComposeAsync(r -> r.after(lostItemPolicyRepository::findLostItemPoliciesForLoans));
   }
 

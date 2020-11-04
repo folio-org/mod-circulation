@@ -1,25 +1,30 @@
 package org.folio.circulation.resources;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.folio.circulation.domain.representations.RequestProperties.ITEM_ID;
+import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.results.Result.failed;
+import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Loan;
-import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
-import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.domain.RequestStatus;
-import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.domain.User;
-import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.ServicePointPickupLocationValidator;
-import org.folio.circulation.support.BadRequestFailure;
+import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
+import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
+import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
+import org.folio.circulation.infrastructure.storage.users.UserRepository;
+import org.folio.circulation.support.BadRequestFailure;
 import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.json.JsonObject;
@@ -52,6 +57,7 @@ class RequestFromRepresentationService {
   CompletableFuture<Result<RequestAndRelatedRecords>> getRequestFrom(JsonObject representation) {
     return completedFuture(succeeded(representation))
       .thenApply(r -> r.next(this::validateStatus))
+      .thenApply(r -> r.next(this::refuseWhenNoItemId))
       .thenApply(r -> r.map(this::removeRelatedRecordInformation))
       .thenApply(r -> r.map(Request::from))
       .thenComposeAsync(r -> r.combineAfter(itemRepository::fetchFor, Request::withItem))
@@ -96,14 +102,25 @@ class RequestFromRepresentationService {
     }
   }
 
-  private JsonObject removeRelatedRecordInformation(JsonObject request) {
-    request.remove("item");
-    request.remove("requester");
-    request.remove("proxy");
-    request.remove("loan");
-    request.remove("pickupServicePoint");
-    request.remove("deliveryAddress");
+  private Result<JsonObject> refuseWhenNoItemId(JsonObject representation) {
+    String itemId = getProperty(representation, ITEM_ID);
 
-    return request;
+    if (isBlank(itemId)) {
+      return failedValidation("Cannot create a request with no item ID", "itemId", itemId);
+    }
+    else {
+      return of(() -> representation);
+    }
+  }
+
+  private JsonObject removeRelatedRecordInformation(JsonObject representation) {
+    representation.remove("item");
+    representation.remove("requester");
+    representation.remove("proxy");
+    representation.remove("loan");
+    representation.remove("pickupServicePoint");
+    representation.remove("deliveryAddress");
+
+    return representation;
   }
 }

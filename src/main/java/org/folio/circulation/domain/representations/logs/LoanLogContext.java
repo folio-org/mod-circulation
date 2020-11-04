@@ -19,7 +19,6 @@ import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import lombok.With;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
@@ -37,41 +36,39 @@ public class LoanLogContext {
   private String instanceId;
   private String holdingsRecordId;
   private String action;
-  @Setter private String actionComment;
+  private String actionComment;
   private DateTime date;
-  @Setter private String servicePointId;
-  @Setter private String updatedByUserId;
+  private String servicePointId;
+  private String updatedByUserId;
   private String description;
   private String loanId;
 
   public static LoanLogContext from(Loan loan) {
-    LoanLogContext loanLogContext = new LoanLogContext()
-      .withUser(loan.getUser())
-      .withItem(loan.getItem())
+    return new LoanLogContext()
+      .withUser(ofNullable(loan.getUser())
+        .orElse(new User(new JsonObject().put("id", loan.getUserId()))))
+      .withItem(ofNullable(loan.getItem())
+        .orElse(Item.from(new JsonObject().put("id", loan.getItemId()))))
       .withAction(LogContextActionResolver.resolveAction(loan.getAction()))
       .withDate(DateTime.now())
-      .withLoanId(loan.getId());
-    ofNullable(loan.getActionComment()).ifPresent(loanLogContext::setActionComment);
-    ofNullable(loan.getUpdatedByUserId()).ifPresent(loanLogContext::setUpdatedByUserId);
-    ofNullable(loan.getCheckoutServicePointId()).ifPresent(loanLogContext::setServicePointId);
-    return loanLogContext;
+      .withServicePointId(ofNullable(loan.getCheckInServicePointId())
+        .orElse(loan.getCheckoutServicePointId()))
+      .withLoanId(loan.getId())
+      .withActionComment(loan.getActionComment())
+      .withUpdatedByUserId(loan.getUpdatedByUserId());
   }
 
   public LoanLogContext withUser(User user) {
-    ofNullable(user).ifPresent(usr -> {
-      userBarcode = usr.getBarcode();
-      userId = usr.getId();
-    });
-      return this;
+    userBarcode = user.getBarcode();
+    userId = user.getId();
+    return this;
   }
 
   public LoanLogContext withItem(Item item) {
-    ofNullable(item).ifPresent(i -> {
-      itemBarcode = i.getBarcode();
-      itemId = i.getItemId();
-      instanceId = i.getInstanceId();
-      holdingsRecordId = i.getHoldingsRecordId();
-    });
+    itemBarcode = item.getBarcode();
+    itemId = item.getItemId();
+    instanceId = item.getInstanceId();
+    holdingsRecordId = item.getHoldingsRecordId();
     return this;
   }
 
