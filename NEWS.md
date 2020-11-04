@@ -1,3 +1,7 @@
+## 19.0.17 2020-11-04
+
+* Fixes a memory leak caused by event publishing (CIRC-983)
+
 ## 19.0.16 2020-10-02
 
 * Changes overnight scheduled notices processing time to midnight in the tenant's timezone (CIRC-919)
