@@ -30,11 +30,11 @@ public class FeeFineService {
       return ofAsync(() -> null);
     }
 
-    final AccountActionRequest refundRequest = AccountActionRequest.builder()
+    final AccountRefundRequest refundRequest = AccountRefundRequest.builder()
       .amount(refundCommand.getAccount().getPaidAndTransferredAmount())
       .servicePointId(refundCommand.getCurrentServicePointId())
       .userName(refundCommand.getUserName())
-      .reason(refundCommand.getRefundReason().getValue())
+      .refundReason(refundCommand.getRefundReason().getValue())
       .build();
 
     return accountRefundClient.post(refundRequest.toJson(), refundCommand.getAccountId())
@@ -42,11 +42,10 @@ public class FeeFineService {
   }
 
   public CompletableFuture<Result<Void>> cancelAccount(AccountCancelCommand cancelCommand) {
-    final AccountActionRequest cancelRequest = AccountActionRequest.builder()
-      .amount(cancelCommand.getAccount().getRemaining())
+    // todo: populate cancellation reason once it will be supported by the API
+    final AccountCancelRequest cancelRequest = AccountCancelRequest.builder()
       .servicePointId(cancelCommand.getCurrentServicePointId())
       .userName(cancelCommand.getUserName())
-      .reason(cancelCommand.getCancellationReason().getValue())
       .build();
 
     return accountCancelClient.post(cancelRequest.toJson(), cancelCommand.getAccountId())

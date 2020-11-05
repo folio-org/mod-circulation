@@ -1,18 +1,14 @@
 package api.loans.scenarios;
 
-import static api.support.matchers.AccountActionsMatchers.arePaymentRefundActionsCreated;
-import static api.support.matchers.AccountActionsMatchers.isCancelledItemReturnedActionCreated;
+import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
 import static api.support.matchers.AccountMatchers.isOpen;
 import static api.support.matchers.AccountMatchers.isRefundedFully;
 import static api.support.matchers.ItemMatchers.isAvailable;
-import static api.support.matchers.LoanAccountActionsMatcher.hasLostItemFeeActions;
 import static api.support.matchers.LoanAccountMatcher.hasLostItemFee;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
-import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
 import static org.hamcrest.CoreMatchers.allOf;
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.joda.time.DateTime.now;
 
@@ -59,12 +55,7 @@ public class CheckInDeclaredLostItemTest extends RefundDeclaredLostFeesTestBase 
     checkInFixture.checkInByBarcode(item);
 
     assertThat(firstLoan, hasLostItemFee(isOpen(firstFee)));
-    assertThat(firstLoan, hasLostItemFeeActions(
-      not(isCancelledItemReturnedActionCreated(firstFee))));
-
     assertThat(loan, hasLostItemFee(isRefundedFully(secondFee)));
-    assertThat(loan, hasLostItemFeeActions(arePaymentRefundActionsCreated(secondFee)));
-    assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
   @Test
@@ -118,12 +109,10 @@ public class CheckInDeclaredLostItemTest extends RefundDeclaredLostFeesTestBase 
     performActionThatRequiresRefund();
 
     assertThat(loan, hasLostItemFee(isRefundedFully(setCostFee)));
-    assertThat(loan, hasLostItemFeeActions(arePaymentRefundActionsCreated(setCostFee)));
-    assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
   @Test
-  public void lostFeeCancellationDoesNotTriggerMarkingItemAsLostAndPaaid() {
+  public void lostFeeCancellationDoesNotTriggerMarkingItemAsLostAndPaid() {
     useChargeableRefundableLostItemFee(15.00, 0.0);
 
     declareItemLost();

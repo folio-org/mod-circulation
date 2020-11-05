@@ -13,7 +13,6 @@ import static api.support.fakes.StorageSchema.validatorForStorageLoanSchema;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.folio.circulation.support.http.server.ForwardResponse.forward;
-import static org.folio.circulation.support.http.server.JsonHttpResponse.created;
 import static org.folio.circulation.support.http.server.NoContentResponse.noContent;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 import static org.folio.rest.tools.utils.NetworkUtils.nextFreePort;
@@ -386,11 +385,7 @@ public class FakeOkapi extends AbstractVerticle {
       .withCollectionPropertyName("automatedPatronBlocks")
       .create().register(router);
 
-    router.post("/accounts/:id/refund")
-      .handler(rc -> created(new JsonObject()).writeTo(rc.response()));
-    router.post("/accounts/:id/cancel")
-      .handler(rc -> created(new JsonObject()).writeTo(rc.response()));
-
+    new FakeFeeFineOperationModules().register(router);
 
     server.requestHandler(router)
       .listen(PORT_TO_USE, result -> {

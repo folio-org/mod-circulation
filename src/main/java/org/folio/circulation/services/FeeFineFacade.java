@@ -129,10 +129,15 @@ public class FeeFineFacade {
 
     final Account account = command.getAccount();
 
+    if (!account.getRemaining().hasAmount()) {
+      log.info("Nothing to cancel for account {}", account.getId());
+      return ofAsync(() -> null);
+    }
+
     log.info("Initiating cancel for account {}", account.getId());
 
     final AccountCancelCommand cancelCommand = AccountCancelCommand.builder()
-      .account(account)
+      .accountId(account.getId())
       .currentServicePointId(command.getServicePointId())
       .cancellationReason(command.getCancelReason())
       .userName(user.getPersonalName())
