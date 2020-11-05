@@ -1,7 +1,8 @@
 package api.loans;
 
-import static api.support.PubsubPublisherTestUtils.assertThatPublishedNoticeLogRecordEventsCountIsEqualTo;
+import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
+import static api.support.PubsubPublisherTestUtils.assertThatPublishedNoticeLogRecordEventsCountIsEqualTo;
 import static api.support.builders.FixedDueDateSchedule.forDay;
 import static api.support.builders.FixedDueDateSchedule.wholeMonth;
 import static api.support.matchers.ItemMatchers.isCheckedOut;
@@ -13,7 +14,6 @@ import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
-import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
 import static org.hamcrest.CoreMatchers.allOf;
@@ -49,6 +49,7 @@ import api.support.builders.ItemBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
+import api.support.builders.OverrideRenewalByBarcodeRequestBuilder;
 import api.support.fixtures.ItemExamples;
 import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.IndividualResource;
@@ -421,9 +422,15 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     loansFixture.attemptRenewal(422, smallAngryPlanet, jessica);
 
-    final JsonObject renewedLoan =
-      loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica,
-        OVERRIDE_COMMENT, null).getJson();
+    final var renewRequestBuilder = new OverrideRenewalByBarcodeRequestBuilder()
+      .forItem(smallAngryPlanet)
+      .forUser(jessica)
+      .withComment(OVERRIDE_COMMENT)
+      .withDueDate(null)
+      .withServicePointId(servicePointsFixture.cd1().getId().toString());
+
+    final JsonObject renewedLoan = loansFixture.overrideRenewalByBarcode(
+      renewRequestBuilder).getJson();
 
     verifyRenewedLoan(smallAngryPlanet, jessica, renewedLoan);
 
