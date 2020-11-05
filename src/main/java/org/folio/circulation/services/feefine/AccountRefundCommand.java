@@ -14,7 +14,7 @@ public final class AccountRefundCommand {
   private final String userName;
   private final AccountRefundReason refundReason;
 
-  public boolean hasPaidAndTransferredAmount() {
+  public boolean hasPaidOrTransferredAmount() {
     return account.hasPaidOrTransferredAmount();
   }
 

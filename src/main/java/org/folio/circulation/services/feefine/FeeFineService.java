@@ -25,7 +25,7 @@ public class FeeFineService {
   }
 
   public CompletableFuture<Result<Void>> refundAccount(AccountRefundCommand refundCommand) {
-    if (!refundCommand.hasPaidAndTransferredAmount()) {
+    if (!refundCommand.hasPaidOrTransferredAmount()) {
       log.info("Account has nothing to refund {}", refundCommand.getAccountId());
       return ofAsync(() -> null);
     }
