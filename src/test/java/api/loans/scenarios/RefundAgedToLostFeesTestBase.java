@@ -37,9 +37,7 @@ public abstract class RefundAgedToLostFeesTestBase extends SpringApiTest {
   private final String cancellationReason;
 
   protected RefundAgedToLostFeesTestBase(String cancellationReason) {
-//    this.cancellationReason = cancellationReason;
-    // FIXME: uncomment when API will be updated and cancellation reason will be possible to set
-    this.cancellationReason = "Cancelled as error";
+    this.cancellationReason = cancellationReason;
   }
 
   @Before

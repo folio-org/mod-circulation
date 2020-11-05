@@ -42,10 +42,10 @@ public class FeeFineService {
   }
 
   public CompletableFuture<Result<Void>> cancelAccount(AccountCancelCommand cancelCommand) {
-    // todo: populate cancellation reason once it will be supported by the API
     final AccountCancelRequest cancelRequest = AccountCancelRequest.builder()
       .servicePointId(cancelCommand.getCurrentServicePointId())
       .userName(cancelCommand.getUserName())
+      .cancellationReason(cancelCommand.getCancellationReason().getValue())
       .build();
 
     return accountCancelClient.post(cancelRequest.toJson(), cancelCommand.getAccountId())

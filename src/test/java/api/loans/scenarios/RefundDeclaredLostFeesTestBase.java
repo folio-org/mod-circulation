@@ -352,8 +352,6 @@ public abstract class RefundDeclaredLostFeesTestBase extends SpringApiTest {
   }
 
   private Matcher<JsonObject> isClosedCancelled(double amount) {
-//    return AccountMatchers.isClosedCancelled(cancellationReason, amount);
-    // FIXME: uncomment when feesfines API will be updated with cancellation reason
-    return AccountMatchers.isClosedCancelled("Cancelled as error", amount);
+    return AccountMatchers.isClosedCancelled(cancellationReason, amount);
   }
 }

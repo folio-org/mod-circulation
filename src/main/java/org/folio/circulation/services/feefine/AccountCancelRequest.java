@@ -12,6 +12,9 @@ final class AccountCancelRequest {
   private final boolean notifyPatron = true;
   private final String servicePointId;
   private final String userName;
+  private final String cancellationReason;
+  @Builder.Default
+  private final String comments = "";
 
   JsonObject toJson() {
     final JsonObject json = new JsonObject();
@@ -19,6 +22,8 @@ final class AccountCancelRequest {
     write(json, "notifyPatron", notifyPatron);
     write(json, "servicePointId", servicePointId);
     write(json, "userName", userName);
+    write(json, "cancellationReason", cancellationReason);
+    write(json, "comments", cancellationReason);
 
     return json;
   }
