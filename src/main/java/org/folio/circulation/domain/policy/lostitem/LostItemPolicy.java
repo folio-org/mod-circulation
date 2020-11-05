@@ -148,10 +148,6 @@ public class LostItemPolicy extends Policy {
       return false;
     }
 
-    if (actualCostFee.isChargeable()) {
-      // actual cost is not supported now
-      return false;
-    }
     return agedToLostAfterOverdueInterval.hasPassedSinceDateTillNow(loanDueDate);
   }
 

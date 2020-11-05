@@ -29,9 +29,6 @@ import api.support.spring.SpringApiTest;
 import io.vertx.core.json.JsonObject;
 
 public class ItemsLostRequiringActualCostsTests extends SpringApiTest {
-  public ItemsLostRequiringActualCostsTests() {
-    super(true, true);
-  }
 
   @Test
   public void shouldIncludeAnyLostItemsRequiringActualCostFees() {
@@ -44,26 +41,25 @@ public class ItemsLostRequiringActualCostsTests extends SpringApiTest {
     final LostItemFeePolicyBuilder actualCostAgedLostPolicy = createActualCostAgeToLostAndBilledAfterOneMinutePolicy();
 
     final ItemResource declaredLostSetCostItem = createDeclaredLostItem(setCostPolicy);
-    //final ItemResource agedToLostSetCostItem = createAgedToLostItem(setCostAgedLostPolicy, true); // FIXME: !!!
+    final ItemResource agedToLostSetCostItem = createAgedToLostItem(setCostAgedLostPolicy);
     final ItemResource declaredLostActualCostItem = createDeclaredLostItem(actualCostPolicy);
-    //final ItemResource agedToLostActualCostItem = createAgedToLostItem(actualCostAgedLostPolicy, true); // FIXME: !!!
+    final ItemResource agedToLostActualCostItem = createAgedToLostItem(actualCostAgedLostPolicy);
 
     final Collection<JsonObject> items = ResourceClient.forItemsLostRequiringActualCosts().getAll();
 
-    //assertThat(items.size(), is(2)); // FIXME: !!!
-    assertThat(items.size(), is(1)); // FIXME: !!!
+    assertThat(items.size(), is(2));
     validateItemExistsInItems(items, declaredLostActualCostItem);
     validateItemInItemsIsDeclaredLost(items, declaredLostActualCostItem);
-    //validateItemExistsInItems(items, agedToLostActualCostItem); // FIXME: !!!
-    //validateItemInItemsIsAgedToLost(items, agedToLostActualCostItem); // FIXME: !!!
+    validateItemExistsInItems(items, agedToLostActualCostItem);
+    validateItemInItemsIsAgedToLost(items, agedToLostActualCostItem);
     validateItemNotExistsInItems(items, closedItem);
     validateItemNotExistsInItems(items, openItem);
     validateItemNotExistsInItems(items, declaredLostSetCostItem);
-    //validateItemNotExistsInItems(items, agedToLostSetCostItem); // FIXME: !!!
+    validateItemNotExistsInItems(items, agedToLostSetCostItem);
   }
 
   @Test
-  public void shouldIncludeItemsThatAreDeclaredLost() {
+  public void shouldIncludeItemsThatAreDeclaredLostUsingActualCostCharge() {
     final LostItemFeePolicyBuilder actualCostPolicy = createActualCostChargeFeePolicy();
     final ItemResource declaredLostActualCostItem = createDeclaredLostItem(actualCostPolicy);
 
@@ -74,11 +70,21 @@ public class ItemsLostRequiringActualCostsTests extends SpringApiTest {
     validateItemInItemsIsDeclaredLost(response, declaredLostActualCostItem);
   }
 
-  /* FIXME: !!!
   @Test
-  public void shouldIncludeItemsThatHaveAgedToLost() {
+  public void shouldNotIncludeItemsThatAreDeclaredLostUsingSetCostCharge() {
+    final LostItemFeePolicyBuilder setCostPolicy = createSetCostChargeFeePolicy();
+
+    createDeclaredLostItem(setCostPolicy);
+
+    final Collection<JsonObject> response = ResourceClient.forItemsLostRequiringActualCosts().getAll();
+
+    assertThat(response.size(), is(0));
+  }
+
+  @Test
+  public void shouldIncludeItemsThatHaveAgedToLostUsingActualCostCharge() {
     final LostItemFeePolicyBuilder actualCostAgedLostPolicy = createActualCostAgeToLostAndBilledAfterOneMinutePolicy();
-    final ItemResource agedToLostItem = createAgedToLostItem(actualCostAgedLostPolicy, true);
+    final ItemResource agedToLostItem = createAgedToLostItem(actualCostAgedLostPolicy);
 
     final Collection<JsonObject> items = ResourceClient.forItemsLostRequiringActualCosts().getAll();
 
@@ -88,10 +94,21 @@ public class ItemsLostRequiringActualCostsTests extends SpringApiTest {
   }
 
   @Test
-  public void shouldNotIncludeUnbilledAgedToLostItem() {
+  public void shouldNotIncludeItemsThatHaveAgedToLostUsingSetCostCharge() {
+    final LostItemFeePolicyBuilder setCostPolicy = createSetCostAgeToLostAndBilledAfterOneMinutePolicy();
+
+    createAgedToLostItem(setCostPolicy);
+
+    final Collection<JsonObject> items = ResourceClient.forItemsLostRequiringActualCosts().getAll();
+
+    assertThat(items.size(), is(0));
+  }
+
+  @Test
+  public void shouldNotIncludeUnbilledAgedToLostItemUsingActualCostCharge() {
     final LostItemFeePolicyBuilder actualCostAgedLostPolicy = createActualCostAgeToLostAndBilledAfterOneMinutePolicy();
 
-    createAgedToLostItem(actualCostAgedLostPolicy, true);
+    createAgedToLostItem(actualCostAgedLostPolicy, false);
 
     Collection<JsonObject> items = ResourceClient.forItemsLostRequiringActualCosts().getAll();
 
@@ -99,16 +116,15 @@ public class ItemsLostRequiringActualCostsTests extends SpringApiTest {
   }
 
   @Test
-  public void shouldNotIncludeBilledAgedToLostItemWithActualCost() {
-    final LostItemFeePolicyBuilder actualCostAgedLostPolicy = createActualCostAgeToLostAndBilledAfterOneMinutePolicy();
+  public void shouldNotIncludeUnbilledAgedToLostItemUsingSetCostCharge() {
+    final LostItemFeePolicyBuilder setCostAgedLostPolicy = createSetCostAgeToLostAndBilledAfterOneMinutePolicy();
 
-    createAgedToLostItem(actualCostAgedLostPolicy, true);
+    createAgedToLostItem(setCostAgedLostPolicy, false);
 
-    final Collection<JsonObject> items = ResourceClient.forItemsLostRequiringActualCosts().getAll();
+    Collection<JsonObject> items = ResourceClient.forItemsLostRequiringActualCosts().getAll();
 
     assertThat(items.size(), is(0));
   }
-  */
 
   @Test
   public void isEmptyWhenNoLostItems() {
@@ -145,6 +161,10 @@ public class ItemsLostRequiringActualCostsTests extends SpringApiTest {
     assertThat(declaredLostLoan.getJsonObject("item"), ItemMatchers.isDeclaredLost());
 
     return declaredLostItem;
+  }
+
+  private ItemResource createAgedToLostItem(LostItemFeePolicyBuilder policy) {
+    return createAgedToLostItem(policy, true);
   }
 
   private ItemResource createAgedToLostItem(LostItemFeePolicyBuilder policy, boolean charge) {

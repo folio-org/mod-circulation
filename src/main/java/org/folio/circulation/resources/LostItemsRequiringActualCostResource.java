@@ -78,8 +78,8 @@ public class LostItemsRequiringActualCostResource extends Resource {
       .thenComposeAsync(r -> r.after(l -> repositories.getServicePoint().findServicePointsForLoans(l)))
       .thenComposeAsync(r -> r.after(l -> repositories.getUser().findUsersForLoans(l)))
       .thenCompose(r -> r.after(l -> mapToLostItem(l)))
-      .thenComposeAsync(r -> r.after(e -> fetchItemsRelatedRecords(e, repositories)))
-      .thenComposeAsync(r -> r.after(e -> fetchFeeFineOwners(e, repositories)))
+      .thenComposeAsync(r -> r.after(l -> fetchItemsRelatedRecords(l, repositories)))
+      .thenComposeAsync(r -> r.after(l -> fetchFeeFineOwners(l, repositories)))
       .thenApply(this::mapResultToJson)
       .thenApply(r -> r.map(JsonHttpResponse::ok))
       .thenAccept(context::writeResultToHttpResponse);
@@ -132,7 +132,7 @@ public class LostItemsRequiringActualCostResource extends Resource {
   private MultipleRecords<Loan> filterOutLoans(MultipleRecords<Loan> multipleLoans) {
     return multipleLoans
       .filter(loan -> hasNoLostFeeFineActualCostsAccounts(loan))
-      //.filter(loan -> hasNoChargeableSetCostFee(loan)) // FIXME: !!!
+      .filter(loan -> hasNoChargeableSetCostFee(loan))
       .filter(loan -> hasActualCostFee(loan));
   }
 
