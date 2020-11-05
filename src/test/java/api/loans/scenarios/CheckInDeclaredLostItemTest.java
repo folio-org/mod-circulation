@@ -9,6 +9,8 @@ import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static org.hamcrest.CoreMatchers.allOf;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.joda.time.DateTime.now;
 
@@ -30,10 +32,13 @@ public class CheckInDeclaredLostItemTest extends RefundDeclaredLostFeesTestBase 
   protected void performActionThatRequiresRefund(DateTime actionDate) {
     mockClockManagerToReturnFixedDateTime(actionDate);
 
-    checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+    final JsonObject loan = checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(item)
       .at(servicePointsFixture.cd1())
-      .on(actionDate));
+      .on(actionDate))
+      .getLoan();
+
+    assertThat(loan, notNullValue());
   }
 
   @Test
@@ -56,6 +61,7 @@ public class CheckInDeclaredLostItemTest extends RefundDeclaredLostFeesTestBase 
 
     assertThat(firstLoan, hasLostItemFee(isOpen(firstFee)));
     assertThat(loan, hasLostItemFee(isRefundedFully(secondFee)));
+    assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
   @Test
@@ -106,9 +112,14 @@ public class CheckInDeclaredLostItemTest extends RefundDeclaredLostFeesTestBase 
     declareItemLost(setCostFee);
     resolveLostItemFee();
 
-    performActionThatRequiresRefund();
+    final var response = checkInFixture.checkInByBarcode(
+      new CheckInByBarcodeRequestBuilder()
+        .forItem(item)
+        .at(servicePointsFixture.cd1()));
 
+    assertThat(response.getLoan(), nullValue());
     assertThat(loan, hasLostItemFee(isRefundedFully(setCostFee)));
+    assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
   @Test

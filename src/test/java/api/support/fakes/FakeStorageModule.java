@@ -1,5 +1,6 @@
 package api.support.fakes;
 
+import static api.support.fakes.CqlPredicate.MATCH_ALL_RECORDS;
 import static java.lang.String.format;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.folio.circulation.support.http.server.JsonHttpResponse.created;
@@ -342,7 +343,7 @@ public class FakeStorageModule extends AbstractVerticle {
 
     Integer limit = context.getIntegerParameter("limit", 10);
     Integer offset = context.getIntegerParameter("offset", 0);
-    String query = context.getStringParameter("query", null);
+    String query = context.getStringParameter("query", MATCH_ALL_RECORDS);
 
     log.debug("Handling {}", routingContext.request().uri());
 
@@ -400,7 +401,7 @@ public class FakeStorageModule extends AbstractVerticle {
   private void deleteMany(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
 
-    String query = context.getStringParameter("query", null);
+    String query = context.getStringParameter("query", MATCH_ALL_RECORDS);
 
     Map<String, JsonObject> resourcesForTenant = getResourcesForTenant(context);
 

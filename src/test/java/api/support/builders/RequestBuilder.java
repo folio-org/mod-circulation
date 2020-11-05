@@ -8,13 +8,13 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getUUIDProperty;
 import static org.folio.circulation.support.json.JsonStringArrayPropertyFetcher.toStream;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
 import org.folio.circulation.domain.Request;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.joda.time.LocalDate;
 
 import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
@@ -201,6 +201,10 @@ public class RequestBuilder extends JsonBuilder implements Builder {
   public RequestBuilder fulfilToHoldShelf(UUID newPickupServicePointId) {
     return withFulfilmentPreference("Hold Shelf")
       .withPickupServicePointId(newPickupServicePointId);
+  }
+
+  public RequestBuilder withNoRequestExpiration() {
+    return withRequestExpiration(null);
   }
 
   public RequestBuilder open() {
