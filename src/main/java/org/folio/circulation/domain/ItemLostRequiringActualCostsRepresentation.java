@@ -22,6 +22,8 @@ public class ItemLostRequiringActualCostsRepresentation {
   private static final String FIRST_NAME_KEY = "firstName";
   private static final String OWNER_KEY = "owner";
 
+  private ItemLostRequiringActualCostsRepresentation() {}
+
   public static JsonObject mapToResult(LostItemRequiringCostsFee entry) {
     if (entry == null) {
       return null;

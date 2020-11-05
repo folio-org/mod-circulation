@@ -7,6 +7,7 @@ import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.http.client.CqlQuery.greaterThan;
 import static org.folio.circulation.support.http.client.CqlQuery.lessThan;
+import static org.folio.circulation.support.http.client.CqlQuery.noQuery;
 import static org.folio.circulation.support.http.client.CqlQuery.notEqual;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
@@ -82,6 +83,17 @@ public class CqlQueryTests {
   }
 
   @Test
+  public void canApplyAndOperatorToTwoQueriesWithBlankSecondQuery() {
+    final Result<CqlQuery> query = exactMatch("barcode", "12345");
+
+    final Result<CqlQuery> combinedQuery = query.combine(noQuery(),
+      CqlQuery::and);
+
+    assertThat(combinedQuery.value().asText(),
+      is("barcode==\"12345\""));
+  }
+
+  @Test
   public void canApplyOrOperatorToTwoQueries() {
     final Result<CqlQuery> query = exactMatch("barcode", "12345");
 
@@ -92,6 +104,17 @@ public class CqlQueryTests {
 
     assertThat(combinedQuery.value().asText(),
       is("barcode==\"12345\" or status==\"Open\""));
+  }
+
+  @Test
+  public void canApplyOrOperatorToTwoQueriesWithBlankSecondQuery() {
+    final Result<CqlQuery> query = exactMatch("barcode", "12345");
+
+    final Result<CqlQuery> combinedQuery = query.combine(noQuery(),
+      CqlQuery::or);
+
+    assertThat(combinedQuery.value().asText(),
+      is("barcode==\"12345\""));
   }
 
   @Test
@@ -108,6 +131,17 @@ public class CqlQueryTests {
   }
 
   @Test
+  public void canApplyAndGroupOperatorToTwoQueriesWithBlankSecondQuery() {
+    final Result<CqlQuery> query = exactMatch("barcode", "12345");
+
+    final Result<CqlQuery> combinedQuery = query.combine(noQuery(),
+      CqlQuery::andGroup);
+
+    assertThat(combinedQuery.value().asText(),
+      is("barcode==\"12345\""));
+  }
+
+  @Test
   public void canApplyOrGroupOperatorToTwoQueries() {
     final Result<CqlQuery> query = exactMatch("barcode", "12345");
 
@@ -118,6 +152,17 @@ public class CqlQueryTests {
 
     assertThat(combinedQuery.value().asText(),
       is("barcode==\"12345\" or (status==\"Open\")"));
+  }
+
+  @Test
+  public void canApplyOrGroupOperatorToTwoQueriesWithBlankSecondQuery() {
+    final Result<CqlQuery> query = exactMatch("barcode", "12345");
+
+    final Result<CqlQuery> combinedQuery = query.combine(noQuery(),
+      CqlQuery::orGroup);
+
+    assertThat(combinedQuery.value().asText(),
+      is("barcode==\"12345\""));
   }
 
   @Test
