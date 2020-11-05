@@ -20,7 +20,7 @@ final class AccountRefundRequest {
   JsonObject toJson() {
     final JsonObject json = new JsonObject();
 
-    write(json, "amount", amount.toDouble());
+    write(json, "amount", amount.toScaledString());
     write(json, "notifyPatron", notifyPatron);
     write(json, "servicePointId", servicePointId);
     write(json, "userName", userName);
