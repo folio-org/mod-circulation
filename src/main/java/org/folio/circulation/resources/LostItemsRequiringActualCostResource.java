@@ -19,7 +19,6 @@ import org.folio.circulation.domain.Account;
 import org.folio.circulation.domain.FeeFine;
 import org.folio.circulation.domain.FeeFineOwner;
 import org.folio.circulation.domain.Item;
-import org.folio.circulation.domain.ItemLostRequiringActualCostsRepresentation;
 import org.folio.circulation.domain.LostItemRequiringCostsFee;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanStatus;
@@ -165,7 +164,7 @@ public class LostItemsRequiringActualCostResource extends Resource {
     return result.map(
       loans -> loans.stream()
         .filter(Objects::nonNull)
-        .map(e -> ItemLostRequiringActualCostsRepresentation.mapToResult(e))
+        .map(e -> e.toJson())
         .collect(Collector.of(JsonArray::new, JsonArray::add, JsonArray::add))
     ).next(jsonArray -> Result.succeeded(new JsonObject()
       .put(RECORD_KEY, jsonArray)
