@@ -12,7 +12,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
-public class FakeFeeFineOperationModules {
+public class FakeFeeFineOperationsModule {
 
   public void register(Router router) {
     router.post("/accounts/:accountId/refund").handler(this::refundAccount);
