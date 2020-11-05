@@ -82,6 +82,45 @@ public class CqlQueryTests {
   }
 
   @Test
+  public void canApplyOrOperatorToTwoQueries() {
+    final Result<CqlQuery> query = exactMatch("barcode", "12345");
+
+    final Result<CqlQuery> secondQuery = exactMatch("status", "Open");
+
+    final Result<CqlQuery> combinedQuery = query.combine(secondQuery,
+      CqlQuery::or);
+
+    assertThat(combinedQuery.value().asText(),
+      is("barcode==\"12345\" or status==\"Open\""));
+  }
+
+  @Test
+  public void canApplyAndGroupOperatorToTwoQueries() {
+    final Result<CqlQuery> query = exactMatch("barcode", "12345");
+
+    final Result<CqlQuery> secondQuery = exactMatch("status", "Open");
+
+    final Result<CqlQuery> combinedQuery = query.combine(secondQuery,
+      CqlQuery::andGroup);
+
+    assertThat(combinedQuery.value().asText(),
+      is("barcode==\"12345\" and (status==\"Open\")"));
+  }
+
+  @Test
+  public void canApplyOrGroupOperatorToTwoQueries() {
+    final Result<CqlQuery> query = exactMatch("barcode", "12345");
+
+    final Result<CqlQuery> secondQuery = exactMatch("status", "Open");
+
+    final Result<CqlQuery> combinedQuery = query.combine(secondQuery,
+      CqlQuery::orGroup);
+
+    assertThat(combinedQuery.value().asText(),
+      is("barcode==\"12345\" or (status==\"Open\")"));
+  }
+
+  @Test
   public void canSortQuery() {
     final Result<CqlQuery> query = exactMatch("barcode", "12345")
       .map(q -> q.sortBy(ascending("position")));
