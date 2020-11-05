@@ -13,6 +13,7 @@ types:
 
 traits:
   language: !include raml-util/traits/language.raml
+  pageable: !include raml-util/traits/pageable.raml
 
 resourceTypes:
   collection-get: !include raml-util/rtypes/collection-get.raml
@@ -23,3 +24,5 @@ resourceTypes:
       collection-get:
         exampleCollection: !include examples/lost-items-requiring-actual-cost-fees.json
         schemaCollection: lost-items-requiring-actual-cost-fees
+    get:
+      is: [pageable]
