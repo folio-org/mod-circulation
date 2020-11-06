@@ -259,6 +259,7 @@ public class RequestQueueResourceTest extends APITests {
 
     List<JsonObject> reorderedRequests = new JsonObject(JsonObject.mapFrom(reorderedLogEvents.get(0))
       .getString("eventPayload"))
+        .getJsonObject("payload")
         .getJsonObject("requests")
         .getJsonArray("reordered")
         .stream()
