@@ -13,7 +13,6 @@ import static org.folio.circulation.domain.representations.logs.CirculationCheck
 import static org.folio.circulation.domain.representations.logs.CirculationCheckInCheckOutLogEventMapper.mapToCheckOutLogEventJson;
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.PAYLOAD;
 import static org.folio.circulation.domain.representations.logs.LogEventType.LOAN;
-import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.domain.representations.logs.RequestUpdateLogEventMapper.mapToRequestLogEventJson;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
@@ -228,11 +227,10 @@ public class EventPublisher {
   }
 
   public CompletableFuture<Result<Void>> publishLogRecord(JsonObject context, LogEventType payloadType) {
-    if (NOTICE.equals(payloadType)) {
-      context = new JsonObject().put(PAYLOAD.value(), context.encode());
-    }
-    write(context, LOG_EVENT_TYPE.value(), payloadType.value());
-    return pubSubPublishingService.publishEvent(LOG_RECORD.name(), context.encode())
+    JsonObject eventJson = new JsonObject();
+    write(eventJson, LOG_EVENT_TYPE.value(), payloadType.value());
+    write(eventJson, PAYLOAD.value(), context);
+    return pubSubPublishingService.publishEvent(LOG_RECORD.name(), eventJson.encode())
       .thenApply(r -> succeeded(null));
   }
 
