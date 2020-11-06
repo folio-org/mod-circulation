@@ -48,7 +48,7 @@ public class FixedDueDateSchedules {
   private Predicate<? super JsonObject> isWithin(DateTime date) {
     return schedule -> {
       DateTime from = DateTime.parse(schedule.getString("from"));
-      DateTime to = DateTime.parse(schedule.getString("to")).withTime(23,59,59,0);
+      DateTime to = DateTime.parse(schedule.getString("to")).withTime(23, 59, 59, 0);
 
       return date.isAfter(from) && date.isBefore(to);
     };
