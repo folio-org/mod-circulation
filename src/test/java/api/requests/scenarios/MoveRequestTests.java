@@ -1030,8 +1030,8 @@ public class MoveRequestTests extends APITests {
     Map<String, List<JsonObject>> logEvents = events.get(LOG_RECORD.name()).stream()
       .collect(groupingBy(e -> new JsonObject(e.getString("eventPayload")).getString("logEventType")));
 
-    Request originalCreatedFromEventPayload = Request.from(new JsonObject(logEvents.get(REQUEST_MOVED.value()).get(0).getString("eventPayload")).getJsonObject("requests").getJsonObject("original"));
-    Request updatedCreatedFromEventPayload = Request.from(new JsonObject(logEvents.get(REQUEST_MOVED.value()).get(0).getString("eventPayload")).getJsonObject("requests").getJsonObject("updated"));
+    Request originalCreatedFromEventPayload = Request.from(new JsonObject(logEvents.get(REQUEST_MOVED.value()).get(0).getString("eventPayload")).getJsonObject("payload").getJsonObject("requests").getJsonObject("original"));
+    Request updatedCreatedFromEventPayload = Request.from(new JsonObject(logEvents.get(REQUEST_MOVED.value()).get(0).getString("eventPayload")).getJsonObject("payload").getJsonObject("requests").getJsonObject("updated"));
     assertThat(originalCreatedFromEventPayload.asJson(), Matchers.not(equalTo(updatedCreatedFromEventPayload.asJson())));
 
     assertThat(originalCreatedFromEventPayload.getItemId(), not(equalTo(updatedCreatedFromEventPayload.getItemId())));

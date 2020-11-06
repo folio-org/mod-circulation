@@ -46,9 +46,9 @@ public class LoanLogContext {
   public static LoanLogContext from(Loan loan) {
     return new LoanLogContext()
       .withUser(ofNullable(loan.getUser())
-        .orElse(new User(new JsonObject().put("id", loan.getUserId()))))
+        .orElse(userFromRepresentation(loan)))
       .withItem(ofNullable(loan.getItem())
-        .orElse(Item.from(new JsonObject().put("id", loan.getItemId()))))
+        .orElse(itemFromRepresentation(loan)))
       .withAction(LogContextActionResolver.resolveAction(loan.getAction()))
       .withDate(DateTime.now())
       .withServicePointId(ofNullable(loan.getCheckInServicePointId())
@@ -58,18 +58,30 @@ public class LoanLogContext {
       .withUpdatedByUserId(loan.getUpdatedByUserId());
   }
 
-  public LoanLogContext withUser(User user) {
+  private LoanLogContext withUser(User user) {
     userBarcode = user.getBarcode();
     userId = user.getId();
     return this;
   }
 
-  public LoanLogContext withItem(Item item) {
+  private LoanLogContext withItem(Item item) {
     itemBarcode = item.getBarcode();
     itemId = item.getItemId();
     instanceId = item.getInstanceId();
     holdingsRecordId = item.getHoldingsRecordId();
     return this;
+  }
+
+  private static User userFromRepresentation(Loan loan) {
+    JsonObject userJson = new JsonObject();
+    ofNullable(loan).ifPresent(l -> write(userJson, "id", l.getUserId()));
+    return new User(userJson);
+  }
+
+  private static Item itemFromRepresentation(Loan loan) {
+    JsonObject itemJson = new JsonObject();
+    ofNullable(loan).ifPresent(l -> write(itemJson, "id", l.getItemId()));
+    return Item.from(itemJson);
   }
 
   public JsonObject asJson() {
