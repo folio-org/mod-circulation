@@ -39,25 +39,6 @@ public class OpeningDay {
   private final boolean open;
   private DateTime dayWithTimeZone;
 
-  OpeningDay(JsonObject openingDayJson) {
-    requireNonNull(openingDayJson, "Json object cannot be null");
-
-    this.allDay = openingDayJson.getBoolean(ALL_DAY_KEY, false);
-    this.open = openingDayJson.getBoolean(OPEN_KEY, false);
-    this.openingHour = fillOpeningDay(openingDayJson);
-    String dateProperty = openingDayJson.getString(DATE_KEY);
-    if (dateProperty != null) {
-      this.date = LocalDate.parse(dateProperty, DATE_TIME_FORMATTER);
-    }
-  }
-
-  private OpeningDay(JsonObject openingDay, DateTime day) {
-    this.openingHour = fillOpeningDay(openingDay);
-    this.allDay = openingDay.getBoolean(ALL_DAY_KEY, false);
-    this.open = openingDay.getBoolean(OPEN_KEY, false);
-    this.dayWithTimeZone = day;
-  }
-
   public static OpeningDay fromJsonByKey(JsonObject jsonObject, String key) {
     return new OpeningDay(jsonObject.getJsonObject(key));
   }
@@ -77,11 +58,38 @@ public class OpeningDay {
     return new OpeningDay(openingDay, date);
   }
 
-  private OpeningDay(List<OpeningHour> openingHour, LocalDate date, boolean allDay, boolean open) {
-    this.openingHour = openingHour;
-    this.date = date;
-    this.allDay = allDay;
-    this.open = open;
+  public static OpeningDay createOpeningDay(List<OpeningHour> openingHour, LocalDate date,
+    boolean allDay, boolean open) {
+
+    return new OpeningDay(openingHour, date, allDay, open, null);
+  }
+
+  public static OpeningDay createOpeningDay(List<OpeningHour> openingHour,
+    LocalDate date, boolean allDay, boolean open, DateTimeZone zone) {
+
+    DateTime datePart = DateTime.parse(date.toString(),
+      DateTimeFormat.forPattern(DATE_PART_FORMAT).withZone(zone));
+
+    return new OpeningDay(openingHour, date, allDay, open, datePart);
+  }
+
+  OpeningDay(JsonObject openingDayJson) {
+    requireNonNull(openingDayJson, "Json object cannot be null");
+
+    this.allDay = openingDayJson.getBoolean(ALL_DAY_KEY, false);
+    this.open = openingDayJson.getBoolean(OPEN_KEY, false);
+    this.openingHour = fillOpeningDay(openingDayJson);
+    String dateProperty = openingDayJson.getString(DATE_KEY);
+    if (dateProperty != null) {
+      this.date = LocalDate.parse(dateProperty, DATE_TIME_FORMATTER);
+    }
+  }
+
+  private OpeningDay(JsonObject openingDay, DateTime day) {
+    this.openingHour = fillOpeningDay(openingDay);
+    this.allDay = openingDay.getBoolean(ALL_DAY_KEY, false);
+    this.open = openingDay.getBoolean(OPEN_KEY, false);
+    this.dayWithTimeZone = day;
   }
 
   private OpeningDay(List<OpeningHour> openingHour, LocalDate date,
@@ -92,19 +100,6 @@ public class OpeningDay {
     this.allDay = allDay;
     this.open = open;
     this.dayWithTimeZone = dateWithTimeZone;
-  }
-
-  public static OpeningDay createOpeningDay(List<OpeningHour> openingHour, LocalDate date, boolean allDay, boolean open) {
-    return new OpeningDay(openingHour, date, allDay, open);
-  }
-
-  public static OpeningDay createOpeningDay(List<OpeningHour> openingHour,
-     LocalDate date, boolean allDay, boolean open, DateTimeZone zone) {
-
-    DateTime datePart = DateTime.parse(date.toString(),
-      DateTimeFormat.forPattern(DATE_PART_FORMAT).withZone(zone));
-
-    return new OpeningDay(openingHour, date, allDay, open, datePart);
   }
 
   private List<OpeningHour> fillOpeningDay(JsonObject representation) {
