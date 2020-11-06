@@ -44,7 +44,16 @@ public class LostItemFeeRefundService {
     CheckInContext checkInContext) {
 
     return refundLostItemFees(forCheckIn(checkInContext))
-      .thenApply(r -> r.map(context -> checkInContext.withLoan(context.getLoan())));
+      .thenApply(r -> r.map(context -> {
+        // Refunds may operate on open or closed loans,
+        // closed loans are not affected during check in
+        // so should not be included in the API response
+        if (checkInContext.getLoan() == null) {
+          return checkInContext;
+        }
+
+        return checkInContext.withLoan(context.getLoan());
+      }));
   }
 
   public CompletableFuture<Result<RenewalContext>> refundLostItemFees(

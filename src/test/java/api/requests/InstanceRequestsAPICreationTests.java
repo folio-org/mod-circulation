@@ -7,8 +7,8 @@ import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static org.folio.HttpStatus.HTTP_CREATED;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.hamcrest.CoreMatchers.allOf;
-import static org.hamcrest.core.Is.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
 import static org.joda.time.DateTime.now;
 import static org.joda.time.DateTimeZone.UTC;
 import static org.joda.time.format.ISODateTimeFormat.dateTime;
@@ -17,18 +17,18 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.time.LocalDate;
 import java.util.UUID;
 
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.RequestType;
-import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
-import org.joda.time.LocalDate;
 import org.junit.Test;
 
 import api.support.APITests;
 import api.support.builders.RequestBuilder;
+import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
 
 public class InstanceRequestsAPICreationTests extends APITests {
@@ -206,8 +206,8 @@ public class InstanceRequestsAPICreationTests extends APITests {
   public void canSuccessfullyPlaceATitleLevelRequestWhenNoCopyIsAvailable() {
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    LocalDate requestDate = new LocalDate(2017, 7, 22);
-    LocalDate requestExpirationDate = requestDate.plusDays(30);
+    final var requestDate = LocalDate.of(2017, 7, 22);
+    final var requestExpirationDate = requestDate.plusDays(30);
 
     IndividualResource instance = instancesFixture.basedUponDunkirk();
     IndividualResource holdings = holdingsFixture.defaultWithHoldings(
@@ -258,8 +258,8 @@ public class InstanceRequestsAPICreationTests extends APITests {
   public void canSuccessfullyPlaceATitleLevelRequestOnAvailableCopyWithAdditionalUnavailableCopy() {
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    LocalDate requestDate = new LocalDate(2017, 7, 22);
-    LocalDate requestExpirationDate = requestDate.plusDays(30);
+    final var requestDate = LocalDate.of(2017, 7, 22);
+    final var requestExpirationDate = requestDate.plusDays(30);
 
     IndividualResource instance = instancesFixture.basedUponDunkirk();
     IndividualResource holdings = holdingsFixture.defaultWithHoldings(
@@ -310,9 +310,9 @@ public class InstanceRequestsAPICreationTests extends APITests {
     DateTime instanceRequestDateRequestExpirationDate
       = instanceRequestDate.plusDays(30);
 
-    LocalDate requestDate = new LocalDate(2017, 7, 22);
-    LocalDate requestExpirationDate1 = requestDate.plusDays(30);
-    LocalDate requestExpirationDate2 = requestDate.minusDays(30);
+    final var requestDate = LocalDate.of(2017, 7, 22);
+    final var requestExpirationDate1 = requestDate.plusDays(30);
+    final var requestExpirationDate2 = requestDate.minusDays(30);
 
     IndividualResource instance = instancesFixture.basedUponDunkirk();
     IndividualResource holdings = holdingsFixture.defaultWithHoldings(
@@ -384,8 +384,8 @@ public class InstanceRequestsAPICreationTests extends APITests {
     DateTime instanceRequestDateRequestExpirationDate
       = instanceRequestDate.plusDays(30);
 
-    LocalDate requestDate = new LocalDate(2017, 7, 22);
-    LocalDate requestExpirationDate1 = requestDate.plusDays(30);
+    final var requestDate = LocalDate.of(2017, 7, 22);
+    final var requestExpirationDate1 = requestDate.plusDays(30);
 
     IndividualResource instance = instancesFixture.basedUponDunkirk();
     IndividualResource holdings = holdingsFixture.defaultWithHoldings(
@@ -431,8 +431,8 @@ public class InstanceRequestsAPICreationTests extends APITests {
     DateTime instanceRequestDateRequestExpirationDate
       = instanceRequestDate.plusDays(30);
 
-    LocalDate requestDate = new LocalDate(2017, 7, 22);
-    LocalDate requestExpirationDate2 = requestDate.minusDays(30);
+    final var requestDate = LocalDate.of(2017, 7, 22);
+    final var requestExpirationDate2 = requestDate.minusDays(30);
 
     IndividualResource instance = instancesFixture.basedUponDunkirk();
     IndividualResource holdings = holdingsFixture.defaultWithHoldings(
@@ -592,8 +592,8 @@ public class InstanceRequestsAPICreationTests extends APITests {
     DateTime instanceRequestDateRequestExpirationDate =
       instanceRequestDate.plusDays(30);
 
-    LocalDate requestDate = new LocalDate(2017, 7, 22);
-    LocalDate requestExpirationDate = requestDate.plusDays(30);
+    final var requestDate = LocalDate.of(2017, 7, 22);
+    final var requestExpirationDate = requestDate.plusDays(30);
 
     IndividualResource instance = instancesFixture.basedUponDunkirk();
     IndividualResource holdings = holdingsFixture.defaultWithHoldings(

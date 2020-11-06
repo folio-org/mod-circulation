@@ -1,8 +1,9 @@
 package api.loans;
 
 import static api.support.APITestContext.getUserId;
-import static api.support.PubsubPublisherTestUtils.assertThatPublishedNoticeLogRecordEventsCountIsEqualTo;
+import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
+import static api.support.PubsubPublisherTestUtils.assertThatPublishedNoticeLogRecordEventsCountIsEqualTo;
 import static api.support.fixtures.AddressExamples.SiriusBlack;
 import static api.support.matchers.EventMatchers.isValidCheckInLogEvent;
 import static api.support.matchers.EventMatchers.isValidItemCheckedInEvent;
@@ -11,12 +12,12 @@ import static api.support.matchers.LoanMatchers.isClosed;
 import static api.support.matchers.OverdueFineMatcher.isValidOverdueFine;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
+import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsBeforeNow;
 import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
-import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.groupingBy;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
@@ -30,6 +31,9 @@ import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNot.not;
 import static org.joda.time.DateTimeZone.UTC;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -42,13 +46,11 @@ import org.awaitility.Awaitility;
 import org.folio.circulation.domain.EventType;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.policy.Period;
-import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.Matcher;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
-import org.joda.time.LocalDate;
 import org.joda.time.Seconds;
 import org.junit.Test;
 
@@ -67,6 +69,7 @@ import api.support.builders.RequestBuilder;
 import api.support.fakes.FakePubSub;
 import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.CqlQuery;
+import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
@@ -177,7 +180,6 @@ public class CheckInByBarcodeTests extends APITests {
 
 @Test
 public void verifyItemEffectiveLocationIdAtCheckOut() {
-
   final IndividualResource james = usersFixture.james();
 
   final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
@@ -224,8 +226,8 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     IndividualResource requester = usersFixture.steve(builder ->
       builder.withAddress(address));
 
-    LocalDate requestExpiration = new LocalDate(2019, 7, 30);
-    LocalDate holdShelfExpiration = new LocalDate(2019, 8, 31);
+    final var requestExpiration = java.time.LocalDate.of(2019, 7, 30);
+    final var holdShelfExpiration = java.time.LocalDate.of(2019, 8, 31);
     IndividualResource request = requestsFixture.place(new RequestBuilder()
       .withId(UUID.randomUUID())
       .open()
@@ -260,8 +262,8 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     assertThat(userContext.getString("countryId"), is(address.getCountryId()));
 
     assertThat(requestContext.getString("deliveryAddressType"), is(addressTypesFixture.home().getJson().getString("addressType")));
-    assertThat(requestContext.getString("requestExpirationDate"), is(requestExpiration.toDateTimeAtStartOfDay().toString()));
-    assertThat(requestContext.getString("holdShelfExpirationDate"), is(holdShelfExpiration.toDateTimeAtStartOfDay().toString()));
+    assertThat(requestContext.getString("requestExpirationDate"), isEquivalentTo(toZonedStartOfDay(requestExpiration)));
+    assertThat(requestContext.getString("holdShelfExpirationDate"), isEquivalentTo(toZonedStartOfDay(holdShelfExpiration)));
     assertThat(requestContext.getString("requestID"), is(request.getId()));
     assertThat(requestContext.getString("servicePointPickup"), is(servicePoint.getJson().getString("name")));
   }
@@ -557,8 +559,8 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
       .by(requester)
       .withRequestDate(requestDate)
       .fulfilToHoldShelf()
-      .withRequestExpiration(new LocalDate(2019, 7, 30))
-      .withHoldShelfExpiration(new LocalDate(2019, 8, 31))
+      .withRequestExpiration(LocalDate.of(2019, 7, 30))
+      .withHoldShelfExpiration(LocalDate.of(2019, 8, 31))
       .withPickupServicePointId(servicePointId)
       .withTags(new RequestBuilder.Tags(asList("new", "important"))));
 
@@ -593,8 +595,8 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
       .by(requester)
       .withRequestDate(requestDate)
       .fulfilToHoldShelf()
-      .withRequestExpiration(new LocalDate(2019, 5, 1))
-      .withHoldShelfExpiration(new LocalDate(2019, 6, 1))
+      .withRequestExpiration(LocalDate.of(2019, 5, 1))
+      .withHoldShelfExpiration(LocalDate.of(2019, 6, 1))
       .withPickupServicePointId(servicePointId)
       .withTags(new RequestBuilder.Tags(asList("new", "important"))));
 
@@ -886,8 +888,8 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
       .forItem(nod)
       .by(requester)
       .fulfilToHoldShelf()
-      .withRequestExpiration(new LocalDate(recallRequestExpirationDate))
-      .withHoldShelfExpiration(new LocalDate(recallRequestExpirationDate))
+      .withRequestExpiration(toLocalDate(recallRequestExpirationDate))
+      .withHoldShelfExpiration(toLocalDate(recallRequestExpirationDate))
       .withPickupServicePointId(UUID.fromString(homeLocation.getJson().getString("primaryServicePoint")))
       .withTags(new RequestBuilder.Tags(asList("new", "important"))));
 
@@ -1068,7 +1070,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     assertThat(itemsClient.getById(item.getId()).getJson(), isAvailable());
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(7));
+      .until(FakePubSub::getPublishedEvents, hasSize(5));
     assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
@@ -1163,5 +1165,15 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
       assertThat(checkInOperation.getString("servicePointId"), is(servicePoint.toString()));
       assertThat(checkInOperation.getString("performedByUserId"), is(getUserId()));
     });
+  }
+
+  private ZonedDateTime toZonedStartOfDay(LocalDate date) {
+    final var startOfDay = date.atStartOfDay();
+
+    return ZonedDateTime.of(startOfDay, ZoneId.systemDefault().normalized());
+  }
+
+  private LocalDate toLocalDate(DateTime dateTime) {
+    return LocalDate.of(dateTime.getYear(), dateTime.getMonthOfYear(), dateTime.getDayOfMonth());
   }
 }
