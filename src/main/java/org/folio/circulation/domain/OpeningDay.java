@@ -88,10 +88,8 @@ public class OpeningDay {
   }
 
   private OpeningDay(JsonObject openingDay, DateTime day) {
-    this.openingHour = fillOpeningDay(openingDay);
-    this.allDay = openingDay.getBoolean(ALL_DAY_KEY, false);
-    this.open = openingDay.getBoolean(OPEN_KEY, false);
-    this.dayWithTimeZone = day;
+    this(fillOpeningDay(openingDay), null, openingDay.getBoolean(ALL_DAY_KEY, false),
+      openingDay.getBoolean(OPEN_KEY, false), day);
   }
 
   private OpeningDay(List<OpeningHour> openingHour, LocalDate date,
@@ -102,19 +100,6 @@ public class OpeningDay {
     this.allDay = allDay;
     this.open = open;
     this.dayWithTimeZone = dateWithTimeZone;
-  }
-
-  private List<OpeningHour> fillOpeningDay(JsonObject representation) {
-    List<OpeningHour> dayPeriods = new ArrayList<>();
-    JsonArray openingHourJson = representation.getJsonArray(OPENING_HOUR_KEY);
-    if (Objects.isNull(openingHourJson)) {
-      return dayPeriods;
-    }
-    for (int i = 0; i < openingHourJson.size(); i++) {
-      JsonObject jsonObject = openingHourJson.getJsonObject(i);
-      dayPeriods.add(new OpeningHour(jsonObject));
-    }
-    return dayPeriods;
   }
 
   public LocalDate getDate() {
@@ -150,5 +135,18 @@ public class OpeningDay {
       .put(ALL_DAY_KEY, allDay)
       .put(OPEN_KEY, open)
       .put(OPENING_HOUR_KEY, openingHourToJsonArray());
+  }
+
+  private static List<OpeningHour> fillOpeningDay(JsonObject representation) {
+    List<OpeningHour> dayPeriods = new ArrayList<>();
+    JsonArray openingHourJson = representation.getJsonArray(OPENING_HOUR_KEY);
+    if (Objects.isNull(openingHourJson)) {
+      return dayPeriods;
+    }
+    for (int i = 0; i < openingHourJson.size(); i++) {
+      JsonObject jsonObject = openingHourJson.getJsonObject(i);
+      dayPeriods.add(new OpeningHour(jsonObject));
+    }
+    return dayPeriods;
   }
 }
