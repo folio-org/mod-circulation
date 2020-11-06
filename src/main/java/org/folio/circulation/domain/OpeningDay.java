@@ -40,7 +40,11 @@ public class OpeningDay {
   private DateTime dayWithTimeZone;
 
   public static OpeningDay fromJsonByKey(JsonObject jsonObject, String key) {
-    return new OpeningDay(jsonObject.getJsonObject(key));
+    JsonObject openingDayJson = jsonObject.getJsonObject(key);
+
+    requireNonNull(openingDayJson, "Json object cannot be null");
+
+    return new OpeningDay(openingDayJson);
   }
 
   public static OpeningDay fromJsonByDefaultKey(JsonObject jsonObject) {
@@ -73,9 +77,7 @@ public class OpeningDay {
     return new OpeningDay(openingHour, date, allDay, open, datePart);
   }
 
-  OpeningDay(JsonObject openingDayJson) {
-    requireNonNull(openingDayJson, "Json object cannot be null");
-
+  private OpeningDay(JsonObject openingDayJson) {
     this.allDay = openingDayJson.getBoolean(ALL_DAY_KEY, false);
     this.open = openingDayJson.getBoolean(OPEN_KEY, false);
     this.openingHour = fillOpeningDay(openingDayJson);
