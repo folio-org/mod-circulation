@@ -8,7 +8,7 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public final class AccountRefundCommand {
+public final class RefundAccountCommand {
   private final Account account;
   private final String currentServicePointId;
   private final String userName;

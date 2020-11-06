@@ -24,13 +24,13 @@ public class FeeFineService {
     this.accountRefundClient = clients.accountsRefundClient();
   }
 
-  public CompletableFuture<Result<Void>> refundAccount(AccountRefundCommand refundCommand) {
+  public CompletableFuture<Result<Void>> refundAccount(RefundAccountCommand refundCommand) {
     if (!refundCommand.hasPaidOrTransferredAmount()) {
       log.info("Account has nothing to refund {}", refundCommand.getAccountId());
       return ofAsync(() -> null);
     }
 
-    final AccountRefundRequest refundRequest = AccountRefundRequest.builder()
+    final RefundAccountRequest refundRequest = RefundAccountRequest.builder()
       .amount(refundCommand.getAccount().getPaidAndTransferredAmount())
       .servicePointId(refundCommand.getCurrentServicePointId())
       .userName(refundCommand.getUserName())
@@ -41,8 +41,8 @@ public class FeeFineService {
       .thenApply(voidCreatedInterpreter()::flatMap);
   }
 
-  public CompletableFuture<Result<Void>> cancelAccount(AccountCancelCommand cancelCommand) {
-    final AccountCancelRequest cancelRequest = AccountCancelRequest.builder()
+  public CompletableFuture<Result<Void>> cancelAccount(CancelAccountCommand cancelCommand) {
+    final CancelAccountRequest cancelRequest = CancelAccountRequest.builder()
       .servicePointId(cancelCommand.getCurrentServicePointId())
       .userName(cancelCommand.getUserName())
       .cancellationReason(cancelCommand.getCancellationReason().getValue())

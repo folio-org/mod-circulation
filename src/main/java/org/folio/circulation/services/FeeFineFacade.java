@@ -20,8 +20,8 @@ import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineActionRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
-import org.folio.circulation.services.feefine.AccountCancelCommand;
-import org.folio.circulation.services.feefine.AccountRefundCommand;
+import org.folio.circulation.services.feefine.CancelAccountCommand;
+import org.folio.circulation.services.feefine.RefundAccountCommand;
 import org.folio.circulation.services.feefine.FeeFineService;
 import org.folio.circulation.services.support.AccountRefundCancelCommand;
 import org.folio.circulation.services.support.CreateAccountCommand;
@@ -114,7 +114,7 @@ public class FeeFineFacade {
 
     log.info("Initiating refund for account {}", account.getId());
 
-    final AccountRefundCommand refundCommand = AccountRefundCommand.builder()
+    final RefundAccountCommand refundCommand = RefundAccountCommand.builder()
       .account(account)
       .currentServicePointId(command.getServicePointId())
       .refundReason(command.getRefundReason())
@@ -136,7 +136,7 @@ public class FeeFineFacade {
 
     log.info("Initiating cancel for account {}", account.getId());
 
-    final AccountCancelCommand cancelCommand = AccountCancelCommand.builder()
+    final CancelAccountCommand cancelCommand = CancelAccountCommand.builder()
       .accountId(account.getId())
       .currentServicePointId(command.getServicePointId())
       .cancellationReason(command.getCancelReason())

@@ -7,7 +7,7 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public final class AccountCancelCommand {
+public final class CancelAccountCommand {
   private final String accountId;
   private final String currentServicePointId;
   private final String userName;
