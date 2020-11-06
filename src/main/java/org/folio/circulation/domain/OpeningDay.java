@@ -33,10 +33,10 @@ public class OpeningDay {
   private static final DateTimeFormatter DATE_TIME_FORMATTER =
     DateTimeFormat.forPattern(DATE_TIME_FORMAT).withZoneUTC();
 
-  private List<OpeningHour> openingHour;
+  private final List<OpeningHour> openingHour;
   private LocalDate date;
-  private boolean allDay;
-  private boolean open;
+  private final boolean allDay;
+  private final boolean open;
   private DateTime dayWithTimeZone;
 
   OpeningDay(JsonObject openingDayJson) {
