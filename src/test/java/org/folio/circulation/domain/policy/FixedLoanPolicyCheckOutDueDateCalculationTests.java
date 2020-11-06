@@ -40,6 +40,28 @@ public class FixedLoanPolicyCheckOutDueDateCalculationTests {
   }
 
   @Test
+  public void shouldUseOnlyScheduleAvailableWhenLoanDateTimeAfterMidnight() {
+    LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
+      .fixed(UUID.randomUUID())
+      .create())
+      .withDueDateSchedules(new FixedDueDateSchedulesBuilder()
+        .addSchedule(new FixedDueDateSchedule(new DateTime(2020, 11, 1, 0, 0, 0, DateTimeZone.UTC),
+          new DateTime(2020, 11, 2, 0, 0, 0, DateTimeZone.UTC),
+          new DateTime(2020, 11, 2, 0, 0, 0, DateTimeZone.UTC)))
+        .create());
+
+    DateTime loanDate = new DateTime(2020, 11, 2, 12, 30, 30, DateTimeZone.UTC);
+
+    Loan loan = loanFor(loanDate);
+
+    final Result<DateTime> calculationResult = loanPolicy
+      .calculateInitialDueDate(loan, null);
+
+    assertThat(calculationResult.value(), is(new DateTime(2020, 11, 2, 0, 0, 0,
+      DateTimeZone.UTC)));
+  }
+
+  @Test
   public void shouldFailWhenLoanDateIsBeforeOnlyScheduleAvailable() {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
