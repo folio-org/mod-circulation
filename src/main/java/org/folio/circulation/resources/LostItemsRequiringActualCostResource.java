@@ -160,7 +160,6 @@ public class LostItemsRequiringActualCostResource extends Resource {
   }
 
   private Result<JsonObject> mapResultToJson(Result<List<LostItemRequiringCostsFee>> result) {
-
     return result.map(
       loans -> loans.stream()
         .filter(Objects::nonNull)

@@ -125,7 +125,7 @@ public class InterfaceUrls {
     return circulationModuleUrl("/inventory-reports/items-in-transit" + subPath);
   }
 
-  public static URL itemsLostRequiringActualCostsUrl(String subPath) {
+  public static URL lostItemsRequiringActualCostsUrl(String subPath) {
     return circulationModuleUrl("/circulation/reports/lost-items-requiring-actual-cost-fees" + subPath);
   }
 
