@@ -35,7 +35,8 @@ public class Launcher {
 
     Runtime.getRuntime().addShutdownHook(new Thread(launcher::stop));
 
-    Integer port = Integer.getInteger("port", 9801);
+    Integer port = Integer.valueOf(
+        System.getProperty("http.port", System.getProperty("port", "9801")));
 
     launcher.start(port).get(10, TimeUnit.SECONDS);
   }
