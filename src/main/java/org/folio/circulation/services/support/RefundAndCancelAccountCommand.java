@@ -9,7 +9,7 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public final class RefundCancelAccountCommand {
+public final class RefundAndCancelAccountCommand {
   private final Account account;
   private final String staffUserId;
   private final String servicePointId;

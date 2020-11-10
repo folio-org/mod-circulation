@@ -23,7 +23,7 @@ import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.services.feefine.CancelAccountCommand;
 import org.folio.circulation.services.feefine.RefundAccountCommand;
 import org.folio.circulation.services.feefine.FeeFineService;
-import org.folio.circulation.services.support.RefundCancelAccountCommand;
+import org.folio.circulation.services.support.RefundAndCancelAccountCommand;
 import org.folio.circulation.services.support.CreateAccountCommand;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.CommonFailures;
@@ -84,26 +84,26 @@ public class FeeFineFacade {
       .thenApply(r -> r.map(notUsed -> null));
   }
 
-  public CompletableFuture<Result<Void>> refundAndCloseAccounts(List<RefundCancelAccountCommand> accounts) {
+  public CompletableFuture<Result<Void>> refundAndCloseAccounts(List<RefundAndCancelAccountCommand> accounts) {
     return allOf(accounts, this::refundAndCloseAccount)
       .thenApply(r -> r.<Void>map(list -> null))
       .exceptionally(CommonFailures::failedDueToServerError);
   }
 
-  private CompletableFuture<Result<Void>> refundAndCloseAccount(RefundCancelAccountCommand command) {
+  private CompletableFuture<Result<Void>> refundAndCloseAccount(RefundAndCancelAccountCommand command) {
     return fetchUser(command.getStaffUserId())
       .thenCompose(r -> r.after(user -> processAccount(command, user)));
   }
 
   private CompletableFuture<Result<Void>> processAccount(
-    RefundCancelAccountCommand command, User user) {
+    RefundAndCancelAccountCommand command, User user) {
 
     return refundAccountIfNeeded(command, user)
       .thenCompose(r -> r.after(notUsed -> cancelAccountIfNeeded(command, user)));
   }
 
   private CompletableFuture<Result<Void>> refundAccountIfNeeded(
-    RefundCancelAccountCommand command, User user) {
+    RefundAndCancelAccountCommand command, User user) {
 
     final Account account = command.getAccount();
 
@@ -125,7 +125,7 @@ public class FeeFineFacade {
   }
 
   private CompletableFuture<Result<Void>> cancelAccountIfNeeded(
-    RefundCancelAccountCommand command, User user) {
+    RefundAndCancelAccountCommand command, User user) {
 
     final Account account = command.getAccount();
 

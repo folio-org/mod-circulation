@@ -17,7 +17,7 @@ import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.policy.lostitem.LostItemPolicy;
 import org.folio.circulation.resources.context.RenewalContext;
-import org.folio.circulation.services.support.RefundCancelAccountCommand;
+import org.folio.circulation.services.support.RefundAndCancelAccountCommand;
 import org.joda.time.DateTime;
 
 import lombok.AccessLevel;
@@ -54,14 +54,14 @@ final class LostItemFeeRefundContext {
     return withLoan(loan.withLostItemPolicy(lostItemPolicy));
   }
 
-  List<RefundCancelAccountCommand> accountRefundCommands() {
+  List<RefundAndCancelAccountCommand> accountRefundCommands() {
     return accountsNeedingRefunds().stream()
       .map(this::createCommand)
       .collect(Collectors.toList());
   }
 
-  private RefundCancelAccountCommand createCommand(Account account) {
-    return new RefundCancelAccountCommand(account, staffUserId, servicePointId,
+  private RefundAndCancelAccountCommand createCommand(Account account) {
+    return new RefundAndCancelAccountCommand(account, staffUserId, servicePointId,
       LOST_ITEM_FOUND, cancelReason);
   }
 

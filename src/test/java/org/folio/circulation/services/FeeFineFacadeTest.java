@@ -27,7 +27,7 @@ import org.folio.circulation.domain.FeeFineOwner;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Location;
-import org.folio.circulation.services.support.RefundCancelAccountCommand;
+import org.folio.circulation.services.support.RefundAndCancelAccountCommand;
 import org.folio.circulation.services.support.CreateAccountCommand;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
@@ -128,7 +128,7 @@ public class FeeFineFacadeTest {
       .withLoan(Loan.from(new JsonObject().put("id", UUID.randomUUID().toString())));
   }
 
-  private RefundCancelAccountCommand refundCommand() {
+  private RefundAndCancelAccountCommand refundCommand() {
     final JsonObject account = new JsonObject()
       .put("feeFineType", "Lost item fee")
       .put("amount", 50.0)
@@ -139,7 +139,7 @@ public class FeeFineFacadeTest {
       .put("typeAction", "Paid fully")
       .put("amountAction", 50.0));
 
-    return new RefundCancelAccountCommand(Account.from(account)
+    return new RefundAndCancelAccountCommand(Account.from(account)
       .withFeeFineActions(singletonList(paidAction)), "user-id", "sp-id",
       LOST_ITEM_FOUND, CANCELLED_ITEM_RETURNED);
   }
