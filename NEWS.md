@@ -1,6 +1,7 @@
 ## 19.2.3 2020-11-10
 
 * Blocks renewals in the presence of an automated patron block (CIRC-774)
+* Does not include closed loan in check in response when item is lost and paid (CIRC-955)
 
 ## 19.2.2 2020-11-02
 
