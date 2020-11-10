@@ -8,22 +8,18 @@ import lombok.Builder;
 
 @Builder(access = AccessLevel.PACKAGE)
 final class CancelAccountRequest {
-  @Builder.Default
-  private final boolean notifyPatron = true;
   private final String servicePointId;
   private final String userName;
   private final String cancellationReason;
-  @Builder.Default
-  private final String comments = "";
 
   JsonObject toJson() {
     final JsonObject json = new JsonObject();
 
-    write(json, "notifyPatron", notifyPatron);
+    write(json, "notifyPatron", true);
     write(json, "servicePointId", servicePointId);
     write(json, "userName", userName);
     write(json, "cancellationReason", cancellationReason);
-    write(json, "comments", cancellationReason);
+    write(json, "comments", "-");
 
     return json;
   }

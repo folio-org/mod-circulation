@@ -11,8 +11,6 @@ import lombok.Builder;
 @Builder(access = AccessLevel.PACKAGE)
 final class RefundAccountRequest {
   private final FeeAmount amount;
-  @Builder.Default
-  private final boolean notifyPatron = true;
   private final String servicePointId;
   private final String userName;
   private final String refundReason;
@@ -21,7 +19,7 @@ final class RefundAccountRequest {
     final JsonObject json = new JsonObject();
 
     write(json, "amount", amount.toScaledString());
-    write(json, "notifyPatron", notifyPatron);
+    write(json, "notifyPatron", true);
     write(json, "servicePointId", servicePointId);
     write(json, "userName", userName);
     write(json, "paymentMethod", refundReason);
