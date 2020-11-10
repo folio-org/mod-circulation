@@ -1068,7 +1068,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     assertThat(itemsClient.getById(item.getId()).getJson(), isAvailable());
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(7));
+      .until(FakePubSub::getPublishedEvents, hasSize(5));
     assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
