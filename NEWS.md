@@ -2,6 +2,7 @@
 
 * Blocks renewals in the presence of an automated patron block (CIRC-774)
 * Does not include closed loan in check in response when item is lost and paid (CIRC-955)
+* Include user details in aged to lost circulation log entries (CIRC-986)
 
 ## 19.2.2 2020-11-02
 
