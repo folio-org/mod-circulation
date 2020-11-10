@@ -1,18 +1,14 @@
 package api.loans.scenarios;
 
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
-import static api.support.matchers.AccountActionsMatchers.arePaymentRefundActionsCreated;
-import static api.support.matchers.AccountActionsMatchers.isCancelledItemReturnedActionCreated;
 import static api.support.matchers.AccountMatchers.isOpen;
 import static api.support.matchers.AccountMatchers.isRefundedFully;
 import static api.support.matchers.ItemMatchers.isAvailable;
-import static api.support.matchers.LoanAccountActionsMatcher.hasLostItemFeeActions;
 import static api.support.matchers.LoanAccountMatcher.hasLostItemFee;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static org.hamcrest.CoreMatchers.allOf;
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -64,11 +60,7 @@ public class CheckInDeclaredLostItemTest extends RefundDeclaredLostFeesTestBase 
     checkInFixture.checkInByBarcode(item);
 
     assertThat(firstLoan, hasLostItemFee(isOpen(firstFee)));
-    assertThat(firstLoan, hasLostItemFeeActions(
-      not(isCancelledItemReturnedActionCreated(firstFee))));
-
     assertThat(loan, hasLostItemFee(isRefundedFully(secondFee)));
-    assertThat(loan, hasLostItemFeeActions(arePaymentRefundActionsCreated(secondFee)));
     assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
@@ -127,7 +119,6 @@ public class CheckInDeclaredLostItemTest extends RefundDeclaredLostFeesTestBase 
 
     assertThat(response.getLoan(), nullValue());
     assertThat(loan, hasLostItemFee(isRefundedFully(setCostFee)));
-    assertThat(loan, hasLostItemFeeActions(arePaymentRefundActionsCreated(setCostFee)));
     assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
