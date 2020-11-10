@@ -19,7 +19,6 @@ import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import lombok.With;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
@@ -37,52 +36,52 @@ public class LoanLogContext {
   private String instanceId;
   private String holdingsRecordId;
   private String action;
-  @Setter private String actionComment;
+  private String actionComment;
   private DateTime date;
-  @Setter private String servicePointId;
-  @Setter private String updatedByUserId;
+  private String servicePointId;
+  private String updatedByUserId;
   private String description;
   private String loanId;
 
   public static LoanLogContext from(Loan loan) {
-    LoanLogContext loanLogContext = new LoanLogContext()
-      .withUser(loan.getUser())
-      .withItem(loan.getItem())
+    return new LoanLogContext()
+      .withUser(ofNullable(loan.getUser())
+        .orElse(userFromRepresentation(loan)))
+      .withItem(ofNullable(loan.getItem())
+        .orElse(itemFromRepresentation(loan)))
       .withAction(LogContextActionResolver.resolveAction(loan.getAction()))
       .withDate(DateTime.now())
-      .withLoanId(loan.getId());
-    ofNullable(loan.getActionComment()).ifPresent(loanLogContext::setActionComment);
-    ofNullable(loan.getUpdatedByUserId()).ifPresent(loanLogContext::setUpdatedByUserId);
-    ofNullable(loan.getCheckoutServicePointId()).ifPresent(loanLogContext::setServicePointId);
-    return loanLogContext;
-  }
-
-  public static LoanLogContext fromAnonymize(Loan loan) {
-    return new LoanLogContext()
-      .withItemId(loan.getItemId())
-      .withAction("Anonymize")
-      .withDate(DateTime.now())
-      .withLoanId(loan.getId())
       .withServicePointId(ofNullable(loan.getCheckInServicePointId())
-        .orElse(loan.getCheckoutServicePointId()));
+        .orElse(loan.getCheckoutServicePointId()))
+      .withLoanId(loan.getId())
+      .withActionComment(loan.getActionComment())
+      .withUpdatedByUserId(loan.getUpdatedByUserId());
   }
 
-  public LoanLogContext withUser(User user) {
-    ofNullable(user).ifPresent(usr -> {
-      userBarcode = usr.getBarcode();
-      userId = usr.getId();
-    });
-      return this;
-  }
-
-  public LoanLogContext withItem(Item item) {
-    ofNullable(item).ifPresent(i -> {
-      itemBarcode = i.getBarcode();
-      itemId = i.getItemId();
-      instanceId = i.getInstanceId();
-      holdingsRecordId = i.getHoldingsRecordId();
-    });
+  private LoanLogContext withUser(User user) {
+    userBarcode = user.getBarcode();
+    userId = user.getId();
     return this;
+  }
+
+  private LoanLogContext withItem(Item item) {
+    itemBarcode = item.getBarcode();
+    itemId = item.getItemId();
+    instanceId = item.getInstanceId();
+    holdingsRecordId = item.getHoldingsRecordId();
+    return this;
+  }
+
+  private static User userFromRepresentation(Loan loan) {
+    JsonObject userJson = new JsonObject();
+    ofNullable(loan).ifPresent(l -> write(userJson, "id", l.getUserId()));
+    return new User(userJson);
+  }
+
+  private static Item itemFromRepresentation(Loan loan) {
+    JsonObject itemJson = new JsonObject();
+    ofNullable(loan).ifPresent(l -> write(itemJson, "id", l.getItemId()));
+    return Item.from(itemJson);
   }
 
   public JsonObject asJson() {
