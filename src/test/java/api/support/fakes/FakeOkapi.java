@@ -385,6 +385,8 @@ public class FakeOkapi extends AbstractVerticle {
       .withCollectionPropertyName("automatedPatronBlocks")
       .create().register(router);
 
+    new FakeFeeFineOperationsModule().register(router);
+
     server.requestHandler(router)
       .listen(PORT_TO_USE, result -> {
         if (result.succeeded()) {

@@ -17,7 +17,6 @@ import static java.net.HttpURLConnection.HTTP_OK;
 import java.net.URL;
 import java.util.UUID;
 
-import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 
@@ -28,6 +27,7 @@ import api.support.builders.OverrideRenewalByBarcodeRequestBuilder;
 import api.support.builders.RenewByBarcodeRequestBuilder;
 import api.support.builders.RenewByIdRequestBuilder;
 import api.support.http.CqlQuery;
+import api.support.http.IndividualResource;
 import api.support.http.Limit;
 import api.support.http.Offset;
 import io.vertx.core.json.JsonObject;
@@ -111,18 +111,19 @@ public class LoansFixture {
       200, "renewal-by-barcode-request"));
   }
 
+  public IndividualResource overrideRenewalByBarcode(OverrideRenewalByBarcodeRequestBuilder request) {
+    return new IndividualResource(restAssuredClient.post(request.create(),
+      overrideRenewalByBarcodeUrl(), 200, "override-renewal-by-barcode-request"));
+  }
+
   public IndividualResource overrideRenewalByBarcode(IndividualResource item,
       IndividualResource user, String comment, String dueDate) {
 
-    JsonObject request = new OverrideRenewalByBarcodeRequestBuilder()
+    return overrideRenewalByBarcode(new OverrideRenewalByBarcodeRequestBuilder()
         .forItem(item)
         .forUser(user)
         .withComment(comment)
-        .withDueDate(dueDate)
-        .create();
-
-    return new IndividualResource(restAssuredClient.post(request,
-      overrideRenewalByBarcodeUrl(), 200, "override-renewal-by-barcode-request"));
+        .withDueDate(dueDate));
   }
 
   public IndividualResource renewLoanById(IndividualResource item, IndividualResource user) {

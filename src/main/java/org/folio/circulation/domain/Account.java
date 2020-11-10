@@ -1,8 +1,6 @@
 package org.folio.circulation.domain;
 
 import static org.folio.circulation.domain.FeeAmount.noFeeAmount;
-import static org.folio.circulation.domain.FeeAmount.zeroFeeAmount;
-import static org.folio.circulation.domain.representations.AccountStatus.CLOSED;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
@@ -13,8 +11,6 @@ import java.util.Comparator;
 import java.util.Optional;
 
 import org.apache.commons.lang3.math.NumberUtils;
-import org.folio.circulation.domain.representations.AccountPaymentStatus;
-import org.folio.circulation.domain.representations.AccountStatus;
 import org.folio.circulation.support.json.JsonPropertyWriter;
 import org.joda.time.DateTime;
 
@@ -102,10 +98,6 @@ public class Account {
     return remaining;
   }
 
-  public boolean hasRemainingAmount() {
-    return remaining.hasAmount();
-  }
-
   public String getFeeFineType() {
     return relatedRecordsInfo.getFeeFineTypeInfo().getFeeFineType();
   }
@@ -178,66 +170,15 @@ public class Account {
     return getStatus().equalsIgnoreCase("open");
   }
 
-  public FeeAmount getPaidAmount() {
+  public FeeAmount getPaidAndTransferredAmount() {
     return feeFineActions.stream()
-      .filter(FeeFineAction::isPaid)
+      .filter(action -> action.isPaid() || action.isTransferred())
       .map(FeeFineAction::getAmount)
       .reduce(FeeAmount::add)
       .orElse(noFeeAmount());
   }
 
-  public boolean hasPaidAmount() {
-    return getPaidAmount().hasAmount();
-  }
-
-  public FeeAmount getTransferredAmount() {
-    return feeFineActions.stream()
-      .filter(FeeFineAction::isTransferred)
-      .map(FeeFineAction::getAmount)
-      .reduce(FeeAmount::add)
-      .orElse(noFeeAmount());
-  }
-
-  public boolean hasTransferredAmount() {
-    return getTransferredAmount().hasAmount();
-  }
-
-  public String getTransferAccountName() {
-    return feeFineActions.stream()
-      .filter(FeeFineAction::isTransferred)
-      .map(FeeFineAction::getPaymentMethod)
-      .findFirst()
-      .orElse("");
-  }
-
-  public Account subtractRemainingAmount(FeeAmount toSubtract) {
-    return new Account(this.id, relatedRecordsInfo, amount, remaining.subtract(toSubtract),
-      status, paymentStatus, feeFineActions, creationDate);
-  }
-
-  public Account addRemainingAmount(FeeAmount toAdd) {
-    return new Account(this.id, relatedRecordsInfo, amount, remaining.add(toAdd),
-      status, paymentStatus, feeFineActions, creationDate);
-  }
-
-  private Account withStatus(AccountStatus status) {
-    return new Account(id, relatedRecordsInfo, amount, remaining, status.getValue(),
-      paymentStatus, feeFineActions, creationDate);
-  }
-
-  public Account withPaymentStatus(AccountPaymentStatus paymentStatus) {
-    return new Account(id, relatedRecordsInfo, amount, remaining, status,
-      paymentStatus.getValue(), feeFineActions, creationDate);
-  }
-
-  private Account withRemaining(FeeAmount remaining) {
-    return new Account(id, relatedRecordsInfo, amount, remaining, status,
-      paymentStatus, feeFineActions, creationDate);
-  }
-
-  public Account close(AccountPaymentStatus paymentAction) {
-    return withStatus(CLOSED)
-      .withPaymentStatus(paymentAction)
-      .withRemaining(zeroFeeAmount());
+  public boolean hasPaidOrTransferredAmount() {
+    return getPaidAndTransferredAmount().hasAmount();
   }
 }
