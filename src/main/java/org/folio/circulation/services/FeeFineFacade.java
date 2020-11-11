@@ -2,10 +2,10 @@ package org.folio.circulation.services;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.representations.StoredFeeFineAction.StoredFeeFineActionBuilder;
-import static org.folio.circulation.services.feefine.FeeRefundProcessor.createLostItemFeeRefundProcessor;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
-import static org.folio.circulation.support.results.Result.failed;
+import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Collection;
 import java.util.List;
@@ -20,30 +20,31 @@ import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineActionRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
-import org.folio.circulation.services.feefine.AccountRefundContext;
-import org.folio.circulation.services.feefine.FeeRefundProcessor;
+import org.folio.circulation.services.feefine.CancelAccountCommand;
+import org.folio.circulation.services.feefine.RefundAccountCommand;
+import org.folio.circulation.services.feefine.FeeFineService;
+import org.folio.circulation.services.support.RefundAndCancelAccountCommand;
 import org.folio.circulation.services.support.CreateAccountCommand;
-import org.folio.circulation.services.support.RefundAccountCommand;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.results.CommonFailures;
 import org.folio.circulation.support.results.Result;
-
-import lombok.val;
+import org.slf4j.Logger;
 
 public class FeeFineFacade {
+  private static final Logger log = getLogger(FeeFineFacade.class);
+
   private final AccountRepository accountRepository;
   private final FeeFineActionRepository feeFineActionRepository;
   private final UserRepository userRepository;
   private final ServicePointRepository servicePointRepository;
-  private final FeeRefundProcessor lostItemRefundProcessor;
+  private final FeeFineService feeFineService;
 
   public FeeFineFacade(Clients clients) {
     this.accountRepository = new AccountRepository(clients);
     this.feeFineActionRepository = new FeeFineActionRepository(clients);
     this.userRepository = new UserRepository(clients);
     this.servicePointRepository = new ServicePointRepository(clients);
-    this.lostItemRefundProcessor = createLostItemFeeRefundProcessor();
+    this.feeFineService = new FeeFineService(clients);
   }
 
   public CompletableFuture<Result<Void>> createAccounts(
@@ -83,71 +84,66 @@ public class FeeFineFacade {
       .thenApply(r -> r.map(notUsed -> null));
   }
 
-  public CompletableFuture<Result<Void>> refundAndCloseAccounts(List<RefundAccountCommand> accounts) {
+  public CompletableFuture<Result<Void>> refundAndCloseAccounts(List<RefundAndCancelAccountCommand> accounts) {
     return allOf(accounts, this::refundAndCloseAccount)
       .thenApply(r -> r.<Void>map(list -> null))
       .exceptionally(CommonFailures::failedDueToServerError);
   }
 
-  private CompletableFuture<Result<Void>> refundAndCloseAccount(RefundAccountCommand refund) {
-    val context = new AccountRefundContext(refund.getAccountToRefund(),
-      refund.getCancellationReason());
-
-    return fetchUser(refund.getStaffUserId())
-      .thenApply(r -> r.map(context::withUser))
-      .thenComposeAsync(r -> r.after(notUsed -> fetchServicePoint(refund.getServicePointId())))
-      .thenApply(r -> r.map(context::withServicePoint))
-      .thenCompose(r -> r.after(this::processRefundAndClose));
+  private CompletableFuture<Result<Void>> refundAndCloseAccount(RefundAndCancelAccountCommand command) {
+    return fetchUser(command.getStaffUserId())
+      .thenCompose(r -> r.after(user -> processAccount(command, user)));
   }
 
-  private CompletableFuture<Result<Void>> processRefundAndClose(AccountRefundContext context) {
-    if (!lostItemRefundProcessor.canHandleAccountRefund(context.getAccount())) {
-      return completedFuture(noRefundProcessorForFeeType(context.getAccount().getFeeFineType()));
-    }
+  private CompletableFuture<Result<Void>> processAccount(
+    RefundAndCancelAccountCommand command, User user) {
 
-    return createRefundAndCloseActions(context)
-      .thenCompose(r -> r.after(notUsed -> updateAccount(context)));
+    return refundAccountIfNeeded(command, user)
+      .thenCompose(r -> r.after(notUsed -> cancelAccountIfNeeded(command, user)));
   }
 
-  private Result<Void> noRefundProcessorForFeeType(String feeFineType) {
-    return failed(new ServerErrorFailure(
-      "No refund processor available for fee/fine of type: " + feeFineType));
+  private CompletableFuture<Result<Void>> refundAccountIfNeeded(
+    RefundAndCancelAccountCommand command, User user) {
+
+    final Account account = command.getAccount();
+
+    if (!account.hasPaidOrTransferredAmount()) {
+      log.info("Account {} is not processed yet, no refunds have to be issued", account.getId());
+      return ofAsync(() -> null);
+    }
+
+    log.info("Initiating refund for account {}", account.getId());
+
+    final RefundAccountCommand refundCommand = RefundAccountCommand.builder()
+      .account(account)
+      .currentServicePointId(command.getServicePointId())
+      .refundReason(command.getRefundReason())
+      .userName(user.getPersonalName())
+      .build();
+
+    return feeFineService.refundAccount(refundCommand);
   }
 
-  private CompletableFuture<Result<Void>> updateAccount(AccountRefundContext context) {
-    final Account account = context.getAccount();
-    if (account.hasTransferredAmount()) {
-      lostItemRefundProcessor.onTransferAmountRefundActionSaved(context);
+  private CompletableFuture<Result<Void>> cancelAccountIfNeeded(
+    RefundAndCancelAccountCommand command, User user) {
+
+    final Account account = command.getAccount();
+
+    if (!account.getRemaining().hasAmount()) {
+      log.info("Nothing to cancel for account {}", account.getId());
+      return ofAsync(() -> null);
     }
 
-    if (account.hasPaidAmount()) {
-      lostItemRefundProcessor.onPaidAmountRefundActionSaved(context);
-    }
+    log.info("Initiating cancel for account {}", account.getId());
 
-    if (account.hasRemainingAmount()) {
-      lostItemRefundProcessor.onRemainingAmountActionSaved(context);
-    }
+    final CancelAccountCommand cancelCommand = CancelAccountCommand.builder()
+      .accountId(account.getId())
+      .currentServicePointId(command.getServicePointId())
+      .cancellationReason(command.getCancelReason())
+      .userName(user.getPersonalName())
+      .build();
 
-    return accountRepository.update(StoredAccount.fromAccount(context.getAccount()));
-  }
-
-  private CompletableFuture<Result<Void>> createRefundAndCloseActions(
-    AccountRefundContext context) {
-
-    final Account account = context.getAccount();
-    if (account.hasTransferredAmount()) {
-      lostItemRefundProcessor.onHasTransferAmount(context);
-    }
-
-    if (account.hasPaidAmount()) {
-      lostItemRefundProcessor.onHasPaidAmount(context);
-    }
-
-    if (account.hasRemainingAmount()) {
-      lostItemRefundProcessor.onHasRemainingAmount(context);
-    }
-
-    return feeFineActionRepository.createAll(context.getActions());
+    return feeFineService.cancelAccount(cancelCommand);
   }
 
   private CompletableFuture<Result<StoredFeeFineActionBuilder>> populateCreatedBy(
