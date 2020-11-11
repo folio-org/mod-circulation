@@ -725,7 +725,8 @@
             "users.item.get",
             "usergroups.collection.get",
             "configuration.entries.collection.get",
-            "pubsub.publish.post"
+            "pubsub.publish.post",
+            "circulation-storage.circulation-rules.get"
           ],
           "unit": "minute",
           "delay": "2"
@@ -1013,7 +1014,7 @@
     },
     {
       "id": "feesfines",
-      "version": "15.0 16.0"
+      "version": "16.1"
     },
     {
       "id": "location-units",
@@ -1557,7 +1558,9 @@
         "feefineactions.item.post",
         "accounts.item.put",
         "pubsub.publish.post",
-        "scheduled-notice-storage.scheduled-notices.item.delete"
+        "scheduled-notice-storage.scheduled-notices.item.delete",
+        "accounts.refund.post",
+        "accounts.cancel.post"
       ],
       "visible": false
     },
@@ -1667,7 +1670,9 @@
         "automated-patron-blocks.collection.get",
         "overdue-fines-policies.item.get",
         "lost-item-fees-policies.item.get",
-        "pubsub.publish.post"
+        "pubsub.publish.post",
+        "accounts.refund.post",
+        "accounts.cancel.post"
       ],
       "visible": false
     },

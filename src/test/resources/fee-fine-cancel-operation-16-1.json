@@ -1,0 +1,36 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "Cancel action request",
+  "type": "object",
+  "properties": {
+    "comments": {
+      "type": "string",
+      "description": "Additional info for staff or patron. Format: [STAFF : staff comment \n PATRON : patron comment]"
+    },
+    "notifyPatron": {
+      "type": "boolean",
+      "description": "Should send patron notification or not"
+    },
+    "servicePointId": {
+      "type": "string",
+      "$ref": "raml-util/schemas/uuid.schema",
+      "description": "Unique ID of the service point where the payment was made"
+    },
+    "userName": {
+      "type": "string",
+      "description": "Name of the user that was logged in when the action was performed"
+    },
+    "cancellationReason": {
+      "type": "string",
+      "description": "Reason for cancellation",
+      "default": "Cancelled as error"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "comments",
+    "notifyPatron",
+    "servicePointId",
+    "userName"
+  ]
+}

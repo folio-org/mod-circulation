@@ -9,7 +9,6 @@ import org.folio.circulation.domain.Account;
 import org.folio.circulation.domain.FeeAmount;
 import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.domain.User;
-import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
 
@@ -22,14 +21,12 @@ public class StoredFeeFineAction extends JsonObject {
     write(this, "accountId", builder.accountId);
     write(this, "source", builder.createdBy);
     write(this, "createdAt", builder.createdAt);
-    write(this, "transactionInformation", builder.transactionInformation);
+    write(this, "transactionInformation", "-");
     write(this, "balance", builder.balance.toDouble());
     write(this, "amountAction", builder.amount.toDouble());
-    write(this, "notify", builder.notify);
+    write(this, "notify", false);
     write(this, "typeAction", builder.action);
-
-    write(this, "paymentMethod", builder.paymentMethod);
-    write(this, "dateAction", builder.actionDate);
+    write(this, "dateAction", getClockManager().getDateTime());
   }
 
   public static StoredFeeFineActionBuilder builder() {
@@ -42,13 +39,9 @@ public class StoredFeeFineAction extends JsonObject {
     private String accountId;
     private String createdBy;
     private String createdAt;
-    private String transactionInformation = "-";
     private FeeAmount balance;
     private FeeAmount amount;
-    private boolean notify = false;
     private String action;
-    private String paymentMethod;
-    private DateTime actionDate = getClockManager().getDateTime();
 
     public StoredFeeFineActionBuilder useAccount(Account account) {
       return withUserId(account.getUserId())
@@ -78,8 +71,7 @@ public class StoredFeeFineAction extends JsonObject {
     }
 
     public StoredFeeFineActionBuilder withCreatedBy(User user) {
-      return withCreatedBy(
-        String.format("%s, %s", user.getLastName(), user.getFirstName()));
+      return withCreatedBy(user.getPersonalName());
     }
 
     public StoredFeeFineActionBuilder createdByAutomatedProcess() {
@@ -105,33 +97,13 @@ public class StoredFeeFineAction extends JsonObject {
       return this;
     }
 
-    public StoredFeeFineActionBuilder withAction(AccountPaymentStatus action) {
-      this.action = action.getValue();
-      return this;
-    }
-
     public StoredFeeFineActionBuilder withAction(String action) {
       this.action = action;
       return this;
     }
 
-    public StoredFeeFineActionBuilder withTransactionInformation(String transactionInfo) {
-      this.transactionInformation = transactionInfo;
-      return this;
-    }
-
     public StoredFeeFineAction build() {
       return new StoredFeeFineAction(this);
-    }
-
-    public StoredFeeFineActionBuilder withPaymentMethod(String paymentMethod) {
-      this.paymentMethod = paymentMethod;
-      return this;
-    }
-
-    public StoredFeeFineActionBuilder withActionDate(DateTime actionDate) {
-      this.actionDate = actionDate;
-      return this;
     }
   }
 }

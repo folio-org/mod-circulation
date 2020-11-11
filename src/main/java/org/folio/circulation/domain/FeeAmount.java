@@ -3,6 +3,7 @@ package org.folio.circulation.domain;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getBigDecimalProperty;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 import io.vertx.core.json.JsonObject;
 
@@ -36,7 +37,11 @@ public final class FeeAmount {
   }
 
   private BigDecimal scaledAmount() {
-    return amount.setScale(2, BigDecimal.ROUND_HALF_UP);
+    return amount.setScale(2, RoundingMode.HALF_UP);
+  }
+
+  public String toScaledString() {
+    return scaledAmount().toString();
   }
 
   public static FeeAmount noFeeAmount() {
