@@ -12,6 +12,7 @@ import java.util.function.Supplier;
 
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
+import org.folio.circulation.support.utils.DateTimeUtil;
 import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
@@ -48,7 +49,7 @@ public class FixedDueDateSchedules {
   private Predicate<? super JsonObject> isWithin(DateTime date) {
     return schedule -> {
       DateTime from = DateTime.parse(schedule.getString("from"));
-      DateTime to = DateTime.parse(schedule.getString("to")).withTime(23, 59, 59, 0);
+      DateTime to = DateTimeUtil.atEndOfTheDay(DateTime.parse(schedule.getString("to")));
 
       return date.isAfter(from) && date.isBefore(to);
     };
