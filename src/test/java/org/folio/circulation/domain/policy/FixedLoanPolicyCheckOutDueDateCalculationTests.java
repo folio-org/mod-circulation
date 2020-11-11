@@ -58,10 +58,10 @@ public class FixedLoanPolicyCheckOutDueDateCalculationTests {
       .calculateInitialDueDate(loan, null);
 
     final var expectedInitialDueDate = new DateTime(2020, 11, 2, 0, 0, 0,
-      DateTimeZone.UTC));
-      
+      DateTimeZone.UTC);
+
     assertThat(calculationResult.succeeded(), is(true));
-    assertThat(calculationResult.value(), is();
+    assertThat(calculationResult.value(), is(expectedInitialDueDate));
   }
 
   @Test
