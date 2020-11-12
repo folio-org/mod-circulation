@@ -3,6 +3,8 @@ package org.folio.circulation.domain;
 import static java.util.Objects.requireNonNull;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getBooleanProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getJodaLocalDateProperty;
+import static org.folio.circulation.support.json.JsonPropertyWriter.write;
+import static org.joda.time.DateTimeZone.UTC;
 import static org.joda.time.LocalTime.MIDNIGHT;
 
 import java.util.ArrayList;
@@ -14,8 +16,6 @@ import java.util.stream.Collector;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -30,9 +30,6 @@ public class OpeningDay {
   private static final String OPEN_KEY = "open";
   private static final String OPENING_HOUR_KEY = "openingHour";
   private static final String OPENING_DAY_KEY = "openingDay";
-  private static final String DATE_TIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
-  private static final DateTimeFormatter DATE_TIME_FORMATTER =
-    DateTimeFormat.forPattern(DATE_TIME_FORMAT).withZoneUTC();
 
   private final List<OpeningHour> openingHour;
   private final LocalDate date;
@@ -109,12 +106,14 @@ public class OpeningDay {
   }
 
   public JsonObject toJson() {
-    DateTime dateTime = date.toDateTime(MIDNIGHT, DateTimeZone.UTC);
-    return new JsonObject()
-      .put(DATE_KEY, DATE_TIME_FORMATTER.print(dateTime))
-      .put(ALL_DAY_KEY, allDay)
-      .put(OPEN_KEY, open)
-      .put(OPENING_HOUR_KEY, openingHourToJsonArray());
+    final var json = new JsonObject();
+
+    write(json, DATE_KEY, date.toDateTime(MIDNIGHT, UTC));
+    write(json, ALL_DAY_KEY, allDay);
+    write(json, OPEN_KEY, open);
+    write(json, OPENING_HOUR_KEY, openingHourToJsonArray());
+
+    return json;
   }
 
   private static List<OpeningHour> fillOpeningDay(JsonObject representation) {
