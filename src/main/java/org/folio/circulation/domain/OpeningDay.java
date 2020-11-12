@@ -1,6 +1,7 @@
 package org.folio.circulation.domain;
 
 import static java.util.Objects.requireNonNull;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getJodaLocalDateProperty;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -34,17 +35,20 @@ public class OpeningDay {
     DateTimeFormat.forPattern(DATE_TIME_FORMAT).withZoneUTC();
 
   private final List<OpeningHour> openingHour;
-  private LocalDate date;
+  private final LocalDate date;
   private final boolean allDay;
   private final boolean open;
-  private DateTime dayWithTimeZone;
+  private final DateTime dayWithTimeZone;
 
   public static OpeningDay fromJsonByKey(JsonObject jsonObject, String key) {
     JsonObject openingDayJson = jsonObject.getJsonObject(key);
 
     requireNonNull(openingDayJson, "Json object cannot be null");
 
-    return new OpeningDay(openingDayJson);
+    return new OpeningDay(fillOpeningDay(openingDayJson),
+      getJodaLocalDateProperty(openingDayJson, DATE_KEY),
+      openingDayJson.getBoolean(ALL_DAY_KEY, false),
+      openingDayJson.getBoolean(OPEN_KEY, false), null);
   }
 
   public static OpeningDay fromJsonByDefaultKey(JsonObject jsonObject) {
@@ -59,7 +63,9 @@ public class OpeningDay {
       date = DateTime.parse(dateProperty, DATE_TIME_FORMATTER).withZoneRetainFields(zone);
     }
 
-    return new OpeningDay(openingDay, date);
+    return new OpeningDay(fillOpeningDay(openingDay), null,
+      openingDay.getBoolean(ALL_DAY_KEY, false),
+      openingDay.getBoolean(OPEN_KEY, false), date);
   }
 
   public static OpeningDay createOpeningDay(List<OpeningHour> openingHour, LocalDate date,
@@ -77,21 +83,6 @@ public class OpeningDay {
     return new OpeningDay(openingHour, date, allDay, open, datePart);
   }
 
-  private OpeningDay(JsonObject openingDayJson) {
-    this.allDay = openingDayJson.getBoolean(ALL_DAY_KEY, false);
-    this.open = openingDayJson.getBoolean(OPEN_KEY, false);
-    this.openingHour = fillOpeningDay(openingDayJson);
-    String dateProperty = openingDayJson.getString(DATE_KEY);
-    if (dateProperty != null) {
-      this.date = LocalDate.parse(dateProperty, DATE_TIME_FORMATTER);
-    }
-  }
-
-  private OpeningDay(JsonObject openingDay, DateTime day) {
-    this(fillOpeningDay(openingDay), null, openingDay.getBoolean(ALL_DAY_KEY, false),
-      openingDay.getBoolean(OPEN_KEY, false), day);
-  }
-
   private OpeningDay(List<OpeningHour> openingHour, LocalDate date,
     boolean allDay, boolean open, DateTime dateWithTimeZone) {
 
@@ -101,6 +92,7 @@ public class OpeningDay {
     this.open = open;
     this.dayWithTimeZone = dateWithTimeZone;
   }
+
 
   public LocalDate getDate() {
     return date;
