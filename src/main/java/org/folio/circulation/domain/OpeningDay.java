@@ -1,6 +1,7 @@
 package org.folio.circulation.domain;
 
 import static java.util.Objects.requireNonNull;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getBooleanProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getJodaLocalDateProperty;
 import static org.joda.time.LocalTime.MIDNIGHT;
 
@@ -30,7 +31,6 @@ public class OpeningDay {
   private static final String OPENING_HOUR_KEY = "openingHour";
   private static final String OPENING_DAY_KEY = "openingDay";
   private static final String DATE_TIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
-  private static final String DATE_PART_FORMAT = "yyyy-MM-dd";
   private static final DateTimeFormatter DATE_TIME_FORMATTER =
     DateTimeFormat.forPattern(DATE_TIME_FORMAT).withZoneUTC();
 
@@ -47,8 +47,8 @@ public class OpeningDay {
 
     return new OpeningDay(fillOpeningDay(openingDayJson),
       getJodaLocalDateProperty(openingDayJson, DATE_KEY),
-      openingDayJson.getBoolean(ALL_DAY_KEY, false),
-      openingDayJson.getBoolean(OPEN_KEY, false), null);
+      getBooleanProperty(openingDayJson, ALL_DAY_KEY),
+      getBooleanProperty(openingDayJson, OPEN_KEY), null);
   }
 
   public static OpeningDay fromOpeningPeriodJson(JsonObject openingPeriod, DateTimeZone zone) {
@@ -56,8 +56,8 @@ public class OpeningDay {
 
     return createOpeningDay(fillOpeningDay(openingDayJson),
       getJodaLocalDateProperty(openingDayJson, DATE_KEY),
-      openingDayJson.getBoolean(ALL_DAY_KEY, false),
-      openingDayJson.getBoolean(OPEN_KEY, false), zone);
+      getBooleanProperty(openingDayJson, ALL_DAY_KEY),
+      getBooleanProperty(openingDayJson, OPEN_KEY), zone);
   }
 
   public static OpeningDay createOpeningDay(List<OpeningHour> openingHour, LocalDate date,
@@ -81,7 +81,7 @@ public class OpeningDay {
     this.open = open;
     this.dayWithTimeZone = dateWithTimeZone;
   }
-  
+
   public LocalDate getDate() {
     return date;
   }
