@@ -1,16 +1,15 @@
 package org.folio.circulation.domain;
 
 import static java.util.Objects.requireNonNull;
+import static org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher.mapToList;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getBooleanProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getJodaLocalDateProperty;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.joda.time.DateTimeZone.UTC;
 import static org.joda.time.LocalTime.MIDNIGHT;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collector;
 
 import org.joda.time.DateTime;
@@ -117,15 +116,6 @@ public class OpeningDay {
   }
 
   private static List<OpeningHour> fillOpeningDay(JsonObject representation) {
-    List<OpeningHour> dayPeriods = new ArrayList<>();
-    JsonArray openingHourJson = representation.getJsonArray(OPENING_HOUR_KEY);
-    if (Objects.isNull(openingHourJson)) {
-      return dayPeriods;
-    }
-    for (int i = 0; i < openingHourJson.size(); i++) {
-      JsonObject jsonObject = openingHourJson.getJsonObject(i);
-      dayPeriods.add(new OpeningHour(jsonObject));
-    }
-    return dayPeriods;
+    return mapToList(representation, OPENING_HOUR_KEY, OpeningHour::new);
   }
 }
