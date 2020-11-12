@@ -1,3 +1,8 @@
+## 19.2.4 2020-11-12
+
+* Deletes scheduled hold shelf expiration notice for filled request (CIRC-938)
+* Fixes receiving notices triggered by hold shelf expiration (CIRC-993)
+
 ## 19.2.3 2020-11-10
 
 * Blocks renewals in the presence of an automated patron block (CIRC-774)
@@ -7,8 +12,8 @@
 ## 19.2.2 2020-11-02
 
 * Iterates over all open loans to age items to lost or charge lost fees (CIRC-965).
-* Sessions with references to non-existant items can expire (CIRC-926) 
-* Log events for declared lost, anonymized and overridden renewals are published correctly (CIRC-957) 
+* Sessions with references to non-existant items can expire (CIRC-926)
+* Log events for declared lost, anonymized and overridden renewals are published correctly (CIRC-957)
 
 ## 19.2.1 2020-10-30
 
