@@ -54,7 +54,7 @@ public final class ClosedLibraryStrategyUtils {
   }
 
   //TODO: Should have parameters for validation error
-  static ValidationErrorFailure failureForAbsentTimetable() {
+  public static ValidationErrorFailure failureForAbsentTimetable() {
     String message = "Calendar timetable is absent for requested date";
     return singleValidationError(new ValidationError(message, emptyMap()));
   }

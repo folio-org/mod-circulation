@@ -6,7 +6,7 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.joda.time.DateTime;
 
-class LibraryTimetable {
+public class LibraryTimetable {
   private final LibraryInterval head;
   private final LibraryInterval tail;
 
@@ -50,7 +50,7 @@ class LibraryTimetable {
     this.tail = headAndTail.getValue();
   }
 
-  LibraryInterval findInterval(DateTime dateTime) {
+  public LibraryInterval findInterval(DateTime dateTime) {
     return findInterval(dateTime, head);
   }
 

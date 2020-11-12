@@ -29,10 +29,12 @@ import org.folio.circulation.domain.validation.InactiveUserValidator;
 import org.folio.circulation.domain.validation.ItemLimitValidator;
 import org.folio.circulation.domain.validation.ItemNotFoundValidator;
 import org.folio.circulation.domain.validation.ItemStatusValidator;
+import org.folio.circulation.domain.validation.LoanPolicyValidator;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.RequestedByAnotherPatronValidator;
 import org.folio.circulation.domain.validation.ServicePointOfCheckoutPresentValidator;
 import org.folio.circulation.infrastructure.storage.AutomatedPatronBlocksRepository;
+import org.folio.circulation.infrastructure.storage.CalendarRepository;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
@@ -101,6 +103,7 @@ public class CheckOutByBarcodeResource extends Resource {
       new DueDateScheduledNoticeService(scheduledNoticesRepository, patronNoticePolicyRepository);
     final AutomatedPatronBlocksRepository automatedPatronBlocksRepository =
       new AutomatedPatronBlocksRepository(clients);
+    final CalendarRepository calendarRepository = new CalendarRepository(clients);
 
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
       clients, () -> singleValidationError(
@@ -132,6 +135,8 @@ public class CheckOutByBarcodeResource extends Resource {
 
     final ItemLimitValidator itemLimitValidator = new ItemLimitValidator(
       message -> singleValidationError(message, ITEM_BARCODE, request.getItemBarcode()), loanRepository);
+
+    final LoanPolicyValidator loanPolicyValidator = new LoanPolicyValidator(calendarRepository);
 
     final AutomatedPatronBlocksValidator automatedPatronBlocksValidator =
       new AutomatedPatronBlocksValidator(automatedPatronBlocksRepository,
@@ -168,6 +173,7 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenCompose(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
         LoanAndRelatedRecords::withTimeZone))
       .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
+      .thenApply(loanPolicyValidator::refuseWhenLoanPolicyHasNoTimetable)
       .thenComposeAsync(r -> r.after(itemLimitValidator::refuseWhenItemLimitIsReached))
       .thenComposeAsync(r -> r.after(overdueFinePolicyRepository::lookupOverdueFinePolicy))
       .thenComposeAsync(r -> r.after(lostItemPolicyRepository::lookupLostItemPolicy))
