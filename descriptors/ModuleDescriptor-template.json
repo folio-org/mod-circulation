@@ -725,7 +725,8 @@
             "users.item.get",
             "usergroups.collection.get",
             "configuration.entries.collection.get",
-            "pubsub.publish.post"
+            "pubsub.publish.post",
+            "circulation-storage.circulation-rules.get"
           ],
           "unit": "minute",
           "delay": "2"
