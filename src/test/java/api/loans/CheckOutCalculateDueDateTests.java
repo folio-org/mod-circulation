@@ -18,8 +18,8 @@ import static api.support.fixtures.CalendarExamples.getLastFakeOpeningDayByServI
 import static api.support.fixtures.ConfigurationExample.newYorkTimezoneConfiguration;
 import static api.support.fixtures.ConfigurationExample.utcTimezoneConfiguration;
 import static api.support.fixtures.LibraryHoursExamples.CASE_CALENDAR_IS_UNAVAILABLE_SERVICE_POINT_ID;
+import static api.support.matchers.DateTimeMatchers.isEquivalentTo;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
-import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
@@ -33,7 +33,6 @@ import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyU
 import static org.folio.circulation.support.utils.DateTimeUtil.toUtcDateTime;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.containsString;
-import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.joda.time.DateTimeZone.UTC;
 import static org.joda.time.LocalTime.MIDNIGHT;
@@ -66,15 +65,10 @@ public class CheckOutCalculateDueDateTests extends APITests {
   private static final String INTERVAL_HOURS = "Hours";
   private static final String INTERVAL_MINUTES = "Minutes";
 
-  private static final String DUE_DATE_KEY = "dueDate";
-
-  private static final String ERROR_MESSAGE_DUE_DATE = "due date should be ";
-
   private static final LocalTime TEST_TIME_MORNING = new LocalTime(10, 0);
   private static final DateTime TEST_DATE =
     new LocalDate(2019, 1, 1)
       .toDateTime(TEST_TIME_MORNING, UTC);
-
 
   @Test
   public void testRespectSelectedTimezoneForDueDateCalculations() {
@@ -90,7 +84,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
 
     JsonObject loanPolicy = useFixedPolicy(fixedDueDateScheduleId, KEEP_THE_CURRENT_DUE_DATE);
 
-    final IndividualResource response = checkOutFixture.checkOutByBarcode(
+    final var response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
@@ -103,7 +97,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
     loanHasOverdueFinePolicyProperties(loan, overdueFinePoliciesFixture.facultyStandard());
     loanHasLostItemPolicyProperties(loan, lostItemFeePoliciesFixture.facultyStandard());
 
-    assertThat(loan.getString(DUE_DATE_KEY), isEquivalentTo(expectedDateTime));
+    assertThat(response.getDueDate(), isEquivalentTo(expectedDateTime));
   }
 
   @Test
@@ -121,7 +115,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
 
     JsonObject loanPolicy = useFixedPolicy(fixedDueDateScheduleId, KEEP_THE_CURRENT_DUE_DATE);
 
-    final IndividualResource response = checkOutFixture.checkOutByBarcode(
+    final var response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
@@ -134,7 +128,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
     loanHasOverdueFinePolicyProperties(loan, overdueFinePoliciesFixture.facultyStandard());
     loanHasLostItemPolicyProperties(loan, lostItemFeePoliciesFixture.facultyStandard());
 
-    assertThat(loan.getString(DUE_DATE_KEY), isEquivalentTo(END_OF_CURRENT_YEAR_DUE_DATE));
+    assertThat(response.getDueDate(), isEquivalentTo(END_OF_CURRENT_YEAR_DUE_DATE));
   }
 
   /**
@@ -156,7 +150,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
 
     JsonObject loanPolicy = useFixedPolicy(fixedDueDateScheduleId, KEEP_THE_CURRENT_DUE_DATE);
 
-    final IndividualResource response = checkOutFixture.checkOutByBarcode(
+    final var response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
@@ -169,7 +163,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
     loanHasOverdueFinePolicyProperties(loan, overdueFinePoliciesFixture.facultyStandard());
     loanHasLostItemPolicyProperties(loan, lostItemFeePoliciesFixture.facultyStandard());
 
-    assertThat(loan.getString(DUE_DATE_KEY), isEquivalentTo(END_OF_CURRENT_YEAR_DUE_DATE));
+    assertThat(response.getDueDate(), isEquivalentTo(END_OF_CURRENT_YEAR_DUE_DATE));
   }
 
   /**
@@ -192,7 +186,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
     JsonObject loanPolicy =
       useFixedPolicy(fixedDueDateScheduleId, MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY);
 
-    final IndividualResource response = checkOutFixture.checkOutByBarcode(
+    final var response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
@@ -206,7 +200,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
 
     DateTime expectedDate = WEDNESDAY_DATE.toDateTime(END_OF_A_DAY, UTC);
 
-    assertThat(loan.getString(DUE_DATE_KEY), isEquivalentTo(expectedDate));
+    assertThat(response.getDueDate(), isEquivalentTo(expectedDate));
   }
 
   /**
@@ -229,7 +223,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
     JsonObject loanPolicy =
       useFixedPolicy(fixedDueDateScheduleId, MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY);
 
-    final IndividualResource response = checkOutFixture.checkOutByBarcode(
+    final var response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
@@ -243,7 +237,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
 
     DateTime expectedDate = WEDNESDAY_DATE.toDateTime(END_OF_A_DAY, UTC);
 
-    assertThat(loan.getString(DUE_DATE_KEY), isEquivalentTo(expectedDate));
+    assertThat(response.getDueDate(), isEquivalentTo(expectedDate));
   }
 
   /**
@@ -267,7 +261,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
       createLoanPolicyEntryFixed(fixedDueDateScheduleId,
         MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY.getValue()));
 
-    final IndividualResource response = checkOutFixture.checkOutByBarcode(
+    final var response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
@@ -281,7 +275,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
 
     DateTime expectedDate = FRIDAY_DATE.toDateTime(END_OF_A_DAY, UTC);
 
-    assertThat(loan.getString(DUE_DATE_KEY), isEquivalentTo(expectedDate));
+    assertThat(response.getDueDate(), isEquivalentTo(expectedDate));
   }
 
   /**
@@ -303,7 +297,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
 
     JsonObject loanPolicy = useFixedPolicy(fixedDueDateScheduleId, MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY);
 
-    final IndividualResource response = checkOutFixture.checkOutByBarcode(
+    final var response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
@@ -317,9 +311,8 @@ public class CheckOutCalculateDueDateTests extends APITests {
 
     DateTime expectedDate = FRIDAY_DATE.toDateTime(END_OF_A_DAY, UTC);
 
-    assertThat(loan.getString(DUE_DATE_KEY), isEquivalentTo(expectedDate));
+    assertThat(response.getDueDate(), isEquivalentTo(expectedDate));
   }
-
 
   /**
    * Test scenario for Long-term loans:
@@ -625,7 +618,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
       noticePoliciesFixture.activeNotice().getId(),
       overdueFinePolicy.getId(), lostItemFeePolicy.getId());
 
-    final IndividualResource response = checkOutFixture.checkOutByBarcode(
+    final var response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
@@ -638,7 +631,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
     loanHasOverdueFinePolicyProperties(loan,  overdueFinePolicy);
     loanHasLostItemPolicyProperties(loan,  lostItemFeePolicy);
 
-    assertThat(loan.getString(DUE_DATE_KEY), isEquivalentTo(loanDate.plusHours(duration)));
+    assertThat(response.getDueDate(), isEquivalentTo(loanDate.plusHours(duration)));
   }
 
   /**
@@ -705,7 +698,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
 
     IndividualResource loanPolicy = createLoanPolicy(loanPolicyEntry);
 
-    final IndividualResource response = checkOutFixture.checkOutByBarcode(
+    final var response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(itemsFixture.basedUponSmallAngryPlanet())
         .to(usersFixture.steve())
@@ -718,7 +711,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
     loanHasOverdueFinePolicyProperties(loan,  overdueFinePoliciesFixture.facultyStandard());
     loanHasLostItemPolicyProperties(loan,  lostItemFeePoliciesFixture.facultyStandard());
 
-    assertThat(loan.getString(DUE_DATE_KEY), isEquivalentTo(loanDate.plusHours(duration)));
+    assertThat(response.getDueDate(), isEquivalentTo(loanDate.plusHours(duration)));
   }
 
   private void checkFixedDayOrTime(DateTime loanDate, String servicePointId,
@@ -743,7 +736,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
       overdueFinePolicy.getId(),
       lostItemFeePolicy.getId());
 
-    final IndividualResource response = checkOutFixture.checkOutByBarcode(
+    final var response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
@@ -757,18 +750,10 @@ public class CheckOutCalculateDueDateTests extends APITests {
     loanHasLostItemPolicyProperties(loan,  lostItemFeePolicy);
 
     if (isIncludeTime) {
-      checkDateTime(expectedDueDate, loan);
+      assertThat(response.getDueDate(), isEquivalentTo(getThresholdDateTime(expectedDueDate)));
     } else {
-      DateTime actualDueDate = DateTime.parse(loan.getString(DUE_DATE_KEY));
-      assertThat(actualDueDate, is(expectedDueDate));
+      assertThat(response.getDueDate(), isEquivalentTo(expectedDueDate));
     }
-  }
-
-  private void checkDateTime(DateTime expectedDueDate, JsonObject loan) {
-    DateTime actualDueDate = getThresholdDateTime(DateTime.parse(loan.getString(DUE_DATE_KEY)));
-
-    DateTime thresholdDateTime = getThresholdDateTime(expectedDueDate);
-    assertThat(actualDueDate, is(thresholdDateTime));
   }
 
   private DateTime findDateTimeInPeriod(OpeningDayPeriod currentDayPeriod, LocalTime offsetTime, LocalDate currentDate) {

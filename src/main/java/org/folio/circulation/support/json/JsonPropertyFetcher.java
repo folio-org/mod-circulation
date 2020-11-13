@@ -5,6 +5,7 @@ import static org.joda.time.DateTime.parse;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 import java.util.function.BiFunction;
 
@@ -64,6 +65,16 @@ public class JsonPropertyFetcher {
       final JsonObject object = representation.getJsonObject(objectName);
 
       return getObjectProperty(object, propertyName);
+    } else {
+      return null;
+    }
+  }
+
+  public static OffsetDateTime getOffsetDateTimeProperty(JsonObject representation,
+    String propertyName) {
+
+    if (representation != null && isNotBlank(representation.getString(propertyName))) {
+      return OffsetDateTime.parse(representation.getString(propertyName));
     } else {
       return null;
     }

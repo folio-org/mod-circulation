@@ -5,6 +5,7 @@ import static org.joda.time.DateTimeZone.UTC;
 import static org.joda.time.LocalTime.MIDNIGHT;
 
 import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Objects;
@@ -31,7 +32,13 @@ public class DateTimeUtil {
     return dateTime.withTime(23, 59, 59, 0);
   }
 
-  public static ZonedDateTime toJavaDateTime(DateTime dateTime) {
+  public static OffsetDateTime toOffsetDateTime(DateTime dateTime) {
+    final var instant = Instant.ofEpochMilli(dateTime.getMillis());
+
+    return OffsetDateTime.ofInstant(instant, ZoneId.of(dateTime.getZone().getID()));
+  }
+
+  public static ZonedDateTime toZonedDateTime(DateTime dateTime) {
     return Instant.ofEpochMilli(dateTime.getMillis())
       .atZone(ZoneId.of(dateTime.getZone().getID()));
   }
