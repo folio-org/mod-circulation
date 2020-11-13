@@ -1,3 +1,7 @@
+## 19.2.5 2020-11-13
+
+* Fixes fixed due date range not being recognized if End Date is equal to Current Date (CIRC-782)
+
 ## 19.2.4 2020-11-12
 
 * Deletes scheduled hold shelf expiration notice for filled request (CIRC-938)
