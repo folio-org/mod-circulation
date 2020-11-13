@@ -71,6 +71,15 @@ In order to change the specific versions of these dependencies, edit the test-vi
 
 Follow the [guide](https://dev.folio.org/guides/raml-cop/) to use raml-cop to assess RAML, schema, and examples.
 
+## Port
+
+When running the jar file the module looks for the `http.port` and `port`
+system property variables in this order, and uses the default 9801 as fallback. Example:
+
+`java -Dhttp.port=8081 -jar target/mod-circulation.jar`
+
+The Docker container exposes port 9801.
+
 ## Design Notes
 
 ### Known Limitations

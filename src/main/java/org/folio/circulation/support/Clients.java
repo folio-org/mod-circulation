@@ -59,6 +59,8 @@ public class Clients {
   private final CollectionResourceClient noteTypesClient;
   private final PubSubPublishingService pubSubPublishingService;
   private final CirculationRulesProcessor circulationRulesProcessor;
+  private final CollectionResourceClient accountsRefundClient;
+  private final CollectionResourceClient accountsCancelClient;
 
   public static Clients create(WebContext context, HttpClient httpClient) {
     return new Clients(context.createHttpClient(httpClient), context);
@@ -116,6 +118,8 @@ public class Clients {
       pubSubPublishingService = createPubSubPublishingService(context);
       circulationRulesProcessor = new CirculationRulesProcessor(context.getTenantId(),
         circulationRulesStorageClient, locationsStorageClient);
+      accountsRefundClient = createAccountsRefundClient(client, context);
+      accountsCancelClient = createAccountsCancelClient(client, context);
     }
     catch(MalformedURLException e) {
       throw new InvalidOkapiLocationException(context.getOkapiLocation(), e);
@@ -312,6 +316,14 @@ public class Clients {
 
   public PubSubPublishingService pubSubPublishingService() {
     return pubSubPublishingService;
+  }
+
+  public CollectionResourceClient accountsRefundClient() {
+    return accountsRefundClient;
+  }
+
+  public CollectionResourceClient accountsCancelClient() {
+    return accountsCancelClient;
   }
 
   private static CollectionResourceClient getCollectionResourceClient(
@@ -683,5 +695,17 @@ public class Clients {
 
   private PubSubPublishingService createPubSubPublishingService(WebContext context) {
     return new PubSubPublishingService(context);
+  }
+
+  private CollectionResourceClient createAccountsRefundClient(
+    OkapiHttpClient client, WebContext context) throws MalformedURLException {
+
+    return getCollectionResourceClient(client, context, "/accounts/%s/refund");
+  }
+
+  private CollectionResourceClient createAccountsCancelClient(
+    OkapiHttpClient client, WebContext context) throws MalformedURLException {
+
+    return getCollectionResourceClient(client, context, "/accounts/%s/cancel");
   }
 }

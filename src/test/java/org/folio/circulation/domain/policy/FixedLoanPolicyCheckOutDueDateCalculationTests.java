@@ -40,6 +40,54 @@ public class FixedLoanPolicyCheckOutDueDateCalculationTests {
   }
 
   @Test
+  public void shouldUseOnlyScheduleAvailableWhenLoanDateTimeAfterMidnight() {
+    LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
+      .fixed(UUID.randomUUID())
+      .create())
+      .withDueDateSchedules(new FixedDueDateSchedulesBuilder()
+        .addSchedule(new FixedDueDateSchedule(new DateTime(2020, 11, 1, 0, 0, 0, DateTimeZone.UTC),
+          new DateTime(2020, 11, 2, 0, 0, 0, DateTimeZone.UTC),
+          new DateTime(2020, 11, 2, 0, 0, 0, DateTimeZone.UTC)))
+        .create());
+
+    DateTime loanDate = new DateTime(2020, 11, 2, 12, 30, 30, DateTimeZone.UTC);
+
+    Loan loan = loanFor(loanDate);
+
+    final Result<DateTime> calculationResult = loanPolicy
+      .calculateInitialDueDate(loan, null);
+
+    final var expectedInitialDueDate = new DateTime(2020, 11, 2, 0, 0, 0,
+      DateTimeZone.UTC);
+
+    assertThat(calculationResult.succeeded(), is(true));
+    assertThat(calculationResult.value(), is(expectedInitialDueDate));
+  }
+
+  @Test
+  public void shouldUseOnlyScheduleAvailableWhenLoanDateTimeAfterMidnightAndTimeZoneIsNotUTC() {
+    DateTimeZone timeZone = DateTimeZone.forOffsetHours(4);
+    LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
+      .fixed(UUID.randomUUID())
+      .create())
+      .withDueDateSchedules(new FixedDueDateSchedulesBuilder()
+        .addSchedule(new FixedDueDateSchedule(new DateTime(2020, 11, 1, 0, 0, 0, timeZone),
+          new DateTime(2020, 11, 2, 0, 0, 0, timeZone),
+          new DateTime(2020, 11, 2, 0, 0, 0, timeZone)))
+        .create());
+
+    DateTime loanDate = new DateTime(2020, 11, 2, 12, 30, 30, timeZone);
+
+    Loan loan = loanFor(loanDate);
+
+    final Result<DateTime> calculationResult = loanPolicy
+      .calculateInitialDueDate(loan, null);
+
+    assertThat(calculationResult.value(), is(new DateTime(2020, 11, 2, 0, 0, 0,
+      timeZone)));
+  }
+
+  @Test
   public void shouldFailWhenLoanDateIsBeforeOnlyScheduleAvailable() {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
