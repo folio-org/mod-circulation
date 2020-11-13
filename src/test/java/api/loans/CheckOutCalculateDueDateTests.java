@@ -1,6 +1,7 @@
 package api.loans;
 
 import static api.support.APITestContext.END_OF_CURRENT_YEAR_DUE_DATE;
+import static api.support.ExampleTimeZones.NEW_YORK;
 import static api.support.fixtures.CalendarExamples.CASE_CALENDAR_IS_EMPTY_SERVICE_POINT_ID;
 import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_DAY_ALL_CURRENT_DATE;
 import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_DAY_ALL_SERVICE_POINT_ID;
@@ -14,6 +15,7 @@ import static api.support.fixtures.CalendarExamples.WEDNESDAY_DATE;
 import static api.support.fixtures.CalendarExamples.getCurrentAndNextFakeOpeningDayByServId;
 import static api.support.fixtures.CalendarExamples.getFirstFakeOpeningDayByServId;
 import static api.support.fixtures.CalendarExamples.getLastFakeOpeningDayByServId;
+import static api.support.fixtures.ConfigurationExample.newYorkTimezoneConfiguration;
 import static api.support.fixtures.ConfigurationExample.utcTimezoneConfiguration;
 import static api.support.fixtures.LibraryHoursExamples.CASE_CALENDAR_IS_UNAVAILABLE_SERVICE_POINT_ID;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
@@ -31,7 +33,6 @@ import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyU
 import static org.folio.circulation.support.utils.DateTimeUtil.toUtcDateTime;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.containsString;
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.joda.time.DateTimeZone.UTC;
 import static org.joda.time.LocalTime.MIDNIGHT;
@@ -56,7 +57,6 @@ import api.support.APITests;
 import api.support.OpeningDayPeriod;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.LoanPolicyBuilder;
-import api.support.fixtures.ConfigurationExample;
 import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
 
@@ -74,14 +74,11 @@ public class CheckOutCalculateDueDateTests extends APITests {
     new LocalDate(2019, 1, 1)
       .toDateTime(TEST_TIME_MORNING, UTC);
 
+
   @Test
   public void testRespectSelectedTimezoneForDueDateCalculations() {
-    String expectedTimeZone = "America/New_York";
-    DateTime expectedDateTime = currentYearDateTime(12, 31, 23, 59, 59, DateTimeZone.forID(expectedTimeZone));
-
-    Response configResponse = configClient.create(ConfigurationExample.newYorkTimezoneConfiguration())
-      .getResponse();
-    assertThat(configResponse.getBody(), not(containsString(UTC.toString())));
+    configClient.create(newYorkTimezoneConfiguration());
+    DateTime expectedDateTime = currentYearDateTime(12, 31, 23, 59, 59, NEW_YORK);
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
@@ -96,7 +93,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
-        .on(currentYearDateTime(1, 11, 14, 43, 54, DateTimeZone.forID(expectedTimeZone)))
+        .on(currentYearDateTime(1, 11, 14, 43, 54, NEW_YORK))
         .at(checkoutServicePointId));
 
     final JsonObject loan = response.getJson();
