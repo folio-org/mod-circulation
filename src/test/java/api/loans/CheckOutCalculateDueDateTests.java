@@ -45,6 +45,7 @@ import org.folio.circulation.domain.OpeningHour;
 import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.utils.DateTimeUtil;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
@@ -924,12 +925,12 @@ public class CheckOutCalculateDueDateTests extends APITests {
     LocalDate date = openingDay.getDate();
 
     if (allDay) {
-      return getDateTimeOfStartDay(date);
+      return DateTimeUtil.toStartOfDayDateTime(date);
     } else {
       List<OpeningHour> openingHours = openingDay.getOpeningHour();
 
       if (openingHours.isEmpty()) {
-        return getDateTimeOfStartDay(date);
+        return DateTimeUtil.toStartOfDayDateTime(date);
       }
       OpeningHour openingHour = openingHours.get(0);
       LocalTime localTime = openingHour.getStartTime();
@@ -946,13 +947,6 @@ public class CheckOutCalculateDueDateTests extends APITests {
    */
   private boolean isInCurrentDateTime(DateTime currentDateTime, DateTime offsetDateTime) {
     return offsetDateTime.isBefore(currentDateTime) || offsetDateTime.isEqual(currentDateTime);
-  }
-
-  /**
-   * Get the date with the start of the day
-   */
-  private DateTime getDateTimeOfStartDay(LocalDate localDate) {
-    return toUtcDateTime(localDate, MIDNIGHT);
   }
 
   /**
@@ -1033,5 +1027,4 @@ public class CheckOutCalculateDueDateTests extends APITests {
     hasProperty("name", loanPolicyObject, "loan policy",
       loanPolicy.getString("name"));
   }
-
 }

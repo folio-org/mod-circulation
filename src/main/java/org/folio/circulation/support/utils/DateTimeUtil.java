@@ -2,6 +2,7 @@ package org.folio.circulation.support.utils;
 
 
 import static org.joda.time.DateTimeZone.UTC;
+import static org.joda.time.LocalTime.MIDNIGHT;
 
 import java.time.Instant;
 import java.time.ZoneId;
@@ -48,5 +49,9 @@ public class DateTimeUtil {
 
   private static DateTime toZonedDateTime(LocalDate date, LocalTime time, DateTimeZone zone) {
     return date.toDateTime(time).withZoneRetainFields(zone);
+  }
+
+  public static DateTime toStartOfDayDateTime(LocalDate localDate) {
+    return toUtcDateTime(localDate, MIDNIGHT);
   }
 }
