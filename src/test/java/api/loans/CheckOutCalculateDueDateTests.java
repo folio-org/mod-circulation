@@ -30,6 +30,7 @@ import static org.folio.circulation.domain.policy.DueDateManagement.MOVE_TO_THE_
 import static org.folio.circulation.domain.policy.DueDateManagement.MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY;
 import static org.folio.circulation.domain.policy.LoanPolicyPeriod.HOURS;
 import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.END_OF_A_DAY;
+import static org.folio.circulation.support.utils.DateTimeUtil.toStartOfDayDateTime;
 import static org.folio.circulation.support.utils.DateTimeUtil.toUtcDateTime;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -45,7 +46,6 @@ import org.folio.circulation.domain.OpeningHour;
 import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.utils.DateTimeUtil;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
@@ -220,7 +220,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
     UUID fixedDueDateScheduleId = loanPoliciesFixture
       .createExampleFixedDueDateSchedule().getId();
 
-    createLoanPolicy(createLoanPolicyEntryFixed(fixedDueDateScheduleId,
+    useLoanPolicy(createFixedLoanPolicy(fixedDueDateScheduleId,
       MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY.getValue()));
 
     final var response = checkOutFixture.checkOutByBarcode(
@@ -552,7 +552,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
     final UUID checkoutServicePointId = UUID.randomUUID();
     int duration = 1;
 
-    IndividualResource loanPolicy = createLoanPolicy(createLoanPolicyEntry(
+    IndividualResource loanPolicy = useLoanPolicy(createLoanPolicy(
       "Keep the current due date/time", true,
         KEEP_THE_CURRENT_DUE_DATE_TIME.getValue(), duration, INTERVAL_HOURS));
 
@@ -585,7 +585,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
     final IndividualResource steve = usersFixture.steve();
     final UUID checkoutServicePointId = UUID.randomUUID();
 
-    createLoanPolicy(createLoanPolicyEntry(
+    useLoanPolicy(createLoanPolicy(
       "Loan Policy Exception Scenario", false,
         KEEP_THE_CURRENT_DUE_DATE.getValue(), 1, "Minutes"));
 
@@ -600,13 +600,9 @@ public class CheckOutCalculateDueDateTests extends APITests {
     assertThat(response.getJson(), hasErrorWith(hasMessage("Item is not loanable")));
   }
 
-  /**
-   * 1
-   * Test scenario when Calendar API is unavailable
-   */
   @Test
   public void testScenarioWhenCalendarApiIsUnavailable() {
-    createLoanPolicy(createLoanPolicyEntry("Calendar API is unavailable", true,
+    useLoanPolicy(createLoanPolicy("Calendar API is unavailable", true,
       KEEP_THE_CURRENT_DUE_DATE_TIME.getValue(), 1, INTERVAL_HOURS));
 
     Response response = checkOutFixture.attemptCheckOutByBarcode(
@@ -620,14 +616,11 @@ public class CheckOutCalculateDueDateTests extends APITests {
       hasMessage("Calendar open periods are not found"))));
   }
 
-  /**
-   * Exception test scenario of Calendar API
-   */
   @Test
   public void testScenarioWhenCalendarApiIsEmpty() {
     final var duration = 1;
 
-    createLoanPolicy(createLoanPolicyEntry(
+    useLoanPolicy(createLoanPolicy(
       "Calendar API is unavailable", true,
         KEEP_THE_CURRENT_DUE_DATE_TIME.getValue(), duration, INTERVAL_HOURS));
 
@@ -649,7 +642,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
     final IndividualResource steve = usersFixture.steve();
     final UUID checkoutServicePointId = UUID.fromString(servicePointId);
 
-    IndividualResource loanPolicy = createLoanPolicy(createLoanPolicyEntry(
+    IndividualResource loanPolicy = useLoanPolicy(createLoanPolicy(
       dueDateManagement.getValue(), true,
         dueDateManagement.getValue(), duration, interval));
 
@@ -815,12 +808,12 @@ public class CheckOutCalculateDueDateTests extends APITests {
     LocalDate date = openingDay.getDate();
 
     if (allDay) {
-      return DateTimeUtil.toStartOfDayDateTime(date);
+      return toStartOfDayDateTime(date);
     } else {
       List<OpeningHour> openingHours = openingDay.getOpeningHour();
 
       if (openingHours.isEmpty()) {
-        return DateTimeUtil.toStartOfDayDateTime(date);
+        return toStartOfDayDateTime(date);
       }
       OpeningHour openingHour = openingHours.get(0);
       LocalTime localTime = openingHour.getStartTime();
@@ -839,10 +832,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
     return offsetDateTime.isBefore(currentDateTime) || offsetDateTime.isEqual(currentDateTime);
   }
 
-  /**
-   * Create a fake json LoanPolicy
-   */
-  private JsonObject createLoanPolicyEntry(String name, boolean loanable,
+  private JsonObject createLoanPolicy(String name, boolean loanable,
     String dueDateManagement, int duration, String intervalId) {
 
     return new LoanPolicyBuilder()
@@ -855,10 +845,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
       .create();
   }
 
-  /**
-   * Create a fake json LoanPolicy for fixed period
-   */
-  private JsonObject createLoanPolicyEntryFixed(UUID fixedDueDateScheduleId,
+  private JsonObject createFixedLoanPolicy(UUID fixedDueDateScheduleId,
     String dueDateManagement) {
 
     return new LoanPolicyBuilder()
@@ -870,7 +857,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
       .create();
   }
 
-  private IndividualResource createLoanPolicy(JsonObject loanPolicyEntry) {
+  private IndividualResource useLoanPolicy(JsonObject loanPolicyEntry) {
     IndividualResource loanPolicy = loanPoliciesFixture.create(loanPolicyEntry);
 
     useFallbackPolicies(loanPolicy.getId(),
@@ -894,7 +881,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
       .withMillisOfSecond(0);
   }
 
-  private JsonObject useFixedPolicy(UUID fixedDueDateScheduleId,
+  private void useFixedPolicy(UUID fixedDueDateScheduleId,
     DueDateManagement dueDateManagement) {
 
     LoanPolicyBuilder loanPolicy = new LoanPolicyBuilder()
@@ -905,16 +892,6 @@ public class CheckOutCalculateDueDateTests extends APITests {
       .renewFromCurrentDueDate();
 
     use(loanPolicy);
-    return loanPolicy.create();
-  }
-
-  private void loanHasLoanPolicyProperties(JsonObject loan, JsonObject loanPolicy) {
-    hasProperty("loanPolicyId", loan, "loan", loanPolicy.getString("id"));
-    hasProperty("loanPolicy", loan, "loan");
-
-    JsonObject loanPolicyObject = loan.getJsonObject("loanPolicy");
-
-    hasProperty("name", loanPolicyObject, "loan policy",
-      loanPolicy.getString("name"));
+    loanPolicy.create();
   }
 }
