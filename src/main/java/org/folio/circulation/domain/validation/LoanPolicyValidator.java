@@ -25,10 +25,11 @@ public class LoanPolicyValidator {
     this.calendarRepository = calendarRepository;
   }
 
-  public Result<LoanAndRelatedRecords> refuseWhenLoanPolicyHasNoTimetable(Result<LoanAndRelatedRecords> result) {
+  public Result<LoanAndRelatedRecords> refuseWhenLoanPolicyHasNoTimetable(
+    Result<LoanAndRelatedRecords> result) {
     return result.combineToResult(getOpeningDays(result).join(), (l, a) -> {
       return result.failWhen(
-        loanAndRelatedRecords -> succeeded(loanPolicyHasNoTimetable(loanAndRelatedRecords, a)),
+        loanAndRelatedRecords -> succeeded(hasNoTimetable(loanAndRelatedRecords, a)),
         loanAndRelatedRecords -> ClosedLibraryStrategyUtils.failureForAbsentTimetable());
     });
   }
@@ -38,8 +39,14 @@ public class LoanPolicyValidator {
     return loanAndRelatedRecord.after(r -> getOpeningDays(r));
   }
 
-  private DateTime getLoanDueDate(
+  private CompletableFuture<Result<AdjacentOpeningDays>> getOpeningDays(
     LoanAndRelatedRecords loanAndRelatedRecord) {
+    return calendarRepository.lookupOpeningDays(
+      getDueDate(loanAndRelatedRecord).toLocalDate(),
+      loanAndRelatedRecord.getLoan().getCheckoutServicePointId());
+  }
+
+  private DateTime getDueDate(LoanAndRelatedRecords loanAndRelatedRecord) {
     final DateTime systemTime = ClockManager.getClockManager().getDateTime();
     final Loan loan = loanAndRelatedRecord.getLoan();
     final RequestQueue requestQueue = loanAndRelatedRecord.getRequestQueue();
@@ -49,16 +56,10 @@ public class LoanPolicyValidator {
     return dueDateStrategy.calculateDueDate(loan).value();
   }
 
-  private CompletableFuture<Result<AdjacentOpeningDays>> getOpeningDays(
-    LoanAndRelatedRecords loanAndRelatedRecord) {
-    return calendarRepository.lookupOpeningDays(
-      getLoanDueDate(loanAndRelatedRecord).toLocalDate(),
-      loanAndRelatedRecord.getLoan().getCheckoutServicePointId());
-  }
-
-  private boolean loanPolicyHasNoTimetable(LoanAndRelatedRecords loanAndRelatedRecord, AdjacentOpeningDays adjacentOpeningDays) {
+  private boolean hasNoTimetable(LoanAndRelatedRecords loanAndRelatedRecord,
+    AdjacentOpeningDays adjacentOpeningDays) {
     final DateTimeZone zone = loanAndRelatedRecord.getTimeZone();
-    final DateTime dueDate = getLoanDueDate(loanAndRelatedRecord);
+    final DateTime dueDate = getDueDate(loanAndRelatedRecord);
     final LibraryTimetable libraryTimetable =
       LibraryTimetableConverter.convertToLibraryTimetable(adjacentOpeningDays, zone);
 
