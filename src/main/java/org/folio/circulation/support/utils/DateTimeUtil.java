@@ -22,6 +22,10 @@ public class DateTimeUtil {
       .withSecond(59);
   }
 
+  public static DateTime atEndOfTheDay(DateTime dateTime) {
+    return dateTime.withTime(23, 59, 59, 0);
+  }
+
   public static ZonedDateTime toJavaDateTime(DateTime dateTime) {
     return Instant.ofEpochMilli(dateTime.getMillis())
       .atZone(ZoneId.of(dateTime.getZone().getID()));
