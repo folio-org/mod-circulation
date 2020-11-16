@@ -34,6 +34,10 @@ public class LoanPolicyValidator {
   }
 
   private CompletableFuture<Result<Boolean>> getOpeningDays(LoanAndRelatedRecords loanAndRelatedRecords) {
+    if (getDueDate(loanAndRelatedRecords) == null) {
+      return CompletableFuture.completedFuture(succeeded(false));
+    }
+
     return calendarRepository.lookupOpeningDays(
       getDueDate(loanAndRelatedRecords).toLocalDate(),
       loanAndRelatedRecords.getLoan().getCheckoutServicePointId())

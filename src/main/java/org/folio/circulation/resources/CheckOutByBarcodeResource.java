@@ -172,8 +172,8 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenApply(requestedByAnotherPatronValidator::refuseWhenRequestedByAnotherPatron)
       .thenCompose(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
         LoanAndRelatedRecords::withTimeZone))
-      .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
-      .thenCompose(loanPolicyValidator::refuseWhenLoanPolicyHasNoTimetable)
+      .thenCompose(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
+      .thenComposeAsync(loanPolicyValidator::refuseWhenLoanPolicyHasNoTimetable)
       .thenComposeAsync(r -> r.after(itemLimitValidator::refuseWhenItemLimitIsReached))
       .thenComposeAsync(r -> r.after(overdueFinePolicyRepository::lookupOverdueFinePolicy))
       .thenComposeAsync(r -> r.after(lostItemPolicyRepository::lookupLostItemPolicy))
