@@ -2,7 +2,7 @@ package org.folio.circulation.domain;
 
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getIntegerProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
-import static org.folio.circulation.support.utils.DateTimeUtil.toJavaDateTime;
+import static org.folio.circulation.support.utils.DateTimeUtil.toZonedDateTime;
 
 import java.time.temporal.ChronoUnit;
 
@@ -38,7 +38,7 @@ public class TimePeriod {
   }
 
   public long between(DateTime start, DateTime end) {
-    return getInterval().between(toJavaDateTime(start), toJavaDateTime(end));
+    return getInterval().between(toZonedDateTime(start), toZonedDateTime(end));
   }
 
   public boolean isLongTermPeriod() {
