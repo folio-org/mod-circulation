@@ -22,7 +22,6 @@ import api.support.builders.OpeningDayPeriodBuilder;
 import io.vertx.core.MultiMap;
 
 public class CalendarExamples {
-
   public static final String ROLLOVER_SCENARIO_SERVICE_POINT_ID = "22211111-2f09-4bc9-8924-3734882d44a3";
   public static final String ROLLOVER_SCENARIO_NEXT_DAY_CLOSED_SERVICE_POINT_ID = "33311111-2f09-4bc9-8924-3734882d44a3";
 
@@ -73,9 +72,7 @@ public class CalendarExamples {
 
   private static final Map<String, OpeningDayPeriodBuilder> fakeOpeningPeriods = new HashMap<>();
 
-  private CalendarExamples() {
-    // not use
-  }
+  private CalendarExamples() { }
 
   static {
     fakeOpeningPeriods.put(CASE_PREV_OPEN_AND_CURRENT_NEXT_CLOSED, new OpeningDayPeriodBuilder(CASE_WED_THU_FRI_DAY_ALL_SERVICE_POINT_ID,
@@ -294,16 +291,7 @@ public class CalendarExamples {
     return fakeOpeningPeriods.get(serviceId).getFirstPeriod();
   }
 
-  public static OpeningDayPeriod getCurrentFakeOpeningDayByServId(String serviceId) {
-    return fakeOpeningPeriods.get(serviceId).getCurrentPeriod();
-  }
-
   public static OpeningDayPeriod getLastFakeOpeningDayByServId(String serviceId) {
     return fakeOpeningPeriods.get(serviceId).getLastPeriod();
-  }
-
-  public static List<OpeningDayPeriod> getFakeOpeningDayByServId(String serviceId) {
-    OpeningDayPeriodBuilder periodBuilder = fakeOpeningPeriods.get(serviceId);
-    return Arrays.asList(periodBuilder.getFirstPeriod(), periodBuilder.getCurrentPeriod(), periodBuilder.getLastPeriod());
   }
 }
