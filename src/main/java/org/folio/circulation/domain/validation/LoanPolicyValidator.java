@@ -25,25 +25,21 @@ public class LoanPolicyValidator {
     this.calendarRepository = calendarRepository;
   }
 
-  public Result<LoanAndRelatedRecords> refuseWhenLoanPolicyHasNoTimetable(
+  public CompletableFuture<Result<LoanAndRelatedRecords>> refuseWhenLoanPolicyHasNoTimetable(
     Result<LoanAndRelatedRecords> result) {
-    return result.combineToResult(getOpeningDays(result).join(), (l, a) -> {
-      return result.failWhen(
-        loanAndRelatedRecords -> succeeded(hasNoTimetable(loanAndRelatedRecords, a)),
-        loanAndRelatedRecords -> ClosedLibraryStrategyUtils.failureForAbsentTimetable());
-    });
+
+    return result.failAfter(
+      l -> getOpeningDays(l),
+      l -> ClosedLibraryStrategyUtils.failureForAbsentTimetable());
   }
 
-  private CompletableFuture<Result<AdjacentOpeningDays>> getOpeningDays(
-    Result<LoanAndRelatedRecords> loanAndRelatedRecord) {
-    return loanAndRelatedRecord.after(r -> getOpeningDays(r));
-  }
-
-  private CompletableFuture<Result<AdjacentOpeningDays>> getOpeningDays(
-    LoanAndRelatedRecords loanAndRelatedRecord) {
+  private CompletableFuture<Result<Boolean>> getOpeningDays(LoanAndRelatedRecords loanAndRelatedRecords) {
     return calendarRepository.lookupOpeningDays(
-      getDueDate(loanAndRelatedRecord).toLocalDate(),
-      loanAndRelatedRecord.getLoan().getCheckoutServicePointId());
+      getDueDate(loanAndRelatedRecords).toLocalDate(),
+      loanAndRelatedRecords.getLoan().getCheckoutServicePointId())
+      .thenApply(r -> r.next(a -> {
+        return succeeded(hasNoTimetable(loanAndRelatedRecords, a));
+      }));
   }
 
   private DateTime getDueDate(LoanAndRelatedRecords loanAndRelatedRecord) {

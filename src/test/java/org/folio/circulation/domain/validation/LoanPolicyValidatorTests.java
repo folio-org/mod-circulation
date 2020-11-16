@@ -1,6 +1,7 @@
 package org.folio.circulation.domain.validation;
 
 import static java.util.Arrays.asList;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.hamcrest.CoreMatchers.is;
@@ -11,6 +12,8 @@ import static org.mockito.Mockito.when;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.AdjacentOpeningDays;
 import org.folio.circulation.domain.Item;
@@ -61,7 +64,7 @@ public class LoanPolicyValidatorTests {
   }
 
   @Test
-  public void hasNoTimetable() {
+  public void hasNoTimetable() throws InterruptedException, ExecutionException, TimeoutException {
     final LoanPolicyValidator validator = new LoanPolicyValidator(calendarRepository);
     final DateTime loanDate = new DateTime()
       .withDate(CURRENT_DATE)
@@ -70,13 +73,13 @@ public class LoanPolicyValidatorTests {
     final Result<LoanAndRelatedRecords> records = of(
       () -> appendTimetable(generateLoanAndRelatedRecords(loanDate)));
     final Result<LoanAndRelatedRecords> result =
-      validator.refuseWhenLoanPolicyHasNoTimetable(records);
+      validator.refuseWhenLoanPolicyHasNoTimetable(records).get(1, SECONDS);
 
     assertThat(result.succeeded(), is(false));
   }
 
   @Test
-  public void hasTimetable() {
+  public void hasTimetable() throws InterruptedException, ExecutionException, TimeoutException {
     final LoanPolicyValidator validator = new LoanPolicyValidator(calendarRepository);
     final DateTime loanDate = new DateTime()
       .withDate(CURRENT_DATE)
@@ -86,7 +89,7 @@ public class LoanPolicyValidatorTests {
     final Result<LoanAndRelatedRecords> records = of(
       () -> appendTimetable(generateLoanAndRelatedRecords(loanDate)));
     final Result<LoanAndRelatedRecords> result =
-      validator.refuseWhenLoanPolicyHasNoTimetable(records);
+      validator.refuseWhenLoanPolicyHasNoTimetable(records).get(1, SECONDS);
 
     assertThat(result.succeeded(), is(true));
   }
