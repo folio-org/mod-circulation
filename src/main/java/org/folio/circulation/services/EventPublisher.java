@@ -87,6 +87,9 @@ public class EventPublisher {
   public CompletableFuture<Result<CheckInContext>> publishItemCheckedInEvents(
     CheckInContext checkInContext) {
 
+    JsonObject logEventPayload = mapToCheckInLogEventJson(checkInContext);
+    CompletableFuture.runAsync(() -> pubSubPublishingService.publishEvent(LOG_RECORD.name(), logEventPayload.encode()));
+
     if (checkInContext.getLoan() != null) {
       Loan loan = checkInContext.getLoan();
 
@@ -94,9 +97,6 @@ public class EventPublisher {
       write(payloadJsonObject, USER_ID_FIELD, loan.getUserId());
       write(payloadJsonObject, LOAN_ID_FIELD, loan.getId());
       write(payloadJsonObject, RETURN_DATE_FIELD, loan.getReturnDate());
-
-      JsonObject logEventPayload = mapToCheckInLogEventJson(checkInContext);
-      CompletableFuture.runAsync(() -> pubSubPublishingService.publishEvent(LOG_RECORD.name(), logEventPayload.encode()));
 
       return
         pubSubPublishingService.publishEvent(ITEM_CHECKED_IN.name(),

@@ -5,10 +5,12 @@ import static org.joda.time.DateTime.parse;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 import java.util.function.BiFunction;
 
 import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormat;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -68,6 +70,16 @@ public class JsonPropertyFetcher {
     }
   }
 
+  public static OffsetDateTime getOffsetDateTimeProperty(JsonObject representation,
+    String propertyName) {
+
+    if (representation != null && isNotBlank(representation.getString(propertyName))) {
+      return OffsetDateTime.parse(representation.getString(propertyName));
+    } else {
+      return null;
+    }
+  }
+
   public static DateTime getDateTimeProperty(JsonObject representation, String propertyName) {
     return getDateTimeProperty(representation, propertyName, null);
   }
@@ -85,6 +97,17 @@ public class JsonPropertyFetcher {
   public static LocalDate getLocalDateProperty(JsonObject representation, String propertyName) {
     if (representation != null && representation.containsKey(propertyName)) {
       return LocalDate.parse(representation.getString(propertyName));
+    } else {
+      return null;
+    }
+  }
+
+  public static org.joda.time.LocalDate getJodaLocalDateProperty(JsonObject representation,
+    String propertyName) {
+
+    if (representation != null && representation.containsKey(propertyName)) {
+      return org.joda.time.LocalDate.parse(representation.getString(propertyName),
+        DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ").withZoneUTC());
     } else {
       return null;
     }
