@@ -1,8 +1,10 @@
 package api.support.matchers;
 
+import static java.time.ZoneOffset.UTC;
 import static java.time.temporal.ChronoUnit.MILLIS;
 
 import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 
 import org.folio.circulation.support.ClockManager;
@@ -46,13 +48,14 @@ public class TextDateTimeMatcher {
       @Override
       protected boolean matchesSafely(String textRepresentation) {
         //response representation might vary from request representation
-        Instant actual = ZonedDateTime.parse(textRepresentation).toInstant();
+        final var actual = OffsetDateTime.parse(textRepresentation);
 
         //The zoned date time could have a higher precision than milliseconds
         //This makes comparison to an ISO formatted date time using milliseconds
         //excessively precise and brittle
         //Discovered when using JDK 13.0.1 instead of JDK 1.8.0_202-b08
-        return expected.truncatedTo(MILLIS).equals(actual);
+        return expected.truncatedTo(MILLIS).equals(actual.toInstant())
+          && actual.getOffset().equals(UTC);
       }
     };
   }
