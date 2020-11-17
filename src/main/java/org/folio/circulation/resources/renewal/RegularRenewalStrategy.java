@@ -64,6 +64,10 @@ public class RegularRenewalStrategy implements RenewalStrategy {
       final List<ValidationError> errors = validateIfRenewIsAllowed(loan, requestQueue);
       final LoanPolicy loanPolicy = loan.getLoanPolicy();
 
+      if (loanPolicy.isNotLoanable() || loanPolicy.isNotRenewable()) {
+        return failedValidation(errors);
+      }
+
       final Result<DateTime> proposedDueDateResult =
         calculateNewDueDate(loan, requestQueue, systemDate);
 

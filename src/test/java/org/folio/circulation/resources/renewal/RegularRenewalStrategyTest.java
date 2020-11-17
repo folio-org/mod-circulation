@@ -11,8 +11,12 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.joda.time.DateTime.now;
 import static org.joda.time.DateTimeZone.UTC;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 
-import java.util.List;
 import java.util.UUID;
 
 import org.folio.circulation.domain.ItemStatus;
@@ -201,6 +205,30 @@ public class RegularRenewalStrategyTest {
     final var renewResult = renew(loan);
 
     assertThat(renewResult, hasValidationError(hasMessage("renewal would not change the due date")));
+  }
+
+  @Test
+  public void shouldNotAttemptToCalculateDueDateWhenPolicyIsNotLoanable() {
+    final var loanPolicy = spy(new LoanPolicyBuilder()
+      .withLoanable(false).asDomainObject());
+
+    final var renewResult = renew(loanPolicy);
+
+    verify(loanPolicy, never()).determineStrategy(any(), anyBoolean(), anyBoolean(), any());
+    assertThat(renewResult, hasValidationErrors(
+      hasMessage("item is not loanable")));
+  }
+
+  @Test
+  public void shouldNotAttemptToCalculateDueDateWhenPolicyIsNotRenewable() {
+    final var loanPolicy = spy(new LoanPolicyBuilder()
+      .rolling(days(1)).notRenewable().asDomainObject());
+
+    final var renewResult = renew(loanPolicy);
+
+    verify(loanPolicy, never()).determineStrategy(any(), anyBoolean(), anyBoolean(), any());
+    assertThat(renewResult, hasValidationErrors(
+      hasMessage("loan is not renewable")));
   }
 
   private Result<Loan> renew(Loan loan, Request topRequest) {
