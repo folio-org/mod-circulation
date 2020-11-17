@@ -9,7 +9,6 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
 public class KeepCurrentDateStrategy implements ClosedLibraryStrategy {
-
   private final DateTimeZone zone;
 
   public KeepCurrentDateStrategy(DateTimeZone zone) {
@@ -18,6 +17,6 @@ public class KeepCurrentDateStrategy implements ClosedLibraryStrategy {
 
   @Override
   public Result<DateTime> calculateDueDate(DateTime requestedDate, AdjacentOpeningDays openingDays) {
-    return succeeded(requestedDate.withZone(zone).withTime(END_OF_A_DAY));
+    return succeeded(requestedDate.withZoneRetainFields(zone).withTime(END_OF_A_DAY));
   }
 }
