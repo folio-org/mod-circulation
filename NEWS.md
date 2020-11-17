@@ -1,3 +1,8 @@
+## 19.2.6 2020-11-17
+
+* Fixes receiving notices triggered by hold shelf expiration (CIRC-993)
+* Not loaned checked in item should appear in the circulation log (CIRC-1015)
+
 ## 19.2.5 2020-11-13
 
 * Fixes fixed due date range not being recognized if End Date is equal to Current Date (CIRC-782)
