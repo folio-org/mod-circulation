@@ -18,9 +18,9 @@ public class KeepCurrentStrategyTest {
   @Test
   public void testKeepCurrentDateStrategy() {
     ClosedLibraryStrategy keepCurrentStrategy = new KeepCurrentDateStrategy(UTC);
-    DateTime requestDate =
-      new DateTime(2019, JANUARY, 1, 0, 0)
-        .withZoneRetainFields(UTC);
+    DateTime requestDate = new DateTime(2019, JANUARY, 1, 0, 0)
+      .withZoneRetainFields(UTC);
+
     Result<DateTime> calculatedDateTime = keepCurrentStrategy.calculateDueDate(requestDate, null);
 
     DateTime expectedDate = requestDate.withTime(END_OF_A_DAY);
@@ -30,9 +30,9 @@ public class KeepCurrentStrategyTest {
   @Test
   public void testKeepCurrentDateTimeStrategy() {
     ClosedLibraryStrategy keepCurrentStrategy = new KeepCurrentDateTimeStrategy();
-    DateTime requestDate =
-      new DateTime(2019, JANUARY, 1, 0, 0)
-        .withZoneRetainFields(UTC);
+    DateTime requestDate = new DateTime(2019, JANUARY, 1, 0, 0)
+      .withZoneRetainFields(UTC);
+
     Result<DateTime> calculatedDateTime = keepCurrentStrategy.calculateDueDate(requestDate, null);
 
     assertEquals(requestDate, calculatedDateTime.value());
