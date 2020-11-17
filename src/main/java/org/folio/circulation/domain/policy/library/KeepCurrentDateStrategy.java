@@ -18,6 +18,11 @@ public class KeepCurrentDateStrategy implements ClosedLibraryStrategy {
 
   @Override
   public Result<DateTime> calculateDueDate(DateTime requestedDate, AdjacentOpeningDays openingDays) {
-    return succeeded(requestedDate.withZone(zone).withTime(END_OF_A_DAY));
+    final DateTime dueDate = requestedDate.withZone(zone)
+      // Always keep the requested date
+      .withDate(requestedDate.toLocalDate())
+      .withTime(END_OF_A_DAY);
+
+    return succeeded(dueDate);
   }
 }
