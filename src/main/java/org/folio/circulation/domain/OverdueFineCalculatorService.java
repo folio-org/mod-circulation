@@ -124,7 +124,7 @@ public class OverdueFineCalculatorService {
     }
 
     if (!loan.getLostItemPolicy().shouldRefundFees(loan.getLostDate())
-      && !loan.getAccounts().isEmpty()) {
+      && !loan.hasAssociatedFeesAndFines()) {
       // any fee is assigned and refund period has passed.
       return false;
     }
