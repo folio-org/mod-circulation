@@ -1,17 +1,17 @@
 package org.folio.circulation.domain.policy.library;
 
-import org.folio.circulation.support.results.Result;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeConstants;
-import org.joda.time.DateTimeZone;
-import org.junit.Test;
-
 import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.END_OF_A_DAY;
+import static org.joda.time.DateTimeConstants.JANUARY;
 import static org.joda.time.DateTimeZone.UTC;
 import static org.joda.time.DateTimeZone.forOffsetHours;
 import static org.junit.Assert.assertEquals;
 
 import java.util.stream.IntStream;
+
+import org.folio.circulation.support.results.Result;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.junit.Test;
 
 public class KeepCurrentStrategyTest {
 
@@ -19,7 +19,7 @@ public class KeepCurrentStrategyTest {
   public void testKeepCurrentDateStrategy() {
     ClosedLibraryStrategy keepCurrentStrategy = new KeepCurrentDateStrategy(UTC);
     DateTime requestDate =
-      new DateTime(2019, DateTimeConstants.JANUARY, 1, 0, 0)
+      new DateTime(2019, JANUARY, 1, 0, 0)
         .withZoneRetainFields(UTC);
     Result<DateTime> calculatedDateTime = keepCurrentStrategy.calculateDueDate(requestDate, null);
 
@@ -31,7 +31,7 @@ public class KeepCurrentStrategyTest {
   public void testKeepCurrentDateTimeStrategy() {
     ClosedLibraryStrategy keepCurrentStrategy = new KeepCurrentDateTimeStrategy();
     DateTime requestDate =
-      new DateTime(2019, DateTimeConstants.JANUARY, 1, 0, 0)
+      new DateTime(2019, JANUARY, 1, 0, 0)
         .withZoneRetainFields(UTC);
     Result<DateTime> calculatedDateTime = keepCurrentStrategy.calculateDueDate(requestDate, null);
 
