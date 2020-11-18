@@ -42,7 +42,7 @@ public class TextDateTimeMatcher {
       @Override
       public void describeTo(Description description) {
         description.appendText(String.format(
-          "a date and time matching: %s", expected.toString()));
+          "an RFC-3339 formatted date and time with a UTC (zero) offset matching: %s", expected.toString()));
       }
 
       @Override
