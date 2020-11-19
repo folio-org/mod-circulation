@@ -270,7 +270,7 @@ public class Item {
   }
 
 
-  Item changeStatus(ItemStatus newStatus) {
+  public Item changeStatus(ItemStatus newStatus) {
     if (isNotSameStatus(newStatus)) {
       changed = true;
     }
