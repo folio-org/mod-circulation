@@ -115,11 +115,7 @@ public class UpdateItem {
   public CompletableFuture<Result<LoanAndRelatedRecords>> onCheckOut(
     LoanAndRelatedRecords relatedRecords) {
 
-    //Hack for creating returned loan - should distinguish further up the chain
-    return succeeded(relatedRecords).afterWhen(
-      records -> loanIsClosed(relatedRecords),
-      UpdateItem::skip,
-      records -> updateItemStatusOnCheckOut(relatedRecords));
+    return updateItemStatusOnCheckOut(relatedRecords);
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> onLoanUpdate(
