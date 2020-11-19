@@ -28,8 +28,9 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
   }
 
   public LoanAndRelatedRecords changeItemStatus(ItemStatus status) {
-    return withItem(getLoan().getItem().changeStatus(status));
+    return withItem(getItem().changeStatus(status));
   }
+
 
   public LoanAndRelatedRecords withLoan(Loan newLoan) {
     return new LoanAndRelatedRecords(newLoan, requestQueue, timeZone, logContextProperties);
@@ -53,8 +54,7 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
   }
 
   public LoanAndRelatedRecords withItemEffectiveLocationIdAtCheckOut() {
-    Item item = this.loan.getItem();
-    return withLoan(loan.changeItemEffectiveLocationIdAtCheckOut(item.getLocationId()));
+    return withLoan(loan.changeItemEffectiveLocationIdAtCheckOut(getItem().getLocationId()));
   }
 
   public LoanAndRelatedRecords withTimeZone(DateTimeZone newTimeZone) {
@@ -63,6 +63,10 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
 
   public Loan getLoan() {
     return loan;
+  }
+
+  public Item getItem() {
+    return getLoan().getItem();
   }
 
   public RequestQueue getRequestQueue() {
