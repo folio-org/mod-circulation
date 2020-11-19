@@ -94,11 +94,8 @@ public class LostItemFeePoliciesFixture {
       .withItemAgedToLostAfterOverdue(itemAgedLostOverdue)
       .billPatronImmediatelyWhenAgedToLost()
       .withSetCost(10.00)
-      .doNotChargeProcessingFeeWhenDeclaredLost()
+      .doNotChargeProcessingFeeWhenAgedToLost()
       .withChargeAmountItemSystem(true)
-      .refundProcessingFeeWhenReturned()
-      .withReplacedLostItemProcessingFee(true)
-      .withReplacementAllowed(true)
       .refundFeesWithinMinutes(10)
       .chargeOverdueFineWhenReturned();
   }
