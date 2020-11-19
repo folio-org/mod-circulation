@@ -1,5 +1,6 @@
 package org.folio.circulation.resources;
 
+import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.PROXY_USER_BARCODE;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.SERVICE_POINT_ID;
@@ -174,6 +175,7 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenApply(r -> r.next(this::setItemLocationIdAtCheckout))
       .thenComposeAsync(r -> r.after(relatedRecords -> checkOutStrategy.checkOut(relatedRecords,
         routingContext.getBodyAsJson(), clients)))
+      .thenApply(r -> r.map(this::checkOutItem))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
       .thenComposeAsync(r -> r.after(loanService::truncateLoanWhenItemRecalled))
       .thenComposeAsync(r -> r.after(loanService::truncateLoanDueDateIfPatronExpiresEarlier))
@@ -187,6 +189,10 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
       .thenApply(this::createdLoanFrom)
       .thenAccept(context::writeResultToHttpResponse);
+  }
+
+  private LoanAndRelatedRecords checkOutItem(LoanAndRelatedRecords loanAndRelatedRecords) {
+    return loanAndRelatedRecords.changeItemStatus(CHECKED_OUT);
   }
 
   private Result<HttpResponse> createdLoanFrom(Result<JsonObject> result) {

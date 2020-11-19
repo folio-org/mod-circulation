@@ -1,7 +1,8 @@
 package org.folio.circulation.domain;
 
-import io.vertx.core.json.JsonObject;
 import org.joda.time.DateTimeZone;
+
+import io.vertx.core.json.JsonObject;
 
 public class LoanAndRelatedRecords implements UserRelatedRecord {
   public static final String REASON_TO_OVERRIDE = "reasonToOverride";
@@ -24,6 +25,10 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
 
   public LoanAndRelatedRecords(Loan loan, DateTimeZone timeZone) {
     this(loan, null, timeZone, new JsonObject());
+  }
+
+  public LoanAndRelatedRecords changeItemStatus(ItemStatus status) {
+    return withItem(getLoan().getItem().changeStatus(status));
   }
 
   public LoanAndRelatedRecords withLoan(Loan newLoan) {
