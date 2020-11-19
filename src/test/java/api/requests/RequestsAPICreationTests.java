@@ -18,6 +18,7 @@ import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static java.util.Arrays.asList;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.function.Function.identity;
 import static org.folio.HttpStatus.HTTP_BAD_REQUEST;
 import static org.folio.HttpStatus.HTTP_CREATED;
@@ -32,6 +33,7 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.emptyString;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertTrue;
@@ -1428,7 +1430,7 @@ public class RequestsAPICreationTests extends APITests {
       .withTags(new RequestBuilder.Tags(asList("new", "important"))));
 
     Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
+      .atMost(1, SECONDS)
       .until(patronNoticesClient::getAll, Matchers.hasSize(1));
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
 
@@ -1496,7 +1498,7 @@ public class RequestsAPICreationTests extends APITests {
       .withTags(new RequestBuilder.Tags(asList("new", "important"))));
 
     Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
+      .atMost(1, SECONDS)
       .until(patronNoticesClient::getAll, Matchers.hasSize(1));
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
 
@@ -1584,7 +1586,7 @@ public class RequestsAPICreationTests extends APITests {
     IndividualResource loanAfterRecall = loansClient.get(loan.getId());
 
     Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
+      .atMost(1, SECONDS)
       .until(patronNoticesClient::getAll, Matchers.hasSize(2));
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
 
@@ -1608,7 +1610,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void recallNoticeToLoanOwnerIsNotSendWhenDueDateIsNotChanged()
+  public void recallNoticeToLoanOwnerIsSendWhenDueDateIsNotChanged()
     throws InterruptedException {
 
     UUID recallToLoanOwnerTemplateId = UUID.randomUUID();
@@ -1661,10 +1663,11 @@ public class RequestsAPICreationTests extends APITests {
       .withPickupServicePointId(pickupServicePointId)
       .withTags(new RequestBuilder.Tags(asList("new", "important"))));
 
-    TimeUnit.SECONDS.sleep(1);
-    List<JsonObject> sentNotices = patronNoticesClient.getAll();
-    assertThat("Recall notice to loan owner shouldn't be sent when due date hasn't been changed",
-      sentNotices, Matchers.empty());
+    // Recall notice to loan owner should be sent when due date hasn't been changed
+    Awaitility.await()
+      .pollDelay(1, SECONDS)
+      .until(patronNoticesClient::getAll, hasSize(1));
+
     assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
     assertThatPublishedLogRecordEventsAreValid();
   }
