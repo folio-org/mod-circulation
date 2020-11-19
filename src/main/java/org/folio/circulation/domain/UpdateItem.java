@@ -112,12 +112,6 @@ public class UpdateItem {
       records -> updateItemStatusOnCheckOut(relatedRecords));
   }
 
-  public CompletableFuture<Result<LoanAndRelatedRecords>> onCheckOut(
-    LoanAndRelatedRecords relatedRecords) {
-
-    return updateItemStatusOnCheckOut(relatedRecords);
-  }
-
   public CompletableFuture<Result<LoanAndRelatedRecords>> onLoanUpdate(
     LoanAndRelatedRecords loanAndRelatedRecords) {
 
