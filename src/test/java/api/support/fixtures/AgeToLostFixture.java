@@ -23,6 +23,7 @@ import org.joda.time.DateTime;
 import api.support.builders.HoldingBuilder;
 import api.support.builders.ItemBuilder;
 import api.support.builders.LostItemFeePolicyBuilder;
+import api.support.builders.OverdueFinePolicyBuilder;
 import api.support.fixtures.policies.PoliciesActivationFixture;
 import api.support.fixtures.policies.PoliciesToActivate;
 import api.support.http.ResourceClient;
@@ -80,6 +81,16 @@ public final class AgeToLostFixture {
     assertThat(ageToLostResult.getItem().getJson(), isAgedToLost());
 
     return ageToLostResult;
+  }
+
+  public AgeToLostResult createLoanAgeToLostAndChargeFeesWithOverdues(LostItemFeePolicyBuilder lostBuilder, IndividualResource overduePolicy) {
+    
+      return createLoanAgeToLostAndChargeFees(UnaryOperator.identity(), 
+        PoliciesToActivate.builder()
+          .lostItemPolicy(lostItemFeePoliciesFixture.create(lostBuilder))
+          .overduePolicy(overduePolicy)
+      );
+
   }
 
   public AgeToLostResult createLoanAgeToLostAndChargeFees(LostItemFeePolicyBuilder builder) {

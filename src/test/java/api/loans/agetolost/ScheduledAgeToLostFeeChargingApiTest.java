@@ -1,5 +1,5 @@
 package api.loans.agetolost;
-
+import static org.hamcrest.core.Is.is;
 import static api.support.matchers.AccountMatchers.isOpen;
 import static api.support.matchers.ItemMatchers.isLostAndPaid;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
@@ -11,6 +11,7 @@ import static api.support.matchers.LoanAccountMatcher.hasLostItemProcessingFee;
 import static api.support.matchers.LoanAccountMatcher.hasNoLostItemFee;
 import static api.support.matchers.LoanAccountMatcher.hasNoLostItemProcessingFee;
 import static api.support.matchers.LoanHistoryMatcher.hasLoanHistoryInOrder;
+import static api.support.matchers.LoanAccountMatcher.hasNoOverdueFine;
 import static api.support.matchers.LoanMatchers.isClosed;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
@@ -20,6 +21,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.iterableWithSize;
 
+import static org.joda.time.DateTime.now;
+import static org.joda.time.DateTimeZone.UTC;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -27,6 +31,7 @@ import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.policy.Period;
 import org.hamcrest.Matcher;
+import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -287,6 +292,38 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     assertThat(result.getLoan().getJson(), isClosed());
     assertThat(result.getItem().getJson(), isLostAndPaid());
     assertThatPublishedLoanLogRecordEventsAreValid();
+  }
+
+  @Test
+  public void shouldNotChargeOverdueOnCheckinWhenBilledForItemAndRefundFeePeriodPassed() {
+    // for a loan that charges both lost fees and overdue fines
+    // where the policies are set such that:
+    // 1. the item charges overdue fees on checkin
+    // 2. A refund expiration date is set
+    // 3. The item is aged to lost
+    // 4. the item has been charged some form of lost item fee
+    // 5.  the item is checked in after the item has been charged lost fees and after the refund expiration date has passed
+    // THEN the loan SHOULD NOT have overdue charges
+
+    val lostItemPolicy = lostItemFeePoliciesFixture.ageToLostAfterOneWeekPolicy();
+
+    IndividualResource overduePolicy = overdueFinePoliciesFixture.facultyStandard();
+
+    feeFineTypeFixture.overdueFine();
+
+    val result = ageToLostFixture.createLoanAgeToLostAndChargeFeesWithOverdues(lostItemPolicy, overduePolicy);
+
+    assertThat(result.getLoan().getJson(), isLostItemHasBeenBilled());
+
+    UUID loanId = result.getLoan().getId();
+
+    // the creation fucntion ages the loan eight weeks into the future.  
+    // it must be checked in after that timeframe to properly examine the 
+    // overdue charges
+    checkInFixture.checkInByBarcode(result.getItem(), now().plusWeeks(9));
+
+    assertThat(loansFixture.getLoanById(loanId), hasNoOverdueFine());
+
   }
 
   private Map<IndividualResource, Double> checkoutTenItems() {

@@ -86,6 +86,23 @@ public class LostItemFeePoliciesFixture {
       .withChargeAmountItemSystem(true);
   }
 
+  public LostItemFeePolicyBuilder ageToLostAfterOneWeekPolicy() {
+    Period itemAgedLostOverdue = Period.weeks(1);
+
+    return new LostItemFeePolicyBuilder()
+      .withName("lost item allows for overdues")
+      .withItemAgedToLostAfterOverdue(itemAgedLostOverdue)
+      .billPatronImmediatelyWhenAgedToLost()
+      .withSetCost(10.00)
+      .doNotChargeProcessingFeeWhenDeclaredLost()
+      .withChargeAmountItemSystem(true)
+      .refundProcessingFeeWhenReturned()
+      .withReplacedLostItemProcessingFee(true)
+      .withReplacementAllowed(true)
+      .refundFeesWithinMinutes(10)
+      .chargeOverdueFineWhenReturned();
+  }
+
   public IndividualResource create(UUID id, String name) {
     return lostItemFeePolicyRecordCreator.createIfAbsent(new LostItemFeePolicyBuilder()
       .withId(id)
