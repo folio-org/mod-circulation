@@ -1,3 +1,6 @@
+## 19.2.7 2020-11-20
+* Removes dueDateChanged checking for sending recall notice (CIRC-989)
+
 ## 19.2.6 2020-11-17
 
 * Fixes receiving notices triggered by hold shelf expiration (CIRC-993)
