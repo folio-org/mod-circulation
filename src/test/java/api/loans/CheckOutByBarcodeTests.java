@@ -8,6 +8,7 @@ import static api.support.builders.ItemBuilder.CHECKED_OUT;
 import static api.support.builders.ItemBuilder.CLAIMED_RETURNED;
 import static api.support.fixtures.AutomatedPatronBlocksFixture.MAX_NUMBER_OF_ITEMS_CHARGED_OUT_MESSAGE;
 import static api.support.fixtures.AutomatedPatronBlocksFixture.MAX_OUTSTANDING_FEE_FINE_BALANCE_MESSAGE;
+import static api.support.fixtures.CalendarExamples.CASE_CALENDAR_IS_EMPTY_SERVICE_POINT_ID;
 import static api.support.fixtures.CalendarExamples.CASE_ONE_DAY_IS_OPEN_NEXT_TWO_DAYS_CLOSED;
 import static api.support.fixtures.CalendarExamples.FIRST_DAY_OPEN;
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasItemBarcodeParameter;
@@ -34,6 +35,7 @@ import static java.util.stream.Collectors.groupingBy;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.domain.EventType.ITEM_CHECKED_OUT;
 import static org.folio.circulation.domain.EventType.LOG_RECORD;
+import static org.folio.circulation.domain.policy.DueDateManagement.KEEP_THE_CURRENT_DUE_DATE;
 import static org.folio.circulation.domain.policy.Period.months;
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 import static org.folio.circulation.domain.representations.logs.LogEventType.CHECK_OUT;
@@ -53,7 +55,6 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import org.awaitility.Awaitility;
-import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
@@ -1360,6 +1361,39 @@ public class CheckOutByBarcodeTests extends APITests {
     assertThat(DateTime.parse(response.getString("dueDate")).toLocalDate(), is(FIRST_DAY_OPEN));
   }
 
+  @Test
+  public void dueDateTruncationForPatronExpirationFailsWhenNoCalendarIsDefinedForServicePoint() {
+    mockClockManagerToReturnFixedDateTime(new DateTime(2020, 10, 27, 10, 0, UTC));
+
+    final UUID book = materialTypesFixture.book().getId();
+
+    circulationRulesFixture.updateCirculationRules(
+      createRulesWithFixedDueDateInLoanPolicy("m " + book));
+
+    IndividualResource item = itemsFixture.basedUponNod();
+    IndividualResource steve = usersFixture.steve(user -> user.expires(
+      DateTime.now().plusDays(3)));
+
+    final var response = checkOutFixture.attemptCheckOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(item)
+        .to(steve)
+        .at(CASE_CALENDAR_IS_EMPTY_SERVICE_POINT_ID));
+
+    mockClockManagerToReturnDefaultDateTime();
+
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Calendar timetable is absent for requested date"))));
+
+    final var incorrectlyUpdateItem = itemsClient.get(item);
+
+    // As the truncation of the due date happens after the item has been updated
+    // the item is checked out in error
+    assertThat(incorrectlyUpdateItem, hasItemStatus("Checked out"));
+  }
+
+
   private IndividualResource prepareLoanPolicyWithItemLimit(int itemLimit) {
     return loanPoliciesFixture.create(
       new LoanPolicyBuilder()
@@ -1376,8 +1410,7 @@ public class CheckOutByBarcodeTests extends APITests {
         .withName("Loan Policy with item limit and fixed due date")
         .withItemLimit(itemLimit)
         .fixed(fixedDueDateScheduleId)
-        .withClosedLibraryDueDateManagement(
-          DueDateManagement.KEEP_THE_CURRENT_DUE_DATE.getValue()));
+        .withClosedLibraryDueDateManagement(KEEP_THE_CURRENT_DUE_DATE.getValue()));
   }
 
   private IndividualResource prepareLoanPolicyWithoutItemLimit() {
