@@ -1,5 +1,5 @@
 package api.loans.agetolost;
-import static org.hamcrest.core.Is.is;
+
 import static api.support.matchers.AccountMatchers.isOpen;
 import static api.support.matchers.ItemMatchers.isLostAndPaid;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
@@ -308,8 +308,6 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     val lostItemPolicy = lostItemFeePoliciesFixture.ageToLostAfterOneWeekPolicy();
 
     IndividualResource overduePolicy = overdueFinePoliciesFixture.facultyStandard();
-
-    feeFineTypeFixture.overdueFine();
 
     val result = ageToLostFixture.createLoanAgeToLostAndChargeFeesWithOverdues(lostItemPolicy, overduePolicy);
 

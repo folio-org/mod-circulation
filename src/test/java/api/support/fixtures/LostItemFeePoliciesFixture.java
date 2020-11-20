@@ -40,6 +40,12 @@ public class LostItemFeePoliciesFixture {
     return create(ageToLostAfterOneMinutePolicy());
   }
 
+  public IndividualResource ageToLostAfterOneWeek() {
+    createReferenceData();
+
+    return create(ageToLostAfterOneWeekPolicy());
+  }
+
 
   public LostItemFeePolicyBuilder facultyStandardPolicy() {
     final Period itemAgedLostOverdue = Period.months(12);
