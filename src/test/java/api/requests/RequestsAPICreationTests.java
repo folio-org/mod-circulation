@@ -33,8 +33,8 @@ import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.emptyString;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertTrue;
@@ -1506,7 +1506,7 @@ RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void recallNoticeToLoanOwnerIsNotSendWhenDueDateIsNotChanged() {
+  public void recallNoticeToLoanOwnerIsSendWhenDueDateIsNotChanged() {
     UUID recallToLoanOwnerTemplateId = UUID.randomUUID();
     JsonObject recallToLoanOwnerNoticeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(recallToLoanOwnerTemplateId)
@@ -1557,10 +1557,10 @@ RequestsAPICreationTests extends APITests {
       .withPickupServicePointId(pickupServicePointId)
       .withTags(new RequestBuilder.Tags(asList("new", "important"))));
 
-    // Recall notice to loan owner shouldn't be sent when due date hasn't been changed
+    // Recall notice to loan owner should be sent when due date hasn't been changed
     await()
       .pollDelay(1, SECONDS)
-      .until(patronNoticesClient::getAll, empty());
+      .until(patronNoticesClient::getAll, hasSize(1));
 
     assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
     assertThatPublishedLogRecordEventsAreValid();
