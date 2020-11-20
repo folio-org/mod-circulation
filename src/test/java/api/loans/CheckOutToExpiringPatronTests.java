@@ -22,10 +22,22 @@ import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
 
 public class CheckOutToExpiringPatronTests extends APITests {
+  @Override
+  public void beforeEach() throws InterruptedException {
+    super.beforeEach();
+
+    mockClockManagerToReturnFixedDateTime(new DateTime(2020, 10, 27, 10, 0, UTC));
+  }
+
+  @Override
+  public void afterEach() {
+    super.afterEach();
+
+    mockClockManagerToReturnDefaultDateTime();
+  }
+
   @Test
   public void dueDateShouldBeTruncatedToTheEndOfLastWorkingDayBeforePatronExpiration() {
-    mockClockManagerToReturnFixedDateTime(new DateTime(2020, 10, 27, 10, 0, UTC));
-
     useExampleFixedPolicyCirculationRules();
 
     IndividualResource item = itemsFixture.basedUponNod();
@@ -38,14 +50,11 @@ public class CheckOutToExpiringPatronTests extends APITests {
         .to(steve)
         .at(CASE_ONE_DAY_IS_OPEN_NEXT_TWO_DAYS_CLOSED)).getJson();
 
-    mockClockManagerToReturnDefaultDateTime();
     assertThat(DateTime.parse(response.getString("dueDate")).toLocalDate(), is(FIRST_DAY_OPEN));
   }
 
   @Test
   public void dueDateTruncationForPatronExpirationFailsWhenNoCalendarIsDefinedForServicePoint() {
-    mockClockManagerToReturnFixedDateTime(new DateTime(2020, 10, 27, 10, 0, UTC));
-
     useExampleFixedPolicyCirculationRules();
 
     IndividualResource item = itemsFixture.basedUponNod();
@@ -57,8 +66,6 @@ public class CheckOutToExpiringPatronTests extends APITests {
         .forItem(item)
         .to(steve)
         .at(CASE_CALENDAR_IS_EMPTY_SERVICE_POINT_ID));
-
-    mockClockManagerToReturnDefaultDateTime();
 
     assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(response.getJson(), hasErrorWith(allOf(
