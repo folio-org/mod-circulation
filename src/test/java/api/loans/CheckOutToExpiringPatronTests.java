@@ -8,21 +8,16 @@ import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
-import static org.folio.circulation.domain.policy.DueDateManagement.KEEP_THE_CURRENT_DUE_DATE;
-import static org.folio.circulation.domain.policy.Period.months;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.joda.time.DateTimeZone.UTC;
-
-import java.util.UUID;
 
 import org.joda.time.DateTime;
 import org.junit.Test;
 
 import api.support.APITests;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
-import api.support.builders.LoanPolicyBuilder;
 import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
 
@@ -30,10 +25,8 @@ public class CheckOutToExpiringPatronTests extends APITests {
   @Test
   public void dueDateShouldBeTruncatedToTheEndOfLastWorkingDayBeforePatronExpiration() {
     mockClockManagerToReturnFixedDateTime(new DateTime(2020, 10, 27, 10, 0, UTC));
-    final UUID book = materialTypesFixture.book().getId();
 
-    circulationRulesFixture.updateCirculationRules(
-      createRulesWithFixedDueDateInLoanPolicy("m " + book));
+    useExampleFixedPolicyCirculationRules();
 
     IndividualResource item = itemsFixture.basedUponNod();
     IndividualResource steve = usersFixture.steve(user -> user.expires(
@@ -53,10 +46,7 @@ public class CheckOutToExpiringPatronTests extends APITests {
   public void dueDateTruncationForPatronExpirationFailsWhenNoCalendarIsDefinedForServicePoint() {
     mockClockManagerToReturnFixedDateTime(new DateTime(2020, 10, 27, 10, 0, UTC));
 
-    final UUID book = materialTypesFixture.book().getId();
-
-    circulationRulesFixture.updateCirculationRules(
-      createRulesWithFixedDueDateInLoanPolicy("m " + book));
+    useExampleFixedPolicyCirculationRules();
 
     IndividualResource item = itemsFixture.basedUponNod();
     IndividualResource steve = usersFixture.steve(user -> user.expires(
@@ -79,39 +69,5 @@ public class CheckOutToExpiringPatronTests extends APITests {
     // As the truncation of the due date happens after the item has been updated
     // the item is checked out in error
     assertThat(incorrectlyUpdateItem, hasItemStatus("Checked out"));
-  }
-
-  private IndividualResource prepareLoanPolicyWithItemLimitAndFixedDueDate(
-    int itemLimit, UUID fixedDueDateScheduleId) {
-    return loanPoliciesFixture.create(
-      new LoanPolicyBuilder()
-        .withName("Loan Policy with item limit and fixed due date")
-        .withItemLimit(itemLimit)
-        .fixed(fixedDueDateScheduleId)
-        .withClosedLibraryDueDateManagement(KEEP_THE_CURRENT_DUE_DATE.getValue()));
-  }
-
-  private IndividualResource prepareLoanPolicyWithoutItemLimit() {
-    return loanPoliciesFixture.create(
-      new LoanPolicyBuilder()
-        .withName("Loan Policy without item limit")
-        .rolling(months(2))
-        .renewFromCurrentDueDate());
-  }
-
-  private String createRulesWithFixedDueDateInLoanPolicy(String ruleCondition) {
-    UUID fixedDueDateScheduleId = loanPoliciesFixture.createExampleFixedDueDateSchedule().getId();
-    final String loanPolicyWithItemLimitAndFixedDueDateId = prepareLoanPolicyWithItemLimitAndFixedDueDate(
-      1, fixedDueDateScheduleId).getId().toString();
-    final String loanPolicyWithoutItemLimitId = prepareLoanPolicyWithoutItemLimit().getId().toString();
-    final String anyRequestPolicy = requestPoliciesFixture.allowAllRequestPolicy().getId().toString();
-    final String anyNoticePolicy = noticePoliciesFixture.activeNotice().getId().toString();
-    final String anyOverdueFinePolicy = overdueFinePoliciesFixture.facultyStandard().getId().toString();
-    final String anyLostItemFeePolicy = lostItemFeePoliciesFixture.facultyStandard().getId().toString();
-
-    return String.join("\n",
-      "priority: t, s, c, b, a, m, g",
-      "fallback-policy: l " + loanPolicyWithoutItemLimitId + " r " + anyRequestPolicy + " n " + anyNoticePolicy + " o " + anyOverdueFinePolicy + " i " + anyLostItemFeePolicy,
-      ruleCondition + " : l " + loanPolicyWithItemLimitAndFixedDueDateId + " r " + anyRequestPolicy + " n " + anyNoticePolicy  + " o " + anyOverdueFinePolicy + " i " + anyLostItemFeePolicy);
   }
 }
