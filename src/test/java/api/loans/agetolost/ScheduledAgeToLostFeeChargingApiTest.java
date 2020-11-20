@@ -317,10 +317,12 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
 
     UUID loanId = result.getLoan().getId();
 
-    // the creation fucntion ages the loan eight weeks into the future.  
+    // the creation function ages the loan eight weeks into the future.  
     // it must be checked in after that timeframe to properly examine the 
     // overdue charges
-    checkInFixture.checkInByBarcode(result.getItem(), now().plusWeeks(9));
+    final DateTime checkInDate = now(UTC).plusWeeks(9);
+    mockClockManagerToReturnFixedDateTime(checkInDate);
+    checkInFixture.checkInByBarcode(result.getItem(), checkInDate);
 
     assertThat(loansFixture.getLoanById(loanId), hasNoOverdueFine());
 
