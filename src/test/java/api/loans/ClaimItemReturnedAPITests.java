@@ -19,7 +19,6 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 
-import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -128,13 +127,11 @@ public class ClaimItemReturnedAPITests extends APITests {
 
     // Five events are expected: one for check-out one for log event, one for the claim
     // and one for log records
-    List<JsonObject> publishedEvents = Awaitility.await()
+    final var publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(FakePubSub::getPublishedEvents, hasSize(4));
 
-    JsonObject event = publishedEvents.stream()
-      .filter(evt -> ITEM_CLAIMED_RETURNED.equalsIgnoreCase(evt.getString("eventType")))
-      .findFirst().orElse(new JsonObject());
+    JsonObject event = publishedEvents.getEventByType(ITEM_CLAIMED_RETURNED);
 
     assertThat(event, isValidItemClaimedReturnedEvent(loan.getJson()));
     assertThatPublishedLoanLogRecordEventsAreValid();
