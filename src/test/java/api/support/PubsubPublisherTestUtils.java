@@ -6,7 +6,7 @@ import static java.util.stream.Collectors.toList;
 import static org.folio.circulation.domain.representations.logs.LogEventType.LOAN;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
 
 import java.util.List;
 import java.util.function.Predicate;
@@ -27,7 +27,7 @@ public class PubsubPublisherTestUtils {
   }
 
   public static void assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(int messagesCount) {
-    assertThat(getPublishedLogRecordEvents(NOTICE.value()).size(), equalTo(messagesCount));
+    assertThat(getPublishedLogRecordEvents(NOTICE.value()), hasSize(messagesCount));
   }
 
   public static List<JsonObject> getPublishedLogRecordEvents(String logEventType) {
