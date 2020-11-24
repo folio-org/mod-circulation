@@ -69,4 +69,11 @@ public class DeclareItemLostRequestBuilder extends JsonBuilder implements Builde
   public DeclareItemLostRequestBuilder withServicePointId(UUID servicePointId) {
     return new DeclareItemLostRequestBuilder(loanId, dateTime, comment, servicePointId.toString());
   }
+
+  public static DeclareItemLostRequestBuilder forLoan(UUID loanId) {
+    return new DeclareItemLostRequestBuilder()
+      .forLoanId(loanId)
+      .withComment("Declaring item lost")
+      .on(DateTime.now(DateTimeZone.UTC));
+  }
 }

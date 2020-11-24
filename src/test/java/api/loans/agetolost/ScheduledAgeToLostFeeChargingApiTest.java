@@ -1,8 +1,12 @@
 package api.loans.agetolost;
 
+import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
+import static api.support.builders.DeclareItemLostRequestBuilder.forLoan;
 import static api.support.matchers.AccountMatchers.isOpen;
+import static api.support.matchers.ItemMatchers.isDeclaredLost;
 import static api.support.matchers.ItemMatchers.isLostAndPaid;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
+import static api.support.matchers.JsonObjectMatcher.hasNoJsonPath;
 import static api.support.matchers.LoanAccountActionsMatcher.hasLostItemFeeCreatedBySystemAction;
 import static api.support.matchers.LoanAccountActionsMatcher.hasLostItemProcessingFeeCreatedBySystemAction;
 import static api.support.matchers.LoanAccountMatcher.hasLostItemFee;
@@ -14,7 +18,6 @@ import static api.support.matchers.LoanHistoryMatcher.hasLoanHistoryInOrder;
 import static api.support.matchers.LoanMatchers.isClosed;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
-import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
 import static java.lang.Boolean.TRUE;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
@@ -34,7 +37,10 @@ import api.support.builders.FeeFineOwnerBuilder;
 import api.support.builders.ItemBuilder;
 import api.support.builders.LostItemFeePolicyBuilder;
 import api.support.builders.ServicePointBuilder;
+import api.support.http.CheckOutResource;
 import api.support.http.IndividualResource;
+import api.support.http.ItemResource;
+import api.support.matchers.LoanMatchers;
 import api.support.spring.SpringApiTest;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
@@ -289,6 +295,31 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
+  @Test
+  public void shouldNotAgeToLostDeclaredLostItem() {
+    final double declaredLostProcessingFee = 10.00;
+    useLostItemPolicy(lostItemFeePoliciesFixture.create(
+      lostItemFeePoliciesFixture.ageToLostAfterOneMinutePolicy()
+        .withPatronBilledAfterAgedLost(Period.weeks(1))
+        .withNoChargeAmountItem()
+        .doNotChargeProcessingFeeWhenAgedToLost()
+        .chargeProcessingFeeWhenDeclaredLost(declaredLostProcessingFee)).getId());
+
+    final ItemResource item = itemsFixture.basedUponNod();
+    final CheckOutResource checkOut = checkOutFixture.checkOutByBarcode(item);
+
+    declareLostFixtures.declareItemLost(forLoan(checkOut.getId()));
+
+    ageToLostFixture.ageToLostAndChargeFees();
+
+    final IndividualResource loanFromStorage = loansStorageClient.get(checkOut.getId());
+    assertThat(loanFromStorage.getJson(), hasNoDelayedBillingInfo());
+    assertThat(loanFromStorage.getJson(), LoanMatchers.isOpen());
+    assertThat(loanFromStorage, hasLostItemProcessingFee(isOpen(declaredLostProcessingFee)));
+
+    assertThat(itemsFixture.getById(item.getId()).getJson(), isDeclaredLost());
+  }
+
   private Map<IndividualResource, Double> checkoutTenItems() {
     val loanToFeeMap = new LinkedHashMap<IndividualResource, Double>();
 
@@ -336,5 +367,9 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
 
   private Matcher<JsonObject> isLostItemHasNotBeenBilled() {
     return hasJsonPath("agedToLostDelayedBilling.lostItemHasBeenBilled", false);
+  }
+
+  private Matcher<JsonObject> hasNoDelayedBillingInfo() {
+    return hasNoJsonPath("agedToLostDelayedBilling");
   }
 }
