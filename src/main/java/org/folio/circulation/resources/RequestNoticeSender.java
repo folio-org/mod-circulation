@@ -72,9 +72,7 @@ public class RequestNoticeSender {
     patronNoticeService.acceptNoticeEvent(requestCreatedEvent, NoticeLogContext.from(request));
 
     Loan loan = request.getLoan();
-    if (request.getRequestType() == RequestType.RECALL &&
-      loan != null && loan.hasDueDateChanged()) {
-
+    if (request.getRequestType() == RequestType.RECALL && loan != null) {
       sendNoticeOnItemRecalledEvent(loan);
     }
     return Result.succeeded(relatedRecords);
