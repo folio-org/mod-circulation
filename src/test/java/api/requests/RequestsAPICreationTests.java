@@ -70,6 +70,7 @@ import api.support.builders.Address;
 import api.support.builders.HoldingBuilder;
 import api.support.builders.ItemBuilder;
 import api.support.builders.LoanPolicyBuilder;
+import api.support.builders.MoveRequestBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
@@ -1799,6 +1800,71 @@ RequestsAPICreationTests extends APITests {
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Recall requests are not allowed for this patron and item combination"),
       hasParameter("requestType", "Recall"))));
+  }
+
+  @Test
+  public void recallNoticeToLoanOwnerIsSentForMovedRecallIfDueDateIsNotChanged() {
+    UUID recallToLoanOwnerTemplateId = UUID.randomUUID();
+    JsonObject recallToLoanOwnerNoticeConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(recallToLoanOwnerTemplateId)
+      .withEventType(ITEM_RECALLED)
+      .create();
+    NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
+      .withName("Policy with recall notice")
+      .withLoanNotices(Collections.singletonList(
+        recallToLoanOwnerNoticeConfiguration));
+
+    LoanPolicyBuilder loanPolicy = new LoanPolicyBuilder()
+      .withName("Policy with recall notice")
+      .withDescription("Recall configuration has no effect on due date")
+      .rolling(Period.weeks(3))
+      .withClosedLibraryDueDateManagement(DueDateManagement.KEEP_THE_CURRENT_DUE_DATE.getValue())
+      .withRecallsMinimumGuaranteedLoanPeriod(Period.weeks(3))
+      .withRecallsRecallReturnInterval(Period.weeks(1));
+
+    useFallbackPolicies(
+      loanPoliciesFixture.create(loanPolicy).getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.create(noticePolicy).getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
+
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    IndividualResource itemToMoveTo = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource itemToMoveFrom = itemsFixture.basedUponInterestingTimes();
+    IndividualResource requester = usersFixture.rebecca();
+    IndividualResource loanOwner = usersFixture.jessica();
+
+    DateTime loanDate = new DateTime(2020, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+    checkOutFixture.checkOutByBarcode(itemToMoveTo, loanOwner, loanDate);
+    checkOutFixture.checkOutByBarcode(itemToMoveFrom, loanOwner, loanDate);
+
+    DateTime requestDate = loanDate.plusDays(1);
+    mockClockManagerToReturnFixedDateTime(requestDate);
+
+    IndividualResource recallRequest = requestsFixture.place(new RequestBuilder()
+      .withId(UUID.randomUUID())
+      .open()
+      .recall()
+      .forItem(itemToMoveFrom)
+      .by(requester)
+      .withRequestDate(requestDate)
+      .fulfilToHoldShelf()
+      .withRequestExpiration(LocalDate.of(2020, 7, 30))
+      .withHoldShelfExpiration(LocalDate.of(2020, 8, 31))
+      .withPickupServicePointId(pickupServicePointId)
+      .withTags(new RequestBuilder.Tags(asList("new", "important"))));
+
+    requestsFixture.move(new MoveRequestBuilder(recallRequest.getId(), itemToMoveTo.getId(),
+        RECALL.getValue()));
+
+    // Recall notice to loan owner should be sent twice without changing due date
+    await()
+      .pollDelay(1, SECONDS)
+      .until(patronNoticesClient::getAll, hasSize(2));
+
+    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+    assertThatPublishedLogRecordEventsAreValid();
   }
 
   private List<IndividualResource> createOneHundredRequests() {
