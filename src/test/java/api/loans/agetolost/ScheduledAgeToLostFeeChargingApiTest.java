@@ -296,7 +296,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
   }
 
   @Test
-  public void shouldNotAgeToLostDeclaredLostItem() {
+  public void declaredLostItemShouldNotBeAgedToLost() {
     final double declaredLostProcessingFee = 10.00;
     useLostItemPolicy(lostItemFeePoliciesFixture.create(
       lostItemFeePoliciesFixture.ageToLostAfterOneMinutePolicy()
@@ -316,6 +316,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     assertThat(loanFromStorage.getJson(), hasNoDelayedBillingInfo());
     assertThat(loanFromStorage.getJson(), LoanMatchers.isOpen());
     assertThat(loanFromStorage, hasLostItemProcessingFee(isOpen(declaredLostProcessingFee)));
+    assertThat(loanFromStorage, hasNoLostItemFee());
 
     assertThat(itemsFixture.getById(item.getId()).getJson(), isDeclaredLost());
   }
