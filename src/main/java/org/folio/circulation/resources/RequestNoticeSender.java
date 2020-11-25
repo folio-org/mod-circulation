@@ -69,7 +69,7 @@ public class RequestNoticeSender {
       .withEventType(eventType)
       .withNoticeContext(createRequestNoticeContext(request))
       .build();
-    if (request.getLoan() != null && request.getLoan().getUser() != null) {
+    if (item != null && requester != null) {
       patronNoticeService.acceptNoticeEvent(requestCreatedEvent, NoticeLogContext.from(request));
     }
 
