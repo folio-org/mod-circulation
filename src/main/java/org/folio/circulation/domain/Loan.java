@@ -52,6 +52,7 @@ import static org.folio.circulation.support.results.CommonFailures.failedDueToSe
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.utils.CommonUtils.executeIfNotNull;
 import static org.folio.circulation.support.utils.DateTimeUtil.mostRecentDate;
+import static org.joda.time.DateTimeZone.UTC;
 
 import java.util.Collection;
 import java.util.Objects;
@@ -110,7 +111,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Loan changeDueDate(DateTime newDueDate) {
-    write(representation, DUE_DATE, newDueDate);
+    write(representation, DUE_DATE, newDueDate.withZone(UTC));
 
     return this;
   }
