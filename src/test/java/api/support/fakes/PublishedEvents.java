@@ -23,4 +23,8 @@ public class PublishedEvents extends ArrayList<JsonObject> {
   public Stream<JsonObject> filter(Predicate<JsonObject> predicate) {
     return stream().filter(predicate);
   }
+
+  public JsonObject findFirst(Predicate<JsonObject> predicate) {
+    return filter(predicate).findFirst().orElse(new JsonObject());
+  }
 }

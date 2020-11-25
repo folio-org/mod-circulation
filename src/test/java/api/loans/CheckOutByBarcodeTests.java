@@ -1297,9 +1297,8 @@ public class CheckOutByBarcodeTests extends APITests {
 
     assertThat(checkedOutEvent, isValidItemCheckedOutEvent(loan));
 
-    final var checkOutLogEvent = publishedEvents.filter(
-      byEventType(LOG_RECORD.name()).and(byLogEventType(CHECK_OUT.value())))
-      .findFirst().orElse(new JsonObject());
+    final var checkOutLogEvent = publishedEvents.findFirst(
+      byEventType(LOG_RECORD.name()).and(byLogEventType(CHECK_OUT.value())));
 
     assertThat(checkOutLogEvent, isValidCheckOutLogEvent(loan));
     assertThatPublishedLoanLogRecordEventsAreValid();
