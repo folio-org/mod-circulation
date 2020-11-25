@@ -18,6 +18,17 @@ import io.vertx.core.json.JsonObject;
 public class PubsubPublisherTestUtils {
   private PubsubPublisherTestUtils() { }
 
+  public static Predicate<JsonObject> byLogEventType(String logEventType) {
+    final Predicate<JsonObject> byLogEventType = json ->
+      json.getString("eventPayload").contains(logEventType);
+
+    return byEventType(LOG_RECORD).and(byLogEventType);
+  }
+
+  public static Predicate<JsonObject> byLogAction(String action) {
+    return json -> json.getString("eventPayload").contains(action);
+  }
+
   public static void assertThatPublishedLoanLogRecordEventsAreValid() {
     getPublishedLogRecordEvents(LOAN.value()).forEach(EventMatchers::isValidLoanLogRecordEvent);
   }
@@ -31,24 +42,14 @@ public class PubsubPublisherTestUtils {
   }
 
   public static List<JsonObject> getPublishedLogRecordEvents(String logEventType) {
-    return FakePubSub.getPublishedEvents().filter(byLogEventType(logEventType))
-      .collect(toList());
+    return filterToList(byLogEventType(logEventType));
   }
 
   public static List<JsonObject> getPublishedLogRecordEvents(String logEventType, String action) {
-    return FakePubSub.getPublishedEvents().filter(byLogEventType(logEventType)
-        .and(byLogAction(action)))
-      .collect(toList());
+    return filterToList(byLogEventType(logEventType).and(byLogAction(action)));
   }
 
-  public static Predicate<JsonObject> byLogEventType(String logEventType) {
-    final Predicate<JsonObject> byLogEventType = json ->
-      json.getString("eventPayload").contains(logEventType);
-
-    return byEventType(LOG_RECORD).and(byLogEventType);
-  }
-
-  public static Predicate<JsonObject> byLogAction(String action) {
-    return json -> json.getString("eventPayload").contains(action);
+  private static List<JsonObject> filterToList(Predicate<JsonObject> predicate) {
+    return FakePubSub.getPublishedEvents().filter(predicate).collect(toList());
   }
 }
