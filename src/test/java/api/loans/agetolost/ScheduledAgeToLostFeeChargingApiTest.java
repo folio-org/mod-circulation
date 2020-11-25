@@ -37,7 +37,6 @@ import api.support.builders.FeeFineOwnerBuilder;
 import api.support.builders.ItemBuilder;
 import api.support.builders.LostItemFeePolicyBuilder;
 import api.support.builders.ServicePointBuilder;
-import api.support.http.CheckOutResource;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import api.support.matchers.LoanMatchers;
@@ -306,7 +305,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
         .chargeProcessingFeeWhenDeclaredLost(declaredLostProcessingFee)).getId());
 
     final ItemResource item = itemsFixture.basedUponNod();
-    final CheckOutResource checkOut = checkOutFixture.checkOutByBarcode(item);
+    final var checkOut = checkOutFixture.checkOutByBarcode(item);
 
     declareLostFixtures.declareItemLost(forLoan(checkOut.getId()));
 
