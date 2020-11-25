@@ -144,7 +144,7 @@ class CheckInProcessAdapter {
   CompletableFuture<Result<Item>> updateItem(CheckInContext context) {
     return updateItem.onCheckIn(context.getItem(), context.getRequestQueue(),
       context.getCheckInServicePointId(), context.getLoggedInUserId(),
-     context.getCheckInProcessedDateTime());
+      context.getCheckInProcessedDateTime());
   }
 
   CompletableFuture<Result<RequestQueue>> updateRequestQueue(
@@ -187,7 +187,7 @@ class CheckInProcessAdapter {
     }
     return StringUtils.isNotBlank(firstRequest.getPickupServicePointId())
       ? servicePointRepository.getServicePointById(UUID.fromString(firstRequest.getPickupServicePointId()))
-          .thenApply(r -> r.map(firstRequest::withPickupServicePoint))
+      .thenApply(r -> r.map(firstRequest::withPickupServicePoint))
       : completedFuture(succeeded(firstRequest));
   }
 
@@ -231,7 +231,7 @@ class CheckInProcessAdapter {
 
   private Result<CheckInContext> sendAvailableNotice(Request request, User user, CheckInContext context) {
     Item item = context.getItem();
-    if (item.isAwaitingPickup() && item.hasChanged()) {
+    if (item != null && item.isAwaitingPickup() && item.hasChanged()) {
       PatronNoticeEvent noticeEvent = new PatronNoticeEventBuilder()
         .withItem(item)
         .withUser(user)

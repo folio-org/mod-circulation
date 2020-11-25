@@ -4,6 +4,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.notice.TemplateContextUtil.createLoanNoticeContext;
 import static org.folio.circulation.support.results.Result.succeeded;
 
+import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Loan;
@@ -19,6 +20,8 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.json.JsonObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class LoanNoticeSender {
 
@@ -28,6 +31,7 @@ public class LoanNoticeSender {
       new LoanPolicyRepository(clients));
   }
 
+  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
   private final PatronNoticeService patronNoticeService;
   private final LoanPolicyRepository loanPolicyRepository;
 
@@ -37,12 +41,17 @@ public class LoanNoticeSender {
   }
 
   public Result<RenewalContext> sendRenewalPatronNotice(RenewalContext records) {
+    if (records.getLoan() == null || records.getLoan().getUser() == null) {
+      log.info("RenewalPatronNotice was not sent. Record doesn't have a valid loan or user.");
+      return succeeded(records);
+    }
     sendLoanNotice(records.getLoan(), NoticeEventType.RENEWED);
     return succeeded(records);
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> sendManualDueDateChangeNotice(LoanAndRelatedRecords records) {
-    if (records.getLoan().getUser() == null) {
+    if (records.getLoan() == null || records.getLoan().getUser() == null) {
+      log.info("ManualDueDateNotice was not sent. Record doesn't have a valid loan or user.");
       return completedFuture(succeeded(records));
     }
 

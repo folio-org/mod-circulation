@@ -142,7 +142,7 @@ public class PatronActionSessionRepository {
     List<ExpiredSession> expiredSessions) {
 
     Set<String> patronIds = expiredSessions.stream()
-      .filter(expiredSession -> StringUtils.isNotBlank(expiredSession.getPatronId()) )
+      .filter(expiredSession -> StringUtils.isNotBlank(expiredSession.getPatronId()))
       .map(ExpiredSession::getPatronId)
       .collect(Collectors.toCollection(HashSet::new));
 
@@ -188,8 +188,14 @@ public class PatronActionSessionRepository {
   private MultipleRecords<PatronSessionRecord> setUserForLoans(
     MultipleRecords<PatronSessionRecord> records, User user) {
 
-    return records.mapRecords(sessionRecord ->
-      sessionRecord.withLoan(sessionRecord.getLoan().withUser(user)));
+    return records.mapRecords(sessionRecord -> {
+        if (sessionRecord.getLoan() != null && sessionRecord.getPatronId() != null) {
+          return sessionRecord.withLoan(sessionRecord.getLoan().withUser(user));
+        }
+        log.info("Session with ID: {} doesn't have a loan", sessionRecord.getId());
+        return sessionRecord;
+      }
+    );
   }
 
   private MultipleRecords<PatronSessionRecord> setUsersForLoans(
