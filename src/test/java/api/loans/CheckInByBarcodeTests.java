@@ -4,7 +4,7 @@ import static api.support.APITestContext.getUserId;
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedNoticeLogRecordEventsCountIsEqualTo;
-import static api.support.PubsubPublisherTestUtils.byLogEventType;
+import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.fixtures.AddressExamples.SiriusBlack;
 import static api.support.matchers.EventMatchers.isValidCheckInLogEvent;
 import static api.support.matchers.EventMatchers.isValidItemCheckedInEvent;

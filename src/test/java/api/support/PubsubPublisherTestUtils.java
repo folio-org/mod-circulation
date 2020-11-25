@@ -1,7 +1,5 @@
 package api.support;
 
-import static api.support.fakes.PublishedEvents.byEventType;
-import static api.support.matchers.EventTypeMatchers.LOG_RECORD;
 import static java.util.stream.Collectors.toList;
 import static org.folio.circulation.domain.representations.logs.LogEventType.LOAN;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
@@ -12,22 +10,12 @@ import java.util.List;
 import java.util.function.Predicate;
 
 import api.support.fakes.FakePubSub;
+import api.support.fakes.PublishedEvents;
 import api.support.matchers.EventMatchers;
 import io.vertx.core.json.JsonObject;
 
 public class PubsubPublisherTestUtils {
   private PubsubPublisherTestUtils() { }
-
-  public static Predicate<JsonObject> byLogEventType(String logEventType) {
-    final Predicate<JsonObject> byLogEventType = json ->
-      json.getString("eventPayload").contains(logEventType);
-
-    return byEventType(LOG_RECORD).and(byLogEventType);
-  }
-
-  public static Predicate<JsonObject> byLogAction(String action) {
-    return json -> json.getString("eventPayload").contains(action);
-  }
 
   public static void assertThatPublishedLoanLogRecordEventsAreValid() {
     getPublishedLogRecordEvents(LOAN.value()).forEach(EventMatchers::isValidLoanLogRecordEvent);
@@ -42,11 +30,11 @@ public class PubsubPublisherTestUtils {
   }
 
   public static List<JsonObject> getPublishedLogRecordEvents(String logEventType) {
-    return filterToList(byLogEventType(logEventType));
+    return filterToList(PublishedEvents.byLogEventType(logEventType));
   }
 
   public static List<JsonObject> getPublishedLogRecordEvents(String logEventType, String action) {
-    return filterToList(byLogEventType(logEventType).and(byLogAction(action)));
+    return filterToList(PublishedEvents.byLogEventType(logEventType).and(PublishedEvents.byLogAction(action)));
   }
 
   private static List<JsonObject> filterToList(Predicate<JsonObject> predicate) {
