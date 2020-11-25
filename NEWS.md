@@ -1,3 +1,8 @@
+## 19.2.8 2020-11-25
+
+* Add missing permission in timer call for scheduled notice processing (CIRC-1023).
+* Exclude Declared lost items from being aged to lost (CIRC-1033).
+
 ## 19.2.7 2020-11-20
 * Removes dueDateChanged checking for sending recall notice (CIRC-989)
 
