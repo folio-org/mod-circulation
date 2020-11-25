@@ -3,6 +3,7 @@ package org.folio.circulation.infrastructure.storage.inventory;
 import static java.util.Objects.isNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Function.identity;
+import static org.folio.circulation.support.http.CommonResponseInterpreters.noContentRecordInterpreter;
 import static org.folio.circulation.support.json.JsonKeys.byId;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
@@ -114,11 +115,14 @@ public class ItemRepository {
       location.getPrimaryServicePointId());
   }
 
-  public CompletableFuture<Result<Response>> updateItem(Item item) {
+  public CompletableFuture<Result<Item>> updateItem(Item item) {
     if (item == null) {
       return completedFuture(null);
     }
-    return itemsClient.put(item.getItemId(), item.getItem());
+
+    return itemsClient.put(item.getItemId(), item.getItem())
+      .thenApply(noContentRecordInterpreter(item)::flatMap)
+      .thenCompose(x -> ofAsync(() -> item));
   }
 
   private CompletableFuture<Result<Item>> fetchMaterialType(Result<Item> result) {

@@ -71,10 +71,10 @@ public class CheckOutToExpiringPatronTests extends APITests {
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Calendar timetable is absent for requested date"))));
 
+    // An earlier version of the code erroneously updated the item status
+    // this check is to confirm that no longer happens
     final var incorrectlyUpdateItem = itemsClient.get(item);
 
-    // As the truncation of the due date happens after the item has been updated
-    // the item is checked out in error
-    assertThat(incorrectlyUpdateItem, hasItemStatus("Checked out"));
+    assertThat(incorrectlyUpdateItem, hasItemStatus("Available"));
   }
 }
