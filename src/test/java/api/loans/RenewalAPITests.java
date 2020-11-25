@@ -1477,9 +1477,7 @@ public abstract class RenewalAPITests extends APITests {
       .atMost(1, TimeUnit.SECONDS)
       .until(FakePubSub::getPublishedEvents, hasSize(4));
 
-    JsonObject event = publishedEvents.stream()
-      .filter(evt -> LOAN_DUE_DATE_CHANGED.equalsIgnoreCase(evt.getString("eventType")))
-      .findFirst().orElse(new JsonObject());
+    final var event = publishedEvents.getEventByType(LOAN_DUE_DATE_CHANGED);
 
     assertThat(event, isValidLoanDueDateChangedEvent(renewedLoan));
     assertThatPublishedLoanLogRecordEventsAreValid();

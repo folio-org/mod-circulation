@@ -30,7 +30,6 @@ import static org.joda.time.DateTimeZone.UTC;
 import static org.junit.Assert.assertTrue;
 
 import java.net.HttpURLConnection;
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
@@ -1747,10 +1746,7 @@ public class LoanAPITests extends APITests {
       .atMost(1, TimeUnit.SECONDS)
       .until(FakePubSub::getPublishedEvents, hasSize(2));
 
-    JsonObject event = publishedEvents.stream()
-      .filter(e -> "LOAN_DUE_DATE_CHANGED".equalsIgnoreCase(e.getString("eventType")))
-      .findFirst()
-      .orElse(new JsonObject());
+    final var event = publishedEvents.getEventByType("LOAN_DUE_DATE_CHANGED");
 
     assertThat(event, isValidLoanDueDateChangedEvent(loan));
   }
@@ -1776,10 +1772,7 @@ public class LoanAPITests extends APITests {
       .atMost(1, TimeUnit.SECONDS)
       .until(FakePubSub::getPublishedEvents, hasSize(4));
 
-    JsonObject event = publishedEvents.stream()
-      .filter(e -> "LOAN_DUE_DATE_CHANGED".equalsIgnoreCase(e.getString("eventType")))
-      .findFirst()
-      .orElse(new JsonObject());
+    final var event = publishedEvents.getEventByType("LOAN_DUE_DATE_CHANGED");
 
     assertThat(event, isValidLoanDueDateChangedEvent(loanFromStorage.getJson()));
   }

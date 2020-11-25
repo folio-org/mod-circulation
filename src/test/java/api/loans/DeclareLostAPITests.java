@@ -429,11 +429,8 @@ public class DeclareLostAPITests extends APITests {
       .atMost(1, TimeUnit.SECONDS)
       .until(FakePubSub::getPublishedEvents, hasSize(4));
 
-    JsonObject event = publishedEvents.stream()
-      .filter(evt -> ITEM_DECLARED_LOST.equalsIgnoreCase(evt.getString("eventType")))
-      .findFirst().orElse(new JsonObject());
-
-    JsonObject loan = loanIndividualResource.getJson();
+    final var event = publishedEvents.getEventByType(ITEM_DECLARED_LOST);
+    final var loan = loanIndividualResource.getJson();
 
     assertThat(event, isValidItemDeclaredLostEvent(loan));
     assertThatPublishedLoanLogRecordEventsAreValid();
