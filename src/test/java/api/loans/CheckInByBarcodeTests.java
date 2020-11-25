@@ -5,7 +5,6 @@ import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRec
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedNoticeLogRecordEventsCountIsEqualTo;
 import static api.support.PubsubPublisherTestUtils.byLogEventType;
-import static api.support.fakes.PublishedEvents.byEventType;
 import static api.support.fixtures.AddressExamples.SiriusBlack;
 import static api.support.matchers.EventMatchers.isValidCheckInLogEvent;
 import static api.support.matchers.EventMatchers.isValidItemCheckedInEvent;
@@ -23,7 +22,6 @@ import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static java.util.Arrays.asList;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.domain.EventType.ITEM_CHECKED_IN;
-import static org.folio.circulation.domain.EventType.LOG_RECORD;
 import static org.folio.circulation.domain.representations.logs.LogEventType.CHECK_IN;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -1128,8 +1126,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
 
     assertThat(checkedInEvent, isValidItemCheckedInEvent(checkedInLoan));
 
-    final var checkInLogEvent = publishedEvents.findFirst(
-      byEventType(LOG_RECORD.name()).and(byLogEventType(CHECK_IN.value())));
+    final var checkInLogEvent = publishedEvents.findFirst(byLogEventType(CHECK_IN.value()));
 
     assertThat(checkInLogEvent, isValidCheckInLogEvent(checkedInLoan));
     assertThatPublishedLoanLogRecordEventsAreValid();
