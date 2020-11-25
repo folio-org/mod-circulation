@@ -202,12 +202,10 @@ public class TemplateContextUtil {
       .ifPresent(value -> requestContext.put("servicePointPickup", value));
     optionalRequest
       .map(Request::getRequestExpirationDate)
-      .map(DateTime::toString)
-      .ifPresent(value -> requestContext.put("requestExpirationDate", value));
+      .ifPresent(value -> write(requestContext, "requestExpirationDate", value));
     optionalRequest
       .map(Request::getHoldShelfExpirationDate)
-      .map(DateTime::toString)
-      .ifPresent(value -> requestContext.put("holdShelfExpirationDate", value));
+      .ifPresent(value -> write(requestContext, "holdShelfExpirationDate", value));
     optionalRequest
       .map(Request::getCancellationAdditionalInformation)
       .ifPresent(value -> requestContext.put("additionalInfo", value));

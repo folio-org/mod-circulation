@@ -665,7 +665,9 @@
             "templates.item.get",
             "pubsub.publish.post",
             "circulation-storage.circulation-rules.get",
-            "circulation.rules.notice-policy.get"
+            "circulation.rules.notice-policy.get",
+            "circulation-storage.fixed-due-date-schedules.item.get",
+            "circulation-storage.fixed-due-date-schedules.collection.get"
           ],
           "unit": "minute",
           "delay": "5"
