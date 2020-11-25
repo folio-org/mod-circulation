@@ -1,5 +1,6 @@
 package api.loans;
 
+import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
 import static api.support.http.CqlQuery.exactMatch;
 import static api.support.http.CqlQuery.queryFromTemplate;
 import static api.support.matchers.EventMatchers.isValidItemDeclaredLostEvent;
@@ -11,12 +12,13 @@ import static api.support.matchers.LoanMatchers.hasLoanProperty;
 import static api.support.matchers.LoanMatchers.hasStatus;
 import static api.support.matchers.LoanMatchers.isClosed;
 import static api.support.matchers.LoanMatchers.isOpen;
+import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsBeforeNow;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
-import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasNoJsonPath;
+import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
@@ -34,9 +36,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.StringUtils;
 import org.awaitility.Awaitility;
-import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
@@ -51,6 +51,7 @@ import api.support.builders.DeclareItemLostRequestBuilder;
 import api.support.builders.ItemBuilder;
 import api.support.builders.LostItemFeePolicyBuilder;
 import api.support.fakes.FakePubSub;
+import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 import junitparams.JUnitParamsRunner;
@@ -88,9 +89,9 @@ public class DeclareLostAPITests extends APITests {
     assertThat(response.getStatusCode(), is(204));
     assertThat(actualItem, hasStatus("Declared lost"));
     assertThat(actualLoan, isOpen());
-    assertThat(actualLoan, hasLoanProperty("action", "declaredLost"));
-    assertThat(actualLoan, hasLoanProperty("actionComment", comment));
-    assertThat(actualLoan, hasLoanProperty("declaredLostDate", dateTime.toString()));
+    assertThat(actualLoan, hasLoanProperty("action", is("declaredLost")));
+    assertThat(actualLoan, hasLoanProperty("actionComment", is(comment)));
+    assertThat(actualLoan, hasLoanProperty("declaredLostDate", isEquivalentTo(dateTime)));
   }
 
   @Test
@@ -112,9 +113,9 @@ public class DeclareLostAPITests extends APITests {
     assertThat(response.getStatusCode(), is(204));
     assertThat(actualItem, hasStatus("Declared lost"));
     assertThat(actualLoan, isOpen());
-    assertThat(actualLoan, hasLoanProperty("action", "declaredLost"));
-    assertThat(actualLoan, hasLoanProperty("actionComment", StringUtils.EMPTY));
-    assertThat(actualLoan, hasLoanProperty("declaredLostDate", dateTime.toString()));
+    assertThat(actualLoan, hasLoanProperty("action", is("declaredLost")));
+    assertThat(actualLoan, hasLoanProperty("actionComment", is(EMPTY)));
+    assertThat(actualLoan, hasLoanProperty("declaredLostDate", isEquivalentTo(dateTime)));
   }
 
   @Test

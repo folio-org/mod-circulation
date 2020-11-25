@@ -4,8 +4,9 @@ import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRec
 import static api.support.matchers.EventMatchers.isValidItemClaimedReturnedEvent;
 import static api.support.matchers.EventTypeMatchers.ITEM_CLAIMED_RETURNED;
 import static api.support.matchers.LoanMatchers.hasLoanProperty;
-import static api.support.matchers.LoanMatchers.isOpen;
 import static api.support.matchers.LoanMatchers.hasStatus;
+import static api.support.matchers.LoanMatchers.isOpen;
+import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasNullParameter;
@@ -23,7 +24,6 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import org.awaitility.Awaitility;
-import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.junit.Before;
@@ -32,6 +32,7 @@ import org.junit.Test;
 import api.support.APITests;
 import api.support.builders.ClaimItemReturnedRequestBuilder;
 import api.support.fakes.FakePubSub;
+import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 
@@ -146,8 +147,8 @@ public class ClaimItemReturnedAPITests extends APITests {
     assertThat(response.getStatusCode(), is(204));
     assertThat(actualItem, hasStatus("Claimed returned"));
     assertThat(actualLoan, isOpen());
-    assertThat(actualLoan, hasLoanProperty(ACTION, "claimedReturned"));
-    assertThat(actualLoan, hasLoanProperty(ACTION_COMMENT, comment));
-    assertThat(actualLoan, hasLoanProperty(CLAIMED_RETURNED_DATE, dateTime.toString()));
+    assertThat(actualLoan, hasLoanProperty(ACTION, is("claimedReturned")));
+    assertThat(actualLoan, hasLoanProperty(ACTION_COMMENT, is(comment)));
+    assertThat(actualLoan, hasLoanProperty(CLAIMED_RETURNED_DATE, isEquivalentTo(dateTime)));
   }
 }

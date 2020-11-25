@@ -1,5 +1,7 @@
 package org.folio.circulation.support.json;
 
+import static org.joda.time.DateTimeZone.UTC;
+
 import java.util.UUID;
 
 import org.apache.commons.lang3.StringUtils;
@@ -71,8 +73,8 @@ public class JsonPropertyWriter {
   }
 
   public static void write(JsonObject to, String propertyName, DateTime value) {
-    if(value != null) {
-      write(to, propertyName, value.toString(ISODateTimeFormat.dateTime()));
+    if (value != null) {
+      write(to, propertyName, value.withZone(UTC).toString(ISODateTimeFormat.dateTime()));
     }
   }
 
