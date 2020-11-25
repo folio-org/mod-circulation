@@ -7,8 +7,11 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.folio.circulation.domain.ItemStatus.AGED_TO_LOST;
 import static org.folio.circulation.domain.policy.Period.days;
+import static org.hamcrest.CoreMatchers.allOf;
+import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.iterableWithSize;
 import static org.joda.time.DateTime.now;
 import static org.joda.time.DateTimeZone.UTC;
 import static org.mockito.ArgumentMatchers.any;
@@ -68,7 +71,6 @@ public class RegularRenewalStrategyTest {
     assertThat(renewResult, hasValidationErrors(
       hasMessage("items cannot be renewed when there is an active recall request"),
       hasMessage("item is not loanable"),
-      hasMessage("loan is not renewable"),
       hasMessage("item is Aged to lost")
     ));
   }
@@ -215,8 +217,10 @@ public class RegularRenewalStrategyTest {
     final var renewResult = renew(loanPolicy);
 
     verify(loanPolicy, never()).determineStrategy(any(), anyBoolean(), anyBoolean(), any());
-    assertThat(renewResult, hasValidationErrors(
-      hasMessage("item is not loanable")));
+    assertThat(renewResult, hasValidationErrors(allOf(
+      iterableWithSize(1),
+      hasItem(hasMessage("item is not loanable"))
+    )));
   }
 
   @Test
@@ -227,8 +231,10 @@ public class RegularRenewalStrategyTest {
     final var renewResult = renew(loanPolicy);
 
     verify(loanPolicy, never()).determineStrategy(any(), anyBoolean(), anyBoolean(), any());
-    assertThat(renewResult, hasValidationErrors(
-      hasMessage("loan is not renewable")));
+    assertThat(renewResult, hasValidationErrors(allOf(
+      iterableWithSize(1),
+      hasItem(hasMessage("loan is not renewable"))
+    )));
   }
 
   private Result<Loan> renew(Loan loan, Request topRequest) {
