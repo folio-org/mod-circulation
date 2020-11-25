@@ -425,13 +425,14 @@ public class DeclareLostAPITests extends APITests {
 
     // There should be five events published - "check out", "log event", "declared lost"
     // and one "log record"
-    List<JsonObject> publishedEvents = Awaitility.await()
+    final var publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(FakePubSub::getPublishedEvents, hasSize(4));
 
     JsonObject event = publishedEvents.stream()
       .filter(evt -> ITEM_DECLARED_LOST.equalsIgnoreCase(evt.getString("eventType")))
       .findFirst().orElse(new JsonObject());
+
     JsonObject loan = loanIndividualResource.getJson();
 
     assertThat(event, isValidItemDeclaredLostEvent(loan));

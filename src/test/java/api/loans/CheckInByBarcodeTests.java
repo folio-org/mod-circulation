@@ -1068,9 +1068,11 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     checkInFixture.checkInByBarcode(item);
 
     assertThat(itemsClient.getById(item.getId()).getJson(), isAvailable());
+
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(FakePubSub::getPublishedEvents, hasSize(6));
+
     assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
@@ -1082,12 +1084,14 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
 
     assertThat(itemsFixture.getById(ageToLostResult.getItemId()).getJson(), isAvailable());
     assertThat(loansFixture.getLoanById(ageToLostResult.getLoanId()).getJson(), isClosed());
+
     List<JsonObject> events = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       // there should be 5 events published: ITEM_CHECKED_OUT, LOG_RECORDs: CHECK_OUT_EVENT
       // LOG_RECORD: LOAN (aged to lost)
       // ITEM_CHECKED_IN, LOG_RECORDs: CHECK_IN_EVENT
       .until(FakePubSub::getPublishedEvents, hasSize(5));
+
     assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
@@ -1114,7 +1118,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     JsonObject checkedInLoan = checkInResponse.getLoan();
 
     // There should be four events published - first ones for "check out" and check out log event, second ones for "check in" and check in log event
-    List<JsonObject> publishedEvents = Awaitility.await()
+    final var publishedEvents = Awaitility.await()
       .atMost(2, TimeUnit.SECONDS)
       .until(FakePubSub::getPublishedEvents, hasSize(4));
 

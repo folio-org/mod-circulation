@@ -244,7 +244,7 @@ public class RequestQueueResourceTest extends APITests {
 
     verifyQueueUpdated(reorderQueue, response);
 
-    List<JsonObject> publishedEvents = Awaitility.await()
+    final var publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(FakePubSub::getPublishedEvents, hasSize(17));
 

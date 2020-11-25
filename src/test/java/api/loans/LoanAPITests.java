@@ -1743,7 +1743,7 @@ public class LoanAPITests extends APITests {
 
     JsonObject loan = response.getJson();
 
-    List<JsonObject> publishedEvents = Awaitility.await()
+    final var publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(FakePubSub::getPublishedEvents, hasSize(2));
 
@@ -1772,7 +1772,7 @@ public class LoanAPITests extends APITests {
 
     // There should be four events published - "create", "replace"
     // and two "log_record"
-    List<JsonObject> publishedEvents = Awaitility.await()
+    final var publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(FakePubSub::getPublishedEvents, hasSize(4));
 

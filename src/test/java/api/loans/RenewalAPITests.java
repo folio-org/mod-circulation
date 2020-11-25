@@ -787,9 +787,11 @@ public abstract class RenewalAPITests extends APITests {
       hasMessage("item is not loanable"),
       hasLoanPolicyIdParameter(notLoanablePolicyId),
       hasLoanPolicyNameParameter("Non loanable policy"))));
+
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(FakePubSub::getPublishedEvents, hasSize(2));
+
     assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
@@ -845,9 +847,11 @@ public abstract class RenewalAPITests extends APITests {
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("item is Aged to lost"),
       hasUUIDParameter("itemId", result.getItem().getId()))));
+
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(FakePubSub::getPublishedEvents, hasSize(3));
+
     assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
@@ -1469,7 +1473,7 @@ public abstract class RenewalAPITests extends APITests {
     // There should be six events published - first for "check out",
     // second one for log event, third for "change due date"
     // and one "log record"
-    List<JsonObject> publishedEvents = Awaitility.await()
+    final var publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(FakePubSub::getPublishedEvents, hasSize(4));
 

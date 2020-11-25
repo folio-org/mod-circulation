@@ -769,7 +769,7 @@ public class RequestsAPIUpdatingTests extends APITests {
     // There should be ten events published - for "check out", for "log event: check out",
     // for "log event: request created", for "log event: request updated" for "recall" and for "replace"
     // and three log events for loans
-    List<JsonObject> publishedEvents = Awaitility.await()
+    final var publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(FakePubSub::getPublishedEvents, hasSize(9));
 

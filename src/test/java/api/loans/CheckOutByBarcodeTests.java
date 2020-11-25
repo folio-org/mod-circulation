@@ -1289,7 +1289,7 @@ public class CheckOutByBarcodeTests extends APITests {
 
     final JsonObject loan = response.getJson();
 
-    List<JsonObject> publishedEvents = Awaitility.await()
+    final var publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(FakePubSub::getPublishedEvents, hasSize(2));
 
