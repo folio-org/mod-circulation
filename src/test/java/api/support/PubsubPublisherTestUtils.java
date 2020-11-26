@@ -1,6 +1,7 @@
 package api.support;
 
-import static java.util.stream.Collectors.toList;
+import static api.support.fakes.PublishedEvents.byLogAction;
+import static api.support.fakes.PublishedEvents.byLogEventType;
 import static org.folio.circulation.domain.representations.logs.LogEventType.LOAN;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -10,7 +11,6 @@ import java.util.List;
 import java.util.function.Predicate;
 
 import api.support.fakes.FakePubSub;
-import api.support.fakes.PublishedEvents;
 import api.support.matchers.EventMatchers;
 import io.vertx.core.json.JsonObject;
 
@@ -30,14 +30,14 @@ public class PubsubPublisherTestUtils {
   }
 
   public static List<JsonObject> getPublishedLogRecordEvents(String logEventType) {
-    return filterToList(PublishedEvents.byLogEventType(logEventType));
+    return getPublishedEvents(byLogEventType(logEventType));
   }
 
   public static List<JsonObject> getPublishedLogRecordEvents(String logEventType, String action) {
-    return filterToList(PublishedEvents.byLogEventType(logEventType).and(PublishedEvents.byLogAction(action)));
+    return getPublishedEvents(byLogEventType(logEventType).and(byLogAction(action)));
   }
 
-  private static List<JsonObject> filterToList(Predicate<JsonObject> predicate) {
-    return FakePubSub.getPublishedEvents().filter(predicate).collect(toList());
+  public static List<JsonObject> getPublishedEvents(Predicate<JsonObject> predicate) {
+    return FakePubSub.getPublishedEvents().filterToList(predicate);
   }
 }

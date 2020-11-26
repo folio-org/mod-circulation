@@ -1,8 +1,10 @@
 package api.support.fakes;
 
 import static api.support.matchers.EventTypeMatchers.LOG_RECORD;
+import static java.util.stream.Collectors.toList;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -27,6 +29,10 @@ public class PublishedEvents extends ArrayList<JsonObject> {
 
   public Stream<JsonObject> filter(Predicate<JsonObject> predicate) {
     return stream().filter(predicate);
+  }
+
+  public List<JsonObject> filterToList(Predicate<JsonObject> predicate) {
+    return filter(predicate).collect(toList());
   }
 
   public JsonObject findFirst(Predicate<JsonObject> predicate) {
