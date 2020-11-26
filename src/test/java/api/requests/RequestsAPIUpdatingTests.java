@@ -1,6 +1,8 @@
 package api.requests;
 
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedNoticeLogRecordEventsCountIsEqualTo;
+import static api.support.fakes.PublishedEvents.byEventType;
+import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.matchers.EventMatchers.isValidLoanDueDateChangedEvent;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
@@ -10,11 +12,9 @@ import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static java.util.function.Function.identity;
-import static java.util.stream.Collectors.groupingBy;
 import static org.folio.HttpStatus.HTTP_NO_CONTENT;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.domain.EventType.LOAN_DUE_DATE_CHANGED;
-import static org.folio.circulation.domain.EventType.LOG_RECORD;
 import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_NAME;
 import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_PUBLIC_DESCRIPTION;
 import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_CREATED;
@@ -731,8 +731,7 @@ public class RequestsAPIUpdatingTests extends APITests {
   }
 
   @Test
-  public void dueDateChangedEventIsPublished() {
-
+  public void eventsShouldBePublished() {
     final ItemResource temeraire = itemsFixture.basedUponTemeraire();
 
     IndividualResource loan = checkOutFixture.checkOutByBarcode(temeraire);
@@ -760,8 +759,7 @@ public class RequestsAPIUpdatingTests extends APITests {
       RequestBuilder.from(createdRequest)
         .hold()
         .by(charlotte)
-        .withTags(new RequestBuilder.Tags(Arrays.asList("new", "important")))
-    );
+        .withTags(new RequestBuilder.Tags(Arrays.asList("new", "important"))));
 
     Response response = loansClient.getById(loan.getId());
     JsonObject updatedLoan = response.getJson();
@@ -773,20 +771,19 @@ public class RequestsAPIUpdatingTests extends APITests {
       .atMost(1, TimeUnit.SECONDS)
       .until(FakePubSub::getPublishedEvents, hasSize(9));
 
-    Map<String, List<JsonObject>> events = publishedEvents.stream().collect(groupingBy(o -> o.getString("eventType")));
+    final var requestCreatedLogEvent = publishedEvents.findFirst(byLogEventType(REQUEST_CREATED.value()));
+    final var requestUpdatedLogEvent = publishedEvents.findFirst(byLogEventType(REQUEST_UPDATED.value()));
+    final var dueDateChangedEvent = publishedEvents.findFirst(byEventType(LOAN_DUE_DATE_CHANGED.name()));
 
-    Map<String, List<JsonObject>> logEvents = events.get(LOG_RECORD.name()).stream()
-      .collect(groupingBy(e -> new JsonObject(e.getString("eventPayload")).getString("logEventType")));
-
-    Request requestCreatedFromEventPayload = Request.from(new JsonObject(logEvents.get(REQUEST_CREATED.value()).get(0).getString("eventPayload")).getJsonObject("payload").getJsonObject("requests").getJsonObject("created"));
+    Request requestCreatedFromEventPayload = Request.from(new JsonObject(requestCreatedLogEvent.getString("eventPayload")).getJsonObject("payload").getJsonObject("requests").getJsonObject("created"));
     assertThat(requestCreatedFromEventPayload, notNullValue());
 
-    Request originalCreatedFromEventPayload = Request.from(new JsonObject(logEvents.get(REQUEST_UPDATED.value()).get(0).getString("eventPayload")).getJsonObject("payload").getJsonObject("requests").getJsonObject("original"));
-    Request updatedCreatedFromEventPayload = Request.from(new JsonObject(logEvents.get(REQUEST_UPDATED.value()).get(0).getString("eventPayload")).getJsonObject("payload").getJsonObject("requests").getJsonObject("updated"));
+    Request originalCreatedFromEventPayload = Request.from(new JsonObject(requestUpdatedLogEvent.getString("eventPayload")).getJsonObject("payload").getJsonObject("requests").getJsonObject("original"));
+    Request updatedCreatedFromEventPayload = Request.from(new JsonObject(requestUpdatedLogEvent.getString("eventPayload")).getJsonObject("payload").getJsonObject("requests").getJsonObject("updated"));
 
     assertThat(requestCreatedFromEventPayload.getRequestType(), equalTo(originalCreatedFromEventPayload.getRequestType()));
     assertThat(originalCreatedFromEventPayload.getRequestType(), not(equalTo(updatedCreatedFromEventPayload.getRequestType())));
 
-    assertThat(events.get(LOAN_DUE_DATE_CHANGED.name()).get(0), isValidLoanDueDateChangedEvent(updatedLoan));
+    assertThat(dueDateChangedEvent, isValidLoanDueDateChangedEvent(updatedLoan));
   }
 }
