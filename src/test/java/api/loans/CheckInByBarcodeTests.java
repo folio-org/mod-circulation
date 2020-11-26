@@ -3,7 +3,7 @@ package api.loans;
 import static api.support.APITestContext.getUserId;
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
-import static api.support.PubsubPublisherTestUtils.assertThatPublishedNoticeLogRecordEventsCountIsEqualTo;
+import static api.support.PubsubPublisherTestUtils.getPublishedEvents;
 import static api.support.fakes.PublishedEvents.byEventType;
 import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.fixtures.AddressExamples.SiriusBlack;
@@ -21,9 +21,12 @@ import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static java.util.Arrays.asList;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.awaitility.Awaitility.waitAtMost;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.domain.EventType.ITEM_CHECKED_IN;
 import static org.folio.circulation.domain.representations.logs.LogEventType.CHECK_IN;
+import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -42,15 +45,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
-import org.awaitility.Awaitility;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.Matcher;
-import org.hamcrest.MatcherAssert;
-import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.joda.time.Seconds;
 import org.junit.Test;
@@ -58,6 +57,7 @@ import org.junit.Test;
 import api.support.APITests;
 import api.support.CheckInByBarcodeResponse;
 import api.support.MultipleJsonRecords;
+import api.support.Wait;
 import api.support.builders.Address;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.FeeFineBuilder;
@@ -285,7 +285,6 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
 
   @Test
   public void cannotCheckInWithoutAServicePoint() {
-
     DateTime loanDate = new DateTime(2018, 3, 1, 13, 25, 46, UTC);
 
     final IndividualResource james = usersFixture.james();
@@ -307,7 +306,6 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
 
   @Test
   public void cannotCheckInWithoutAnItem() {
-
     DateTime loanDate = new DateTime(2018, 3, 1, 13, 25, 46, UTC);
 
     final IndividualResource james = usersFixture.james();
@@ -329,7 +327,6 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
 
   @Test
   public void cannotCheckInWithoutACheckInDate() {
-
     DateTime loanDate = new DateTime(2018, 3, 1, 13, 25, 46, UTC);
 
     final IndividualResource james = usersFixture.james();
@@ -351,7 +348,6 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
 
   @Test
   public void canCheckInAnItemWithoutAnOpenLoan() {
-
     final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
 
     final IndividualResource homeLocation = locationsFixture.basedUponExampleLocation(
@@ -397,7 +393,6 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
 
   @Test
   public void canCheckInAnItemTwice() {
-
     DateTime loanDate = new DateTime(2018, 3, 1, 13, 25, 46, UTC);
 
     final IndividualResource james = usersFixture.james();
@@ -452,9 +447,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
   }
 
   @Test
-  public void patronNoticeOnCheckInIsNotSentWhenCheckInLoanNoticeIsDefinedAndLoanExists()
-    throws InterruptedException {
-
+  public void patronNoticeOnCheckInIsNotSentWhenCheckInLoanNoticeIsDefinedAndLoanExists() {
     UUID checkInTemplateId = UUID.randomUUID();
     JsonObject checkOutNoticeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(checkInTemplateId)
@@ -496,15 +489,15 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     assertThat("Closed loan should be present",
       loanRepresentation, notNullValue());
 
-    TimeUnit.SECONDS.sleep(1);
-    assertThat(patronNoticesClient.getAll(), hasSize(0));
-    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+    Wait.atLeast(1, SECONDS)
+      .until(patronNoticesClient::getAll, empty());
+
+    Wait.atLeast(1, SECONDS)
+      .until(() -> getPublishedEvents(byLogEventType(NOTICE.value())), empty());
   }
 
   @Test
-  public void shouldNotSendPatronNoticeWhenCheckInNoticeIsDefinedAndCheckInDoesNotCloseLoan()
-    throws InterruptedException {
-
+  public void shouldNotSendPatronNoticeWhenCheckInNoticeIsDefinedAndCheckInDoesNotCloseLoan() {
     UUID checkInTemplateId = UUID.randomUUID();
     JsonObject checkOutNoticeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(checkInTemplateId)
@@ -534,11 +527,11 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     assertThat("Response should not include a loan",
       checkInResponse.getJson().containsKey("loan"), is(false));
 
-    TimeUnit.SECONDS.sleep(1);
-    List<JsonObject> sentNotices = patronNoticesClient.getAll();
-    assertThat("Check-in notice shouldn't be sent if item isn't checked-out",
-      sentNotices, Matchers.empty());
-    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+    Wait.atLeast(1, SECONDS)
+      .until(patronNoticesClient::getAll, empty());
+
+    Wait.atLeast(1, SECONDS)
+      .until(() -> getPublishedEvents(byLogEventType(NOTICE.value())), empty());
   }
 
   @Test
@@ -619,7 +612,6 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
 
   @Test
   public void availableNoticeIsSentOnceWhenItemStatusIsChangedToAwaitingPickup() {
-
     JsonObject availableNoticeConfig = new NoticeConfigurationBuilder()
       .withTemplateId(UUID.randomUUID())
       .withAvailableEvent()
@@ -644,21 +636,26 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     DateTime checkInDate = new DateTime(2019, 10, 10, 12, 30);
 
     checkInFixture.checkInByBarcode(requestedItem, checkInDate, pickupServicePointId);
-    Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
+
+    waitAtMost(1, SECONDS)
       .until(patronNoticesClient::getAll, hasSize(1));
-    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+
+    waitAtMost(1, SECONDS)
+      .until(() -> getPublishedEvents(byLogEventType(NOTICE.value())), hasSize(1));
+
     assertThatPublishedLogRecordEventsAreValid();
+
     patronNoticesClient.deleteAll();
     FakePubSub.clearPublishedEvents();
 
     //Check-in again and verify no notice are sent
     checkInFixture.checkInByBarcode(requestedItem, checkInDate, pickupServicePointId);
-    Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
+
+    waitAtMost(1, SECONDS)
       .until(patronNoticesClient::getAll, empty());
-    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
-    assertThatPublishedLogRecordEventsAreValid();
+
+    waitAtMost(1, SECONDS)
+      .until(() -> getPublishedEvents(byLogEventType(NOTICE.value())), empty());
   }
 
   @Test
@@ -704,8 +701,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
         .at(checkInServicePointId));
     JsonObject checkedInLoan = checkInResponse.getLoan();
 
-    Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
+    waitAtMost(1, SECONDS)
       .until(accountsClient::getAll, hasSize(1));
 
     List<JsonObject> createdAccounts = accountsClient.getAll();
@@ -717,8 +713,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     assertThat(account, isValidOverdueFine(checkedInLoan, nod,
       homeLocation.getJson().getString("name"), ownerId, feeFineId, 5.0));
 
-    Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
+    waitAtMost(1, SECONDS)
       .until(feeFineActionsClient::getAll, hasSize(1));
 
     List<JsonObject> createdFeeFineActions = feeFineActionsClient.getAll();
@@ -762,8 +757,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
       );
     }
 
-    Awaitility.await()
-      .atMost(3, TimeUnit.SECONDS)
+    waitAtMost(3, SECONDS)
       .until(feeFineOwnersClient::getAll, hasSize(10));
 
     JsonObject servicePointOwner = new JsonObject();
@@ -792,8 +786,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
         .at(checkInServicePointId));
     JsonObject checkedInLoan = checkInResponse.getLoan();
 
-    Awaitility.await()
-      .atMost(3, TimeUnit.SECONDS)
+    waitAtMost(3, SECONDS)
       .until(accountsClient::getAll, hasSize(1));
 
     List<JsonObject> createdAccounts = accountsClient.getAll();
@@ -849,7 +842,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
       .on(new DateTime(2020, 1, 25, 12, 0, 0, UTC))
       .at(checkInServicePointId));
 
-    Awaitility.waitAtMost(1, TimeUnit.SECONDS);
+    waitAtMost(1, SECONDS);
 
     List<JsonObject> createdAccounts = accountsClient.getAll();
 
@@ -901,16 +894,14 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     feeFineOwnersClient.create(new FeeFineOwnerBuilder()
       .withId(ownerId)
       .withOwner("fee-fine-owner")
-      .withServicePointOwner(Collections.singletonList(servicePointOwner))
-    );
+      .withServicePointOwner(Collections.singletonList(servicePointOwner)));
 
     UUID feeFineId = UUID.randomUUID();
     feeFinesClient.create(new FeeFineBuilder()
       .withId(feeFineId)
       .withFeeFineType("Overdue fine")
       .withOwnerId(ownerId)
-      .withAutomatic(true)
-    );
+      .withAutomatic(true));
 
     CheckInByBarcodeResponse checkInResponse = checkInFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
@@ -919,15 +910,10 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
       .at(checkInServicePointId));
     JsonObject checkedInLoan = checkInResponse.getLoan();
 
-    Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
+    final var createdAccounts = waitAtMost(1, SECONDS)
       .until(accountsClient::getAll, hasSize(1));
 
     mockClockManagerToReturnDefaultDateTime();
-
-    List<JsonObject> createdAccounts = accountsClient.getAll();
-
-    assertThat("Fee/fine record should be created", createdAccounts, hasSize(1));
 
     JsonObject account = createdAccounts.get(0);
 
@@ -936,9 +922,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
   }
 
   @Test
-  public void noOverdueFineShouldBeChargedForOverdueFinePolicyWithNoOverdueFine()
-    throws InterruptedException {
-
+  public void noOverdueFineShouldBeChargedForOverdueFinePolicyWithNoOverdueFine() {
     useFallbackPolicies(loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId(),
@@ -962,33 +946,28 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     feeFineOwnersClient.create(new FeeFineOwnerBuilder()
       .withId(ownerId)
       .withOwner("fee-fine-owner")
-      .withServicePointOwner(Collections.singletonList(servicePointOwner))
-    );
+      .withServicePointOwner(Collections.singletonList(servicePointOwner)));
 
     UUID feeFineId = UUID.randomUUID();
     feeFinesClient.create(new FeeFineBuilder()
       .withId(feeFineId)
       .withFeeFineType("Overdue fine")
-      .withOwnerId(ownerId)
-    );
+      .withOwnerId(ownerId));
 
     checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(nod)
       .on(new DateTime(2020, 1, 25, 12, 0, 0, UTC))
       .at(checkInServicePointId));
 
-    TimeUnit.SECONDS.sleep(1);
+    Wait.atLeast(1, SECONDS)
+      .until(accountsClient::getAll, empty());
 
-    List<JsonObject> createdAccounts = accountsClient.getAll();
-    List<JsonObject> createdFeeFineActions = feeFineActionsClient.getAll();
-
-    assertThat("Fee/fine record shouldn't be created", createdAccounts, empty());
-    assertThat("Fee/fine action record shouldn't be created", createdFeeFineActions, empty());
+    Wait.atLeast(1, SECONDS)
+      .until(feeFineActionsClient::getAll, empty());
   }
 
   @Test
   public void overdueFineCalculatedCorrectlyWhenHourlyFeeFinePolicyIsApplied() {
-
     useFallbackPolicies(loanPoliciesFixture.create(new LoanPolicyBuilder()
         .withId(UUID.randomUUID())
         .withName("Three days policy")
@@ -1045,8 +1024,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
 
     JsonObject checkedInLoan = checkInResponse.getLoan();
 
-    Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
+    waitAtMost(1, SECONDS)
       .until(accountsClient::getAll, hasSize(1));
 
     List<JsonObject> createdAccounts = accountsClient.getAll();
@@ -1070,8 +1048,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
 
     assertThat(itemsClient.getById(item.getId()).getJson(), isAvailable());
 
-    Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
+    waitAtMost(1, SECONDS)
       .until(FakePubSub::getPublishedEvents, hasSize(6));
 
     assertThatPublishedLoanLogRecordEventsAreValid();
@@ -1086,8 +1063,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     assertThat(itemsFixture.getById(ageToLostResult.getItemId()).getJson(), isAvailable());
     assertThat(loansFixture.getLoanById(ageToLostResult.getLoanId()).getJson(), isClosed());
 
-    List<JsonObject> events = Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
+    waitAtMost(1, SECONDS)
       // there should be 5 events published: ITEM_CHECKED_OUT, LOG_RECORDs: CHECK_OUT_EVENT
       // LOG_RECORD: LOAN (aged to lost)
       // ITEM_CHECKED_IN, LOG_RECORDs: CHECK_IN_EVENT
@@ -1119,8 +1095,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     JsonObject checkedInLoan = checkInResponse.getLoan();
 
     // There should be four events published - first ones for "check out" and check out log event, second ones for "check in" and check in log event
-    final var publishedEvents = Awaitility.await()
-      .atMost(2, TimeUnit.SECONDS)
+    final var publishedEvents = waitAtMost(2, SECONDS)
       .until(FakePubSub::getPublishedEvents, hasSize(4));
 
     final var checkedInEvent = publishedEvents.findFirst(byEventType(ITEM_CHECKED_IN.name()));
@@ -1133,12 +1108,10 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
-  private void checkPatronNoticeEvent(
-    IndividualResource request, IndividualResource requester,
+  private void checkPatronNoticeEvent(IndividualResource request, IndividualResource requester,
     ItemResource item, UUID expectedTemplateId) {
 
-    Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
+    waitAtMost(1, SECONDS)
       .until(patronNoticesClient::getAll, hasSize(1));
 
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
@@ -1147,10 +1120,13 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     noticeContextMatchers.putAll(TemplateContextMatchers.getUserContextMatchers(requester));
     noticeContextMatchers.putAll(TemplateContextMatchers.getItemContextMatchers(item, true));
     noticeContextMatchers.putAll(TemplateContextMatchers.getRequestContextMatchers(request));
-    MatcherAssert.assertThat(sentNotices,
-      hasItems(
-        hasEmailNoticeProperties(requester.getId(), expectedTemplateId, noticeContextMatchers)));
-    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+
+    assertThat(sentNotices, hasItems(
+      hasEmailNoticeProperties(requester.getId(), expectedTemplateId, noticeContextMatchers)));
+
+    waitAtMost(1, SECONDS)
+      .until(() -> getPublishedEvents(byLogEventType(NOTICE.value())), hasSize(1));
+
     assertThatPublishedLogRecordEventsAreValid();
   }
 
