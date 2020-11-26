@@ -9,7 +9,7 @@ import org.awaitility.core.ConditionFactory;
 public class Wait {
   private Wait() { }
 
-  public static ConditionFactory atLeast(int delay, TimeUnit timeUnit) {
+  public static ConditionFactory waitAtLeast(int delay, TimeUnit timeUnit) {
     return await()
       .pollDelay(delay, timeUnit)
       .atLeast(delay, timeUnit);

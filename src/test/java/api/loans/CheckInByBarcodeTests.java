@@ -4,6 +4,7 @@ import static api.support.APITestContext.getUserId;
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
 import static api.support.PubsubPublisherTestUtils.getPublishedEvents;
+import static api.support.Wait.waitAtLeast;
 import static api.support.fakes.PublishedEvents.byEventType;
 import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.fixtures.AddressExamples.SiriusBlack;
@@ -57,7 +58,6 @@ import org.junit.Test;
 import api.support.APITests;
 import api.support.CheckInByBarcodeResponse;
 import api.support.MultipleJsonRecords;
-import api.support.Wait;
 import api.support.builders.Address;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.FeeFineBuilder;
@@ -489,10 +489,10 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     assertThat("Closed loan should be present",
       loanRepresentation, notNullValue());
 
-    Wait.atLeast(1, SECONDS)
+    waitAtLeast(1, SECONDS)
       .until(patronNoticesClient::getAll, empty());
 
-    Wait.atLeast(1, SECONDS)
+    waitAtLeast(1, SECONDS)
       .until(() -> getPublishedEvents(byLogEventType(NOTICE.value())), empty());
   }
 
@@ -527,10 +527,10 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     assertThat("Response should not include a loan",
       checkInResponse.getJson().containsKey("loan"), is(false));
 
-    Wait.atLeast(1, SECONDS)
+    waitAtLeast(1, SECONDS)
       .until(patronNoticesClient::getAll, empty());
 
-    Wait.atLeast(1, SECONDS)
+    waitAtLeast(1, SECONDS)
       .until(() -> getPublishedEvents(byLogEventType(NOTICE.value())), empty());
   }
 
@@ -959,10 +959,10 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
       .on(new DateTime(2020, 1, 25, 12, 0, 0, UTC))
       .at(checkInServicePointId));
 
-    Wait.atLeast(1, SECONDS)
+    waitAtLeast(1, SECONDS)
       .until(accountsClient::getAll, empty());
 
-    Wait.atLeast(1, SECONDS)
+    waitAtLeast(1, SECONDS)
       .until(feeFineActionsClient::getAll, empty());
   }
 
