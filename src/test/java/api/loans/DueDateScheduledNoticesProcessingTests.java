@@ -1,11 +1,12 @@
 package api.loans;
 
-import static api.support.PubsubPublisherTestUtils.assertThatPublishedNoticeLogRecordEventsCountIsEqualTo;
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
+import static api.support.PubsubPublisherTestUtils.getPublishedLogRecordEvents;
 import static api.support.fixtures.ItemExamples.basedUponSmallAngryPlanet;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.ScheduledNoticeMatchers.hasScheduledLoanNotice;
 import static java.util.Comparator.comparing;
+import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -25,7 +26,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import api.support.fakes.FakePubSub;
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.policy.Period;
 import org.hamcrest.Matcher;
@@ -40,6 +40,7 @@ import api.support.builders.HoldingBuilder;
 import api.support.builders.ItemBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
+import api.support.fakes.FakePubSub;
 import api.support.fixtures.ConfigurationExample;
 import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.IndividualResource;
@@ -479,21 +480,22 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
 
   @SuppressWarnings("unchecked")
   private void checkSentNotices(UUID... expectedTemplateIds) {
-
     Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
     noticeContextMatchers.putAll(TemplateContextMatchers.getUserContextMatchers(borrower));
     noticeContextMatchers.putAll(TemplateContextMatchers.getItemContextMatchers(item, true));
     noticeContextMatchers.putAll(TemplateContextMatchers.getLoanContextMatchers(loan));
     noticeContextMatchers.putAll(TemplateContextMatchers.getLoanPolicyContextMatchersForUnlimitedRenewals());
 
-    Matcher[] matchers = Stream.of(expectedTemplateIds)
+    final var matchers = Stream.of(expectedTemplateIds)
       .map(templateId -> hasEmailNoticeProperties(borrower.getId(), templateId, noticeContextMatchers))
       .toArray(Matcher[]::new);
 
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
+
     assertThat(sentNotices, hasSize(expectedTemplateIds.length));
     assertThat(sentNotices, hasItems(matchers));
-    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+
+    assertThat(getPublishedLogRecordEvents(NOTICE.value()), hasSize(expectedTemplateIds.length));
     assertThatPublishedLogRecordEventsAreValid();
   }
 
