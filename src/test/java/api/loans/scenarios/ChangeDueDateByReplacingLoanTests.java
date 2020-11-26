@@ -1,35 +1,34 @@
 package api.loans.scenarios;
 
-import static api.support.PubsubPublisherTestUtils.assertThatPublishedNoticeLogRecordEventsCountIsEqualTo;
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
+import static api.support.PubsubPublisherTestUtils.getPublishedEvents;
+import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.awaitility.Awaitility.waitAtMost;
 import static org.folio.HttpStatus.HTTP_NO_CONTENT;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
+import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.Is.is;
 
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
-import org.awaitility.Awaitility;
-import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.Matcher;
-import org.hamcrest.MatcherAssert;
-import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.joda.time.Period;
 import org.junit.Test;
@@ -43,6 +42,7 @@ import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.fixtures.ItemExamples;
 import api.support.fixtures.TemplateContextMatchers;
+import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 
@@ -188,7 +188,6 @@ public class ChangeDueDateByReplacingLoanTests extends APITests {
 
   @Test
   public void manualDueDateChangeNoticeIsSentWhenPolicyDefinesManualDueDateChangeNoticeConfiguration() {
-
     UUID manualDueDateChangeTemplateId = UUID.randomUUID();
     JsonObject manualDueDateChangeNoticeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(manualDueDateChangeTemplateId)
@@ -244,20 +243,20 @@ public class ChangeDueDateByReplacingLoanTests extends APITests {
 
     IndividualResource loanAfterUpdate = loansClient.get(loan);
 
-    Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
-      .until(patronNoticesClient::getAll, Matchers.hasSize(1));
-    List<JsonObject> sentNotices = patronNoticesClient.getAll();
+    final var sentNotices = waitAtMost(1, SECONDS)
+      .until(patronNoticesClient::getAll, hasSize(1));
 
     Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
+
     noticeContextMatchers.putAll(TemplateContextMatchers.getUserContextMatchers(steve));
     noticeContextMatchers.putAll(TemplateContextMatchers.getItemContextMatchers(smallAngryPlanet, true));
     noticeContextMatchers.putAll(TemplateContextMatchers.getLoanContextMatchers(loanAfterUpdate));
     noticeContextMatchers.putAll(TemplateContextMatchers.getLoanPolicyContextMatchers(renewalLimit, renewalLimit));
-    MatcherAssert.assertThat(sentNotices,
-      hasItems(
-        hasEmailNoticeProperties(steve.getId(), manualDueDateChangeTemplateId, noticeContextMatchers)));
-    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+
+    assertThat(sentNotices,
+      hasItems(hasEmailNoticeProperties(steve.getId(), manualDueDateChangeTemplateId, noticeContextMatchers)));
+
+    assertThat(getPublishedEvents(byLogEventType(NOTICE.value())), hasSize(1));
     assertThatPublishedLogRecordEventsAreValid();
   }
 

@@ -2,8 +2,9 @@ package api.loans.scenarios;
 
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
-import static api.support.PubsubPublisherTestUtils.assertThatPublishedNoticeLogRecordEventsCountIsEqualTo;
+import static api.support.PubsubPublisherTestUtils.getPublishedEvents;
 import static api.support.fakes.PublishedEvents.byEventType;
+import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.fixtures.TemplateContextMatchers.getItemContextMatchers;
 import static api.support.fixtures.TemplateContextMatchers.getLoanContextMatchers;
 import static api.support.fixtures.TemplateContextMatchers.getLoanPolicyContextMatchers;
@@ -17,9 +18,12 @@ import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasNullParameter;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
+import static org.awaitility.Awaitility.waitAtMost;
 import static org.folio.HttpStatus.HTTP_NOT_FOUND;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
+import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -28,15 +32,12 @@ import static org.joda.time.Period.weeks;
 
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 import org.awaitility.Awaitility;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.Matcher;
-import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.joda.time.Period;
 import org.junit.Before;
@@ -228,11 +229,8 @@ public class ChangeDueDateAPITests extends APITests {
 
     IndividualResource loanAfterUpdate = loansClient.get(loan);
 
-    Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
-      .until(patronNoticesClient::getAll, Matchers.hasSize(1));
-
-    List<JsonObject> sentNotices = patronNoticesClient.getAll();
+    final var sentNotices = waitAtMost(1, SECONDS)
+      .until(patronNoticesClient::getAll, hasSize(1));
 
     Map<String, Matcher<String>> matchers = new HashMap<>();
 
@@ -243,7 +241,8 @@ public class ChangeDueDateAPITests extends APITests {
 
     assertThat(sentNotices, hasItems(
       hasEmailNoticeProperties(steve.getId(), templateId, matchers)));
-    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+
+    assertThat(getPublishedEvents(byLogEventType(NOTICE.value())), hasSize(1));
     assertThatPublishedLogRecordEventsAreValid();
   }
 
@@ -261,7 +260,7 @@ public class ChangeDueDateAPITests extends APITests {
     // second one for "log event", third one for "change due date"
     // and one "log record"
     final var publishedEvents = Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
+      .atMost(1, SECONDS)
       .until(FakePubSub::getPublishedEvents, hasSize(4));
 
     final var event = publishedEvents.findFirst(byEventType(LOAN_DUE_DATE_CHANGED));
