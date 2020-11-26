@@ -36,6 +36,7 @@ public class PublishedEvents extends ArrayList<JsonObject> {
   }
 
   public JsonObject findFirst(Predicate<JsonObject> predicate) {
-    return filter(predicate).findFirst().orElse(new JsonObject());
+    return filter(predicate).findFirst()
+      .orElseThrow(() -> new RuntimeException("No event found for filter"));
   }
 }
