@@ -1,7 +1,8 @@
 package api.loans.anonymization;
 
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
-import static api.support.PubsubPublisherTestUtils.getPublishedLogRecordEvents;
+import static api.support.PubsubPublisherTestUtils.getPublishedEvents;
+import static api.support.fakes.PublishedEvents.byLogEventTypeAndAction;
 import static api.support.matchers.LoanMatchers.isAnonymized;
 import static api.support.matchers.LoanMatchers.isOpen;
 import static org.folio.circulation.domain.representations.logs.LogEventType.LOAN;
@@ -22,6 +23,7 @@ import org.junit.Test;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.LoanHistoryConfigurationBuilder;
 import api.support.fakes.FakePubSub;
+import api.support.fakes.PublishedEvents;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 
@@ -398,15 +400,20 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
     assertThat(firstAnonymization.getAnonymizedLoans().size(), is(2));
     assertThat(loansStorageClient.getById(firstLoan.getId()).getJson(), isAnonymized());
     assertThat(loansStorageClient.getById(secondLoan.getId()).getJson(), isAnonymized());
-    assertThat(getPublishedLogRecordEvents(LOAN.value(), "Anonymize").size(), is(2));
+
+    final var anonymizedLoanLogEvents = getPublishedEvents(
+      PublishedEvents.byLogEventTypeAndAction(LOAN.value(), "Anonymize"));
+
+    assertThat(anonymizedLoanLogEvents, hasSize(2));
     assertThatPublishedLoanLogRecordEventsAreValid();
     FakePubSub.clearPublishedEvents();
 
     setNextAnonymizationDateTime(ONE_MINUTE_AND_ONE);
 
     LoanAnonymizationAPIResponse secondAnonymization = anonymizeLoansInTenant();
+
     assertThat(secondAnonymization.getAnonymizedLoans().size(), is(0));
-    assertThat(getPublishedLogRecordEvents(LOAN.value(), "Anonymize").size(), is(0));
+    assertThat(getPublishedEvents(byLogEventTypeAndAction(LOAN.value(), "Anonymize")), hasSize(0));
   }
 
   @Test

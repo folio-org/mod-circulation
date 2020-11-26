@@ -27,6 +27,10 @@ public class PublishedEvents extends ArrayList<JsonObject> {
     return json -> json.getString("eventPayload").contains(action);
   }
 
+  public static Predicate<JsonObject> byLogEventTypeAndAction(String type, String action) {
+    return byLogEventType(type).and(byLogAction(action));
+  }
+
   public Stream<JsonObject> filter(Predicate<JsonObject> predicate) {
     return stream().filter(predicate);
   }
