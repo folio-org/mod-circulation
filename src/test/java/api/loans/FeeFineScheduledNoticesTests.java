@@ -1,7 +1,8 @@
 package api.loans;
 
-import static api.support.PubsubPublisherTestUtils.assertThatPublishedNoticeLogRecordEventsCountIsEqualTo;
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
+import static api.support.PubsubPublisherTestUtils.getPublishedEvents;
+import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.matchers.PatronNoticeMatcher.hasNoticeProperties;
 import static api.support.matchers.ScheduledNoticeMatchers.hasScheduledFeeFineNotice;
 import static java.util.UUID.randomUUID;
@@ -9,9 +10,11 @@ import static org.folio.circulation.domain.notice.NoticeTiming.AFTER;
 import static org.folio.circulation.domain.notice.NoticeTiming.UPON_AT;
 import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.OVERDUE_FINE_RENEWED;
 import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.OVERDUE_FINE_RETURNED;
+import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasSize;
 
 import java.util.Arrays;
@@ -356,8 +359,11 @@ public class FeeFineScheduledNoticesTests extends APITests {
 
   private void assertThatNoticesWereSent(UUID... expectedTemplateIds) {
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
+
     assertThat(sentNotices, hasSize(expectedTemplateIds.length));
-    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+    assertThat(getPublishedEvents(byLogEventType(NOTICE.value())),
+      hasSize(expectedTemplateIds.length));
+
     assertThatPublishedLogRecordEventsAreValid();
 
     Matcher<?> matcher = TemplateContextMatchers.getFeeFineContextMatcher(account, action);
@@ -372,8 +378,8 @@ public class FeeFineScheduledNoticesTests extends APITests {
   }
 
   private void assertThatNoNoticesWereSent() {
-    assertThat(patronNoticesClient.getAll(), hasSize(0));
-    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+    assertThat(patronNoticesClient.getAll(), empty());
+    assertThat(getPublishedEvents(byLogEventType(NOTICE.value())), empty());
   }
 
   private static DateTime rightAfter(DateTime dateTime) {
