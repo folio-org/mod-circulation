@@ -1,6 +1,6 @@
 package api.requests;
 
-import static api.support.PubsubPublisherTestUtils.assertThatPublishedNoticeLogRecordEventsCountIsEqualTo;
+import static api.support.PubsubPublisherTestUtils.getPublishedEvents;
 import static api.support.fakes.PublishedEvents.byEventType;
 import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.matchers.EventMatchers.isValidLoanDueDateChangedEvent;
@@ -11,12 +11,15 @@ import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.function.Function.identity;
+import static org.awaitility.Awaitility.waitAtMost;
 import static org.folio.HttpStatus.HTTP_NO_CONTENT;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.domain.EventType.LOAN_DUE_DATE_CHANGED;
 import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_NAME;
 import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_PUBLIC_DESCRIPTION;
+import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
 import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_CREATED;
 import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_UPDATED;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
@@ -35,17 +38,14 @@ import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matcher;
-import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
@@ -155,7 +155,6 @@ public class RequestsAPIUpdatingTests extends APITests {
   //TODO: Check does not have pickup service point any more
   @Test
   public void canReplaceAnExistingRequestWithDeliveryAddress() {
-
     final ItemResource temeraire = itemsFixture.basedUponTemeraire();
 
     checkOutFixture.checkOutByBarcode(temeraire);
@@ -216,7 +215,6 @@ public class RequestsAPIUpdatingTests extends APITests {
 
   @Test
   public void replacingAnExistingRequestRemovesItemInformationWhenItemDoesNotExist() {
-
     final ItemResource nod = itemsFixture.basedUponNod();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
@@ -250,7 +248,6 @@ public class RequestsAPIUpdatingTests extends APITests {
 
   @Test
   public void replacingAnExistingRequestRemovesRequesterInformationWhenUserDoesNotExist() {
-
     final ItemResource nod = itemsFixture.basedUponNod();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
@@ -281,7 +278,6 @@ public class RequestsAPIUpdatingTests extends APITests {
 
   @Test
   public void replacingAnExistingRequestRemovesRequesterBarcodeWhenNonePresent() {
-
     final ItemResource nod = itemsFixture.basedUponNod();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
@@ -328,7 +324,6 @@ public class RequestsAPIUpdatingTests extends APITests {
 
   @Test
   public void replacingAnExistingRequestIncludesRequesterMiddleNameWhenPresent() {
-
     final ItemResource nod = itemsFixture.basedUponNod();
 
     checkOutFixture.checkOutByBarcode(nod);
@@ -377,7 +372,6 @@ public class RequestsAPIUpdatingTests extends APITests {
 
   @Test
   public void replacingAnExistingRequestRemovesItemBarcodeWhenNonePresent() {
-
     final ItemResource temeraire = itemsFixture.basedUponTemeraire();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
@@ -417,7 +411,6 @@ public class RequestsAPIUpdatingTests extends APITests {
 
   @Test
   public void cannotReplaceAnExistingRequestWithServicePointThatIsNotForPickup() {
-
     final ItemResource temeraire = itemsFixture.basedUponTemeraire();
 
     checkOutFixture.checkOutByBarcode(temeraire);
@@ -443,7 +436,6 @@ public class RequestsAPIUpdatingTests extends APITests {
 
   @Test
   public void cannotReplaceAnExistingRequestWithUnknownPickupLocation() {
-
     final ItemResource temeraire = itemsFixture.basedUponTemeraire();
 
     checkOutFixture.checkOutByBarcode(temeraire);
@@ -473,7 +465,6 @@ public class RequestsAPIUpdatingTests extends APITests {
 
   @Test
   public void cancellationReasonPublicDescriptionIsUsedAsReasonForCancellationToken() {
-
     UUID requestCancellationTemplateId = UUID.randomUUID();
     JsonObject requestCancellationConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(requestCancellationTemplateId)
@@ -512,27 +503,26 @@ public class RequestsAPIUpdatingTests extends APITests {
       .create();
     requestsClient.replace(createdRequest.getId(), updatedRequest);
 
-    Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
-      .until(patronNoticesClient::getAll, Matchers.hasSize(1));
-    List<JsonObject> sentNotices = patronNoticesClient.getAll();
+    final var sentNotices = waitAtMost(1, SECONDS)
+      .until(patronNoticesClient::getAll, hasSize(1));
 
     Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
+
     noticeContextMatchers.putAll(TemplateContextMatchers.getUserContextMatchers(requester));
     noticeContextMatchers.putAll(TemplateContextMatchers.getItemContextMatchers(temeraire, true));
     noticeContextMatchers.putAll(TemplateContextMatchers.getRequestContextMatchers(updatedRequest));
     noticeContextMatchers.putAll(TemplateContextMatchers.getCancelledRequestContextMatchers(updatedRequest));
     noticeContextMatchers.put("request.reasonForCancellation",
       is(itemNotAvailable.getJson().getString(CANCELLATION_REASON_PUBLIC_DESCRIPTION)));
-    assertThat(sentNotices,
-      hasItems(
-        hasEmailNoticeProperties(requester.getId(), requestCancellationTemplateId, noticeContextMatchers)));
-    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+
+    assertThat(sentNotices, hasItems(
+      hasEmailNoticeProperties(requester.getId(), requestCancellationTemplateId, noticeContextMatchers)));
+
+    assertThat(getPublishedEvents(byLogEventType(NOTICE.value())), hasSize(1));
   }
 
   @Test
   public void cancellationReasonNameIsUsedAsReasonForCancellationTokenWhenPublicDescriptionIsNotPresent() {
-
     UUID requestCancellationTemplateId = UUID.randomUUID();
     JsonObject requestCancellationConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(requestCancellationTemplateId)
@@ -569,29 +559,30 @@ public class RequestsAPIUpdatingTests extends APITests {
       .withCancellationReasonId(courseReserves.getId())
       .withCancellationAdditionalInformation("Cancellation info")
       .create();
+
     requestsClient.replace(createdRequest.getId(), updatedRequest);
 
-    Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
-      .until(patronNoticesClient::getAll, Matchers.hasSize(1));
-    List<JsonObject> sentNotices = patronNoticesClient.getAll();
+    final var sentNotices = Awaitility.await()
+      .atMost(1, SECONDS)
+      .until(patronNoticesClient::getAll, hasSize(1));
 
     Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
+
     noticeContextMatchers.putAll(TemplateContextMatchers.getUserContextMatchers(requester));
     noticeContextMatchers.putAll(TemplateContextMatchers.getItemContextMatchers(temeraire, true));
     noticeContextMatchers.putAll(TemplateContextMatchers.getRequestContextMatchers(updatedRequest));
     noticeContextMatchers.putAll(TemplateContextMatchers.getCancelledRequestContextMatchers(updatedRequest));
     noticeContextMatchers.put("request.reasonForCancellation",
       is(courseReserves.getJson().getString(CANCELLATION_REASON_NAME)));
-    assertThat(sentNotices,
-      hasItems(
-        hasEmailNoticeProperties(requester.getId(), requestCancellationTemplateId, noticeContextMatchers)));
-    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+
+    assertThat(sentNotices, hasItems(
+      hasEmailNoticeProperties(requester.getId(), requestCancellationTemplateId, noticeContextMatchers)));
+
+    assertThat(getPublishedEvents(byLogEventType(NOTICE.value())), hasSize(1));
   }
 
   @Test
   public void replacedRequestShouldOnlyIncludeStoredPropertiesInStorage() {
-
     final ItemResource temeraire = itemsFixture.basedUponTemeraire();
 
     checkOutFixture.checkOutByBarcode(temeraire);
@@ -657,7 +648,6 @@ public class RequestsAPIUpdatingTests extends APITests {
 
   @Test
   public void canReplaceRequestWithAnInactiveUser() {
-
     final ItemResource temeraire = itemsFixture.basedUponTemeraire();
 
     checkOutFixture.checkOutByBarcode(temeraire);
@@ -768,7 +758,7 @@ public class RequestsAPIUpdatingTests extends APITests {
     // for "log event: request created", for "log event: request updated" for "recall" and for "replace"
     // and three log events for loans
     final var publishedEvents = Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
+      .atMost(1, SECONDS)
       .until(FakePubSub::getPublishedEvents, hasSize(9));
 
     final var requestCreatedLogEvent = publishedEvents.findFirst(byLogEventType(REQUEST_CREATED.value()));

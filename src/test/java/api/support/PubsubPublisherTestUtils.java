@@ -4,8 +4,6 @@ import static api.support.fakes.PublishedEvents.byLogAction;
 import static api.support.fakes.PublishedEvents.byLogEventType;
 import static org.folio.circulation.domain.representations.logs.LogEventType.LOAN;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasSize;
 
 import java.util.List;
 import java.util.function.Predicate;
@@ -23,10 +21,6 @@ public class PubsubPublisherTestUtils {
 
   public static void assertThatPublishedLogRecordEventsAreValid() {
     getPublishedLogRecordEvents(NOTICE.value()).forEach(EventMatchers::isValidNoticeLogRecordEvent);
-  }
-
-  public static void assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(int messagesCount) {
-    assertThat(getPublishedLogRecordEvents(NOTICE.value()), hasSize(messagesCount));
   }
 
   public static List<JsonObject> getPublishedLogRecordEvents(String logEventType) {

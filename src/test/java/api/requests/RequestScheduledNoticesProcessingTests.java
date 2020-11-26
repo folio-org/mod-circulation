@@ -1,28 +1,30 @@
 package api.requests;
 
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
-import static api.support.PubsubPublisherTestUtils.assertThatPublishedNoticeLogRecordEventsCountIsEqualTo;
+import static api.support.PubsubPublisherTestUtils.getPublishedEvents;
 import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
+import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static java.util.Collections.singletonList;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.awaitility.Awaitility.waitAtMost;
+import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
 import static org.folio.circulation.support.ClockManager.getClockManager;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasSize;
 import static org.joda.time.DateTimeZone.UTC;
 
 import java.time.LocalDate;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
-import org.awaitility.Awaitility;
 import org.folio.circulation.domain.policy.Period;
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
@@ -93,23 +95,25 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
       .withPickupServicePoint(pickupServicePoint)
       .withRequestExpiration(requestExpiration));
 
-    Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
+    waitAtMost(1, SECONDS)
       .until(scheduledNoticesClient::getAll, hasSize(1));
 
     //close request
     IndividualResource requestInStorage = requestsStorageClient.get(request);
+
     requestsStorageClient.replace(request.getId(),
       requestInStorage.getJson().put("status", "Closed - Unfilled"));
 
     scheduledNoticeProcessingClient.runRequestNoticesProcessing();
 
-    assertThat(scheduledNoticesClient.getAll(), hasSize(0));
+    assertThat(scheduledNoticesClient.getAll(), empty());
 
-    List<JsonObject> notices = patronNoticesClient.getAll();
+    final var notices = patronNoticesClient.getAll();
+
     assertThat(notices, hasSize(1));
     assertThat(notices.get(0), getTemplateContextMatcher(templateId, request));
-    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+
+    assertThat(getPublishedEvents(byLogEventType(NOTICE.value())), hasSize(1));
     assertThatPublishedLogRecordEventsAreValid();
   }
 
@@ -133,8 +137,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
       .withPickupServicePoint(pickupServicePoint)
       .withRequestExpiration(requestExpiration));
 
-    Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
+    waitAtMost(1, SECONDS)
       .until(scheduledNoticesClient::getAll, hasSize(1));
 
     scheduledNoticeProcessingClient.runRequestNoticesProcessing();
@@ -166,8 +169,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
       .at(pickupServicePoint);
     checkInFixture.checkInByBarcode(builder);
 
-    Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
+    waitAtMost(1, SECONDS)
       .until(scheduledNoticesClient::getAll, hasSize(1));
 
     //close request
@@ -176,7 +178,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
     scheduledNoticeProcessingClient.runRequestNoticesProcessing(
       org.joda.time.LocalDate.now(UTC).plusDays(31).toDateTimeAtStartOfDay());
 
-    assertThat(scheduledNoticesClient.getAll(), hasSize(0));
+    assertThat(scheduledNoticesClient.getAll(), empty());
   }
 
   @Test
@@ -202,8 +204,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
       .at(pickupServicePoint);
     checkInFixture.checkInByBarcode(builder);
 
-    Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
+    waitAtMost(1, SECONDS)
       .until(scheduledNoticesClient::getAll, hasSize(1));
 
     scheduledNoticeProcessingClient.runRequestNoticesProcessing(
@@ -235,24 +236,22 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
       .at(pickupServicePoint);
     checkInFixture.checkInByBarcode(builder);
 
-    Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
+    waitAtMost(1, SECONDS)
       .until(scheduledNoticesClient::getAll, hasSize(1));
 
-    assertThat(patronNoticesClient.getAll(), hasSize(0));
+    assertThat(patronNoticesClient.getAll(), empty());
 
     checkOutFixture.checkOutByBarcode(item, requester);
 
-    Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
+    waitAtMost(1, SECONDS)
       .until(() -> requestsClient.get(request.getId()).getJson().getString("status"),
         equalTo("Closed - Filled"));
 
     scheduledNoticeProcessingClient.runRequestNoticesProcessing(
       org.joda.time.LocalDate.now(UTC).plusDays(100).toDateTimeAtStartOfDay());
 
-    assertThat(scheduledNoticesClient.getAll(), hasSize(0));
-    assertThat(patronNoticesClient.getAll(), hasSize(0));
+    assertThat(scheduledNoticesClient.getAll(), empty());
+    assertThat(patronNoticesClient.getAll(), empty());
   }
 
   @Test
@@ -275,16 +274,17 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
       .withPickupServicePoint(pickupServicePoint)
       .withRequestExpiration(requestExpiration));
 
-    Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
+    waitAtMost(1, SECONDS)
       .until(scheduledNoticesClient::getAll, hasSize(1));
 
     scheduledNoticeProcessingClient.runRequestNoticesProcessing();
-    List<JsonObject> notices = patronNoticesClient.getAll();
+
+    final var notices = patronNoticesClient.getAll();
 
     assertThat(notices, hasSize(1));
     assertThat(notices.get(0), getTemplateContextMatcher(templateId, request));
-    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+
+    assertThat(getPublishedEvents(byLogEventType(NOTICE.value())), hasSize(1));
     assertThatPublishedLogRecordEventsAreValid();
   }
 
@@ -309,16 +309,15 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
       .withPickupServicePoint(pickupServicePoint)
       .withRequestExpiration(requestExpiration));
 
-    Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
+    waitAtMost(1, SECONDS)
       .until(scheduledNoticesClient::getAll, hasSize(1));
 
     DateTime nextRunTimeBeforeProcessing = DateTime.parse(scheduledNoticesClient.getAll()
       .get(0).getString("nextRunTime"));
 
-
     scheduledNoticeProcessingClient.runRequestNoticesProcessing();
-    List<JsonObject> notices = patronNoticesClient.getAll();
+
+    final var notices = patronNoticesClient.getAll();
 
     DateTime nextRunTimeAfterProcessing = DateTime.parse(scheduledNoticesClient.getAll()
       .get(0).getString("nextRunTime"));
@@ -326,7 +325,8 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
     assertThat(notices, hasSize(1));
     assertThat(nextRunTimeBeforeProcessing, is(nextRunTimeAfterProcessing.minusDays(1)));
     assertThat(notices.get(0), getTemplateContextMatcher(templateId, request));
-    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+
+    assertThat(getPublishedEvents(byLogEventType(NOTICE.value())), hasSize(1));
     assertThatPublishedLogRecordEventsAreValid();
   }
 
@@ -356,19 +356,20 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
       .at(pickupServicePoint);
     checkInFixture.checkInByBarcode(builder);
 
-    Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
+    waitAtMost(1, SECONDS)
       .until(scheduledNoticesClient::getAll, hasSize(1));
 
     scheduledNoticeProcessingClient.runRequestNoticesProcessing(
       org.joda.time.LocalDate.now(UTC).plusDays(28).toDateTimeAtStartOfDay());
 
-    List<JsonObject> notices = patronNoticesClient.getAll();
+    final var notices = patronNoticesClient.getAll();
 
     assertThat(notices, hasSize(1));
     assertThat(notices.get(0), getTemplateContextMatcher(templateId, requestsClient.get(request.getId())));
-    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(notices.size());
+
+    assertThat(getPublishedEvents(byLogEventType(NOTICE.value())), hasSize(1));
     assertThatPublishedLogRecordEventsAreValid();
+
     assertThat(scheduledNoticesClient.getAll(), hasSize(0));
   }
 
