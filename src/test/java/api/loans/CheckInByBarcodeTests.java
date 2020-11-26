@@ -4,6 +4,7 @@ import static api.support.APITestContext.getUserId;
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedNoticeLogRecordEventsCountIsEqualTo;
+import static api.support.fakes.PublishedEvents.byEventType;
 import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.fixtures.AddressExamples.SiriusBlack;
 import static api.support.matchers.EventMatchers.isValidCheckInLogEvent;
@@ -1122,7 +1123,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
       .atMost(2, TimeUnit.SECONDS)
       .until(FakePubSub::getPublishedEvents, hasSize(4));
 
-    final var checkedInEvent = publishedEvents.getEventByType(ITEM_CHECKED_IN.name());
+    final var checkedInEvent = publishedEvents.findFirst(byEventType(ITEM_CHECKED_IN.name()));
 
     assertThat(checkedInEvent, isValidItemCheckedInEvent(checkedInLoan));
 

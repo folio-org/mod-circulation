@@ -1,6 +1,7 @@
 package api.loans;
 
 import static api.requests.RequestsAPICreationTests.setupMissingItem;
+import static api.support.fakes.PublishedEvents.byEventType;
 import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
 import static api.support.http.CqlQuery.queryFromTemplate;
 import static api.support.http.Limit.limit;
@@ -1746,7 +1747,7 @@ public class LoanAPITests extends APITests {
       .atMost(1, TimeUnit.SECONDS)
       .until(FakePubSub::getPublishedEvents, hasSize(2));
 
-    final var event = publishedEvents.getEventByType("LOAN_DUE_DATE_CHANGED");
+    final var event = publishedEvents.findFirst(byEventType("LOAN_DUE_DATE_CHANGED"));
 
     assertThat(event, isValidLoanDueDateChangedEvent(loan));
   }
@@ -1772,7 +1773,7 @@ public class LoanAPITests extends APITests {
       .atMost(1, TimeUnit.SECONDS)
       .until(FakePubSub::getPublishedEvents, hasSize(4));
 
-    final var event = publishedEvents.getEventByType("LOAN_DUE_DATE_CHANGED");
+    final var event = publishedEvents.findFirst(byEventType("LOAN_DUE_DATE_CHANGED"));
 
     assertThat(event, isValidLoanDueDateChangedEvent(loanFromStorage.getJson()));
   }

@@ -38,8 +38,4 @@ public class PublishedEvents extends ArrayList<JsonObject> {
   public JsonObject findFirst(Predicate<JsonObject> predicate) {
     return filter(predicate).findFirst().orElse(new JsonObject());
   }
-
-  public JsonObject getEventByType(String eventType) {
-    return findFirst(byEventType(eventType));
-  }
 }

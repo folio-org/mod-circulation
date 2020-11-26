@@ -1,6 +1,7 @@
 package api.loans;
 
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
+import static api.support.fakes.PublishedEvents.byEventType;
 import static api.support.matchers.EventMatchers.isValidItemClaimedReturnedEvent;
 import static api.support.matchers.EventTypeMatchers.ITEM_CLAIMED_RETURNED;
 import static api.support.matchers.LoanMatchers.hasLoanProperty;
@@ -131,7 +132,7 @@ public class ClaimItemReturnedAPITests extends APITests {
       .atMost(1, TimeUnit.SECONDS)
       .until(FakePubSub::getPublishedEvents, hasSize(4));
 
-    JsonObject event = publishedEvents.getEventByType(ITEM_CLAIMED_RETURNED);
+    final var event = publishedEvents.findFirst(byEventType(ITEM_CLAIMED_RETURNED));
 
     assertThat(event, isValidItemClaimedReturnedEvent(loan.getJson()));
     assertThatPublishedLoanLogRecordEventsAreValid();
