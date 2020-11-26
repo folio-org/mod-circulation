@@ -1,7 +1,6 @@
 package api.loans;
 
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
-import static api.support.PubsubPublisherTestUtils.getPublishedEvents;
 import static api.support.Wait.waitAtLeast;
 import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.fixtures.TemplateContextMatchers.getLoanPolicyContextMatchersForUnlimitedRenewals;
@@ -39,6 +38,7 @@ import api.support.APITests;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
+import api.support.fakes.FakePubSub;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import io.vertx.core.json.JsonArray;
@@ -129,7 +129,7 @@ public class PatronActionSessionTests extends APITests {
     final var sentNotices = patronNoticesClient.getAll();
 
     assertThat(sentNotices, hasSize(1));
-    assertThat(getPublishedEvents(byLogEventType(NOTICE.value())), hasSize(1));
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
     assertThatPublishedLogRecordEventsAreValid();
 
     final var multipleLoansToJamesContextMatcher = getMultipleLoansContextMatcher(james,
@@ -152,7 +152,7 @@ public class PatronActionSessionTests extends APITests {
       .until(patronSessionRecordsClient::getAll, hasSize(1));
 
     assertThat(patronNoticesClient.getAll(), empty());
-    assertThat(getPublishedEvents(byLogEventType(NOTICE.value())), empty());
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), empty());
     assertThatPublishedLogRecordEventsAreValid();
   }
 
@@ -170,7 +170,7 @@ public class PatronActionSessionTests extends APITests {
       .until(patronSessionRecordsClient::getAll, hasSize(1));
 
     assertThat(patronNoticesClient.getAll(), empty());
-    assertThat(getPublishedEvents(byLogEventType(NOTICE.value())), empty());
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), empty());
   }
 
   @Test
@@ -225,7 +225,7 @@ public class PatronActionSessionTests extends APITests {
     assertThat(checkInSessions, hasSize(1));
 
     assertThat(patronNoticesClient.getAll(), empty());
-    assertThat(getPublishedEvents(byLogEventType(NOTICE.value())), empty());
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), empty());
 
     endPatronSessionClient.endCheckInSession(steve.getId());
 
@@ -234,7 +234,7 @@ public class PatronActionSessionTests extends APITests {
       .until(this::getCheckInSessions, empty());
 
     assertThat(patronNoticesClient.getAll(), hasSize(1));
-    assertThat(getPublishedEvents(byLogEventType(NOTICE.value())), hasSize(1));
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
     assertThatPublishedLogRecordEventsAreValid();
   }
 

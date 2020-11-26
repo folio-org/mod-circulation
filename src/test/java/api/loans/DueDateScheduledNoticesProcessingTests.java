@@ -1,7 +1,6 @@
 package api.loans;
 
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
-import static api.support.PubsubPublisherTestUtils.getPublishedEvents;
 import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.fixtures.ItemExamples.basedUponSmallAngryPlanet;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
@@ -496,7 +495,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
     assertThat(sentNotices, hasSize(expectedTemplateIds.length));
     assertThat(sentNotices, hasItems(matchers));
 
-    assertThat(getPublishedEvents(byLogEventType(NOTICE.value())), hasSize(expectedTemplateIds.length));
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(expectedTemplateIds.length));
     assertThatPublishedLogRecordEventsAreValid();
   }
 

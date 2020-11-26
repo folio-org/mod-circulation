@@ -1,7 +1,6 @@
 package api.loans;
 
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
-import static api.support.PubsubPublisherTestUtils.getPublishedEvents;
 import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.matchers.PatronNoticeMatcher.hasNoticeProperties;
 import static api.support.matchers.ScheduledNoticeMatchers.hasScheduledFeeFineNotice;
@@ -47,6 +46,7 @@ import api.support.builders.FeeFineBuilder;
 import api.support.builders.FeeFineOwnerBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
+import api.support.fakes.FakePubSub;
 import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
@@ -361,7 +361,7 @@ public class FeeFineScheduledNoticesTests extends APITests {
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
 
     assertThat(sentNotices, hasSize(expectedTemplateIds.length));
-    assertThat(getPublishedEvents(byLogEventType(NOTICE.value())),
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())),
       hasSize(expectedTemplateIds.length));
 
     assertThatPublishedLogRecordEventsAreValid();
@@ -379,7 +379,7 @@ public class FeeFineScheduledNoticesTests extends APITests {
 
   private void assertThatNoNoticesWereSent() {
     assertThat(patronNoticesClient.getAll(), empty());
-    assertThat(getPublishedEvents(byLogEventType(NOTICE.value())), empty());
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), empty());
   }
 
   private static DateTime rightAfter(DateTime dateTime) {

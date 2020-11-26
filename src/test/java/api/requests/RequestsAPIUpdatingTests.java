@@ -1,6 +1,5 @@
 package api.requests;
 
-import static api.support.PubsubPublisherTestUtils.getPublishedEvents;
 import static api.support.fakes.PublishedEvents.byEventType;
 import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.matchers.EventMatchers.isValidLoanDueDateChangedEvent;
@@ -518,7 +517,7 @@ public class RequestsAPIUpdatingTests extends APITests {
     assertThat(sentNotices, hasItems(
       hasEmailNoticeProperties(requester.getId(), requestCancellationTemplateId, noticeContextMatchers)));
 
-    assertThat(getPublishedEvents(byLogEventType(NOTICE.value())), hasSize(1));
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
   }
 
   @Test
@@ -578,7 +577,7 @@ public class RequestsAPIUpdatingTests extends APITests {
     assertThat(sentNotices, hasItems(
       hasEmailNoticeProperties(requester.getId(), requestCancellationTemplateId, noticeContextMatchers)));
 
-    assertThat(getPublishedEvents(byLogEventType(NOTICE.value())), hasSize(1));
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
   }
 
   @Test

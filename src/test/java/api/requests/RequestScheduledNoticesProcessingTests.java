@@ -1,7 +1,6 @@
 package api.requests;
 
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
-import static api.support.PubsubPublisherTestUtils.getPublishedEvents;
 import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
 import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
@@ -113,7 +112,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
     assertThat(notices, hasSize(1));
     assertThat(notices.get(0), getTemplateContextMatcher(templateId, request));
 
-    assertThat(getPublishedEvents(byLogEventType(NOTICE.value())), hasSize(1));
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
     assertThatPublishedLogRecordEventsAreValid();
   }
 
@@ -284,7 +283,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
     assertThat(notices, hasSize(1));
     assertThat(notices.get(0), getTemplateContextMatcher(templateId, request));
 
-    assertThat(getPublishedEvents(byLogEventType(NOTICE.value())), hasSize(1));
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
     assertThatPublishedLogRecordEventsAreValid();
   }
 
@@ -326,7 +325,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
     assertThat(nextRunTimeBeforeProcessing, is(nextRunTimeAfterProcessing.minusDays(1)));
     assertThat(notices.get(0), getTemplateContextMatcher(templateId, request));
 
-    assertThat(getPublishedEvents(byLogEventType(NOTICE.value())), hasSize(1));
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
     assertThatPublishedLogRecordEventsAreValid();
   }
 
@@ -367,7 +366,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
     assertThat(notices, hasSize(1));
     assertThat(notices.get(0), getTemplateContextMatcher(templateId, requestsClient.get(request.getId())));
 
-    assertThat(getPublishedEvents(byLogEventType(NOTICE.value())), hasSize(1));
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
     assertThatPublishedLogRecordEventsAreValid();
 
     assertThat(scheduledNoticesClient.getAll(), hasSize(0));

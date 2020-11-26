@@ -1,7 +1,6 @@
 package api.requests;
 
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
-import static api.support.PubsubPublisherTestUtils.getPublishedEvents;
 import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
 import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.fixtures.AutomatedPatronBlocksFixture.MAX_NUMBER_OF_ITEMS_CHARGED_OUT_MESSAGE;
@@ -76,6 +75,7 @@ import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.builders.UserBuilder;
 import api.support.builders.UserManualBlockBuilder;
+import api.support.fakes.FakePubSub;
 import api.support.fixtures.CheckInFixture;
 import api.support.fixtures.ItemExamples;
 import api.support.fixtures.ItemsFixture;
@@ -1340,7 +1340,7 @@ RequestsAPICreationTests extends APITests {
     assertThat(sentNotices, hasItems(
       hasEmailNoticeProperties(requester.getId(), pageConfirmationTemplateId, noticeContextMatchers)));
 
-    assertThat(getPublishedEvents(byLogEventType(NOTICE.value())), hasSize(1));
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
     assertThatPublishedLogRecordEventsAreValid();
   }
 
@@ -1407,7 +1407,7 @@ RequestsAPICreationTests extends APITests {
     assertThat(sentNotices, hasItems(
       hasEmailNoticeProperties(requester.getId(), holdConfirmationTemplateId, noticeContextMatchers)));
 
-    assertThat(getPublishedEvents(byLogEventType(NOTICE.value())), hasSize(1));
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
     assertThatPublishedLogRecordEventsAreValid();
   }
 
@@ -1501,7 +1501,7 @@ RequestsAPICreationTests extends APITests {
       hasEmailNoticeProperties(loanOwner.getId(), recallToLoaneeTemplateId,
         recallNotificationContextMatchers)));
 
-    assertThat(getPublishedEvents(byLogEventType(NOTICE.value())), hasSize(2));
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(2));
     assertThatPublishedLogRecordEventsAreValid();
   }
 
@@ -1561,7 +1561,7 @@ RequestsAPICreationTests extends APITests {
     waitAtMost(1, SECONDS)
       .until(patronNoticesClient::getAll, hasSize(1));
 
-    assertThat(getPublishedEvents(byLogEventType(NOTICE.value())), hasSize(1));
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
     assertThatPublishedLogRecordEventsAreValid();
   }
 
@@ -1860,7 +1860,7 @@ RequestsAPICreationTests extends APITests {
     waitAtMost(1, SECONDS)
       .until(patronNoticesClient::getAll, hasSize(2));
 
-    assertThat(getPublishedEvents(byLogEventType(NOTICE.value())), hasSize(2));
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(2));
     assertThatPublishedLogRecordEventsAreValid();
   }
 

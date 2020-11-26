@@ -1,7 +1,6 @@
 package api.loans.anonymization;
 
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
-import static api.support.PubsubPublisherTestUtils.getPublishedEvents;
 import static api.support.fakes.PublishedEvents.byLogEventTypeAndAction;
 import static api.support.matchers.LoanMatchers.isAnonymized;
 import static api.support.matchers.LoanMatchers.isOpen;
@@ -401,7 +400,7 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
     assertThat(loansStorageClient.getById(firstLoan.getId()).getJson(), isAnonymized());
     assertThat(loansStorageClient.getById(secondLoan.getId()).getJson(), isAnonymized());
 
-    final var anonymizedLoanLogEvents = getPublishedEvents(
+    final var anonymizedLoanLogEvents = FakePubSub.getPublishedEventsAsList(
       PublishedEvents.byLogEventTypeAndAction(LOAN.value(), "Anonymize"));
 
     assertThat(anonymizedLoanLogEvents, hasSize(2));
@@ -413,7 +412,7 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
     LoanAnonymizationAPIResponse secondAnonymization = anonymizeLoansInTenant();
 
     assertThat(secondAnonymization.getAnonymizedLoans().size(), is(0));
-    assertThat(getPublishedEvents(byLogEventTypeAndAction(LOAN.value(), "Anonymize")), hasSize(0));
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventTypeAndAction(LOAN.value(), "Anonymize")), hasSize(0));
   }
 
   @Test

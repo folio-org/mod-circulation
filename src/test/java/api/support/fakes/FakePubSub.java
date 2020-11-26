@@ -8,6 +8,7 @@ import static org.folio.HttpStatus.HTTP_NO_CONTENT;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Predicate;
 
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
@@ -63,7 +64,7 @@ public class FakePubSub {
   }
 
   private static void postTenant(RoutingContext routingContext,
-                                 List<JsonObject> requestBodyList) {
+    List<JsonObject> requestBodyList) {
 
     if (failPubSubRegistration) {
       routingContext.response()
@@ -98,6 +99,10 @@ public class FakePubSub {
         .setStatusCode(HTTP_NO_CONTENT.toInt())
         .end();
     }
+  }
+
+  public static List<JsonObject> getPublishedEventsAsList(Predicate<JsonObject> predicate) {
+    return getPublishedEvents().filterToList(predicate);
   }
 
   public static PublishedEvents getPublishedEvents() {

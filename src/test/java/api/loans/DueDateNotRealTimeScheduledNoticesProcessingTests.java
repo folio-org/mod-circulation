@@ -1,7 +1,6 @@
 package api.loans;
 
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
-import static api.support.PubsubPublisherTestUtils.getPublishedEvents;
 import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.fixtures.TemplateContextMatchers.getLoanPolicyContextMatchersForUnlimitedRenewals;
 import static api.support.fixtures.TemplateContextMatchers.getMultipleLoansContextMatcher;
@@ -35,6 +34,7 @@ import org.junit.Test;
 import api.support.APITests;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
+import api.support.fakes.FakePubSub;
 import api.support.fixtures.ConfigurationExample;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
@@ -89,7 +89,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
 
     assertThat(scheduledNoticesClient.getAll(), empty());
     assertThat(sentNotices, hasSize(2));
-    assertThat(getPublishedEvents(byLogEventType(NOTICE.value())), hasSize(2));
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(2));
 
     assertThatPublishedLogRecordEventsAreValid();
 
@@ -162,7 +162,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
       .allMatch(newNextRunTime::isEqual));
 
     assertThat(patronNoticesClient.getAll(), hasSize(1));
-    assertThat(getPublishedEvents(byLogEventType(NOTICE.value())), hasSize(1));
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
     assertThatPublishedLogRecordEventsAreValid();
   }
 
@@ -202,7 +202,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
     scheduledNoticeProcessingClient.runDueDateNotRealTimeNoticesProcessing(nextDayAfterBeforeNoticeShouldBeSend);
 
     assertThat(patronNoticesClient.getAll(), empty());
-    assertThat(getPublishedEvents(byLogEventType(NOTICE.value())), empty());
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), empty());
   }
 
   @Test
@@ -294,7 +294,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
 
     assertThat(scheduledNoticesClient.getAll(), empty());
     assertThat(patronNoticesClient.getAll(), empty());
-    assertThat(getPublishedEvents(byLogEventType(NOTICE.value())), empty());
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), empty());
   }
 
   @Test
@@ -332,7 +332,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
 
     assertThat(scheduledNoticesClient.getAll(), hasSize(0));
     assertThat(patronNoticesClient.getAll(), hasSize(0));
-    assertThat(getPublishedEvents(byLogEventType(NOTICE.value())), hasSize(0));
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(0));
   }
 
   @Test
@@ -370,7 +370,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
 
     assertThat(scheduledNoticesClient.getAll(), empty());
     assertThat(patronNoticesClient.getAll(), empty());
-    assertThat(getPublishedEvents(byLogEventType(NOTICE.value())), empty());
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), empty());
   }
 
   @Test
@@ -426,7 +426,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
 
     assertThat(scheduledNoticesClient.getAll(), hasSize(0));
     assertThat(sentNotices, hasSize(2));
-    assertThat(getPublishedEvents(byLogEventType(NOTICE.value())), hasSize(2));
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(2));
 
     assertThatPublishedLogRecordEventsAreValid();
 
@@ -485,7 +485,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
 
     assertThat(scheduledNoticesClient.getAll(), empty());
     assertThat(patronNoticesClient.getAll(), empty());
-    assertThat(getPublishedEvents(byLogEventType(NOTICE.value())), empty());
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), empty());
   }
 
   @Test

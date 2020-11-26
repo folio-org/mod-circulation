@@ -3,7 +3,6 @@ package api.loans;
 import static api.support.APITestContext.getUserId;
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
-import static api.support.PubsubPublisherTestUtils.getPublishedEvents;
 import static api.support.Wait.waitAtLeast;
 import static api.support.fakes.PublishedEvents.byEventType;
 import static api.support.fakes.PublishedEvents.byLogEventType;
@@ -493,7 +492,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
       .until(patronNoticesClient::getAll, empty());
 
     waitAtLeast(1, SECONDS)
-      .until(() -> getPublishedEvents(byLogEventType(NOTICE.value())), empty());
+      .until(() -> FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), empty());
   }
 
   @Test
@@ -531,7 +530,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
       .until(patronNoticesClient::getAll, empty());
 
     waitAtLeast(1, SECONDS)
-      .until(() -> getPublishedEvents(byLogEventType(NOTICE.value())), empty());
+      .until(() -> FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), empty());
   }
 
   @Test
@@ -641,7 +640,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
       .until(patronNoticesClient::getAll, hasSize(1));
 
     waitAtMost(1, SECONDS)
-      .until(() -> getPublishedEvents(byLogEventType(NOTICE.value())), hasSize(1));
+      .until(() -> FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
 
     assertThatPublishedLogRecordEventsAreValid();
 
@@ -655,7 +654,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
       .until(patronNoticesClient::getAll, empty());
 
     waitAtMost(1, SECONDS)
-      .until(() -> getPublishedEvents(byLogEventType(NOTICE.value())), empty());
+      .until(() -> FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), empty());
   }
 
   @Test
@@ -1125,7 +1124,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
       hasEmailNoticeProperties(requester.getId(), expectedTemplateId, noticeContextMatchers)));
 
     waitAtMost(1, SECONDS)
-      .until(() -> getPublishedEvents(byLogEventType(NOTICE.value())), hasSize(1));
+      .until(() -> FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
 
     assertThatPublishedLogRecordEventsAreValid();
   }

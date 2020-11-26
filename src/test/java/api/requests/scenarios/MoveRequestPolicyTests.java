@@ -1,7 +1,6 @@
 package api.requests.scenarios;
 
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
-import static api.support.PubsubPublisherTestUtils.getPublishedEvents;
 import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.http.CqlQuery.exactMatch;
 import static java.util.Collections.singletonList;
@@ -182,7 +181,7 @@ public class MoveRequestPolicyTests extends APITests {
     waitAtMost(1, SECONDS)
       .until(patronNoticesClient::getAll, hasSize(1));
 
-    assertThat(getPublishedEvents(byLogEventType(NOTICE.value())), hasSize(1));
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
 
     // move jessica's recall request from interestingTimes to smallAngryPlanet
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
@@ -208,7 +207,7 @@ public class MoveRequestPolicyTests extends APITests {
     assertThat("move recall request notice has not been sent",
       patronNoticesClient.getAll().size(), is(2));
 
-    assertThat(getPublishedEvents(byLogEventType(NOTICE.value())), hasSize(2));
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(2));
     assertThatPublishedLogRecordEventsAreValid();
   }
 
@@ -253,7 +252,7 @@ public class MoveRequestPolicyTests extends APITests {
     waitAtMost(1, SECONDS)
       .until(() -> getPatronNoticesForRecipient(charlotte).size(), is(1));
 
-    assertThat(getPublishedEvents(byLogEventType(NOTICE.value())), hasSize(2));
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(2));
     assertThatPublishedLogRecordEventsAreValid();
 
     // move jessica's recall request from interestingTimes to smallAngryPlanet
@@ -276,7 +275,7 @@ public class MoveRequestPolicyTests extends APITests {
     assertThat("move recall request unexpectedly sent another patron notice",
       patronNoticesClient.getAll(), hasSize(2));
 
-    assertThat(getPublishedEvents(byLogEventType(NOTICE.value())), hasSize(2));
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(2));
     assertThatPublishedLogRecordEventsAreValid();
   }
 
@@ -321,7 +320,7 @@ public class MoveRequestPolicyTests extends APITests {
     waitAtMost(1, SECONDS)
       .until(patronNoticesClient::getAll, hasSize(1));
 
-    assertThat(getPublishedEvents(byLogEventType(NOTICE.value())), hasSize(1));
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
 
     // move jessica's recall request from interestingTimes to smallAngryPlanet
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
@@ -347,7 +346,7 @@ public class MoveRequestPolicyTests extends APITests {
     assertThat("move recall request notice has not been sent",
       patronNoticesClient.getAll(), hasSize(2));
 
-    assertThat(getPublishedEvents(byLogEventType(NOTICE.value())), hasSize(2));
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(2));
     assertThatPublishedLogRecordEventsAreValid();
   }
 
@@ -408,7 +407,7 @@ public class MoveRequestPolicyTests extends APITests {
     waitAtMost(1, SECONDS)
       .until(() -> getPatronNoticesForRecipient(charlotte).size(), is(1));
 
-    assertThat(getPublishedEvents(byLogEventType(NOTICE.value())), hasSize(2));
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(2));
     assertThatPublishedLogRecordEventsAreValid();
 
     // move jessica's recall request from interestingTimes to smallAngryPlanet
@@ -431,7 +430,7 @@ public class MoveRequestPolicyTests extends APITests {
     assertThat("move recall request unexpectedly sent another patron notice",
       patronNoticesClient.getAll(), hasSize(2));
 
-    assertThat(getPublishedEvents(byLogEventType(NOTICE.value())), hasSize(2));
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(2));
     assertThatPublishedLogRecordEventsAreValid();
   }
 
