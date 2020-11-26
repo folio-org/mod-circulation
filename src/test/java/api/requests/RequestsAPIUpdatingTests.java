@@ -775,15 +775,20 @@ public class RequestsAPIUpdatingTests extends APITests {
     final var requestUpdatedLogEvent = publishedEvents.findFirst(byLogEventType(REQUEST_UPDATED.value()));
     final var dueDateChangedEvent = publishedEvents.findFirst(byEventType(LOAN_DUE_DATE_CHANGED.name()));
 
-    Request requestCreatedFromEventPayload = Request.from(new JsonObject(requestCreatedLogEvent.getString("eventPayload")).getJsonObject("payload").getJsonObject("requests").getJsonObject("created"));
+    Request requestCreatedFromEventPayload = getRequestFromPayload(requestCreatedLogEvent, "created");
     assertThat(requestCreatedFromEventPayload, notNullValue());
 
-    Request originalCreatedFromEventPayload = Request.from(new JsonObject(requestUpdatedLogEvent.getString("eventPayload")).getJsonObject("payload").getJsonObject("requests").getJsonObject("original"));
-    Request updatedCreatedFromEventPayload = Request.from(new JsonObject(requestUpdatedLogEvent.getString("eventPayload")).getJsonObject("payload").getJsonObject("requests").getJsonObject("updated"));
+    Request originalCreatedFromEventPayload = getRequestFromPayload(requestUpdatedLogEvent, "original");
+    Request updatedCreatedFromEventPayload = getRequestFromPayload(requestUpdatedLogEvent, "updated");
 
     assertThat(requestCreatedFromEventPayload.getRequestType(), equalTo(originalCreatedFromEventPayload.getRequestType()));
     assertThat(originalCreatedFromEventPayload.getRequestType(), not(equalTo(updatedCreatedFromEventPayload.getRequestType())));
 
     assertThat(dueDateChangedEvent, isValidLoanDueDateChangedEvent(updatedLoan));
+  }
+
+  private Request getRequestFromPayload(JsonObject logEvent, String created) {
+    return Request.from(new JsonObject(logEvent.getString("eventPayload"))
+      .getJsonObject("payload").getJsonObject("requests").getJsonObject(created));
   }
 }
