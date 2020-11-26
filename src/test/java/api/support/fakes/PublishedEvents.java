@@ -15,7 +15,8 @@ public class PublishedEvents extends ArrayList<JsonObject> {
 
   public static Predicate<JsonObject> byLogEventType(String logEventType) {
     final Predicate<JsonObject> byLogEventType = json ->
-      json.getString("eventPayload").contains(logEventType);
+      new JsonObject(json.getString("eventPayload")).getString("logEventType")
+        .equals(logEventType);
 
     return byEventType(LOG_RECORD).and(byLogEventType);
   }
