@@ -26,6 +26,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import api.support.http.UserResource;
 import org.apache.commons.lang3.tuple.Pair;
 import org.awaitility.Awaitility;
 import api.support.http.IndividualResource;
@@ -239,6 +240,63 @@ public class PatronActionSessionTests extends APITests {
     assertThat(patronNoticesClient.getAll(), hasSize(1));
     assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
     assertThatPublishedLogRecordEventsAreValid();
+  }
+
+  @Test
+  public void checkOutSessionWithNonExistentLoanShouldBeEnded() {
+    IndividualResource james = usersFixture.james();
+    ItemResource nod = itemsFixture.basedUponNod();
+
+    checkOutFixture.checkOutByBarcode(nod, james);
+    List<JsonObject> sessions = patronSessionRecordsClient.getAll();
+    assertThat(sessions, hasSize(1));
+    String loanId = sessions.get(0).getString(LOAN_ID);
+    loansFixture.deleteLoan(UUID.fromString(loanId));
+    endPatronSessionClient.endCheckOutSession(james.getId());
+
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(patronSessionRecordsClient::getAll, empty());
+    assertThat(patronNoticesClient.getAll(), hasSize(0));
+    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+  }
+
+  @Test
+  public void checkOutSessionWithNonExistentItemShouldBeEnded() {
+    IndividualResource james = usersFixture.james();
+    ItemResource nod = itemsFixture.basedUponNod();
+
+    checkOutFixture.checkOutByBarcode(nod, james);
+    List<JsonObject> sessions = patronSessionRecordsClient.getAll();
+    assertThat(sessions, Matchers.hasSize(1));
+    UUID loanId = UUID.fromString(sessions.get(0).getString(LOAN_ID));
+    IndividualResource loan = loansFixture.getLoanById(loanId);
+    itemsClient.delete(UUID.fromString(loan.getJson().getString("itemId")));
+    endPatronSessionClient.endCheckOutSession(james.getId());
+
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(patronSessionRecordsClient::getAll, empty());
+    assertThat(patronNoticesClient.getAll(), hasSize(0));
+    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+  }
+
+  @Test
+  public void checkOutSessionWithNonExistentUserShouldBeEnded() {
+    UserResource steve = usersFixture.steve();
+    ItemResource nod = itemsFixture.basedUponNod();
+
+    checkOutFixture.checkOutByBarcode(nod, steve);
+    List<JsonObject> sessions = patronSessionRecordsClient.getAll();
+    assertThat(sessions, Matchers.hasSize(1));
+    usersFixture.remove(steve);
+    endPatronSessionClient.endCheckOutSession(steve.getId());
+
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(patronSessionRecordsClient::getAll, empty());
+    assertThat(patronNoticesClient.getAll(), hasSize(0));
+    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
   }
 
   private List<JsonObject> getCheckInSessions() {

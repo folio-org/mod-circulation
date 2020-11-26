@@ -189,7 +189,7 @@ public class PatronActionSessionRepository {
     MultipleRecords<PatronSessionRecord> records, User user) {
 
     return records.mapRecords(sessionRecord -> {
-        if (sessionRecord.getLoan() != null && sessionRecord.getPatronId() != null) {
+        if (sessionRecord.getLoan() != null) {
           return sessionRecord.withLoan(sessionRecord.getLoan().withUser(user));
         }
         log.info("Session with ID: {} doesn't have a loan", sessionRecord.getId());

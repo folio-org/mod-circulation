@@ -69,9 +69,7 @@ public class RequestNoticeSender {
       .withEventType(eventType)
       .withNoticeContext(createRequestNoticeContext(request))
       .build();
-    if (item != null && requester != null) {
       patronNoticeService.acceptNoticeEvent(requestCreatedEvent, NoticeLogContext.from(request));
-    }
 
     Loan loan = request.getLoan();
     if (request.getRequestType() == RequestType.RECALL && loan != null) {
@@ -107,7 +105,6 @@ public class RequestNoticeSender {
     Item item = request.getItem();
     User requester = request.getRequester();
 
-    if(requester != null && item != null) {
       PatronNoticeEvent requestCancelledEvent = new PatronNoticeEventBuilder()
         .withItem(item)
         .withUser(requester)
@@ -115,7 +112,6 @@ public class RequestNoticeSender {
         .withNoticeContext(createRequestNoticeContext(request))
         .build();
       patronNoticeService.acceptNoticeEvent(requestCancelledEvent, NoticeLogContext.from(request));
-    }
 
     return Result.succeeded(null);
   }

@@ -7,6 +7,7 @@ import static org.folio.circulation.domain.notice.TemplateContextUtil.createLoan
 import static org.folio.circulation.domain.notice.TemplateContextUtil.createUserContext;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.results.Result.of;
+import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 import static org.folio.circulation.support.http.client.PageLimit.limit;
@@ -70,10 +71,9 @@ public class PatronActionSessionService {
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> saveCheckOutSessionRecord(LoanAndRelatedRecords records) {
-
-    if(records.getLoan() == null){
+    if (records.getLoan() == null) {
       log.info("CheckOutSessionRecord is not saved, record doesn't have a valid loan.");
-      return completedFuture(of(() -> records));
+      return ofAsync(() -> records);
     }
 
     UUID patronId = UUID.fromString(records.getUserId());
@@ -87,8 +87,7 @@ public class PatronActionSessionService {
       .thenApply(mapResult(v -> records));
   }
 
-  public CompletableFuture<Result<Void>> endSession(String patronId,
-                                                    PatronActionType actionType) {
+  public CompletableFuture<Result<Void>> endSession(String patronId, PatronActionType actionType) {
 
     return patronActionSessionRepository.findPatronActionSessions(patronId,
       actionType, DEFAULT_SESSION_SIZE_PAGE_LIMIT)
@@ -117,6 +116,7 @@ public class PatronActionSessionService {
     MultipleRecords<PatronSessionRecord> records) {
 
     if (records == null) {
+      log.info("Records are empty, nothing to delete.");
       return completedFuture(succeeded(null));
     }
 
@@ -128,14 +128,25 @@ public class PatronActionSessionService {
     MultipleRecords<PatronSessionRecord> records) {
 
     if (records.isEmpty()) {
+      log.info("Records are empty, notices will not be sent.");
       return completedFuture(succeeded(null));
     }
     List<PatronSessionRecord> sessionRecords = new ArrayList<>(records.getRecords());
 
     PatronSessionRecord recordSample = sessionRecords.get(0);
 
-    if (recordSample.getLoan() == null || recordSample.getLoan().getUser() == null) {
-      log.info("Notice was not sent. Session: {} doesn't have a valid loan or user.", recordSample.getId());
+    if (recordSample.getLoan() == null) {
+      log.info("Notice was not sent. Session: {} doesn't have a valid loan.", recordSample.getId());
+      return completedFuture(succeeded(records));
+    }
+
+    if (recordSample.getLoan().getItem() == null || recordSample.getLoan().getItem().getItem() == null){
+      log.info("Notice was not sent. Session: {} doesn't have a valid item.", recordSample.getId());
+      return completedFuture(succeeded(records));
+    }
+
+    if (recordSample.getLoan().getUser() == null) {
+      log.info("Notice was not sent. Session: {} doesn't have a valid user.", recordSample.getId());
       return completedFuture(succeeded(records));
     }
 

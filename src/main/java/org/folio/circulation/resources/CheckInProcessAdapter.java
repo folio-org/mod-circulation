@@ -4,6 +4,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.notice.TemplateContextUtil.createAvailableNoticeContext;
 import static org.folio.circulation.support.results.Result.succeeded;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -40,8 +41,11 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.server.WebContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 class CheckInProcessAdapter {
+  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
   private final ItemByBarcodeInStorageFinder itemFinder;
   private final SingleOpenLoanForItemInStorageFinder singleOpenLoanFinder;
   private final LoanCheckInService loanCheckInService;
@@ -231,14 +235,18 @@ class CheckInProcessAdapter {
 
   private Result<CheckInContext> sendAvailableNotice(Request request, User user, CheckInContext context) {
     Item item = context.getItem();
-    if (item != null && item.isAwaitingPickup() && item.hasChanged()) {
-      PatronNoticeEvent noticeEvent = new PatronNoticeEventBuilder()
-        .withItem(item)
-        .withUser(user)
-        .withEventType(NoticeEventType.AVAILABLE)
-        .withNoticeContext(createAvailableNoticeContext(item, user, request))
-        .build();
-      patronNoticeService.acceptNoticeEvent(noticeEvent, NoticeLogContext.from(item, user, request));
+    if (item != null) {
+      if (item.isAwaitingPickup() && item.hasChanged()) {
+        PatronNoticeEvent noticeEvent = new PatronNoticeEventBuilder()
+          .withItem(item)
+          .withUser(user)
+          .withEventType(NoticeEventType.AVAILABLE)
+          .withNoticeContext(createAvailableNoticeContext(item, user, request))
+          .build();
+        patronNoticeService.acceptNoticeEvent(noticeEvent, NoticeLogContext.from(item, user, request));
+      }
+    } else {
+      log.info("Notice was not sent. CheckInContext doesn't have a valid item.");
     }
     return succeeded(context);
   }
