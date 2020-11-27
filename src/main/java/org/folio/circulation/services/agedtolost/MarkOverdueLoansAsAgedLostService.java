@@ -18,10 +18,12 @@ import java.util.concurrent.CompletableFuture;
 import org.folio.circulation.StoreLoanAndItem;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.domain.notice.schedule.LoanScheduledNoticeService;
 import org.folio.circulation.domain.policy.lostitem.LostItemPolicy;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.loans.LostItemPolicyRepository;
+import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.fetching.PageableFetcher;
@@ -38,6 +40,8 @@ public class MarkOverdueLoansAsAgedLostService {
   private final StoreLoanAndItem storeLoanAndItem;
   private final EventPublisher eventPublisher;
   private final PageableFetcher<Loan> loanPageableFetcher;
+  private final LoanScheduledNoticeService loanScheduledNoticeService;
+  private final UserRepository userRepository;
 
   public MarkOverdueLoansAsAgedLostService(Clients clients) {
     this.lostItemPolicyRepository = new LostItemPolicyRepository(clients);
@@ -45,6 +49,8 @@ public class MarkOverdueLoansAsAgedLostService {
     this.storeLoanAndItem = new StoreLoanAndItem(clients);
     this.eventPublisher = new EventPublisher(clients.pubSubPublishingService());
     this.loanPageableFetcher = new PageableFetcher<>(new LoanRepository(clients));
+    this.loanScheduledNoticeService = LoanScheduledNoticeService.using(clients);
+    this.userRepository = new UserRepository(clients);
   }
 
   public CompletableFuture<Result<Void>> processAgeToLost() {
@@ -65,12 +71,13 @@ public class MarkOverdueLoansAsAgedLostService {
       .thenCompose(loansResult -> itemRepository.fetchItemsFor(loansResult, Loan::withItem))
       .thenApply(this::markLoansAsAgedToLost)
       .thenCompose(this::updateLoansAndItemsInStorage)
-      .thenCompose(this::publishAgedToLostEvent);
+      .thenCompose(this::publishAgedToLostEvent)
+      .thenCompose(this::scheduleAgedToLostNotices);
   }
 
-  private CompletableFuture<Result<Void>> publishAgedToLostEvent(Result<List<Loan>> allLoansResult) {
+  private CompletableFuture<Result<List<Loan>>> publishAgedToLostEvent(Result<List<Loan>> allLoansResult) {
     return allLoansResult.after(allLoans -> allOf(allLoans, eventPublisher::publishAgedToLostEvent))
-      .thenApply(r -> r.map(results -> null));
+      .thenApply(r -> r.next(ignored -> allLoansResult));
   }
 
   private Result<MultipleRecords<Loan>> markLoansAsAgedToLost(
@@ -124,5 +131,10 @@ public class MarkOverdueLoansAsAgedLostService {
       .combine(claimedReturnedQuery, CqlQuery::and)
       .combine(agedToLostQuery, CqlQuery::and)
       .map(query -> query.sortBy(ascending("dueDate")));
+  }
+
+  private CompletableFuture<Result<Void>> scheduleAgedToLostNotices(Result<List<Loan>> result) {
+    return result.after(userRepository::findUsersForLoans)
+      .thenApply(r -> r.next(loanScheduledNoticeService::scheduleAgedToLostNotices));
   }
 }

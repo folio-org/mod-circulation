@@ -46,4 +46,15 @@ public class ScheduledNoticeConfig {
   public boolean isRecurring() {
     return recurringPeriod != null;
   }
+
+  @Override
+  public String toString() {
+    return "ScheduledNoticeConfig{" +
+      "timing='" + timing.getRepresentation() + '\'' +
+      ", recurringPeriod=" + recurringPeriod +
+      ", templateId='" + templateId + '\'' +
+      ", format='" + format.getRepresentation() + '\'' +
+      ", sendInRealTime=" + sendInRealTime +
+      '}';
+  }
 }

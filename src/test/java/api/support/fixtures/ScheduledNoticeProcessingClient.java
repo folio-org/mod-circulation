@@ -27,10 +27,10 @@ public class ScheduledNoticeProcessingClient {
 
   public void runDueDateNoticesProcessing() {
     URL url = circulationModuleUrl(
-      "/circulation/due-date-scheduled-notices-processing");
+      "/circulation/loan-scheduled-notices-processing");
 
     timedTaskClient.start(url, 204,
-      "due-date-scheduled-notices-processing-request");
+      "loan-scheduled-notices-processing-request");
   }
 
   public void runDueDateNotRealTimeNoticesProcessing(DateTime mockSystemTime) {

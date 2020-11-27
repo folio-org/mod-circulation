@@ -12,7 +12,7 @@ import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.domain.LoanRepresentation;
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
-import org.folio.circulation.domain.notice.schedule.DueDateScheduledNoticeService;
+import org.folio.circulation.domain.notice.schedule.LoanScheduledNoticeService;
 import org.folio.circulation.domain.notice.schedule.FeeFineScheduledNoticeService;
 import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
 import org.folio.circulation.domain.validation.AutomatedPatronBlocksValidator;
@@ -70,7 +70,7 @@ public abstract class RenewalResource extends Resource {
 
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
     final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
-    final DueDateScheduledNoticeService scheduledNoticeService = DueDateScheduledNoticeService.using(clients);
+    final LoanScheduledNoticeService scheduledNoticeService = LoanScheduledNoticeService.using(clients);
 
     final EventPublisher eventPublisher = new EventPublisher(routingContext);
 

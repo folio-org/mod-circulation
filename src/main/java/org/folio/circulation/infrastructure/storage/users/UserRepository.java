@@ -93,6 +93,13 @@ public class UserRepository {
         loan -> loan.withUser(users.getOrDefault(loan.getUserId(), null)))));
   }
 
+  public CompletableFuture<Result<Collection<Loan>>> findUsersForLoans(Collection<Loan> loans) {
+    return getUsersForLoans(loans)
+      .thenApply(r -> r.map(users -> loans.stream()
+        .map(loan -> loan.withUser(users.getOrDefault(loan.getUserId(), null)))
+        .collect(Collectors.toList())));
+  }
+
   private CompletableFuture<Result<Map<String, User>>> getUsersForLoans(
     Collection<Loan> loans) {
 

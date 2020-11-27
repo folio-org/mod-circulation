@@ -58,4 +58,12 @@ public class PatronNotice {
     this.context = context;
     return this;
   }
+
+  @Override
+  public String toString() {
+    return "PatronNotice{" +
+      "recipientId='" + recipientId + '\'' +
+      ", templateId='" + templateId + '\'' +
+      '}';
+  }
 }

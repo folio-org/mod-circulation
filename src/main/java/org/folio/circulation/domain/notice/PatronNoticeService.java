@@ -2,8 +2,10 @@ package org.folio.circulation.domain.notice;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.stream.Collectors.groupingBy;
+import static org.apache.http.HttpStatus.SC_OK;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
+import static org.folio.circulation.support.logging.PatronNoticeLogHelper.logClientResponse;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 import static org.folio.circulation.support.http.CommonResponseInterpreters.mapToRecordInterpreter;
@@ -38,9 +40,9 @@ public class PatronNoticeService {
     return new PatronNoticeService(new PatronNoticePolicyRepository(clients), clients);
   }
 
-  private PatronNoticePolicyRepository noticePolicyRepository;
-  private CollectionResourceClient patronNoticeClient;
-  private EventPublisher eventPublisher;
+  private final PatronNoticePolicyRepository noticePolicyRepository;
+  private final CollectionResourceClient patronNoticeClient;
+  private final EventPublisher eventPublisher;
 
   public PatronNoticeService(PatronNoticePolicyRepository noticePolicyRepository, Clients clients) {
     this.noticePolicyRepository = noticePolicyRepository;
@@ -166,6 +168,7 @@ public class PatronNoticeService {
       mapToRecordInterpreter(null, 200, 201);
 
     return patronNoticeClient.post(body)
+      .whenComplete((result, error) -> logClientResponse(result, error, SC_OK, patronNotice))
       .thenApply(responseInterpreter::flatMap);
   }
 
