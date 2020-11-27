@@ -6,8 +6,7 @@ import static api.support.builders.ItemBuilder.CHECKED_OUT;
 import static api.support.builders.RequestBuilder.CLOSED_FILLED;
 import static api.support.builders.RequestBuilder.OPEN_AWAITING_PICKUP;
 import static api.support.fakes.FakePubSub.clearPublishedEvents;
-import static api.support.fakes.FakePubSub.findFirstPublishedEvent;
-import static api.support.fakes.PublishedEvents.byLogEventType;
+import static api.support.fakes.FakePubSub.findFirstLogEvent;
 import static api.support.http.ResourceClient.forRequestsStorage;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
@@ -26,7 +25,6 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 
 import java.util.UUID;
-import java.util.function.Function;
 
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
@@ -75,7 +73,7 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
     assertThat(smallAngryPlanet, hasItemStatus(AWAITING_PICKUP));
 
     final var checkInLogEvent = waitAtMost(1, SECONDS)
-      .until(this::getPublishedCheckInLogEvent, is(notNullValue()));
+      .until(this::findFirstCheckInLogEvent, is(notNullValue()));
 
     assertThat(checkInLogEvent.loanId, is(getProperty(loan, "id")));
     assertThat(checkInLogEvent.changedRequests, hasSize(1));
@@ -118,7 +116,7 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
     assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
 
     final var checkOutLogEvent = waitAtMost(1, SECONDS)
-      .until(this::getPublishedCheckOutLogEvent, is(notNullValue()));
+      .until(this::findFirstCheckOutLogEvent, is(notNullValue()));
 
     assertThat(checkOutLogEvent.loanId, is(getProperty(loan, "id")));
     assertThat(checkOutLogEvent.changedRequests, hasSize(1));
@@ -255,18 +253,11 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
     requestsStorage.replace(requestId, holdRequestWithoutPickupServicePoint);
   }
 
-  private CheckOutLogEvent getPublishedCheckOutLogEvent() {
-    return getPublishedLogEvent("CHECK_OUT_EVENT", new JsonToCheckOutLogEventMapper()::fromJson);
+  private CheckOutLogEvent findFirstCheckOutLogEvent() {
+    return findFirstLogEvent("CHECK_OUT_EVENT", new JsonToCheckOutLogEventMapper()::fromJson);
   }
 
-  private CheckInLogEvent getPublishedCheckInLogEvent() {
-    return getPublishedLogEvent("CHECK_IN_EVENT", new JsonToCheckInLogEventMapper()::fromJson);
-  }
-
-  private <T> T getPublishedLogEvent(String eventType, Function<JsonObject, T> payloadMapper) {
-    final var publishedEvent = findFirstPublishedEvent(byLogEventType(eventType));
-    final var logEventPayload = new JsonObject(getProperty(publishedEvent, "eventPayload"));
-
-    return payloadMapper.apply(logEventPayload);
+  private CheckInLogEvent findFirstCheckInLogEvent() {
+    return findFirstLogEvent("CHECK_IN_EVENT", new JsonToCheckInLogEventMapper()::fromJson);
   }
 }
