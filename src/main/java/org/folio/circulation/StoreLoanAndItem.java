@@ -13,7 +13,6 @@ import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.results.Result;
 
 public class StoreLoanAndItem {
@@ -45,9 +44,9 @@ public class StoreLoanAndItem {
       .thenComposeAsync(response -> loanRepository.updateLoan(loan));
   }
 
-  private CompletableFuture<Result<Response>> updateItem(Item item) {
+  private CompletableFuture<Result<Item>> updateItem(Item item) {
     if (!item.hasChanged()) {
-      return completedFuture(succeeded(null));
+      return completedFuture(succeeded(item));
     }
 
     return itemRepository.updateItem(item);

@@ -2,6 +2,7 @@ package org.folio.circulation.services.agedtolost;
 
 import static org.folio.circulation.domain.ItemStatus.AGED_TO_LOST;
 import static org.folio.circulation.domain.ItemStatus.CLAIMED_RETURNED;
+import static org.folio.circulation.domain.ItemStatus.DECLARED_LOST;
 import static org.folio.circulation.infrastructure.storage.inventory.ItemRepository.noLocationMaterialTypeAndLoanTypeInstance;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.ClockManager.getClockManager;
@@ -126,10 +127,12 @@ public class MarkOverdueLoansAsAgedLostService {
     final Result<CqlQuery> dueDateQuery = lessThan("dueDate", getClockManager().getDateTime());
     final Result<CqlQuery> claimedReturnedQuery = notEqual("itemStatus", CLAIMED_RETURNED.getValue());
     final Result<CqlQuery> agedToLostQuery = notEqual("itemStatus", AGED_TO_LOST.getValue());
+    final Result<CqlQuery> declaredLostQuery = notEqual("itemStatus", DECLARED_LOST.getValue());
 
     return statusQuery.combine(dueDateQuery, CqlQuery::and)
       .combine(claimedReturnedQuery, CqlQuery::and)
       .combine(agedToLostQuery, CqlQuery::and)
+      .combine(declaredLostQuery, CqlQuery::and)
       .map(query -> query.sortBy(ascending("dueDate")));
   }
 

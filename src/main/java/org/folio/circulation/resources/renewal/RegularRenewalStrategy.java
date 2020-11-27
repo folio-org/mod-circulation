@@ -114,9 +114,7 @@ public class RegularRenewalStrategy implements RenewalStrategy {
 
     if (loanPolicy.isNotLoanable()) {
       errors.add(loanPolicyValidationError(loanPolicy, "item is not loanable"));
-    }
-
-    if (loanPolicy.isNotRenewable()) {
+    } else if (loanPolicy.isNotRenewable()) {
       errors.add(loanPolicyValidationError(loanPolicy, "loan is not renewable"));
     }
 

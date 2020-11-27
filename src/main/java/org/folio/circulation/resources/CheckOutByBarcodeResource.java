@@ -1,5 +1,6 @@
 package org.folio.circulation.resources;
 
+import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.PROXY_USER_BARCODE;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.SERVICE_POINT_ID;
@@ -10,13 +11,13 @@ import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.HashMap;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.LoanRepresentation;
 import org.folio.circulation.domain.LoanService;
-import org.folio.circulation.domain.UpdateItem;
 import org.folio.circulation.domain.UpdateRequestQueue;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.notice.schedule.LoanScheduledNoticeService;
@@ -139,7 +140,6 @@ public class CheckOutByBarcodeResource extends Resource {
           .map(message -> new ValidationError(message, new HashMap<>()))
           .collect(Collectors.toList())));
 
-    final UpdateItem updateItem = new UpdateItem(clients);
     final UpdateRequestQueue requestQueueUpdate = UpdateRequestQueue.using(clients);
 
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
@@ -174,11 +174,12 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenApply(r -> r.next(this::setItemLocationIdAtCheckout))
       .thenComposeAsync(r -> r.after(relatedRecords -> checkOutStrategy.checkOut(relatedRecords,
         routingContext.getBodyAsJson(), clients)))
+      .thenApply(r -> r.map(this::checkOutItem))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
-      .thenComposeAsync(r -> r.after(updateItem::onCheckOut))
       .thenComposeAsync(r -> r.after(loanService::truncateLoanWhenItemRecalled))
       .thenComposeAsync(r -> r.after(loanService::truncateLoanDueDateIfPatronExpiresEarlier))
       .thenComposeAsync(r -> r.after(patronGroupRepository::findPatronGroupForLoanAndRelatedRecords))
+      .thenComposeAsync(r -> r.after(l -> updateItem(l, itemRepository)))
       .thenComposeAsync(r -> r.after(loanRepository::createLoan))
       .thenComposeAsync(r -> r.after(patronActionSessionService::saveCheckOutSessionRecord))
       .thenComposeAsync(r -> r.after(eventPublisher::publishItemCheckedOutEvent))
@@ -187,6 +188,17 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
       .thenApply(this::createdLoanFrom)
       .thenAccept(context::writeResultToHttpResponse);
+  }
+
+  private CompletableFuture<Result<LoanAndRelatedRecords>> updateItem(
+    LoanAndRelatedRecords loanAndRelatedRecords, ItemRepository itemRepository) {
+
+    return itemRepository.updateItem(loanAndRelatedRecords.getItem())
+      .thenApply(r -> r.map(loanAndRelatedRecords::withItem));
+  }
+
+  private LoanAndRelatedRecords checkOutItem(LoanAndRelatedRecords loanAndRelatedRecords) {
+    return loanAndRelatedRecords.changeItemStatus(CHECKED_OUT);
   }
 
   private Result<HttpResponse> createdLoanFrom(Result<JsonObject> result) {
