@@ -1,6 +1,7 @@
 package org.folio.circulation.domain.representations;
 
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getUUIDProperty;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
@@ -53,6 +54,6 @@ public class RequestByInstanceIdRequest {
     final UUID pickupServicePointId = getUUIDProperty(json, PICKUP_SERVICE_POINT_ID);
 
     return succeeded(new RequestByInstanceIdRequest(requestDate, requesterId, instanceId,
-        requestExpirationDate, pickupServicePointId, json.getString("patronComments")));
+        requestExpirationDate, pickupServicePointId, getProperty(json, "patronComments")));
   }
 }
