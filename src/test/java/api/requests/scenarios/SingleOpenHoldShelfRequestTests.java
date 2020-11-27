@@ -15,7 +15,6 @@ import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.waitAtMost;
 import static org.folio.HttpStatus.HTTP_OK;
-import static org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher.mapToList;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -23,7 +22,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 
-import java.util.List;
 import java.util.UUID;
 
 import org.folio.circulation.support.http.client.Response;
@@ -34,12 +32,11 @@ import org.junit.Test;
 import api.support.APITests;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.RequestBuilder;
+import api.support.dto.CheckOutLogEvent;
 import api.support.fakes.FakePubSub;
 import api.support.http.IndividualResource;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.val;
 
 public class SingleOpenHoldShelfRequestTests extends APITests {
@@ -98,7 +95,7 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
     assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
 
     final var checkOutLogEvent = waitAtMost(1, SECONDS)
-      .until(this::getCheckOutLogEvent, is(notNullValue()));
+      .until(this::getPublishedCheckOutLogEvent, is(notNullValue()));
 
     assertThat(checkOutLogEvent.loanId, is(getProperty(loan, "id")));
     assertThat(checkOutLogEvent.changedRequests, hasSize(1));
@@ -235,39 +232,10 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
     requestsStorage.replace(requestId, holdRequestWithoutPickupServicePoint);
   }
 
-  private CheckOutLogEvent getCheckOutLogEvent() {
+  private CheckOutLogEvent getPublishedCheckOutLogEvent() {
     final var publishedEvent = FakePubSub.getPublishedEvents().findFirst(byLogEventType("CHECK_OUT_EVENT"));
     final var logEventPayload = new JsonObject(getProperty(publishedEvent, "eventPayload"));
 
-    return CheckOutLogEvent.builder()
-      .loanId(getProperty(logEventPayload, "loanId"))
-      .changedRequests(getChangedRequests(logEventPayload))
-      .build();
-  }
-
-  private List<CheckOutLogEventChangedRequest> getChangedRequests(JsonObject logEventPayload) {
-    return mapToList(logEventPayload, "requests",
-      request -> CheckOutLogEventChangedRequest.builder()
-        .id(getProperty(request, "id"))
-        .requestType(getProperty(request, "requestType"))
-        .oldRequestStatus(getProperty(request, "oldRequestStatus"))
-        .newRequestStatus(getProperty(request, "newRequestStatus"))
-        .build());
-  }
-
-  @AllArgsConstructor
-  @Builder
-  static class CheckOutLogEvent {
-    private final String loanId;
-    private final List<CheckOutLogEventChangedRequest> changedRequests;
-  }
-
-  @AllArgsConstructor
-  @Builder
-  static class CheckOutLogEventChangedRequest {
-    private final String id;
-    private final String requestType;
-    private final String oldRequestStatus;
-    private final String newRequestStatus;
+    return CheckOutLogEvent.fromJson(logEventPayload);
   }
 }
