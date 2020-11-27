@@ -32,6 +32,10 @@ public class CheckOutLogEvent {
   public final String loanId;
   public final List<CheckOutLogEventChangedRequest> changedRequests;
 
+  public CheckOutLogEventChangedRequest firstChangedRequest() {
+    return changedRequests.get(0);
+  }
+
   @AllArgsConstructor
   @Builder
   public static class CheckOutLogEventChangedRequest {

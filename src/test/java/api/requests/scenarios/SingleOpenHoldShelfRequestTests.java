@@ -100,7 +100,7 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
     assertThat(checkOutLogEvent.loanId, is(getProperty(loan, "id")));
     assertThat(checkOutLogEvent.changedRequests, hasSize(1));
 
-    final var onlyChangedRequest = checkOutLogEvent.changedRequests.get(0);
+    final var onlyChangedRequest = checkOutLogEvent.firstChangedRequest();
 
     assertThat(onlyChangedRequest.id, is(requestByJessica.getId().toString()));
     assertThat(onlyChangedRequest.requestType, is("Hold"));
