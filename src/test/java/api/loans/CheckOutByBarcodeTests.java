@@ -6,6 +6,8 @@ import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRec
 import static api.support.builders.ItemBuilder.AVAILABLE;
 import static api.support.builders.ItemBuilder.CHECKED_OUT;
 import static api.support.builders.ItemBuilder.CLAIMED_RETURNED;
+import static api.support.fakes.PublishedEvents.byEventType;
+import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.fixtures.AutomatedPatronBlocksFixture.MAX_NUMBER_OF_ITEMS_CHARGED_OUT_MESSAGE;
 import static api.support.fixtures.AutomatedPatronBlocksFixture.MAX_OUTSTANDING_FEE_FINE_BALANCE_MESSAGE;
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasItemBarcodeParameter;
@@ -28,10 +30,8 @@ import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
-import static java.util.stream.Collectors.groupingBy;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.domain.EventType.ITEM_CHECKED_OUT;
-import static org.folio.circulation.domain.EventType.LOG_RECORD;
 import static org.folio.circulation.domain.policy.DueDateManagement.KEEP_THE_CURRENT_DUE_DATE;
 import static org.folio.circulation.domain.policy.Period.months;
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
@@ -46,7 +46,6 @@ import static org.joda.time.DateTimeZone.UTC;
 import static org.junit.Assert.assertTrue;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -1289,16 +1288,16 @@ public class CheckOutByBarcodeTests extends APITests {
 
     final JsonObject loan = response.getJson();
 
-    List<JsonObject> publishedEvents = Awaitility.await()
+    final var publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(FakePubSub::getPublishedEvents, hasSize(2));
 
-    Map<String, List<JsonObject>> events = publishedEvents.stream().collect(groupingBy(e -> e.getString("eventType")));
+    final var checkedOutEvent = publishedEvents.findFirst(byEventType(ITEM_CHECKED_OUT.name()));
 
-    assertThat(events.get(ITEM_CHECKED_OUT.name()).get(0), isValidItemCheckedOutEvent(loan));
-    JsonObject checkOutLogEvent = events.get(LOG_RECORD.name()).stream()
-      .filter(json -> json.getString("eventPayload").contains(CHECK_OUT.value()))
-      .findFirst().orElse(new JsonObject());
+    assertThat(checkedOutEvent, isValidItemCheckedOutEvent(loan));
+
+    final var checkOutLogEvent = publishedEvents.findFirst(byLogEventType(CHECK_OUT.value()));
+
     assertThat(checkOutLogEvent, isValidCheckOutLogEvent(loan));
     assertThatPublishedLoanLogRecordEventsAreValid();
   }

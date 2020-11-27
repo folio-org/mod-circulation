@@ -1,6 +1,7 @@
 package api.loans;
 
 import static api.requests.RequestsAPICreationTests.setupMissingItem;
+import static api.support.fakes.PublishedEvents.byEventType;
 import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
 import static api.support.http.CqlQuery.queryFromTemplate;
 import static api.support.http.Limit.limit;
@@ -30,7 +31,6 @@ import static org.joda.time.DateTimeZone.UTC;
 import static org.junit.Assert.assertTrue;
 
 import java.net.HttpURLConnection;
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
@@ -1743,14 +1743,11 @@ public class LoanAPITests extends APITests {
 
     JsonObject loan = response.getJson();
 
-    List<JsonObject> publishedEvents = Awaitility.await()
+    final var publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(FakePubSub::getPublishedEvents, hasSize(2));
 
-    JsonObject event = publishedEvents.stream()
-      .filter(e -> "LOAN_DUE_DATE_CHANGED".equalsIgnoreCase(e.getString("eventType")))
-      .findFirst()
-      .orElse(new JsonObject());
+    final var event = publishedEvents.findFirst(byEventType("LOAN_DUE_DATE_CHANGED"));
 
     assertThat(event, isValidLoanDueDateChangedEvent(loan));
   }
@@ -1772,14 +1769,11 @@ public class LoanAPITests extends APITests {
 
     // There should be four events published - "create", "replace"
     // and two "log_record"
-    List<JsonObject> publishedEvents = Awaitility.await()
+    final var publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(FakePubSub::getPublishedEvents, hasSize(4));
 
-    JsonObject event = publishedEvents.stream()
-      .filter(e -> "LOAN_DUE_DATE_CHANGED".equalsIgnoreCase(e.getString("eventType")))
-      .findFirst()
-      .orElse(new JsonObject());
+    final var event = publishedEvents.findFirst(byEventType("LOAN_DUE_DATE_CHANGED"));
 
     assertThat(event, isValidLoanDueDateChangedEvent(loanFromStorage.getJson()));
   }

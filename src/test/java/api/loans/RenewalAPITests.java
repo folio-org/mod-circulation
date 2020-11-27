@@ -1,11 +1,13 @@
 package api.loans;
 
-import static api.support.PubsubPublisherTestUtils.assertThatPublishedNoticeLogRecordEventsCountIsEqualTo;
+import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
 import static api.support.builders.FixedDueDateSchedule.forDay;
 import static api.support.builders.FixedDueDateSchedule.todayOnly;
 import static api.support.builders.FixedDueDateSchedule.wholeMonth;
 import static api.support.builders.ItemBuilder.CHECKED_OUT;
+import static api.support.fakes.PublishedEvents.byEventType;
+import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.fixtures.AutomatedPatronBlocksFixture.MAX_NUMBER_OF_ITEMS_CHARGED_OUT_MESSAGE;
 import static api.support.fixtures.AutomatedPatronBlocksFixture.MAX_OUTSTANDING_FEE_FINE_BALANCE_MESSAGE;
 import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_SERVICE_POINT_ID;
@@ -27,9 +29,10 @@ import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
-import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
+import static org.awaitility.Awaitility.waitAtMost;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.END_OF_A_DAY;
+import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.hasItems;
@@ -52,8 +55,6 @@ import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.hamcrest.Matcher;
-import org.hamcrest.MatcherAssert;
-import org.hamcrest.Matchers;
 import org.hamcrest.core.Is;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
@@ -97,7 +98,6 @@ public abstract class RenewalAPITests extends APITests {
 
   @Test
   public void canRenewRollingLoanFromSystemDate() {
-
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
@@ -142,7 +142,6 @@ public abstract class RenewalAPITests extends APITests {
 
   @Test
   public void canRenewRollingLoanFromCurrentDueDate() {
-
     configClient.create(ConfigurationExample.utcTimezoneConfiguration());
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
@@ -195,7 +194,6 @@ public abstract class RenewalAPITests extends APITests {
 
   @Test
   public void canRenewUsingDueDateLimitedRollingLoanPolicy() {
-
     FixedDueDateSchedulesBuilder dueDateLimitSchedule = new FixedDueDateSchedulesBuilder()
       .withName("March Only Due Date Limit")
       .addSchedule(wholeMonth(2018, 3));
@@ -238,7 +236,6 @@ public abstract class RenewalAPITests extends APITests {
 
   @Test
   public void canRenewRollingLoanUsingDifferentPeriod() {
-
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
@@ -290,7 +287,6 @@ public abstract class RenewalAPITests extends APITests {
 
   @Test
   public void canRenewUsingAlternateDueDateLimitedRollingLoanPolicy() {
-
     FixedDueDateSchedulesBuilder dueDateLimitSchedule = new FixedDueDateSchedulesBuilder()
       .withName("March Only Due Date Limit")
       .addSchedule(wholeMonth(2018, 3));
@@ -334,7 +330,6 @@ public abstract class RenewalAPITests extends APITests {
 
   @Test
   public void canRenewUsingLoanDueDateLimitSchedulesWhenDifferentPeriodAndNotAlternateLimits() {
-
     FixedDueDateSchedulesBuilder dueDateLimitSchedule = new FixedDueDateSchedulesBuilder()
       .withName("March Only Due Date Limit")
       .addSchedule(wholeMonth(2018, 3));
@@ -378,7 +373,6 @@ public abstract class RenewalAPITests extends APITests {
 
   @Test
   public void canCheckOutUsingFixedDueDateLoanPolicy() {
-
     //TODO: Need to be able to inject system date here
     final DateTime renewalDate = DateTime.now(DateTimeZone.UTC);
     //e.g. Clock.freeze(renewalDate)
@@ -433,7 +427,6 @@ public abstract class RenewalAPITests extends APITests {
 
   @Test
   public void canRenewMultipleTimesUpToRenewalLimit() {
-
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
@@ -525,7 +518,6 @@ public abstract class RenewalAPITests extends APITests {
 
   @Test
   public void cannotRenewWhenLoanPolicyDoesNotExist() {
-
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
@@ -554,7 +546,6 @@ public abstract class RenewalAPITests extends APITests {
 
   @Test
   public void canRenewLoanWithAnotherLoanPolicyName() {
-
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
@@ -580,7 +571,6 @@ public abstract class RenewalAPITests extends APITests {
 
   @Test
   public void cannotRenewWhenRenewalLimitReached() {
-
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
@@ -612,7 +602,6 @@ public abstract class RenewalAPITests extends APITests {
 
   @Test
   public void multipleRenewalFailuresWhenLoanHasReachedMaximumNumberOfRenewalsAndOpenRecallRequest() {
-
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
@@ -653,7 +642,6 @@ public abstract class RenewalAPITests extends APITests {
 
   @Test
   public void multipleReasonsWhyCannotRenewWhenRenewalLimitReachedAndDueDateNotChanged() {
-
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
@@ -696,7 +684,6 @@ public abstract class RenewalAPITests extends APITests {
 
   @Test
   public void cannotRenewWhenNonRenewableRollingPolicy() {
-
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
@@ -723,7 +710,6 @@ public abstract class RenewalAPITests extends APITests {
 
   @Test
   public void cannotRenewWhenNonRenewableFixedPolicy() {
-
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
@@ -758,7 +744,6 @@ public abstract class RenewalAPITests extends APITests {
 
   @Test
   public void cannotRenewWhenItemIsNotLoanable() {
-
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
@@ -787,9 +772,11 @@ public abstract class RenewalAPITests extends APITests {
       hasMessage("item is not loanable"),
       hasLoanPolicyIdParameter(notLoanablePolicyId),
       hasLoanPolicyNameParameter("Non loanable policy"))));
+
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(FakePubSub::getPublishedEvents, hasSize(2));
+
     assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
@@ -845,9 +832,11 @@ public abstract class RenewalAPITests extends APITests {
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("item is Aged to lost"),
       hasUUIDParameter("itemId", result.getItem().getId()))));
+
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(FakePubSub::getPublishedEvents, hasSize(3));
+
     assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
@@ -870,7 +859,6 @@ public abstract class RenewalAPITests extends APITests {
 
   @Test
   public void cannotRenewWhenItemCannotBeFound() {
-
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
 
@@ -887,7 +875,6 @@ public abstract class RenewalAPITests extends APITests {
 
   @Test
   public void cannotRenewLoanForDifferentUser() {
-
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
     final IndividualResource jessica = usersFixture.jessica();
@@ -1076,7 +1063,6 @@ public abstract class RenewalAPITests extends APITests {
 
   @Test
   public void testRespectSelectedTimezoneForDueDateCalculations() {
-
     String expectedTimeZone = "America/New_York";
 
     Response response = configClient.create(ConfigurationExample.newYorkTimezoneConfiguration())
@@ -1127,7 +1113,6 @@ public abstract class RenewalAPITests extends APITests {
 
   @Test
   public void canRenewWhenCurrentDueDateFallsWithinLimitingDueDateSchedule() {
-
     FixedDueDateSchedulesBuilder fixedDueDateSchedules = new FixedDueDateSchedulesBuilder()
       .withName("Fixed Due Date Schedule")
       .addSchedule(wholeMonth(2019, DateTimeConstants.MARCH))
@@ -1154,7 +1139,6 @@ public abstract class RenewalAPITests extends APITests {
 
   @Test
   public void canRenewWhenSystemDateFallsWithinLimitingDueDateSchedule() {
-
     FixedDueDateSchedulesBuilder fixedDueDateSchedules = new FixedDueDateSchedulesBuilder()
       .withName("Fixed Due Date Schedule")
       .addSchedule(wholeMonth(2019, DateTimeConstants.MARCH))
@@ -1183,7 +1167,6 @@ public abstract class RenewalAPITests extends APITests {
 
   @Test
   public void cannotRenewWhenCurrentDueDateDoesNotFallWithinLimitingDueDateSchedule() {
-
     DateTime futureDateTime = DateTime.now(DateTimeZone.UTC).plusMonths(1);
 
     FixedDueDateSchedulesBuilder fixedDueDateSchedules = new FixedDueDateSchedulesBuilder()
@@ -1215,7 +1198,6 @@ public abstract class RenewalAPITests extends APITests {
 
   @Test
   public void  canRenewFromCurrentDueDateWhenDueDateFallsWithinRangeOfAlternateDueDateLimit() {
-
     FixedDueDateSchedulesBuilder dueDateLimitSchedule = new FixedDueDateSchedulesBuilder()
       .withName("Alternate Due Date Limit")
       .addSchedule(wholeMonth(2019, DateTimeConstants.MARCH))
@@ -1243,7 +1225,6 @@ public abstract class RenewalAPITests extends APITests {
 
   @Test
   public void canRenewWhenSystemDateFallsWithinAlternateScheduleAndDueDateDoesNot() {
-
     FixedDueDateSchedulesBuilder dueDateLimitSchedule = new FixedDueDateSchedulesBuilder()
       .withName("Alternate Due Date Limit")
       .addSchedule(wholeMonth(2019, DateTimeConstants.MARCH))
@@ -1273,7 +1254,6 @@ public abstract class RenewalAPITests extends APITests {
 
   @Test
   public void renewalNoticeIsSentWhenPolicyDefinesRenewalNoticeConfiguration() {
-
     UUID renewalTemplateId = UUID.randomUUID();
     JsonObject renewalNoticeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(renewalTemplateId)
@@ -1320,10 +1300,8 @@ public abstract class RenewalAPITests extends APITests {
 
     IndividualResource loanAfterRenewal = loansFixture.renewLoan(smallAngryPlanet, steve);
 
-    Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
-      .until(patronNoticesClient::getAll, Matchers.hasSize(1));
-    List<JsonObject> sentNotices = patronNoticesClient.getAll();
+    final var sentNotices = waitAtMost(1, TimeUnit.SECONDS)
+      .until(patronNoticesClient::getAll, hasSize(1));
 
     int expectedRenewalLimit = 3;
     int expectedRenewalsRemaining = 2;
@@ -1333,10 +1311,11 @@ public abstract class RenewalAPITests extends APITests {
     noticeContextMatchers.putAll(TemplateContextMatchers.getLoanContextMatchers(loanAfterRenewal));
     noticeContextMatchers.putAll(TemplateContextMatchers.getLoanPolicyContextMatchers(
       expectedRenewalLimit, expectedRenewalsRemaining));
-    MatcherAssert.assertThat(sentNotices,
-      hasItems(
-        hasEmailNoticeProperties(steve.getId(), renewalTemplateId, noticeContextMatchers)));
-    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+
+    assertThat(sentNotices, hasItems(
+      hasEmailNoticeProperties(steve.getId(), renewalTemplateId, noticeContextMatchers)));
+
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
     assertThatPublishedLogRecordEventsAreValid();
   }
 
@@ -1461,7 +1440,8 @@ public abstract class RenewalAPITests extends APITests {
   public void dueDateChangedEventIsPublished() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
-    final IndividualResource loan = checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica,
+
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica,
       new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
 
     final JsonObject renewedLoan = renew(smallAngryPlanet, jessica).getJson();
@@ -1469,13 +1449,11 @@ public abstract class RenewalAPITests extends APITests {
     // There should be six events published - first for "check out",
     // second one for log event, third for "change due date"
     // and one "log record"
-    List<JsonObject> publishedEvents = Awaitility.await()
+    final var publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(FakePubSub::getPublishedEvents, hasSize(4));
 
-    JsonObject event = publishedEvents.stream()
-      .filter(evt -> LOAN_DUE_DATE_CHANGED.equalsIgnoreCase(evt.getString("eventType")))
-      .findFirst().orElse(new JsonObject());
+    final var event = publishedEvents.findFirst(byEventType(LOAN_DUE_DATE_CHANGED));
 
     assertThat(event, isValidLoanDueDateChangedEvent(renewedLoan));
     assertThatPublishedLoanLogRecordEventsAreValid();
@@ -1500,7 +1478,6 @@ public abstract class RenewalAPITests extends APITests {
   }
 
   private void checkRenewalAttempt(DateTime expectedDueDate, UUID dueDateLimitedPolicyId) {
-
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 

@@ -1,6 +1,7 @@
 package api.requests;
 
-import static api.support.PubsubPublisherTestUtils.assertThatPublishedNoticeLogRecordEventsCountIsEqualTo;
+import static api.support.fakes.PublishedEvents.byEventType;
+import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.matchers.EventMatchers.isValidLoanDueDateChangedEvent;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
@@ -9,14 +10,15 @@ import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.function.Function.identity;
-import static java.util.stream.Collectors.groupingBy;
+import static org.awaitility.Awaitility.waitAtMost;
 import static org.folio.HttpStatus.HTTP_NO_CONTENT;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.domain.EventType.LOAN_DUE_DATE_CHANGED;
-import static org.folio.circulation.domain.EventType.LOG_RECORD;
 import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_NAME;
 import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_PUBLIC_DESCRIPTION;
+import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
 import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_CREATED;
 import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_UPDATED;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
@@ -35,17 +37,14 @@ import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matcher;
-import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
@@ -155,7 +154,6 @@ public class RequestsAPIUpdatingTests extends APITests {
   //TODO: Check does not have pickup service point any more
   @Test
   public void canReplaceAnExistingRequestWithDeliveryAddress() {
-
     final ItemResource temeraire = itemsFixture.basedUponTemeraire();
 
     checkOutFixture.checkOutByBarcode(temeraire);
@@ -216,7 +214,6 @@ public class RequestsAPIUpdatingTests extends APITests {
 
   @Test
   public void replacingAnExistingRequestRemovesItemInformationWhenItemDoesNotExist() {
-
     final ItemResource nod = itemsFixture.basedUponNod();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
@@ -250,7 +247,6 @@ public class RequestsAPIUpdatingTests extends APITests {
 
   @Test
   public void replacingAnExistingRequestRemovesRequesterInformationWhenUserDoesNotExist() {
-
     final ItemResource nod = itemsFixture.basedUponNod();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
@@ -281,7 +277,6 @@ public class RequestsAPIUpdatingTests extends APITests {
 
   @Test
   public void replacingAnExistingRequestRemovesRequesterBarcodeWhenNonePresent() {
-
     final ItemResource nod = itemsFixture.basedUponNod();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
@@ -328,7 +323,6 @@ public class RequestsAPIUpdatingTests extends APITests {
 
   @Test
   public void replacingAnExistingRequestIncludesRequesterMiddleNameWhenPresent() {
-
     final ItemResource nod = itemsFixture.basedUponNod();
 
     checkOutFixture.checkOutByBarcode(nod);
@@ -377,7 +371,6 @@ public class RequestsAPIUpdatingTests extends APITests {
 
   @Test
   public void replacingAnExistingRequestRemovesItemBarcodeWhenNonePresent() {
-
     final ItemResource temeraire = itemsFixture.basedUponTemeraire();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
@@ -417,7 +410,6 @@ public class RequestsAPIUpdatingTests extends APITests {
 
   @Test
   public void cannotReplaceAnExistingRequestWithServicePointThatIsNotForPickup() {
-
     final ItemResource temeraire = itemsFixture.basedUponTemeraire();
 
     checkOutFixture.checkOutByBarcode(temeraire);
@@ -443,7 +435,6 @@ public class RequestsAPIUpdatingTests extends APITests {
 
   @Test
   public void cannotReplaceAnExistingRequestWithUnknownPickupLocation() {
-
     final ItemResource temeraire = itemsFixture.basedUponTemeraire();
 
     checkOutFixture.checkOutByBarcode(temeraire);
@@ -473,7 +464,6 @@ public class RequestsAPIUpdatingTests extends APITests {
 
   @Test
   public void cancellationReasonPublicDescriptionIsUsedAsReasonForCancellationToken() {
-
     UUID requestCancellationTemplateId = UUID.randomUUID();
     JsonObject requestCancellationConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(requestCancellationTemplateId)
@@ -512,27 +502,26 @@ public class RequestsAPIUpdatingTests extends APITests {
       .create();
     requestsClient.replace(createdRequest.getId(), updatedRequest);
 
-    Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
-      .until(patronNoticesClient::getAll, Matchers.hasSize(1));
-    List<JsonObject> sentNotices = patronNoticesClient.getAll();
+    final var sentNotices = waitAtMost(1, SECONDS)
+      .until(patronNoticesClient::getAll, hasSize(1));
 
     Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
+
     noticeContextMatchers.putAll(TemplateContextMatchers.getUserContextMatchers(requester));
     noticeContextMatchers.putAll(TemplateContextMatchers.getItemContextMatchers(temeraire, true));
     noticeContextMatchers.putAll(TemplateContextMatchers.getRequestContextMatchers(updatedRequest));
     noticeContextMatchers.putAll(TemplateContextMatchers.getCancelledRequestContextMatchers(updatedRequest));
     noticeContextMatchers.put("request.reasonForCancellation",
       is(itemNotAvailable.getJson().getString(CANCELLATION_REASON_PUBLIC_DESCRIPTION)));
-    assertThat(sentNotices,
-      hasItems(
-        hasEmailNoticeProperties(requester.getId(), requestCancellationTemplateId, noticeContextMatchers)));
-    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+
+    assertThat(sentNotices, hasItems(
+      hasEmailNoticeProperties(requester.getId(), requestCancellationTemplateId, noticeContextMatchers)));
+
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
   }
 
   @Test
   public void cancellationReasonNameIsUsedAsReasonForCancellationTokenWhenPublicDescriptionIsNotPresent() {
-
     UUID requestCancellationTemplateId = UUID.randomUUID();
     JsonObject requestCancellationConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(requestCancellationTemplateId)
@@ -569,29 +558,30 @@ public class RequestsAPIUpdatingTests extends APITests {
       .withCancellationReasonId(courseReserves.getId())
       .withCancellationAdditionalInformation("Cancellation info")
       .create();
+
     requestsClient.replace(createdRequest.getId(), updatedRequest);
 
-    Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
-      .until(patronNoticesClient::getAll, Matchers.hasSize(1));
-    List<JsonObject> sentNotices = patronNoticesClient.getAll();
+    final var sentNotices = Awaitility.await()
+      .atMost(1, SECONDS)
+      .until(patronNoticesClient::getAll, hasSize(1));
 
     Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
+
     noticeContextMatchers.putAll(TemplateContextMatchers.getUserContextMatchers(requester));
     noticeContextMatchers.putAll(TemplateContextMatchers.getItemContextMatchers(temeraire, true));
     noticeContextMatchers.putAll(TemplateContextMatchers.getRequestContextMatchers(updatedRequest));
     noticeContextMatchers.putAll(TemplateContextMatchers.getCancelledRequestContextMatchers(updatedRequest));
     noticeContextMatchers.put("request.reasonForCancellation",
       is(courseReserves.getJson().getString(CANCELLATION_REASON_NAME)));
-    assertThat(sentNotices,
-      hasItems(
-        hasEmailNoticeProperties(requester.getId(), requestCancellationTemplateId, noticeContextMatchers)));
-    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+
+    assertThat(sentNotices, hasItems(
+      hasEmailNoticeProperties(requester.getId(), requestCancellationTemplateId, noticeContextMatchers)));
+
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
   }
 
   @Test
   public void replacedRequestShouldOnlyIncludeStoredPropertiesInStorage() {
-
     final ItemResource temeraire = itemsFixture.basedUponTemeraire();
 
     checkOutFixture.checkOutByBarcode(temeraire);
@@ -657,7 +647,6 @@ public class RequestsAPIUpdatingTests extends APITests {
 
   @Test
   public void canReplaceRequestWithAnInactiveUser() {
-
     final ItemResource temeraire = itemsFixture.basedUponTemeraire();
 
     checkOutFixture.checkOutByBarcode(temeraire);
@@ -731,8 +720,7 @@ public class RequestsAPIUpdatingTests extends APITests {
   }
 
   @Test
-  public void dueDateChangedEventIsPublished() {
-
+  public void eventsShouldBePublished() {
     final ItemResource temeraire = itemsFixture.basedUponTemeraire();
 
     IndividualResource loan = checkOutFixture.checkOutByBarcode(temeraire);
@@ -760,8 +748,7 @@ public class RequestsAPIUpdatingTests extends APITests {
       RequestBuilder.from(createdRequest)
         .hold()
         .by(charlotte)
-        .withTags(new RequestBuilder.Tags(Arrays.asList("new", "important")))
-    );
+        .withTags(new RequestBuilder.Tags(Arrays.asList("new", "important"))));
 
     Response response = loansClient.getById(loan.getId());
     JsonObject updatedLoan = response.getJson();
@@ -769,24 +756,28 @@ public class RequestsAPIUpdatingTests extends APITests {
     // There should be ten events published - for "check out", for "log event: check out",
     // for "log event: request created", for "log event: request updated" for "recall" and for "replace"
     // and three log events for loans
-    List<JsonObject> publishedEvents = Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
+    final var publishedEvents = Awaitility.await()
+      .atMost(1, SECONDS)
       .until(FakePubSub::getPublishedEvents, hasSize(9));
 
-    Map<String, List<JsonObject>> events = publishedEvents.stream().collect(groupingBy(o -> o.getString("eventType")));
+    final var requestCreatedLogEvent = publishedEvents.findFirst(byLogEventType(REQUEST_CREATED.value()));
+    final var requestUpdatedLogEvent = publishedEvents.findFirst(byLogEventType(REQUEST_UPDATED.value()));
+    final var dueDateChangedEvent = publishedEvents.findFirst(byEventType(LOAN_DUE_DATE_CHANGED.name()));
 
-    Map<String, List<JsonObject>> logEvents = events.get(LOG_RECORD.name()).stream()
-      .collect(groupingBy(e -> new JsonObject(e.getString("eventPayload")).getString("logEventType")));
-
-    Request requestCreatedFromEventPayload = Request.from(new JsonObject(logEvents.get(REQUEST_CREATED.value()).get(0).getString("eventPayload")).getJsonObject("payload").getJsonObject("requests").getJsonObject("created"));
+    Request requestCreatedFromEventPayload = getRequestFromPayload(requestCreatedLogEvent, "created");
     assertThat(requestCreatedFromEventPayload, notNullValue());
 
-    Request originalCreatedFromEventPayload = Request.from(new JsonObject(logEvents.get(REQUEST_UPDATED.value()).get(0).getString("eventPayload")).getJsonObject("payload").getJsonObject("requests").getJsonObject("original"));
-    Request updatedCreatedFromEventPayload = Request.from(new JsonObject(logEvents.get(REQUEST_UPDATED.value()).get(0).getString("eventPayload")).getJsonObject("payload").getJsonObject("requests").getJsonObject("updated"));
+    Request originalCreatedFromEventPayload = getRequestFromPayload(requestUpdatedLogEvent, "original");
+    Request updatedCreatedFromEventPayload = getRequestFromPayload(requestUpdatedLogEvent, "updated");
 
     assertThat(requestCreatedFromEventPayload.getRequestType(), equalTo(originalCreatedFromEventPayload.getRequestType()));
     assertThat(originalCreatedFromEventPayload.getRequestType(), not(equalTo(updatedCreatedFromEventPayload.getRequestType())));
 
-    assertThat(events.get(LOAN_DUE_DATE_CHANGED.name()).get(0), isValidLoanDueDateChangedEvent(updatedLoan));
+    assertThat(dueDateChangedEvent, isValidLoanDueDateChangedEvent(updatedLoan));
+  }
+
+  private Request getRequestFromPayload(JsonObject logEvent, String created) {
+    return Request.from(new JsonObject(logEvent.getString("eventPayload"))
+      .getJsonObject("payload").getJsonObject("requests").getJsonObject(created));
   }
 }
