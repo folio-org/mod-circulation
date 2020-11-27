@@ -52,6 +52,7 @@ public class RequestBuilder extends JsonBuilder implements Builder {
   private final Integer position;
   private final UUID pickupServicePointId;
   private final Tags tags;
+  private final String patronComments;
 
   public RequestBuilder() {
     this(UUID.randomUUID(),
@@ -60,6 +61,7 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       UUID.randomUUID(),
       UUID.randomUUID(),
       "Hold Shelf",
+      null,
       null,
       null,
       null,
@@ -99,7 +101,8 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       getDateTimeProperty(representation, "cancelledDate"),
       getIntegerProperty(representation, "position", null),
       getUUIDProperty(representation, "pickupServicePointId"),
-      new Tags((toStream(representation.getJsonObject("tags"), "tagList").collect(toList())))
+      new Tags((toStream(representation.getJsonObject("tags"), "tagList").collect(toList()))),
+      getProperty(representation, "patronComments")
     );
   }
 
@@ -124,6 +127,7 @@ public class RequestBuilder extends JsonBuilder implements Builder {
     put(request, "cancellationAdditionalInformation", cancellationAdditionalInformation);
     put(request, "cancelledDate", cancelledDate);
     put(request, "pickupServicePointId", this.pickupServicePointId);
+    put(request, "patronComments", this.patronComments);
 
     if (itemSummary != null) {
       final JsonObject itemRepresentation = new JsonObject();

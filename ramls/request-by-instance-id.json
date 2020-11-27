@@ -28,6 +28,10 @@
       "description": "The ID of the Service Point where this request can be picked up",
       "type": "string",
       "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+    },
+    "patronComments": {
+      "description": "Comments made by the patron",
+      "type": "string"
     }
   },
   "additionalProperties": false,
