@@ -5,6 +5,7 @@ import static api.support.builders.ItemBuilder.AWAITING_PICKUP;
 import static api.support.builders.ItemBuilder.CHECKED_OUT;
 import static api.support.builders.RequestBuilder.CLOSED_FILLED;
 import static api.support.builders.RequestBuilder.OPEN_AWAITING_PICKUP;
+import static api.support.fakes.FakePubSub.clearPublishedEvents;
 import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.http.ResourceClient.forRequestsStorage;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
@@ -32,7 +33,9 @@ import org.junit.Test;
 import api.support.APITests;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.RequestBuilder;
+import api.support.data.events.log.CheckInLogEvent;
 import api.support.data.events.log.CheckOutLogEvent;
+import api.support.data.events.log.JsonToCheckInLogEventMapper;
 import api.support.data.events.log.JsonToCheckOutLogEventMapper;
 import api.support.fakes.FakePubSub;
 import api.support.http.IndividualResource;
@@ -52,6 +55,8 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
 
+    clearPublishedEvents();
+
     checkInFixture.checkInByBarcode(smallAngryPlanet);
 
     Response request = requestsClient.getById(requestByJessica.getId());
@@ -64,6 +69,9 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
     assertThat(smallAngryPlanet, hasItemStatus(AWAITING_PICKUP));
+
+    waitAtMost(1, SECONDS)
+      .until(this::getPublishedCheckInLogEvent, is(notNullValue()));
   }
 
   @Test
@@ -79,7 +87,7 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
 
     checkInFixture.checkInByBarcode(smallAngryPlanet);
 
-    FakePubSub.clearPublishedEvents();
+    clearPublishedEvents();
 
     final var checkOutResource = checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica);
 
@@ -238,5 +246,12 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
     final var logEventPayload = new JsonObject(getProperty(publishedEvent, "eventPayload"));
 
     return new JsonToCheckOutLogEventMapper().fromJson(logEventPayload);
+  }
+
+  private CheckInLogEvent getPublishedCheckInLogEvent() {
+    final var publishedEvent = FakePubSub.findFirstPublishedEvent(byLogEventType("CHECK_IN_EVENT"));
+    final var logEventPayload = new JsonObject(getProperty(publishedEvent, "eventPayload"));
+
+    return new JsonToCheckInLogEventMapper().fromJson(logEventPayload);
   }
 }
