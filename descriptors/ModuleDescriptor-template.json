@@ -150,7 +150,7 @@
     },
     {
       "id": "circulation",
-      "version": "9.4",
+      "version": "9.5",
       "handlers": [
         {
           "methods": [
@@ -959,7 +959,7 @@
     },
     {
       "id": "request-storage",
-      "version": "3.3"
+      "version": "3.4"
     },
     {
       "id": "request-storage-batch",
