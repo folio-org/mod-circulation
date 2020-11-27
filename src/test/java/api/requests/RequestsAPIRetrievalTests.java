@@ -8,6 +8,7 @@ import static api.support.http.Limit.noLimit;
 import static api.support.http.Offset.noOffset;
 import static api.support.http.Offset.offset;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
+import static api.support.matchers.JsonObjectMatcher.hasNoJsonPath;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.UUIDMatcher.is;
 import static java.lang.String.format;
@@ -16,8 +17,8 @@ import static java.util.function.Function.identity;
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.emptyString;
-import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.core.Is.is;
@@ -272,7 +273,6 @@ public class RequestsAPIRetrievalTests extends APITests {
     assertThat(getResponse.getStatusCode(), is(HttpURLConnection.HTTP_NOT_FOUND));
   }
 
-  @SuppressWarnings("unchecked")
   @Test
   public void canGetMultipleRequests() {
     final IndividualResource cd1 = servicePointsFixture.cd1();
@@ -317,7 +317,6 @@ public class RequestsAPIRetrievalTests extends APITests {
       .withRequesterId(requesterId)
       .withUserProxyId(proxyId)
       .withPickupServicePointId(pickupServicePointId)
-      .withPatronComments("Comment 1")
       .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG))));
 
     final IndividualResource requestForNod = requestsFixture.place(
@@ -372,13 +371,7 @@ public class RequestsAPIRetrievalTests extends APITests {
     requestHasCallNumberStringProperties(requests.getById(
       requestForTemeraire.getId()), "tem");
 
-    assertThat(requests, hasItems(
-      hasJsonPath("patronComments", "Comment 1"),
-      hasJsonPath("patronComments", "Comment 2"),
-      hasJsonPath("patronComments", "Comment 3"),
-      hasJsonPath("patronComments", "Comment 4"),
-      hasJsonPath("patronComments", "Comment 5")
-    ));
+    assertThatRequestsHavePatronComments(requests);
   }
 
   @Test
@@ -739,5 +732,16 @@ public class RequestsAPIRetrievalTests extends APITests {
     assertThat(item.getString("enumeration"), is(prefix + "enumeration1"));
     assertThat(item.getString("chronology"), is(prefix + "chronology"));
     assertThat(item.getString("volume"), is(prefix + "vol.1"));
+  }
+
+  @SuppressWarnings("unchecked")
+  private void assertThatRequestsHavePatronComments(MultipleJsonRecords requests) {
+    assertThat(requests, containsInAnyOrder(
+      hasNoJsonPath("patronComments"),
+      hasJsonPath("patronComments", "Comment 2"),
+      hasJsonPath("patronComments", "Comment 3"),
+      hasJsonPath("patronComments", "Comment 4"),
+      hasJsonPath("patronComments", "Comment 5")
+    ));
   }
 }

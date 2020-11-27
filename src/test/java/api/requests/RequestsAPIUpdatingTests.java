@@ -809,8 +809,7 @@ public class RequestsAPIUpdatingTests extends APITests {
       RequestBuilder.from(createdRequest).withPatronComments("updated patron comments"));
 
     assertThat(replaceResponse.getJson(), hasErrorWith(allOf(
-      hasMessage("Unable to update patronComments for request"),
-      hasParameter("existingPatronComments", "Original patron comments")
-    )));
+      hasMessage("Patron comments are not allowed to change"),
+      hasParameter("existingPatronComments", "Original patron comments"))));
   }
 }
