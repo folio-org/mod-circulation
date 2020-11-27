@@ -55,6 +55,7 @@ public class LoanNoticeSender {
         sendLoanNotice(recordsWithPolicy, NoticeEventType.MANUAL_DUE_DATE_CHANGE);
         return succeeded(records);
       }));
+
   }
 
   private void sendLoanNotice(LoanAndRelatedRecords records, NoticeEventType eventType) {
