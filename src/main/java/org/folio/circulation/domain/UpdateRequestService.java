@@ -39,7 +39,7 @@ public class UpdateRequestService {
     Request updated = requestAndRelatedRecords.getRequest();
 
     return requestRepository.getById(updated.getId())
-      .thenApply(originalRq -> refuseWhenPatronCommentChanged(updated, originalRq))
+      .thenApply(originalRequest -> refuseWhenPatronCommentChanged(updated, originalRequest))
       .thenCompose(original -> original.after(o -> closedRequestValidator.refuseWhenAlreadyClosed(requestAndRelatedRecords)
         .thenApply(r -> r.next(this::removeRequestQueuePositionWhenCancelled))
         .thenComposeAsync(r -> r.after(requestRepository::update))
@@ -54,7 +54,7 @@ public class UpdateRequestService {
 
     return originalRequestResult.failWhen(
       original -> succeeded(!Objects.equals(updated.getPatronComments(), original.getPatronComments())),
-      original -> singleValidationError("Unable to update patronComments for request",
+      original -> singleValidationError("Patron comments are not allowed to change",
         "existingPatronComments", original.getPatronComments())
     );
   }
