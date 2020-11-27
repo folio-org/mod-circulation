@@ -13,9 +13,9 @@ import lombok.Builder;
 @Builder
 public class CheckOutLogEvent {
   public final String loanId;
-  public final List<CheckOutLogEventChangedRequest> changedRequests;
+  public final List<ChangedRequest> changedRequests;
 
-  public CheckOutLogEventChangedRequest firstChangedRequest() {
+  public ChangedRequest firstChangedRequest() {
     return changedRequests.get(0);
   }
 
@@ -26,25 +26,7 @@ public class CheckOutLogEvent {
       .build();
   }
 
-  private static List<CheckOutLogEventChangedRequest> changedRequestsFromJson(JsonObject json) {
-    return mapToList(json, "requests", CheckOutLogEventChangedRequest::fromJson);
-  }
-
-  @AllArgsConstructor
-  @Builder
-  public static class CheckOutLogEventChangedRequest {
-    public final String id;
-    public final String requestType;
-    public final String oldRequestStatus;
-    public final String newRequestStatus;
-
-    public static CheckOutLogEventChangedRequest fromJson(JsonObject request) {
-      return builder()
-        .id(getProperty(request, "id"))
-        .requestType(getProperty(request, "requestType"))
-        .oldRequestStatus(getProperty(request, "oldRequestStatus"))
-        .newRequestStatus(getProperty(request, "newRequestStatus"))
-        .build();
-    }
+  private static List<ChangedRequest> changedRequestsFromJson(JsonObject json) {
+    return mapToList(json, "requests", ChangedRequest::fromJson);
   }
 }
