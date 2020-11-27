@@ -102,7 +102,7 @@ public class FakePubSub {
   }
 
   public static List<JsonObject> getPublishedEventsAsList(Predicate<JsonObject> predicate) {
-    return getPublishedEvents().filterToList(predicate);
+    return publishedEvents.filterToList(predicate);
   }
 
   public static PublishedEvents getPublishedEvents() {

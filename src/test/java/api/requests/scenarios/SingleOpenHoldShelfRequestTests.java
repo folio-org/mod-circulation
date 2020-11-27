@@ -5,14 +5,19 @@ import static api.support.builders.ItemBuilder.AWAITING_PICKUP;
 import static api.support.builders.ItemBuilder.CHECKED_OUT;
 import static api.support.builders.RequestBuilder.CLOSED_FILLED;
 import static api.support.builders.RequestBuilder.OPEN_AWAITING_PICKUP;
+import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.http.ResourceClient.forRequestsStorage;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.awaitility.Awaitility.waitAtMost;
 import static org.folio.HttpStatus.HTTP_OK;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.hamcrest.CoreMatchers.allOf;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
@@ -26,6 +31,7 @@ import org.junit.Test;
 import api.support.APITests;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.RequestBuilder;
+import api.support.fakes.FakePubSub;
 import api.support.http.IndividualResource;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
@@ -70,6 +76,8 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
 
     checkInFixture.checkInByBarcode(smallAngryPlanet);
 
+    FakePubSub.clearPublishedEvents();
+
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica);
 
     Response request = requestsClient.getById(requestByJessica.getId());
@@ -81,6 +89,11 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
     assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
+
+    final var checkOutLogEvent = waitAtMost(1, SECONDS)
+      .until(this::getCheckOutLogEvent, is(notNullValue()));
+
+    assertThat(checkOutLogEvent, is(notNullValue()));
   }
 
   @Test
@@ -205,5 +218,11 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
     holdRequestWithoutPickupServicePoint.remove("pickupServicePointId");
 
     requestsStorage.replace(requestId, holdRequestWithoutPickupServicePoint);
+  }
+
+  private JsonObject getCheckOutLogEvent() {
+    return new JsonObject(getProperty(
+      FakePubSub.getPublishedEvents().findFirst(byLogEventType("CHECK_OUT_EVENT")),
+    "eventPayload"));
   }
 }
