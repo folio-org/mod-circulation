@@ -32,7 +32,8 @@ import org.junit.Test;
 import api.support.APITests;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.RequestBuilder;
-import api.support.dto.CheckOutLogEvent;
+import api.support.data.events.log.CheckOutLogEvent;
+import api.support.data.events.log.JsonToCheckOutLogEventMapper;
 import api.support.fakes.FakePubSub;
 import api.support.http.IndividualResource;
 import api.support.http.ResourceClient;
@@ -236,6 +237,6 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
     final var publishedEvent = FakePubSub.findFirstPublishedEvent(byLogEventType("CHECK_OUT_EVENT"));
     final var logEventPayload = new JsonObject(getProperty(publishedEvent, "eventPayload"));
 
-    return CheckOutLogEvent.fromJson(logEventPayload);
+    return new JsonToCheckOutLogEventMapper().fromJson(logEventPayload);
   }
 }

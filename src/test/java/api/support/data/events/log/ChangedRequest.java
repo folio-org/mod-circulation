@@ -1,4 +1,4 @@
-package api.support.dto;
+package api.support.data.events.log;
 
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 
