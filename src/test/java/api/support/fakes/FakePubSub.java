@@ -101,6 +101,10 @@ public class FakePubSub {
     }
   }
 
+  public static JsonObject findFirstPublishedEvent(Predicate<JsonObject> predicate) {
+    return publishedEvents.findFirst(predicate);
+  }
+
   public static List<JsonObject> getPublishedEventsAsList(Predicate<JsonObject> predicate) {
     return publishedEvents.filterToList(predicate);
   }

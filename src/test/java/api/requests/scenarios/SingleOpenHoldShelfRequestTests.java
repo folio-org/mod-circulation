@@ -233,7 +233,7 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
   }
 
   private CheckOutLogEvent getPublishedCheckOutLogEvent() {
-    final var publishedEvent = FakePubSub.getPublishedEvents().findFirst(byLogEventType("CHECK_OUT_EVENT"));
+    final var publishedEvent = FakePubSub.findFirstPublishedEvent(byLogEventType("CHECK_OUT_EVENT"));
     final var logEventPayload = new JsonObject(getProperty(publishedEvent, "eventPayload"));
 
     return CheckOutLogEvent.fromJson(logEventPayload);
