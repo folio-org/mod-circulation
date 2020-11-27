@@ -1,6 +1,5 @@
 package org.folio.circulation.resources;
 
-import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.notice.TemplateContextUtil.createLoanNoticeContext;
 import static org.folio.circulation.support.results.Result.succeeded;
 
@@ -41,20 +40,11 @@ public class LoanNoticeSender {
   }
 
   public Result<RenewalContext> sendRenewalPatronNotice(RenewalContext records) {
-    if (records.getLoan() == null || records.getLoan().getUser() == null) {
-      log.info("RenewalPatronNotice was not sent. Record doesn't have a valid loan or user.");
-      return succeeded(records);
-    }
     sendLoanNotice(records.getLoan(), NoticeEventType.RENEWED);
     return succeeded(records);
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> sendManualDueDateChangeNotice(LoanAndRelatedRecords records) {
-    if (records.getLoan() == null || records.getLoan().getUser() == null) {
-      log.info("ManualDueDateNotice was not sent. Record doesn't have a valid loan or user.");
-      return completedFuture(succeeded(records));
-    }
-
     return loanPolicyRepository.lookupLoanPolicy(records)
       .thenApply(r -> r.next(recordsWithPolicy -> {
         sendLoanNotice(recordsWithPolicy, NoticeEventType.MANUAL_DUE_DATE_CHANGE);
@@ -67,15 +57,19 @@ public class LoanNoticeSender {
   }
 
   private void sendLoanNotice(Loan loan, NoticeEventType eventType) {
-    JsonObject noticeContext = createLoanNoticeContext(loan);
+    if (loan != null && loan.getUser() != null && loan.getItem() != null) {
 
-    PatronNoticeEvent noticeEvent = new PatronNoticeEventBuilder()
-      .withItem(loan.getItem())
-      .withUser(loan.getUser())
-      .withEventType(eventType)
-      .withNoticeContext(noticeContext)
-      .build();
+      JsonObject noticeContext = createLoanNoticeContext(loan);
+      PatronNoticeEvent noticeEvent = new PatronNoticeEventBuilder()
+        .withItem(loan.getItem())
+        .withUser(loan.getUser())
+        .withEventType(eventType)
+        .withNoticeContext(noticeContext)
+        .build();
 
-    patronNoticeService.acceptNoticeEvent(noticeEvent, NoticeLogContext.from(loan));
+      patronNoticeService.acceptNoticeEvent(noticeEvent, NoticeLogContext.from(loan));
+    } else {
+      log.info("Notice was not sent. Loan doesn't exist or doesn't have a valid user or item.");
+    }
   }
 }
