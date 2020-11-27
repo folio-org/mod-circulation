@@ -299,6 +299,75 @@ public class PatronActionSessionTests extends APITests {
     assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
   }
 
+  @Test
+  public void checkInSessionWithNonExistentLoanShouldBeEnded() {
+    IndividualResource james = usersFixture.james();
+    ItemResource nod = itemsFixture.basedUponNod();
+    UUID checkInServicePointId = servicePointsFixture.cd1().getId();
+
+    checkOutFixture.checkOutByBarcode(nod, james);
+    checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+      .forItem(nod)
+      .at(checkInServicePointId));
+    List<JsonObject> sessions =getCheckInSessions();
+    assertThat(sessions, hasSize(1));
+    String loanId = sessions.get(0).getString(LOAN_ID);
+    loansFixture.deleteLoan(UUID.fromString(loanId));
+    endPatronSessionClient.endCheckInSession(james.getId());
+
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(this::getCheckInSessions, empty());
+    assertThat(patronNoticesClient.getAll(), hasSize(0));
+    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+  }
+
+  @Test
+  public void checkInSessionWithNonExistentItemShouldBeEnded() {
+    IndividualResource james = usersFixture.james();
+    ItemResource nod = itemsFixture.basedUponNod();
+    UUID checkInServicePointId = servicePointsFixture.cd1().getId();
+
+    checkOutFixture.checkOutByBarcode(nod, james);
+    checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+      .forItem(nod)
+      .at(checkInServicePointId));
+    List<JsonObject> sessions =getCheckInSessions();
+    assertThat(sessions, Matchers.hasSize(1));
+    UUID loanId = UUID.fromString(sessions.get(0).getString(LOAN_ID));
+    IndividualResource loan = loansFixture.getLoanById(loanId);
+    itemsClient.delete(UUID.fromString(loan.getJson().getString("itemId")));
+    endPatronSessionClient.endCheckInSession(james.getId());
+
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(this::getCheckInSessions, empty());
+    assertThat(patronNoticesClient.getAll(), hasSize(0));
+    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+  }
+
+  @Test
+  public void checkInSessionWithNonExistentUserShouldBeEnded() {
+    UserResource steve = usersFixture.steve();
+    ItemResource nod = itemsFixture.basedUponNod();
+    UUID checkInServicePointId = servicePointsFixture.cd1().getId();
+
+    checkOutFixture.checkOutByBarcode(nod, steve);
+    checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+      .forItem(nod)
+      .at(checkInServicePointId));
+    List<JsonObject> sessions = getCheckInSessions();
+    assertThat(sessions, Matchers.hasSize(1));
+    usersFixture.remove(steve);
+    endPatronSessionClient.endCheckInSession(steve.getId());
+
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(this::getCheckInSessions, empty());
+    assertThat(patronNoticesClient.getAll(), hasSize(0));
+    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+  }
+
   private List<JsonObject> getCheckInSessions() {
 
     Predicate<JsonObject> isCheckInSession = json -> json.getString(ACTION_TYPE).equals("Check-in");
