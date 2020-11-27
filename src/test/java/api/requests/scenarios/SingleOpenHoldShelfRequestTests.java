@@ -10,6 +10,7 @@ import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.http.ResourceClient.forRequestsStorage;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
+import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
@@ -50,7 +51,9 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
     val james = usersFixture.james();
     val jessica = usersFixture.jessica();
 
-    checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
+    final var checkOutResource = checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
+
+    final var loan = checkOutResource.getJson();
 
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
@@ -70,8 +73,18 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
 
     assertThat(smallAngryPlanet, hasItemStatus(AWAITING_PICKUP));
 
-    waitAtMost(1, SECONDS)
+    final var checkInLogEvent = waitAtMost(1, SECONDS)
       .until(this::getPublishedCheckInLogEvent, is(notNullValue()));
+
+    assertThat(checkInLogEvent.loanId, is(getProperty(loan, "id")));
+    assertThat(checkInLogEvent.changedRequests, hasSize(1));
+
+    final var onlyChangedRequest = checkInLogEvent.firstChangedRequest();
+
+    assertThat(onlyChangedRequest.id, is(requestByJessica.getId()));
+    assertThat(onlyChangedRequest.requestType, is("Hold"));
+    assertThat(onlyChangedRequest.oldRequestStatus, is("Open - Not yet filled"));
+    assertThat(onlyChangedRequest.newRequestStatus, is("Open - Awaiting pickup"));
   }
 
   @Test
@@ -111,7 +124,7 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
 
     final var onlyChangedRequest = checkOutLogEvent.firstChangedRequest();
 
-    assertThat(onlyChangedRequest.id, is(requestByJessica.getId().toString()));
+    assertThat(onlyChangedRequest.id, is(requestByJessica.getId()));
     assertThat(onlyChangedRequest.requestType, is("Hold"));
     assertThat(onlyChangedRequest.oldRequestStatus, is("Open - Awaiting pickup"));
     assertThat(onlyChangedRequest.newRequestStatus, is("Closed - Filled"));

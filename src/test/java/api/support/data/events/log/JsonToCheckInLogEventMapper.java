@@ -1,9 +1,21 @@
 package api.support.data.events.log;
 
+import static org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher.mapToList;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
+
+import java.util.List;
+
 import io.vertx.core.json.JsonObject;
 
 public class JsonToCheckInLogEventMapper {
-  public CheckInLogEvent fromJson(JsonObject logEventPayload) {
-    return new CheckInLogEvent();
+  public CheckInLogEvent fromJson(JsonObject json) {
+    return CheckInLogEvent.builder()
+      .loanId(getProperty(json, "loanId"))
+      .changedRequests(changedRequestsFromJson(json))
+      .build();
+  }
+
+  private List<ChangedRequest> changedRequestsFromJson(JsonObject json) {
+    return mapToList(json, "requests", ChangedRequest::fromJson);
   }
 }
