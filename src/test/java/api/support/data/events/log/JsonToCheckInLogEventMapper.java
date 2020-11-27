@@ -16,6 +16,6 @@ public class JsonToCheckInLogEventMapper {
   }
 
   private List<ChangedRequest> changedRequestsFromJson(JsonObject json) {
-    return mapToList(json, "requests", ChangedRequest::fromJson);
+    return mapToList(json, "requests", new JsonToChangedRequestMapper()::fromJson);
   }
 }
