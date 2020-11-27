@@ -6,6 +6,7 @@ import static api.support.builders.ItemBuilder.CHECKED_OUT;
 import static api.support.builders.RequestBuilder.CLOSED_FILLED;
 import static api.support.builders.RequestBuilder.OPEN_AWAITING_PICKUP;
 import static api.support.fakes.FakePubSub.clearPublishedEvents;
+import static api.support.fakes.FakePubSub.findFirstPublishedEvent;
 import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.http.ResourceClient.forRequestsStorage;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
@@ -25,6 +26,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 
 import java.util.UUID;
+import java.util.function.Function;
 
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
@@ -38,7 +40,6 @@ import api.support.data.events.log.CheckInLogEvent;
 import api.support.data.events.log.CheckOutLogEvent;
 import api.support.data.events.log.JsonToCheckInLogEventMapper;
 import api.support.data.events.log.JsonToCheckOutLogEventMapper;
-import api.support.fakes.FakePubSub;
 import api.support.http.IndividualResource;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
@@ -255,16 +256,17 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
   }
 
   private CheckOutLogEvent getPublishedCheckOutLogEvent() {
-    final var publishedEvent = FakePubSub.findFirstPublishedEvent(byLogEventType("CHECK_OUT_EVENT"));
-    final var logEventPayload = new JsonObject(getProperty(publishedEvent, "eventPayload"));
-
-    return new JsonToCheckOutLogEventMapper().fromJson(logEventPayload);
+    return getPublishedLogEvent("CHECK_OUT_EVENT", new JsonToCheckOutLogEventMapper()::fromJson);
   }
 
   private CheckInLogEvent getPublishedCheckInLogEvent() {
-    final var publishedEvent = FakePubSub.findFirstPublishedEvent(byLogEventType("CHECK_IN_EVENT"));
+    return getPublishedLogEvent("CHECK_IN_EVENT", new JsonToCheckInLogEventMapper()::fromJson);
+  }
+
+  private <T> T getPublishedLogEvent(String eventType, Function<JsonObject, T> payloadMapper) {
+    final var publishedEvent = findFirstPublishedEvent(byLogEventType(eventType));
     final var logEventPayload = new JsonObject(getProperty(publishedEvent, "eventPayload"));
 
-    return new JsonToCheckInLogEventMapper().fromJson(logEventPayload);
+    return payloadMapper.apply(logEventPayload);
   }
 }
