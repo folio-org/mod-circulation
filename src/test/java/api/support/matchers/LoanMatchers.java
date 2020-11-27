@@ -1,13 +1,15 @@
 package api.support.matchers;
 
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 
-import io.vertx.core.json.JsonObject;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeDiagnosingMatcher;
+
+import io.vertx.core.json.JsonObject;
 
 public class LoanMatchers {
   public static TypeSafeDiagnosingMatcher<JsonObject> isOpen() {
@@ -20,6 +22,28 @@ public class LoanMatchers {
 
   public static TypeSafeDiagnosingMatcher<JsonObject> isAnonymized() {
     return doesNotHaveUserId();
+  }
+
+  public static TypeSafeDiagnosingMatcher<JsonObject> hasLoanProperty(
+    String propertyName, Matcher<String> matcher) {
+    return new TypeSafeDiagnosingMatcher<>() {
+      @Override
+      public void describeTo(Description description) {
+        description.appendText("Loan should have a ")
+          .appendText(propertyName).appendText(" property that is ").appendDescriptionOf(matcher);
+      }
+
+      @Override
+      protected boolean matchesSafely(JsonObject representation,
+        Description description) {
+
+        final String actualValue = getProperty(representation, propertyName);
+
+        matcher.describeMismatch(actualValue, description);
+
+        return matcher.matches(actualValue);
+      }
+    };
   }
 
   public static TypeSafeDiagnosingMatcher<JsonObject> hasLoanProperty(

@@ -8,6 +8,7 @@ import static org.folio.HttpStatus.HTTP_NO_CONTENT;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Predicate;
 
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
@@ -16,7 +17,7 @@ import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 
 public class FakePubSub {
-  private static final List<JsonObject> publishedEvents = new ArrayList<>();
+  private static final PublishedEvents publishedEvents = new PublishedEvents();
   private static final List<JsonObject> createdEventTypes = new ArrayList<>();
   private static final List<JsonObject> registeredPublishers = new ArrayList<>();
   private static final List<JsonObject> registeredSubscribers = new ArrayList<>();
@@ -63,7 +64,7 @@ public class FakePubSub {
   }
 
   private static void postTenant(RoutingContext routingContext,
-                                 List<JsonObject> requestBodyList) {
+    List<JsonObject> requestBodyList) {
 
     if (failPubSubRegistration) {
       routingContext.response()
@@ -100,7 +101,11 @@ public class FakePubSub {
     }
   }
 
-  public static List<JsonObject> getPublishedEvents() {
+  public static List<JsonObject> getPublishedEventsAsList(Predicate<JsonObject> predicate) {
+    return getPublishedEvents().filterToList(predicate);
+  }
+
+  public static PublishedEvents getPublishedEvents() {
     return publishedEvents;
   }
 

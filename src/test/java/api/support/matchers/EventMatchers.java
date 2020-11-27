@@ -6,18 +6,18 @@ import static api.support.matchers.EventTypeMatchers.isItemClaimedReturnedEventT
 import static api.support.matchers.EventTypeMatchers.isItemDeclaredLostEventType;
 import static api.support.matchers.EventTypeMatchers.isLoanDueDateChangedEventType;
 import static api.support.matchers.EventTypeMatchers.isLogRecordEventType;
+import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getBooleanProperty;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.core.Is.is;
 
-import io.vertx.core.json.JsonArray;
 import org.hamcrest.Matcher;
+import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
 
 public class EventMatchers {
-
   public static Matcher<JsonObject> isValidItemCheckedOutEvent(JsonObject loan) {
     return allOf(JsonObjectMatcher.allOfPaths(
       hasJsonPath("eventPayload", allOf(
@@ -96,7 +96,7 @@ public class EventMatchers {
       hasJsonPath("eventPayload", allOf(
         hasJsonPath("userId", is(loan.getString("userId"))),
         hasJsonPath("loanId", is(loan.getString("id"))),
-        hasJsonPath("dueDate", is(loan.getString("dueDate"))),
+        hasJsonPath("dueDate", isEquivalentTo(DateTime.parse(loan.getString("dueDate")))),
         hasJsonPath("dueDateChangedByRecall",
           is(getBooleanProperty(loan, "dueDateChangedByRecall")))
       ))),
@@ -117,7 +117,7 @@ public class EventMatchers {
         hasJsonPath("loanId", is(loanCtx.getString("loanId")))
       ))),
       isLogRecordEventType());
-  }  
+  }
 
   public static Matcher<JsonObject> isValidNoticeLogRecordEvent(JsonObject notice) {
     return allOf(JsonObjectMatcher.allOfPaths(

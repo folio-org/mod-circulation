@@ -6,10 +6,10 @@ import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRec
 import static api.support.builders.ItemBuilder.AVAILABLE;
 import static api.support.builders.ItemBuilder.CHECKED_OUT;
 import static api.support.builders.ItemBuilder.CLAIMED_RETURNED;
+import static api.support.fakes.PublishedEvents.byEventType;
+import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.fixtures.AutomatedPatronBlocksFixture.MAX_NUMBER_OF_ITEMS_CHARGED_OUT_MESSAGE;
 import static api.support.fixtures.AutomatedPatronBlocksFixture.MAX_OUTSTANDING_FEE_FINE_BALANCE_MESSAGE;
-import static api.support.fixtures.CalendarExamples.CASE_ONE_DAY_IS_OPEN_NEXT_TWO_DAYS_CLOSED;
-import static api.support.fixtures.CalendarExamples.FIRST_DAY_OPEN;
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasItemBarcodeParameter;
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasLoanPolicyParameters;
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasProxyUserBarcodeParameter;
@@ -30,10 +30,9 @@ import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
-import static java.util.stream.Collectors.groupingBy;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.domain.EventType.ITEM_CHECKED_OUT;
-import static org.folio.circulation.domain.EventType.LOG_RECORD;
+import static org.folio.circulation.domain.policy.DueDateManagement.KEEP_THE_CURRENT_DUE_DATE;
 import static org.folio.circulation.domain.policy.Period.months;
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 import static org.folio.circulation.domain.representations.logs.LogEventType.CHECK_OUT;
@@ -47,13 +46,11 @@ import static org.joda.time.DateTimeZone.UTC;
 import static org.junit.Assert.assertTrue;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import org.awaitility.Awaitility;
-import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
@@ -1291,16 +1288,16 @@ public class CheckOutByBarcodeTests extends APITests {
 
     final JsonObject loan = response.getJson();
 
-    List<JsonObject> publishedEvents = Awaitility.await()
+    final var publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(FakePubSub::getPublishedEvents, hasSize(2));
 
-    Map<String, List<JsonObject>> events = publishedEvents.stream().collect(groupingBy(e -> e.getString("eventType")));
+    final var checkedOutEvent = publishedEvents.findFirst(byEventType(ITEM_CHECKED_OUT.name()));
 
-    assertThat(events.get(ITEM_CHECKED_OUT.name()).get(0), isValidItemCheckedOutEvent(loan));
-    JsonObject checkOutLogEvent = events.get(LOG_RECORD.name()).stream()
-      .filter(json -> json.getString("eventPayload").contains(CHECK_OUT.value()))
-      .findFirst().orElse(new JsonObject());
+    assertThat(checkedOutEvent, isValidItemCheckedOutEvent(loan));
+
+    final var checkOutLogEvent = publishedEvents.findFirst(byLogEventType(CHECK_OUT.value()));
+
     assertThat(checkOutLogEvent, isValidCheckOutLogEvent(loan));
     assertThatPublishedLoanLogRecordEventsAreValid();
   }
@@ -1337,29 +1334,6 @@ public class CheckOutByBarcodeTests extends APITests {
     assertThat(response.getBody(), containsString(
       "Error during publishing Event Message in PubSub. Status code: 400"));
   }
-
-  @Test
-  public void dueDateShouldBeTruncatedToTheEndOfLastWorkingDayBeforePatronExpiration() {
-    mockClockManagerToReturnFixedDateTime(new DateTime(2020, 10, 27, 10, 0, UTC));
-    final UUID book = materialTypesFixture.book().getId();
-
-    circulationRulesFixture.updateCirculationRules(
-      createRulesWithFixedDueDateInLoanPolicy("m " + book));
-
-    IndividualResource item = itemsFixture.basedUponNod();
-    IndividualResource steve = usersFixture.steve(user -> user.expires(
-      DateTime.now().plusDays(3)));
-
-    JsonObject response = checkOutFixture.checkOutByBarcode(
-      new CheckOutByBarcodeRequestBuilder()
-        .forItem(item)
-        .to(steve)
-        .at(CASE_ONE_DAY_IS_OPEN_NEXT_TWO_DAYS_CLOSED)).getJson();
-
-    mockClockManagerToReturnDefaultDateTime();
-    assertThat(DateTime.parse(response.getString("dueDate")).toLocalDate(), is(FIRST_DAY_OPEN));
-  }
-
   private IndividualResource prepareLoanPolicyWithItemLimit(int itemLimit) {
     return loanPoliciesFixture.create(
       new LoanPolicyBuilder()
@@ -1376,8 +1350,7 @@ public class CheckOutByBarcodeTests extends APITests {
         .withName("Loan Policy with item limit and fixed due date")
         .withItemLimit(itemLimit)
         .fixed(fixedDueDateScheduleId)
-        .withClosedLibraryDueDateManagement(
-          DueDateManagement.KEEP_THE_CURRENT_DUE_DATE.getValue()));
+        .withClosedLibraryDueDateManagement(KEEP_THE_CURRENT_DUE_DATE.getValue()));
   }
 
   private IndividualResource prepareLoanPolicyWithoutItemLimit() {
@@ -1403,7 +1376,6 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   private String createRulesWithFixedDueDateInLoanPolicy(String ruleCondition) {
-
     UUID fixedDueDateScheduleId = loanPoliciesFixture.createExampleFixedDueDateSchedule().getId();
     final String loanPolicyWithItemLimitAndFixedDueDateId = prepareLoanPolicyWithItemLimitAndFixedDueDate(
       1, fixedDueDateScheduleId).getId().toString();
