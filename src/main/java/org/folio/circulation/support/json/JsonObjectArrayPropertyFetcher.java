@@ -23,7 +23,7 @@ public class JsonObjectArrayPropertyFetcher {
   public static <T> List<T> mapToList(JsonObject within, String arrayPropertyName,
       Function<JsonObject, T> mapper) {
 
-    return toList(toStream(within, arrayPropertyName).map(mapper));
+    return mapToList(getArrayProperty(within, arrayPropertyName), mapper);
   }
 
   public static Stream<JsonObject> toStream(JsonObject within, String arrayPropertyName) {
