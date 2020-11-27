@@ -1,7 +1,7 @@
 package api.queue;
 
+import static api.support.fakes.PublishedEvents.byLogEventType;
 import static java.util.stream.Collectors.toList;
-import static org.folio.circulation.domain.EventType.LOG_RECORD;
 import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_REORDERED;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -224,7 +224,6 @@ public class RequestQueueResourceTest extends APITests {
 
   @Test
   public void logRecordEventIsPublished() {
-
     checkOutFixture.checkOutByBarcode(item, rebecca);
 
     IndividualResource firstHoldRequest = holdRequest(steve);
@@ -244,16 +243,12 @@ public class RequestQueueResourceTest extends APITests {
 
     verifyQueueUpdated(reorderQueue, response);
 
-    List<JsonObject> publishedEvents = Awaitility.await()
+    final var publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(FakePubSub::getPublishedEvents, hasSize(17));
 
-    List<JsonObject> reorderedLogEvents = publishedEvents.stream()
-      .filter(o -> o.getString("eventType")
-        .equals(LOG_RECORD.name())
-          && new JsonObject(o.getString("eventPayload")).getString("logEventType")
-            .equals(REQUEST_REORDERED.value()))
-      .collect(toList());
+    final var reorderedLogEvents = publishedEvents.filterToList(
+      byLogEventType(REQUEST_REORDERED.value()));
 
     assertThat(reorderedLogEvents, hasSize(1));
 

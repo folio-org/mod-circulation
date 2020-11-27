@@ -1,6 +1,7 @@
 package api.loans;
 
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
+import static api.support.fakes.PublishedEvents.byEventType;
 import static api.support.matchers.EventMatchers.isValidItemClaimedReturnedEvent;
 import static api.support.matchers.EventTypeMatchers.ITEM_CLAIMED_RETURNED;
 import static api.support.matchers.LoanMatchers.hasLoanProperty;
@@ -19,7 +20,6 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 
-import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -128,13 +128,11 @@ public class ClaimItemReturnedAPITests extends APITests {
 
     // Five events are expected: one for check-out one for log event, one for the claim
     // and one for log records
-    List<JsonObject> publishedEvents = Awaitility.await()
+    final var publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(FakePubSub::getPublishedEvents, hasSize(4));
 
-    JsonObject event = publishedEvents.stream()
-      .filter(evt -> ITEM_CLAIMED_RETURNED.equalsIgnoreCase(evt.getString("eventType")))
-      .findFirst().orElse(new JsonObject());
+    final var event = publishedEvents.findFirst(byEventType(ITEM_CLAIMED_RETURNED));
 
     assertThat(event, isValidItemClaimedReturnedEvent(loan.getJson()));
     assertThatPublishedLoanLogRecordEventsAreValid();
