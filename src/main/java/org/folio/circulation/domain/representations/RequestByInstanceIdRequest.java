@@ -28,6 +28,7 @@ public class RequestByInstanceIdRequest {
   private final UUID instanceId;
   private final DateTime requestExpirationDate;
   private final UUID pickupServicePointId;
+  private final String patronComments;
 
   public static Result<RequestByInstanceIdRequest> from(JsonObject json) {
     final DateTime requestDate = getDateTimeProperty(json, REQUEST_DATE);
@@ -52,6 +53,6 @@ public class RequestByInstanceIdRequest {
     final UUID pickupServicePointId = getUUIDProperty(json, PICKUP_SERVICE_POINT_ID);
 
     return succeeded(new RequestByInstanceIdRequest(requestDate, requesterId, instanceId,
-        requestExpirationDate, pickupServicePointId));
+        requestExpirationDate, pickupServicePointId, json.getString("patronComments")));
   }
 }

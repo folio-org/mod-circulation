@@ -1,5 +1,6 @@
 package api.requests;
 
+import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
@@ -55,15 +56,18 @@ public class InstanceRequestsAPICreationTests extends APITests {
     itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(),
       null);
 
+    final String expectedPatronComment = "I need the book";
     JsonObject requestBody = createInstanceRequestObject(
       instanceMultipleCopies.getId(), requesterId, pickupServicePointId,
-      requestDate, requestExpirationDate);
+      requestDate, requestExpirationDate).put("patronComments", expectedPatronComment);
 
     Response postResponse = requestsFixture.attemptToPlaceForInstance(requestBody);
 
     JsonObject representation = postResponse.getJson();
     validateInstanceRequestResponse(representation, pickupServicePointId,
       instanceMultipleCopies.getId(), item2.getId(), RequestType.PAGE);
+
+    assertThat(representation, hasJsonPath("patronComments", expectedPatronComment));
   }
 
   @Test
