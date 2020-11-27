@@ -1,6 +1,7 @@
 package api.support.data.events.log;
 
 import static org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher.mapToList;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getArrayProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 
 import java.util.List;
@@ -16,6 +17,6 @@ public class JsonToCheckOutLogEventMapper {
   }
 
   private List<ChangedRequest> changedRequestsFromJson(JsonObject json) {
-    return mapToList(json, "requests", new JsonToChangedRequestMapper()::fromJson);
+    return mapToList(getArrayProperty(json, "requests"), new JsonToChangedRequestMapper()::fromJson);
   }
 }
