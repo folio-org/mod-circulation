@@ -251,11 +251,10 @@ public class PatronActionSessionTests extends APITests {
     loansFixture.deleteLoan(UUID.fromString(loanId));
     endPatronSessionClient.endCheckOutSession(james.getId());
 
-    Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
+    waitAtMost(1, SECONDS)
       .until(patronSessionRecordsClient::getAll, empty());
     assertThat(patronNoticesClient.getAll(), hasSize(0));
-    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(patronNoticesClient.getAll().size()));
   }
 
   @Test
@@ -265,17 +264,16 @@ public class PatronActionSessionTests extends APITests {
 
     checkOutFixture.checkOutByBarcode(nod, james);
     List<JsonObject> sessions = patronSessionRecordsClient.getAll();
-    assertThat(sessions, Matchers.hasSize(1));
+    assertThat(sessions, hasSize(1));
     UUID loanId = UUID.fromString(sessions.get(0).getString(LOAN_ID));
     IndividualResource loan = loansFixture.getLoanById(loanId);
     itemsClient.delete(UUID.fromString(loan.getJson().getString("itemId")));
     endPatronSessionClient.endCheckOutSession(james.getId());
 
-    Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
+    waitAtMost(1, SECONDS)
       .until(patronSessionRecordsClient::getAll, empty());
     assertThat(patronNoticesClient.getAll(), hasSize(0));
-    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(patronNoticesClient.getAll().size()));
   }
 
   @Test
@@ -285,15 +283,14 @@ public class PatronActionSessionTests extends APITests {
 
     checkOutFixture.checkOutByBarcode(nod, steve);
     List<JsonObject> sessions = patronSessionRecordsClient.getAll();
-    assertThat(sessions, Matchers.hasSize(1));
+    assertThat(sessions, hasSize(1));
     usersFixture.remove(steve);
     endPatronSessionClient.endCheckOutSession(steve.getId());
 
-    Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
+    waitAtMost(1, SECONDS)
       .until(patronSessionRecordsClient::getAll, empty());
     assertThat(patronNoticesClient.getAll(), hasSize(0));
-    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(patronNoticesClient.getAll().size()));
   }
 
   @Test
@@ -306,17 +303,16 @@ public class PatronActionSessionTests extends APITests {
     checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(nod)
       .at(checkInServicePointId));
-    List<JsonObject> sessions =getCheckInSessions();
+    List<JsonObject> sessions = getCheckInSessions();
     assertThat(sessions, hasSize(1));
     String loanId = sessions.get(0).getString(LOAN_ID);
     loansFixture.deleteLoan(UUID.fromString(loanId));
     endPatronSessionClient.endCheckInSession(james.getId());
 
-    Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
+    waitAtMost(1, SECONDS)
       .until(this::getCheckInSessions, empty());
     assertThat(patronNoticesClient.getAll(), hasSize(0));
-    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(patronNoticesClient.getAll().size()));
   }
 
   @Test
@@ -329,18 +325,17 @@ public class PatronActionSessionTests extends APITests {
     checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(nod)
       .at(checkInServicePointId));
-    List<JsonObject> sessions =getCheckInSessions();
-    assertThat(sessions, Matchers.hasSize(1));
+    List<JsonObject> sessions = getCheckInSessions();
+    assertThat(sessions, hasSize(1));
     UUID loanId = UUID.fromString(sessions.get(0).getString(LOAN_ID));
     IndividualResource loan = loansFixture.getLoanById(loanId);
     itemsClient.delete(UUID.fromString(loan.getJson().getString("itemId")));
     endPatronSessionClient.endCheckInSession(james.getId());
 
-    Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
+    waitAtMost(1, SECONDS)
       .until(this::getCheckInSessions, empty());
     assertThat(patronNoticesClient.getAll(), hasSize(0));
-    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(patronNoticesClient.getAll().size()));
   }
 
   @Test
@@ -354,15 +349,14 @@ public class PatronActionSessionTests extends APITests {
       .forItem(nod)
       .at(checkInServicePointId));
     List<JsonObject> sessions = getCheckInSessions();
-    assertThat(sessions, Matchers.hasSize(1));
+    assertThat(sessions, hasSize(1));
     usersFixture.remove(steve);
     endPatronSessionClient.endCheckInSession(steve.getId());
 
-    Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
+    waitAtMost(1, SECONDS)
       .until(this::getCheckInSessions, empty());
     assertThat(patronNoticesClient.getAll(), hasSize(0));
-    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(patronNoticesClient.getAll().size()));
   }
 
   private List<JsonObject> getCheckInSessions() {
