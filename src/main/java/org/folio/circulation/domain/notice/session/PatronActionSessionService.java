@@ -113,7 +113,7 @@ public class PatronActionSessionService {
     MultipleRecords<PatronSessionRecord> records) {
 
     if (records == null) {
-      log.info("Records are empty, nothing to delete.");
+      log.info("PatronSessionRecords are empty, nothing to delete.");
       return completedFuture(succeeded(null));
     }
 
@@ -127,7 +127,7 @@ public class PatronActionSessionService {
     MultipleRecords<PatronSessionRecord> records) {
 
     if (records.isEmpty()) {
-      log.info("Records are empty, notices will not be sent.");
+      log.info("PatronSessionRecords are empty, notices will not be sent.");
       return completedFuture(succeeded(null));
     }
     List<PatronSessionRecord> sessionRecords = new ArrayList<>(records.getRecords());
