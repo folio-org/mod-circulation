@@ -9,6 +9,7 @@ import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
+import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.function.Function.identity;
@@ -779,5 +780,27 @@ public class RequestsAPIUpdatingTests extends APITests {
   private Request getRequestFromPayload(JsonObject logEvent, String created) {
     return Request.from(new JsonObject(logEvent.getString("eventPayload"))
       .getJsonObject("payload").getJsonObject("requests").getJsonObject(created));
+  }
+
+  @Test
+  public void cannotUpdatePatronComments() {
+    final ItemResource temeraire = itemsFixture.basedUponTemeraire();
+    final IndividualResource steve = usersFixture.steve();
+
+    final IndividualResource createdRequest = requestsClient.create(new RequestBuilder()
+      .page()
+      .withRequestDate(DateTime.now(DateTimeZone.UTC))
+      .forItem(temeraire)
+      .by(steve)
+      .fulfilToHoldShelf()
+      .withPatronComments("Original patron comments")
+      .withPickupServicePointId(servicePointsFixture.cd1().getId()));
+
+    final var replaceResponse = requestsClient.attemptReplace(createdRequest.getId(),
+      RequestBuilder.from(createdRequest).withPatronComments("updated patron comments"));
+
+    assertThat(replaceResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("Patron comments are not allowed to change"),
+      hasParameter("existingPatronComments", "Original patron comments"))));
   }
 }
