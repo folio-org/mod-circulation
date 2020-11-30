@@ -123,9 +123,8 @@ public class OverdueFineCalculatorService {
       return false;
     }
 
-    if (!loan.getLostItemPolicy().shouldRefundFees(loan.getLostDate())
-      && !loan.hasAssociatedFeesAndFines()) {
-      // any fee is assigned and refund period has passed.
+    if (!loan.getLostItemPolicy().shouldRefundFees(loan.getLostDate())) {
+      // if the refund period has passed, do not charge fines.
       return false;
     }
 

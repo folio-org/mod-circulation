@@ -473,7 +473,7 @@ public class DeclareLostAPITests extends APITests {
     IndividualResource loan = checkOutFixture
       .checkOutByBarcode(item, usersFixture.jessica());
 
-    // advance system time by six weeks to accrue fines before declared lost
+    // advance system time by five weeks to accrue fines before declared lost
     final DateTime declareLostDate = now(UTC).plusWeeks(5);
     mockClockManagerToReturnFixedDateTime(declareLostDate);
 
