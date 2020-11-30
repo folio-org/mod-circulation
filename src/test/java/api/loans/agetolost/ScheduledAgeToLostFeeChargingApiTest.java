@@ -18,7 +18,6 @@ import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
 import static java.lang.Boolean.TRUE;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.iterableWithSize;
 
@@ -36,7 +35,6 @@ import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 
-import api.support.builders.OverdueFinePolicyBuilder;
 import api.support.builders.FeeFineOwnerBuilder;
 import api.support.builders.ItemBuilder;
 import api.support.builders.LostItemFeePolicyBuilder;
@@ -324,9 +322,6 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     checkInFixture.checkInByBarcode(result.getItem(), checkInDate);
 
     assertThat(loansFixture.getLoanById(loanId), hasNoOverdueFine());
-
-    assertThat(loansFixture.getLoanById(loanId).getJson().toString(), is(""));
-
   }
 
   private Map<IndividualResource, Double> checkoutTenItems() {
