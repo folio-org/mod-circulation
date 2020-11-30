@@ -96,6 +96,8 @@ public class PatronActionSessionService {
 
   public CompletableFuture<Result<Void>> endSession(List<ExpiredSession> expiredSessions) {
 
+    log.info("Attempting to delete expired sessions by timeout.");
+
     return patronActionSessionRepository.findPatronActionSessions(expiredSessions)
       .thenCompose(r -> r.after(this::endSessionsForRecords));
   }
@@ -114,6 +116,8 @@ public class PatronActionSessionService {
       log.info("Records are empty, nothing to delete.");
       return completedFuture(succeeded(null));
     }
+
+    log.info("{} session records will be deleted.", records.size());
 
     return allOf(records.getRecords(), patronActionSessionRepository::delete)
       .thenApply(mapResult(v -> null));
@@ -135,7 +139,7 @@ public class PatronActionSessionService {
       return completedFuture(succeeded(records));
     }
 
-    if (recordSample.getLoan().getItem() == null || recordSample.getLoan().getItem().getItem() == null){
+    if (recordSample.getLoan().getItem() == null || recordSample.getLoan().getItem().getItem() == null) {
       log.info("Notice was not sent. Session: {} doesn't have a valid item.", recordSample.getId());
       return completedFuture(succeeded(records));
     }
@@ -180,6 +184,8 @@ public class PatronActionSessionService {
       .values().stream()
       .map(recordsList -> new MultipleRecords<>(recordsList, recordsList.size()))
       .collect(Collectors.toList());
+
+    log.info("Attempting to send {} notices for expired sessions before they will be deleted by timeout.", recordsGroupedByUser.size());
 
     return allOf(recordsGroupedByUser, this::sendNotices)
       .thenApply(mapResult(v -> records));

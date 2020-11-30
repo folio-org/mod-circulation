@@ -14,6 +14,7 @@ import static org.folio.circulation.support.http.client.CqlQuery.noQuery;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
+import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
@@ -44,6 +45,7 @@ import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.ForwardOnFailure;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
@@ -99,7 +101,12 @@ public class PatronActionSessionRepository {
   public CompletableFuture<Result<Void>> delete(PatronSessionRecord record) {
     final ResponseInterpreter<Void> interpreter = new ResponseInterpreter<Void>()
       .on(204, of(() -> null))
-      .otherwise(forwardOnFailure());
+      .otherwise(response -> {
+        log.info("Error has occurred while deleting PatronSessionRecord with id: {} and action type: {}", record.getId(), record.getActionType().name());
+        return failed(new ForwardOnFailure(response));
+      });
+
+    log.info("Deleting PatronSessionRecord with id: {} and action type: {}", record.getId(), record.getActionType().name());
 
     return patronActionSessionsStorageClient.delete(record.getId().toString())
       .thenApply(flatMapResult(interpreter::apply));
