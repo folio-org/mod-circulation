@@ -1,26 +1,27 @@
 package org.folio.circulation.domain;
 
-import api.support.builders.RequestBuilder;
-import org.junit.Test;
+import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.collection.IsEmptyCollection.empty;
+import static org.hamcrest.collection.IsIterableContainingInOrder.contains;
 
 import java.util.UUID;
 
-import static java.util.Arrays.asList;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.nullValue;
-import static org.hamcrest.collection.IsEmptyCollection.empty;
-import static org.hamcrest.collection.IsIterableContainingInOrder.contains;
-import static org.hamcrest.MatcherAssert.assertThat;
+import org.junit.Test;
+
+import api.support.builders.RequestBuilder;
 
 public class RequestQueueTests {
-
   @Test
   public void canRemoveOnlyRequestInQueue() {
     final UUID itemId = UUID.randomUUID();
 
     Request onlyRequest = requestAtPosition(itemId, 1);
 
-    final RequestQueue requestQueue = new RequestQueue(asList(onlyRequest));
+    final RequestQueue requestQueue = new RequestQueue(singletonList(onlyRequest));
 
     requestQueue.remove(onlyRequest);
 
