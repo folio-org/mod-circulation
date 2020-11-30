@@ -46,10 +46,6 @@ public class LoanNoticeSender {
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> sendManualDueDateChangeNotice(LoanAndRelatedRecords records) {
-    if (records.getLoan() == null || records.getLoan().getUser() == null) {
-      log.info("ManualDueDateNotice was not sent. Record doesn't have a valid loan or user.");
-      return ofAsync(() -> records);
-    }
     return loanPolicyRepository.lookupLoanPolicy(records)
       .thenApply(r -> r.next(recordsWithPolicy -> {
         sendLoanNotice(recordsWithPolicy, NoticeEventType.MANUAL_DUE_DATE_CHANGE);
@@ -62,8 +58,13 @@ public class LoanNoticeSender {
   }
 
   private void sendLoanNotice(Loan loan, NoticeEventType eventType) {
-    if (loan != null && loan.getUser() != null && loan.getItem() != null) {
-
+    if (loan == null) {
+      log.info("Notice for event type: {} was not sent. Loan doesn't exist.", eventType.name());
+    } else if (loan.getItem() == null) {
+      log.info("Notice for event type: {} was not sent. Loan doesn't have a valid item.", eventType.name());
+    } else if (loan.getUser() == null) {
+      log.info("Notice for event type: {} was not sent. Loan doesn't have a valid user.", eventType.name());
+    } else {
       JsonObject noticeContext = createLoanNoticeContext(loan);
       PatronNoticeEvent noticeEvent = new PatronNoticeEventBuilder()
         .withItem(loan.getItem())
@@ -73,8 +74,6 @@ public class LoanNoticeSender {
         .build();
 
       patronNoticeService.acceptNoticeEvent(noticeEvent, NoticeLogContext.from(loan));
-    } else {
-      log.info("Notice was not sent. Loan doesn't exist or doesn't have a valid user or item.");
     }
   }
 }
