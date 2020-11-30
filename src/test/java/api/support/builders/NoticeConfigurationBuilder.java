@@ -93,6 +93,10 @@ public class NoticeConfigurationBuilder extends JsonBuilder implements Builder {
     return withEventType("Overdue fine renewed");
   }
 
+  public NoticeConfigurationBuilder withAgedToLostEvent() {
+    return withEventType("Aged to lost");
+  }
+
   public NoticeConfigurationBuilder withTiming(String timing, JsonObject timingPeriod) {
     return new NoticeConfigurationBuilder(
       templateId,

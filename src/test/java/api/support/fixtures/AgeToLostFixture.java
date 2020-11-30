@@ -16,6 +16,7 @@ import java.time.ZoneOffset;
 import java.util.UUID;
 import java.util.function.UnaryOperator;
 
+import api.support.builders.NoticePolicyBuilder;
 import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
@@ -34,6 +35,7 @@ import lombok.val;
 public final class AgeToLostFixture {
   private final PoliciesActivationFixture policiesActivation;
   private final LostItemFeePoliciesFixture lostItemFeePoliciesFixture;
+  private final NoticePoliciesFixture noticePoliciesFixture;
   private final ItemsFixture itemsFixture;
   private final CheckOutFixture checkOutFixture;
   private final UsersFixture usersFixture;
@@ -45,6 +47,7 @@ public final class AgeToLostFixture {
 
     this.policiesActivation = new PoliciesActivationFixture();
     this.lostItemFeePoliciesFixture = new LostItemFeePoliciesFixture();
+    this.noticePoliciesFixture = new NoticePoliciesFixture(ResourceClient.forNoticePolicies());
     this.itemsFixture = itemsFixture;
     this.usersFixture = usersFixture;
     this.checkOutFixture = checkOutFixture;
@@ -60,6 +63,12 @@ public final class AgeToLostFixture {
   public AgeToLostResult createAgedToLostLoan() {
     return createAgedToLostLoan(UnaryOperator.identity(), PoliciesToActivate.builder()
     .lostItemPolicy(lostItemFeePoliciesFixture.ageToLostAfterOneMinute()));
+  }
+
+  public AgeToLostResult createAgedToLostLoan(NoticePolicyBuilder builder) {
+    return createAgedToLostLoan(UnaryOperator.identity(), PoliciesToActivate.builder()
+      .lostItemPolicy(lostItemFeePoliciesFixture.ageToLostAfterOneMinute())
+      .noticePolicy(noticePoliciesFixture.create(builder)));
   }
 
   public AgeToLostResult createAgedToLostLoan(UnaryOperator<HoldingBuilder> holdingsBuilder,

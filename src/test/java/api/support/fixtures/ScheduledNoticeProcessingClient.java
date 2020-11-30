@@ -21,11 +21,11 @@ public class ScheduledNoticeProcessingClient {
     timedTaskClient = new TimedTaskClient(getOkapiHeadersFromContext());
   }
 
-  public void runDueDateNoticesProcessing(DateTime mockSystemTime) {
-    runWithFrozenTime(this::runDueDateNoticesProcessing, mockSystemTime);
+  public void runLoanNoticesProcessing(DateTime mockSystemTime) {
+    runWithFrozenTime(this::runLoanNoticesProcessing, mockSystemTime);
   }
 
-  public void runDueDateNoticesProcessing() {
+  public void runLoanNoticesProcessing() {
     URL url = circulationModuleUrl(
       "/circulation/loan-scheduled-notices-processing");
 

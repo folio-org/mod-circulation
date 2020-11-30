@@ -2,7 +2,6 @@ package org.folio.circulation.domain.notice.schedule;
 
 import static org.folio.circulation.domain.notice.NoticeEventType.AGED_TO_LOST;
 import static org.folio.circulation.domain.notice.NoticeEventType.DUE_DATE;
-import static org.folio.circulation.support.ClockManager.getClockManager;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.Collection;
@@ -46,8 +45,7 @@ public class LoanScheduledNoticeService {
   }
 
   public Result<Void> scheduleAgedToLostNotices(Collection<Loan> loans) {
-    final DateTime now = getClockManager().getDateTime();
-    loans.forEach(loan -> scheduleLoanNotices(loan, AGED_TO_LOST, now));
+    loans.forEach(loan -> scheduleLoanNotices(loan, AGED_TO_LOST, loan.getAgedToLostDateTime()));
 
     return succeeded(null);
   }
