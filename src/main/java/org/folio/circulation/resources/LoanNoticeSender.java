@@ -46,10 +46,6 @@ public class LoanNoticeSender {
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> sendManualDueDateChangeNotice(LoanAndRelatedRecords records) {
-    if (records.getLoan() == null || records.getLoan().getUser() == null) {
-      log.info("ManualDueDateNotice was not sent. Record doesn't have a valid loan or user.");
-      return ofAsync(() -> records);
-    }
     return loanPolicyRepository.lookupLoanPolicy(records)
       .thenApply(r -> r.next(recordsWithPolicy -> {
         sendLoanNotice(recordsWithPolicy, NoticeEventType.MANUAL_DUE_DATE_CHANGE);
