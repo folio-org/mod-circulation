@@ -71,11 +71,6 @@ public class PatronActionSessionService {
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> saveCheckOutSessionRecord(LoanAndRelatedRecords records) {
-    if (records.getLoan() == null) {
-      log.info("CheckOutSessionRecord is not saved, record doesn't have a valid loan.");
-      return ofAsync(() -> records);
-    }
-
     UUID patronId = UUID.fromString(records.getUserId());
     UUID loanId = UUID.fromString(records.getLoan().getId());
 
