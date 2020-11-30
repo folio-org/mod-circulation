@@ -133,7 +133,8 @@ RequestsAPICreationTests extends APITests {
       .withRequestExpiration(LocalDate.of(2017, 7, 30))
       .withHoldShelfExpiration(LocalDate.of(2017, 8, 31))
       .withPickupServicePointId(pickupServicePointId)
-      .withTags(new RequestBuilder.Tags(asList("new", "important"))));
+      .withTags(new RequestBuilder.Tags(asList("new", "important")))
+      .withPatronComments("I need this book"));
 
     JsonObject representation = request.getJson();
 
@@ -147,6 +148,7 @@ RequestsAPICreationTests extends APITests {
     assertThat(representation.getString("holdShelfExpirationDate"), is("2017-08-31"));
     assertThat(representation.getString("status"), is("Open - Not yet filled"));
     assertThat(representation.getString("pickupServicePointId"), is(pickupServicePointId.toString()));
+    assertThat(representation.getString("patronComments"), is("I need this book"));
 
     assertThat("has information taken from item",
       representation.containsKey("item"), is(true));
