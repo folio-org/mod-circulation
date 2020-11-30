@@ -102,7 +102,7 @@ public class LostItemFeePoliciesFixture {
       .withSetCost(10.00)
       .doNotChargeProcessingFeeWhenAgedToLost()
       .withChargeAmountItemSystem(true)
-      .refundFeesWithinMinutes(10)
+      .refundFeesWithinWeeks(1)
       .chargeOverdueFineWhenReturned();
   }
 

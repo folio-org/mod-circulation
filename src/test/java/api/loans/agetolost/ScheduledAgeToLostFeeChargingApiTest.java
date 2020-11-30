@@ -18,6 +18,7 @@ import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
 import static java.lang.Boolean.TRUE;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.iterableWithSize;
 
@@ -35,6 +36,7 @@ import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 
+import api.support.builders.OverdueFinePolicyBuilder;
 import api.support.builders.FeeFineOwnerBuilder;
 import api.support.builders.ItemBuilder;
 import api.support.builders.LostItemFeePolicyBuilder;
@@ -295,7 +297,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
   }
 
   @Test
-  public void shouldNotChargeOverdueOnCheckinWhenBilledForItemAndRefundFeePeriodPassed() {
+  public void shouldNotChargeOverdueOnCheckinWhenAgedToLostAndRefundFeePeriodPassed() {
     // for a loan that charges both lost fees and overdue fines
     // where the policies are set such that:
     // 1. the item charges overdue fees on checkin
@@ -304,12 +306,11 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     // 4. the item has been charged some form of lost item fee
     // 5.  the item is checked in after the item has been charged lost fees and after the refund expiration date has passed
     // THEN the loan SHOULD NOT have overdue charges
+    IndividualResource overDueFinePolicy = overdueFinePoliciesFixture.facultyStandard();
 
-    val lostItemPolicy = lostItemFeePoliciesFixture.ageToLostAfterOneWeekPolicy();
+    IndividualResource lostItemPolicy = lostItemFeePoliciesFixture.ageToLostAfterOneWeek();
 
-    IndividualResource overduePolicy = overdueFinePoliciesFixture.facultyStandard();
-
-    val result = ageToLostFixture.createLoanAgeToLostAndChargeFeesWithOverdues(lostItemPolicy, overduePolicy);
+    val result = ageToLostFixture.createLoanAgeToLostAndChargeFeesWithOverdues(lostItemPolicy, overDueFinePolicy);
 
     assertThat(result.getLoan().getJson(), isLostItemHasBeenBilled());
 
@@ -323,6 +324,8 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     checkInFixture.checkInByBarcode(result.getItem(), checkInDate);
 
     assertThat(loansFixture.getLoanById(loanId), hasNoOverdueFine());
+
+    assertThat(loansFixture.getLoanById(loanId).getJson().toString(), is(""));
 
   }
 

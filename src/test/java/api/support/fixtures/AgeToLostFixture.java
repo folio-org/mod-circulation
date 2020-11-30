@@ -83,11 +83,11 @@ public final class AgeToLostFixture {
     return ageToLostResult;
   }
 
-  public AgeToLostResult createLoanAgeToLostAndChargeFeesWithOverdues(LostItemFeePolicyBuilder lostBuilder, IndividualResource overduePolicy) {
+  public AgeToLostResult createLoanAgeToLostAndChargeFeesWithOverdues(IndividualResource lostPolicy, IndividualResource overduePolicy) {
     
       return createLoanAgeToLostAndChargeFees(UnaryOperator.identity(), 
         PoliciesToActivate.builder()
-          .lostItemPolicy(lostItemFeePoliciesFixture.create(lostBuilder))
+          .lostItemPolicy(lostPolicy)
           .overduePolicy(overduePolicy)
       );
 
