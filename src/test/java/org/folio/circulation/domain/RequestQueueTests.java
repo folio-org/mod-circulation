@@ -1,11 +1,12 @@
 package org.folio.circulation.domain;
 
 import static org.folio.circulation.domain.RequestQueue.requestQueueOf;
+import static org.folio.circulation.matchers.requests.RequestMatchers.hasNoPosition;
+import static org.folio.circulation.matchers.requests.RequestMatchers.inPosition;
 import static org.folio.circulation.matchers.requests.RequestQueueMatchers.doesNotInclude;
 import static org.folio.circulation.matchers.requests.RequestQueueMatchers.hasSize;
 import static org.folio.circulation.matchers.requests.RequestQueueMatchers.includes;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.collection.IsEmptyCollection.empty;
 import static org.hamcrest.collection.IsIterableContainingInOrder.contains;
@@ -19,117 +20,99 @@ import api.support.builders.RequestBuilder;
 class RequestQueueTests {
   @Test
   void canRemoveOnlyRequestInQueue() {
-    final UUID itemId = UUID.randomUUID();
+    final var itemId = UUID.randomUUID();
 
-    Request onlyRequest = requestAtPosition(itemId, 1);
+    final var onlyRequest = requestAtPosition(itemId, 1);
 
-    final var requestQueue = requestQueueOf(onlyRequest);
+    final var queue = requestQueueOf(onlyRequest);
 
-    requestQueue.remove(onlyRequest);
+    queue.remove(onlyRequest);
 
-    assertThat(requestQueue, hasSize(0));
-    assertThat(requestQueue, doesNotInclude(onlyRequest));
+    assertThat(queue, hasSize(0));
 
-    assertThat("Removed request should not have a position",
-      onlyRequest.getPosition(), is(nullValue()));
+    assertThat(queue, doesNotInclude(onlyRequest));
 
-    assertThat("No requests have changed position",
-      requestQueue.getRequestsWithChangedPosition(), is(empty()));
+    assertThat(onlyRequest, hasNoPosition());
+
+    assertThat(queue.getRequestsWithChangedPosition(), is(empty()));
   }
 
   @Test
   void canRemoveLastRequestInQueue() {
-    final UUID itemId = UUID.randomUUID();
+    final var itemId = UUID.randomUUID();
 
-    final var first = requestAtPosition(itemId, 1);
-    final var second = requestAtPosition(itemId, 2);
-    final var third = requestAtPosition(itemId, 3);
+    final var firstRequest = requestAtPosition(itemId, 1);
+    final var secondRequest = requestAtPosition(itemId, 2);
+    final var thirdRequest = requestAtPosition(itemId, 3);
 
-    final var requestQueue = requestQueueOf(first, second, third);
+    final var queue = requestQueueOf(firstRequest, secondRequest, thirdRequest);
 
-    requestQueue.remove(third);
+    queue.remove(thirdRequest);
 
-    assertThat(requestQueue, hasSize(2));
-    assertThat(requestQueue, doesNotInclude(third));
-    assertThat(requestQueue, includes(first));
-    assertThat(requestQueue, includes(second));
+    assertThat(queue, hasSize(2));
 
-    assertThat("Removed request should not have a position",
-      third.getPosition(), is(nullValue()));
+    assertThat(queue, includes(firstRequest));
+    assertThat(queue, includes(secondRequest));
+    assertThat(queue, doesNotInclude(thirdRequest));
 
-    assertThat("First request should still in correct position",
-      first.getPosition(), is(1));
+    assertThat(firstRequest, is(inPosition(1)));
+    assertThat(secondRequest, is(inPosition(2)));
+    assertThat(thirdRequest, hasNoPosition());
 
-    assertThat("Second request should still in correct position",
-      second.getPosition(), is(2));
-
-    assertThat("No requests have changed position",
-      requestQueue.getRequestsWithChangedPosition(), is(empty()));
+    assertThat(queue.getRequestsWithChangedPosition(), is(empty()));
   }
 
   @Test
   void canRemoveFirstRequestInQueue() {
-    final UUID itemId = UUID.randomUUID();
+    final var itemId = UUID.randomUUID();
 
-    final var first = requestAtPosition(itemId, 1);
-    final var second = requestAtPosition(itemId, 2);
-    final var third = requestAtPosition(itemId, 3);
+    final var firstRequest = requestAtPosition(itemId, 1);
+    final var secondRequest = requestAtPosition(itemId, 2);
+    final var thirdRequest = requestAtPosition(itemId, 3);
 
-    final var requestQueue = requestQueueOf(first, second, third);
+    final var queue = requestQueueOf(firstRequest, secondRequest, thirdRequest);
 
-    requestQueue.remove(first);
+    queue.remove(firstRequest);
 
-    assertThat(requestQueue, hasSize(2));
-    assertThat(requestQueue, doesNotInclude(first));
-    assertThat(requestQueue, includes(second));
-    assertThat(requestQueue, includes(third));
+    assertThat(queue, hasSize(2));
 
-    assertThat("Removed request should not have a position",
-      first.getPosition(), is(nullValue()));
+    assertThat(queue, doesNotInclude(firstRequest));
+    assertThat(queue, includes(secondRequest));
+    assertThat(queue, includes(thirdRequest));
 
-    assertThat("Second request should have moved up the queue",
-      second.getPosition(), is(1));
+    assertThat(firstRequest, hasNoPosition());
+    assertThat(secondRequest, is(inPosition(1)));
+    assertThat(thirdRequest, is(inPosition(2)));
 
-    assertThat("Third request should have moved up the queue",
-      third.getPosition(), is(2));
-
-    assertThat("Second and third requests have changed position",
-      requestQueue.getRequestsWithChangedPosition(), contains(third, second));
+    assertThat(queue.getRequestsWithChangedPosition(), contains(thirdRequest, secondRequest));
   }
 
   @Test
   void canRemoveMiddleRequestInQueue() {
-    final UUID itemId = UUID.randomUUID();
+    final var itemId = UUID.randomUUID();
 
-    Request first = requestAtPosition(itemId, 1);
-    Request second = requestAtPosition(itemId, 2);
-    Request third = requestAtPosition(itemId, 3);
-    Request fourth = requestAtPosition(itemId, 4);
+    final var firstRequest = requestAtPosition(itemId, 1);
+    final var secondRequest = requestAtPosition(itemId, 2);
+    final var thirdRequest = requestAtPosition(itemId, 3);
+    final var fourthRequest = requestAtPosition(itemId, 4);
 
-    final var requestQueue = requestQueueOf(first, second, third, fourth);
+    final var queue = requestQueueOf(firstRequest, secondRequest, thirdRequest, fourthRequest);
 
-    requestQueue.remove(second);
+    queue.remove(secondRequest);
 
-    assertThat(requestQueue, hasSize(3));
-    assertThat(requestQueue, doesNotInclude(second));
-    assertThat(requestQueue, includes(first));
-    assertThat(requestQueue, includes(third));
-    assertThat(requestQueue, includes(fourth));
+    assertThat(queue, hasSize(3));
 
-    assertThat("Removed request should not have a position",
-      second.getPosition(), is(nullValue()));
+    assertThat(queue, includes(firstRequest));
+    assertThat(queue, doesNotInclude(secondRequest));
+    assertThat(queue, includes(thirdRequest));
+    assertThat(queue, includes(fourthRequest));
 
-    assertThat("First request should be at the same position",
-      first.getPosition(), is(1));
+    assertThat(firstRequest, is(inPosition(1)));
+    assertThat(secondRequest, hasNoPosition());
+    assertThat(thirdRequest, is(inPosition(2)));
+    assertThat(fourthRequest, is(inPosition(3)));
 
-    assertThat("Third request should have moved up the queue",
-      third.getPosition(), is(2));
-
-    assertThat("Fourth request should have moved up the queue",
-      fourth.getPosition(), is(3));
-
-    assertThat("Second and third requests have changed position",
-      requestQueue.getRequestsWithChangedPosition(), contains(fourth, third));
+    assertThat(queue.getRequestsWithChangedPosition(), contains(fourthRequest, thirdRequest));
   }
 
   private Request requestAtPosition(UUID itemId, Integer position) {
