@@ -10,13 +10,13 @@ import static org.hamcrest.collection.IsIterableContainingInOrder.contains;
 
 import java.util.UUID;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.builders.RequestBuilder;
 
-public class RequestQueueTests {
+class RequestQueueTests {
   @Test
-  public void canRemoveOnlyRequestInQueue() {
+  void canRemoveOnlyRequestInQueue() {
     final UUID itemId = UUID.randomUUID();
 
     Request onlyRequest = requestAtPosition(itemId, 1);
@@ -38,7 +38,7 @@ public class RequestQueueTests {
   }
 
   @Test
-  public void canRemoveLastRequestInQueue() {
+  void canRemoveLastRequestInQueue() {
     final UUID itemId = UUID.randomUUID();
 
     Request firstRequest = requestAtPosition(itemId, 1);
@@ -64,7 +64,6 @@ public class RequestQueueTests {
     assertThat("Should contain second request",
       requestQueue.contains(secondRequest), is(true));
 
-
     assertThat("First request should still in correct position",
       firstRequest.getPosition(), is(1));
 
@@ -76,7 +75,7 @@ public class RequestQueueTests {
   }
 
   @Test
-  public void canRemoveFirstRequestInQueue() {
+  void canRemoveFirstRequestInQueue() {
     final UUID itemId = UUID.randomUUID();
 
     Request firstRequest = requestAtPosition(itemId, 1);
@@ -102,7 +101,6 @@ public class RequestQueueTests {
     assertThat("Should contain third request",
       requestQueue.contains(thirdRequest), is(true));
 
-
     assertThat("Second request should have moved up the queue",
       secondRequest.getPosition(), is(1));
 
@@ -114,7 +112,7 @@ public class RequestQueueTests {
   }
 
   @Test
-  public void canRemoveMiddleRequestInQueue() {
+  void canRemoveMiddleRequestInQueue() {
     final UUID itemId = UUID.randomUUID();
 
     Request firstRequest = requestAtPosition(itemId, 1);
