@@ -2,6 +2,7 @@ package org.folio.circulation.domain;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
+import static org.folio.circulation.matchers.requests.RequestQueueMatchers.hasSize;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -25,7 +26,7 @@ class RequestQueueTests {
 
     requestQueue.remove(onlyRequest);
 
-    assertThat("Should have no requests", requestQueue.size(), is(0));
+    assertThat(requestQueue, hasSize(0));
 
     assertThat("Should not contain removed request",
       requestQueue.contains(onlyRequest), is(false));
@@ -50,7 +51,7 @@ class RequestQueueTests {
 
     requestQueue.remove(thirdRequest);
 
-    assertThat("Should have two requests", requestQueue.size(), is(2));
+    assertThat(requestQueue, hasSize(2));
 
     assertThat("Should not contain removed request",
       requestQueue.contains(thirdRequest), is(false));
@@ -87,7 +88,7 @@ class RequestQueueTests {
 
     requestQueue.remove(firstRequest);
 
-    assertThat("Should have two requests", requestQueue.size(), is(2));
+    assertThat("Should have two requests", requestQueue, hasSize(2));
 
     assertThat("Should not contain removed request",
       requestQueue.contains(firstRequest), is(false));
@@ -125,7 +126,7 @@ class RequestQueueTests {
 
     requestQueue.remove(secondRequest);
 
-    assertThat("Should have three requests", requestQueue.size(), is(3));
+    assertThat(requestQueue, hasSize(3));
 
     assertThat("Should not contain removed request",
       requestQueue.contains(secondRequest), is(false));
