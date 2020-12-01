@@ -2,7 +2,9 @@ package org.folio.circulation.domain;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
+import static org.folio.circulation.matchers.requests.RequestQueueMatchers.doesNotInclude;
 import static org.folio.circulation.matchers.requests.RequestQueueMatchers.hasSize;
+import static org.folio.circulation.matchers.requests.RequestQueueMatchers.includes;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -28,8 +30,7 @@ class RequestQueueTests {
 
     assertThat(requestQueue, hasSize(0));
 
-    assertThat("Should not contain removed request",
-      requestQueue.contains(onlyRequest), is(false));
+    assertThat(requestQueue, doesNotInclude(onlyRequest));
 
     assertThat("Removed request should not have a position",
       onlyRequest.getPosition(), is(nullValue()));
@@ -52,18 +53,12 @@ class RequestQueueTests {
     requestQueue.remove(thirdRequest);
 
     assertThat(requestQueue, hasSize(2));
-
-    assertThat("Should not contain removed request",
-      requestQueue.contains(thirdRequest), is(false));
+    assertThat(requestQueue, doesNotInclude(thirdRequest));
+    assertThat(requestQueue, includes(firstRequest));
+    assertThat(requestQueue, includes(secondRequest));
 
     assertThat("Removed request should not have a position",
       thirdRequest.getPosition(), is(nullValue()));
-
-    assertThat("Should contain first request",
-      requestQueue.contains(firstRequest), is(true));
-
-    assertThat("Should contain second request",
-      requestQueue.contains(secondRequest), is(true));
 
     assertThat("First request should still in correct position",
       firstRequest.getPosition(), is(1));
@@ -88,19 +83,13 @@ class RequestQueueTests {
 
     requestQueue.remove(firstRequest);
 
-    assertThat("Should have two requests", requestQueue, hasSize(2));
-
-    assertThat("Should not contain removed request",
-      requestQueue.contains(firstRequest), is(false));
+    assertThat(requestQueue, hasSize(2));
+    assertThat(requestQueue, doesNotInclude(firstRequest));
+    assertThat(requestQueue, includes(secondRequest));
+    assertThat(requestQueue, includes(thirdRequest));
 
     assertThat("Removed request should not have a position",
       firstRequest.getPosition(), is(nullValue()));
-
-    assertThat("Should contain second request",
-      requestQueue.contains(secondRequest), is(true));
-
-    assertThat("Should contain third request",
-      requestQueue.contains(thirdRequest), is(true));
 
     assertThat("Second request should have moved up the queue",
       secondRequest.getPosition(), is(1));
@@ -127,21 +116,13 @@ class RequestQueueTests {
     requestQueue.remove(secondRequest);
 
     assertThat(requestQueue, hasSize(3));
-
-    assertThat("Should not contain removed request",
-      requestQueue.contains(secondRequest), is(false));
+    assertThat(requestQueue, doesNotInclude(secondRequest));
+    assertThat(requestQueue, includes(firstRequest));
+    assertThat(requestQueue, includes(thirdRequest));
+    assertThat(requestQueue, includes(fourthRequest));
 
     assertThat("Removed request should not have a position",
       secondRequest.getPosition(), is(nullValue()));
-
-    assertThat("Should contain first request",
-      requestQueue.contains(firstRequest), is(true));
-
-    assertThat("Should contain third request",
-      requestQueue.contains(thirdRequest), is(true));
-
-    assertThat("Should contain fourth request",
-      requestQueue.contains(fourthRequest), is(true));
 
     assertThat("First request should be at the same position",
       firstRequest.getPosition(), is(1));
