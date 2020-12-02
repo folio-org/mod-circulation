@@ -1,7 +1,7 @@
 package api.loans;
 
-import static api.support.PubsubPublisherTestUtils.assertThatPublishedNoticeLogRecordEventsCountIsEqualTo;
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
+import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.matchers.PatronNoticeMatcher.hasNoticeProperties;
 import static api.support.matchers.ScheduledNoticeMatchers.hasScheduledFeeFineNotice;
 import static java.util.UUID.randomUUID;
@@ -9,9 +9,11 @@ import static org.folio.circulation.domain.notice.NoticeTiming.AFTER;
 import static org.folio.circulation.domain.notice.NoticeTiming.UPON_AT;
 import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.OVERDUE_FINE_RENEWED;
 import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.OVERDUE_FINE_RETURNED;
+import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasSize;
 
 import java.util.Arrays;
@@ -44,6 +46,7 @@ import api.support.builders.FeeFineBuilder;
 import api.support.builders.FeeFineOwnerBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
+import api.support.fakes.FakePubSub;
 import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
@@ -356,8 +359,11 @@ public class FeeFineScheduledNoticesTests extends APITests {
 
   private void assertThatNoticesWereSent(UUID... expectedTemplateIds) {
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
+
     assertThat(sentNotices, hasSize(expectedTemplateIds.length));
-    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())),
+      hasSize(expectedTemplateIds.length));
+
     assertThatPublishedLogRecordEventsAreValid();
 
     Matcher<?> matcher = TemplateContextMatchers.getFeeFineContextMatcher(account, action);
@@ -372,8 +378,8 @@ public class FeeFineScheduledNoticesTests extends APITests {
   }
 
   private void assertThatNoNoticesWereSent() {
-    assertThat(patronNoticesClient.getAll(), hasSize(0));
-    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+    assertThat(patronNoticesClient.getAll(), empty());
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), empty());
   }
 
   private static DateTime rightAfter(DateTime dateTime) {

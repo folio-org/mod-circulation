@@ -352,6 +352,7 @@ public class RequestByInstanceIdResource extends Resource {
             write(requestBody, "requestExpirationDate",
               requestByInstanceIdRequest.getRequestExpirationDate().toString(ISODateTimeFormat.dateTime()));
           }
+          write(requestBody, "patronComments", requestByInstanceIdRequest.getPatronComments());
           requests.add(requestBody);
         }
       }

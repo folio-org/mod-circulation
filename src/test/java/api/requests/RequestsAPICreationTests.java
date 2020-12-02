@@ -1,8 +1,8 @@
 package api.requests;
 
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
-import static api.support.PubsubPublisherTestUtils.assertThatPublishedNoticeLogRecordEventsCountIsEqualTo;
 import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
+import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.fixtures.AutomatedPatronBlocksFixture.MAX_NUMBER_OF_ITEMS_CHARGED_OUT_MESSAGE;
 import static api.support.fixtures.AutomatedPatronBlocksFixture.MAX_OUTSTANDING_FEE_FINE_BALANCE_MESSAGE;
 import static api.support.http.CqlQuery.exactMatch;
@@ -20,13 +20,14 @@ import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.function.Function.identity;
-import static org.awaitility.Awaitility.await;
+import static org.awaitility.Awaitility.waitAtMost;
 import static org.folio.HttpStatus.HTTP_BAD_REQUEST;
 import static org.folio.HttpStatus.HTTP_CREATED;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.domain.ItemStatus.PAGED;
 import static org.folio.circulation.domain.RequestType.RECALL;
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
+import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.hasItems;
@@ -58,8 +59,6 @@ import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.Matcher;
-import org.hamcrest.MatcherAssert;
-import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
@@ -76,6 +75,7 @@ import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.builders.UserBuilder;
 import api.support.builders.UserManualBlockBuilder;
+import api.support.fakes.FakePubSub;
 import api.support.fixtures.CheckInFixture;
 import api.support.fixtures.ItemExamples;
 import api.support.fixtures.ItemsFixture;
@@ -133,7 +133,8 @@ RequestsAPICreationTests extends APITests {
       .withRequestExpiration(LocalDate.of(2017, 7, 30))
       .withHoldShelfExpiration(LocalDate.of(2017, 8, 31))
       .withPickupServicePointId(pickupServicePointId)
-      .withTags(new RequestBuilder.Tags(asList("new", "important"))));
+      .withTags(new RequestBuilder.Tags(asList("new", "important")))
+      .withPatronComments("I need this book"));
 
     JsonObject representation = request.getJson();
 
@@ -147,6 +148,7 @@ RequestsAPICreationTests extends APITests {
     assertThat(representation.getString("holdShelfExpirationDate"), is("2017-08-31"));
     assertThat(representation.getString("status"), is("Open - Not yet filled"));
     assertThat(representation.getString("pickupServicePointId"), is(pickupServicePointId.toString()));
+    assertThat(representation.getString("patronComments"), is("I need this book"));
 
     assertThat("has information taken from item",
       representation.containsKey("item"), is(true));
@@ -1328,19 +1330,19 @@ RequestsAPICreationTests extends APITests {
       .withPickupServicePointId(pickupServicePointId)
       .withTags(new RequestBuilder.Tags(asList("new", "important"))));
 
-    await()
-      .atMost(1, SECONDS)
-      .until(patronNoticesClient::getAll, Matchers.hasSize(1));
-    List<JsonObject> sentNotices = patronNoticesClient.getAll();
+    final var sentNotices = waitAtMost(1, SECONDS)
+      .until(patronNoticesClient::getAll, hasSize(1));
 
     Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
+
     noticeContextMatchers.putAll(TemplateContextMatchers.getUserContextMatchers(requester));
     noticeContextMatchers.putAll(TemplateContextMatchers.getItemContextMatchers(item, true));
     noticeContextMatchers.putAll(TemplateContextMatchers.getRequestContextMatchers(request));
-    MatcherAssert.assertThat(sentNotices,
-      hasItems(
-        hasEmailNoticeProperties(requester.getId(), pageConfirmationTemplateId, noticeContextMatchers)));
-    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+
+    assertThat(sentNotices, hasItems(
+      hasEmailNoticeProperties(requester.getId(), pageConfirmationTemplateId, noticeContextMatchers)));
+
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
     assertThatPublishedLogRecordEventsAreValid();
   }
 
@@ -1395,19 +1397,19 @@ RequestsAPICreationTests extends APITests {
       .withPickupServicePointId(pickupServicePointId)
       .withTags(new RequestBuilder.Tags(asList("new", "important"))));
 
-    await()
-      .atMost(1, SECONDS)
-      .until(patronNoticesClient::getAll, Matchers.hasSize(1));
-    List<JsonObject> sentNotices = patronNoticesClient.getAll();
+    final var sentNotices = waitAtMost(1, SECONDS)
+      .until(patronNoticesClient::getAll, hasSize(1));
 
     Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
+
     noticeContextMatchers.putAll(TemplateContextMatchers.getUserContextMatchers(requester));
     noticeContextMatchers.putAll(TemplateContextMatchers.getItemContextMatchers(item, true));
     noticeContextMatchers.putAll(TemplateContextMatchers.getRequestContextMatchers(request));
-    MatcherAssert.assertThat(sentNotices,
-      hasItems(
-        hasEmailNoticeProperties(requester.getId(), holdConfirmationTemplateId, noticeContextMatchers)));
-    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+
+    assertThat(sentNotices, hasItems(
+      hasEmailNoticeProperties(requester.getId(), holdConfirmationTemplateId, noticeContextMatchers)));
+
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
     assertThatPublishedLogRecordEventsAreValid();
   }
 
@@ -1482,10 +1484,8 @@ RequestsAPICreationTests extends APITests {
       .withTags(new RequestBuilder.Tags(asList("new", "important"))));
     IndividualResource loanAfterRecall = loansClient.get(loan.getId());
 
-    await()
-      .atMost(1, SECONDS)
-      .until(patronNoticesClient::getAll, Matchers.hasSize(2));
-    List<JsonObject> sentNotices = patronNoticesClient.getAll();
+    final var sentNotices = waitAtMost(1, SECONDS)
+      .until(patronNoticesClient::getAll, hasSize(2));
 
     Map<String, Matcher<String>> recallConfirmationContextMatchers = new HashMap<>();
     recallConfirmationContextMatchers.putAll(TemplateContextMatchers.getUserContextMatchers(requester));
@@ -1496,13 +1496,14 @@ RequestsAPICreationTests extends APITests {
     recallNotificationContextMatchers.putAll(TemplateContextMatchers.getUserContextMatchers(loanOwner));
     recallNotificationContextMatchers.putAll(TemplateContextMatchers.getItemContextMatchers(item, false));
     recallNotificationContextMatchers.putAll(TemplateContextMatchers.getLoanContextMatchers(loanAfterRecall));
-    MatcherAssert.assertThat(sentNotices,
-      hasItems(
-        hasEmailNoticeProperties(requester.getId(), recallConfirmationTemplateId,
-          recallConfirmationContextMatchers),
-        hasEmailNoticeProperties(loanOwner.getId(), recallToLoaneeTemplateId,
-          recallNotificationContextMatchers)));
-    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+
+    assertThat(sentNotices, hasItems(
+      hasEmailNoticeProperties(requester.getId(), recallConfirmationTemplateId,
+        recallConfirmationContextMatchers),
+      hasEmailNoticeProperties(loanOwner.getId(), recallToLoaneeTemplateId,
+        recallNotificationContextMatchers)));
+
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(2));
     assertThatPublishedLogRecordEventsAreValid();
   }
 
@@ -1559,11 +1560,10 @@ RequestsAPICreationTests extends APITests {
       .withTags(new RequestBuilder.Tags(asList("new", "important"))));
 
     // Recall notice to loan owner should be sent when due date hasn't been changed
-    await()
-      .pollDelay(1, SECONDS)
+    waitAtMost(1, SECONDS)
       .until(patronNoticesClient::getAll, hasSize(1));
 
-    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
     assertThatPublishedLogRecordEventsAreValid();
   }
 
@@ -1859,11 +1859,10 @@ RequestsAPICreationTests extends APITests {
         RECALL.getValue()));
 
     // Recall notice to loan owner should be sent twice without changing due date
-    await()
-      .pollDelay(1, SECONDS)
+    waitAtMost(1, SECONDS)
       .until(patronNoticesClient::getAll, hasSize(2));
 
-    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(2));
     assertThatPublishedLogRecordEventsAreValid();
   }
 

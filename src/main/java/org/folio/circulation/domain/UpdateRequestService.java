@@ -1,8 +1,10 @@
 package org.folio.circulation.domain;
 
 import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_UPDATED;
+import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.results.Result.succeeded;
 
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.validation.ClosedRequestValidator;
@@ -37,6 +39,7 @@ public class UpdateRequestService {
     Request updated = requestAndRelatedRecords.getRequest();
 
     return requestRepository.getById(updated.getId())
+      .thenApply(originalRequest -> refuseWhenPatronCommentChanged(updated, originalRequest))
       .thenCompose(original -> original.after(o -> closedRequestValidator.refuseWhenAlreadyClosed(requestAndRelatedRecords)
         .thenApply(r -> r.next(this::removeRequestQueuePositionWhenCancelled))
         .thenComposeAsync(r -> r.after(requestRepository::update))
@@ -44,6 +47,16 @@ public class UpdateRequestService {
         .thenComposeAsync(r -> r.after(updateItem::onRequestCreateOrUpdate))
         .thenApplyAsync(r -> r.map(p -> eventPublisher.publishLogRecordAsync(p, o, REQUEST_UPDATED)))
         .thenApply(r -> r.next(requestNoticeSender::sendNoticeOnRequestUpdated))));
+  }
+
+  private Result<Request> refuseWhenPatronCommentChanged(
+    Request updated, Result<Request> originalRequestResult) {
+
+    return originalRequestResult.failWhen(
+      original -> succeeded(!Objects.equals(updated.getPatronComments(), original.getPatronComments())),
+      original -> singleValidationError("Patron comments are not allowed to change",
+        "existingPatronComments", original.getPatronComments())
+    );
   }
 
   private Result<RequestAndRelatedRecords> removeRequestQueuePositionWhenCancelled(

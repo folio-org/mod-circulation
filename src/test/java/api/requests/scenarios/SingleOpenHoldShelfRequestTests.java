@@ -5,15 +5,23 @@ import static api.support.builders.ItemBuilder.AWAITING_PICKUP;
 import static api.support.builders.ItemBuilder.CHECKED_OUT;
 import static api.support.builders.RequestBuilder.CLOSED_FILLED;
 import static api.support.builders.RequestBuilder.OPEN_AWAITING_PICKUP;
+import static api.support.fakes.FakePubSub.clearPublishedEvents;
+import static api.support.fakes.FakePubSub.findFirstLogEvent;
 import static api.support.http.ResourceClient.forRequestsStorage;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
+import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.awaitility.Awaitility.waitAtMost;
 import static org.folio.HttpStatus.HTTP_OK;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.hamcrest.CoreMatchers.allOf;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 
 import java.util.UUID;
@@ -26,6 +34,10 @@ import org.junit.Test;
 import api.support.APITests;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.RequestBuilder;
+import api.support.data.events.log.CheckInLogEvent;
+import api.support.data.events.log.CheckOutLogEvent;
+import api.support.data.events.log.JsonToCheckInLogEventMapper;
+import api.support.data.events.log.JsonToCheckOutLogEventMapper;
 import api.support.http.IndividualResource;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
@@ -38,10 +50,14 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
     val james = usersFixture.james();
     val jessica = usersFixture.jessica();
 
-    checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
+    final var checkOutResource = checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
+
+    final var loan = checkOutResource.getJson();
 
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
+
+    clearPublishedEvents();
 
     checkInFixture.checkInByBarcode(smallAngryPlanet);
 
@@ -55,6 +71,19 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
     assertThat(smallAngryPlanet, hasItemStatus(AWAITING_PICKUP));
+
+    final var checkInLogEvent = waitAtMost(1, SECONDS)
+      .until(this::findFirstCheckInLogEvent, is(notNullValue()));
+
+    assertThat(checkInLogEvent.loanId, is(getProperty(loan, "id")));
+    assertThat(checkInLogEvent.changedRequests, hasSize(1));
+
+    final var onlyChangedRequest = checkInLogEvent.firstChangedRequest();
+
+    assertThat(onlyChangedRequest.id, is(requestByJessica.getId()));
+    assertThat(onlyChangedRequest.requestType, is("Hold"));
+    assertThat(onlyChangedRequest.oldRequestStatus, is("Open - Not yet filled"));
+    assertThat(onlyChangedRequest.newRequestStatus, is("Open - Awaiting pickup"));
   }
 
   @Test
@@ -70,7 +99,11 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
 
     checkInFixture.checkInByBarcode(smallAngryPlanet);
 
-    checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica);
+    clearPublishedEvents();
+
+    final var checkOutResource = checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica);
+
+    final var loan = checkOutResource.getJson();
 
     Response request = requestsClient.getById(requestByJessica.getId());
 
@@ -81,6 +114,19 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
     assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
+
+    final var checkOutLogEvent = waitAtMost(1, SECONDS)
+      .until(this::findFirstCheckOutLogEvent, is(notNullValue()));
+
+    assertThat(checkOutLogEvent.loanId, is(getProperty(loan, "id")));
+    assertThat(checkOutLogEvent.changedRequests, hasSize(1));
+
+    final var onlyChangedRequest = checkOutLogEvent.firstChangedRequest();
+
+    assertThat(onlyChangedRequest.id, is(requestByJessica.getId()));
+    assertThat(onlyChangedRequest.requestType, is("Hold"));
+    assertThat(onlyChangedRequest.oldRequestStatus, is("Open - Awaiting pickup"));
+    assertThat(onlyChangedRequest.newRequestStatus, is("Closed - Filled"));
   }
 
   @Test
@@ -205,5 +251,13 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
     holdRequestWithoutPickupServicePoint.remove("pickupServicePointId");
 
     requestsStorage.replace(requestId, holdRequestWithoutPickupServicePoint);
+  }
+
+  private CheckOutLogEvent findFirstCheckOutLogEvent() {
+    return findFirstLogEvent("CHECK_OUT_EVENT", new JsonToCheckOutLogEventMapper()::fromJson);
+  }
+
+  private CheckInLogEvent findFirstCheckInLogEvent() {
+    return findFirstLogEvent("CHECK_IN_EVENT", new JsonToCheckInLogEventMapper()::fromJson);
   }
 }

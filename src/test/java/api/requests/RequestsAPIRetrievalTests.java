@@ -7,6 +7,8 @@ import static api.support.http.Limit.limit;
 import static api.support.http.Limit.noLimit;
 import static api.support.http.Offset.noOffset;
 import static api.support.http.Offset.offset;
+import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
+import static api.support.matchers.JsonObjectMatcher.hasNoJsonPath;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.UUIDMatcher.is;
 import static java.lang.String.format;
@@ -15,6 +17,7 @@ import static java.util.function.Function.identity;
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.emptyString;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
@@ -91,7 +94,8 @@ public class RequestsAPIRetrievalTests extends APITests {
         .withRequestExpiration(LocalDate.of(2017, 7, 30))
         .withHoldShelfExpiration(LocalDate.of(2017, 8, 31))
         .withPickupServicePointId(pickupServicePointId)
-        .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG))));
+        .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG)))
+        .withPatronComments("I need the book"));
 
     Response getResponse = requestsFixture.getById(createdRequest.getId());
 
@@ -108,6 +112,7 @@ public class RequestsAPIRetrievalTests extends APITests {
     assertThat(representation.getString("fulfilmentPreference"), is("Hold Shelf"));
     assertThat(representation.getString("requestExpirationDate"), is("2017-07-30"));
     assertThat(representation.getString("holdShelfExpirationDate"), is("2017-08-31"));
+    assertThat(representation.getString("patronComments"), is("I need the book"));
     assertThat(representation.getString("pickupServicePointId"),
       is(pickupServicePointId));
 
@@ -321,6 +326,7 @@ public class RequestsAPIRetrievalTests extends APITests {
         .withRequesterId(requesterId)
         .withUserProxyId(proxyId)
         .withPickupServicePointId(pickupServicePointId2)
+        .withPatronComments("Comment 2")
         .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG))));
 
     requestsFixture.place(new RequestBuilder()
@@ -329,6 +335,7 @@ public class RequestsAPIRetrievalTests extends APITests {
       .withRequesterId(requesterId)
       .withUserProxyId(proxyId)
       .withPickupServicePointId(pickupServicePointId)
+      .withPatronComments("Comment 3")
       .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG))));
 
     final IndividualResource requestForTemeraire = requestsFixture.place(
@@ -338,6 +345,7 @@ public class RequestsAPIRetrievalTests extends APITests {
         .withRequesterId(requesterId)
         .withUserProxyId(proxyId)
         .withPickupServicePointId(pickupServicePointId2)
+        .withPatronComments("Comment 4")
         .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG))));
 
     requestsFixture.place(new RequestBuilder()
@@ -346,6 +354,7 @@ public class RequestsAPIRetrievalTests extends APITests {
       .withRequesterId(requesterId)
       .withUserProxyId(proxyId)
       .withPickupServicePointId(pickupServicePointId)
+      .withPatronComments("Comment 5")
       .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG))));
 
     MultipleJsonRecords requests = requestsFixture.getAllRequests();
@@ -361,6 +370,8 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     requestHasCallNumberStringProperties(requests.getById(
       requestForTemeraire.getId()), "tem");
+
+    assertThatRequestsHavePatronComments(requests);
   }
 
   @Test
@@ -721,5 +732,16 @@ public class RequestsAPIRetrievalTests extends APITests {
     assertThat(item.getString("enumeration"), is(prefix + "enumeration1"));
     assertThat(item.getString("chronology"), is(prefix + "chronology"));
     assertThat(item.getString("volume"), is(prefix + "vol.1"));
+  }
+
+  @SuppressWarnings("unchecked")
+  private void assertThatRequestsHavePatronComments(MultipleJsonRecords requests) {
+    assertThat(requests, containsInAnyOrder(
+      hasNoJsonPath("patronComments"),
+      hasJsonPath("patronComments", "Comment 2"),
+      hasJsonPath("patronComments", "Comment 3"),
+      hasJsonPath("patronComments", "Comment 4"),
+      hasJsonPath("patronComments", "Comment 5")
+    ));
   }
 }
