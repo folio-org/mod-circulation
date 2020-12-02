@@ -15,6 +15,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -85,7 +86,7 @@ public class FeeFineFacadeTest {
     when(accountClient.post(any()))
       .thenAnswer(postRespondWithRequestAndFail(expectedError));
 
-    final Result<Void> result = feeFineFacade.createAccounts(Arrays.asList(
+    final Result<List<FeeFineAction>> result = feeFineFacade.createAccounts(Arrays.asList(
       createCommandBuilder().build(),
       createCommandBuilder().build()))
       .getNow(null);
