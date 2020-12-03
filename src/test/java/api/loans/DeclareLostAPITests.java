@@ -459,7 +459,7 @@ public class DeclareLostAPITests extends APITests {
   }
 
   @Test
-  public void shouldNotChargeOverdueOnCheckinWhenItemLostandBilledAndRefundFeePeriodPassed() {
+  public void shouldNotChargeOverdueOnCheckinWhenItemLostAndRefundFeePeriodPassed() {
     ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
 
     IndividualResource overduePolicy = overdueFinePoliciesFixture.facultyStandard();

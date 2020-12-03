@@ -301,8 +301,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     // 1. the item charges overdue fees on checkin
     // 2. A refund expiration date is set
     // 3. The item is aged to lost
-    // 4. the item has been charged some form of lost item fee
-    // 5.  the item is checked in after the item has been charged lost fees and after the refund expiration date has passed
+    // 4.  the item is checked in after the refund expiration date has passed
     // THEN the loan SHOULD NOT have overdue charges
     IndividualResource overDueFinePolicy = overdueFinePoliciesFixture.facultyStandard();
 
