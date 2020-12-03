@@ -7,10 +7,12 @@ import static org.folio.circulation.domain.notice.TemplateContextUtil.createLoan
 import static org.folio.circulation.domain.notice.TemplateContextUtil.createUserContext;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.results.Result.of;
+import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 import static org.folio.circulation.support.http.client.PageLimit.limit;
 
+import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -37,8 +39,11 @@ import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.client.PageLimit;
 
 import io.vertx.core.json.JsonObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PatronActionSessionService {
+  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
   private static final PageLimit DEFAULT_SESSION_SIZE_PAGE_LIMIT = limit(200);
 
   private static EnumMap<PatronActionType, NoticeEventType> actionToEventMap;
@@ -77,11 +82,10 @@ public class PatronActionSessionService {
       .thenApply(mapResult(v -> records));
   }
 
-  public CompletableFuture<Result<Void>> endSession(String patronId,
-    PatronActionType actionType) {
+  public CompletableFuture<Result<Void>> endSession(String patronId, PatronActionType actionType) {
 
     return patronActionSessionRepository.findPatronActionSessions(patronId,
-        actionType, DEFAULT_SESSION_SIZE_PAGE_LIMIT)
+      actionType, DEFAULT_SESSION_SIZE_PAGE_LIMIT)
       .thenCompose(r -> r.after(this::sendNotices))
       .thenCompose(r -> r.after(records ->
         allOf(Objects.isNull(records)
@@ -91,6 +95,8 @@ public class PatronActionSessionService {
   }
 
   public CompletableFuture<Result<Void>> endSession(List<ExpiredSession> expiredSessions) {
+
+    log.info("Attempting to delete expired sessions by timeout.");
 
     return patronActionSessionRepository.findPatronActionSessions(expiredSessions)
       .thenCompose(r -> r.after(this::endSessionsForRecords));
@@ -107,8 +113,11 @@ public class PatronActionSessionService {
     MultipleRecords<PatronSessionRecord> records) {
 
     if (records == null) {
+      log.info("PatronSessionRecords are empty, nothing to delete.");
       return completedFuture(succeeded(null));
     }
+
+    log.info("{} session records will be deleted.", records.size());
 
     return allOf(records.getRecords(), patronActionSessionRepository::delete)
       .thenApply(mapResult(v -> null));
@@ -118,11 +127,27 @@ public class PatronActionSessionService {
     MultipleRecords<PatronSessionRecord> records) {
 
     if (records.isEmpty()) {
+      log.info("PatronSessionRecords are empty, notices will not be sent.");
       return completedFuture(succeeded(null));
     }
     List<PatronSessionRecord> sessionRecords = new ArrayList<>(records.getRecords());
 
     PatronSessionRecord recordSample = sessionRecords.get(0);
+
+    if (recordSample.getLoan() == null) {
+      log.info("Notice was not sent. Session: {} doesn't have a valid loan.", recordSample.getId());
+      return completedFuture(succeeded(records));
+    }
+
+    if (recordSample.getLoan().getItem() == null || recordSample.getLoan().getItem().getItem() == null) {
+      log.info("Notice was not sent. Session: {} doesn't have a valid item.", recordSample.getId());
+      return completedFuture(succeeded(records));
+    }
+
+    if (recordSample.getLoan().getUser() == null) {
+      log.info("Notice was not sent. Session: {} doesn't have a valid user.", recordSample.getId());
+      return completedFuture(succeeded(records));
+    }
 
     //The user is the same for all records
     User user = recordSample.getLoan().getUser();
@@ -160,6 +185,8 @@ public class PatronActionSessionService {
       .map(recordsList -> new MultipleRecords<>(recordsList, recordsList.size()))
       .collect(Collectors.toList());
 
+    log.info("Attempting to send {} notices for expired sessions before they will be deleted by timeout.", recordsGroupedByUser.size());
+
     return allOf(recordsGroupedByUser, this::sendNotices)
       .thenApply(mapResult(v -> records));
   }
@@ -167,6 +194,7 @@ public class PatronActionSessionService {
   public CompletableFuture<Result<CheckInContext>> saveCheckInSessionRecord(CheckInContext context) {
     Loan loan = context.getLoan();
     if (loan == null) {
+      log.info("CheckInSessionRecord is not saved, context doesn't have a valid loan.");
       return completedFuture(of(() -> context));
     }
     UUID patronId = UUID.fromString(loan.getUserId());
