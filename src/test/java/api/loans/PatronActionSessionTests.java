@@ -29,6 +29,7 @@ import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import api.support.http.UserResource;
 import org.apache.commons.lang3.tuple.Pair;
 import org.folio.circulation.support.http.client.Response;
 import org.junit.Before;
@@ -236,6 +237,126 @@ public class PatronActionSessionTests extends APITests {
     assertThat(patronNoticesClient.getAll(), hasSize(1));
     assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
     assertThatPublishedLogRecordEventsAreValid();
+  }
+
+  @Test
+  public void checkOutSessionWithNonExistentLoanShouldBeEnded() {
+    IndividualResource james = usersFixture.james();
+    ItemResource nod = itemsFixture.basedUponNod();
+
+    checkOutFixture.checkOutByBarcode(nod, james);
+    List<JsonObject> sessions = patronSessionRecordsClient.getAll();
+    assertThat(sessions, hasSize(1));
+    String loanId = sessions.get(0).getString(LOAN_ID);
+    loansFixture.deleteLoan(UUID.fromString(loanId));
+    endPatronSessionClient.endCheckOutSession(james.getId());
+
+    waitAtMost(1, SECONDS)
+      .until(patronSessionRecordsClient::getAll, empty());
+    assertThat(patronNoticesClient.getAll(), hasSize(0));
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(patronNoticesClient.getAll().size()));
+  }
+
+  @Test
+  public void checkOutSessionWithNonExistentItemShouldBeEnded() {
+    IndividualResource james = usersFixture.james();
+    ItemResource nod = itemsFixture.basedUponNod();
+
+    checkOutFixture.checkOutByBarcode(nod, james);
+    List<JsonObject> sessions = patronSessionRecordsClient.getAll();
+    assertThat(sessions, hasSize(1));
+    UUID loanId = UUID.fromString(sessions.get(0).getString(LOAN_ID));
+    IndividualResource loan = loansFixture.getLoanById(loanId);
+    itemsClient.delete(UUID.fromString(loan.getJson().getString("itemId")));
+    endPatronSessionClient.endCheckOutSession(james.getId());
+
+    waitAtMost(1, SECONDS)
+      .until(patronSessionRecordsClient::getAll, empty());
+    assertThat(patronNoticesClient.getAll(), hasSize(0));
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(patronNoticesClient.getAll().size()));
+  }
+
+  @Test
+  public void checkOutSessionWithNonExistentUserShouldBeEnded() {
+    UserResource steve = usersFixture.steve();
+    ItemResource nod = itemsFixture.basedUponNod();
+
+    checkOutFixture.checkOutByBarcode(nod, steve);
+    List<JsonObject> sessions = patronSessionRecordsClient.getAll();
+    assertThat(sessions, hasSize(1));
+    usersFixture.remove(steve);
+    endPatronSessionClient.endCheckOutSession(steve.getId());
+
+    waitAtMost(1, SECONDS)
+      .until(patronSessionRecordsClient::getAll, empty());
+    assertThat(patronNoticesClient.getAll(), hasSize(0));
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(patronNoticesClient.getAll().size()));
+  }
+
+  @Test
+  public void checkInSessionWithNonExistentLoanShouldBeEnded() {
+    IndividualResource james = usersFixture.james();
+    ItemResource nod = itemsFixture.basedUponNod();
+    UUID checkInServicePointId = servicePointsFixture.cd1().getId();
+
+    checkOutFixture.checkOutByBarcode(nod, james);
+    checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+      .forItem(nod)
+      .at(checkInServicePointId));
+    List<JsonObject> sessions = getCheckInSessions();
+    assertThat(sessions, hasSize(1));
+    String loanId = sessions.get(0).getString(LOAN_ID);
+    loansFixture.deleteLoan(UUID.fromString(loanId));
+    endPatronSessionClient.endCheckInSession(james.getId());
+
+    waitAtMost(1, SECONDS)
+      .until(this::getCheckInSessions, empty());
+    assertThat(patronNoticesClient.getAll(), hasSize(0));
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(patronNoticesClient.getAll().size()));
+  }
+
+  @Test
+  public void checkInSessionWithNonExistentItemShouldBeEnded() {
+    IndividualResource james = usersFixture.james();
+    ItemResource nod = itemsFixture.basedUponNod();
+    UUID checkInServicePointId = servicePointsFixture.cd1().getId();
+
+    checkOutFixture.checkOutByBarcode(nod, james);
+    checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+      .forItem(nod)
+      .at(checkInServicePointId));
+    List<JsonObject> sessions = getCheckInSessions();
+    assertThat(sessions, hasSize(1));
+    UUID loanId = UUID.fromString(sessions.get(0).getString(LOAN_ID));
+    IndividualResource loan = loansFixture.getLoanById(loanId);
+    itemsClient.delete(UUID.fromString(loan.getJson().getString("itemId")));
+    endPatronSessionClient.endCheckInSession(james.getId());
+
+    waitAtMost(1, SECONDS)
+      .until(this::getCheckInSessions, empty());
+    assertThat(patronNoticesClient.getAll(), hasSize(0));
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(patronNoticesClient.getAll().size()));
+  }
+
+  @Test
+  public void checkInSessionWithNonExistentUserShouldBeEnded() {
+    UserResource steve = usersFixture.steve();
+    ItemResource nod = itemsFixture.basedUponNod();
+    UUID checkInServicePointId = servicePointsFixture.cd1().getId();
+
+    checkOutFixture.checkOutByBarcode(nod, steve);
+    checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+      .forItem(nod)
+      .at(checkInServicePointId));
+    List<JsonObject> sessions = getCheckInSessions();
+    assertThat(sessions, hasSize(1));
+    usersFixture.remove(steve);
+    endPatronSessionClient.endCheckInSession(steve.getId());
+
+    waitAtMost(1, SECONDS)
+      .until(this::getCheckInSessions, empty());
+    assertThat(patronNoticesClient.getAll(), hasSize(0));
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(patronNoticesClient.getAll().size()));
   }
 
   private List<JsonObject> getCheckInSessions() {

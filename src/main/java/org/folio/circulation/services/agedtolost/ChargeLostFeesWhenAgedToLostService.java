@@ -35,6 +35,7 @@ import org.folio.circulation.domain.FeeFine;
 import org.folio.circulation.domain.FeeFineOwner;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.domain.notice.schedule.FeeFineScheduledNoticeService;
 import org.folio.circulation.domain.policy.lostitem.LostItemPolicy;
 import org.folio.circulation.domain.policy.lostitem.itemfee.AutomaticallyChargeableFee;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineOwnerRepository;
@@ -42,6 +43,7 @@ import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineReposito
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.loans.LostItemPolicyRepository;
+import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.services.FeeFineFacade;
 import org.folio.circulation.services.support.CreateAccountCommand;
@@ -64,9 +66,11 @@ public class ChargeLostFeesWhenAgedToLostService {
   private final FeeFineFacade feeFineFacade;
   private final LoanRepository loanRepository;
   private final ItemRepository itemRepository;
+  private final UserRepository userRepository;
   private final StoreLoanAndItem storeLoanAndItem;
   private final EventPublisher eventPublisher;
   private final PageableFetcher<Loan> loanPageableFetcher;
+  private final FeeFineScheduledNoticeService feeFineScheduledNoticeService;
 
   public ChargeLostFeesWhenAgedToLostService(Clients clients) {
     this.lostItemPolicyRepository = new LostItemPolicyRepository(clients);
@@ -75,9 +79,11 @@ public class ChargeLostFeesWhenAgedToLostService {
     this.feeFineFacade = new FeeFineFacade(clients);
     this.loanRepository = new LoanRepository(clients);
     this.itemRepository = new ItemRepository(clients, true, false, false);
+    this.userRepository = new UserRepository(clients);
     this.storeLoanAndItem = new StoreLoanAndItem(loanRepository, itemRepository);
     this.eventPublisher = new EventPublisher(clients.pubSubPublishingService());
     this.loanPageableFetcher = new PageableFetcher<>(loanRepository);
+    this.feeFineScheduledNoticeService = FeeFineScheduledNoticeService.using(clients);
   }
 
   public CompletableFuture<Result<Void>> chargeFees() {
@@ -122,8 +128,11 @@ public class ChargeLostFeesWhenAgedToLostService {
       return closeLoanAsLostAndPaid(loanToChargeFees);
     }
 
+    Loan loan = loanToChargeFees.getLoan();
     return createAccountsForLoan(loanToChargeFees)
       .after(feeFineFacade::createAccounts)
+      .thenCompose(r -> r.after(actions ->
+        feeFineScheduledNoticeService.scheduleNoticesForAgedLostFeeFineCharged(loan, actions)))
       .thenCompose(r -> r.after(notUsed -> updateLoanBillingInfo(loanToChargeFees)));
   }
 
@@ -213,6 +222,7 @@ public class ChargeLostFeesWhenAgedToLostService {
     MultipleRecords<Loan> loans) {
 
     return itemRepository.fetchItemsFor(succeeded(loans), Loan::withItem)
+      .thenCompose(r -> r.after(multipleLoans -> userRepository.findUsersForLoans(multipleLoans)))
       .thenComposeAsync(r -> r.after(lostItemPolicyRepository::findLostItemPoliciesForLoans));
   }
 

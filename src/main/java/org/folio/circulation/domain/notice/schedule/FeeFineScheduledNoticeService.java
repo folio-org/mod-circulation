@@ -1,5 +1,6 @@
 package org.folio.circulation.domain.notice.schedule;
 
+import static org.folio.circulation.domain.notice.NoticeEventType.AGED_TO_LOST_FINE_CHARGED;
 import static org.folio.circulation.domain.notice.NoticeEventType.OVERDUE_FINE_RENEWED;
 import static org.folio.circulation.domain.notice.NoticeEventType.OVERDUE_FINE_RETURNED;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
@@ -66,6 +67,15 @@ public class FeeFineScheduledNoticeService {
     return noticePolicyRepository.lookupPolicy(loan)
       .thenCompose(r -> r.after(policy ->
         scheduleNoticeBasedOnPolicy(loan, policy, action, eventType)));
+  }
+
+  public CompletableFuture<Result<Void>> scheduleNoticesForAgedLostFeeFineCharged(
+    Loan loan, List<FeeFineAction> actions) {
+
+    actions.forEach(feeFineAction -> scheduleNotices(loan, feeFineAction,
+      AGED_TO_LOST_FINE_CHARGED));
+
+    return ofAsync(() -> null);
   }
 
   private CompletableFuture<Result<List<ScheduledNotice>>> scheduleNoticeBasedOnPolicy(
