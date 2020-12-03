@@ -22,6 +22,7 @@ public enum NoticeEventType {
 
   OVERDUE_FINE_RETURNED("Overdue fine returned"),
   OVERDUE_FINE_RENEWED("Overdue fine renewed"),
+  AGED_TO_LOST_FINE_CHARGED("Aged to lost - fine charged"),
 
   UNKNOWN("Unknown");
 

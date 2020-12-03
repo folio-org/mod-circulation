@@ -21,9 +21,11 @@ import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static java.lang.Boolean.TRUE;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.iterableWithSize;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -36,6 +38,8 @@ import org.junit.Test;
 import api.support.builders.FeeFineOwnerBuilder;
 import api.support.builders.ItemBuilder;
 import api.support.builders.LostItemFeePolicyBuilder;
+import api.support.builders.NoticeConfigurationBuilder;
+import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.ServicePointBuilder;
 import api.support.http.CheckOutResource;
 import api.support.http.IndividualResource;
@@ -66,13 +70,14 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     final String expectedOwnerId = feeFineOwnerFixture.ownerForServicePoint(ownerServicePoint)
     .getId().toString();
 
-    val policy = lostItemFeePoliciesFixture
+    val lostItemFeePolicy = lostItemFeePoliciesFixture
       .ageToLostAfterOneMinutePolicy()
       .withSetCost(expectedSetCost)
       .doNotChargeProcessingFeeWhenAgedToLost();
-
-    val result = ageToLostFixture.createLoanAgeToLostAndChargeFees(
-      builder -> builder.withPermanentLocation(permanentLocation), policy);
+    val noticePolicy = createNoticePolicyWithAgedToLostChargedNotice();
+    val result = ageToLostFixture.createLoanAgeToLostAndChargeFeesWithNotice(
+        builder -> builder.withPermanentLocation(permanentLocation), lostItemFeePolicy,
+        noticePolicy);
 
     assertThat(result.getLoan().getJson(), isLostItemHasBeenBilled());
     assertThat(result.getLoan(), hasLostItemFee(allOf(isOpen(expectedSetCost),
@@ -84,6 +89,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
       hasJsonPath("loan.action", "itemAgedToLost"),
       hasJsonPath("loan.action", "checkedout")
     ));
+    assertThat(scheduledNoticesClient.getAll(), hasSize(1));
     assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
@@ -91,19 +97,21 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
   public void shouldChargeItemProcessingFee() {
     final double expectedProcessingFee = 99.54;
 
-    val policy = new LostItemFeePolicyBuilder()
+    val lostItemFeePolicy = new LostItemFeePolicyBuilder()
       .withName("shouldChargeItemProcessingFee")
       .withItemAgedToLostAfterOverdue(Period.weeks(1))
       .withPatronBilledAfterAgedLost(Period.weeks(2))
       .withNoChargeAmountItem()
       .doNotChargeProcessingFeeWhenDeclaredLost()
       .chargeProcessingFeeWhenAgedToLost(expectedProcessingFee);
-
-    val result = ageToLostFixture.createLoanAgeToLostAndChargeFees(policy);
+    val noticePolicy = createNoticePolicyWithAgedToLostChargedNotice();
+    val result = ageToLostFixture.createLoanAgeToLostAndChargeFeesWithNotice(
+      lostItemFeePolicy, noticePolicy);
 
     assertThat(result.getLoan().getJson(), isLostItemHasBeenBilled());
     assertThat(result.getLoan(), hasLostItemProcessingFee(isOpen(expectedProcessingFee)));
     assertThat(result.getLoan(), hasLostItemProcessingFeeCreatedBySystemAction());
+    assertThat(scheduledNoticesClient.getAll(), hasSize(1));
     assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
@@ -112,12 +120,14 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     final double expectedItemFee = 99.54;
     final double expectedProcessingFee = 99.54;
 
-    val policy = lostItemFeePoliciesFixture
+    val lostItemFeePolicy = lostItemFeePoliciesFixture
       .ageToLostAfterOneMinutePolicy()
       .withSetCost(expectedItemFee)
       .chargeProcessingFeeWhenAgedToLost(expectedProcessingFee);
 
-    val result = ageToLostFixture.createLoanAgeToLostAndChargeFees(policy);
+    val noticePolicy = createNoticePolicyWithAgedToLostChargedNotice();
+    val result = ageToLostFixture.createLoanAgeToLostAndChargeFeesWithNotice(
+      lostItemFeePolicy, noticePolicy);
 
     assertThat(result.getLoan().getJson(), isLostItemHasBeenBilled());
 
@@ -126,35 +136,41 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
 
     assertThat(result.getLoan(), hasLostItemProcessingFee(isOpen(expectedProcessingFee)));
     assertThat(result.getLoan(), hasLostItemProcessingFeeCreatedBySystemAction());
+    assertThat(scheduledNoticesClient.getAll(), hasSize(2));
     assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
   @Test
   public void shouldNotChargeFeesIfStatedByPolicy() {
-    val policy = lostItemFeePoliciesFixture
+    val lostItemFeePolicy = lostItemFeePoliciesFixture
       .ageToLostAfterOneMinutePolicy()
       .withNoChargeAmountItem()
       .doNotChargeProcessingFeeWhenAgedToLost();
 
-    val result = ageToLostFixture.createLoanAgeToLostAndChargeFees(policy);
+    val noticePolicy = createNoticePolicyWithAgedToLostChargedNotice();
+    val result = ageToLostFixture.createLoanAgeToLostAndChargeFeesWithNotice(
+      lostItemFeePolicy, noticePolicy);
 
     assertThat(result.getLoan().getJson(), isLostItemHasBeenBilled());
 
     assertThat(result.getLoan(), hasNoLostItemFee());
     assertThat(result.getLoan(), hasNoLostItemProcessingFee());
+    assertThat(scheduledNoticesClient.getAll(), hasSize(0));
     assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
   @Test
   public void shouldSkipChargingFeesWhenActualCostFeeShouldBeIssued() {
-    val policy = lostItemFeePoliciesFixture
+    val lostItemFeePolicy = lostItemFeePoliciesFixture
       .ageToLostAfterOneMinutePolicy()
       .withSetCost(10.00)
       .doNotChargeProcessingFeeWhenAgedToLost();
-
-    val result = ageToLostFixture.createLoanAgeToLostAndChargeFees(policy);
+    val noticePolicy = createNoticePolicyWithAgedToLostChargedNotice();
+    val result = ageToLostFixture.createLoanAgeToLostAndChargeFeesWithNotice(
+      lostItemFeePolicy, noticePolicy);
 
     assertThat(result.getLoan().getJson(), isLostItemHasBeenBilled());
+    assertThat(scheduledNoticesClient.getAll(), hasSize(1));
     assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
@@ -250,25 +266,28 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
 
   @Test
   public void shouldNotChargeFeesWhenDelayedBillingPeriodHasNotPassed() {
-    val policy = lostItemFeePoliciesFixture
+    val lostItemFeePolicy = lostItemFeePoliciesFixture
       .ageToLostAfterOneMinutePolicy()
       .withSetCost(11.00)
       .withPatronBilledAfterAgedLost(Period.months(7));
-
-    val result = ageToLostFixture.createLoanAgeToLostAndChargeFees(policy);
+    val noticePolicy = createNoticePolicyWithAgedToLostChargedNotice();
+    val result = ageToLostFixture.createLoanAgeToLostAndChargeFeesWithNotice(
+      lostItemFeePolicy, noticePolicy);
 
     assertThat(result.getLoan().getJson(), isLostItemHasNotBeenBilled());
     assertThat(result.getLoan(), hasNoLostItemFee());
+    assertThat(scheduledNoticesClient.getAll(), hasSize(0));
     assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
   @Test
   public void shouldNotChargeFeesMoreThanOnce() {
-    val policy = lostItemFeePoliciesFixture
+    val lostItemFeePolicy = lostItemFeePoliciesFixture
       .ageToLostAfterOneMinutePolicy()
       .withSetCost(11.00);
-
-    val result = ageToLostFixture.createLoanAgeToLostAndChargeFees(policy);
+    val noticePolicy = createNoticePolicyWithAgedToLostChargedNotice();
+    val result = ageToLostFixture.createLoanAgeToLostAndChargeFeesWithNotice(
+      lostItemFeePolicy, noticePolicy);
 
     assertThat(result.getLoan().getJson(), isLostItemHasBeenBilled());
     assertThat(result.getLoan(), hasLostItemFee(isOpen(11.00)));
@@ -276,22 +295,26 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     ageToLostFixture.ageToLostAndChargeFees();
 
     assertThat(result.getLoan(), hasLostItemFees(iterableWithSize(1)));
+    assertThat(scheduledNoticesClient.getAll(), hasSize(2));
     assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
   @Test
   public void shouldCloseLoanWhenNoFeesToCharge() {
-    val policy = lostItemFeePoliciesFixture
+    val lostItemFeePolicy = lostItemFeePoliciesFixture
       .ageToLostAfterOneMinutePolicy()
       .withPatronBilledAfterAgedLost(Period.weeks(1))
       .withNoChargeAmountItem()
       .doNotChargeProcessingFeeWhenAgedToLost();
 
-    val result = ageToLostFixture.createLoanAgeToLostAndChargeFees(policy);
+    val noticePolicy = createNoticePolicyWithAgedToLostChargedNotice();
+    val result = ageToLostFixture.createLoanAgeToLostAndChargeFeesWithNotice(
+      lostItemFeePolicy, noticePolicy);
 
     assertThat(result.getLoan().getJson(), isLostItemHasBeenBilled());
     assertThat(result.getLoan().getJson(), isClosed());
     assertThat(result.getItem().getJson(), isLostAndPaid());
+    assertThat(scheduledNoticesClient.getAll(), hasSize(0));
     assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
@@ -372,5 +395,17 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
 
   private Matcher<JsonObject> hasNoDelayedBillingInfo() {
     return hasNoJsonPath("agedToLostDelayedBilling");
+  }
+
+  private NoticePolicyBuilder createNoticePolicyWithAgedToLostChargedNotice() {
+    return new NoticePolicyBuilder()
+      .active()
+      .withName("Aged to lost charged notice policy")
+      .withFeeFineNotices(List.of(
+        new NoticeConfigurationBuilder()
+          .withEventType("Aged to lost - fine charged")
+          .withTemplateId(UUID.randomUUID())
+          .withUponAtTiming()
+          .create()));
   }
 }

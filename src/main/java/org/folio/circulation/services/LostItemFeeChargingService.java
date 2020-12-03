@@ -19,6 +19,7 @@ import org.folio.circulation.domain.FeeFine;
 import org.folio.circulation.domain.FeeFineOwner;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Location;
+import org.folio.circulation.domain.notice.schedule.FeeFineScheduledNoticeService;
 import org.folio.circulation.domain.policy.lostitem.LostItemPolicy;
 import org.folio.circulation.domain.policy.lostitem.itemfee.AutomaticallyChargeableFee;
 import org.folio.circulation.domain.representations.DeclareItemLostRequest;
@@ -42,6 +43,7 @@ public class LostItemFeeChargingService {
   private final StoreLoanAndItem storeLoanAndItem;
   private final LocationRepository locationRepository;
   private final EventPublisher eventPublisher;
+  private final FeeFineScheduledNoticeService feeFineScheduledNoticeService;
 
   public LostItemFeeChargingService(Clients clients) {
     this.lostItemPolicyRepository = new LostItemPolicyRepository(clients);
@@ -51,6 +53,7 @@ public class LostItemFeeChargingService {
     this.storeLoanAndItem = new StoreLoanAndItem(clients);
     this.locationRepository = LocationRepository.using(clients);
     this.eventPublisher = new EventPublisher(clients.pubSubPublishingService());
+    this.feeFineScheduledNoticeService = FeeFineScheduledNoticeService.using(clients);
   }
 
   public CompletableFuture<Result<Loan>> chargeLostItemFees(

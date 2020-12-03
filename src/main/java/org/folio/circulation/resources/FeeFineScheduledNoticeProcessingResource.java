@@ -32,7 +32,8 @@ public class FeeFineScheduledNoticeProcessingResource extends ScheduledNoticePro
 
     return scheduledNoticesRepository.findNotices(
       ClockManager.getClockManager().getDateTime(), true,
-      Arrays.asList(TriggeringEvent.OVERDUE_FINE_RETURNED, TriggeringEvent.OVERDUE_FINE_RENEWED),
+      Arrays.asList(TriggeringEvent.OVERDUE_FINE_RETURNED, TriggeringEvent.OVERDUE_FINE_RENEWED,
+        TriggeringEvent.AGED_TO_LOST_FINE_CHARGED),
       CqlSortBy.ascending("nextRunTime"), pageLimit);
   }
 

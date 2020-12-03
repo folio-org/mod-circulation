@@ -16,6 +16,7 @@ import java.time.ZoneOffset;
 import java.util.UUID;
 import java.util.function.UnaryOperator;
 
+import api.support.builders.NoticePolicyBuilder;
 import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
@@ -34,6 +35,7 @@ import lombok.val;
 public final class AgeToLostFixture {
   private final PoliciesActivationFixture policiesActivation;
   private final LostItemFeePoliciesFixture lostItemFeePoliciesFixture;
+  private final NoticePoliciesFixture noticePoliciesFixture;
   private final ItemsFixture itemsFixture;
   private final CheckOutFixture checkOutFixture;
   private final UsersFixture usersFixture;
@@ -45,6 +47,7 @@ public final class AgeToLostFixture {
 
     this.policiesActivation = new PoliciesActivationFixture();
     this.lostItemFeePoliciesFixture = new LostItemFeePoliciesFixture();
+    this.noticePoliciesFixture = new NoticePoliciesFixture(ResourceClient.forNoticePolicies());
     this.itemsFixture = itemsFixture;
     this.usersFixture = usersFixture;
     this.checkOutFixture = checkOutFixture;
@@ -86,11 +89,33 @@ public final class AgeToLostFixture {
     return createLoanAgeToLostAndChargeFees(UnaryOperator.identity(), builder);
   }
 
+  public AgeToLostResult createLoanAgeToLostAndChargeFeesWithNotice(
+    LostItemFeePolicyBuilder lostItemFeePolicyBuilder, NoticePolicyBuilder noticePolicyBuilder) {
+
+    return createLoanAgeToLostAndChargeFeesWithNotice(UnaryOperator.identity(),
+      lostItemFeePolicyBuilder, noticePolicyBuilder);
+  }
+
   public AgeToLostResult createLoanAgeToLostAndChargeFees(
     UnaryOperator<HoldingBuilder> holdingsBuilder, LostItemFeePolicyBuilder builder) {
 
     return createLoanAgeToLostAndChargeFees(holdingsBuilder, PoliciesToActivate.builder()
       .lostItemPolicy(lostItemFeePoliciesFixture.create(builder)));
+  }
+
+  public AgeToLostResult createLoanAgeToLostAndChargeFeesWithNotice(
+    UnaryOperator<HoldingBuilder> holdingsBuilder, LostItemFeePolicyBuilder lostItemPolicyBuilder,
+    NoticePolicyBuilder noticePolicyBuilder) {
+
+    return createLoanAgeToLostAndChargeFees(holdingsBuilder, PoliciesToActivate.builder()
+      .noticePolicy(noticePoliciesFixture.create(noticePolicyBuilder))
+      .lostItemPolicy(lostItemFeePoliciesFixture.create(lostItemPolicyBuilder)));
+  }
+
+  public AgeToLostResult createAgedToLostLoan(NoticePolicyBuilder builder) {
+    return createAgedToLostLoan(UnaryOperator.identity(), PoliciesToActivate.builder()
+      .lostItemPolicy(lostItemFeePoliciesFixture.ageToLostAfterOneMinute())
+      .noticePolicy(noticePoliciesFixture.create(builder)));
   }
 
   private AgeToLostResult createLoanAgeToLostAndChargeFees(UnaryOperator<HoldingBuilder> builder,
