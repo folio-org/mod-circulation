@@ -118,12 +118,6 @@ public final class AgeToLostFixture {
       .lostItemPolicy(lostItemFeePoliciesFixture.create(lostItemPolicyBuilder)));
   }
 
-  public AgeToLostResult createAgedToLostLoan(NoticePolicyBuilder builder) {
-    return createAgedToLostLoan(UnaryOperator.identity(), PoliciesToActivate.builder()
-      .lostItemPolicy(lostItemFeePoliciesFixture.ageToLostAfterOneMinute())
-      .noticePolicy(noticePoliciesFixture.create(builder)));
-  }
-
   private AgeToLostResult createLoanAgeToLostAndChargeFees(UnaryOperator<HoldingBuilder> builder,
     PoliciesToActivate.PoliciesToActivateBuilder policiesToUse) {
 
