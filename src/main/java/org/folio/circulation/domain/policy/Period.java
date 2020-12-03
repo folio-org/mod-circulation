@@ -210,4 +210,12 @@ public class Period {
   public static Period zeroDurationPeriod() {
     return ZERO_DURATION_PERIOD;
   }
+
+  @Override
+  public String toString() {
+    return "Period{" +
+      "duration=" + duration +
+      ", interval='" + interval + '\'' +
+      '}';
+  }
 }

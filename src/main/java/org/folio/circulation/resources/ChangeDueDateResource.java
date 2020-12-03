@@ -13,7 +13,7 @@ import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
-import org.folio.circulation.domain.notice.schedule.DueDateScheduledNoticeService;
+import org.folio.circulation.domain.notice.schedule.LoanScheduledNoticeService;
 import org.folio.circulation.domain.representations.ChangeDueDateRequest;
 import org.folio.circulation.domain.validation.ItemStatusValidator;
 import org.folio.circulation.domain.validation.LoanValidator;
@@ -59,8 +59,8 @@ public class ChangeDueDateResource extends Resource {
 
     final LoanRepository loanRepository = new LoanRepository(clients);
 
-    final DueDateScheduledNoticeService scheduledNoticeService
-      = DueDateScheduledNoticeService.using(clients);
+    final LoanScheduledNoticeService scheduledNoticeService
+      = LoanScheduledNoticeService.using(clients);
 
     final ItemStatusValidator itemStatusValidator = new ItemStatusValidator(
         ChangeDueDateResource::errorWhenInIncorrectStatus);

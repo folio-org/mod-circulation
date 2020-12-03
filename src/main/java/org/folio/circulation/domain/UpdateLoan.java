@@ -6,7 +6,7 @@ import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.concurrent.CompletableFuture;
 
-import org.folio.circulation.domain.notice.schedule.DueDateScheduledNoticeService;
+import org.folio.circulation.domain.notice.schedule.LoanScheduledNoticeService;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
 import org.folio.circulation.domain.policy.library.ClosedLibraryStrategyService;
@@ -20,7 +20,7 @@ public class UpdateLoan {
   private final ClosedLibraryStrategyService closedLibraryStrategyService;
   private final LoanRepository loanRepository;
   private final LoanPolicyRepository loanPolicyRepository;
-  private final DueDateScheduledNoticeService scheduledNoticeService;
+  private final LoanScheduledNoticeService scheduledNoticeService;
 
   public UpdateLoan(Clients clients,
       LoanRepository loanRepository,
@@ -29,7 +29,7 @@ public class UpdateLoan {
         DateTime.now(DateTimeZone.UTC), false);
     this.loanPolicyRepository = loanPolicyRepository;
     this.loanRepository = loanRepository;
-    this.scheduledNoticeService = DueDateScheduledNoticeService.using(clients);
+    this.scheduledNoticeService = LoanScheduledNoticeService.using(clients);
   }
 
   /**

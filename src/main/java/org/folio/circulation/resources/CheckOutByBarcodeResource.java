@@ -20,7 +20,7 @@ import org.folio.circulation.domain.LoanRepresentation;
 import org.folio.circulation.domain.LoanService;
 import org.folio.circulation.domain.UpdateRequestQueue;
 import org.folio.circulation.domain.User;
-import org.folio.circulation.domain.notice.schedule.DueDateScheduledNoticeService;
+import org.folio.circulation.domain.notice.schedule.LoanScheduledNoticeService;
 import org.folio.circulation.domain.notice.session.PatronActionSessionService;
 import org.folio.circulation.domain.representations.CheckOutByBarcodeRequest;
 import org.folio.circulation.domain.validation.AlreadyCheckedOutValidator;
@@ -98,8 +98,8 @@ public class CheckOutByBarcodeResource extends Resource {
     final PatronGroupRepository patronGroupRepository = new PatronGroupRepository(clients);
     final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
     final ScheduledNoticesRepository scheduledNoticesRepository = ScheduledNoticesRepository.using(clients);
-    final DueDateScheduledNoticeService scheduledNoticeService =
-      new DueDateScheduledNoticeService(scheduledNoticesRepository, patronNoticePolicyRepository);
+    final LoanScheduledNoticeService scheduledNoticeService =
+      new LoanScheduledNoticeService(scheduledNoticesRepository, patronNoticePolicyRepository);
     final AutomatedPatronBlocksRepository automatedPatronBlocksRepository =
       new AutomatedPatronBlocksRepository(clients);
 

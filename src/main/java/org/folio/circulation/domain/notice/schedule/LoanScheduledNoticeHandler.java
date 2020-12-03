@@ -2,6 +2,7 @@ package org.folio.circulation.domain.notice.schedule;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.results.Result.failed;
+import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.lang.invoke.MethodHandles;
@@ -36,7 +37,7 @@ import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
-public class DueDateScheduledNoticeHandler {
+public class LoanScheduledNoticeHandler {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private static final String USER_RECORD_TYPE = "user";
@@ -46,8 +47,8 @@ public class DueDateScheduledNoticeHandler {
   static final String[] REQUIRED_RECORD_TYPES = {USER_RECORD_TYPE,
     ITEM_RECORD_TYPE, LOAN_RECORD_TYPE, TEMPLATE_RECORD_TYPE};
 
-  public static DueDateScheduledNoticeHandler using(Clients clients, DateTime systemTime) {
-    return new DueDateScheduledNoticeHandler(
+  public static LoanScheduledNoticeHandler using(Clients clients, DateTime systemTime) {
+    return new LoanScheduledNoticeHandler(
       new LoanRepository(clients),
       new LoanPolicyRepository(clients),
       new ConfigurationRepository(clients),
@@ -77,13 +78,10 @@ public class DueDateScheduledNoticeHandler {
   }
 
   private CompletableFuture<Result<ScheduledNotice>> handleNotice(ScheduledNotice notice) {
-    if (notice.getLoanId() != null) {
-      return handleDueDateNotice(notice);
+    if (notice.getLoanId() == null) {
+      return ofAsync(() -> notice);
     }
-    return completedFuture(succeeded(notice));
-  }
 
-  private CompletableFuture<Result<ScheduledNotice>> handleDueDateNotice(ScheduledNotice notice) {
     String templateId = notice.getConfiguration().getTemplateId();
 
     return templateNoticesClient.get(templateId)

@@ -24,7 +24,7 @@ import org.folio.circulation.domain.UpdateItem;
 import org.folio.circulation.domain.UpdateRequestQueue;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
-import org.folio.circulation.domain.notice.schedule.DueDateScheduledNoticeService;
+import org.folio.circulation.domain.notice.schedule.LoanScheduledNoticeService;
 import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
 import org.folio.circulation.infrastructure.storage.loans.LostItemPolicyRepository;
 import org.folio.circulation.infrastructure.storage.loans.OverdueFinePolicyRepository;
@@ -155,8 +155,8 @@ public class LoanCollectionResource extends CollectionResource {
     final ChangeDueDateValidator changeDueDateValidator
         = new ChangeDueDateValidator(loanRepository);
 
-    final DueDateScheduledNoticeService scheduledNoticeService
-        = DueDateScheduledNoticeService.using(clients);
+    final LoanScheduledNoticeService scheduledNoticeService
+        = LoanScheduledNoticeService.using(clients);
 
     final EventPublisher eventPublisher = new EventPublisher(routingContext);
 

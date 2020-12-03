@@ -65,6 +65,12 @@ public final class AgeToLostFixture {
     .lostItemPolicy(lostItemFeePoliciesFixture.ageToLostAfterOneMinute()));
   }
 
+  public AgeToLostResult createAgedToLostLoan(NoticePolicyBuilder builder) {
+    return createAgedToLostLoan(UnaryOperator.identity(), PoliciesToActivate.builder()
+      .lostItemPolicy(lostItemFeePoliciesFixture.ageToLostAfterOneMinute())
+      .noticePolicy(noticePoliciesFixture.create(builder)));
+  }
+
   public AgeToLostResult createAgedToLostLoan(UnaryOperator<HoldingBuilder> holdingsBuilder,
     PoliciesToActivate.PoliciesToActivateBuilder policiesToUse) {
 
@@ -110,12 +116,6 @@ public final class AgeToLostFixture {
     return createLoanAgeToLostAndChargeFees(holdingsBuilder, PoliciesToActivate.builder()
       .noticePolicy(noticePoliciesFixture.create(noticePolicyBuilder))
       .lostItemPolicy(lostItemFeePoliciesFixture.create(lostItemPolicyBuilder)));
-  }
-
-  public AgeToLostResult createAgedToLostLoan(NoticePolicyBuilder builder) {
-    return createAgedToLostLoan(UnaryOperator.identity(), PoliciesToActivate.builder()
-      .lostItemPolicy(lostItemFeePoliciesFixture.ageToLostAfterOneMinute())
-      .noticePolicy(noticePoliciesFixture.create(builder)));
   }
 
   private AgeToLostResult createLoanAgeToLostAndChargeFees(UnaryOperator<HoldingBuilder> builder,

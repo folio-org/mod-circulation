@@ -63,4 +63,18 @@ public class ScheduledNotice {
     return new ScheduledNotice(id, loanId, requestId, recipientUserId, feeFineActionId,
       triggeringEvent, nextRunTime, configuration);
   }
+
+  @Override
+  public String toString() {
+    return "ScheduledNotice{" +
+      "id='" + id + '\'' +
+      ", loanId='" + loanId + '\'' +
+      ", requestId='" + requestId + '\'' +
+      ", recipientUserId='" + recipientUserId + '\'' +
+      ", feeFineActionId='" + feeFineActionId + '\'' +
+      ", triggeringEvent='" + triggeringEvent.getRepresentation() + '\'' +
+      ", nextRunTime=" + nextRunTime +
+      ", configuration=" + configuration +
+      '}';
+  }
 }
