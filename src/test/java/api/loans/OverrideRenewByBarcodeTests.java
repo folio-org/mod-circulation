@@ -39,11 +39,7 @@ import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.hamcrest.Matcher;
-<<<<<<< HEAD
-import org.hamcrest.Matchers;
 import static org.joda.time.DateTime.now;
-=======
->>>>>>> master
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
 import org.junit.Test;
