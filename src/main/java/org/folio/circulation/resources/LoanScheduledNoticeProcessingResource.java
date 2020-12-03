@@ -1,16 +1,17 @@
 package org.folio.circulation.resources;
 
+import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.AGED_TO_LOST;
+import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.DUE_DATE;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
-import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.MultipleRecords;
-import org.folio.circulation.domain.notice.schedule.DueDateScheduledNoticeHandler;
+import org.folio.circulation.domain.notice.schedule.LoanScheduledNoticeHandler;
 import org.folio.circulation.domain.notice.schedule.ScheduledNotice;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
-import org.folio.circulation.domain.notice.schedule.TriggeringEvent;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CqlSortBy;
 import org.folio.circulation.support.results.Result;
@@ -20,10 +21,10 @@ import org.joda.time.DateTimeZone;
 
 import io.vertx.core.http.HttpClient;
 
-public class DueDateScheduledNoticeProcessingResource extends ScheduledNoticeProcessingResource {
+public class LoanScheduledNoticeProcessingResource extends ScheduledNoticeProcessingResource {
 
-  public DueDateScheduledNoticeProcessingResource(HttpClient client) {
-    super("/circulation/due-date-scheduled-notices-processing", client);
+  public LoanScheduledNoticeProcessingResource(HttpClient client) {
+    super("/circulation/loan-scheduled-notices-processing", client);
   }
 
   @Override
@@ -33,7 +34,7 @@ public class DueDateScheduledNoticeProcessingResource extends ScheduledNoticePro
 
     return scheduledNoticesRepository.findNotices(
       DateTime.now(DateTimeZone.UTC), true,
-      Collections.singletonList(TriggeringEvent.DUE_DATE),
+      List.of(DUE_DATE, AGED_TO_LOST),
       CqlSortBy.ascending("nextRunTime"), pageLimit);
   }
 
@@ -41,10 +42,10 @@ public class DueDateScheduledNoticeProcessingResource extends ScheduledNoticePro
   protected CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> handleNotices(
     Clients clients, MultipleRecords<ScheduledNotice> noticesResult) {
 
-    final DueDateScheduledNoticeHandler dueDateNoticeHandler =
-      DueDateScheduledNoticeHandler.using(clients, DateTime.now(DateTimeZone.UTC));
+    final LoanScheduledNoticeHandler loanNoticeHandler =
+      LoanScheduledNoticeHandler.using(clients, DateTime.now(DateTimeZone.UTC));
 
-    return dueDateNoticeHandler.handleNotices(noticesResult.getRecords())
+    return loanNoticeHandler.handleNotices(noticesResult.getRecords())
       .thenApply(mapResult(v -> noticesResult));
   }
 }

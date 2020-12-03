@@ -33,9 +33,8 @@ public final class ResultMatchers {
     };
   }
 
-  @SafeVarargs
   public static <T> Matcher<Result<T>> hasValidationErrors(
-    Matcher<ValidationError>... errorMatchers) {
+    Matcher<Iterable<ValidationError>> errorMatcher) {
 
     return new TypeSafeMatcher<>() {
       @Override
@@ -43,7 +42,7 @@ public final class ResultMatchers {
         if (item.failed() && item.cause() instanceof ValidationErrorFailure) {
           final var validationFailure = (ValidationErrorFailure) item.cause();
 
-          return hasItems(errorMatchers).matches(validationFailure.getErrors());
+          return errorMatcher.matches(validationFailure.getErrors());
         }
 
         return false;
@@ -52,9 +51,14 @@ public final class ResultMatchers {
       @Override
       public void describeTo(Description description) {
         description.appendText("Result has validation errors matching: ")
-          .appendDescriptionOf(hasItems(errorMatchers));
+          .appendDescriptionOf(errorMatcher);
       }
     };
+  }
+
+  @SafeVarargs
+  public static <T> Matcher<Result<T>> hasValidationErrors(Matcher<ValidationError>... errorMatchers) {
+    return hasValidationErrors(hasItems(errorMatchers));
   }
 
   public static <T> Matcher<Result<T>> hasValidationError(Matcher<ValidationError> errorMatcher) {

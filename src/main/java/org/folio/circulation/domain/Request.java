@@ -340,4 +340,8 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   public Request copy() {
     return withRequestJsonRepresentation(requestRepresentation.copy());
   }
+
+  public String getPatronComments() {
+    return getProperty(requestRepresentation, "patronComments");
+  }
 }

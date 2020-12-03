@@ -12,8 +12,10 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Account;
+import org.folio.circulation.domain.FeeFineAction;
 import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.domain.User;
+import org.folio.circulation.domain.notice.schedule.FeeFineScheduledNoticeService;
 import org.folio.circulation.domain.representations.StoredAccount;
 import org.folio.circulation.domain.representations.StoredFeeFineAction;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
@@ -47,15 +49,14 @@ public class FeeFineFacade {
     this.feeFineService = new FeeFineService(clients);
   }
 
-  public CompletableFuture<Result<Void>> createAccounts(
+  public CompletableFuture<Result<List<FeeFineAction>>> createAccounts(
     Collection<CreateAccountCommand> accountAndActions) {
 
     return allOf(accountAndActions, this::createAccount)
-      .thenApply(r -> r.<Void>map(list -> null))
       .exceptionally(CommonFailures::failedDueToServerError);
   }
 
-  private CompletableFuture<Result<Void>> createAccount(CreateAccountCommand creation) {
+  private CompletableFuture<Result<FeeFineAction>> createAccount(CreateAccountCommand creation) {
     final StoredAccount account = new StoredAccount(
       creation.getLoan(),
       creation.getItem(),
@@ -67,7 +68,7 @@ public class FeeFineFacade {
       .thenCompose(r -> r.after(createdAccount -> createAccountCreatedAction(createdAccount, creation)));
   }
 
-  private CompletableFuture<Result<Void>> createAccountCreatedAction(
+  private CompletableFuture<Result<FeeFineAction>> createAccountCreatedAction(
     Account createdAccount, CreateAccountCommand creation) {
 
     final StoredFeeFineActionBuilder builder = StoredFeeFineAction.builder();
@@ -80,8 +81,7 @@ public class FeeFineFacade {
         .withAction(createdAccount.getFeeFineType())
         .withAccountId(createdAccount.getId())
         .build()))
-      .thenCompose(r -> r.after(feeFineActionRepository::create))
-      .thenApply(r -> r.map(notUsed -> null));
+      .thenCompose(r -> r.after(feeFineActionRepository::create));
   }
 
   public CompletableFuture<Result<Void>> refundAndCloseAccounts(List<RefundAndCancelAccountCommand> accounts) {

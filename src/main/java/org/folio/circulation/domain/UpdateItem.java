@@ -102,7 +102,7 @@ public class UpdateItem {
     return succeeded(item.changeStatus(request.checkedInItemStatus()));
   }
 
-  public CompletableFuture<Result<LoanAndRelatedRecords>> onCheckOut(
+  public CompletableFuture<Result<LoanAndRelatedRecords>> onLoanCreated(
     LoanAndRelatedRecords relatedRecords) {
 
     //Hack for creating returned loan - should distinguish further up the chain

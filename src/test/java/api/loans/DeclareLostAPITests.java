@@ -1,5 +1,7 @@
 package api.loans;
 
+import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
+import static api.support.fakes.PublishedEvents.byEventType;
 import static api.support.http.CqlQuery.exactMatch;
 import static api.support.http.CqlQuery.queryFromTemplate;
 import static api.support.matchers.EventMatchers.isValidItemDeclaredLostEvent;
@@ -11,13 +13,14 @@ import static api.support.matchers.LoanMatchers.hasLoanProperty;
 import static api.support.matchers.LoanMatchers.hasStatus;
 import static api.support.matchers.LoanMatchers.isClosed;
 import static api.support.matchers.LoanMatchers.isOpen;
+import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsBeforeNow;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static api.support.matchers.LoanAccountMatcher.hasNoOverdueFine;
-import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasNoJsonPath;
+import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
@@ -38,9 +41,7 @@ import java.util.stream.Collectors;
 import static org.joda.time.DateTime.now;
 import static org.joda.time.DateTimeZone.UTC;
 
-import org.apache.commons.lang3.StringUtils;
 import org.awaitility.Awaitility;
-import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
@@ -56,6 +57,7 @@ import api.support.builders.ItemBuilder;
 import api.support.builders.LostItemFeePolicyBuilder;
 import api.support.fakes.FakePubSub;
 import api.support.fixtures.policies.PoliciesToActivate;
+import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 import junitparams.JUnitParamsRunner;
@@ -93,9 +95,9 @@ public class DeclareLostAPITests extends APITests {
     assertThat(response.getStatusCode(), is(204));
     assertThat(actualItem, hasStatus("Declared lost"));
     assertThat(actualLoan, isOpen());
-    assertThat(actualLoan, hasLoanProperty("action", "declaredLost"));
-    assertThat(actualLoan, hasLoanProperty("actionComment", comment));
-    assertThat(actualLoan, hasLoanProperty("declaredLostDate", dateTime.toString()));
+    assertThat(actualLoan, hasLoanProperty("action", is("declaredLost")));
+    assertThat(actualLoan, hasLoanProperty("actionComment", is(comment)));
+    assertThat(actualLoan, hasLoanProperty("declaredLostDate", isEquivalentTo(dateTime)));
   }
 
   @Test
@@ -117,9 +119,9 @@ public class DeclareLostAPITests extends APITests {
     assertThat(response.getStatusCode(), is(204));
     assertThat(actualItem, hasStatus("Declared lost"));
     assertThat(actualLoan, isOpen());
-    assertThat(actualLoan, hasLoanProperty("action", "declaredLost"));
-    assertThat(actualLoan, hasLoanProperty("actionComment", StringUtils.EMPTY));
-    assertThat(actualLoan, hasLoanProperty("declaredLostDate", dateTime.toString()));
+    assertThat(actualLoan, hasLoanProperty("action", is("declaredLost")));
+    assertThat(actualLoan, hasLoanProperty("actionComment", is(EMPTY)));
+    assertThat(actualLoan, hasLoanProperty("declaredLostDate", isEquivalentTo(dateTime)));
   }
 
   @Test
@@ -429,14 +431,12 @@ public class DeclareLostAPITests extends APITests {
 
     // There should be five events published - "check out", "log event", "declared lost"
     // and one "log record"
-    List<JsonObject> publishedEvents = Awaitility.await()
+    final var publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(FakePubSub::getPublishedEvents, hasSize(4));
 
-    JsonObject event = publishedEvents.stream()
-      .filter(evt -> ITEM_DECLARED_LOST.equalsIgnoreCase(evt.getString("eventType")))
-      .findFirst().orElse(new JsonObject());
-    JsonObject loan = loanIndividualResource.getJson();
+    final var event = publishedEvents.findFirst(byEventType(ITEM_DECLARED_LOST));
+    final var loan = loanIndividualResource.getJson();
 
     assertThat(event, isValidItemDeclaredLostEvent(loan));
     assertThatPublishedLoanLogRecordEventsAreValid();

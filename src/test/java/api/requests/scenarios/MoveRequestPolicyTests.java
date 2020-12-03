@@ -1,31 +1,29 @@
 package api.requests.scenarios;
 
-import static api.support.PubsubPublisherTestUtils.assertThatPublishedNoticeLogRecordEventsCountIsEqualTo;
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
+import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.http.CqlQuery.exactMatch;
 import static java.util.Collections.singletonList;
-import static org.awaitility.Awaitility.await;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.awaitility.Awaitility.waitAtMost;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_TYPE;
+import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
-import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
-
-import api.support.fakes.FakePubSub;
 
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.notice.NoticeEventType;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.ClockManager;
-
-import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -35,10 +33,13 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import api.support.APITests;
+import api.support.MultipleJsonRecords;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.MoveRequestBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
+import api.support.fakes.FakePubSub;
+import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
 
 /**
@@ -177,15 +178,16 @@ public class MoveRequestPolicyTests extends APITests {
       interestingTimes, jessica, DateTime.now(DateTimeZone.UTC), RequestType.RECALL.getValue());
 
     // notice for the recall is expected
-    await().until(() -> patronNoticesClient.getAll().size(), is(1));
-    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+    waitAtMost(1, SECONDS)
+      .until(patronNoticesClient::getAll, hasSize(1));
+
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
 
     // move jessica's recall request from interestingTimes to smallAngryPlanet
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
       requestByJessica.getId(),
       smallAngryPlanet.getId(),
-      RequestType.RECALL.getValue()
-    ));
+      RequestType.RECALL.getValue()));
 
     assertThat("Move request should have correct item id",
       moveRequest.getJson().getString("itemId"), is(smallAngryPlanet.getId().toString()));
@@ -204,7 +206,8 @@ public class MoveRequestPolicyTests extends APITests {
 
     assertThat("move recall request notice has not been sent",
       patronNoticesClient.getAll().size(), is(2));
-    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(2));
     assertThatPublishedLogRecordEventsAreValid();
   }
 
@@ -243,20 +246,20 @@ public class MoveRequestPolicyTests extends APITests {
       interestingTimes, jessica, DateTime.now(DateTimeZone.UTC), RequestType.RECALL.getValue());
 
     // There should be 2 notices for each recall
-    await().until(() -> patronNoticesClient
-      .getMany(exactMatch("recipientId", steve.getId().toString())).size(), is(1));
-    await().until(() -> patronNoticesClient
-      .getMany(exactMatch("recipientId", charlotte.getId().toString())).size(), is(1));
+    waitAtMost(1, SECONDS)
+      .until(() -> getPatronNoticesForRecipient(steve).size(), is(1));
 
-    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+    waitAtMost(1, SECONDS)
+      .until(() -> getPatronNoticesForRecipient(charlotte).size(), is(1));
+
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(2));
     assertThatPublishedLogRecordEventsAreValid();
 
     // move jessica's recall request from interestingTimes to smallAngryPlanet
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
       requestByJessica.getId(),
       smallAngryPlanet.getId(),
-      RequestType.RECALL.getValue()
-    ));
+      RequestType.RECALL.getValue()));
 
     assertThat("Move request should have correct item id",
       moveRequest.getJson().getString("itemId"), is(smallAngryPlanet.getId().toString()));
@@ -269,11 +272,10 @@ public class MoveRequestPolicyTests extends APITests {
     assertThat("due date has changed",
       storedLoan.getString("dueDate"), is(expectedDueDate));
 
-    List<JsonObject> patronNotices = patronNoticesClient.getAll();
-
     assertThat("move recall request unexpectedly sent another patron notice",
-      patronNotices.size(), is(2));
-    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+      patronNoticesClient.getAll(), hasSize(2));
+
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(2));
     assertThatPublishedLogRecordEventsAreValid();
   }
 
@@ -315,15 +317,16 @@ public class MoveRequestPolicyTests extends APITests {
       interestingTimes, jessica, DateTime.now(DateTimeZone.UTC), RequestType.RECALL.getValue());
 
     // One notice for the recall is expected
-    await().until(() -> patronNoticesClient.getAll().size(), is(1));
-    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+    waitAtMost(1, SECONDS)
+      .until(patronNoticesClient::getAll, hasSize(1));
+
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
 
     // move jessica's recall request from interestingTimes to smallAngryPlanet
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
       requestByJessica.getId(),
       smallAngryPlanet.getId(),
-      RequestType.RECALL.getValue()
-    ));
+      RequestType.RECALL.getValue()));
 
     assertThat("Move request should have correct item id",
       moveRequest.getJson().getString("itemId"), is(smallAngryPlanet.getId().toString()));
@@ -341,8 +344,9 @@ public class MoveRequestPolicyTests extends APITests {
       storedLoan.getString("dueDate"), is(expectedDueDate));
 
     assertThat("move recall request notice has not been sent",
-      patronNoticesClient.getAll().size(), is(2));
-    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+      patronNoticesClient.getAll(), hasSize(2));
+
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(2));
     assertThatPublishedLogRecordEventsAreValid();
   }
 
@@ -397,20 +401,20 @@ public class MoveRequestPolicyTests extends APITests {
       interestingTimes, jessica, DateTime.now(DateTimeZone.UTC), RequestType.RECALL.getValue());
 
     // There should be 2 notices for each recall
-    await().until(() -> patronNoticesClient
-      .getMany(exactMatch("recipientId", steve.getId().toString())).size(), is(1));
-    await().until(() -> patronNoticesClient
-      .getMany(exactMatch("recipientId", charlotte.getId().toString())).size(), is(1));
+    waitAtMost(1, SECONDS)
+      .until(() -> getPatronNoticesForRecipient(steve).size(), is(1));
 
-    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+    waitAtMost(1, SECONDS)
+      .until(() -> getPatronNoticesForRecipient(charlotte).size(), is(1));
+
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(2));
     assertThatPublishedLogRecordEventsAreValid();
 
     // move jessica's recall request from interestingTimes to smallAngryPlanet
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
       requestByJessica.getId(),
       smallAngryPlanet.getId(),
-      RequestType.RECALL.getValue()
-    ));
+      RequestType.RECALL.getValue()));
 
     assertThat("Move request should have correct item id",
       moveRequest.getJson().getString("itemId"), is(smallAngryPlanet.getId().toString()));
@@ -424,9 +428,14 @@ public class MoveRequestPolicyTests extends APITests {
       storedLoan.getString("dueDate"), is(expectedDueDate));
 
     assertThat("move recall request unexpectedly sent another patron notice",
-      patronNoticesClient.getAll().size(), is(2));
-    assertThatPublishedNoticeLogRecordEventsCountIsEqualTo(patronNoticesClient.getAll().size());
+      patronNoticesClient.getAll(), hasSize(2));
+
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(2));
     assertThatPublishedLogRecordEventsAreValid();
+  }
+
+  private MultipleJsonRecords getPatronNoticesForRecipient(IndividualResource steve) {
+    return patronNoticesClient.getMany(exactMatch("recipientId", steve.getId().toString()));
   }
 
   private void setRules(String rules) {

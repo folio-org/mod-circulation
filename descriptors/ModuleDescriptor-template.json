@@ -150,7 +150,7 @@
     },
     {
       "id": "circulation",
-      "version": "9.4",
+      "version": "9.5",
       "handlers": [
         {
           "methods": [
@@ -625,6 +625,7 @@
             "circulation-storage.loan-policies.collection.get",
             "users.item.get",
             "users.collection.get",
+            "circulation-storage.circulation-rules.get",
             "circulation.rules.notice-policy.get",
             "circulation-storage.patron-notice-policies.item.get",
             "patron-notice.post",
@@ -639,7 +640,7 @@
           "methods": [
             "POST"
           ],
-          "pathPattern": "/circulation/due-date-scheduled-notices-processing",
+          "pathPattern": "/circulation/loan-scheduled-notices-processing",
           "modulePermissions": [
             "scheduled-notice-storage.scheduled-notices.collection.get",
             "scheduled-notice-storage.scheduled-notices.item.delete",
@@ -662,7 +663,11 @@
             "patron-notice.post",
             "users.item.get",
             "templates.item.get",
-            "pubsub.publish.post"
+            "pubsub.publish.post",
+            "circulation-storage.circulation-rules.get",
+            "circulation.rules.notice-policy.get",
+            "circulation-storage.fixed-due-date-schedules.item.get",
+            "circulation-storage.fixed-due-date-schedules.collection.get"
           ],
           "unit": "minute",
           "delay": "5"
@@ -695,7 +700,9 @@
             "patron-notice.post",
             "users.item.get",
             "templates.item.get",
-            "pubsub.publish.post"
+            "pubsub.publish.post",
+            "circulation-storage.circulation-rules.get",
+            "circulation.rules.notice-policy.get"
           ],
           "unit": "minute",
           "delay": "2"
@@ -726,7 +733,8 @@
             "usergroups.collection.get",
             "configuration.entries.collection.get",
             "pubsub.publish.post",
-            "circulation-storage.circulation-rules.get"
+            "circulation-storage.circulation-rules.get",
+            "circulation.rules.notice-policy.get"
           ],
           "unit": "minute",
           "delay": "2"
@@ -750,6 +758,7 @@
             "feefineactions.collection.get",
             "circulation-storage.loans.item.get",
             "circulation-storage.loans.collection.get",
+            "circulation-storage.circulation-rules.get",
             "inventory-storage.items.item.get",
             "inventory-storage.items.collection.get",
             "inventory-storage.holdings.item.get",
@@ -840,15 +849,23 @@
             "circulation-storage.loans.item.put",
             "circulation-storage.loans.item.get",
             "circulation-storage.loans.collection.get",
+            "circulation-storage.circulation-rules.get",
+            "circulation-storage.patron-notice-policies.collection.get",
+            "circulation-storage.patron-notice-policies.item.get",
             "inventory-storage.items.item.put",
             "inventory-storage.items.item.get",
             "inventory-storage.items.collection.get",
             "inventory-storage.locations.collection.get",
+            "inventory-storage.locations.item.get",
             "inventory-storage.holdings.collection.get",
             "inventory-storage.instances.collection.get",
             "inventory-storage.material-types.collection.get",
+            "lost-item-fees-policies.item.get",
             "lost-item-fees-policies.collection.get",
-            "pubsub.publish.post"
+            "pubsub.publish.post",
+            "users.item.get",
+            "users.collection.get",
+            "scheduled-notice-storage.scheduled-notices.item.post"
           ],
           "unit": "minute",
           "delay": "30"
@@ -870,12 +887,21 @@
             "inventory-storage.holdings.collection.get",
             "inventory-storage.instances.collection.get",
             "inventory-storage.material-types.collection.get",
+            "lost-item-fees-policies.item.get",
             "lost-item-fees-policies.collection.get",
             "owners.collection.get",
             "feefines.collection.get",
             "accounts.item.post",
             "feefineactions.item.post",
-            "pubsub.publish.post"
+            "pubsub.publish.post",
+            "users.item.get",
+            "users.collection.get",
+            "circulation-storage.circulation-rules.get",
+            "circulation-storage.patron-notice-policies.item.get",
+            "circulation-storage.patron-notice-policies.collection.get",
+            "circulation.rules.notice-policy.get",
+            "inventory-storage.locations.item.get",
+            "scheduled-notice-storage.scheduled-notices.item.post"
           ],
           "unit": "minute",
           "delay": "35"
@@ -951,7 +977,7 @@
     },
     {
       "id": "request-storage",
-      "version": "3.3"
+      "version": "3.4"
     },
     {
       "id": "request-storage-batch",

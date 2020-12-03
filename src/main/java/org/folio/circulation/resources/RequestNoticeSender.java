@@ -72,9 +72,7 @@ public class RequestNoticeSender {
     patronNoticeService.acceptNoticeEvent(requestCreatedEvent, NoticeLogContext.from(request));
 
     Loan loan = request.getLoan();
-    if (request.getRequestType() == RequestType.RECALL &&
-      loan != null && loan.hasDueDateChanged()) {
-
+    if (request.getRequestType() == RequestType.RECALL && loan != null) {
       sendNoticeOnItemRecalledEvent(loan);
     }
     return Result.succeeded(relatedRecords);
@@ -86,9 +84,7 @@ public class RequestNoticeSender {
     Request request = relatedRecords.getRequest();
 
     Loan loan = request.getLoan();
-    if (request.getRequestType() == RequestType.RECALL &&
-      loan != null && loan.hasDueDateChanged()) {
-
+    if (request.getRequestType() == RequestType.RECALL && loan != null) {
       sendNoticeOnItemRecalledEvent(loan);
     }
     return Result.succeeded(relatedRecords);
@@ -121,14 +117,16 @@ public class RequestNoticeSender {
   }
 
   private Result<Void> sendNoticeOnItemRecalledEvent(Loan loan) {
-    PatronNoticeEvent itemRecalledEvent = new PatronNoticeEventBuilder()
-      .withItem(loan.getItem())
-      .withUser(loan.getUser())
-      .withEventType(NoticeEventType.ITEM_RECALLED)
-      .withNoticeContext(TemplateContextUtil.createLoanNoticeContext(loan))
-      .build();
-    patronNoticeService.acceptNoticeEvent(itemRecalledEvent, NoticeLogContext.from(loan))
-      .thenCompose(r -> r.after(v -> eventPublisher.publishRecallRequestedEvent(loan)));
+    if (loan.getUser() != null && loan.getItem() != null) {
+      PatronNoticeEvent itemRecalledEvent = new PatronNoticeEventBuilder()
+        .withItem(loan.getItem())
+        .withUser(loan.getUser())
+        .withEventType(NoticeEventType.ITEM_RECALLED)
+        .withNoticeContext(TemplateContextUtil.createLoanNoticeContext(loan))
+        .build();
+      patronNoticeService.acceptNoticeEvent(itemRecalledEvent, NoticeLogContext.from(loan))
+        .thenCompose(r -> r.after(v -> eventPublisher.publishRecallRequestedEvent(loan)));
+    }
     return Result.succeeded(null);
   }
 

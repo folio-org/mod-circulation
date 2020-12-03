@@ -1,11 +1,13 @@
 package api.loans;
 
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
+import static api.support.fakes.PublishedEvents.byEventType;
 import static api.support.matchers.EventMatchers.isValidItemClaimedReturnedEvent;
 import static api.support.matchers.EventTypeMatchers.ITEM_CLAIMED_RETURNED;
 import static api.support.matchers.LoanMatchers.hasLoanProperty;
-import static api.support.matchers.LoanMatchers.isOpen;
 import static api.support.matchers.LoanMatchers.hasStatus;
+import static api.support.matchers.LoanMatchers.isOpen;
+import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasNullParameter;
@@ -18,12 +20,10 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 
-import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import org.awaitility.Awaitility;
-import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.junit.Before;
@@ -32,6 +32,7 @@ import org.junit.Test;
 import api.support.APITests;
 import api.support.builders.ClaimItemReturnedRequestBuilder;
 import api.support.fakes.FakePubSub;
+import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 
@@ -127,13 +128,11 @@ public class ClaimItemReturnedAPITests extends APITests {
 
     // Five events are expected: one for check-out one for log event, one for the claim
     // and one for log records
-    List<JsonObject> publishedEvents = Awaitility.await()
+    final var publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(FakePubSub::getPublishedEvents, hasSize(4));
 
-    JsonObject event = publishedEvents.stream()
-      .filter(evt -> ITEM_CLAIMED_RETURNED.equalsIgnoreCase(evt.getString("eventType")))
-      .findFirst().orElse(new JsonObject());
+    final var event = publishedEvents.findFirst(byEventType(ITEM_CLAIMED_RETURNED));
 
     assertThat(event, isValidItemClaimedReturnedEvent(loan.getJson()));
     assertThatPublishedLoanLogRecordEventsAreValid();
@@ -146,8 +145,8 @@ public class ClaimItemReturnedAPITests extends APITests {
     assertThat(response.getStatusCode(), is(204));
     assertThat(actualItem, hasStatus("Claimed returned"));
     assertThat(actualLoan, isOpen());
-    assertThat(actualLoan, hasLoanProperty(ACTION, "claimedReturned"));
-    assertThat(actualLoan, hasLoanProperty(ACTION_COMMENT, comment));
-    assertThat(actualLoan, hasLoanProperty(CLAIMED_RETURNED_DATE, dateTime.toString()));
+    assertThat(actualLoan, hasLoanProperty(ACTION, is("claimedReturned")));
+    assertThat(actualLoan, hasLoanProperty(ACTION_COMMENT, is(comment)));
+    assertThat(actualLoan, hasLoanProperty(CLAIMED_RETURNED_DATE, isEquivalentTo(dateTime)));
   }
 }

@@ -10,7 +10,7 @@ import org.folio.circulation.resources.ClaimItemReturnedResource;
 import org.folio.circulation.resources.DeclareClaimedReturnedItemAsMissingResource;
 import org.folio.circulation.resources.DeclareLostResource;
 import org.folio.circulation.resources.DueDateNotRealTimeScheduledNoticeProcessingResource;
-import org.folio.circulation.resources.DueDateScheduledNoticeProcessingResource;
+import org.folio.circulation.resources.LoanScheduledNoticeProcessingResource;
 import org.folio.circulation.resources.EndPatronActionSessionResource;
 import org.folio.circulation.resources.ExpiredSessionProcessingResource;
 import org.folio.circulation.resources.FeeFineScheduledNoticeProcessingResource;
@@ -115,7 +115,7 @@ public class CirculationVerticle extends AbstractVerticle {
       "/circulation/rules/notice-policy-all", client)
       .register(router);
 
-    new DueDateScheduledNoticeProcessingResource(client).register(router);
+    new LoanScheduledNoticeProcessingResource(client).register(router);
     new DueDateNotRealTimeScheduledNoticeProcessingResource(client).register(router);
     new RequestScheduledNoticeProcessingResource(client).register(router);
     new FeeFineScheduledNoticeProcessingResource(client).register(router);

@@ -1,17 +1,16 @@
 package api.requests;
 
+import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static org.folio.HttpStatus.HTTP_CREATED;
-import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.joda.time.DateTime.now;
 import static org.joda.time.DateTimeZone.UTC;
-import static org.joda.time.format.ISODateTimeFormat.dateTime;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -28,6 +27,7 @@ import org.junit.Test;
 
 import api.support.APITests;
 import api.support.builders.RequestBuilder;
+import api.support.builders.RequestByInstanceIdRequestBuilder;
 import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
 
@@ -36,8 +36,6 @@ public class InstanceRequestsAPICreationTests extends APITests {
   public void canCreateATitleLevelRequestForMultipleAvailableItemsAndAMatchingPickupLocationId() {
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     UUID requesterId = usersFixture.jessica().getId();
-    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, UTC);
-    DateTime requestExpirationDate = requestDate.plusDays(30);
 
     IndividualResource instanceMultipleCopies = instancesFixture.basedUponDunkirk();
     IndividualResource holdings = holdingsFixture.defaultWithHoldings(
@@ -55,15 +53,20 @@ public class InstanceRequestsAPICreationTests extends APITests {
     itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(),
       null);
 
-    JsonObject requestBody = createInstanceRequestObject(
-      instanceMultipleCopies.getId(), requesterId, pickupServicePointId,
-      requestDate, requestExpirationDate);
+    JsonObject requestBody = new RequestByInstanceIdRequestBuilder()
+      .withInstanceId(instanceMultipleCopies.getId())
+      .withRequesterId(requesterId)
+      .withPickupServicePointId(pickupServicePointId)
+      .withPatronComments("I need the book")
+      .create();
 
     Response postResponse = requestsFixture.attemptToPlaceForInstance(requestBody);
 
     JsonObject representation = postResponse.getJson();
     validateInstanceRequestResponse(representation, pickupServicePointId,
       instanceMultipleCopies.getId(), item2.getId(), RequestType.PAGE);
+
+    assertThat(representation, hasJsonPath("patronComments", "I need the book"));
   }
 
   @Test
@@ -862,16 +865,13 @@ public class InstanceRequestsAPICreationTests extends APITests {
     UUID requesterId, UUID pickupServicePointId, DateTime requestDate,
     DateTime requestExpirationDate) {
 
-    JsonObject requestBody = new JsonObject();
-
-    write(requestBody, "instanceId", instanceId.toString());
-    write(requestBody, "requestDate", requestDate.toString(dateTime()));
-    write(requestBody, "requesterId", requesterId.toString());
-    write(requestBody, "pickupServicePointId", pickupServicePointId.toString());
-    write(requestBody, "fulfilmentPreference", "Hold Shelf");
-    write(requestBody, "requestExpirationDate", requestExpirationDate);
-
-    return requestBody;
+    return new RequestByInstanceIdRequestBuilder()
+      .withInstanceId(instanceId)
+      .withRequestDate(requestDate)
+      .withRequesterId(requesterId)
+      .withPickupServicePointId(pickupServicePointId)
+      .withRequestExpirationDate(requestExpirationDate)
+      .create();
   }
 
   private void placeHoldRequest(IndividualResource item,

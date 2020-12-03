@@ -168,7 +168,6 @@ public class MoveRequestTests extends APITests {
 
   @Test
   public void canMoveAShelfHoldRequestToAnAvailableItem() {
-
     IndividualResource smallAngryPlanet = itemsFixture
       .basedUponSmallAngryPlanet(itemsFixture.addCallNumberStringComponents("sap"));
     IndividualResource interestingTimes = itemsFixture
@@ -181,8 +180,14 @@ public class MoveRequestTests extends APITests {
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     // make requests for smallAngryPlanet
-    IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, jessica, DateTime.now(DateTimeZone.UTC));
+    IndividualResource requestByJessica = requestsFixture.place(new RequestBuilder()
+      .hold()
+      .fulfilToHoldShelf()
+      .withItemId(smallAngryPlanet.getId())
+      .withRequestDate(DateTime.now(DateTimeZone.UTC))
+      .withRequesterId(jessica.getId())
+      .withPatronComments("Patron comments for smallAngryPlanet")
+      .withPickupServicePointId(servicePointsFixture.cd1().getId()));
 
     // move jessica's hold shelf request from smallAngryPlanet to interestingTimes
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
@@ -202,6 +207,9 @@ public class MoveRequestTests extends APITests {
     assertThat(requestByJessica.getJson().getJsonObject("item").getString("status"), is(ItemStatus.PAGED.getValue()));
     assertThat(requestByJessica.getJson().getInteger("position"), is(1));
     assertThat(requestByJessica.getJson().getString("itemId"), is(interestingTimes.getId().toString()));
+    assertThat(requestByJessica.getJson().getString("patronComments"),
+      is("Patron comments for smallAngryPlanet"));
+
     retainsStoredSummaries(requestByJessica);
     requestHasCallNumberStringProperties(requestByJessica.getJson(), "it");
 
@@ -1021,7 +1029,7 @@ public class MoveRequestTests extends APITests {
     itemCopyALoan = loansClient.get(itemCopyALoan);
 
     // There should be four events published - for "check out", for "log event", for "hold" and for "move"
-    List<JsonObject> publishedEvents = Awaitility.await()
+    final var publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(FakePubSub::getPublishedEvents, hasSize(11));
 

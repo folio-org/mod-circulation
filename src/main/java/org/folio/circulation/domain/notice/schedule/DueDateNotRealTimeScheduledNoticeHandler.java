@@ -2,7 +2,7 @@ package org.folio.circulation.domain.notice.schedule;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.stream.Collectors.toList;
-import static org.folio.circulation.domain.notice.schedule.DueDateScheduledNoticeHandler.REQUIRED_RECORD_TYPES;
+import static org.folio.circulation.domain.notice.schedule.LoanScheduledNoticeHandler.REQUIRED_RECORD_TYPES;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allResultsOf;
 import static org.folio.circulation.support.results.Result.succeeded;
@@ -34,7 +34,7 @@ public class DueDateNotRealTimeScheduledNoticeHandler {
 
   public static DueDateNotRealTimeScheduledNoticeHandler using(Clients clients, DateTime systemTime) {
     return new DueDateNotRealTimeScheduledNoticeHandler(
-      DueDateScheduledNoticeHandler.using(clients, systemTime),
+      LoanScheduledNoticeHandler.using(clients, systemTime),
       new LoanRepository(clients),
       new LoanPolicyRepository(clients),
       PatronNoticeService.using(clients),
@@ -42,7 +42,7 @@ public class DueDateNotRealTimeScheduledNoticeHandler {
       clients.templateNoticeClient());
   }
 
-  private final DueDateScheduledNoticeHandler dueDateScheduledNoticeHandler;
+  private final LoanScheduledNoticeHandler loanScheduledNoticeHandler;
   private final LoanRepository loanRepository;
   private final LoanPolicyRepository loanPolicyRepository;
   private final PatronNoticeService patronNoticeService;
@@ -50,14 +50,14 @@ public class DueDateNotRealTimeScheduledNoticeHandler {
   private final CollectionResourceClient templateNoticesClient;
 
   public DueDateNotRealTimeScheduledNoticeHandler(
-    DueDateScheduledNoticeHandler dueDateScheduledNoticeHandler,
+    LoanScheduledNoticeHandler loanScheduledNoticeHandler,
     LoanRepository loanRepository,
     LoanPolicyRepository loanPolicyRepository,
     PatronNoticeService patronNoticeService,
     PatronNoticePolicyRepository noticePolicyRepository,
     CollectionResourceClient templateNoticesClient) {
 
-    this.dueDateScheduledNoticeHandler = dueDateScheduledNoticeHandler;
+    this.loanScheduledNoticeHandler = loanScheduledNoticeHandler;
     this.loanRepository = loanRepository;
     this.loanPolicyRepository = loanPolicyRepository;
     this.patronNoticeService = patronNoticeService;
@@ -85,7 +85,7 @@ public class DueDateNotRealTimeScheduledNoticeHandler {
 
   private CompletableFuture<Result<List<Pair<ScheduledNotice, LoanAndRelatedRecords>>>> handleFailures(
     List<Result<Pair<ScheduledNotice, LoanAndRelatedRecords>>> results) {
-    results.removeIf(r -> dueDateScheduledNoticeHandler.failedToFindRecordOfType(r, REQUIRED_RECORD_TYPES));
+    results.removeIf(r -> loanScheduledNoticeHandler.failedToFindRecordOfType(r, REQUIRED_RECORD_TYPES));
     return CompletableFuture.completedFuture(results)
       .thenApply(Result::combineAll);
   }
@@ -97,9 +97,9 @@ public class DueDateNotRealTimeScheduledNoticeHandler {
 
     return templateNoticesClient.get(templateId)
       .thenApply(r -> r.next(
-        response -> dueDateScheduledNoticeHandler.failIfTemplateNotFound(response, templateId)))
+        response -> loanScheduledNoticeHandler.failIfTemplateNotFound(response, templateId)))
       .thenCompose(r -> r.after(i -> loanRepository.getById(notice.getLoanId())))
-      .thenCompose(r -> dueDateScheduledNoticeHandler.deleteNoticeIfLoanIsMissingOrIncomplete(r, notice))
+      .thenCompose(r -> loanScheduledNoticeHandler.deleteNoticeIfLoanIsMissingOrIncomplete(r, notice))
       .thenApply(mapResult(LoanAndRelatedRecords::new))
       .thenCompose(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
       .thenApply(mapResult(relatedRecords -> Pair.of(notice, relatedRecords)));
@@ -145,7 +145,7 @@ public class DueDateNotRealTimeScheduledNoticeHandler {
     ScheduledNotice notice = noticeWithContext.getLeft();
     Loan loan = noticeWithContext.getRight().getLoan();
 
-    return !dueDateScheduledNoticeHandler.noticeIsNotRelevant(notice, loan);
+    return !loanScheduledNoticeHandler.noticeIsNotRelevant(notice, loan);
   }
 
   private CompletableFuture<Result<List<Pair<ScheduledNotice, LoanAndRelatedRecords>>>> updateGroupedNotice(
@@ -154,7 +154,7 @@ public class DueDateNotRealTimeScheduledNoticeHandler {
     CompletableFuture<Result<ScheduledNotice>> future = completedFuture(succeeded(null));
     for (Pair<ScheduledNotice, LoanAndRelatedRecords> notice : noticeGroup) {
       future = future.thenCompose(r -> r.after(v ->
-        dueDateScheduledNoticeHandler.updateNotice(notice.getRight(), notice.getLeft())));
+        loanScheduledNoticeHandler.updateNotice(notice.getRight(), notice.getLeft())));
     }
     return future.thenApply(mapResult(v -> noticeGroup));
   }

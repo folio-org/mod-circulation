@@ -6,15 +6,15 @@ import static api.support.http.InterfaceUrls.overrideCheckOutByBarcodeUrl;
 
 import java.util.UUID;
 
-import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 
 import api.support.RestAssuredClient;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
-import io.vertx.core.json.JsonObject;
-
 import api.support.builders.OverrideCheckOutByBarcodeRequestBuilder;
+import api.support.http.CheckOutResource;
+import api.support.http.IndividualResource;
+import io.vertx.core.json.JsonObject;
 
 public class CheckOutFixture {
   private final UsersFixture usersFixture;
@@ -27,20 +27,18 @@ public class CheckOutFixture {
     restAssuredClient = new RestAssuredClient(getOkapiHeadersFromContext());
   }
 
-  public IndividualResource checkOutByBarcode(IndividualResource item) {
-
+  public CheckOutResource checkOutByBarcode(IndividualResource item) {
     return checkOutByBarcode(item, usersFixture.jessica());
   }
 
-  public IndividualResource checkOutByBarcode(IndividualResource item, IndividualResource to) {
-
+  public CheckOutResource checkOutByBarcode(IndividualResource item, IndividualResource to) {
     return checkOutByBarcode(new CheckOutByBarcodeRequestBuilder()
       .forItem(item)
       .to(to)
       .at(defaultServicePoint()));
   }
 
-  public IndividualResource checkOutByBarcode(IndividualResource item,
+  public CheckOutResource checkOutByBarcode(IndividualResource item,
     IndividualResource to, DateTime loanDate) {
 
     return checkOutByBarcode(new CheckOutByBarcodeRequestBuilder()
@@ -50,12 +48,11 @@ public class CheckOutFixture {
       .at(defaultServicePoint()));
   }
 
-  public IndividualResource checkOutByBarcode(CheckOutByBarcodeRequestBuilder builder) {
+  public CheckOutResource checkOutByBarcode(CheckOutByBarcodeRequestBuilder builder) {
     JsonObject request = builder.create();
 
-    return new IndividualResource(
-      restAssuredClient.post(request, checkOutByBarcodeUrl(), 201,
-        "check-out-by-barcode-request"));
+    return new CheckOutResource(restAssuredClient.post(request, checkOutByBarcodeUrl(), 201,
+      "check-out-by-barcode-request"));
   }
 
   public Response attemptCheckOutByBarcode(IndividualResource item, IndividualResource to) {
