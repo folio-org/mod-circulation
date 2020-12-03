@@ -1,3 +1,7 @@
+## 19.3.0 (in-progress)
+
+* Does not charge overdue fees when fee refund period has passed (CIRC-1000)
+
 ## 19.2.0 2020-10-15
 
 * Publishes audit log events for loans (CIRC-933)
