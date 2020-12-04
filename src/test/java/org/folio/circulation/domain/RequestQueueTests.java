@@ -40,15 +40,35 @@ class RequestQueueTests {
 
   @Nested
   class whenQueueIncludesMultipleRequests {
+    final Request firstRequest = requestAtPosition(itemId, 1);
+    final Request secondRequest = requestAtPosition(itemId, 2);
+    final Request thirdRequest = requestAtPosition(itemId, 3);
+    final Request fourthRequest = requestAtPosition(itemId, 4);
+
+    final RequestQueue queue = requestQueueOf(firstRequest, secondRequest, thirdRequest, fourthRequest);
+
+    @Test
+    void canRemoveFirstRequestInQueue() {
+      queue.remove(firstRequest);
+
+      assertThat(queue, hasSize(3));
+
+      assertThat(queue, doesNotInclude(firstRequest));
+      assertThat(queue, includes(secondRequest));
+      assertThat(queue, includes(thirdRequest));
+      assertThat(queue, includes(fourthRequest));
+
+      assertThat(firstRequest, hasNoPosition());
+      assertThat(secondRequest, is(inPosition(1)));
+      assertThat(thirdRequest, is(inPosition(2)));
+      assertThat(fourthRequest, is(inPosition(3)));
+
+      assertThat(queue.getRequestsWithChangedPosition(),
+        contains(fourthRequest, thirdRequest, secondRequest));
+    }
+
     @Test
     void canRemoveLastRequestInQueue() {
-      final var firstRequest = requestAtPosition(itemId, 1);
-      final var secondRequest = requestAtPosition(itemId, 2);
-      final var thirdRequest = requestAtPosition(itemId, 3);
-      final var fourthRequest = requestAtPosition(itemId, 4);
-
-      final var queue = requestQueueOf(firstRequest, secondRequest, thirdRequest, fourthRequest);
-
       queue.remove(fourthRequest);
 
       assertThat(queue, hasSize(3));
@@ -67,40 +87,7 @@ class RequestQueueTests {
     }
 
     @Test
-    void canRemoveFirstRequestInQueue() {
-      final var firstRequest = requestAtPosition(itemId, 1);
-      final var secondRequest = requestAtPosition(itemId, 2);
-      final var thirdRequest = requestAtPosition(itemId, 3);
-      final var fourthRequest = requestAtPosition(itemId, 4);
-
-      final var queue = requestQueueOf(firstRequest, secondRequest, thirdRequest, fourthRequest);
-
-      queue.remove(firstRequest);
-
-      assertThat(queue, hasSize(3));
-
-      assertThat(queue, doesNotInclude(firstRequest));
-      assertThat(queue, includes(secondRequest));
-      assertThat(queue, includes(thirdRequest));
-      assertThat(queue, includes(fourthRequest));
-
-      assertThat(firstRequest, hasNoPosition());
-      assertThat(secondRequest, is(inPosition(1)));
-      assertThat(thirdRequest, is(inPosition(2)));
-      assertThat(fourthRequest, is(inPosition(3)));
-
-      assertThat(queue.getRequestsWithChangedPosition(), contains(fourthRequest, thirdRequest, secondRequest));
-    }
-
-    @Test
     void canRemoveMiddleRequestInQueue() {
-      final var firstRequest = requestAtPosition(itemId, 1);
-      final var secondRequest = requestAtPosition(itemId, 2);
-      final var thirdRequest = requestAtPosition(itemId, 3);
-      final var fourthRequest = requestAtPosition(itemId, 4);
-
-      final var queue = requestQueueOf(firstRequest, secondRequest, thirdRequest, fourthRequest);
-
       queue.remove(secondRequest);
 
       assertThat(queue, hasSize(3));
@@ -115,7 +102,8 @@ class RequestQueueTests {
       assertThat(thirdRequest, is(inPosition(2)));
       assertThat(fourthRequest, is(inPosition(3)));
 
-      assertThat(queue.getRequestsWithChangedPosition(), contains(fourthRequest, thirdRequest));
+      assertThat(queue.getRequestsWithChangedPosition(),
+        contains(fourthRequest, thirdRequest));
     }
   }
 
