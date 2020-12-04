@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test;
 
 import api.support.builders.RequestBuilder;
 
-class RequestQueueTests {
+class RequestQueueRemoveRequestTests {
   private final UUID itemId = UUID.randomUUID();
 
   @Test
