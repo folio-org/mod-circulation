@@ -17,31 +17,17 @@ import api.support.http.ItemResource;
 public class RequestsAPIDeletionTests extends APITests {
   @Test
   public void canDeleteAllRequests() {
-    UUID requesterId = usersFixture.rebecca().getId();
-
     final ItemResource nod = itemsFixture.basedUponNod();
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final ItemResource temeraire = itemsFixture.basedUponTemeraire();
-    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     checkOutFixture.checkOutByBarcode(nod);
     checkOutFixture.checkOutByBarcode(smallAngryPlanet);
     checkOutFixture.checkOutByBarcode(temeraire);
 
-    requestsFixture.place(new RequestBuilder()
-      .withItemId(nod.getId())
-      .withPickupServicePointId(pickupServicePointId)
-      .withRequesterId(requesterId));
-
-    requestsFixture.place(new RequestBuilder()
-      .withItemId(smallAngryPlanet.getId())
-      .withPickupServicePointId(pickupServicePointId)
-      .withRequesterId(requesterId));
-
-    requestsFixture.place(new RequestBuilder()
-      .withItemId(temeraire.getId())
-      .withPickupServicePointId(pickupServicePointId)
-      .withRequesterId(requesterId));
+    requestsFixture.place(requestFor(nod));
+    requestsFixture.place(requestFor(smallAngryPlanet));
+    requestsFixture.place(requestFor(temeraire));
 
     requestsFixture.deleteAllRequests();
 
@@ -53,34 +39,17 @@ public class RequestsAPIDeletionTests extends APITests {
 
   @Test
   public void canDeleteAnIndividualRequest() {
-    UUID requesterId = usersFixture.rebecca().getId();
-
     final ItemResource nod = itemsFixture.basedUponNod();
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final ItemResource temeraire = itemsFixture.basedUponTemeraire();
-    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     checkOutFixture.checkOutByBarcode(nod);
     checkOutFixture.checkOutByBarcode(smallAngryPlanet);
     checkOutFixture.checkOutByBarcode(temeraire);
 
-    final UUID firstRequestId = requestsFixture.place(new RequestBuilder()
-      .withItemId(nod.getId())
-      .withPickupServicePointId(pickupServicePointId)
-      .withRequesterId(requesterId))
-      .getId();
-
-    final UUID secondRequestId = requestsFixture.place(new RequestBuilder()
-      .withItemId(smallAngryPlanet.getId())
-      .withPickupServicePointId(pickupServicePointId)
-      .withRequesterId(requesterId))
-      .getId();
-
-    final UUID thirdRequestId = requestsFixture.place(new RequestBuilder()
-      .withItemId(temeraire.getId())
-      .withPickupServicePointId(pickupServicePointId)
-      .withRequesterId(requesterId))
-      .getId();
+    final UUID firstRequestId = requestsFixture.place(requestFor(nod)).getId();
+    final UUID secondRequestId = requestsFixture.place(requestFor(smallAngryPlanet)).getId();
+    final UUID thirdRequestId = requestsFixture.place(requestFor(temeraire)).getId();
 
     requestsFixture.deleteRequest(secondRequestId);
 
@@ -97,5 +66,12 @@ public class RequestsAPIDeletionTests extends APITests {
 
     assertThat(allRequests.size(), is(2));
     assertThat(allRequests.totalRecords(), is(2));
+  }
+
+  private RequestBuilder requestFor(ItemResource item) {
+    return new RequestBuilder()
+      .withItemId(item.getId())
+      .withPickupServicePoint(servicePointsFixture.cd1())
+      .withRequesterId(usersFixture.rebecca().getId());
   }
 }
