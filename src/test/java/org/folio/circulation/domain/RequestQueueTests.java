@@ -18,10 +18,10 @@ import org.junit.jupiter.api.Test;
 import api.support.builders.RequestBuilder;
 
 class RequestQueueTests {
+  private final UUID itemId = UUID.randomUUID();
+
   @Test
   void canRemoveOnlyRequestInQueue() {
-    final var itemId = UUID.randomUUID();
-
     final var onlyRequest = requestAtPosition(itemId, 1);
 
     final var queue = requestQueueOf(onlyRequest);
@@ -39,8 +39,6 @@ class RequestQueueTests {
 
   @Test
   void canRemoveLastRequestInQueue() {
-    final var itemId = UUID.randomUUID();
-
     final var firstRequest = requestAtPosition(itemId, 1);
     final var secondRequest = requestAtPosition(itemId, 2);
     final var thirdRequest = requestAtPosition(itemId, 3);
@@ -64,8 +62,6 @@ class RequestQueueTests {
 
   @Test
   void canRemoveFirstRequestInQueue() {
-    final var itemId = UUID.randomUUID();
-
     final var firstRequest = requestAtPosition(itemId, 1);
     final var secondRequest = requestAtPosition(itemId, 2);
     final var thirdRequest = requestAtPosition(itemId, 3);
@@ -89,8 +85,6 @@ class RequestQueueTests {
 
   @Test
   void canRemoveMiddleRequestInQueue() {
-    final var itemId = UUID.randomUUID();
-
     final var firstRequest = requestAtPosition(itemId, 1);
     final var secondRequest = requestAtPosition(itemId, 2);
     final var thirdRequest = requestAtPosition(itemId, 3);
