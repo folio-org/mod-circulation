@@ -18,6 +18,7 @@ import static api.support.matchers.TextDateTimeMatcher.withinSecondsBeforeNow;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
+import static api.support.matchers.LoanAccountMatcher.hasNoOverdueFine;
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasNoJsonPath;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.hamcrest.CoreMatchers.allOf;
@@ -37,6 +38,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
+import static org.joda.time.DateTime.now;
+import static org.joda.time.DateTimeZone.UTC;
+
 import org.awaitility.Awaitility;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.Matcher;
@@ -52,6 +56,7 @@ import api.support.builders.DeclareItemLostRequestBuilder;
 import api.support.builders.ItemBuilder;
 import api.support.builders.LostItemFeePolicyBuilder;
 import api.support.fakes.FakePubSub;
+import api.support.fixtures.policies.PoliciesToActivate;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
@@ -451,6 +456,37 @@ public class DeclareLostAPITests extends APITests {
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("The item is already declared lost"),
       hasParameter("itemId", itemId.toString()))));
+  }
+
+  @Test
+  public void shouldNotChargeOverdueFeesDuringCheckInWhenItemDeclaredLostAndRefundFeePeriodHasPassed() {
+    ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+
+    IndividualResource overduePolicy = overdueFinePoliciesFixture.facultyStandard();
+    IndividualResource lostItemPolicy = lostItemFeePoliciesFixture.ageToLostAfterOneWeek();
+
+    policiesActivation.use(PoliciesToActivate.builder()
+      .lostItemPolicy(lostItemPolicy)
+      .overduePolicy(overduePolicy));
+
+    IndividualResource loan = checkOutFixture
+      .checkOutByBarcode(item, usersFixture.jessica());
+
+    // advance system time by five weeks to accrue fines before declared lost
+    final DateTime declareLostDate = now(UTC).plusWeeks(5);
+    mockClockManagerToReturnFixedDateTime(declareLostDate);
+
+    final DeclareItemLostRequestBuilder builder = new DeclareItemLostRequestBuilder()
+      .forLoanId(loan.getId())
+      .on(declareLostDate)
+      .withNoComment();
+    declareLostFixtures.declareItemLost(builder);
+
+    final DateTime checkInDate = now(UTC).plusWeeks(6);
+    mockClockManagerToReturnFixedDateTime(checkInDate);
+    checkInFixture.checkInByBarcode(item, checkInDate);
+
+    assertThat(loansFixture.getLoanById(loan.getId()), hasNoOverdueFine());
   }
 
   @Test

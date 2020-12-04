@@ -58,6 +58,13 @@ public class CheckInFixture {
       .at(servicePointId));
   }
 
+  public CheckInByBarcodeResponse checkInByBarcode(IndividualResource item, DateTime checkInDate) {
+    return checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+      .forItem(item)
+      .on(checkInDate)
+      .at(defaultServicePoint()));
+  }
+
   public CheckInByBarcodeResponse checkInByBarcode(IndividualResource item,
     UUID servicePointId) {
 
