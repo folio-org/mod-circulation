@@ -13,6 +13,7 @@ import static org.hamcrest.collection.IsIterableContainingInOrder.contains;
 
 import java.util.UUID;
 
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import api.support.builders.RequestBuilder;
@@ -37,82 +38,85 @@ class RequestQueueTests {
     assertThat(queue.getRequestsWithChangedPosition(), is(empty()));
   }
 
-  @Test
-  void canRemoveLastRequestInQueue() {
-    final var firstRequest = requestAtPosition(itemId, 1);
-    final var secondRequest = requestAtPosition(itemId, 2);
-    final var thirdRequest = requestAtPosition(itemId, 3);
-    final var fourthRequest = requestAtPosition(itemId, 4);
+  @Nested
+  class whenQueueIncludesMultipleRequests {
+    @Test
+    void canRemoveLastRequestInQueue() {
+      final var firstRequest = requestAtPosition(itemId, 1);
+      final var secondRequest = requestAtPosition(itemId, 2);
+      final var thirdRequest = requestAtPosition(itemId, 3);
+      final var fourthRequest = requestAtPosition(itemId, 4);
 
-    final var queue = requestQueueOf(firstRequest, secondRequest, thirdRequest, fourthRequest);
+      final var queue = requestQueueOf(firstRequest, secondRequest, thirdRequest, fourthRequest);
 
-    queue.remove(fourthRequest);
+      queue.remove(fourthRequest);
 
-    assertThat(queue, hasSize(3));
+      assertThat(queue, hasSize(3));
 
-    assertThat(queue, includes(firstRequest));
-    assertThat(queue, includes(secondRequest));
-    assertThat(queue, includes(thirdRequest));
-    assertThat(queue, doesNotInclude(fourthRequest));
+      assertThat(queue, includes(firstRequest));
+      assertThat(queue, includes(secondRequest));
+      assertThat(queue, includes(thirdRequest));
+      assertThat(queue, doesNotInclude(fourthRequest));
 
-    assertThat(firstRequest, is(inPosition(1)));
-    assertThat(secondRequest, is(inPosition(2)));
-    assertThat(thirdRequest, is(inPosition(3)));
-    assertThat(fourthRequest, hasNoPosition());
+      assertThat(firstRequest, is(inPosition(1)));
+      assertThat(secondRequest, is(inPosition(2)));
+      assertThat(thirdRequest, is(inPosition(3)));
+      assertThat(fourthRequest, hasNoPosition());
 
-    assertThat(queue.getRequestsWithChangedPosition(), is(empty()));
-  }
+      assertThat(queue.getRequestsWithChangedPosition(), is(empty()));
+    }
 
-  @Test
-  void canRemoveFirstRequestInQueue() {
-    final var firstRequest = requestAtPosition(itemId, 1);
-    final var secondRequest = requestAtPosition(itemId, 2);
-    final var thirdRequest = requestAtPosition(itemId, 3);
-    final var fourthRequest = requestAtPosition(itemId, 4);
+    @Test
+    void canRemoveFirstRequestInQueue() {
+      final var firstRequest = requestAtPosition(itemId, 1);
+      final var secondRequest = requestAtPosition(itemId, 2);
+      final var thirdRequest = requestAtPosition(itemId, 3);
+      final var fourthRequest = requestAtPosition(itemId, 4);
 
-    final var queue = requestQueueOf(firstRequest, secondRequest, thirdRequest, fourthRequest);
+      final var queue = requestQueueOf(firstRequest, secondRequest, thirdRequest, fourthRequest);
 
-    queue.remove(firstRequest);
+      queue.remove(firstRequest);
 
-    assertThat(queue, hasSize(3));
+      assertThat(queue, hasSize(3));
 
-    assertThat(queue, doesNotInclude(firstRequest));
-    assertThat(queue, includes(secondRequest));
-    assertThat(queue, includes(thirdRequest));
-    assertThat(queue, includes(fourthRequest));
+      assertThat(queue, doesNotInclude(firstRequest));
+      assertThat(queue, includes(secondRequest));
+      assertThat(queue, includes(thirdRequest));
+      assertThat(queue, includes(fourthRequest));
 
-    assertThat(firstRequest, hasNoPosition());
-    assertThat(secondRequest, is(inPosition(1)));
-    assertThat(thirdRequest, is(inPosition(2)));
-    assertThat(fourthRequest, is(inPosition(3)));
+      assertThat(firstRequest, hasNoPosition());
+      assertThat(secondRequest, is(inPosition(1)));
+      assertThat(thirdRequest, is(inPosition(2)));
+      assertThat(fourthRequest, is(inPosition(3)));
 
-    assertThat(queue.getRequestsWithChangedPosition(), contains(fourthRequest, thirdRequest, secondRequest));
-  }
+      assertThat(queue.getRequestsWithChangedPosition(), contains(fourthRequest, thirdRequest, secondRequest));
+    }
 
-  @Test
-  void canRemoveMiddleRequestInQueue() {
-    final var firstRequest = requestAtPosition(itemId, 1);
-    final var secondRequest = requestAtPosition(itemId, 2);
-    final var thirdRequest = requestAtPosition(itemId, 3);
-    final var fourthRequest = requestAtPosition(itemId, 4);
+    @Test
+    void canRemoveMiddleRequestInQueue() {
+      final var firstRequest = requestAtPosition(itemId, 1);
+      final var secondRequest = requestAtPosition(itemId, 2);
+      final var thirdRequest = requestAtPosition(itemId, 3);
+      final var fourthRequest = requestAtPosition(itemId, 4);
 
-    final var queue = requestQueueOf(firstRequest, secondRequest, thirdRequest, fourthRequest);
+      final var queue = requestQueueOf(firstRequest, secondRequest, thirdRequest, fourthRequest);
 
-    queue.remove(secondRequest);
+      queue.remove(secondRequest);
 
-    assertThat(queue, hasSize(3));
+      assertThat(queue, hasSize(3));
 
-    assertThat(queue, includes(firstRequest));
-    assertThat(queue, doesNotInclude(secondRequest));
-    assertThat(queue, includes(thirdRequest));
-    assertThat(queue, includes(fourthRequest));
+      assertThat(queue, includes(firstRequest));
+      assertThat(queue, doesNotInclude(secondRequest));
+      assertThat(queue, includes(thirdRequest));
+      assertThat(queue, includes(fourthRequest));
 
-    assertThat(firstRequest, is(inPosition(1)));
-    assertThat(secondRequest, hasNoPosition());
-    assertThat(thirdRequest, is(inPosition(2)));
-    assertThat(fourthRequest, is(inPosition(3)));
+      assertThat(firstRequest, is(inPosition(1)));
+      assertThat(secondRequest, hasNoPosition());
+      assertThat(thirdRequest, is(inPosition(2)));
+      assertThat(fourthRequest, is(inPosition(3)));
 
-    assertThat(queue.getRequestsWithChangedPosition(), contains(fourthRequest, thirdRequest));
+      assertThat(queue.getRequestsWithChangedPosition(), contains(fourthRequest, thirdRequest));
+    }
   }
 
   private Request requestAtPosition(UUID itemId, Integer position) {
