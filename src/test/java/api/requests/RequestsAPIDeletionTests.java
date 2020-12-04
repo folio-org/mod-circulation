@@ -8,9 +8,9 @@ import static org.hamcrest.core.Is.is;
 import org.junit.Test;
 
 import api.support.APITests;
-import api.support.MultipleJsonRecords;
 import api.support.builders.RequestBuilder;
 import api.support.http.ItemResource;
+import api.support.http.UserResource;
 
 public class RequestsAPIDeletionTests extends APITests {
   @Test
@@ -19,22 +19,17 @@ public class RequestsAPIDeletionTests extends APITests {
 
     checkOutFixture.checkOutByBarcode(nod);
 
-    final var firstRequestId = requestsFixture.place(requestFor(nod)).getId();
-    final var secondRequestId = requestsFixture.place(requestFor(nod)).getId();
-    final var thirdRequestId = requestsFixture.place(requestFor(nod)).getId();
+    final var firstRequest = requestsFixture.place(requestFor(nod, usersFixture.rebecca()));
+    final var secondRequest = requestsFixture.place(requestFor(nod, usersFixture.charlotte()));
+    final var thirdRequest = requestsFixture.place(requestFor(nod, usersFixture.james()));
 
-    requestsFixture.deleteRequest(secondRequestId);
+    requestsFixture.deleteRequest(secondRequest.getId());
 
-    assertThat(requestsFixture.getById(firstRequestId).getStatusCode(),
-      is(HTTP_OK));
+    assertThat(requestsFixture.getById(firstRequest.getId()).getStatusCode(), is(HTTP_OK));
+    assertThat(requestsFixture.getById(secondRequest.getId()).getStatusCode(), is(HTTP_NOT_FOUND));
+    assertThat(requestsFixture.getById(thirdRequest.getId()).getStatusCode(), is(HTTP_OK));
 
-    assertThat(requestsFixture.getById(secondRequestId).getStatusCode(),
-      is(HTTP_NOT_FOUND));
-
-    assertThat(requestsFixture.getById(thirdRequestId).getStatusCode(),
-      is(HTTP_OK));
-
-    MultipleJsonRecords allRequests = requestsFixture.getAllRequests();
+    final var allRequests = requestsFixture.getAllRequests();
 
     assertThat(allRequests.size(), is(2));
     assertThat(allRequests.totalRecords(), is(2));
@@ -42,9 +37,9 @@ public class RequestsAPIDeletionTests extends APITests {
 
   @Test
   public void canDeleteAllRequests() {
-    final ItemResource nod = itemsFixture.basedUponNod();
-    final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    final ItemResource temeraire = itemsFixture.basedUponTemeraire();
+    final var nod = itemsFixture.basedUponNod();
+    final var smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final var temeraire = itemsFixture.basedUponTemeraire();
 
     checkOutFixture.checkOutByBarcode(nod);
     checkOutFixture.checkOutByBarcode(smallAngryPlanet);
@@ -56,16 +51,20 @@ public class RequestsAPIDeletionTests extends APITests {
 
     requestsFixture.deleteAllRequests();
 
-    MultipleJsonRecords allRequests = requestsFixture.getAllRequests();
+    final var allRequests = requestsFixture.getAllRequests();
 
     assertThat(allRequests.size(), is(0));
     assertThat(allRequests.totalRecords(), is(0));
   }
 
   private RequestBuilder requestFor(ItemResource item) {
+    return requestFor(item, usersFixture.rebecca());
+  }
+
+  private RequestBuilder requestFor(ItemResource item, UserResource requester) {
     return new RequestBuilder()
       .withItemId(item.getId())
       .withPickupServicePoint(servicePointsFixture.cd1())
-      .withRequesterId(usersFixture.rebecca().getId());
+      .withRequesterId(requester.getId());
   }
 }
