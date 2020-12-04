@@ -324,7 +324,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
   }
 
   @Test
-  public void shouldNotChargeOverdueOnCheckinWhenAgedToLostAndRefundFeePeriodPassed() {
+  public void shouldNotChargeOverdueFeesDuringCheckInWhenItemHasAgedToLostAndRefundFeePeriodHasPassed() {
     // for a loan that charges both lost fees and overdue fines
     // where the policies are set such that:
     // 1. the item charges overdue fees on checkin
@@ -348,7 +348,6 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     final DateTime checkInDate = now(UTC).plusWeeks(9);
     mockClockManagerToReturnFixedDateTime(checkInDate);
     checkInFixture.checkInByBarcode(result.getItem(), checkInDate);
-
     assertThat(loansFixture.getLoanById(loanId), hasNoOverdueFine());
 
   }

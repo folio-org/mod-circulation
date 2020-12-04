@@ -713,7 +713,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   }
 
   @Test
-  public void shouldNotChargeOverdueOnRenewalWhenItemAgedToLostAndRefundFeePeriodPast() {
+  public void shouldNotChargeOverdueFeesDuringRenewalWhenItemHasAgedToLostAndRefundFeePeriodHasPassed() {
 
     IndividualResource overDueFinePolicy = overdueFinePoliciesFixture.facultyStandard();
     IndividualResource lostItemPolicy = lostItemFeePoliciesFixture.ageToLostAfterOneWeek();
@@ -733,7 +733,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     assertThat(renewedLoan, hasNoOverdueFine());
   }
 
-  public void shouldNotChargeOverdueOnRenewalWhenItemDeclaredLostAndRefundFeePeriodPassed() {
+  public void shouldNotChargeOverdueFeesDuringRenewalWhenItemIsDeclaredLostAndRefundFeePeriodHasPassed() {
     ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
     UserResource user = usersFixture.jessica();
 
@@ -745,8 +745,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
       .overduePolicy(overduePolicy)
     );
 
-    IndividualResource loan = checkOutFixture
-      .checkOutByBarcode(item, user);
+    IndividualResource loan = checkOutFixture.checkOutByBarcode(item, user);
 
     // advance system time by five weeks to accrue fines before declared lost
     final DateTime declareLostDate = now(UTC).plusWeeks(5);

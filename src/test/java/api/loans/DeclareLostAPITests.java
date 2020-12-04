@@ -459,7 +459,7 @@ public class DeclareLostAPITests extends APITests {
   }
 
   @Test
-  public void shouldNotChargeOverdueOnCheckinWhenItemLostAndRefundFeePeriodPassed() {
+  public void shouldNotChargeOverdueFeesDuringCheckInWhenItemDeclaredLostAndRefundFeePeriodHasPassed() {
     ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
 
     IndividualResource overduePolicy = overdueFinePoliciesFixture.facultyStandard();
@@ -467,8 +467,7 @@ public class DeclareLostAPITests extends APITests {
 
     policiesActivation.use(PoliciesToActivate.builder()
       .lostItemPolicy(lostItemPolicy)
-      .overduePolicy(overduePolicy)
-    );
+      .overduePolicy(overduePolicy));
 
     IndividualResource loan = checkOutFixture
       .checkOutByBarcode(item, usersFixture.jessica());
