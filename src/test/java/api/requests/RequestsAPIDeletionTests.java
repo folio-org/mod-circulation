@@ -6,9 +6,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 
-import org.folio.circulation.support.http.client.Response;
 import org.junit.Test;
 
 import api.support.APITests;
@@ -33,22 +31,19 @@ public class RequestsAPIDeletionTests extends APITests {
     requestsFixture.place(new RequestBuilder()
       .withItemId(nod.getId())
       .withPickupServicePointId(pickupServicePointId)
-      .withRequesterId(requesterId))
-      .getId();
+      .withRequesterId(requesterId));
 
     requestsFixture.place(new RequestBuilder()
       .withItemId(smallAngryPlanet.getId())
       .withPickupServicePointId(pickupServicePointId)
-      .withRequesterId(requesterId))
-      .getId();
+      .withRequesterId(requesterId));
 
     requestsFixture.place(new RequestBuilder()
       .withItemId(temeraire.getId())
       .withPickupServicePointId(pickupServicePointId)
-      .withRequesterId(requesterId))
-      .getId();
+      .withRequesterId(requesterId));
 
-    Response deleteResponse = requestsFixture.deleteAllRequests();
+    requestsFixture.deleteAllRequests();
 
     MultipleJsonRecords allRequests = requestsFixture.getAllRequests();
 
@@ -86,8 +81,6 @@ public class RequestsAPIDeletionTests extends APITests {
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(requesterId))
       .getId();
-
-    CompletableFuture<Response> deleteCompleted = new CompletableFuture<>();
 
     requestsFixture.deleteRequest(secondRequestId);
 
