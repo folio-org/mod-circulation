@@ -1,7 +1,8 @@
 package api.requests;
 
-import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
-import static java.net.HttpURLConnection.HTTP_OK;
+import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
+import static org.folio.HttpStatus.HTTP_NOT_FOUND;
+import static org.folio.HttpStatus.HTTP_OK;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
@@ -25,9 +26,9 @@ public class RequestsAPIDeletionTests extends APITests {
 
     requestsFixture.deleteRequest(secondRequest.getId());
 
-    assertThat(requestsFixture.getById(firstRequest.getId()).getStatusCode(), is(HTTP_OK));
-    assertThat(requestsFixture.getById(secondRequest.getId()).getStatusCode(), is(HTTP_NOT_FOUND));
-    assertThat(requestsFixture.getById(thirdRequest.getId()).getStatusCode(), is(HTTP_OK));
+    assertThat(requestsFixture.getById(firstRequest.getId()), hasStatus(HTTP_OK));
+    assertThat(requestsFixture.getById(secondRequest.getId()), hasStatus(HTTP_NOT_FOUND));
+    assertThat(requestsFixture.getById(thirdRequest.getId()), hasStatus(HTTP_OK));
 
     final var allRequests = requestsFixture.getAllRequests();
 
