@@ -117,7 +117,7 @@ public class AccountRepository {
 
     return getFeeFineActionsForAccounts(multipleLoans.getRecords())
         .thenApply(r -> r.map(accountMap -> multipleLoans.mapRecords(
-            loan -> loan.withFeeFineActions(accountMap.getOrDefault(loan.getId(),
+            account -> account.withFeeFineActions(accountMap.getOrDefault(account.getId(),
                 new ArrayList<>())))));
   }
 

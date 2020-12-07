@@ -95,6 +95,13 @@ public final class AgeToLostFixture {
     return createLoanAgeToLostAndChargeFees(UnaryOperator.identity(), builder);
   }
 
+  public AgeToLostResult createLoanAgeToLostAndChargeFees(
+    LostItemFeePolicyBuilder lostItemFeePolicyBuilder, NoticePolicyBuilder noticePolicyBuilder) {
+
+    return createLoanAgeToLostAndChargeFeesWithNotice(UnaryOperator.identity(),
+      lostItemFeePolicyBuilder, noticePolicyBuilder);
+  }
+
   public AgeToLostResult createLoanAgeToLostAndChargeFeesWithNotice(
     LostItemFeePolicyBuilder lostItemFeePolicyBuilder, NoticePolicyBuilder noticePolicyBuilder) {
 

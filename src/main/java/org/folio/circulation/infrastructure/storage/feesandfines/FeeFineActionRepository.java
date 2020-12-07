@@ -2,6 +2,8 @@ package org.folio.circulation.infrastructure.storage.feesandfines;
 
 import static java.util.Objects.isNull;
 import static java.util.concurrent.CompletableFuture.allOf;
+import static org.folio.circulation.support.fetching.MultipleCqlIndexValuesCriteria.byId;
+import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
@@ -11,6 +13,7 @@ import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.FeeFineAction;
+import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.representations.StoredFeeFineAction;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
@@ -46,6 +49,13 @@ public class FeeFineActionRepository {
       .mapTo(FeeFineAction::from)
       .whenNotFound(succeeded(null))
       .fetch(id);
+  }
+
+  public CompletableFuture<Result<Collection<FeeFineAction>>> findByIds(Collection<String> ids) {
+    return findWithMultipleCqlIndexValues(feeFineActionsStorageClient, "feefineactions",
+      FeeFineAction::from)
+      .find(byId(ids))
+      .thenApply(r -> r.map(MultipleRecords::getRecords));
   }
 
   public CompletableFuture<Result<Void>> createAll(

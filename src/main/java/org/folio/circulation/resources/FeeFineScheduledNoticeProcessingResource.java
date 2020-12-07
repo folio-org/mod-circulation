@@ -1,8 +1,12 @@
 package org.folio.circulation.resources;
 
+import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.AGED_TO_LOST_FINE_CHARGED;
+import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.AGED_TO_LOST_RETURNED;
+import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.OVERDUE_FINE_RENEWED;
+import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.OVERDUE_FINE_RETURNED;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
-import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.MultipleRecords;
@@ -20,6 +24,12 @@ import org.folio.circulation.support.http.client.PageLimit;
 import io.vertx.core.http.HttpClient;
 
 public class FeeFineScheduledNoticeProcessingResource extends ScheduledNoticeProcessingResource {
+  private static final List<TriggeringEvent> TRIGGERING_EVENTS_TO_PROCESS = List.of(
+    OVERDUE_FINE_RETURNED,
+    OVERDUE_FINE_RENEWED,
+    AGED_TO_LOST_FINE_CHARGED,
+    AGED_TO_LOST_RETURNED
+  );
 
   public FeeFineScheduledNoticeProcessingResource(HttpClient client) {
     super("/circulation/fee-fine-scheduled-notices-processing", client);
@@ -31,9 +41,7 @@ public class FeeFineScheduledNoticeProcessingResource extends ScheduledNoticePro
     ScheduledNoticesRepository scheduledNoticesRepository, PageLimit pageLimit) {
 
     return scheduledNoticesRepository.findNotices(
-      ClockManager.getClockManager().getDateTime(), true,
-      Arrays.asList(TriggeringEvent.OVERDUE_FINE_RETURNED, TriggeringEvent.OVERDUE_FINE_RENEWED,
-        TriggeringEvent.AGED_TO_LOST_FINE_CHARGED),
+      ClockManager.getClockManager().getDateTime(), true, TRIGGERING_EVENTS_TO_PROCESS,
       CqlSortBy.ascending("nextRunTime"), pageLimit);
   }
 
