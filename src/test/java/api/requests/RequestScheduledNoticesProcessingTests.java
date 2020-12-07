@@ -372,6 +372,42 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
     assertThat(scheduledNoticesClient.getAll(), hasSize(0));
   }
 
+  @Test
+  public void scheduledNoticesShouldNotBeSentAfterRequestCancellation() {
+    JsonObject noticeConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(templateId)
+      .withHoldShelfExpirationEvent()
+      .withBeforeTiming(Period.minutes(35))
+      .recurring(Period.minutes(5))
+      .sendInRealTime(true)
+      .create();
+    setupNoticePolicyWithRequestNotice(noticeConfiguration);
+
+    IndividualResource request = requestsFixture.place(new RequestBuilder().page()
+      .forItem(item)
+      .withRequesterId(requester.getId())
+      .withRequestDate(DateTime.now())
+      .withStatus(OPEN_NOT_YET_FILLED)
+      .withPickupServicePoint(pickupServicePoint)
+      .withNoRequestExpiration());
+
+    CheckInByBarcodeRequestBuilder builder = new CheckInByBarcodeRequestBuilder()
+      .forItem(item)
+      .withItemBarcode(item.getBarcode())
+      .at(pickupServicePoint);
+    checkInFixture.checkInByBarcode(builder);
+
+    waitAtMost(1, SECONDS)
+      .until(scheduledNoticesClient::getAll, hasSize(1));
+
+    requestsFixture.cancelRequest(request);
+
+    waitAtMost(1, SECONDS)
+      .until(scheduledNoticesClient::getAll, hasSize(0));
+
+    assertThat(patronNoticesClient.getAll(), empty());
+  }
+
   private void setupNoticePolicyWithRequestNotice(JsonObject noticeConfiguration) {
 
     NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
