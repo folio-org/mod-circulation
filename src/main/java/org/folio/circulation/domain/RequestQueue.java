@@ -1,5 +1,6 @@
 package org.folio.circulation.domain;
 
+import static java.util.Arrays.asList;
 import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
 
 import java.util.ArrayList;
@@ -11,9 +12,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class RequestQueue {
-
   private List<Request> requests;
   private final List<UpdatedRequestPair> updatedRequests;
+
+  public static RequestQueue requestQueueOf(Request... requests) {
+    return new RequestQueue(asList(requests));
+  }
 
   public RequestQueue(Collection<Request> requests) {
     this.requests = new ArrayList<>(requests);
