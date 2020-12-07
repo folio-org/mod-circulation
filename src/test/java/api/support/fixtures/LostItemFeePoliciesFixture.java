@@ -40,6 +40,12 @@ public class LostItemFeePoliciesFixture {
     return create(ageToLostAfterOneMinutePolicy());
   }
 
+  public IndividualResource ageToLostAfterOneWeek() {
+    createReferenceData();
+
+    return create(ageToLostAfterOneWeekPolicy());
+  }
+
 
   public LostItemFeePolicyBuilder facultyStandardPolicy() {
     final Period itemAgedLostOverdue = Period.months(12);
@@ -84,6 +90,20 @@ public class LostItemFeePoliciesFixture {
       // disable lost item processing fee
       .withChargeAmountItemPatron(false)
       .withChargeAmountItemSystem(true);
+  }
+
+  public LostItemFeePolicyBuilder ageToLostAfterOneWeekPolicy() {
+    Period itemAgedLostOverdue = Period.weeks(1);
+
+    return new LostItemFeePolicyBuilder()
+      .withName("lost item allows for overdues")
+      .withItemAgedToLostAfterOverdue(itemAgedLostOverdue)
+      .billPatronImmediatelyWhenAgedToLost()
+      .withSetCost(10.00)
+      .doNotChargeProcessingFeeWhenAgedToLost()
+      .withChargeAmountItemSystem(true)
+      .refundFeesWithinWeeks(1)
+      .chargeOverdueFineWhenReturned();
   }
 
   public IndividualResource create(UUID id, String name) {

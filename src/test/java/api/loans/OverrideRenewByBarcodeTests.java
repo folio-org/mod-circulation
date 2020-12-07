@@ -11,6 +11,7 @@ import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
+import static api.support.matchers.LoanAccountMatcher.hasNoOverdueFine;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
@@ -38,12 +39,14 @@ import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.hamcrest.Matcher;
+import static org.joda.time.DateTime.now;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
 import org.junit.Test;
 
 import api.support.APITests;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
+import api.support.builders.DeclareItemLostRequestBuilder;
 import api.support.builders.FixedDueDateSchedulesBuilder;
 import api.support.builders.ItemBuilder;
 import api.support.builders.LoanPolicyBuilder;
@@ -53,8 +56,10 @@ import api.support.builders.OverrideRenewalByBarcodeRequestBuilder;
 import api.support.fakes.FakePubSub;
 import api.support.fixtures.ItemExamples;
 import api.support.fixtures.TemplateContextMatchers;
+import api.support.fixtures.policies.PoliciesToActivate;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
+import api.support.http.UserResource;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
@@ -705,6 +710,61 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
     assertThatPublishedLogRecordEventsAreValid();
+  }
+
+  @Test
+  public void shouldNotChargeOverdueFeesDuringRenewalWhenItemHasAgedToLostAndRefundFeePeriodHasPassed() {
+
+    IndividualResource overDueFinePolicy = overdueFinePoliciesFixture.facultyStandard();
+    IndividualResource lostItemPolicy = lostItemFeePoliciesFixture.ageToLostAfterOneWeek();
+
+    val result = ageToLostFixture.createLoanAgeToLostAndChargeFeesWithOverdues(lostItemPolicy, overDueFinePolicy);
+
+    IndividualResource item = result.getItem();
+    IndividualResource user = result.getUser();
+    
+    final DateTime renewalDate = now(UTC).plusWeeks(9);
+    mockClockManagerToReturnFixedDateTime(renewalDate);
+    
+    IndividualResource renewedLoan =
+      loansFixture.overrideRenewalByBarcode(item, user,
+        OVERRIDE_COMMENT, null);
+
+    assertThat(renewedLoan, hasNoOverdueFine());
+  }
+
+  public void shouldNotChargeOverdueFeesDuringRenewalWhenItemIsDeclaredLostAndRefundFeePeriodHasPassed() {
+    ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+    UserResource user = usersFixture.jessica();
+
+    IndividualResource overduePolicy = overdueFinePoliciesFixture.facultyStandard();
+    IndividualResource lostItemPolicy = lostItemFeePoliciesFixture.ageToLostAfterOneWeek();
+
+    policiesActivation.use(PoliciesToActivate.builder()
+      .lostItemPolicy(lostItemPolicy)
+      .overduePolicy(overduePolicy)
+    );
+
+    IndividualResource loan = checkOutFixture.checkOutByBarcode(item, user);
+
+    // advance system time by five weeks to accrue fines before declared lost
+    final DateTime declareLostDate = now(UTC).plusWeeks(5);
+    mockClockManagerToReturnFixedDateTime(declareLostDate);
+
+    final DeclareItemLostRequestBuilder builder = new DeclareItemLostRequestBuilder()
+      .forLoanId(loan.getId())
+      .on(declareLostDate)
+      .withNoComment();
+    declareLostFixtures.declareItemLost(builder);
+
+    final DateTime renewalDate = now(UTC).plusWeeks(6);
+    mockClockManagerToReturnFixedDateTime(renewalDate);
+
+    IndividualResource renewedLoan =
+      loansFixture.overrideRenewalByBarcode(item, user,
+        OVERRIDE_COMMENT, null);
+
+    assertThat(renewedLoan, hasNoOverdueFine());
   }
 
   private Matcher<ValidationError> hasUserRelatedParameter(IndividualResource user) {
