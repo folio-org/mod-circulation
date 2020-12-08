@@ -217,6 +217,9 @@ public class TemplateContextUtil {
     optionalRequest
       .map(Request::getAddressType)
       .ifPresent(value -> requestContext.put("deliveryAddressType", value.getName()));
+    optionalRequest
+      .map(Request::getPatronComments)
+      .ifPresent(value -> write(requestContext, "patronComments", value));
 
     return requestContext;
   }

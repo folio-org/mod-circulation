@@ -150,6 +150,10 @@
               "deliveryAddressType": {
                 "description": "Name of the delivery address type",
                 "type": "string"
+              },
+              "patronComments": {
+                "description": "Comments made by the patron",
+                "type": "string"
               }
             },
             "additionalProperties": false
