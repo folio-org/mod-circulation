@@ -1,10 +1,10 @@
 package org.folio.circulation.services.feefine;
 
-import static java.util.stream.Collectors.toList;
-import static org.folio.circulation.support.json.JsonStringArrayPropertyFetcher.toStream;
+import static org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher.mapToList;
 
 import java.util.List;
 
+import org.folio.circulation.domain.FeeFineAction;
 import org.folio.circulation.support.http.client.Response;
 
 import io.vertx.core.json.JsonObject;
@@ -17,7 +17,7 @@ import lombok.Getter;
 public final class AccountActionResponse {
   private final String accountId;
   private final String amount;
-  private final List<String> feeFineActionIds;
+  private final List<FeeFineAction> feeFineActions;
 
   public static AccountActionResponse from(Response response) {
     final JsonObject responseJson = response.getJson();
@@ -25,6 +25,6 @@ public final class AccountActionResponse {
     return new AccountActionResponse(
       responseJson.getString("accountId"),
       responseJson.getString("amount"),
-      toStream(responseJson, "feeFineActionIds").collect(toList()));
+      mapToList(responseJson, "feefineactions", FeeFineAction::from));
   }
 }

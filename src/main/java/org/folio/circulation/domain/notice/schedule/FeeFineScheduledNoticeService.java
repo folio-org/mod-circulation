@@ -79,7 +79,7 @@ public class FeeFineScheduledNoticeService {
       return ofAsync(() -> null);
     }
 
-    log.info("Creating scheduled fee/fine notice: loanId={}, feeFineActionId={}, eventType=\"{}\"",
+    log.info("Scheduling a fee/fine notice: loanId={}, feeFineActionId={}, eventType=\"{}\"",
       loan.getId(), action.getId(), eventType.getRepresentation());
 
     return noticePolicyRepository.lookupPolicy(loan)

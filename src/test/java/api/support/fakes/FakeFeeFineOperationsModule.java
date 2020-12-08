@@ -54,18 +54,19 @@ public class FakeFeeFineOperationsModule {
 
     String actionTypeForCredit = isFullRefund ? "Credited fully" : "Credited partially";
 
-    String creditFeeFineActionId = createFeeFineAction(context, account, actionTypeForCredit,
+    JsonObject creditFeeFineAction = createFeeFineAction(context, account, actionTypeForCredit,
       actionAmount, accountRemainingAmount - actionAmount);
 
-    String refundFeeFineActionId = createFeeFineAction(context, account, paymentStatus,
+    JsonObject refundFeeFineAction = createFeeFineAction(context, account, paymentStatus,
       actionAmount, accountRemainingAmount + actionAmount);
 
     final JsonObject fakeRefundResponseJson = new JsonObject()
       .put("accountId", accountId)
       .put("amount", String.valueOf(accountAmount))
-      .put("feeFineActionIds", new JsonArray()
-        .add(creditFeeFineActionId)
-        .add(refundFeeFineActionId));
+      .put("feefineactions", new JsonArray()
+        .add(creditFeeFineAction)
+        .add(refundFeeFineAction)
+      );
 
     created(fakeRefundResponseJson).writeTo(context.response());
   }
@@ -83,13 +84,13 @@ public class FakeFeeFineOperationsModule {
 
     updateAccount(context, account);
 
-    String cancelFeeFineActionId = createFeeFineAction(context, account, cancellationReason,
+    JsonObject cancelFeeFineAction = createFeeFineAction(context, account, cancellationReason,
       accountAmount, 0.0);
 
     final JsonObject responseJson = new JsonObject()
       .put("accountId", accountId)
       .put("amount", String.valueOf(accountAmount))
-      .put("feeFineActionIds", new JsonArray().add(cancelFeeFineActionId));
+      .put("feefineactions", new JsonArray().add(cancelFeeFineAction));
 
     created(responseJson).writeTo(context.response());
   }
@@ -109,7 +110,7 @@ public class FakeFeeFineOperationsModule {
     getAccountsStorage(context).put(accountId, updatedAccount);
   }
 
-  private String createFeeFineAction(RoutingContext context, JsonObject account, String actionType,
+  private JsonObject createFeeFineAction(RoutingContext context, JsonObject account, String actionType,
     double actionAmount, double balance) {
 
     final String feeFineActionId = UUID.randomUUID().toString();
@@ -130,7 +131,7 @@ public class FakeFeeFineOperationsModule {
     getStorage().getTenantResources("/feefineactions", tenant)
       .put(feeFineActionId, feeFineAction);
 
-    return feeFineActionId;
+    return feeFineAction;
   }
 
   private Handler<RoutingContext> validateRequest(JsonSchemaValidator schemaValidator) {

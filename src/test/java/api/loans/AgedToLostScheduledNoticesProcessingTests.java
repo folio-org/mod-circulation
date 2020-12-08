@@ -24,8 +24,6 @@ import org.folio.circulation.domain.policy.Period;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
 
 import api.support.APITests;
 import api.support.builders.LostItemFeePolicyBuilder;
@@ -182,7 +180,7 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
           PAYMENT_STATUS_OUTSTANDING, LOST_ITEM_PROCESSING_FEE, agedToLostLoan.getUser().getId())
       )));
 
-    // one "charge" action per account should exist
+    // one "charge" action per account
     assertThat(feeFineActionsClient.getAll(), hasSize(2));
 
     // create payments for both accounts to produce "refund" actions and notices
@@ -242,7 +240,7 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
           UPON_AT, null, true)
       )));
 
-    DateTime maxNextRunTime = Stream.of(
+    DateTime maxActionDate = Stream.of(
       cancelLostItemFeeActionDate,
       cancelProcessingFeeActionDate,
       refundLostItemFeeActionDate,
@@ -250,7 +248,7 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
       .max(DateTime::compareTo)
       .orElseThrow();
 
-    scheduledNoticeProcessingClient.runFeeFineNoticesProcessing(maxNextRunTime.plusSeconds(1));
+    scheduledNoticeProcessingClient.runFeeFineNoticesProcessing(maxActionDate.plusSeconds(1));
 
     assertThat(patronNoticesClient.getAll(), hasSize(4));
     assertThat(scheduledNoticesClient.getAll(), hasSize(0));

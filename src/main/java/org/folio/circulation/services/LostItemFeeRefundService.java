@@ -16,7 +16,6 @@ import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -27,7 +26,6 @@ import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.notice.schedule.FeeFineScheduledNoticeService;
 import org.folio.circulation.domain.policy.lostitem.LostItemPolicy;
 import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
-import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineActionRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.loans.LostItemPolicyRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
@@ -47,7 +45,6 @@ public class LostItemFeeRefundService {
   private final LostItemPolicyRepository lostItemPolicyRepository;
   private final FeeFineFacade feeFineFacade;
   private final AccountRepository accountRepository;
-  private final FeeFineActionRepository feeFineActionRepository;
   private final LoanRepository loanRepository;
   private final UserRepository userRepository;
   private final FeeFineScheduledNoticeService scheduledNoticeService;
@@ -56,7 +53,6 @@ public class LostItemFeeRefundService {
     this.lostItemPolicyRepository = new LostItemPolicyRepository(clients);
     this.feeFineFacade = new FeeFineFacade(clients);
     this.accountRepository = new AccountRepository(clients);
-    this.feeFineActionRepository = new FeeFineActionRepository(clients);
     this.loanRepository = new LoanRepository(clients);
     this.userRepository = new UserRepository(clients);
     this.scheduledNoticeService = FeeFineScheduledNoticeService.using(clients);
@@ -135,34 +131,22 @@ public class LostItemFeeRefundService {
   private Result<Void> schedulePatronNotices(LostItemFeeRefundContext context,
     AccountActionResponse response) {
 
-    if (shouldSchedulePatronNotice(context, response)) {
-      log.info("Creating scheduled notices for account {} and fee/fine actions {}",
-        response.getAccountId(), response.getFeeFineActionIds());
-
-      feeFineActionRepository.findByIds(response.getFeeFineActionIds())
-        .thenApply(r -> r.next(feeFineActions -> schedulePatronNotices(context, feeFineActions)));
+    if (shouldSchedulePatronNotices(context, response)) {
+      response.getFeeFineActions().stream()
+        // no patron notices should be created for "credit" actions
+        .filter(not(FeeFineAction::isCredited))
+        .forEach(ffa -> scheduledNoticeService.scheduleAgedToLostReturnedNotices(context, ffa));
     }
 
     return succeeded(null);
   }
 
-  private static boolean shouldSchedulePatronNotice(LostItemFeeRefundContext context,
+  private static boolean shouldSchedulePatronNotices(LostItemFeeRefundContext context,
     AccountActionResponse response) {
 
     return context.getCancelReason() == CANCELLED_ITEM_RETURNED
       && response != null
-      && isNotEmpty(response.getFeeFineActionIds());
-  }
-
-  private Result<Void> schedulePatronNotices(LostItemFeeRefundContext context,
-    Collection<FeeFineAction> feeFineActions) {
-
-    feeFineActions.stream()
-      // no patron notices should be created for "credit" actions
-      .filter(not(FeeFineAction::isCredited))
-      .forEach(ffa -> scheduledNoticeService.scheduleAgedToLostReturnedNotices(context, ffa));
-
-    return succeeded(null);
+      && isNotEmpty(response.getFeeFineActions());
   }
 
   private CompletableFuture<Result<LostItemFeeRefundContext>> lookupLoan(
