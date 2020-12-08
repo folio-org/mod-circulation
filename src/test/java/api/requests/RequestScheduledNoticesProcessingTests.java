@@ -383,7 +383,8 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
       .create();
     setupNoticePolicyWithRequestNotice(noticeConfiguration);
 
-    IndividualResource request = requestsFixture.place(new RequestBuilder().page()
+    IndividualResource request = requestsFixture.place(new RequestBuilder()
+      .page()
       .forItem(item)
       .withRequesterId(requester.getId())
       .withRequestDate(DateTime.now())
@@ -403,8 +404,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
     requestsFixture.cancelRequest(request);
 
     waitAtMost(1, SECONDS)
-      .until(scheduledNoticesClient::getAll, hasSize(0));
-
+      .until(scheduledNoticesClient::getAll, empty());
     assertThat(patronNoticesClient.getAll(), empty());
   }
 
