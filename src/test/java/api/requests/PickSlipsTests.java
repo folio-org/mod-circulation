@@ -159,6 +159,7 @@ public class PickSlipsTests extends APITests {
       .withPickupServicePointId(servicePointId)
       .withDeliveryAddressType(addressTypeResource.getId())
       .forItem(itemResource)
+      .withPatronComments("I need the book")
       .by(requesterResource));
 
     Response response = ResourceClient.forPickSlips().getById(servicePointId);
@@ -232,6 +233,7 @@ public class PickSlipsTests extends APITests {
       UUIDMatcher.is(requestResource.getId()));
     assertThat(requestContext.getString("servicePointPickup"),
       is(servicePoint.getJson().getString("name")));
+    assertThat(requestContext.getString("patronComments"), is("I need the book"));
   }
 
   @Test
