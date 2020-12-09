@@ -134,8 +134,10 @@ public class RequestScheduledNoticeService {
   }
 
   private Result<Request> scheduleRequestNotices(Request request) {
-    noticePolicyRepository.lookupPolicy(request)
-      .thenApply(r -> r.next(policy -> scheduleRequestNoticesBasedOnPolicy(request, policy)));
+    if (!request.isClosed()) {
+      noticePolicyRepository.lookupPolicy(request)
+        .thenApply(r -> r.next(policy -> scheduleRequestNoticesBasedOnPolicy(request, policy)));
+    }
 
     return succeeded(request);
   }
