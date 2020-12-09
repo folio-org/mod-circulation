@@ -78,7 +78,7 @@ public class RequestScheduledNoticeHandler {
     Request request, ScheduledNotice notice) {
 
     if (HOLD_EXPIRATION.equals(notice.getTriggeringEvent()) &&
-      CLOSED_FILLED.equals(request.getStatus())) {
+      request.isClosed()) {
 
       log.info(format("Request %s is filled, deleting hold shelf expiration scheduled notice %s",
         request.getId(), notice.getId()));
