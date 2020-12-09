@@ -240,6 +240,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
       .withHoldShelfExpiration(holdShelfExpiration)
       .withPickupServicePointId(servicePoint.getId())
       .withDeliveryAddressType(addressTypesFixture.home().getId())
+      .withPatronComments("I need the book")
       .withTags(new RequestBuilder.Tags(asList("new", "important"))));
 
     DateTime checkInDate = new DateTime(2019, 7, 25, 14, 23, 41, UTC);
@@ -266,6 +267,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     assertThat(requestContext.getString("holdShelfExpirationDate"), isEquivalentTo(toZonedStartOfDay(holdShelfExpiration)));
     assertThat(requestContext.getString("requestID"), is(request.getId()));
     assertThat(requestContext.getString("servicePointPickup"), is(servicePoint.getJson().getString("name")));
+    assertThat(requestContext.getString("patronComments"), is("I need the book"));
   }
 
   @Test
