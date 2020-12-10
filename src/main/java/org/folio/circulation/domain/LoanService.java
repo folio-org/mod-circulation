@@ -8,7 +8,6 @@ import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.library.ClosedLibraryStrategyService;
-import org.folio.circulation.domain.policy.library.EndOfPreviousDayStrategy;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
@@ -54,19 +53,5 @@ public class LoanService {
       .recall(loanToRecall)
       .map(records::withLoan))
       .thenCompose(r -> r.after(closedLibraryStrategyService::applyClosedLibraryDueDateManagement));
-  }
-
-  public CompletableFuture<Result<LoanAndRelatedRecords>> truncateLoanDueDateIfPatronExpiresEarlier(
-    LoanAndRelatedRecords records) {
-
-    Loan loan = records.getLoan();
-    DateTime userExpirationDate = loan.getUser().getExpirationDate();
-
-    if (userExpirationDate != null && userExpirationDate.isBefore(loan.getDueDate())) {
-      return closedLibraryStrategyService.applyStrategyForExpiredPatron(records,
-        new EndOfPreviousDayStrategy(records.getTimeZone()));
-    }
-
-    return Result.ofAsync(() -> records);
   }
 }
