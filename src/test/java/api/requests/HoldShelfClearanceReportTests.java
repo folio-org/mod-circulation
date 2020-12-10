@@ -1,5 +1,6 @@
 package api.requests;
 
+import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static org.folio.circulation.support.StreamToListMapper.toList;
 import static org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher.toStream;
@@ -220,6 +221,7 @@ public class HoldShelfClearanceReportTests extends APITests {
       .hold()
       .withPickupServicePointId(pickupServicePointId)
       .forItem(smallAngryPlanet)
+      .withPatronComments("Comment for second request")
       .by(rebecca);
     IndividualResource request = requestsClient.create(requestBuilderOnItem);
     checkInFixture.checkInByBarcode(smallAngryPlanet);
@@ -229,6 +231,8 @@ public class HoldShelfClearanceReportTests extends APITests {
 
     Response response = ResourceClient.forRequestReport().getById(pickupServicePointId);
     verifyResponse(smallAngryPlanet, rebecca, response, RequestStatus.CLOSED_PICKUP_EXPIRED);
+    assertThat(response.getJson().getJsonArray(REQUESTS_KEY).getJsonObject(0),
+      hasJsonPath("patronComments", "Comment for second request"));
   }
 
   @Test
