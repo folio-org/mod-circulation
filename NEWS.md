@@ -1,12 +1,12 @@
 ## 19.3.0 (in-progress)
 
 * Does not charge overdue fees when fee refund period has passed (CIRC-1000)
+* Loan dates now truncate if there is a recall in any position in the item hold queue (CIRC-1018)
 
 ## 19.2.0 2020-10-15
 
 * Publishes audit log events for loans (CIRC-933)
 * Publishes audit log events for requests (CIRC-930)
-* Loan dates now truncate if there is a recall in any position in the item hold queue (CIRC-1018)
 
 ## 19.1.0 2020-10-09
 
