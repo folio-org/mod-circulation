@@ -7,6 +7,7 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedIn
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedObjectProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getObjectProperty;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 
@@ -15,6 +16,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+
+import com.github.javaparser.utils.Log;
 
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.Loan;
@@ -38,8 +41,11 @@ public class LoanPolicy extends Policy {
 
   private static final String REQUEST_MANAGEMENT_KEY = "requestManagement";
   private static final String HOLDS_KEY = "holds";
+  private static final String RECALL_KEY = "recall";
   private static final String ALTERNATE_RENEWAL_LOAN_PERIOD_KEY = "alternateRenewalLoanPeriod";
-
+  private static final String ALLOW_RECALLS_TO_EXTEND_OVERDUE_LOANS = "allowRecallsToExtendOverdueLoans";
+  private static final String ALTERNATE_RECALL_RETURN_INTERVAL = "alternateRecallReturnInterval";
+  
   private static final String INTERVAL_ID = "intervalId";
   private static final String DURATION = "duration";
   private static final String ALTERNATE_CHECKOUT_LOAN_PERIOD_KEY = "alternateCheckoutLoanPeriod";
@@ -100,6 +106,19 @@ public class LoanPolicy extends Policy {
     return renewItemsWithRequest;
   }
 
+  public boolean isRecallRequestRenewable() {
+    boolean renewItemsWithRequest = false;
+    if (representation != null && representation.containsKey(REQUEST_MANAGEMENT_KEY)) {
+      JsonObject requestManagement = representation.getJsonObject(REQUEST_MANAGEMENT_KEY);
+      JsonObject recalls = requestManagement.getJsonObject(RECALL_KEY);
+      Log.info("\n\n\n\n");
+      Log.info(recalls.toString());
+      Log.info("\n\n\n\n");
+      renewItemsWithRequest = getBooleanProperty(recalls, "renewItemsWithRequest");
+    }
+    return renewItemsWithRequest;
+  }
+
   public boolean isNotRenewable() {
     return !getBooleanProperty(representation, "renewable");
   }
@@ -110,6 +129,22 @@ public class LoanPolicy extends Policy {
     }
 
     return reachedNumberOfRenewalsLimit(loan) && !unlimitedRenewals();
+  }
+
+  public boolean hasAllowRecallsToExtendOverdueLoans() {
+   return getBooleanProperty(getRecalls(), ALLOW_RECALLS_TO_EXTEND_OVERDUE_LOANS);
+  }
+
+  public JsonObject getAlternateRecallReturnInterval() {
+    return getObjectProperty(getRecalls(), ALTERNATE_RECALL_RETURN_INTERVAL);
+  }
+
+  public String getAlternateRecallReturnIntervalId() {
+    return getProperty(getAlternateRecallReturnInterval(), "intervalId");
+  }
+
+  public Integer getAlternateRecallReturnIntervalDuration() {
+    return getIntegerProperty(getAlternateRecallReturnInterval(), "duration", 0);
   }
 
   private boolean reachedNumberOfRenewalsLimit(Loan loan) {
@@ -207,6 +242,15 @@ public class LoanPolicy extends Policy {
 
   private JsonObject getRenewalsPolicy() {
     return representation.getJsonObject("renewalsPolicy");
+  }
+
+  private JsonObject getRequestManagement() {
+    return representation.getJsonObject("requestManagement");
+  }
+
+  private JsonObject getRecalls() {
+    return getRequestManagement()
+      .getJsonObject("recalls");
   }
 
   private JsonObject getHolds() {
@@ -421,6 +465,10 @@ public class LoanPolicy extends Policy {
     final DateTime systemDate = ClockManager.getClockManager().getDateTime();
 
     final Result<DateTime> recallDueDateResult =
+        loan.isOverdue() && 
+        hasAllowRecallsToExtendOverdueLoans() && 
+        getAlternateRecallReturnInterval() != null ?
+        getDueDate("alternateRecallReturnInterval", recalls, systemDate, systemDate) :
         getDueDate("recallReturnInterval", recalls, systemDate, systemDate);
 
     final List<ValidationError> errors = new ArrayList<>();

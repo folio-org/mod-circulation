@@ -89,6 +89,8 @@ public class UpdateLoan {
     final Loan loan = loanAndRelatedRecords.getLoan();
     LoanPolicy loanPolicy = loan.getLoanPolicy();
 
+    // loanPolicy.recall is a public method and may be called outside of the context of the
+    // loan.wasDueDateChangedByRecall() condition found in the recall method of this class.
     return loanPolicy.recall(loan)
         .map(loanAndRelatedRecords::withLoan);
   }
