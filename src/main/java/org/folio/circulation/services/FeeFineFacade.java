@@ -15,13 +15,13 @@ import org.folio.circulation.domain.Account;
 import org.folio.circulation.domain.FeeFineAction;
 import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.domain.User;
-import org.folio.circulation.domain.notice.schedule.FeeFineScheduledNoticeService;
 import org.folio.circulation.domain.representations.StoredAccount;
 import org.folio.circulation.domain.representations.StoredFeeFineAction;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineActionRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
+import org.folio.circulation.services.feefine.AccountActionResponse;
 import org.folio.circulation.services.feefine.CancelAccountCommand;
 import org.folio.circulation.services.feefine.RefundAccountCommand;
 import org.folio.circulation.services.feefine.FeeFineService;
@@ -84,25 +84,7 @@ public class FeeFineFacade {
       .thenCompose(r -> r.after(feeFineActionRepository::create));
   }
 
-  public CompletableFuture<Result<Void>> refundAndCloseAccounts(List<RefundAndCancelAccountCommand> accounts) {
-    return allOf(accounts, this::refundAndCloseAccount)
-      .thenApply(r -> r.<Void>map(list -> null))
-      .exceptionally(CommonFailures::failedDueToServerError);
-  }
-
-  private CompletableFuture<Result<Void>> refundAndCloseAccount(RefundAndCancelAccountCommand command) {
-    return fetchUser(command.getStaffUserId())
-      .thenCompose(r -> r.after(user -> processAccount(command, user)));
-  }
-
-  private CompletableFuture<Result<Void>> processAccount(
-    RefundAndCancelAccountCommand command, User user) {
-
-    return refundAccountIfNeeded(command, user)
-      .thenCompose(r -> r.after(notUsed -> cancelAccountIfNeeded(command, user)));
-  }
-
-  private CompletableFuture<Result<Void>> refundAccountIfNeeded(
+  CompletableFuture<Result<AccountActionResponse>> refundAccountIfNeeded(
     RefundAndCancelAccountCommand command, User user) {
 
     final Account account = command.getAccount();
@@ -124,7 +106,7 @@ public class FeeFineFacade {
     return feeFineService.refundAccount(refundCommand);
   }
 
-  private CompletableFuture<Result<Void>> cancelAccountIfNeeded(
+  CompletableFuture<Result<AccountActionResponse>> cancelAccountIfNeeded(
     RefundAndCancelAccountCommand command, User user) {
 
     final Account account = command.getAccount();
@@ -155,10 +137,6 @@ public class FeeFineFacade {
 
     return userRepository.getUser(command.getStaffUserId())
       .thenApply(r -> r.map(builder::withCreatedBy));
-  }
-
-  private CompletableFuture<Result<User>> fetchUser(String userId) {
-    return userRepository.getUser(userId);
   }
 
   private CompletableFuture<Result<ServicePoint>> fetchServicePoint(String servicePointId) {

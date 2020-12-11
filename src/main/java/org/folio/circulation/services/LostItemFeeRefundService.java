@@ -1,26 +1,40 @@
 package org.folio.circulation.services;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.domain.FeeFine.lostItemFeeTypes;
+import static java.util.function.Predicate.not;
+import static org.apache.commons.collections.CollectionUtils.isNotEmpty;
+import static org.folio.circulation.domain.AccountCancelReason.CANCELLED_ITEM_RETURNED;
+import static org.folio.circulation.domain.FeeFine.LOST_ITEM_FEE_TYPE;
+import static org.folio.circulation.domain.FeeFine.LOST_ITEM_PROCESSING_FEE_TYPE;
 import static org.folio.circulation.services.LostItemFeeRefundContext.forCheckIn;
 import static org.folio.circulation.services.LostItemFeeRefundContext.forRenewal;
+import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.succeeded;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.CheckInContext;
+import org.folio.circulation.domain.FeeFineAction;
 import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.User;
+import org.folio.circulation.domain.notice.schedule.FeeFineScheduledNoticeService;
 import org.folio.circulation.domain.policy.lostitem.LostItemPolicy;
 import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.loans.LostItemPolicyRepository;
+import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.context.RenewalContext;
+import org.folio.circulation.services.feefine.AccountActionResponse;
+import org.folio.circulation.services.support.RefundAndCancelAccountCommand;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.http.client.CqlQuery;
+import org.folio.circulation.support.results.CommonFailures;
 import org.folio.circulation.support.results.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,12 +46,16 @@ public class LostItemFeeRefundService {
   private final FeeFineFacade feeFineFacade;
   private final AccountRepository accountRepository;
   private final LoanRepository loanRepository;
+  private final UserRepository userRepository;
+  private final FeeFineScheduledNoticeService scheduledNoticeService;
 
   public LostItemFeeRefundService(Clients clients) {
     this.lostItemPolicyRepository = new LostItemPolicyRepository(clients);
     this.feeFineFacade = new FeeFineFacade(clients);
     this.accountRepository = new AccountRepository(clients);
     this.loanRepository = new LoanRepository(clients);
+    this.userRepository = new UserRepository(clients);
+    this.scheduledNoticeService = FeeFineScheduledNoticeService.using(clients);
   }
 
   public CompletableFuture<Result<CheckInContext>> refundLostItemFees(
@@ -80,14 +98,55 @@ public class LostItemFeeRefundService {
           return completedFuture(succeeded(context));
         }
 
-        return fetchAccountsAndActionsForLoan(contextResult)
-          .thenCompose(r -> r.after(this::refundAccounts));
+        return fetchAccountsAndActionsForLoan(context)
+          .thenCompose(r -> r.after(this::refundAccounts))
+          .exceptionally(CommonFailures::failedDueToServerError);
       }));
   }
 
-  private CompletableFuture<Result<LostItemFeeRefundContext>> refundAccounts(LostItemFeeRefundContext context) {
-    return feeFineFacade.refundAndCloseAccounts(context.accountRefundCommands())
+  public CompletableFuture<Result<LostItemFeeRefundContext>> refundAccounts(
+    LostItemFeeRefundContext context) {
+
+    return succeeded(context.accountRefundCommands())
+      .after(commands -> allOf(commands, command -> refundAndCloseAccount(context, command)))
       .thenApply(r -> r.map(notUsed -> context));
+  }
+
+  private CompletableFuture<Result<Void>> refundAndCloseAccount(LostItemFeeRefundContext context,
+    RefundAndCancelAccountCommand command) {
+
+    return userRepository.getUser(command.getStaffUserId())
+      .thenCompose(r -> r.after(user -> processAccount(context, command, user)));
+  }
+
+  private CompletableFuture<Result<Void>> processAccount(LostItemFeeRefundContext context,
+    RefundAndCancelAccountCommand command, User user) {
+
+    return feeFineFacade.refundAccountIfNeeded(command, user)
+      .thenApply(r -> r.next(response -> schedulePatronNotices(context, response)))
+      .thenCompose(r -> r.after(notUsed -> feeFineFacade.cancelAccountIfNeeded(command, user)))
+      .thenApply(r -> r.next(response -> schedulePatronNotices(context, response)));
+  }
+
+  private Result<Void> schedulePatronNotices(LostItemFeeRefundContext context,
+    AccountActionResponse response) {
+
+    if (shouldSchedulePatronNotices(context, response)) {
+      response.getFeeFineActions().stream()
+        // no patron notices should be created for "credit" actions
+        .filter(not(FeeFineAction::isCredited))
+        .forEach(ffa -> scheduledNoticeService.scheduleAgedToLostReturnedNotices(context, ffa));
+    }
+
+    return succeeded(null);
+  }
+
+  private static boolean shouldSchedulePatronNotices(LostItemFeeRefundContext context,
+    AccountActionResponse response) {
+
+    return context.getCancelReason() == CANCELLED_ITEM_RETURNED
+      && response != null
+      && isNotEmpty(response.getFeeFineActions());
   }
 
   private CompletableFuture<Result<LostItemFeeRefundContext>> lookupLoan(
@@ -118,15 +177,19 @@ public class LostItemFeeRefundService {
   }
 
   private CompletableFuture<Result<LostItemFeeRefundContext>> fetchAccountsAndActionsForLoan(
-    Result<LostItemFeeRefundContext> contextResult) {
+    LostItemFeeRefundContext context) {
 
-    return contextResult.after(context -> {
-      final Result<CqlQuery> fetchQuery = exactMatch("loanId", context.getLoan().getId())
-        .combine(exactMatchAny("feeFineType", lostItemFeeTypes()), CqlQuery::and);
+    List<String> feeFineTypes = new ArrayList<>();
+    feeFineTypes.add(LOST_ITEM_FEE_TYPE);
+    if (context.getLostItemPolicy().isRefundProcessingFeeWhenReturned()) {
+      feeFineTypes.add(LOST_ITEM_PROCESSING_FEE_TYPE);
+    }
 
-      return accountRepository.findAccountsAndActionsForLoanByQuery(fetchQuery)
-        .thenApply(r -> r.map(context::withAccounts));
-    });
+    final Result<CqlQuery> fetchQuery = exactMatch("loanId", context.getLoan().getId())
+      .combine(exactMatchAny("feeFineType", feeFineTypes), CqlQuery::and);
+
+    return accountRepository.findAccountsAndActionsForLoanByQuery(fetchQuery)
+      .thenApply(r -> r.map(context::withAccounts));
   }
 
   private CompletableFuture<Result<LostItemFeeRefundContext>> fetchLostItemPolicy(

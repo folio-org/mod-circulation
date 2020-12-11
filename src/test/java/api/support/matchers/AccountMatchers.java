@@ -3,6 +3,8 @@ package api.support.matchers;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static org.hamcrest.CoreMatchers.allOf;
 
+import java.util.UUID;
+
 import org.hamcrest.Matcher;
 
 import io.vertx.core.json.JsonObject;
@@ -47,5 +49,17 @@ public final class AccountMatchers {
       hasJsonPath("remaining", 0.0),
       hasJsonPath("status.name", "Closed"),
       hasJsonPath("paymentStatus.name", "Paid fully"));
+  }
+
+  public static Matcher<JsonObject> isAccount(double amount, double remaining, String status,
+    String paymentStatus, String feeFineType, UUID userId) {
+    return allOf(
+      hasJsonPath("amount", amount),
+      hasJsonPath("remaining", remaining),
+      hasJsonPath("status.name", status),
+      hasJsonPath("paymentStatus.name", paymentStatus),
+      hasJsonPath("feeFineType", feeFineType),
+      hasJsonPath("userId", UUIDMatcher.is(userId))
+    );
   }
 }
