@@ -42,6 +42,10 @@ public class FeeFineAction {
     return isActionTypeStartsWith("Transferred");
   }
 
+  public boolean isCredited() {
+    return isActionTypeStartsWith("Credited");
+  }
+
   private boolean isActionTypeStartsWith(String prefix) {
     return getActionType() != null && getActionType().toLowerCase()
       .startsWith(prefix.toLowerCase());

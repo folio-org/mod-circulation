@@ -3,7 +3,6 @@ package org.folio.circulation.services;
 import static org.folio.circulation.domain.AccountCancelReason.CANCELLED_ITEM_RENEWED;
 import static org.folio.circulation.domain.AccountCancelReason.CANCELLED_ITEM_RETURNED;
 import static org.folio.circulation.domain.AccountRefundReason.LOST_ITEM_FOUND;
-import static org.folio.circulation.domain.FeeFine.LOST_ITEM_PROCESSING_FEE_TYPE;
 import static org.folio.circulation.domain.ItemStatus.LOST_AND_PAID;
 
 import java.util.Collection;
@@ -26,25 +25,15 @@ import lombok.Getter;
 import lombok.With;
 
 @With(AccessLevel.PACKAGE)
-@Getter(AccessLevel.PACKAGE)
+@Getter
 @AllArgsConstructor(access = AccessLevel.PACKAGE)
-final class LostItemFeeRefundContext {
+public final class LostItemFeeRefundContext {
   private final ItemStatus initialItemStatus;
   private final String itemId;
   private final String staffUserId;
   private final String servicePointId;
   private final Loan loan;
   private final AccountCancelReason cancelReason;
-
-  private Collection<Account> accountsNeedingRefunds() {
-    if (!getLostItemPolicy().isRefundProcessingFeeWhenReturned()) {
-      return loan.getAccounts().stream()
-        .filter(account -> !account.getFeeFineType().equals(LOST_ITEM_PROCESSING_FEE_TYPE))
-        .collect(Collectors.toList());
-    }
-
-    return loan.getAccounts();
-  }
 
   LostItemFeeRefundContext withAccounts(Collection<Account> accounts) {
     return withLoan(loan.withAccounts(accounts));
@@ -55,7 +44,7 @@ final class LostItemFeeRefundContext {
   }
 
   List<RefundAndCancelAccountCommand> accountRefundCommands() {
-    return accountsNeedingRefunds().stream()
+    return loan.getAccounts().stream()
       .map(this::createCommand)
       .collect(Collectors.toList());
   }

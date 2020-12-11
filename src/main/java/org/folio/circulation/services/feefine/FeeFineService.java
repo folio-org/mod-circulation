@@ -18,13 +18,18 @@ public class FeeFineService {
 
   private final CollectionResourceClient accountRefundClient;
   private final CollectionResourceClient accountCancelClient;
+  private final ResponseInterpreter<AccountActionResponse> accountActionResponseInterpreter;
 
   public FeeFineService(Clients clients) {
     this.accountCancelClient = clients.accountsCancelClient();
     this.accountRefundClient = clients.accountsRefundClient();
+
+    this.accountActionResponseInterpreter = new ResponseInterpreter<AccountActionResponse>()
+      .flatMapOn(201, response -> succeeded(AccountActionResponse.from(response)))
+      .otherwise(forwardOnFailure());
   }
 
-  public CompletableFuture<Result<Void>> refundAccount(RefundAccountCommand refundCommand) {
+  public CompletableFuture<Result<AccountActionResponse>> refundAccount(RefundAccountCommand refundCommand) {
     if (!refundCommand.hasPaidOrTransferredAmount()) {
       log.info("Account has nothing to refund {}", refundCommand.getAccountId());
       return ofAsync(() -> null);
@@ -38,10 +43,10 @@ public class FeeFineService {
       .build();
 
     return accountRefundClient.post(refundRequest.toJson(), refundCommand.getAccountId())
-      .thenApply(voidCreatedInterpreter()::flatMap);
+      .thenApply(r -> r.next(accountActionResponseInterpreter::apply));
   }
 
-  public CompletableFuture<Result<Void>> cancelAccount(CancelAccountCommand cancelCommand) {
+  public CompletableFuture<Result<AccountActionResponse>> cancelAccount(CancelAccountCommand cancelCommand) {
     final CancelAccountRequest cancelRequest = CancelAccountRequest.builder()
       .servicePointId(cancelCommand.getCurrentServicePointId())
       .userName(cancelCommand.getUserName())
@@ -49,12 +54,7 @@ public class FeeFineService {
       .build();
 
     return accountCancelClient.post(cancelRequest.toJson(), cancelCommand.getAccountId())
-      .thenApply(voidCreatedInterpreter()::flatMap);
+      .thenApply(r -> r.next(accountActionResponseInterpreter::apply));
   }
 
-  private ResponseInterpreter<Void> voidCreatedInterpreter() {
-    return new ResponseInterpreter<Void>()
-      .on(201, succeeded(null))
-      .otherwise(forwardOnFailure());
-  }
 }
