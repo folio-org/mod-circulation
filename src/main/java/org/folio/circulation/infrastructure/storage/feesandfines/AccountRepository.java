@@ -109,15 +109,15 @@ public class AccountRepository {
   }
 
   public CompletableFuture<Result<MultipleRecords<Account>>> findFeeFineActionsForAccounts(
-      MultipleRecords<Account> multipleLoans) {
+      MultipleRecords<Account> multipleAccounts) {
 
-    if (multipleLoans.getRecords().isEmpty()) {
-      return completedFuture(succeeded(multipleLoans));
+    if (multipleAccounts.getRecords().isEmpty()) {
+      return completedFuture(succeeded(multipleAccounts));
     }
 
-    return getFeeFineActionsForAccounts(multipleLoans.getRecords())
-        .thenApply(r -> r.map(accountMap -> multipleLoans.mapRecords(
-            loan -> loan.withFeeFineActions(accountMap.getOrDefault(loan.getId(),
+    return getFeeFineActionsForAccounts(multipleAccounts.getRecords())
+        .thenApply(r -> r.map(accountMap -> multipleAccounts.mapRecords(
+            account -> account.withFeeFineActions(accountMap.getOrDefault(account.getId(),
                 new ArrayList<>())))));
   }
 

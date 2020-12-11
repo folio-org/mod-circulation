@@ -269,7 +269,7 @@ class CheckInProcessAdapter {
     CheckInContext records, WebContext context) {
 
     return overdueFineCalculatorService.createOverdueFineIfNecessary(records, context.getUserId())
-      .thenApply(r -> r.next(action -> feeFineScheduledNoticeService.scheduleNotices(records, action)));
+      .thenApply(r -> r.next(action -> feeFineScheduledNoticeService.scheduleOverdueFineNotices(records, action)));
   }
 
   CompletableFuture<Result<CheckInContext>> refundLostItemFees(CheckInContext context) {

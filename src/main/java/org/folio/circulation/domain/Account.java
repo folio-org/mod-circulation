@@ -16,6 +16,7 @@ import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 @AllArgsConstructor
 public class Account {
@@ -25,7 +26,7 @@ public class Account {
   private final FeeAmount remaining;
   private final String status;
   private final String paymentStatus;
-  private final Collection<FeeFineAction> feeFineActions;
+  @Getter private final Collection<FeeFineAction> feeFineActions;
   private final DateTime creationDate;
 
   public static Account from(JsonObject representation) {

@@ -1,12 +1,14 @@
 package org.folio.circulation.domain.notice.schedule;
 
 import static org.folio.circulation.domain.notice.NoticeEventType.AGED_TO_LOST_FINE_CHARGED;
+import static org.folio.circulation.domain.notice.NoticeEventType.AGED_TO_LOST_RETURNED;
 import static org.folio.circulation.domain.notice.NoticeEventType.OVERDUE_FINE_RENEWED;
 import static org.folio.circulation.domain.notice.NoticeEventType.OVERDUE_FINE_RETURNED;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
+import java.lang.invoke.MethodHandles;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -22,11 +24,16 @@ import org.folio.circulation.domain.notice.PatronNoticePolicy;
 import org.folio.circulation.infrastructure.storage.notices.PatronNoticePolicyRepository;
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
 import org.folio.circulation.resources.context.RenewalContext;
+import org.folio.circulation.services.LostItemFeeRefundContext;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class FeeFineScheduledNoticeService {
+  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+
   public static FeeFineScheduledNoticeService using(Clients clients) {
     return new FeeFineScheduledNoticeService(
       ScheduledNoticesRepository.using(clients),
@@ -43,8 +50,8 @@ public class FeeFineScheduledNoticeService {
     this.noticePolicyRepository = noticePolicyRepository;
   }
 
-  public Result<CheckInContext> scheduleNotices(
-    CheckInContext context, FeeFineAction action) {
+  public Result<CheckInContext> scheduleOverdueFineNotices(CheckInContext context,
+    FeeFineAction action) {
 
     scheduleNotices(context.getLoan(), action, OVERDUE_FINE_RETURNED);
 
@@ -57,12 +64,23 @@ public class FeeFineScheduledNoticeService {
     return succeeded(context);
   }
 
+  public Result<LostItemFeeRefundContext> scheduleAgedToLostReturnedNotices(
+    LostItemFeeRefundContext context, FeeFineAction feeFineAction) {
+
+    scheduleNotices(context.getLoan(), feeFineAction, AGED_TO_LOST_RETURNED);
+
+    return succeeded(context);
+  }
+
   private CompletableFuture<Result<List<ScheduledNotice>>> scheduleNotices(
     Loan loan, FeeFineAction action, NoticeEventType eventType) {
 
     if (action == null) {
       return ofAsync(() -> null);
     }
+
+    log.info("Scheduling a fee/fine notice: loanId={}, feeFineActionId={}, eventType=\"{}\"",
+      loan.getId(), action.getId(), eventType.getRepresentation());
 
     return noticePolicyRepository.lookupPolicy(loan)
       .thenCompose(r -> r.after(policy ->
@@ -99,7 +117,7 @@ public class FeeFineScheduledNoticeService {
       .setRecipientUserId(loan.getUserId())
       .setNextRunTime(determineNextRunTime(configuration, action))
       .setNoticeConfig(createScheduledNoticeConfig(configuration))
-      .setTriggeringEvent(TriggeringEvent.from(eventType.getRepresentation()))
+      .setTriggeringEvent(TriggeringEvent.from(eventType))
       .build();
   }
 

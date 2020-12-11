@@ -2,6 +2,7 @@ package org.folio.circulation.domain.notice.schedule;
 
 import static org.apache.commons.lang3.ObjectUtils.allNotNull;
 import static org.folio.circulation.domain.notice.TemplateContextUtil.createFeeFineNoticeContext;
+import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.AGED_TO_LOST_RETURNED;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.ClockManager.getClockManager;
 import static org.folio.circulation.support.results.Result.ofAsync;
@@ -40,7 +41,7 @@ public class FeeFineScheduledNoticeHandler {
   private final FeeFineActionRepository actionRepository;
   private final AccountRepository accountRepository;
   private final LoanRepository loanRepository;
-  private PatronNoticePolicyRepository noticePolicyRepository;
+  private final PatronNoticePolicyRepository noticePolicyRepository;
 
   private FeeFineScheduledNoticeHandler(PatronNoticeService patronNoticeService,
     ScheduledNoticesRepository scheduledNoticesRepository,
@@ -111,7 +112,7 @@ public class FeeFineScheduledNoticeHandler {
 
     if (context.isIncomplete()) {
       log.error(getInvalidContextMessage(notice, "one of the referenced entities was not found"));
-    } else if (context.getAccount().isClosed()) {
+    } else if (noticeIsIrrelevant(context)) {
       log.warn(getInvalidContextMessage(notice, "associated fee/fine is already closed"));
     } else {
       JsonObject noticeContext = createFeeFineNoticeContext(context.getAccount(), context.getLoan());
@@ -137,6 +138,11 @@ public class FeeFineScheduledNoticeHandler {
     }
 
     return scheduledNoticesRepository.delete(notice);
+  }
+
+  private static boolean noticeIsIrrelevant(FeeFineNoticeContext context) {
+    return context.getAccount().isClosed() &&
+      context.getNotice().getTriggeringEvent() != AGED_TO_LOST_RETURNED;
   }
 
   private static String getInvalidContextMessage(ScheduledNotice notice, String reason) {
