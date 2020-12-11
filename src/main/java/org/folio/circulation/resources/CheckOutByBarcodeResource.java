@@ -177,7 +177,6 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenApply(r -> r.map(this::checkOutItem))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
       .thenComposeAsync(r -> r.after(loanService::truncateLoanWhenItemRecalled))
-      .thenComposeAsync(r -> r.after(loanService::truncateLoanDueDateIfPatronExpiresEarlier))
       .thenComposeAsync(r -> r.after(patronGroupRepository::findPatronGroupForLoanAndRelatedRecords))
       .thenComposeAsync(r -> r.after(l -> updateItem(l, itemRepository)))
       .thenComposeAsync(r -> r.after(loanRepository::createLoan))
