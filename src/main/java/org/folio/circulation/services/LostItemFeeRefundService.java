@@ -190,7 +190,6 @@ public class LostItemFeeRefundService {
 
     return accountRepository.findAccountsAndActionsForLoanByQuery(fetchQuery)
       .thenApply(r -> r.map(context::withAccounts));
-
   }
 
   private CompletableFuture<Result<LostItemFeeRefundContext>> fetchLostItemPolicy(

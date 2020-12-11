@@ -44,7 +44,6 @@ public class FeeFineService {
 
     return accountRefundClient.post(refundRequest.toJson(), refundCommand.getAccountId())
       .thenApply(r -> r.next(accountActionResponseInterpreter::apply));
-
   }
 
   public CompletableFuture<Result<AccountActionResponse>> cancelAccount(CancelAccountCommand cancelCommand) {
