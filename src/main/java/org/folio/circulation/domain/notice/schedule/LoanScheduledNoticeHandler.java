@@ -1,33 +1,42 @@
 package org.folio.circulation.domain.notice.schedule;
 
+import static java.util.Collections.singletonList;
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.apache.http.HttpStatus.SC_NOT_FOUND;
+import static org.folio.circulation.domain.FeeFine.lostItemFeeTypes;
+import static org.folio.circulation.domain.notice.NoticeTiming.BEFORE;
+import static org.folio.circulation.domain.notice.schedule.LoanScheduledNoticeHandler.RecordType.ITEM;
+import static org.folio.circulation.domain.notice.schedule.LoanScheduledNoticeHandler.RecordType.LOAN;
+import static org.folio.circulation.domain.notice.schedule.LoanScheduledNoticeHandler.RecordType.TEMPLATE;
+import static org.folio.circulation.domain.notice.schedule.LoanScheduledNoticeHandler.RecordType.USER;
+import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.AGED_TO_LOST;
+import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.DUE_DATE;
+import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.lang.invoke.MethodHandles;
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.collections.CollectionUtils;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.representations.logs.NoticeLogContext;
-import org.folio.circulation.domain.notice.NoticeTiming;
 import org.folio.circulation.domain.notice.PatronNoticeService;
 import org.folio.circulation.domain.notice.TemplateContextUtil;
 import org.folio.circulation.domain.representations.logs.NoticeLogContextItem;
-import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
+import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.notices.PatronNoticePolicyRepository;
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.RecordNotFoundFailure;
-import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -35,36 +44,32 @@ import org.slf4j.LoggerFactory;
 
 import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 @AllArgsConstructor
 public class LoanScheduledNoticeHandler {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-
-  private static final String USER_RECORD_TYPE = "user";
-  private static final String ITEM_RECORD_TYPE = "item";
-  private static final String LOAN_RECORD_TYPE = "loan";
-  private static final String TEMPLATE_RECORD_TYPE = "template";
-  static final String[] REQUIRED_RECORD_TYPES = {USER_RECORD_TYPE,
-    ITEM_RECORD_TYPE, LOAN_RECORD_TYPE, TEMPLATE_RECORD_TYPE};
+  private static final String ERROR_MESSAGE_TEMPLATE = "Sending scheduled notice {} failed: {}";
 
   public static LoanScheduledNoticeHandler using(Clients clients, DateTime systemTime) {
     return new LoanScheduledNoticeHandler(
       new LoanRepository(clients),
       new LoanPolicyRepository(clients),
-      new ConfigurationRepository(clients),
       new PatronNoticePolicyRepository(clients),
       PatronNoticeService.using(clients),
       ScheduledNoticesRepository.using(clients),
-      clients.templateNoticeClient(), systemTime);
+      clients.templateNoticeClient(),
+      new AccountRepository(clients),
+      systemTime);
   }
 
   private final LoanRepository loanRepository;
   private final LoanPolicyRepository loanPolicyRepository;
-  private final ConfigurationRepository configurationRepository;
   private final PatronNoticePolicyRepository noticePolicyRepository;
   private final PatronNoticeService patronNoticeService;
   private final ScheduledNoticesRepository scheduledNoticesRepository;
   private final CollectionResourceClient templateNoticesClient;
+  private final AccountRepository accountRepository;
   private final DateTime systemTime;
 
   public CompletableFuture<Result<Collection<ScheduledNotice>>> handleNotices(
@@ -74,82 +79,126 @@ public class LoanScheduledNoticeHandler {
     for (ScheduledNotice scheduledNotice : scheduledNotices) {
       future = future.thenCompose(r -> handleNotice(scheduledNotice));
     }
-    return future.thenApply(r -> r.map(v -> scheduledNotices));
+    return future.thenApply(r -> succeeded(scheduledNotices));
   }
 
   private CompletableFuture<Result<ScheduledNotice>> handleNotice(ScheduledNotice notice) {
-    if (notice.getLoanId() == null) {
-      return ofAsync(() -> notice);
-    }
+    return collectRequiredData(notice)
+      .thenCompose(r -> r.afterWhen(
+        records -> isNoticeIrrelevant(notice, records),
+        records -> handleIrrelevantNotice(notice),
+        records -> handleRelevantNotice(notice, records)));
+  }
 
-    String templateId = notice.getConfiguration().getTemplateId();
+  CompletableFuture<Result<LoanAndRelatedRecords>> collectRequiredData(ScheduledNotice notice) {
+    return failIfNoticeHasNoLoanId(notice)
+      .after(this::failIfTemplateDoesNotExist)
+      .thenCompose(r -> r.after(this::fetchLoanAndRelatedRecords))
+      .thenApply(r -> r.next(this::failIfLoanRelatedRecordWasNotFound))
+      .thenCompose(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
+      .thenCompose(r -> handleDataCollectionResult(r, notice));
+  }
+
+  private Result<ScheduledNotice> failIfNoticeHasNoLoanId(ScheduledNotice notice) {
+    return notice.getLoanId() == null
+      ? buildRecordNotFoundFailure(LOAN, null)
+      : succeeded(notice);
+  }
+
+  private CompletableFuture<Result<ScheduledNotice>> failIfTemplateDoesNotExist(
+    ScheduledNotice notice) {
+
+    final String templateId = notice.getConfiguration().getTemplateId();
 
     return templateNoticesClient.get(templateId)
-      .thenApply(r -> r.next(response -> failIfTemplateNotFound(response, templateId)))
-      .thenCompose(r -> r.after(i -> loanRepository.getById(notice.getLoanId())))
-      .thenCompose(r -> deleteNoticeIfLoanIsMissingOrIncomplete(r, notice))
-      .thenApply(r -> r.map(LoanAndRelatedRecords::new))
-      .thenCompose(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
-      .thenCompose(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration, LoanAndRelatedRecords::withTimeZone))
-      .thenCompose(r -> r.after(records -> sendNotice(records, notice)))
-      .thenCompose(r -> r.after(relatedRecords -> updateNotice(relatedRecords, notice)))
-      .thenApply(r -> r.mapFailure(this::handleFailure));
+      .thenApply(r -> r.next(response -> response.getStatusCode() == SC_NOT_FOUND
+        ? buildRecordNotFoundFailure(TEMPLATE, templateId)
+        : succeeded(notice)));
   }
 
-  public Result<Response> failIfTemplateNotFound(Response response, String templateId) {
-    if (response.getStatusCode() == 404) {
-      return failed(new RecordNotFoundFailure(TEMPLATE_RECORD_TYPE, templateId));
-    } else {
-      return succeeded(response);
-    }
+  private CompletableFuture<Result<LoanAndRelatedRecords>> fetchLoanAndRelatedRecords(
+    ScheduledNotice notice) {
+
+    // Returns RecordNotFoundFailure if loan was not found
+    // Also fetches user, item and item-related records (holdings, instance, location, etc.)
+    return loanRepository.getById(notice.getLoanId())
+      .thenApply(r -> r.map(LoanAndRelatedRecords::new));
   }
 
-  CompletableFuture<Result<Loan>> deleteNoticeIfLoanIsMissingOrIncomplete(
-      Result<Loan> result, ScheduledNotice notice) {
+  private Result<LoanAndRelatedRecords> failIfLoanRelatedRecordWasNotFound(
+    LoanAndRelatedRecords records) {
 
-    if (failedToFindRecordOfType(result, LOAN_RECORD_TYPE)) {
-      return deleteInvalidNoticeAndFail(notice, LOAN_RECORD_TYPE, notice.getLoanId());
+    final Loan loan = records.getLoan();
+
+    if (loan.getItem().isNotFound()) {
+      return buildRecordNotFoundFailure(ITEM, loan.getItemId());
     }
 
-    if (failedToFindRecordOfType(result, TEMPLATE_RECORD_TYPE)) {
-      return deleteInvalidNoticeAndFail(notice, TEMPLATE_RECORD_TYPE,
-        notice.getConfiguration().getTemplateId());
+    if (loan.getUser() == null) {
+      return buildRecordNotFoundFailure(USER, loan.getUserId());
     }
 
-    if (result.succeeded()) {
-      Loan loan = result.value();
-      if (loan.getItem().isNotFound()) {
-        return deleteInvalidNoticeAndFail(notice, ITEM_RECORD_TYPE, loan.getItemId());
-      }
-      if (loan.getUser() == null) {
-        return deleteInvalidNoticeAndFail(notice, USER_RECORD_TYPE, loan.getUserId());
-      }
+    return succeeded(records);
+  }
+
+  private CompletableFuture<Result<ScheduledNotice>> handleIrrelevantNotice(ScheduledNotice notice) {
+    log.info("Deleting scheduled notice {} as irrelevant", notice.getId());
+    return scheduledNoticesRepository.delete(notice);
+  }
+
+  private CompletableFuture<Result<ScheduledNotice>> handleRelevantNotice(ScheduledNotice notice,
+    LoanAndRelatedRecords records) {
+
+    return sendNotice(records, notice)
+      .thenCompose(r -> r.after(ignored -> updateNotice(records, notice)))
+      .whenComplete((result, throwable) -> {
+        if (throwable != null) {
+          log.error(ERROR_MESSAGE_TEMPLATE, notice.getId(), throwable.getMessage());
+        } else if (result.failed()) {
+          log.error(ERROR_MESSAGE_TEMPLATE, notice.getId(), result.cause());
+        }
+      });
+  }
+
+  private CompletableFuture<Result<LoanAndRelatedRecords>> handleDataCollectionResult(
+    Result<LoanAndRelatedRecords> result, ScheduledNotice notice) {
+
+    if (result.failed()) {
+      log.error("Data collection for scheduled notice {} failed: {}", notice.getId(), result.cause());
     }
+
+    if (failedToFindRequiredRecord(result)) {
+      log.warn("Deleting scheduled notice {} without sending: {}", notice.getId(), result.cause());
+      return scheduledNoticesRepository.delete(notice)
+        .thenApply(r -> r.next(ignored -> result));
+    }
+
     return completedFuture(result);
   }
 
-  private CompletableFuture<Result<Loan>> deleteInvalidNoticeAndFail(
-      ScheduledNotice notice, String recordType, String recordId) {
+  private CompletableFuture<Result<Boolean>> isNoticeIrrelevant(ScheduledNotice notice,
+    LoanAndRelatedRecords relatedRecords) {
 
-    log.info("Deleting scheduled notice {} as referenced {} {} was not found", notice.getId(), recordType, recordId);
-    return scheduledNoticesRepository.delete(notice)
-      .thenApply(r -> r.next(n -> failed(new RecordNotFoundFailure(recordType, recordId))));
-  }
+    final Loan loan = relatedRecords.getLoan();
 
-  private Result<ScheduledNotice> handleFailure(HttpFailure failure) {
-    if (isRecordNotFoundFailureForType(failure, REQUIRED_RECORD_TYPES)) {
-      return succeeded(null);
+    if (noticeIsNotRelevant(notice, loan)) {
+      return ofAsync(() -> true);
     }
-    return failed(failure);
+
+    // should stop sending "Aged to lost" notices once a lost item fee is charged
+    if (notice.getTriggeringEvent() == AGED_TO_LOST) {
+      Result<CqlQuery> query = exactMatchAny("feeFineType", lostItemFeeTypes());
+      return accountRepository.findAccountsForLoanByQuery(loan, query)
+        .thenApply(r -> r.map(CollectionUtils::isNotEmpty));
+    }
+
+    return ofAsync(() -> false);
   }
 
   private CompletableFuture<Result<LoanAndRelatedRecords>> sendNotice(
     LoanAndRelatedRecords relatedRecords, ScheduledNotice notice) {
-    Loan loan = relatedRecords.getLoan();
 
-    if (noticeIsNotRelevant(notice, loan)) {
-      return completedFuture(succeeded(relatedRecords));
-    }
+    final Loan loan = relatedRecords.getLoan();
 
     JsonObject loanNoticeContext = TemplateContextUtil.createLoanNoticeContext(loan);
 
@@ -161,7 +210,7 @@ public class LoanScheduledNoticeHandler {
       .thenCompose(r -> r.after(policy -> patronNoticeService.acceptScheduledNoticeEvent(
         notice.getConfiguration(), relatedRecords.getUserId(), loanNoticeContext,
         new NoticeLogContext().withUser(loan.getUser())
-          .withItems(Collections.singletonList(logContextItem.withNoticePolicyId(policy.getPolicyId()))))))
+          .withItems(singletonList(logContextItem.withNoticePolicyId(policy.getPolicyId()))))))
       .thenApply(r -> r.map(v -> relatedRecords));
   }
 
@@ -193,31 +242,46 @@ public class LoanScheduledNoticeHandler {
   }
 
   public boolean noticeIsNotRelevant(ScheduledNotice notice, Loan loan) {
-    return loan.isClosed() || beforeNoticeIsNotRelevant(notice, loan);
+    return loan.isClosed() || beforeDueDateNoticeIsNotRelevant(notice, loan);
   }
 
-  private boolean beforeNoticeIsNotRelevant(ScheduledNotice notice, Loan loan) {
+  private boolean beforeDueDateNoticeIsNotRelevant(ScheduledNotice notice, Loan loan) {
     ScheduledNoticeConfig noticeConfig = notice.getConfiguration();
 
-    return noticeConfig.getTiming() == NoticeTiming.BEFORE &&
-      loan.getDueDate().isBefore(systemTime);
+    return notice.getTriggeringEvent() == DUE_DATE
+      && noticeConfig.getTiming() == BEFORE
+      && loan.getDueDate().isBefore(systemTime);
   }
 
   private boolean nextRecurringNoticeIsNotRelevant(ScheduledNotice notice, Loan loan) {
     ScheduledNoticeConfig noticeConfig = notice.getConfiguration();
 
     return noticeConfig.isRecurring() &&
-      noticeConfig.getTiming() == NoticeTiming.BEFORE &&
+      noticeConfig.getTiming() == BEFORE &&
       notice.getNextRunTime().isAfter(loan.getDueDate());
   }
 
-  <T> boolean failedToFindRecordOfType(Result<T> result, String... recordTypes) {
+  static <T> boolean failedToFindRequiredRecord(Result<T> result) {
     return result.failed()
-      && isRecordNotFoundFailureForType(result.cause(), recordTypes);
+      && result.cause() instanceof RecordNotFoundFailure
+      && Arrays.stream(RecordType.values())
+      .map(RecordType::getValue)
+      .anyMatch(t -> t.equals(((RecordNotFoundFailure) result.cause()).getRecordType()));
   }
 
-  private boolean isRecordNotFoundFailureForType(HttpFailure failure, String... recordTypes) {
-    return failure instanceof RecordNotFoundFailure
-        && StringUtils.equalsAny(((RecordNotFoundFailure) failure).getRecordType(), recordTypes);
+  private static <T> Result<T> buildRecordNotFoundFailure(RecordType recordType, String recordId) {
+    return failed(new RecordNotFoundFailure(recordType.getValue(), recordId));
   }
+
+  @AllArgsConstructor
+  @Getter
+  enum RecordType {
+    USER("user"),
+    ITEM("item"),
+    LOAN("loan"),
+    TEMPLATE("template");
+
+    private final String value;
+  }
+
 }

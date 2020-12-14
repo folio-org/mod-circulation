@@ -667,7 +667,9 @@
             "circulation-storage.circulation-rules.get",
             "circulation.rules.notice-policy.get",
             "circulation-storage.fixed-due-date-schedules.item.get",
-            "circulation-storage.fixed-due-date-schedules.collection.get"
+            "circulation-storage.fixed-due-date-schedules.collection.get",
+            "accounts.item.get",
+            "accounts.collection.get"
           ],
           "unit": "minute",
           "delay": "5"
