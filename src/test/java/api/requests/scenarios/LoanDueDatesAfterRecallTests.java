@@ -895,6 +895,5 @@ public class LoanDueDatesAfterRecallTests extends APITests {
 
       String loanDueDate = loan.getJson().getString("dueDate");
       assertThat(loanDueDate, is(truncatedLoanDate.toString()));
-      
   }
 }
