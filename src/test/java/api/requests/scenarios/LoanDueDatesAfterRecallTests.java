@@ -867,8 +867,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
       .withRecallsMinimumGuaranteedLoanPeriod(Period.weeks(2))
       .withRecallsRecallReturnInterval(Period.weeks(2)));
 
-      checkOutFixture.checkOutByBarcode(
-        smallAngryPlanet, steve, now(UTC));
+      checkOutFixture.checkOutByBarcode(smallAngryPlanet, steve, now(UTC));
 
       requestsFixture.placeHoldShelfRequest(
         smallAngryPlanet, james, now(UTC),
@@ -895,7 +894,6 @@ public class LoanDueDatesAfterRecallTests extends APITests {
         smallAngryPlanet, james, checkOutDate);
 
       String loanDueDate = loan.getJson().getString("dueDate");
-
       assertThat(loanDueDate, is(truncatedLoanDate.toString()));
       
   }

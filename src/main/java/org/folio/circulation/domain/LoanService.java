@@ -30,25 +30,18 @@ public class LoanService {
     if(requests.isEmpty()) {
       return completedFuture(succeeded(records));
     }
-    
-    //check to see if there are any recalls in the Queue
-    Boolean isRecallInQueue = requests.stream().anyMatch(request -> request.getRequestType() == RequestType.RECALL);
 
-    //if no, exit 
-    if (!isRecallInQueue) {
+    if (!requestQueue.queueContainsRequestOfType(RequestType.RECALL)) {
       return completedFuture(succeeded(records));
     }
-
-    //if there are any recalls, check to see if the wasDueDateChangedByRecall flag on the loan is already set
 
     final Loan loanToRecall = records.getLoan();
     final LoanPolicy loanPolicy = loanToRecall.getLoanPolicy();
 
-    // if it is, we don't need to apply the recall
     if (loanToRecall.wasDueDateChangedByRecall()) {
       return completedFuture(succeeded(records));
     }
-    //otherwise, apply the recall 
+
     return completedFuture(loanPolicy
       .recall(loanToRecall)
       .map(records::withLoan))
