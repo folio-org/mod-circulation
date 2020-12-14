@@ -31,7 +31,7 @@ public class LoanService {
       return completedFuture(succeeded(records));
     }
 
-    if (!requestQueue.queueContainsRequestOfType(RequestType.RECALL)) {
+    if (!requestQueue.containsRequestOfType(RequestType.RECALL)) {
       return completedFuture(succeeded(records));
     }
 
