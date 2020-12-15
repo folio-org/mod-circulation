@@ -26,7 +26,8 @@ public class ItemStatusValidatorTest {
   @Parameters({
     "Declared lost",
     "Claimed returned",
-    "Aged to lost"
+    "Aged to lost",
+    "Intellectual item"
   })
   public void cannotCheckOutItemInDisallowedStatus(String itemStatus) {
     val validator = new ItemStatusValidator(this::validationError);
