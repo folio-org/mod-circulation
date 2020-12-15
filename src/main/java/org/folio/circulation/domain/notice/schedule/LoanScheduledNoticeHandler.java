@@ -193,7 +193,7 @@ public class LoanScheduledNoticeHandler {
   }
 
   public boolean noticeIsNotRelevant(ScheduledNotice notice, Loan loan) {
-    return loan.isClosed() || beforeNoticeIsNotRelevant(notice, loan) || loan.getItem().isClaimedReturned(); //here
+    return loan.isClosed() || beforeNoticeIsNotRelevant(notice, loan) || loan.getItem().isClaimedReturned();
   }
 
   private boolean beforeNoticeIsNotRelevant(ScheduledNotice notice, Loan loan) {
