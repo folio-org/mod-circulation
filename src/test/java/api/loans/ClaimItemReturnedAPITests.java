@@ -173,7 +173,7 @@ public class ClaimItemReturnedAPITests extends APITests {
   }
 
   @Test
-  public void itemClaimedReturnedScheduledNoticesShouldBeDeleted() {
+  public void afterItemClaimedReturnedScheduledNoticesShouldBeDeleted() {
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(scheduledNoticesClient::getAll, hasSize(1));
