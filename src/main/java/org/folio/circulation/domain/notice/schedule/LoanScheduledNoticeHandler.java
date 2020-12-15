@@ -171,7 +171,7 @@ public class LoanScheduledNoticeHandler {
     Loan loan = relatedRecords.getLoan();
     ScheduledNoticeConfig noticeConfig = notice.getConfiguration();
 
-    if (loan.isClosed() || !noticeConfig.isRecurring()) {
+    if (loan.isClosed() || !noticeConfig.isRecurring() || loan.getItem().isClaimedReturned()) {
       return scheduledNoticesRepository.delete(notice);
     }
 
@@ -193,7 +193,7 @@ public class LoanScheduledNoticeHandler {
   }
 
   public boolean noticeIsNotRelevant(ScheduledNotice notice, Loan loan) {
-    return loan.isClosed() || beforeNoticeIsNotRelevant(notice, loan);
+    return loan.isClosed() || beforeNoticeIsNotRelevant(notice, loan) || loan.getItem().isClaimedReturned(); //here
   }
 
   private boolean beforeNoticeIsNotRelevant(ScheduledNotice notice, Loan loan) {

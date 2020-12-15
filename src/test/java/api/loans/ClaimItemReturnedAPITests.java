@@ -18,12 +18,20 @@ import static org.folio.circulation.domain.representations.LoanProperties.CLAIME
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasSize;
 
+import java.util.Collections;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import api.support.builders.NoticeConfigurationBuilder;
+import api.support.builders.NoticePolicyBuilder;
+import api.support.fixtures.NoticePoliciesFixture;
+import api.support.fixtures.ScheduledNoticeProcessingClient;
+import api.support.http.ResourceClient;
 import org.awaitility.Awaitility;
+import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.junit.Before;
@@ -41,8 +49,34 @@ public class ClaimItemReturnedAPITests extends APITests {
   private IndividualResource loan;
   private String loanId;
 
+  protected final ResourceClient noticePolicyClient
+    = ResourceClient.forNoticePolicies();
+
+  protected final NoticePoliciesFixture noticePoliciesFixture
+    = new NoticePoliciesFixture(noticePolicyClient);
+
+  protected final ResourceClient scheduledNoticesClient =
+    ResourceClient.forScheduledNotices();
+
+  protected final ScheduledNoticeProcessingClient scheduledNoticeProcessingClient =
+    new ScheduledNoticeProcessingClient();
+
   @Before
   public void setUpItemAndLoan() {
+    JsonObject loanNotice = new NoticeConfigurationBuilder()
+      .withTemplateId(UUID.randomUUID())
+      .withDueDateEvent()
+      .withAfterTiming(Period.minutes(5))
+      .recurring(Period.minutes(5))
+      .sendInRealTime(true)
+      .create();
+
+    NoticePolicyBuilder noticePolicyBuilder = new NoticePolicyBuilder()
+      .withName("loan policy")
+      .withLoanNotices(Collections.singletonList(loanNotice));
+
+    use(noticePolicyBuilder);
+
     item = itemsFixture.basedUponSmallAngryPlanet();
     loan = checkOutFixture.checkOutByBarcode(item, usersFixture.charlotte());
     loanId = loan.getId().toString();
@@ -136,6 +170,24 @@ public class ClaimItemReturnedAPITests extends APITests {
 
     assertThat(event, isValidItemClaimedReturnedEvent(loan.getJson()));
     assertThatPublishedLoanLogRecordEventsAreValid();
+  }
+
+  @Test
+  public void itemClaimedReturnedScheduledNoticesShouldBeDeleted() {
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(scheduledNoticesClient::getAll, hasSize(1));
+
+    claimItemReturnedFixture
+      .claimItemReturned(new ClaimItemReturnedRequestBuilder()
+        .forLoan(loanId)
+        .withItemClaimedReturnedDate(DateTime.now()));
+
+    scheduledNoticeProcessingClient.runLoanNoticesProcessing(DateTime.parse(loan.getJson().getString("dueDate")).plusDays(1));
+
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(scheduledNoticesClient::getAll, empty());
   }
 
   private void assertLoanAndItem(Response response, String comment, DateTime dateTime) {
