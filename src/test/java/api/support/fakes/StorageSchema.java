@@ -32,7 +32,7 @@ public class StorageSchema {
   }
 
   public static JsonSchemaValidator validatorForNoteSchema() throws IOException {
-    return JsonSchemaValidator.fromResource("/note-2-9.json");
+    return JsonSchemaValidator.fromResource("/note-2-0.json");
   }
 
   public static JsonSchemaValidator validatorForFeeFineOperationSchema() throws IOException {
