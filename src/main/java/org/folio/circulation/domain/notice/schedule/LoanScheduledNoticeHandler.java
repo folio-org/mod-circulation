@@ -2,6 +2,7 @@ package org.folio.circulation.domain.notice.schedule;
 
 import static java.util.Collections.singletonList;
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.apache.commons.lang3.BooleanUtils.isTrue;
 import static org.apache.http.HttpStatus.SC_NOT_FOUND;
 import static org.folio.circulation.domain.FeeFine.lostItemFeeTypes;
 import static org.folio.circulation.domain.notice.NoticeTiming.BEFORE;
@@ -43,6 +44,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.vertx.core.json.JsonObject;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -164,13 +166,13 @@ public class LoanScheduledNoticeHandler {
     Result<LoanAndRelatedRecords> result, ScheduledNotice notice) {
 
     if (result.failed()) {
-      log.error("Data collection for scheduled notice {} failed: {}", notice.getId(), result.cause());
-    }
+      if (failedToFindRequiredRecord(result)) {
+        log.warn("Deleting scheduled notice {} without sending: {}", notice.getId(), result.cause());
+        return scheduledNoticesRepository.delete(notice)
+          .thenApply(r -> r.next(ignored -> result));
+      }
 
-    if (failedToFindRequiredRecord(result)) {
-      log.warn("Deleting scheduled notice {} without sending: {}", notice.getId(), result.cause());
-      return scheduledNoticesRepository.delete(notice)
-        .thenApply(r -> r.next(ignored -> result));
+      log.error("Data collection for scheduled notice {} failed: {}", notice.getId(), result.cause());
     }
 
     return completedFuture(result);
@@ -189,7 +191,13 @@ public class LoanScheduledNoticeHandler {
     if (notice.getTriggeringEvent() == AGED_TO_LOST) {
       Result<CqlQuery> query = exactMatchAny("feeFineType", lostItemFeeTypes());
       return accountRepository.findAccountsForLoanByQuery(loan, query)
-        .thenApply(r -> r.map(CollectionUtils::isNotEmpty));
+        .thenApply(r -> r.map(CollectionUtils::isNotEmpty))
+        .whenComplete((result, throwable) -> {
+          if (result != null && result.succeeded() && isTrue(result.value())) {
+            log.info("Lost item fee(s) for loan {} exist. Scheduled \"Aged to lost\" " +
+              "notice {} is no longer relevant.", loan.getId(), notice.getId());
+          }
+        });
     }
 
     return ofAsync(() -> false);
@@ -274,7 +282,7 @@ public class LoanScheduledNoticeHandler {
   }
 
   @AllArgsConstructor
-  @Getter
+  @Getter(AccessLevel.PRIVATE)
   enum RecordType {
     USER("user"),
     ITEM("item"),
