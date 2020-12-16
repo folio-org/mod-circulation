@@ -46,6 +46,7 @@ import api.support.builders.LoanBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.builders.ServicePointBuilder;
+import api.support.builders.CheckInByBarcodeRequestBuilder;
 import io.vertx.core.json.JsonObject;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
@@ -844,5 +845,55 @@ public class LoanDueDatesAfterRecallTests extends APITests {
       hasJsonPath("loan.action", "recallrequested"),
       hasJsonPath("loan.itemStatus", "Checked out"))
     ));
+  }
+
+  @Test
+  public void loanDueDateTruncatedOnCheckoutWhenRecallAnywhereInQueue() {
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource requestServicePoint = servicePointsFixture.cd1();
+    final IndividualResource jessica = usersFixture.jessica();
+    final IndividualResource charlotte = usersFixture.charlotte();
+    final IndividualResource james = usersFixture.james();
+    final IndividualResource rebecca = usersFixture.rebecca();
+    final IndividualResource steve = usersFixture.steve();
+
+    final Period loanPeriod = Period.weeks(4);
+    setFallbackPolicies(new LoanPolicyBuilder()
+      .withName("Can Circulate Rolling With Recalls")
+      .withDescription("Can circulate item With Recalls")
+      .rolling(loanPeriod)
+      .unlimitedRenewals()
+      .renewFromSystemDate()
+      .withRecallsMinimumGuaranteedLoanPeriod(Period.weeks(2))
+      .withRecallsRecallReturnInterval(Period.weeks(2)));
+
+      checkOutFixture.checkOutByBarcode(smallAngryPlanet, steve, now(UTC));
+
+      requestsFixture.placeHoldShelfRequest(
+        smallAngryPlanet, james, now(UTC),
+        requestServicePoint.getId(), "Hold");
+      
+      requestsFixture.placeHoldShelfRequest(
+        smallAngryPlanet, jessica, now(UTC),
+        requestServicePoint.getId(), "Hold");
+
+      requestsFixture.place(new RequestBuilder()
+        .recall()
+        .forItem(smallAngryPlanet)
+        .fulfilToHoldShelf()
+        .by(rebecca)
+        .fulfilToHoldShelf()
+        .withPickupServicePointId(requestServicePoint.getId()));
+
+      checkInFixture.checkInByBarcode(smallAngryPlanet);
+
+      final DateTime checkOutDate = now(UTC);
+      final DateTime truncatedLoanDate = checkOutDate.plusWeeks(2);
+
+      final IndividualResource loan = checkOutFixture.checkOutByBarcode(
+        smallAngryPlanet, james, checkOutDate);
+
+      String loanDueDate = loan.getJson().getString("dueDate");
+      assertThat(loanDueDate, is(truncatedLoanDate.toString()));
   }
 }

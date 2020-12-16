@@ -1,0 +1,22 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "description": "Link to object associated with a note",
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Id of object linked to note",
+      "example": "1234-5678"
+    },
+    "type": {
+      "type": "string",
+      "description": "Type of object linked to note",
+      "example": "package"
+    }
+  },
+  "required": [
+    "id",
+    "type"
+  ]
+}
