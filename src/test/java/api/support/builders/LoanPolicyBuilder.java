@@ -3,6 +3,8 @@ package api.support.builders;
 import java.util.Objects;
 import java.util.UUID;
 
+import com.github.javaparser.utils.Log;
+
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.Period;
 
@@ -154,6 +156,20 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
       }
       putIfNotNull(recalls, "recallReturnInterval", recallsRecallReturnInterval,
         Period::asJson);
+    }
+
+
+    Log.info("MYTEST %s", alternateRecallReturnInterval);
+    if (alternateRecallReturnInterval != null) {
+      if (recalls == null) {
+        recalls = new JsonObject();
+      }
+      putIfNotNull(recalls, "alternateRecallReturnInterval", alternateRecallReturnInterval,
+        Period::asJson);
+    }
+
+    if (recalls != null) {
+      put(recalls, "allowsAlternateRecallReturnInterval", allowsAlternateRecallReturnInterval);
     }
 
     JsonObject requestManagement = null;

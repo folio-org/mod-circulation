@@ -852,6 +852,8 @@ public class LoanDueDatesAfterRecallTests extends APITests {
   public void shouldExtendLoanDueDateIfOverdueLoanIsRecalledAndConditionsAreMet() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
+    final Period alternateLoanPeriod = Period.weeks(1);
+
     final Period loanPeriod = Period.weeks(3);
     setFallbackPolicies(new LoanPolicyBuilder()
       .withName("Can Circulate Rolling With Recalls")
@@ -860,9 +862,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
       .unlimitedRenewals()
       .renewFromSystemDate()
       .withAllowsAlternateRecallReturnInterval(true)
-      .withAlternateCheckoutLoanPeriod(Period.weeks(1))
-      .withRecallsMinimumGuaranteedLoanPeriod(Period.weeks(2))
-      .withRecallsRecallReturnInterval(Period.months(2)));
+      .withAlternateCheckoutLoanPeriod(alternateLoanPeriod));
 
     final DateTime loanCreateDate = now(UTC)
       .minus(loanPeriod.timePeriod()).minusMinutes(1);
@@ -870,7 +870,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
 
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(
       smallAngryPlanet, usersFixture.steve(), loanCreateDate);
-
+    Log.info("MYTEST it is a test");
     requestsFixture.place(new RequestBuilder()
       .recall()
       .forItem(smallAngryPlanet)
@@ -880,16 +880,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
       .withPickupServicePointId(servicePointsFixture.cd1().getId()));
 
     assertThat(loansStorageClient.getById(loan.getId()).getJson(),
-      hasJsonPath("dueDate", expectedLoanDueDate.toString()));
-
-    // verify that loan action is recorder even though due date is not changed
-    final MultipleJsonRecords loanHistory = loanHistoryClient
-      .getMany(queryFromTemplate("loan.id==%s and operation==U", loan.getId()));
-    
-      assertThat(loanHistory, hasItem(allOf(
-      hasJsonPath("loan.action", "recallrequested"),
-      hasJsonPath("loan.itemStatus", "Checked out"))
-    ));
+      hasJsonPath("dueDate", expectedLoanDueDate.plus(alternateLoanPeriod.timePeriod())));
   }
 
   @Test
@@ -897,7 +888,6 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requestServicePoint = servicePointsFixture.cd1();
     final IndividualResource jessica = usersFixture.jessica();
-    final IndividualResource charlotte = usersFixture.charlotte();
     final IndividualResource james = usersFixture.james();
     final IndividualResource rebecca = usersFixture.rebecca();
     final IndividualResource steve = usersFixture.steve();
