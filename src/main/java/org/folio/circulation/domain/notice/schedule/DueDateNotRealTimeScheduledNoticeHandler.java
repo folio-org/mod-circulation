@@ -7,6 +7,7 @@ import static org.folio.circulation.support.AsyncCoordinationUtil.allResultsOf;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
+import java.lang.invoke.MethodHandles;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -22,6 +23,8 @@ import org.folio.circulation.infrastructure.storage.notices.PatronNoticePolicyRe
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -29,6 +32,7 @@ import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
 public class DueDateNotRealTimeScheduledNoticeHandler {
+  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   public static DueDateNotRealTimeScheduledNoticeHandler using(Clients clients, DateTime systemTime) {
     return new DueDateNotRealTimeScheduledNoticeHandler(
@@ -63,7 +67,19 @@ public class DueDateNotRealTimeScheduledNoticeHandler {
   private CompletableFuture<Result<List<Pair<ScheduledNotice, LoanAndRelatedRecords>>>> handleFailures(
     List<Result<Pair<ScheduledNotice, LoanAndRelatedRecords>>> results) {
 
-    results.removeIf(Result::failed);
+    var failedResults = results.stream()
+      .filter(Result::failed)
+      .collect(toList());
+
+    if (!failedResults.isEmpty()) {
+      log.error("Failed to collect data for {} of {} scheduled \"Due date\" non-real-time notices",
+        failedResults.size(), results.size());
+    }
+
+    results.removeAll(failedResults);
+
+    log.info("Processing a group of {} scheduled \"Due date\" non-real-time notices...",
+      results.size());
 
     return completedFuture(results).thenApply(Result::combineAll);
   }
