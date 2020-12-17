@@ -14,25 +14,25 @@ public class PatronNoticeLogHelper {
     throw new UnsupportedOperationException("Do not instantiate");
   }
 
-  public static void logClientResponse(Result<Response> result, Throwable error, int expectedStatus,
+  public static void logResponse(Result<Response> result, Throwable error, int expectedStatus,
    PatronNotice notice) {
 
     String successMessage = String.format("Patron notice request sent: %s", notice);
     String errorMessage = String.format("Failed to send patron notice request: %s", notice);
 
-    LogHelper.logClientResponse(result, error, expectedStatus, successMessage, errorMessage);
+    LogHelper.logResponse(result, error, expectedStatus, successMessage, errorMessage);
   }
 
-  public static void logClientResponse(Result<Response> result, Throwable error, int expectedStatus,
+  public static void logResponse(Result<Response> result, Throwable error, int expectedStatus,
     HttpMethod action, ScheduledNotice notice) {
 
     String successMessage = String.format("%s scheduled patron notice succeeded: %s", action, notice);
     String errorMessage = String.format("%s scheduled patron notice failed: %s", action, notice);
 
-    LogHelper.logClientResponse(result, error, expectedStatus, successMessage, errorMessage);
+    LogHelper.logResponse(result, error, expectedStatus, successMessage, errorMessage);
   }
 
-  public static void logClientResponse(Result<Response> result, Throwable error, int expectedStatus,
+  public static void logResponse(Result<Response> result, Throwable error, int expectedStatus,
     HttpMethod action, CqlQuery cqlQuery) {
 
     String successMessage = String.format("%s scheduled patron notices by query succeeded: %s",
@@ -40,7 +40,7 @@ public class PatronNoticeLogHelper {
     String errorMessage = String.format("%s scheduled patron notices by query failed: %s",
       action, cqlQuery);
 
-    LogHelper.logClientResponse(result, error, expectedStatus, successMessage, errorMessage);
+    LogHelper.logResponse(result, error, expectedStatus, successMessage, errorMessage);
   }
 
 }

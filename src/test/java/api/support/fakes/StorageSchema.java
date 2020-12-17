@@ -8,7 +8,7 @@ public class StorageSchema {
   private StorageSchema() { }
 
   public static JsonSchemaValidator validatorForStorageItemSchema() throws IOException {
-    return JsonSchemaValidator.fromResource("/item-storage-8-5.json");
+    return JsonSchemaValidator.fromResource("/item-storage-8-7.json");
   }
 
   public static JsonSchemaValidator validatorForStorageLoanSchema() throws IOException {
@@ -32,7 +32,7 @@ public class StorageSchema {
   }
 
   public static JsonSchemaValidator validatorForNoteSchema() throws IOException {
-    return JsonSchemaValidator.fromResource("/note-2-9.json");
+    return JsonSchemaValidator.fromResource("/note-2-0.json");
   }
 
   public static JsonSchemaValidator validatorForFeeFineOperationSchema() throws IOException {

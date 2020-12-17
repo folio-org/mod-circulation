@@ -2,12 +2,12 @@ package org.folio.circulation.domain.notice.schedule;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.stream.Collectors.toList;
-import static org.folio.circulation.domain.notice.schedule.LoanScheduledNoticeHandler.REQUIRED_RECORD_TYPES;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allResultsOf;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
+import java.lang.invoke.MethodHandles;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -16,63 +16,44 @@ import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.representations.logs.NoticeLogContext;
 import org.folio.circulation.domain.representations.logs.NoticeLogContextItem;
-import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.notice.PatronNoticeService;
 import org.folio.circulation.domain.notice.TemplateContextUtil;
-import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
 import org.folio.circulation.infrastructure.storage.notices.PatronNoticePolicyRepository;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import lombok.AllArgsConstructor;
 
+@AllArgsConstructor
 public class DueDateNotRealTimeScheduledNoticeHandler {
+  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   public static DueDateNotRealTimeScheduledNoticeHandler using(Clients clients, DateTime systemTime) {
     return new DueDateNotRealTimeScheduledNoticeHandler(
       LoanScheduledNoticeHandler.using(clients, systemTime),
-      new LoanRepository(clients),
-      new LoanPolicyRepository(clients),
       PatronNoticeService.using(clients),
-      new PatronNoticePolicyRepository(clients),
-      clients.templateNoticeClient());
+      new PatronNoticePolicyRepository(clients));
   }
 
   private final LoanScheduledNoticeHandler loanScheduledNoticeHandler;
-  private final LoanRepository loanRepository;
-  private final LoanPolicyRepository loanPolicyRepository;
   private final PatronNoticeService patronNoticeService;
   private final PatronNoticePolicyRepository noticePolicyRepository;
-  private final CollectionResourceClient templateNoticesClient;
 
-  public DueDateNotRealTimeScheduledNoticeHandler(
-    LoanScheduledNoticeHandler loanScheduledNoticeHandler,
-    LoanRepository loanRepository,
-    LoanPolicyRepository loanPolicyRepository,
-    PatronNoticeService patronNoticeService,
-    PatronNoticePolicyRepository noticePolicyRepository,
-    CollectionResourceClient templateNoticesClient) {
-
-    this.loanScheduledNoticeHandler = loanScheduledNoticeHandler;
-    this.loanRepository = loanRepository;
-    this.loanPolicyRepository = loanPolicyRepository;
-    this.patronNoticeService = patronNoticeService;
-    this.noticePolicyRepository = noticePolicyRepository;
-    this.templateNoticesClient = templateNoticesClient;
-  }
 
   public CompletableFuture<Result<Void>> handleNotices(
     List<List<ScheduledNotice>> noticeGroups) {
 
     CompletableFuture<Result<Void>> future = completedFuture(succeeded(null));
     for (List<ScheduledNotice> noticeGroup : noticeGroups) {
-      future = future.thenCompose(r -> r.after(v -> handleNoticeGroup(noticeGroup)));
+      future = future.thenCompose(r -> handleNoticeGroup(noticeGroup));
     }
-    return future.thenApply(mapResult(v -> null));
+    return future.thenApply(r -> succeeded(null));
   }
 
   private CompletableFuture<Result<Void>> handleNoticeGroup(List<ScheduledNotice> noticeGroup) {
@@ -85,23 +66,28 @@ public class DueDateNotRealTimeScheduledNoticeHandler {
 
   private CompletableFuture<Result<List<Pair<ScheduledNotice, LoanAndRelatedRecords>>>> handleFailures(
     List<Result<Pair<ScheduledNotice, LoanAndRelatedRecords>>> results) {
-    results.removeIf(r -> loanScheduledNoticeHandler.failedToFindRecordOfType(r, REQUIRED_RECORD_TYPES));
-    return CompletableFuture.completedFuture(results)
-      .thenApply(Result::combineAll);
+
+    var failedResults = results.stream()
+      .filter(Result::failed)
+      .collect(toList());
+
+    if (!failedResults.isEmpty()) {
+      log.error("Failed to collect data for {} of {} scheduled \"Due date\" non-real-time notices",
+        failedResults.size(), results.size());
+    }
+
+    results.removeAll(failedResults);
+
+    log.info("Processing a group of {} scheduled \"Due date\" non-real-time notices...",
+      results.size());
+
+    return completedFuture(results).thenApply(Result::combineAll);
   }
 
   private CompletableFuture<Result<Pair<ScheduledNotice, LoanAndRelatedRecords>>> getContext(
     ScheduledNotice notice) {
 
-    String templateId = notice.getConfiguration().getTemplateId();
-
-    return templateNoticesClient.get(templateId)
-      .thenApply(r -> r.next(
-        response -> loanScheduledNoticeHandler.failIfTemplateNotFound(response, templateId)))
-      .thenCompose(r -> r.after(i -> loanRepository.getById(notice.getLoanId())))
-      .thenCompose(r -> loanScheduledNoticeHandler.deleteNoticeIfLoanIsMissingOrIncomplete(r, notice))
-      .thenApply(mapResult(LoanAndRelatedRecords::new))
-      .thenCompose(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
+    return loanScheduledNoticeHandler.collectRequiredData(notice)
       .thenApply(mapResult(relatedRecords -> Pair.of(notice, relatedRecords)));
   }
 

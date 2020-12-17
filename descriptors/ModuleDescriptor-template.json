@@ -667,7 +667,9 @@
             "circulation-storage.circulation-rules.get",
             "circulation.rules.notice-policy.get",
             "circulation-storage.fixed-due-date-schedules.item.get",
-            "circulation-storage.fixed-due-date-schedules.collection.get"
+            "circulation-storage.fixed-due-date-schedules.collection.get",
+            "accounts.item.get",
+            "accounts.collection.get"
           ],
           "unit": "minute",
           "delay": "5"
@@ -965,7 +967,7 @@
     },
     {
       "id": "item-storage",
-      "version": "8.5"
+      "version": "8.7"
     },
     {
       "id": "instance-storage",
@@ -1077,7 +1079,7 @@
     },
     {
       "id": "notes",
-      "version": "1.0"
+      "version": "1.0 2.0"
     }
   ],
   "permissionSets": [

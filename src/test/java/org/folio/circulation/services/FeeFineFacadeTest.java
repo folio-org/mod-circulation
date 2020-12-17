@@ -28,6 +28,8 @@ import org.folio.circulation.domain.FeeFineOwner;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Location;
+import org.folio.circulation.domain.User;
+import org.folio.circulation.services.feefine.AccountActionResponse;
 import org.folio.circulation.services.support.RefundAndCancelAccountCommand;
 import org.folio.circulation.services.support.CreateAccountCommand;
 import org.folio.circulation.support.Clients;
@@ -105,8 +107,14 @@ public class FeeFineFacadeTest {
     when(accountRefundClient.post(any(JsonObject.class), anyString()))
       .thenAnswer(postRespondWithRequestAndFail(expectedError));
 
-    final Result<Void> result = feeFineFacade.refundAndCloseAccounts(Arrays.asList(
-      refundCommand(), refundCommand())).get(5, TimeUnit.SECONDS);
+    User user = User.from(new JsonObject()
+      .put("personal", new JsonObject()
+        .put("firstName", "Folio")
+        .put("lastName", "Tester")));
+
+    final Result<AccountActionResponse> result = feeFineFacade
+      .refundAccountIfNeeded(refundCommand(), user)
+      .get(5, TimeUnit.SECONDS);
 
     assertThat(result, notNullValue());
 

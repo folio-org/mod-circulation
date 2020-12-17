@@ -1,6 +1,7 @@
 package org.folio.circulation.domain.notice.schedule;
 
 import static org.folio.circulation.domain.notice.NoticeEventType.AGED_TO_LOST_FINE_CHARGED;
+import static org.folio.circulation.domain.notice.NoticeEventType.AGED_TO_LOST_RETURNED;
 import static org.folio.circulation.domain.notice.NoticeEventType.OVERDUE_FINE_RENEWED;
 import static org.folio.circulation.domain.notice.NoticeEventType.OVERDUE_FINE_RETURNED;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
@@ -22,11 +23,13 @@ import org.folio.circulation.domain.notice.PatronNoticePolicy;
 import org.folio.circulation.infrastructure.storage.notices.PatronNoticePolicyRepository;
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
 import org.folio.circulation.resources.context.RenewalContext;
+import org.folio.circulation.services.LostItemFeeRefundContext;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
 
 public class FeeFineScheduledNoticeService {
+
   public static FeeFineScheduledNoticeService using(Clients clients) {
     return new FeeFineScheduledNoticeService(
       ScheduledNoticesRepository.using(clients),
@@ -43,8 +46,8 @@ public class FeeFineScheduledNoticeService {
     this.noticePolicyRepository = noticePolicyRepository;
   }
 
-  public Result<CheckInContext> scheduleNotices(
-    CheckInContext context, FeeFineAction action) {
+  public Result<CheckInContext> scheduleOverdueFineNotices(CheckInContext context,
+    FeeFineAction action) {
 
     scheduleNotices(context.getLoan(), action, OVERDUE_FINE_RETURNED);
 
@@ -53,6 +56,14 @@ public class FeeFineScheduledNoticeService {
 
   public Result<RenewalContext> scheduleOverdueFineNotices(RenewalContext context) {
     scheduleNotices(context.getLoan(), context.getOverdueFeeFineAction(), OVERDUE_FINE_RENEWED);
+
+    return succeeded(context);
+  }
+
+  public Result<LostItemFeeRefundContext> scheduleAgedToLostReturnedNotices(
+    LostItemFeeRefundContext context, FeeFineAction feeFineAction) {
+
+    scheduleNotices(context.getLoan(), feeFineAction, AGED_TO_LOST_RETURNED);
 
     return succeeded(context);
   }
@@ -99,7 +110,7 @@ public class FeeFineScheduledNoticeService {
       .setRecipientUserId(loan.getUserId())
       .setNextRunTime(determineNextRunTime(configuration, action))
       .setNoticeConfig(createScheduledNoticeConfig(configuration))
-      .setTriggeringEvent(TriggeringEvent.from(eventType.getRepresentation()))
+      .setTriggeringEvent(TriggeringEvent.from(eventType))
       .build();
   }
 
