@@ -8,7 +8,6 @@ import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
-import java.lang.invoke.MethodHandles;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -28,11 +27,8 @@ import org.folio.circulation.services.LostItemFeeRefundContext;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class FeeFineScheduledNoticeService {
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   public static FeeFineScheduledNoticeService using(Clients clients) {
     return new FeeFineScheduledNoticeService(
@@ -78,9 +74,6 @@ public class FeeFineScheduledNoticeService {
     if (action == null) {
       return ofAsync(() -> null);
     }
-
-    log.info("Scheduling a fee/fine notice: loanId={}, feeFineActionId={}, eventType=\"{}\"",
-      loan.getId(), action.getId(), eventType.getRepresentation());
 
     return noticePolicyRepository.lookupPolicy(loan)
       .thenCompose(r -> r.after(policy ->

@@ -289,6 +289,24 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
+  public void testNoticeIsDeletedIfItHasNoLoanId() {
+
+    scheduledNoticesClient.deleteAll();
+    int expectedNumberOfUnprocessedNotices = 0;
+
+    JsonObject brokenNotice = createNoticesOverTime(dueDate.minusMinutes(1)::minusHours, 1).get(0);
+    brokenNotice.remove("loanId");
+
+    scheduledNoticesClient.create(brokenNotice);
+    scheduledNoticeProcessingClient.runLoanNoticesProcessing(dueDate.minusSeconds(1));
+
+    checkSentNotices();
+
+    List<JsonObject> unprocessedScheduledNotices = scheduledNoticesClient.getAll();
+    assertThat(unprocessedScheduledNotices, hasSize(expectedNumberOfUnprocessedNotices));
+  }
+
+  @Test
   public void testNoticeIsDeletedIfReferencedLoanDoesNotExist() {
 
     scheduledNoticesClient.deleteAll();
