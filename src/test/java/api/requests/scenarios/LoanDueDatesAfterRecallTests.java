@@ -24,6 +24,8 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.UUID;
 
+import com.github.javaparser.utils.Log;
+
 import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.ClockManager;
@@ -765,8 +767,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
         .renewFromSystemDate()
         .withRecallsMinimumGuaranteedLoanPeriod(Period.weeks(1))
         .withRecallsRecallReturnInterval(Period.weeks(2));
-
-
+  
     setFallbackPolicies(canCirculateRollingPolicy);
 
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(
@@ -845,4 +846,91 @@ public class LoanDueDatesAfterRecallTests extends APITests {
       hasJsonPath("loan.itemStatus", "Checked out"))
     ));
   }
+
+  // @Test
+  // public void shouldExtendLoanDueDateIfOverdueLoanIsRecalledAndConditionsAreMet() {
+  //   final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+
+  //   final Period loanPeriod = Period.weeks(3);
+  //   setFallbackPolicies(new LoanPolicyBuilder()
+  //     .withName("Can Circulate Rolling With Recalls")
+  //     .withDescription("Can circulate item With Recalls")
+  //     .rolling(loanPeriod)
+  //     .unlimitedRenewals()
+  //     .renewFromSystemDate()
+  //     .withAllowsAlternateRecallReturnInterval(true)
+  //     .withAlternateCheckoutLoanPeriod(Period.weeks(1))
+  //     .withRecallsMinimumGuaranteedLoanPeriod(Period.weeks(2))
+  //     .withRecallsRecallReturnInterval(Period.months(2)));
+
+  //   final DateTime loanCreateDate = now(UTC)
+  //     .minus(loanPeriod.timePeriod()).minusMinutes(1);
+  //   final DateTime expectedLoanDueDate = loanCreateDate.plus(loanPeriod.timePeriod());
+
+  //   final IndividualResource loan = checkOutFixture.checkOutByBarcode(
+  //     smallAngryPlanet, usersFixture.steve(), loanCreateDate);
+
+  //   requestsFixture.place(new RequestBuilder()
+  //     .recall()
+  //     .forItem(smallAngryPlanet)
+  //     .fulfilToHoldShelf()
+  //     .by(usersFixture.jessica())
+  //     .fulfilToHoldShelf()
+  //     .withPickupServicePointId(servicePointsFixture.cd1().getId()));
+
+  //   assertThat(loansStorageClient.getById(loan.getId()).getJson(),
+  //     hasJsonPath("dueDate", expectedLoanDueDate.toString()));
+
+  //   // verify that loan action is recorder even though due date is not changed
+  //   final MultipleJsonRecords loanHistory = loanHistoryClient
+  //     .getMany(queryFromTemplate("loan.id==%s and operation==U", loan.getId()));
+    
+  //     assertThat(loanHistory, hasItem(allOf(
+  //     hasJsonPath("loan.action", "recallrequested"),
+  //     hasJsonPath("loan.itemStatus", "Checked out"))
+  //   ));
+  // }
+
+  // @Test
+  // public void shouldNotExtendLoanDueDateIfOverdueLoanIsRecalled() {
+  //   final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+
+  //   final Period loanPeriod = Period.weeks(3);
+  //   setFallbackPolicies(new LoanPolicyBuilder()
+  //     .withName("Can Circulate Rolling With Recalls")
+  //     .withDescription("Can circulate item With Recalls")
+  //     .rolling(loanPeriod)
+  //     .unlimitedRenewals()
+  //     .renewFromSystemDate()
+  //     .withRecallsMinimumGuaranteedLoanPeriod(Period.weeks(2))
+  //     .withRecallsRecallReturnInterval(Period.months(2)));
+
+  //   final DateTime loanCreateDate = now(UTC)
+  //     .minus(loanPeriod.timePeriod()).minusMinutes(1);
+  //   final DateTime expectedLoanDueDate = loanCreateDate.plus(loanPeriod.timePeriod());
+
+  //   final IndividualResource loan = checkOutFixture.checkOutByBarcode(
+  //     smallAngryPlanet, usersFixture.steve(), loanCreateDate);
+
+  //   requestsFixture.place(new RequestBuilder()
+  //     .recall()
+  //     .forItem(smallAngryPlanet)
+  //     .fulfilToHoldShelf()
+  //     .by(usersFixture.jessica())
+  //     .fulfilToHoldShelf()
+  //     .withPickupServicePointId(servicePointsFixture.cd1().getId()));
+
+  //   assertThat(loansStorageClient.getById(loan.getId()).getJson(),
+  //     hasJsonPath("dueDate", expectedLoanDueDate.toString()));
+
+  //   // verify that loan action is recorder even though due date is not changed
+  //   final MultipleJsonRecords loanHistory = loanHistoryClient
+  //     .getMany(queryFromTemplate("loan.id==%s and operation==U", loan.getId()));
+
+  //   assertThat(loanHistory, hasItem(allOf(
+  //     hasJsonPath("loan.action", "recallrequested"),
+  //     hasJsonPath("loan.itemStatus", "Checked out"))
+  //   ));
+  // }
+
 }

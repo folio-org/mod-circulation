@@ -34,6 +34,8 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
   private final boolean loanable;
   private final Period recallsMinimumGuaranteedLoanPeriod;
   private final Period recallsRecallReturnInterval;
+  private final Period alternateRecallReturnInterval;
+  private final boolean allowsAlternateRecallReturnInterval;
   private final JsonObject holds;
   private final Period alternateCheckoutLoanPeriod;
   private final Integer itemLimit;
@@ -59,8 +61,10 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
       null,
       null,
       null,
-      null,
-      null,
+      false, 
+      null, 
+      null, 
+      null, 
       null
     );
   }
