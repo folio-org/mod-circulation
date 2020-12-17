@@ -147,6 +147,51 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
+  public void shouldStopSendingAgedToLostNoticesOnceLostItemFeeWasCharged() {
+    val agedToLostLoan = ageToLostFixture.createAgedToLostLoan(
+      new NoticePolicyBuilder()
+        .active()
+        .withName("Aged to lost notice policy")
+        .withLoanNotices(List.of(
+          new NoticeConfigurationBuilder()
+            .withAgedToLostEvent()
+            .withTemplateId(AFTER_RECURRING_TEMPLATE_ID)
+            .withAfterTiming(TIMING_PERIOD)
+            .recurring(RECURRENCE_PERIOD)
+            .create()
+        )));
+
+    final DateTime firstRunTime = getAgedToLostDate(agedToLostLoan).plus(TIMING_PERIOD.timePeriod());
+
+    final UUID loanId = agedToLostLoan.getLoanId();
+
+    assertThat(scheduledNoticesClient.getAll(), allOf(
+      iterableWithSize(1),
+      hasItems(
+        hasScheduledLoanNotice(loanId, firstRunTime,
+          AFTER.getRepresentation(), AFTER_RECURRING_TEMPLATE_ID, RECURRENCE_PERIOD, true)
+      )));
+
+    // first run, notice should be sent and rescheduled
+    scheduledNoticeProcessingClient.runLoanNoticesProcessing(firstRunTime.plusMinutes(1));
+    assertThat(patronNoticesClient.getAll(), hasSize(1));
+    assertThat(scheduledNoticesClient.getAll(), allOf(
+      iterableWithSize(1),
+      hasItems(
+        hasScheduledLoanNotice(loanId, firstRunTime.plus(RECURRENCE_PERIOD.timePeriod()),
+          AFTER.getRepresentation(), AFTER_RECURRING_TEMPLATE_ID, RECURRENCE_PERIOD, true)
+      )));
+
+    ageToLostFixture.chargeFees();
+
+    // second run, notice should be deleted without sending
+    scheduledNoticeProcessingClient.runLoanNoticesProcessing(
+      firstRunTime.plus(RECURRENCE_PERIOD.timePeriod()).plusMinutes(1));
+    assertThat(patronNoticesClient.getAll(), hasSize(1));
+    assertThat(scheduledNoticesClient.getAll(), hasSize(0));
+  }
+
+  @Test
   public void patronNoticesForForAgedToLostFineAdjustmentsAreCreatedAndProcessed() {
     LostItemFeePolicyBuilder lostItemFeePolicyBuilder = lostItemFeePoliciesFixture
       .ageToLostAfterOneMinutePolicy()
