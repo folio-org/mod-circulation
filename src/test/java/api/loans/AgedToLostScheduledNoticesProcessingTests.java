@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Stream;
 
+import org.folio.circulation.domain.Account;
 import org.folio.circulation.domain.policy.Period;
 import org.joda.time.DateTime;
 import org.junit.Before;
@@ -48,6 +49,7 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
 
   public static final String ACTION_TYPE_CANCELLED = "Cancelled item returned";
   public static final String ACTION_TYPE_REFUNDED_PARTIALLY = "Refunded partially";
+  public static final String ACTION_TYPE_REFUNDED_FULLY = "Refunded fully";
 
   public static final double LOST_ITEM_FEE_AMOUNT = 10;
   public static final double PROCESSING_FEE_AMOUNT = 5;
@@ -92,12 +94,7 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
             .create()
           )));
 
-    final String agedToLostDateString = agedToLostLoan.getLoan()
-      .getJson()
-      .getJsonObject("agedToLostDelayedBilling")
-      .getString("agedToLostDate");
-
-    final DateTime runTimeOfUponAtNotice = DateTime.parse(agedToLostDateString);
+    final DateTime runTimeOfUponAtNotice = getAgedToLostDate(agedToLostLoan);
     final DateTime runTimeOfAfterNotices = runTimeOfUponAtNotice.plus(TIMING_PERIOD.timePeriod());
 
     final UUID loanId = agedToLostLoan.getLoanId();
@@ -150,7 +147,7 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void patronNoticesForForBothLostItemFeesAreCreatedAndProcessed() {
+  public void patronNoticesForForAgedToLostFineAdjustmentsAreCreatedAndProcessed() {
     LostItemFeePolicyBuilder lostItemFeePolicyBuilder = lostItemFeePoliciesFixture
       .ageToLostAfterOneMinutePolicy()
       .withSetCost(LOST_ITEM_FEE_AMOUNT)
@@ -254,6 +251,82 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
     assertThat(scheduledNoticesClient.getAll(), hasSize(0));
   }
 
+  @Test
+  public void patronNoticeForAdjustmentOfFullyPaidLostItemFeeIsCreatedAndProcessed() {
+    LostItemFeePolicyBuilder lostItemFeePolicyBuilder = lostItemFeePoliciesFixture
+      .ageToLostAfterOneMinutePolicy()
+      .withChargeAmountItemSystem(false)
+      .withSetCost(LOST_ITEM_FEE_AMOUNT);
+
+    AgeToLostResult agedToLostLoan = ageToLostFixture.createLoanAgeToLostAndChargeFees(
+      lostItemFeePolicyBuilder,
+      new NoticePolicyBuilder()
+        .active()
+        .withName("Aged to lost notice policy")
+        .withFeeFineNotices(List.of(
+          new NoticeConfigurationBuilder()
+            .withAgedToLostReturnedEvent()
+            .withTemplateId(UPON_AT_TEMPLATE_ID)
+            .withUponAtTiming()
+            .create()
+        )));
+
+    final List<JsonObject> existingAccounts = accountsClient.getAll();
+
+    assertThat(existingAccounts, allOf(
+      iterableWithSize(1),
+      hasItems(
+        isAccount(LOST_ITEM_FEE_AMOUNT, LOST_ITEM_FEE_AMOUNT, ACCOUNT_STATUS_OPEN,
+          PAYMENT_STATUS_OUTSTANDING, LOST_ITEM_FEE, agedToLostLoan.getUser().getId())
+      )));
+
+    // one "charge" action should exist
+    assertThat(feeFineActionsClient.getAll(), hasSize(1));
+
+    final String accountId = Account.from(existingAccounts.get(0)).getId();
+
+    // fully pay the Lost Item Fee
+    feeFineAccountFixture.pay(accountId, LOST_ITEM_FEE_AMOUNT);
+
+    // 1 charge + 1 payment
+    assertThat(feeFineActionsClient.getAll(), hasSize(2));
+
+    final UUID loanId = agedToLostLoan.getLoanId();
+
+    eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loanId, UUID.fromString(accountId));
+    assertThat(loansFixture.getLoanById(agedToLostLoan.getLoanId()).getJson(), isClosed());
+
+    // check-in should only refund the "Lost item fee", no cancellation since it was paid fully
+    checkInFixture.checkInByBarcode(agedToLostLoan.getItem());
+    assertThat(itemsFixture.getById(agedToLostLoan.getItemId()).getJson(), isAvailable());
+    assertThat(loansFixture.getLoanById(agedToLostLoan.getLoanId()).getJson(), isClosed());
+
+    // 1 charge + 1 payment + 1 credit + 1 refund
+    assertThat(feeFineActionsClient.getAll(), hasSize(4));
+
+    final JsonObject lostItemFeeRefundAction =
+      findFeeFineAction(ACTION_TYPE_REFUNDED_FULLY, LOST_ITEM_FEE_AMOUNT);
+    final UUID refundLostItemFeeActionId = getId(lostItemFeeRefundAction);
+    final DateTime refundLostItemFeeActionDate = getActionDate(lostItemFeeRefundAction);
+
+    final UUID userId = agedToLostLoan.getUser().getId();
+
+    assertThat(patronNoticesClient.getAll(), hasSize(0));
+    assertThat(scheduledNoticesClient.getAll(), allOf(
+      iterableWithSize(1),
+      hasItems(
+        hasScheduledFeeFineNotice(refundLostItemFeeActionId, loanId, userId,
+          UPON_AT_TEMPLATE_ID, AGED_TO_LOST_RETURNED, refundLostItemFeeActionDate,
+          UPON_AT, null, true)
+      )));
+
+    scheduledNoticeProcessingClient.runFeeFineNoticesProcessing(
+      refundLostItemFeeActionDate.plusSeconds(1));
+
+    assertThat(patronNoticesClient.getAll(), hasSize(1));
+    assertThat(scheduledNoticesClient.getAll(), hasSize(0));
+  }
+
   private JsonObject findFeeFineAction(String actionType, double actionAmount) {
     return feeFineActionsClient.getMany(
       exactMatch("typeAction", actionType)
@@ -268,4 +341,14 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
   private static UUID getId(JsonObject jsonObject) {
     return UUID.fromString(jsonObject.getString("id"));
   }
+
+  private static DateTime getAgedToLostDate(AgeToLostResult ageToLostResult) {
+    return DateTime.parse(
+      ageToLostResult.getLoan()
+        .getJson()
+        .getJsonObject("agedToLostDelayedBilling")
+        .getString("agedToLostDate")
+    );
+  }
+
 }
