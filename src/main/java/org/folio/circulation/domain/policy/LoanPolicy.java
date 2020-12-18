@@ -453,11 +453,13 @@ public class LoanPolicy extends Policy {
     Log.info("MYTEST loan.isOverdue(): %s, hasAllowRecallsToExtendOverdueLoans: %s, getAlternateRecallReturnInterval: %s", loan.isOverdue(), hasAllowRecallsToExtendOverdueLoans(), getAlternateRecallReturnInterval());
 
     final Result<DateTime> recallDueDateResult =
-        loan.isOverdue() && 
+        (loan.isOverdue() && 
         hasAllowRecallsToExtendOverdueLoans() && 
-        getAlternateRecallReturnInterval() != null ?
+        getAlternateRecallReturnInterval() != null) ?
         getDueDate("alternateRecallReturnInterval", recalls, systemDate, systemDate) :
         getDueDate("recallReturnInterval", recalls, systemDate, systemDate);
+
+    Log.info("MYTEST recallDueDateResult: %s", recallDueDateResult.value());
 
     final List<ValidationError> errors = new ArrayList<>();
 

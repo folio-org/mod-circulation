@@ -852,9 +852,9 @@ public class LoanDueDatesAfterRecallTests extends APITests {
   public void shouldExtendLoanDueDateIfOverdueLoanIsRecalledAndConditionsAreMet() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
-    final Period alternateLoanPeriod = Period.weeks(1);
+    final Period alternateLoanPeriod = Period.weeks(3);
 
-    final Period loanPeriod = Period.weeks(3);
+    final Period loanPeriod = Period.weeks(1);
     setFallbackPolicies(new LoanPolicyBuilder()
       .withName("Can Circulate Rolling With Recalls")
       .withDescription("Can circulate item With Recalls")
@@ -862,15 +862,15 @@ public class LoanDueDatesAfterRecallTests extends APITests {
       .unlimitedRenewals()
       .renewFromSystemDate()
       .withAllowsAlternateRecallReturnInterval(true)
-      .withAlternateCheckoutLoanPeriod(alternateLoanPeriod));
+      .withAlternateRecallReturnInterval(alternateLoanPeriod));
 
     final DateTime loanCreateDate = now(UTC)
       .minus(loanPeriod.timePeriod()).minusMinutes(1);
-    final DateTime expectedLoanDueDate = loanCreateDate.plus(loanPeriod.timePeriod());
+    final DateTime expectedLoanDueDate = loanCreateDate.plus(alternateLoanPeriod.timePeriod());
 
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(
       smallAngryPlanet, usersFixture.steve(), loanCreateDate);
-    Log.info("MYTEST it is a test");
+
     requestsFixture.place(new RequestBuilder()
       .recall()
       .forItem(smallAngryPlanet)
@@ -879,8 +879,11 @@ public class LoanDueDatesAfterRecallTests extends APITests {
       .fulfilToHoldShelf()
       .withPickupServicePointId(servicePointsFixture.cd1().getId()));
 
+
+    Log.info("MYTEST loanCreateDate: %s", loanCreateDate);
+
     assertThat(loansStorageClient.getById(loan.getId()).getJson(),
-      hasJsonPath("dueDate", expectedLoanDueDate.plus(alternateLoanPeriod.timePeriod())));
+      hasJsonPath("dueDate", expectedLoanDueDate));
   }
 
   @Test

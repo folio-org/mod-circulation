@@ -158,8 +158,6 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
         Period::asJson);
     }
 
-
-    Log.info("MYTEST %s", alternateRecallReturnInterval);
     if (alternateRecallReturnInterval != null) {
       if (recalls == null) {
         recalls = new JsonObject();
@@ -169,7 +167,7 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
     }
 
     if (recalls != null) {
-      put(recalls, "allowsAlternateRecallReturnInterval", allowsAlternateRecallReturnInterval);
+      put(recalls, "allowRecallsToExtendOverdueLoans", allowsAlternateRecallReturnInterval);
     }
 
     JsonObject requestManagement = null;
