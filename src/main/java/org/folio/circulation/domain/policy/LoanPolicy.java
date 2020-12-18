@@ -17,8 +17,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import com.github.javaparser.utils.Log;
-
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Request;
