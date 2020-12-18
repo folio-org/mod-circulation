@@ -3,8 +3,6 @@ package api.support.builders;
 import java.util.Objects;
 import java.util.UUID;
 
-import com.github.javaparser.utils.Log;
-
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.Period;
 

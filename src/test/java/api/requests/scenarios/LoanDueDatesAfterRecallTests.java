@@ -24,8 +24,6 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.UUID;
 
-import com.github.javaparser.utils.Log;
-
 import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.ClockManager;
