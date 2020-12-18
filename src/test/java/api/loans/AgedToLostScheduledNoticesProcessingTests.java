@@ -18,6 +18,7 @@ import static org.hamcrest.Matchers.iterableWithSize;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.folio.circulation.domain.Account;
@@ -300,8 +301,8 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
   public void patronNoticeForAdjustmentOfFullyPaidLostItemFeeIsCreatedAndProcessed() {
     LostItemFeePolicyBuilder lostItemFeePolicyBuilder = lostItemFeePoliciesFixture
       .ageToLostAfterOneMinutePolicy()
-      .withChargeAmountItemSystem(false)
-      .withSetCost(LOST_ITEM_FEE_AMOUNT);
+      .withSetCost(LOST_ITEM_FEE_AMOUNT)
+      .withLostItemProcessingFee(PROCESSING_FEE_AMOUNT);
 
     AgeToLostResult agedToLostLoan = ageToLostFixture.createLoanAgeToLostAndChargeFees(
       lostItemFeePolicyBuilder,
@@ -316,59 +317,80 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
             .create()
         )));
 
+    final UUID loanId = agedToLostLoan.getLoanId();
+    final UUID userId = agedToLostLoan.getUser().getId();
+
     final List<JsonObject> existingAccounts = accountsClient.getAll();
 
     assertThat(existingAccounts, allOf(
-      iterableWithSize(1),
+      iterableWithSize(2),
       hasItems(
         isAccount(LOST_ITEM_FEE_AMOUNT, LOST_ITEM_FEE_AMOUNT, ACCOUNT_STATUS_OPEN,
-          PAYMENT_STATUS_OUTSTANDING, LOST_ITEM_FEE, agedToLostLoan.getUser().getId())
+          PAYMENT_STATUS_OUTSTANDING, LOST_ITEM_FEE, agedToLostLoan.getUser().getId()),
+        isAccount(PROCESSING_FEE_AMOUNT, PROCESSING_FEE_AMOUNT, ACCOUNT_STATUS_OPEN,
+          PAYMENT_STATUS_OUTSTANDING, LOST_ITEM_PROCESSING_FEE, agedToLostLoan.getUser().getId())
       )));
 
-    // one "charge" action should exist
-    assertThat(feeFineActionsClient.getAll(), hasSize(1));
-
-    final String accountId = Account.from(existingAccounts.get(0)).getId();
-
-    // fully pay the Lost Item Fee
-    feeFineAccountFixture.pay(accountId, LOST_ITEM_FEE_AMOUNT);
-
-    // 1 charge + 1 payment
+    // one "charge" action per account
     assertThat(feeFineActionsClient.getAll(), hasSize(2));
 
-    final UUID loanId = agedToLostLoan.getLoanId();
+    final List<Account> accounts = existingAccounts.stream()
+      .map(Account::from)
+      .collect(Collectors.toList());
 
-    eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loanId, UUID.fromString(accountId));
+    assertThat(accounts, hasSize(2));
+
+    final Account firstAccount = accounts.get(0);
+    final Account secondAccount = accounts.get(1);
+
+    feeFineAccountFixture.pay(firstAccount.getId(), firstAccount.getAmount().toDouble());
+    feeFineAccountFixture.transfer(secondAccount.getId(), secondAccount.getAmount().toDouble());
+
+    // 2 charges + 1 payment + 1 transfer
+    assertThat(feeFineActionsClient.getAll(), hasSize(4));
+
+    // closing a loan-related fee/fine should close the loan
+    eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loanId);
     assertThat(loansFixture.getLoanById(agedToLostLoan.getLoanId()).getJson(), isClosed());
 
-    // check-in should only refund the "Lost item fee", no cancellation since it was paid fully
+    // check-in should refund both fees, no cancellations since both were paid/transferred fully
     checkInFixture.checkInByBarcode(agedToLostLoan.getItem());
     assertThat(itemsFixture.getById(agedToLostLoan.getItemId()).getJson(), isAvailable());
     assertThat(loansFixture.getLoanById(agedToLostLoan.getLoanId()).getJson(), isClosed());
 
-    // 1 charge + 1 payment + 1 credit + 1 refund
-    assertThat(feeFineActionsClient.getAll(), hasSize(4));
+    // 2 charges + 1 payment + 1 transfer + 2 credits + 2 refunds
+    assertThat(feeFineActionsClient.getAll(), hasSize(8));
 
     final JsonObject lostItemFeeRefundAction =
       findFeeFineAction(ACTION_TYPE_REFUNDED_FULLY, LOST_ITEM_FEE_AMOUNT);
-    final UUID refundLostItemFeeActionId = getId(lostItemFeeRefundAction);
-    final DateTime refundLostItemFeeActionDate = getActionDate(lostItemFeeRefundAction);
+    final JsonObject processingFeeRefundAction =
+      findFeeFineAction(ACTION_TYPE_REFUNDED_FULLY, PROCESSING_FEE_AMOUNT);
 
-    final UUID userId = agedToLostLoan.getUser().getId();
+    final UUID refundLostItemFeeActionId = getId(lostItemFeeRefundAction);
+    final UUID refundProcessingFeeActionId = getId(processingFeeRefundAction);
+
+    final DateTime refundLostItemFeeActionDate = getActionDate(lostItemFeeRefundAction);
+    final DateTime refundProcessingFeeActionDate = getActionDate(processingFeeRefundAction);
 
     assertThat(patronNoticesClient.getAll(), hasSize(0));
     assertThat(scheduledNoticesClient.getAll(), allOf(
-      iterableWithSize(1),
+      iterableWithSize(2),
       hasItems(
         hasScheduledFeeFineNotice(refundLostItemFeeActionId, loanId, userId,
           UPON_AT_TEMPLATE_ID, AGED_TO_LOST_RETURNED, refundLostItemFeeActionDate,
+          UPON_AT, null, true),
+        hasScheduledFeeFineNotice(refundProcessingFeeActionId, loanId, userId,
+          UPON_AT_TEMPLATE_ID, AGED_TO_LOST_RETURNED, refundProcessingFeeActionDate,
           UPON_AT, null, true)
       )));
 
-    scheduledNoticeProcessingClient.runFeeFineNoticesProcessing(
-      refundLostItemFeeActionDate.plusSeconds(1));
+    DateTime maxActionDate = Stream.of(refundLostItemFeeActionDate, refundProcessingFeeActionDate)
+      .max(DateTime::compareTo)
+      .orElseThrow();
 
-    assertThat(patronNoticesClient.getAll(), hasSize(1));
+    scheduledNoticeProcessingClient.runFeeFineNoticesProcessing(maxActionDate.plusSeconds(1));
+
+    assertThat(patronNoticesClient.getAll(), hasSize(2));
     assertThat(scheduledNoticesClient.getAll(), hasSize(0));
   }
 
