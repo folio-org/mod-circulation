@@ -8,11 +8,7 @@ import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.support.results.Result;
 
 public final class CheckInValidators {
-
-  private CheckInValidators() {
-  }
-
-  public static Result<CheckInContext> refuseWhenClaimedReturnedIsNotResolved(
+  public Result<CheckInContext> refuseWhenClaimedReturnedIsNotResolved(
     Result<CheckInContext> contextResult) {
 
     return contextResult.failWhen(
@@ -22,7 +18,7 @@ public final class CheckInValidators {
         CLAIMED_RETURNED_RESOLUTION, null));
   }
 
-  private static boolean isClaimedReturnedNotResolved(CheckInContext context) {
+  private boolean isClaimedReturnedNotResolved(CheckInContext context) {
     return context.getItem().isClaimedReturned()
       && context.getCheckInRequest().getClaimedReturnedResolution() == null;
   }

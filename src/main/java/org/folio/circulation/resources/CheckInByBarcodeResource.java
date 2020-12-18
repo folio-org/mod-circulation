@@ -41,6 +41,7 @@ public class CheckInByBarcodeResource extends Resource {
 
     final EventPublisher eventPublisher = new EventPublisher(routingContext);
 
+    final var checkInValidators = new CheckInValidators();
     final CheckInProcessAdapter processAdapter = CheckInProcessAdapter.newInstance(clients);
 
     final RequestScheduledNoticeService requestScheduledNoticeService =
@@ -55,7 +56,7 @@ public class CheckInByBarcodeResource extends Resource {
       .combineAfter(processAdapter::findItem, (records, item) -> records
         .withItem(item)
         .withItemStatusBeforeCheckIn(item.getStatus()))
-      .thenApply(CheckInValidators::refuseWhenClaimedReturnedIsNotResolved)
+      .thenApply(checkInValidators::refuseWhenClaimedReturnedIsNotResolved)
       .thenComposeAsync(findItemResult -> findItemResult.combineAfter(
         processAdapter::getRequestQueue, CheckInContext::withRequestQueue))
       .thenApply(findRequestQueueResult -> findRequestQueueResult.map(
