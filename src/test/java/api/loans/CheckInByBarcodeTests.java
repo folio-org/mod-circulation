@@ -4,12 +4,14 @@ import static api.support.APITestContext.getUserId;
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
 import static api.support.Wait.waitAtLeast;
+import static api.support.builders.ItemBuilder.AVAILABLE;
 import static api.support.fakes.PublishedEvents.byEventType;
 import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.fixtures.AddressExamples.SiriusBlack;
 import static api.support.matchers.EventMatchers.isValidCheckInLogEvent;
 import static api.support.matchers.EventMatchers.isValidItemCheckedInEvent;
 import static api.support.matchers.ItemMatchers.isAvailable;
+import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.LoanMatchers.isClosed;
 import static api.support.matchers.OverdueFineMatcher.isValidOverdueFine;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
@@ -445,6 +447,26 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
 
     assertThat("has item volume",
       itemFromResponse.getString("volume"), is("testVolume"));
+  }
+
+  @Test
+  public void intellectualItemBecomesAvailableWhenCheckedIn() {
+    final var checkInServicePointId = servicePointsFixture.cd1().getId();
+
+    final var homeLocation = locationsFixture.basedUponExampleLocation(
+      item -> item.withPrimaryServicePoint(checkInServicePointId));
+
+    final var nod = itemsFixture.basedUponNod(item -> item
+      .intellectualItem()
+      .withTemporaryLocation(homeLocation));
+
+    checkInFixture.checkInByBarcode(
+      nod, new DateTime(2018, 3, 5, 14, 23, 41, UTC),
+      checkInServicePointId);
+
+    final var fetchedNod = itemsFixture.getById(nod.getId());
+
+    assertThat(fetchedNod, hasItemStatus(AVAILABLE));
   }
 
   @Test
