@@ -92,12 +92,7 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
             .create()
           )));
 
-    final String agedToLostDateString = agedToLostLoan.getLoan()
-      .getJson()
-      .getJsonObject("agedToLostDelayedBilling")
-      .getString("agedToLostDate");
-
-    final DateTime runTimeOfUponAtNotice = DateTime.parse(agedToLostDateString);
+    final DateTime runTimeOfUponAtNotice = getAgedToLostDate(agedToLostLoan);
     final DateTime runTimeOfAfterNotices = runTimeOfUponAtNotice.plus(TIMING_PERIOD.timePeriod());
 
     final UUID loanId = agedToLostLoan.getLoanId();
@@ -146,6 +141,51 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
     scheduledNoticeProcessingClient.runLoanNoticesProcessing(
       runTimeOfAfterNotices.plus(RECURRENCE_PERIOD.timePeriod()).plusMinutes(1));
     assertThat(patronNoticesClient.getAll(), hasSize(3));
+    assertThat(scheduledNoticesClient.getAll(), hasSize(0));
+  }
+
+  @Test
+  public void shouldStopSendingAgedToLostNoticesOnceLostItemFeeWasCharged() {
+    val agedToLostLoan = ageToLostFixture.createAgedToLostLoan(
+      new NoticePolicyBuilder()
+        .active()
+        .withName("Aged to lost notice policy")
+        .withLoanNotices(List.of(
+          new NoticeConfigurationBuilder()
+            .withAgedToLostEvent()
+            .withTemplateId(AFTER_RECURRING_TEMPLATE_ID)
+            .withAfterTiming(TIMING_PERIOD)
+            .recurring(RECURRENCE_PERIOD)
+            .create()
+        )));
+
+    final DateTime firstRunTime = getAgedToLostDate(agedToLostLoan).plus(TIMING_PERIOD.timePeriod());
+
+    final UUID loanId = agedToLostLoan.getLoanId();
+
+    assertThat(scheduledNoticesClient.getAll(), allOf(
+      iterableWithSize(1),
+      hasItems(
+        hasScheduledLoanNotice(loanId, firstRunTime,
+          AFTER.getRepresentation(), AFTER_RECURRING_TEMPLATE_ID, RECURRENCE_PERIOD, true)
+      )));
+
+    // first run, notice should be sent and rescheduled
+    scheduledNoticeProcessingClient.runLoanNoticesProcessing(firstRunTime.plusMinutes(1));
+    assertThat(patronNoticesClient.getAll(), hasSize(1));
+    assertThat(scheduledNoticesClient.getAll(), allOf(
+      iterableWithSize(1),
+      hasItems(
+        hasScheduledLoanNotice(loanId, firstRunTime.plus(RECURRENCE_PERIOD.timePeriod()),
+          AFTER.getRepresentation(), AFTER_RECURRING_TEMPLATE_ID, RECURRENCE_PERIOD, true)
+      )));
+
+    ageToLostFixture.chargeFees();
+
+    // second run, notice should be deleted without sending
+    scheduledNoticeProcessingClient.runLoanNoticesProcessing(
+      firstRunTime.plus(RECURRENCE_PERIOD.timePeriod()).plusMinutes(1));
+    assertThat(patronNoticesClient.getAll(), hasSize(1));
     assertThat(scheduledNoticesClient.getAll(), hasSize(0));
   }
 
@@ -268,4 +308,14 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
   private static UUID getId(JsonObject jsonObject) {
     return UUID.fromString(jsonObject.getString("id"));
   }
+
+  private static DateTime getAgedToLostDate(AgeToLostResult ageToLostResult) {
+    return DateTime.parse(
+      ageToLostResult.getLoan()
+        .getJson()
+        .getJsonObject("agedToLostDelayedBilling")
+        .getString("agedToLostDate")
+    );
+  }
+
 }
