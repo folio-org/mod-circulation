@@ -5,13 +5,10 @@ import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 
-import org.folio.circulation.domain.ItemStatus;
 import api.support.http.IndividualResource;
-
 import io.vertx.core.json.JsonObject;
 
 public class ItemBuilder extends JsonBuilder implements Builder {
-
   public static final String AVAILABLE = "Available";
   public static final String CHECKED_OUT = "Checked out";
   public static final String AWAITING_PICKUP = "Awaiting pickup";
@@ -23,6 +20,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
   public static final String ON_ORDER = "On order";
   public static final String IN_PROCESS = "In process";
   public static final String CLAIMED_RETURNED = "Claimed returned";
+  public static final String INTELLECTUAL_ITEM = "Intellectual item";
 
   private final UUID id;
   private final UUID holdingId;
@@ -151,11 +149,15 @@ public class ItemBuilder extends JsonBuilder implements Builder {
   }
 
   public ItemBuilder claimedReturned() {
-    return withStatus(ItemStatus.CLAIMED_RETURNED.getValue());
+    return withStatus(CLAIMED_RETURNED);
   }
 
   public ItemBuilder withdrawn() {
     return withStatus("Withdrawn");
+  }
+
+  public ItemBuilder intellectualItem() {
+    return withStatus(INTELLECTUAL_ITEM);
   }
 
   private ItemBuilder withStatus(String status) {
