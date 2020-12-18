@@ -23,11 +23,6 @@ public class EventSubscribersFixture {
     assertThat(response.getStatusCode(), is(204));
   }
 
-  public void publishLoanRelatedFeeFineClosedEvent(UUID loanId, UUID accountId) {
-    final Response response = attemptPublishLoanRelatedFeeFineClosedEvent(loanId, accountId);
-    assertThat(response.getStatusCode(), is(204));
-  }
-
   public Response attemptPublishLoanRelatedFeeFineClosedEvent(UUID loanId, UUID accountId) {
     final JsonObject payload = new JsonObject();
     write(payload, "feeFineId", accountId);
