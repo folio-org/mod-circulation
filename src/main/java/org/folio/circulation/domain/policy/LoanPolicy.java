@@ -450,16 +450,12 @@ public class LoanPolicy extends Policy {
 
     final DateTime systemDate = ClockManager.getClockManager().getDateTime();
 
-    Log.info("MYTEST loan.isOverdue(): %s, hasAllowRecallsToExtendOverdueLoans: %s, getAlternateRecallReturnInterval: %s", loan.isOverdue(), hasAllowRecallsToExtendOverdueLoans(), getAlternateRecallReturnInterval());
-
     final Result<DateTime> recallDueDateResult =
-        (loan.isOverdue() && 
-        hasAllowRecallsToExtendOverdueLoans() && 
-        getAlternateRecallReturnInterval() != null) ?
+        loan.isOverdue() &&
+        hasAllowRecallsToExtendOverdueLoans() &&
+        getAlternateRecallReturnInterval() != null ?
         getDueDate("alternateRecallReturnInterval", recalls, systemDate, systemDate) :
         getDueDate("recallReturnInterval", recalls, systemDate, systemDate);
-
-    Log.info("MYTEST recallDueDateResult: %s", recallDueDateResult.value());
 
     final List<ValidationError> errors = new ArrayList<>();
 
@@ -479,8 +475,8 @@ public class LoanPolicy extends Policy {
 
     return minimumGuaranteedDueDateResult.combine(recallDueDateResult,
       (minimumGuaranteedDueDate, recallDueDate) -> {
-        if (loan.isOverdue()) {
-          // for overdue loans do not update due date
+        if (loan.isOverdue() && !hasAllowRecallsToExtendOverdueLoans()) {
+
           return loan.getDueDate();
         }
 

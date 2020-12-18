@@ -48,7 +48,6 @@ import api.support.builders.LoanBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.builders.ServicePointBuilder;
-import api.support.builders.CheckInByBarcodeRequestBuilder;
 import io.vertx.core.json.JsonObject;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
@@ -865,8 +864,12 @@ public class LoanDueDatesAfterRecallTests extends APITests {
       .withAlternateRecallReturnInterval(alternateLoanPeriod));
 
     final DateTime loanCreateDate = now(UTC)
-      .minus(loanPeriod.timePeriod()).minusMinutes(1);
-    final DateTime expectedLoanDueDate = loanCreateDate.plus(alternateLoanPeriod.timePeriod());
+      .minus(loanPeriod.timePeriod())
+      .minusMinutes(1);
+    DateTime expectedLoanDueDate = loanCreateDate
+      .plus(loanPeriod.timePeriod())
+      .plus(alternateLoanPeriod.timePeriod())
+      .plusMinutes(1);
 
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(
       smallAngryPlanet, usersFixture.steve(), loanCreateDate);
@@ -879,11 +882,17 @@ public class LoanDueDatesAfterRecallTests extends APITests {
       .fulfilToHoldShelf()
       .withPickupServicePointId(servicePointsFixture.cd1().getId()));
 
+    DateTime actualLoanDueDate = DateTime.parse(loansStorageClient.getById(loan.getId()).getJson().getString("dueDate"));
 
-    Log.info("MYTEST loanCreateDate: %s", loanCreateDate);
+    actualLoanDueDate = actualLoanDueDate
+      .minusSeconds(actualLoanDueDate.getSecondOfMinute())
+      .minusMillis(actualLoanDueDate.getMillisOfSecond());
 
-    assertThat(loansStorageClient.getById(loan.getId()).getJson(),
-      hasJsonPath("dueDate", expectedLoanDueDate));
+    expectedLoanDueDate = expectedLoanDueDate
+      .minusSeconds(expectedLoanDueDate.getSecondOfMinute())
+      .minusMillis(expectedLoanDueDate.getMillisOfSecond());
+
+    assertThat(actualLoanDueDate, is(expectedLoanDueDate));
   }
 
   @Test
