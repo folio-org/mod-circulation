@@ -123,14 +123,6 @@ public class LoanPolicy extends Policy {
     return getObjectProperty(getRecalls(), ALTERNATE_RECALL_RETURN_INTERVAL);
   }
 
-  public String getAlternateRecallReturnIntervalId() {
-    return getProperty(getAlternateRecallReturnInterval(), INTERVAL_ID);
-  }
-
-  public Integer getAlternateRecallReturnIntervalDuration() {
-    return getIntegerProperty(getAlternateRecallReturnInterval(), DURATION, 0);
-  }
-
   private boolean reachedNumberOfRenewalsLimit(Loan loan) {
     return loan.getRenewalCount() >= getRenewalLimit();
   }
