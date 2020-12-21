@@ -75,7 +75,7 @@ public class LostItemPolicyTest {
     "Weeks, 1",
     "Months, 5",
   })
-  public void shouldAgeToLostIfAgeToLostPeriodsHavePassedSinceDueDateAndItemRecalled(
+  public void shouldAgeToLostIfAgeToLostPeriodHasPassedSinceDueDateAndItemRecalled(
     String interval, int duration) {
 
     final Period period = from(duration, interval);
@@ -94,7 +94,7 @@ public class LostItemPolicyTest {
     "Weeks, 2",
     "Months, 3",
   })
-  public void shouldAgeItemToLostIfAgeToLostPeriodsArePassingExactlyNowSinceDueDate(
+  public void shouldAgeItemToLostIfAgeToLostPeriodArePassingExactlyNowSinceDueDate(
     String interval, int duration) {
 
     final Period period = from(duration, interval);
@@ -233,7 +233,7 @@ public class LostItemPolicyTest {
   }
 
   @Test
-  public void canUseRecallIntervalForBillingDate() {
+  public void shouldUseRecallIntervalForBillingDateWhenItemRecalled() {
     final Period billPatronAfterPeriod = Period.weeks(2);
     final DateTime ageToLostDate = DateTime.now();
     final DateTime expectedBillingDate = ageToLostDate.plus(billPatronAfterPeriod.timePeriod());
