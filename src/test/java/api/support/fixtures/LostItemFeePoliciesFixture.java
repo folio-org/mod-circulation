@@ -55,7 +55,7 @@ public class LostItemFeePoliciesFixture {
       .withName("Undergrad standard")
       .withDescription("This is description for undergrad standard")
       .withItemAgedToLostAfterOverdue(itemAgedLostOverdue)
-      .withPatronBilledAfterAgedLost(patronBilledAfterAgedLost)
+      .withPatronBilledAfterItemAgedToLost(patronBilledAfterAgedLost)
       .withNoChargeAmountItem()
       .doNotChargeProcessingFeeWhenDeclaredLost()
       .withChargeAmountItemSystem(true)
@@ -72,7 +72,7 @@ public class LostItemFeePoliciesFixture {
     return new LostItemFeePolicyBuilder()
       .withName("No lost item fees policy")
       .withItemAgedToLostAfterOverdue(itemAgedLostOverdue)
-      .withPatronBilledAfterAgedLost(patronBilledAfterAgedLost)
+      .withPatronBilledAfterItemAgedToLost(patronBilledAfterAgedLost)
       .withSetCost(10.00)
       .chargeProcessingFeeWhenDeclaredLost(5.00)
       .withChargeAmountItemSystem(true)
@@ -86,7 +86,7 @@ public class LostItemFeePoliciesFixture {
     return chargeFeePolicy()
       .withName("Age to lost after one minute overdue")
       .withItemAgedToLostAfterOverdue(minutes(1))
-      .withPatronBilledAfterAgedLost(minutes(5))
+      .withPatronBilledAfterItemAgedToLost(minutes(5))
       // disable lost item processing fee
       .withChargeAmountItemPatron(false)
       .withChargeAmountItemSystem(true);
