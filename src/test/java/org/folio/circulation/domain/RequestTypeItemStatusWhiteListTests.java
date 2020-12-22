@@ -8,10 +8,15 @@ import static org.folio.circulation.domain.ItemStatus.AWAITING_DELIVERY;
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
 import static org.folio.circulation.domain.ItemStatus.CLAIMED_RETURNED;
 import static org.folio.circulation.domain.ItemStatus.DECLARED_LOST;
+import static org.folio.circulation.domain.ItemStatus.INTELLECTUAL_ITEM;
 import static org.folio.circulation.domain.ItemStatus.IN_PROCESS;
+import static org.folio.circulation.domain.ItemStatus.IN_PROCESS_NON_REQUESTABLE;
+import static org.folio.circulation.domain.ItemStatus.LONG_MISSING;
 import static org.folio.circulation.domain.ItemStatus.LOST_AND_PAID;
 import static org.folio.circulation.domain.ItemStatus.ON_ORDER;
 import static org.folio.circulation.domain.ItemStatus.PAGED;
+import static org.folio.circulation.domain.ItemStatus.UNAVAILABLE;
+import static org.folio.circulation.domain.ItemStatus.UNKNOWN;
 import static org.folio.circulation.domain.ItemStatus.WITHDRAWN;
 import static org.folio.circulation.domain.RequestType.HOLD;
 import static org.folio.circulation.domain.RequestType.PAGE;
@@ -166,5 +171,60 @@ public class RequestTypeItemStatusWhiteListTests {
   })
   public void cannotCreateRequestWhenItemIsAgedToLost(String requestType) {
     assertFalse(canCreateRequestForItem(AGED_TO_LOST, from(requestType)));
+  }
+
+  @Test
+  @Parameters({
+    "",
+    "Hold",
+    "Recall",
+    "Page"
+  })
+  public void cannotCreateRequestWhenItemHasIntellectualItemStatus(String requestType) {
+    assertFalse(canCreateRequestForItem(INTELLECTUAL_ITEM, from(requestType)));
+  }
+
+  @Test
+  @Parameters({
+    "",
+    "Hold",
+    "Recall",
+    "Page"
+  })
+  public void cannotCreateRequestWhenItemIsInProcessNonRequestable(String requestType) {
+    assertFalse(canCreateRequestForItem(IN_PROCESS_NON_REQUESTABLE, from(requestType)));
+  }
+
+  @Test
+  @Parameters({
+    "",
+    "Hold",
+    "Recall",
+    "Page"
+  })
+  public void cannotCreateRequestWhenItemIsLongMissing(String requestType) {
+    assertFalse(canCreateRequestForItem(LONG_MISSING, from(requestType)));
+  }
+
+  @Test
+  @Parameters({
+    "",
+    "Hold",
+    "Recall",
+    "Page"
+  })
+  public void cannotCreateRequestWhenItemIsUnavailable(String requestType) {
+    assertFalse(canCreateRequestForItem(UNAVAILABLE, from(requestType)));
+  }
+
+  @Test
+  @Parameters({
+    "",
+    "Hold",
+    "Recall",
+    "Page"
+  })
+  public void cannotCreateRequestWhenItemIsUnknown(String requestType) {
+    assertFalse(canCreateRequestForItem(UNKNOWN, from(requestType)));
   }
 }
