@@ -158,41 +158,6 @@ public class ClaimItemReturnedAPITests extends APITests {
     assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
-  @Test
-  public void afterItemClaimedReturnedScheduledNoticesShouldBeDeleted() {
-    JsonObject loanNotice = new NoticeConfigurationBuilder()
-      .withTemplateId(UUID.randomUUID())
-      .withDueDateEvent()
-      .withAfterTiming(Period.minutes(5))
-      .recurring(Period.minutes(5))
-      .sendInRealTime(true)
-      .create();
-
-    NoticePolicyBuilder noticePolicyBuilder = new NoticePolicyBuilder()
-      .withName("loan policy")
-      .withLoanNotices(Collections.singletonList(loanNotice));
-
-    use(noticePolicyBuilder);
-
-    ItemResource item = itemsFixture.basedUponNod();
-    IndividualResource loan = checkOutFixture.checkOutByBarcode(item, usersFixture.steve());
-
-    Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
-      .until(scheduledNoticesClient::getAll, hasSize(1));
-
-    claimItemReturnedFixture
-      .claimItemReturned(new ClaimItemReturnedRequestBuilder()
-        .forLoan(loan.getId().toString())
-        .withItemClaimedReturnedDate(DateTime.now()));
-
-    scheduledNoticeProcessingClient.runLoanNoticesProcessing(DateTime.parse(loan.getJson().getString("dueDate")).plusDays(1));
-
-    Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
-      .until(scheduledNoticesClient::getAll, empty());
-  }
-
   private void assertLoanAndItem(Response response, String comment, DateTime dateTime) {
     JsonObject actualLoan = loansClient.getById(UUID.fromString(loanId)).getJson();
     JsonObject actualItem = actualLoan.getJsonObject("item");
