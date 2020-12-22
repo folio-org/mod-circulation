@@ -24,6 +24,7 @@ public enum ItemStatus {
   LONG_MISSING("Long missing"),
   UNAVAILABLE("Unavailable"),
   UNKNOWN("Unknown"),
+  RESTRICTED("Restricted"),
   AGED_TO_LOST("Aged to lost");
 
   public static ItemStatus from(String value) {
