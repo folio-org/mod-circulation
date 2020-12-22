@@ -56,7 +56,7 @@ public class LostItemPolicyTest {
     "Weeks, 1",
     "Months, 5",
   })
-  public void shouldAgeToLostIfAgeToLostPeriodsHavePassedSinceDueDateAndItemNotRecalled(
+  public void shouldAgeToLostIfAgeToLostPeriodHasPassedSinceDueDateAndItemNotRecalled(
     String interval, int duration) {
 
     final Period period = from(duration, interval);
