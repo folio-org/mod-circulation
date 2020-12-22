@@ -261,7 +261,7 @@ public class LoanScheduledNoticeHandler {
       return agedToLostNoticeIsNotRelevant(loan);
     }
     log.error("Unexpected triggering event {}", triggeringEvent.getRepresentation());
-    throw new IllegalStateException("Unexpected triggering event: " +
+    throw new UnsupportedOperationException("Unexpected triggering event: " +
       triggeringEvent.getRepresentation());
   }
 
