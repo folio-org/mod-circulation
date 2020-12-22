@@ -105,7 +105,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     val lostItemFeePolicy = new LostItemFeePolicyBuilder()
       .withName("shouldChargeItemProcessingFee")
       .withItemAgedToLostAfterOverdue(Period.weeks(1))
-      .withPatronBilledAfterAgedLost(Period.weeks(2))
+      .withPatronBilledAfterItemAgedToLost(Period.weeks(2))
       .withNoChargeAmountItem()
       .doNotChargeProcessingFeeWhenDeclaredLost()
       .chargeProcessingFeeWhenAgedToLost(expectedProcessingFee);
@@ -274,7 +274,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     val lostItemFeePolicy = lostItemFeePoliciesFixture
       .ageToLostAfterOneMinutePolicy()
       .withSetCost(11.00)
-      .withPatronBilledAfterAgedLost(Period.months(7));
+      .withPatronBilledAfterItemAgedToLost(Period.months(7));
     val noticePolicy = createNoticePolicyWithAgedToLostChargedNotice();
     val result = ageToLostFixture.createLoanAgeToLostAndChargeFeesWithNotice(
       lostItemFeePolicy, noticePolicy);
@@ -308,7 +308,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
   public void shouldCloseLoanWhenNoFeesToCharge() {
     val lostItemFeePolicy = lostItemFeePoliciesFixture
       .ageToLostAfterOneMinutePolicy()
-      .withPatronBilledAfterAgedLost(Period.weeks(1))
+      .withPatronBilledAfterItemAgedToLost(Period.weeks(1))
       .withNoChargeAmountItem()
       .doNotChargeProcessingFeeWhenAgedToLost();
 
@@ -342,8 +342,8 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
 
     UUID loanId = result.getLoan().getId();
 
-    // the creation function ages the loan eight weeks into the future.  
-    // it must be checked in after that timeframe to properly examine the 
+    // the creation function ages the loan eight weeks into the future.
+    // it must be checked in after that timeframe to properly examine the
     // overdue charges
     final DateTime checkInDate = now(UTC).plusWeeks(9);
     mockClockManagerToReturnFixedDateTime(checkInDate);
@@ -351,12 +351,12 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     assertThat(loansFixture.getLoanById(loanId), hasNoOverdueFine());
 
   }
-  
+
   public void declaredLostItemShouldNotBeAgedToLost() {
     final double declaredLostProcessingFee = 10.00;
     useLostItemPolicy(lostItemFeePoliciesFixture.create(
       lostItemFeePoliciesFixture.ageToLostAfterOneMinutePolicy()
-        .withPatronBilledAfterAgedLost(Period.weeks(1))
+        .withPatronBilledAfterItemAgedToLost(Period.weeks(1))
         .withNoChargeAmountItem()
         .doNotChargeProcessingFeeWhenAgedToLost()
         .chargeProcessingFeeWhenDeclaredLost(declaredLostProcessingFee)).getId());

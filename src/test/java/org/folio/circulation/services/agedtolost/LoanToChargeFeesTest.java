@@ -28,7 +28,7 @@ public class LoanToChargeFeesTest {
   @Test
   public void shouldCloseLoanIfNoFeesToChargeForDelayedBilling() {
     val lostItemPolicy = new LostItemFeePolicyBuilder()
-      .withPatronBilledAfterAgedLost(Period.minutes(1));
+      .withPatronBilledAfterItemAgedToLost(Period.minutes(1));
 
     assertTrue(loanForLostItemPolicy(lostItemPolicy).shouldCloseLoan());
   }
