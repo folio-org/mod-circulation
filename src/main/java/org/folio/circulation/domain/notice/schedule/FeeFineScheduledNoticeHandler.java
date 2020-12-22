@@ -2,14 +2,12 @@ package org.folio.circulation.domain.notice.schedule;
 
 import static org.apache.commons.lang3.ObjectUtils.allNotNull;
 import static org.folio.circulation.domain.notice.TemplateContextUtil.createFeeFineNoticeContext;
-import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.AGED_TO_LOST_RETURNED;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.ClockManager.getClockManager;
 import static org.folio.circulation.support.results.Result.ofAsync;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -24,6 +22,7 @@ import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.domain.notice.PatronNoticeService;
 import org.folio.circulation.infrastructure.storage.notices.PatronNoticePolicyRepository;
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
+import org.folio.circulation.rules.CirculationRuleMatch;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
@@ -32,6 +31,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.vertx.core.json.JsonObject;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.With;
 
 public class FeeFineScheduledNoticeHandler {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -112,37 +114,44 @@ public class FeeFineScheduledNoticeHandler {
 
     if (context.isIncomplete()) {
       log.error(getInvalidContextMessage(notice, "one of the referenced entities was not found"));
+      return scheduledNoticesRepository.delete(notice);
     } else if (noticeIsIrrelevant(context)) {
       log.warn(getInvalidContextMessage(notice, "associated fee/fine is already closed"));
+      return scheduledNoticesRepository.delete(notice);
     } else {
-      JsonObject noticeContext = createFeeFineNoticeContext(context.getAccount(), context.getLoan());
-      ScheduledNoticeConfig config = notice.getConfiguration();
-
-      NoticeLogContextItem logContextItem = NoticeLogContextItem.from(context.getLoan())
-        .withTemplateId(notice.getConfiguration().getTemplateId())
-        .withTriggeringEvent(notice.getTriggeringEvent().getRepresentation());
-
-      return noticePolicyRepository.lookupPolicyId(
-        context.getLoan().getItem(), context.getLoan().getUser())
-        .thenCompose(r -> r.after(policy -> patronNoticeService.acceptScheduledNoticeEvent(
-          config, notice.getRecipientUserId(), noticeContext,
-          new NoticeLogContext().withUser(context.getLoan().getUser())
-            .withAccountId(context.getAccount().getId())
-            .withItems(Collections.singletonList(logContextItem.withNoticePolicyId(policy.getPolicyId()))))))
-        .thenCompose(r -> r.after(v -> {
-          if (config.isRecurring()) {
-            return scheduledNoticesRepository.update(getNextRecurringNotice(notice));
-          }
-          return scheduledNoticesRepository.delete(notice);
-        }));
+      return noticePolicyRepository.lookupPolicyId(context.getLoan().getItem(), context.getLoan().getUser())
+        .thenCompose(r -> r.after(policy -> sendNotice(context, policy)))
+        .thenCompose(r -> r.after(v -> notice.getConfiguration().isRecurring()
+          ? scheduledNoticesRepository.update(getNextRecurringNotice(notice))
+          : scheduledNoticesRepository.delete(notice)));
     }
+  }
 
-    return scheduledNoticesRepository.delete(notice);
+  private CompletableFuture<Result<Void>> sendNotice(FeeFineNoticeContext context,
+    CirculationRuleMatch policy) {
+
+    final ScheduledNotice notice = context.getNotice();
+    final Loan loan = context.getLoan();
+    final ScheduledNoticeConfig configuration = notice.getConfiguration();
+
+    NoticeLogContextItem logContextItem = NoticeLogContextItem.from(loan)
+      .withTemplateId(configuration.getTemplateId())
+      .withTriggeringEvent(notice.getTriggeringEvent().getRepresentation());
+
+    final NoticeLogContext noticeLogContext = new NoticeLogContext()
+      .withUser(loan.getUser())
+      .withAccountId(context.getAccount().getId())
+      .withItems(List.of(logContextItem.withNoticePolicyId(policy.getPolicyId())));
+
+    final JsonObject noticeContextJson = buildNoticeContextJson(context);
+
+    return patronNoticeService.acceptScheduledNoticeEvent(configuration,
+      notice.getRecipientUserId(), noticeContextJson, noticeLogContext);
   }
 
   private static boolean noticeIsIrrelevant(FeeFineNoticeContext context) {
     return context.getAccount().isClosed() &&
-      context.getNotice().getTriggeringEvent() != AGED_TO_LOST_RETURNED;
+      !context.getNotice().getTriggeringEvent().isAutomaticFeeFineAdjustment();
   }
 
   private static String getInvalidContextMessage(ScheduledNotice notice, String reason) {
@@ -152,7 +161,13 @@ public class FeeFineScheduledNoticeHandler {
       reason);
   }
 
-  private ScheduledNotice getNextRecurringNotice(ScheduledNotice notice) {
+  private static JsonObject buildNoticeContextJson(FeeFineNoticeContext context) {
+    return context.getNotice().getTriggeringEvent().isAutomaticFeeFineAdjustment()
+      ? createFeeFineNoticeContext(context.getAccount(), context.getLoan(), context.getAction())
+      : createFeeFineNoticeContext(context.getAccount(), context.getLoan());
+  }
+
+  private static ScheduledNotice getNextRecurringNotice(ScheduledNotice notice) {
     Period recurringPeriod = notice.getConfiguration().getRecurringPeriod().timePeriod();
     DateTime nextRunTime = notice.getNextRunTime().plus(recurringPeriod);
     DateTime now = getClockManager().getDateTime();
@@ -164,6 +179,9 @@ public class FeeFineScheduledNoticeHandler {
     return notice.withNextRunTime(nextRunTime);
   }
 
+  @With
+  @Getter
+  @AllArgsConstructor
   private static class FeeFineNoticeContext {
     private final ScheduledNotice notice;
     private Account account;
@@ -172,42 +190,6 @@ public class FeeFineScheduledNoticeHandler {
 
     private FeeFineNoticeContext(ScheduledNotice notice) {
       this.notice = notice;
-    }
-
-    private FeeFineNoticeContext(ScheduledNotice notice, Account account,
-      FeeFineAction action, Loan loan) {
-      this.notice = notice;
-      this.account = account;
-      this.action = action;
-      this.loan = loan;
-    }
-
-    private ScheduledNotice getNotice() {
-      return notice;
-    }
-
-    private Account getAccount() {
-      return account;
-    }
-
-    private FeeFineAction getAction() {
-      return action;
-    }
-
-    private Loan getLoan() {
-      return loan;
-    }
-
-    private FeeFineNoticeContext withAccount(Account account) {
-      return new FeeFineNoticeContext(this.notice, account, this.action, this.loan);
-    }
-
-    private FeeFineNoticeContext withAction(FeeFineAction action) {
-      return new FeeFineNoticeContext(this.notice, this.account, action, this.loan);
-    }
-
-    private FeeFineNoticeContext withLoan(Loan loan) {
-      return new FeeFineNoticeContext(this.notice, this.account, action, loan);
     }
 
     private boolean isComplete() {
