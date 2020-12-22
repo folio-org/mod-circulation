@@ -23,9 +23,14 @@ import lombok.val;
 public class CheckInValidatorsTests {
   @Test
   @Parameters({
-    "Available"
+    "Available",
+    "Long missing",
+    "In process (non-requestable)",
+    "Restricted",
+    "Unavailable",
+    "Unknown"
   })
-  public void cannotCheckInItemInAllowedStatus(String itemStatus) {
+  public void canCheckInItemInAllowedStatus(String itemStatus) {
     final var validator = new CheckInValidators(this::validationError);
 
     final var item = itemIn(itemStatus);

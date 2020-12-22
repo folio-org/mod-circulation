@@ -17,7 +17,9 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
   private final String name;
   private final String description;
   private final Period itemAgedToLostAfterOverdue;
-  private final Period patronBilledAfterAgedLost;
+  private final Period patronBilledAfterItemAgedToLost;
+  private final Period recalledItemAgedToLostAfterOverdue;
+  private final Period patronBilledAfterRecalledItemAgedLost;
   private final JsonObject chargeAmountItem;
   private final Double lostItemProcessingFee;
   private final boolean chargeAmountItemPatron;
@@ -34,6 +36,8 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
     this(UUID.randomUUID(),
       "Undergrad standard",
       "This is description for undergrad standard",
+      null,
+      null,
       null,
       null,
       new JsonObject(),
@@ -120,7 +124,7 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
   }
 
   public LostItemFeePolicyBuilder billPatronImmediatelyWhenAgedToLost() {
-    return withPatronBilledAfterAgedLost(Period.minutes(0));
+    return withPatronBilledAfterItemAgedToLost(Period.minutes(0));
   }
 
   @Override
@@ -135,8 +139,17 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
       request.put("itemAgedLostOverdue", itemAgedToLostAfterOverdue.asJson());
     }
 
-    if (patronBilledAfterAgedLost != null) {
-      request.put("patronBilledAfterAgedLost", patronBilledAfterAgedLost.asJson());
+    if (patronBilledAfterItemAgedToLost != null) {
+      request.put("patronBilledAfterAgedLost", patronBilledAfterItemAgedToLost.asJson());
+    }
+
+    if (recalledItemAgedToLostAfterOverdue != null) {
+      request.put("recalledItemAgedLostOverdue", recalledItemAgedToLostAfterOverdue.asJson());
+    }
+
+    if (patronBilledAfterRecalledItemAgedLost != null) {
+      request.put("patronBilledAfterRecalledItemAgedLost",
+        patronBilledAfterRecalledItemAgedLost.asJson());
     }
 
     if (feeRefundInterval != null) {

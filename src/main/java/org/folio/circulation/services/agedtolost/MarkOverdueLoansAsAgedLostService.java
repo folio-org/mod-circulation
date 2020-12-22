@@ -90,9 +90,13 @@ public class MarkOverdueLoansAsAgedLostService {
   private Loan ageItemToLost(Loan loan) {
     final LostItemPolicy lostItemPolicy = loan.getLostItemPolicy();
     final DateTime ageToLostDate = getClockManager().getDateTime();
+    final boolean isRecalled = loan.wasDueDateChangedByRecall();
 
     final DateTime whenToBill = lostItemPolicy
-      .calculateDateTimeWhenPatronBilledForAgedToLost(ageToLostDate);
+      .calculateDateTimeWhenPatronBilledForAgedToLost(isRecalled, ageToLostDate);
+
+    log.info("Billing date for loan [{}] is [{}], is recalled [{}]", loan.getId(),
+      whenToBill, isRecalled);
 
     loan.setAgedToLostDelayedBilling(false, whenToBill);
     return loan.ageOverdueItemToLost(ageToLostDate);
@@ -119,7 +123,14 @@ public class MarkOverdueLoansAsAgedLostService {
   }
 
   private boolean shouldAgeLoanToLost(Loan loan) {
-    return loan.getLostItemPolicy().canAgeLoanToLost(loan.getDueDate());
+    final boolean isRecalled = loan.wasDueDateChangedByRecall();
+    final boolean shouldAgeToLost = loan.getLostItemPolicy().canAgeLoanToLost(
+      isRecalled, loan.getDueDate());
+
+    log.info("Loan [{}] - will be aged to lost - [{}], is recalled [{}]", loan.getId(),
+      shouldAgeToLost, isRecalled);
+
+    return shouldAgeToLost;
   }
 
   private Result<CqlQuery> loanFetchQuery() {

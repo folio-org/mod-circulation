@@ -13,6 +13,7 @@ import static org.folio.circulation.support.ValidationErrorFailure.singleValidat
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.results.Result.failed;
+import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.ArrayList;
@@ -26,6 +27,7 @@ import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.notice.schedule.FeeFineScheduledNoticeService;
 import org.folio.circulation.domain.policy.lostitem.LostItemPolicy;
 import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
+import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.loans.LostItemPolicyRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
@@ -47,6 +49,7 @@ public class LostItemFeeRefundService {
   private final AccountRepository accountRepository;
   private final LoanRepository loanRepository;
   private final UserRepository userRepository;
+  private final ItemRepository itemRepository;
   private final FeeFineScheduledNoticeService scheduledNoticeService;
 
   public LostItemFeeRefundService(Clients clients) {
@@ -55,6 +58,7 @@ public class LostItemFeeRefundService {
     this.accountRepository = new AccountRepository(clients);
     this.loanRepository = new LoanRepository(clients);
     this.userRepository = new UserRepository(clients);
+    this.itemRepository = new ItemRepository(clients, true, false, false);
     this.scheduledNoticeService = FeeFineScheduledNoticeService.using(clients);
   }
 
@@ -158,6 +162,8 @@ public class LostItemFeeRefundService {
       }
 
       return loanRepository.findLastLoanForItem(context.getItemId())
+        // we will need user and item to find Patron Notice Policy while scheduling notices later
+        .thenCompose(r -> r.after(this::fetchUserAndItem))
         .thenApply(r -> r.next(loan -> {
           if (loan == null) {
             log.error("There are no loans for lost item [{}]", context.getItemId());
@@ -174,6 +180,15 @@ public class LostItemFeeRefundService {
           return succeeded(context.withLoan(loan));
         }));
     });
+  }
+
+  private CompletableFuture<Result<Loan>> fetchUserAndItem(Loan loan) {
+    if (loan == null) {
+      return ofAsync(() -> null);
+    }
+
+    return userRepository.findUserForLoan(succeeded(loan))
+      .thenCompose(r -> r.combineAfter(itemRepository::fetchFor, Loan::withItem));
   }
 
   private CompletableFuture<Result<LostItemFeeRefundContext>> fetchAccountsAndActionsForLoan(
