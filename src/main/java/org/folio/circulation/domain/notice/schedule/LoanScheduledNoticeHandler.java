@@ -275,8 +275,7 @@ public class LoanScheduledNoticeHandler {
   }
 
   private boolean agedToLostNoticeIsNotRelevant(Loan loan) {
-    return loan.getItem().isDeclaredLost() || loan.getItem().isClaimedReturned()
-      || loan.isRenewed();
+    return loan.getItem().isDeclaredLost() || loan.getItem().isClaimedReturned();
   }
 
   private boolean beforeDueDateNoticeIsNotRelevant(ScheduledNotice notice, Loan loan) {
