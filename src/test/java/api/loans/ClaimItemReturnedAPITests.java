@@ -18,20 +18,12 @@ import static org.folio.circulation.domain.representations.LoanProperties.CLAIME
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasSize;
 
-import java.util.Collections;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import api.support.builders.NoticeConfigurationBuilder;
-import api.support.builders.NoticePolicyBuilder;
-import api.support.fixtures.NoticePoliciesFixture;
-import api.support.fixtures.ScheduledNoticeProcessingClient;
-import api.support.http.ResourceClient;
 import org.awaitility.Awaitility;
-import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.junit.Before;
@@ -48,18 +40,6 @@ public class ClaimItemReturnedAPITests extends APITests {
   private ItemResource item;
   private IndividualResource loan;
   private String loanId;
-
-  protected final ResourceClient noticePolicyClient
-    = ResourceClient.forNoticePolicies();
-
-  protected final NoticePoliciesFixture noticePoliciesFixture
-    = new NoticePoliciesFixture(noticePolicyClient);
-
-  protected final ResourceClient scheduledNoticesClient =
-    ResourceClient.forScheduledNotices();
-
-  protected final ScheduledNoticeProcessingClient scheduledNoticeProcessingClient =
-    new ScheduledNoticeProcessingClient();
 
   @Before
   public void setUpItemAndLoan() {
