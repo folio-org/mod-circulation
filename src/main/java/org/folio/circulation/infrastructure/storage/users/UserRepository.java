@@ -77,7 +77,7 @@ public class UserRepository {
             log.info("No user found for loan {}", loan.getId());
           } else {
             log.info("User with username {} found for loan {}",
-              loan.getUser().getUsername(), loan.getId());
+              user.getUsername(), loan.getId());
           }
           return loan.withUser(user);
         })));
