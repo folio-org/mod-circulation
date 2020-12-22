@@ -229,7 +229,7 @@ public class LoanScheduledNoticeHandler {
     Loan loan = relatedRecords.getLoan();
     ScheduledNoticeConfig noticeConfig = notice.getConfiguration();
 
-    if (noticeIsNotRelevant(notice, loan)) {
+    if (loan.isClosed() || !noticeConfig.isRecurring() || noticeIsNotRelevant(notice, loan)) {
       return scheduledNoticesRepository.delete(notice);
     }
 
