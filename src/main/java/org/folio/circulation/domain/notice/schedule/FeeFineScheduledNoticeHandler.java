@@ -118,13 +118,13 @@ public class FeeFineScheduledNoticeHandler {
     } else if (noticeIsIrrelevant(context)) {
       log.warn(getInvalidContextMessage(notice, "associated fee/fine is already closed"));
       return scheduledNoticesRepository.delete(notice);
-    } else {
-      return noticePolicyRepository.lookupPolicyId(context.getLoan().getItem(), context.getLoan().getUser())
-        .thenCompose(r -> r.after(policy -> sendNotice(context, policy)))
-        .thenCompose(r -> r.after(v -> notice.getConfiguration().isRecurring()
-          ? scheduledNoticesRepository.update(getNextRecurringNotice(notice))
-          : scheduledNoticesRepository.delete(notice)));
     }
+
+    return noticePolicyRepository.lookupPolicyId(context.getLoan().getItem(), context.getLoan().getUser())
+      .thenCompose(r -> r.after(policy -> sendNotice(context, policy)))
+      .thenCompose(r -> r.after(v -> notice.getConfiguration().isRecurring()
+        ? scheduledNoticesRepository.update(getNextRecurringNotice(notice))
+        : scheduledNoticesRepository.delete(notice)));
   }
 
   private CompletableFuture<Result<Void>> sendNotice(FeeFineNoticeContext context,
@@ -134,7 +134,7 @@ public class FeeFineScheduledNoticeHandler {
     final Loan loan = context.getLoan();
     final ScheduledNoticeConfig configuration = notice.getConfiguration();
 
-    NoticeLogContextItem logContextItem = NoticeLogContextItem.from(loan)
+    final NoticeLogContextItem logContextItem = NoticeLogContextItem.from(loan)
       .withTemplateId(configuration.getTemplateId())
       .withTriggeringEvent(notice.getTriggeringEvent().getRepresentation());
 
