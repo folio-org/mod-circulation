@@ -251,9 +251,6 @@ public class LoanScheduledNoticeHandler {
   }
 
   public boolean noticeIsNotRelevant(ScheduledNotice notice, Loan loan) {
-    if (loan.isClosed()) {
-      return true;
-    }
     TriggeringEvent triggeringEvent = notice.getTriggeringEvent();
     switch (triggeringEvent) {
       case DUE_DATE:
@@ -298,6 +295,10 @@ public class LoanScheduledNoticeHandler {
         notice.getId(), loan.getId());
       return true;
     }
+    if (loan.isClosed()) {
+      log.warn("The notice {} is irrelevant. The loan {} is closed", notice.getId(), loan.getId());
+      return true;
+    }
     return false;
   }
 
@@ -310,6 +311,10 @@ public class LoanScheduledNoticeHandler {
     if (loan.getItem().isClaimedReturned()) {
       log.warn("Aged to lost notice is irrelevant. The item {} was claimed returned",
         loan.getItemId());
+      return true;
+    }
+    if (loan.isClosed()) {
+      log.warn("Aged to lost notice is irrelevant. The loan {} is closed", loan.getId());
       return true;
     }
     return false;
