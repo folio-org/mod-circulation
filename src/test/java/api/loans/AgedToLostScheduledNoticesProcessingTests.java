@@ -200,7 +200,7 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
 
   @Test
   public void shouldStopSendingAgedToLostNoticesOnceItemIsDeclaredLost() {
-    AgeToLostResult agedToLostLoan = createAgedToLostNotice();
+    AgeToLostResult agedToLostLoan = createRecurringAgedToLostNotice();
 
     declareLostFixtures.declareItemLost(agedToLostLoan.getLoan().getJson());
     final DateTime firstRunTime = getAgedToLostDate(agedToLostLoan).plus(
@@ -215,7 +215,7 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
 
   @Test
   public void shouldStopSendingAgedToLostNoticesOnceItemIsClaimedReturned() {
-    AgeToLostResult agedToLostLoan = createAgedToLostNotice();
+    AgeToLostResult agedToLostLoan = createRecurringAgedToLostNotice();
 
     claimItemReturnedFixture.claimItemReturned(new ClaimItemReturnedRequestBuilder()
       .forLoan(agedToLostLoan.getLoanId().toString())
@@ -230,7 +230,7 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
       .until(scheduledNoticesClient::getAll, empty());
   }
 
-  private AgeToLostResult createAgedToLostNotice() {
+  private AgeToLostResult createRecurringAgedToLostNotice() {
     val agedToLostLoan = ageToLostFixture.createAgedToLostLoan(
       new NoticePolicyBuilder()
         .active()

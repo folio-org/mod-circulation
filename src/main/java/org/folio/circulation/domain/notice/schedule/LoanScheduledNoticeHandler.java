@@ -229,7 +229,7 @@ public class LoanScheduledNoticeHandler {
     Loan loan = relatedRecords.getLoan();
     ScheduledNoticeConfig noticeConfig = notice.getConfiguration();
 
-    if (loan.isClosed() || !noticeConfig.isRecurring() || noticeIsNotRelevant(notice, loan)) {
+    if (!noticeConfig.isRecurring() || noticeIsNotRelevant(notice, loan)) {
       return scheduledNoticesRepository.delete(notice);
     }
 
@@ -255,27 +255,64 @@ public class LoanScheduledNoticeHandler {
       return true;
     }
     TriggeringEvent triggeringEvent = notice.getTriggeringEvent();
-    if (triggeringEvent == DUE_DATE) {
-      return dueDateNoticeIsNotRelevant(notice, loan);
-    } else if (triggeringEvent == AGED_TO_LOST) {
-      return agedToLostNoticeIsNotRelevant(loan);
+    switch (triggeringEvent) {
+      case DUE_DATE:
+        return dueDateNoticeIsNotRelevant(notice, loan);
+      case AGED_TO_LOST:
+        return agedToLostNoticeIsNotRelevant(loan);
+      default:
+        var errorMessage = String.format("Unexpected triggering event %s",
+          triggeringEvent.getRepresentation());
+        log.error(errorMessage);
+        throw new UnsupportedOperationException(errorMessage);
     }
-    log.error("Unexpected triggering event {}", triggeringEvent.getRepresentation());
-    throw new UnsupportedOperationException("Unexpected triggering event: " +
-      triggeringEvent.getRepresentation());
   }
 
   private boolean dueDateNoticeIsNotRelevant(ScheduledNotice notice, Loan loan) {
-    return beforeDueDateNoticeIsNotRelevant(notice, loan)
-      || loan.getItem().isDeclaredLost()
-      || loan.getItem().getStatus() == ItemStatus.AGED_TO_LOST
-      || loan.isRenewed()
-      || loan.getItem().isClaimedReturned()
-      || (loan.hasDueDateChanged() && loan.getDueDate().isAfter(systemTime));
+    if (beforeDueDateNoticeIsNotRelevant(notice, loan)) {
+      log.warn("The notice {} is irrelevant. The due date is before", notice.getId());
+      return true;
+    }
+    if (loan.getItem().isDeclaredLost()) {
+      log.warn("The notice {} is irrelevant. The loan {} was declared lost",
+        notice.getId(), loan.getId());
+      return true;
+    }
+    if (loan.getItem().getStatus() == ItemStatus.AGED_TO_LOST) {
+      log.warn("The notice {} is irrelevant. The item {} was aged to lost",
+        notice.getId(), loan.getItemId());
+      return true;
+    }
+    if (loan.isRenewed()) {
+      log.warn("The notice {} is irrelevant. The item {} was renewed",
+        notice.getId(), loan.getItemId());
+      return true;
+    }
+    if (loan.getItem().isClaimedReturned()) {
+      log.warn("The notice {} is irrelevant. The item {} was claimed returned",
+        notice.getId(), loan.getItemId());
+      return true;
+    }
+    if (loan.hasDueDateChanged() && loan.getDueDate().isAfter(systemTime)) {
+      log.warn("The notice {} is irrelevant. The due date for the loan {} was changed",
+        notice.getId(), loan.getId());
+      return true;
+    }
+    return false;
   }
 
   private boolean agedToLostNoticeIsNotRelevant(Loan loan) {
-    return loan.getItem().isDeclaredLost() || loan.getItem().isClaimedReturned();
+    if (loan.getItem().isDeclaredLost()) {
+      log.warn("Aged to lost notice is irrelevant. The item {} was declared lost",
+        loan.getItemId());
+      return true;
+    }
+    if (loan.getItem().isClaimedReturned()) {
+      log.warn("Aged to lost notice is irrelevant. The item {} was claimed returned",
+        loan.getItemId());
+      return true;
+    }
+    return false;
   }
 
   private boolean beforeDueDateNoticeIsNotRelevant(ScheduledNotice notice, Loan loan) {
