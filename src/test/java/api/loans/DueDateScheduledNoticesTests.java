@@ -718,6 +718,21 @@ public class DueDateScheduledNoticesTests extends APITests {
     assertThat(patronNoticesClient.getAll(), empty());
   }
 
+  @Test
+  public void scheduledOverdueNoticesShouldBeDeletedIfLoanIsClosed() {
+    activatePolicies(createNoticePolicy());
+    IndividualResource user = usersFixture.steve();
+    ItemResource item = itemsFixture.basedUponNod();
+    IndividualResource loan = createLoan(item, user, now());
+
+    checkInFixture.checkInByBarcode(item);
+    var dueDate = getDateTimeProperty(loan.getJson(), "dueDate");
+    scheduledNoticeProcessingClient.runLoanNoticesProcessing(dueDate.plusHours(1));
+
+    assertThat(scheduledNoticesClient.getAll(), empty());
+    assertThat(patronNoticesClient.getAll(), empty());
+  }
+
   private NoticePolicyBuilder createNoticePolicy() {
     UUID templateId = UUID.randomUUID();
     JsonObject loanNotice = new NoticeConfigurationBuilder()
