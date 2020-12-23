@@ -10,6 +10,7 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.folio.circulation.domain.Account;
 import org.folio.circulation.domain.CallNumberComponents;
 import org.folio.circulation.domain.CheckInContext;
+import org.folio.circulation.domain.FeeFineAction;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Location;
@@ -31,6 +32,7 @@ public class TemplateContextUtil {
   private static final String REQUESTER = "requester";
   private static final String LOAN = "loan";
   private static final String FEE_CHARGE = "feeCharge";
+  private static final String FEE_ACTION = "feeAction";
 
   private static final String UNLIMITED = "unlimited";
 
@@ -256,6 +258,13 @@ public class TemplateContextUtil {
       .put(FEE_CHARGE, createFeeChargeContext(account));
   }
 
+  public static JsonObject createFeeFineNoticeContext(Account account, Loan loan,
+    FeeFineAction feeFineAction) {
+
+    return createFeeFineNoticeContext(account, loan)
+      .put(FEE_ACTION, createFeeActionContext(feeFineAction));
+  }
+
   private static JsonObject createFeeChargeContext(Account account) {
     JsonObject context = new JsonObject();
 
@@ -269,4 +278,18 @@ public class TemplateContextUtil {
 
     return context;
   }
+
+  private static JsonObject createFeeActionContext(FeeFineAction feeFineAction) {
+    final JsonObject context = new JsonObject();
+    String actionDateString = feeFineAction.getDateAction().toString();
+
+    write(context, "type", feeFineAction.getActionType());
+    write(context, "actionDate", actionDateString);
+    write(context, "actionDateTime", actionDateString);
+    write(context, "amount", feeFineAction.getAmount().toDouble());
+    write(context, "remainingAmount", feeFineAction.getBalance());
+
+    return context;
+  }
+
 }

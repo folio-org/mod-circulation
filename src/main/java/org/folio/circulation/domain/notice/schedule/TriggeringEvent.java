@@ -1,7 +1,9 @@
 package org.folio.circulation.domain.notice.schedule;
 
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.Objects;
+import java.util.Set;
 
 import org.folio.circulation.domain.notice.NoticeEventType;
 
@@ -15,6 +17,9 @@ public enum TriggeringEvent {
   AGED_TO_LOST("Aged to lost"),
   AGED_TO_LOST_FINE_CHARGED("Aged to lost - fine charged"),
   AGED_TO_LOST_RETURNED("Aged to lost & item returned - fine adjusted");
+
+  private static final Set<TriggeringEvent> AUTOMATIC_FEE_FINE_ADJUSTMENTS =
+    EnumSet.of(AGED_TO_LOST_RETURNED);
 
   private final String representation;
 
@@ -42,5 +47,9 @@ public enum TriggeringEvent {
     }
 
     return result;
+  }
+
+  public boolean isAutomaticFeeFineAdjustment() {
+    return AUTOMATIC_FEE_FINE_ADJUSTMENTS.contains(this);
   }
 }

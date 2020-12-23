@@ -366,7 +366,7 @@ public class FeeFineScheduledNoticesTests extends APITests {
 
     assertThatPublishedLogRecordEventsAreValid();
 
-    Matcher<?> matcher = TemplateContextMatchers.getFeeFineContextMatcher(account, action);
+    Matcher<?> matcher = TemplateContextMatchers.getFeeChargeContextMatcher(account);
 
     Stream.of(expectedTemplateIds)
       .forEach(templateId -> assertThat(sentNotices, hasItem(
