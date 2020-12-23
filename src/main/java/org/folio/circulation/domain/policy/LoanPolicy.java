@@ -42,7 +42,7 @@ public class LoanPolicy extends Policy {
   private static final String ALTERNATE_RENEWAL_LOAN_PERIOD_KEY = "alternateRenewalLoanPeriod";
   private static final String ALLOW_RECALLS_TO_EXTEND_OVERDUE_LOANS = "allowRecallsToExtendOverdueLoans";
   private static final String ALTERNATE_RECALL_RETURN_INTERVAL = "alternateRecallReturnInterval";
-  
+
   private static final String INTERVAL_ID = "intervalId";
   private static final String DURATION = "duration";
   private static final String ALTERNATE_CHECKOUT_LOAN_PERIOD_KEY = "alternateCheckoutLoanPeriod";
@@ -221,12 +221,11 @@ public class LoanPolicy extends Policy {
   }
 
   private JsonObject getRequestManagement() {
-    return representation.getJsonObject("requestManagement");
+    return getObjectProperty(representation, REQUEST_MANAGEMENT_KEY);
   }
 
   private JsonObject getRecalls() {
-    return getRequestManagement()
-      .getJsonObject("recalls");
+    return getObjectProperty(getRequestManagement(), "recalls");
   }
 
   private JsonObject getHolds() {
