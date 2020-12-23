@@ -270,9 +270,9 @@ public class LoanScheduledNoticeHandler {
       log.warn("The notice {} is irrelevant. The due date is before", notice.getId());
       return true;
     }
-    if (loan.getItem().isDeclaredLost()) {
-      log.warn("The notice {} is irrelevant. The loan {} was declared lost",
-        notice.getId(), loan.getId());
+    if (loan.isDeclaredLost()) {
+      log.warn("The notice {} is irrelevant. The item {} was declared lost",
+        notice.getId(), loan.getItemId());
       return true;
     }
     if (loan.getItem().getStatus() == ItemStatus.AGED_TO_LOST) {
@@ -303,7 +303,7 @@ public class LoanScheduledNoticeHandler {
   }
 
   private boolean agedToLostNoticeIsNotRelevant(Loan loan) {
-    if (loan.getItem().isDeclaredLost()) {
+    if (loan.isDeclaredLost()) {
       log.warn("Aged to lost notice is irrelevant. The item {} was declared lost",
         loan.getItemId());
       return true;

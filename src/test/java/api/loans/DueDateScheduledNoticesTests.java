@@ -34,6 +34,7 @@ import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
+import api.support.fixtures.policies.PoliciesToActivate;
 import api.support.http.CheckOutResource;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
@@ -43,8 +44,8 @@ public class DueDateScheduledNoticesTests extends APITests {
   private static final String BEFORE_TIMING = "Before";
   private static final String UPON_AT_TIMING = "Upon At";
   private static final String AFTER_TIMING = "After";
-  private static final Period TIMING_AFTER = Period.minutes(5);
-  private static final Period TIMING_RECURRING = Period.minutes(10);
+  private static final Period TIMING_PERIOD_AFTER = Period.minutes(5);
+  private static final Period TIMING_PERIOD_RECURRING = Period.minutes(10);
 
   @Test
   public void allDueDateNoticesShouldBeScheduledOnCheckoutWhenPolicyDefinesDueDateNoticeConfiguration() {
@@ -634,14 +635,14 @@ public class DueDateScheduledNoticesTests extends APITests {
 
   @Test
   public void scheduledOverdueNoticesShouldBeDeletedAfterAgedToLost() {
-    NoticePolicyBuilder noticePolicy = createSendNoticePolicy();
-    use(noticePolicy);
+    NoticePolicyBuilder noticePolicy = createNoticePolicy();
+    activatePolicies(noticePolicy);
     createLoan(new DateTime(2020, 1, 1, 12, 0, 0, UTC));
 
     var agedToLostLoan = ageToLostFixture.createAgedToLostLoan(noticePolicy);
     var dueDate = getDateTimeProperty(agedToLostLoan.getLoan().getJson(), "dueDate");
 
-    scheduledNoticeProcessingClient.runLoanNoticesProcessing(dueDate.plusDays(1));
+    scheduledNoticeProcessingClient.runLoanNoticesProcessing(dueDate.plusHours(1));
 
     assertThat(scheduledNoticesClient.getAll(), empty());
     assertThat(patronNoticesClient.getAll(), empty());
@@ -649,8 +650,7 @@ public class DueDateScheduledNoticesTests extends APITests {
 
   @Test
   public void scheduledOverDueNoticeShouldBeDeletedAfterClaimedReturned() {
-    NoticePolicyBuilder noticePolicy = createSendNoticePolicy();
-    use(noticePolicy);
+    activatePolicies(createNoticePolicy());
     IndividualResource loan = createLoan(now());
 
     claimItemReturnedFixture
@@ -659,7 +659,7 @@ public class DueDateScheduledNoticesTests extends APITests {
         .withItemClaimedReturnedDate(now()));
 
     var dueDate = getDateTimeProperty(loan.getJson(), "dueDate");
-    scheduledNoticeProcessingClient.runLoanNoticesProcessing(dueDate.plusDays(1));
+    scheduledNoticeProcessingClient.runLoanNoticesProcessing(dueDate.plusHours(1));
 
     assertThat(scheduledNoticesClient.getAll(), empty());
     assertThat(patronNoticesClient.getAll(), empty());
@@ -667,8 +667,7 @@ public class DueDateScheduledNoticesTests extends APITests {
 
   @Test
   public void scheduledOverdueNoticesShouldBeDeletedAfterDeclaredLost() {
-    NoticePolicyBuilder noticePolicy = createSendNoticePolicy();
-    use(noticePolicy);
+    activatePolicies(createNoticePolicy());
     IndividualResource loan = createLoan(now());
 
     declareLostFixtures.declareItemLost(loan.getJson());
@@ -681,8 +680,7 @@ public class DueDateScheduledNoticesTests extends APITests {
 
   @Test
   public void scheduledOverdueNoticesShouldBeDeletedAfterDueDateChange() {
-    NoticePolicyBuilder noticePolicy = createSendNoticePolicy();
-    use(noticePolicy);
+    activatePolicies(createNoticePolicy());
     IndividualResource loan = createLoan(new DateTime(2020, 1, 1, 12, 0, 0, UTC));
 
     var dueDate = getDateTimeProperty(loan.getJson(), "dueDate");
@@ -698,7 +696,7 @@ public class DueDateScheduledNoticesTests extends APITests {
       .forLoan(loan.getId())
       .withDueDate(dueDate.plusWeeks(2)));
 
-    scheduledNoticeProcessingClient.runLoanNoticesProcessing(dueDate.plusDays(1));
+    scheduledNoticeProcessingClient.runLoanNoticesProcessing(dueDate.plusHours(1));
 
     assertThat(scheduledNoticesClient.getAll(), hasSize(1));
     assertThat(scheduledNoticesClient.getAll().get(0).getString("nextRunTime"),
@@ -707,36 +705,39 @@ public class DueDateScheduledNoticesTests extends APITests {
 
   @Test
   public void scheduledOverdueNoticesShouldBeDeletedAfterRenew() {
-    NoticePolicyBuilder noticePolicy = createSendNoticePolicy();
-    use(noticePolicy);
+    activatePolicies(createNoticePolicy());
     IndividualResource user = usersFixture.steve();
     ItemResource item = itemsFixture.basedUponNod();
     IndividualResource loan = createLoan(item, user, now());
 
     loansFixture.renewLoan(item, user);
     var dueDate = getDateTimeProperty(loan.getJson(), "dueDate");
-    scheduledNoticeProcessingClient.runLoanNoticesProcessing(dueDate.plusDays(1));
+    scheduledNoticeProcessingClient.runLoanNoticesProcessing(dueDate.plusHours(1));
 
     assertThat(scheduledNoticesClient.getAll(), empty());
     assertThat(patronNoticesClient.getAll(), empty());
   }
 
-  private NoticePolicyBuilder createSendNoticePolicy() {
+  private NoticePolicyBuilder createNoticePolicy() {
     UUID templateId = UUID.randomUUID();
     JsonObject loanNotice = new NoticeConfigurationBuilder()
       .withTemplateId(templateId)
       .withDueDateEvent()
-      .withAfterTiming(TIMING_AFTER)
-      .recurring(TIMING_RECURRING)
+      .withAfterTiming(TIMING_PERIOD_AFTER)
+      .recurring(TIMING_PERIOD_RECURRING)
       .sendInRealTime(true)
       .create();
     templateFixture.createDummyNoticeTemplate(templateId);
 
-    NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
+    return new NoticePolicyBuilder()
       .withName("loan policy")
       .withLoanNotices(Collections.singletonList(loanNotice));
-    use(noticePolicy);
-    return noticePolicy;
+  }
+
+  private void activatePolicies(NoticePolicyBuilder noticePolicy) {
+    policiesActivation.use(PoliciesToActivate.builder()
+      .noticePolicy(noticePoliciesFixture.create(noticePolicy))
+      .lostItemPolicy(lostItemFeePoliciesFixture.chargeFee()));
   }
 
   private IndividualResource createLoan(DateTime loanDate) {
@@ -744,13 +745,14 @@ public class DueDateScheduledNoticesTests extends APITests {
   }
 
   private IndividualResource createLoan(ItemResource item, IndividualResource user,
-                                        DateTime loanDate) {
+    DateTime loanDate) {
 
-    CheckOutResource loan = checkOutFixture.checkOutByBarcode(new CheckOutByBarcodeRequestBuilder()
-      .forItem(item)
-      .to(user)
-      .on(loanDate)
-      .at(servicePointsFixture.cd1()));
+    CheckOutResource loan = checkOutFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(item)
+        .to(user)
+        .on(loanDate)
+        .at(servicePointsFixture.cd1()));
 
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
