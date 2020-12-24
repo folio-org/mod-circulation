@@ -199,8 +199,8 @@ public class RequestCollectionResource extends CollectionResource {
     fromFutureResult(requestRepository.getById(id))
       .flatMapFuture(requestRepository::delete)
       .flatMapFuture(updateRequestQueue::onDeletion)
+      .map(toFixedValue(NoContentResponse::noContent))
       .toCompletionStage()
-      .thenApply(r -> r.map(toFixedValue(NoContentResponse::noContent)))
       .thenAccept(context::writeResultToHttpResponse);
   }
 

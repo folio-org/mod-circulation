@@ -76,4 +76,8 @@ public class AsynchronousResult<T> {
   public <R> AsynchronousResult<R> flatMapFuture(Function<T, CompletableFuture<Result<R>>> map) {
     return fromFutureResult(completionStage.thenComposeAsync(r -> r.after(map)));
   }
+
+  public <R> AsynchronousResult<R> map(Function<T, R> mapper) {
+    return fromFutureResult(completionStage.thenApply(r -> r.map(mapper)));
+  }
 }
