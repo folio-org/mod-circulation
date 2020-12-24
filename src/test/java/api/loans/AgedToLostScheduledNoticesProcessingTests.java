@@ -22,15 +22,20 @@ import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.iterableWithSize;
+import static org.joda.time.DateTime.now;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import org.awaitility.Awaitility;
 import org.folio.circulation.domain.Account;
 import org.folio.circulation.domain.policy.Period;
 import org.hamcrest.Matcher;
@@ -39,6 +44,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import api.support.APITests;
+import api.support.builders.ClaimItemReturnedRequestBuilder;
 import api.support.builders.LostItemFeePolicyBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
@@ -206,6 +212,55 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
       firstRunTime.plus(RECURRENCE_PERIOD.timePeriod()).plusMinutes(1));
     assertThat(patronNoticesClient.getAll(), hasSize(1));
     assertThat(scheduledNoticesClient.getAll(), hasSize(0));
+  }
+
+  @Test
+  public void shouldStopSendingAgedToLostNoticesOnceItemIsDeclaredLost() {
+    AgeToLostResult agedToLostLoan = createRecurringAgedToLostNotice();
+
+    declareLostFixtures.declareItemLost(agedToLostLoan.getLoan().getJson());
+    final DateTime firstRunTime = getAgedToLostDate(agedToLostLoan).plus(
+      TIMING_PERIOD.timePeriod());
+    scheduledNoticeProcessingClient.runLoanNoticesProcessing(
+      firstRunTime.plus(RECURRENCE_PERIOD.timePeriod()).plusMinutes(1));
+
+    assertThat(scheduledNoticesClient.getAll(), empty());
+    assertThat(patronNoticesClient.getAll(), empty());
+  }
+
+  @Test
+  public void shouldStopSendingAgedToLostNoticesOnceItemIsClaimedReturned() {
+    AgeToLostResult agedToLostLoan = createRecurringAgedToLostNotice();
+
+    claimItemReturnedFixture.claimItemReturned(new ClaimItemReturnedRequestBuilder()
+      .forLoan(agedToLostLoan.getLoanId().toString())
+      .withItemClaimedReturnedDate(now()));
+    final DateTime firstRunTime = getAgedToLostDate(agedToLostLoan).plus(
+      TIMING_PERIOD.timePeriod());
+    scheduledNoticeProcessingClient.runLoanNoticesProcessing(
+      firstRunTime.plus(RECURRENCE_PERIOD.timePeriod()).plusMinutes(1));
+
+    assertThat(scheduledNoticesClient.getAll(), empty());
+    assertThat(patronNoticesClient.getAll(), empty());
+  }
+
+  private AgeToLostResult createRecurringAgedToLostNotice() {
+    val agedToLostLoan = ageToLostFixture.createAgedToLostLoan(
+      new NoticePolicyBuilder()
+        .active()
+        .withName("Aged to lost notice policy")
+        .withLoanNotices(Collections.singletonList(new NoticeConfigurationBuilder()
+          .withAgedToLostEvent()
+          .withTemplateId(AFTER_RECURRING_TEMPLATE_ID)
+          .withAfterTiming(TIMING_PERIOD)
+          .recurring(RECURRENCE_PERIOD)
+          .create())));
+
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(scheduledNoticesClient::getAll, hasSize(1));
+
+    return agedToLostLoan;
   }
 
   @Test
