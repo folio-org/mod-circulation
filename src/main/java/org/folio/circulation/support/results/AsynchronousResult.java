@@ -4,6 +4,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import org.folio.circulation.support.HttpFailure;
@@ -79,5 +80,25 @@ public class AsynchronousResult<T> {
 
   public <R> AsynchronousResult<R> map(Function<T, R> mapper) {
     return fromFutureResult(completionStage.thenApply(r -> r.map(mapper)));
+  }
+
+  public AsynchronousResult<T> onSuccess(Consumer<T> consumer) {
+    return fromFutureResult(completionStage.thenCompose(r -> {
+      if (r.succeeded()) {
+        consumer.accept(r.value());
+      }
+
+      return completionStage;
+    }));
+  }
+
+  public AsynchronousResult<T> onFailure(Consumer<HttpFailure> consumer) {
+    return fromFutureResult(completionStage.thenCompose(r -> {
+      if (r.failed()) {
+        consumer.accept(r.cause());
+      }
+
+      return completionStage;
+    }));
   }
 }

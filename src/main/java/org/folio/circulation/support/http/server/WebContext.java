@@ -12,9 +12,9 @@ import java.net.URL;
 import java.util.Map;
 
 import org.folio.circulation.support.InvalidOkapiLocationException;
-import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.VertxWebClientOkapiHttpClient;
+import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.ext.web.RoutingContext;
@@ -94,8 +94,8 @@ public class WebContext {
     response.writeTo(routingContext.response());
   }
 
-  public void writeResultToHttpResponse(Result<HttpResponse> httpResponseResult) {
-    httpResponseResult.applySideEffect(this::write, this::write);
+  public void writeResultToHttpResponse(Result<HttpResponse> result) {
+    result.applySideEffect(this::write, this::write);
   }
 
   public Map<String, String> getHeaders() {

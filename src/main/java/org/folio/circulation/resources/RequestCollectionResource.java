@@ -200,8 +200,8 @@ public class RequestCollectionResource extends CollectionResource {
       .flatMapFuture(requestRepository::delete)
       .flatMapFuture(updateRequestQueue::onDeletion)
       .map(toFixedValue(NoContentResponse::noContent))
-      .toCompletionStage()
-      .thenAccept(context::writeResultToHttpResponse);
+      .onSuccess(context::write)
+      .onFailure(context::write);
   }
 
   @Override
