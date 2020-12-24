@@ -4,6 +4,7 @@ import static org.folio.circulation.domain.representations.RequestProperties.PRO
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQuery;
+import static org.folio.circulation.support.results.MappingFunctions.toFixedValue;
 
 import org.folio.circulation.infrastructure.storage.AutomatedPatronBlocksRepository;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
@@ -182,7 +183,7 @@ public class RequestCollectionResource extends CollectionResource {
       .thenComposeAsync(r -> r.after(
         records -> eventPublisher.publishDueDateChangedEvent(records, clients)))
       .thenApply(r -> r.next(requestScheduledNoticeService::rescheduleRequestNotices))
-      .thenApply(r -> r.toFixedValue(NoContentResponse::noContent))
+      .thenApply(r -> r.map(toFixedValue(NoContentResponse::noContent)))
       .thenAccept(context::writeResultToHttpResponse);
   }
 
@@ -220,7 +221,7 @@ public class RequestCollectionResource extends CollectionResource {
     requestRepository.getById(id)
       .thenComposeAsync(r -> r.after(requestRepository::delete))
       .thenComposeAsync(r -> r.after(updateRequestQueue::onDeletion))
-      .thenApply(r -> r.toFixedValue(NoContentResponse::noContent))
+      .thenApply(r -> r.map(toFixedValue(NoContentResponse::noContent)))
       .thenAccept(context::writeResultToHttpResponse);
   }
 
@@ -245,7 +246,7 @@ public class RequestCollectionResource extends CollectionResource {
     Clients clients = Clients.create(context, client);
 
     clients.requestsStorage().delete()
-      .thenApply(r -> r.toFixedValue(NoContentResponse::noContent))
+      .thenApply(r -> r.map(toFixedValue(NoContentResponse::noContent)))
       .thenAccept(context::writeResultToHttpResponse);
   }
 

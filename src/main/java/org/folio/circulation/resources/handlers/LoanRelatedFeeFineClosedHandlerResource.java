@@ -6,6 +6,7 @@ import static org.folio.circulation.domain.subscribers.LoanRelatedFeeFineClosedE
 import static org.folio.circulation.support.Clients.create;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.http.server.NoContentResponse.noContent;
+import static org.folio.circulation.support.results.MappingFunctions.toFixedValue;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.succeeded;
 
@@ -56,7 +57,7 @@ public class LoanRelatedFeeFineClosedHandlerResource extends Resource {
       .after(request -> processEvent(context, request))
       .thenCompose(r -> r.after(eventPublisher::publishClosedLoanEvent))
       .exceptionally(CommonFailures::failedDueToServerError)
-      .thenApply(r -> r.toFixedValue(NoContentResponse::noContent))
+      .thenApply(r -> r.map(toFixedValue(NoContentResponse::noContent)))
       .thenAccept(result -> result.applySideEffect(context::write, failure -> {
         log.error("Cannot handle event [{}], error occurred {}",
           routingContext.getBodyAsString(), failure);

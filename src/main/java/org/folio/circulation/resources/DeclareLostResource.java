@@ -3,6 +3,7 @@ package org.folio.circulation.resources;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.apache.commons.lang.StringUtils.defaultIfBlank;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
+import static org.folio.circulation.support.results.MappingFunctions.toFixedValue;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
@@ -49,7 +50,7 @@ public class DeclareLostResource extends Resource {
     validateDeclaredLostRequest(routingContext)
       .after(request -> declareItemLost(request, clients, context))
       .thenComposeAsync(r -> r.after(eventPublisher::publishDeclaredLostEvent))
-      .thenApply(r -> r.toFixedValue(NoContentResponse::noContent))
+      .thenApply(r -> r.map(toFixedValue(NoContentResponse::noContent)))
       .thenAccept(context::writeResultToHttpResponse);
   }
 
