@@ -261,7 +261,7 @@ public class LoanScheduledNoticeHandler {
         var errorMessage = String.format("Unexpected triggering event %s",
           triggeringEvent.getRepresentation());
         log.error(errorMessage);
-        throw new UnsupportedOperationException(errorMessage);
+        throw new IllegalArgumentException(errorMessage);
     }
   }
 
