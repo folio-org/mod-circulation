@@ -224,9 +224,8 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
     scheduledNoticeProcessingClient.runLoanNoticesProcessing(
       firstRunTime.plus(RECURRENCE_PERIOD.timePeriod()).plusMinutes(1));
 
-    Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
-      .until(scheduledNoticesClient::getAll, empty());
+    assertThat(scheduledNoticesClient.getAll(), empty());
+    assertThat(patronNoticesClient.getAll(), empty());
   }
 
   @Test
@@ -241,9 +240,8 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
     scheduledNoticeProcessingClient.runLoanNoticesProcessing(
       firstRunTime.plus(RECURRENCE_PERIOD.timePeriod()).plusMinutes(1));
 
-    Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
-      .until(scheduledNoticesClient::getAll, empty());
+    assertThat(scheduledNoticesClient.getAll(), empty());
+    assertThat(patronNoticesClient.getAll(), empty());
   }
 
   private AgeToLostResult createRecurringAgedToLostNotice() {
