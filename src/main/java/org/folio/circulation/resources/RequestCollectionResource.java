@@ -178,10 +178,11 @@ public class RequestCollectionResource extends CollectionResource {
 
     final var id = getRequestId(routingContext);
 
-    requestRepository.getById(id)
-      .thenApply(r -> r.map(new RequestRepresentation()::extendedRepresentation))
-      .thenApply(r -> r.map(JsonHttpResponse::ok))
-      .thenAccept(context::writeResultToHttpResponse);
+    fromFutureResult(requestRepository.getById(id))
+      .map(new RequestRepresentation()::extendedRepresentation)
+      .map(JsonHttpResponse::ok)
+      .onSuccess(context::write)
+      .onFailure(context::write);
   }
 
   @Override
@@ -212,11 +213,12 @@ public class RequestCollectionResource extends CollectionResource {
     final var requestRepository = RequestRepository.using(clients);
     final var requestRepresentation = new RequestRepresentation();
 
-    requestRepository.findBy(routingContext.request().query())
-      .thenApply(r -> r.map(requests ->
-        requests.asJson(requestRepresentation::extendedRepresentation, "requests")))
-      .thenApply(r -> r.map(JsonHttpResponse::ok))
-      .thenAccept(context::writeResultToHttpResponse);
+    fromFutureResult(requestRepository.findBy(routingContext.request().query()))
+      .map(requests ->
+        requests.asJson(requestRepresentation::extendedRepresentation, "requests"))
+      .map(JsonHttpResponse::ok)
+      .onSuccess(context::write)
+      .onFailure(context::write);
   }
 
   @Override
