@@ -4,6 +4,7 @@ import static org.folio.circulation.domain.representations.RequestProperties.PRO
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQuery;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
+import static org.folio.circulation.support.results.AsynchronousResult.fromFutureResult;
 import static org.folio.circulation.support.results.MappingFunctions.toFixedValue;
 import static org.folio.circulation.support.results.MappingFunctions.when;
 
@@ -195,7 +196,8 @@ public class RequestCollectionResource extends CollectionResource {
     final var updateRequestQueue = new UpdateRequestQueue(RequestQueueRepository.using(clients),
       requestRepository, new ServicePointRepository(clients), new ConfigurationRepository(clients));
 
-    requestRepository.getById(id)
+    fromFutureResult(requestRepository.getById(id))
+      .toCompletionStage()
       .thenComposeAsync(r -> r.after(requestRepository::delete))
       .thenComposeAsync(r -> r.after(updateRequestQueue::onDeletion))
       .thenApply(r -> r.map(toFixedValue(NoContentResponse::noContent)))
