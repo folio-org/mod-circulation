@@ -181,8 +181,7 @@ public class RequestCollectionResource extends CollectionResource {
     fromFutureResult(requestRepository.getById(id))
       .map(new RequestRepresentation()::extendedRepresentation)
       .map(JsonHttpResponse::ok)
-      .onSuccess(context::write)
-      .onFailure(context::write);
+      .onSuccess(context::write).onFailure(context::write);
   }
 
   @Override
@@ -201,8 +200,7 @@ public class RequestCollectionResource extends CollectionResource {
       .flatMapFuture(requestRepository::delete)
       .flatMapFuture(updateRequestQueue::onDeletion)
       .map(toFixedValue(NoContentResponse::noContent))
-      .onSuccess(context::write)
-      .onFailure(context::write);
+      .onSuccess(context::write).onFailure(context::write);
   }
 
   @Override
@@ -217,8 +215,7 @@ public class RequestCollectionResource extends CollectionResource {
       .map(requests ->
         requests.asJson(requestRepresentation::extendedRepresentation, "requests"))
       .map(JsonHttpResponse::ok)
-      .onSuccess(context::write)
-      .onFailure(context::write);
+      .onSuccess(context::write).onFailure(context::write);
   }
 
   @Override
@@ -226,9 +223,9 @@ public class RequestCollectionResource extends CollectionResource {
     final var context = new WebContext(routingContext);
     final var clients = Clients.create(context, client);
 
-    clients.requestsStorage().delete()
-      .thenApply(r -> r.map(toFixedValue(NoContentResponse::noContent)))
-      .thenAccept(context::writeResultToHttpResponse);
+    fromFutureResult(clients.requestsStorage().delete())
+      .map(toFixedValue(NoContentResponse::noContent))
+      .onSuccess(context::write).onFailure(context::write);
   }
 
   void move(RoutingContext routingContext) {
