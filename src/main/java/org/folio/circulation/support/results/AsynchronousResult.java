@@ -83,20 +83,24 @@ public class AsynchronousResult<T> {
   }
 
   public AsynchronousResult<T> onSuccess(Consumer<T> consumer) {
-    return fromFutureResult(completionStage.thenCompose(r -> {
+    return run(r -> {
       if (r.succeeded()) {
         consumer.accept(r.value());
       }
-
-      return completionStage;
-    }));
+    });
   }
 
   public AsynchronousResult<T> onFailure(Consumer<HttpFailure> consumer) {
-    return fromFutureResult(completionStage.thenCompose(r -> {
+    return run(r -> {
       if (r.failed()) {
         consumer.accept(r.cause());
       }
+    });
+  }
+
+  private AsynchronousResult<T> run(Consumer<Result<T>> consumer) {
+    return fromFutureResult(completionStage.thenCompose(r -> {
+      consumer.accept(r);
 
       return completionStage;
     }));
