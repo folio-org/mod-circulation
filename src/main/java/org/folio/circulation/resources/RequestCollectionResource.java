@@ -197,9 +197,9 @@ public class RequestCollectionResource extends CollectionResource {
       requestRepository, new ServicePointRepository(clients), new ConfigurationRepository(clients));
 
     fromFutureResult(requestRepository.getById(id))
+      .flatMapFuture(requestRepository::delete)
+      .flatMapFuture(updateRequestQueue::onDeletion)
       .toCompletionStage()
-      .thenComposeAsync(r -> r.after(requestRepository::delete))
-      .thenComposeAsync(r -> r.after(updateRequestQueue::onDeletion))
       .thenApply(r -> r.map(toFixedValue(NoContentResponse::noContent)))
       .thenAccept(context::writeResultToHttpResponse);
   }
