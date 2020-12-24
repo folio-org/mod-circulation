@@ -18,8 +18,10 @@ import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.lang.invoke.MethodHandles;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.commons.collections.CollectionUtils;
@@ -266,55 +268,48 @@ public class LoanScheduledNoticeHandler {
   }
 
   private boolean dueDateNoticeIsNotRelevant(ScheduledNotice notice, Loan loan) {
+    List<String> logMessages = new ArrayList<>();
     if (beforeDueDateNoticeIsNotRelevant(notice, loan)) {
-      log.warn("The notice {} is irrelevant. The due date is before", notice.getId());
-      return true;
+      logMessages.add(String.format("Due date of loan %s is before now", loan.getId()));
     }
     if (loan.isDeclaredLost()) {
-      log.warn("The notice {} is irrelevant. The item {} was declared lost",
-        notice.getId(), loan.getItemId());
-      return true;
+      logMessages.add(String.format("Item %s was declared lost", loan.getItemId()));
     }
     if (loan.getItem().getStatus() == ItemStatus.AGED_TO_LOST) {
-      log.warn("The notice {} is irrelevant. The item {} was aged to lost",
-        notice.getId(), loan.getItemId());
-      return true;
+      logMessages.add(String.format("Item %s was aged to lost", loan.getItemId()));
     }
     if (loan.isRenewed()) {
-      log.warn("The notice {} is irrelevant. The item {} was renewed",
-        notice.getId(), loan.getItemId());
-      return true;
+      logMessages.add(String.format("Item %s was renewed", loan.getItemId()));
     }
     if (loan.getItem().isClaimedReturned()) {
-      log.warn("The notice {} is irrelevant. The item {} was claimed returned",
-        notice.getId(), loan.getItemId());
-      return true;
+      logMessages.add(String.format("Item %s was claimed returned", loan.getItemId()));
     }
     if (loan.hasDueDateChanged() && loan.getDueDate().isAfter(systemTime)) {
-      log.warn("The notice {} is irrelevant. The due date for the loan {} was changed",
-        notice.getId(), loan.getId());
-      return true;
+      logMessages.add(String.format("Due date for the loan %s was changed", loan.getId()));
     }
     if (loan.isClosed()) {
-      log.warn("The notice {} is irrelevant. The loan {} is closed", notice.getId(), loan.getId());
+      logMessages.add(String.format("Loan %s is closed", loan.getId()));
+    }
+    if (!logMessages.isEmpty()) {
+      log.warn("Due date notice {} is irrelevant: {}", notice.getId(), logMessages);
       return true;
     }
     return false;
   }
 
   private boolean agedToLostNoticeIsNotRelevant(Loan loan) {
+    List<String> logMessages = new ArrayList<>();
     if (loan.isDeclaredLost()) {
-      log.warn("Aged to lost notice is irrelevant. The item {} was declared lost",
-        loan.getItemId());
-      return true;
+      logMessages.add(String.format("Item %s was declared lost", loan.getItemId()));
     }
     if (loan.getItem().isClaimedReturned()) {
-      log.warn("Aged to lost notice is irrelevant. The item {} was claimed returned",
-        loan.getItemId());
-      return true;
+      logMessages.add(String.format("Item %s was claimed returned", loan.getItemId()));
     }
     if (loan.isClosed()) {
-      log.warn("Aged to lost notice is irrelevant. The loan {} is closed", loan.getId());
+      logMessages.add(String.format("Loan %s is closed", loan.getId()));
+    }
+    if (!logMessages.isEmpty()) {
+      log.warn("Aged to lost notice is irrelevant: {}", logMessages);
       return true;
     }
     return false;
