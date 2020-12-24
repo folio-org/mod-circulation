@@ -322,11 +322,11 @@ public interface Result<T> {
    * Responds with a new result with the supplied new value
    * unless current result is failed or the mapping fails e.g. throws an exception
    *
-   * @param value function to apply to value of result
+   * @param fixedValueSupplier function to apply to value of result
    * @return success when result succeeded and map is applied successfully, failure otherwise
    */
-  default <U> Result<U> toFixedValue(Supplier<U> value) {
-    return map(it -> value.get());
+  default <U> Result<U> toFixedValue(Supplier<U> fixedValueSupplier) {
+    return map(MappingFunctions.toFixedValue(fixedValueSupplier));
   }
 
   /**
