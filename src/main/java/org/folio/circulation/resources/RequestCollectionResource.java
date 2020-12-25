@@ -48,7 +48,6 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
 public class RequestCollectionResource extends CollectionResource {
-
   public RequestCollectionResource(HttpClient client) {
     super(client, "/circulation/requests");
   }
@@ -86,25 +85,18 @@ public class RequestCollectionResource extends CollectionResource {
       new CreateRequestRepositories(RequestRepository.using(clients),
         new RequestPolicyRepository(clients), configurationRepository,
         new AutomatedPatronBlocksRepository(clients)),
-      updateUponRequest,
-      new RequestLoanValidator(loanRepository),
-      requestNoticeSender,
-      new UserManualBlocksValidator(userManualBlocksValidator),
+      updateUponRequest, new RequestLoanValidator(loanRepository),
+      requestNoticeSender, new UserManualBlocksValidator(userManualBlocksValidator),
       eventPublisher);
 
     final RequestFromRepresentationService requestFromRepresentationService =
-      new RequestFromRepresentationService(
-        new ItemRepository(clients, true, true, true),
-        RequestQueueRepository.using(clients),
-        userRepository,
-        loanRepository,
+      new RequestFromRepresentationService(new ItemRepository(clients, true, true, true),
+        RequestQueueRepository.using(clients), userRepository, loanRepository,
         new ServicePointRepository(clients),
         createProxyRelationshipValidator(representation, clients),
-        new ServicePointPickupLocationValidator()
-      );
+        new ServicePointPickupLocationValidator());
 
     final RequestScheduledNoticeService scheduledNoticeService = RequestScheduledNoticeService.using(clients);
-
 
     requestFromRepresentationService.getRequestFrom(representation)
       .thenComposeAsync(r -> r.after(createRequestService::createRequest))
@@ -119,7 +111,6 @@ public class RequestCollectionResource extends CollectionResource {
 
   @Override
   void replace(RoutingContext routingContext) {
-
     JsonObject representation = routingContext.getBodyAsJson();
     write(representation, "id", getRequestId(routingContext));
 
@@ -145,33 +136,23 @@ public class RequestCollectionResource extends CollectionResource {
         updateRequestQueue);
 
     final CreateRequestService createRequestService = new CreateRequestService(
-      new CreateRequestRepositories(RequestRepository.using(clients),
+      new CreateRequestRepositories(requestRepository,
         new RequestPolicyRepository(clients), configurationRepository,
         new AutomatedPatronBlocksRepository(clients)),
-      updateUponRequest,
-      new RequestLoanValidator(loanRepository),
-      requestNoticeSender,
-      new UserManualBlocksValidator(userManualBlocksValidator),
+      updateUponRequest, new RequestLoanValidator(loanRepository),
+      requestNoticeSender, new UserManualBlocksValidator(userManualBlocksValidator),
       eventPublisher);
 
     final UpdateRequestService updateRequestService = new UpdateRequestService(
-        requestRepository,
-        updateRequestQueue,
-        new ClosedRequestValidator(RequestRepository.using(clients)),
-        requestNoticeSender,
-        updateItem,
-        eventPublisher);
+      requestRepository, updateRequestQueue, new ClosedRequestValidator(requestRepository),
+      requestNoticeSender, updateItem, eventPublisher);
 
     final RequestFromRepresentationService requestFromRepresentationService =
-      new RequestFromRepresentationService(
-        new ItemRepository(clients, true, true, true),
-        RequestQueueRepository.using(clients),
-        new UserRepository(clients),
-        loanRepository,
-        new ServicePointRepository(clients),
+      new RequestFromRepresentationService(new ItemRepository(clients, true, true, true),
+        RequestQueueRepository.using(clients), new UserRepository(clients),
+        loanRepository, new ServicePointRepository(clients),
         createProxyRelationshipValidator(representation, clients),
-        new ServicePointPickupLocationValidator()
-      );
+        new ServicePointPickupLocationValidator());
 
     final RequestScheduledNoticeService requestScheduledNoticeService =
       RequestScheduledNoticeService.using(clients);
@@ -212,11 +193,8 @@ public class RequestCollectionResource extends CollectionResource {
     final RequestRepository requestRepository = RequestRepository.using(clients);
 
     final UpdateRequestQueue updateRequestQueue = new UpdateRequestQueue(
-      RequestQueueRepository.using(clients),
-      requestRepository,
-      new ServicePointRepository(clients),
-      new ConfigurationRepository(clients)
-    );
+      RequestQueueRepository.using(clients), requestRepository,
+      new ServicePointRepository(clients), new ConfigurationRepository(clients));
 
     requestRepository.getById(id)
       .thenComposeAsync(r -> r.after(requestRepository::delete))
@@ -267,26 +245,19 @@ public class RequestCollectionResource extends CollectionResource {
     final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
 
     final UpdateUponRequest updateUponRequest = new UpdateUponRequest(
-        new UpdateItem(clients),
-        new UpdateLoan(clients, loanRepository, loanPolicyRepository),
-        UpdateRequestQueue.using(clients));
+      new UpdateItem(clients), new UpdateLoan(clients, loanRepository, loanPolicyRepository),
+      UpdateRequestQueue.using(clients));
 
     final MoveRequestProcessAdapter moveRequestProcessAdapter =
-        new MoveRequestProcessAdapter(
-          itemRepository,
-          loanRepository,
-          requestRepository,
-          requestQueueRepository);
+      new MoveRequestProcessAdapter(itemRepository, loanRepository, requestRepository,
+        requestQueueRepository);
 
     final EventPublisher eventPublisher = new EventPublisher(routingContext);
 
     final MoveRequestService moveRequestService = new MoveRequestService(
-        RequestRepository.using(clients),
-        new RequestPolicyRepository(clients),
-        updateUponRequest,
-        moveRequestProcessAdapter,
-        new RequestLoanValidator(loanRepository),
-        RequestNoticeSender.using(clients), configurationRepository, eventPublisher);
+      requestRepository, new RequestPolicyRepository(clients),
+      updateUponRequest, moveRequestProcessAdapter, new RequestLoanValidator(loanRepository),
+      RequestNoticeSender.using(clients), configurationRepository, eventPublisher);
 
     requestRepository.getById(id)
       .thenApply(r -> r.map(RequestAndRelatedRecords::new))
