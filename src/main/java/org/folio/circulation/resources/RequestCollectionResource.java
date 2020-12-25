@@ -273,18 +273,21 @@ public class RequestCollectionResource extends CollectionResource {
 
   private RequestAndRelatedRecords asMove(RequestAndRelatedRecords requestAndRelatedRecords,
     JsonObject representation) {
+
     String originalItemId = requestAndRelatedRecords.getItemId();
+
     String destinationItemId = representation.getString("destinationItemId");
+
     if (representation.containsKey("requestType")) {
       RequestType requestType = RequestType.from(representation.getString("requestType"));
       return requestAndRelatedRecords.withRequestType(requestType).asMove(originalItemId, destinationItemId);
     }
+
     return requestAndRelatedRecords.asMove(originalItemId, destinationItemId);
   }
 
   private ProxyRelationshipValidator createProxyRelationshipValidator(
-    JsonObject representation,
-    Clients clients) {
+    JsonObject representation, Clients clients) {
 
     return new ProxyRelationshipValidator(clients, () ->
       singleValidationError("proxyUserId is not valid",
