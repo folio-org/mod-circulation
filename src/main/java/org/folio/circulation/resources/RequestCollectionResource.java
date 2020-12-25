@@ -60,10 +60,10 @@ public class RequestCollectionResource extends CollectionResource {
   @Override
   void create(RoutingContext routingContext) {
     final var context = new WebContext(routingContext);
+    final var clients = Clients.create(context, client);
 
     final var representation = routingContext.getBodyAsJson();
 
-    final var clients = Clients.create(context, client);
     final var eventPublisher = new EventPublisher(routingContext);
 
     final var userRepository = new UserRepository(clients);
@@ -108,12 +108,12 @@ public class RequestCollectionResource extends CollectionResource {
 
   @Override
   void replace(RoutingContext routingContext) {
+    final var context = new WebContext(routingContext);
+    final var clients = Clients.create(context, client);
+
     final var representation = routingContext.getBodyAsJson();
 
     write(representation, "id", getRequestId(routingContext));
-
-    final var context = new WebContext(routingContext);
-    final var clients = Clients.create(context, client);
 
     final var requestRepository = RequestRepository.using(clients);
     final var updateRequestQueue = UpdateRequestQueue.using(clients);
