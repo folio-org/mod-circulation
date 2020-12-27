@@ -12,6 +12,8 @@ import org.folio.circulation.domain.CreateRequestRepositories;
 import org.folio.circulation.domain.CreateRequestService;
 import org.folio.circulation.domain.MoveRequestProcessAdapter;
 import org.folio.circulation.domain.MoveRequestService;
+import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.RequestRepresentation;
 import org.folio.circulation.domain.RequestType;
@@ -209,13 +211,17 @@ public class RequestCollectionResource extends CollectionResource {
     final var clients = Clients.create(context, client);
 
     final var requestRepository = RequestRepository.using(clients);
-    final var requestRepresentation = new RequestRepresentation();
 
     fromFutureResult(requestRepository.findBy(routingContext.request().query()))
-      .map(requests ->
-        requests.asJson(requestRepresentation::extendedRepresentation, "requests"))
+      .map(this::mapToJson)
       .map(JsonHttpResponse::ok)
       .onComplete(context::write, context::write);
+  }
+
+  private JsonObject mapToJson(MultipleRecords<Request> requests) {
+    final var requestRepresentation = new RequestRepresentation();
+
+    return requests.asJson(requestRepresentation::extendedRepresentation, "requests");
   }
 
   @Override
