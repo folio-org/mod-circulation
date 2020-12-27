@@ -36,6 +36,16 @@ class AsynchronousResultSideEffectTests {
 
       assertThat(onSuccess.hasBeenInvoked(), is(false));
     }
+
+    @Test
+    void onCompletionOnlySuccessConsumerShouldBeExecuted() {
+      result.onComplete(onSuccess.consumer(), onFailure.consumer());
+
+      assertThat(onSuccess.hasBeenInvoked(), is(true));
+      assertThat(onSuccess.invokedValue(), is(10));
+
+      assertThat(onFailure.hasBeenInvoked(), is(false));
+    }
   }
 
   @Nested
@@ -52,6 +62,16 @@ class AsynchronousResultSideEffectTests {
     @Test
     void onFailureConsumerShouldBeExecuted() {
       result.onFailure(onFailure.consumer());
+
+      assertThat(onFailure.hasBeenInvoked(), is(true));
+      assertThat(onFailure.invokedValue(), isFailureContaining("Already failed"));
+    }
+
+    @Test
+    void onCompletionOnlySuccessConsumerShouldBeExecuted() {
+      result.onComplete(onSuccess.consumer(), onFailure.consumer());
+
+      assertThat(onSuccess.hasBeenInvoked(), is(false));
 
       assertThat(onFailure.hasBeenInvoked(), is(true));
       assertThat(onFailure.invokedValue(), isFailureContaining("Already failed"));

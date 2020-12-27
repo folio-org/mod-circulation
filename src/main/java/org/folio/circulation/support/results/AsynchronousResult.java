@@ -98,6 +98,10 @@ public class AsynchronousResult<T> {
     });
   }
 
+  public AsynchronousResult<T> onComplete(Consumer<T> onSuccess, Consumer<HttpFailure> onFailure) {
+    return onSuccess(onSuccess).onFailure(onFailure);
+  }
+
   private AsynchronousResult<T> run(Consumer<Result<T>> consumer) {
     return fromFutureResult(completionStage.thenCompose(r -> {
       consumer.accept(r);
