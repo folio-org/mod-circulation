@@ -18,16 +18,19 @@ import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.lang.invoke.MethodHandles;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
-import org.folio.circulation.domain.representations.logs.NoticeLogContext;
 import org.folio.circulation.domain.notice.PatronNoticeService;
 import org.folio.circulation.domain.notice.TemplateContextUtil;
+import org.folio.circulation.domain.representations.logs.NoticeLogContext;
 import org.folio.circulation.domain.representations.logs.NoticeLogContextItem;
 import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
@@ -228,7 +231,7 @@ public class LoanScheduledNoticeHandler {
     Loan loan = relatedRecords.getLoan();
     ScheduledNoticeConfig noticeConfig = notice.getConfiguration();
 
-    if (loan.isClosed() || !noticeConfig.isRecurring()) {
+    if (!noticeConfig.isRecurring() || noticeIsNotRelevant(notice, loan)) {
       return scheduledNoticesRepository.delete(notice);
     }
 
@@ -250,7 +253,66 @@ public class LoanScheduledNoticeHandler {
   }
 
   public boolean noticeIsNotRelevant(ScheduledNotice notice, Loan loan) {
-    return loan.isClosed() || beforeDueDateNoticeIsNotRelevant(notice, loan);
+    TriggeringEvent triggeringEvent = notice.getTriggeringEvent();
+    switch (triggeringEvent) {
+      case DUE_DATE:
+        return dueDateNoticeIsNotRelevant(notice, loan);
+      case AGED_TO_LOST:
+        return agedToLostNoticeIsNotRelevant(loan);
+      default:
+        var errorMessage = String.format("Unexpected triggering event %s",
+          triggeringEvent.getRepresentation());
+        log.error(errorMessage);
+        throw new IllegalArgumentException(errorMessage);
+    }
+  }
+
+  private boolean dueDateNoticeIsNotRelevant(ScheduledNotice notice, Loan loan) {
+    List<String> logMessages = new ArrayList<>();
+    if (beforeDueDateNoticeIsNotRelevant(notice, loan)) {
+      logMessages.add(String.format("Due date of loan %s is before now", loan.getId()));
+    }
+    if (loan.isDeclaredLost()) {
+      logMessages.add(String.format("Item %s was declared lost", loan.getItemId()));
+    }
+    if (loan.getItem().getStatus() == ItemStatus.AGED_TO_LOST) {
+      logMessages.add(String.format("Item %s was aged to lost", loan.getItemId()));
+    }
+    if (loan.isRenewed()) {
+      logMessages.add(String.format("Item %s was renewed", loan.getItemId()));
+    }
+    if (loan.getItem().isClaimedReturned()) {
+      logMessages.add(String.format("Item %s was claimed returned", loan.getItemId()));
+    }
+    if (loan.hasDueDateChanged() && loan.getDueDate().isAfter(systemTime)) {
+      logMessages.add(String.format("Due date for the loan %s was changed", loan.getId()));
+    }
+    if (loan.isClosed()) {
+      logMessages.add(String.format("Loan %s is closed", loan.getId()));
+    }
+    if (!logMessages.isEmpty()) {
+      log.warn("Due date notice {} is irrelevant: {}", notice.getId(), logMessages);
+      return true;
+    }
+    return false;
+  }
+
+  private boolean agedToLostNoticeIsNotRelevant(Loan loan) {
+    List<String> logMessages = new ArrayList<>();
+    if (loan.isDeclaredLost()) {
+      logMessages.add(String.format("Item %s was declared lost", loan.getItemId()));
+    }
+    if (loan.getItem().isClaimedReturned()) {
+      logMessages.add(String.format("Item %s was claimed returned", loan.getItemId()));
+    }
+    if (loan.isClosed()) {
+      logMessages.add(String.format("Loan %s is closed", loan.getId()));
+    }
+    if (!logMessages.isEmpty()) {
+      log.warn("Aged to lost notice is irrelevant: {}", logMessages);
+      return true;
+    }
+    return false;
   }
 
   private boolean beforeDueDateNoticeIsNotRelevant(ScheduledNotice notice, Loan loan) {
