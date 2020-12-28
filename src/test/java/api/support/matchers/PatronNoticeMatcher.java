@@ -29,7 +29,7 @@ public class PatronNoticeMatcher {
 
   public static Matcher<JsonObject> hasEmailNoticeProperties(
     UUID expectedRecipientId, UUID expectedTemplateId,
-    Matcher<? super String> contextMatcher) {
+    Matcher<?> contextMatcher) {
 
     return hasNoticeProperties(
       expectedRecipientId, expectedTemplateId,

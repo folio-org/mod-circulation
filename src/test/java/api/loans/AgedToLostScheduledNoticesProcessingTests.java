@@ -1,37 +1,56 @@
 package api.loans;
 
+import static api.support.fixtures.TemplateContextMatchers.getFeeActionContextMatcher;
+import static api.support.fixtures.TemplateContextMatchers.getFeeChargeContextMatcher;
+import static api.support.fixtures.TemplateContextMatchers.getItemContextMatchers;
+import static api.support.fixtures.TemplateContextMatchers.getLoanContextMatchers;
+import static api.support.fixtures.TemplateContextMatchers.getUserContextMatchers;
 import static api.support.http.CqlQuery.exactMatch;
 import static api.support.matchers.AccountMatchers.isAccount;
 import static api.support.matchers.ItemMatchers.isAvailable;
+import static api.support.matchers.JsonObjectMatcher.toStringMatcher;
 import static api.support.matchers.LoanMatchers.isClosed;
+import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.ScheduledNoticeMatchers.hasScheduledFeeFineNotice;
 import static api.support.matchers.ScheduledNoticeMatchers.hasScheduledLoanNotice;
+import static java.util.stream.Collectors.toList;
 import static org.folio.circulation.domain.notice.NoticeTiming.AFTER;
 import static org.folio.circulation.domain.notice.NoticeTiming.UPON_AT;
 import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.AGED_TO_LOST_RETURNED;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getUUIDProperty;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.iterableWithSize;
+import static org.joda.time.DateTime.now;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import org.awaitility.Awaitility;
 import org.folio.circulation.domain.Account;
 import org.folio.circulation.domain.policy.Period;
+import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 
 import api.support.APITests;
+import api.support.builders.ClaimItemReturnedRequestBuilder;
 import api.support.builders.LostItemFeePolicyBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.fixtures.AgeToLostFixture.AgeToLostResult;
+import api.support.http.IndividualResource;
+import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
@@ -135,6 +154,9 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
           AFTER.getRepresentation(), AFTER_RECURRING_TEMPLATE_ID, RECURRENCE_PERIOD, true)
       )));
 
+    checkSentLoanNotices(agedToLostLoan,
+      List.of(UPON_AT_TEMPLATE_ID, AFTER_ONE_TIME_TEMPLATE_ID, AFTER_RECURRING_TEMPLATE_ID));
+
     // close the loan
     checkInFixture.checkInByBarcode(agedToLostLoan.getItem());
     assertThat(itemsFixture.getById(agedToLostLoan.getItemId()).getJson(), isAvailable());
@@ -193,6 +215,55 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
+  public void shouldStopSendingAgedToLostNoticesOnceItemIsDeclaredLost() {
+    AgeToLostResult agedToLostLoan = createRecurringAgedToLostNotice();
+
+    declareLostFixtures.declareItemLost(agedToLostLoan.getLoan().getJson());
+    final DateTime firstRunTime = getAgedToLostDate(agedToLostLoan).plus(
+      TIMING_PERIOD.timePeriod());
+    scheduledNoticeProcessingClient.runLoanNoticesProcessing(
+      firstRunTime.plus(RECURRENCE_PERIOD.timePeriod()).plusMinutes(1));
+
+    assertThat(scheduledNoticesClient.getAll(), empty());
+    assertThat(patronNoticesClient.getAll(), empty());
+  }
+
+  @Test
+  public void shouldStopSendingAgedToLostNoticesOnceItemIsClaimedReturned() {
+    AgeToLostResult agedToLostLoan = createRecurringAgedToLostNotice();
+
+    claimItemReturnedFixture.claimItemReturned(new ClaimItemReturnedRequestBuilder()
+      .forLoan(agedToLostLoan.getLoanId().toString())
+      .withItemClaimedReturnedDate(now()));
+    final DateTime firstRunTime = getAgedToLostDate(agedToLostLoan).plus(
+      TIMING_PERIOD.timePeriod());
+    scheduledNoticeProcessingClient.runLoanNoticesProcessing(
+      firstRunTime.plus(RECURRENCE_PERIOD.timePeriod()).plusMinutes(1));
+
+    assertThat(scheduledNoticesClient.getAll(), empty());
+    assertThat(patronNoticesClient.getAll(), empty());
+  }
+
+  private AgeToLostResult createRecurringAgedToLostNotice() {
+    val agedToLostLoan = ageToLostFixture.createAgedToLostLoan(
+      new NoticePolicyBuilder()
+        .active()
+        .withName("Aged to lost notice policy")
+        .withLoanNotices(Collections.singletonList(new NoticeConfigurationBuilder()
+          .withAgedToLostEvent()
+          .withTemplateId(AFTER_RECURRING_TEMPLATE_ID)
+          .withAfterTiming(TIMING_PERIOD)
+          .recurring(RECURRENCE_PERIOD)
+          .create())));
+
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(scheduledNoticesClient::getAll, hasSize(1));
+
+    return agedToLostLoan;
+  }
+
+  @Test
   public void patronNoticesForForAgedToLostFineAdjustmentsAreCreatedAndProcessed() {
     LostItemFeePolicyBuilder lostItemFeePolicyBuilder = lostItemFeePoliciesFixture
       .ageToLostAfterOneMinutePolicy()
@@ -246,22 +317,22 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
     final UUID loanId = agedToLostLoan.getLoanId();
     final UUID userId = agedToLostLoan.getUser().getId();
 
-    final JsonObject lostItemFeeRefundAction =
+    final JsonObject refundLostItemFeeAction =
       findFeeFineAction(ACTION_TYPE_REFUNDED_PARTIALLY, LOST_ITEM_FEE_PAYMENT_AMOUNT);
-    final JsonObject processingFeeRefundAction =
+    final JsonObject refundProcessingFeeAction =
       findFeeFineAction(ACTION_TYPE_REFUNDED_PARTIALLY, PROCESSING_FEE_PAYMENT_AMOUNT);
     final JsonObject cancelLostItemFeeAction =
       findFeeFineAction(ACTION_TYPE_CANCELLED, LOST_ITEM_FEE_AMOUNT);
     final JsonObject cancelProcessingFeeAction =
       findFeeFineAction(ACTION_TYPE_CANCELLED, PROCESSING_FEE_AMOUNT);
 
-    final UUID refundLostItemFeeActionId = getId(lostItemFeeRefundAction);
-    final UUID refundProcessingFeeActionId = getId(processingFeeRefundAction);
+    final UUID refundLostItemFeeActionId = getId(refundLostItemFeeAction);
+    final UUID refundProcessingFeeActionId = getId(refundProcessingFeeAction);
     final UUID cancelLostItemFeeActionId = getId(cancelLostItemFeeAction);
     final UUID cancelProcessingFeeActionId = getId(cancelProcessingFeeAction);
 
-    final DateTime refundLostItemFeeActionDate = getActionDate(lostItemFeeRefundAction);
-    final DateTime refundProcessingFeeActionDate = getActionDate(processingFeeRefundAction);
+    final DateTime refundLostItemFeeActionDate = getActionDate(refundLostItemFeeAction);
+    final DateTime refundProcessingFeeActionDate = getActionDate(refundProcessingFeeAction);
     final DateTime cancelLostItemFeeActionDate = getActionDate(cancelLostItemFeeAction);
     final DateTime cancelProcessingFeeActionDate = getActionDate(cancelProcessingFeeAction);
 
@@ -292,9 +363,14 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
       .orElseThrow();
 
     scheduledNoticeProcessingClient.runFeeFineNoticesProcessing(maxActionDate.plusSeconds(1));
-
-    assertThat(patronNoticesClient.getAll(), hasSize(4));
     assertThat(scheduledNoticesClient.getAll(), hasSize(0));
+
+    checkSentFeeFineNotices(agedToLostLoan, Map.of(
+      refundLostItemFeeAction, UPON_AT_TEMPLATE_ID,
+      refundProcessingFeeAction, UPON_AT_TEMPLATE_ID,
+      cancelLostItemFeeAction, UPON_AT_TEMPLATE_ID,
+      cancelProcessingFeeAction, UPON_AT_TEMPLATE_ID
+    ));
   }
 
   @Test
@@ -336,7 +412,7 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
 
     final List<Account> accounts = existingAccounts.stream()
       .map(Account::from)
-      .collect(Collectors.toList());
+      .collect(toList());
 
     assertThat(accounts, hasSize(2));
 
@@ -389,9 +465,12 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
       .orElseThrow();
 
     scheduledNoticeProcessingClient.runFeeFineNoticesProcessing(maxActionDate.plusSeconds(1));
-
-    assertThat(patronNoticesClient.getAll(), hasSize(2));
     assertThat(scheduledNoticesClient.getAll(), hasSize(0));
+
+    checkSentFeeFineNotices(agedToLostLoan, Map.of(
+      lostItemFeeRefundAction, UPON_AT_TEMPLATE_ID,
+      processingFeeRefundAction, UPON_AT_TEMPLATE_ID
+    ));
   }
 
   private JsonObject findFeeFineAction(String actionType, double actionAmount) {
@@ -418,4 +497,52 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
     );
   }
 
+  private void checkSentFeeFineNotices(AgeToLostResult agedToLostResult,
+    Map<JsonObject, UUID> actionsToTemplateIds) {
+
+    final UUID userId = agedToLostResult.getUser().getId();
+
+    final List<JsonObject> sentNotices = patronNoticesClient.getAll();
+    assertThat(sentNotices, hasSize(actionsToTemplateIds.size()));
+
+    actionsToTemplateIds.keySet().stream()
+      .map(feeFineAction -> hasEmailNoticeProperties(userId, actionsToTemplateIds.get(feeFineAction),
+          allOf(
+            getBaseNoticeContextMatcher(agedToLostResult),
+            getFeeActionContextMatcher(feeFineAction),
+            getFeeChargeContextMatcher(findAccountForFeeFineAction(feeFineAction)))))
+      .forEach(matcher -> assertThat(sentNotices, hasItem(matcher)));
+  }
+
+  private void checkSentLoanNotices(AgeToLostResult agedToLostResult, List<UUID> templateIds) {
+    final UUID userId = agedToLostResult.getUser().getId();
+
+    final List<JsonObject> sentNotices = patronNoticesClient.getAll();
+    assertThat(sentNotices, hasSize(templateIds.size()));
+
+    templateIds.forEach(templateId -> assertThat(sentNotices, hasItem(
+        hasEmailNoticeProperties(userId, templateId, getBaseNoticeContextMatcher(agedToLostResult)))));
+  }
+
+  private JsonObject findAccountForFeeFineAction(JsonObject feeFineAction) {
+    return accountsClient.get(UUID.fromString(feeFineAction.getString("accountId"))).getJson();
+  }
+
+  private Matcher<? super String> getBaseNoticeContextMatcher(AgeToLostResult agedToLostResult) {
+    final IndividualResource holdingsRecord = holdingsClient.get(
+      getUUIDProperty(agedToLostResult.getItem().getJson(), "holdingsRecordId"));
+
+    final IndividualResource instance = instancesClient.get(
+      getUUIDProperty(holdingsRecord.getJson(), "instanceId"));
+
+    final ItemResource itemResource = new ItemResource(agedToLostResult.getItem(),
+      holdingsRecord, instance);
+
+    Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
+    noticeContextMatchers.putAll(getUserContextMatchers(agedToLostResult.getUser()));
+    noticeContextMatchers.putAll(getLoanContextMatchers(agedToLostResult.getLoan()));
+    noticeContextMatchers.putAll(getItemContextMatchers(itemResource, true));
+
+    return toStringMatcher(noticeContextMatchers);
+  }
 }

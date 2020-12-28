@@ -4,7 +4,9 @@ import static api.support.matchers.JsonObjectMatcher.toStringMatcher;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getDoubleProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getIntegerProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getObjectProperty;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.hasItems;
@@ -52,9 +54,9 @@ public class TemplateContextMatchers {
     return tokenMatchers;
   }
 
-  public static Map<String, Matcher<String>> getItemContextMatchers(
-          ItemResource itemResource,
-                                                                    boolean applyHoldingRecord) {
+  public static Map<String, Matcher<String>> getItemContextMatchers(ItemResource itemResource,
+    boolean applyHoldingRecord) {
+
     JsonObject item = itemResource.getJson();
     String callNumber = findRepresentationCallNumbers(itemResource, applyHoldingRecord, "callNumber");
     String callNumberPrefix = findRepresentationCallNumbers(itemResource, applyHoldingRecord, "callNumberPrefix");
@@ -226,13 +228,43 @@ public class TemplateContextMatchers {
     return allOf(loanContextMatcher, itemContextMatcher, loanPolicyMatcher);
   }
 
-  public static Matcher<?> getFeeFineContextMatcher(Account account, FeeFineAction action) {
+  public static Matcher<?> getFeeChargeContextMatcher(Account account) {
     return allOf(
       hasJsonPath("feeCharge.owner", is(account.getFeeFineOwner())),
       hasJsonPath("feeCharge.type", is(account.getFeeFineType())),
       hasJsonPath("feeCharge.paymentStatus", is(account.getPaymentStatus())),
       hasJsonPath("feeCharge.amount", is(account.getAmount().toDouble())),
       hasJsonPath("feeCharge.remainingAmount", is(account.getRemaining().toDouble()))
+    );
+  }
+
+  public static Matcher<Object> getFeeChargeContextMatcher(JsonObject account) {
+    return allOf(
+      hasJsonPath("feeCharge.owner", is(account.getString("feeFineOwner"))),
+      hasJsonPath("feeCharge.type", is(account.getString("feeFineType"))),
+      hasJsonPath("feeCharge.paymentStatus", is(getNestedStringProperty(account, "paymentStatus", "name"))),
+      hasJsonPath("feeCharge.amount", is(getDoubleProperty(account, "amount", -1.0))),
+      hasJsonPath("feeCharge.remainingAmount", is(getDoubleProperty(account, "remaining", -1.0)))
+    );
+  }
+
+  public static Matcher<?> getFeeActionContextMatcher(FeeFineAction action) {
+    return allOf(
+      hasJsonPath("feeAction.type", is(action.getActionType())),
+      hasJsonPath("feeAction.actionDate", isEquivalentTo(action.getDateAction())),
+      hasJsonPath("feeAction.actionDateTime", isEquivalentTo(action.getDateAction())),
+      hasJsonPath("feeAction.amount", is(action.getAmount().toDouble())),
+      hasJsonPath("feeAction.remainingAmount", is(action.getBalance()))
+    );
+  }
+
+  public static Matcher<Object> getFeeActionContextMatcher(JsonObject action) {
+    return allOf(
+      hasJsonPath("feeAction.type", is(action.getString("typeAction"))),
+      hasJsonPath("feeAction.actionDate", isEquivalentTo(getDateTimeProperty(action, "dateAction"))),
+      hasJsonPath("feeAction.actionDateTime", isEquivalentTo(getDateTimeProperty(action, "dateAction"))),
+      hasJsonPath("feeAction.amount", is(getDoubleProperty(action, "amountAction", -1.0))),
+      hasJsonPath("feeAction.remainingAmount", is(getDoubleProperty(action, "balance", -1.0)))
     );
   }
 }
