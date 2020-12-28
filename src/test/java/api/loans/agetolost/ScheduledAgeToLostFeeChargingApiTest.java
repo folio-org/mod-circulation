@@ -3,6 +3,7 @@ package api.loans.agetolost;
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
 import static api.support.builders.DeclareItemLostRequestBuilder.forLoan;
 import static api.support.matchers.AccountMatchers.isOpen;
+import static api.support.matchers.ItemMatchers.isAgedToLost;
 import static api.support.matchers.ItemMatchers.isDeclaredLost;
 import static api.support.matchers.ItemMatchers.isLostAndPaid;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
@@ -23,6 +24,7 @@ import static java.lang.Boolean.TRUE;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.iterableWithSize;
 
 import static org.joda.time.DateTime.now;
@@ -352,6 +354,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
 
   }
 
+  @Test
   public void declaredLostItemShouldNotBeAgedToLost() {
     final double declaredLostProcessingFee = 10.00;
     useLostItemPolicy(lostItemFeePoliciesFixture.create(
@@ -375,6 +378,31 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     assertThat(loanFromStorage, hasNoLostItemFee());
 
     assertThat(itemsFixture.getById(item.getId()).getJson(), isDeclaredLost());
+  }
+
+  @Test
+  public void loanWithRemovedItemShouldBeSkipped() {
+    useLostItemPolicy(lostItemFeePoliciesFixture.ageToLostAfterOneMinute().getId());
+
+    final var firstItem = itemsFixture.basedUponNod(ItemBuilder::withRandomBarcode);
+    final var secondItem = itemsFixture.basedUponNod(ItemBuilder::withRandomBarcode);
+    final var thirdItem = itemsFixture.basedUponNod(ItemBuilder::withRandomBarcode);
+
+    final var firstLoan = checkOutFixture.checkOutByBarcode(firstItem, usersFixture.charlotte());
+    final var secondLoan = checkOutFixture.checkOutByBarcode(secondItem, usersFixture.steve());
+    final var thirdLoan = checkOutFixture.checkOutByBarcode(thirdItem, usersFixture.james());
+
+    itemsClient.delete(secondItem);
+
+    ageToLostFixture.ageToLostAndChargeFees();
+
+    assertThat(loansStorageClient.get(firstLoan).getJson(), isLostItemHasBeenBilled());
+    assertThat(loansStorageClient.get(secondLoan).getJson(), hasNoDelayedBillingInfo());
+    assertThat(loansStorageClient.get(thirdLoan).getJson(), isLostItemHasBeenBilled());
+
+    assertThat(itemsClient.get(firstItem).getJson(), isAgedToLost());
+    assertThat(itemsClient.attemptGet(secondItem).getStatusCode(), is(404));
+    assertThat(itemsClient.get(thirdItem).getJson(), isAgedToLost());
   }
 
   private Map<IndividualResource, Double> checkoutTenItems() {
