@@ -161,11 +161,7 @@ public interface Result<T> {
     Function<T, CompletableFuture<Result<R>>> whenTrue,
     Function<T, CompletableFuture<Result<R>>> whenFalse) {
 
-    return after(value ->
-      conditionFunction.apply(value)
-        .thenComposeAsync(r -> r.after(condition -> isTrue(condition)
-          ? whenTrue.apply(value)
-          : whenFalse.apply(value))));
+    return after(MappingFunctions.when(conditionFunction, whenTrue, whenFalse));
   }
 
   /**
