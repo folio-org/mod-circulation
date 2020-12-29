@@ -160,14 +160,13 @@ public class RequestCollectionResource extends CollectionResource {
 
     final var requestScheduledNoticeService = RequestScheduledNoticeService.using(clients);
 
-    requestFromRepresentationService.getRequestFrom(representation)
-      .thenComposeAsync(r -> r.after(when(requestRepository::exists,
-        updateRequestService::replaceRequest, createRequestService::createRequest)))
-      .thenComposeAsync(r -> r.after(
-        records -> eventPublisher.publishDueDateChangedEvent(records, clients)))
-      .thenApply(r -> r.next(requestScheduledNoticeService::rescheduleRequestNotices))
-      .thenApply(r -> r.map(toFixedValue(NoContentResponse::noContent)))
-      .thenAccept(context::writeResultToHttpResponse);
+    fromFutureResult(requestFromRepresentationService.getRequestFrom(representation))
+      .flatMapFuture(when(requestRepository::exists, updateRequestService::replaceRequest,
+        createRequestService::createRequest))
+      .flatMapFuture(records -> eventPublisher.publishDueDateChangedEvent(records, clients))
+      .map(requestScheduledNoticeService::rescheduleRequestNotices)
+      .map(toFixedValue(NoContentResponse::noContent))
+      .onComplete(context::write, context::write);
   }
 
   @Override
