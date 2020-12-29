@@ -263,16 +263,15 @@ public class RequestCollectionResource extends CollectionResource {
       updateUponRequest, moveRequestProcessAdapter, new RequestLoanValidator(loanRepository),
       RequestNoticeSender.using(clients), configurationRepository, eventPublisher);
 
-    requestRepository.getById(id)
-      .thenApply(r -> r.map(RequestAndRelatedRecords::new))
-      .thenApply(r -> r.map(rr -> asMove(rr, representation)))
-      .thenComposeAsync(r -> r.after(u -> moveRequestService.moveRequest(u, u.getOriginalRequest())))
-      .thenComposeAsync(r -> r.after(
-        records -> eventPublisher.publishDueDateChangedEvent(records, clients)))
-      .thenApply(r -> r.map(RequestAndRelatedRecords::getRequest))
-      .thenApply(r -> r.map(new RequestRepresentation()::extendedRepresentation))
-      .thenApply(r -> r.map(JsonHttpResponse::ok))
-      .thenAccept(context::writeResultToHttpResponse);
+    fromFutureResult(requestRepository.getById(id))
+      .map(RequestAndRelatedRecords::new)
+      .map(request -> asMove(request, representation))
+      .flatMapFuture(move -> moveRequestService.moveRequest(move, move.getOriginalRequest()))
+      .onSuccess(records -> eventPublisher.publishDueDateChangedEvent(records, clients))
+      .map(RequestAndRelatedRecords::getRequest)
+      .map(new RequestRepresentation()::extendedRepresentation)
+      .map(JsonHttpResponse::ok)
+      .onComplete(context::write, context::write);
   }
 
   private RequestAndRelatedRecords asMove(RequestAndRelatedRecords requestAndRelatedRecords,
