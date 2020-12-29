@@ -2,9 +2,9 @@ package org.folio.circulation.domain.notice.schedule;
 
 import static java.lang.String.format;
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.domain.RequestStatus.CLOSED_FILLED;
 import static org.folio.circulation.domain.notice.NoticeTiming.UPON_AT;
 import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.HOLD_EXPIRATION;
+import static org.folio.circulation.support.results.MappingFunctions.when;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.lang.invoke.MethodHandles;
@@ -68,10 +68,9 @@ public class RequestScheduledNoticeHandler {
 
   private CompletableFuture<Result<ScheduledNotice>> handleRequestNotice(ScheduledNotice notice) {
     return requestRepository.getById(notice.getRequestId())
-      .thenCompose(r -> r.afterWhen(
-        request -> noticeIsIrrelevant(request, notice),
+      .thenCompose(r -> r.after(when(request -> noticeIsIrrelevant(request, notice),
         request -> scheduledNoticesRepository.delete(notice),
-        request -> sendAndUpdateNotice(request, notice)));
+        request -> sendAndUpdateNotice(request, notice))));
   }
 
   private CompletableFuture<Result<Boolean>> noticeIsIrrelevant(
