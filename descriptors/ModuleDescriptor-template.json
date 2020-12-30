@@ -161,7 +161,10 @@
             "circulation.check-out-by-barcode.post"
           ],
           "modulePermissions": [
-            "modperms.circulation.check-out-by-barcode.post"
+            "modperms.circulation.check-out-by-barcode.post",
+            "circulation.override-patron-block",
+            "circulation.override-item-limit-block",
+            "circulation.override-item-not-loanable-block"
           ]
         },
         {
