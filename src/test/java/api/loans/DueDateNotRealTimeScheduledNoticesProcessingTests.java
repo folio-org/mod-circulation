@@ -532,10 +532,9 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
 
     IndividualResource steve = usersFixture.steve();
     ItemResource dunkirk = itemsFixture.basedUponDunkirk();
+    IndividualResource dunkirkForSteve = checkOutFixture.checkOutByBarcode(dunkirk, steve, loanDate);
 
-    checkOutFixture.checkOutByBarcode(dunkirk, steve, loanDate);
-
-    DateTime dueDate = new DateTime(steve.getJson().getString("dueDate"));
+    DateTime dueDate = new DateTime(dunkirkForSteve.getJson().getString("dueDate"));
 
     waitAtMost(1, SECONDS)
       .until(scheduledNoticesClient::getAll, hasSize(1));
