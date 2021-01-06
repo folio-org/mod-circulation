@@ -500,6 +500,49 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
     scheduledNotRealTimeNoticesShouldBeSentAtMidnightInTenantsTimeZone(-1, 1, 0);
   }
 
+  @Test
+  public void scheduledNotRealTimeNoticesShouldBeSentOnlyOnceIfPubSubReturnsError() {
+
+    FakePubSub.setFailPublishingWithBadRequestError(true);
+
+    String timeZoneId = "America/New_York";
+    DateTime systemTime = DateTime.now();
+    configClient.create(ConfigurationExample.timezoneConfigurationFor(timeZoneId));
+
+    JsonObject uponAtDueDateNoticeConfig = new NoticeConfigurationBuilder()
+      .withTemplateId(TEMPLATE_ID)
+      .withDueDateEvent()
+      .withUponAtTiming()
+      .sendInRealTime(false)
+      .create();
+
+    NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
+      .withName("Policy with due date notices")
+      .withLoanNotices(Collections.singletonList(uponAtDueDateNoticeConfig));
+    use(noticePolicy);
+
+    DateTime loanDate = new DateTime(2020, 6, 3, 6, 0)
+      .withZoneRetainFields(DateTimeZone.forID(timeZoneId));
+
+    IndividualResource james = usersFixture.james();
+    ItemResource nod = itemsFixture.basedUponNod();
+
+    checkOutFixture.checkOutByBarcode(nod, james, loanDate);
+
+    waitAtMost(1, SECONDS)
+      .until(scheduledNoticesClient::getAll, hasSize(1));
+
+    scheduledNoticeProcessingClient.runDueDateNotRealTimeNoticesProcessing(systemTime);
+
+    assertThat(scheduledNoticesClient.getAll(), hasSize(1));
+    assertThat(patronNoticesClient.getAll(), hasSize(1));
+
+    scheduledNoticeProcessingClient.runDueDateNotRealTimeNoticesProcessing(systemTime);
+
+    assertThat(scheduledNoticesClient.getAll(), hasSize(1));
+    assertThat(patronNoticesClient.getAll(), hasSize(1));
+  }
+
   private void scheduledNotRealTimeNoticesShouldBeSentAtMidnightInTenantsTimeZone(
     int plusMinutes, int scheduledNoticesNumber, int sentNoticesNumber) {
 
@@ -538,4 +581,6 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
     assertThat(scheduledNoticesClient.getAll(), hasSize(scheduledNoticesNumber));
     assertThat(patronNoticesClient.getAll(), hasSize(sentNoticesNumber));
   }
+
+
 }
