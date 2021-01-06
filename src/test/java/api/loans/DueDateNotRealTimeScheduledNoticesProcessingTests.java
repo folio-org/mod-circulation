@@ -501,19 +501,12 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
   }
 
   @Test
-  public void scheduledNotRealTimeNoticesShouldBeSentOnlyOnceIfPubSubReturnsError() {
-    String timeZoneId = "America/New_York";
-    DateTime systemTime = DateTime
-      .now()
-      .withZoneRetainFields(DateTimeZone.forID(timeZoneId));
-    mockClockManagerToReturnFixedDateTime(systemTime);
-    configClient.create(ConfigurationExample.timezoneConfigurationFor(timeZoneId));
-
+  public void scheduledNotRealTimeNoticesShouldBeSentOnlyOncePerDayIfPubSubReturnsError() {
     JsonObject afterDueDateNoticeConfig = new NoticeConfigurationBuilder()
       .withTemplateId(TEMPLATE_ID)
       .withDueDateEvent()
-      .withAfterTiming(Period.minutes(5))
-      .recurring(Period.minutes(5))
+      .withAfterTiming(Period.days(1))
+      .recurring(Period.days(1))
       .sendInRealTime(false)
       .create();
 
@@ -522,27 +515,25 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
       .withLoanNotices(Collections.singletonList(afterDueDateNoticeConfig));
     use(noticePolicy);
 
-    DateTime loanDate = DateTime.now().minusDays(2)
-      .withZoneRetainFields(DateTimeZone.forID(timeZoneId));
+    DateTime loanDate = DateTime.now().minusMonths(1);
 
     IndividualResource steve = usersFixture.steve();
     ItemResource dunkirk = itemsFixture.basedUponDunkirk();
-    IndividualResource dunkirkForSteve = checkOutFixture.checkOutByBarcode(dunkirk, steve, loanDate);
-
-    DateTime dueDate = new DateTime(dunkirkForSteve.getJson().getString("dueDate"));
+    checkOutFixture.checkOutByBarcode(dunkirk, steve, loanDate);
 
     waitAtMost(1, SECONDS)
       .until(scheduledNoticesClient::getAll, hasSize(1));
+    assertThat(patronNoticesClient.getAll(), empty());
 
     FakePubSub.setFailPublishingWithBadRequestError(true);
 
-    scheduledNoticeProcessingClient.runDueDateNotRealTimeNoticesProcessing(dueDate.plusDays(2));
+    scheduledNoticeProcessingClient.runDueDateNotRealTimeNoticesProcessing();
 
     waitAtMost(1, SECONDS)
       .until(scheduledNoticesClient::getAll, hasSize(1));
     assertThat(patronNoticesClient.getAll(), hasSize(1));
 
-    scheduledNoticeProcessingClient.runDueDateNotRealTimeNoticesProcessing(dueDate.plusDays(2));
+    scheduledNoticeProcessingClient.runDueDateNotRealTimeNoticesProcessing();
 
     assertThat(scheduledNoticesClient.getAll(), hasSize(1));
     assertThat(patronNoticesClient.getAll(), hasSize(1));
