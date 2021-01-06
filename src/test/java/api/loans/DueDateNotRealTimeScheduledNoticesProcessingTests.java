@@ -1,11 +1,13 @@
 package api.loans;
 
-import static api.support.PubsubPublisherTestUtils.assertThatPublishedNoticeLogRecordEventsCountIsEqualTo;
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
+import static api.support.PubsubPublisherTestUtils.assertThatPublishedNoticeLogRecordEventsCountIsEqualTo;
 import static api.support.fixtures.TemplateContextMatchers.getLoanPolicyContextMatchersForUnlimitedRenewals;
 import static api.support.fixtures.TemplateContextMatchers.getMultipleLoansContextMatcher;
 import static api.support.matchers.JsonObjectMatcher.toStringMatcher;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.awaitility.Awaitility.waitAtMost;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -16,7 +18,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.awaitility.Awaitility;
@@ -32,6 +33,7 @@ import org.junit.Test;
 import api.support.APITests;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
+import api.support.fakes.FakePubSub;
 import api.support.fixtures.ConfigurationExample;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
@@ -77,7 +79,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
     IndividualResource dunkirkToRebeccaLoan = checkOutFixture.checkOutByBarcode(dunkirk, rebecca, loanDate);
 
     Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
+      .atMost(1, SECONDS)
       .until(scheduledNoticesClient::getAll, hasSize(4));
 
     DateTime dueDate = new DateTime(nodToJamesLoan.getJson().getString("dueDate"));
@@ -141,7 +143,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
     checkOutFixture.checkOutByBarcode(itemsFixture.basedUponInterestingTimes(), james, loanDate);
 
     Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
+      .atMost(1, SECONDS)
       .until(scheduledNoticesClient::getAll, hasSize(2));
 
     DateTime dueDate = new DateTime(nodToJamesLoan.getJson().getString("dueDate"));
@@ -189,7 +191,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
     IndividualResource nodToJamesLoan = checkOutFixture.checkOutByBarcode(nod, james, loanDate);
 
     Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
+      .atMost(1, SECONDS)
       .until(scheduledNoticesClient::getAll, hasSize(1));
 
     DateTime dueDate = new DateTime(nodToJamesLoan.getJson().getString("dueDate"));
@@ -239,7 +241,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
     }
 
     Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
+      .atMost(1, SECONDS)
       .until(scheduledNoticesClient::getAll, hasSize(12));
 
     int noticesLimitConfig = 10;
@@ -285,7 +287,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
     loansStorageClient.delete(nodToJamesLoan);
 
     Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
+      .atMost(1, SECONDS)
       .until(scheduledNoticesClient::getAll, hasSize(1));
 
     DateTime dueDate = new DateTime(nodToJamesLoan.getJson().getString("dueDate"));
@@ -324,7 +326,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
     itemsClient.delete(nod);
 
     Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
+      .atMost(1, SECONDS)
       .until(scheduledNoticesClient::getAll, hasSize(1));
 
     DateTime dueDate = new DateTime(nodToJamesLoan.getJson().getString("dueDate"));
@@ -363,7 +365,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
     usersFixture.remove(james);
 
     Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
+      .atMost(1, SECONDS)
       .until(scheduledNoticesClient::getAll, hasSize(1));
 
     DateTime dueDate = new DateTime(nodToJamesLoan.getJson().getString("dueDate"));
@@ -419,7 +421,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
     usersFixture.remove(jessica);
 
     Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
+      .atMost(1, SECONDS)
       .until(scheduledNoticesClient::getAll, hasSize(6));
 
     DateTime dueDate = new DateTime(nodToJames.getJson().getString("dueDate"));
@@ -479,7 +481,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
     templateFixture.delete(TEMPLATE_ID);
 
     Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
+      .atMost(1, SECONDS)
       .until(scheduledNoticesClient::getAll, hasSize(1));
 
     DateTime dueDate = new DateTime(nodToJamesLoan.getJson().getString("dueDate"));
@@ -501,6 +503,49 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
   @Test
   public void scheduledNotRealTimeNoticesIsNotSentBeforeMidnightInTenantsTimeZone() {
     scheduledNotRealTimeNoticesShouldBeSentAtMidnightInTenantsTimeZone(-1, 1, 0);
+  }
+
+  @Test
+  public void scheduledNotRealTimeNoticesShouldBeSentOnlyOnceIfPubSubReturnsError() {
+
+    FakePubSub.setFailPublishingWithBadRequestError(true);
+
+    String timeZoneId = "America/New_York";
+    DateTime systemTime = DateTime.now();
+    configClient.create(ConfigurationExample.timezoneConfigurationFor(timeZoneId));
+
+    JsonObject uponAtDueDateNoticeConfig = new NoticeConfigurationBuilder()
+      .withTemplateId(TEMPLATE_ID)
+      .withDueDateEvent()
+      .withUponAtTiming()
+      .sendInRealTime(false)
+      .create();
+
+    NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
+      .withName("Policy with due date notices")
+      .withLoanNotices(Collections.singletonList(uponAtDueDateNoticeConfig));
+    use(noticePolicy);
+
+    DateTime loanDate = new DateTime(2020, 6, 3, 6, 0)
+      .withZoneRetainFields(DateTimeZone.forID(timeZoneId));
+
+    IndividualResource james = usersFixture.james();
+    ItemResource nod = itemsFixture.basedUponNod();
+
+    checkOutFixture.checkOutByBarcode(nod, james, loanDate);
+
+    waitAtMost(1, SECONDS)
+      .until(scheduledNoticesClient::getAll, hasSize(1));
+
+    scheduledNoticeProcessingClient.runDueDateNotRealTimeNoticesProcessing(systemTime);
+
+    assertThat(scheduledNoticesClient.getAll(), hasSize(1));
+    assertThat(patronNoticesClient.getAll(), hasSize(1));
+
+    scheduledNoticeProcessingClient.runDueDateNotRealTimeNoticesProcessing(systemTime);
+
+    assertThat(scheduledNoticesClient.getAll(), hasSize(1));
+    assertThat(patronNoticesClient.getAll(), hasSize(1));
   }
 
   private void scheduledNotRealTimeNoticesShouldBeSentAtMidnightInTenantsTimeZone(
@@ -534,7 +579,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
     checkOutFixture.checkOutByBarcode(nod, james, loanDate);
 
     Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
+      .atMost(1, SECONDS)
       .until(scheduledNoticesClient::getAll, hasSize(1));
 
     scheduledNoticeProcessingClient.runDueDateNotRealTimeNoticesProcessing(systemTime);
@@ -543,4 +588,6 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
     assertThat(sentNotices, hasSize(sentNoticesNumber));
   }
+
+
 }
