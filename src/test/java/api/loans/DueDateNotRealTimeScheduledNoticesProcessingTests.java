@@ -506,16 +506,16 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
     DateTime systemTime = DateTime.now();
     configClient.create(ConfigurationExample.timezoneConfigurationFor(timeZoneId));
 
-    JsonObject uponAtDueDateNoticeConfig = new NoticeConfigurationBuilder()
+    JsonObject afterDueDateNoticeConfig = new NoticeConfigurationBuilder()
       .withTemplateId(TEMPLATE_ID)
       .withDueDateEvent()
-      .withUponAtTiming()
+      .withAfterTiming(Period.minutes(5))
       .sendInRealTime(false)
       .create();
 
     NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
       .withName("Policy with due date notices")
-      .withLoanNotices(Collections.singletonList(uponAtDueDateNoticeConfig));
+      .withLoanNotices(Collections.singletonList(afterDueDateNoticeConfig));
     use(noticePolicy);
 
     DateTime loanDate = DateTime.now().minusDays(2)
