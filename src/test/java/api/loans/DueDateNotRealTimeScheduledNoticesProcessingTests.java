@@ -534,8 +534,6 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
     waitAtMost(1, SECONDS)
       .until(scheduledNoticesClient::getAll, hasSize(1));
 
-    FakePubSub.setFailPublishingWithBadRequestError(true);
-
     scheduledNoticeProcessingClient.runDueDateNotRealTimeNoticesProcessing(systemTime);
 
     waitAtMost(1, SECONDS)
