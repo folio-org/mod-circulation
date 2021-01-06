@@ -508,13 +508,16 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
   @Test
   public void scheduledNotRealTimeNoticesShouldBeSentOnlyOnceIfPubSubReturnsError() {
     String timeZoneId = "America/New_York";
-    DateTime systemTime = DateTime.now();
+    DateTime systemTime = DateTime
+      .now()
+      .withZoneRetainFields(DateTimeZone.forID(timeZoneId));
     configClient.create(ConfigurationExample.timezoneConfigurationFor(timeZoneId));
 
     JsonObject afterDueDateNoticeConfig = new NoticeConfigurationBuilder()
       .withTemplateId(TEMPLATE_ID)
       .withDueDateEvent()
       .withAfterTiming(Period.minutes(5))
+      .recurring(Period.minutes(5))
       .sendInRealTime(false)
       .create();
 
@@ -533,6 +536,8 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
 
     waitAtMost(1, SECONDS)
       .until(scheduledNoticesClient::getAll, hasSize(1));
+
+    FakePubSub.setFailPublishingWithBadRequestError(true);
 
     scheduledNoticeProcessingClient.runDueDateNotRealTimeNoticesProcessing(systemTime);
 
