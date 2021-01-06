@@ -506,8 +506,9 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
     DateTime systemTime = DateTime
       .now()
       .withZoneRetainFields(DateTimeZone.forID(timeZoneId));
+    mockClockManagerToReturnFixedDateTime(systemTime);
     configClient.create(ConfigurationExample.timezoneConfigurationFor(timeZoneId));
-
+    
     JsonObject afterDueDateNoticeConfig = new NoticeConfigurationBuilder()
       .withTemplateId(TEMPLATE_ID)
       .withDueDateEvent()
