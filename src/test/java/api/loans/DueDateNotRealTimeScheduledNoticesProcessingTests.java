@@ -546,6 +546,8 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
 
     assertThat(scheduledNoticesClient.getAll(), hasSize(1));
     assertThat(patronNoticesClient.getAll(), hasSize(1));
+
+    FakePubSub.setFailPublishingWithBadRequestError(false);
   }
 
   private void scheduledNotRealTimeNoticesShouldBeSentAtMidnightInTenantsTimeZone(
