@@ -521,20 +521,21 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
       .withLoanNotices(Collections.singletonList(uponAtDueDateNoticeConfig));
     use(noticePolicy);
 
-    DateTime loanDate = new DateTime(2020, 6, 3, 6, 0)
+    DateTime loanDate = DateTime.now().minusDays(2)
       .withZoneRetainFields(DateTimeZone.forID(timeZoneId));
 
-    IndividualResource james = usersFixture.james();
-    ItemResource nod = itemsFixture.basedUponNod();
+    IndividualResource steve = usersFixture.steve();
+    ItemResource dunkirk = itemsFixture.basedUponDunkirk();
 
-    checkOutFixture.checkOutByBarcode(nod, james, loanDate);
+    checkOutFixture.checkOutByBarcode(dunkirk, steve, loanDate);
 
     waitAtMost(1, SECONDS)
       .until(scheduledNoticesClient::getAll, hasSize(1));
 
     scheduledNoticeProcessingClient.runDueDateNotRealTimeNoticesProcessing(systemTime);
 
-    assertThat(scheduledNoticesClient.getAll(), hasSize(1));
+    waitAtMost(1, SECONDS)
+      .until(scheduledNoticesClient::getAll, hasSize(1));
     assertThat(patronNoticesClient.getAll(), hasSize(1));
 
     scheduledNoticeProcessingClient.runDueDateNotRealTimeNoticesProcessing(systemTime);
