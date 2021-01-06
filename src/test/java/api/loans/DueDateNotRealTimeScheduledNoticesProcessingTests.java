@@ -513,7 +513,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
       .withZoneRetainFields(DateTimeZone.forID(timeZoneId));
     mockClockManagerToReturnFixedDateTime(systemTime);
     configClient.create(ConfigurationExample.timezoneConfigurationFor(timeZoneId));
-    
+
     JsonObject afterDueDateNoticeConfig = new NoticeConfigurationBuilder()
       .withTemplateId(TEMPLATE_ID)
       .withDueDateEvent()
@@ -535,18 +535,20 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
 
     checkOutFixture.checkOutByBarcode(dunkirk, steve, loanDate);
 
+    DateTime dueDate = new DateTime(steve.getJson().getString("dueDate"));
+
     waitAtMost(1, SECONDS)
       .until(scheduledNoticesClient::getAll, hasSize(1));
 
     FakePubSub.setFailPublishingWithBadRequestError(true);
 
-    scheduledNoticeProcessingClient.runDueDateNotRealTimeNoticesProcessing(systemTime);
+    scheduledNoticeProcessingClient.runDueDateNotRealTimeNoticesProcessing(dueDate.plusDays(2));
 
     waitAtMost(1, SECONDS)
       .until(scheduledNoticesClient::getAll, hasSize(1));
     assertThat(patronNoticesClient.getAll(), hasSize(1));
 
-    scheduledNoticeProcessingClient.runDueDateNotRealTimeNoticesProcessing(systemTime);
+    scheduledNoticeProcessingClient.runDueDateNotRealTimeNoticesProcessing(dueDate.plusDays(2));
 
     assertThat(scheduledNoticesClient.getAll(), hasSize(1));
     assertThat(patronNoticesClient.getAll(), hasSize(1));
