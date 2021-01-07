@@ -22,8 +22,6 @@ public class LoanAnonymization {
   public static final PageLimit FETCH_LOANS_PAGE_LIMIT = limit(5000);
 
   private final Clients clients;
-  private LoanAnonymizationFinderService loansFinderService;
-  private AnonymizationCheckersService anonymizationCheckersService;
 
   public LoanAnonymization(Clients clients) {
     this.clients = clients;
@@ -32,20 +30,20 @@ public class LoanAnonymization {
   public LoanAnonymizationService byUserId(String userId) {
     log.info("Initializing loan anonymization for borrower");
 
-    loansFinderService = new LoansForBorrowerFinder(clients, userId);
-    anonymizationCheckersService = new AnonymizationCheckersService();
-
-    return new DefaultLoanAnonymizationService(anonymizationCheckersService, loansFinderService,
-      new AnonymizeStorageLoansRepository(clients),
-      new EventPublisher(clients.pubSubPublishingService()));
+    return createService(new AnonymizationCheckersService(),
+      new LoansForBorrowerFinder(clients, userId));
   }
 
-  public LoanAnonymizationService byCurrentTenant(
-      LoanAnonymizationConfiguration config) {
+  public LoanAnonymizationService byCurrentTenant(LoanAnonymizationConfiguration config) {
     log.info("Initializing loan anonymization for current tenant");
 
-    loansFinderService = new LoansForTenantFinder(clients);
-    anonymizationCheckersService = new AnonymizationCheckersService(config);
+    return createService(new AnonymizationCheckersService(config),
+      new LoansForTenantFinder(clients));
+  }
+
+  private DefaultLoanAnonymizationService createService(
+    AnonymizationCheckersService anonymizationCheckersService,
+    LoanAnonymizationFinderService loansFinderService) {
 
     return new DefaultLoanAnonymizationService(anonymizationCheckersService, loansFinderService,
       new AnonymizeStorageLoansRepository(clients),
