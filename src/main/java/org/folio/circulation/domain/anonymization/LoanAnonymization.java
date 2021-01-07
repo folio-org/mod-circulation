@@ -9,6 +9,8 @@ import org.folio.circulation.domain.anonymization.service.AnonymizationCheckersS
 import org.folio.circulation.domain.anonymization.service.LoanAnonymizationFinderService;
 import org.folio.circulation.domain.anonymization.service.LoansForBorrowerFinder;
 import org.folio.circulation.domain.anonymization.service.LoansForTenantFinder;
+import org.folio.circulation.infrastructure.storage.loans.AnonymizeStorageLoansRepository;
+import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.slf4j.Logger;
@@ -33,8 +35,9 @@ public class LoanAnonymization {
     loansFinderService = new LoansForBorrowerFinder(clients, userId);
     anonymizationCheckersService = new AnonymizationCheckersService();
 
-    return new DefaultLoanAnonymizationService(clients,
-        anonymizationCheckersService, loansFinderService);
+    return new DefaultLoanAnonymizationService(anonymizationCheckersService, loansFinderService,
+      new AnonymizeStorageLoansRepository(clients),
+      new EventPublisher(clients.pubSubPublishingService()));
   }
 
   public LoanAnonymizationService byCurrentTenant(
@@ -44,7 +47,8 @@ public class LoanAnonymization {
     loansFinderService = new LoansForTenantFinder(clients);
     anonymizationCheckersService = new AnonymizationCheckersService(config);
 
-    return new DefaultLoanAnonymizationService(clients,
-        anonymizationCheckersService, loansFinderService);
+    return new DefaultLoanAnonymizationService(anonymizationCheckersService, loansFinderService,
+      new AnonymizeStorageLoansRepository(clients),
+      new EventPublisher(clients.pubSubPublishingService()));
   }
 }
