@@ -115,7 +115,7 @@ public class LoanPolicy extends Policy {
     return reachedNumberOfRenewalsLimit(loan) && !unlimitedRenewals();
   }
 
-  public boolean hasAllowRecallsToExtendOverdueLoans() {
+  public boolean allowRecallsToExtendOverdueLoans() {
    return getBooleanProperty(getRecalls(), ALLOW_RECALLS_TO_EXTEND_OVERDUE_LOANS);
   }
 
@@ -441,7 +441,7 @@ public class LoanPolicy extends Policy {
 
     final Result<DateTime> recallDueDateResult =
         loan.isOverdue() &&
-        hasAllowRecallsToExtendOverdueLoans() &&
+        allowRecallsToExtendOverdueLoans() &&
         getAlternateRecallReturnInterval() != null ?
         getDueDate("alternateRecallReturnInterval", recalls, systemDate, systemDate) :
         getDueDate("recallReturnInterval", recalls, systemDate, systemDate);
@@ -464,7 +464,7 @@ public class LoanPolicy extends Policy {
 
     return minimumGuaranteedDueDateResult.combine(recallDueDateResult,
       (minimumGuaranteedDueDate, recallDueDate) -> {
-        if (loan.isOverdue() && !hasAllowRecallsToExtendOverdueLoans()) {
+        if (loan.isOverdue() && !allowRecallsToExtendOverdueLoans()) {
 
           return loan.getDueDate();
         }
