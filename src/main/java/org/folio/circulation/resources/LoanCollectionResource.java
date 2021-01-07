@@ -2,32 +2,24 @@ package org.folio.circulation.resources;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.representations.LoanProperties.ITEM_ID;
-import static org.folio.circulation.support.results.Result.of;
-import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
+import static org.folio.circulation.support.results.MappingFunctions.toFixedValue;
+import static org.folio.circulation.support.results.Result.of;
+import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.concurrent.CompletableFuture;
 
-import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
-import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.domain.LoanRepresentation;
 import org.folio.circulation.domain.LoanService;
-import org.folio.circulation.infrastructure.storage.users.PatronGroupRepository;
 import org.folio.circulation.domain.RequestQueue;
-import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
-import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.domain.UpdateItem;
 import org.folio.circulation.domain.UpdateRequestQueue;
 import org.folio.circulation.domain.User;
-import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.domain.notice.schedule.LoanScheduledNoticeService;
-import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
-import org.folio.circulation.infrastructure.storage.loans.LostItemPolicyRepository;
-import org.folio.circulation.infrastructure.storage.loans.OverdueFinePolicyRepository;
 import org.folio.circulation.domain.validation.AlreadyCheckedOutValidator;
 import org.folio.circulation.domain.validation.ChangeDueDateValidator;
 import org.folio.circulation.domain.validation.ItemNotFoundValidator;
@@ -35,14 +27,23 @@ import org.folio.circulation.domain.validation.ItemStatusValidator;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.RequestedByAnotherPatronValidator;
 import org.folio.circulation.domain.validation.ServicePointLoanLocationValidator;
+import org.folio.circulation.infrastructure.storage.ServicePointRepository;
+import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
+import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
+import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
+import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
+import org.folio.circulation.infrastructure.storage.loans.LostItemPolicyRepository;
+import org.folio.circulation.infrastructure.storage.loans.OverdueFinePolicyRepository;
+import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
+import org.folio.circulation.infrastructure.storage.users.PatronGroupRepository;
+import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
-import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.JsonHttpResponse;
 import org.folio.circulation.support.http.server.NoContentResponse;
 import org.folio.circulation.support.http.server.WebContext;
+import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
@@ -184,7 +185,7 @@ public class LoanCollectionResource extends CollectionResource {
       .thenComposeAsync(r -> r.after(eventPublisher::publishDueDateChangedEvent))
       .thenApply(r -> r.next(scheduledNoticeService::rescheduleDueDateNotices))
       .thenCompose(r -> r.after(loanNoticeSender::sendManualDueDateChangeNotice))
-      .thenApply(r -> r.toFixedValue(NoContentResponse::noContent))
+      .thenApply(r -> r.map(toFixedValue(NoContentResponse::noContent)))
       .thenAccept(context::writeResultToHttpResponse);
   }
 
@@ -226,7 +227,7 @@ public class LoanCollectionResource extends CollectionResource {
     String id = routingContext.request().getParam("id");
 
     clients.loansStorage().delete(id)
-      .thenApply(r -> r.toFixedValue(NoContentResponse::noContent))
+      .thenApply(r -> r.map(toFixedValue(NoContentResponse::noContent)))
       .thenAccept(context::writeResultToHttpResponse);
   }
 
@@ -272,7 +273,7 @@ public class LoanCollectionResource extends CollectionResource {
     Clients clients = Clients.create(context, client);
 
     clients.loansStorage().delete()
-      .thenApply(r -> r.toFixedValue(NoContentResponse::noContent))
+      .thenApply(r -> r.map(toFixedValue(NoContentResponse::noContent)))
       .thenAccept(context::writeResultToHttpResponse);
   }
 

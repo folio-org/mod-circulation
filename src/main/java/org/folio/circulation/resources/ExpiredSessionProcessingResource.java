@@ -2,6 +2,7 @@ package org.folio.circulation.resources;
 
 import static org.folio.circulation.domain.notice.session.PatronActionType.ALL;
 import static org.folio.circulation.support.results.AsynchronousResultBindings.safelyInitialise;
+import static org.folio.circulation.support.results.MappingFunctions.toFixedValue;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -14,11 +15,11 @@ import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.sessions.PatronExpiredSessionRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.ClockManager;
-import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.server.NoContentResponse;
 import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.CommonFailures;
+import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
 
 import io.vertx.core.http.HttpClient;
@@ -58,7 +59,7 @@ public class ExpiredSessionProcessingResource extends Resource {
         patronExpiredSessionRepository.findPatronExpiredSessions(ALL, inactivityTime.toString())))
       .thenCompose(r -> r.after(expiredSessions -> attemptEndSession(
         patronSessionService, expiredSessions)))
-      .thenApply(r -> r.toFixedValue(NoContentResponse::noContent))
+      .thenApply(r -> r.map(toFixedValue(NoContentResponse::noContent)))
       .exceptionally(CommonFailures::failedDueToServerError)
       .thenAccept(context::writeResultToHttpResponse);
   }

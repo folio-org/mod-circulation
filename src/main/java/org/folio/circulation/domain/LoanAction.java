@@ -1,6 +1,11 @@
 package org.folio.circulation.domain;
 
+import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
+
+import java.util.Arrays;
+
 public enum LoanAction {
+  NONE(""),
   DECLARED_LOST("declaredLost"),
   RENEWED("renewed"),
   RENEWED_THROUGH_OVERRIDE("renewedThroughOverride"),
@@ -26,5 +31,16 @@ public enum LoanAction {
 
   public String getValue() {
     return value;
+  }
+
+  public static LoanAction from(String value) {
+    return Arrays.stream(values())
+      .filter(status -> status.valueMatches(value))
+      .findFirst()
+      .orElse(NONE);
+  }
+
+  private boolean valueMatches(String value) {
+    return equalsIgnoreCase(getValue(), value);
   }
 }

@@ -1,9 +1,10 @@
 package org.folio.circulation.resources;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
+import static org.folio.circulation.support.results.MappingFunctions.toFixedValue;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.succeeded;
-import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -16,10 +17,10 @@ import org.folio.circulation.services.ChangeItemStatusService;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.services.PubSubPublishingService;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.server.NoContentResponse;
 import org.folio.circulation.support.http.server.WebContext;
+import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
@@ -44,7 +45,7 @@ public class DeclareClaimedReturnedItemAsMissingResource extends Resource {
     createRequest(routingContext)
       .after(request -> processDeclareClaimedReturnedItemAsMissing(routingContext, request))
       .thenCompose(r -> r.after(eventPublisher::publishMarkedAsMissingLoanEvent))
-      .thenApply(r -> r.toFixedValue(NoContentResponse::noContent))
+      .thenApply(r -> r.map(toFixedValue(NoContentResponse::noContent)))
       .thenAccept(context::writeResultToHttpResponse);
   }
 
