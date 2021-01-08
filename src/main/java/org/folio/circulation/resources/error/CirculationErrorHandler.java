@@ -14,7 +14,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 @Getter
-@RequiredArgsConstructor(access = AccessLevel.PROTECTED)
+@RequiredArgsConstructor(access = AccessLevel.PACKAGE)
 public abstract class CirculationErrorHandler {
 
   private final Map<HttpFailure, CirculationError> errors;

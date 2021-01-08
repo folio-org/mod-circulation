@@ -6,7 +6,8 @@ import static org.folio.circulation.domain.representations.logs.RequestUpdateLog
 import static org.folio.circulation.resources.error.CirculationError.FAILED_TO_FETCH_REQUEST_POLICY;
 import static org.folio.circulation.resources.error.CirculationError.FAILED_TO_FETCH_TIME_ZONE_CONFIG;
 import static org.folio.circulation.resources.error.CirculationError.INVALID_ITEM;
-import static org.folio.circulation.resources.error.CirculationError.INVALID_USER_OR_PATRON_GROUP;
+import static org.folio.circulation.resources.error.CirculationError.INVALID_PATRON_GROUP_ID;
+import static org.folio.circulation.resources.error.CirculationError.INVALID_USER;
 import static org.folio.circulation.resources.error.CirculationError.ITEM_ALREADY_LOANED_TO_SAME_USER;
 import static org.folio.circulation.resources.error.CirculationError.ITEM_ALREADY_REQUESTED_BY_SAME_USER;
 import static org.folio.circulation.resources.error.CirculationError.REQUESTING_DISALLOWED_BY_REQUEST_POLICY;
@@ -74,9 +75,10 @@ public class CreateRequestService {
     return of(() -> request)
       .next(RequestServiceUtility::refuseWhenItemDoesNotExist)
       .mapFailure(error -> errorHandler.handle(error, INVALID_ITEM, request))
-      // TODO: split into 2 checks?
-      .next(RequestServiceUtility::refuseWhenInvalidUserAndPatronGroup)
-      .mapFailure(error -> errorHandler.handle(error, INVALID_USER_OR_PATRON_GROUP, request))
+      .next(RequestServiceUtility::refuseWhenInvalidUser)
+      .mapFailure(error -> errorHandler.handle(error, INVALID_USER, request))
+      .next(RequestServiceUtility::refuseWhenInvalidPatronGroupId)
+      .mapFailure(error -> errorHandler.handle(error, INVALID_PATRON_GROUP_ID, request))
       .next(RequestServiceUtility::refuseWhenItemIsNotValid)
       .mapFailure(error -> errorHandler.handle(error, REQUESTING_DISALLOWED_FOR_ITEM, request))
       .next(RequestServiceUtility::refuseWhenUserIsInactive)

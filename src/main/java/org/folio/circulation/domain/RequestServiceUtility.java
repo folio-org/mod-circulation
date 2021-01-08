@@ -66,19 +66,20 @@ public class RequestServiceUtility {
       REQUEST_TYPE, requestTypeName);
   }
 
-  static Result<RequestAndRelatedRecords> refuseWhenInvalidUserAndPatronGroup(
+  static Result<RequestAndRelatedRecords> refuseWhenInvalidUser(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
-    Request request = requestAndRelatedRecords.getRequest();
-    User requester = request.getRequester();
+    return requestAndRelatedRecords.getRequest().getRequester() == null
+      ? failedValidation("A valid user and patron group are required. User is null", "userId", null)
+      : succeeded(requestAndRelatedRecords);
+  }
 
-    if (requester == null) {
-      return failedValidation("A valid user and patron group are required. User is null", "userId", null);
-    } else if (requester.getPatronGroupId() == null) {
-      return failedValidation("A valid patron group is required. PatronGroup ID is null", "PatronGroupId", null);
-    } else {
-      return succeeded(requestAndRelatedRecords);
-    }
+  static Result<RequestAndRelatedRecords> refuseWhenInvalidPatronGroupId(
+    RequestAndRelatedRecords requestAndRelatedRecords) {
+
+    return requestAndRelatedRecords.getRequest().getRequester().getPatronGroupId() == null
+      ? failedValidation("A valid patron group is required. PatronGroup ID is null", "PatronGroupId", null)
+      : succeeded(requestAndRelatedRecords);
   }
 
   static Result<RequestAndRelatedRecords> refuseWhenUserIsInactive(

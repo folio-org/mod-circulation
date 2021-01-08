@@ -83,7 +83,8 @@ public class MoveRequestService {
 
     return of(() -> requestAndRelatedRecords)
       .next(RequestServiceUtility::refuseWhenItemDoesNotExist)
-      .next(RequestServiceUtility::refuseWhenInvalidUserAndPatronGroup)
+      .next(RequestServiceUtility::refuseWhenInvalidUser)
+      .next(RequestServiceUtility::refuseWhenInvalidPatronGroupId)
       .next(RequestServiceUtility::refuseWhenItemIsNotValid)
       .next(RequestServiceUtility::refuseWhenUserHasAlreadyRequestedItem)
       .after(requestLoanValidator::refuseWhenUserHasAlreadyBeenLoanedItem)
