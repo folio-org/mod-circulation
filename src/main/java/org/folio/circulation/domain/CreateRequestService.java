@@ -1,6 +1,5 @@
 package org.folio.circulation.domain;
 
-import static org.folio.circulation.domain.RequestServiceUtility.refuseWhenRequestCannotBeFulfilled;
 import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_CREATED;
 import static org.folio.circulation.domain.representations.logs.RequestUpdateLogEventMapper.mapToRequestLogEventJson;
 import static org.folio.circulation.resources.error.CirculationError.FAILED_TO_FETCH_REQUEST_POLICY;
@@ -15,7 +14,7 @@ import static org.folio.circulation.resources.error.CirculationError.REQUESTING_
 import static org.folio.circulation.resources.error.CirculationError.USER_IS_BLOCKED_AUTOMATICALLY;
 import static org.folio.circulation.resources.error.CirculationError.USER_IS_BLOCKED_MANUALLY;
 import static org.folio.circulation.resources.error.CirculationError.USER_IS_INACTIVE;
-import static org.folio.circulation.support.results.Result.of;
+import static org.folio.circulation.support.results.Result.ofAsync;
 
 import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
@@ -59,7 +58,7 @@ public class CreateRequestService {
   }
 
   public CompletableFuture<Result<RequestAndRelatedRecords>> createRequest(
-      RequestAndRelatedRecords request) {
+      RequestAndRelatedRecords requestAndRelatedRecords) {
 
     RequestRepository requestRepository = repositories.getRequestRepository();
     RequestPolicyRepository requestPolicyRepository = repositories.getRequestPolicyRepository();
@@ -72,32 +71,32 @@ public class CreateRequestService {
           .map(message -> new ValidationError(message, new HashMap<>()))
           .collect(Collectors.toList())));
 
-    return of(() -> request)
-      .next(RequestServiceUtility::refuseWhenItemDoesNotExist)
-      .mapFailure(error -> errorHandler.handle(error, INVALID_ITEM, request))
-      .next(RequestServiceUtility::refuseWhenInvalidUser)
-      .mapFailure(error -> errorHandler.handle(error, INVALID_USER, request))
-      .next(RequestServiceUtility::refuseWhenInvalidPatronGroupId)
-      .mapFailure(error -> errorHandler.handle(error, INVALID_PATRON_GROUP_ID, request))
-      .next(RequestServiceUtility::refuseWhenItemIsNotValid)
-      .mapFailure(error -> errorHandler.handle(error, REQUESTING_DISALLOWED_FOR_ITEM, request))
-      .next(RequestServiceUtility::refuseWhenUserIsInactive)
-      .mapFailure(error -> errorHandler.handle(error, USER_IS_INACTIVE, request))
-      .next(RequestServiceUtility::refuseWhenUserHasAlreadyRequestedItem)
-      .mapFailure(error -> errorHandler.handle(error, ITEM_ALREADY_REQUESTED_BY_SAME_USER, request))
-      .after(req -> requestLoanValidator.refuseWhenUserHasAlreadyBeenLoanedItem(req)
-        .thenApply(r -> errorHandler.handle(r, ITEM_ALREADY_LOANED_TO_SAME_USER, req)))
-      .thenComposeAsync(r -> r.after(req -> userManualBlocksValidator.refuseWhenUserIsBlocked(req)
-        .thenApply(res -> errorHandler.handle(res, USER_IS_BLOCKED_MANUALLY, req))))
-      .thenComposeAsync(r -> r.after(req -> automatedPatronBlocksValidator.refuseWhenRequestActionIsBlockedForPatron(req)
-        .thenApply(res -> errorHandler.handle(res, USER_IS_BLOCKED_AUTOMATICALLY, req))))
-      .thenComposeAsync(r -> r.after(req -> requestPolicyRepository.lookupRequestPolicy(req)
-        .thenApply(res -> errorHandler.handle(res, FAILED_TO_FETCH_REQUEST_POLICY, req))))
-      .thenComposeAsync(r -> r.after(req -> configurationRepository.findTimeZoneConfiguration()
-        .thenApply(res -> res.map(req::withTimeZone))
-        .thenApply(res -> errorHandler.handle(res, FAILED_TO_FETCH_TIME_ZONE_CONFIG, req))))
-      .thenApply(r -> r.next(req -> refuseWhenRequestCannotBeFulfilled(req)
-        .mapFailure(error -> errorHandler.handle(error, REQUESTING_DISALLOWED_BY_REQUEST_POLICY, req))))
+    return ofAsync(() -> requestAndRelatedRecords)
+      .thenApply(r -> r.next(RequestServiceUtility::refuseWhenItemDoesNotExist)
+        .mapFailure(error -> errorHandler.handle(error, INVALID_ITEM, r)))
+      .thenApply(r -> r.next(RequestServiceUtility::refuseWhenInvalidUser)
+        .mapFailure(error -> errorHandler.handle(error, INVALID_USER, r)))
+      .thenApply(r -> r.next(RequestServiceUtility::refuseWhenInvalidPatronGroupId)
+        .mapFailure(error -> errorHandler.handle(error, INVALID_PATRON_GROUP_ID, r)))
+      .thenApply(r -> r.next(RequestServiceUtility::refuseWhenItemIsNotValid)
+        .mapFailure(error -> errorHandler.handle(error, REQUESTING_DISALLOWED_FOR_ITEM, r)))
+      .thenApply(r -> r.next(RequestServiceUtility::refuseWhenUserIsInactive)
+        .mapFailure(error -> errorHandler.handle(error, USER_IS_INACTIVE, r)))
+      .thenApply(r -> r.next(RequestServiceUtility::refuseWhenUserHasAlreadyRequestedItem)
+        .mapFailure(error -> errorHandler.handle(error, ITEM_ALREADY_REQUESTED_BY_SAME_USER, r)))
+      .thenComposeAsync(r -> r.after(requestLoanValidator::refuseWhenUserHasAlreadyBeenLoanedItem)
+        .thenApply(res -> errorHandler.handle(res, ITEM_ALREADY_LOANED_TO_SAME_USER, r)))
+      .thenComposeAsync(r -> r.after(userManualBlocksValidator::refuseWhenUserIsBlocked)
+        .thenApply(res -> errorHandler.handle(res, USER_IS_BLOCKED_MANUALLY, r)))
+      .thenComposeAsync(r -> r.after(automatedPatronBlocksValidator::refuseWhenRequestActionIsBlockedForPatron)
+        .thenApply(res -> errorHandler.handle(res, USER_IS_BLOCKED_AUTOMATICALLY, r)))
+      .thenComposeAsync(r -> r.after(requestPolicyRepository::lookupRequestPolicy)
+        .thenApply(res -> errorHandler.handle(res, FAILED_TO_FETCH_REQUEST_POLICY, r)))
+      .thenComposeAsync(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
+        RequestAndRelatedRecords::withTimeZone)
+        .thenApply(res -> errorHandler.handle(res, FAILED_TO_FETCH_TIME_ZONE_CONFIG, r)))
+      .thenApply(r -> r.next(RequestServiceUtility::refuseWhenRequestCannotBeFulfilled)
+        .mapFailure(error -> errorHandler.handle(error, REQUESTING_DISALLOWED_BY_REQUEST_POLICY, r)))
 
       .thenApply(r -> r.next(errorHandler::failIfErrorsExist))
 

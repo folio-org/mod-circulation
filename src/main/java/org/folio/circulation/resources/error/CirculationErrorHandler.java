@@ -19,9 +19,9 @@ public abstract class CirculationErrorHandler {
 
   private final Map<HttpFailure, CirculationError> errors;
 
-  public abstract <T> Result<T> handle(Result<T> result, CirculationError errorType, T returnValue);
+  public abstract <T> Result<T> handle(Result<T> result, CirculationError errorType, Result<T> returnValue);
 
-  public abstract <T> Result<T> handle(HttpFailure error, CirculationError errorType, T returnValue);
+  public abstract <T> Result<T> handle(HttpFailure error, CirculationError errorType, Result<T> returnValue);
 
   public <T> Result<T> failIfErrorsExist(T returnValue) {
     return getErrors().isEmpty()

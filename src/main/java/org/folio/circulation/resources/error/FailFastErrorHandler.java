@@ -13,12 +13,12 @@ public class FailFastErrorHandler extends CirculationErrorHandler {
   }
 
   @Override
-  public <T> Result<T> handle(Result<T> result, CirculationError errorType, T returnValue) {
+  public <T> Result<T> handle(Result<T> result, CirculationError errorType, Result<T> returnValue) {
     return result;
   }
 
   @Override
-  public <T> Result<T> handle(HttpFailure error, CirculationError errorType, T returnValue) {
+  public <T> Result<T> handle(HttpFailure error, CirculationError errorType, Result<T> returnValue) {
     return failed(error);
   }
 

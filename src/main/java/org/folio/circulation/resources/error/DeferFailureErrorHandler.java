@@ -1,7 +1,5 @@
 package org.folio.circulation.resources.error;
 
-import static org.folio.circulation.support.results.Result.succeeded;
-
 import java.util.HashMap;
 
 import org.folio.circulation.support.HttpFailure;
@@ -14,14 +12,14 @@ public class DeferFailureErrorHandler extends CirculationErrorHandler {
   }
 
   @Override
-  public <T> Result<T> handle(Result<T> result, CirculationError errorType, T returnValue) {
+  public <T> Result<T> handle(Result<T> result, CirculationError errorType, Result<T> returnValue) {
     return result.mapFailure(error -> handle(error, errorType, returnValue));
   }
 
   @Override
-  public <T> Result<T> handle(HttpFailure error, CirculationError errorType, T returnValue) {
+  public <T> Result<T> handle(HttpFailure error, CirculationError errorType, Result<T> returnValue) {
     getErrors().put(error, errorType);
-    return succeeded(returnValue);
+    return returnValue;
   }
 
 }
