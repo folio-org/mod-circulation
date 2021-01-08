@@ -587,6 +587,4 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
     assertThat(sentNotices, hasSize(sentNoticesNumber));
   }
-
-
 }
