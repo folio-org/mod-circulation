@@ -3,6 +3,17 @@ package org.folio.circulation.resources;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.folio.circulation.domain.representations.RequestProperties.ITEM_ID;
+import static org.folio.circulation.resources.error.CirculationError.FAILED_TO_FETCH_ITEM;
+import static org.folio.circulation.resources.error.CirculationError.FAILED_TO_FETCH_LOAN;
+import static org.folio.circulation.resources.error.CirculationError.FAILED_TO_FETCH_PROXY_USER;
+import static org.folio.circulation.resources.error.CirculationError.FAILED_TO_FETCH_REQUEST_QUEUE;
+import static org.folio.circulation.resources.error.CirculationError.FAILED_TO_FETCH_SERVICE_POINT;
+import static org.folio.circulation.resources.error.CirculationError.FAILED_TO_FETCH_USER;
+import static org.folio.circulation.resources.error.CirculationError.FAILED_TO_FETCH_USER_FOR_LOAN;
+import static org.folio.circulation.resources.error.CirculationError.INVALID_PICKUP_SERVICE_POINT;
+import static org.folio.circulation.resources.error.CirculationError.INVALID_PROXY_RELATIONSHIP;
+import static org.folio.circulation.resources.error.CirculationError.INVALID_STATUS;
+import static org.folio.circulation.resources.error.CirculationError.INVALID_ITEM_ID;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.results.Result.failed;
@@ -24,6 +35,7 @@ import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
+import org.folio.circulation.resources.error.CirculationErrorHandler;
 import org.folio.circulation.support.BadRequestFailure;
 import org.folio.circulation.support.results.Result;
 
@@ -36,14 +48,16 @@ class RequestFromRepresentationService {
   private final LoanRepository loanRepository;
   private final ServicePointRepository servicePointRepository;
   private final ProxyRelationshipValidator proxyRelationshipValidator;
-  private final ServicePointPickupLocationValidator servicePointPickupLocationValidator;
+  private final ServicePointPickupLocationValidator pickupLocationValidator;
+  private final CirculationErrorHandler errorHandler;
 
 
   RequestFromRepresentationService(ItemRepository itemRepository,
     RequestQueueRepository requestQueueRepository, UserRepository userRepository,
     LoanRepository loanRepository, ServicePointRepository servicePointRepository,
     ProxyRelationshipValidator proxyRelationshipValidator,
-    ServicePointPickupLocationValidator servicePointPickupLocationValidator) {
+    ServicePointPickupLocationValidator pickupLocationValidator,
+    CirculationErrorHandler errorHandler) {
 
     this.loanRepository = loanRepository;
     this.itemRepository = itemRepository;
@@ -51,26 +65,44 @@ class RequestFromRepresentationService {
     this.userRepository = userRepository;
     this.servicePointRepository = servicePointRepository;
     this.proxyRelationshipValidator = proxyRelationshipValidator;
-    this.servicePointPickupLocationValidator = servicePointPickupLocationValidator;
+    this.pickupLocationValidator = pickupLocationValidator;
+    this.errorHandler = errorHandler;
   }
 
   CompletableFuture<Result<RequestAndRelatedRecords>> getRequestFrom(JsonObject representation) {
     return completedFuture(succeeded(representation))
       .thenApply(r -> r.next(this::validateStatus))
+      .thenApply(r -> errorHandler.handle(r, INVALID_STATUS, representation))
       .thenApply(r -> r.next(this::refuseWhenNoItemId))
+      .thenApply(r -> errorHandler.handle(r, INVALID_ITEM_ID, representation))
       .thenApply(r -> r.map(this::removeRelatedRecordInformation))
       .thenApply(r -> r.map(Request::from))
-      .thenComposeAsync(r -> r.combineAfter(itemRepository::fetchFor, Request::withItem))
-      .thenComposeAsync(r -> r.combineAfter(userRepository::getUser, Request::withRequester))
-      .thenComposeAsync(r -> r.combineAfter(userRepository::getProxyUser, Request::withProxy))
-      .thenComposeAsync(r -> r.combineAfter(servicePointRepository::getServicePointForRequest, Request::withPickupServicePoint))
-      .thenComposeAsync(r -> r.combineAfter(loanRepository::findOpenLoanForRequest, Request::withLoan))
-      .thenComposeAsync(r -> r.combineAfter(this::getUserForExistingLoan, this::addUserToLoan))
+      .thenCompose(res -> res.after(request -> itemRepository.fetchFor(request)
+        .thenApply(r -> r.map(request::withItem))
+        .thenApply(r -> errorHandler.handle(r, FAILED_TO_FETCH_ITEM, request))))
+      .thenCompose(res -> res.after(request -> userRepository.getUser(request)
+        .thenApply(r -> r.map(request::withRequester))
+        .thenApply(r -> errorHandler.handle(r, FAILED_TO_FETCH_USER, request))))
+      .thenCompose(res -> res.after(request -> userRepository.getProxyUser(request)
+        .thenApply(r -> r.map(request::withProxy))
+        .thenApply(r -> errorHandler.handle(r, FAILED_TO_FETCH_PROXY_USER, request))))
+      .thenCompose(res -> res.after(request -> servicePointRepository.getServicePointForRequest(request)
+        .thenApply(r -> r.map(request::withPickupServicePoint))
+        .thenApply(r -> errorHandler.handle(r, FAILED_TO_FETCH_SERVICE_POINT, request))))
+      .thenCompose(res -> res.after(request -> loanRepository.findOpenLoanForRequest(request)
+        .thenApply(r -> r.map(request::withLoan))
+        .thenApply(r -> errorHandler.handle(r, FAILED_TO_FETCH_LOAN, request))))
+      .thenCompose(res -> res.after(request -> getUserForExistingLoan(request)
+        .thenApply(r -> r.map(user -> addUserToLoan(request, user)))
+        .thenApply(r -> errorHandler.handle(r, FAILED_TO_FETCH_USER_FOR_LOAN, request))))
       .thenApply(r -> r.map(RequestAndRelatedRecords::new))
-      .thenComposeAsync(r -> r.combineAfter(requestQueueRepository::get,
-        RequestAndRelatedRecords::withRequestQueue))
-      .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
-      .thenApply(servicePointPickupLocationValidator::checkServicePointPickupLocation);
+      .thenCompose(res -> res.after(records -> requestQueueRepository.get(records)
+        .thenApply(r -> r.map(records::withRequestQueue))
+        .thenApply(r -> errorHandler.handle(r, FAILED_TO_FETCH_REQUEST_QUEUE, records))))
+      .thenCompose(res -> res.after(records -> proxyRelationshipValidator.refuseWhenInvalid(records)
+        .thenApply(r -> errorHandler.handle(r, INVALID_PROXY_RELATIONSHIP, records))))
+      .thenApply(r -> r.next(records -> pickupLocationValidator.refuseInvalidPickupServicePoint(records)
+        .mapFailure(error -> errorHandler.handle(error, INVALID_PICKUP_SERVICE_POINT, records))));
   }
 
   private CompletableFuture<Result<User>> getUserForExistingLoan(Request request) {
