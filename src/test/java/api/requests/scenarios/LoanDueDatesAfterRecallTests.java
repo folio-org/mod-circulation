@@ -846,7 +846,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
   }
 
   @Test
-  public void shouldExtendLoanDueDateIfOverdueLoanIsRecalledAndConditionsAreMet() {
+  public void shouldExtendLoanDueDateByAlternatePeriodWhenOverdueLoanIsRecalledAndPolicyAllowsExtension() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
     final Period alternateLoanPeriod = Period.weeks(3);
@@ -880,17 +880,9 @@ public class LoanDueDatesAfterRecallTests extends APITests {
       .fulfilToHoldShelf()
       .withPickupServicePointId(servicePointsFixture.cd1().getId()));
 
-    DateTime actualLoanDueDate = DateTime.parse(loansStorageClient.getById(loan.getId()).getJson().getString("dueDate"));
+    final JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
 
-    actualLoanDueDate = actualLoanDueDate
-      .minusSeconds(actualLoanDueDate.getSecondOfMinute())
-      .minusMillis(actualLoanDueDate.getMillisOfSecond());
-
-    expectedLoanDueDate = expectedLoanDueDate
-      .minusSeconds(expectedLoanDueDate.getSecondOfMinute())
-      .minusMillis(expectedLoanDueDate.getMillisOfSecond());
-
-    assertThat(actualLoanDueDate, is(expectedLoanDueDate));
+    assertThat(storedLoan.getString("dueDate"), isEquivalentTo(expectedLoanDueDate));
   }
 
   @Test
