@@ -858,7 +858,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
       .rolling(loanPeriod)
       .unlimitedRenewals()
       .renewFromSystemDate()
-      .withAllowRecallsToExtendOverudeLoans(true)
+      .withAllowRecallsToExtendOverdueLoans(true)
       .withAlternateRecallReturnInterval(alternateLoanPeriod));
 
     final DateTime loanCreateDate = now(UTC)

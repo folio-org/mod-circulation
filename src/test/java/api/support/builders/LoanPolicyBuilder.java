@@ -35,7 +35,7 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
   private final Period recallsMinimumGuaranteedLoanPeriod;
   private final Period recallsRecallReturnInterval;
   private final Period alternateRecallReturnInterval;
-  private final boolean allowRecallsToExtendOverudeLoans;
+  private final boolean allowRecallsToExtendOverdueLoans;
   private final JsonObject holds;
   private final Period alternateCheckoutLoanPeriod;
   private final Integer itemLimit;
@@ -165,7 +165,7 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
     }
 
     if (recalls != null) {
-      put(recalls, "allowRecallsToExtendOverdueLoans", allowRecallsToExtendOverudeLoans);
+      put(recalls, "allowRecallsToExtendOverdueLoans", allowRecallsToExtendOverdueLoans);
     }
 
     JsonObject requestManagement = null;
