@@ -4,6 +4,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.apache.commons.lang.StringUtils.defaultIfBlank;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.results.MappingFunctions.toFixedValue;
+import static org.folio.circulation.support.results.MappingFunctions.when;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
@@ -74,9 +75,9 @@ public class DeclareLostResource extends Resource {
   private Function<Result<Loan>, CompletionStage<Result<Loan>>> declareItemLost(
     DeclareItemLostRequest request, Clients clients) {
 
-    return r -> r.afterWhen(loan -> ofAsync(loan::isClaimedReturned),
+    return r -> r.after(when(loan -> ofAsync(loan::isClaimedReturned),
       loan -> declareItemLostWhenClaimedReturned(loan, request, clients),
-      loan -> declareItemLostWhenNotClaimedReturned(loan, request));
+      loan -> declareItemLostWhenNotClaimedReturned(loan, request)));
   }
 
   private CompletableFuture<Result<Loan>> declareItemLostWhenNotClaimedReturned(
