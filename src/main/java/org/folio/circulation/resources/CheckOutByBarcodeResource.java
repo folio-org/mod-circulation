@@ -201,33 +201,33 @@ public class CheckOutByBarcodeResource extends Resource {
     Map<String, String> headers, AutomatedPatronBlocksRepository automatedPatronBlocksRepository) {
 
     return request.isPatronBlockOverriding()
-      ? new AutomatedPatronBlocksValidator(automatedPatronBlocksRepository,
+      ? new OverrideAutomatedPatronBlocksValidator(message -> singleValidationError(
+      message, "patron-block", OVERRIDE_PATRON_BLOCK.getValue()), headers, request)
+      : new AutomatedPatronBlocksValidator(automatedPatronBlocksRepository,
       messages -> new ValidationErrorFailure(messages.stream()
         .map(message -> new ValidationError(message, new HashMap<>()))
-        .collect(Collectors.toList())))
-      : new OverrideAutomatedPatronBlocksValidator(message -> singleValidationError(
-      message, "patron-block", OVERRIDE_PATRON_BLOCK.getValue()), headers, request);
+        .collect(Collectors.toList())));
   }
 
   private OverrideValidation defineItemLimitValidator(CheckOutByBarcodeRequest request,
     Map<String, String> headers, LoanRepository loanRepository) {
 
     return request.isItemLimitBlockOverriding()
-      ? new ItemLimitValidator(message -> singleValidationError(
-      message, ITEM_BARCODE, request.getItemBarcode()), loanRepository)
-      : new OverrideItemLimitValidator(message -> singleValidationError(
-      message, "item-limit-block", OVERRIDE_ITEM_LIMIT_BLOCK.getValue()), headers, request);
+      ? new OverrideItemLimitValidator(message -> singleValidationError(
+      message, "item-limit-block", OVERRIDE_ITEM_LIMIT_BLOCK.getValue()), headers, request)
+      : new ItemLimitValidator(message -> singleValidationError(
+      message, ITEM_BARCODE, request.getItemBarcode()), loanRepository);
   }
 
   private OverrideValidation defineLoanPolicyValidator(CheckOutByBarcodeRequest request,
     Map<String, String> headers) {
 
     return request.isItemNotLoanableBlock()
-      ? new LoanPolicyValidator(loanPolicy -> singleLoanPolicyValidationError(
-      loanPolicy, "Item is not loanable", ITEM_BARCODE, request.getItemBarcode()))
-      : new OverrideLoanPolicyValidator(message -> singleValidationError(
+      ? new OverrideLoanPolicyValidator(message -> singleValidationError(
       message, "item-not-loanable-block", OVERRIDE_ITEM_NOT_LOANABLE_BLOCK.getValue()),
-      headers, request);
+      headers, request)
+      : new LoanPolicyValidator(loanPolicy -> singleLoanPolicyValidationError(
+      loanPolicy, "Item is not loanable", ITEM_BARCODE, request.getItemBarcode()));
   }
 
   private CompletableFuture<Result<LoanAndRelatedRecords>> updateItem(
