@@ -884,6 +884,46 @@ public class LoanDueDatesAfterRecallTests extends APITests {
 
     assertThat(storedLoan.getString("dueDate"), isEquivalentTo(expectedLoanDueDate));
   }
+  
+  public void shouldExtendLoanDueDateByRecallReturnIntervalForOverdueLoansIsRecalledAndAlternateRecallReturnIntervalForOverdueLoansIsEmpty() {
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+
+    final Period recalReturnInterval = Period.weeks(3);
+
+    final Period loanPeriod = Period.weeks(1);
+    setFallbackPolicies(new LoanPolicyBuilder()
+      .withName("Can Circulate Rolling With Recalls")
+      .withDescription("Can circulate item With Recalls")
+      .rolling(loanPeriod)
+      .unlimitedRenewals()
+      .renewFromSystemDate()
+      .withAllowRecallsToExtendOverdueLoans(true)
+      .withRecallsRecallReturnInterval(recalReturnInterval));
+
+    final DateTime loanCreateDate = now(UTC)
+      .minus(loanPeriod.timePeriod())
+      .minusMinutes(1);
+
+    DateTime expectedLoanDueDate = loanCreateDate
+      .plus(loanPeriod.timePeriod())
+      .plus(recalReturnInterval.timePeriod())
+      .plusMinutes(1);
+
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(
+      smallAngryPlanet, usersFixture.steve(), loanCreateDate);
+
+    requestsFixture.place(new RequestBuilder()
+      .recall()
+      .forItem(smallAngryPlanet)
+      .fulfilToHoldShelf()
+      .by(usersFixture.jessica())
+      .fulfilToHoldShelf()
+      .withPickupServicePointId(servicePointsFixture.cd1().getId()));
+
+    final JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
+
+    assertThat(storedLoan.getString("dueDate"), isEquivalentTo(expectedLoanDueDate));
+  }
 
   @Test
   public void loanDueDateTruncatedOnCheckoutWhenRecallAnywhereInQueue() {
