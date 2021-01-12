@@ -5,12 +5,17 @@ import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequ
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.PROXY_USER_BARCODE;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.USER_BARCODE;
+import static org.folio.circulation.domain.validation.overriding.OverridePermissions.OVERRIDE_ITEM_LIMIT_BLOCK;
+import static org.folio.circulation.domain.validation.overriding.OverridePermissions.OVERRIDE_ITEM_NOT_LOANABLE_BLOCK;
+import static org.folio.circulation.domain.validation.overriding.OverridePermissions.OVERRIDE_PATRON_BLOCK;
+import static org.folio.circulation.support.ValidationErrorFailure.singleLoanPolicyValidationError;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.http.server.JsonHttpResponse.created;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -30,9 +35,14 @@ import org.folio.circulation.domain.validation.InactiveUserValidator;
 import org.folio.circulation.domain.validation.ItemLimitValidator;
 import org.folio.circulation.domain.validation.ItemNotFoundValidator;
 import org.folio.circulation.domain.validation.ItemStatusValidator;
+import org.folio.circulation.domain.validation.LoanPolicyValidator;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.RequestedByAnotherPatronValidator;
 import org.folio.circulation.domain.validation.ServicePointOfCheckoutPresentValidator;
+import org.folio.circulation.domain.validation.overriding.OverrideAutomatedPatronBlocksValidator;
+import org.folio.circulation.domain.validation.overriding.OverrideItemLimitValidator;
+import org.folio.circulation.domain.validation.overriding.OverrideLoanPolicyValidator;
+import org.folio.circulation.domain.validation.overriding.OverrideValidation;
 import org.folio.circulation.infrastructure.storage.AutomatedPatronBlocksRepository;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
@@ -131,14 +141,12 @@ public class CheckOutByBarcodeResource extends Resource {
     final ExistingOpenLoanValidator openLoanValidator = new ExistingOpenLoanValidator(
       loanRepository, message -> singleValidationError(message, ITEM_BARCODE, request.getItemBarcode()));
 
-    final ItemLimitValidator itemLimitValidator = new ItemLimitValidator(
-      message -> singleValidationError(message, ITEM_BARCODE, request.getItemBarcode()), loanRepository);
-
-    final AutomatedPatronBlocksValidator automatedPatronBlocksValidator =
-      new AutomatedPatronBlocksValidator(automatedPatronBlocksRepository,
-        messages -> new ValidationErrorFailure(messages.stream()
-          .map(message -> new ValidationError(message, new HashMap<>()))
-          .collect(Collectors.toList())));
+    final Map<String, String> headers = new WebContext(routingContext).getHeaders();
+    final OverrideValidation itemLimitValidator = defineItemLimitValidator(
+      request, headers, loanRepository);
+    final OverrideValidation automatedPatronBlocksValidator = definePatronBlocksValidator(
+      request, headers, automatedPatronBlocksRepository);
+    final OverrideValidation loanPolicyValidator = defineLoanPolicyValidator(request, headers);
 
     final UpdateRequestQueue requestQueueUpdate = UpdateRequestQueue.using(clients);
 
@@ -152,8 +160,7 @@ public class CheckOutByBarcodeResource extends Resource {
     ofAsync(() -> new LoanAndRelatedRecords(request.toLoan()))
       .thenApply(servicePointOfCheckoutPresentValidator::refuseCheckOutWhenServicePointIsNotPresent)
       .thenCombineAsync(userRepository.getUserByBarcode(request.getUserBarcode()), this::addUser)
-      .thenComposeAsync(r -> r.after(
-        automatedPatronBlocksValidator::refuseWhenCheckOutActionIsBlockedForPatron))
+      .thenComposeAsync(r -> r.after(automatedPatronBlocksValidator::validate))
       .thenCombineAsync(userRepository.getProxyUserByBarcode(request.getProxyUserBarcode()), this::addProxyUser)
       .thenApply(inactiveUserValidator::refuseWhenUserIsInactive)
       .thenApply(inactiveProxyUserValidator::refuseWhenUserIsInactive)
@@ -161,7 +168,6 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenApply(itemNotFoundValidator::refuseWhenItemNotFound)
       .thenApply(alreadyCheckedOutValidator::refuseWhenItemIsAlreadyCheckedOut)
       .thenApply(itemStatusValidator::refuseWhenItemIsNotAllowedForCheckOut)
-      //.thenCompose(overrideValidator::refuseOverridingIfNoPermissions)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
       .thenComposeAsync(r -> r.after(openLoanValidator::refuseWhenHasOpenLoan))
       .thenComposeAsync(r -> r.after(requestQueueRepository::get))
@@ -169,10 +175,11 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenCompose(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
         LoanAndRelatedRecords::withTimeZone))
       .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
-      .thenComposeAsync(r -> r.after(itemLimitValidator::refuseWhenItemLimitIsReached))
+      .thenComposeAsync(r -> r.after(itemLimitValidator::validate))
       .thenComposeAsync(r -> r.after(overdueFinePolicyRepository::lookupOverdueFinePolicy))
       .thenComposeAsync(r -> r.after(lostItemPolicyRepository::lookupLostItemPolicy))
       .thenApply(r -> r.next(this::setItemLocationIdAtCheckout))
+      .thenComposeAsync(r -> r.after(loanPolicyValidator::validate))
       .thenComposeAsync(r -> r.after(relatedRecords -> checkOutStrategy.checkOut(relatedRecords,
         routingContext.getBodyAsJson(), clients)))
       .thenApply(r -> r.map(this::checkOutItem))
@@ -188,6 +195,39 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
       .thenApply(this::createdLoanFrom)
       .thenAccept(context::writeResultToHttpResponse);
+  }
+
+  private OverrideValidation definePatronBlocksValidator(CheckOutByBarcodeRequest request,
+    Map<String, String> headers, AutomatedPatronBlocksRepository automatedPatronBlocksRepository) {
+
+    return request.isPatronBlockOverriding()
+      ? new AutomatedPatronBlocksValidator(automatedPatronBlocksRepository,
+      messages -> new ValidationErrorFailure(messages.stream()
+        .map(message -> new ValidationError(message, new HashMap<>()))
+        .collect(Collectors.toList())))
+      : new OverrideAutomatedPatronBlocksValidator(message -> singleValidationError(
+      message, "patron-block", OVERRIDE_PATRON_BLOCK.getValue()), headers, request);
+  }
+
+  private OverrideValidation defineItemLimitValidator(CheckOutByBarcodeRequest request,
+    Map<String, String> headers, LoanRepository loanRepository) {
+
+    return request.isItemLimitBlockOverriding()
+      ? new ItemLimitValidator(message -> singleValidationError(
+      message, ITEM_BARCODE, request.getItemBarcode()), loanRepository)
+      : new OverrideItemLimitValidator(message -> singleValidationError(
+      message, "item-limit-block", OVERRIDE_ITEM_LIMIT_BLOCK.getValue()), headers, request);
+  }
+
+  private OverrideValidation defineLoanPolicyValidator(CheckOutByBarcodeRequest request,
+    Map<String, String> headers) {
+
+    return request.isItemNotLoanableBlock()
+      ? new LoanPolicyValidator(loanPolicy -> singleLoanPolicyValidationError(
+      loanPolicy, "Item is not loanable", ITEM_BARCODE, request.getItemBarcode()))
+      : new OverrideLoanPolicyValidator(message -> singleValidationError(
+      message, "item-not-loanable-block", OVERRIDE_ITEM_NOT_LOANABLE_BLOCK.getValue()),
+      headers, request);
   }
 
   private CompletableFuture<Result<LoanAndRelatedRecords>> updateItem(

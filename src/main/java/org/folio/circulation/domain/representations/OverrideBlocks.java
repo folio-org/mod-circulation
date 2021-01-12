@@ -16,14 +16,17 @@ public class OverrideBlocks {
   private final ItemLimitBlock itemLimitBlock;
 
   public static OverrideBlocks from(JsonObject representation) {
-    ItemNotLoanableBlock itemNotLoanableBlock = ItemNotLoanableBlock.from(
-      getObjectProperty(representation, "itemNotLoanableBlock"));
-    PatronBlock patronBlock = PatronBlock.from(
-      getObjectProperty(representation, "patronBlock"));
-    ItemLimitBlock itemLimitBlock = ItemLimitBlock.from(
-      getObjectProperty(representation, "itemLimitBlock"));
+    if (representation != null) {
+      ItemNotLoanableBlock itemNotLoanableBlock = ItemNotLoanableBlock.from(
+        getObjectProperty(representation, "itemNotLoanableBlock"));
+      PatronBlock patronBlock = PatronBlock.from(
+        getObjectProperty(representation, "patronBlock"));
+      ItemLimitBlock itemLimitBlock = ItemLimitBlock.from(
+        getObjectProperty(representation, "itemLimitBlock"));
 
-    return new OverrideBlocks(
-      itemNotLoanableBlock, patronBlock, itemLimitBlock);
+      return new OverrideBlocks(
+        itemNotLoanableBlock, patronBlock, itemLimitBlock);
+    }
+    return null;
   }
 }

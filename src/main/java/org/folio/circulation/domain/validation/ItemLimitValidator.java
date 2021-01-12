@@ -12,13 +12,14 @@ import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
+import org.folio.circulation.domain.validation.overriding.OverrideValidation;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.rules.AppliedRuleConditions;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.client.PageLimit;
 
-public class ItemLimitValidator {
+public class ItemLimitValidator implements OverrideValidation {
   private final Function<String, ValidationErrorFailure> itemLimitErrorFunction;
   private final LoanRepository loanRepository;
   private static final PageLimit LOANS_PAGE_LIMIT = limit(10000);
@@ -30,7 +31,12 @@ public class ItemLimitValidator {
     this.loanRepository = loanRepository;
   }
 
-  public CompletableFuture<Result<LoanAndRelatedRecords>> refuseWhenItemLimitIsReached(
+  @Override
+  public CompletableFuture<Result<LoanAndRelatedRecords>> validate(LoanAndRelatedRecords records) {
+    return refuseWhenItemLimitIsReached(records);
+  }
+
+  private CompletableFuture<Result<LoanAndRelatedRecords>> refuseWhenItemLimitIsReached(
     LoanAndRelatedRecords records) {
 
     Loan loan = records.getLoan();

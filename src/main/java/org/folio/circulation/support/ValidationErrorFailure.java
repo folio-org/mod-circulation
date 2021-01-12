@@ -1,14 +1,17 @@
 package org.folio.circulation.support;
 
-import static org.folio.circulation.support.results.Result.failed;
+import static org.folio.circulation.resources.RenewalValidator.loanPolicyValidationError;
 import static org.folio.circulation.support.http.server.JsonHttpResponse.unprocessableEntity;
+import static org.folio.circulation.support.results.Result.failed;
 
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
+import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
 import org.slf4j.Logger;
@@ -46,6 +49,13 @@ public class ValidationErrorFailure implements HttpFailure {
 
   public static ValidationErrorFailure singleValidationError(ValidationError error) {
     return new ValidationErrorFailure(error);
+  }
+
+  public static ValidationErrorFailure singleLoanPolicyValidationError(
+    LoanPolicy loanPolicy, String message, String propertyName, String propertyValue) {
+
+    return new ValidationErrorFailure(loanPolicyValidationError(
+      loanPolicy, message, Map.of(propertyName, propertyValue)));
   }
 
   private ValidationErrorFailure(ValidationError error) {
