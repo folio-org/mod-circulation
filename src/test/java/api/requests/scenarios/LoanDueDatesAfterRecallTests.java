@@ -6,7 +6,7 @@ import static api.support.fixtures.ConfigurationExample.timezoneConfigurationFor
 import static api.support.http.CqlQuery.queryFromTemplate;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
-import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
+import static api.support.matchers.TextDateTimeMatcher.withinSecondsBefore;
 import static java.lang.Boolean.TRUE;
 import static org.folio.circulation.domain.policy.DueDateManagement.KEEP_THE_CURRENT_DUE_DATE;
 import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.END_OF_A_DAY;
@@ -884,7 +884,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
 
     final JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
 
-    assertThat(storedLoan.getString("dueDate"), withinSecondsAfter(Seconds.seconds(30), expectedLoanDueDate));
+    assertThat(storedLoan.getString("dueDate"), withinSecondsBefore(Seconds.seconds(30), expectedLoanDueDate));
   }
   
   public void shouldExtendLoanDueDateByRecallReturnIntervalForOverdueLoansIsRecalledAndAlternateRecallReturnIntervalForOverdueLoansIsEmpty() {
@@ -924,7 +924,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
 
     final JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
 
-    assertThat(storedLoan.getString("dueDate"), withinSecondsAfter(Seconds.seconds(30), expectedLoanDueDate));
+    assertThat(storedLoan.getString("dueDate"), withinSecondsBefore(Seconds.seconds(30), expectedLoanDueDate));
   }
 
   @Test
