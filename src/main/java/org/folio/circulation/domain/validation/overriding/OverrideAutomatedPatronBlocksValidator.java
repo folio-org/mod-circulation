@@ -26,7 +26,8 @@ public class OverrideAutomatedPatronBlocksValidator extends OverrideValidator {
 
   @Override
   public CompletableFuture<Result<Boolean>> isOverridingItemLimitAllowed() {
-    return ofAsync(() -> request.getOverrideBlocks().getPatronBlock() != null
+    return ofAsync(() -> request.getOverrideBlocks() != null
+      && request.getOverrideBlocks().getPatronBlock() != null
       && headers.get(OKAPI_PERMISSIONS).contains(OVERRIDE_PATRON_BLOCK.getValue()));
   }
 }
