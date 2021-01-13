@@ -6,6 +6,7 @@ import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
 import static org.folio.circulation.domain.ItemStatus.PAGED;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.http.CommonResponseInterpreters.noContentRecordInterpreter;
+import static org.folio.circulation.support.results.MappingFunctions.when;
 import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.results.Result.succeeded;
 
@@ -106,10 +107,9 @@ public class UpdateItem {
     LoanAndRelatedRecords relatedRecords) {
 
     //Hack for creating returned loan - should distinguish further up the chain
-    return succeeded(relatedRecords).afterWhen(
-      records -> loanIsClosed(relatedRecords),
-      UpdateItem::skip,
-      records -> updateItemStatusOnCheckOut(relatedRecords));
+    return succeeded(relatedRecords).after(when(
+      records -> loanIsClosed(relatedRecords), UpdateItem::skip,
+      records -> updateItemStatusOnCheckOut(relatedRecords)));
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> onLoanUpdate(
