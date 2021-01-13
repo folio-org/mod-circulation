@@ -15,6 +15,7 @@ import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
+import static api.support.matchers.ValidationErrorMatchers.hasNullParameter;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static java.util.Arrays.asList;
@@ -360,9 +361,12 @@ RequestsAPICreationTests extends APITests {
     Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
       .recall()
       .withItemId(itemId)
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .withRequesterId(usersFixture.charlotte().getId()));
 
     assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(postResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("Recall requests are not allowed for this patron and item combination"))));
   }
 
   @Test
@@ -374,9 +378,12 @@ RequestsAPICreationTests extends APITests {
     Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
       .hold()
       .withItemId(itemId)
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .withRequesterId(usersFixture.charlotte().getId()));
 
     assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(postResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("Hold requests are not allowed for this patron and item combination"))));
   }
 
   @Test
@@ -1864,6 +1871,72 @@ RequestsAPICreationTests extends APITests {
 
     assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(2));
     assertThatPublishedLogRecordEventsAreValid();
+  }
+
+  @Test
+  public void shouldReturnMultipleErrorsWhenIdsAreMissingInRequest() {
+    Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
+      .recall()
+      .withItemId(null)
+      .withRequesterId(null)
+      .withPickupServicePointId(null));
+
+    assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+
+    final JsonObject responseJson = postResponse.getJson();
+
+    assertThat(responseJson, hasErrorWith(allOf(
+        hasMessage("Cannot create a request with no item ID"),
+        hasNullParameter("itemId"))));
+
+    assertThat(responseJson, hasErrorWith(allOf(
+      hasMessage("A valid user is required. User is null."),
+      hasNullParameter("userId"))));
+
+    assertThat(responseJson, hasErrorWith(allOf(
+      hasMessage("Hold Shelf Fulfillment Requests require a Pickup Service Point"))));
+  }
+
+  @Test
+  public void shouldReturnMultipleErrorsWhenRequestContainsNonExistentIds() {
+    final UUID itemId = UUID.randomUUID();
+    final UUID userId = UUID.randomUUID();
+    final UUID pickupServicePointId = UUID.randomUUID();
+
+    Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
+      .recall()
+      .withItemId(itemId)
+      .withRequesterId(userId)
+      .withPickupServicePointId(pickupServicePointId));
+
+    assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+
+    final JsonObject responseJson = postResponse.getJson();
+
+    assertThat(responseJson, hasErrorWith(allOf(
+      hasMessage("Item does not exist"),
+      hasUUIDParameter("itemId", itemId))));
+
+    assertThat(responseJson, hasErrorWith(allOf(
+      hasMessage("A valid user is required. User is null."),
+      hasUUIDParameter("userId", userId))));
+
+    assertThat(responseJson, hasErrorWith(allOf(
+      hasMessage("Pickup service point does not exist"),
+      hasUUIDParameter("pickupServicePointId", pickupServicePointId))));
+  }
+
+  @Test
+  public void shouldReturnFirstNonValidationErrorIfAny() {
+    Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
+      .recall()
+      .withStatus("fake")             // 400
+      .withItemId(null)               // 422
+      .withRequesterId(null)          // 422
+      .withPickupServicePointId(null) // 422
+    );
+
+    assertThat(postResponse, hasStatus(HTTP_BAD_REQUEST));
   }
 
   private List<IndividualResource> createOneHundredRequests() {

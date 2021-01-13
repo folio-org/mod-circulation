@@ -14,7 +14,7 @@ import static org.folio.circulation.resources.error.CirculationError.ITEM_DOES_N
 import static org.folio.circulation.resources.error.CirculationError.ITEM_VALIDATION_FAILED;
 import static org.folio.circulation.resources.error.CirculationError.MANUAL_BLOCKS_VALIDATION_FAILED;
 import static org.folio.circulation.resources.error.CirculationError.REQUESTING_DISALLOWED_BY_POLICY;
-import static org.folio.circulation.resources.error.CirculationError.REQUESTING_DISALLOWED_FOR_TYPE;
+import static org.folio.circulation.resources.error.CirculationError.REQUESTING_DISALLOWED;
 import static org.folio.circulation.resources.error.CirculationError.USER_DOES_NOT_EXIST;
 import static org.folio.circulation.resources.error.CirculationError.USER_IS_BLOCKED_AUTOMATICALLY;
 import static org.folio.circulation.resources.error.CirculationError.USER_IS_BLOCKED_MANUALLY;
@@ -100,8 +100,8 @@ public class CreateRequestService {
 
     return result.next(RequestServiceUtility::refuseWhenItemDoesNotExist)
       .mapFailure(err -> errorHandler.handleValidationError(err, ITEM_DOES_NOT_EXIST, result))
-      .next(RequestServiceUtility::refuseWhenItemIsNotValid)
-      .mapFailure(err -> errorHandler.handleValidationError(err, REQUESTING_DISALLOWED_FOR_TYPE, result))
+      .next(RequestServiceUtility::refuseWhenRequestTypeIsNotAllowedForItem)
+      .mapFailure(err -> errorHandler.handleValidationError(err, REQUESTING_DISALLOWED, result))
       .after(requestLoanValidator::refuseWhenUserHasAlreadyBeenLoanedItem)
       .thenApply(r -> errorHandler.handleValidationResult(r, ITEM_ALREADY_LOANED_TO_SAME_USER, result))
       .thenApply(r -> errorHandler.handleResult(r, ITEM_VALIDATION_FAILED, result));

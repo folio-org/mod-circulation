@@ -44,12 +44,12 @@ public class RequestServiceUtility {
     }
   }
 
-  static Result<RequestAndRelatedRecords> refuseWhenItemIsNotValid(
+  static Result<RequestAndRelatedRecords> refuseWhenRequestTypeIsNotAllowedForItem(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
     Request request = requestAndRelatedRecords.getRequest();
 
-    if (request.allowedForItem()) {
+    if (request.getItem().isNotFound() || request.allowedForItem()) {
       return succeeded(requestAndRelatedRecords);
     } else {
       return failureDisallowedForRequestType(request.getRequestType());
@@ -67,11 +67,11 @@ public class RequestServiceUtility {
   }
 
   static Result<RequestAndRelatedRecords> refuseWhenInvalidUser(
-    RequestAndRelatedRecords requestAndRelatedRecords) {
+    RequestAndRelatedRecords records) {
 
-    return requestAndRelatedRecords.getRequest().getRequester() == null
-      ? failedValidation("A valid user is required. User is null.", "userId", null)
-      : succeeded(requestAndRelatedRecords);
+    return records.getRequest().getRequester() == null
+      ? failedValidation("A valid user is required. User is null.", "userId", records.getUserId())
+      : succeeded(records);
   }
 
   static Result<RequestAndRelatedRecords> refuseWhenInvalidPatronGroupId(

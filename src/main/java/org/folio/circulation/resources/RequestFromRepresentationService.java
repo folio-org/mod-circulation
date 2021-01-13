@@ -70,7 +70,7 @@ class RequestFromRepresentationService {
   CompletableFuture<Result<RequestAndRelatedRecords>> getRequestFrom(JsonObject representation) {
     return completedFuture(succeeded(representation))
       .thenApply(r -> r.next(this::validateStatus)
-        .mapFailure(err -> errorHandler.handleValidationError(err, INVALID_STATUS, r)))
+        .mapFailure(err -> errorHandler.handleError(err, INVALID_STATUS, r)))
       .thenApply(r -> r.map(this::removeRelatedRecordInformation))
       .thenApply(r -> r.map(Request::from))
       .thenComposeAsync(this::fetchItem)
