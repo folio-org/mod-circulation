@@ -22,7 +22,7 @@ public class AutomatedPatronBlocksRepository {
 
   public CompletableFuture<Result<AutomatedPatronBlocks>> findByUserId(String userId) {
     if(isNull(userId)) {
-      return ofAsync(() -> null);
+      return ofAsync(AutomatedPatronBlocks::new);
     }
 
     return FetchSingleRecord.<AutomatedPatronBlocks>forRecord("automatedPatronBlocks")

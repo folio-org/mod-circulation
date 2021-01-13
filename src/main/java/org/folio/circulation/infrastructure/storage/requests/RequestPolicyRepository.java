@@ -46,10 +46,7 @@ public class RequestPolicyRepository {
       .thenApply(result -> result.map(relatedRecords::withRequestPolicy));
   }
 
-  private CompletableFuture<Result<RequestPolicy>> lookupRequestPolicy(
-    Item item,
-    User user) {
-
+  private CompletableFuture<Result<RequestPolicy>> lookupRequestPolicy(Item item, User user) {
     return lookupRequestPolicyId(item, user)
       .thenComposeAsync(r -> r.after(this::lookupRequestPolicy))
       .thenApply(result -> result.map(RequestPolicy::from));
@@ -67,9 +64,14 @@ public class RequestPolicyRepository {
   private CompletableFuture<Result<String>> lookupRequestPolicyId(
     Item item, User user) {
 
-    if(item.isNotFound()) {
+    if (item.isNotFound()) {
       return completedFuture(failedDueToServerError(
         "Unable to find matching request rules for unknown item"));
+    }
+
+    if (user == null) {
+      return completedFuture(failedDueToServerError(
+        "Unable to find matching request rules for unknown user"));
     }
 
     String materialTypeId = item.getMaterialTypeId();

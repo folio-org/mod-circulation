@@ -580,7 +580,7 @@ RequestsAPICreationTests extends APITests {
     assertThat(recallResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
 
     assertThat(recallResponse.getJson(), hasErrorWith(allOf(
-      hasMessage("A valid patron group is required. PatronGroup ID is null"))));
+      hasMessage("A valid patron group is required. PatronGroup ID is null."))));
   }
 
   @Test
@@ -605,7 +605,7 @@ RequestsAPICreationTests extends APITests {
     assertThat(recallResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
 
     assertThat(recallResponse.getJson(), hasErrorWith(allOf(
-      hasMessage("A valid user and patron group are required. User is null"))));
+      hasMessage("A valid user is required. User is null."))));
   }
 
   @Test

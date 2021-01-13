@@ -70,15 +70,17 @@ public class RequestServiceUtility {
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
     return requestAndRelatedRecords.getRequest().getRequester() == null
-      ? failedValidation("A valid user and patron group are required. User is null", "userId", null)
+      ? failedValidation("A valid user is required. User is null.", "userId", null)
       : succeeded(requestAndRelatedRecords);
   }
 
   static Result<RequestAndRelatedRecords> refuseWhenInvalidPatronGroupId(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
-    return requestAndRelatedRecords.getRequest().getRequester().getPatronGroupId() == null
-      ? failedValidation("A valid patron group is required. PatronGroup ID is null", "PatronGroupId", null)
+    final User requester = requestAndRelatedRecords.getRequest().getRequester();
+
+    return requester != null && requester.getPatronGroupId() == null
+      ? failedValidation("A valid patron group is required. PatronGroup ID is null.", "PatronGroupId", null)
       : succeeded(requestAndRelatedRecords);
   }
 
