@@ -24,6 +24,7 @@ import org.joda.time.DateTimeZone;
 import org.junit.Test;
 
 import api.support.APITests;
+import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.OverrideCheckOutByBarcodeRequestBuilder;
 import api.support.builders.RequestBuilder;
@@ -40,6 +41,9 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
     new DateTime(2019, 4, 20, 11, 30, 0, DateTimeZone.UTC);
   private static final String TEST_COMMENT = "Some comment";
   private static final String CHECKED_OUT_THROUGH_OVERRIDE = "checkedOutThroughOverride";
+  public static final String OVERRIDE_ITEM_NOT_LOANABLE_BLOCK_PERMISSION =
+    "circulation.override-item-not-loanable-block";
+  public static final String OVERRIDE_PATRON_BLOCK_PERMISSION = "circulation.override-patron-block";
 
   @Test
   public void canOverrideCheckoutWhenItemIsNotLoanable() {
@@ -53,7 +57,7 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
     final UUID checkoutServicePointId = UUID.randomUUID();
 
     final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
-      "override-check-out-by-barcode-request");
+      OVERRIDE_ITEM_NOT_LOANABLE_BLOCK_PERMISSION);
 
     setNotLoanablePolicy();
     IndividualResource response = checkOutFixture.overrideCheckOutByBarcode(
@@ -179,7 +183,7 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
     IndividualResource steve = usersFixture.steve();
     final UUID checkoutServicePointId = UUID.randomUUID();
     final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
-      "override-check-out-by-barcode-request");
+      OVERRIDE_ITEM_NOT_LOANABLE_BLOCK_PERMISSION);
 
     Response response = checkOutFixture.attemptOverrideCheckOutByBarcode(
       new OverrideCheckOutByBarcodeRequestBuilder()
@@ -203,7 +207,7 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
     final UUID checkoutServicePointId = UUID.randomUUID();
 
     final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
-      "override-check-out-by-barcode-request");
+      OVERRIDE_ITEM_NOT_LOANABLE_BLOCK_PERMISSION);
 
     setNotLoanablePolicy();
     Response response = checkOutFixture.attemptOverrideCheckOutByBarcode(
@@ -228,7 +232,7 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
     final UUID checkoutServicePointId = UUID.randomUUID();
 
     final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
-      "override-check-out-by-barcode-request");
+      OVERRIDE_ITEM_NOT_LOANABLE_BLOCK_PERMISSION);
 
     setNotLoanablePolicy();
     DateTime invalidDueDate = TEST_LOAN_DATE.minusDays(2);
@@ -255,7 +259,7 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
     final UUID checkoutServicePointId = UUID.randomUUID();
 
     final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
-      "override-check-out-by-barcode-request");
+      OVERRIDE_ITEM_NOT_LOANABLE_BLOCK_PERMISSION);
 
     setNotLoanablePolicy();
     Response response = checkOutFixture.attemptOverrideCheckOutByBarcode(
@@ -281,7 +285,7 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
     final UUID checkoutServicePointId = UUID.randomUUID();
 
     final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
-      "override-check-out-by-barcode-request");
+      OVERRIDE_ITEM_NOT_LOANABLE_BLOCK_PERMISSION);
 
     setNotLoanablePolicy();
     Response response = checkOutFixture.attemptOverrideCheckOutByBarcode(
@@ -307,7 +311,7 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
     IndividualResource charlotte = usersFixture.charlotte();
 
     final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
-      "override-check-out-by-barcode-request");
+      OVERRIDE_ITEM_NOT_LOANABLE_BLOCK_PERMISSION);
 
     setNotLoanablePolicy();
     checkOutFixture.overrideCheckOutByBarcode(
@@ -330,6 +334,80 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
     assertThat(placeRequestResponse.getStatusCode(), is(201));
   }
 
+  @Test
+  public void cannotOverrideItemNotLoanableBlockWhenOverridingBlocksIsNotPresent() {
+    final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
+      OVERRIDE_ITEM_NOT_LOANABLE_BLOCK_PERMISSION);
+
+    setNotLoanablePolicy();
+    Response response = checkOutFixture.attemptCheckOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(itemsFixture.basedUponSmallAngryPlanet())
+        .to(usersFixture.steve())
+        .at(UUID.randomUUID())
+        .on(TEST_LOAN_DATE), okapiHeaders);
+
+    assertThat(response.getStatusCode(), is(422));
+    assertThat(response.getJson(), hasErrorWith(allOf(hasMessage("Item is not loanable"),
+      hasParameter("loanPolicyName", "Not Loanable Policy"))));
+  }
+
+  @Test
+  public void cannotOverrideItemNotLoanableBlockWhenItemNotLoanableBlockIsNotPresent() {
+    final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
+      OVERRIDE_ITEM_NOT_LOANABLE_BLOCK_PERMISSION);
+
+    setNotLoanablePolicy();
+    Response response = checkOutFixture.attemptCheckOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(itemsFixture.basedUponSmallAngryPlanet())
+        .to(usersFixture.steve())
+        .at(UUID.randomUUID())
+        .on(TEST_LOAN_DATE)
+        .withOverrideBlocks(new OverrideBlocks(null, null, null)), okapiHeaders);
+
+    assertThat(response.getStatusCode(), is(422));
+    assertThat(response.getJson(), hasErrorWith(allOf(hasMessage("Item is not loanable"),
+      hasParameter("loanPolicyName", "Not Loanable Policy"))));
+  }
+
+  @Test
+  public void cannotOverrideItemNotLoanableBlockWhenUserDoesNotHavePermissions() {
+    setNotLoanablePolicy();
+    Response response = checkOutFixture.attemptCheckOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(itemsFixture.basedUponSmallAngryPlanet())
+        .to(usersFixture.steve())
+        .at(UUID.randomUUID())
+        .on(TEST_LOAN_DATE).withOverrideBlocks(new OverrideBlocks(
+          new ItemNotLoanableBlock(TEST_DUE_DATE), null, null)));
+
+    assertThat(response.getStatusCode(), is(422));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Missing override permissions"),
+      hasParameter("item-not-loanable-block", OVERRIDE_ITEM_NOT_LOANABLE_BLOCK_PERMISSION))));
+  }
+
+  @Test
+  public void cannotOverrideItemNotLoanableBlockWhenUserDoesNotHaveAppropriatePermissions() {
+    final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
+      OVERRIDE_PATRON_BLOCK_PERMISSION);
+
+    setNotLoanablePolicy();
+    Response response = checkOutFixture.attemptCheckOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(itemsFixture.basedUponSmallAngryPlanet())
+        .to(usersFixture.steve())
+        .at(UUID.randomUUID())
+        .on(TEST_LOAN_DATE).withOverrideBlocks(new OverrideBlocks(
+        new ItemNotLoanableBlock(TEST_DUE_DATE), null, null)), okapiHeaders);
+
+    assertThat(response.getStatusCode(), is(422));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Missing override permissions"),
+      hasParameter("item-not-loanable-block", OVERRIDE_ITEM_NOT_LOANABLE_BLOCK_PERMISSION))));
+  }
+
   private void setNotLoanablePolicy() {
 
     LoanPolicyBuilder notLoanablePolicy = new LoanPolicyBuilder()
@@ -348,7 +426,7 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
 
   private OkapiHeaders buildOkapiHeadersWithPermissions(String permissions) {
     return getOkapiHeadersFromContext()
-      .withRequestId(permissions)
-      .withOkapiPermissions("[" + "circulation.override-item-not-loanable-block" + "]");
+      .withRequestId("override-check-out-by-barcode-request")
+      .withOkapiPermissions("[" + permissions + "]");
   }
 }

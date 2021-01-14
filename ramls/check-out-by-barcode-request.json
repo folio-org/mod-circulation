@@ -29,7 +29,7 @@
       "description": "Blocks that user wants to override",
       "type": "object",
       "itemNotLoanableBlock": {
-        "description": "Parameters for overriding of the 'item not loanable' block",
+        "description": "Override 'item not loanable' block",
         "type": "object",
         "dueDate": {
           "description": "Due date for a new loan",
@@ -41,11 +41,11 @@
         ]
       },
       "patronBlock": {
-        "description": "Parameters for overriding of the patron block",
+        "description": "Override 'automation patron' block",
         "type": "object"
       },
       "itemLimitBlock": {
-        "description": "Parameters for overriding of the 'item limit' block",
+        "description": "Override 'item limit' block",
         "type": "object"
       }
     }

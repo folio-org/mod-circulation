@@ -67,6 +67,12 @@ public class CheckOutFixture {
     return attemptCheckOutByBarcode(422, builder);
   }
 
+  public Response attemptCheckOutByBarcode(CheckOutByBarcodeRequestBuilder builder,
+    OkapiHeaders headers) {
+
+    return attemptCheckOutByBarcode(422, builder, headers);
+  }
+
   public Response attemptCheckOutByBarcode(int expectedStatusCode,
     CheckOutByBarcodeRequestBuilder builder) {
 
@@ -74,6 +80,13 @@ public class CheckOutFixture {
 
     return restAssuredClient.post(request, checkOutByBarcodeUrl(),
       expectedStatusCode, "check-out-by-barcode-request");
+  }
+
+  public Response attemptCheckOutByBarcode(int expectedStatusCode,
+    CheckOutByBarcodeRequestBuilder builder, OkapiHeaders headers) {
+
+    return restAssuredClient.post(builder.create(), checkOutByBarcodeUrl(),
+      expectedStatusCode, headers);
   }
 
   public IndividualResource overrideCheckOutByBarcode(
