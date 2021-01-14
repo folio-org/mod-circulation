@@ -244,6 +244,22 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
     assertThat(patronNoticesClient.getAll(), empty());
   }
 
+  @Test
+  public void shouldStopSendingAgedToLostNoticesOnceItemIsRenewed() {
+    AgeToLostResult agedToLostLoan = createRecurringAgedToLostNotice();
+
+    loansFixture.overrideRenewalByBarcode(agedToLostLoan.getItem(), agedToLostLoan.getUser(),
+      "Test overriding", agedToLostLoan.getLoan().getJson().getString("dueDate"));
+    loansFixture.renewLoan(agedToLostLoan.getItem(), agedToLostLoan.getUser());
+    final DateTime firstRunTime = getAgedToLostDate(agedToLostLoan).plus(
+      TIMING_PERIOD.timePeriod());
+    scheduledNoticeProcessingClient.runLoanNoticesProcessing(
+      firstRunTime.plus(RECURRENCE_PERIOD.timePeriod()).plusMinutes(1));
+
+    assertThat(scheduledNoticesClient.getAll(), empty());
+    assertThat(patronNoticesClient.getAll(), empty());
+  }
+
   private AgeToLostResult createRecurringAgedToLostNotice() {
     val agedToLostLoan = ageToLostFixture.createAgedToLostLoan(
       new NoticePolicyBuilder()
