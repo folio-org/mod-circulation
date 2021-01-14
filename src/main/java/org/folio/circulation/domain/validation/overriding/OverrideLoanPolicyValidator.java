@@ -25,9 +25,10 @@ public class OverrideLoanPolicyValidator extends OverrideValidator {
   }
 
   @Override
-  protected CompletableFuture<Result<Boolean>> isOverridingItemLimitAllowed() {
-    return ofAsync(() -> request.getOverrideBlocks() != null
+  protected CompletableFuture<Result<Boolean>> isOverridingForbidden() {
+    return ofAsync(() -> !(request.getOverrideBlocks() != null
       && request.getOverrideBlocks().getItemNotLoanableBlock() != null
-      && headers.get(OKAPI_PERMISSIONS).contains(OVERRIDE_ITEM_NOT_LOANABLE_BLOCK.getValue()));
+      && headers.get(OKAPI_PERMISSIONS) != null
+      && headers.get(OKAPI_PERMISSIONS).contains(OVERRIDE_ITEM_NOT_LOANABLE_BLOCK.getValue())));
   }
 }

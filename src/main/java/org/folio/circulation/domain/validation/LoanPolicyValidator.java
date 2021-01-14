@@ -29,12 +29,12 @@ public class LoanPolicyValidator implements OverrideValidation {
     LoanAndRelatedRecords relatedRecords) {
 
     return ofAsync(relatedRecords.getLoan()::getLoanPolicy)
-      .thenComposeAsync(result -> result.failAfter(this::isPolicyLoanable,
+      .thenComposeAsync(result -> result.failAfter(this::isNotLoanablePolicy,
         itemLimitErrorFunction::apply))
       .thenApply(result -> result.map(v -> relatedRecords));
   }
 
-  private CompletableFuture<Result<Boolean>> isPolicyLoanable(LoanPolicy loanPolicy) {
+  private CompletableFuture<Result<Boolean>> isNotLoanablePolicy(LoanPolicy loanPolicy) {
     return ofAsync(loanPolicy::isNotLoanable);
   }
 }

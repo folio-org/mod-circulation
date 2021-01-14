@@ -24,9 +24,10 @@ public class OverrideItemLimitValidator extends OverrideValidator {
   }
 
   @Override
-  public CompletableFuture<Result<Boolean>> isOverridingItemLimitAllowed() {
-    return ofAsync(() -> request.getOverrideBlocks() != null
+  public CompletableFuture<Result<Boolean>> isOverridingForbidden() {
+    return ofAsync(() -> !(request.getOverrideBlocks() != null
       && request.getOverrideBlocks().getItemLimitBlock() != null
-      && headers.get(OKAPI_PERMISSIONS).contains(OVERRIDE_ITEM_LIMIT_BLOCK.getValue()));
+      && headers.get(OKAPI_PERMISSIONS) != null
+      && headers.get(OKAPI_PERMISSIONS).contains(OVERRIDE_ITEM_LIMIT_BLOCK.getValue())));
   }
 }

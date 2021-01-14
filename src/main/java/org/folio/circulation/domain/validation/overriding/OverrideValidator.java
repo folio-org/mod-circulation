@@ -20,9 +20,9 @@ public abstract class OverrideValidator implements OverrideValidation {
   @Override
   public CompletableFuture<Result<LoanAndRelatedRecords>> validate(LoanAndRelatedRecords records) {
     return ofAsync(() -> records)
-      .thenCompose(result -> result.failAfter(relatedRecords -> isOverridingItemLimitAllowed(),
+      .thenCompose(result -> result.failAfter(relatedRecords -> isOverridingForbidden(),
         relatedRecords -> overridingErrorFunction.apply("Missing override permissions")));
   }
 
-  protected abstract CompletableFuture<Result<Boolean>> isOverridingItemLimitAllowed();
+  protected abstract CompletableFuture<Result<Boolean>> isOverridingForbidden();
 }

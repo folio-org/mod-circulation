@@ -71,6 +71,6 @@ public class CheckOutByBarcodeRequest {
   }
 
   public boolean isItemNotLoanableBlock() {
-    return this.overrideBlocks != null && this.overrideBlocks.getPatronBlock() != null;
+    return this.overrideBlocks != null && this.overrideBlocks.getItemNotLoanableBlock() != null;
   }
 }

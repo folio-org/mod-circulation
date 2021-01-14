@@ -1,5 +1,6 @@
 package api.loans;
 
+import static api.support.APITestContext.getOkapiHeadersFromContext;
 import static api.support.builders.ItemBuilder.CHECKED_OUT;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
@@ -13,11 +14,10 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.domain.policy.Period;
-import api.support.http.IndividualResource;
+import org.folio.circulation.domain.representations.ItemNotLoanableBlock;
+import org.folio.circulation.domain.representations.OverrideBlocks;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -27,6 +27,8 @@ import api.support.APITests;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.OverrideCheckOutByBarcodeRequestBuilder;
 import api.support.builders.RequestBuilder;
+import api.support.http.IndividualResource;
+import api.support.http.OkapiHeaders;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -40,11 +42,7 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
   private static final String CHECKED_OUT_THROUGH_OVERRIDE = "checkedOutThroughOverride";
 
   @Test
-  public void canOverrideCheckoutWhenItemIsNotLoanable()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
-
+  public void canOverrideCheckoutWhenItemIsNotLoanable() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
       item -> item
         .withEnumeration("v.70:no.1-6")
@@ -53,6 +51,9 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
 
     IndividualResource steve = usersFixture.steve();
     final UUID checkoutServicePointId = UUID.randomUUID();
+
+    final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
+      "override-check-out-by-barcode-request");
 
     setNotLoanablePolicy();
     IndividualResource response = checkOutFixture.overrideCheckOutByBarcode(
@@ -63,7 +64,8 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
         .on(TEST_LOAN_DATE)
         .withDueDate(TEST_DUE_DATE)
         .withComment(TEST_COMMENT)
-    );
+        .withOverrideBlocks(new OverrideBlocks(
+          new ItemNotLoanableBlock(TEST_DUE_DATE), null, null)), okapiHeaders);
 
     final JsonObject loan = response.getJson();
 
@@ -163,7 +165,6 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
 
   @Test
   public void cannotOverrideCheckoutWhenItemIsLoanable() {
-
     LoanPolicyBuilder loanablePolicy = new LoanPolicyBuilder()
       .withName("Loanable Policy")
       .rolling(Period.days(2));
@@ -177,6 +178,8 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource steve = usersFixture.steve();
     final UUID checkoutServicePointId = UUID.randomUUID();
+    final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
+      "override-check-out-by-barcode-request");
 
     Response response = checkOutFixture.attemptOverrideCheckOutByBarcode(
       new OverrideCheckOutByBarcodeRequestBuilder()
@@ -186,21 +189,21 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
         .on(TEST_LOAN_DATE)
         .withDueDate(TEST_DUE_DATE)
         .withComment(TEST_COMMENT)
-    );
+        .withOverrideBlocks(new OverrideBlocks(
+          new ItemNotLoanableBlock(TEST_DUE_DATE), null, null)), okapiHeaders);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Override is not allowed when item is loanable"))));
   }
 
   @Test
-  public void cannotOverrideCheckoutWhenDueDateIsNotPresent()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
-
+  public void cannotOverrideCheckoutWhenDueDateIsNotPresent() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource steve = usersFixture.steve();
     final UUID checkoutServicePointId = UUID.randomUUID();
+
+    final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
+      "override-check-out-by-barcode-request");
 
     setNotLoanablePolicy();
     Response response = checkOutFixture.attemptOverrideCheckOutByBarcode(
@@ -210,7 +213,8 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
         .at(checkoutServicePointId)
         .on(TEST_LOAN_DATE)
         .withComment(TEST_COMMENT)
-    );
+        .withOverrideBlocks(new OverrideBlocks(
+          new ItemNotLoanableBlock(TEST_DUE_DATE), null, null)), okapiHeaders);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Override should be performed with due date specified"),
@@ -218,14 +222,13 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotOverrideCheckoutWhenDueDateIsBeforeLoanDate()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
-
+  public void cannotOverrideCheckoutWhenDueDateIsBeforeLoanDate() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource steve = usersFixture.steve();
     final UUID checkoutServicePointId = UUID.randomUUID();
+
+    final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
+      "override-check-out-by-barcode-request");
 
     setNotLoanablePolicy();
     DateTime invalidDueDate = TEST_LOAN_DATE.minusDays(2);
@@ -237,7 +240,8 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
         .on(TEST_LOAN_DATE)
         .withDueDate(invalidDueDate)
         .withComment(TEST_COMMENT)
-    );
+        .withOverrideBlocks(new OverrideBlocks(
+          new ItemNotLoanableBlock(TEST_DUE_DATE), null, null)), okapiHeaders);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Due date should be later than loan date"),
@@ -245,14 +249,13 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotOverrideCheckoutWhenDueDateIsTheSameAsLoanDate()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
-
+  public void cannotOverrideCheckoutWhenDueDateIsTheSameAsLoanDate() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource steve = usersFixture.steve();
     final UUID checkoutServicePointId = UUID.randomUUID();
+
+    final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
+      "override-check-out-by-barcode-request");
 
     setNotLoanablePolicy();
     Response response = checkOutFixture.attemptOverrideCheckOutByBarcode(
@@ -263,7 +266,8 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
         .on(TEST_LOAN_DATE)
         .withDueDate(TEST_LOAN_DATE)
         .withComment(TEST_COMMENT)
-    );
+        .withOverrideBlocks(new OverrideBlocks(
+          new ItemNotLoanableBlock(TEST_DUE_DATE), null, null)), okapiHeaders);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Due date should be later than loan date"),
@@ -271,14 +275,13 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotOverrideCheckoutWhenCommentIsNotPresent()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
-
+  public void cannotOverrideCheckoutWhenCommentIsNotPresent() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource steve = usersFixture.steve();
     final UUID checkoutServicePointId = UUID.randomUUID();
+
+    final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
+      "override-check-out-by-barcode-request");
 
     setNotLoanablePolicy();
     Response response = checkOutFixture.attemptOverrideCheckOutByBarcode(
@@ -288,7 +291,8 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
         .at(checkoutServicePointId)
         .on(TEST_LOAN_DATE)
         .withDueDate(TEST_DUE_DATE)
-    );
+        .withOverrideBlocks(new OverrideBlocks(
+          new ItemNotLoanableBlock(TEST_DUE_DATE), null, null)), okapiHeaders);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Override should be performed with the comment specified"),
@@ -296,18 +300,16 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canCreateRecallRequestAfterOverriddenCheckout()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
-
+  public void canCreateRecallRequestAfterOverriddenCheckout() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
     IndividualResource steve = usersFixture.steve();
     IndividualResource charlotte = usersFixture.charlotte();
 
-    setNotLoanablePolicy();
+    final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
+      "override-check-out-by-barcode-request");
 
+    setNotLoanablePolicy();
     checkOutFixture.overrideCheckOutByBarcode(
       new OverrideCheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
@@ -315,7 +317,9 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
         .at(servicePointsFixture.cd1())
         .on(TEST_LOAN_DATE)
         .withDueDate(TEST_DUE_DATE)
-        .withComment(TEST_COMMENT));
+        .withComment(TEST_COMMENT)
+        .withOverrideBlocks(new OverrideBlocks(
+        new ItemNotLoanableBlock(TEST_DUE_DATE), null, null)), okapiHeaders);
 
     final Response placeRequestResponse = requestsFixture.attemptPlace(new RequestBuilder()
       .recall()
@@ -341,4 +345,10 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
       lostItemFeePoliciesFixture.facultyStandard().getId());
   }
 
+
+  private OkapiHeaders buildOkapiHeadersWithPermissions(String permissions) {
+    return getOkapiHeadersFromContext()
+      .withRequestId(permissions)
+      .withOkapiPermissions("[" + "circulation.override-item-not-loanable-block" + "]");
+  }
 }
