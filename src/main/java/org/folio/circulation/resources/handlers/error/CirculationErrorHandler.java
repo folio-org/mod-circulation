@@ -1,4 +1,4 @@
-package org.folio.circulation.resources.error;
+package org.folio.circulation.resources.handlers.error;
 
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.succeeded;
@@ -17,19 +17,20 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor(access = AccessLevel.PACKAGE)
 public abstract class CirculationErrorHandler {
-  private final Map<HttpFailure, CirculationError> errors;
 
-  public abstract <T> Result<T> handleResult(Result<T> result, CirculationError errorType,
+  private final Map<HttpFailure, CirculationErrorType> errors;
+
+  public abstract <T> Result<T> handleResult(Result<T> result, CirculationErrorType errorType,
     Result<T> returnValue);
 
-  public abstract <T> Result<T> handleError(HttpFailure error, CirculationError errorType,
+  public abstract <T> Result<T> handleError(HttpFailure error, CirculationErrorType errorType,
     Result<T> returnValue);
 
-  public abstract <T> Result<T> handleValidationResult(Result<T> result, CirculationError errorType,
-    Result<T> returnValue);
+  public abstract <T> Result<T> handleValidationResult(Result<T> result,
+    CirculationErrorType errorType, Result<T> returnValue);
 
-  public abstract <T> Result<T> handleValidationError(HttpFailure error,CirculationError errorType,
-    Result<T> returnValue);
+  public abstract <T> Result<T> handleValidationError(HttpFailure error,
+    CirculationErrorType errorType, Result<T> returnValue);
 
   public <T> Result<T> failIfHasErrors(T returnValue) {
     return errors.isEmpty()
@@ -37,7 +38,7 @@ public abstract class CirculationErrorHandler {
       : failed(new MultiErrorFailure(errors.keySet()));
   }
 
-  public boolean hasAny(CirculationError... errorTypes) {
+  public boolean hasAny(CirculationErrorType... errorTypes) {
     return Arrays.stream(errorTypes)
       .anyMatch(errors::containsValue);
   }

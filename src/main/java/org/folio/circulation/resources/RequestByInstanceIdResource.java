@@ -54,7 +54,7 @@ import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.RequestLoanValidator;
 import org.folio.circulation.domain.validation.ServicePointPickupLocationValidator;
 import org.folio.circulation.domain.validation.UserManualBlocksValidator;
-import org.folio.circulation.resources.error.FailFastErrorHandler;
+import org.folio.circulation.resources.handlers.error.FailFastErrorHandler;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.storage.ItemByInstanceIdFinder;
 import org.folio.circulation.support.BadRequestFailure;

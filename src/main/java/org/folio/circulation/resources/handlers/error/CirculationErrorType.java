@@ -1,6 +1,6 @@
-package org.folio.circulation.resources.error;
+package org.folio.circulation.resources.handlers.error;
 
-public enum CirculationError {
+public enum CirculationErrorType {
   INVALID_ITEM_ID,
   INVALID_PATRON_GROUP_ID,
   INVALID_STATUS,

@@ -1,4 +1,4 @@
-package org.folio.circulation.resources.error;
+package org.folio.circulation.resources.handlers.error;
 
 import static java.util.Collections.emptyMap;
 import static org.folio.circulation.support.results.Result.failed;
@@ -13,22 +13,22 @@ public class FailFastErrorHandler extends CirculationErrorHandler {
   }
 
   @Override
-  public <T> Result<T> handleResult(Result<T> result, CirculationError errorType, Result<T> returnValue) {
+  public <T> Result<T> handleResult(Result<T> result, CirculationErrorType errorType, Result<T> returnValue) {
     return result;
   }
 
   @Override
-  public <T> Result<T> handleError(HttpFailure error, CirculationError errorType, Result<T> returnValue) {
+  public <T> Result<T> handleError(HttpFailure error, CirculationErrorType errorType, Result<T> returnValue) {
     return failed(error);
   }
 
   @Override
-  public <T> Result<T> handleValidationResult(Result<T> result, CirculationError errorType, Result<T> returnValue) {
+  public <T> Result<T> handleValidationResult(Result<T> result, CirculationErrorType errorType, Result<T> returnValue) {
     return result;
   }
 
   @Override
-  public <T> Result<T> handleValidationError(HttpFailure error, CirculationError errorType, Result<T> returnValue) {
+  public <T> Result<T> handleValidationError(HttpFailure error, CirculationErrorType errorType, Result<T> returnValue) {
     return failed(error);
   }
 

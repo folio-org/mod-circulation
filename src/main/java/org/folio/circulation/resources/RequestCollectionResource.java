@@ -36,8 +36,8 @@ import org.folio.circulation.infrastructure.storage.requests.RequestPolicyReposi
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
-import org.folio.circulation.resources.error.DeferFailureErrorHandler;
-import org.folio.circulation.resources.error.FailFastErrorHandler;
+import org.folio.circulation.resources.handlers.error.DeferFailureErrorHandler;
+import org.folio.circulation.resources.handlers.error.FailFastErrorHandler;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.http.server.JsonHttpResponse;
