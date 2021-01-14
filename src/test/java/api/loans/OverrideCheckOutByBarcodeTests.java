@@ -397,7 +397,7 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotOverrideItemNotLoanableBlockWhenUserDoesNotHaveAppropriatePermissions() {
+  public void cannotOverrideItemNotLoanableBlockWhenUserDoesNotHaveRequiredPermissions() {
     final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
       OVERRIDE_PATRON_BLOCK_PERMISSION);
 
@@ -477,8 +477,26 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
       hasParameter("patron-block", OVERRIDE_PATRON_BLOCK_PERMISSION))));
   }
 
-  private void setNotLoanablePolicy() {
+  @Test
+  public void cannotOverridePatronBlockWhenUserDoesNotHaveRequiredPermissions() {
+    final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
+      OVERRIDE_ITEM_LIMIT_BLOCK_PERMISSION);
 
+    Response response = checkOutFixture.attemptCheckOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(itemsFixture.basedUponNod())
+        .to(usersFixture.steve())
+        .at(UUID.randomUUID())
+        .withOverrideBlocks(new OverrideBlocks(
+          null, new PatronBlock(), null)), okapiHeaders);
+
+    assertThat(response.getStatusCode(), is(422));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Missing override permissions"),
+      hasParameter("patron-block", OVERRIDE_PATRON_BLOCK_PERMISSION))));
+  }
+
+  private void setNotLoanablePolicy() {
     LoanPolicyBuilder notLoanablePolicy = new LoanPolicyBuilder()
       .withName("Not Loanable Policy")
       .withLoanable(false)
