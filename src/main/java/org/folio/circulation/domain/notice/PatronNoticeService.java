@@ -68,7 +68,8 @@ public class PatronNoticeService {
     patronNotice.setContext(context);
 
     return sendNotice(patronNotice)
-      .thenCompose(r -> r.after(v -> publishAuditLogEvent(noticeLogContext)));
+      .thenCompose(v -> publishAuditLogEvent(noticeLogContext))
+      .exceptionally(t -> succeeded(null));
   }
 
   public CompletableFuture<Result<Void>> acceptMultipleNoticeEvent(

@@ -304,6 +304,9 @@ public class LoanScheduledNoticeHandler {
     if (loan.getItem().isClaimedReturned()) {
       logMessages.add(String.format("Item %s was claimed returned", loan.getItemId()));
     }
+    if (loan.isRenewed()) {
+      logMessages.add(String.format("Item %s was renewed", loan.getItemId()));
+    }
     if (loan.isClosed()) {
       logMessages.add(String.format("Loan %s is closed", loan.getId()));
     }
