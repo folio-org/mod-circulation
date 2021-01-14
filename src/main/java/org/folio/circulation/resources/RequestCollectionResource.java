@@ -5,6 +5,7 @@ import static org.folio.circulation.support.ValidationErrorFailure.singleValidat
 import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQuery;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.results.MappingFunctions.toFixedValue;
+import static org.folio.circulation.support.results.MappingFunctions.when;
 
 import org.folio.circulation.domain.CreateRequestRepositories;
 import org.folio.circulation.domain.CreateRequestService;
@@ -152,9 +153,8 @@ public class RequestCollectionResource extends CollectionResource {
     final var requestScheduledNoticeService = RequestScheduledNoticeService.using(clients);
 
     requestFromRepresentationService.getRequestFrom(representation)
-      .thenComposeAsync(r -> r.afterWhen(requestRepository::exists,
-        updateRequestService::replaceRequest,
-        createRequestService::createRequest))
+      .thenComposeAsync(r -> r.after(when(requestRepository::exists,
+        updateRequestService::replaceRequest, createRequestService::createRequest)))
       .thenComposeAsync(r -> r.after(
         records -> eventPublisher.publishDueDateChangedEvent(records, clients)))
       .thenApply(r -> r.next(requestScheduledNoticeService::rescheduleRequestNotices))
