@@ -20,6 +20,7 @@ import org.folio.circulation.support.http.server.ValidationError;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeDiagnosingMatcher;
+import org.hamcrest.core.Is;
 import org.hamcrest.core.IsCollectionContaining;
 
 import io.vertx.core.json.JsonObject;
@@ -137,6 +138,24 @@ public class ValidationErrorMatchers {
         matcher.describeMismatch(error, description);
 
         return matcher.matches(error);
+      }
+    };
+  }
+
+  public static TypeSafeDiagnosingMatcher<JsonObject> hasErrors(int numberOfErrors) {
+    return new TypeSafeDiagnosingMatcher<>() {
+      @Override
+      public void describeTo(Description description) {
+        description.appendText("Errors array of size ").appendValue(numberOfErrors);
+      }
+
+      @Override
+      protected boolean matchesSafely(JsonObject representation, Description description) {
+        int actualNumberOfErrors = representation.getJsonArray("errors").size();
+        Matcher<Integer> sizeMatcher = Is.is(actualNumberOfErrors);
+        sizeMatcher.describeMismatch(actualNumberOfErrors, description);
+
+        return sizeMatcher.matches(numberOfErrors);
       }
     };
   }
