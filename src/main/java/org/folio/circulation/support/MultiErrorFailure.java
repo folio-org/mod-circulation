@@ -3,8 +3,8 @@ package org.folio.circulation.support;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.folio.circulation.support.http.server.ValidationError;
 
 import io.vertx.core.http.HttpServerResponse;
@@ -38,8 +38,9 @@ public class MultiErrorFailure implements HttpFailure {
 
   @Override
   public String toString() {
-    return new ToStringBuilder(this)
-      .append("errors", errors)
-      .toString();
+    return String.format("Multiple errors occurred:%n%s",
+      errors.stream()
+        .map(HttpFailure::toString)
+        .collect(Collectors.joining(System.lineSeparator())));
   }
 }
