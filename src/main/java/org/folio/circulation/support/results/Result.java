@@ -142,32 +142,6 @@ public interface Result<T> {
     return combineAfter(u -> nextAction.get(), combiner);
   }
 
-
-  /**
-   * Allows branching between two paths based upon the outcome of a condition
-   *
-   * Executes the whenTrue function when condition evaluates to true
-   * Executes the whenFalse function when condition evaluates to false
-   * Executes neither if the condition evaluation fails
-   * Forwards on failure if previous result failed
-   *
-   * @param conditionFunction on which to branch upon
-   * @param whenTrue executed when condition evaluates to true
-   * @param whenFalse executed when condition evaluates to false
-   * @return Result of whenTrue or whenFalse, unless previous result failed
-   */
-  default <R> CompletableFuture<Result<R>> afterWhen(
-    Function<T, CompletableFuture<Result<Boolean>>> conditionFunction,
-    Function<T, CompletableFuture<Result<R>>> whenTrue,
-    Function<T, CompletableFuture<Result<R>>> whenFalse) {
-
-    return after(value ->
-      conditionFunction.apply(value)
-        .thenComposeAsync(r -> r.after(condition -> isTrue(condition)
-          ? whenTrue.apply(value)
-          : whenFalse.apply(value))));
-  }
-
   /**
    * Fail a result when a condition evaluates to true
    *
@@ -184,9 +158,9 @@ public interface Result<T> {
     Function<T, CompletableFuture<Result<Boolean>>> condition,
     Function<T, HttpFailure> failure) {
 
-    return afterWhen(condition,
+    return after(MappingFunctions.when(condition,
       value -> completedFuture(failed(failure.apply(value))),
-      value -> completedFuture(succeeded(value)));
+      value -> completedFuture(succeeded(value))));
   }
 
   /**
@@ -314,19 +288,6 @@ public interface Result<T> {
    */
   default <U> Result<U> map(Function<T, U> map) {
     return next(value -> succeeded(map.apply(value)));
-  }
-
-  /**
-   * Map a successful result to a new fixed value
-   *
-   * Responds with a new result with the supplied new value
-   * unless current result is failed or the mapping fails e.g. throws an exception
-   *
-   * @param value function to apply to value of result
-   * @return success when result succeeded and map is applied successfully, failure otherwise
-   */
-  default <U> Result<U> toFixedValue(Supplier<U> value) {
-    return map(it -> value.get());
   }
 
   /**

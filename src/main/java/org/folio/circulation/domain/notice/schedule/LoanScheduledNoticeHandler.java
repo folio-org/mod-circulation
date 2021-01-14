@@ -13,6 +13,7 @@ import static org.folio.circulation.domain.notice.schedule.LoanScheduledNoticeHa
 import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.AGED_TO_LOST;
 import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.DUE_DATE;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
+import static org.folio.circulation.support.results.MappingFunctions.when;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
@@ -89,10 +90,8 @@ public class LoanScheduledNoticeHandler {
 
   private CompletableFuture<Result<ScheduledNotice>> handleNotice(ScheduledNotice notice) {
     return collectRequiredData(notice)
-      .thenCompose(r -> r.afterWhen(
-        records -> isNoticeIrrelevant(notice, records),
-        records -> handleIrrelevantNotice(notice),
-        records -> handleRelevantNotice(notice, records)));
+      .thenCompose(r -> r.after(when(records -> isNoticeIrrelevant(notice, records),
+        records -> handleIrrelevantNotice(notice), records -> handleRelevantNotice(notice, records))));
   }
 
   CompletableFuture<Result<LoanAndRelatedRecords>> collectRequiredData(ScheduledNotice notice) {

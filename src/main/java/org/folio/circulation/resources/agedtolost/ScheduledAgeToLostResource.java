@@ -1,6 +1,7 @@
 package org.folio.circulation.resources.agedtolost;
 
 import static org.folio.circulation.support.Clients.create;
+import static org.folio.circulation.support.results.MappingFunctions.toFixedValue;
 
 import org.folio.circulation.resources.Resource;
 import org.folio.circulation.services.agedtolost.MarkOverdueLoansAsAgedLostService;
@@ -29,7 +30,7 @@ public class ScheduledAgeToLostResource extends Resource {
       new MarkOverdueLoansAsAgedLostService(create(context, client));
 
     ageToLostService.processAgeToLost()
-      .thenApply(r -> r.toFixedValue(NoContentResponse::noContent))
+      .thenApply(r -> r.map(toFixedValue(NoContentResponse::noContent)))
       .thenAccept(context::writeResultToHttpResponse);
   }
 }

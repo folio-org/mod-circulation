@@ -70,6 +70,7 @@ public class MarkOverdueLoansAsAgedLostService {
     return lostItemPolicyRepository.findLostItemPoliciesForLoans(loans)
       .thenApply(this::getLoansThatHaveToBeAgedToLost)
       .thenCompose(loansResult -> itemRepository.fetchItemsFor(loansResult, Loan::withItem))
+      .thenApply(this::excludeLoansThatHaveNoItem)
       .thenApply(this::markLoansAsAgedToLost)
       .thenCompose(this::updateLoansAndItemsInStorage)
       .thenCompose(this::publishAgedToLostEvent)
@@ -150,5 +151,18 @@ public class MarkOverdueLoansAsAgedLostService {
   private CompletableFuture<Result<Void>> scheduleAgedToLostNotices(Result<List<Loan>> result) {
     return result.after(userRepository::findUsersForLoans)
       .thenApply(r -> r.next(loanScheduledNoticeService::scheduleAgedToLostNotices));
+  }
+
+  private Result<MultipleRecords<Loan>> excludeLoansThatHaveNoItem(
+    Result<MultipleRecords<Loan>> recordsResult) {
+
+    return recordsResult.map(records -> records
+      .filter(loan -> {
+        if (loan.getItem() == null || loan.getItem().isNotFound()) {
+          log.warn("No item [{}] exists for loan [{}]", loan.getItemId(), loan.getId());
+        }
+
+        return loan.getItem() != null && loan.getItem().isFound();
+      }));
   }
 }
