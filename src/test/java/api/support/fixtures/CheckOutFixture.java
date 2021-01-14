@@ -56,6 +56,13 @@ public class CheckOutFixture {
       "check-out-by-barcode-request"));
   }
 
+  public CheckOutResource checkOutByBarcode(CheckOutByBarcodeRequestBuilder builder,
+    OkapiHeaders headers) {
+
+    return new CheckOutResource(restAssuredClient.post(builder.create(),
+      checkOutByBarcodeUrl(), 201, headers));
+  }
+
   public Response attemptCheckOutByBarcode(IndividualResource item, IndividualResource to) {
     return attemptCheckOutByBarcode(new CheckOutByBarcodeRequestBuilder()
       .forItem(item)
