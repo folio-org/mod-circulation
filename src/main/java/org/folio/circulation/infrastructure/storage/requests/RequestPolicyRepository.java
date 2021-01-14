@@ -69,11 +69,6 @@ public class RequestPolicyRepository {
         "Unable to find matching request rules for unknown item"));
     }
 
-    if (user == null) {
-      return completedFuture(failedDueToServerError(
-        "Unable to find matching request rules for unknown user"));
-    }
-
     String materialTypeId = item.getMaterialTypeId();
     String patronGroupId = user.getPatronGroupId();
     String loanTypeId = item.determineLoanTypeForItem();
