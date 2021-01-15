@@ -333,8 +333,8 @@ RequestsAPICreationTests extends APITests {
       .withRequesterId(patronId));
 
     assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
-    assertThat(postResponse.getJson(), hasErrorWith(allOf(
-      hasMessage("Item does not exist"))));
+    assertThat(postResponse.getJson(), hasErrorWith(
+      hasMessage("Item does not exist")));
   }
 
   @Test
@@ -350,8 +350,8 @@ RequestsAPICreationTests extends APITests {
 
     assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(postResponse.getJson(), hasErrors(1));
-    assertThat(postResponse.getJson(), hasErrorWith(allOf(
-      hasMessage("Cannot create a request with no item ID"))));
+    assertThat(postResponse.getJson(), hasErrorWith(
+      hasMessage("Cannot create a request with no item ID")));
   }
 
   @Test
@@ -368,8 +368,8 @@ RequestsAPICreationTests extends APITests {
 
     assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(postResponse.getJson(), hasErrors(1));
-    assertThat(postResponse.getJson(), hasErrorWith(allOf(
-      hasMessage("Recall requests are not allowed for this patron and item combination"))));
+    assertThat(postResponse.getJson(), hasErrorWith(
+      hasMessage("Recall requests are not allowed for this patron and item combination")));
   }
 
   @Test
@@ -386,8 +386,8 @@ RequestsAPICreationTests extends APITests {
 
     assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(postResponse.getJson(), hasErrors(1));
-    assertThat(postResponse.getJson(), hasErrorWith(allOf(
-      hasMessage("Hold requests are not allowed for this patron and item combination"))));
+    assertThat(postResponse.getJson(), hasErrorWith(
+      hasMessage("Hold requests are not allowed for this patron and item combination")));
   }
 
   @Test
@@ -591,8 +591,8 @@ RequestsAPICreationTests extends APITests {
 
     assertThat(recallResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(recallResponse.getJson(), hasErrors(1));
-    assertThat(recallResponse.getJson(), hasErrorWith(allOf(
-      hasMessage("A valid patron group is required. PatronGroup ID is null."))));
+    assertThat(recallResponse.getJson(), hasErrorWith(
+      hasMessage("A valid patron group is required. PatronGroup ID is null.")));
   }
 
   @Test
@@ -616,8 +616,8 @@ RequestsAPICreationTests extends APITests {
 
     assertThat(recallResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(recallResponse.getJson(), hasErrors(1));
-    assertThat(recallResponse.getJson(), hasErrorWith(allOf(
-      hasMessage("A valid user is required. User is null."))));
+    assertThat(recallResponse.getJson(), hasErrorWith(
+      hasMessage("A valid user is required. User is null.")));
   }
 
   @Test
@@ -873,8 +873,8 @@ RequestsAPICreationTests extends APITests {
 
     assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(postResponse.getJson(), hasErrors(1));
-    assertThat(postResponse.getJson(), hasErrorWith(allOf(
-      hasMessage("Hold Shelf Fulfillment Requests require a Pickup Service Point"))));
+    assertThat(postResponse.getJson(), hasErrorWith(
+      hasMessage("Hold Shelf Fulfillment Requests require a Pickup Service Point")));
   }
 
   @Test
@@ -1760,8 +1760,8 @@ RequestsAPICreationTests extends APITests {
 
     assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(postResponse.getJson(), hasErrors(1));
-    assertThat(postResponse.getJson(), hasErrorWith(allOf(
-      hasMessage("Patron blocked from requesting"))));
+    assertThat(postResponse.getJson(), hasErrorWith(
+      hasMessage("Patron blocked from requesting")));
   }
 
   @Test
@@ -1800,10 +1800,10 @@ RequestsAPICreationTests extends APITests {
 
     assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(response.getJson(), hasErrors(2));
-    assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage(MAX_NUMBER_OF_ITEMS_CHARGED_OUT_MESSAGE))));
-    assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage(MAX_OUTSTANDING_FEE_FINE_BALANCE_MESSAGE))));
+    assertThat(response.getJson(), hasErrorWith(
+      hasMessage(MAX_NUMBER_OF_ITEMS_CHARGED_OUT_MESSAGE)));
+    assertThat(response.getJson(), hasErrorWith(
+      hasMessage(MAX_OUTSTANDING_FEE_FINE_BALANCE_MESSAGE)));
   }
 
   @Test
@@ -1912,8 +1912,8 @@ RequestsAPICreationTests extends APITests {
       hasMessage("A valid user is required. User is null."),
       hasNullParameter("userId"))));
 
-    assertThat(responseJson, hasErrorWith(allOf(
-      hasMessage("Hold Shelf Fulfillment Requests require a Pickup Service Point"))));
+    assertThat(responseJson, hasErrorWith(
+      hasMessage("Hold Shelf Fulfillment Requests require a Pickup Service Point")));
   }
 
   @Test
