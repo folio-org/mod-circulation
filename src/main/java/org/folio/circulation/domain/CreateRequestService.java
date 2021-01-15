@@ -20,7 +20,9 @@ import static org.folio.circulation.resources.handlers.error.CirculationErrorTyp
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_BLOCKED_MANUALLY;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_INACTIVE;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_VALIDATION_FAILED;
+import static org.folio.circulation.support.results.MappingFunctions.when;
 import static org.folio.circulation.support.results.Result.ofAsync;
+import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
@@ -64,9 +66,11 @@ public class CreateRequestService {
 
     return ofAsync(() -> requestAndRelatedRecords)
       .thenApply(this::checkRequester)
-      .thenComposeAsync(this::checkItem)
       .thenComposeAsync(this::checkBlocks)
-      .thenComposeAsync(this::checkRequestPolicy)
+      .thenComposeAsync(r -> r.after(when(
+        this::shouldCheckItem, this::checkItem, this::doNothing)))
+      .thenComposeAsync(r -> r.after(when(
+        this::shouldCheckRequestPolicy, this::checkRequestPolicy, this::doNothing)))
       .thenComposeAsync(this::fetchTimeZoneConfiguration)
       .thenApply(r -> r.next(errorHandler::failIfHasErrors))
       .thenComposeAsync(r -> r.after(updateUponRequest.updateItem::onRequestCreateOrUpdate))
@@ -92,11 +96,9 @@ public class CreateRequestService {
   }
 
   private CompletableFuture<Result<RequestAndRelatedRecords>> checkItem(
-    Result<RequestAndRelatedRecords> result) {
+    RequestAndRelatedRecords records) {
 
-    if (errorHandler.hasAny(INVALID_ITEM_ID)) {
-      return completedFuture(result);
-    }
+    final Result<RequestAndRelatedRecords> result = succeeded(records);
 
     return result.next(RequestServiceUtility::refuseWhenItemDoesNotExist)
       .mapFailure(err -> errorHandler.handleValidationError(err, ITEM_DOES_NOT_EXIST, result))
@@ -125,18 +127,29 @@ public class CreateRequestService {
   }
 
   private CompletableFuture<Result<RequestAndRelatedRecords>> checkRequestPolicy(
-    Result<RequestAndRelatedRecords> result) {
+    RequestAndRelatedRecords records) {
 
-    if (errorHandler.hasAny(INVALID_ITEM_ID, ITEM_DOES_NOT_EXIST,
-      USER_DOES_NOT_EXIST, INVALID_PATRON_GROUP_ID)) {
-
-      return completedFuture(result);
-    }
+    final Result<RequestAndRelatedRecords> result = succeeded(records);
 
     return result.after(repositories.getRequestPolicyRepository()::lookupRequestPolicy)
       .thenApply(r -> r.next(RequestServiceUtility::refuseWhenRequestCannotBeFulfilled)
         .mapFailure(err -> errorHandler.handleValidationError(err, REQUESTING_DISALLOWED_BY_POLICY, r)))
       .thenApply(r -> errorHandler.handleResult(r, FAILED_TO_FETCH_REQUEST_POLICY, result));
+  }
+
+  private CompletableFuture<Result<Boolean>> shouldCheckItem(RequestAndRelatedRecords records) {
+    return ofAsync(() -> errorHandler.hasNone(INVALID_ITEM_ID));
+  }
+
+  private CompletableFuture<Result<Boolean>> shouldCheckRequestPolicy(RequestAndRelatedRecords records) {
+    return ofAsync(() -> errorHandler.hasNone(INVALID_ITEM_ID, ITEM_DOES_NOT_EXIST,
+      USER_DOES_NOT_EXIST, INVALID_PATRON_GROUP_ID));
+  }
+
+  private CompletableFuture<Result<RequestAndRelatedRecords>> doNothing(
+    RequestAndRelatedRecords records) {
+
+    return ofAsync(() -> records);
   }
 
   private CompletableFuture<Result<RequestAndRelatedRecords>> fetchTimeZoneConfiguration(

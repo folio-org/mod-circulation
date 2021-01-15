@@ -14,6 +14,7 @@ import static org.folio.circulation.resources.handlers.error.CirculationErrorTyp
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_PROXY_RELATIONSHIP;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_STATUS;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
+import static org.folio.circulation.support.results.MappingFunctions.when;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.results.Result.ofAsync;
@@ -74,7 +75,8 @@ class RequestFromRepresentationService {
       .thenApply(r -> r.map(this::removeRelatedRecordInformation))
       .thenApply(r -> r.map(Request::from))
       .thenComposeAsync(this::fetchItem)
-      .thenComposeAsync(this::fetchLoan)
+      .thenComposeAsync(r -> r.after(when(
+        this::shouldFetchLoan, this::fetchLoan, request -> ofAsync(() -> request))))
       .thenComposeAsync(r -> r.combineAfter(userRepository::getUser, Request::withRequester)
         .thenApply(res -> errorHandler.handleResult(res, FAILED_TO_FETCH_USER, r)))
       .thenComposeAsync(r -> r.combineAfter(userRepository::getProxyUser, Request::withProxy)
@@ -100,14 +102,15 @@ class RequestFromRepresentationService {
       .thenApply(r -> errorHandler.handleResult(r, FAILED_TO_FETCH_ITEM, result));
   }
 
-  private CompletableFuture<Result<Request>> fetchLoan(Result<Request> result) {
-    if (errorHandler.hasAny(INVALID_ITEM_ID, FAILED_TO_FETCH_ITEM)) {
-      return completedFuture(result);
-    }
+  private CompletableFuture<Result<Boolean>> shouldFetchLoan(Request request) {
+    return ofAsync(() -> errorHandler.hasNone(INVALID_ITEM_ID, FAILED_TO_FETCH_ITEM));
+  }
 
-    return result.combineAfter(loanRepository::findOpenLoanForRequest, Request::withLoan)
+  private CompletableFuture<Result<Request>> fetchLoan(Request request) {
+    return succeeded(request)
+      .combineAfter(loanRepository::findOpenLoanForRequest, Request::withLoan)
       .thenComposeAsync(r -> r.combineAfter(this::getUserForExistingLoan, this::addUserToLoan))
-      .thenApply(r -> errorHandler.handleResult(r, FAILED_TO_FETCH_LOAN, result));
+      .thenApply(r -> errorHandler.handleResult(r, FAILED_TO_FETCH_LOAN, succeeded(request)));
   }
 
   private CompletableFuture<Result<User>> getUserForExistingLoan(Request request) {

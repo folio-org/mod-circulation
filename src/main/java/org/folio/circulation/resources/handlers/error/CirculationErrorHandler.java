@@ -43,4 +43,9 @@ public abstract class CirculationErrorHandler {
       .anyMatch(errors::containsValue);
   }
 
+  public boolean hasNone(CirculationErrorType... errorTypes) {
+    return Arrays.stream(errorTypes)
+      .noneMatch(errors::containsValue);
+  }
+
 }
