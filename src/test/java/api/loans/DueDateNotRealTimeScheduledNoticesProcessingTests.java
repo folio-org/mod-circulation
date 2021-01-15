@@ -500,6 +500,42 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
     scheduledNotRealTimeNoticesShouldBeSentAtMidnightInTenantsTimeZone(-1, 1, 0);
   }
 
+  @Test
+  public void scheduledNotRealTimeNoticesShouldBeSentOnlyOncePerDayIfPubSubReturnsError() {
+    JsonObject afterDueDateNoticeConfig = new NoticeConfigurationBuilder()
+      .withTemplateId(TEMPLATE_ID)
+      .withDueDateEvent()
+      .withAfterTiming(Period.days(1))
+      .recurring(Period.days(1))
+      .sendInRealTime(false)
+      .create();
+
+    NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
+      .withName("Policy with due date notices")
+      .withLoanNotices(Collections.singletonList(afterDueDateNoticeConfig));
+    use(noticePolicy);
+
+    DateTime loanDate = DateTime.now().minusMonths(1);
+
+    IndividualResource steve = usersFixture.steve();
+    ItemResource dunkirk = itemsFixture.basedUponDunkirk();
+    checkOutFixture.checkOutByBarcode(dunkirk, steve, loanDate);
+
+    waitAtMost(1, SECONDS)
+      .until(scheduledNoticesClient::getAll, hasSize(1));
+    assertThat(patronNoticesClient.getAll(), empty());
+
+    FakePubSub.setFailPublishingWithBadRequestError(true);
+
+    scheduledNoticeProcessingClient.runDueDateNotRealTimeNoticesProcessing();
+    scheduledNoticeProcessingClient.runDueDateNotRealTimeNoticesProcessing();
+
+    assertThat(scheduledNoticesClient.getAll(), hasSize(1));
+    assertThat(patronNoticesClient.getAll(), hasSize(1));
+
+    FakePubSub.setFailPublishingWithBadRequestError(false);
+  }
+
   private void scheduledNotRealTimeNoticesShouldBeSentAtMidnightInTenantsTimeZone(
     int plusMinutes, int scheduledNoticesNumber, int sentNoticesNumber) {
 
