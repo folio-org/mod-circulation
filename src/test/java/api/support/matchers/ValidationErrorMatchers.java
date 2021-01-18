@@ -1,5 +1,6 @@
 package api.support.matchers;
 
+import static java.util.Optional.ofNullable;
 import static org.folio.circulation.support.StreamToListMapper.toList;
 import static org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher.toStream;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
@@ -23,6 +24,7 @@ import org.hamcrest.TypeSafeDiagnosingMatcher;
 import org.hamcrest.core.Is;
 import org.hamcrest.core.IsCollectionContaining;
 
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class ValidationErrorMatchers {
@@ -151,7 +153,10 @@ public class ValidationErrorMatchers {
 
       @Override
       protected boolean matchesSafely(JsonObject representation, Description description) {
-        int actualNumberOfErrors = representation.getJsonArray("errors").size();
+        int actualNumberOfErrors = ofNullable(representation.getJsonArray("errors"))
+          .map(JsonArray::size)
+          .orElse(0);
+
         Matcher<Integer> sizeMatcher = Is.is(actualNumberOfErrors);
         sizeMatcher.describeMismatch(actualNumberOfErrors, description);
 

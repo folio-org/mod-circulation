@@ -20,14 +20,14 @@ public class DeferFailureErrorHandler extends CirculationErrorHandler {
 
   @Override
   public <T> Result<T> handleResult(Result<T> result, CirculationErrorType errorType,
-    Result<T> returnValue) {
+    Result<T> otherwise) {
 
-    return result.mapFailure(error -> handleError(error, errorType, returnValue));
+    return result.mapFailure(error -> handleError(error, errorType, otherwise));
   }
 
   @Override
   public <T> Result<T> handleError(HttpFailure error, CirculationErrorType errorType,
-    Result<T> returnValue) {
+    Result<T> otherwise) {
 
     if (error != null) {
       getErrors().put(error, errorType);
@@ -35,22 +35,22 @@ public class DeferFailureErrorHandler extends CirculationErrorHandler {
       log.warn("HttpFailure object for error of type {} is null, error is ignored", errorType);
     }
 
-    return returnValue;
+    return otherwise;
   }
 
   @Override
   public <T> Result<T> handleValidationResult(Result<T> result, CirculationErrorType errorType,
-    Result<T> returnValue) {
+    Result<T> otherwise) {
 
-    return result.mapFailure(error -> handleValidationError(error, errorType, returnValue));
+    return result.mapFailure(error -> handleValidationError(error, errorType, otherwise));
   }
 
   @Override
   public <T> Result<T> handleValidationError(HttpFailure error, CirculationErrorType errorType,
-    Result<T> returnValue) {
+    Result<T> otherwise) {
 
     return error instanceof ValidationErrorFailure
-      ? handleError(error, errorType, returnValue)
+      ? handleError(error, errorType, otherwise)
       : failed(error);
   }
 

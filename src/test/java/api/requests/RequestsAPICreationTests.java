@@ -1891,7 +1891,7 @@ RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void shouldReturnMultipleErrorsWhenIdsAreMissingInRequest() {
+  public void shouldNotCreateRequestWhenItemRequesterAndPickupServicePointAreNotProvided() {
     Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
       .recall()
       .withItemId(null)

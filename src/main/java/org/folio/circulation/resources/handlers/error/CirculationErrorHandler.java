@@ -21,20 +21,20 @@ public abstract class CirculationErrorHandler {
   private final Map<HttpFailure, CirculationErrorType> errors;
 
   public abstract <T> Result<T> handleResult(Result<T> result, CirculationErrorType errorType,
-    Result<T> returnValue);
+    Result<T> otherwise);
 
   public abstract <T> Result<T> handleError(HttpFailure error, CirculationErrorType errorType,
-    Result<T> returnValue);
+    Result<T> otherwise);
 
   public abstract <T> Result<T> handleValidationResult(Result<T> result,
-    CirculationErrorType errorType, Result<T> returnValue);
+    CirculationErrorType errorType, Result<T> otherwise);
 
   public abstract <T> Result<T> handleValidationError(HttpFailure error,
-    CirculationErrorType errorType, Result<T> returnValue);
+    CirculationErrorType errorType, Result<T> otherwise);
 
-  public <T> Result<T> failIfHasErrors(T returnValue) {
+  public <T> Result<T> failIfHasErrors(T otherwise) {
     return errors.isEmpty()
-      ? succeeded(returnValue)
+      ? succeeded(otherwise)
       : failed(new MultiErrorFailure(errors.keySet()));
   }
 

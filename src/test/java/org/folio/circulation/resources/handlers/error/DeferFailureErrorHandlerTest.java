@@ -177,11 +177,11 @@ public class DeferFailureErrorHandlerTest {
 
   @Test
   public void failIfHasErrorsReturnsPassedValueWhenHasNoErrors() {
-    Object returnValue = new Object();
-    Result<Object> output = handler.failIfHasErrors(returnValue);
+    Object otherwise = new Object();
+    Result<Object> output = handler.failIfHasErrors(otherwise);
 
     assertTrue(output.succeeded());
-    assertSame(returnValue, output.value());
+    assertSame(otherwise, output.value());
   }
 
   @Test

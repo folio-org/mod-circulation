@@ -1,6 +1,5 @@
 package org.folio.circulation.domain;
 
-import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_CREATED;
 import static org.folio.circulation.domain.representations.logs.RequestUpdateLogEventMapper.mapToRequestLogEventJson;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.AUTOMATED_BLOCKS_VALIDATION_FAILED;
