@@ -333,8 +333,7 @@ RequestsAPICreationTests extends APITests {
       .withRequesterId(patronId));
 
     assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
-    assertThat(postResponse.getJson(), hasErrorWith(
-      hasMessage("Item does not exist")));
+    assertThat(postResponse.getJson(), hasErrorWith(hasMessage("Item does not exist")));
   }
 
   @Test
@@ -1917,7 +1916,7 @@ RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void shouldReturnMultipleErrorsWhenRequestContainsNonExistentIds() {
+  public void shouldNotCreateRequestWhenItemRequesterAndPickupServicePointCannotBeFound() {
     final UUID itemId = UUID.randomUUID();
     final UUID userId = UUID.randomUUID();
     final UUID pickupServicePointId = UUID.randomUUID();
