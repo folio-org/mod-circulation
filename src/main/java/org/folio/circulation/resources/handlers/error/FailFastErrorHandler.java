@@ -7,7 +7,6 @@ import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.results.Result;
 
 public class FailFastErrorHandler extends CirculationErrorHandler {
-
   public FailFastErrorHandler() {
     super(emptyMap()); // immutable empty map to disallow adding errors
   }
@@ -39,5 +38,4 @@ public class FailFastErrorHandler extends CirculationErrorHandler {
 
     return failed(error);
   }
-
 }

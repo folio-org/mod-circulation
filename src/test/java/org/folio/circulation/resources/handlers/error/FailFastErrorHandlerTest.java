@@ -11,7 +11,6 @@ import org.folio.circulation.support.results.Result;
 import org.junit.Test;
 
 public class FailFastErrorHandlerTest {
-
   private static final HttpFailure TEST_ERROR = new ServerErrorFailure("test error");
   private static final Result<Object> FAILED_RESULT = failed(TEST_ERROR);
   private static final Result<Object> SUCCEEDED_RESULT = succeeded(new Object());
@@ -146,5 +145,4 @@ public class FailFastErrorHandlerTest {
   public void attemptToAddErrorToMapThrowsException() {
     handler.getErrors().put(TEST_ERROR, INVALID_STATUS);
   }
-
 }

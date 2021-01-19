@@ -17,7 +17,6 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor(access = AccessLevel.PACKAGE)
 public abstract class CirculationErrorHandler {
-
   private final Map<HttpFailure, CirculationErrorType> errors;
 
   public abstract <T> Result<T> handleResult(Result<T> result, CirculationErrorType errorType,
@@ -47,5 +46,4 @@ public abstract class CirculationErrorHandler {
     return Arrays.stream(errorTypes)
       .noneMatch(errors::containsValue);
   }
-
 }
