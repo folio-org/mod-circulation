@@ -471,7 +471,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
 
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("Nod (Book) (Barcode:10304054) has the item status Intellectual item and cannot be checked in"),
+      hasMessage("Nod (Book) (Barcode: 10304054) has the item status Intellectual item and cannot be checked in"),
       hasItemBarcodeParameter(nod))));
 
     final var fetchedNod = itemsFixture.getById(nod.getId());
