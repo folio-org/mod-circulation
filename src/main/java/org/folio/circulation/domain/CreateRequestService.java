@@ -6,7 +6,7 @@ import static org.folio.circulation.resources.handlers.error.CirculationErrorTyp
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_REQUEST_POLICY;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_TIME_ZONE_CONFIG;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_ITEM_ID;
-import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_PATRON_GROUP_ID;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_USER_OR_PATRON_GROUP_ID;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ITEM_ALREADY_LOANED_TO_SAME_USER;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ITEM_ALREADY_REQUESTED_BY_SAME_USER;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ITEM_DOES_NOT_EXIST;
@@ -14,7 +14,6 @@ import static org.folio.circulation.resources.handlers.error.CirculationErrorTyp
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.MANUAL_BLOCKS_VALIDATION_FAILED;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.REQUESTING_DISALLOWED_BY_POLICY;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.REQUESTING_DISALLOWED;
-import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_DOES_NOT_EXIST;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_BLOCKED_AUTOMATICALLY;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_BLOCKED_MANUALLY;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_INACTIVE;
@@ -83,10 +82,8 @@ public class CreateRequestService {
   }
 
   private Result<RequestAndRelatedRecords> checkRequester(Result<RequestAndRelatedRecords> result) {
-    return result.next(RequestServiceUtility::refuseWhenInvalidUser)
-      .mapFailure(err -> errorHandler.handleValidationError(err, USER_DOES_NOT_EXIST, result))
-      .next(RequestServiceUtility::refuseWhenInvalidPatronGroupId)
-      .mapFailure(err -> errorHandler.handleValidationError(err, INVALID_PATRON_GROUP_ID, result))
+    return result.next(RequestServiceUtility::refuseWhenInvalidUserAndPatronGroup)
+      .mapFailure(err -> errorHandler.handleValidationError(err, INVALID_USER_OR_PATRON_GROUP_ID, result))
       .next(RequestServiceUtility::refuseWhenUserIsInactive)
       .mapFailure(err -> errorHandler.handleValidationError(err, USER_IS_INACTIVE, result))
       .next(RequestServiceUtility::refuseWhenUserHasAlreadyRequestedItem)
@@ -142,7 +139,7 @@ public class CreateRequestService {
 
   private CompletableFuture<Result<Boolean>> shouldCheckRequestPolicy(RequestAndRelatedRecords records) {
     return ofAsync(() -> errorHandler.hasNone(INVALID_ITEM_ID, ITEM_DOES_NOT_EXIST,
-      USER_DOES_NOT_EXIST, INVALID_PATRON_GROUP_ID));
+      INVALID_USER_OR_PATRON_GROUP_ID));
   }
 
   private CompletableFuture<Result<RequestAndRelatedRecords>> doNothing(
