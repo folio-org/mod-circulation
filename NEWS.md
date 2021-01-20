@@ -1,3 +1,7 @@
+## 19.2.9 20202-01-20
+
+* Only sends overdue notices once (CIRC-1070)
+
 ## 19.2.8 2020-11-25
 
 * Add missing permission in timer call for scheduled notice processing (CIRC-1023).
