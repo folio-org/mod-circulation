@@ -31,7 +31,6 @@ import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.OverrideCheckOutByBarcodeRequestBuilder;
 import api.support.builders.RequestBuilder;
-import api.support.http.CheckOutResource;
 import api.support.http.IndividualResource;
 import api.support.http.OkapiHeaders;
 import io.vertx.core.json.JsonArray;

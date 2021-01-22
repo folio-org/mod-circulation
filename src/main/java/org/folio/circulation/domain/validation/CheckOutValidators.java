@@ -6,6 +6,9 @@ import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequ
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.PROXY_USER_BARCODE;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.USER_BARCODE;
+import static org.folio.circulation.domain.validation.overriding.OverridePermissions.OVERRIDE_ITEM_LIMIT_BLOCK;
+import static org.folio.circulation.domain.validation.overriding.OverridePermissions.OVERRIDE_ITEM_NOT_LOANABLE_BLOCK;
+import static org.folio.circulation.domain.validation.overriding.OverridePermissions.OVERRIDE_PATRON_BLOCK;
 import static org.folio.circulation.resources.error.CirculationError.FAILED_TO_FETCH_ITEM;
 import static org.folio.circulation.resources.error.CirculationError.FAILED_TO_FETCH_LOAN_POLICY;
 import static org.folio.circulation.resources.error.CirculationError.FAILED_TO_FETCH_PROXY_USER;
@@ -19,16 +22,21 @@ import static org.folio.circulation.resources.error.CirculationError.ITEM_REQUES
 import static org.folio.circulation.resources.error.CirculationError.PROXY_USER_EQUALS_TO_USER;
 import static org.folio.circulation.resources.error.CirculationError.SERVICE_POINT_IS_NOT_PRESENT;
 import static org.folio.circulation.resources.error.CirculationError.USER_IS_BLOCKED_AUTOMATICALLY;
+import static org.folio.circulation.support.ValidationErrorFailure.singleLoanPolicyValidationError;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
-import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.representations.CheckOutByBarcodeRequest;
+import org.folio.circulation.domain.validation.overriding.OverrideAutomatedPatronBlocksValidator;
+import org.folio.circulation.domain.validation.overriding.OverrideItemLimitValidator;
+import org.folio.circulation.domain.validation.overriding.OverrideLoanPolicyValidator;
+import org.folio.circulation.domain.validation.overriding.OverrideValidation;
 import org.folio.circulation.infrastructure.storage.AutomatedPatronBlocksRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.resources.CheckOutStrategy;
@@ -49,14 +57,14 @@ public class CheckOutValidators {
   private final InactiveUserValidator inactiveUserValidator;
   private final InactiveUserValidator inactiveProxyUserValidator;
   private final ExistingOpenLoanValidator openLoanValidator;
-  private final ItemLimitValidator itemLimitValidator;
-  private final LoanPolicyValidator loanPolicyValidator;
-  private final AutomatedPatronBlocksValidator automatedPatronBlocksValidator;
+  private final OverrideValidation itemLimitValidator;
+  private final OverrideValidation loanPolicyValidator;
+  private final OverrideValidation automatedPatronBlocksValidator;
 
   private final CirculationErrorHandler errorHandler;
 
   public CheckOutValidators(CheckOutByBarcodeRequest request, Clients clients,
-    CirculationErrorHandler errorHandler) {
+    CirculationErrorHandler errorHandler, Map<String, String> headers) {
 
     this.errorHandler = errorHandler;
 
@@ -91,15 +99,12 @@ public class CheckOutValidators {
     openLoanValidator = new ExistingOpenLoanValidator(
       loanRepository, message -> singleValidationError(message, ITEM_BARCODE, request.getItemBarcode()));
 
-    itemLimitValidator = new ItemLimitValidator(
-      message -> singleValidationError(message, ITEM_BARCODE, request.getItemBarcode()), loanRepository);
+    itemLimitValidator = defineItemLimitValidator(request, headers, loanRepository);
 
-    automatedPatronBlocksValidator = new AutomatedPatronBlocksValidator(automatedPatronBlocksRepository,
-      messages -> new ValidationErrorFailure(messages.stream()
-        .map(message -> new ValidationError(message, new HashMap<>()))
-        .collect(Collectors.toList())));
+    automatedPatronBlocksValidator = definePatronBlocksValidator(request, headers,
+      automatedPatronBlocksRepository);
 
-    loanPolicyValidator = new LoanPolicyValidator();
+    loanPolicyValidator = defineLoanPolicyValidator(request, headers);
   }
 
   private ValidationErrorFailure errorWhenInIncorrectStatus(Item item) {
@@ -137,7 +142,7 @@ public class CheckOutValidators {
       return completedFuture(result);
     }
 
-    return automatedPatronBlocksValidator.refuseWhenCheckOutActionIsBlockedForPatron(result.value())
+    return automatedPatronBlocksValidator.validate(result.value())
       .thenApply(r -> errorHandler.handle(r, USER_IS_BLOCKED_AUTOMATICALLY, result));
   }
 
@@ -220,21 +225,52 @@ public class CheckOutValidators {
       return completedFuture(result);
     }
 
-    return result.after(l -> itemLimitValidator.refuseWhenItemLimitIsReached(l)
-      .thenApply(r -> errorHandler.handle(r, ITEM_LIMIT_IS_REACHED, l)));
+    return result.after(relatedRecords -> itemLimitValidator.validate(relatedRecords)
+      .thenApply(r -> errorHandler.handle(r, ITEM_LIMIT_IS_REACHED, relatedRecords)));
   }
 
-  public Result<LoanAndRelatedRecords> refuseWhenItemIsNotLoanable(
+  public CompletableFuture<Result<LoanAndRelatedRecords>> refuseWhenItemIsNotLoanable(
     Result<LoanAndRelatedRecords> result, CheckOutStrategy checkOutStrategy) {
 
-    if (errorHandler.hasCirculationError(FAILED_TO_FETCH_ITEM, FAILED_TO_FETCH_LOAN_POLICY)) {
-      return result;
+    if (errorHandler.hasCirculationError(FAILED_TO_FETCH_ITEM, FAILED_TO_FETCH_LOAN_POLICY)
+      || checkOutStrategy instanceof OverrideCheckOutStrategy) {
+      return completedFuture(result);
     }
 
-    return result.nextWhen(
-      loanAndRelatedRecords -> succeeded(checkOutStrategy instanceof OverrideCheckOutStrategy),
-      loanAndRelatedRecords -> result,
-      loanAndRelatedRecords -> loanPolicyValidator.refuseWhenItemIsNotLoanable(loanAndRelatedRecords)
-        .mapFailure(failure -> errorHandler.handle(failure, ITEM_IS_NOT_LOANABLE, result)));
+    return result.after(relatedRecords -> loanPolicyValidator.validate(relatedRecords)
+      .thenApply(r -> errorHandler.handle(r, ITEM_IS_NOT_LOANABLE, relatedRecords)));
+  }
+
+  private OverrideValidation definePatronBlocksValidator(CheckOutByBarcodeRequest request,
+    Map<String, String> headers, AutomatedPatronBlocksRepository automatedPatronBlocksRepository) {
+
+    return request.isPatronBlockOverriding()
+      ? new OverrideAutomatedPatronBlocksValidator(message -> singleValidationError(
+      message, "patron-block", OVERRIDE_PATRON_BLOCK.getValue()), headers, request)
+      : new AutomatedPatronBlocksValidator(automatedPatronBlocksRepository,
+      messages -> new ValidationErrorFailure(messages.stream()
+        .map(message -> new ValidationError(message, new HashMap<>()))
+        .collect(Collectors.toList())));
+  }
+
+  private OverrideValidation defineItemLimitValidator(CheckOutByBarcodeRequest request,
+    Map<String, String> headers, LoanRepository loanRepository) {
+
+    return request.isItemLimitBlockOverriding()
+      ? new OverrideItemLimitValidator(message -> singleValidationError(
+      message, "item-limit-block", OVERRIDE_ITEM_LIMIT_BLOCK.getValue()), headers, request)
+      : new ItemLimitValidator(message -> singleValidationError(
+      message, ITEM_BARCODE, request.getItemBarcode()), loanRepository);
+  }
+
+  private OverrideValidation defineLoanPolicyValidator(CheckOutByBarcodeRequest request,
+    Map<String, String> headers) {
+
+    return request.isItemNotLoanableBlock()
+      ? new OverrideLoanPolicyValidator(message -> singleValidationError(
+      message, "item-not-loanable-block", OVERRIDE_ITEM_NOT_LOANABLE_BLOCK.getValue()),
+      headers, request)
+      : new LoanPolicyValidator(loanPolicy -> singleLoanPolicyValidationError(
+      loanPolicy, "Item is not loanable", ITEM_BARCODE, request.getItemBarcode()));
   }
 }

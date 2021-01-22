@@ -90,7 +90,8 @@ public class CheckOutByBarcodeResource extends Resource {
       new LoanScheduledNoticeService(scheduledNoticesRepository, patronNoticePolicyRepository);
 
     CirculationErrorHandler errorHandler = new DeferFailureErrorHandler();
-    CheckOutValidators validators = new CheckOutValidators(request, clients, errorHandler);
+    CheckOutValidators validators = new CheckOutValidators(request, clients, errorHandler,
+      new WebContext(routingContext).getHeaders());
 
     final UpdateRequestQueue requestQueueUpdate = UpdateRequestQueue.using(clients);
 
@@ -121,14 +122,13 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenApply(validators::refuseWhenRequestedByAnotherPatron)
       .thenComposeAsync(r -> r.after(l -> getLoanPolicy(l, loanPolicyRepository, errorHandler)))
       .thenComposeAsync(validators::refuseWhenItemLimitIsReached)
-      .thenApply(r -> validators.refuseWhenItemIsNotLoanable(r, checkOutStrategy))
+      .thenComposeAsync(r -> validators.refuseWhenItemIsNotLoanable(r, checkOutStrategy))
       .thenApply(errorHandler::failIfErrorsExist)
       .thenCompose(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
         LoanAndRelatedRecords::withTimeZone))
       .thenComposeAsync(r -> r.after(overdueFinePolicyRepository::lookupOverdueFinePolicy))
       .thenComposeAsync(r -> r.after(lostItemPolicyRepository::lookupLostItemPolicy))
       .thenApply(r -> r.next(this::setItemLocationIdAtCheckout))
-      .thenComposeAsync(r -> r.after(loanPolicyValidator::validate))
       .thenComposeAsync(r -> r.after(relatedRecords -> checkOutStrategy.checkOut(relatedRecords,
         routingContext.getBodyAsJson(), clients)))
       .thenApply(r -> r.map(this::checkOutItem))
@@ -144,39 +144,6 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
       .thenApply(this::createdLoanFrom)
       .thenAccept(context::writeResultToHttpResponse);
-  }
-
-  private OverrideValidation definePatronBlocksValidator(CheckOutByBarcodeRequest request,
-    Map<String, String> headers, AutomatedPatronBlocksRepository automatedPatronBlocksRepository) {
-
-    return request.isPatronBlockOverriding()
-      ? new OverrideAutomatedPatronBlocksValidator(message -> singleValidationError(
-      message, "patron-block", OVERRIDE_PATRON_BLOCK.getValue()), headers, request)
-      : new AutomatedPatronBlocksValidator(automatedPatronBlocksRepository,
-      messages -> new ValidationErrorFailure(messages.stream()
-        .map(message -> new ValidationError(message, new HashMap<>()))
-        .collect(Collectors.toList())));
-  }
-
-  private OverrideValidation defineItemLimitValidator(CheckOutByBarcodeRequest request,
-    Map<String, String> headers, LoanRepository loanRepository) {
-
-    return request.isItemLimitBlockOverriding()
-      ? new OverrideItemLimitValidator(message -> singleValidationError(
-      message, "item-limit-block", OVERRIDE_ITEM_LIMIT_BLOCK.getValue()), headers, request)
-      : new ItemLimitValidator(message -> singleValidationError(
-      message, ITEM_BARCODE, request.getItemBarcode()), loanRepository);
-  }
-
-  private OverrideValidation defineLoanPolicyValidator(CheckOutByBarcodeRequest request,
-    Map<String, String> headers) {
-
-    return request.isItemNotLoanableBlock()
-      ? new OverrideLoanPolicyValidator(message -> singleValidationError(
-      message, "item-not-loanable-block", OVERRIDE_ITEM_NOT_LOANABLE_BLOCK.getValue()),
-      headers, request)
-      : new LoanPolicyValidator(loanPolicy -> singleLoanPolicyValidationError(
-      loanPolicy, "Item is not loanable", ITEM_BARCODE, request.getItemBarcode()));
   }
 
   private CompletableFuture<Result<LoanAndRelatedRecords>> updateItem(

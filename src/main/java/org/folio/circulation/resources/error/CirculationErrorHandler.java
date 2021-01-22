@@ -36,12 +36,6 @@ public abstract class CirculationErrorHandler {
     return errors.values().stream().anyMatch(e -> Arrays.asList(errorsToMatch).contains(e));
   }
 
-//  public <T> Result<T> failIfErrorsExist(T returnValue) {
-//    return getErrors().isEmpty()
-//      ? succeeded(returnValue)
-//      : failed(new ServerErrorFailure(getErrors().size() + " error(s) encountered"));
-//  }
-
   public <T> Result<T> failIfErrorsExist(Result<T> result) {
     if (result.succeeded() && errors.isEmpty()) {
       return result;
