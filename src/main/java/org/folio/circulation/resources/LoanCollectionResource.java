@@ -361,7 +361,7 @@ public class LoanCollectionResource extends CollectionResource {
 
   private static ValidationErrorFailure errorWhenInIncorrectStatus(Item item) {
     String message =
-      String.format("%s (%s) (Barcode:%s) has the item status %s, loan cannot be created",
+      String.format("%s (%s) (Barcode: %s) has the item status %s, loan cannot be created",
         item.getTitle(),
         item.getMaterialTypeName(),
         item.getBarcode(),

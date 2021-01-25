@@ -228,7 +228,7 @@ public class CheckOutByBarcodeResource extends Resource {
 
   private static ValidationErrorFailure errorWhenInIncorrectStatus(Item item) {
     String message =
-      String.format("%s (%s) (Barcode:%s) has the item status %s and cannot be checked out",
+      String.format("%s (%s) (Barcode: %s) has the item status %s and cannot be checked out",
         item.getTitle(),
         item.getMaterialTypeName(),
         item.getBarcode(),
