@@ -469,7 +469,8 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public boolean isRenewed() {
     if (getAction() != null) {
-      return LoanAction.from(getAction()) == RENEWED;
+      return LoanAction.from(getAction()) == RENEWED
+        || LoanAction.from(getAction()) == RENEWED_THROUGH_OVERRIDE;
     }
     return false;
   }

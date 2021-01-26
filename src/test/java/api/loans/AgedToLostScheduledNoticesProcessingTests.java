@@ -245,12 +245,11 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void shouldStopSendingAgedToLostNoticesOnceItemIsRenewed() {
+  public void shouldStopSendingAgedToLostNoticesOnceItemIsRenewedThroughOverride() {
     AgeToLostResult agedToLostLoan = createRecurringAgedToLostNotice();
 
     loansFixture.overrideRenewalByBarcode(agedToLostLoan.getItem(), agedToLostLoan.getUser(),
       "Test overriding", agedToLostLoan.getLoan().getJson().getString("dueDate"));
-    loansFixture.renewLoan(agedToLostLoan.getItem(), agedToLostLoan.getUser());
     final DateTime firstRunTime = getAgedToLostDate(agedToLostLoan).plus(
       TIMING_PERIOD.timePeriod());
     scheduledNoticeProcessingClient.runLoanNoticesProcessing(
