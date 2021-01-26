@@ -1,10 +1,12 @@
 package org.folio.circulation.resources.error;
 
+import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.LinkedHashMap;
 
 import org.folio.circulation.support.HttpFailure;
+import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
 
 public class DeferFailureErrorHandler extends CirculationErrorHandler {
@@ -21,7 +23,12 @@ public class DeferFailureErrorHandler extends CirculationErrorHandler {
   @Override
   public <T> Result<T> handle(HttpFailure error, CirculationError errorType, T returnValue) {
     getErrors().put(error, errorType);
-    return succeeded(returnValue);
+
+    if (error instanceof ValidationError) {
+      return succeeded(returnValue);
+    }
+
+    return failed(error);
   }
 
   @Override
@@ -34,7 +41,12 @@ public class DeferFailureErrorHandler extends CirculationErrorHandler {
     Result<T> returnResult) {
 
     getErrors().put(error, errorType);
-    return returnResult;
+
+    if (error instanceof ValidationError) {
+      return returnResult;
+    }
+
+    return failed(error);
   }
 
 }
