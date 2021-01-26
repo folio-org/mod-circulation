@@ -2,22 +2,16 @@ package org.folio.circulation.domain;
 
 import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_CREATED;
 import static org.folio.circulation.domain.representations.logs.RequestUpdateLogEventMapper.mapToRequestLogEventJson;
-import static org.folio.circulation.resources.handlers.error.CirculationErrorType.AUTOMATED_BLOCKS_VALIDATION_FAILED;
-import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_REQUEST_POLICY;
-import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_TIME_ZONE_CONFIG;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_ITEM_ID;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_USER_OR_PATRON_GROUP_ID;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ITEM_ALREADY_LOANED_TO_SAME_USER;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ITEM_ALREADY_REQUESTED_BY_SAME_USER;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ITEM_DOES_NOT_EXIST;
-import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ITEM_VALIDATION_FAILED;
-import static org.folio.circulation.resources.handlers.error.CirculationErrorType.MANUAL_BLOCKS_VALIDATION_FAILED;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.REQUESTING_DISALLOWED_BY_POLICY;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.REQUESTING_DISALLOWED;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_BLOCKED_AUTOMATICALLY;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_BLOCKED_MANUALLY;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_INACTIVE;
-import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_VALIDATION_FAILED;
 import static org.folio.circulation.support.results.MappingFunctions.when;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
@@ -29,6 +23,8 @@ import java.util.stream.Collectors;
 import org.folio.circulation.domain.validation.AutomatedPatronBlocksValidator;
 import org.folio.circulation.domain.validation.RequestLoanValidator;
 import org.folio.circulation.domain.validation.UserManualBlocksValidator;
+import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
+import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.resources.RequestNoticeSender;
 import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
 import org.folio.circulation.services.EventPublisher;
@@ -62,18 +58,34 @@ public class CreateRequestService {
   public CompletableFuture<Result<RequestAndRelatedRecords>> createRequest(
       RequestAndRelatedRecords requestAndRelatedRecords) {
 
-    return ofAsync(() -> requestAndRelatedRecords)
-      .thenApply(this::checkRequester)
-      .thenComposeAsync(this::checkBlocks)
-      .thenComposeAsync(r -> r.after(when(
-        this::shouldCheckItem, this::checkItem, this::doNothing)))
-      .thenComposeAsync(r -> r.after(when(
-        this::shouldCheckRequestPolicy, this::checkRequestPolicy, this::doNothing)))
-      .thenComposeAsync(this::fetchTimeZoneConfiguration)
-      .thenApply(r -> r.next(errorHandler::failIfHasErrors))
+    RequestRepository requestRepository = repositories.getRequestRepository();
+    ConfigurationRepository configurationRepository = repositories.getConfigurationRepository();
+    AutomatedPatronBlocksValidator automatedPatronBlocksValidator =
+      new AutomatedPatronBlocksValidator(repositories.getAutomatedPatronBlocksRepository(),
+        messages -> new ValidationErrorFailure(messages.stream()
+          .map(message -> new ValidationError(message, new HashMap<>()))
+          .collect(Collectors.toList())));
+
+    final Result<RequestAndRelatedRecords> result = succeeded(requestAndRelatedRecords);
+
+    return result.next(RequestServiceUtility::refuseWhenInvalidUserAndPatronGroup)
+      .mapFailure(err -> errorHandler.handleValidationError(err, INVALID_USER_OR_PATRON_GROUP_ID, result))
+      .next(RequestServiceUtility::refuseWhenUserIsInactive)
+      .mapFailure(err -> errorHandler.handleValidationError(err, USER_IS_INACTIVE, result))
+      .next(RequestServiceUtility::refuseWhenUserHasAlreadyRequestedItem)
+      .mapFailure(err -> errorHandler.handleValidationError(err, ITEM_ALREADY_REQUESTED_BY_SAME_USER, result))
+      .after(automatedPatronBlocksValidator::refuseWhenRequestActionIsBlockedForPatron)
+      .thenApply(r -> errorHandler.handleValidationResult(r, USER_IS_BLOCKED_AUTOMATICALLY, result))
+      .thenCompose(r -> r.after(userManualBlocksValidator::refuseWhenUserIsBlocked))
+      .thenApply(r -> errorHandler.handleValidationResult(r, USER_IS_BLOCKED_MANUALLY, result))
+      .thenComposeAsync(r -> r.after(when(this::shouldCheckItem, this::checkItem, this::doNothing)))
+      .thenComposeAsync(r -> r.after(when(this::shouldCheckPolicy, this::checkPolicy, this::doNothing)))
+      .thenComposeAsync(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
+        RequestAndRelatedRecords::withTimeZone))
+      .thenApply(r -> r.next(errorHandler::failWithValidationErrors))
       .thenComposeAsync(r -> r.after(updateUponRequest.updateItem::onRequestCreateOrUpdate))
       .thenComposeAsync(r -> r.after(updateUponRequest.updateLoan::onRequestCreateOrUpdate))
-      .thenComposeAsync(r -> r.after(repositories.getRequestRepository()::create))
+      .thenComposeAsync(r -> r.after(requestRepository::create))
       .thenComposeAsync(r -> r.after(updateUponRequest.updateRequestQueue::onCreate))
       .thenApplyAsync(r -> {
         r.after(t -> eventPublisher.publishLogRecord(mapToRequestLogEventJson(t.getRequest()), REQUEST_CREATED));
@@ -81,63 +93,31 @@ public class CreateRequestService {
       });
   }
 
-  private Result<RequestAndRelatedRecords> checkRequester(Result<RequestAndRelatedRecords> result) {
-    return result.next(RequestServiceUtility::refuseWhenInvalidUserAndPatronGroup)
-      .mapFailure(err -> errorHandler.handleValidationError(err, INVALID_USER_OR_PATRON_GROUP_ID, result))
-      .next(RequestServiceUtility::refuseWhenUserIsInactive)
-      .mapFailure(err -> errorHandler.handleValidationError(err, USER_IS_INACTIVE, result))
-      .next(RequestServiceUtility::refuseWhenUserHasAlreadyRequestedItem)
-      .mapFailure(err -> errorHandler.handleValidationError(err, ITEM_ALREADY_REQUESTED_BY_SAME_USER, result))
-      .mapFailure(err -> errorHandler.handleError(err, USER_VALIDATION_FAILED, result));
-  }
-
   private CompletableFuture<Result<RequestAndRelatedRecords>> checkItem(
     RequestAndRelatedRecords records) {
 
-    final Result<RequestAndRelatedRecords> result = succeeded(records);
-
-    return result.next(RequestServiceUtility::refuseWhenItemDoesNotExist)
-      .mapFailure(err -> errorHandler.handleValidationError(err, ITEM_DOES_NOT_EXIST, result))
+    return succeeded(records)
+      .next(RequestServiceUtility::refuseWhenItemDoesNotExist)
+      .mapFailure(err -> errorHandler.handleValidationError(err, ITEM_DOES_NOT_EXIST, records))
       .next(RequestServiceUtility::refuseWhenRequestTypeIsNotAllowedForItem)
-      .mapFailure(err -> errorHandler.handleValidationError(err, REQUESTING_DISALLOWED, result))
+      .mapFailure(err -> errorHandler.handleValidationError(err, REQUESTING_DISALLOWED, records))
       .after(requestLoanValidator::refuseWhenUserHasAlreadyBeenLoanedItem)
-      .thenApply(r -> errorHandler.handleValidationResult(r, ITEM_ALREADY_LOANED_TO_SAME_USER, result))
-      .thenApply(r -> errorHandler.handleResult(r, ITEM_VALIDATION_FAILED, result));
+      .thenApply(r -> errorHandler.handleValidationResult(r, ITEM_ALREADY_LOANED_TO_SAME_USER, records));
   }
 
-  private CompletableFuture<Result<RequestAndRelatedRecords>> checkBlocks(
-    Result<RequestAndRelatedRecords> result) {
-
-    final AutomatedPatronBlocksValidator automatedPatronBlocksValidator =
-      new AutomatedPatronBlocksValidator(repositories.getAutomatedPatronBlocksRepository(),
-        messages -> new ValidationErrorFailure(messages.stream()
-          .map(message -> new ValidationError(message, new HashMap<>()))
-          .collect(Collectors.toList())));
-
-    return result.after(automatedPatronBlocksValidator::refuseWhenRequestActionIsBlockedForPatron)
-      .thenApply(r -> errorHandler.handleValidationResult(r, USER_IS_BLOCKED_AUTOMATICALLY, result))
-      .thenApply(r -> errorHandler.handleResult(r, AUTOMATED_BLOCKS_VALIDATION_FAILED, result))
-      .thenCompose(r -> r.after(userManualBlocksValidator::refuseWhenUserIsBlocked))
-      .thenApply(r -> errorHandler.handleValidationResult(r, USER_IS_BLOCKED_MANUALLY, result))
-      .thenApply(r -> errorHandler.handleResult(r, MANUAL_BLOCKS_VALIDATION_FAILED, result));
-  }
-
-  private CompletableFuture<Result<RequestAndRelatedRecords>> checkRequestPolicy(
+  private CompletableFuture<Result<RequestAndRelatedRecords>> checkPolicy(
     RequestAndRelatedRecords records) {
 
-    final Result<RequestAndRelatedRecords> result = succeeded(records);
-
-    return result.after(repositories.getRequestPolicyRepository()::lookupRequestPolicy)
+    return repositories.getRequestPolicyRepository().lookupRequestPolicy(records)
       .thenApply(r -> r.next(RequestServiceUtility::refuseWhenRequestCannotBeFulfilled)
-        .mapFailure(err -> errorHandler.handleValidationError(err, REQUESTING_DISALLOWED_BY_POLICY, r)))
-      .thenApply(r -> errorHandler.handleResult(r, FAILED_TO_FETCH_REQUEST_POLICY, result));
+        .mapFailure(err -> errorHandler.handleValidationError(err, REQUESTING_DISALLOWED_BY_POLICY, r)));
   }
 
   private CompletableFuture<Result<Boolean>> shouldCheckItem(RequestAndRelatedRecords records) {
     return ofAsync(() -> errorHandler.hasNone(INVALID_ITEM_ID));
   }
 
-  private CompletableFuture<Result<Boolean>> shouldCheckRequestPolicy(RequestAndRelatedRecords records) {
+  private CompletableFuture<Result<Boolean>> shouldCheckPolicy(RequestAndRelatedRecords records) {
     return ofAsync(() -> errorHandler.hasNone(INVALID_ITEM_ID, ITEM_DOES_NOT_EXIST,
       INVALID_USER_OR_PATRON_GROUP_ID));
   }
@@ -146,14 +126,6 @@ public class CreateRequestService {
     RequestAndRelatedRecords records) {
 
     return ofAsync(() -> records);
-  }
-
-  private CompletableFuture<Result<RequestAndRelatedRecords>> fetchTimeZoneConfiguration(
-    Result<RequestAndRelatedRecords> result) {
-
-    return result.combineAfter(repositories.getConfigurationRepository()::findTimeZoneConfiguration,
-      RequestAndRelatedRecords::withTimeZone)
-      .thenApply(r -> errorHandler.handleResult(r, FAILED_TO_FETCH_TIME_ZONE_CONFIG, result));
   }
 
 }

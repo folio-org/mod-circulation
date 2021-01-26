@@ -1946,19 +1946,6 @@ RequestsAPICreationTests extends APITests {
       hasUUIDParameter("pickupServicePointId", pickupServicePointId))));
   }
 
-  @Test
-  public void shouldReturnFirstNonValidationErrorIfAny() {
-    Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
-      .recall()
-      .withStatus("fake")             // 400
-      .withItemId(null)               // 422
-      .withRequesterId(null)          // 422
-      .withPickupServicePointId(null) // 422
-    );
-
-    assertThat(postResponse, hasStatus(HTTP_BAD_REQUEST));
-  }
-
   private List<IndividualResource> createOneHundredRequests() {
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
