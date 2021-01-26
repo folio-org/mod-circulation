@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.folio.circulation.support.HttpFailure;
@@ -37,7 +38,7 @@ public abstract class CirculationErrorHandler {
   }
 
   public <T> Result<T> failIfErrorsExist(Result<T> result) {
-    if (result.succeeded() && errors.isEmpty()) {
+    if (result.succeeded() || errors.isEmpty()) {
       return result;
     }
 
@@ -70,7 +71,9 @@ public abstract class CirculationErrorHandler {
         Map<String, String> parameters = new HashMap<>();
         parameters.put("overridableBlocks", errors.values().stream()
           .map(CirculationError::getOverridableBlock)
+          .filter(Objects::nonNull)
           .map(OverridableBlock::getBlockName)
+          .filter(Objects::nonNull)
           .collect(Collectors.joining(",")));
         parameters.put("missingOverridePermissions", "");
         new ValidationError("Overridable blocks found", parameters);
