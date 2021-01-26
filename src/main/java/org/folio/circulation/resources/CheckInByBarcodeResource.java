@@ -103,7 +103,7 @@ public class CheckInByBarcodeResource extends Resource {
 
   private ValidationErrorFailure errorWhenInIncorrectStatus(Item item) {
     String message =
-      String.format("%s (%s) (Barcode:%s) has the item status %s and cannot be checked in",
+      String.format("%s (%s) (Barcode: %s) has the item status %s and cannot be checked in",
         item.getTitle(),
         item.getMaterialTypeName(),
         item.getBarcode(),
