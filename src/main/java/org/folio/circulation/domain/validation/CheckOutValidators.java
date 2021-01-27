@@ -122,7 +122,7 @@ public class CheckOutValidators {
     Result<LoanAndRelatedRecords> result) {
 
     return servicePointOfCheckoutPresentValidator.refuseCheckOutWhenServicePointIsNotPresent(result)
-      .mapFailure(failure -> errorHandler.handle(failure, SERVICE_POINT_IS_NOT_PRESENT, result));
+      .mapFailure(failure -> errorHandler.handleValidationError(failure, SERVICE_POINT_IS_NOT_PRESENT, result));
   }
 
   public Result<LoanAndRelatedRecords> refuseWhenUserIsInactive(
@@ -143,7 +143,7 @@ public class CheckOutValidators {
     }
 
     return automatedPatronBlocksValidator.validate(result.value())
-      .thenApply(r -> errorHandler.handle(r, USER_IS_BLOCKED_AUTOMATICALLY, result));
+      .thenApply(r -> errorHandler.handleValidationResult(r, USER_IS_BLOCKED_AUTOMATICALLY, result));
   }
 
   public Result<LoanAndRelatedRecords> refuseWhenProxyUserIsInactive(
@@ -164,7 +164,7 @@ public class CheckOutValidators {
     }
 
     return result.after(l -> proxyRelationshipValidator.refuseWhenInvalid(l)
-      .thenApply(r -> errorHandler.handle(r, PROXY_USER_EQUALS_TO_USER, l)));
+      .thenApply(r -> errorHandler.handleValidationResult(r, PROXY_USER_EQUALS_TO_USER, l)));
   }
 
   public Result<LoanAndRelatedRecords> refuseWhenItemNotFound(
@@ -175,7 +175,7 @@ public class CheckOutValidators {
     }
 
     return itemNotFoundValidator.refuseWhenItemNotFound(result)
-      .mapFailure(failure -> errorHandler.handle(failure, FAILED_TO_FETCH_ITEM, result));
+      .mapFailure(failure -> errorHandler.handleValidationError(failure, FAILED_TO_FETCH_ITEM, result));
   }
 
   public Result<LoanAndRelatedRecords> refuseWhenItemIsAlreadyCheckedOut(
@@ -186,7 +186,7 @@ public class CheckOutValidators {
     }
 
     return alreadyCheckedOutValidator.refuseWhenItemIsAlreadyCheckedOut(result)
-      .mapFailure(failure -> errorHandler.handle(failure, ITEM_ALREADY_CHECKED_OUT, result));
+      .mapFailure(failure -> errorHandler.handleValidationError(failure, ITEM_ALREADY_CHECKED_OUT, result));
   }
 
   public Result<LoanAndRelatedRecords> refuseWhenItemIsNotAllowedForCheckOut(
@@ -197,7 +197,7 @@ public class CheckOutValidators {
     }
 
     return itemStatusValidator.refuseWhenItemIsNotAllowedForCheckOut(result)
-      .mapFailure(failure -> errorHandler.handle(failure, ITEM_IS_NOT_ALLOWED_FOR_CHECK_OUT, result));
+      .mapFailure(failure -> errorHandler.handleValidationError(failure, ITEM_IS_NOT_ALLOWED_FOR_CHECK_OUT, result));
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> refuseWhenItemHasOpenLoans(
@@ -208,14 +208,14 @@ public class CheckOutValidators {
     }
 
     return result.after(l -> openLoanValidator.refuseWhenHasOpenLoan(l)
-      .thenApply(r -> errorHandler.handle(r, ITEM_HAS_OPEN_LOANS, l)));
+      .thenApply(r -> errorHandler.handleValidationResult(r, ITEM_HAS_OPEN_LOANS, l)));
   }
 
   public Result<LoanAndRelatedRecords> refuseWhenRequestedByAnotherPatron(
     Result<LoanAndRelatedRecords> result) {
 
     return requestedByAnotherPatronValidator.refuseWhenRequestedByAnotherPatron(result)
-      .mapFailure(failure -> errorHandler.handle(failure, ITEM_REQUESTED_BY_ANOTHER_PATRON, result));
+      .mapFailure(failure -> errorHandler.handleValidationError(failure, ITEM_REQUESTED_BY_ANOTHER_PATRON, result));
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> refuseWhenItemLimitIsReached(
@@ -226,7 +226,7 @@ public class CheckOutValidators {
     }
 
     return result.after(relatedRecords -> itemLimitValidator.validate(relatedRecords)
-      .thenApply(r -> errorHandler.handle(r, ITEM_LIMIT_IS_REACHED, relatedRecords)));
+      .thenApply(r -> errorHandler.handleValidationResult(r, ITEM_LIMIT_IS_REACHED, relatedRecords)));
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> refuseWhenItemIsNotLoanable(
@@ -238,7 +238,7 @@ public class CheckOutValidators {
     }
 
     return result.after(relatedRecords -> loanPolicyValidator.validate(relatedRecords)
-      .thenApply(r -> errorHandler.handle(r, ITEM_IS_NOT_LOANABLE, relatedRecords)));
+      .thenApply(r -> errorHandler.handleValidationError(r, ITEM_IS_NOT_LOANABLE, relatedRecords)));
   }
 
   private OverrideValidation definePatronBlocksValidator(CheckOutByBarcodeRequest request,

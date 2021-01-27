@@ -25,20 +25,24 @@ public abstract class CirculationErrorHandler {
 
   private final Map<HttpFailure, CirculationError> errors;
 
-  public abstract <T> Result<T> handle(Result<T> result, CirculationError errorType, T returnValue);
+  public abstract <T> Result<T> handleValidationResult(Result<T> result, CirculationError errorType,
+    T returnValue);
 
-  public abstract <T> Result<T> handle(HttpFailure error, CirculationError errorType, T returnValue);
+  public abstract <T> Result<T> handleValidationError(HttpFailure error, CirculationError errorType,
+    T returnValue);
 
-  public abstract <T> Result<T> handle(Result<T> result, CirculationError errorType, Result<T> returnValue);
+  public abstract <T> Result<T> handleValidationResult(Result<T> result, CirculationError errorType,
+    Result<T> returnValue);
 
-  public abstract <T> Result<T> handle(HttpFailure error, CirculationError errorType, Result<T> returnResult);
+  public abstract <T> Result<T> handleValidationError(HttpFailure error, CirculationError errorType,
+    Result<T> returnResult);
 
   public boolean hasCirculationError(CirculationError... errorsToMatch) {
     return errors.values().stream().anyMatch(e -> Arrays.asList(errorsToMatch).contains(e));
   }
 
   public <T> Result<T> failIfErrorsExist(Result<T> result) {
-    if (result.succeeded() || errors.isEmpty()) {
+    if (result.succeeded() && errors.isEmpty()) {
       return result;
     }
 
