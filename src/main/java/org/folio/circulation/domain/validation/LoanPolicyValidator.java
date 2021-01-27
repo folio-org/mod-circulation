@@ -25,7 +25,7 @@ public class LoanPolicyValidator implements OverrideValidation {
     return refuseWhenItemIsNotLoanable(records);
   }
 
-  public CompletableFuture<Result<LoanAndRelatedRecords>> refuseWhenItemIsNotLoanable(
+  private CompletableFuture<Result<LoanAndRelatedRecords>> refuseWhenItemIsNotLoanable(
     LoanAndRelatedRecords relatedRecords) {
 
     return ofAsync(relatedRecords.getLoan()::getLoanPolicy)

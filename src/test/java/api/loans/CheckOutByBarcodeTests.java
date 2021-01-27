@@ -508,7 +508,7 @@ public class CheckOutByBarcodeTests extends APITests {
       .attemptCheckOutByBarcode(claimedReturnedItem, usersFixture.steve());
 
     final String expectedMessage = String.format(
-      "%s (Book) (Barcode: %s) has the item status Claimed returned and cannot be checked out",
+      "%s (Book) (Barcode:%s) has the item status Claimed returned and cannot be checked out",
       claimedReturnedItem.getInstance().getJson().getString("title"), barcode);
 
     assertThat(response.getJson(), hasErrorWith(allOf(hasMessage(expectedMessage),

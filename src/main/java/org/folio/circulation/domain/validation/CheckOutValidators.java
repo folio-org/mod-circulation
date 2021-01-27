@@ -238,7 +238,7 @@ public class CheckOutValidators {
     }
 
     return result.after(relatedRecords -> loanPolicyValidator.validate(relatedRecords)
-      .thenApply(r -> errorHandler.handleValidationError(r, ITEM_IS_NOT_LOANABLE, relatedRecords)));
+      .thenApply(r -> errorHandler.handleValidationResult(r, ITEM_IS_NOT_LOANABLE, relatedRecords)));
   }
 
   private OverrideValidation definePatronBlocksValidator(CheckOutByBarcodeRequest request,

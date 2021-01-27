@@ -874,7 +874,7 @@
             "users.collection.get",
             "scheduled-notice-storage.scheduled-notices.item.post"
           ],
-          "unit": "second",
+          "unit": "minute",
           "delay": "30"
         },
         {
@@ -910,7 +910,7 @@
             "inventory-storage.locations.item.get",
             "scheduled-notice-storage.scheduled-notices.item.post"
           ],
-          "unit": "second",
+          "unit": "minute",
           "delay": "35"
         }
       ]
