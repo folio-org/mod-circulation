@@ -27,23 +27,9 @@ public class FailFastErrorHandler extends CirculationErrorHandler {
 
   @Override
   public <T> Result<T> handleValidationResult(Result<T> result, CirculationErrorType errorType,
-    T otherwise) {
-
-    return result;
-  }
-
-  @Override
-  public <T> Result<T> handleValidationResult(Result<T> result, CirculationErrorType errorType,
     Result<T> otherwise) {
 
     return result;
-  }
-
-  @Override
-  public <T> Result<T> handleValidationError(HttpFailure error, CirculationErrorType errorType,
-    T otherwise) {
-
-    return failed(error);
   }
 
   @Override

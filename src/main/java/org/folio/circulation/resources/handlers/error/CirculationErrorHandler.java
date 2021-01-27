@@ -30,16 +30,22 @@ public abstract class CirculationErrorHandler {
     CirculationErrorType errorType, Result<T> otherwise);
 
   public abstract <T> Result<T> handleValidationResult(Result<T> result,
-    CirculationErrorType errorType, T otherwise);
-
-  public abstract <T> Result<T> handleValidationResult(Result<T> result,
     CirculationErrorType errorType, Result<T> otherwise);
 
   public abstract <T> Result<T> handleValidationError(HttpFailure error,
-    CirculationErrorType errorType, T otherwise);
-
-  public abstract <T> Result<T> handleValidationError(HttpFailure error,
     CirculationErrorType errorType, Result<T> otherwise);
+
+  public <T> Result<T> handleValidationResult(Result<T> result,
+    CirculationErrorType errorType, T otherwise) {
+
+    return handleValidationResult(result, errorType, succeeded(otherwise));
+  }
+
+  public <T> Result<T> handleValidationError(HttpFailure error,
+    CirculationErrorType errorType, T otherwise) {
+
+    return handleValidationError(error, errorType, succeeded(otherwise));
+  }
 
   public <T> Result<T> failWithValidationErrors(T otherwise) {
     List<ValidationError> validationErrors = errors.keySet().stream()

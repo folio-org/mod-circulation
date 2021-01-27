@@ -1,7 +1,6 @@
 package org.folio.circulation.resources.handlers.error;
 
 import static org.folio.circulation.support.results.Result.failed;
-import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.lang.invoke.MethodHandles;
 import java.util.LinkedHashMap;
@@ -41,23 +40,9 @@ public class DeferFailureErrorHandler extends CirculationErrorHandler {
 
   @Override
   public <T> Result<T> handleValidationResult(Result<T> result, CirculationErrorType errorType,
-    T otherwise) {
-
-    return handleValidationResult(result, errorType, succeeded(otherwise));
-  }
-
-  @Override
-  public <T> Result<T> handleValidationResult(Result<T> result, CirculationErrorType errorType,
     Result<T> otherwise) {
 
     return result.mapFailure(error -> handleValidationError(error, errorType, otherwise));
-  }
-
-  @Override
-  public <T> Result<T> handleValidationError(HttpFailure error, CirculationErrorType errorType,
-    T otherwise) {
-
-    return handleValidationError(error, errorType, succeeded(otherwise));
   }
 
   @Override
