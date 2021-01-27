@@ -168,7 +168,7 @@ public class CheckOutByBarcodeResource extends Resource {
     UserRepository userRepository, CirculationErrorHandler errorHandler) {
 
     return userRepository.getUserByBarcode(barcode)
-      .thenApply(r -> errorHandler.handle(r, FAILED_TO_FETCH_USER, succeeded(null)));
+      .thenApply(r -> errorHandler.handleValidationResult(r, FAILED_TO_FETCH_USER, succeeded(null)));
   }
 
   private Result<LoanAndRelatedRecords> addUser(Result<LoanAndRelatedRecords> loanResult,
@@ -179,14 +179,14 @@ public class CheckOutByBarcodeResource extends Resource {
     }
 
     return loanResult.combine(getUserResult, LoanAndRelatedRecords::withRequestingUser)
-      .mapFailure(failure -> errorHandler.handle(failure, FAILED_TO_FETCH_USER, loanResult));
+      .mapFailure(failure -> errorHandler.handleValidationError(failure, FAILED_TO_FETCH_USER, loanResult));
   }
 
   private CompletableFuture<Result<User>> getProxyUserByBarcode(String barcode,
     UserRepository userRepository, CirculationErrorHandler errorHandler) {
 
     return userRepository.getProxyUserByBarcode(barcode)
-      .thenApply(r -> errorHandler.handle(r, FAILED_TO_FETCH_PROXY_USER, succeeded(null)));
+      .thenApply(r -> errorHandler.handleValidationResult(r, FAILED_TO_FETCH_PROXY_USER, succeeded(null)));
   }
 
   private Result<LoanAndRelatedRecords> addProxyUser(Result<LoanAndRelatedRecords> loanResult,
@@ -199,14 +199,14 @@ public class CheckOutByBarcodeResource extends Resource {
     }
 
     return loanResult.combine(getUserResult, LoanAndRelatedRecords::withProxyingUser)
-      .mapFailure(failure -> errorHandler.handle(failure, FAILED_TO_FETCH_PROXY_USER, loanResult));
+      .mapFailure(failure -> errorHandler.handleValidationError(failure, FAILED_TO_FETCH_PROXY_USER, loanResult));
   }
 
   private CompletableFuture<Result<Item>> getItemByBarcode(String barcode,
     ItemRepository itemRepository, CirculationErrorHandler errorHandler) {
 
     return itemRepository.fetchByBarcode(barcode)
-      .thenApply(r -> errorHandler.handle(r, FAILED_TO_FETCH_ITEM, succeeded(null)));
+      .thenApply(r -> errorHandler.handleValidationResult(r, FAILED_TO_FETCH_ITEM, succeeded(null)));
   }
 
   private Result<LoanAndRelatedRecords> addItem(Result<LoanAndRelatedRecords> loanResult,
@@ -226,7 +226,7 @@ public class CheckOutByBarcodeResource extends Resource {
     CirculationErrorHandler errorHandler) {
 
     return requestQueueRepository.get(loanAndRelatedRecords)
-      .thenApply(r -> errorHandler.handle(r, FAILED_TO_FETCH_REQUEST_QUEUE, loanAndRelatedRecords));
+      .thenApply(r -> errorHandler.handleValidationResult(r, FAILED_TO_FETCH_REQUEST_QUEUE, loanAndRelatedRecords));
   }
 
   private CompletableFuture<Result<LoanAndRelatedRecords>> getLoanPolicy(
@@ -234,7 +234,7 @@ public class CheckOutByBarcodeResource extends Resource {
     CirculationErrorHandler errorHandler) {
 
     return loanPolicyRepository.lookupLoanPolicy(loanAndRelatedRecords)
-      .thenApply(r -> errorHandler.handle(r, FAILED_TO_FETCH_LOAN_POLICY, loanAndRelatedRecords));
+      .thenApply(r -> errorHandler.handleValidationResult(r, FAILED_TO_FETCH_LOAN_POLICY, loanAndRelatedRecords));
   }
 
   private Result<LoanAndRelatedRecords> setItemLocationIdAtCheckout(

@@ -6,7 +6,7 @@ import static org.folio.circulation.support.results.Result.succeeded;
 import java.util.LinkedHashMap;
 
 import org.folio.circulation.support.HttpFailure;
-import org.folio.circulation.support.http.server.ValidationError;
+import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.results.Result;
 
 public class DeferFailureErrorHandler extends CirculationErrorHandler {
@@ -16,15 +16,15 @@ public class DeferFailureErrorHandler extends CirculationErrorHandler {
   }
 
   @Override
-  public <T> Result<T> handle(Result<T> result, CirculationError errorType, T returnValue) {
-    return result.mapFailure(error -> handle(error, errorType, returnValue));
+  public <T> Result<T> handleValidationResult(Result<T> result, CirculationError errorType, T returnValue) {
+    return result.mapFailure(error -> handleValidationError(error, errorType, returnValue));
   }
 
   @Override
-  public <T> Result<T> handle(HttpFailure error, CirculationError errorType, T returnValue) {
+  public <T> Result<T> handleValidationError(HttpFailure error, CirculationError errorType, T returnValue) {
     getErrors().put(error, errorType);
 
-    if (error instanceof ValidationError) {
+    if (error instanceof ValidationErrorFailure) {
       return succeeded(returnValue);
     }
 
@@ -32,17 +32,17 @@ public class DeferFailureErrorHandler extends CirculationErrorHandler {
   }
 
   @Override
-  public <T> Result<T> handle(Result<T> result, CirculationError errorType, Result<T> returnValue) {
-    return result.mapFailure(error -> handle(error, errorType, returnValue));
+  public <T> Result<T> handleValidationResult(Result<T> result, CirculationError errorType, Result<T> returnValue) {
+    return result.mapFailure(error -> handleValidationError(error, errorType, returnValue));
   }
 
   @Override
-  public <T> Result<T> handle(HttpFailure error, CirculationError errorType,
+  public <T> Result<T> handleValidationError(HttpFailure error, CirculationError errorType,
     Result<T> returnResult) {
 
     getErrors().put(error, errorType);
 
-    if (error instanceof ValidationError) {
+    if (error instanceof ValidationErrorFailure) {
       return returnResult;
     }
 
