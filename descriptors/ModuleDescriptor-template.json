@@ -920,7 +920,7 @@
           ],
           "pathPattern": "/circulation/handlers/loan-related-fee-fine-closed",
           "permissionsRequired": [
-            "circulation.events.post"
+            "pubsub.events.post"
           ],
           "modulePermissions": [
             "modperms.circulation.handlers.loan-related-fee-fine-closed.post"
@@ -1277,11 +1277,6 @@
       "permissionName": "circulation.end-patron-action-session.post",
       "displayName": "circulation - end patron action session",
       "description": "end patron action session"
-    },
-    {
-      "permissionName": "circulation.events.post",
-      "displayName": "Circulation - post event",
-      "description": "Post event to handle in circulation"
     },
     {
       "permissionName": "circulation.all",
