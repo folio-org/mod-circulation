@@ -667,7 +667,9 @@
             "circulation-storage.circulation-rules.get",
             "circulation.rules.notice-policy.get",
             "circulation-storage.fixed-due-date-schedules.item.get",
-            "circulation-storage.fixed-due-date-schedules.collection.get"
+            "circulation-storage.fixed-due-date-schedules.collection.get",
+            "accounts.item.get",
+            "accounts.collection.get"
           ],
           "unit": "minute",
           "delay": "5"
@@ -918,7 +920,7 @@
           ],
           "pathPattern": "/circulation/handlers/loan-related-fee-fine-closed",
           "permissionsRequired": [
-            "circulation.events.post"
+            "pubsub.events.post"
           ],
           "modulePermissions": [
             "modperms.circulation.handlers.loan-related-fee-fine-closed.post"
@@ -965,7 +967,7 @@
     },
     {
       "id": "item-storage",
-      "version": "8.5"
+      "version": "8.7"
     },
     {
       "id": "instance-storage",
@@ -1041,7 +1043,7 @@
     },
     {
       "id": "feesfines",
-      "version": "16.1"
+      "version": "16.3"
     },
     {
       "id": "location-units",
@@ -1077,7 +1079,7 @@
     },
     {
       "id": "notes",
-      "version": "1.0"
+      "version": "1.0 2.0"
     }
   ],
   "permissionSets": [
@@ -1275,11 +1277,6 @@
       "permissionName": "circulation.end-patron-action-session.post",
       "displayName": "circulation - end patron action session",
       "description": "end patron action session"
-    },
-    {
-      "permissionName": "circulation.events.post",
-      "displayName": "Circulation - post event",
-      "description": "Post event to handle in circulation"
     },
     {
       "permissionName": "circulation.all",

@@ -5,7 +5,7 @@ import static java.util.stream.Collectors.groupingBy;
 import static org.apache.http.HttpStatus.SC_OK;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
-import static org.folio.circulation.support.logging.PatronNoticeLogHelper.logClientResponse;
+import static org.folio.circulation.support.logging.PatronNoticeLogHelper.logResponse;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 import static org.folio.circulation.support.http.CommonResponseInterpreters.mapToRecordInterpreter;
@@ -68,7 +68,8 @@ public class PatronNoticeService {
     patronNotice.setContext(context);
 
     return sendNotice(patronNotice)
-      .thenCompose(r -> r.after(v -> publishAuditLogEvent(noticeLogContext)));
+      .thenCompose(v -> publishAuditLogEvent(noticeLogContext))
+      .exceptionally(t -> succeeded(null));
   }
 
   public CompletableFuture<Result<Void>> acceptMultipleNoticeEvent(
@@ -168,7 +169,7 @@ public class PatronNoticeService {
       mapToRecordInterpreter(null, 200, 201);
 
     return patronNoticeClient.post(body)
-      .whenComplete((result, error) -> logClientResponse(result, error, SC_OK, patronNotice))
+      .whenComplete((result, error) -> logResponse(result, error, SC_OK, patronNotice))
       .thenApply(responseInterpreter::flatMap);
   }
 

@@ -467,6 +467,14 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return hasItemWithStatus(ItemStatus.CLAIMED_RETURNED);
   }
 
+  public boolean isRenewed() {
+    if (getAction() != null) {
+      return LoanAction.from(getAction()) == RENEWED
+        || LoanAction.from(getAction()) == RENEWED_THROUGH_OVERRIDE;
+    }
+    return false;
+  }
+
   public boolean hasItemWithStatus(ItemStatus itemStatus) {
     return Objects.nonNull(item) && item.isInStatus(itemStatus);
   }

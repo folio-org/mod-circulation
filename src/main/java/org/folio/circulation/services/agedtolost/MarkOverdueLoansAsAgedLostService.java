@@ -70,6 +70,7 @@ public class MarkOverdueLoansAsAgedLostService {
     return lostItemPolicyRepository.findLostItemPoliciesForLoans(loans)
       .thenApply(this::getLoansThatHaveToBeAgedToLost)
       .thenCompose(loansResult -> itemRepository.fetchItemsFor(loansResult, Loan::withItem))
+      .thenApply(this::excludeLoansThatHaveNoItem)
       .thenApply(this::markLoansAsAgedToLost)
       .thenCompose(this::updateLoansAndItemsInStorage)
       .thenCompose(this::publishAgedToLostEvent)
@@ -90,9 +91,13 @@ public class MarkOverdueLoansAsAgedLostService {
   private Loan ageItemToLost(Loan loan) {
     final LostItemPolicy lostItemPolicy = loan.getLostItemPolicy();
     final DateTime ageToLostDate = getClockManager().getDateTime();
+    final boolean isRecalled = loan.wasDueDateChangedByRecall();
 
     final DateTime whenToBill = lostItemPolicy
-      .calculateDateTimeWhenPatronBilledForAgedToLost(ageToLostDate);
+      .calculateDateTimeWhenPatronBilledForAgedToLost(isRecalled, ageToLostDate);
+
+    log.info("Billing date for loan [{}] is [{}], is recalled [{}]", loan.getId(),
+      whenToBill, isRecalled);
 
     loan.setAgedToLostDelayedBilling(false, whenToBill);
     return loan.ageOverdueItemToLost(ageToLostDate);
@@ -119,7 +124,14 @@ public class MarkOverdueLoansAsAgedLostService {
   }
 
   private boolean shouldAgeLoanToLost(Loan loan) {
-    return loan.getLostItemPolicy().canAgeLoanToLost(loan.getDueDate());
+    final boolean isRecalled = loan.wasDueDateChangedByRecall();
+    final boolean shouldAgeToLost = loan.getLostItemPolicy().canAgeLoanToLost(
+      isRecalled, loan.getDueDate());
+
+    log.info("Loan [{}] - will be aged to lost - [{}], is recalled [{}]", loan.getId(),
+      shouldAgeToLost, isRecalled);
+
+    return shouldAgeToLost;
   }
 
   private Result<CqlQuery> loanFetchQuery() {
@@ -139,5 +151,18 @@ public class MarkOverdueLoansAsAgedLostService {
   private CompletableFuture<Result<Void>> scheduleAgedToLostNotices(Result<List<Loan>> result) {
     return result.after(userRepository::findUsersForLoans)
       .thenApply(r -> r.next(loanScheduledNoticeService::scheduleAgedToLostNotices));
+  }
+
+  private Result<MultipleRecords<Loan>> excludeLoansThatHaveNoItem(
+    Result<MultipleRecords<Loan>> recordsResult) {
+
+    return recordsResult.map(records -> records
+      .filter(loan -> {
+        if (loan.getItem() == null || loan.getItem().isNotFound()) {
+          log.warn("No item [{}] exists for loan [{}]", loan.getItemId(), loan.getId());
+        }
+
+        return loan.getItem() != null && loan.getItem().isFound();
+      }));
   }
 }

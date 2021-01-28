@@ -6,19 +6,19 @@ import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequ
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.PROXY_USER_BARCODE;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.USER_BARCODE;
-import static org.folio.circulation.resources.error.CirculationError.FAILED_TO_FETCH_ITEM;
-import static org.folio.circulation.resources.error.CirculationError.FAILED_TO_FETCH_LOAN_POLICY;
-import static org.folio.circulation.resources.error.CirculationError.FAILED_TO_FETCH_PROXY_USER;
-import static org.folio.circulation.resources.error.CirculationError.FAILED_TO_FETCH_USER;
-import static org.folio.circulation.resources.error.CirculationError.ITEM_ALREADY_CHECKED_OUT;
-import static org.folio.circulation.resources.error.CirculationError.ITEM_HAS_OPEN_LOANS;
-import static org.folio.circulation.resources.error.CirculationError.ITEM_IS_NOT_ALLOWED_FOR_CHECK_OUT;
-import static org.folio.circulation.resources.error.CirculationError.ITEM_IS_NOT_LOANABLE;
-import static org.folio.circulation.resources.error.CirculationError.ITEM_LIMIT_IS_REACHED;
-import static org.folio.circulation.resources.error.CirculationError.ITEM_REQUESTED_BY_ANOTHER_PATRON;
-import static org.folio.circulation.resources.error.CirculationError.PROXY_USER_EQUALS_TO_USER;
-import static org.folio.circulation.resources.error.CirculationError.SERVICE_POINT_IS_NOT_PRESENT;
-import static org.folio.circulation.resources.error.CirculationError.USER_IS_BLOCKED_AUTOMATICALLY;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_ITEM;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_LOAN_POLICY;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_PROXY_USER;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_USER;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ITEM_ALREADY_CHECKED_OUT;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ITEM_HAS_OPEN_LOANS;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ITEM_IS_NOT_ALLOWED_FOR_CHECK_OUT;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ITEM_IS_NOT_LOANABLE;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ITEM_LIMIT_IS_REACHED;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ITEM_REQUESTED_BY_ANOTHER_PATRON;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.PROXY_USER_EQUALS_TO_USER;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.SERVICE_POINT_IS_NOT_PRESENT;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_BLOCKED_AUTOMATICALLY;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.results.Result.succeeded;
 
@@ -33,7 +33,7 @@ import org.folio.circulation.infrastructure.storage.AutomatedPatronBlocksReposit
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.resources.CheckOutStrategy;
 import org.folio.circulation.resources.OverrideCheckOutStrategy;
-import org.folio.circulation.resources.error.CirculationErrorHandler;
+import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.ValidationError;
@@ -104,7 +104,7 @@ public class CheckOutValidators {
 
   private ValidationErrorFailure errorWhenInIncorrectStatus(Item item) {
     String message =
-      String.format("%s (%s) (Barcode:%s) has the item status %s and cannot be checked out",
+      String.format("%s (%s) (Barcode: %s) has the item status %s and cannot be checked out",
         item.getTitle(),
         item.getMaterialTypeName(),
         item.getBarcode(),
@@ -123,7 +123,7 @@ public class CheckOutValidators {
   public Result<LoanAndRelatedRecords> refuseWhenUserIsInactive(
     Result<LoanAndRelatedRecords> result) {
 
-    if (errorHandler.hasCirculationError(FAILED_TO_FETCH_USER)) {
+    if (errorHandler.hasAny(FAILED_TO_FETCH_USER)) {
       return result;
     }
 
@@ -133,7 +133,7 @@ public class CheckOutValidators {
   public CompletableFuture<Result<LoanAndRelatedRecords>>
   refuseWhenCheckOutActionIsBlockedForPatron(Result<LoanAndRelatedRecords> result) {
 
-    if (result.failed() || errorHandler.hasCirculationError(FAILED_TO_FETCH_USER)) {
+    if (result.failed() || errorHandler.hasAny(FAILED_TO_FETCH_USER)) {
       return completedFuture(result);
     }
 
@@ -144,7 +144,7 @@ public class CheckOutValidators {
   public Result<LoanAndRelatedRecords> refuseWhenProxyUserIsInactive(
     Result<LoanAndRelatedRecords> result) {
 
-    if (errorHandler.hasCirculationError(FAILED_TO_FETCH_PROXY_USER)) {
+    if (errorHandler.hasAny(FAILED_TO_FETCH_PROXY_USER)) {
       return result;
     }
 
@@ -154,7 +154,7 @@ public class CheckOutValidators {
   public CompletableFuture<Result<LoanAndRelatedRecords>> refuseWhenProxyUserIsTheSameAsUser(
     Result<LoanAndRelatedRecords> result) {
 
-    if (errorHandler.hasCirculationError(FAILED_TO_FETCH_USER, FAILED_TO_FETCH_PROXY_USER)) {
+    if (errorHandler.hasAny(FAILED_TO_FETCH_USER, FAILED_TO_FETCH_PROXY_USER)) {
       return completedFuture(result);
     }
 
@@ -165,7 +165,7 @@ public class CheckOutValidators {
   public Result<LoanAndRelatedRecords> refuseWhenItemNotFound(
     Result<LoanAndRelatedRecords> result) {
 
-    if (errorHandler.hasCirculationError(FAILED_TO_FETCH_ITEM)) {
+    if (errorHandler.hasAny(FAILED_TO_FETCH_ITEM)) {
       return result;
     }
 
@@ -176,7 +176,7 @@ public class CheckOutValidators {
   public Result<LoanAndRelatedRecords> refuseWhenItemIsAlreadyCheckedOut(
     Result<LoanAndRelatedRecords> result) {
 
-    if (errorHandler.hasCirculationError(FAILED_TO_FETCH_ITEM)) {
+    if (errorHandler.hasAny(FAILED_TO_FETCH_ITEM)) {
       return result;
     }
 
@@ -187,7 +187,7 @@ public class CheckOutValidators {
   public Result<LoanAndRelatedRecords> refuseWhenItemIsNotAllowedForCheckOut(
     Result<LoanAndRelatedRecords> result) {
 
-    if (errorHandler.hasCirculationError(FAILED_TO_FETCH_ITEM)) {
+    if (errorHandler.hasAny(FAILED_TO_FETCH_ITEM)) {
       return result;
     }
 
@@ -198,7 +198,7 @@ public class CheckOutValidators {
   public CompletableFuture<Result<LoanAndRelatedRecords>> refuseWhenItemHasOpenLoans(
     Result<LoanAndRelatedRecords> result) {
 
-    if (errorHandler.hasCirculationError(FAILED_TO_FETCH_ITEM)) {
+    if (errorHandler.hasAny(FAILED_TO_FETCH_ITEM)) {
       return completedFuture(result);
     }
 
@@ -216,7 +216,7 @@ public class CheckOutValidators {
   public CompletableFuture<Result<LoanAndRelatedRecords>> refuseWhenItemLimitIsReached(
     Result<LoanAndRelatedRecords> result) {
 
-    if (errorHandler.hasCirculationError(FAILED_TO_FETCH_ITEM, FAILED_TO_FETCH_LOAN_POLICY)) {
+    if (errorHandler.hasAny(FAILED_TO_FETCH_ITEM, FAILED_TO_FETCH_LOAN_POLICY)) {
       return completedFuture(result);
     }
 
@@ -227,7 +227,7 @@ public class CheckOutValidators {
   public Result<LoanAndRelatedRecords> refuseWhenItemIsNotLoanable(
     Result<LoanAndRelatedRecords> result, CheckOutStrategy checkOutStrategy) {
 
-    if (errorHandler.hasCirculationError(FAILED_TO_FETCH_ITEM, FAILED_TO_FETCH_LOAN_POLICY)) {
+    if (errorHandler.hasAny(FAILED_TO_FETCH_ITEM, FAILED_TO_FETCH_LOAN_POLICY)) {
       return result;
     }
 

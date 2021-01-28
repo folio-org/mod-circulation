@@ -19,6 +19,12 @@ public enum ItemStatus {
   CLAIMED_RETURNED("Claimed returned"),
   WITHDRAWN("Withdrawn"),
   LOST_AND_PAID("Lost and paid"),
+  INTELLECTUAL_ITEM("Intellectual item"),
+  IN_PROCESS_NON_REQUESTABLE("In process (non-requestable)"),
+  LONG_MISSING("Long missing"),
+  UNAVAILABLE("Unavailable"),
+  UNKNOWN("Unknown"),
+  RESTRICTED("Restricted"),
   AGED_TO_LOST("Aged to lost");
 
   public static ItemStatus from(String value) {

@@ -14,7 +14,7 @@ public class LogHelper {
     throw new UnsupportedOperationException("Do not instantiate");
   }
 
-  public static void logClientResponse(Result<Response> result, Throwable error, int expectedStatus,
+  public static void logResponse(Result<Response> result, Throwable error, int expectedStatus,
     String successMessage, String errorMessage) {
 
     String errorCause = "unknown";

@@ -21,7 +21,7 @@ import static org.folio.circulation.support.http.ResponseMapping.flatMapUsingJso
 import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
-import static org.folio.circulation.support.logging.PatronNoticeLogHelper.logClientResponse;
+import static org.folio.circulation.support.logging.PatronNoticeLogHelper.logResponse;
 import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
 
 import java.util.Arrays;
@@ -69,7 +69,7 @@ public class ScheduledNoticesRepository {
       .flatMapOn(201, flatMapUsingJson(JsonScheduledNoticeMapper::mapFromJson));
 
     return scheduledNoticesStorageClient.post(representation)
-      .whenComplete((r, t) -> logClientResponse(r, t, SC_CREATED, POST, scheduledNotice))
+      .whenComplete((r, t) -> logResponse(r, t, SC_CREATED, POST, scheduledNotice))
       .thenApply(interpreter::flatMap);
   }
 
@@ -92,7 +92,7 @@ public class ScheduledNoticesRepository {
     CqlQuery cqlQuery, PageLimit pageLimit) {
 
     return scheduledNoticesStorageClient.getMany(cqlQuery, pageLimit)
-      .whenComplete((r, t) -> logClientResponse(r, t, SC_OK, GET, cqlQuery))
+      .whenComplete((r, t) -> logResponse(r, t, SC_OK, GET, cqlQuery))
       .thenApply(r -> r.next(response ->
         MultipleRecords.from(response, identity(), "scheduledNotices")))
       .thenApply(r -> r.next(records -> records.flatMapRecords(
@@ -104,7 +104,7 @@ public class ScheduledNoticesRepository {
 
     return scheduledNoticesStorageClient.put(scheduledNotice.getId(),
         mapToJson(scheduledNotice))
-      .whenComplete((r, t) -> logClientResponse(r, t, SC_NO_CONTENT, PUT, scheduledNotice))
+      .whenComplete((r, t) -> logResponse(r, t, SC_NO_CONTENT, PUT, scheduledNotice))
       .thenApply(noContentRecordInterpreter(scheduledNotice)::flatMap);
   }
 
@@ -116,7 +116,7 @@ public class ScheduledNoticesRepository {
       .otherwise(forwardOnFailure());
 
     return scheduledNoticesStorageClient.delete(scheduledNotice.getId())
-      .whenComplete((r, t) -> logClientResponse(r, t, SC_NO_CONTENT, DELETE, scheduledNotice))
+      .whenComplete((r, t) -> logResponse(r, t, SC_NO_CONTENT, DELETE, scheduledNotice))
       .thenApply(flatMapResult(interpreter::apply));
   }
 
@@ -146,7 +146,7 @@ public class ScheduledNoticesRepository {
       .otherwise(forwardOnFailure());
 
     return scheduledNoticesStorageClient.deleteMany(cqlQuery)
-      .whenComplete((r, t) -> logClientResponse(r, t, SC_NO_CONTENT, DELETE, cqlQuery))
+      .whenComplete((r, t) -> logResponse(r, t, SC_NO_CONTENT, DELETE, cqlQuery))
       .thenApply(responseResult -> responseResult.next(interpreter::apply));
   }
 }

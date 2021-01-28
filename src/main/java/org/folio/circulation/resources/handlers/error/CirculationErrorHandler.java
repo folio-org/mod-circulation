@@ -1,10 +1,13 @@
-package org.folio.circulation.resources.error;
+package org.folio.circulation.resources.handlers.error;
 
+import static java.util.stream.Collectors.toList;
 import static org.folio.circulation.support.results.Result.failed;
+import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -20,25 +23,45 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 @Getter
-@RequiredArgsConstructor(access = AccessLevel.PROTECTED)
+@RequiredArgsConstructor(access = AccessLevel.PACKAGE)
 public abstract class CirculationErrorHandler {
+  private final Map<HttpFailure, CirculationErrorType> errors;
 
-  private final Map<HttpFailure, CirculationError> errors;
+  public abstract <T> Result<T> handleAnyResult(Result<T> result,
+    CirculationErrorType errorType, Result<T> otherwise);
 
-  public abstract <T> Result<T> handleValidationResult(Result<T> result, CirculationError errorType,
-    T returnValue);
+  public abstract <T> Result<T> handleAnyError(HttpFailure error,
+    CirculationErrorType errorType, Result<T> otherwise);
 
-  public abstract <T> Result<T> handleValidationError(HttpFailure error, CirculationError errorType,
-    T returnValue);
+  public abstract <T> Result<T> handleValidationResult(Result<T> result,
+    CirculationErrorType errorType, Result<T> otherwise);
 
-  public abstract <T> Result<T> handleValidationResult(Result<T> result, CirculationError errorType,
-    Result<T> returnValue);
+  public abstract <T> Result<T> handleValidationError(HttpFailure error,
+    CirculationErrorType errorType, Result<T> otherwise);
 
-  public abstract <T> Result<T> handleValidationError(HttpFailure error, CirculationError errorType,
-    Result<T> returnResult);
+  public <T> Result<T> handleValidationResult(Result<T> result,
+    CirculationErrorType errorType, T otherwise) {
 
-  public boolean hasCirculationError(CirculationError... errorsToMatch) {
-    return errors.values().stream().anyMatch(e -> Arrays.asList(errorsToMatch).contains(e));
+    return handleValidationResult(result, errorType, succeeded(otherwise));
+  }
+
+  public <T> Result<T> handleValidationError(HttpFailure error,
+    CirculationErrorType errorType, T otherwise) {
+
+    return handleValidationError(error, errorType, succeeded(otherwise));
+  }
+
+  public <T> Result<T> failWithValidationErrors(T otherwise) {
+    List<ValidationError> validationErrors = errors.keySet().stream()
+      .filter(ValidationErrorFailure.class::isInstance)
+      .map(ValidationErrorFailure.class::cast)
+      .map(ValidationErrorFailure::getErrors)
+      .flatMap(Collection::stream)
+      .collect(toList());
+
+    return validationErrors.isEmpty()
+      ? succeeded(otherwise)
+      : failed(new ValidationErrorFailure(validationErrors));
   }
 
   public <T> Result<T> failIfErrorsExist(Result<T> result) {
@@ -49,7 +72,7 @@ public abstract class CirculationErrorHandler {
     boolean onlyValidationErrorsFound = errors.keySet().stream()
       .allMatch(ValidationErrorFailure.class::isInstance);
     boolean overridableErrorsFound = errors.values().stream()
-      .anyMatch(CirculationError::isOverridable);
+      .anyMatch(CirculationErrorType::isOverridable);
 
     if (errors.size() == 1 || !overridableErrorsFound) {
       // If there's only one error or if there are no overridable errors - fail with the first error
@@ -74,7 +97,7 @@ public abstract class CirculationErrorHandler {
         // Create a separate error for overridable errors
         Map<String, String> parameters = new HashMap<>();
         parameters.put("overridableBlocks", errors.values().stream()
-          .map(CirculationError::getOverridableBlock)
+          .map(CirculationErrorType::getOverridableBlock)
           .filter(Objects::nonNull)
           .map(OverridableBlock::getBlockName)
           .filter(Objects::nonNull)
@@ -91,4 +114,13 @@ public abstract class CirculationErrorHandler {
     }
   }
 
+  public boolean hasAny(CirculationErrorType... errorTypes) {
+    return Arrays.stream(errorTypes)
+      .anyMatch(errors::containsValue);
+  }
+
+  public boolean hasNone(CirculationErrorType... errorTypes) {
+    return Arrays.stream(errorTypes)
+      .noneMatch(errors::containsValue);
+  }
 }

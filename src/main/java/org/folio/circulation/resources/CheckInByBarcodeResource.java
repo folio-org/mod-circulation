@@ -1,8 +1,11 @@
 package org.folio.circulation.resources;
 
+import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE;
 import static org.folio.circulation.domain.validation.UserNotFoundValidator.refuseWhenLoggedInUserNotPresent;
+import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
 import org.folio.circulation.domain.CheckInContext;
+import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.notice.schedule.RequestScheduledNoticeService;
 import org.folio.circulation.domain.notice.session.PatronActionSessionService;
 import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
@@ -10,6 +13,7 @@ import org.folio.circulation.domain.representations.CheckInByBarcodeResponse;
 import org.folio.circulation.domain.validation.CheckInValidators;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.server.WebContext;
@@ -41,6 +45,7 @@ public class CheckInByBarcodeResource extends Resource {
 
     final EventPublisher eventPublisher = new EventPublisher(routingContext);
 
+    final var checkInValidators = new CheckInValidators(this::errorWhenInIncorrectStatus);
     final CheckInProcessAdapter processAdapter = CheckInProcessAdapter.newInstance(clients);
 
     final RequestScheduledNoticeService requestScheduledNoticeService =
@@ -55,7 +60,8 @@ public class CheckInByBarcodeResource extends Resource {
       .combineAfter(processAdapter::findItem, (records, item) -> records
         .withItem(item)
         .withItemStatusBeforeCheckIn(item.getStatus()))
-      .thenApply(CheckInValidators::refuseWhenClaimedReturnedIsNotResolved)
+      .thenApply(checkInValidators::refuseWhenItemIsNotAllowedForCheckIn)
+      .thenApply(checkInValidators::refuseWhenClaimedReturnedIsNotResolved)
       .thenComposeAsync(findItemResult -> findItemResult.combineAfter(
         processAdapter::getRequestQueue, CheckInContext::withRequestQueue))
       .thenApply(findRequestQueueResult -> findRequestQueueResult.map(
@@ -93,5 +99,16 @@ public class CheckInByBarcodeResource extends Resource {
       .thenApply(r -> r.map(CheckInByBarcodeResponse::fromRecords))
       .thenApply(r -> r.map(CheckInByBarcodeResponse::toHttpResponse))
       .thenAccept(context::writeResultToHttpResponse);
+  }
+
+  private ValidationErrorFailure errorWhenInIncorrectStatus(Item item) {
+    String message =
+      String.format("%s (%s) (Barcode: %s) has the item status %s and cannot be checked in",
+        item.getTitle(),
+        item.getMaterialTypeName(),
+        item.getBarcode(),
+        item.getStatusName());
+
+    return singleValidationError(message, ITEM_BARCODE, item.getBarcode());
   }
 }

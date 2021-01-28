@@ -3,6 +3,7 @@ package api.loans.agetolost;
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
 import static api.support.builders.DeclareItemLostRequestBuilder.forLoan;
 import static api.support.matchers.AccountMatchers.isOpen;
+import static api.support.matchers.ItemMatchers.isAgedToLost;
 import static api.support.matchers.ItemMatchers.isDeclaredLost;
 import static api.support.matchers.ItemMatchers.isLostAndPaid;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
@@ -23,6 +24,7 @@ import static java.lang.Boolean.TRUE;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.iterableWithSize;
 
 import static org.joda.time.DateTime.now;
@@ -105,7 +107,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     val lostItemFeePolicy = new LostItemFeePolicyBuilder()
       .withName("shouldChargeItemProcessingFee")
       .withItemAgedToLostAfterOverdue(Period.weeks(1))
-      .withPatronBilledAfterAgedLost(Period.weeks(2))
+      .withPatronBilledAfterItemAgedToLost(Period.weeks(2))
       .withNoChargeAmountItem()
       .doNotChargeProcessingFeeWhenDeclaredLost()
       .chargeProcessingFeeWhenAgedToLost(expectedProcessingFee);
@@ -274,7 +276,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     val lostItemFeePolicy = lostItemFeePoliciesFixture
       .ageToLostAfterOneMinutePolicy()
       .withSetCost(11.00)
-      .withPatronBilledAfterAgedLost(Period.months(7));
+      .withPatronBilledAfterItemAgedToLost(Period.months(7));
     val noticePolicy = createNoticePolicyWithAgedToLostChargedNotice();
     val result = ageToLostFixture.createLoanAgeToLostAndChargeFeesWithNotice(
       lostItemFeePolicy, noticePolicy);
@@ -308,7 +310,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
   public void shouldCloseLoanWhenNoFeesToCharge() {
     val lostItemFeePolicy = lostItemFeePoliciesFixture
       .ageToLostAfterOneMinutePolicy()
-      .withPatronBilledAfterAgedLost(Period.weeks(1))
+      .withPatronBilledAfterItemAgedToLost(Period.weeks(1))
       .withNoChargeAmountItem()
       .doNotChargeProcessingFeeWhenAgedToLost();
 
@@ -342,8 +344,8 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
 
     UUID loanId = result.getLoan().getId();
 
-    // the creation function ages the loan eight weeks into the future.  
-    // it must be checked in after that timeframe to properly examine the 
+    // the creation function ages the loan eight weeks into the future.
+    // it must be checked in after that timeframe to properly examine the
     // overdue charges
     final DateTime checkInDate = now(UTC).plusWeeks(9);
     mockClockManagerToReturnFixedDateTime(checkInDate);
@@ -351,12 +353,13 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     assertThat(loansFixture.getLoanById(loanId), hasNoOverdueFine());
 
   }
-  
+
+  @Test
   public void declaredLostItemShouldNotBeAgedToLost() {
     final double declaredLostProcessingFee = 10.00;
     useLostItemPolicy(lostItemFeePoliciesFixture.create(
       lostItemFeePoliciesFixture.ageToLostAfterOneMinutePolicy()
-        .withPatronBilledAfterAgedLost(Period.weeks(1))
+        .withPatronBilledAfterItemAgedToLost(Period.weeks(1))
         .withNoChargeAmountItem()
         .doNotChargeProcessingFeeWhenAgedToLost()
         .chargeProcessingFeeWhenDeclaredLost(declaredLostProcessingFee)).getId());
@@ -375,6 +378,31 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     assertThat(loanFromStorage, hasNoLostItemFee());
 
     assertThat(itemsFixture.getById(item.getId()).getJson(), isDeclaredLost());
+  }
+
+  @Test
+  public void loanWithRemovedItemShouldBeSkipped() {
+    useLostItemPolicy(lostItemFeePoliciesFixture.ageToLostAfterOneMinute().getId());
+
+    final var firstItem = itemsFixture.basedUponNod(ItemBuilder::withRandomBarcode);
+    final var secondItem = itemsFixture.basedUponNod(ItemBuilder::withRandomBarcode);
+    final var thirdItem = itemsFixture.basedUponNod(ItemBuilder::withRandomBarcode);
+
+    final var firstLoan = checkOutFixture.checkOutByBarcode(firstItem, usersFixture.charlotte());
+    final var secondLoan = checkOutFixture.checkOutByBarcode(secondItem, usersFixture.steve());
+    final var thirdLoan = checkOutFixture.checkOutByBarcode(thirdItem, usersFixture.james());
+
+    itemsClient.delete(secondItem);
+
+    ageToLostFixture.ageToLostAndChargeFees();
+
+    assertThat(loansStorageClient.get(firstLoan).getJson(), isLostItemHasBeenBilled());
+    assertThat(loansStorageClient.get(secondLoan).getJson(), hasNoDelayedBillingInfo());
+    assertThat(loansStorageClient.get(thirdLoan).getJson(), isLostItemHasBeenBilled());
+
+    assertThat(itemsClient.get(firstItem).getJson(), isAgedToLost());
+    assertThat(itemsClient.attemptGet(secondItem).getStatusCode(), is(404));
+    assertThat(itemsClient.get(thirdItem).getJson(), isAgedToLost());
   }
 
   private Map<IndividualResource, Double> checkoutTenItems() {

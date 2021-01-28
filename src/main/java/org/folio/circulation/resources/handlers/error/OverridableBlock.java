@@ -1,4 +1,4 @@
-package org.folio.circulation.resources.error;
+package org.folio.circulation.resources.handlers.error;
 
 public enum OverridableBlock {
   ITEM_NOT_LOANABLE("item-not-loanable"),

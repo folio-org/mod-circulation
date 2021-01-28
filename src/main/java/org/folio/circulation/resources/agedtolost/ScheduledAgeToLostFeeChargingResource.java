@@ -1,6 +1,7 @@
 package org.folio.circulation.resources.agedtolost;
 
 import static org.folio.circulation.support.Clients.create;
+import static org.folio.circulation.support.results.MappingFunctions.toFixedValue;
 
 import org.folio.circulation.resources.Resource;
 import org.folio.circulation.services.agedtolost.ChargeLostFeesWhenAgedToLostService;
@@ -29,7 +30,7 @@ public class ScheduledAgeToLostFeeChargingResource extends Resource {
       new ChargeLostFeesWhenAgedToLostService(create(context, client));
 
     chargingService.chargeFees()
-      .thenApply(r -> r.toFixedValue(NoContentResponse::noContent))
+      .thenApply(r -> r.map(toFixedValue(NoContentResponse::noContent)))
       .thenAccept(context::writeResultToHttpResponse);
   }
 }

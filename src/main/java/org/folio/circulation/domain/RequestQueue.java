@@ -45,6 +45,10 @@ public class RequestQueue {
     return fulfillableRequests().get(0);
   }
 
+  boolean containsRequestOfType(RequestType type) {
+    return requests.stream().anyMatch(request -> request.getRequestType() == type);
+  }
+
   public boolean isRequestedByOtherPatron(User requestingUser) {
     if(!hasOutstandingFulfillableRequests()) {
       return false;

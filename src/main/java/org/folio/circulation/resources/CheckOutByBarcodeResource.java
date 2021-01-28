@@ -1,11 +1,11 @@
 package org.folio.circulation.resources;
 
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
-import static org.folio.circulation.resources.error.CirculationError.FAILED_TO_FETCH_ITEM;
-import static org.folio.circulation.resources.error.CirculationError.FAILED_TO_FETCH_LOAN_POLICY;
-import static org.folio.circulation.resources.error.CirculationError.FAILED_TO_FETCH_PROXY_USER;
-import static org.folio.circulation.resources.error.CirculationError.FAILED_TO_FETCH_REQUEST_QUEUE;
-import static org.folio.circulation.resources.error.CirculationError.FAILED_TO_FETCH_USER;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_ITEM;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_LOAN_POLICY;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_PROXY_USER;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_REQUEST_QUEUE;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_USER;
 import static org.folio.circulation.support.http.server.JsonHttpResponse.created;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
@@ -33,8 +33,8 @@ import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepo
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.infrastructure.storage.users.PatronGroupRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
-import org.folio.circulation.resources.error.CirculationErrorHandler;
-import org.folio.circulation.resources.error.DeferFailureErrorHandler;
+import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
+import org.folio.circulation.resources.handlers.error.DeferFailureErrorHandler;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.RouteRegistration;
@@ -174,7 +174,7 @@ public class CheckOutByBarcodeResource extends Resource {
   private Result<LoanAndRelatedRecords> addUser(Result<LoanAndRelatedRecords> loanResult,
     Result<User> getUserResult, CirculationErrorHandler errorHandler) {
 
-    if (getUserResult.value() == null || errorHandler.hasCirculationError(FAILED_TO_FETCH_USER)) {
+    if (getUserResult.value() == null || errorHandler.hasAny(FAILED_TO_FETCH_USER)) {
       return loanResult;
     }
 
@@ -193,7 +193,7 @@ public class CheckOutByBarcodeResource extends Resource {
     Result<User> getUserResult, CirculationErrorHandler errorHandler) {
 
     if (getUserResult.value() == null ||
-      errorHandler.hasCirculationError(FAILED_TO_FETCH_PROXY_USER)) {
+      errorHandler.hasAny(FAILED_TO_FETCH_PROXY_USER)) {
 
       return loanResult;
     }
@@ -213,7 +213,7 @@ public class CheckOutByBarcodeResource extends Resource {
     Result<Item> inventoryRecordsResult, CirculationErrorHandler errorHandler) {
 
     if (inventoryRecordsResult.value() == null ||
-      errorHandler.hasCirculationError(FAILED_TO_FETCH_ITEM)) {
+      errorHandler.hasAny(FAILED_TO_FETCH_ITEM)) {
 
       return loanResult;
     }

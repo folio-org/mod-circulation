@@ -3,6 +3,7 @@ package org.folio.circulation.domain.validation;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;
 
@@ -24,9 +25,28 @@ public class ItemStatusValidatorTest {
 
   @Test
   @Parameters({
+    "Long missing",
+    "In process (non-requestable)",
+    "Restricted",
+    "Unavailable",
+    "Unknown"
+  })
+  public void canCheckOutItemInAllowedStatus(String itemStatus) {
+    val validator = new ItemStatusValidator(this::validationError);
+
+    val validationResult  = validator
+      .refuseWhenItemIsNotAllowedForCheckOut(loanWithItemInStatus(itemStatus));
+
+    assertTrue(validationResult.succeeded());
+    assertThat(validationResult.value(), notNullValue());
+  }
+
+  @Test
+  @Parameters({
     "Declared lost",
     "Claimed returned",
-    "Aged to lost"
+    "Aged to lost",
+    "Intellectual item"
   })
   public void cannotCheckOutItemInDisallowedStatus(String itemStatus) {
     val validator = new ItemStatusValidator(this::validationError);

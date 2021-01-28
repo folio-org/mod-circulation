@@ -4,12 +4,15 @@ import static api.support.APITestContext.getUserId;
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
 import static api.support.Wait.waitAtLeast;
+import static api.support.builders.ItemBuilder.INTELLECTUAL_ITEM;
 import static api.support.fakes.PublishedEvents.byEventType;
 import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.fixtures.AddressExamples.SiriusBlack;
+import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasItemBarcodeParameter;
 import static api.support.matchers.EventMatchers.isValidCheckInLogEvent;
 import static api.support.matchers.EventMatchers.isValidItemCheckedInEvent;
 import static api.support.matchers.ItemMatchers.isAvailable;
+import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.LoanMatchers.isClosed;
 import static api.support.matchers.OverdueFineMatcher.isValidOverdueFine;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
@@ -27,6 +30,7 @@ import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.domain.EventType.ITEM_CHECKED_IN;
 import static org.folio.circulation.domain.representations.logs.LogEventType.CHECK_IN;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
+import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -445,6 +449,34 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
 
     assertThat("has item volume",
       itemFromResponse.getString("volume"), is("testVolume"));
+  }
+
+  @Test
+  public void intellectualItemCannotBeCheckedIn() {
+    final var checkInServicePointId = servicePointsFixture.cd1().getId();
+
+    final var homeLocation = locationsFixture.basedUponExampleLocation(
+      item -> item.withPrimaryServicePoint(checkInServicePointId));
+
+    final var nod = itemsFixture.basedUponNod(item -> item
+      .intellectualItem()
+      .withBarcode("10304054")
+      .withTemporaryLocation(homeLocation));
+
+    final var response = checkInFixture.attemptCheckInByBarcode(new CheckInByBarcodeRequestBuilder()
+      .forItem(nod)
+      .on(new DateTime(2018, 3, 5, 14, 23, 41, UTC))
+      .at(checkInServicePointId));
+
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Nod (Book) (Barcode: 10304054) has the item status Intellectual item and cannot be checked in"),
+      hasItemBarcodeParameter(nod))));
+
+    final var fetchedNod = itemsFixture.getById(nod.getId());
+
+    assertThat(fetchedNod, hasItemStatus(INTELLECTUAL_ITEM));
   }
 
   @Test

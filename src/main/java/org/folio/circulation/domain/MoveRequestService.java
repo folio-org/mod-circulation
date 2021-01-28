@@ -84,7 +84,7 @@ public class MoveRequestService {
     return of(() -> requestAndRelatedRecords)
       .next(RequestServiceUtility::refuseWhenItemDoesNotExist)
       .next(RequestServiceUtility::refuseWhenInvalidUserAndPatronGroup)
-      .next(RequestServiceUtility::refuseWhenItemIsNotValid)
+      .next(RequestServiceUtility::refuseWhenRequestTypeIsNotAllowedForItem)
       .next(RequestServiceUtility::refuseWhenUserHasAlreadyRequestedItem)
       .after(requestLoanValidator::refuseWhenUserHasAlreadyBeenLoanedItem)
       .thenComposeAsync(r -> r.after(requestPolicyRepository::lookupRequestPolicy))
