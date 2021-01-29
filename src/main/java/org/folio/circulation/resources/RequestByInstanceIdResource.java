@@ -54,6 +54,7 @@ import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.RequestLoanValidator;
 import org.folio.circulation.domain.validation.ServicePointPickupLocationValidator;
 import org.folio.circulation.domain.validation.UserManualBlocksValidator;
+import org.folio.circulation.resources.handlers.error.FailFastErrorHandler;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.storage.ItemByInstanceIdFinder;
 import org.folio.circulation.support.BadRequestFailure;
@@ -243,7 +244,7 @@ public class RequestByInstanceIdResource extends Resource {
       new RequestLoanValidator(loanRepository),
       requestNoticeSender,
       new UserManualBlocksValidator(userManualBlocksValidator),
-      eventPublisher);
+      eventPublisher, new FailFastErrorHandler());
 
     return placeRequest(itemRequestRepresentations, 0, createRequestService,
                         clients, loanRepository, new ArrayList<>());
@@ -275,7 +276,8 @@ public class RequestByInstanceIdResource extends Resource {
         loanRepository,
         new ServicePointRepository(clients),
         createProxyRelationshipValidator(currentItemRequest, clients),
-        new ServicePointPickupLocationValidator()
+        new ServicePointPickupLocationValidator(),
+        new FailFastErrorHandler()
       );
 
     return requestFromRepresentationService.getRequestFrom(currentItemRequest)

@@ -44,12 +44,12 @@ public class RequestServiceUtility {
     }
   }
 
-  static Result<RequestAndRelatedRecords> refuseWhenItemIsNotValid(
+  static Result<RequestAndRelatedRecords> refuseWhenRequestTypeIsNotAllowedForItem(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
     Request request = requestAndRelatedRecords.getRequest();
 
-    if (request.allowedForItem()) {
+    if (request.getItem().isNotFound() || request.allowedForItem()) {
       return succeeded(requestAndRelatedRecords);
     } else {
       return failureDisallowedForRequestType(request.getRequestType());
@@ -73,7 +73,8 @@ public class RequestServiceUtility {
     User requester = request.getRequester();
 
     if (requester == null) {
-      return failedValidation("A valid user and patron group are required. User is null", "userId", null);
+      return failedValidation("A valid user and patron group are required. User is null", "userId",
+        request.getUserId());
     } else if (requester.getPatronGroupId() == null) {
       return failedValidation("A valid patron group is required. PatronGroup ID is null", "PatronGroupId", null);
     } else {

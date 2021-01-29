@@ -15,14 +15,7 @@ import org.slf4j.LoggerFactory;
 public class ServicePointPickupLocationValidator {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-  public Result<RequestAndRelatedRecords> checkServicePointPickupLocation(
-      Result<RequestAndRelatedRecords> requestAndRelatedRecordsResult) {
-
-    return requestAndRelatedRecordsResult.next(
-      this::refuseInvalidPickupServicePoint);
-  }
-
-  private Result<RequestAndRelatedRecords> refuseInvalidPickupServicePoint(
+  public Result<RequestAndRelatedRecords> refuseInvalidPickupServicePoint(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
     Request request = null;
