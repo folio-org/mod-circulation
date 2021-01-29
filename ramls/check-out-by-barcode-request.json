@@ -26,7 +26,7 @@
       "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
     },
     "overrideBlocks": {
-      "description": "Blocks that user wants to override",
+      "description": "Blocks the user wants to override",
       "type": "object",
       "itemNotLoanableBlock": {
         "description": "Override 'item not loanable' block",
@@ -47,7 +47,14 @@
       "itemLimitBlock": {
         "description": "Override 'item limit' block",
         "type": "object"
-      }
+      },
+      "comment": {
+        "description": "Overriding comment",
+        "type": "string"
+      },
+      "required": [
+        "comment"
+      ]
     }
   },
   "required": [

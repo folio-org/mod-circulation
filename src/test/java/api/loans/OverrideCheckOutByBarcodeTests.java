@@ -76,7 +76,8 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
         .withDueDate(TEST_DUE_DATE)
         .withComment(TEST_COMMENT)
         .withOverrideBlocks(new OverrideBlocks(
-          new ItemNotLoanableBlock(TEST_DUE_DATE), null, null)), okapiHeaders);
+          new ItemNotLoanableBlock(TEST_DUE_DATE), null, null, TEST_COMMENT)),
+      okapiHeaders);
 
     final JsonObject loan = response.getJson();
 
@@ -201,7 +202,8 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
         .withDueDate(TEST_DUE_DATE)
         .withComment(TEST_COMMENT)
         .withOverrideBlocks(new OverrideBlocks(
-          new ItemNotLoanableBlock(TEST_DUE_DATE), null, null)), okapiHeaders);
+          new ItemNotLoanableBlock(TEST_DUE_DATE), null, null, TEST_COMMENT)),
+      okapiHeaders);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Override is not allowed when item is loanable"))));
@@ -225,7 +227,8 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
         .on(TEST_LOAN_DATE)
         .withComment(TEST_COMMENT)
         .withOverrideBlocks(new OverrideBlocks(
-          new ItemNotLoanableBlock(TEST_DUE_DATE), null, null)), okapiHeaders);
+          new ItemNotLoanableBlock(TEST_DUE_DATE), null, null, TEST_COMMENT)),
+      okapiHeaders);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Override should be performed with due date specified"),
@@ -252,7 +255,8 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
         .withDueDate(invalidDueDate)
         .withComment(TEST_COMMENT)
         .withOverrideBlocks(new OverrideBlocks(
-          new ItemNotLoanableBlock(TEST_DUE_DATE), null, null)), okapiHeaders);
+          new ItemNotLoanableBlock(TEST_DUE_DATE), null, null, TEST_COMMENT)),
+      okapiHeaders);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Due date should be later than loan date"),
@@ -278,7 +282,8 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
         .withDueDate(TEST_LOAN_DATE)
         .withComment(TEST_COMMENT)
         .withOverrideBlocks(new OverrideBlocks(
-          new ItemNotLoanableBlock(TEST_DUE_DATE), null, null)), okapiHeaders);
+          new ItemNotLoanableBlock(TEST_DUE_DATE), null, null, TEST_COMMENT)),
+      okapiHeaders);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Due date should be later than loan date"),
@@ -303,7 +308,8 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
         .on(TEST_LOAN_DATE)
         .withDueDate(TEST_DUE_DATE)
         .withOverrideBlocks(new OverrideBlocks(
-          new ItemNotLoanableBlock(TEST_DUE_DATE), null, null)), okapiHeaders);
+          new ItemNotLoanableBlock(TEST_DUE_DATE), null, null, TEST_COMMENT)),
+      okapiHeaders);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Override should be performed with the comment specified"),
@@ -330,7 +336,8 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
         .withDueDate(TEST_DUE_DATE)
         .withComment(TEST_COMMENT)
         .withOverrideBlocks(new OverrideBlocks(
-        new ItemNotLoanableBlock(TEST_DUE_DATE), null, null)), okapiHeaders);
+        new ItemNotLoanableBlock(TEST_DUE_DATE), null, null, TEST_COMMENT)),
+      okapiHeaders);
 
     final Response placeRequestResponse = requestsFixture.attemptPlace(new RequestBuilder()
       .recall()
@@ -371,7 +378,8 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
         .to(usersFixture.steve())
         .at(UUID.randomUUID())
         .on(TEST_LOAN_DATE)
-        .withOverrideBlocks(new OverrideBlocks(null, null, null)), okapiHeaders);
+        .withOverrideBlocks(new OverrideBlocks(null, null, null, TEST_COMMENT)),
+      okapiHeaders);
 
     assertThat(response.getStatusCode(), is(422));
     assertThat(response.getJson(), hasErrorWith(allOf(hasMessage("Item is not loanable"),
@@ -387,7 +395,7 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
         .to(usersFixture.steve())
         .at(UUID.randomUUID())
         .on(TEST_LOAN_DATE).withOverrideBlocks(new OverrideBlocks(
-          new ItemNotLoanableBlock(TEST_DUE_DATE), null, null)));
+          new ItemNotLoanableBlock(TEST_DUE_DATE), null, null, TEST_COMMENT)));
 
     assertThat(response.getStatusCode(), is(422));
     assertThat(response.getJson(), hasErrorWith(allOf(
@@ -407,7 +415,8 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
         .to(usersFixture.steve())
         .at(UUID.randomUUID())
         .on(TEST_LOAN_DATE).withOverrideBlocks(new OverrideBlocks(
-        new ItemNotLoanableBlock(TEST_DUE_DATE), null, null)), okapiHeaders);
+        new ItemNotLoanableBlock(TEST_DUE_DATE), null, null, TEST_COMMENT)),
+      okapiHeaders);
 
     assertThat(response.getStatusCode(), is(422));
     assertThat(response.getJson(), hasErrorWith(allOf(
@@ -432,16 +441,19 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
 
     final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
       OVERRIDE_ITEM_LIMIT_BLOCK_PERMISSION);
-    checkOutFixture.checkOutByBarcode(
+    JsonObject loan = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(secondBookTypeItem)
         .to(steve)
         .at(UUID.randomUUID())
         .withOverrideBlocks(new OverrideBlocks(
-          null, null, new ItemLimitBlock())), okapiHeaders);
+          null, null, new ItemLimitBlock(), TEST_COMMENT)),
+      okapiHeaders).getJson();
 
     secondBookTypeItem = itemsClient.get(secondBookTypeItem);
     assertThat(secondBookTypeItem, hasItemStatus(CHECKED_OUT));
+    assertThat(loan.getString("actionComment"), is(TEST_COMMENT));
+    assertThat(loan.getString("action"), is("checkedOutThroughOverride"));
   }
 
   @Test
@@ -452,7 +464,7 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
         .to(usersFixture.steve())
         .at(UUID.randomUUID())
         .withOverrideBlocks(new OverrideBlocks(
-          null, null, new ItemLimitBlock())));
+          null, null, new ItemLimitBlock(), TEST_COMMENT)));
 
     assertThat(response.getStatusCode(), is(422));
     assertThat(response.getJson(), hasErrorWith(allOf(
@@ -468,7 +480,7 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
         .to(usersFixture.steve())
         .at(UUID.randomUUID())
         .withOverrideBlocks(new OverrideBlocks(
-          null, new PatronBlock(), null)));
+          null, new PatronBlock(), null, TEST_COMMENT)));
 
     assertThat(response.getStatusCode(), is(422));
     assertThat(response.getJson(), hasErrorWith(allOf(
@@ -487,7 +499,8 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
         .to(usersFixture.steve())
         .at(UUID.randomUUID())
         .withOverrideBlocks(new OverrideBlocks(
-          null, new PatronBlock(), null)), okapiHeaders);
+          null, new PatronBlock(), null, TEST_COMMENT)),
+      okapiHeaders);
 
     assertThat(response.getStatusCode(), is(422));
     assertThat(response.getJson(), hasErrorWith(allOf(

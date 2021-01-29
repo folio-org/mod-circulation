@@ -19,7 +19,7 @@ public class OverrideLoanPolicyValidator extends OverrideValidator {
     Function<String, ValidationErrorFailure> overridingErrorFunction,
     Map<String, String> headers, CheckOutByBarcodeRequest request) {
 
-    super(overridingErrorFunction);
+    super(overridingErrorFunction, request.getOverrideBlocks().getComment());
     this.headers = headers;
     this.request = request;
   }

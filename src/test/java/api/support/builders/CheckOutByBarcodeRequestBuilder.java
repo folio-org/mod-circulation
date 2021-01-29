@@ -59,6 +59,7 @@ public class CheckOutByBarcodeRequestBuilder extends JsonBuilder implements Buil
       if (overrideBlocks.getItemLimitBlock() != null) {
         put(overrideBlocksJson, "itemLimitBlock", new JsonObject());
       }
+      put(overrideBlocksJson, "comment", overrideBlocks.getComment());
       put(request, "overrideBlocks", overrideBlocksJson);
     }
 
