@@ -6,6 +6,7 @@ import static api.support.fixtures.ConfigurationExample.timezoneConfigurationFor
 import static api.support.http.CqlQuery.queryFromTemplate;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
+import static api.support.matchers.TextDateTimeMatcher.withinSecondsBefore;
 import static java.lang.Boolean.TRUE;
 import static org.folio.circulation.domain.policy.DueDateManagement.KEEP_THE_CURRENT_DUE_DATE;
 import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.END_OF_A_DAY;
@@ -33,6 +34,7 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalTime;
+import org.joda.time.Seconds;
 import org.joda.time.format.ISODateTimeFormat;
 import org.junit.After;
 import org.junit.Before;
@@ -46,7 +48,6 @@ import api.support.builders.LoanBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.builders.ServicePointBuilder;
-import api.support.builders.CheckInByBarcodeRequestBuilder;
 import io.vertx.core.json.JsonObject;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
@@ -766,8 +767,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
         .renewFromSystemDate()
         .withRecallsMinimumGuaranteedLoanPeriod(Period.weeks(1))
         .withRecallsRecallReturnInterval(Period.weeks(2));
-
-
+  
     setFallbackPolicies(canCirculateRollingPolicy);
 
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(
@@ -848,11 +848,90 @@ public class LoanDueDatesAfterRecallTests extends APITests {
   }
 
   @Test
+  public void shouldExtendLoanDueDateByAlternatePeriodWhenOverdueLoanIsRecalledAndPolicyAllowsExtension() {
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+
+    final Period alternateLoanPeriod = Period.weeks(3);
+
+    final Period loanPeriod = Period.weeks(1);
+    setFallbackPolicies(new LoanPolicyBuilder()
+      .withName("Can Circulate Rolling With Recalls")
+      .withDescription("Can circulate item With Recalls")
+      .rolling(loanPeriod)
+      .unlimitedRenewals()
+      .renewFromSystemDate()
+      .withAllowRecallsToExtendOverdueLoans(true)
+      .withAlternateRecallReturnInterval(alternateLoanPeriod));
+
+    final DateTime loanCreateDate = now(UTC)
+      .minus(loanPeriod.timePeriod())
+      .minusMinutes(1);
+    DateTime expectedLoanDueDate = loanCreateDate
+      .plus(loanPeriod.timePeriod())
+      .plus(alternateLoanPeriod.timePeriod())
+      .plusMinutes(1);
+
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(
+      smallAngryPlanet, usersFixture.steve(), loanCreateDate);
+
+    requestsFixture.place(new RequestBuilder()
+      .recall()
+      .forItem(smallAngryPlanet)
+      .fulfilToHoldShelf()
+      .by(usersFixture.jessica())
+      .fulfilToHoldShelf()
+      .withPickupServicePointId(servicePointsFixture.cd1().getId()));
+
+    final JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
+
+    assertThat(storedLoan.getString("dueDate"), withinSecondsBefore(Seconds.seconds(30), expectedLoanDueDate));
+  }
+  
+  public void shouldExtendLoanDueDateByRecallReturnIntervalForOverdueLoansIsRecalledAndAlternateRecallReturnIntervalForOverdueLoansIsEmpty() {
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+
+    final Period recalReturnInterval = Period.weeks(3);
+
+    final Period loanPeriod = Period.weeks(1);
+    setFallbackPolicies(new LoanPolicyBuilder()
+      .withName("Can Circulate Rolling With Recalls")
+      .withDescription("Can circulate item With Recalls")
+      .rolling(loanPeriod)
+      .unlimitedRenewals()
+      .renewFromSystemDate()
+      .withAllowRecallsToExtendOverdueLoans(true)
+      .withRecallsRecallReturnInterval(recalReturnInterval));
+
+    final DateTime loanCreateDate = now(UTC)
+      .minus(loanPeriod.timePeriod())
+      .minusMinutes(1);
+
+    DateTime expectedLoanDueDate = loanCreateDate
+      .plus(loanPeriod.timePeriod())
+      .plus(recalReturnInterval.timePeriod())
+      .plusMinutes(1);
+
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(
+      smallAngryPlanet, usersFixture.steve(), loanCreateDate);
+
+    requestsFixture.place(new RequestBuilder()
+      .recall()
+      .forItem(smallAngryPlanet)
+      .fulfilToHoldShelf()
+      .by(usersFixture.jessica())
+      .fulfilToHoldShelf()
+      .withPickupServicePointId(servicePointsFixture.cd1().getId()));
+
+    final JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
+
+    assertThat(storedLoan.getString("dueDate"), withinSecondsBefore(Seconds.seconds(30), expectedLoanDueDate));
+  }
+
+  @Test
   public void loanDueDateTruncatedOnCheckoutWhenRecallAnywhereInQueue() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requestServicePoint = servicePointsFixture.cd1();
     final IndividualResource jessica = usersFixture.jessica();
-    final IndividualResource charlotte = usersFixture.charlotte();
     final IndividualResource james = usersFixture.james();
     final IndividualResource rebecca = usersFixture.rebecca();
     final IndividualResource steve = usersFixture.steve();

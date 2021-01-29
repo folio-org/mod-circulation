@@ -1,14 +1,15 @@
 package org.folio.circulation.domain.policy;
 
 import static java.lang.String.format;
+import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getBooleanProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getIntegerProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedIntegerProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedObjectProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedStringProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getObjectProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.results.Result.succeeded;
-import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -25,9 +26,9 @@ import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.resources.RenewalValidator;
 import org.folio.circulation.rules.AppliedRuleConditions;
 import org.folio.circulation.support.ClockManager;
-import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.ValidationError;
+import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
@@ -39,6 +40,8 @@ public class LoanPolicy extends Policy {
   private static final String REQUEST_MANAGEMENT_KEY = "requestManagement";
   private static final String HOLDS_KEY = "holds";
   private static final String ALTERNATE_RENEWAL_LOAN_PERIOD_KEY = "alternateRenewalLoanPeriod";
+  private static final String ALLOW_RECALLS_TO_EXTEND_OVERDUE_LOANS = "allowRecallsToExtendOverdueLoans";
+  private static final String ALTERNATE_RECALL_RETURN_INTERVAL = "alternateRecallReturnInterval";
 
   private static final String INTERVAL_ID = "intervalId";
   private static final String DURATION = "duration";
@@ -110,6 +113,14 @@ public class LoanPolicy extends Policy {
     }
 
     return reachedNumberOfRenewalsLimit(loan) && !unlimitedRenewals();
+  }
+
+  public boolean allowRecallsToExtendOverdueLoans() {
+   return getBooleanProperty(getRecalls(), ALLOW_RECALLS_TO_EXTEND_OVERDUE_LOANS);
+  }
+
+  public JsonObject getAlternateRecallReturnInterval() {
+    return getObjectProperty(getRecalls(), ALTERNATE_RECALL_RETURN_INTERVAL);
   }
 
   private boolean reachedNumberOfRenewalsLimit(Loan loan) {
@@ -207,6 +218,14 @@ public class LoanPolicy extends Policy {
 
   private JsonObject getRenewalsPolicy() {
     return representation.getJsonObject("renewalsPolicy");
+  }
+
+  private JsonObject getRequestManagement() {
+    return getObjectProperty(representation, REQUEST_MANAGEMENT_KEY);
+  }
+
+  private JsonObject getRecalls() {
+    return getObjectProperty(getRequestManagement(), "recalls");
   }
 
   private JsonObject getHolds() {
@@ -421,6 +440,10 @@ public class LoanPolicy extends Policy {
     final DateTime systemDate = ClockManager.getClockManager().getDateTime();
 
     final Result<DateTime> recallDueDateResult =
+        loan.isOverdue() &&
+        allowRecallsToExtendOverdueLoans() &&
+        getAlternateRecallReturnInterval() != null ?
+        getDueDate("alternateRecallReturnInterval", recalls, systemDate, systemDate) :
         getDueDate("recallReturnInterval", recalls, systemDate, systemDate);
 
     final List<ValidationError> errors = new ArrayList<>();
@@ -441,8 +464,8 @@ public class LoanPolicy extends Policy {
 
     return minimumGuaranteedDueDateResult.combine(recallDueDateResult,
       (minimumGuaranteedDueDate, recallDueDate) -> {
-        if (loan.isOverdue()) {
-          // for overdue loans do not update due date
+        if (loan.isOverdue() && !allowRecallsToExtendOverdueLoans()) {
+
           return loan.getDueDate();
         }
 
