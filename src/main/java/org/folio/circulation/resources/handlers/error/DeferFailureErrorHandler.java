@@ -29,7 +29,11 @@ public class DeferFailureErrorHandler extends CirculationErrorHandler {
   public <T> Result<T> handleAnyError(HttpFailure error, CirculationErrorType errorType,
     Result<T> otherwise) {
 
-    storeError(error, errorType);
+    if (error != null) {
+      getErrors().put(error, errorType);
+    } else {
+      log.warn("HttpFailure object for error of type {} is null, error is ignored", errorType);
+    }
 
     return otherwise;
   }
@@ -49,16 +53,7 @@ public class DeferFailureErrorHandler extends CirculationErrorHandler {
       return handleAnyError(error, errorType, otherwise);
     }
     else {
-      storeError(error, errorType);
       return failed(error);
-    }
-  }
-
-  private void storeError(HttpFailure error, CirculationErrorType errorType) {
-    if (error != null) {
-      getErrors().put(error, errorType);
-    } else {
-      log.warn("HttpFailure object for error of type {} is null, error is ignored", errorType);
     }
   }
 }

@@ -122,7 +122,7 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenComposeAsync(r -> r.after(l -> getLoanPolicy(l, loanPolicyRepository, errorHandler)))
       .thenComposeAsync(validators::refuseWhenItemLimitIsReached)
       .thenApply(r -> validators.refuseWhenItemIsNotLoanable(r, checkOutStrategy))
-      .thenApply(errorHandler::failIfErrorsExist)
+      .thenApply(errorHandler::failWithValidationErrors)
       .thenCompose(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
         LoanAndRelatedRecords::withTimeZone))
       .thenComposeAsync(r -> r.after(overdueFinePolicyRepository::lookupOverdueFinePolicy))

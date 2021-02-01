@@ -16,7 +16,7 @@ import static org.folio.circulation.resources.handlers.error.CirculationErrorTyp
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ITEM_IS_NOT_LOANABLE;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ITEM_LIMIT_IS_REACHED;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ITEM_REQUESTED_BY_ANOTHER_PATRON;
-import static org.folio.circulation.resources.handlers.error.CirculationErrorType.PROXY_USER_EQUALS_TO_USER;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_PROXY_RELATIONSHIP;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.SERVICE_POINT_IS_NOT_PRESENT;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_BLOCKED_AUTOMATICALLY;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
@@ -159,7 +159,7 @@ public class CheckOutValidators {
     }
 
     return result.after(l -> proxyRelationshipValidator.refuseWhenInvalid(l)
-      .thenApply(r -> errorHandler.handleValidationResult(r, PROXY_USER_EQUALS_TO_USER, l)));
+      .thenApply(r -> errorHandler.handleValidationResult(r, INVALID_PROXY_RELATIONSHIP, l)));
   }
 
   public Result<LoanAndRelatedRecords> refuseWhenItemNotFound(

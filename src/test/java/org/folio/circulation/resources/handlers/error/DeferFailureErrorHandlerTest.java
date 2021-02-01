@@ -112,15 +112,15 @@ public class DeferFailureErrorHandlerTest {
     assertSame(INVALID_ITEM_ID, handler.getErrors().get(VALIDATION_ERROR));
   }
 
-//  @Test
-//  public void handleValidationErrorIgnoresNonValidationError() {
-//    Result<String> output = handler.handleValidationError(
-//      SERVER_ERROR, INVALID_ITEM_ID, SUCCEEDED_RESULT);
-//
-//    assertTrue(output.failed());
-//    assertSame(SERVER_ERROR, output.cause());
-//    assertTrue(handler.getErrors().isEmpty());
-//  }
+  @Test
+  public void handleValidationErrorIgnoresNonValidationError() {
+    Result<String> output = handler.handleValidationError(
+      SERVER_ERROR, INVALID_ITEM_ID, SUCCEEDED_RESULT);
+
+    assertTrue(output.failed());
+    assertSame(SERVER_ERROR, output.cause());
+    assertTrue(handler.getErrors().isEmpty());
+  }
 
   @Test
   public void handleValidationErrorIgnoresNullError() {
@@ -141,15 +141,15 @@ public class DeferFailureErrorHandlerTest {
     assertSame(INVALID_ITEM_ID, handler.getErrors().get(VALIDATION_ERROR));
   }
 
-//  @Test
-//  public void handledValidationResultIgnoresNonValidationError() {
-//    Result<String> output = handler.handleValidationResult(
-//      SERVER_ERROR_RESULT, INVALID_ITEM_ID, SUCCEEDED_RESULT);
-//
-//    assertTrue(output.failed());
-//    assertSame(SERVER_ERROR, output.cause());
-//    assertTrue(handler.getErrors().isEmpty());
-//  }
+  @Test
+  public void handledValidationResultIgnoresNonValidationError() {
+    Result<String> output = handler.handleValidationResult(
+      SERVER_ERROR_RESULT, INVALID_ITEM_ID, SUCCEEDED_RESULT);
+
+    assertTrue(output.failed());
+    assertSame(SERVER_ERROR, output.cause());
+    assertTrue(handler.getErrors().isEmpty());
+  }
 
   @Test
   public void handlerAccumulatesErrors() {
