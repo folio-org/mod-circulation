@@ -21,10 +21,12 @@ public class OverrideBlocks {
     if (representation != null) {
       ItemNotLoanableBlock itemNotLoanableBlock = ItemNotLoanableBlock.from(
         getObjectProperty(representation, "itemNotLoanableBlock"));
-      PatronBlock patronBlock = PatronBlock.from(
-        getObjectProperty(representation, "patronBlock"));
-      ItemLimitBlock itemLimitBlock = ItemLimitBlock.from(
-        getObjectProperty(representation, "itemLimitBlock"));
+      PatronBlock patronBlock = getObjectProperty(representation, "patronBlock") != null
+        ? new PatronBlock()
+        : null;
+      ItemLimitBlock itemLimitBlock = getObjectProperty(representation, "itemLimitBlock") != null
+        ? new ItemLimitBlock()
+        : null;
       String comment = getProperty(representation, "comment");
 
       return new OverrideBlocks(
