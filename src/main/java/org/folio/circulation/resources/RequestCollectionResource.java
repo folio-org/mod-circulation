@@ -36,6 +36,8 @@ import org.folio.circulation.infrastructure.storage.requests.RequestPolicyReposi
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
+import org.folio.circulation.resources.handlers.error.DeferFailureErrorHandler;
+import org.folio.circulation.resources.handlers.error.FailFastErrorHandler;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.http.server.JsonHttpResponse;
@@ -79,20 +81,22 @@ public class RequestCollectionResource extends CollectionResource {
       new UpdateLoan(clients, loanRepository, loanPolicyRepository),
       UpdateRequestQueue.using(clients));
 
+    final var errorHandler = new DeferFailureErrorHandler();
+
     final var createRequestService = new CreateRequestService(
       new CreateRequestRepositories(RequestRepository.using(clients),
         new RequestPolicyRepository(clients), configurationRepository,
         new AutomatedPatronBlocksRepository(clients)),
       updateUponRequest, new RequestLoanValidator(loanRepository),
       requestNoticeSender, new UserManualBlocksValidator(userManualBlocksValidator),
-      eventPublisher);
+      eventPublisher, errorHandler);
 
     final var requestFromRepresentationService = new RequestFromRepresentationService(
       new ItemRepository(clients, true, true, true),
       RequestQueueRepository.using(clients), userRepository, loanRepository,
       new ServicePointRepository(clients),
       createProxyRelationshipValidator(representation, clients),
-      new ServicePointPickupLocationValidator());
+      new ServicePointPickupLocationValidator(), errorHandler);
 
     final var scheduledNoticeService = RequestScheduledNoticeService.using(clients);
 
@@ -131,13 +135,15 @@ public class RequestCollectionResource extends CollectionResource {
     final var updateUponRequest = new UpdateUponRequest(updateItem,
       new UpdateLoan(clients, loanRepository, loanPolicyRepository), updateRequestQueue);
 
+    final var errorHandler = new FailFastErrorHandler();
+
     final var createRequestService = new CreateRequestService(
       new CreateRequestRepositories(requestRepository,
         new RequestPolicyRepository(clients), configurationRepository,
         new AutomatedPatronBlocksRepository(clients)),
       updateUponRequest, new RequestLoanValidator(loanRepository),
       requestNoticeSender, new UserManualBlocksValidator(userManualBlocksValidator),
-      eventPublisher);
+      eventPublisher, errorHandler);
 
     final var updateRequestService = new UpdateRequestService(requestRepository,
       updateRequestQueue, new ClosedRequestValidator(requestRepository),
@@ -148,7 +154,7 @@ public class RequestCollectionResource extends CollectionResource {
       RequestQueueRepository.using(clients), new UserRepository(clients),
       loanRepository, new ServicePointRepository(clients),
       createProxyRelationshipValidator(representation, clients),
-      new ServicePointPickupLocationValidator());
+      new ServicePointPickupLocationValidator(), errorHandler);
 
     final var requestScheduledNoticeService = RequestScheduledNoticeService.using(clients);
 

@@ -77,6 +77,10 @@ public class AutomatedPatronBlocksValidator implements OverrideValidation {
   private CompletableFuture<Result<List<AutomatedPatronBlock>>> getActionBlock(
     AutomatedPatronBlocks automatedPatronBlocks, Predicate<AutomatedPatronBlock> actionPredicate) {
 
+    if (automatedPatronBlocks == null) {
+      return ofAsync(ArrayList::new);
+    }
+
     return completedFuture(succeeded(automatedPatronBlocks.getBlocks().stream()
       .filter(actionPredicate)
       .collect(Collectors.toList())))

@@ -1,5 +1,6 @@
 package api.support.matchers;
 
+import static java.util.Optional.ofNullable;
 import static org.folio.circulation.support.StreamToListMapper.toList;
 import static org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher.toStream;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
@@ -20,8 +21,10 @@ import org.folio.circulation.support.http.server.ValidationError;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeDiagnosingMatcher;
+import org.hamcrest.core.Is;
 import org.hamcrest.core.IsCollectionContaining;
 
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class ValidationErrorMatchers {
@@ -137,6 +140,27 @@ public class ValidationErrorMatchers {
         matcher.describeMismatch(error, description);
 
         return matcher.matches(error);
+      }
+    };
+  }
+
+  public static TypeSafeDiagnosingMatcher<JsonObject> hasErrors(int numberOfErrors) {
+    return new TypeSafeDiagnosingMatcher<>() {
+      @Override
+      public void describeTo(Description description) {
+        description.appendText("Errors array of size ").appendValue(numberOfErrors);
+      }
+
+      @Override
+      protected boolean matchesSafely(JsonObject representation, Description description) {
+        int actualNumberOfErrors = ofNullable(representation.getJsonArray("errors"))
+          .map(JsonArray::size)
+          .orElse(0);
+
+        Matcher<Integer> sizeMatcher = Is.is(actualNumberOfErrors);
+        sizeMatcher.describeMismatch(actualNumberOfErrors, description);
+
+        return sizeMatcher.matches(numberOfErrors);
       }
     };
   }
