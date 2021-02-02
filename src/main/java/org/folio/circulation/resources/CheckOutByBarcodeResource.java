@@ -2,7 +2,6 @@ package org.folio.circulation.resources;
 
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_ITEM;
-import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_LOAN_POLICY;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_PROXY_USER;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_REQUEST_QUEUE;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_USER;
@@ -119,7 +118,7 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenComposeAsync(validators::refuseWhenItemHasOpenLoans)
       .thenComposeAsync(r -> r.after(l -> getRequestQueue(l, requestQueueRepository, errorHandler)))
       .thenApply(validators::refuseWhenRequestedByAnotherPatron)
-      .thenComposeAsync(r -> r.after(l -> getLoanPolicy(l, loanPolicyRepository, errorHandler)))
+      .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
       .thenComposeAsync(validators::refuseWhenItemLimitIsReached)
       .thenApply(r -> validators.refuseWhenItemIsNotLoanable(r, checkOutStrategy))
       .thenApply(errorHandler::failWithValidationErrors)
@@ -227,14 +226,6 @@ public class CheckOutByBarcodeResource extends Resource {
 
     return requestQueueRepository.get(loanAndRelatedRecords)
       .thenApply(r -> errorHandler.handleValidationResult(r, FAILED_TO_FETCH_REQUEST_QUEUE, loanAndRelatedRecords));
-  }
-
-  private CompletableFuture<Result<LoanAndRelatedRecords>> getLoanPolicy(
-    LoanAndRelatedRecords loanAndRelatedRecords, LoanPolicyRepository loanPolicyRepository,
-    CirculationErrorHandler errorHandler) {
-
-    return loanPolicyRepository.lookupLoanPolicy(loanAndRelatedRecords)
-      .thenApply(r -> errorHandler.handleValidationResult(r, FAILED_TO_FETCH_LOAN_POLICY, loanAndRelatedRecords));
   }
 
   private Result<LoanAndRelatedRecords> setItemLocationIdAtCheckout(

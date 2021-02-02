@@ -7,7 +7,6 @@ import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequ
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.USER_BARCODE;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_ITEM;
-import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_LOAN_POLICY;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_PROXY_USER;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_USER;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ITEM_ALREADY_CHECKED_OUT;
@@ -71,7 +70,7 @@ public class CheckOutValidators {
       PROXY_USER_BARCODE, request.getProxyUserBarcode()));
 
     servicePointOfCheckoutPresentValidator = new ServicePointOfCheckoutPresentValidator(message ->
-    singleValidationError(message, SERVICE_POINT_ID, request.getCheckoutServicePointId()));
+      singleValidationError(message, SERVICE_POINT_ID, request.getCheckoutServicePointId()));
 
     requestedByAnotherPatronValidator = new RequestedByAnotherPatronValidator(
       message -> singleValidationError(message, USER_BARCODE, request.getUserBarcode()));
@@ -80,24 +79,25 @@ public class CheckOutValidators {
       message -> singleValidationError(message, ITEM_BARCODE, request.getItemBarcode()));
 
     itemNotFoundValidator = new ItemNotFoundValidator(
-      () -> singleValidationError(String.format("No item with barcode %s could be found", request.getItemBarcode()),
-        ITEM_BARCODE, request.getItemBarcode()));
+      () -> singleValidationError(String.format("No item with barcode %s could be found",
+        request.getItemBarcode()), ITEM_BARCODE, request.getItemBarcode()));
 
     itemStatusValidator = new ItemStatusValidator(this::errorWhenInIncorrectStatus);
 
     inactiveUserValidator = InactiveUserValidator.forUser(request.getUserBarcode());
     inactiveProxyUserValidator = InactiveUserValidator.forProxy(request.getProxyUserBarcode());
 
-    openLoanValidator = new ExistingOpenLoanValidator(
-      loanRepository, message -> singleValidationError(message, ITEM_BARCODE, request.getItemBarcode()));
+    openLoanValidator = new ExistingOpenLoanValidator(loanRepository,
+      message -> singleValidationError(message, ITEM_BARCODE, request.getItemBarcode()));
 
     itemLimitValidator = new ItemLimitValidator(
-      message -> singleValidationError(message, ITEM_BARCODE, request.getItemBarcode()), loanRepository);
+      message -> singleValidationError(message, ITEM_BARCODE, request.getItemBarcode()),
+      loanRepository);
 
-    automatedPatronBlocksValidator = new AutomatedPatronBlocksValidator(automatedPatronBlocksRepository,
-      messages -> new ValidationErrorFailure(messages.stream()
-        .map(message -> new ValidationError(message, new HashMap<>()))
-        .collect(Collectors.toList())));
+    automatedPatronBlocksValidator = new AutomatedPatronBlocksValidator(
+      automatedPatronBlocksRepository, messages -> new ValidationErrorFailure(messages.stream()
+      .map(message -> new ValidationError(message, new HashMap<>()))
+      .collect(Collectors.toList())));
 
     loanPolicyValidator = new LoanPolicyValidator();
   }
@@ -117,7 +117,8 @@ public class CheckOutValidators {
     Result<LoanAndRelatedRecords> result) {
 
     return servicePointOfCheckoutPresentValidator.refuseCheckOutWhenServicePointIsNotPresent(result)
-      .mapFailure(failure -> errorHandler.handleValidationError(failure, SERVICE_POINT_IS_NOT_PRESENT, result));
+      .mapFailure(failure -> errorHandler.handleValidationError(failure,
+        SERVICE_POINT_IS_NOT_PRESENT, result));
   }
 
   public Result<LoanAndRelatedRecords> refuseWhenUserIsInactive(
@@ -133,12 +134,12 @@ public class CheckOutValidators {
   public CompletableFuture<Result<LoanAndRelatedRecords>>
   refuseWhenCheckOutActionIsBlockedForPatron(Result<LoanAndRelatedRecords> result) {
 
-    if (result.failed() || errorHandler.hasAny(FAILED_TO_FETCH_USER)) {
+    if (errorHandler.hasAny(FAILED_TO_FETCH_USER)) {
       return completedFuture(result);
     }
 
-    return automatedPatronBlocksValidator.refuseWhenCheckOutActionIsBlockedForPatron(result.value())
-      .thenApply(r -> errorHandler.handleValidationResult(r, USER_IS_BLOCKED_AUTOMATICALLY, result));
+    return result.after(l -> automatedPatronBlocksValidator.refuseWhenCheckOutActionIsBlockedForPatron(l)
+      .thenApply(r -> errorHandler.handleValidationResult(r, USER_IS_BLOCKED_AUTOMATICALLY, result)));
   }
 
   public Result<LoanAndRelatedRecords> refuseWhenProxyUserIsInactive(
@@ -170,7 +171,8 @@ public class CheckOutValidators {
     }
 
     return itemNotFoundValidator.refuseWhenItemNotFound(result)
-      .mapFailure(failure -> errorHandler.handleValidationError(failure, FAILED_TO_FETCH_ITEM, result));
+      .mapFailure(failure -> errorHandler.handleValidationError(failure,
+        FAILED_TO_FETCH_ITEM, result));
   }
 
   public Result<LoanAndRelatedRecords> refuseWhenItemIsAlreadyCheckedOut(
@@ -181,7 +183,8 @@ public class CheckOutValidators {
     }
 
     return alreadyCheckedOutValidator.refuseWhenItemIsAlreadyCheckedOut(result)
-      .mapFailure(failure -> errorHandler.handleValidationError(failure, ITEM_ALREADY_CHECKED_OUT, result));
+      .mapFailure(failure -> errorHandler.handleValidationError(failure,
+        ITEM_ALREADY_CHECKED_OUT, result));
   }
 
   public Result<LoanAndRelatedRecords> refuseWhenItemIsNotAllowedForCheckOut(
@@ -192,7 +195,8 @@ public class CheckOutValidators {
     }
 
     return itemStatusValidator.refuseWhenItemIsNotAllowedForCheckOut(result)
-      .mapFailure(failure -> errorHandler.handleValidationError(failure, ITEM_IS_NOT_ALLOWED_FOR_CHECK_OUT, result));
+      .mapFailure(failure -> errorHandler.handleValidationError(failure,
+        ITEM_IS_NOT_ALLOWED_FOR_CHECK_OUT, result));
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> refuseWhenItemHasOpenLoans(
@@ -210,15 +214,12 @@ public class CheckOutValidators {
     Result<LoanAndRelatedRecords> result) {
 
     return requestedByAnotherPatronValidator.refuseWhenRequestedByAnotherPatron(result)
-      .mapFailure(failure -> errorHandler.handleValidationError(failure, ITEM_REQUESTED_BY_ANOTHER_PATRON, result));
+      .mapFailure(failure -> errorHandler.handleValidationError(failure,
+        ITEM_REQUESTED_BY_ANOTHER_PATRON, result));
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> refuseWhenItemLimitIsReached(
     Result<LoanAndRelatedRecords> result) {
-
-    if (errorHandler.hasAny(FAILED_TO_FETCH_ITEM, FAILED_TO_FETCH_LOAN_POLICY)) {
-      return completedFuture(result);
-    }
 
     return result.after(l -> itemLimitValidator.refuseWhenItemLimitIsReached(l)
       .thenApply(r -> errorHandler.handleValidationResult(r, ITEM_LIMIT_IS_REACHED, l)));
@@ -226,10 +227,6 @@ public class CheckOutValidators {
 
   public Result<LoanAndRelatedRecords> refuseWhenItemIsNotLoanable(
     Result<LoanAndRelatedRecords> result, CheckOutStrategy checkOutStrategy) {
-
-    if (errorHandler.hasAny(FAILED_TO_FETCH_ITEM, FAILED_TO_FETCH_LOAN_POLICY)) {
-      return result;
-    }
 
     return result.nextWhen(
       loanAndRelatedRecords -> succeeded(checkOutStrategy instanceof OverrideCheckOutStrategy),

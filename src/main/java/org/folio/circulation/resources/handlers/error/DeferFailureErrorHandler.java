@@ -49,11 +49,8 @@ public class DeferFailureErrorHandler extends CirculationErrorHandler {
   public <T> Result<T> handleValidationError(HttpFailure error, CirculationErrorType errorType,
     Result<T> otherwise) {
 
-    if (error instanceof ValidationErrorFailure) {
-      return handleAnyError(error, errorType, otherwise);
-    }
-    else {
-      return failed(error);
-    }
+    return error instanceof ValidationErrorFailure
+      ? handleAnyError(error, errorType, otherwise)
+      : failed(error);
   }
 }
