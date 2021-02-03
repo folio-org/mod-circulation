@@ -356,10 +356,6 @@ public class CheckOutByBarcodeTests extends APITests {
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Could not find user with matching barcode"),
       hasUserBarcodeParameter(steve))));
-
-    assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("Item is not loanable"),
-      hasItemBarcodeParameter(smallAngryPlanet))));
   }
 
   @Test
@@ -1359,7 +1355,6 @@ public class CheckOutByBarcodeTests extends APITests {
         .at(UUID.randomUUID()));
 
     usersFixture.remove(steve);
-    loanPoliciesFixture.delete(loanPolicy);
 
     final Response secondCheckoutResponse = checkOutFixture.attemptCheckOutByBarcode(
       smallAngryPlanet, steve);
@@ -1374,10 +1369,6 @@ public class CheckOutByBarcodeTests extends APITests {
 
     assertThat(secondCheckoutResponse.getJson(), hasErrorWith(allOf(
       hasMessage("Cannot check out item that already has an open loan"),
-      hasItemBarcodeParameter(smallAngryPlanet))));
-
-    assertThat(secondCheckoutResponse.getJson(), hasErrorWith(allOf(
-      hasMessage("Item is not loanable"),
       hasItemBarcodeParameter(smallAngryPlanet))));
   }
 

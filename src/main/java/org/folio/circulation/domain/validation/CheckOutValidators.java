@@ -221,6 +221,10 @@ public class CheckOutValidators {
   public CompletableFuture<Result<LoanAndRelatedRecords>> refuseWhenItemLimitIsReached(
     Result<LoanAndRelatedRecords> result) {
 
+    if (isLoanPolicyNotInitialized(result)) {
+      return completedFuture(result);
+    }
+
     return result.after(l -> itemLimitValidator.refuseWhenItemLimitIsReached(l)
       .thenApply(r -> errorHandler.handleValidationResult(r, ITEM_LIMIT_IS_REACHED, l)));
   }
@@ -228,10 +232,19 @@ public class CheckOutValidators {
   public Result<LoanAndRelatedRecords> refuseWhenItemIsNotLoanable(
     Result<LoanAndRelatedRecords> result, CheckOutStrategy checkOutStrategy) {
 
+    if (isLoanPolicyNotInitialized(result)) {
+      return result;
+    }
+
     return result.nextWhen(
       loanAndRelatedRecords -> succeeded(checkOutStrategy instanceof OverrideCheckOutStrategy),
       loanAndRelatedRecords -> result,
       loanAndRelatedRecords -> loanPolicyValidator.refuseWhenItemIsNotLoanable(loanAndRelatedRecords)
         .mapFailure(failure -> errorHandler.handleValidationError(failure, ITEM_IS_NOT_LOANABLE, result)));
+  }
+
+  private boolean isLoanPolicyNotInitialized(Result<LoanAndRelatedRecords> result) {
+    return !(result.succeeded() && result.value() != null && result.value().getLoan() != null &&
+      result.value().getLoan().getLoanPolicyId() != null);
   }
 }
