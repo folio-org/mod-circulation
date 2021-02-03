@@ -152,7 +152,7 @@ public class CheckOutValidators {
     return inactiveProxyUserValidator.refuseWhenUserIsInactive(result);
   }
 
-  public CompletableFuture<Result<LoanAndRelatedRecords>> refuseWhenProxyUserIsTheSameAsUser(
+  public CompletableFuture<Result<LoanAndRelatedRecords>> refuseWhenInvalidProxyRelationship(
     Result<LoanAndRelatedRecords> result) {
 
     if (errorHandler.hasAny(FAILED_TO_FETCH_USER, FAILED_TO_FETCH_PROXY_USER)) {

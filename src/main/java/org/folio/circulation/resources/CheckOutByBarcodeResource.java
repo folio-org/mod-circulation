@@ -109,7 +109,7 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenComposeAsync(r -> getProxyUserByBarcode(request.getProxyUserBarcode(), userRepository, errorHandler)
         .thenApply(userResult -> addProxyUser(r, userResult, errorHandler)))
       .thenApply(validators::refuseWhenProxyUserIsInactive)
-      .thenComposeAsync(validators::refuseWhenProxyUserIsTheSameAsUser)
+      .thenComposeAsync(validators::refuseWhenInvalidProxyRelationship)
       .thenComposeAsync(r -> getItemByBarcode(request.getItemBarcode(), itemRepository, errorHandler)
         .thenApply(itemResult -> addItem(r, itemResult, errorHandler)))
       .thenApply(validators::refuseWhenItemNotFound)
