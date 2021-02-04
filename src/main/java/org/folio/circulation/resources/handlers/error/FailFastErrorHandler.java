@@ -2,6 +2,7 @@ package org.folio.circulation.resources.handlers.error;
 
 import static java.util.Collections.emptyMap;
 import static org.folio.circulation.support.results.Result.failed;
+import static org.folio.circulation.support.results.Result.succeeded;
 
 import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.results.Result;
@@ -37,5 +38,10 @@ public class FailFastErrorHandler extends CirculationErrorHandler {
     Result<T> otherwise) {
 
     return failed(error);
+  }
+
+  @Override
+  public <T> Result<T> failWithValidationErrors(T otherwise) {
+    return succeeded(otherwise);
   }
 }
