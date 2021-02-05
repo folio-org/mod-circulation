@@ -15,7 +15,6 @@ import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.support.results.Result;
 
 public class LoanPolicyValidator {
-
   public Result<LoanAndRelatedRecords> refuseWhenItemIsNotLoanable(
     LoanAndRelatedRecords relatedRecords) {
 
