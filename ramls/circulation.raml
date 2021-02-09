@@ -14,8 +14,10 @@ types:
   request: !include request.json
   requests: !include requests.json
   check-in-by-barcode-response: !include check-in-by-barcode-response.json
-  error: !include raml-util/schemas/error.schema
-  errors: !include raml-util/schemas/errors.schema
+#  error: !include raml-util/schemas/error.schema
+#  errors: !include raml-util/schemas/errors.schema
+  error: !include overridable-error.json
+  errors: !include overridable-errors.json
 
 traits:
   language: !include raml-util/traits/language.raml
@@ -243,6 +245,10 @@ resourceTypes:
         501:
           description: "Not implemented yet"
     post:
+      is: [
+        language,
+        validate
+      ]
       responses:
         501:
           description: "Not implemented yet"

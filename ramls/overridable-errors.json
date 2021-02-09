@@ -1,0 +1,20 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "A set of overridable errors",
+  "type": "object",
+  "properties": {
+    "errors": {
+      "description": "List of overridable errors",
+      "id": "errors",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "$ref": "overridable-error.json"
+      }
+    },
+    "total_records": {
+      "description": "Total number of errors",
+      "type": "integer"
+    }
+  }
+}

@@ -6,6 +6,7 @@ import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQ
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.results.MappingFunctions.toFixedValue;
 import static org.folio.circulation.support.results.MappingFunctions.when;
+import static org.folio.circulation.support.utils.OkapiHeadersUtils.getOkapiPermissions;
 
 import org.folio.circulation.domain.CreateRequestRepositories;
 import org.folio.circulation.domain.CreateRequestService;
@@ -36,8 +37,9 @@ import org.folio.circulation.infrastructure.storage.requests.RequestPolicyReposi
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
-import org.folio.circulation.resources.handlers.error.DeferFailureErrorHandler;
 import org.folio.circulation.resources.handlers.error.FailFastErrorHandler;
+import org.folio.circulation.resources.handlers.error.OverridingErrorHandler;
+import org.folio.circulation.resources.handlers.error.override.BlockOverrides;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.http.server.JsonHttpResponse;
@@ -81,7 +83,9 @@ public class RequestCollectionResource extends CollectionResource {
       new UpdateLoan(clients, loanRepository, loanPolicyRepository),
       UpdateRequestQueue.using(clients));
 
-    final var errorHandler = new DeferFailureErrorHandler(context.getHeaders());
+    final var errorHandler = new OverridingErrorHandler(
+      getOkapiPermissions(context.getHeaders()),
+      BlockOverrides.fromRequest(representation));
 
     final var createRequestService = new CreateRequestService(
       new CreateRequestRepositories(RequestRepository.using(clients),

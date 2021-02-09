@@ -1,4 +1,4 @@
-package org.folio.circulation.resources.handlers.error;
+package org.folio.circulation.resources.handlers.error.override;
 
 import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.toList;
@@ -22,7 +22,7 @@ public enum OverridableBlockType {
   private final String name;
   private final List<String> requiredOverridePermissions;
 
-  public List<String> getMissingOverridePermissions(Collection<String> existingPermissions) {
+  public List<String> getMissingPermissions(Collection<String> existingPermissions) {
     return  requiredOverridePermissions.stream()
       .filter(not(existingPermissions::contains))
       .collect(toList());

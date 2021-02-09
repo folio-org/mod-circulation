@@ -27,8 +27,5 @@
       "description": "Reason for override",
       "type": "string"
     }
-  },
-  "required": [
-    "comment"
-  ]
+  }
 }

@@ -29,7 +29,7 @@ public class DeferFailureErrorHandlerTest {
   private static final Result<String> VALIDATION_ERROR_RESULT = failed(VALIDATION_ERROR);
   private static final Result<String> SUCCEEDED_RESULT = succeeded("success");
 
-  private final DeferFailureErrorHandler handler = new DeferFailureErrorHandler(null);
+  private final DeferFailureErrorHandler handler = new DeferFailureErrorHandler();
 
   @Test
   public void handleAnyErrorAddsErrorToMapAndReturnsPassedValue() {
