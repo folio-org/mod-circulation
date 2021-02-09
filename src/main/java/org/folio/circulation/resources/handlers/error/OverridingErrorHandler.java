@@ -46,12 +46,12 @@ public class OverridingErrorHandler extends DeferFailureErrorHandler {
     final OverridableBlockType blockType = OVERRIDABLE_ERROR_TYPES.get(errorType);
 
     return blockOverrides.getOverrideOfType(blockType)
-      .map(override -> handleOverride(error, errorType, otherwise, blockType, override))
+      .map(override -> handleOverride(override, error, errorType, blockType, otherwise))
       .orElseGet(() -> super.handleValidationError(error, errorType, otherwise));
   }
 
-  private <T> Result<T> handleOverride(HttpFailure error, CirculationErrorType errorType,
-    Result<T> otherwise, OverridableBlockType blockType, BlockOverride override) {
+  private <T> Result<T> handleOverride(BlockOverride override, HttpFailure error,
+    CirculationErrorType errorType, OverridableBlockType blockType, Result<T> otherwise) {
 
     final List<String> missingPermissions = override.getBlockType()
       .getMissingPermissions(okapiPermissions);
