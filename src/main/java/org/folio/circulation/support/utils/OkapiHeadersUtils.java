@@ -17,10 +17,10 @@ public class OkapiHeadersUtils {
 
   public static List<String> getOkapiPermissions(Map<String, String> okapiHeaders) {
     // TODO: check value when no permissions
-    String permissionsArrayString = new CaseInsensitiveMap<>(okapiHeaders)
+    String permissionsString = new CaseInsensitiveMap<>(okapiHeaders)
       .getOrDefault("x-okapi-permissions", "[]");
 
-    return new JsonArray(permissionsArrayString)
+    return new JsonArray(permissionsString)
       .stream()
       .filter(String.class::isInstance)
       .map(String.class::cast)

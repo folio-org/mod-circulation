@@ -23,8 +23,17 @@ public enum OverridableBlockType {
   private final List<String> requiredOverridePermissions;
 
   public List<String> getMissingPermissions(Collection<String> existingPermissions) {
+    if (existingPermissions == null) {
+      return requiredOverridePermissions;
+    }
+
     return  requiredOverridePermissions.stream()
       .filter(not(existingPermissions::contains))
       .collect(toList());
+  }
+
+  @Override
+  public String toString() {
+    return name;
   }
 }

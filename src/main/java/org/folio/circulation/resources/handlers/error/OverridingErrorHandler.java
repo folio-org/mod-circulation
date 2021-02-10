@@ -56,13 +56,17 @@ public class OverridingErrorHandler extends DeferFailureErrorHandler {
     final List<String> missingPermissions = override.getBlockType()
       .getMissingPermissions(okapiPermissions);
 
-    if (missingPermissions.isEmpty()) {
-      log.info("Overriding error of type {}", errorType);
-      return otherwise;
-    } else {
+    if (!missingPermissions.isEmpty()) {
+      log.warn("Unable to override {} caused by error {}. Missing permissions: {}",
+        blockType, errorType, missingPermissions);
+
       return super.handleValidationError(error, errorType, otherwise)
         .next(r -> handleMissingPermissions(blockType, missingPermissions, otherwise));
     }
+
+    log.info("Overriding {} caused by error {}", blockType, errorType);
+
+    return otherwise;
   }
 
   private <T> Result<T> handleMissingPermissions(OverridableBlockType blockType,
