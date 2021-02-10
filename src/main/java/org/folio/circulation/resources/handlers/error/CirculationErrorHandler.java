@@ -48,6 +48,10 @@ public abstract class CirculationErrorHandler {
   }
 
   public <T> Result<T> failWithValidationErrors(T otherwise) {
+    return failWithValidationErrors(succeeded(otherwise));
+  }
+
+  public <T> Result<T> failWithValidationErrors(Result<T> otherwise) {
     List<ValidationError> validationErrors = errors.keySet().stream()
       .filter(ValidationErrorFailure.class::isInstance)
       .map(ValidationErrorFailure.class::cast)
@@ -56,7 +60,7 @@ public abstract class CirculationErrorHandler {
       .collect(toList());
 
     return validationErrors.isEmpty()
-      ? succeeded(otherwise)
+      ? otherwise
       : failed(new ValidationErrorFailure(validationErrors));
   }
 
