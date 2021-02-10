@@ -1,6 +1,8 @@
 package org.folio.circulation.resources;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_ITEM;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_PROXY_USER;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_USER;
 import static org.folio.circulation.support.http.server.JsonHttpResponse.created;
@@ -111,10 +113,10 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenComposeAsync(validators::refuseWhenItemHasOpenLoans)
       .thenComposeAsync(r -> r.after(requestQueueRepository::get))
       .thenApply(validators::refuseWhenRequestedByAnotherPatron)
-      .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
+      .thenComposeAsync(r -> r.after(l -> lookupLoanPolicy(l, loanPolicyRepository, errorHandler)))
       .thenComposeAsync(validators::refuseWhenItemLimitIsReached)
       .thenApply(r -> validators.refuseWhenItemIsNotLoanable(r, checkOutStrategy))
-      .thenApply(errorHandler::failWithValidationErrors)
+      .thenApply(r -> r.next(errorHandler::failWithValidationErrors))
       .thenCompose(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
         LoanAndRelatedRecords::withTimeZone))
       .thenComposeAsync(r -> r.after(overdueFinePolicyRepository::lookupOverdueFinePolicy))
@@ -135,6 +137,17 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
       .thenApply(this::createdLoanFrom)
       .thenAccept(context::writeResultToHttpResponse);
+  }
+
+  private CompletableFuture<Result<LoanAndRelatedRecords>> lookupLoanPolicy(
+    LoanAndRelatedRecords loanAndRelatedRecords, LoanPolicyRepository loanPolicyRepository,
+    CirculationErrorHandler errorHandler) {
+
+    if (errorHandler.hasAny(FAILED_TO_FETCH_ITEM)) {
+      return completedFuture(succeeded(loanAndRelatedRecords));
+    }
+
+    return loanPolicyRepository.lookupLoanPolicy(loanAndRelatedRecords);
   }
 
   private CompletableFuture<Result<LoanAndRelatedRecords>> updateItem(
