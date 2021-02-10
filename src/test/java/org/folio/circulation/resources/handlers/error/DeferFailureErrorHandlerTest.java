@@ -12,6 +12,7 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 
 import org.folio.circulation.support.HttpFailure;
@@ -29,7 +30,7 @@ public class DeferFailureErrorHandlerTest {
   private static final Result<String> VALIDATION_ERROR_RESULT = failed(VALIDATION_ERROR);
   private static final Result<String> SUCCEEDED_RESULT = succeeded("success");
 
-  private final DeferFailureErrorHandler handler = new DeferFailureErrorHandler(null);
+  private final DeferFailureErrorHandler handler = new DeferFailureErrorHandler(new HashMap<>());
 
   @Test
   public void handleAnyErrorAddsErrorToMapAndReturnsPassedValue() {
