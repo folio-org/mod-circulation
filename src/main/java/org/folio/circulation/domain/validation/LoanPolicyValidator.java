@@ -21,15 +21,16 @@ public class LoanPolicyValidator {
     final Loan loan = relatedRecords.getLoan();
     final LoanPolicy loanPolicy = loan.getLoanPolicy();
 
-    if (loanPolicy.isNotLoanable()) {
-      String itemBarcode = loan.getItem().getBarcode();
-
-      Map<String, String> parameters = new HashMap<>();
-      parameters.put(ITEM_BARCODE, itemBarcode);
-      return failed(singleValidationError(
-        loanPolicyValidationError(loanPolicy,
-          "Item is not loanable", parameters)));
+    if (loanPolicy.isLoanable()) {
+      return succeeded(relatedRecords);
     }
-    return succeeded(relatedRecords);
+
+    String itemBarcode = loan.getItem().getBarcode();
+
+    Map<String, String> parameters = new HashMap<>();
+    parameters.put(ITEM_BARCODE, itemBarcode);
+
+    return failed(singleValidationError(loanPolicyValidationError(loanPolicy,
+      "Item is not loanable", parameters)));
   }
 }

@@ -16,17 +16,22 @@ import static org.folio.circulation.resources.handlers.error.CirculationErrorTyp
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ITEM_LIMIT_IS_REACHED;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ITEM_REQUESTED_BY_ANOTHER_PATRON;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_PROXY_RELATIONSHIP;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.PROXY_USER_IS_INACTIVE;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.SERVICE_POINT_IS_NOT_PRESENT;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_BLOCKED_AUTOMATICALLY;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_INACTIVE;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.HashMap;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.Item;
+import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
+import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.representations.CheckOutByBarcodeRequest;
 import org.folio.circulation.infrastructure.storage.AutomatedPatronBlocksRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
@@ -128,7 +133,9 @@ public class CheckOutValidators {
       return result;
     }
 
-    return inactiveUserValidator.refuseWhenUserIsInactive(result);
+    return inactiveUserValidator.refuseWhenUserIsInactive(result)
+      .mapFailure(failure -> errorHandler.handleValidationError(failure,
+        USER_IS_INACTIVE, result));
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>>
@@ -149,7 +156,9 @@ public class CheckOutValidators {
       return result;
     }
 
-    return inactiveProxyUserValidator.refuseWhenUserIsInactive(result);
+    return inactiveProxyUserValidator.refuseWhenUserIsInactive(result)
+      .mapFailure(failure -> errorHandler.handleValidationError(failure,
+        PROXY_USER_IS_INACTIVE, result));
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> refuseWhenInvalidProxyRelationship(
@@ -244,7 +253,10 @@ public class CheckOutValidators {
   }
 
   private boolean isLoanPolicyNotInitialized(Result<LoanAndRelatedRecords> result) {
-    return !(result.succeeded() && result.value() != null && result.value().getLoan() != null &&
-      result.value().getLoan().getLoanPolicyId() != null);
+    return Optional.ofNullable(result.value())
+      .map(LoanAndRelatedRecords::getLoan)
+      .map(Loan::getLoanPolicy)
+      .map(LoanPolicy::getId)
+      .isEmpty();
   }
 }
