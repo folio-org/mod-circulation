@@ -7,11 +7,11 @@ import java.util.function.Function;
 
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.policy.LoanPolicy;
-import org.folio.circulation.domain.validation.overriding.OverrideValidation;
+import org.folio.circulation.domain.validation.overriding.LoanValidator;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.results.Result;
 
-public class LoanPolicyValidator implements OverrideValidation {
+public class LoanPolicyValidator implements LoanValidator {
   private final Function<LoanPolicy, ValidationErrorFailure> itemLimitErrorFunction;
 
   public LoanPolicyValidator(Function<LoanPolicy, ValidationErrorFailure> itemLimitErrorFunction) {

@@ -81,7 +81,7 @@ public class RequestCollectionResource extends CollectionResource {
       new UpdateLoan(clients, loanRepository, loanPolicyRepository),
       UpdateRequestQueue.using(clients));
 
-    final var errorHandler = new DeferFailureErrorHandler();
+    final var errorHandler = new DeferFailureErrorHandler(context.getHeaders());
 
     final var createRequestService = new CreateRequestService(
       new CreateRequestRepositories(RequestRepository.using(clients),

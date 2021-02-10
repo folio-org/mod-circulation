@@ -11,7 +11,7 @@ public class OkapiHeaders {
   private final String okapiPermissions;
 
   public OkapiHeaders(URL url, String tenantId, String token, String userId) {
-    this(url, tenantId, token, userId, null, null);
+    this(url, tenantId, token, userId, null, "[]");
   }
 
   public OkapiHeaders(URL url, String tenantId, String token, String userId,

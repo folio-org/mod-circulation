@@ -5,21 +5,18 @@ import static org.folio.circulation.support.results.Result.ofAsync;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Function;
 
 import org.folio.circulation.domain.representations.CheckOutByBarcodeRequest;
-import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.results.Result;
 
 public class OverrideAutomatedPatronBlocksValidator extends OverrideValidator {
   private final Map<String, String> headers;
   private final CheckOutByBarcodeRequest request;
 
-  public OverrideAutomatedPatronBlocksValidator(
-    Function<String, ValidationErrorFailure> overridingErrorFunction,
-    Map<String, String> headers, CheckOutByBarcodeRequest request) {
+  public OverrideAutomatedPatronBlocksValidator(Map<String, String> headers,
+    CheckOutByBarcodeRequest request) {
 
-    super(overridingErrorFunction, request.getOverrideBlocks().getComment());
+    super(request.getOverrideBlocks().getComment());
     this.headers = headers;
     this.request = request;
   }

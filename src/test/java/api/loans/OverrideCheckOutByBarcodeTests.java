@@ -10,11 +10,15 @@ import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static org.folio.circulation.domain.policy.Period.months;
 import static org.hamcrest.CoreMatchers.allOf;
+import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasSize;
 
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.domain.representations.ItemLimitBlock;
@@ -22,6 +26,7 @@ import org.folio.circulation.domain.representations.ItemNotLoanableBlock;
 import org.folio.circulation.domain.representations.OverrideBlocks;
 import org.folio.circulation.domain.representations.PatronBlock;
 import org.folio.circulation.support.http.client.Response;
+import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
@@ -50,6 +55,7 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
     "circulation.override-patron-block";
   public static final String OVERRIDE_ITEM_LIMIT_BLOCK_PERMISSION =
     "circulation.override-item-limit-block";
+  public static final String INSUFFICIENT_OVERRIDE_PERMISSIONS = "Insufficient override permissions";
 
 
   @Test
@@ -399,8 +405,9 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
 
     assertThat(response.getStatusCode(), is(422));
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("Missing override permissions"),
-      hasParameter("item-not-loanable-block", OVERRIDE_ITEM_NOT_LOANABLE_BLOCK_PERMISSION))));
+      hasMessage(INSUFFICIENT_OVERRIDE_PERMISSIONS))));
+    assertThat(getMissingPermissions(response), hasSize(1));
+    assertThat(getMissingPermissions(response), hasItem(OVERRIDE_ITEM_NOT_LOANABLE_BLOCK_PERMISSION));
   }
 
   @Test
@@ -420,8 +427,28 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
 
     assertThat(response.getStatusCode(), is(422));
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("Missing override permissions"),
-      hasParameter("item-not-loanable-block", OVERRIDE_ITEM_NOT_LOANABLE_BLOCK_PERMISSION))));
+      hasMessage(INSUFFICIENT_OVERRIDE_PERMISSIONS))));
+    assertThat(getMissingPermissions(response), hasSize(1));
+    assertThat(getMissingPermissions(response), hasItem(OVERRIDE_ITEM_NOT_LOANABLE_BLOCK_PERMISSION));
+  }
+
+  @Test
+  public void cannotOverrideItemNotLoanableBlockAndPatronBlockWhenUserDoesNotHavePermissions() {
+    setNotLoanablePolicy();
+    Response response = checkOutFixture.attemptCheckOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(itemsFixture.basedUponSmallAngryPlanet())
+        .to(usersFixture.steve())
+        .at(UUID.randomUUID())
+        .on(TEST_LOAN_DATE).withOverrideBlocks(new OverrideBlocks(
+        new ItemNotLoanableBlock(TEST_DUE_DATE), new PatronBlock(), null, TEST_COMMENT)));
+
+    assertThat(response.getStatusCode(), is(422));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage(INSUFFICIENT_OVERRIDE_PERMISSIONS))));
+    assertThat(getMissingPermissions(response), hasSize(2));
+    assertThat(getMissingPermissions(response).get(0), is(OVERRIDE_PATRON_BLOCK_PERMISSION));
+    assertThat(getMissingPermissions(response).get(1), is(OVERRIDE_ITEM_NOT_LOANABLE_BLOCK_PERMISSION));
   }
 
   @Test
@@ -468,8 +495,9 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
 
     assertThat(response.getStatusCode(), is(422));
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("Missing override permissions"),
-      hasParameter("item-limit-block", OVERRIDE_ITEM_LIMIT_BLOCK_PERMISSION))));
+      hasMessage(INSUFFICIENT_OVERRIDE_PERMISSIONS))));
+    assertThat(getMissingPermissions(response), hasSize(1));
+    assertThat(getMissingPermissions(response), hasItem(OVERRIDE_ITEM_LIMIT_BLOCK_PERMISSION));
   }
 
   @Test
@@ -484,8 +512,9 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
 
     assertThat(response.getStatusCode(), is(422));
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("Missing override permissions"),
-      hasParameter("patron-block", OVERRIDE_PATRON_BLOCK_PERMISSION))));
+      hasMessage(INSUFFICIENT_OVERRIDE_PERMISSIONS))));
+    assertThat(getMissingPermissions(response), hasSize(1));
+    assertThat(getMissingPermissions(response), hasItem(OVERRIDE_PATRON_BLOCK_PERMISSION));
   }
 
   @Test
@@ -504,8 +533,9 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
 
     assertThat(response.getStatusCode(), is(422));
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("Missing override permissions"),
-      hasParameter("patron-block", OVERRIDE_PATRON_BLOCK_PERMISSION))));
+      hasMessage(INSUFFICIENT_OVERRIDE_PERMISSIONS))));
+    assertThat(getMissingPermissions(response), hasSize(1));
+    assertThat(getMissingPermissions(response), hasItem(OVERRIDE_PATRON_BLOCK_PERMISSION));
   }
 
   private void setNotLoanablePolicy() {
@@ -557,5 +587,15 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
         .withName("Loan Policy without item limit")
         .rolling(months(2))
         .renewFromCurrentDueDate());
+  }
+
+  private List<String> getMissingPermissions(Response response) {
+    return response.getJson().getJsonArray("errors")
+      .stream()
+      .map(JsonObject.class::cast)
+      .map(error -> error.getJsonObject("overridableBlock"))
+      .map(block -> block.getJsonArray("missingPermissions"))
+      .map(missingPermissions -> missingPermissions.getString(0))
+      .collect(Collectors.toList());
   }
 }

@@ -1,15 +1,15 @@
 package org.folio.circulation.resources;
 
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
-import static org.folio.circulation.resources.error.CirculationError.FAILED_TO_FETCH_ITEM;
-import static org.folio.circulation.resources.error.CirculationError.FAILED_TO_FETCH_LOAN_POLICY;
-import static org.folio.circulation.resources.error.CirculationError.FAILED_TO_FETCH_PROXY_USER;
-import static org.folio.circulation.resources.error.CirculationError.FAILED_TO_FETCH_REQUEST_QUEUE;
-import static org.folio.circulation.resources.error.CirculationError.FAILED_TO_FETCH_USER;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_ITEM;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_PROXY_USER;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_REQUEST_QUEUE;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_USER;
 import static org.folio.circulation.support.http.server.JsonHttpResponse.created;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Item;
@@ -33,8 +33,8 @@ import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepo
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.infrastructure.storage.users.PatronGroupRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
-import org.folio.circulation.resources.error.CirculationErrorHandler;
-import org.folio.circulation.resources.error.DeferFailureErrorHandler;
+import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
+import org.folio.circulation.resources.handlers.error.DeferFailureErrorHandler;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.RouteRegistration;
@@ -89,9 +89,10 @@ public class CheckOutByBarcodeResource extends Resource {
     final LoanScheduledNoticeService scheduledNoticeService =
       new LoanScheduledNoticeService(scheduledNoticesRepository, patronNoticePolicyRepository);
 
-    CirculationErrorHandler errorHandler = new DeferFailureErrorHandler();
+    Map<String, String> okapiHeaders = new WebContext(routingContext).getHeaders();
+    CirculationErrorHandler errorHandler = new DeferFailureErrorHandler(okapiHeaders);
     CheckOutValidators validators = new CheckOutValidators(request, clients, errorHandler,
-      new WebContext(routingContext).getHeaders());
+      okapiHeaders);
 
     final UpdateRequestQueue requestQueueUpdate = UpdateRequestQueue.using(clients);
 
@@ -111,7 +112,7 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenComposeAsync(r -> getProxyUserByBarcode(request.getProxyUserBarcode(), userRepository, errorHandler)
         .thenApply(userResult -> addProxyUser(r, userResult, errorHandler)))
       .thenApply(validators::refuseWhenProxyUserIsInactive)
-      .thenComposeAsync(validators::refuseWhenProxyUserIsTheSameAsUser)
+      .thenComposeAsync(validators::refuseWhenInvalidProxyRelationship)
       .thenComposeAsync(r -> getItemByBarcode(request.getItemBarcode(), itemRepository, errorHandler)
         .thenApply(itemResult -> addItem(r, itemResult, errorHandler)))
       .thenApply(validators::refuseWhenItemNotFound)
@@ -120,10 +121,10 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenComposeAsync(validators::refuseWhenItemHasOpenLoans)
       .thenComposeAsync(r -> r.after(l -> getRequestQueue(l, requestQueueRepository, errorHandler)))
       .thenApply(validators::refuseWhenRequestedByAnotherPatron)
-      .thenComposeAsync(r -> r.after(l -> getLoanPolicy(l, loanPolicyRepository, errorHandler)))
+      .thenComposeAsync(r -> r.after(l -> lookupLoanPolicy(l, loanPolicyRepository, errorHandler)))
       .thenComposeAsync(validators::refuseWhenItemLimitIsReached)
       .thenComposeAsync(r -> validators.refuseWhenItemIsNotLoanable(r, checkOutStrategy))
-      .thenApply(errorHandler::failIfErrorsExist)
+      .thenApply(r -> r.next(errorHandler::failWithValidationErrors))
       .thenCompose(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
         LoanAndRelatedRecords::withTimeZone))
       .thenComposeAsync(r -> r.after(overdueFinePolicyRepository::lookupOverdueFinePolicy))
@@ -144,6 +145,17 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
       .thenApply(this::createdLoanFrom)
       .thenAccept(context::writeResultToHttpResponse);
+  }
+
+  private CompletableFuture<Result<LoanAndRelatedRecords>> lookupLoanPolicy(
+    LoanAndRelatedRecords loanAndRelatedRecords, LoanPolicyRepository loanPolicyRepository,
+    CirculationErrorHandler errorHandler) {
+
+    if (errorHandler.hasAny(FAILED_TO_FETCH_ITEM)) {
+      return CompletableFuture.completedFuture(succeeded(loanAndRelatedRecords));
+    }
+
+    return loanPolicyRepository.lookupLoanPolicy(loanAndRelatedRecords);
   }
 
   private CompletableFuture<Result<LoanAndRelatedRecords>> updateItem(
@@ -175,7 +187,7 @@ public class CheckOutByBarcodeResource extends Resource {
   private Result<LoanAndRelatedRecords> addUser(Result<LoanAndRelatedRecords> loanResult,
     Result<User> getUserResult, CirculationErrorHandler errorHandler) {
 
-    if (getUserResult.value() == null || errorHandler.hasCirculationError(FAILED_TO_FETCH_USER)) {
+    if (getUserResult.value() == null || errorHandler.hasAny(FAILED_TO_FETCH_USER)) {
       return loanResult;
     }
 
@@ -194,7 +206,7 @@ public class CheckOutByBarcodeResource extends Resource {
     Result<User> getUserResult, CirculationErrorHandler errorHandler) {
 
     if (getUserResult.value() == null ||
-      errorHandler.hasCirculationError(FAILED_TO_FETCH_PROXY_USER)) {
+      errorHandler.hasAny(FAILED_TO_FETCH_PROXY_USER)) {
 
       return loanResult;
     }
@@ -214,7 +226,7 @@ public class CheckOutByBarcodeResource extends Resource {
     Result<Item> inventoryRecordsResult, CirculationErrorHandler errorHandler) {
 
     if (inventoryRecordsResult.value() == null ||
-      errorHandler.hasCirculationError(FAILED_TO_FETCH_ITEM)) {
+      errorHandler.hasAny(FAILED_TO_FETCH_ITEM)) {
 
       return loanResult;
     }
@@ -228,14 +240,6 @@ public class CheckOutByBarcodeResource extends Resource {
 
     return requestQueueRepository.get(loanAndRelatedRecords)
       .thenApply(r -> errorHandler.handleValidationResult(r, FAILED_TO_FETCH_REQUEST_QUEUE, loanAndRelatedRecords));
-  }
-
-  private CompletableFuture<Result<LoanAndRelatedRecords>> getLoanPolicy(
-    LoanAndRelatedRecords loanAndRelatedRecords, LoanPolicyRepository loanPolicyRepository,
-    CirculationErrorHandler errorHandler) {
-
-    return loanPolicyRepository.lookupLoanPolicy(loanAndRelatedRecords)
-      .thenApply(r -> errorHandler.handleValidationResult(r, FAILED_TO_FETCH_LOAN_POLICY, loanAndRelatedRecords));
   }
 
   private Result<LoanAndRelatedRecords> setItemLocationIdAtCheckout(

@@ -13,15 +13,15 @@ import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.AutomatedPatronBlock;
 import org.folio.circulation.domain.AutomatedPatronBlocks;
-import org.folio.circulation.domain.validation.overriding.OverrideValidation;
-import org.folio.circulation.infrastructure.storage.AutomatedPatronBlocksRepository;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
+import org.folio.circulation.domain.validation.overriding.LoanValidator;
+import org.folio.circulation.infrastructure.storage.AutomatedPatronBlocksRepository;
 import org.folio.circulation.resources.context.RenewalContext;
-import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.ValidationErrorFailure;
+import org.folio.circulation.support.results.Result;
 
-public class AutomatedPatronBlocksValidator implements OverrideValidation {
+public class AutomatedPatronBlocksValidator implements LoanValidator {
   private final AutomatedPatronBlocksRepository automatedPatronBlocksRepository;
   private final Function<List<String>, ValidationErrorFailure> actionIsBlockedForPatronErrorFunction;
 
