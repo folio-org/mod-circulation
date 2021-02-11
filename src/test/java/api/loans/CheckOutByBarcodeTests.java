@@ -70,6 +70,7 @@ import api.support.builders.UserBuilder;
 import api.support.fakes.FakePubSub;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
+import api.support.http.UserResource;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
@@ -1334,6 +1335,43 @@ public class CheckOutByBarcodeTests extends APITests {
     assertThat(response.getBody(), containsString(
       "Error during publishing Event Message in PubSub. Status code: 400"));
   }
+
+  @Test
+  public void failedCheckOutWithMultipleValidationErrors() {
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final UserResource steve = usersFixture.steve();
+
+    IndividualResource loanPolicy = loanPoliciesFixture.create(new LoanPolicyBuilder()
+      .withId(UUID.randomUUID())
+      .withName("Example loan policy")
+      .withLoanable(true)
+    );
+
+    checkOutFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(smallAngryPlanet)
+        .to(steve)
+        .on(DateTime.now(UTC))
+        .at(UUID.randomUUID()));
+
+    usersFixture.remove(steve);
+
+    final Response secondCheckoutResponse = checkOutFixture.attemptCheckOutByBarcode(
+      smallAngryPlanet, steve);
+
+    assertThat(secondCheckoutResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("Could not find user with matching barcode"),
+      hasUserBarcodeParameter(steve))));
+
+    assertThat(secondCheckoutResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("Item is already checked out"),
+      hasItemBarcodeParameter(smallAngryPlanet))));
+
+    assertThat(secondCheckoutResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("Cannot check out item that already has an open loan"),
+      hasItemBarcodeParameter(smallAngryPlanet))));
+  }
+
   private IndividualResource prepareLoanPolicyWithItemLimit(int itemLimit) {
     return loanPoliciesFixture.create(
       new LoanPolicyBuilder()

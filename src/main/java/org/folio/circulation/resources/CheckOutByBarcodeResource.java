@@ -1,5 +1,6 @@
 package org.folio.circulation.resources;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_ITEM;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_PROXY_USER;
@@ -12,12 +13,10 @@ import static org.folio.circulation.support.results.Result.succeeded;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.LoanRepresentation;
 import org.folio.circulation.domain.LoanService;
 import org.folio.circulation.domain.UpdateRequestQueue;
-import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.notice.schedule.LoanScheduledNoticeService;
 import org.folio.circulation.domain.notice.session.PatronActionSessionService;
 import org.folio.circulation.domain.representations.CheckOutByBarcodeRequest;
@@ -105,21 +104,18 @@ public class CheckOutByBarcodeResource extends Resource {
 
     ofAsync(() -> new LoanAndRelatedRecords(request.toLoan()))
       .thenApply(validators::refuseCheckOutWhenServicePointIsNotPresent)
-      .thenComposeAsync(r -> getUserByBarcode(request.getUserBarcode(), userRepository, errorHandler)
-        .thenApply(userResult -> addUser(r, userResult, errorHandler)))
-      .thenApply(validators::refuseWhenUserIsInactive)
+      .thenComposeAsync(r -> lookupUser(request.getUserBarcode(), userRepository, r, errorHandler))
       .thenComposeAsync(validators::refuseWhenCheckOutActionIsBlockedForPatron)
-      .thenComposeAsync(r -> getProxyUserByBarcode(request.getProxyUserBarcode(), userRepository, errorHandler)
-        .thenApply(userResult -> addProxyUser(r, userResult, errorHandler)))
+      .thenComposeAsync(r -> lookupProxyUser(request.getProxyUserBarcode(), userRepository, r, errorHandler))
+      .thenApply(validators::refuseWhenUserIsInactive)
       .thenApply(validators::refuseWhenProxyUserIsInactive)
       .thenComposeAsync(validators::refuseWhenInvalidProxyRelationship)
-      .thenComposeAsync(r -> getItemByBarcode(request.getItemBarcode(), itemRepository, errorHandler)
-        .thenApply(itemResult -> addItem(r, itemResult, errorHandler)))
+      .thenComposeAsync(r -> lookupItem(request.getItemBarcode(), itemRepository, r))
       .thenApply(validators::refuseWhenItemNotFound)
       .thenApply(validators::refuseWhenItemIsAlreadyCheckedOut)
       .thenApply(validators::refuseWhenItemIsNotAllowedForCheckOut)
       .thenComposeAsync(validators::refuseWhenItemHasOpenLoans)
-      .thenComposeAsync(r -> r.after(l -> getRequestQueue(l, requestQueueRepository, errorHandler)))
+      .thenComposeAsync(r -> r.after(requestQueueRepository::get))
       .thenApply(validators::refuseWhenRequestedByAnotherPatron)
       .thenComposeAsync(r -> r.after(l -> lookupLoanPolicy(l, loanPolicyRepository, errorHandler)))
       .thenComposeAsync(validators::refuseWhenItemLimitIsReached)
@@ -152,7 +148,7 @@ public class CheckOutByBarcodeResource extends Resource {
     CirculationErrorHandler errorHandler) {
 
     if (errorHandler.hasAny(FAILED_TO_FETCH_ITEM)) {
-      return CompletableFuture.completedFuture(succeeded(loanAndRelatedRecords));
+      return completedFuture(succeeded(loanAndRelatedRecords));
     }
 
     return loanPolicyRepository.lookupLoanPolicy(loanAndRelatedRecords);
@@ -177,69 +173,29 @@ public class CheckOutByBarcodeResource extends Resource {
     return String.format("/circulation/loans/%s", id);
   }
 
-  private CompletableFuture<Result<User>> getUserByBarcode(String barcode,
-    UserRepository userRepository, CirculationErrorHandler errorHandler) {
-
-    return userRepository.getUserByBarcode(barcode)
-      .thenApply(r -> errorHandler.handleValidationResult(r, FAILED_TO_FETCH_USER, succeeded(null)));
-  }
-
-  private Result<LoanAndRelatedRecords> addUser(Result<LoanAndRelatedRecords> loanResult,
-    Result<User> getUserResult, CirculationErrorHandler errorHandler) {
-
-    if (getUserResult.value() == null || errorHandler.hasAny(FAILED_TO_FETCH_USER)) {
-      return loanResult;
-    }
-
-    return loanResult.combine(getUserResult, LoanAndRelatedRecords::withRequestingUser)
-      .mapFailure(failure -> errorHandler.handleValidationError(failure, FAILED_TO_FETCH_USER, loanResult));
-  }
-
-  private CompletableFuture<Result<User>> getProxyUserByBarcode(String barcode,
-    UserRepository userRepository, CirculationErrorHandler errorHandler) {
-
-    return userRepository.getProxyUserByBarcode(barcode)
-      .thenApply(r -> errorHandler.handleValidationResult(r, FAILED_TO_FETCH_PROXY_USER, succeeded(null)));
-  }
-
-  private Result<LoanAndRelatedRecords> addProxyUser(Result<LoanAndRelatedRecords> loanResult,
-    Result<User> getUserResult, CirculationErrorHandler errorHandler) {
-
-    if (getUserResult.value() == null ||
-      errorHandler.hasAny(FAILED_TO_FETCH_PROXY_USER)) {
-
-      return loanResult;
-    }
-
-    return loanResult.combine(getUserResult, LoanAndRelatedRecords::withProxyingUser)
-      .mapFailure(failure -> errorHandler.handleValidationError(failure, FAILED_TO_FETCH_PROXY_USER, loanResult));
-  }
-
-  private CompletableFuture<Result<Item>> getItemByBarcode(String barcode,
-    ItemRepository itemRepository, CirculationErrorHandler errorHandler) {
-
-    return itemRepository.fetchByBarcode(barcode)
-      .thenApply(r -> errorHandler.handleValidationResult(r, FAILED_TO_FETCH_ITEM, succeeded(null)));
-  }
-
-  private Result<LoanAndRelatedRecords> addItem(Result<LoanAndRelatedRecords> loanResult,
-    Result<Item> inventoryRecordsResult, CirculationErrorHandler errorHandler) {
-
-    if (inventoryRecordsResult.value() == null ||
-      errorHandler.hasAny(FAILED_TO_FETCH_ITEM)) {
-
-      return loanResult;
-    }
-
-    return loanResult.combine(inventoryRecordsResult, LoanAndRelatedRecords::withItem);
-  }
-
-  private CompletableFuture<Result<LoanAndRelatedRecords>> getRequestQueue(
-    LoanAndRelatedRecords loanAndRelatedRecords, RequestQueueRepository requestQueueRepository,
+  private CompletableFuture<Result<LoanAndRelatedRecords>> lookupUser(String barcode,
+    UserRepository userRepository, Result<LoanAndRelatedRecords> loanResult,
     CirculationErrorHandler errorHandler) {
 
-    return requestQueueRepository.get(loanAndRelatedRecords)
-      .thenApply(r -> errorHandler.handleValidationResult(r, FAILED_TO_FETCH_REQUEST_QUEUE, loanAndRelatedRecords));
+    return userRepository.getUserByBarcode(barcode)
+      .thenApply(userResult -> loanResult.combine(userResult, LoanAndRelatedRecords::withRequestingUser))
+      .thenApply(r -> errorHandler.handleValidationResult(r, FAILED_TO_FETCH_USER, loanResult));
+  }
+
+  private CompletableFuture<Result<LoanAndRelatedRecords>> lookupProxyUser(String barcode,
+    UserRepository userRepository, Result<LoanAndRelatedRecords> loanResult,
+    CirculationErrorHandler errorHandler) {
+
+    return userRepository.getProxyUserByBarcode(barcode)
+      .thenApply(userResult -> loanResult.combine(userResult, LoanAndRelatedRecords::withProxyingUser))
+      .thenApply(r -> errorHandler.handleValidationResult(r, FAILED_TO_FETCH_PROXY_USER, loanResult));
+  }
+
+  private CompletableFuture<Result<LoanAndRelatedRecords>> lookupItem(
+    String barcode, ItemRepository itemRepository, Result<LoanAndRelatedRecords> loanResult) {
+
+    return itemRepository.fetchByBarcode(barcode)
+      .thenApply(itemResult -> loanResult.combine(itemResult, LoanAndRelatedRecords::withItem));
   }
 
   private Result<LoanAndRelatedRecords> setItemLocationIdAtCheckout(
