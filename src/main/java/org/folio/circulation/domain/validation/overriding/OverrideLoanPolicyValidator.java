@@ -1,6 +1,6 @@
 package org.folio.circulation.domain.validation.overriding;
 
-import static org.folio.circulation.domain.validation.overriding.OverridePermissions.OVERRIDE_ITEM_NOT_LOANABLE_BLOCK;
+import static org.folio.circulation.resources.handlers.error.OverridableBlockType.ITEM_NOT_LOANABLE_BLOCK;
 import static org.folio.circulation.support.results.Result.ofAsync;
 
 import java.util.Map;
@@ -26,6 +26,7 @@ public class OverrideLoanPolicyValidator extends OverrideValidator {
     return ofAsync(() ->  !(request.getOverrideBlocks() != null
       && request.getOverrideBlocks().getItemNotLoanableBlock() != null
       && headers.get(OKAPI_PERMISSIONS) != null
-      && headers.get(OKAPI_PERMISSIONS).contains(OVERRIDE_ITEM_NOT_LOANABLE_BLOCK.getValue())));
+      && ITEM_NOT_LOANABLE_BLOCK.getRequiredOverridePermissions().stream()
+      .allMatch(permission -> headers.get(OKAPI_PERMISSIONS).contains(permission))));
   }
 }

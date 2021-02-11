@@ -1,12 +1,12 @@
 package org.folio.circulation.domain.validation.overriding;
 
-import static org.folio.circulation.domain.validation.overriding.OverridePermissions.OVERRIDE_PATRON_BLOCK;
 import static org.folio.circulation.support.results.Result.ofAsync;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.representations.CheckOutByBarcodeRequest;
+import org.folio.circulation.resources.handlers.error.OverridableBlockType;
 import org.folio.circulation.support.results.Result;
 
 public class OverrideAutomatedPatronBlocksValidator extends OverrideValidator {
@@ -26,6 +26,7 @@ public class OverrideAutomatedPatronBlocksValidator extends OverrideValidator {
     return ofAsync(() -> !(request.getOverrideBlocks() != null
       && request.getOverrideBlocks().getPatronBlock() != null
       && headers.get(OKAPI_PERMISSIONS) != null
-      && headers.get(OKAPI_PERMISSIONS).contains(OVERRIDE_PATRON_BLOCK.getValue())));
+      && OverridableBlockType.PATRON_BLOCK.getRequiredOverridePermissions().stream()
+      .allMatch(permission -> headers.get(OKAPI_PERMISSIONS).contains(permission))));
   }
 }
