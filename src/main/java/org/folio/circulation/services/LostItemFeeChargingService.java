@@ -12,26 +12,41 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.Iterator;
 
+import org.folio.circulation.services.LostItemFeeRefundService;
+import org.folio.circulation.services.feefine.FeeFineService;
+import org.folio.circulation.services.LostItemFeeRefundContext;
 import org.folio.circulation.StoreLoanAndItem;
+import org.folio.circulation.domain.Account;
+import org.folio.circulation.domain.AccountCancelReason;
 import org.folio.circulation.domain.FeeFine;
 import org.folio.circulation.domain.FeeFineOwner;
+import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.notice.schedule.FeeFineScheduledNoticeService;
 import org.folio.circulation.domain.policy.lostitem.LostItemPolicy;
 import org.folio.circulation.domain.policy.lostitem.itemfee.AutomaticallyChargeableFee;
 import org.folio.circulation.domain.representations.DeclareItemLostRequest;
+import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineOwnerRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineRepository;
 import org.folio.circulation.infrastructure.storage.inventory.LocationRepository;
 import org.folio.circulation.infrastructure.storage.loans.LostItemPolicyRepository;
+import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.services.support.CreateAccountCommand;
 import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.HttpFailure;
+import org.folio.circulation.support.results.CommonFailures;
 import org.folio.circulation.support.results.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import io.netty.handler.codec.http2.StreamBufferingEncoder;
 
 public class LostItemFeeChargingService {
   private static final Logger log = LoggerFactory.getLogger(LostItemFeeChargingService.class);
@@ -44,6 +59,11 @@ public class LostItemFeeChargingService {
   private final LocationRepository locationRepository;
   private final EventPublisher eventPublisher;
   private final FeeFineScheduledNoticeService feeFineScheduledNoticeService;
+  private final LostItemFeeRefundService lostItemFeeRefundService;
+  private final Clients clients;
+  private final LostItemFeeRefundService refundService;
+  private final AccountRepository accountRepository;
+  private Loan loanWithAccountData;
 
   public LostItemFeeChargingService(Clients clients) {
     this.lostItemPolicyRepository = new LostItemPolicyRepository(clients);
@@ -54,22 +74,49 @@ public class LostItemFeeChargingService {
     this.locationRepository = LocationRepository.using(clients);
     this.eventPublisher = new EventPublisher(clients.pubSubPublishingService());
     this.feeFineScheduledNoticeService = FeeFineScheduledNoticeService.using(clients);
+    this.lostItemFeeRefundService = new LostItemFeeRefundService(clients);
+    this.clients = clients;
+    this.refundService = new LostItemFeeRefundService(clients);
+    this.accountRepository = new AccountRepository(clients);
+
   }
 
-  public CompletableFuture<Result<Loan>> chargeLostItemFees(
+  public CompletableFuture<Object> chargeLostItemFees(
     Loan loan, DeclareItemLostRequest request, String staffUserId) {
 
     final ReferenceDataContext referenceDataContext = new ReferenceDataContext(
       loan, request, staffUserId);
+    final AccountCancelReason reason = AccountCancelReason.CANCELLED_ITEM_DECLARED_LOST;
+    final LostItemFeeRefundContext refundContext = new LostItemFeeRefundContext(
+      loan.getItem().getStatus(),
+      loan.getItem().getItemId(),
+      staffUserId,
+      request.getServicePointid(),
+      loan,
+      reason
+    );
 
     return lostItemPolicyRepository.getLostItemPolicyById(loan.getLostItemPolicyId())
       .thenApply(result -> result.map(referenceDataContext::withLostItemPolicy))
       .thenCompose(refDataResult -> refDataResult.after(referenceData -> {
         if (shouldCloseLoan(referenceData.lostItemPolicy)) {
           log.debug("Loan [{}] can be closed because no fee will be charged", loan.getId());
-          return closeLoanAndUpdateInStorage(loan)
-            .thenCompose(r -> r.after(eventPublisher::publishClosedLoanEvent))
-            .thenApply(r -> r.map(v -> loan));
+          return closeLoanAndPublishEvent(loan);
+        }
+        try {
+          loanWithAccountData = accountRepository.findAccountsForLoan(loan).join().value();
+        } catch (Exception e) {
+          log.error("Cannot retrieve account data for loan [{}], aborting charge fines", loan.getId());
+          return closeLoanAndPublishEvent(loan);
+        }
+
+        if (hasLostItemFees(loanWithAccountData)) {
+          log.info("Found pre-existing lost item fees for loan, attempting to remove", loan.getId());
+          Result<LostItemFeeRefundContext> refund = refundService.refundAccounts(refundContext).join();
+          if (refund.failed()) {
+            log.error("Cannot refund and cancel existing fees for loan [{}]", loan.getId());
+            return closeLoanAndPublishEvent(loan);
+          }  
         }
 
         return fetchFeeFineOwner(referenceData)
@@ -79,8 +126,46 @@ public class LostItemFeeChargingService {
           .thenCompose(r -> r.after(feeFineFacade::createAccounts))
           .thenApply(r -> r.map(notUsed -> loan));
       }));
+    }
+
+  private Boolean isOpenLostItemFee(Account account) {
+    String type = account.getFeeFineType();
+
+    log.info("account type is: " + account.getFeeFineType());
+    log.info("account is open: " + account.isOpen());
+    log.info("amount is: " + account.getAmount());
+    if ((type == FeeFine.LOST_ITEM_FEE_TYPE || type == FeeFine.LOST_ITEM_PROCESSING_FEE_TYPE) && account.isOpen()) {
+      return true;
+    } else {
+      return false;
+    }
   }
 
+  private Boolean hasLostItemFees(Loan loan) {
+    return loan.getAccounts().stream().anyMatch(account -> isOpenLostItemFee(account));
+  }
+
+  private CompletableFuture<Result<Object>> closeLoanAndPublishEvent(Loan loan) {
+    return closeLoanAndUpdateInStorage(loan)
+            .thenCompose(r -> r.after(eventPublisher::publishClosedLoanEvent))
+            .thenApply(r -> r.map(v -> loan));
+  }
+
+  private CompletableFuture<Result<Object>> applyLostFees(ReferenceDataContext data, Loan loan) {
+    return fetchFeeFineOwner(data)
+          .thenApply(this::refuseWhenFeeFineOwnerIsNotFound)
+          .thenComposeAsync(this::fetchFeeFineTypes)
+          .thenApply(this::buildAccountsAndActions)
+          .thenCompose(r -> r.after(feeFineFacade::createAccounts))
+          .thenApply(r -> r.map(notUsed -> loan));
+  }
+
+  private Result<LostItemFeeRefundContext> refundExistingLostItemFees(Clients clients, DeclareItemLostRequest request, String userId, Loan loan)   
+    throws InterruptedException, ExecutionException {
+    
+
+    return refundService.refundAccounts(context).completeAsync(supplier);
+  }
 
   private CompletableFuture<Result<Loan>> closeLoanAndUpdateInStorage(Loan loan) {
     loan.closeLoanAsLostAndPaid();
