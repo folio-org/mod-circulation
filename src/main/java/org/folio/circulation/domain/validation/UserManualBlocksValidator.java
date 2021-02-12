@@ -90,6 +90,6 @@ public class UserManualBlocksValidator {
 
   private boolean isBlockedToCreateRequests(DateTime expirationDate, boolean requests) {
     final DateTime now = ClockManager.getClockManager().getDateTime();
-    return requests && expirationDate != null && expirationDate.isAfter(now);
+    return expirationDate == null || requests && expirationDate.isAfter(now);
   }
 }
