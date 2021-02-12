@@ -1655,7 +1655,34 @@ RequestsAPICreationTests extends APITests {
     assertThat(postResponse.getJson(), hasErrors(1));
     assertThat(postResponse.getJson(), hasErrorWith(allOf(
       hasMessage("Patron blocked from requesting"))));
-      hasParameter("reason", "Display description");
+    hasParameter("reason", "Display description");
+  }
+
+  @Test
+  public void cannotCreateRequestWhenExpirationDateIsNotSet() {
+    final IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource requester = usersFixture.rebecca();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+
+    final UserManualBlockBuilder userManualBlockBuilder = getManualBlockBuilder()
+      .withRequests(true)
+      .withUserId(String.valueOf(requester.getId()));
+
+    final RequestBuilder requestBuilder = createRequestBuilder(item,
+      requester,
+      pickupServicePointId,
+      new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
+
+    checkOutFixture.checkOutByBarcode(item, usersFixture.jessica());
+    userManualBlocksFixture.create(userManualBlockBuilder);
+
+    Response postResponse = requestsClient.attemptCreate(requestBuilder);
+
+    assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(postResponse.getJson(), hasErrors(1));
+    assertThat(postResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("Patron blocked from requesting"))));
+    hasParameter("reason", "Display description");
   }
 
   @Test
