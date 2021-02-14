@@ -1,32 +1,15 @@
 package org.folio.circulation.domain.validation.overriding;
 
-import static org.folio.circulation.support.results.Result.ofAsync;
+import static org.folio.circulation.resources.handlers.error.OverridableBlockType.PATRON_BLOCK;
 
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
+import java.util.List;
 
-import org.folio.circulation.domain.representations.CheckOutByBarcodeRequest;
-import org.folio.circulation.resources.handlers.error.OverridableBlockType;
-import org.folio.circulation.support.results.Result;
+import org.folio.circulation.domain.representations.OverrideBlocks;
 
-public class OverrideAutomatedPatronBlocksValidator extends OverrideValidator {
-  private final Map<String, String> headers;
-  private final CheckOutByBarcodeRequest request;
+public class OverrideAutomatedPatronBlocksValidator extends LoanOverrideValidator {
+  public OverrideAutomatedPatronBlocksValidator(OverrideBlocks overrideBlocks,
+    List<String> permissions) {
 
-  public OverrideAutomatedPatronBlocksValidator(Map<String, String> headers,
-    CheckOutByBarcodeRequest request) {
-
-    super(request.getOverrideBlocks().getComment());
-    this.headers = headers;
-    this.request = request;
-  }
-
-  @Override
-  public CompletableFuture<Result<Boolean>> isOverridingForbidden() {
-    return ofAsync(() -> !(request.getOverrideBlocks() != null
-      && request.getOverrideBlocks().getPatronBlock() != null
-      && headers.get(OKAPI_PERMISSIONS) != null
-      && OverridableBlockType.PATRON_BLOCK.getRequiredOverridePermissions().stream()
-      .allMatch(permission -> headers.get(OKAPI_PERMISSIONS).contains(permission))));
+    super(PATRON_BLOCK, overrideBlocks, permissions);
   }
 }

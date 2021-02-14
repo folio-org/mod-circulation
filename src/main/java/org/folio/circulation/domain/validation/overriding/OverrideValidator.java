@@ -1,42 +1,47 @@
 package org.folio.circulation.domain.validation.overriding;
 
-import static org.folio.circulation.domain.LoanAction.CHECKED_OUT_THROUGH_OVERRIDE;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INSUFFICIENT_OVERRIDE_PERMISSIONS;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.results.Result.ofAsync;
+import static org.folio.circulation.support.results.Result.succeeded;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import org.folio.circulation.domain.Loan;
-import org.folio.circulation.domain.LoanAndRelatedRecords;
+import org.folio.circulation.domain.representations.OverrideBlocks;
+import org.folio.circulation.resources.handlers.error.CirculationErrorType;
+import org.folio.circulation.resources.handlers.error.OverridableBlockType;
 import org.folio.circulation.support.http.server.InsufficientOverridePermissionsError;
 import org.folio.circulation.support.results.Result;
 
-public abstract class OverrideValidator implements LoanValidator {
-  protected static final String OKAPI_PERMISSIONS = "x-okapi-permissions";
-  private final String comment;
+import lombok.Getter;
 
-  public OverrideValidator(String comment) {
-    this.comment = comment;
+@Getter
+public abstract class OverrideValidator<T> implements Validator<T> {
+  private final OverridableBlockType blockType;
+  private final OverrideBlocks overrideBlocks;
+  private final List<String> permissions;
+
+  public OverrideValidator(OverridableBlockType blockType, OverrideBlocks overrideBlocks,
+    List<String> permissions) {
+
+    this.blockType = blockType;
+    this.permissions = permissions;
+    this.overrideBlocks = overrideBlocks;
   }
 
   @Override
-  public CompletableFuture<Result<LoanAndRelatedRecords>> validate(LoanAndRelatedRecords records) {
-    return ofAsync(() -> records)
-      .thenCompose(result -> result.failAfter(relatedRecords -> isOverridingForbidden(),
-        relatedRecords -> singleValidationError(
-          new InsufficientOverridePermissionsError(null, null))))
-      .thenCompose(result -> result.after(this::setLoanAction));
+  public CompletableFuture<Result<T>> validate(T records) {
+    List<String> missingPermissions = blockType.getMissingOverridePermissions(permissions);
+
+    return succeeded(records)
+      .failAfter(r -> ofAsync(() -> !missingPermissions.isEmpty()),
+        r -> singleValidationError(
+          new InsufficientOverridePermissionsError(blockType, missingPermissions)));
   }
 
-  private CompletableFuture<Result<LoanAndRelatedRecords>> setLoanAction(
-    LoanAndRelatedRecords loanAndRelatedRecords) {
-
-    Loan loan = loanAndRelatedRecords.getLoan();
-    loan.changeAction(CHECKED_OUT_THROUGH_OVERRIDE);
-    loan.changeActionComment(comment);
-
-    return ofAsync(() -> loanAndRelatedRecords);
+  @Override
+  public CirculationErrorType getErrorType() {
+    return INSUFFICIENT_OVERRIDE_PERMISSIONS;
   }
-
-  protected abstract CompletableFuture<Result<Boolean>> isOverridingForbidden();
 }

@@ -15,7 +15,7 @@ import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.domain.notice.schedule.LoanScheduledNoticeService;
 import org.folio.circulation.domain.notice.schedule.FeeFineScheduledNoticeService;
 import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
-import org.folio.circulation.domain.validation.AutomatedPatronBlocksValidator;
+import org.folio.circulation.domain.validation.RegularAutomatedPatronBlocksValidator;
 import org.folio.circulation.resources.LoanNoticeSender;
 import org.folio.circulation.resources.Resource;
 import org.folio.circulation.resources.context.RenewalContext;
@@ -78,8 +78,8 @@ public abstract class RenewalResource extends Resource {
 
     final AutomatedPatronBlocksRepository automatedPatronBlocksRepository =
       new AutomatedPatronBlocksRepository(clients);
-    final AutomatedPatronBlocksValidator automatedPatronBlocksValidator =
-      new AutomatedPatronBlocksValidator(automatedPatronBlocksRepository,
+    final RegularAutomatedPatronBlocksValidator automatedPatronBlocksValidator =
+      new RegularAutomatedPatronBlocksValidator(automatedPatronBlocksRepository,
         messages -> new ValidationErrorFailure(messages.stream()
           .map(message -> new ValidationError(message, new HashMap<>()))
           .collect(Collectors.toList())));

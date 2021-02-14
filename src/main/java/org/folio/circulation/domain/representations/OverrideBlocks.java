@@ -18,20 +18,22 @@ public class OverrideBlocks {
   private final String comment;
 
   public static OverrideBlocks from(JsonObject representation) {
-    if (representation != null) {
-      ItemNotLoanableBlock itemNotLoanableBlock = ItemNotLoanableBlock.from(
-        getObjectProperty(representation, "itemNotLoanableBlock"));
-      PatronBlock patronBlock = getObjectProperty(representation, "patronBlock") != null
-        ? new PatronBlock()
-        : null;
-      ItemLimitBlock itemLimitBlock = getObjectProperty(representation, "itemLimitBlock") != null
-        ? new ItemLimitBlock()
-        : null;
-      String comment = getProperty(representation, "comment");
-
-      return new OverrideBlocks(
-        itemNotLoanableBlock, patronBlock, itemLimitBlock, comment);
+    if (representation == null) {
+      return new OverrideBlocks(null, null, null, null);
     }
-    return null;
+
+    ItemNotLoanableBlock itemNotLoanableBlock = ItemNotLoanableBlock.from(
+      getObjectProperty(representation, "itemNotLoanableBlock"));
+    PatronBlock patronBlock = getObjectProperty(representation, "patronBlock") != null
+      ? new PatronBlock()
+      : null;
+    ItemLimitBlock itemLimitBlock = getObjectProperty(representation, "itemLimitBlock") != null
+      ? new ItemLimitBlock()
+      : null;
+    String comment = getProperty(representation, "comment");
+
+    return new OverrideBlocks(
+      itemNotLoanableBlock, patronBlock, itemLimitBlock, comment);
+
   }
 }

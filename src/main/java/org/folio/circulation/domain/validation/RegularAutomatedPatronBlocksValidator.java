@@ -1,6 +1,7 @@
 package org.folio.circulation.domain.validation;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_BLOCKED_AUTOMATICALLY;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
@@ -15,17 +16,18 @@ import org.folio.circulation.domain.AutomatedPatronBlock;
 import org.folio.circulation.domain.AutomatedPatronBlocks;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
-import org.folio.circulation.domain.validation.overriding.LoanValidator;
+import org.folio.circulation.domain.validation.overriding.Validator;
 import org.folio.circulation.infrastructure.storage.AutomatedPatronBlocksRepository;
 import org.folio.circulation.resources.context.RenewalContext;
+import org.folio.circulation.resources.handlers.error.CirculationErrorType;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.results.Result;
 
-public class AutomatedPatronBlocksValidator implements LoanValidator {
+public class RegularAutomatedPatronBlocksValidator implements Validator<LoanAndRelatedRecords> {
   private final AutomatedPatronBlocksRepository automatedPatronBlocksRepository;
   private final Function<List<String>, ValidationErrorFailure> actionIsBlockedForPatronErrorFunction;
 
-  public AutomatedPatronBlocksValidator(
+  public RegularAutomatedPatronBlocksValidator(
     AutomatedPatronBlocksRepository automatedPatronBlocksRepository,
     Function<List<String>, ValidationErrorFailure> actionIsBlockedForPatronErrorFunction) {
 
@@ -36,6 +38,11 @@ public class AutomatedPatronBlocksValidator implements LoanValidator {
   @Override
   public CompletableFuture<Result<LoanAndRelatedRecords>> validate(LoanAndRelatedRecords records) {
     return refuseWhenCheckOutActionIsBlockedForPatron(records);
+  }
+
+  @Override
+  public CirculationErrorType getErrorType() {
+    return USER_IS_BLOCKED_AUTOMATICALLY;
   }
 
   private CompletableFuture<Result<LoanAndRelatedRecords>>

@@ -10,6 +10,7 @@ import static org.folio.circulation.support.http.server.JsonHttpResponse.created
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
@@ -40,6 +41,7 @@ import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.server.HttpResponse;
 import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.Result;
+import org.folio.circulation.support.utils.OkapiHeadersUtils;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
@@ -89,9 +91,10 @@ public class CheckOutByBarcodeResource extends Resource {
       new LoanScheduledNoticeService(scheduledNoticesRepository, patronNoticePolicyRepository);
 
     Map<String, String> okapiHeaders = new WebContext(routingContext).getHeaders();
+    List<String> permissions = OkapiHeadersUtils.getOkapiPermissions(okapiHeaders);
     CirculationErrorHandler errorHandler = new DeferFailureErrorHandler(okapiHeaders);
     CheckOutValidators validators = new CheckOutValidators(request, clients, errorHandler,
-      okapiHeaders);
+      permissions);
 
     final UpdateRequestQueue requestQueueUpdate = UpdateRequestQueue.using(clients);
 

@@ -1,9 +1,10 @@
 package org.folio.circulation.domain.validation;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ITEM_LIMIT_IS_REACHED;
+import static org.folio.circulation.support.http.client.PageLimit.limit;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
-import static org.folio.circulation.support.http.client.PageLimit.limit;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
@@ -12,19 +13,20 @@ import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
-import org.folio.circulation.domain.validation.overriding.LoanValidator;
+import org.folio.circulation.domain.validation.overriding.Validator;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
+import org.folio.circulation.resources.handlers.error.CirculationErrorType;
 import org.folio.circulation.rules.AppliedRuleConditions;
-import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.client.PageLimit;
+import org.folio.circulation.support.results.Result;
 
-public class ItemLimitValidator implements LoanValidator {
+public class RegularItemLimitValidator implements Validator<LoanAndRelatedRecords> {
   private final Function<String, ValidationErrorFailure> itemLimitErrorFunction;
   private final LoanRepository loanRepository;
   private static final PageLimit LOANS_PAGE_LIMIT = limit(10000);
 
-  public ItemLimitValidator(Function<String, ValidationErrorFailure> itemLimitErrorFunction,
+  public RegularItemLimitValidator(Function<String, ValidationErrorFailure> itemLimitErrorFunction,
     LoanRepository loanRepository) {
 
     this.itemLimitErrorFunction = itemLimitErrorFunction;
@@ -34,6 +36,11 @@ public class ItemLimitValidator implements LoanValidator {
   @Override
   public CompletableFuture<Result<LoanAndRelatedRecords>> validate(LoanAndRelatedRecords records) {
     return refuseWhenItemLimitIsReached(records);
+  }
+
+  @Override
+  public CirculationErrorType getErrorType() {
+    return ITEM_LIMIT_IS_REACHED;
   }
 
   private CompletableFuture<Result<LoanAndRelatedRecords>> refuseWhenItemLimitIsReached(
