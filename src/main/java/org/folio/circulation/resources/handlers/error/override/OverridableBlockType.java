@@ -13,7 +13,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum OverridableBlockType {
   PATRON_BLOCK("patronBlock",
-    List.of("circulation.override-patron-block", "test-permission", "fake-permission")),
+    List.of("circulation.override-patron-block")),
   ITEM_LIMIT_BLOCK("itemLimitBlock",
     List.of("circulation.override-item-limit-block")),
   ITEM_NOT_LOANABLE_BLOCK("itemNotLoanableBlock",

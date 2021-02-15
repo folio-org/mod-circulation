@@ -16,7 +16,6 @@ public class OkapiHeadersUtils {
   }
 
   public static List<String> getOkapiPermissions(Map<String, String> okapiHeaders) {
-    // TODO: check value when no permissions
     String permissionsString = new CaseInsensitiveMap<>(okapiHeaders)
       .getOrDefault("x-okapi-permissions", "[]");
 

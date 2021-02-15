@@ -5,6 +5,7 @@ import static org.folio.circulation.resources.handlers.error.override.Overridabl
 import static org.folio.circulation.resources.handlers.error.override.OverridableBlockType.ITEM_NOT_LOANABLE_BLOCK;
 import static org.folio.circulation.resources.handlers.error.override.OverridableBlockType.PATRON_BLOCK;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedObjectProperty;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,10 +25,8 @@ public class BlockOverrides {
   private final String comment;
 
   public static BlockOverrides fromRequest(JsonObject requestRepresentation) {
-    return from(
-      Optional.ofNullable(requestRepresentation.getJsonObject("requestProcessingParameters"))
-      .map(params -> params.getJsonObject("overrideBlocks"))
-      .orElse(null));
+    return from(getNestedObjectProperty(
+      requestRepresentation, "requestProcessingParameters", "overrideBlocks"));
   }
 
   public static BlockOverrides from(JsonObject representation) {
@@ -37,13 +36,11 @@ public class BlockOverrides {
 
     List<BlockOverride> overrides = new ArrayList<>();
 
-    JsonObject patronBlockJson = representation.getJsonObject(PATRON_BLOCK.getName());
-    if (patronBlockJson != null) {
+    if (representation.getJsonObject(PATRON_BLOCK.getName()) != null) {
       overrides.add(new PatronBlockOverride());
     }
 
-    JsonObject itemLimitBlock = representation.getJsonObject(ITEM_LIMIT_BLOCK.getName());
-    if (itemLimitBlock != null) {
+    if (representation.getJsonObject(ITEM_LIMIT_BLOCK.getName()) != null) {
       overrides.add(new ItemLimitBlockOverride());
     }
 
@@ -53,14 +50,12 @@ public class BlockOverrides {
       overrides.add(new ItemNotLoanableBlockOverride(dueDate));
     }
 
-    String comment = representation.getString("comment");
-
-    return new BlockOverrides(overrides, comment);
+    return new BlockOverrides(overrides, representation.getString("comment"));
   }
 
-    public Optional<BlockOverride> getOverrideOfType(OverridableBlockType blockType) {
-      return overrides.stream()
-        .filter(override -> override.getBlockType() == blockType)
-        .findFirst();
-    }
+  public Optional<BlockOverride> findOverrideOfType(OverridableBlockType blockType) {
+    return overrides.stream()
+      .filter(override -> override.getBlockType() == blockType)
+      .findFirst();
+  }
 }

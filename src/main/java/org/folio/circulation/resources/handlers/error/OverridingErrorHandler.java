@@ -45,7 +45,7 @@ public class OverridingErrorHandler extends DeferFailureErrorHandler {
 
     final OverridableBlockType blockType = OVERRIDABLE_ERROR_TYPES.get(errorType);
 
-    return blockOverrides.getOverrideOfType(blockType)
+    return blockOverrides.findOverrideOfType(blockType)
       .map(override -> handleOverride(override, error, errorType, blockType, otherwise))
       .orElseGet(() -> super.handleValidationError(error, errorType, otherwise));
   }
@@ -82,7 +82,7 @@ public class OverridingErrorHandler extends DeferFailureErrorHandler {
     List<ValidationError> validationErrors = getErrors().keySet().stream()
       .filter(ValidationErrorFailure.class::isInstance)
       .map(ValidationErrorFailure.class::cast)
-      .map(this::enrichOverridableErrors)
+      .map(this::extendOverridableErrors)
       .map(ValidationErrorFailure::getErrors)
       .flatMap(Collection::stream)
       .collect(toList());
@@ -92,18 +92,18 @@ public class OverridingErrorHandler extends DeferFailureErrorHandler {
       : failed(new ValidationErrorFailure(validationErrors));
   }
 
-  private ValidationErrorFailure enrichOverridableErrors(ValidationErrorFailure validationFailure) {
+  private ValidationErrorFailure extendOverridableErrors(ValidationErrorFailure validationFailure) {
     final CirculationErrorType errorType = getErrors().get(validationFailure);
 
     if (OVERRIDABLE_ERROR_TYPES.containsKey(errorType)) {
       OverridableBlockType blockType = OVERRIDABLE_ERROR_TYPES.get(errorType);
       List<String> missingPermissions = blockType.getMissingPermissions(okapiPermissions);
 
-      List<ValidationError> overridableValidationErrors = validationFailure.getErrors().stream()
+      List<ValidationError> overridableErrors = validationFailure.getErrors().stream()
         .map(error -> new OverridableValidationError(error, blockType, missingPermissions))
         .collect(toList());
 
-      return new ValidationErrorFailure(overridableValidationErrors);
+      return new ValidationErrorFailure(overridableErrors);
     }
 
     return validationFailure;
