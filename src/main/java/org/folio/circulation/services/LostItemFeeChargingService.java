@@ -12,20 +12,13 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.Iterator;
 
-import org.folio.circulation.services.LostItemFeeRefundService;
-import org.folio.circulation.services.feefine.FeeFineService;
-import org.folio.circulation.services.LostItemFeeRefundContext;
 import org.folio.circulation.StoreLoanAndItem;
 import org.folio.circulation.domain.Account;
 import org.folio.circulation.domain.AccountCancelReason;
 import org.folio.circulation.domain.FeeFine;
 import org.folio.circulation.domain.FeeFineOwner;
-import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.notice.schedule.FeeFineScheduledNoticeService;
@@ -37,16 +30,11 @@ import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineOwnerRep
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineRepository;
 import org.folio.circulation.infrastructure.storage.inventory.LocationRepository;
 import org.folio.circulation.infrastructure.storage.loans.LostItemPolicyRepository;
-import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.services.support.CreateAccountCommand;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.HttpFailure;
-import org.folio.circulation.support.results.CommonFailures;
 import org.folio.circulation.support.results.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import io.netty.handler.codec.http2.StreamBufferingEncoder;
 
 public class LostItemFeeChargingService {
   private static final Logger log = LoggerFactory.getLogger(LostItemFeeChargingService.class);
@@ -81,7 +69,7 @@ public class LostItemFeeChargingService {
 
   }
 
-  public CompletableFuture<Object> chargeLostItemFees(
+  public CompletableFuture<Result<Loan>> chargeLostItemFees(
     Loan loan, DeclareItemLostRequest request, String staffUserId) {
 
     final ReferenceDataContext referenceDataContext = new ReferenceDataContext(
@@ -91,7 +79,7 @@ public class LostItemFeeChargingService {
       loan.getItem().getStatus(),
       loan.getItem().getItemId(),
       staffUserId,
-      request.getServicePointid(),
+      request.getServicePointId(),
       loan,
       reason
     );
@@ -116,7 +104,7 @@ public class LostItemFeeChargingService {
           if (refund.failed()) {
             log.error("Cannot refund and cancel existing fees for loan [{}]", loan.getId());
             return closeLoanAndPublishEvent(loan);
-          }  
+          }
         }
 
         return fetchFeeFineOwner(referenceData)
@@ -145,26 +133,10 @@ public class LostItemFeeChargingService {
     return loan.getAccounts().stream().anyMatch(account -> isOpenLostItemFee(account));
   }
 
-  private CompletableFuture<Result<Object>> closeLoanAndPublishEvent(Loan loan) {
+  private CompletableFuture<Result<Loan>> closeLoanAndPublishEvent(Loan loan) {
     return closeLoanAndUpdateInStorage(loan)
             .thenCompose(r -> r.after(eventPublisher::publishClosedLoanEvent))
             .thenApply(r -> r.map(v -> loan));
-  }
-
-  private CompletableFuture<Result<Object>> applyLostFees(ReferenceDataContext data, Loan loan) {
-    return fetchFeeFineOwner(data)
-          .thenApply(this::refuseWhenFeeFineOwnerIsNotFound)
-          .thenComposeAsync(this::fetchFeeFineTypes)
-          .thenApply(this::buildAccountsAndActions)
-          .thenCompose(r -> r.after(feeFineFacade::createAccounts))
-          .thenApply(r -> r.map(notUsed -> loan));
-  }
-
-  private Result<LostItemFeeRefundContext> refundExistingLostItemFees(Clients clients, DeclareItemLostRequest request, String userId, Loan loan)   
-    throws InterruptedException, ExecutionException {
-    
-
-    return refundService.refundAccounts(context).completeAsync(supplier);
   }
 
   private CompletableFuture<Result<Loan>> closeLoanAndUpdateInStorage(Loan loan) {
