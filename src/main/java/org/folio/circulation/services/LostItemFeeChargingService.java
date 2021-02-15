@@ -66,7 +66,6 @@ public class LostItemFeeChargingService {
     this.clients = clients;
     this.refundService = new LostItemFeeRefundService(clients);
     this.accountRepository = new AccountRepository(clients);
-
   }
 
   public CompletableFuture<Result<Loan>> chargeLostItemFees(
@@ -89,32 +88,40 @@ public class LostItemFeeChargingService {
       .thenCompose(refDataResult -> refDataResult.after(referenceData -> {
         if (shouldCloseLoan(referenceData.lostItemPolicy)) {
           log.debug("Loan [{}] can be closed because no fee will be charged", loan.getId());
-          return closeLoanAndPublishEvent(loan);
-        }
-        try {
-          loanWithAccountData = accountRepository.findAccountsForLoan(loan).join().value();
-        } catch (Exception e) {
-          log.error("Cannot retrieve account data for loan [{}], aborting charge fines", loan.getId());
-          return closeLoanAndPublishEvent(loan);
+          return closeLoanAndPublishEvent(loan, true);
         }
 
-        if (hasLostItemFees(loanWithAccountData)) {
-          log.info("Found pre-existing lost item fees for loan, attempting to remove", loan.getId());
-          Result<LostItemFeeRefundContext> refund = refundService.refundAccounts(refundContext).join();
-          if (refund.failed()) {
-            log.error("Cannot refund and cancel existing fees for loan [{}]", loan.getId());
-            return closeLoanAndPublishEvent(loan);
-          }
-        }
-
-        return fetchFeeFineOwner(referenceData)
-          .thenApply(this::refuseWhenFeeFineOwnerIsNotFound)
-          .thenComposeAsync(this::fetchFeeFineTypes)
-          .thenApply(this::buildAccountsAndActions)
-          .thenCompose(r -> r.after(feeFineFacade::createAccounts))
-          .thenApply(r -> r.map(notUsed -> loan));
+        log.info("Checking for existing lost item fees for loan [{}]", loan.getId());
+        return accountRepository.findAccountsForLoan(loan)
+          .thenCompose(result -> {
+            Loan loanWithAccountData = result.value();
+            if (hasLostItemFees(loanWithAccountData)) {
+              log.info("Existing lost item fees found for loan [{}], trying to clear", loan.getId());
+              return refundService.refundAccounts(refundContext)
+                .thenCompose(context -> {
+                  if (context.failed()) {
+                    log.error("Unable to clear existing lost item fees for loan [{}], aborting without charging new fees", loan.getId());
+                    return closeLoanAndPublishEvent(loan, false);
+                  }
+                  log.info("Existing lost item fees cleared, applying new fees to loan [{}]", loan.getId());
+                  return applyFees(referenceData, loan);
+                });
+            } else {
+              log.info("No existing lost item fees found, applying lost item fees to loan [{}]", loan.getId());
+              return applyFees(referenceData, loanWithAccountData);
+            }
+          });
       }));
     }
+
+  private CompletableFuture<Result<Loan>> applyFees (ReferenceDataContext referenceData, Loan loan) {
+    return fetchFeeFineOwner(referenceData)
+    .thenApply(this::refuseWhenFeeFineOwnerIsNotFound)
+    .thenComposeAsync(this::fetchFeeFineTypes)
+    .thenApply(this::buildAccountsAndActions)
+    .thenCompose(r -> r.after(feeFineFacade::createAccounts))
+    .thenApply(r -> r.map(notUsed -> loan));
+  }
 
   private Boolean isOpenLostItemFee(Account account) {
     String type = account.getFeeFineType();
@@ -133,13 +140,24 @@ public class LostItemFeeChargingService {
     return loan.getAccounts().stream().anyMatch(account -> isOpenLostItemFee(account));
   }
 
-  private CompletableFuture<Result<Loan>> closeLoanAndPublishEvent(Loan loan) {
-    return closeLoanAndUpdateInStorage(loan)
-            .thenCompose(r -> r.after(eventPublisher::publishClosedLoanEvent))
-            .thenApply(r -> r.map(v -> loan));
+  private CompletableFuture<Result<Loan>> closeLoanAndPublishEvent(Loan loan, Boolean asPaid) {
+    if (asPaid) {
+      return closeLoanAsLostAndPaidAndUpdateInStorage(loan)
+              .thenCompose(r -> r.after(eventPublisher::publishClosedLoanEvent))
+              .thenApply(r -> r.map(v -> loan));
+    } else {
+      return closeLoanAsLostAndUpdateInStorage(loan)
+              .thenCompose(r -> r.after(eventPublisher::publishClosedLoanEvent))
+              .thenApply(r -> r.map(v -> loan));
+    }
   }
 
-  private CompletableFuture<Result<Loan>> closeLoanAndUpdateInStorage(Loan loan) {
+  private CompletableFuture<Result<Loan>> closeLoanAsLostAndUpdateInStorage(Loan loan) {
+    loan.closeLoanAsLostAndPaid();
+    return storeLoanAndItem.updateLoanAndItemInStorage(loan);
+  }
+
+  private CompletableFuture<Result<Loan>> closeLoanAsLostAndPaidAndUpdateInStorage(Loan loan) {
     loan.closeLoanAsLostAndPaid();
     return storeLoanAndItem.updateLoanAndItemInStorage(loan);
   }
