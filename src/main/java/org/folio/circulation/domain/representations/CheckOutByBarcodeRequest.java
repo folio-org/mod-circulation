@@ -61,16 +61,4 @@ public class CheckOutByBarcodeRequest {
 
     return Loan.from(loanJson);
   }
-
-  public boolean isItemLimitBlockOverriding() {
-    return this.overrideBlocks != null && this.overrideBlocks.getItemLimitBlock() != null;
-  }
-
-  public boolean isPatronBlockOverriding() {
-    return this.overrideBlocks != null && this.overrideBlocks.getPatronBlock() != null;
-  }
-
-  public boolean isItemNotLoanableBlock() {
-    return this.overrideBlocks != null && this.overrideBlocks.getItemNotLoanableBlock() != null;
-  }
 }

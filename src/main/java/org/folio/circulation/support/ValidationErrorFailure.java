@@ -51,14 +51,7 @@ public class ValidationErrorFailure implements HttpFailure {
     return new ValidationErrorFailure(error);
   }
 
-  public static ValidationErrorFailure singleLoanPolicyValidationError(
-    LoanPolicy loanPolicy, String message, String propertyName, String propertyValue) {
-
-    return new ValidationErrorFailure(loanPolicyValidationError(
-      loanPolicy, message, Map.of(propertyName, propertyValue)));
-  }
-
-  private ValidationErrorFailure(ValidationError error) {
+  public ValidationErrorFailure(ValidationError error) {
     this.errors.add(error);
   }
 

@@ -6,6 +6,7 @@ import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
@@ -16,18 +17,18 @@ import org.folio.circulation.domain.AutomatedPatronBlock;
 import org.folio.circulation.domain.AutomatedPatronBlocks;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
-import org.folio.circulation.domain.validation.overriding.Validator;
 import org.folio.circulation.infrastructure.storage.AutomatedPatronBlocksRepository;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.resources.handlers.error.CirculationErrorType;
 import org.folio.circulation.support.ValidationErrorFailure;
+import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
 
-public class RegularAutomatedPatronBlocksValidator implements Validator<LoanAndRelatedRecords> {
+public class AutomatedPatronBlocksValidator {
   private final AutomatedPatronBlocksRepository automatedPatronBlocksRepository;
   private final Function<List<String>, ValidationErrorFailure> actionIsBlockedForPatronErrorFunction;
 
-  public RegularAutomatedPatronBlocksValidator(
+  public AutomatedPatronBlocksValidator(
     AutomatedPatronBlocksRepository automatedPatronBlocksRepository,
     Function<List<String>, ValidationErrorFailure> actionIsBlockedForPatronErrorFunction) {
 
@@ -35,17 +36,22 @@ public class RegularAutomatedPatronBlocksValidator implements Validator<LoanAndR
     this.actionIsBlockedForPatronErrorFunction = actionIsBlockedForPatronErrorFunction;
   }
 
-  @Override
-  public CompletableFuture<Result<LoanAndRelatedRecords>> validate(LoanAndRelatedRecords records) {
-    return refuseWhenCheckOutActionIsBlockedForPatron(records);
+  public AutomatedPatronBlocksValidator(AutomatedPatronBlocksRepository automatedPatronBlocksRepository) {
+    this(automatedPatronBlocksRepository, messages -> new ValidationErrorFailure(messages.stream()
+        .map(message -> new ValidationError(message, new HashMap<>()))
+        .collect(Collectors.toList())));
   }
 
-  @Override
+  //  @Override
+//  public CompletableFuture<Result<LoanAndRelatedRecords>> validate(LoanAndRelatedRecords records) {
+//    return refuseWhenCheckOutActionIsBlockedForPatron(records);
+//  }
+
   public CirculationErrorType getErrorType() {
     return USER_IS_BLOCKED_AUTOMATICALLY;
   }
 
-  private CompletableFuture<Result<LoanAndRelatedRecords>>
+  public CompletableFuture<Result<LoanAndRelatedRecords>>
   refuseWhenCheckOutActionIsBlockedForPatron(LoanAndRelatedRecords loanAndRelatedRecords) {
 
     return refuse(loanAndRelatedRecords.getLoan().getUserId(),

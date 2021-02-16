@@ -1,6 +1,7 @@
 package org.folio.circulation.domain.validation.overriding;
 
 import static org.folio.circulation.domain.LoanAction.CHECKED_OUT_THROUGH_OVERRIDE;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INSUFFICIENT_OVERRIDE_PERMISSIONS;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -8,6 +9,7 @@ import java.util.concurrent.CompletableFuture;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.representations.OverrideBlocks;
+import org.folio.circulation.resources.handlers.error.CirculationErrorType;
 import org.folio.circulation.resources.handlers.error.OverridableBlockType;
 import org.folio.circulation.support.results.Result;
 

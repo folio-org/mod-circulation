@@ -20,7 +20,7 @@ import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import org.folio.circulation.domain.validation.RegularAutomatedPatronBlocksValidator;
+import org.folio.circulation.domain.validation.AutomatedPatronBlocksValidator;
 import org.folio.circulation.domain.validation.RequestLoanValidator;
 import org.folio.circulation.domain.validation.UserManualBlocksValidator;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
@@ -60,8 +60,8 @@ public class CreateRequestService {
 
     RequestRepository requestRepository = repositories.getRequestRepository();
     ConfigurationRepository configurationRepository = repositories.getConfigurationRepository();
-    RegularAutomatedPatronBlocksValidator automatedPatronBlocksValidator =
-      new RegularAutomatedPatronBlocksValidator(repositories.getAutomatedPatronBlocksRepository(),
+    AutomatedPatronBlocksValidator automatedPatronBlocksValidator =
+      new AutomatedPatronBlocksValidator(repositories.getAutomatedPatronBlocksRepository(),
         messages -> new ValidationErrorFailure(messages.stream()
           .map(message -> new ValidationError(message, new HashMap<>()))
           .collect(Collectors.toList())));

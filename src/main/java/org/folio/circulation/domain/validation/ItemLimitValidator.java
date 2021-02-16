@@ -1,7 +1,9 @@
 package org.folio.circulation.domain.validation;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ITEM_LIMIT_IS_REACHED;
+import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.http.client.PageLimit.limit;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
@@ -13,7 +15,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
-import org.folio.circulation.domain.validation.overriding.Validator;
+import org.folio.circulation.domain.representations.CheckOutByBarcodeRequest;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.resources.handlers.error.CirculationErrorType;
 import org.folio.circulation.rules.AppliedRuleConditions;
@@ -21,29 +23,33 @@ import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.results.Result;
 
-public class RegularItemLimitValidator implements Validator<LoanAndRelatedRecords> {
+public class ItemLimitValidator {
   private final Function<String, ValidationErrorFailure> itemLimitErrorFunction;
   private final LoanRepository loanRepository;
   private static final PageLimit LOANS_PAGE_LIMIT = limit(10000);
 
-  public RegularItemLimitValidator(Function<String, ValidationErrorFailure> itemLimitErrorFunction,
+  public ItemLimitValidator(Function<String, ValidationErrorFailure> itemLimitErrorFunction,
     LoanRepository loanRepository) {
 
     this.itemLimitErrorFunction = itemLimitErrorFunction;
     this.loanRepository = loanRepository;
   }
 
-  @Override
-  public CompletableFuture<Result<LoanAndRelatedRecords>> validate(LoanAndRelatedRecords records) {
-    return refuseWhenItemLimitIsReached(records);
+  public ItemLimitValidator(CheckOutByBarcodeRequest request, LoanRepository loanRepository) {
+    this(message -> singleValidationError(message, ITEM_BARCODE,
+      request.getItemBarcode()), loanRepository);
   }
 
-  @Override
+  //  @Override
+//  public CompletableFuture<Result<LoanAndRelatedRecords>> validate(LoanAndRelatedRecords records) {
+//    return refuseWhenItemLimitIsReached(records);
+//  }
+
   public CirculationErrorType getErrorType() {
     return ITEM_LIMIT_IS_REACHED;
   }
 
-  private CompletableFuture<Result<LoanAndRelatedRecords>> refuseWhenItemLimitIsReached(
+  public CompletableFuture<Result<LoanAndRelatedRecords>> refuseWhenItemLimitIsReached(
     LoanAndRelatedRecords records) {
 
     Loan loan = records.getLoan();

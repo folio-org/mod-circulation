@@ -1,5 +1,7 @@
 package org.folio.circulation.support.utils;
 
+import static org.folio.circulation.support.http.OkapiHeader.OKAPI_PERMISSIONS;
+
 import java.util.List;
 import java.util.Map;
 
@@ -16,7 +18,7 @@ public class OkapiHeadersUtils {
 
   public static List<String> getOkapiPermissions(Map<String, String> okapiHeaders) {
     String permissionsArrayString = new CaseInsensitiveMap<>(okapiHeaders)
-      .getOrDefault("x-okapi-permissions", "[]");
+      .getOrDefault(OKAPI_PERMISSIONS, "[]");
 
     return Splitter.on(',')
       .trimResults(CharMatcher.anyOf("[] "))
