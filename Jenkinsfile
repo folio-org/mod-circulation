@@ -8,6 +8,10 @@ buildMvn {
   publishPreview = false
   buildNode = 'jenkins-agent-java11'
 
+  doApiLint = true
+  apiTypes = 'RAML'
+  apiDirectories = 'ramls'
+
   doDocker = {
     buildJavaDocker {
       publishPreview = false
