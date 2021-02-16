@@ -250,8 +250,8 @@ public class CheckOutValidators {
   private Validator<LoanAndRelatedRecords> createPatronBlocksValidator(CheckOutByBarcodeRequest request,
     List<String> permissions, AutomatedPatronBlocksRepository automatedPatronBlocksRepository) {
 
-    return request.getOverrideBlocks().isPatronBlockOverriding()
-      ? new OverridingLoanValidator(PATRON_BLOCK, request.getOverrideBlocks(), permissions)
+    return request.getBlockOverrides().getPatronBlockOverride().isRequested()
+      ? new OverridingLoanValidator(PATRON_BLOCK, request.getBlockOverrides(), permissions)
       : new Validator<>(USER_IS_BLOCKED_AUTOMATICALLY,
       new AutomatedPatronBlocksValidator(
         automatedPatronBlocksRepository)::refuseWhenCheckOutActionIsBlockedForPatron);
@@ -260,8 +260,8 @@ public class CheckOutValidators {
   private Validator<LoanAndRelatedRecords> createItemLimitValidator(CheckOutByBarcodeRequest request,
     List<String> permissions, LoanRepository loanRepository) {
 
-    return request.getOverrideBlocks().isItemLimitBlockOverriding()
-      ? new OverridingLoanValidator(ITEM_LIMIT_BLOCK, request.getOverrideBlocks(), permissions)
+    return request.getBlockOverrides().getItemLimitBlockOverride().isRequested()
+      ? new OverridingLoanValidator(ITEM_LIMIT_BLOCK, request.getBlockOverrides(), permissions)
       : new Validator<>(ITEM_LIMIT_IS_REACHED,
       new ItemLimitValidator(request, loanRepository)::refuseWhenItemLimitIsReached);
   }
@@ -269,8 +269,8 @@ public class CheckOutValidators {
   private Validator<LoanAndRelatedRecords> createLoanPolicyValidator(CheckOutByBarcodeRequest request,
     List<String> permissions) {
 
-    return request.getOverrideBlocks().isItemNotLoanableBlock()
-      ? new OverridingLoanValidator(ITEM_NOT_LOANABLE_BLOCK, request.getOverrideBlocks(), permissions)
+    return request.getBlockOverrides().getItemNotLoanableBlockOverride().isRequested()
+      ? new OverridingLoanValidator(ITEM_NOT_LOANABLE_BLOCK, request.getBlockOverrides(), permissions)
       : new Validator<>(ITEM_IS_NOT_LOANABLE,
       new LoanPolicyValidator(request)::refuseWhenItemIsNotLoanable);
   }

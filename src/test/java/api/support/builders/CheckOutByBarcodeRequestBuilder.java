@@ -2,7 +2,7 @@ package api.support.builders;
 
 import java.util.UUID;
 
-import org.folio.circulation.domain.representations.OverrideBlocks;
+import org.folio.circulation.domain.override.BlockOverrides;
 import org.joda.time.DateTime;
 
 import api.support.http.IndividualResource;
@@ -14,7 +14,7 @@ public class CheckOutByBarcodeRequestBuilder extends JsonBuilder implements Buil
   private final String proxyBarcode;
   private final DateTime loanDate;
   private final String servicePointId;
-  private final OverrideBlocks overrideBlocks;
+  private final BlockOverrides blockOverrides;
 
   public CheckOutByBarcodeRequestBuilder() {
     this(null, null, null, null, null, null);
@@ -26,14 +26,14 @@ public class CheckOutByBarcodeRequestBuilder extends JsonBuilder implements Buil
     String proxyBarcode,
     DateTime loanDate,
     String servicePointId,
-    OverrideBlocks overrideBlocks) {
+    BlockOverrides blockOverrides) {
 
     this.itemBarcode = itemBarcode;
     this.userBarcode = userBarcode;
     this.proxyBarcode = proxyBarcode;
     this.loanDate = loanDate;
     this.servicePointId = servicePointId;
-    this.overrideBlocks = overrideBlocks;
+    this.blockOverrides = blockOverrides;
   }
 
   @Override
@@ -45,21 +45,27 @@ public class CheckOutByBarcodeRequestBuilder extends JsonBuilder implements Buil
     put(request, "proxyUserBarcode", this.proxyBarcode);
     put(request, "loanDate", this.loanDate);
     put(request, "servicePointId", this.servicePointId);
-    if (overrideBlocks != null) {
+    if (blockOverrides != null) {
       JsonObject overrideBlocksJson = new JsonObject();
-      if (overrideBlocks.getItemNotLoanableBlock() != null) {
+      if (blockOverrides.getItemNotLoanableBlockOverride() != null
+        && blockOverrides.getItemNotLoanableBlockOverride().isRequested()) {
+
         JsonObject itemNotLoanableBlockJson = new JsonObject();
         put(itemNotLoanableBlockJson, "dueDate",
-          overrideBlocks.getItemNotLoanableBlock().getDueDate());
+          blockOverrides.getItemNotLoanableBlockOverride().getDueDate());
         put(overrideBlocksJson, "itemNotLoanableBlock", itemNotLoanableBlockJson);
       }
-      if (overrideBlocks.getPatronBlock() != null) {
+      if (blockOverrides.getPatronBlockOverride() != null
+        && blockOverrides.getPatronBlockOverride().isRequested()) {
+
         put(overrideBlocksJson, "patronBlock", new JsonObject());
       }
-      if (overrideBlocks.getItemLimitBlock() != null) {
+      if (blockOverrides.getItemLimitBlockOverride() != null
+        && blockOverrides.getItemLimitBlockOverride().isRequested()) {
+
         put(overrideBlocksJson, "itemLimitBlock", new JsonObject());
       }
-      put(overrideBlocksJson, "comment", overrideBlocks.getComment());
+      put(overrideBlocksJson, "comment", blockOverrides.getComment());
       put(request, "overrideBlocks", overrideBlocksJson);
     }
 
@@ -73,7 +79,7 @@ public class CheckOutByBarcodeRequestBuilder extends JsonBuilder implements Buil
       this.proxyBarcode,
       this.loanDate,
       this.servicePointId,
-      this.overrideBlocks);
+      this.blockOverrides);
   }
 
   public CheckOutByBarcodeRequestBuilder to(IndividualResource loanee) {
@@ -83,7 +89,7 @@ public class CheckOutByBarcodeRequestBuilder extends JsonBuilder implements Buil
       this.proxyBarcode,
       this.loanDate,
       this.servicePointId,
-      this.overrideBlocks);
+      this.blockOverrides);
   }
 
   public CheckOutByBarcodeRequestBuilder on(DateTime loanDate) {
@@ -93,7 +99,7 @@ public class CheckOutByBarcodeRequestBuilder extends JsonBuilder implements Buil
       this.proxyBarcode,
       loanDate,
       this.servicePointId,
-      this.overrideBlocks);
+      this.blockOverrides);
   }
 
   public CheckOutByBarcodeRequestBuilder proxiedBy(IndividualResource proxy) {
@@ -103,7 +109,7 @@ public class CheckOutByBarcodeRequestBuilder extends JsonBuilder implements Buil
       getBarcode(proxy),
       this.loanDate,
       this.servicePointId,
-      this.overrideBlocks);
+      this.blockOverrides);
   }
 
   public CheckOutByBarcodeRequestBuilder at(String checkoutServicePointId) {
@@ -113,7 +119,7 @@ public class CheckOutByBarcodeRequestBuilder extends JsonBuilder implements Buil
       this.proxyBarcode,
       this.loanDate,
       checkoutServicePointId,
-      this.overrideBlocks);
+      this.blockOverrides);
   }
 
   public CheckOutByBarcodeRequestBuilder at(IndividualResource checkoutServicePoint) {
@@ -127,17 +133,17 @@ public class CheckOutByBarcodeRequestBuilder extends JsonBuilder implements Buil
       this.proxyBarcode,
       this.loanDate,
       checkoutServicePointId.toString(),
-      this.overrideBlocks);
+      this.blockOverrides);
   }
 
-  public CheckOutByBarcodeRequestBuilder withOverrideBlocks(OverrideBlocks overrideBlocks) {
+  public CheckOutByBarcodeRequestBuilder withOverrideBlocks(BlockOverrides blockOverrides) {
     return new CheckOutByBarcodeRequestBuilder(
       this.itemBarcode,
       this.userBarcode,
       this.proxyBarcode,
       this.loanDate,
       this.servicePointId,
-      overrideBlocks);
+      blockOverrides);
   }
 
   private String getBarcode(IndividualResource record) {

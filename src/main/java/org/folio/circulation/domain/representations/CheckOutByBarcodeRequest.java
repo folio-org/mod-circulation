@@ -10,6 +10,8 @@ import static org.joda.time.format.ISODateTimeFormat.dateTime;
 import java.util.UUID;
 
 import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.override.BlockOverride;
+import org.folio.circulation.domain.override.BlockOverrides;
 import org.folio.circulation.support.ClockManager;
 
 import io.vertx.core.json.JsonObject;
@@ -31,7 +33,7 @@ public class CheckOutByBarcodeRequest {
   private final String userBarcode;
   private final String proxyUserBarcode;
   private final String checkoutServicePointId;
-  private final OverrideBlocks overrideBlocks;
+  private final BlockOverrides blockOverrides;
 
   public static CheckOutByBarcodeRequest fromJson(JsonObject request) {
     final String loanDate = getProperty(request, LOAN_DATE);
@@ -39,11 +41,11 @@ public class CheckOutByBarcodeRequest {
     final String userBarcode = getProperty(request, USER_BARCODE);
     final String proxyUserBarcode = getProperty(request, PROXY_USER_BARCODE);
     final String checkoutServicePointId = getProperty(request, SERVICE_POINT_ID);
-    final OverrideBlocks overrideBlocks = OverrideBlocks.from(
+    final BlockOverrides blockOverrides = BlockOverrides.from(
       getObjectProperty(request, OVERRIDE_BLOCKS));
 
     return new CheckOutByBarcodeRequest(defaultLoanDate(loanDate), itemBarcode, userBarcode,
-      proxyUserBarcode, checkoutServicePointId, overrideBlocks);
+      proxyUserBarcode, checkoutServicePointId, blockOverrides);
   }
 
   private static String defaultLoanDate(String loanDate) {

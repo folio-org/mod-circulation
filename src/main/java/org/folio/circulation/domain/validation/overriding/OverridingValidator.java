@@ -8,7 +8,7 @@ import static org.folio.circulation.support.results.Result.ofAsync;
 
 import java.util.List;
 
-import org.folio.circulation.domain.representations.OverrideBlocks;
+import org.folio.circulation.domain.override.BlockOverrides;
 import org.folio.circulation.domain.validation.Validator;
 import org.folio.circulation.resources.handlers.error.OverridableBlockType;
 import org.folio.circulation.support.http.server.InsufficientOverridePermissionsError;
@@ -18,11 +18,11 @@ import lombok.Getter;
 @Getter
 public class OverridingValidator<T> extends Validator<T> {
   private final OverridableBlockType blockType;
-  private final OverrideBlocks overrideBlocks;
+  private final BlockOverrides overrideBlocks;
   private final List<String> permissions;
 
   public OverridingValidator(OverridableBlockType blockType,
-    OverrideBlocks overrideBlocks, List<String> permissions) {
+    BlockOverrides blockOverrides, List<String> permissions) {
 
     super(INSUFFICIENT_OVERRIDE_PERMISSIONS, otherwise -> {
       List<String> missingPermissions = blockType.getMissingOverridePermissions(permissions);
@@ -35,6 +35,6 @@ public class OverridingValidator<T> extends Validator<T> {
 
     this.blockType = blockType;
     this.permissions = permissions;
-    this.overrideBlocks = overrideBlocks;
+    this.overrideBlocks = blockOverrides;
   }
 }

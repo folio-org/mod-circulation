@@ -7,15 +7,15 @@ import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
-import org.folio.circulation.domain.representations.OverrideBlocks;
+import org.folio.circulation.domain.override.BlockOverrides;
 import org.folio.circulation.resources.handlers.error.OverridableBlockType;
 import org.folio.circulation.support.results.Result;
 
 public class OverridingLoanValidator extends OverridingValidator<LoanAndRelatedRecords> {
-  public OverridingLoanValidator(OverridableBlockType blockType, OverrideBlocks overrideBlocks,
+  public OverridingLoanValidator(OverridableBlockType blockType, BlockOverrides blockOverrides,
     List<String> permissions) {
 
-    super(blockType, overrideBlocks, permissions);
+    super(blockType, blockOverrides, permissions);
   }
 
   @Override
