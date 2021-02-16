@@ -7,29 +7,20 @@ import static org.folio.circulation.resources.handlers.error.CirculationErrorTyp
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ITEM_ALREADY_LOANED_TO_SAME_USER;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ITEM_ALREADY_REQUESTED_BY_SAME_USER;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ITEM_DOES_NOT_EXIST;
-import static org.folio.circulation.resources.handlers.error.CirculationErrorType.REQUESTING_DISALLOWED_BY_POLICY;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.REQUESTING_DISALLOWED;
-import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_BLOCKED_AUTOMATICALLY;
-import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_BLOCKED_MANUALLY;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.REQUESTING_DISALLOWED_BY_POLICY;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_INACTIVE;
 import static org.folio.circulation.support.results.MappingFunctions.when;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
-import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
-import org.folio.circulation.domain.validation.AutomatedPatronBlocksValidator;
 import org.folio.circulation.domain.validation.RequestLoanValidator;
-import org.folio.circulation.domain.validation.UserManualBlocksValidator;
-import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
-import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
+import org.folio.circulation.resources.RequestBlocksValidators;
 import org.folio.circulation.resources.RequestNoticeSender;
 import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
 import org.folio.circulation.services.EventPublisher;
-import org.folio.circulation.support.ValidationErrorFailure;
-import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
 
 public class CreateRequestService {
@@ -37,20 +28,20 @@ public class CreateRequestService {
   private final UpdateUponRequest updateUponRequest;
   private final RequestLoanValidator requestLoanValidator;
   private final RequestNoticeSender requestNoticeSender;
-  private final UserManualBlocksValidator userManualBlocksValidator;
+  private final RequestBlocksValidators requestBlocksValidators;
   private final EventPublisher eventPublisher;
   private final CirculationErrorHandler errorHandler;
 
   public CreateRequestService(CreateRequestRepositories repositories,
     UpdateUponRequest updateUponRequest, RequestLoanValidator requestLoanValidator,
-    RequestNoticeSender requestNoticeSender, UserManualBlocksValidator userManualBlocksValidator,
+    RequestNoticeSender requestNoticeSender, RequestBlocksValidators requestBlocksValidators,
     EventPublisher eventPublisher, CirculationErrorHandler errorHandler) {
 
     this.repositories = repositories;
     this.updateUponRequest = updateUponRequest;
     this.requestLoanValidator = requestLoanValidator;
     this.requestNoticeSender = requestNoticeSender;
-    this.userManualBlocksValidator = userManualBlocksValidator;
+    this.requestBlocksValidators = requestBlocksValidators;
     this.eventPublisher = eventPublisher;
     this.errorHandler = errorHandler;
   }
@@ -58,13 +49,10 @@ public class CreateRequestService {
   public CompletableFuture<Result<RequestAndRelatedRecords>> createRequest(
       RequestAndRelatedRecords requestAndRelatedRecords) {
 
-    RequestRepository requestRepository = repositories.getRequestRepository();
-    ConfigurationRepository configurationRepository = repositories.getConfigurationRepository();
-    AutomatedPatronBlocksValidator automatedPatronBlocksValidator =
-      new AutomatedPatronBlocksValidator(repositories.getAutomatedPatronBlocksRepository(),
-        messages -> new ValidationErrorFailure(messages.stream()
-          .map(message -> new ValidationError(message, new HashMap<>()))
-          .collect(Collectors.toList())));
+    final var requestRepository = repositories.getRequestRepository();
+    final var configurationRepository = repositories.getConfigurationRepository();
+    final var automatedBlocksValidator = requestBlocksValidators.getAutomatedPatronBlocksValidator();
+    final var manualBlocksValidator = requestBlocksValidators.getManualPatronBlocksValidator();
 
     final Result<RequestAndRelatedRecords> result = succeeded(requestAndRelatedRecords);
 
@@ -74,10 +62,10 @@ public class CreateRequestService {
       .mapFailure(err -> errorHandler.handleValidationError(err, USER_IS_INACTIVE, result))
       .next(RequestServiceUtility::refuseWhenUserHasAlreadyRequestedItem)
       .mapFailure(err -> errorHandler.handleValidationError(err, ITEM_ALREADY_REQUESTED_BY_SAME_USER, result))
-      .after(automatedPatronBlocksValidator::refuseWhenRequestActionIsBlockedForPatron)
-      .thenApply(r -> errorHandler.handleValidationResult(r, USER_IS_BLOCKED_AUTOMATICALLY, result))
-      .thenCompose(r -> r.after(userManualBlocksValidator::refuseWhenUserIsBlocked))
-      .thenApply(r -> errorHandler.handleValidationResult(r, USER_IS_BLOCKED_MANUALLY, result))
+      .after(automatedBlocksValidator::validate)
+      .thenApply(r -> errorHandler.handleValidationResult(r, automatedBlocksValidator.getErrorType(), result))
+      .thenCompose(r -> r.after(manualBlocksValidator::validate))
+      .thenApply(r -> errorHandler.handleValidationResult(r, manualBlocksValidator.getErrorType(), result))
       .thenComposeAsync(r -> r.after(when(this::shouldCheckItem, this::checkItem, this::doNothing)))
       .thenComposeAsync(r -> r.after(when(this::shouldCheckPolicy, this::checkPolicy, this::doNothing)))
       .thenComposeAsync(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,

@@ -4,13 +4,13 @@ import static org.folio.circulation.domain.InstanceRequestItemsComparer.sortRequ
 import static org.folio.circulation.domain.representations.RequestProperties.ITEM_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.PROXY_USER_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUESTER_ID;
-import static org.folio.circulation.support.json.JsonPropertyWriter.write;
-import static org.folio.circulation.support.results.Result.of;
-import static org.folio.circulation.support.results.Result.succeeded;
+import static org.folio.circulation.resources.RequestBlocksValidators.regularRequestBlocksValidator;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
-import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQuery;
+import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
+import static org.folio.circulation.support.results.Result.of;
+import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
@@ -25,45 +25,40 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import org.folio.circulation.infrastructure.storage.AutomatedPatronBlocksRepository;
-import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.domain.CreateRequestRepositories;
 import org.folio.circulation.domain.CreateRequestService;
 import org.folio.circulation.domain.InstanceRequestRelatedRecords;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
-import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.RequestQueue;
-import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
-import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.domain.RequestRepresentation;
 import org.folio.circulation.domain.RequestType;
-import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.domain.UpdateItem;
 import org.folio.circulation.domain.UpdateLoan;
 import org.folio.circulation.domain.UpdateRequestQueue;
 import org.folio.circulation.domain.UpdateUponRequest;
-import org.folio.circulation.domain.UserManualBlock;
-import org.folio.circulation.infrastructure.storage.users.UserRepository;
-import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
-import org.folio.circulation.infrastructure.storage.requests.RequestPolicyRepository;
 import org.folio.circulation.domain.representations.RequestByInstanceIdRequest;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.RequestLoanValidator;
 import org.folio.circulation.domain.validation.ServicePointPickupLocationValidator;
-import org.folio.circulation.domain.validation.UserManualBlocksValidator;
+import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
+import org.folio.circulation.infrastructure.storage.ServicePointRepository;
+import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
+import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
+import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
+import org.folio.circulation.infrastructure.storage.requests.RequestPolicyRepository;
+import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
+import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
+import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.handlers.error.FailFastErrorHandler;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.storage.ItemByInstanceIdFinder;
 import org.folio.circulation.support.BadRequestFailure;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.FindWithCqlQuery;
 import org.folio.circulation.support.ForwardOnFailure;
 import org.folio.circulation.support.HttpFailure;
-import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
-import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.ValidationErrorFailure;
@@ -71,6 +66,7 @@ import org.folio.circulation.support.http.server.JsonHttpResponse;
 import org.folio.circulation.support.http.server.ServerErrorResponse;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.http.server.WebContext;
+import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
 import org.joda.time.format.ISODateTimeFormat;
 import org.slf4j.Logger;
@@ -227,9 +223,6 @@ public class RequestByInstanceIdResource extends Resource {
     final LoanRepository loanRepository = new LoanRepository(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
     final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
-    final FindWithCqlQuery<UserManualBlock> userManualBlocksValidator
-      = findWithCqlQuery(clients.userManualBlocksStorageClient(),
-        "manualblocks", UserManualBlock::from);
 
     final UpdateUponRequest updateUponRequest = new UpdateUponRequest(
         new UpdateItem(clients),
@@ -238,12 +231,11 @@ public class RequestByInstanceIdResource extends Resource {
 
     final CreateRequestService createRequestService = new CreateRequestService(
       new CreateRequestRepositories(RequestRepository.using(clients),
-        new RequestPolicyRepository(clients), configurationRepository,
-        new AutomatedPatronBlocksRepository(clients)),
+        new RequestPolicyRepository(clients), configurationRepository),
       updateUponRequest,
       new RequestLoanValidator(loanRepository),
       requestNoticeSender,
-      new UserManualBlocksValidator(userManualBlocksValidator),
+      regularRequestBlocksValidator(clients),
       eventPublisher, new FailFastErrorHandler());
 
     return placeRequest(itemRequestRepresentations, 0, createRequestService,
