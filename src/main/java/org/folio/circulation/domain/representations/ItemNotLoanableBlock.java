@@ -16,11 +16,11 @@ public class ItemNotLoanableBlock {
   private DateTime dueDate;
 
   public static ItemNotLoanableBlock from(JsonObject representation) {
-
     if (representation != null) {
       return new ItemNotLoanableBlock(
         getDateTimeProperty(representation, "dueDate"));
     }
+
     return null;
   }
 }
