@@ -4,6 +4,7 @@ import static org.folio.circulation.domain.representations.RequestProperties.PRO
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQuery;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
+import static org.folio.circulation.support.results.AsynchronousResult.fromFutureResult;
 import static org.folio.circulation.support.results.MappingFunctions.toFixedValue;
 import static org.folio.circulation.support.results.MappingFunctions.when;
 
@@ -11,6 +12,8 @@ import org.folio.circulation.domain.CreateRequestRepositories;
 import org.folio.circulation.domain.CreateRequestService;
 import org.folio.circulation.domain.MoveRequestProcessAdapter;
 import org.folio.circulation.domain.MoveRequestService;
+import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.RequestRepresentation;
 import org.folio.circulation.domain.RequestType;
@@ -100,15 +103,14 @@ public class RequestCollectionResource extends CollectionResource {
 
     final var scheduledNoticeService = RequestScheduledNoticeService.using(clients);
 
-    requestFromRepresentationService.getRequestFrom(representation)
-      .thenComposeAsync(r -> r.after(createRequestService::createRequest))
-      .thenApply(r -> r.next(scheduledNoticeService::scheduleRequestNotices))
-      .thenComposeAsync(r -> r.after(
-        records -> eventPublisher.publishDueDateChangedEvent(records, clients)))
-      .thenApply(r -> r.map(RequestAndRelatedRecords::getRequest))
-      .thenApply(r -> r.map(new RequestRepresentation()::extendedRepresentation))
-      .thenApply(r -> r.map(JsonHttpResponse::created))
-      .thenAccept(context::writeResultToHttpResponse);
+    fromFutureResult(requestFromRepresentationService.getRequestFrom(representation))
+      .flatMapFuture(createRequestService::createRequest)
+      .onSuccess(scheduledNoticeService::scheduleRequestNotices)
+      .onSuccess(records -> eventPublisher.publishDueDateChangedEvent(records, clients))
+      .map(RequestAndRelatedRecords::getRequest)
+      .map(new RequestRepresentation()::extendedRepresentation)
+      .map(JsonHttpResponse::created)
+      .onComplete(context::write, context::write);
   }
 
   @Override
@@ -158,14 +160,13 @@ public class RequestCollectionResource extends CollectionResource {
 
     final var requestScheduledNoticeService = RequestScheduledNoticeService.using(clients);
 
-    requestFromRepresentationService.getRequestFrom(representation)
-      .thenComposeAsync(r -> r.after(when(requestRepository::exists,
-        updateRequestService::replaceRequest, createRequestService::createRequest)))
-      .thenComposeAsync(r -> r.after(
-        records -> eventPublisher.publishDueDateChangedEvent(records, clients)))
-      .thenApply(r -> r.next(requestScheduledNoticeService::rescheduleRequestNotices))
-      .thenApply(r -> r.map(toFixedValue(NoContentResponse::noContent)))
-      .thenAccept(context::writeResultToHttpResponse);
+    fromFutureResult(requestFromRepresentationService.getRequestFrom(representation))
+      .flatMapFuture(when(requestRepository::exists, updateRequestService::replaceRequest,
+        createRequestService::createRequest))
+      .flatMapFuture(records -> eventPublisher.publishDueDateChangedEvent(records, clients))
+      .map(requestScheduledNoticeService::rescheduleRequestNotices)
+      .map(toFixedValue(NoContentResponse::noContent))
+      .onComplete(context::write, context::write);
   }
 
   @Override
@@ -177,10 +178,10 @@ public class RequestCollectionResource extends CollectionResource {
 
     final var id = getRequestId(routingContext);
 
-    requestRepository.getById(id)
-      .thenApply(r -> r.map(new RequestRepresentation()::extendedRepresentation))
-      .thenApply(r -> r.map(JsonHttpResponse::ok))
-      .thenAccept(context::writeResultToHttpResponse);
+    fromFutureResult(requestRepository.getById(id))
+      .map(new RequestRepresentation()::extendedRepresentation)
+      .map(JsonHttpResponse::ok)
+      .onComplete(context::write, context::write);
   }
 
   @Override
@@ -195,11 +196,11 @@ public class RequestCollectionResource extends CollectionResource {
     final var updateRequestQueue = new UpdateRequestQueue(RequestQueueRepository.using(clients),
       requestRepository, new ServicePointRepository(clients), new ConfigurationRepository(clients));
 
-    requestRepository.getById(id)
-      .thenComposeAsync(r -> r.after(requestRepository::delete))
-      .thenComposeAsync(r -> r.after(updateRequestQueue::onDeletion))
-      .thenApply(r -> r.map(toFixedValue(NoContentResponse::noContent)))
-      .thenAccept(context::writeResultToHttpResponse);
+    fromFutureResult(requestRepository.getById(id))
+      .flatMapFuture(requestRepository::delete)
+      .flatMapFuture(updateRequestQueue::onDeletion)
+      .map(toFixedValue(NoContentResponse::noContent))
+      .onComplete(context::write, context::write);
   }
 
   @Override
@@ -208,13 +209,17 @@ public class RequestCollectionResource extends CollectionResource {
     final var clients = Clients.create(context, client);
 
     final var requestRepository = RequestRepository.using(clients);
+
+    fromFutureResult(requestRepository.findBy(routingContext.request().query()))
+      .map(this::mapToJson)
+      .map(JsonHttpResponse::ok)
+      .onComplete(context::write, context::write);
+  }
+
+  private JsonObject mapToJson(MultipleRecords<Request> requests) {
     final var requestRepresentation = new RequestRepresentation();
 
-    requestRepository.findBy(routingContext.request().query())
-      .thenApply(r -> r.map(requests ->
-        requests.asJson(requestRepresentation::extendedRepresentation, "requests")))
-      .thenApply(r -> r.map(JsonHttpResponse::ok))
-      .thenAccept(context::writeResultToHttpResponse);
+    return requests.asJson(requestRepresentation::extendedRepresentation, "requests");
   }
 
   @Override
@@ -222,9 +227,9 @@ public class RequestCollectionResource extends CollectionResource {
     final var context = new WebContext(routingContext);
     final var clients = Clients.create(context, client);
 
-    clients.requestsStorage().delete()
-      .thenApply(r -> r.map(toFixedValue(NoContentResponse::noContent)))
-      .thenAccept(context::writeResultToHttpResponse);
+    fromFutureResult(clients.requestsStorage().delete())
+      .map(toFixedValue(NoContentResponse::noContent))
+      .onComplete(context::write, context::write);
   }
 
   void move(RoutingContext routingContext) {
@@ -257,16 +262,15 @@ public class RequestCollectionResource extends CollectionResource {
       updateUponRequest, moveRequestProcessAdapter, new RequestLoanValidator(loanRepository),
       RequestNoticeSender.using(clients), configurationRepository, eventPublisher);
 
-    requestRepository.getById(id)
-      .thenApply(r -> r.map(RequestAndRelatedRecords::new))
-      .thenApply(r -> r.map(rr -> asMove(rr, representation)))
-      .thenComposeAsync(r -> r.after(u -> moveRequestService.moveRequest(u, u.getOriginalRequest())))
-      .thenComposeAsync(r -> r.after(
-        records -> eventPublisher.publishDueDateChangedEvent(records, clients)))
-      .thenApply(r -> r.map(RequestAndRelatedRecords::getRequest))
-      .thenApply(r -> r.map(new RequestRepresentation()::extendedRepresentation))
-      .thenApply(r -> r.map(JsonHttpResponse::ok))
-      .thenAccept(context::writeResultToHttpResponse);
+    fromFutureResult(requestRepository.getById(id))
+      .map(RequestAndRelatedRecords::new)
+      .map(request -> asMove(request, representation))
+      .flatMapFuture(move -> moveRequestService.moveRequest(move, move.getOriginalRequest()))
+      .onSuccess(records -> eventPublisher.publishDueDateChangedEvent(records, clients))
+      .map(RequestAndRelatedRecords::getRequest)
+      .map(new RequestRepresentation()::extendedRepresentation)
+      .map(JsonHttpResponse::ok)
+      .onComplete(context::write, context::write);
   }
 
   private RequestAndRelatedRecords asMove(RequestAndRelatedRecords requestAndRelatedRecords,

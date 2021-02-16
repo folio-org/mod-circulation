@@ -202,7 +202,7 @@
             "circulation.renew-by-barcode.post"
           ],
           "modulePermissions": [
-            "modperms.circulation.renew-by-barcode.post"
+            "circulation.renew-loan"
           ]
         },
         {
@@ -226,7 +226,7 @@
             "circulation.renew-by-id.post"
           ],
           "modulePermissions": [
-            "modperms.circulation.renew-by-id.post"
+            "circulation.renew-loan"
           ]
         },
         {
@@ -1598,9 +1598,9 @@
       "visible": false
     },
     {
-      "permissionName": "modperms.circulation.renew-by-barcode.post",
-      "displayName" : "module permissions for one op",
-      "description" : "to reduce X-Okapi-Token size",
+      "permissionName": "circulation.renew-loan",
+      "displayName" : "Renew a loan",
+      "description" : "Permissions needed to renew a loan",
       "subPermissions": [
         "circulation-storage.loans.item.put",
         "circulation-storage.loans.item.get",
@@ -1611,12 +1611,12 @@
         "circulation-storage.requests.collection.get",
         "circulation-storage.requests.item.put",
         "circulation-storage.request-policies.item.get",
-        "circulation-storage.patron-notice-policies.item.get",
         "circulation-storage.fixed-due-date-schedules.item.get",
         "circulation-storage.fixed-due-date-schedules.collection.get",
-        "circulation.rules.notice-policy.get",
+        "circulation-storage.patron-notice-policies.item.get",
         "circulation.rules.loan-policy.get",
         "circulation.rules.request-policy.get",
+        "circulation.rules.notice-policy.get",
         "inventory-storage.items.item.put",
         "inventory-storage.items.item.get",
         "inventory-storage.items.collection.get",
@@ -1655,7 +1655,7 @@
         "lost-item-fees-policies.item.get"
       ],
       "visible": false
-},
+    },
     {
       "permissionName": "modperms.circulation.override-renewal-by-barcode.post",
       "displayName" : "module permissions for one op",
@@ -1757,61 +1757,6 @@
         "anonymize-storage-loans.post",
         "feefineactions.collection.get",
         "pubsub.publish.post"
-      ],
-      "visible": false
-    },
-    {
-      "permissionName": "modperms.circulation.renew-by-id.post",
-      "displayName" : "module permissions for one op",
-      "description" : "to reduce X-Okapi-Token size",
-      "subPermissions": [
-        "circulation-storage.loans.item.put",
-        "circulation-storage.loans.item.get",
-        "circulation-storage.loans.collection.get",
-        "circulation-storage.loan-policies.item.get",
-        "circulation-storage.loan-policies.collection.get",
-        "circulation-storage.circulation-rules.get",
-        "circulation-storage.requests.collection.get",
-        "circulation-storage.requests.item.put",
-        "circulation-storage.request-policies.item.get",
-        "circulation-storage.fixed-due-date-schedules.item.get",
-        "circulation-storage.fixed-due-date-schedules.collection.get",
-        "circulation-storage.patron-notice-policies.item.get",
-        "circulation.rules.loan-policy.get",
-        "circulation.rules.request-policy.get",
-        "circulation.rules.notice-policy.get",
-        "inventory-storage.items.item.put",
-        "inventory-storage.items.item.get",
-        "inventory-storage.items.collection.get",
-        "inventory-storage.locations.item.get",
-        "inventory-storage.locations.collection.get",
-        "inventory-storage.location-units.institutions.item.get",
-        "inventory-storage.location-units.campuses.item.get",
-        "inventory-storage.location-units.libraries.item.get",
-        "inventory-storage.location-units.libraries.collection.get",
-        "inventory-storage.holdings.collection.get",
-        "inventory-storage.holdings.item.get",
-        "inventory-storage.instances.collection.get",
-        "inventory-storage.instances.item.get",
-        "inventory-storage.material-types.item.get",
-        "inventory-storage.material-types.collection.get",
-        "inventory-storage.service-points.collection.get",
-        "inventory-storage.service-points.item.get",
-        "inventory-storage.loan-types.item.get",
-        "users.item.get",
-        "users.collection.get",
-        "proxiesfor.collection.get",
-        "calendar.opening-hours.collection.get",
-        "configuration.entries.collection.get",
-        "scheduled-notice-storage.scheduled-notices.collection.delete",
-        "scheduled-notice-storage.scheduled-notices.item.post",
-        "patron-notice.post",
-        "feefines.collection.get",
-        "feefines.item.post",
-        "owners.collection.get",
-        "accounts.item.post",
-        "pubsub.publish.post",
-        "scheduled-notice-storage.scheduled-notices.item.delete"
       ],
       "visible": false
     },

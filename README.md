@@ -29,6 +29,12 @@ FOLIO compatible circulation capabilities, including loan items from the invento
 
 - Python 3 (for un-registering module during managed demo and tests via Okapi, and the lint-raml tools)
 
+### Environmental
+
+mod-circulation defines many `module permissions` as it integrates with many other parts of FOLIO.
+
+These require the use of `Okapi 3.x` or later and an implementation of the `_tenantPermissions 1.1` interface.
+
 ## Preparation
 
 ### Git Submodules
