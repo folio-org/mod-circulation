@@ -130,6 +130,7 @@ public class LostItemFeeChargingService {
     log.info("account is open: " + account.isOpen());
     log.info("amount is: " + account.getAmount());
     if ((type == FeeFine.LOST_ITEM_FEE_TYPE || type == FeeFine.LOST_ITEM_PROCESSING_FEE_TYPE) && account.isOpen()) {
+      log.info("Account should be wiped");
       return true;
     } else {
       return false;
