@@ -2,11 +2,9 @@ package api.support.builders;
 
 import java.util.UUID;
 
-import api.support.http.IndividualResource;
-
-import org.folio.circulation.domain.representations.OverrideBlocks;
 import org.joda.time.DateTime;
 
+import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
 
 public class OverrideCheckOutByBarcodeRequestBuilder extends JsonBuilder implements Builder {
@@ -18,12 +16,10 @@ public class OverrideCheckOutByBarcodeRequestBuilder extends JsonBuilder impleme
   private final String servicePointId;
   private final DateTime dueDate;
   private final String comment;
-  private final OverrideBlocks overrideBlocks;
 
   public OverrideCheckOutByBarcodeRequestBuilder(
     String itemBarcode, String userBarcode, String proxyBarcode,
-    DateTime loanDate, String servicePointId, DateTime dueDate, String comment,
-    OverrideBlocks overrideBlocks) {
+    DateTime loanDate, String servicePointId, DateTime dueDate, String comment) {
 
     this.itemBarcode = itemBarcode;
     this.userBarcode = userBarcode;
@@ -32,11 +28,10 @@ public class OverrideCheckOutByBarcodeRequestBuilder extends JsonBuilder impleme
     this.servicePointId = servicePointId;
     this.dueDate = dueDate;
     this.comment = comment;
-    this.overrideBlocks = overrideBlocks;
   }
 
   public OverrideCheckOutByBarcodeRequestBuilder() {
-    this(null, null, null, null, null, null, null, null);
+    this(null, null, null, null, null, null, null);
   }
 
   @Override
@@ -50,22 +45,6 @@ public class OverrideCheckOutByBarcodeRequestBuilder extends JsonBuilder impleme
     put(request, "servicePointId", this.servicePointId);
     put(request, "dueDate", this.dueDate);
     put(request, "comment", this.comment);
-    if (overrideBlocks != null) {
-      JsonObject overrideBlocksJson = new JsonObject();
-      if (overrideBlocks.getItemNotLoanableBlock() != null) {
-        JsonObject itemNotLoanableBlockJson = new JsonObject();
-        put(itemNotLoanableBlockJson, "dueDate",
-          overrideBlocks.getItemNotLoanableBlock().getDueDate());
-        put(overrideBlocksJson, "itemNotLoanableBlock", itemNotLoanableBlockJson);
-      }
-      if (overrideBlocks.getPatronBlock() != null) {
-        put(overrideBlocksJson, "patronBlock", new JsonObject());
-      }
-      if (overrideBlocks.getItemLimitBlock() != null) {
-        put(overrideBlocksJson, "itemLimitBlock", new JsonObject());
-      }
-      put(request, "overrideBlocks", overrideBlocksJson);
-    }
 
     return request;
   }
@@ -78,8 +57,7 @@ public class OverrideCheckOutByBarcodeRequestBuilder extends JsonBuilder impleme
       this.loanDate,
       this.servicePointId,
       this.dueDate,
-      this.comment,
-      this.overrideBlocks);
+      this.comment);
   }
 
   public OverrideCheckOutByBarcodeRequestBuilder to(IndividualResource loanee) {
@@ -90,8 +68,7 @@ public class OverrideCheckOutByBarcodeRequestBuilder extends JsonBuilder impleme
       this.loanDate,
       this.servicePointId,
       this.dueDate,
-      this.comment,
-      this.overrideBlocks);
+      this.comment);
   }
 
   public OverrideCheckOutByBarcodeRequestBuilder on(DateTime loanDate) {
@@ -102,8 +79,7 @@ public class OverrideCheckOutByBarcodeRequestBuilder extends JsonBuilder impleme
       loanDate,
       this.servicePointId,
       this.dueDate,
-      this.comment,
-      this.overrideBlocks);
+      this.comment);
   }
 
   public OverrideCheckOutByBarcodeRequestBuilder proxiedBy(IndividualResource proxy) {
@@ -114,8 +90,7 @@ public class OverrideCheckOutByBarcodeRequestBuilder extends JsonBuilder impleme
       this.loanDate,
       this.servicePointId,
       this.dueDate,
-      this.comment,
-      this.overrideBlocks);
+      this.comment);
   }
 
   public OverrideCheckOutByBarcodeRequestBuilder at(String checkoutServicePointId) {
@@ -126,8 +101,7 @@ public class OverrideCheckOutByBarcodeRequestBuilder extends JsonBuilder impleme
       this.loanDate,
       checkoutServicePointId,
       this.dueDate,
-      this.comment,
-      this.overrideBlocks);
+      this.comment);
   }
 
   public OverrideCheckOutByBarcodeRequestBuilder at(IndividualResource checkoutServicePoint) {
@@ -142,8 +116,7 @@ public class OverrideCheckOutByBarcodeRequestBuilder extends JsonBuilder impleme
       this.loanDate,
       checkoutServicePointId.toString(),
       this.dueDate,
-      this.comment,
-      this.overrideBlocks);
+      this.comment);
   }
 
   public OverrideCheckOutByBarcodeRequestBuilder withDueDate(DateTime dueDate) {
@@ -154,8 +127,7 @@ public class OverrideCheckOutByBarcodeRequestBuilder extends JsonBuilder impleme
       this.loanDate,
       this.servicePointId,
       dueDate,
-      this.comment,
-      this.overrideBlocks);
+      this.comment);
   }
 
   public OverrideCheckOutByBarcodeRequestBuilder withComment(String comment) {
@@ -166,23 +138,9 @@ public class OverrideCheckOutByBarcodeRequestBuilder extends JsonBuilder impleme
       this.loanDate,
       this.servicePointId,
       this.dueDate,
-      comment,
-      this.overrideBlocks);
+      comment);
   }
 
-  public OverrideCheckOutByBarcodeRequestBuilder withOverrideBlocks(
-    OverrideBlocks overrideBlocks) {
-
-    return new OverrideCheckOutByBarcodeRequestBuilder(
-      this.itemBarcode,
-      this.userBarcode,
-      this.proxyBarcode,
-      this.loanDate,
-      this.servicePointId,
-      this.dueDate,
-      this.comment,
-      overrideBlocks);
-  }
 
   private String getBarcode(IndividualResource record) {
     return record.getJson().getString("barcode");

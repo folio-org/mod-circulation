@@ -20,7 +20,7 @@ import java.util.Map;
 
 import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.ValidationErrorFailure;
-import org.folio.circulation.support.http.server.OverridableValidationError;
+import org.folio.circulation.support.http.server.OverrideValidationError;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
 import org.slf4j.Logger;
@@ -102,7 +102,7 @@ public class DeferFailureErrorHandler extends CirculationErrorHandler {
       List<String> missingPermissions = blockType.getMissingOverridePermissions(okapiPermissions);
 
       List<ValidationError> overridableValidationErrors = validationFailure.getErrors().stream()
-        .map(error -> new OverridableValidationError(error, blockType, missingPermissions))
+        .map(error -> new OverrideValidationError(error, blockType, missingPermissions))
         .collect(toList());
 
       return new ValidationErrorFailure(overridableValidationErrors);

@@ -40,10 +40,6 @@ public class ValidationError {
       .put("parameters", mappedParameters);
   }
 
-  public String getMessage() {
-    return message;
-  }
-
   public boolean hasParameter(String key) {
     return parameters.containsKey(key);
   }

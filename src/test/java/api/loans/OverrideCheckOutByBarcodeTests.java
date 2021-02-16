@@ -1,6 +1,5 @@
 package api.loans;
 
-import static api.support.APITestContext.getOkapiHeadersFromContext;
 import static api.support.builders.ItemBuilder.CHECKED_OUT;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
@@ -8,35 +7,24 @@ import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
-import static org.folio.circulation.domain.policy.Period.months;
 import static org.hamcrest.CoreMatchers.allOf;
-import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasSize;
 
-import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.policy.Period;
-import org.folio.circulation.domain.representations.ItemLimitBlock;
-import org.folio.circulation.domain.representations.ItemNotLoanableBlock;
-import org.folio.circulation.domain.representations.OverrideBlocks;
-import org.folio.circulation.domain.representations.PatronBlock;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
 
 import api.support.APITests;
-import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.OverrideCheckOutByBarcodeRequestBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.http.IndividualResource;
-import api.support.http.OkapiHeaders;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -48,14 +36,6 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
     new DateTime(2019, 4, 20, 11, 30, 0, DateTimeZone.UTC);
   private static final String TEST_COMMENT = "Some comment";
   private static final String CHECKED_OUT_THROUGH_OVERRIDE = "checkedOutThroughOverride";
-  public static final String OVERRIDE_ITEM_NOT_LOANABLE_BLOCK_PERMISSION =
-    "circulation.override-item-not-loanable-block";
-  public static final String OVERRIDE_PATRON_BLOCK_PERMISSION =
-    "circulation.override-patron-block";
-  public static final String OVERRIDE_ITEM_LIMIT_BLOCK_PERMISSION =
-    "circulation.override-item-limit-block";
-  public static final String INSUFFICIENT_OVERRIDE_PERMISSIONS = "Insufficient override permissions";
-
 
   @Test
   public void canOverrideCheckoutWhenItemIsNotLoanable() {
@@ -312,190 +292,6 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
     assertThat(placeRequestResponse.getStatusCode(), is(201));
   }
 
-  @Test
-  public void cannotOverrideItemNotLoanableBlockWhenOverrideBlocksIsNotPresent() {
-    final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
-      OVERRIDE_ITEM_NOT_LOANABLE_BLOCK_PERMISSION);
-
-    setNotLoanablePolicy();
-    Response response = checkOutFixture.attemptCheckOutByBarcode(
-      new CheckOutByBarcodeRequestBuilder()
-        .forItem(itemsFixture.basedUponSmallAngryPlanet())
-        .to(usersFixture.steve())
-        .at(UUID.randomUUID())
-        .on(TEST_LOAN_DATE), okapiHeaders);
-
-    assertThat(response.getStatusCode(), is(422));
-    assertThat(response.getJson(), hasErrorWith(allOf(hasMessage("Item is not loanable"),
-      hasParameter("loanPolicyName", "Not Loanable Policy"))));
-  }
-
-  @Test
-  public void cannotOverrideItemNotLoanableBlockWhenItemNotLoanableBlockIsNotPresent() {
-    final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
-      OVERRIDE_ITEM_NOT_LOANABLE_BLOCK_PERMISSION);
-
-    setNotLoanablePolicy();
-    Response response = checkOutFixture.attemptCheckOutByBarcode(
-      new CheckOutByBarcodeRequestBuilder()
-        .forItem(itemsFixture.basedUponSmallAngryPlanet())
-        .to(usersFixture.steve())
-        .at(UUID.randomUUID())
-        .on(TEST_LOAN_DATE)
-        .withOverrideBlocks(new OverrideBlocks(null, null, null, TEST_COMMENT)),
-      okapiHeaders);
-
-    assertThat(response.getStatusCode(), is(422));
-    assertThat(response.getJson(), hasErrorWith(allOf(hasMessage("Item is not loanable"),
-      hasParameter("loanPolicyName", "Not Loanable Policy"))));
-  }
-
-  @Test
-  public void cannotOverrideItemNotLoanableBlockWhenUserDoesNotHavePermissions() {
-    setNotLoanablePolicy();
-    Response response = checkOutFixture.attemptCheckOutByBarcode(
-      new CheckOutByBarcodeRequestBuilder()
-        .forItem(itemsFixture.basedUponSmallAngryPlanet())
-        .to(usersFixture.steve())
-        .at(UUID.randomUUID())
-        .on(TEST_LOAN_DATE).withOverrideBlocks(new OverrideBlocks(
-          new ItemNotLoanableBlock(TEST_DUE_DATE), null, null, TEST_COMMENT)));
-
-    assertThat(response.getStatusCode(), is(422));
-    assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage(INSUFFICIENT_OVERRIDE_PERMISSIONS))));
-    assertThat(getMissingPermissions(response), hasSize(1));
-    assertThat(getMissingPermissions(response), hasItem(OVERRIDE_ITEM_NOT_LOANABLE_BLOCK_PERMISSION));
-  }
-
-  @Test
-  public void cannotOverrideItemNotLoanableBlockWhenUserDoesNotHaveRequiredPermissions() {
-    final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
-      OVERRIDE_PATRON_BLOCK_PERMISSION);
-
-    setNotLoanablePolicy();
-    Response response = checkOutFixture.attemptCheckOutByBarcode(
-      new CheckOutByBarcodeRequestBuilder()
-        .forItem(itemsFixture.basedUponSmallAngryPlanet())
-        .to(usersFixture.steve())
-        .at(UUID.randomUUID())
-        .on(TEST_LOAN_DATE).withOverrideBlocks(new OverrideBlocks(
-        new ItemNotLoanableBlock(TEST_DUE_DATE), null, null, TEST_COMMENT)),
-      okapiHeaders);
-
-    assertThat(response.getStatusCode(), is(422));
-    assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage(INSUFFICIENT_OVERRIDE_PERMISSIONS))));
-    assertThat(getMissingPermissions(response), hasSize(1));
-    assertThat(getMissingPermissions(response), hasItem(OVERRIDE_ITEM_NOT_LOANABLE_BLOCK_PERMISSION));
-  }
-
-  @Test
-  public void cannotOverrideItemNotLoanableBlockAndPatronBlockWhenUserDoesNotHavePermissions() {
-    setNotLoanablePolicy();
-    Response response = checkOutFixture.attemptCheckOutByBarcode(
-      new CheckOutByBarcodeRequestBuilder()
-        .forItem(itemsFixture.basedUponSmallAngryPlanet())
-        .to(usersFixture.steve())
-        .at(UUID.randomUUID())
-        .on(TEST_LOAN_DATE).withOverrideBlocks(new OverrideBlocks(
-        new ItemNotLoanableBlock(TEST_DUE_DATE), new PatronBlock(), null, TEST_COMMENT)));
-
-    assertThat(response.getStatusCode(), is(422));
-    assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage(INSUFFICIENT_OVERRIDE_PERMISSIONS))));
-    assertThat(getMissingPermissions(response), hasSize(2));
-    assertThat(getMissingPermissions(response).get(0), is(OVERRIDE_PATRON_BLOCK_PERMISSION));
-    assertThat(getMissingPermissions(response).get(1), is(OVERRIDE_ITEM_NOT_LOANABLE_BLOCK_PERMISSION));
-  }
-
-  @Test
-  public void canOverrideCheckoutWhenItemLimitWasReachedForBookMaterialType() {
-    circulationRulesFixture.updateCirculationRules(createRulesWithBookItemLimit());
-    IndividualResource firstBookTypeItem = itemsFixture.basedUponNod();
-    IndividualResource secondBookTypeItem = itemsFixture.basedUponSmallAngryPlanet();
-    IndividualResource steve = usersFixture.steve();
-
-    checkOutFixture.checkOutByBarcode(firstBookTypeItem, steve);
-    firstBookTypeItem = itemsClient.get(firstBookTypeItem);
-    assertThat(firstBookTypeItem, hasItemStatus(CHECKED_OUT));
-
-    Response response = checkOutFixture.attemptCheckOutByBarcode(secondBookTypeItem, steve);
-    assertThat(response.getJson(), hasErrorWith(
-      hasMessage("Patron has reached maximum limit of 1 items for material type")));
-
-    final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
-      OVERRIDE_ITEM_LIMIT_BLOCK_PERMISSION);
-    JsonObject loan = checkOutFixture.checkOutByBarcode(
-      new CheckOutByBarcodeRequestBuilder()
-        .forItem(secondBookTypeItem)
-        .to(steve)
-        .at(UUID.randomUUID())
-        .withOverrideBlocks(new OverrideBlocks(
-          null, null, new ItemLimitBlock(), TEST_COMMENT)),
-      okapiHeaders).getJson();
-
-    secondBookTypeItem = itemsClient.get(secondBookTypeItem);
-    assertThat(secondBookTypeItem, hasItemStatus(CHECKED_OUT));
-    assertThat(loan.getString("actionComment"), is(TEST_COMMENT));
-    assertThat(loan.getString("action"), is("checkedOutThroughOverride"));
-  }
-
-  @Test
-  public void cannotOverrideItemLimitBlockWhenUserDoesNotHavePermissions() {
-    Response response = checkOutFixture.attemptCheckOutByBarcode(
-      new CheckOutByBarcodeRequestBuilder()
-        .forItem(itemsFixture.basedUponNod())
-        .to(usersFixture.steve())
-        .at(UUID.randomUUID())
-        .withOverrideBlocks(new OverrideBlocks(
-          null, null, new ItemLimitBlock(), TEST_COMMENT)));
-
-    assertThat(response.getStatusCode(), is(422));
-    assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage(INSUFFICIENT_OVERRIDE_PERMISSIONS))));
-    assertThat(getMissingPermissions(response), hasSize(1));
-    assertThat(getMissingPermissions(response), hasItem(OVERRIDE_ITEM_LIMIT_BLOCK_PERMISSION));
-  }
-
-  @Test
-  public void cannotOverridePatronBlockWhenUserDoesNotHavePermissions() {
-    Response response = checkOutFixture.attemptCheckOutByBarcode(
-      new CheckOutByBarcodeRequestBuilder()
-        .forItem(itemsFixture.basedUponNod())
-        .to(usersFixture.steve())
-        .at(UUID.randomUUID())
-        .withOverrideBlocks(new OverrideBlocks(
-          null, new PatronBlock(), null, TEST_COMMENT)));
-
-    assertThat(response.getStatusCode(), is(422));
-    assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage(INSUFFICIENT_OVERRIDE_PERMISSIONS))));
-    assertThat(getMissingPermissions(response), hasSize(1));
-    assertThat(getMissingPermissions(response), hasItem(OVERRIDE_PATRON_BLOCK_PERMISSION));
-  }
-
-  @Test
-  public void cannotOverridePatronBlockWhenUserDoesNotHaveRequiredPermissions() {
-    final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
-      OVERRIDE_ITEM_LIMIT_BLOCK_PERMISSION);
-
-    Response response = checkOutFixture.attemptCheckOutByBarcode(
-      new CheckOutByBarcodeRequestBuilder()
-        .forItem(itemsFixture.basedUponNod())
-        .to(usersFixture.steve())
-        .at(UUID.randomUUID())
-        .withOverrideBlocks(new OverrideBlocks(
-          null, new PatronBlock(), null, TEST_COMMENT)),
-      okapiHeaders);
-
-    assertThat(response.getStatusCode(), is(422));
-    assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage(INSUFFICIENT_OVERRIDE_PERMISSIONS))));
-    assertThat(getMissingPermissions(response), hasSize(1));
-    assertThat(getMissingPermissions(response), hasItem(OVERRIDE_PATRON_BLOCK_PERMISSION));
-  }
-
   private void setNotLoanablePolicy() {
     LoanPolicyBuilder notLoanablePolicy = new LoanPolicyBuilder()
       .withName("Not Loanable Policy")
@@ -508,52 +304,5 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
       noticePoliciesFixture.inactiveNotice().getId(),
       overdueFinePoliciesFixture.facultyStandard().getId(),
       lostItemFeePoliciesFixture.facultyStandard().getId());
-  }
-
-  private OkapiHeaders buildOkapiHeadersWithPermissions(String permissions) {
-    return getOkapiHeadersFromContext()
-      .withRequestId("override-check-out-by-barcode-request")
-      .withOkapiPermissions("[" + permissions + "]");
-  }
-
-  private String createRulesWithBookItemLimit() {
-    final String loanPolicyWithItemLimitId = prepareLoanPolicyWithItemLimit(1).getId().toString();
-    final String loanPolicyWithoutItemLimitId = prepareLoanPolicyWithoutItemLimit().getId().toString();
-    final String anyRequestPolicy = requestPoliciesFixture.allowAllRequestPolicy().getId().toString();
-    final String anyNoticePolicy = noticePoliciesFixture.activeNotice().getId().toString();
-    final String anyOverdueFinePolicy = overdueFinePoliciesFixture.facultyStandard().getId().toString();
-    final String anyLostItemFeePolicy = lostItemFeePoliciesFixture.facultyStandard().getId().toString();
-
-    return String.join("\n",
-      "priority: t, s, c, b, a, m, g",
-      "fallback-policy: l " + loanPolicyWithoutItemLimitId + " r " + anyRequestPolicy + " n " + anyNoticePolicy + " o " + anyOverdueFinePolicy + " i " + anyLostItemFeePolicy,
-      "m " + materialTypesFixture.book().getId() + " : l " + loanPolicyWithItemLimitId + " r " + anyRequestPolicy + " n " + anyNoticePolicy  + " o " + anyOverdueFinePolicy + " i " + anyLostItemFeePolicy);
-  }
-
-  private IndividualResource prepareLoanPolicyWithItemLimit(int itemLimit) {
-    return loanPoliciesFixture.create(
-      new LoanPolicyBuilder()
-        .withName("Loan Policy with item limit")
-        .withItemLimit(itemLimit)
-        .rolling(months(2))
-        .renewFromCurrentDueDate());
-  }
-
-  private IndividualResource prepareLoanPolicyWithoutItemLimit() {
-    return loanPoliciesFixture.create(
-      new LoanPolicyBuilder()
-        .withName("Loan Policy without item limit")
-        .rolling(months(2))
-        .renewFromCurrentDueDate());
-  }
-
-  private List<String> getMissingPermissions(Response response) {
-    return response.getJson().getJsonArray("errors")
-      .stream()
-      .map(JsonObject.class::cast)
-      .map(error -> error.getJsonObject("overridableBlock"))
-      .map(block -> block.getJsonArray("missingPermissions"))
-      .map(missingPermissions -> missingPermissions.getString(0))
-      .collect(Collectors.toList());
   }
 }
