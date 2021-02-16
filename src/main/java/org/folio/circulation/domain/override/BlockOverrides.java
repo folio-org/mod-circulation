@@ -1,7 +1,6 @@
 
 package org.folio.circulation.domain.override;
 
-import static lombok.AccessLevel.PRIVATE;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedObjectProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getObjectProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;

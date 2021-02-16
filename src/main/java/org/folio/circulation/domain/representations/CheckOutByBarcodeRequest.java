@@ -1,6 +1,5 @@
 package org.folio.circulation.domain.representations;
 
-
 import static org.apache.commons.lang.StringUtils.isNotBlank;
 import static org.folio.circulation.domain.representations.LoanProperties.CHECKOUT_SERVICE_POINT_ID;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getObjectProperty;
@@ -10,7 +9,6 @@ import static org.joda.time.format.ISODateTimeFormat.dateTime;
 import java.util.UUID;
 
 import org.folio.circulation.domain.Loan;
-import org.folio.circulation.domain.override.BlockOverride;
 import org.folio.circulation.domain.override.BlockOverrides;
 import org.folio.circulation.support.ClockManager;
 
