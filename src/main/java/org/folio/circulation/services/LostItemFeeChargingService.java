@@ -74,14 +74,6 @@ public class LostItemFeeChargingService {
     final ReferenceDataContext referenceDataContext = new ReferenceDataContext(
       loan, request, staffUserId);
     final AccountCancelReason reason = AccountCancelReason.CANCELLED_ITEM_DECLARED_LOST;
-    final LostItemFeeRefundContext refundContext = new LostItemFeeRefundContext(
-      loan.getItem().getStatus(),
-      loan.getItem().getItemId(),
-      staffUserId,
-      request.getServicePointId(),
-      loan,
-      reason
-    );
 
     return lostItemPolicyRepository.getLostItemPolicyById(loan.getLostItemPolicyId())
       .thenApply(result -> result.map(referenceDataContext::withLostItemPolicy))
@@ -97,6 +89,14 @@ public class LostItemFeeChargingService {
             Loan loanWithAccountData = result.value();
             if (hasLostItemFees(loanWithAccountData)) {
               log.info("Existing lost item fees found for loan [{}], trying to clear", loan.getId());
+              final LostItemFeeRefundContext refundContext = new LostItemFeeRefundContext(
+                loan.getItem().getStatus(),
+                loan.getItem().getItemId(),
+                staffUserId,
+                request.getServicePointId(),
+                loanWithAccountData,
+                reason
+              );
               return refundService.refundAccounts(refundContext)
                 .thenCompose(context -> {
                   if (context.failed()) {
@@ -125,12 +125,7 @@ public class LostItemFeeChargingService {
 
   private Boolean isOpenLostItemFee(Account account) {
     String type = account.getFeeFineType();
-
-    log.info("account type is: " + account.getFeeFineType());
-    log.info("account is open: " + account.isOpen());
-    log.info("amount is: " + account.getAmount());
-    if ((type == FeeFine.LOST_ITEM_FEE_TYPE || type == FeeFine.LOST_ITEM_PROCESSING_FEE_TYPE) && account.isOpen()) {
-      log.info("Account should be wiped");
+    if ((type.equals(FeeFine.LOST_ITEM_FEE_TYPE) || type.equals(FeeFine.LOST_ITEM_PROCESSING_FEE_TYPE)) && account.isOpen()) {
       return true;
     } else {
       return false;
