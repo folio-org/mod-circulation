@@ -1,7 +1,6 @@
 
 package org.folio.circulation.domain.override;
 
-import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedObjectProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getObjectProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 
@@ -24,14 +23,4 @@ public class BlockOverrides {
       ItemLimitBlockOverride.from(getObjectProperty(representation, "itemLimitBlock")),
       getProperty(representation, "comment"));
   }
-
-  public static BlockOverrides fromRequest(JsonObject requestRepresentation) {
-    return from(getNestedObjectProperty(
-      requestRepresentation, "requestProcessingParameters", "overrideBlocks"));
-  }
-
-  public static BlockOverrides noOverrides() {
-    return from(null);
-  }
 }
-

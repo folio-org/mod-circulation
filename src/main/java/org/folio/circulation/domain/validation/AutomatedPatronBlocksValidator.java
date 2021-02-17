@@ -1,7 +1,6 @@
 package org.folio.circulation.domain.validation;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_BLOCKED_AUTOMATICALLY;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
@@ -19,7 +18,6 @@ import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.infrastructure.storage.AutomatedPatronBlocksRepository;
 import org.folio.circulation.resources.context.RenewalContext;
-import org.folio.circulation.resources.handlers.error.CirculationErrorType;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
@@ -38,17 +36,8 @@ public class AutomatedPatronBlocksValidator {
 
   public AutomatedPatronBlocksValidator(AutomatedPatronBlocksRepository automatedPatronBlocksRepository) {
     this(automatedPatronBlocksRepository, messages -> new ValidationErrorFailure(messages.stream()
-        .map(message -> new ValidationError(message, new HashMap<>()))
-        .collect(Collectors.toList())));
-  }
-
-  //  @Override
-//  public CompletableFuture<Result<LoanAndRelatedRecords>> validate(LoanAndRelatedRecords records) {
-//    return refuseWhenCheckOutActionIsBlockedForPatron(records);
-//  }
-
-  public CirculationErrorType getErrorType() {
-    return USER_IS_BLOCKED_AUTOMATICALLY;
+      .map(message -> new ValidationError(message, new HashMap<>()))
+      .collect(Collectors.toList())));
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>>

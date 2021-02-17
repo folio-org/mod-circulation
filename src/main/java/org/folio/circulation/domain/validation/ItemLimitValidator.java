@@ -40,15 +40,6 @@ public class ItemLimitValidator {
       request.getItemBarcode()), loanRepository);
   }
 
-  //  @Override
-//  public CompletableFuture<Result<LoanAndRelatedRecords>> validate(LoanAndRelatedRecords records) {
-//    return refuseWhenItemLimitIsReached(records);
-//  }
-
-  public CirculationErrorType getErrorType() {
-    return ITEM_LIMIT_IS_REACHED;
-  }
-
   public CompletableFuture<Result<LoanAndRelatedRecords>> refuseWhenItemLimitIsReached(
     LoanAndRelatedRecords records) {
 

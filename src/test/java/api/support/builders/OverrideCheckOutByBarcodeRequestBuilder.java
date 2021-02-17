@@ -141,7 +141,6 @@ public class OverrideCheckOutByBarcodeRequestBuilder extends JsonBuilder impleme
       comment);
   }
 
-
   private String getBarcode(IndividualResource record) {
     return record.getJson().getString("barcode");
   }
