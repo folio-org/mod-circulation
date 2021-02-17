@@ -135,8 +135,7 @@ public class CheckOutByBarcodeTests extends APITests {
       loan.getString("itemId"), is(smallAngryPlanet.getId()));
 
     assertThat("itemEffectiveLocationIdAtCheckOut should match item effective location ID",
-      loan.getString("itemEffectiveLocationIdAtCheckOut"),
-      is(smallAngryPlanet.getJson().getString("effectiveLocationId")));
+      loan.getString("itemEffectiveLocationIdAtCheckOut"), is(smallAngryPlanet.getJson().getString("effectiveLocationId")));
 
     assertThat("status should be open",
       loan.getJsonObject("status").getString("name"), is("Open"));
@@ -978,8 +977,7 @@ public class CheckOutByBarcodeTests extends APITests {
         .at(servicePointsFixture.cd1()));
 
     assertThat(response.getBody(),
-      is(
-        "Loan policy " + invalidLoanPolicyId + " could not be found, please check circulation rules"));
+      is("Loan policy " + invalidLoanPolicyId + " could not be found, please check circulation rules"));
 
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
@@ -1092,8 +1090,7 @@ public class CheckOutByBarcodeTests extends APITests {
     final UUID readingRoom = loanTypesFixture.readingRoom().getId();
     final UUID book = materialTypesFixture.book().getId();
 
-    circulationRulesFixture.updateCirculationRules(
-      createRules("m " + book + " + t " + readingRoom));
+    circulationRulesFixture.updateCirculationRules(createRules("m " + book + " + t " + readingRoom));
 
     IndividualResource firstBookTypeItem = itemsFixture.basedUponNod(
       itemBuilder -> itemBuilder.withTemporaryLoanType(readingRoom));
@@ -1108,8 +1105,7 @@ public class CheckOutByBarcodeTests extends APITests {
 
     Response response = checkOutFixture.attemptCheckOutByBarcode(secondBookTypeItem, steve);
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage(
-        "Patron has reached maximum limit of 1 items for combination of material type and loan type"))));
+      hasMessage("Patron has reached maximum limit of 1 items for combination of material type and loan type"))));
     secondBookTypeItem = itemsClient.get(secondBookTypeItem);
     assertThat(secondBookTypeItem, hasItemStatus(AVAILABLE));
 
@@ -1125,8 +1121,7 @@ public class CheckOutByBarcodeTests extends APITests {
     final UUID book = materialTypesFixture.book().getId();
     final UUID regular = patronGroupsFixture.regular().getId();
 
-    circulationRulesFixture.updateCirculationRules(
-      createRules("m " + book + " + t " + readingRoom + " + g " + regular));
+    circulationRulesFixture.updateCirculationRules(createRules("m " + book + " + t " + readingRoom + " + g " + regular));
 
     IndividualResource firstBookTypeItem = itemsFixture.basedUponNod(
       itemBuilder -> itemBuilder.withTemporaryLoanType(readingRoom));
@@ -1141,8 +1136,7 @@ public class CheckOutByBarcodeTests extends APITests {
 
     Response response = checkOutFixture.attemptCheckOutByBarcode(secondBookTypeItem, steve);
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage(
-        "Patron has reached maximum limit of 1 items for combination of patron group, material type and loan type"))));
+      hasMessage("Patron has reached maximum limit of 1 items for combination of patron group, material type and loan type"))));
     secondBookTypeItem = itemsClient.get(secondBookTypeItem);
     assertThat(secondBookTypeItem, hasItemStatus(AVAILABLE));
 
@@ -1155,16 +1149,10 @@ public class CheckOutByBarcodeTests extends APITests {
   public void canCheckOutWhenItemLimitIsReachedForBookMaterialTypeAndCanCirculateLoanTypeInMultipleLinesRules() {
 
     final String loanPolicyWithItemLimitId = prepareLoanPolicyWithItemLimit(1).getId().toString();
-    final String anyRequestPolicy = requestPoliciesFixture.allowAllRequestPolicy()
-      .getId()
-      .toString();
+    final String anyRequestPolicy = requestPoliciesFixture.allowAllRequestPolicy().getId().toString();
     final String anyNoticePolicy = noticePoliciesFixture.activeNotice().getId().toString();
-    final String anyOverdueFinePolicy = overdueFinePoliciesFixture.facultyStandard()
-      .getId()
-      .toString();
-    final String anyLostItemFeePolicy = lostItemFeePoliciesFixture.facultyStandard()
-      .getId()
-      .toString();
+    final String anyOverdueFinePolicy = overdueFinePoliciesFixture.facultyStandard().getId().toString();
+    final String anyLostItemFeePolicy = lostItemFeePoliciesFixture.facultyStandard().getId().toString();
     final UUID canCirculate = loanTypesFixture.canCirculate().getId();
     final UUID readingRoom = loanTypesFixture.readingRoom().getId();
     final UUID book = materialTypesFixture.book().getId();
@@ -1174,8 +1162,7 @@ public class CheckOutByBarcodeTests extends APITests {
       " : l " + loanPolicyWithItemLimitId + " r " + anyRequestPolicy + " n " + anyNoticePolicy + " o " + anyOverdueFinePolicy + " i " + anyLostItemFeePolicy;
     String nestedRuleReadingRoom = "    t " + readingRoom + " + g " + regular +
       " : l " + loanPolicyWithItemLimitId + " r " + anyRequestPolicy + " n " + anyNoticePolicy + " o " + anyOverdueFinePolicy + " i " + anyLostItemFeePolicy;
-    String rules = createRules(
-      "m " + book) + "\n" + nestedRuleCanCirculate + "\n" + nestedRuleReadingRoom;
+    String rules = createRules("m " + book) + "\n" + nestedRuleCanCirculate + "\n" + nestedRuleReadingRoom;
     circulationRulesFixture.updateCirculationRules(rules);
 
     IndividualResource firstBookTypeItem = itemsFixture.basedUponNod(
@@ -1192,8 +1179,7 @@ public class CheckOutByBarcodeTests extends APITests {
 
     Response response = checkOutFixture.attemptCheckOutByBarcode(secondBookTypeItem, steve);
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage(
-        "Patron has reached maximum limit of 1 items for combination of patron group, material type and loan type"))));
+      hasMessage("Patron has reached maximum limit of 1 items for combination of patron group, material type and loan type"))));
     secondBookTypeItem = itemsClient.get(secondBookTypeItem);
     assertThat(secondBookTypeItem, hasItemStatus(AVAILABLE));
 
@@ -1700,18 +1686,11 @@ public class CheckOutByBarcodeTests extends APITests {
 
   private String createRules(String ruleCondition) {
     final String loanPolicyWithItemLimitId = prepareLoanPolicyWithItemLimit(1).getId().toString();
-    final String loanPolicyWithoutItemLimitId = prepareLoanPolicyWithoutItemLimit().getId()
-      .toString();
-    final String anyRequestPolicy = requestPoliciesFixture.allowAllRequestPolicy()
-      .getId()
-      .toString();
+    final String loanPolicyWithoutItemLimitId = prepareLoanPolicyWithoutItemLimit().getId().toString();
+    final String anyRequestPolicy = requestPoliciesFixture.allowAllRequestPolicy().getId().toString();
     final String anyNoticePolicy = noticePoliciesFixture.activeNotice().getId().toString();
-    final String anyOverdueFinePolicy = overdueFinePoliciesFixture.facultyStandard()
-      .getId()
-      .toString();
-    final String anyLostItemFeePolicy = lostItemFeePoliciesFixture.facultyStandard()
-      .getId()
-      .toString();
+    final String anyOverdueFinePolicy = overdueFinePoliciesFixture.facultyStandard().getId().toString();
+    final String anyLostItemFeePolicy = lostItemFeePoliciesFixture.facultyStandard().getId().toString();
 
     return String.join("\n",
       "priority: t, s, c, b, a, m, g",
@@ -1723,18 +1702,11 @@ public class CheckOutByBarcodeTests extends APITests {
     UUID fixedDueDateScheduleId = loanPoliciesFixture.createExampleFixedDueDateSchedule().getId();
     final String loanPolicyWithItemLimitAndFixedDueDateId = prepareLoanPolicyWithItemLimitAndFixedDueDate(
       1, fixedDueDateScheduleId).getId().toString();
-    final String loanPolicyWithoutItemLimitId = prepareLoanPolicyWithoutItemLimit().getId()
-      .toString();
-    final String anyRequestPolicy = requestPoliciesFixture.allowAllRequestPolicy()
-      .getId()
-      .toString();
+    final String loanPolicyWithoutItemLimitId = prepareLoanPolicyWithoutItemLimit().getId().toString();
+    final String anyRequestPolicy = requestPoliciesFixture.allowAllRequestPolicy().getId().toString();
     final String anyNoticePolicy = noticePoliciesFixture.activeNotice().getId().toString();
-    final String anyOverdueFinePolicy = overdueFinePoliciesFixture.facultyStandard()
-      .getId()
-      .toString();
-    final String anyLostItemFeePolicy = lostItemFeePoliciesFixture.facultyStandard()
-      .getId()
-      .toString();
+    final String anyOverdueFinePolicy = overdueFinePoliciesFixture.facultyStandard().getId().toString();
+    final String anyLostItemFeePolicy = lostItemFeePoliciesFixture.facultyStandard().getId().toString();
 
     return String.join("\n",
       "priority: t, s, c, b, a, m, g",
