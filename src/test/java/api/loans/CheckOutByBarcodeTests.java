@@ -147,8 +147,8 @@ public class CheckOutByBarcodeTests extends APITests {
       loan.getString("loanDate"), isEquivalentTo(loanDate));
 
     loanHasLoanPolicyProperties(loan, loanPoliciesFixture.canCirculateRolling());
-    loanHasOverdueFinePolicyProperties(loan, overdueFinePoliciesFixture.facultyStandard());
-    loanHasLostItemPolicyProperties(loan, lostItemFeePoliciesFixture.facultyStandard());
+    loanHasOverdueFinePolicyProperties(loan,  overdueFinePoliciesFixture.facultyStandard());
+    loanHasLostItemPolicyProperties(loan,  lostItemFeePoliciesFixture.facultyStandard());
 
     loanHasPatronGroupProperties(loan, "Regular Group");
 
@@ -275,8 +275,8 @@ public class CheckOutByBarcodeTests extends APITests {
     loanHasPatronGroupProperties(loan, "Regular Group");
 
     loanHasLoanPolicyProperties(loan, loanPolicy);
-    loanHasOverdueFinePolicyProperties(loan, overdueFinePolicy);
-    loanHasLostItemPolicyProperties(loan, lostItemFeePolicy);
+    loanHasOverdueFinePolicyProperties(loan,  overdueFinePolicy);
+    loanHasLostItemPolicyProperties(loan,  lostItemFeePolicy);
 
     assertThat("due date should be based upon fixed due date schedule",
       loan.getString("dueDate"), isEquivalentTo(END_OF_CURRENT_YEAR_DUE_DATE));
@@ -1033,7 +1033,7 @@ public class CheckOutByBarcodeTests extends APITests {
 
     final UUID book = materialTypesFixture.book().getId();
 
-    circulationRulesFixture.updateCirculationRules(createRules("m " + book));
+    circulationRulesFixture.updateCirculationRules(createRules( "m " + book));
 
     IndividualResource firstBookTypeItem = itemsFixture.basedUponNod();
     IndividualResource secondBookTypeItem = itemsFixture.basedUponSmallAngryPlanet();
@@ -1062,10 +1062,8 @@ public class CheckOutByBarcodeTests extends APITests {
 
     circulationRulesFixture.updateCirculationRules(createRules("t " + readingRoom));
 
-    IndividualResource firstBookTypeItem = itemsFixture.basedUponNod(
-      itemBuilder -> itemBuilder.withTemporaryLoanType(readingRoom));
-    IndividualResource secondBookTypeItem = itemsFixture.basedUponSmallAngryPlanet(
-      itemBuilder -> itemBuilder.withTemporaryLoanType(readingRoom));
+    IndividualResource firstBookTypeItem = itemsFixture.basedUponNod(itemBuilder -> itemBuilder.withTemporaryLoanType(readingRoom));
+    IndividualResource secondBookTypeItem = itemsFixture.basedUponSmallAngryPlanet(itemBuilder -> itemBuilder.withTemporaryLoanType(readingRoom));
     IndividualResource videoTypeItem = itemsFixture.basedUponDunkirk();
     IndividualResource steve = usersFixture.steve();
 
@@ -1092,10 +1090,8 @@ public class CheckOutByBarcodeTests extends APITests {
 
     circulationRulesFixture.updateCirculationRules(createRules("m " + book + " + t " + readingRoom));
 
-    IndividualResource firstBookTypeItem = itemsFixture.basedUponNod(
-      itemBuilder -> itemBuilder.withTemporaryLoanType(readingRoom));
-    IndividualResource secondBookTypeItem = itemsFixture.basedUponSmallAngryPlanet(
-      itemBuilder -> itemBuilder.withTemporaryLoanType(readingRoom));
+    IndividualResource firstBookTypeItem = itemsFixture.basedUponNod(itemBuilder -> itemBuilder.withTemporaryLoanType(readingRoom));
+    IndividualResource secondBookTypeItem = itemsFixture.basedUponSmallAngryPlanet(itemBuilder -> itemBuilder.withTemporaryLoanType(readingRoom));
     IndividualResource videoTypeItem = itemsFixture.basedUponDunkirk();
     IndividualResource steve = usersFixture.steve();
 
@@ -1159,18 +1155,15 @@ public class CheckOutByBarcodeTests extends APITests {
     final UUID regular = patronGroupsFixture.regular().getId();
 
     String nestedRuleCanCirculate = "    t " + canCirculate + " + g " + regular +
-      " : l " + loanPolicyWithItemLimitId + " r " + anyRequestPolicy + " n " + anyNoticePolicy + " o " + anyOverdueFinePolicy + " i " + anyLostItemFeePolicy;
+      " : l " + loanPolicyWithItemLimitId + " r " + anyRequestPolicy + " n " + anyNoticePolicy  + " o " + anyOverdueFinePolicy + " i " + anyLostItemFeePolicy;
     String nestedRuleReadingRoom = "    t " + readingRoom + " + g " + regular +
-      " : l " + loanPolicyWithItemLimitId + " r " + anyRequestPolicy + " n " + anyNoticePolicy + " o " + anyOverdueFinePolicy + " i " + anyLostItemFeePolicy;
+      " : l " + loanPolicyWithItemLimitId + " r " + anyRequestPolicy + " n " + anyNoticePolicy  + " o " + anyOverdueFinePolicy + " i " + anyLostItemFeePolicy;
     String rules = createRules("m " + book) + "\n" + nestedRuleCanCirculate + "\n" + nestedRuleReadingRoom;
     circulationRulesFixture.updateCirculationRules(rules);
 
-    IndividualResource firstBookTypeItem = itemsFixture.basedUponNod(
-      itemBuilder -> itemBuilder.withTemporaryLoanType(canCirculate));
-    IndividualResource secondBookTypeItem = itemsFixture.basedUponSmallAngryPlanet(
-      itemBuilder -> itemBuilder.withTemporaryLoanType(canCirculate));
-    IndividualResource bookTypeItemReadingRoomLoanType = itemsFixture.basedUponInterestingTimes(
-      itemBuilder -> itemBuilder.withTemporaryLoanType(readingRoom));
+    IndividualResource firstBookTypeItem = itemsFixture.basedUponNod(itemBuilder -> itemBuilder.withTemporaryLoanType(canCirculate));
+    IndividualResource secondBookTypeItem = itemsFixture.basedUponSmallAngryPlanet(itemBuilder -> itemBuilder.withTemporaryLoanType(canCirculate));
+    IndividualResource bookTypeItemReadingRoomLoanType = itemsFixture.basedUponInterestingTimes(itemBuilder -> itemBuilder.withTemporaryLoanType(readingRoom));
     IndividualResource steve = usersFixture.steve();
 
     checkOutFixture.checkOutByBarcode(firstBookTypeItem, steve);
@@ -1197,10 +1190,8 @@ public class CheckOutByBarcodeTests extends APITests {
 
     circulationRulesFixture.updateCirculationRules(createRules("m " + book));
 
-    IndividualResource firstBookTypeItem = itemsFixture.basedUponNod(
-      itemBuilder -> itemBuilder.withTemporaryLoanType(readingRoom));
-    IndividualResource secondBookTypeItem = itemsFixture.basedUponSmallAngryPlanet(
-      itemBuilder -> itemBuilder.withTemporaryLoanType(canCirculate));
+    IndividualResource firstBookTypeItem = itemsFixture.basedUponNod(itemBuilder -> itemBuilder.withTemporaryLoanType(readingRoom));
+    IndividualResource secondBookTypeItem = itemsFixture.basedUponSmallAngryPlanet(itemBuilder -> itemBuilder.withTemporaryLoanType(canCirculate));
     IndividualResource steve = usersFixture.steve();
 
     checkOutFixture.checkOutByBarcode(firstBookTypeItem, steve);
@@ -1220,7 +1211,7 @@ public class CheckOutByBarcodeTests extends APITests {
     final UUID book = materialTypesFixture.book().getId();
 
     circulationRulesFixture.updateCirculationRules(
-      createRulesWithFixedDueDateInLoanPolicy("m " + book));
+      createRulesWithFixedDueDateInLoanPolicy( "m " + book));
 
     IndividualResource firstBookTypeItem = itemsFixture.basedUponNod();
     IndividualResource secondBookTypeItem = itemsFixture.basedUponSmallAngryPlanet();
@@ -1247,7 +1238,7 @@ public class CheckOutByBarcodeTests extends APITests {
   public void canCheckOutWhenItemLimitWasReachedForBookMaterialAndItemIsClaimedReturned() {
     final UUID book = materialTypesFixture.book().getId();
 
-    circulationRulesFixture.updateCirculationRules(createRules("m " + book));
+    circulationRulesFixture.updateCirculationRules(createRules( "m " + book));
 
     IndividualResource firstBookTypeItem = itemsFixture.basedUponNod();
     IndividualResource secondBookTypeItem = itemsFixture.basedUponSmallAngryPlanet();
@@ -1695,7 +1686,7 @@ public class CheckOutByBarcodeTests extends APITests {
     return String.join("\n",
       "priority: t, s, c, b, a, m, g",
       "fallback-policy: l " + loanPolicyWithoutItemLimitId + " r " + anyRequestPolicy + " n " + anyNoticePolicy + " o " + anyOverdueFinePolicy + " i " + anyLostItemFeePolicy,
-      ruleCondition + " : l " + loanPolicyWithItemLimitId + " r " + anyRequestPolicy + " n " + anyNoticePolicy + " o " + anyOverdueFinePolicy + " i " + anyLostItemFeePolicy);
+      ruleCondition + " : l " + loanPolicyWithItemLimitId + " r " + anyRequestPolicy + " n " + anyNoticePolicy  + " o " + anyOverdueFinePolicy + " i " + anyLostItemFeePolicy);
   }
 
   private String createRulesWithFixedDueDateInLoanPolicy(String ruleCondition) {
@@ -1711,7 +1702,7 @@ public class CheckOutByBarcodeTests extends APITests {
     return String.join("\n",
       "priority: t, s, c, b, a, m, g",
       "fallback-policy: l " + loanPolicyWithoutItemLimitId + " r " + anyRequestPolicy + " n " + anyNoticePolicy + " o " + anyOverdueFinePolicy + " i " + anyLostItemFeePolicy,
-      ruleCondition + " : l " + loanPolicyWithItemLimitAndFixedDueDateId + " r " + anyRequestPolicy + " n " + anyNoticePolicy + " o " + anyOverdueFinePolicy + " i " + anyLostItemFeePolicy);
+      ruleCondition + " : l " + loanPolicyWithItemLimitAndFixedDueDateId + " r " + anyRequestPolicy + " n " + anyNoticePolicy  + " o " + anyOverdueFinePolicy + " i " + anyLostItemFeePolicy);
   }
 
   private OkapiHeaders buildOkapiHeadersWithPermissions(String permissions) {
