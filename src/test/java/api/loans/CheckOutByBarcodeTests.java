@@ -1691,7 +1691,7 @@ public class CheckOutByBarcodeTests extends APITests {
   private OkapiHeaders buildOkapiHeadersWithPermissions(String permissions) {
     return getOkapiHeadersFromContext()
       .withRequestId("override-check-out-by-barcode-request")
-      .withOkapiPermissions("[" + permissions + "]");
+      .withOkapiPermissions("[\"" + permissions + "\"]");
   }
 
   private List<String> getMissingPermissions(Response response) {

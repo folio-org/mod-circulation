@@ -1,5 +1,6 @@
 package org.folio.circulation.support.utils;
 
+import static java.util.stream.Collectors.toList;
 import static org.folio.circulation.support.http.OkapiHeader.OKAPI_PERMISSIONS;
 
 import java.util.List;
@@ -7,8 +8,7 @@ import java.util.Map;
 
 import org.apache.commons.collections4.map.CaseInsensitiveMap;
 
-import com.google.common.base.CharMatcher;
-import com.google.common.base.Splitter;
+import io.vertx.core.json.JsonArray;
 
 public class OkapiHeadersUtils {
 
@@ -20,9 +20,10 @@ public class OkapiHeadersUtils {
     String permissionsArrayString = new CaseInsensitiveMap<>(okapiHeaders)
       .getOrDefault(OKAPI_PERMISSIONS, "[]");
 
-    return Splitter.on(',')
-      .trimResults(CharMatcher.anyOf("[] "))
-      .omitEmptyStrings()
-      .splitToList(permissionsArrayString);
+    return new JsonArray(permissionsArrayString)
+      .stream()
+      .filter(String.class::isInstance)
+      .map(String.class::cast)
+      .collect(toList());
   }
 }
