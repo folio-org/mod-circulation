@@ -13,8 +13,11 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.domain.policy.Period;
+import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -24,7 +27,6 @@ import api.support.APITests;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.OverrideCheckOutByBarcodeRequestBuilder;
 import api.support.builders.RequestBuilder;
-import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -38,7 +40,11 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
   private static final String CHECKED_OUT_THROUGH_OVERRIDE = "checkedOutThroughOverride";
 
   @Test
-  public void canOverrideCheckoutWhenItemIsNotLoanable() {
+  public void canOverrideCheckoutWhenItemIsNotLoanable()
+    throws InterruptedException,
+    TimeoutException,
+    ExecutionException {
+
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
       item -> item
         .withEnumeration("v.70:no.1-6")
@@ -56,7 +62,8 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
         .at(checkoutServicePointId)
         .on(TEST_LOAN_DATE)
         .withDueDate(TEST_DUE_DATE)
-        .withComment(TEST_COMMENT));
+        .withComment(TEST_COMMENT)
+    );
 
     final JsonObject loan = response.getJson();
 
@@ -156,6 +163,7 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
 
   @Test
   public void cannotOverrideCheckoutWhenItemIsLoanable() {
+
     LoanPolicyBuilder loanablePolicy = new LoanPolicyBuilder()
       .withName("Loanable Policy")
       .rolling(Period.days(2));
@@ -177,14 +185,19 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
         .at(checkoutServicePointId)
         .on(TEST_LOAN_DATE)
         .withDueDate(TEST_DUE_DATE)
-        .withComment(TEST_COMMENT));
+        .withComment(TEST_COMMENT)
+    );
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Override is not allowed when item is loanable"))));
   }
 
   @Test
-  public void cannotOverrideCheckoutWhenDueDateIsNotPresent() {
+  public void cannotOverrideCheckoutWhenDueDateIsNotPresent()
+    throws InterruptedException,
+    TimeoutException,
+    ExecutionException {
+
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource steve = usersFixture.steve();
     final UUID checkoutServicePointId = UUID.randomUUID();
@@ -196,7 +209,8 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
         .to(steve)
         .at(checkoutServicePointId)
         .on(TEST_LOAN_DATE)
-        .withComment(TEST_COMMENT));
+        .withComment(TEST_COMMENT)
+    );
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Override should be performed with due date specified"),
@@ -204,7 +218,11 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotOverrideCheckoutWhenDueDateIsBeforeLoanDate() {
+  public void cannotOverrideCheckoutWhenDueDateIsBeforeLoanDate()
+    throws InterruptedException,
+    TimeoutException,
+    ExecutionException {
+
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource steve = usersFixture.steve();
     final UUID checkoutServicePointId = UUID.randomUUID();
@@ -218,7 +236,8 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
         .at(checkoutServicePointId)
         .on(TEST_LOAN_DATE)
         .withDueDate(invalidDueDate)
-        .withComment(TEST_COMMENT));
+        .withComment(TEST_COMMENT)
+    );
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Due date should be later than loan date"),
@@ -226,7 +245,11 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotOverrideCheckoutWhenDueDateIsTheSameAsLoanDate() {
+  public void cannotOverrideCheckoutWhenDueDateIsTheSameAsLoanDate()
+    throws InterruptedException,
+    TimeoutException,
+    ExecutionException {
+
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource steve = usersFixture.steve();
     final UUID checkoutServicePointId = UUID.randomUUID();
@@ -239,7 +262,8 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
         .at(checkoutServicePointId)
         .on(TEST_LOAN_DATE)
         .withDueDate(TEST_LOAN_DATE)
-        .withComment(TEST_COMMENT));
+        .withComment(TEST_COMMENT)
+    );
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Due date should be later than loan date"),
@@ -247,7 +271,11 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotOverrideCheckoutWhenCommentIsNotPresent() {
+  public void cannotOverrideCheckoutWhenCommentIsNotPresent()
+    throws InterruptedException,
+    TimeoutException,
+    ExecutionException {
+
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource steve = usersFixture.steve();
     final UUID checkoutServicePointId = UUID.randomUUID();
@@ -259,7 +287,8 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
         .to(steve)
         .at(checkoutServicePointId)
         .on(TEST_LOAN_DATE)
-        .withDueDate(TEST_DUE_DATE));
+        .withDueDate(TEST_DUE_DATE)
+    );
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Override should be performed with the comment specified"),
@@ -267,13 +296,18 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canCreateRecallRequestAfterOverriddenCheckout() {
+  public void canCreateRecallRequestAfterOverriddenCheckout()
+    throws InterruptedException,
+    TimeoutException,
+    ExecutionException {
+
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
     IndividualResource steve = usersFixture.steve();
     IndividualResource charlotte = usersFixture.charlotte();
 
     setNotLoanablePolicy();
+
     checkOutFixture.overrideCheckOutByBarcode(
       new OverrideCheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
@@ -293,6 +327,7 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
   }
 
   private void setNotLoanablePolicy() {
+
     LoanPolicyBuilder notLoanablePolicy = new LoanPolicyBuilder()
       .withName("Not Loanable Policy")
       .withLoanable(false)
@@ -305,4 +340,5 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
       overdueFinePoliciesFixture.facultyStandard().getId(),
       lostItemFeePoliciesFixture.facultyStandard().getId());
   }
+
 }
