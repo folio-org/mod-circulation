@@ -1,36 +1,42 @@
 package org.folio.circulation.domain.validation;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE;
 import static org.folio.circulation.resources.RenewalValidator.loanPolicyValidationError;
-import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.results.Result.failed;
-import static org.folio.circulation.support.results.Result.succeeded;
+import static org.folio.circulation.support.results.Result.ofAsync;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
-import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.policy.LoanPolicy;
+import org.folio.circulation.domain.representations.CheckOutByBarcodeRequest;
+import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.results.Result;
 
 public class LoanPolicyValidator {
-  public Result<LoanAndRelatedRecords> refuseWhenItemIsNotLoanable(
+  private final Function<LoanPolicy, ValidationErrorFailure> itemLimitErrorFunction;
+
+  public LoanPolicyValidator(Function<LoanPolicy, ValidationErrorFailure> itemLimitErrorFunction) {
+    this.itemLimitErrorFunction = itemLimitErrorFunction;
+  }
+
+  public LoanPolicyValidator(CheckOutByBarcodeRequest request) {
+    this(loanPolicy -> new ValidationErrorFailure(
+      loanPolicyValidationError(loanPolicy, "Item is not loanable",
+        Map.of(ITEM_BARCODE, request.getItemBarcode()))));
+  }
+
+  public CompletableFuture<Result<LoanAndRelatedRecords>> refuseWhenItemIsNotLoanable(
     LoanAndRelatedRecords relatedRecords) {
 
-    final Loan loan = relatedRecords.getLoan();
-    final LoanPolicy loanPolicy = loan.getLoanPolicy();
-
-    if (loanPolicy.isLoanable()) {
-      return succeeded(relatedRecords);
+    LoanPolicy loanPolicy = relatedRecords.getLoan().getLoanPolicy();
+    if (loanPolicy.isNotLoanable()) {
+      return completedFuture(failed(itemLimitErrorFunction.apply(loanPolicy)));
     }
 
-    String itemBarcode = loan.getItem().getBarcode();
-
-    Map<String, String> parameters = new HashMap<>();
-    parameters.put(ITEM_BARCODE, itemBarcode);
-
-    return failed(singleValidationError(loanPolicyValidationError(loanPolicy,
-      "Item is not loanable", parameters)));
+    return ofAsync(() -> relatedRecords);
   }
 }

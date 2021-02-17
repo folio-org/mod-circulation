@@ -46,6 +46,7 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.http.server.JsonHttpResponse;
 import org.folio.circulation.support.http.server.NoContentResponse;
 import org.folio.circulation.support.http.server.WebContext;
+import org.folio.circulation.support.utils.OkapiHeadersUtils;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
@@ -84,7 +85,8 @@ public class RequestCollectionResource extends CollectionResource {
       new UpdateLoan(clients, loanRepository, loanPolicyRepository),
       UpdateRequestQueue.using(clients));
 
-    final var errorHandler = new DeferFailureErrorHandler();
+    final var errorHandler = new DeferFailureErrorHandler(
+      OkapiHeadersUtils.getOkapiPermissions(context.getHeaders()));
 
     final var createRequestService = new CreateRequestService(
       new CreateRequestRepositories(RequestRepository.using(clients),

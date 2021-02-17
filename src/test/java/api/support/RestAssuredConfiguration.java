@@ -28,6 +28,7 @@ public class RestAssuredConfiguration {
     headers.put(TENANT, okapiHeaders.getTenantId());
     headers.put(OkapiHeader.TOKEN, okapiHeaders.getToken());
     headers.put(OkapiHeader.REQUEST_ID, okapiHeaders.getRequestId());
+    headers.put(OkapiHeader.OKAPI_PERMISSIONS, okapiHeaders.getOkapiPermissions());
 
     if (okapiHeaders.hasUserId()) {
       headers.put(OkapiHeader.USER_ID, okapiHeaders.getUserId());

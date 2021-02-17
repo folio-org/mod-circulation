@@ -1,6 +1,7 @@
 package org.folio.circulation.resources;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.LoanAction.CHECKED_OUT_THROUGH_OVERRIDE;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.concurrent.CompletableFuture;
@@ -30,7 +31,11 @@ public class RegularCheckOutStrategy implements CheckOutStrategy {
     DateTime loanDate = relatedRecords.getLoan().getLoanDate();
     final ClosedLibraryStrategyService strategyService =
       ClosedLibraryStrategyService.using(clients, loanDate, false);
+    if (CHECKED_OUT_THROUGH_OVERRIDE.getValue().equals(relatedRecords.getLoan().getAction())
+      && relatedRecords.getLoan().hasDueDateChanged()) {
 
+      return completedFuture(succeeded(relatedRecords));
+    }
     return completedFuture(succeeded(relatedRecords))
       .thenApply(r -> r.next(this::calculateDefaultInitialDueDate))
       .thenCompose(r -> r.after(strategyService::applyClosedLibraryDueDateManagement));

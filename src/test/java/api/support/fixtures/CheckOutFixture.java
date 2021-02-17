@@ -14,6 +14,7 @@ import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.OverrideCheckOutByBarcodeRequestBuilder;
 import api.support.http.CheckOutResource;
 import api.support.http.IndividualResource;
+import api.support.http.OkapiHeaders;
 import io.vertx.core.json.JsonObject;
 
 public class CheckOutFixture {
@@ -55,6 +56,13 @@ public class CheckOutFixture {
       "check-out-by-barcode-request"));
   }
 
+  public CheckOutResource checkOutByBarcode(CheckOutByBarcodeRequestBuilder builder,
+    OkapiHeaders headers) {
+
+    return new CheckOutResource(restAssuredClient.post(builder.create(),
+      checkOutByBarcodeUrl(), 201, headers));
+  }
+
   public Response attemptCheckOutByBarcode(IndividualResource item, IndividualResource to) {
     return attemptCheckOutByBarcode(new CheckOutByBarcodeRequestBuilder()
       .forItem(item)
@@ -66,6 +74,12 @@ public class CheckOutFixture {
     return attemptCheckOutByBarcode(422, builder);
   }
 
+  public Response attemptCheckOutByBarcode(CheckOutByBarcodeRequestBuilder builder,
+    OkapiHeaders headers) {
+
+    return attemptCheckOutByBarcode(422, builder, headers);
+  }
+
   public Response attemptCheckOutByBarcode(int expectedStatusCode,
     CheckOutByBarcodeRequestBuilder builder) {
 
@@ -73,6 +87,13 @@ public class CheckOutFixture {
 
     return restAssuredClient.post(request, checkOutByBarcodeUrl(),
       expectedStatusCode, "check-out-by-barcode-request");
+  }
+
+  public Response attemptCheckOutByBarcode(int expectedStatusCode,
+    CheckOutByBarcodeRequestBuilder builder, OkapiHeaders headers) {
+
+    return restAssuredClient.post(builder.create(), checkOutByBarcodeUrl(),
+      expectedStatusCode, headers);
   }
 
   public IndividualResource overrideCheckOutByBarcode(
@@ -85,10 +106,24 @@ public class CheckOutFixture {
         "override-check-out-by-barcode-request"));
   }
 
+  public IndividualResource overrideCheckOutByBarcode(
+    OverrideCheckOutByBarcodeRequestBuilder builder, OkapiHeaders okapiHeaders) {
+
+    return new IndividualResource(
+    restAssuredClient.post(builder.create(), overrideCheckOutByBarcodeUrl(), 201,
+        okapiHeaders));
+  }
+
   public Response attemptOverrideCheckOutByBarcode(
     OverrideCheckOutByBarcodeRequestBuilder builder) {
 
     return attemptOverrideCheckOutByBarcode(422, builder);
+  }
+
+  public Response attemptOverrideCheckOutByBarcode(
+    OverrideCheckOutByBarcodeRequestBuilder builder, OkapiHeaders headers) {
+
+    return attemptOverrideCheckOutByBarcode(422, builder, headers);
   }
 
   public Response attemptOverrideCheckOutByBarcode(int expectedStatusCode,
@@ -98,6 +133,13 @@ public class CheckOutFixture {
 
     return restAssuredClient.post(request, overrideCheckOutByBarcodeUrl(),
       expectedStatusCode, "override-check-out-by-barcode-request");
+  }
+
+  public Response attemptOverrideCheckOutByBarcode(int expectedStatusCode,
+    OverrideCheckOutByBarcodeRequestBuilder builder, OkapiHeaders okapiHeaders) {
+
+    return restAssuredClient.post(builder.create(), overrideCheckOutByBarcodeUrl(),
+      expectedStatusCode, okapiHeaders);
   }
 
   private IndividualResource defaultServicePoint() {

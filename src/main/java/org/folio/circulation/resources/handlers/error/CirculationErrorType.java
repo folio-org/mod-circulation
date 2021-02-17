@@ -6,6 +6,8 @@ public enum CirculationErrorType {
   SERVICE_POINT_IS_NOT_PRESENT,
 
   // Errors related to the item
+  INVALID_ITEM,
+  INVALID_STATUS,
   INVALID_ITEM_ID,
   ITEM_DOES_NOT_EXIST,
   ITEM_ALREADY_REQUESTED_BY_SAME_USER,
@@ -32,5 +34,8 @@ public enum CirculationErrorType {
 
   // Errors related to requests
   REQUESTING_DISALLOWED,
-  REQUESTING_DISALLOWED_BY_POLICY
+  REQUESTING_DISALLOWED_BY_POLICY,
+
+  // Errors related to block overrides
+  INSUFFICIENT_OVERRIDE_PERMISSIONS
 }
