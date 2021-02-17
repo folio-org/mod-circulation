@@ -29,13 +29,6 @@ public class LoanPolicyValidator {
         Map.of(ITEM_BARCODE, request.getItemBarcode()))));
   }
 
-  //  @Override
-//  public CompletableFuture<Result<LoanAndRelatedRecords>> validate(
-//    LoanAndRelatedRecords records) {
-//
-//    return refuseWhenItemIsNotLoanable(records);
-//  }
-
   public CirculationErrorType getErrorType() {
     return ITEM_IS_NOT_LOANABLE;
   }

@@ -1416,26 +1416,6 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotOverrideItemNotLoanableBlockWhenItemNotLoanableBlockIsNotPresent() {
-    final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
-      OVERRIDE_ITEM_NOT_LOANABLE_BLOCK_PERMISSION);
-
-    setNotLoanablePolicy();
-    Response response = checkOutFixture.attemptCheckOutByBarcode(
-      new CheckOutByBarcodeRequestBuilder()
-        .forItem(itemsFixture.basedUponSmallAngryPlanet())
-        .to(usersFixture.steve())
-        .at(UUID.randomUUID())
-        .on(TEST_LOAN_DATE)
-        .withOverrideBlocks(new BlockOverrides(null, null, null, TEST_COMMENT)),
-      okapiHeaders);
-
-    assertThat(response.getStatusCode(), is(422));
-    assertThat(response.getJson(), hasErrorWith(allOf(hasMessage("Item is not loanable"),
-      hasParameter("loanPolicyName", "Not Loanable Policy"))));
-  }
-
-  @Test
   public void cannotOverrideItemNotLoanableBlockWhenUserDoesNotHavePermissions() {
     setNotLoanablePolicy();
     Response response = checkOutFixture.attemptCheckOutByBarcode(
@@ -1496,39 +1476,6 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canOverrideCheckoutWhenItemLimitWasReachedForBookMaterialType() {
-    circulationRulesFixture.updateCirculationRules(createRules(
-      "m " + materialTypesFixture.book().getId()));
-    IndividualResource firstBookTypeItem = itemsFixture.basedUponNod();
-    IndividualResource secondBookTypeItem = itemsFixture.basedUponSmallAngryPlanet();
-    IndividualResource steve = usersFixture.steve();
-
-    checkOutFixture.checkOutByBarcode(firstBookTypeItem, steve);
-    firstBookTypeItem = itemsClient.get(firstBookTypeItem);
-    assertThat(firstBookTypeItem, hasItemStatus(CHECKED_OUT));
-
-    Response response = checkOutFixture.attemptCheckOutByBarcode(secondBookTypeItem, steve);
-    assertThat(response.getJson(), hasErrorWith(
-      hasMessage("Patron has reached maximum limit of 1 items for material type")));
-
-    final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
-      OVERRIDE_ITEM_LIMIT_BLOCK_PERMISSION);
-    JsonObject loan = checkOutFixture.checkOutByBarcode(
-      new CheckOutByBarcodeRequestBuilder()
-        .forItem(secondBookTypeItem)
-        .to(steve)
-        .at(UUID.randomUUID())
-        .withOverrideBlocks(new BlockOverrides(
-          null, null, new ItemLimitBlockOverride(true), TEST_COMMENT)),
-      okapiHeaders).getJson();
-
-    secondBookTypeItem = itemsClient.get(secondBookTypeItem);
-    assertThat(secondBookTypeItem, hasItemStatus(CHECKED_OUT));
-    assertThat(loan.getString("actionComment"), is(TEST_COMMENT));
-    assertThat(loan.getString("action"), is(CHECKED_OUT_THROUGH_OVERRIDE));
-  }
-
-  @Test
   public void cannotOverrideItemLimitBlockWhenUserDoesNotHavePermissions() {
     Response response = checkOutFixture.attemptCheckOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -1581,6 +1528,75 @@ public class CheckOutByBarcodeTests extends APITests {
       hasMessage(INSUFFICIENT_OVERRIDE_PERMISSIONS))));
     assertThat(getMissingPermissions(response), hasSize(1));
     assertThat(getMissingPermissions(response), hasItem(OVERRIDE_PATRON_BLOCK_PERMISSION));
+  }
+  @Test
+  public void canOverrideCheckoutWhenItemLimitWasReachedForBookMaterialType() {
+    circulationRulesFixture.updateCirculationRules(createRules(
+      "m " + materialTypesFixture.book().getId()));
+    IndividualResource firstBookTypeItem = itemsFixture.basedUponNod();
+    IndividualResource secondBookTypeItem = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource steve = usersFixture.steve();
+
+    checkOutFixture.checkOutByBarcode(firstBookTypeItem, steve);
+    firstBookTypeItem = itemsClient.get(firstBookTypeItem);
+    assertThat(firstBookTypeItem, hasItemStatus(CHECKED_OUT));
+
+    Response response = checkOutFixture.attemptCheckOutByBarcode(secondBookTypeItem, steve);
+    assertThat(response.getJson(), hasErrorWith(
+      hasMessage("Patron has reached maximum limit of 1 items for material type")));
+
+    final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
+      OVERRIDE_ITEM_LIMIT_BLOCK_PERMISSION);
+    JsonObject loan = checkOutFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(secondBookTypeItem)
+        .to(steve)
+        .at(UUID.randomUUID())
+        .withOverrideBlocks(new BlockOverrides(
+          null, null, new ItemLimitBlockOverride(true), TEST_COMMENT)),
+      okapiHeaders).getJson();
+
+    secondBookTypeItem = itemsClient.get(secondBookTypeItem);
+    assertThat(secondBookTypeItem, hasItemStatus(CHECKED_OUT));
+    assertThat(loan.getString("actionComment"), is(TEST_COMMENT));
+    assertThat(loan.getString("action"), is(CHECKED_OUT_THROUGH_OVERRIDE));
+  }
+
+  @Test
+  public void canOverrideCheckOutWhenItemNotLoanableBlockIsPresent() {
+    final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
+      OVERRIDE_ITEM_NOT_LOANABLE_BLOCK_PERMISSION);
+
+    setNotLoanablePolicy();
+    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+    Response responseBlocked = checkOutFixture.attemptCheckOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(item)
+        .to(usersFixture.steve())
+        .at(UUID.randomUUID())
+        .on(TEST_LOAN_DATE)
+        .withOverrideBlocks(new BlockOverrides(null, null, null, TEST_COMMENT)),
+      okapiHeaders);
+
+    assertThat(responseBlocked.getStatusCode(), is(422));
+    assertThat(responseBlocked.getJson(), hasErrorWith(allOf(hasMessage("Item is not loanable"),
+      hasParameter("loanPolicyName", "Not Loanable Policy"))));
+
+    JsonObject loan = checkOutFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(item)
+        .to(usersFixture.steve())
+        .at(UUID.randomUUID())
+        .on(TEST_LOAN_DATE)
+        .withOverrideBlocks(new BlockOverrides(
+          new ItemNotLoanableBlockOverride(true, new DateTime(2019, 4, 16, 9, 15, 30)),
+          null, null, TEST_COMMENT)),
+      okapiHeaders).getJson();
+
+    item = itemsClient.get(item);
+    assertThat(item, hasItemStatus(CHECKED_OUT));
+    assertThat(loan.getString("actionComment"), is(TEST_COMMENT));
+    assertThat(loan.getString("action"), is(CHECKED_OUT_THROUGH_OVERRIDE));
   }
 
   private IndividualResource prepareLoanPolicyWithItemLimit(int itemLimit) {
