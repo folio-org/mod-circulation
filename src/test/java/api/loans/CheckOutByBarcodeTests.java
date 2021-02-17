@@ -50,6 +50,7 @@ import static org.joda.time.DateTimeZone.UTC;
 import static org.junit.Assert.assertTrue;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -1752,10 +1753,11 @@ public class CheckOutByBarcodeTests extends APITests {
       .stream()
       .filter(JsonObject.class::isInstance)
       .map(JsonObject.class::cast)
-      .filter(error -> error.getJsonObject("overridableBlock") != null)
+      .filter(error -> Objects.nonNull(error.getJsonObject("overridableBlock")))
       .map(error -> error.getJsonObject("overridableBlock"))
       .map(block -> block.getJsonArray("missingPermissions"))
-      .map(missingPermissions -> missingPermissions.getString(0))
+      .flatMap(JsonArray::stream)
+      .map(String.class::cast)
       .collect(Collectors.toList());
   }
 
