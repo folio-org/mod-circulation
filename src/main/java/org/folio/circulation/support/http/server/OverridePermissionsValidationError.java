@@ -8,18 +8,18 @@ import org.folio.circulation.resources.handlers.error.OverridableBlockType;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
-public class OverrideValidationError extends ValidationError {
+public class OverridePermissionsValidationError extends ValidationError {
   private final OverridableBlockType overridableBlockType;
   private final List<String> missingOverridePermissions;
 
-  public OverrideValidationError(ValidationError validationError,
+  public OverridePermissionsValidationError(ValidationError validationError,
     OverridableBlockType circulationBlockType, List<String> missingOverridePermissions) {
 
     this(validationError.getMessage(), validationError.getParameters(),
       circulationBlockType, missingOverridePermissions);
   }
 
-  public OverrideValidationError(String message, Map<String, String> parameters,
+  public OverridePermissionsValidationError(String message, Map<String, String> parameters,
     OverridableBlockType circulationBlockType, List<String> missingOverridePermissions) {
 
     super(message, parameters);

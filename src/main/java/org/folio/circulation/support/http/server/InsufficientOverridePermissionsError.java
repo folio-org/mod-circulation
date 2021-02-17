@@ -6,7 +6,7 @@ import java.util.List;
 
 import org.folio.circulation.resources.handlers.error.OverridableBlockType;
 
-public class InsufficientOverridePermissionsError extends OverrideValidationError {
+public class InsufficientOverridePermissionsError extends OverridePermissionsValidationError {
 
   public InsufficientOverridePermissionsError(OverridableBlockType blockType,
     List<String> missingOverridePermissions) {

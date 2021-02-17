@@ -89,11 +89,11 @@ public class CheckOutByBarcodeResource extends Resource {
     final LoanScheduledNoticeService scheduledNoticeService =
       new LoanScheduledNoticeService(scheduledNoticesRepository, patronNoticePolicyRepository);
 
-    Map<String, String> okapiHeaders = new WebContext(routingContext).getHeaders();
-    List<String> permissions = OkapiHeadersUtils.getOkapiPermissions(okapiHeaders);
-    CirculationErrorHandler errorHandler = new DeferFailureErrorHandler(okapiHeaders);
+    List<String> okapiPermissions = OkapiHeadersUtils.getOkapiPermissions(
+      new WebContext(routingContext).getHeaders());
+    CirculationErrorHandler errorHandler = new DeferFailureErrorHandler(okapiPermissions);
     CheckOutValidators validators = new CheckOutValidators(request, clients, errorHandler,
-      permissions);
+      okapiPermissions);
 
     final UpdateRequestQueue requestQueueUpdate = UpdateRequestQueue.using(clients);
 
@@ -121,7 +121,7 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenApply(validators::refuseWhenRequestedByAnotherPatron)
       .thenComposeAsync(r -> r.after(l -> lookupLoanPolicy(l, loanPolicyRepository, errorHandler)))
       .thenComposeAsync(validators::refuseWhenItemLimitIsReached)
-      .thenComposeAsync(r -> validators.refuseWhenItemIsNotLoanable(r, checkOutStrategy))
+      .thenCompose(r -> validators.refuseWhenItemIsNotLoanable(r, checkOutStrategy))
       .thenApply(r -> r.next(errorHandler::failWithValidationErrors))
       .thenCompose(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
         LoanAndRelatedRecords::withTimeZone))

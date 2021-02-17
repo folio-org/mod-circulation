@@ -10,7 +10,6 @@ import static org.folio.circulation.resources.handlers.error.OverridableBlockTyp
 import static org.folio.circulation.resources.handlers.error.OverridableBlockType.PATRON_BLOCK;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.succeeded;
-import static org.folio.circulation.support.utils.OkapiHeadersUtils.getOkapiPermissions;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
@@ -20,7 +19,7 @@ import java.util.Map;
 
 import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.ValidationErrorFailure;
-import org.folio.circulation.support.http.server.OverrideValidationError;
+import org.folio.circulation.support.http.server.OverridePermissionsValidationError;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
 import org.slf4j.Logger;
@@ -38,9 +37,9 @@ public class DeferFailureErrorHandler extends CirculationErrorHandler {
 
   private final Collection<String> okapiPermissions;
 
-  public DeferFailureErrorHandler(Map<String, String> okapiHeaders) {
+  public DeferFailureErrorHandler(List<String> okapiPermissions) {
     super(new LinkedHashMap<>());
-    this.okapiPermissions = getOkapiPermissions(okapiHeaders);
+    this.okapiPermissions = okapiPermissions;
   }
 
   @Override
@@ -84,7 +83,7 @@ public class DeferFailureErrorHandler extends CirculationErrorHandler {
     List<ValidationError> validationErrors = getErrors().keySet().stream()
       .filter(ValidationErrorFailure.class::isInstance)
       .map(ValidationErrorFailure.class::cast)
-      .map(this::enrichOverridableErrors)
+      .map(this::extendOverridableErrors)
       .map(ValidationErrorFailure::getErrors)
       .flatMap(Collection::stream)
       .collect(toList());
@@ -94,7 +93,7 @@ public class DeferFailureErrorHandler extends CirculationErrorHandler {
       : failed(new ValidationErrorFailure(validationErrors));
   }
 
-  private ValidationErrorFailure enrichOverridableErrors(ValidationErrorFailure validationFailure) {
+  private ValidationErrorFailure extendOverridableErrors(ValidationErrorFailure validationFailure) {
     final CirculationErrorType errorType = getErrors().get(validationFailure);
 
     if (OVERRIDABLE_ERROR_TYPES.containsKey(errorType)) {
@@ -102,7 +101,7 @@ public class DeferFailureErrorHandler extends CirculationErrorHandler {
       List<String> missingPermissions = blockType.getMissingOverridePermissions(okapiPermissions);
 
       List<ValidationError> overridableValidationErrors = validationFailure.getErrors().stream()
-        .map(error -> new OverrideValidationError(error, blockType, missingPermissions))
+        .map(error -> new OverridePermissionsValidationError(error, blockType, missingPermissions))
         .collect(toList());
 
       return new ValidationErrorFailure(overridableValidationErrors);

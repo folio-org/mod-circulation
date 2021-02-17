@@ -1,17 +1,14 @@
 package org.folio.circulation.support;
 
-import static org.folio.circulation.resources.RenewalValidator.loanPolicyValidationError;
 import static org.folio.circulation.support.http.server.JsonHttpResponse.unprocessableEntity;
 import static org.folio.circulation.support.results.Result.failed;
 
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
-import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
 import org.slf4j.Logger;

@@ -41,15 +41,15 @@
         ]
       },
       "patronBlock": {
-        "description": "Override 'automation patron' block",
+        "description": "Override automated patron block",
         "type": "object"
       },
       "itemLimitBlock": {
-        "description": "Override 'item limit' block",
+        "description": "Override item limit block",
         "type": "object"
       },
       "comment": {
-        "description": "Overriding comment",
+        "description": "Override comment",
         "type": "string"
       },
       "required": [

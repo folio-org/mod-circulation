@@ -35,6 +35,7 @@ public enum CirculationErrorType {
   // Errors related to requests
   REQUESTING_DISALLOWED,
   REQUESTING_DISALLOWED_BY_POLICY,
-  REQUESTING_DISALLOWED_FOR_ITEM,
-  INSUFFICIENT_OVERRIDE_PERMISSIONS;
+
+  // Errors related to block overrides
+  INSUFFICIENT_OVERRIDE_PERMISSIONS
 }

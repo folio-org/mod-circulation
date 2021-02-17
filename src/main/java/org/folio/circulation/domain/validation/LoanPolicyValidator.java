@@ -1,8 +1,9 @@
 package org.folio.circulation.domain.validation;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE;
 import static org.folio.circulation.resources.RenewalValidator.loanPolicyValidationError;
-import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ITEM_IS_NOT_LOANABLE;
+import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.ofAsync;
 
 import java.util.Map;
@@ -12,7 +13,6 @@ import java.util.function.Function;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.representations.CheckOutByBarcodeRequest;
-import org.folio.circulation.resources.handlers.error.CirculationErrorType;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.results.Result;
 
@@ -29,20 +29,14 @@ public class LoanPolicyValidator {
         Map.of(ITEM_BARCODE, request.getItemBarcode()))));
   }
 
-  public CirculationErrorType getErrorType() {
-    return ITEM_IS_NOT_LOANABLE;
-  }
-
   public CompletableFuture<Result<LoanAndRelatedRecords>> refuseWhenItemIsNotLoanable(
     LoanAndRelatedRecords relatedRecords) {
 
-    return ofAsync(relatedRecords.getLoan()::getLoanPolicy)
-      .thenComposeAsync(result -> result.failAfter(this::isNotLoanablePolicy,
-        itemLimitErrorFunction::apply))
-      .thenApply(result -> result.map(v -> relatedRecords));
-  }
+    LoanPolicy loanPolicy = relatedRecords.getLoan().getLoanPolicy();
+    if (loanPolicy.isNotLoanable()) {
+      return completedFuture(failed(itemLimitErrorFunction.apply(loanPolicy)));
+    }
 
-  private CompletableFuture<Result<Boolean>> isNotLoanablePolicy(LoanPolicy loanPolicy) {
-    return ofAsync(loanPolicy::isNotLoanable);
+    return ofAsync(() -> relatedRecords);
   }
 }

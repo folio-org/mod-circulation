@@ -23,8 +23,8 @@ public class OverridingLoanValidator extends OverridingValidator<LoanAndRelatedR
   @Override
   public CompletableFuture<Result<LoanAndRelatedRecords>> validate(LoanAndRelatedRecords records) {
     return super.validate(records)
-      .thenApply(result -> result.next(this::setDueDateIfNotLoanableOverriding))
-      .thenApply(r -> r.map(this::setLoanAction));
+      .thenApply(result -> result.map(this::setDueDateIfNotLoanableOverriding)
+      .map(this::setLoanAction));
   }
 
   private LoanAndRelatedRecords setLoanAction(LoanAndRelatedRecords loanAndRelatedRecords) {
@@ -35,8 +35,9 @@ public class OverridingLoanValidator extends OverridingValidator<LoanAndRelatedR
     return loanAndRelatedRecords;
   }
 
-  private Result<LoanAndRelatedRecords> setDueDateIfNotLoanableOverriding(
+  private LoanAndRelatedRecords setDueDateIfNotLoanableOverriding(
     LoanAndRelatedRecords loanAndRelatedRecords) {
+
     ItemNotLoanableBlockOverride itemNotLoanableBlockOverride = getOverrideBlocks()
       .getItemNotLoanableBlockOverride();
 
@@ -44,6 +45,6 @@ public class OverridingLoanValidator extends OverridingValidator<LoanAndRelatedR
       loanAndRelatedRecords.getLoan().changeDueDate(itemNotLoanableBlockOverride.getDueDate());
     }
 
-    return succeeded(loanAndRelatedRecords);
+    return loanAndRelatedRecords;
   }
 }
