@@ -11,7 +11,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -30,7 +29,7 @@ public class DeferFailureErrorHandlerTest {
   private static final Result<String> VALIDATION_ERROR_RESULT = failed(VALIDATION_ERROR);
   private static final Result<String> SUCCEEDED_RESULT = succeeded("success");
 
-  private final DeferFailureErrorHandler handler = new DeferFailureErrorHandler(new ArrayList<>());
+  private final DeferFailureErrorHandler handler = new DeferFailureErrorHandler();
 
   @Test
   public void handleAnyErrorAddsErrorToMapAndReturnsPassedValue() {

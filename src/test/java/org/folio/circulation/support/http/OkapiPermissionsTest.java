@@ -8,17 +8,20 @@ import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.junit.Test;
+
+import io.vertx.core.json.JsonArray;
 
 public class OkapiPermissionsTest {
   private static final String PERMISSIONS_HEADER = "X-Okapi-Permissions";
   private static final String PERMISSION_1 = "users.item.get";
   private static final String PERMISSION_2 = "pubsub.publish.post";
   private static final String PERMISSIONS_STRING =
-    String.format("[\"%s\", \"%s\"]", PERMISSION_1, PERMISSION_2);
+    new JsonArray(List.of(PERMISSION_1, PERMISSION_2)).encode();
   private static final Map<String, String> HEADERS_MAP =
     Map.of(PERMISSIONS_HEADER, PERMISSIONS_STRING);
 
@@ -32,7 +35,7 @@ public class OkapiPermissionsTest {
   }
 
   @Test
-  public void fromCreatesInstanceWithAllPermissionsFromMapIsLowercase() {
+  public void fromCreatesInstanceWithAllPermissionsFromMapWhenHeaderIsLowercase() {
     OkapiPermissions permissions = OkapiPermissions.from(
       Map.of(PERMISSIONS_HEADER.toLowerCase(), PERMISSIONS_STRING));
 

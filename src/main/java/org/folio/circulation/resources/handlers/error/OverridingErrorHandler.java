@@ -2,7 +2,11 @@ package org.folio.circulation.resources.handlers.error;
 
 import static java.util.Map.entry;
 import static java.util.stream.Collectors.toList;
+import static org.folio.circulation.domain.override.OverridableBlockType.ITEM_LIMIT_BLOCK;
+import static org.folio.circulation.domain.override.OverridableBlockType.ITEM_NOT_LOANABLE_BLOCK;
 import static org.folio.circulation.domain.override.OverridableBlockType.PATRON_BLOCK;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ITEM_IS_NOT_LOANABLE;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ITEM_LIMIT_IS_REACHED;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_BLOCKED_AUTOMATICALLY;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_BLOCKED_MANUALLY;
 import static org.folio.circulation.support.results.Result.failed;
@@ -15,7 +19,7 @@ import java.util.Map;
 import org.folio.circulation.domain.override.OverridableBlockType;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.OkapiPermissions;
-import org.folio.circulation.support.http.server.BlockValidationError;
+import org.folio.circulation.support.http.server.BlockOverrideError;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
 
@@ -28,7 +32,9 @@ public class OverridingErrorHandler extends DeferFailureErrorHandler {
   private static final Map<CirculationErrorType, OverridableBlockType> OVERRIDABLE_ERROR_TYPES =
     Map.ofEntries(
       entry(USER_IS_BLOCKED_MANUALLY, PATRON_BLOCK),
-      entry(USER_IS_BLOCKED_AUTOMATICALLY, PATRON_BLOCK)
+      entry(USER_IS_BLOCKED_AUTOMATICALLY, PATRON_BLOCK),
+      entry(ITEM_LIMIT_IS_REACHED, ITEM_LIMIT_BLOCK),
+      entry(ITEM_IS_NOT_LOANABLE, ITEM_NOT_LOANABLE_BLOCK)
     );
 
   private final OkapiPermissions okapiPermissions;
@@ -62,7 +68,7 @@ public class OverridingErrorHandler extends DeferFailureErrorHandler {
 
     return new ValidationErrorFailure(
       validationFailure.getErrors().stream()
-        .map(error -> new BlockValidationError(error, blockType, missingOverridePermissions))
+        .map(error -> new BlockOverrideError(error, blockType, missingOverridePermissions))
         .collect(toList()));
   }
 }

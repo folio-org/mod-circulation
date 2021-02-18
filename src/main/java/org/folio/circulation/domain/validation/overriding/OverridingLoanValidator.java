@@ -1,21 +1,20 @@
 package org.folio.circulation.domain.validation.overriding;
 
 import static org.folio.circulation.domain.LoanAction.CHECKED_OUT_THROUGH_OVERRIDE;
-import static org.folio.circulation.support.results.Result.succeeded;
 
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.override.BlockOverrides;
 import org.folio.circulation.domain.override.ItemNotLoanableBlockOverride;
-import org.folio.circulation.resources.handlers.error.OverridableBlockType;
+import org.folio.circulation.domain.override.OverridableBlockType;
+import org.folio.circulation.support.http.OkapiPermissions;
 import org.folio.circulation.support.results.Result;
 
-public class OverridingLoanValidator extends OverridingValidator<LoanAndRelatedRecords> {
+public class OverridingLoanValidator extends OverridingBlockValidator<LoanAndRelatedRecords> {
   public OverridingLoanValidator(OverridableBlockType blockType, BlockOverrides blockOverrides,
-    List<String> permissions) {
+    OkapiPermissions permissions) {
 
     super(blockType, blockOverrides, permissions);
   }
@@ -30,7 +29,7 @@ public class OverridingLoanValidator extends OverridingValidator<LoanAndRelatedR
   private LoanAndRelatedRecords setLoanAction(LoanAndRelatedRecords loanAndRelatedRecords) {
     Loan loan = loanAndRelatedRecords.getLoan();
     loan.changeAction(CHECKED_OUT_THROUGH_OVERRIDE);
-    loan.changeActionComment(getOverrideBlocks().getComment());
+    loan.changeActionComment(getBlockOverrides().getComment());
 
     return loanAndRelatedRecords;
   }
@@ -38,7 +37,7 @@ public class OverridingLoanValidator extends OverridingValidator<LoanAndRelatedR
   private LoanAndRelatedRecords setDueDateIfNotLoanableOverriding(
     LoanAndRelatedRecords loanAndRelatedRecords) {
 
-    ItemNotLoanableBlockOverride itemNotLoanableBlockOverride = getOverrideBlocks()
+    ItemNotLoanableBlockOverride itemNotLoanableBlockOverride = getBlockOverrides()
       .getItemNotLoanableBlockOverride();
 
     if (itemNotLoanableBlockOverride.isRequested()) {

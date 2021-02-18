@@ -13,18 +13,18 @@ import lombok.Getter;
 
 @Getter
 @EqualsAndHashCode(callSuper = true)
-public class BlockValidationError extends ValidationError {
+public class BlockOverrideError extends ValidationError {
   private final OverridableBlockType blockType;
   private final OkapiPermissions missingOverridePermissions;
 
-  public BlockValidationError(ValidationError validationError,
+  public BlockOverrideError(ValidationError validationError,
     OverridableBlockType blockType, OkapiPermissions missingOverridePermissions) {
 
     this(validationError.getMessage(), validationError.getParameters(),
       blockType, missingOverridePermissions);
   }
 
-  public BlockValidationError(String message, Map<String, String> parameters,
+  public BlockOverrideError(String message, Map<String, String> parameters,
     OverridableBlockType blockType, OkapiPermissions missingOverridePermissions) {
 
     super(message, parameters);

@@ -2,8 +2,10 @@ package org.folio.circulation.resources.handlers.error;
 
 import static java.util.stream.Collectors.toList;
 import static org.folio.circulation.support.results.Result.failed;
+import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.lang.invoke.MethodHandles;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 
