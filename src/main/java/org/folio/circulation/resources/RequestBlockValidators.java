@@ -17,11 +17,11 @@ import org.folio.circulation.support.http.OkapiPermissions;
 import lombok.Getter;
 
 @Getter
-public class RequestBlocksValidators {
+public class RequestBlockValidators {
   private final BlockValidator<RequestAndRelatedRecords> manualPatronBlocksValidator;
   private final BlockValidator<RequestAndRelatedRecords> automatedPatronBlocksValidator;
 
-  public RequestBlocksValidators(BlockOverrides blockOverrides,
+  public RequestBlockValidators(BlockOverrides blockOverrides,
     OkapiPermissions permissions, Clients clients) {
 
     manualPatronBlocksValidator = blockOverrides.getPatronBlockOverride().isRequested()
@@ -35,7 +35,7 @@ public class RequestBlocksValidators {
       new AutomatedPatronBlocksValidator(clients)::refuseWhenRequestActionIsBlockedForPatron);
   }
 
-  public static RequestBlocksValidators regularRequestBlocksValidator(Clients clients) {
-    return new RequestBlocksValidators(noOverrides(), OkapiPermissions.empty(), clients);
+  public static RequestBlockValidators regularRequestBlockValidators(Clients clients) {
+    return new RequestBlockValidators(noOverrides(), OkapiPermissions.empty(), clients);
   }
 }

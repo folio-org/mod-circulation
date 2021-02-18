@@ -17,7 +17,7 @@ import static org.folio.circulation.support.results.Result.succeeded;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.validation.RequestLoanValidator;
-import org.folio.circulation.resources.RequestBlocksValidators;
+import org.folio.circulation.resources.RequestBlockValidators;
 import org.folio.circulation.resources.RequestNoticeSender;
 import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
 import org.folio.circulation.services.EventPublisher;
@@ -28,20 +28,20 @@ public class CreateRequestService {
   private final UpdateUponRequest updateUponRequest;
   private final RequestLoanValidator requestLoanValidator;
   private final RequestNoticeSender requestNoticeSender;
-  private final RequestBlocksValidators requestBlocksValidators;
+  private final RequestBlockValidators requestBlockValidators;
   private final EventPublisher eventPublisher;
   private final CirculationErrorHandler errorHandler;
 
   public CreateRequestService(CreateRequestRepositories repositories,
     UpdateUponRequest updateUponRequest, RequestLoanValidator requestLoanValidator,
-    RequestNoticeSender requestNoticeSender, RequestBlocksValidators requestBlocksValidators,
+    RequestNoticeSender requestNoticeSender, RequestBlockValidators requestBlockValidators,
     EventPublisher eventPublisher, CirculationErrorHandler errorHandler) {
 
     this.repositories = repositories;
     this.updateUponRequest = updateUponRequest;
     this.requestLoanValidator = requestLoanValidator;
     this.requestNoticeSender = requestNoticeSender;
-    this.requestBlocksValidators = requestBlocksValidators;
+    this.requestBlockValidators = requestBlockValidators;
     this.eventPublisher = eventPublisher;
     this.errorHandler = errorHandler;
   }
@@ -51,8 +51,8 @@ public class CreateRequestService {
 
     final var requestRepository = repositories.getRequestRepository();
     final var configurationRepository = repositories.getConfigurationRepository();
-    final var automatedBlocksValidator = requestBlocksValidators.getAutomatedPatronBlocksValidator();
-    final var manualBlocksValidator = requestBlocksValidators.getManualPatronBlocksValidator();
+    final var automatedBlocksValidator = requestBlockValidators.getAutomatedPatronBlocksValidator();
+    final var manualBlocksValidator = requestBlockValidators.getManualPatronBlocksValidator();
 
     final Result<RequestAndRelatedRecords> result = succeeded(requestAndRelatedRecords);
 

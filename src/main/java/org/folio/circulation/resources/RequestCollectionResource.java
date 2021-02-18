@@ -1,7 +1,7 @@
 package org.folio.circulation.resources;
 
 import static org.folio.circulation.domain.representations.RequestProperties.PROXY_USER_ID;
-import static org.folio.circulation.resources.RequestBlocksValidators.regularRequestBlocksValidator;
+import static org.folio.circulation.resources.RequestBlockValidators.regularRequestBlockValidators;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.results.MappingFunctions.toFixedValue;
@@ -81,7 +81,7 @@ public class RequestCollectionResource extends CollectionResource {
     final var okapiPermissions = OkapiPermissions.from(context.getHeaders());
     final var blockOverrides = BlockOverrides.fromRequest(representation);
     final var errorHandler = new OverridingErrorHandler(okapiPermissions);
-    final var requestBlocksValidators = new RequestBlocksValidators(
+    final var requestBlocksValidators = new RequestBlockValidators(
       blockOverrides, okapiPermissions, clients);
 
     final var createRequestService = new CreateRequestService(
@@ -138,7 +138,7 @@ public class RequestCollectionResource extends CollectionResource {
       new CreateRequestRepositories(requestRepository,
         new RequestPolicyRepository(clients), configurationRepository),
       updateUponRequest, new RequestLoanValidator(loanRepository),
-      requestNoticeSender, regularRequestBlocksValidator(clients),
+      requestNoticeSender, regularRequestBlockValidators(clients),
       eventPublisher, errorHandler);
 
     final var updateRequestService = new UpdateRequestService(requestRepository,

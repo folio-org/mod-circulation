@@ -1,12 +1,17 @@
 package api.support.matchers;
 
+import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
+import static java.util.Collections.singletonList;
 import static java.util.Optional.ofNullable;
 import static org.folio.circulation.support.StreamToListMapper.toList;
 import static org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher.toStream;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
+import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasProperty;
+import static org.hamcrest.Matchers.is;
 
 import java.util.Collection;
 import java.util.List;
@@ -84,7 +89,7 @@ public class ValidationErrorMatchers {
   }
 
   public static TypeSafeDiagnosingMatcher<ValidationError> hasParameter(String key, String value) {
-    return new TypeSafeDiagnosingMatcher<ValidationError>() {
+    return new TypeSafeDiagnosingMatcher<>() {
       @Override
       public void describeTo(Description description) {
         description.appendText("has parameter with key ").appendValue(key)
@@ -109,7 +114,7 @@ public class ValidationErrorMatchers {
   }
 
   public static TypeSafeDiagnosingMatcher<ValidationError> hasMessage(String message) {
-    return new TypeSafeDiagnosingMatcher<ValidationError>() {
+    return new TypeSafeDiagnosingMatcher<>() {
       @Override
       public void describeTo(Description description) {
         description.appendText("has message ").appendValue(message);
@@ -127,7 +132,7 @@ public class ValidationErrorMatchers {
   }
 
   public static TypeSafeDiagnosingMatcher<ValidationError> hasMessageContaining(String message) {
-    return new TypeSafeDiagnosingMatcher<ValidationError>() {
+    return new TypeSafeDiagnosingMatcher<>() {
       @Override
       public void describeTo(Description description) {
         description.appendText("has message ").appendValue(message);
@@ -183,4 +188,32 @@ public class ValidationErrorMatchers {
     return toList(toStream(representation, "errors")
       .map(ValidationErrorMatchers::fromJson));
   }
+
+  public static Matcher<JsonObject> isBlockRelatedError(String message, String blockName,
+    String missingPermission) {
+
+    return isBlockRelatedError(message, blockName, singletonList(missingPermission));
+  }
+
+  public static Matcher<JsonObject> isBlockRelatedError(String message, String blockName,
+    List<String> missingPermissions) {
+
+    return allOf(
+      hasJsonPath("message", is(message)),
+      hasJsonPath("overridableBlock.name", is(blockName)),
+      hasJsonPath("overridableBlock.missingPermissions", hasItems(missingPermissions.toArray()))
+    );
+  }
+
+  public static Matcher<JsonObject> isInsufficientPermissionsError(
+    String blockName, List<String> missingPermissions) {
+
+    return isBlockRelatedError("Insufficient override permissions", blockName, missingPermissions);
+  }
+
+  public static Matcher<JsonObject> isInsufficientPermissionsToOverridePatronBlockError() {
+    return isInsufficientPermissionsError("patronBlock",
+      List.of("circulation.override-patron-block"));
+  }
+
 }

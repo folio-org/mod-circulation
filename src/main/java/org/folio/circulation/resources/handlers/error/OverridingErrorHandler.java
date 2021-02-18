@@ -52,18 +52,17 @@ public class OverridingErrorHandler extends DeferFailureErrorHandler {
   private ValidationErrorFailure extendOverridableErrors(ValidationErrorFailure validationFailure) {
     final CirculationErrorType errorType = getErrors().get(validationFailure);
 
-    if (OVERRIDABLE_ERROR_TYPES.containsKey(errorType)) {
-      OverridableBlockType blockType = OVERRIDABLE_ERROR_TYPES.get(errorType);
-      OkapiPermissions missingOverridePermissions =
-        blockType.getMissingOverridePermissions(okapiPermissions);
-
-      return new ValidationErrorFailure(
-        validationFailure.getErrors().stream()
-          .map(error -> new BlockValidationError(error, blockType, missingOverridePermissions))
-          .collect(toList())
-      );
+    if (!OVERRIDABLE_ERROR_TYPES.containsKey(errorType)) {
+      return validationFailure;
     }
 
-    return validationFailure;
+    OverridableBlockType blockType = OVERRIDABLE_ERROR_TYPES.get(errorType);
+    OkapiPermissions missingOverridePermissions =
+      blockType.getMissingOverridePermissions(okapiPermissions);
+
+    return new ValidationErrorFailure(
+      validationFailure.getErrors().stream()
+        .map(error -> new BlockValidationError(error, blockType, missingOverridePermissions))
+        .collect(toList()));
   }
 }

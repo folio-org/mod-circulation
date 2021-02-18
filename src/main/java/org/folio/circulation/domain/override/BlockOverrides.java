@@ -1,7 +1,6 @@
 
 package org.folio.circulation.domain.override;
 
-import static lombok.AccessLevel.PRIVATE;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedObjectProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getObjectProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
@@ -10,7 +9,7 @@ import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-@AllArgsConstructor(access = PRIVATE)
+@AllArgsConstructor
 @Getter
 public class BlockOverrides {
   private final ItemNotLoanableBlockOverride itemNotLoanableBlockOverride;

@@ -255,10 +255,18 @@ public class ResourceClient {
     return attemptCreate(builder.create());
   }
 
+  public Response attemptCreate(Builder builder, OkapiHeaders okapiHeaders) {
+    return attemptCreate(builder.create(), okapiHeaders);
+  }
+
   public Response attemptCreate(JsonObject representation) {
 
     return restAssuredClient.post(representation, rootUrl(),
         "attempt-create-record");
+  }
+
+  public Response attemptCreate(JsonObject representation, OkapiHeaders okapiHeaders) {
+    return restAssuredClient.post(representation, rootUrl(), okapiHeaders);
   }
 
   public IndividualResource create(Builder builder) {

@@ -1,5 +1,6 @@
 package api.requests;
 
+import static api.support.APITestContext.getOkapiHeadersFromContext;
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
 import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
 import static api.support.fakes.PublishedEvents.byLogEventType;
@@ -14,12 +15,15 @@ import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
+import static api.support.matchers.ValidationErrorMatchers.hasErrors;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasNullParameter;
-import static api.support.matchers.ValidationErrorMatchers.hasErrors;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
+import static api.support.matchers.ValidationErrorMatchers.isBlockRelatedError;
+import static api.support.matchers.ValidationErrorMatchers.isInsufficientPermissionsToOverridePatronBlockError;
 import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.function.Function.identity;
 import static org.awaitility.Awaitility.waitAtMost;
@@ -30,6 +34,7 @@ import static org.folio.circulation.domain.ItemStatus.PAGED;
 import static org.folio.circulation.domain.RequestType.RECALL;
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
+import static org.folio.circulation.support.ClockManager.getClockManager;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.hasItems;
@@ -37,6 +42,7 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.emptyString;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.core.Is.is;
@@ -56,9 +62,10 @@ import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
+import org.folio.circulation.domain.override.BlockOverrides;
+import org.folio.circulation.domain.override.PatronBlockOverride;
 import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.Period;
-import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
@@ -86,7 +93,10 @@ import api.support.fixtures.TemplateContextMatchers;
 import api.support.fixtures.UsersFixture;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
+import api.support.http.OkapiHeaders;
 import api.support.http.ResourceClient;
+import api.support.http.UserResource;
+import api.support.matchers.ValidationErrorMatchers;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import junitparams.JUnitParamsRunner;
@@ -99,6 +109,14 @@ RequestsAPICreationTests extends APITests {
   private static final String HOLD_REQUEST_EVENT = "Hold request";
   private static final String RECALL_REQUEST_EVENT = "Recall request";
   private static final String ITEM_RECALLED = "Item recalled";
+
+  public static final String CREATE_REQUEST_PERMISSION = "circulation.requests.item.post";
+  public static final String OVERRIDE_PATRON_BLOCK_PERMISSION = "circulation.override-patron-block";
+  public static final OkapiHeaders HEADERS_WITH_ALL_OVERRIDE_PERMISSIONS =
+    buildOkapiHeadersWithPermissions(CREATE_REQUEST_PERMISSION, OVERRIDE_PATRON_BLOCK_PERMISSION);
+  public static final BlockOverrides PATRON_BLOCK_OVERRIDE =
+    new BlockOverrides(null, new PatronBlockOverride(true), null, null);
+  public static final String PATRON_BLOCK_NAME = "patronBlock";
 
   @Override
   public void afterEach() {
@@ -1638,7 +1656,7 @@ RequestsAPICreationTests extends APITests {
     final IndividualResource requester = usersFixture.rebecca();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     final DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
-    final DateTime now = ClockManager.getClockManager().getDateTime();
+    final DateTime now = getClockManager().getDateTime();
     final DateTime expirationDate = now.plusDays(4);
     final UserManualBlockBuilder userManualBlockBuilder = getManualBlockBuilder()
         .withRequests(true)
@@ -1664,7 +1682,7 @@ RequestsAPICreationTests extends APITests {
     final IndividualResource requester = usersFixture.rebecca();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     final DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
-    final DateTime now = ClockManager.getClockManager().getDateTime();
+    final DateTime now = getClockManager().getDateTime();
     final DateTime expirationDate = now.plusDays(4);
     final UserManualBlockBuilder userManualBlockBuilder = getManualBlockBuilder()
       .withExpirationDate(expirationDate)
@@ -1686,7 +1704,7 @@ RequestsAPICreationTests extends APITests {
     final IndividualResource requester = usersFixture.rebecca();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     final DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
-    final DateTime now = ClockManager.getClockManager().getDateTime();
+    final DateTime now = getClockManager().getDateTime();
     final DateTime expirationDate = now.minusDays(1);
     final UserManualBlockBuilder userManualBlockBuilder = getManualBlockBuilder()
       .withRequests(true)
@@ -1708,7 +1726,7 @@ RequestsAPICreationTests extends APITests {
     final IndividualResource requester = usersFixture.rebecca();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     final DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
-    final DateTime now = ClockManager.getClockManager().getDateTime();
+    final DateTime now = getClockManager().getDateTime();
     final DateTime expirationDate = now.plusDays(7);
     final UserManualBlockBuilder borrowingUserManualBlockBuilder = getManualBlockBuilder()
       .withBorrowing(true)
@@ -1736,7 +1754,7 @@ RequestsAPICreationTests extends APITests {
     final IndividualResource requester = usersFixture.rebecca();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     final DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
-    final DateTime now = ClockManager.getClockManager().getDateTime();
+    final DateTime now = getClockManager().getDateTime();
     final DateTime expirationDate = now.plusDays(4);
     final UserManualBlockBuilder requestUserManualBlockBuilder1 = getManualBlockBuilder()
         .withRequests(true)
@@ -1946,6 +1964,140 @@ RequestsAPICreationTests extends APITests {
       hasUUIDParameter("pickupServicePointId", pickupServicePointId))));
   }
 
+  @Test
+  public void shouldOverrideManualPatronBlockWhenUserHasPermissions() {
+    UUID userId = usersFixture.jessica().getId();
+    createManualPatronBlockForUser(userId);
+    Response response = attemptCreateRequestThroughPatronBlockOverride(
+      userId, HEADERS_WITH_ALL_OVERRIDE_PERMISSIONS);
+    assertResponseSuccess(response);
+  }
+
+  @Test
+  public void shouldOverrideAutomatedPatronBlockWhenUserHasPermissions() {
+    UUID userId = usersFixture.jessica().getId();
+    createAutomatedPatronBlockForUser(userId);
+    Response response = attemptCreateRequestThroughPatronBlockOverride(
+      userId, HEADERS_WITH_ALL_OVERRIDE_PERMISSIONS);
+    assertResponseSuccess(response);
+  }
+
+  @Test
+  public void shouldOverrideManualAndAutomatedPatronBlocksWhenUserHasPermissions() {
+    UUID userId = usersFixture.jessica().getId();
+    createManualPatronBlockForUser(userId);
+    createAutomatedPatronBlockForUser(userId);
+    Response response = attemptCreateRequestThroughPatronBlockOverride(
+      userId, HEADERS_WITH_ALL_OVERRIDE_PERMISSIONS);
+    assertResponseSuccess(response);
+  }
+
+  @Test
+  public void shouldCreateRequestThroughPatronBlockOverrideWhenUserHasPermissionsButNoBlocksExist() {
+    UUID userId = usersFixture.jessica().getId();
+    Response response = attemptCreateRequestThroughPatronBlockOverride(
+      userId, HEADERS_WITH_ALL_OVERRIDE_PERMISSIONS);
+    assertResponseSuccess(response);
+  }
+
+  @Test
+  public void shouldFailToOverridePatronBlockWhenUserHasInsufficientPermissions() {
+    shouldFailToOverridePatronBlockWithInsufficientPermissions(CREATE_REQUEST_PERMISSION);
+  }
+
+  @Test
+  public void shouldFailToOverridePatronBlockWhenUserHasNoPermissionsAtAll() {
+    shouldFailToOverridePatronBlockWithInsufficientPermissions();
+  }
+
+  private void shouldFailToOverridePatronBlockWithInsufficientPermissions(String... permissions) {
+    UUID userId = usersFixture.jessica().getId();
+    createManualPatronBlockForUser(userId);
+    Response response = attemptCreateRequestThroughPatronBlockOverride(
+      userId, buildOkapiHeadersWithPermissions(permissions));
+
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(response.getJson(), hasErrors(1));
+
+    assertThat(getErrorsFromResponse(response),
+      hasItem(isInsufficientPermissionsToOverridePatronBlockError()));
+  }
+
+  @Test
+  public void shouldFailToOverridePatronBlockWhenUserHasNoPermissionsAndNonOverridableErrorOccurs() {
+    UserResource inactiveSteve = usersFixture.steve(UserBuilder::inactive);
+    UUID userId = inactiveSteve.getId();
+    createManualPatronBlockForUser(userId);
+    Response response = attemptCreateRequestThroughPatronBlockOverride(
+      userId, buildOkapiHeadersWithPermissions(CREATE_REQUEST_PERMISSION));
+
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(response.getJson(), hasErrors(2));
+
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Inactive users cannot make requests"),
+      hasUUIDParameter("requesterId", userId))));
+
+    assertThat(getErrorsFromResponse(response),
+      hasItem(isInsufficientPermissionsToOverridePatronBlockError()));
+  }
+
+  @Test
+  public void shouldFailToCreateRequestWhenBlockExistsAndUserHasPermissionsButOverrideIsNotRequested() {
+    UUID userId = usersFixture.steve().getId();
+    createManualPatronBlockForUser(userId);
+    Response response = attemptCreateRequestThroughOverride(userId,
+      HEADERS_WITH_ALL_OVERRIDE_PERMISSIONS, null);
+
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(response.getJson(), hasErrors(1));
+
+    assertThat(getErrorsFromResponse(response),
+      hasItem(
+        isBlockRelatedError("Patron blocked from requesting",
+          PATRON_BLOCK_NAME, emptyList())));
+  }
+
+  @Test
+  public void shouldFailToCreateRequestWhenBlockExistsButUserHasNoPermissionsAndOverrideIsNotRequested() {
+    UUID userId = usersFixture.steve().getId();
+    createManualPatronBlockForUser(userId);
+    Response response = attemptCreateRequestThroughOverride(userId,
+      buildOkapiHeadersWithPermissions(CREATE_REQUEST_PERMISSION), null);
+
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(response.getJson(), hasErrors(1));
+
+    assertThat(getErrorsFromResponse(response),
+      hasItem(
+        isBlockRelatedError("Patron blocked from requesting",
+          PATRON_BLOCK_NAME, List.of(OVERRIDE_PATRON_BLOCK_PERMISSION))));
+  }
+
+  private static void assertResponseSuccess(Response response) {
+    assertThat(response, hasStatus(HTTP_CREATED));
+    assertThat(response.getJson(), hasErrors(0));
+  }
+
+  private Response attemptCreateRequestThroughPatronBlockOverride(UUID requesterId,
+    OkapiHeaders okapiHeaders) {
+
+    return attemptCreateRequestThroughOverride(requesterId, okapiHeaders, PATRON_BLOCK_OVERRIDE);
+  }
+
+  private Response attemptCreateRequestThroughOverride(UUID requesterId, OkapiHeaders okapiHeaders,
+    BlockOverrides blockOverrides) {
+
+    RequestBuilder requestBuilder = new RequestBuilder()
+      .page()
+      .withItemId(itemsFixture.basedUponSmallAngryPlanet().getId())
+      .withRequesterId(requesterId)
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
+      .withBlockOverrides(blockOverrides);
+
+    return requestsClient.attemptCreate(requestBuilder, okapiHeaders);
+  }
+
   private List<IndividualResource> createOneHundredRequests() {
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
@@ -2061,5 +2213,25 @@ RequestsAPICreationTests extends APITests {
     assertThat(missingItem.getResponse().getJson().getJsonObject("status").getString("name"), is(ItemStatus.MISSING.getValue()));
 
     return missingItem;
+  }
+
+  private static OkapiHeaders buildOkapiHeadersWithPermissions(String... permission) {
+    return getOkapiHeadersFromContext().withOkapiPermissions(
+      new JsonArray(List.of(permission)).encode());
+  }
+
+  private void createManualPatronBlockForUser(UUID requesterId) {
+    userManualBlocksFixture.create(getManualBlockBuilder()
+      .withRequests(true)
+      .withExpirationDate(getClockManager().getDateTime().plusYears(1))
+      .withUserId(requesterId.toString()));
+  }
+
+  private void createAutomatedPatronBlockForUser(UUID requesterId) {
+    automatedPatronBlocksFixture.blockAction(requesterId.toString(), false, false, true);
+  }
+
+  private static JsonArray getErrorsFromResponse(Response response) {
+    return response.getJson().getJsonArray("errors");
   }
 }

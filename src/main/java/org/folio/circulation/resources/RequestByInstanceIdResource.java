@@ -4,7 +4,7 @@ import static org.folio.circulation.domain.InstanceRequestItemsComparer.sortRequ
 import static org.folio.circulation.domain.representations.RequestProperties.ITEM_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.PROXY_USER_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUESTER_ID;
-import static org.folio.circulation.resources.RequestBlocksValidators.regularRequestBlocksValidator;
+import static org.folio.circulation.resources.RequestBlockValidators.regularRequestBlockValidators;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
@@ -235,7 +235,7 @@ public class RequestByInstanceIdResource extends Resource {
       updateUponRequest,
       new RequestLoanValidator(loanRepository),
       requestNoticeSender,
-      regularRequestBlocksValidator(clients),
+      regularRequestBlockValidators(clients),
       eventPublisher, new FailFastErrorHandler());
 
     return placeRequest(itemRequestRepresentations, 0, createRequestService,
