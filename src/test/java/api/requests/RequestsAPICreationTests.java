@@ -1654,12 +1654,13 @@ RequestsAPICreationTests extends APITests {
     assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(postResponse.getJson(), hasErrors(1));
     assertThat(postResponse.getJson(), hasErrorWith(allOf(
-      hasMessage("Patron blocked from requesting"))));
-    hasParameter("reason", "Display description");
+      hasMessage("Patron blocked from requesting"),
+      hasParameter("reason", "Display description")))
+    );
   }
 
   @Test
-  public void cannotCreateRequestWhenExpirationDateIsNotSet() {
+  public void cannotCreateRequestWhenRequesterHasActiveRequestManualBlocksAndExpirationDateIsNotSet() {
     final IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requester = usersFixture.rebecca();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -1681,8 +1682,9 @@ RequestsAPICreationTests extends APITests {
     assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(postResponse.getJson(), hasErrors(1));
     assertThat(postResponse.getJson(), hasErrorWith(allOf(
-      hasMessage("Patron blocked from requesting"))));
-    hasParameter("reason", "Display description");
+      hasMessage("Patron blocked from requesting"),
+      hasParameter("reason", "Display description")))
+    );
   }
 
   @Test
