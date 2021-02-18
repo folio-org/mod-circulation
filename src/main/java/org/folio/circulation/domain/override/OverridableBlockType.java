@@ -21,9 +21,4 @@ public enum OverridableBlockType {
   public OkapiPermissions getMissingOverridePermissions(OkapiPermissions existingPermissions) {
     return requiredOverridePermissions.getAllNotContainedIn(existingPermissions);
   }
-
-  @Override
-  public String toString() {
-    return name;
-  }
 }
