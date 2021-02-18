@@ -8,4 +8,5 @@ public class OkapiHeader {
   public static final String TOKEN = "X-Okapi-Token";
   public static final String USER_ID = "X-Okapi-User-Id";
   public static final String REQUEST_ID = "X-Okapi-Request-Id";
+  public static final String OKAPI_PERMISSIONS = "X-Okapi-Permissions";
 }

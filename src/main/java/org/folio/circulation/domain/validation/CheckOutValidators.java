@@ -1,6 +1,5 @@
 package org.folio.circulation.domain.validation;
 
-
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.PROXY_USER_BARCODE;
@@ -9,30 +8,32 @@ import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequ
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_ITEM;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_PROXY_USER;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_USER;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_PROXY_RELATIONSHIP;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ITEM_ALREADY_CHECKED_OUT;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ITEM_HAS_OPEN_LOANS;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ITEM_IS_NOT_ALLOWED_FOR_CHECK_OUT;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ITEM_IS_NOT_LOANABLE;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ITEM_LIMIT_IS_REACHED;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ITEM_REQUESTED_BY_ANOTHER_PATRON;
-import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_PROXY_RELATIONSHIP;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.PROXY_USER_IS_INACTIVE;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.SERVICE_POINT_IS_NOT_PRESENT;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_BLOCKED_AUTOMATICALLY;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_INACTIVE;
+import static org.folio.circulation.resources.handlers.error.OverridableBlockType.ITEM_LIMIT_BLOCK;
+import static org.folio.circulation.resources.handlers.error.OverridableBlockType.ITEM_NOT_LOANABLE_BLOCK;
+import static org.folio.circulation.resources.handlers.error.OverridableBlockType.PATRON_BLOCK;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
-import static org.folio.circulation.support.results.Result.succeeded;
 
-import java.util.HashMap;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.representations.CheckOutByBarcodeRequest;
+import org.folio.circulation.domain.validation.overriding.OverridingLoanValidator;
 import org.folio.circulation.infrastructure.storage.AutomatedPatronBlocksRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.resources.CheckOutStrategy;
@@ -40,7 +41,6 @@ import org.folio.circulation.resources.OverrideCheckOutStrategy;
 import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.ValidationErrorFailure;
-import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
 
 public class CheckOutValidators {
@@ -53,14 +53,14 @@ public class CheckOutValidators {
   private final InactiveUserValidator inactiveUserValidator;
   private final InactiveUserValidator inactiveProxyUserValidator;
   private final ExistingOpenLoanValidator openLoanValidator;
-  private final ItemLimitValidator itemLimitValidator;
-  private final LoanPolicyValidator loanPolicyValidator;
-  private final AutomatedPatronBlocksValidator automatedPatronBlocksValidator;
+  private final Validator<LoanAndRelatedRecords> itemLimitValidator;
+  private final Validator<LoanAndRelatedRecords> loanPolicyValidator;
+  private final Validator<LoanAndRelatedRecords> automatedPatronBlocksValidator;
 
   private final CirculationErrorHandler errorHandler;
 
   public CheckOutValidators(CheckOutByBarcodeRequest request, Clients clients,
-    CirculationErrorHandler errorHandler) {
+    CirculationErrorHandler errorHandler, List<String> permissions) {
 
     this.errorHandler = errorHandler;
 
@@ -95,16 +95,12 @@ public class CheckOutValidators {
     openLoanValidator = new ExistingOpenLoanValidator(loanRepository,
       message -> singleValidationError(message, ITEM_BARCODE, request.getItemBarcode()));
 
-    itemLimitValidator = new ItemLimitValidator(
-      message -> singleValidationError(message, ITEM_BARCODE, request.getItemBarcode()),
-      loanRepository);
+    itemLimitValidator = createItemLimitValidator(request, permissions, loanRepository);
 
-    automatedPatronBlocksValidator = new AutomatedPatronBlocksValidator(
-      automatedPatronBlocksRepository, messages -> new ValidationErrorFailure(messages.stream()
-      .map(message -> new ValidationError(message, new HashMap<>()))
-      .collect(Collectors.toList())));
+    automatedPatronBlocksValidator = createPatronBlocksValidator(request, permissions,
+      automatedPatronBlocksRepository);
 
-    loanPolicyValidator = new LoanPolicyValidator();
+    loanPolicyValidator = createLoanPolicyValidator(request, permissions);
   }
 
   private ValidationErrorFailure errorWhenInIncorrectStatus(Item item) {
@@ -145,8 +141,8 @@ public class CheckOutValidators {
       return completedFuture(result);
     }
 
-    return result.after(l -> automatedPatronBlocksValidator.refuseWhenCheckOutActionIsBlockedForPatron(l)
-      .thenApply(r -> errorHandler.handleValidationResult(r, USER_IS_BLOCKED_AUTOMATICALLY, result)));
+    return result.after(l -> automatedPatronBlocksValidator.validate(l)
+      .thenApply(r -> errorHandler.handleValidationResult(r, automatedPatronBlocksValidator.getErrorType(), result)));
   }
 
   public Result<LoanAndRelatedRecords> refuseWhenProxyUserIsInactive(
@@ -234,22 +230,49 @@ public class CheckOutValidators {
       return completedFuture(result);
     }
 
-    return result.after(l -> itemLimitValidator.refuseWhenItemLimitIsReached(l)
-      .thenApply(r -> errorHandler.handleValidationResult(r, ITEM_LIMIT_IS_REACHED, l)));
+    return result.after(relatedRecords -> itemLimitValidator.validate(relatedRecords)
+      .thenApply(r -> errorHandler.handleValidationResult(r, itemLimitValidator.getErrorType(), relatedRecords)));
   }
 
-  public Result<LoanAndRelatedRecords> refuseWhenItemIsNotLoanable(
+  public CompletableFuture<Result<LoanAndRelatedRecords>> refuseWhenItemIsNotLoanable(
     Result<LoanAndRelatedRecords> result, CheckOutStrategy checkOutStrategy) {
 
-    if (isLoanPolicyNotInitialized(result)) {
-      return result;
+    if (isLoanPolicyNotInitialized(result)
+      || checkOutStrategy instanceof OverrideCheckOutStrategy) {
+
+      return completedFuture(result);
     }
 
-    return result.nextWhen(
-      loanAndRelatedRecords -> succeeded(checkOutStrategy instanceof OverrideCheckOutStrategy),
-      loanAndRelatedRecords -> result,
-      loanAndRelatedRecords -> loanPolicyValidator.refuseWhenItemIsNotLoanable(loanAndRelatedRecords)
-        .mapFailure(failure -> errorHandler.handleValidationError(failure, ITEM_IS_NOT_LOANABLE, result)));
+    return result.after(relatedRecords -> loanPolicyValidator.validate(relatedRecords)
+      .thenApply(r -> errorHandler.handleValidationResult(r, loanPolicyValidator.getErrorType(), relatedRecords)));
+  }
+
+  private Validator<LoanAndRelatedRecords> createPatronBlocksValidator(CheckOutByBarcodeRequest request,
+    List<String> permissions, AutomatedPatronBlocksRepository automatedPatronBlocksRepository) {
+
+    return request.getBlockOverrides().getPatronBlockOverride().isRequested()
+      ? new OverridingLoanValidator(PATRON_BLOCK, request.getBlockOverrides(), permissions)
+      : new Validator<>(USER_IS_BLOCKED_AUTOMATICALLY,
+      new AutomatedPatronBlocksValidator(
+        automatedPatronBlocksRepository)::refuseWhenCheckOutActionIsBlockedForPatron);
+  }
+
+  private Validator<LoanAndRelatedRecords> createItemLimitValidator(CheckOutByBarcodeRequest request,
+    List<String> permissions, LoanRepository loanRepository) {
+
+    return request.getBlockOverrides().getItemLimitBlockOverride().isRequested()
+      ? new OverridingLoanValidator(ITEM_LIMIT_BLOCK, request.getBlockOverrides(), permissions)
+      : new Validator<>(ITEM_LIMIT_IS_REACHED,
+      new ItemLimitValidator(request, loanRepository)::refuseWhenItemLimitIsReached);
+  }
+
+  private Validator<LoanAndRelatedRecords> createLoanPolicyValidator(CheckOutByBarcodeRequest request,
+    List<String> permissions) {
+
+    return request.getBlockOverrides().getItemNotLoanableBlockOverride().isRequested()
+      ? new OverridingLoanValidator(ITEM_NOT_LOANABLE_BLOCK, request.getBlockOverrides(), permissions)
+      : new Validator<>(ITEM_IS_NOT_LOANABLE,
+      new LoanPolicyValidator(request)::refuseWhenItemIsNotLoanable);
   }
 
   private boolean isLoanPolicyNotInitialized(Result<LoanAndRelatedRecords> result) {

@@ -9,6 +9,8 @@ import static org.folio.circulation.support.http.server.JsonHttpResponse.created
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.LoanAndRelatedRecords;
@@ -38,6 +40,7 @@ import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.server.HttpResponse;
 import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.Result;
+import org.folio.circulation.support.utils.OkapiHeadersUtils;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
@@ -86,8 +89,11 @@ public class CheckOutByBarcodeResource extends Resource {
     final LoanScheduledNoticeService scheduledNoticeService =
       new LoanScheduledNoticeService(scheduledNoticesRepository, patronNoticePolicyRepository);
 
-    CirculationErrorHandler errorHandler = new DeferFailureErrorHandler();
-    CheckOutValidators validators = new CheckOutValidators(request, clients, errorHandler);
+    List<String> okapiPermissions = OkapiHeadersUtils.getOkapiPermissions(
+      new WebContext(routingContext).getHeaders());
+    CirculationErrorHandler errorHandler = new DeferFailureErrorHandler(okapiPermissions);
+    CheckOutValidators validators = new CheckOutValidators(request, clients, errorHandler,
+      okapiPermissions);
 
     final UpdateRequestQueue requestQueueUpdate = UpdateRequestQueue.using(clients);
 
@@ -115,7 +121,7 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenApply(validators::refuseWhenRequestedByAnotherPatron)
       .thenComposeAsync(r -> r.after(l -> lookupLoanPolicy(l, loanPolicyRepository, errorHandler)))
       .thenComposeAsync(validators::refuseWhenItemLimitIsReached)
-      .thenApply(r -> validators.refuseWhenItemIsNotLoanable(r, checkOutStrategy))
+      .thenCompose(r -> validators.refuseWhenItemIsNotLoanable(r, checkOutStrategy))
       .thenApply(r -> r.next(errorHandler::failWithValidationErrors))
       .thenCompose(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
         LoanAndRelatedRecords::withTimeZone))
