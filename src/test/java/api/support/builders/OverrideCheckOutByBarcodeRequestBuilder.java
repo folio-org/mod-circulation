@@ -2,9 +2,9 @@ package api.support.builders;
 
 import java.util.UUID;
 
-import api.support.http.IndividualResource;
 import org.joda.time.DateTime;
 
+import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
 
 public class OverrideCheckOutByBarcodeRequestBuilder extends JsonBuilder implements Builder {
@@ -20,6 +20,7 @@ public class OverrideCheckOutByBarcodeRequestBuilder extends JsonBuilder impleme
   public OverrideCheckOutByBarcodeRequestBuilder(
     String itemBarcode, String userBarcode, String proxyBarcode,
     DateTime loanDate, String servicePointId, DateTime dueDate, String comment) {
+
     this.itemBarcode = itemBarcode;
     this.userBarcode = userBarcode;
     this.proxyBarcode = proxyBarcode;

@@ -6,6 +6,7 @@ import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
@@ -17,6 +18,7 @@ import org.folio.circulation.domain.AutomatedPatronBlocks;
 import org.folio.circulation.infrastructure.storage.AutomatedPatronBlocksRepository;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
+import org.folio.circulation.infrastructure.storage.AutomatedPatronBlocksRepository;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.http.server.ValidationError;
@@ -35,11 +37,14 @@ public class AutomatedPatronBlocksValidator {
     this.actionIsBlockedForPatronErrorFunction = actionIsBlockedForPatronErrorFunction;
   }
 
+  public AutomatedPatronBlocksValidator(AutomatedPatronBlocksRepository automatedPatronBlocksRepository) {
+    this(automatedPatronBlocksRepository, messages -> new ValidationErrorFailure(messages.stream()
+      .map(message -> new ValidationError(message, new HashMap<>()))
+      .collect(Collectors.toList())));
+  }
+
   public AutomatedPatronBlocksValidator(Clients clients) {
-    this(new AutomatedPatronBlocksRepository(clients),
-      messages -> new ValidationErrorFailure(messages.stream()
-        .map( message -> new ValidationError(message, new HashMap<>()))
-        .collect(Collectors.toList())));
+    this(new AutomatedPatronBlocksRepository(clients));
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>>

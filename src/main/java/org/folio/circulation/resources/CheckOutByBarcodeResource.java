@@ -1,39 +1,26 @@
 package org.folio.circulation.resources;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
-import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE;
-import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.PROXY_USER_BARCODE;
-import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.SERVICE_POINT_ID;
-import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.USER_BARCODE;
-import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_ITEM;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_PROXY_USER;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_USER;
 import static org.folio.circulation.support.http.server.JsonHttpResponse.created;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
-import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
-import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.LoanRepresentation;
 import org.folio.circulation.domain.LoanService;
 import org.folio.circulation.domain.UpdateRequestQueue;
-import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.notice.schedule.LoanScheduledNoticeService;
 import org.folio.circulation.domain.notice.session.PatronActionSessionService;
 import org.folio.circulation.domain.representations.CheckOutByBarcodeRequest;
-import org.folio.circulation.domain.validation.AlreadyCheckedOutValidator;
-import org.folio.circulation.domain.validation.AutomatedPatronBlocksValidator;
-import org.folio.circulation.domain.validation.ExistingOpenLoanValidator;
-import org.folio.circulation.domain.validation.InactiveUserValidator;
-import org.folio.circulation.domain.validation.ItemLimitValidator;
-import org.folio.circulation.domain.validation.ItemNotFoundValidator;
-import org.folio.circulation.domain.validation.ItemStatusValidator;
-import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
-import org.folio.circulation.domain.validation.RequestedByAnotherPatronValidator;
-import org.folio.circulation.domain.validation.ServicePointOfCheckoutPresentValidator;
-import org.folio.circulation.infrastructure.storage.AutomatedPatronBlocksRepository;
+import org.folio.circulation.domain.validation.CheckOutValidators;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
@@ -45,14 +32,15 @@ import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepo
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.infrastructure.storage.users.PatronGroupRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
+import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
+import org.folio.circulation.resources.handlers.error.DeferFailureErrorHandler;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.RouteRegistration;
-import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.HttpResponse;
-import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.Result;
+import org.folio.circulation.support.utils.OkapiHeadersUtils;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
@@ -100,45 +88,12 @@ public class CheckOutByBarcodeResource extends Resource {
     final ScheduledNoticesRepository scheduledNoticesRepository = ScheduledNoticesRepository.using(clients);
     final LoanScheduledNoticeService scheduledNoticeService =
       new LoanScheduledNoticeService(scheduledNoticesRepository, patronNoticePolicyRepository);
-    final AutomatedPatronBlocksRepository automatedPatronBlocksRepository =
-      new AutomatedPatronBlocksRepository(clients);
 
-    final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
-      clients, () -> singleValidationError(
-      "Cannot check out item via proxy when relationship is invalid",
-      PROXY_USER_BARCODE, request.getProxyUserBarcode()));
-
-    final ServicePointOfCheckoutPresentValidator servicePointOfCheckoutPresentValidator
-      = new ServicePointOfCheckoutPresentValidator(message ->
-      singleValidationError(message, SERVICE_POINT_ID, request.getCheckoutServicePointId()));
-
-    final RequestedByAnotherPatronValidator requestedByAnotherPatronValidator = new RequestedByAnotherPatronValidator(
-      message -> singleValidationError(message, USER_BARCODE, request.getUserBarcode()));
-
-    final AlreadyCheckedOutValidator alreadyCheckedOutValidator = new AlreadyCheckedOutValidator(
-      message -> singleValidationError(message, ITEM_BARCODE, request.getItemBarcode()));
-
-    final ItemNotFoundValidator itemNotFoundValidator = new ItemNotFoundValidator(
-      () -> singleValidationError(String.format("No item with barcode %s could be found", request.getItemBarcode()),
-        ITEM_BARCODE, request.getItemBarcode()));
-
-    final ItemStatusValidator itemStatusValidator = new ItemStatusValidator(
-      CheckOutByBarcodeResource::errorWhenInIncorrectStatus);
-
-    final InactiveUserValidator inactiveUserValidator = InactiveUserValidator.forUser(request.getUserBarcode());
-    final InactiveUserValidator inactiveProxyUserValidator = InactiveUserValidator.forProxy(request.getProxyUserBarcode());
-
-    final ExistingOpenLoanValidator openLoanValidator = new ExistingOpenLoanValidator(
-      loanRepository, message -> singleValidationError(message, ITEM_BARCODE, request.getItemBarcode()));
-
-    final ItemLimitValidator itemLimitValidator = new ItemLimitValidator(
-      message -> singleValidationError(message, ITEM_BARCODE, request.getItemBarcode()), loanRepository);
-
-    final AutomatedPatronBlocksValidator automatedPatronBlocksValidator =
-      new AutomatedPatronBlocksValidator(automatedPatronBlocksRepository,
-        messages -> new ValidationErrorFailure(messages.stream()
-          .map(message -> new ValidationError(message, new HashMap<>()))
-          .collect(Collectors.toList())));
+    List<String> okapiPermissions = OkapiHeadersUtils.getOkapiPermissions(
+      new WebContext(routingContext).getHeaders());
+    CirculationErrorHandler errorHandler = new DeferFailureErrorHandler(okapiPermissions);
+    CheckOutValidators validators = new CheckOutValidators(request, clients, errorHandler,
+      okapiPermissions);
 
     final UpdateRequestQueue requestQueueUpdate = UpdateRequestQueue.using(clients);
 
@@ -150,25 +105,26 @@ public class CheckOutByBarcodeResource extends Resource {
       PatronActionSessionService.using(clients);
 
     ofAsync(() -> new LoanAndRelatedRecords(request.toLoan()))
-      .thenApply(servicePointOfCheckoutPresentValidator::refuseCheckOutWhenServicePointIsNotPresent)
-      .thenCombineAsync(userRepository.getUserByBarcode(request.getUserBarcode()), this::addUser)
-      .thenComposeAsync(r -> r.after(
-        automatedPatronBlocksValidator::refuseWhenCheckOutActionIsBlockedForPatron))
-      .thenCombineAsync(userRepository.getProxyUserByBarcode(request.getProxyUserBarcode()), this::addProxyUser)
-      .thenApply(inactiveUserValidator::refuseWhenUserIsInactive)
-      .thenApply(inactiveProxyUserValidator::refuseWhenUserIsInactive)
-      .thenCombineAsync(itemRepository.fetchByBarcode(request.getItemBarcode()), this::addItem)
-      .thenApply(itemNotFoundValidator::refuseWhenItemNotFound)
-      .thenApply(alreadyCheckedOutValidator::refuseWhenItemIsAlreadyCheckedOut)
-      .thenApply(itemStatusValidator::refuseWhenItemIsNotAllowedForCheckOut)
-      .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
-      .thenComposeAsync(r -> r.after(openLoanValidator::refuseWhenHasOpenLoan))
+      .thenApply(validators::refuseCheckOutWhenServicePointIsNotPresent)
+      .thenComposeAsync(r -> lookupUser(request.getUserBarcode(), userRepository, r, errorHandler))
+      .thenComposeAsync(validators::refuseWhenCheckOutActionIsBlockedForPatron)
+      .thenComposeAsync(r -> lookupProxyUser(request.getProxyUserBarcode(), userRepository, r, errorHandler))
+      .thenApply(validators::refuseWhenUserIsInactive)
+      .thenApply(validators::refuseWhenProxyUserIsInactive)
+      .thenComposeAsync(validators::refuseWhenInvalidProxyRelationship)
+      .thenComposeAsync(r -> lookupItem(request.getItemBarcode(), itemRepository, r))
+      .thenApply(validators::refuseWhenItemNotFound)
+      .thenApply(validators::refuseWhenItemIsAlreadyCheckedOut)
+      .thenApply(validators::refuseWhenItemIsNotAllowedForCheckOut)
+      .thenComposeAsync(validators::refuseWhenItemHasOpenLoans)
       .thenComposeAsync(r -> r.after(requestQueueRepository::get))
-      .thenApply(requestedByAnotherPatronValidator::refuseWhenRequestedByAnotherPatron)
+      .thenApply(validators::refuseWhenRequestedByAnotherPatron)
+      .thenComposeAsync(r -> r.after(l -> lookupLoanPolicy(l, loanPolicyRepository, errorHandler)))
+      .thenComposeAsync(validators::refuseWhenItemLimitIsReached)
+      .thenCompose(r -> validators.refuseWhenItemIsNotLoanable(r, checkOutStrategy))
+      .thenApply(r -> r.next(errorHandler::failWithValidationErrors))
       .thenCompose(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
         LoanAndRelatedRecords::withTimeZone))
-      .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
-      .thenComposeAsync(r -> r.after(itemLimitValidator::refuseWhenItemLimitIsReached))
       .thenComposeAsync(r -> r.after(overdueFinePolicyRepository::lookupOverdueFinePolicy))
       .thenComposeAsync(r -> r.after(lostItemPolicyRepository::lookupLostItemPolicy))
       .thenApply(r -> r.next(this::setItemLocationIdAtCheckout))
@@ -187,6 +143,17 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
       .thenApply(this::createdLoanFrom)
       .thenAccept(context::writeResultToHttpResponse);
+  }
+
+  private CompletableFuture<Result<LoanAndRelatedRecords>> lookupLoanPolicy(
+    LoanAndRelatedRecords loanAndRelatedRecords, LoanPolicyRepository loanPolicyRepository,
+    CirculationErrorHandler errorHandler) {
+
+    if (errorHandler.hasAny(FAILED_TO_FETCH_ITEM)) {
+      return completedFuture(succeeded(loanAndRelatedRecords));
+    }
+
+    return loanPolicyRepository.lookupLoanPolicy(loanAndRelatedRecords);
   }
 
   private CompletableFuture<Result<LoanAndRelatedRecords>> updateItem(
@@ -208,33 +175,29 @@ public class CheckOutByBarcodeResource extends Resource {
     return String.format("/circulation/loans/%s", id);
   }
 
-  private Result<LoanAndRelatedRecords> addProxyUser(Result<LoanAndRelatedRecords> loanResult,
-    Result<User> getUserResult) {
+  private CompletableFuture<Result<LoanAndRelatedRecords>> lookupUser(String barcode,
+    UserRepository userRepository, Result<LoanAndRelatedRecords> loanResult,
+    CirculationErrorHandler errorHandler) {
 
-    return loanResult.combine(getUserResult, LoanAndRelatedRecords::withProxyingUser);
+    return userRepository.getUserByBarcode(barcode)
+      .thenApply(userResult -> loanResult.combine(userResult, LoanAndRelatedRecords::withRequestingUser))
+      .thenApply(r -> errorHandler.handleValidationResult(r, FAILED_TO_FETCH_USER, loanResult));
   }
 
-  private Result<LoanAndRelatedRecords> addUser(Result<LoanAndRelatedRecords> loanResult,
-    Result<User> getUserResult) {
+  private CompletableFuture<Result<LoanAndRelatedRecords>> lookupProxyUser(String barcode,
+    UserRepository userRepository, Result<LoanAndRelatedRecords> loanResult,
+    CirculationErrorHandler errorHandler) {
 
-    return loanResult.combine(getUserResult, LoanAndRelatedRecords::withRequestingUser);
+    return userRepository.getProxyUserByBarcode(barcode)
+      .thenApply(userResult -> loanResult.combine(userResult, LoanAndRelatedRecords::withProxyingUser))
+      .thenApply(r -> errorHandler.handleValidationResult(r, FAILED_TO_FETCH_PROXY_USER, loanResult));
   }
 
-  private Result<LoanAndRelatedRecords> addItem(Result<LoanAndRelatedRecords> loanResult,
-    Result<Item> inventoryRecordsResult) {
+  private CompletableFuture<Result<LoanAndRelatedRecords>> lookupItem(
+    String barcode, ItemRepository itemRepository, Result<LoanAndRelatedRecords> loanResult) {
 
-    return loanResult.combine(inventoryRecordsResult, LoanAndRelatedRecords::withItem);
-  }
-
-  private static ValidationErrorFailure errorWhenInIncorrectStatus(Item item) {
-    String message =
-      String.format("%s (%s) (Barcode: %s) has the item status %s and cannot be checked out",
-        item.getTitle(),
-        item.getMaterialTypeName(),
-        item.getBarcode(),
-        item.getStatusName());
-
-    return singleValidationError(message, ITEM_BARCODE, item.getBarcode());
+    return itemRepository.fetchByBarcode(barcode)
+      .thenApply(itemResult -> loanResult.combine(itemResult, LoanAndRelatedRecords::withItem));
   }
 
   private Result<LoanAndRelatedRecords> setItemLocationIdAtCheckout(

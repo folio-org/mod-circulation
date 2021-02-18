@@ -128,13 +128,13 @@
     </dependency>
     <!--
     Remove xstream dependency after drools has upgraded its
-    xstream dependency to >= 1.4.14:
-    https://x-stream.github.io/CVE-2020-26217.html
+    xstream dependency to >= 1.4.15:
+    https://x-stream.github.io/CVE-2020-26259.html
     -->
     <dependency>
       <groupId>com.thoughtworks.xstream</groupId>
       <artifactId>xstream</artifactId>
-      <version>1.4.14</version>
+      <version>1.4.15</version>
     </dependency>
     <dependency>
       <groupId>org.antlr</groupId>
