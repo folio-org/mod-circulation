@@ -1,34 +1,46 @@
 package org.folio.circulation.resources.renewal;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_USER;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FIND_SINGLE_OPEN_LOAN;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ITEM_DOES_NOT_EXIST;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.DEFAULT;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_BLOCKED_AUTOMATICALLY;
+import static org.folio.circulation.support.results.Result.succeeded;
+
 import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import org.folio.circulation.StoreLoanAndItem;
+import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.LoanRepresentation;
+import org.folio.circulation.domain.notice.schedule.FeeFineScheduledNoticeService;
+import org.folio.circulation.domain.notice.schedule.LoanScheduledNoticeService;
+import org.folio.circulation.domain.validation.AutomatedPatronBlocksValidator;
 import org.folio.circulation.infrastructure.storage.AutomatedPatronBlocksRepository;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
-import org.folio.circulation.domain.Loan;
+import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
+import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
-import org.folio.circulation.domain.LoanRepresentation;
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
-import org.folio.circulation.domain.notice.schedule.LoanScheduledNoticeService;
-import org.folio.circulation.domain.notice.schedule.FeeFineScheduledNoticeService;
-import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
-import org.folio.circulation.domain.validation.AutomatedPatronBlocksValidator;
 import org.folio.circulation.resources.LoanNoticeSender;
 import org.folio.circulation.resources.Resource;
 import org.folio.circulation.resources.context.RenewalContext;
+import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
+import org.folio.circulation.resources.handlers.error.DeferFailureErrorHandler;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
-import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.HttpResponse;
 import org.folio.circulation.support.http.server.JsonHttpResponse;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.http.server.WebContext;
+import org.folio.circulation.support.results.Result;
+import org.folio.circulation.support.utils.OkapiHeadersUtils;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
@@ -60,6 +72,10 @@ public abstract class RenewalResource extends Resource {
   private void renew(RoutingContext routingContext) {
     final WebContext webContext = new WebContext(routingContext);
     final Clients clients = Clients.create(webContext, client);
+    final List<String> okapiPermissions =
+      OkapiHeadersUtils.getOkapiPermissions(webContext.getHeaders());
+
+    final CirculationErrorHandler errorHandler = new DeferFailureErrorHandler(okapiPermissions);
 
     final LoanRepository loanRepository = new LoanRepository(clients);
     final ItemRepository itemRepository = new ItemRepository(clients, true, true, true);
@@ -89,17 +105,19 @@ public abstract class RenewalResource extends Resource {
     //TODO: Validation check for same user should be in the domain service
     JsonObject bodyAsJson = routingContext.getBodyAsJson();
     CompletableFuture<Result<Loan>> findLoanResult = findLoan(bodyAsJson,
-      loanRepository, itemRepository, userRepository);
+      loanRepository, itemRepository, userRepository, errorHandler);
 
     findLoanResult
       .thenApply(r -> r.map(loan -> RenewalContext.create(loan, bodyAsJson, webContext.getUserId())))
+      .thenComposeAsync(r ->
+        refuseWhenRenewalActionIsBlockedForPatron(automatedPatronBlocksValidator, r, errorHandler))
+      .thenCompose(r -> r.after(ctx -> lookupLoanPolicy(ctx, loanPolicyRepository, errorHandler)))
       .thenComposeAsync(r -> r.after(
-        automatedPatronBlocksValidator::refuseWhenRenewalActionIsBlockedForPatron))
-      .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
-      .thenComposeAsync(r -> r.after(requestQueueRepository::get))
+        ctx -> lookupRequestQueue(ctx, requestQueueRepository, errorHandler)))
       .thenCompose(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
         RenewalContext::withTimeZone))
-      .thenComposeAsync(r -> r.after(context -> renewalStrategy.renew(context, clients)))
+      .thenComposeAsync(r -> r.after(context -> renew(context, clients, errorHandler)))
+      .thenApply(r -> r.next(errorHandler::failWithValidationErrors))
       .thenComposeAsync(r -> r.after(storeLoanAndItem::updateLoanAndItemInStorage))
       .thenComposeAsync(r -> r.after(context -> feeProcessing.processFeesFines(context, clients)))
       .thenApplyAsync(r -> r.next(feeFineNoticesService::scheduleOverdueFineNotices))
@@ -111,6 +129,59 @@ public abstract class RenewalResource extends Resource {
       .thenAccept(webContext::writeResultToHttpResponse);
   }
 
+  private CompletableFuture<Result<RenewalContext>> refuseWhenRenewalActionIsBlockedForPatron(
+    AutomatedPatronBlocksValidator validator, Result<RenewalContext> result,
+    CirculationErrorHandler errorHandler) {
+
+    if (errorHandler.hasAny(ITEM_DOES_NOT_EXIST, FAILED_TO_FIND_SINGLE_OPEN_LOAN,
+      FAILED_TO_FETCH_USER)) {
+
+      return completedFuture(result);
+    }
+
+    return result.after(renewalContext ->
+      validator.refuseWhenRenewalActionIsBlockedForPatron(renewalContext)
+        .thenApply(r -> errorHandler.handleValidationResult(r, USER_IS_BLOCKED_AUTOMATICALLY,
+          result)));
+  }
+
+  private CompletableFuture<Result<RenewalContext>> lookupLoanPolicy(
+    RenewalContext renewalContext, LoanPolicyRepository loanPolicyRepository,
+    CirculationErrorHandler errorHandler) {
+
+    if (errorHandler.hasAny(ITEM_DOES_NOT_EXIST, FAILED_TO_FIND_SINGLE_OPEN_LOAN,
+      FAILED_TO_FETCH_USER)) {
+
+      return completedFuture(succeeded(renewalContext));
+    }
+
+    return loanPolicyRepository.lookupLoanPolicy(renewalContext);
+  }
+
+  private CompletableFuture<Result<RenewalContext>> lookupRequestQueue(
+    RenewalContext renewalContext, RequestQueueRepository requestQueueRepository,
+    CirculationErrorHandler errorHandler) {
+
+    if (errorHandler.hasAny(ITEM_DOES_NOT_EXIST, FAILED_TO_FIND_SINGLE_OPEN_LOAN)) {
+      return completedFuture(succeeded(renewalContext));
+    }
+
+    return requestQueueRepository.get(renewalContext);
+  }
+
+  private CompletableFuture<Result<RenewalContext>> renew(
+    RenewalContext renewalContext, Clients clients, CirculationErrorHandler errorHandler) {
+
+    if (errorHandler.hasAny(ITEM_DOES_NOT_EXIST, FAILED_TO_FIND_SINGLE_OPEN_LOAN,
+      FAILED_TO_FETCH_USER)) {
+
+      return completedFuture(succeeded(renewalContext));
+    }
+
+    return renewalStrategy.renew(renewalContext, clients)
+      .thenApply(r -> errorHandler.handleValidationResult(r, DEFAULT, renewalContext));
+  }
+
   private HttpResponse toResponse(JsonObject body) {
     return JsonHttpResponse.ok(body,
       String.format("/circulation/loans/%s", body.getString("id")));
@@ -118,5 +189,5 @@ public abstract class RenewalResource extends Resource {
 
   protected abstract CompletableFuture<Result<Loan>> findLoan(JsonObject request,
     LoanRepository loanRepository, ItemRepository itemRepository,
-    UserRepository userRepository);
+    UserRepository userRepository, CirculationErrorHandler errorHandler);
 }

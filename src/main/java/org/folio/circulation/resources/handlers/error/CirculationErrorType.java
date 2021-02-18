@@ -1,6 +1,8 @@
 package org.folio.circulation.resources.handlers.error;
 
 public enum CirculationErrorType {
+  DEFAULT,
+
   // Errors related to the service point
   INVALID_PICKUP_SERVICE_POINT,
   SERVICE_POINT_IS_NOT_PRESENT,
@@ -19,6 +21,9 @@ public enum CirculationErrorType {
   ITEM_HAS_OPEN_LOANS,
   ITEM_LIMIT_IS_REACHED,
 
+  // Errors related to the loan
+  FAILED_TO_FIND_SINGLE_OPEN_LOAN,
+
   // Errors that represent fetch failures
   FAILED_TO_FETCH_ITEM,
   FAILED_TO_FETCH_USER,
@@ -31,6 +36,7 @@ public enum CirculationErrorType {
   USER_IS_BLOCKED_AUTOMATICALLY,
   INVALID_USER_OR_PATRON_GROUP_ID,
   INVALID_PROXY_RELATIONSHIP,
+  USER_DOES_NOT_MATCH,
 
   // Errors related to requests
   REQUESTING_DISALLOWED,

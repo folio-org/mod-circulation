@@ -1,19 +1,26 @@
 package org.folio.circulation.resources.renewal;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.validation.CommonFailures.noItemFoundForIdFailure;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_USER;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FIND_SINGLE_OPEN_LOAN;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ITEM_DOES_NOT_EXIST;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_DOES_NOT_MATCH;
+import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.results.Result.succeeded;
-import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.commons.lang3.StringUtils;
+import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.validation.UserNotFoundValidator;
+import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
-import org.folio.circulation.domain.validation.UserNotFoundValidator;
+import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
 import org.folio.circulation.storage.ItemByIdInStorageFinder;
 import org.folio.circulation.storage.SingleOpenLoanForItemInStorageFinder;
-import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.http.HttpClient;
@@ -26,11 +33,9 @@ public class RenewByIdResource extends RenewalResource {
   }
 
   @Override
-  protected CompletableFuture<Result<Loan>> findLoan(
-    JsonObject request,
-    LoanRepository loanRepository,
-    ItemRepository itemRepository,
-    UserRepository userRepository) {
+  protected CompletableFuture<Result<Loan>> findLoan(JsonObject request,
+    LoanRepository loanRepository, ItemRepository itemRepository, UserRepository userRepository,
+    CirculationErrorHandler errorHandler) {
 
     final Result<RenewByIdRequest> requestResult
       = RenewByIdRequest.from(request);
@@ -45,24 +50,62 @@ public class RenewByIdResource extends RenewalResource {
     final ItemByIdInStorageFinder itemFinder = new ItemByIdInStorageFinder(
       itemRepository, noItemFoundForIdFailure(itemId));
 
-    return requestResult
-      .after(checkInRequest -> itemFinder.findItemById(itemId))
-      .thenComposeAsync(itemResult -> itemResult.after(singleOpenLoanFinder::findSingleOpenLoan))
-      .thenApply(UserNotFoundValidator::refuseWhenUserNotFound)
-      .thenApply(loanResult -> loanResult.combineToResult(requestResult,
-        this::refuseWhenUserDoesNotMatch));
+    return completedFuture(requestResult)
+      .thenCompose(r -> lookupItem(itemFinder, itemId, errorHandler))
+      .thenCompose(r -> r.after(item -> lookupLoan(singleOpenLoanFinder, item, errorHandler)))
+      .thenApply(r -> r.next(loan -> refuseWhenUserNotFound(loan, errorHandler)))
+      .thenApply(r -> r.next(loan -> refuseWhenUserDoesNotMatch(loan, requestResult.value(),
+        errorHandler)));
   }
 
-  private Result<Loan> refuseWhenUserDoesNotMatch(
-    Loan loan,
-    RenewByIdRequest idRequest) {
+  private CompletableFuture<Result<Item>> lookupItem(ItemByIdInStorageFinder itemFinder,
+    String itemId, CirculationErrorHandler errorHandler) {
+
+    return itemFinder.findItemById(itemId)
+      .thenApply(r -> errorHandler.handleValidationResult(r, ITEM_DOES_NOT_EXIST, (Item) null));
+  }
+
+  private CompletableFuture<Result<Loan>> lookupLoan(
+    SingleOpenLoanForItemInStorageFinder singleOpenLoanFinder, Item item,
+    CirculationErrorHandler errorHandler) {
+
+    if (errorHandler.hasAny(ITEM_DOES_NOT_EXIST)) {
+      return completedFuture(succeeded(null));
+    }
+
+    return singleOpenLoanFinder.findSingleOpenLoan(item)
+      .thenApply(r -> errorHandler.handleValidationResult(r, FAILED_TO_FIND_SINGLE_OPEN_LOAN,
+        (Loan) null));
+  }
+
+  private Result<Loan> refuseWhenUserNotFound(Loan loan,
+    CirculationErrorHandler errorHandler) {
+
+    if (errorHandler.hasAny(ITEM_DOES_NOT_EXIST, FAILED_TO_FIND_SINGLE_OPEN_LOAN)) {
+      return succeeded(loan);
+    }
+
+    return UserNotFoundValidator.refuseWhenUserNotFound(succeeded(loan))
+      .mapFailure(failure -> errorHandler.handleValidationError(failure,
+        FAILED_TO_FETCH_USER, loan));
+  }
+
+  private Result<Loan> refuseWhenUserDoesNotMatch(Loan loan, RenewByIdRequest idRequest,
+    CirculationErrorHandler errorHandler) {
+
+    if (errorHandler.hasAny(ITEM_DOES_NOT_EXIST, FAILED_TO_FIND_SINGLE_OPEN_LOAN,
+      FAILED_TO_FETCH_USER)) {
+
+      return succeeded(loan);
+    }
 
     if(userMatches(loan, idRequest.getUserId())) {
       return succeeded(loan);
     }
     else {
-      return failedValidation("Cannot renew item checked out to different user",
-        RenewByIdRequest.USER_ID, idRequest.getUserId());
+      return errorHandler.handleValidationError(
+        singleValidationError("Cannot renew item checked out to different user",
+          RenewByIdRequest.USER_ID, idRequest.getUserId()), USER_DOES_NOT_MATCH, loan);
     }
   }
 
