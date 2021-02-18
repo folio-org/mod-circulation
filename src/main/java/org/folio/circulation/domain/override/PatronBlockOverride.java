@@ -11,5 +11,4 @@ public class PatronBlockOverride extends BlockOverride {
   public static PatronBlockOverride from(JsonObject representation) {
     return new PatronBlockOverride(representation != null);
   }
-
 }

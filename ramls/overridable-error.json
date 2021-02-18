@@ -19,7 +19,10 @@
         },
         "missingPermissions": {
           "type": "array",
-          "description": "Missing permissions required to override the block"
+          "description": "Missing permissions required to override the block",
+          "items": {
+            "type": "string"
+          }
         }
       },
       "required": [
