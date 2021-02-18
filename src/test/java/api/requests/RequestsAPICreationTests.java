@@ -114,6 +114,8 @@ RequestsAPICreationTests extends APITests {
   public static final String OVERRIDE_PATRON_BLOCK_PERMISSION = "circulation.override-patron-block";
   public static final OkapiHeaders HEADERS_WITH_ALL_OVERRIDE_PERMISSIONS =
     buildOkapiHeadersWithPermissions(CREATE_REQUEST_PERMISSION, OVERRIDE_PATRON_BLOCK_PERMISSION);
+  public static final OkapiHeaders HEADERS_WITHOUT_OVERRIDE_PERMISSIONS =
+    buildOkapiHeadersWithPermissions();
   public static final BlockOverrides PATRON_BLOCK_OVERRIDE =
     new BlockOverrides(null, new PatronBlockOverride(true), null, null);
   public static final String PATRON_BLOCK_NAME = "patronBlock";
@@ -2072,6 +2074,22 @@ RequestsAPICreationTests extends APITests {
       hasItem(
         isBlockRelatedError("Patron blocked from requesting",
           PATRON_BLOCK_NAME, List.of(OVERRIDE_PATRON_BLOCK_PERMISSION))));
+  }
+
+  @Test
+  public void overrideResponseDoesNotContainDuplicateInsufficientOverridePermissionsErrors() {
+    UUID userId = usersFixture.steve().getId();
+    createManualPatronBlockForUser(userId);
+    createAutomatedPatronBlockForUser(userId);
+
+    Response response = attemptCreateRequestThroughPatronBlockOverride(
+      userId, HEADERS_WITHOUT_OVERRIDE_PERMISSIONS);
+
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(response.getJson(), hasErrors(1));
+
+    assertThat(getErrorsFromResponse(response),
+      hasItem(isInsufficientPermissionsToOverridePatronBlockError()));
   }
 
   private static void assertResponseSuccess(Response response) {
