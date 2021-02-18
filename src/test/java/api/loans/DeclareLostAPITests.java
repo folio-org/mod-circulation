@@ -13,6 +13,7 @@ import static api.support.matchers.LoanMatchers.hasLoanProperty;
 import static api.support.matchers.LoanMatchers.hasStatus;
 import static api.support.matchers.LoanMatchers.isClosed;
 import static api.support.matchers.LoanMatchers.isOpen;
+import static api.support.matchers.ItemMatchers.isAgedToLost;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsBeforeNow;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
@@ -32,6 +33,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.joda.time.Seconds.seconds;
 import static org.junit.Assert.assertEquals;
 
+
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -42,6 +44,7 @@ import static org.joda.time.DateTime.now;
 import static org.joda.time.DateTimeZone.UTC;
 
 import org.awaitility.Awaitility;
+import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
@@ -56,6 +59,7 @@ import api.support.builders.DeclareItemLostRequestBuilder;
 import api.support.builders.ItemBuilder;
 import api.support.builders.LostItemFeePolicyBuilder;
 import api.support.fakes.FakePubSub;
+import api.support.fixtures.AgeToLostFixture.AgeToLostResult;
 import api.support.fixtures.policies.PoliciesToActivate;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
@@ -64,8 +68,13 @@ import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
 import junitparams.converters.Nullable;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import java.lang.invoke.MethodHandles;
+
 @RunWith(JUnitParamsRunner.class)
 public class DeclareLostAPITests extends APITests {
+  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
   public DeclareLostAPITests() {
     super(true, true);
   }
@@ -458,6 +467,63 @@ public class DeclareLostAPITests extends APITests {
       hasParameter("itemId", itemId.toString()))));
   }
 
+  @Test 
+  public void shouldClearLostItemFeesWhenItemAgedToLostAndFeesAlreadyApplied() {
+    final double expectedProcessingFee = 5.0;
+    final double expectedItemFee = 10.0;
+
+    final LostItemFeePolicyBuilder lostPolicyBuilder = lostItemFeePoliciesFixture.ageToLostAfterOneMinutePolicy()
+        .withName("age to lost with fees")
+        .billPatronImmediatelyWhenAgedToLost()
+        .withSetCost(expectedItemFee)
+        .withLostItemProcessingFee(expectedProcessingFee)
+        .withNoFeeRefundInterval()
+        .withChargeAmountItemPatron(false)
+        .withChargeAmountItemSystem(true);
+
+    JsonObject lostPolicy = lostItemFeePoliciesFixture.create(lostPolicyBuilder).getJson();
+
+    log.info("lost policy" + lostPolicy.toString());
+
+    useLostItemPolicy(lostItemFeePoliciesFixture.create(lostPolicyBuilder).getId());
+
+    AgeToLostResult agedToLostLoan = ageToLostFixture.createLoanAgeToLostAndChargeFees(lostPolicyBuilder);
+    
+    JsonObject item = itemsFixture.getById(agedToLostLoan.getItemId()).getJson();
+    JsonObject loan = loansClient.getById(agedToLostLoan.getLoanId()).getJson();
+
+    assertThat(item, isAgedToLost());
+
+    log.info("Aged to lost loan: " + loan.toString());
+    JsonObject itemFee = getAccountForLoan(agedToLostLoan.getLoanId(), "Lost item fee");
+    JsonObject itemProcessingFee = getAccountForLoan(agedToLostLoan.getLoanId(), "Lost item processing fee");
+    assertThat(itemFee, hasJsonPath("amount", expectedItemFee));
+    assertThat(itemProcessingFee, hasJsonPath("amount", expectedProcessingFee));
+
+    final DateTime declareLostDate = now(UTC).plusWeeks(1);
+    mockClockManagerToReturnFixedDateTime(declareLostDate);
+
+    final DeclareItemLostRequestBuilder builder = new DeclareItemLostRequestBuilder()
+      .forLoanId(agedToLostLoan.getLoanId())
+      .on(declareLostDate)
+      .withNoComment();
+
+    declareLostFixtures.declareItemLost(builder);
+
+    JsonObject declareLostLoan = loansClient.getById(agedToLostLoan.getLoanId()).getJson();
+    JsonObject declareLostItem = declareLostLoan.getJsonObject("item");
+
+    log.info("declare lost loan: " + declareLostLoan.toString());
+ 
+    //assertThat(declareLostItem, isDeclaredLost());
+
+    assertThat(getAccountsForLoan(agedToLostLoan.getLoanId()), hasSize(1));
+
+    JsonObject declaredLostItemFee = getAccountForLoan(agedToLostLoan.getLoanId(), "Lost item fee");
+
+    assertThat(declaredLostItemFee, hasJsonPath("amount", expectedItemFee));
+  }
+
   @Test
   public void shouldNotChargeOverdueFeesDuringCheckInWhenItemDeclaredLostAndRefundFeePeriodHasPassed() {
     ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
@@ -625,6 +691,9 @@ public class DeclareLostAPITests extends APITests {
         hasJsonPath("loan.action", "closedLoan"),
         hasJsonPath("loan.itemStatus", "Lost and paid"))
     ));
+  }
+  private Matcher<JsonObject> isLostItemHasBeenBilled() {
+    return hasJsonPath("agedToLostDelayedBilling.lostItemHasBeenBilled", true);
   }
 
   private void assertNoteHasBeenCreated() {
