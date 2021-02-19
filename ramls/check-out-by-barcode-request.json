@@ -28,7 +28,7 @@
     "overrideBlocks": {
       "description": "Blocks to override",
       "type": "object",
-      "$ref": "overrideBlocks.json"
+      "$ref": "override-blocks.json"
     }
   },
   "required": [

@@ -4,28 +4,34 @@
   "description": "Blocks to override (e.g. during checkout or renewal)",
   "properties": {
     "itemNotLoanableBlock": {
-      "description": "\"Item not loanable\" block",
+      "description": "'Item not loanable' block",
       "type": "object",
-      "dueDate": {
-        "description": "Due date for a new loan",
-        "type": "string",
-        "format": "date-time"
+      "properties": {
+        "dueDate": {
+          "description": "Due date for a new loan",
+          "type": "string",
+          "format": "date-time"
+        }
       },
+      "additionalProperties": false,
       "required": [
         "dueDate"
       ]
     },
     "patronBlock": {
       "description": "Automated patron block",
-      "type": "object"
+      "type": "object",
+      "additionalProperties": false
     },
     "itemLimitBlock": {
       "description": "Item limit block",
-      "type": "object"
+      "type": "object",
+      "additionalProperties": false
     },
     "comment": {
       "description": "Reason for override",
       "type": "string"
     }
-  }
+  },
+  "additionalProperties": false
 }

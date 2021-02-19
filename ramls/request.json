@@ -441,7 +441,7 @@
         "overrideBlocks": {
           "type": "object",
           "description": "Blocks to override if user has corresponding permissions",
-          "$ref": "overrideBlocks.json"
+          "$ref": "override-blocks.json"
         }
       }
     }
