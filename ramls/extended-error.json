@@ -2,8 +2,24 @@
   "$schema": "http://json-schema.org/draft-04/schema#",
   "description": "An extended error",
   "type": "object",
-  "allOf": [{"$ref": "raml-util/schemas/error.schema"}],
   "properties": {
+    "message": {
+      "type": "string",
+      "description": "Error message text"
+    },
+    "type": {
+      "type": "string",
+      "description": "Error message type"
+    },
+    "code": {
+      "type": "string",
+      "description": "Error message code"
+    },
+    "parameters": {
+      "type": "object",
+      "description": "Error message parameters",
+      "$ref": "raml-util/schemas/parameters.schema"
+    },
     "overridableBlock": {
       "type": "object",
       "description": "Details of an overridable block the error is related to",
@@ -30,5 +46,8 @@
         "missingPermissions"
       ]
     }
-  }
+  },
+  "required": [
+    "message"
+  ]
 }
