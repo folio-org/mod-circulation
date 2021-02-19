@@ -1,15 +1,15 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "description": "A set of overridable errors",
+  "description": "A collection of extended errors",
   "type": "object",
   "properties": {
     "errors": {
-      "description": "List of overridable errors",
+      "description": "List of extended errors",
       "id": "errors",
       "type": "array",
       "items": {
         "type": "object",
-        "$ref": "overridable-error.json"
+        "$ref": "extended-error.json"
       }
     },
     "total_records": {

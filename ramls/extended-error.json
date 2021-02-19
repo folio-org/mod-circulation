@@ -1,12 +1,12 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "description": "Overridable error",
+  "description": "An extended error",
   "type": "object",
+  "allOf": [{"$ref": "raml-util/schemas/error.schema"}],
   "properties": {
-    "allOf": [{"$ref": "raml-util/schemas/error.schema"}],
     "overridableBlock": {
       "type": "object",
-      "description": "Details of overridable block",
+      "description": "Details of an overridable block the error is related to",
       "properties": {
         "name": {
           "type": "string",
@@ -19,7 +19,7 @@
         },
         "missingPermissions": {
           "type": "array",
-          "description": "Missing permissions required to override the block",
+          "description": "Missing Okapi permissions required to override the block",
           "items": {
             "type": "string"
           }
@@ -30,8 +30,5 @@
         "missingPermissions"
       ]
     }
-  },
-  "required": [
-    "overridableBlock"
-  ]
+  }
 }
