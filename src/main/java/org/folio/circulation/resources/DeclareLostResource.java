@@ -42,7 +42,12 @@ import io.vertx.core.http.HttpClient;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+
 public class DeclareLostResource extends Resource {
+  private static final Logger log = LoggerFactory.getLogger(DeclareLostResource.class);
 
   public DeclareLostResource(HttpClient client) {
     super(client);
@@ -116,6 +121,8 @@ public class DeclareLostResource extends Resource {
 
   private Result<DeclareItemLostRequest> validateDeclaredLostRequest(
     RoutingContext routingContext) {
+
+    log.info("Text of request: " + routingContext.getBodyAsString());
 
     String loanId = routingContext.request().getParam("id");
     return DeclareItemLostRequest.from(routingContext.getBodyAsJson(), loanId);

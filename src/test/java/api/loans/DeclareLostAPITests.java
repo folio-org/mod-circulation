@@ -32,7 +32,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.joda.time.Seconds.seconds;
 import static org.junit.Assert.assertEquals;
-
+import static org.mockito.ArgumentMatchers.isNull;
 
 import java.util.List;
 import java.util.UUID;
@@ -44,6 +44,7 @@ import static org.joda.time.DateTime.now;
 import static org.joda.time.DateTimeZone.UTC;
 
 import org.awaitility.Awaitility;
+import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.Matcher;
@@ -59,6 +60,7 @@ import api.support.builders.DeclareItemLostRequestBuilder;
 import api.support.builders.ItemBuilder;
 import api.support.builders.LostItemFeePolicyBuilder;
 import api.support.fakes.FakePubSub;
+import api.support.fixtures.FeeFineAccountFixture;
 import api.support.fixtures.AgeToLostFixture.AgeToLostResult;
 import api.support.fixtures.policies.PoliciesToActivate;
 import api.support.http.IndividualResource;
@@ -468,9 +470,10 @@ public class DeclareLostAPITests extends APITests {
   }
 
   @Test 
-  public void shouldClearLostItemFeesWhenItemAgedToLostAndFeesAlreadyApplied() {
+  public void shouldCancelUnpaidLostItemFeesWhenItemAgedToLostAndFeesAlreadyApplied() {
     final double expectedProcessingFee = 5.0;
     final double expectedItemFee = 10.0;
+    UUID servicePointId = servicePointsFixture.cd1().getId();
 
     final LostItemFeePolicyBuilder lostPolicyBuilder = lostItemFeePoliciesFixture.ageToLostAfterOneMinutePolicy()
         .withName("age to lost with fees")
@@ -483,8 +486,6 @@ public class DeclareLostAPITests extends APITests {
 
     JsonObject lostPolicy = lostItemFeePoliciesFixture.create(lostPolicyBuilder).getJson();
 
-    log.info("lost policy" + lostPolicy.toString());
-
     useLostItemPolicy(lostItemFeePoliciesFixture.create(lostPolicyBuilder).getId());
 
     AgeToLostResult agedToLostLoan = ageToLostFixture.createLoanAgeToLostAndChargeFees(lostPolicyBuilder);
@@ -494,9 +495,9 @@ public class DeclareLostAPITests extends APITests {
 
     assertThat(item, isAgedToLost());
 
-    log.info("Aged to lost loan: " + loan.toString());
     JsonObject itemFee = getAccountForLoan(agedToLostLoan.getLoanId(), "Lost item fee");
     JsonObject itemProcessingFee = getAccountForLoan(agedToLostLoan.getLoanId(), "Lost item processing fee");
+
     assertThat(itemFee, hasJsonPath("amount", expectedItemFee));
     assertThat(itemProcessingFee, hasJsonPath("amount", expectedProcessingFee));
 
@@ -505,6 +506,7 @@ public class DeclareLostAPITests extends APITests {
 
     final DeclareItemLostRequestBuilder builder = new DeclareItemLostRequestBuilder()
       .forLoanId(agedToLostLoan.getLoanId())
+      .withServicePointId(servicePointId)
       .on(declareLostDate)
       .withNoComment();
 
@@ -512,17 +514,87 @@ public class DeclareLostAPITests extends APITests {
 
     JsonObject declareLostLoan = loansClient.getById(agedToLostLoan.getLoanId()).getJson();
     JsonObject declareLostItem = declareLostLoan.getJsonObject("item");
-
-    log.info("declare lost loan: " + declareLostLoan.toString());
  
-    //assertThat(declareLostItem, isDeclaredLost());
+    assertThat(declareLostItem, isDeclaredLost());
 
-    assertThat(getAccountsForLoan(agedToLostLoan.getLoanId()), hasSize(1));
+    Double amountRemaining = declareLostLoan.getJsonObject("feesAndFines").getDouble("amountRemainingToPay");
+    assertEquals(amountRemaining, 10.0, 0.01);
 
-    JsonObject declaredLostItemFee = getAccountForLoan(agedToLostLoan.getLoanId(), "Lost item fee");
-
-    assertThat(declaredLostItemFee, hasJsonPath("amount", expectedItemFee));
+    assertThat(getAccountsForLoan(agedToLostLoan.getLoanId()), hasSize(3));
   }
+
+  @Test 
+  public void shouldRefundPartiallyPaidOrTransferredLostItemFeesBeforeApplyingNewFees() {
+    final double expectedItemFee = 20.0;
+    UUID servicePointId = servicePointsFixture.cd1().getId();
+
+    final LostItemFeePolicyBuilder lostPolicyBuilder = lostItemFeePoliciesFixture.ageToLostAfterOneMinutePolicy()
+        .withName("age to lost with fees")
+        .billPatronImmediatelyWhenAgedToLost()
+        .withSetCost(expectedItemFee)
+
+        .withNoFeeRefundInterval()
+        .withChargeAmountItemPatron(false)
+        .withChargeAmountItemSystem(false);
+
+    JsonObject lostPolicy = lostItemFeePoliciesFixture.create(lostPolicyBuilder).getJson();
+
+    useLostItemPolicy(lostItemFeePoliciesFixture.create(lostPolicyBuilder).getId());
+
+    AgeToLostResult agedToLostResult = ageToLostFixture.createLoanAgeToLostAndChargeFees(lostPolicyBuilder);
+    UUID testLoanId = agedToLostResult.getLoanId();
+    UUID itemId = agedToLostResult.getItemId();
+    
+    JsonObject ageToLostLoan = loansClient.getById(testLoanId).getJson();
+    JsonObject AgeToLostItem = itemsFixture.getById(itemId).getJson();
+
+    assertThat(AgeToLostItem, isAgedToLost());
+
+    JsonObject itemFee = getAccountForLoan(testLoanId, "Lost item fee");
+    
+    assertThat(itemFee, hasJsonPath("amount", expectedItemFee));
+    
+    feeFineAccountFixture.transferLostItemFee(testLoanId, 5.00);
+    feeFineAccountFixture.payLostItemFee(testLoanId, 5.00);
+
+    JsonObject transferredAndPaidLoan = loansClient.getById(testLoanId).getJson();
+    JsonObject transferredAndPaidItemFee = getAccountForLoan(testLoanId, "Lost item fee");
+    
+    log.info("loan object: " + transferredAndPaidLoan.toString());
+
+    assertThat(getAccountsForLoan(testLoanId), hasSize(1));
+
+    getAccountsForLoan(testLoanId).stream().forEach(account-> {
+      log.info("Account data: " + account.toString());
+    });
+
+    assertThat(transferredAndPaidItemFee, hasJsonPath("remaining", 10.00));
+    
+    Double amountRemaining = transferredAndPaidLoan.getJsonObject("feesAndFines").getDouble("amountRemainingToPay");
+    assertEquals(amountRemaining, 10.0, 0.01);
+
+    final DateTime declareLostDate = now(UTC).plusWeeks(1);
+    mockClockManagerToReturnFixedDateTime(declareLostDate);
+
+    final DeclareItemLostRequestBuilder builder = new DeclareItemLostRequestBuilder()
+      .forLoanId(testLoanId)
+      .withServicePointId(servicePointId)
+      .on(declareLostDate)
+      .withNoComment();
+
+    declareLostFixtures.declareItemLost(builder);
+
+    JsonObject declareLostLoan = loansClient.getById(testLoanId).getJson();
+    JsonObject declareLostItem = itemsFixture.getById(itemId).getJson();
+ 
+    assertThat(declareLostItem, isDeclaredLost());
+    
+    Double finalAmountRemaining = declareLostLoan.getJsonObject("feesAndFines").getDouble("amountRemainingToPay");
+    assertEquals(finalAmountRemaining, 20.0, 0.01);
+
+    assertThat(getAccountsForLoan(testLoanId), hasSize(2));
+  }
+
 
   @Test
   public void shouldNotChargeOverdueFeesDuringCheckInWhenItemDeclaredLostAndRefundFeePeriodHasPassed() {
