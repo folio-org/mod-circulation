@@ -58,9 +58,11 @@ public class LostItemFeeChargingService {
   private final Clients clients;
   private final LostItemFeeRefundService refundService;
   private final AccountRepository accountRepository;
-  private Loan loanWithAccountData;
   private final FeeFineService feeFineService;
   private final UserRepository userRepository;
+  private String userId;
+  private String servicePointId;
+  private Loan loanWithAccountData;
 
   public LostItemFeeChargingService(Clients clients) {
     this.lostItemPolicyRepository = new LostItemPolicyRepository(clients);
@@ -81,10 +83,14 @@ public class LostItemFeeChargingService {
 
   public CompletableFuture<Result<Loan>> chargeLostItemFees(
     Loan loan, DeclareItemLostRequest request, String staffUserId) {
+    this.userId = staffUserId;
+    this.servicePointId = request.getServicePointId();
 
     final ReferenceDataContext referenceDataContext = new ReferenceDataContext(
       loan, request, staffUserId);
     final AccountCancelReason reason = AccountCancelReason.CANCELLED_ITEM_DECLARED_LOST;
+
+    log.info("service point data: " + request.getServicePointId());
 
     return lostItemPolicyRepository.getLostItemPolicyById(loan.getLostItemPolicyId())
       .thenApply(result -> result.map(referenceDataContext::withLostItemPolicy))
@@ -99,7 +105,7 @@ public class LostItemFeeChargingService {
         log.info("Checking for existing lost item fees for loan [{}]", loan.getId());
         return accountRepository.findAccountsForLoan(loan)
           .thenCompose(result -> {
-            loanWithAccountData = result.value();
+            this.loanWithAccountData = result.value();
             if (!hasLostItemFees(loanWithAccountData)) {
               log.info("No existing lost item fees found, applying lost item fees to loan [{}]", loan.getId());
               return applyFees(referenceData, loanWithAccountData);
@@ -108,8 +114,8 @@ public class LostItemFeeChargingService {
             final LostItemFeeRefundContext refundContext = new LostItemFeeRefundContext(
               loan.getItem().getStatus(),
               loan.getItem().getItemId(),
-              staffUserId,
-              request.getServicePointId(),
+              userId,
+              servicePointId,
               loanWithAccountData,
               reason
             );
@@ -117,12 +123,12 @@ public class LostItemFeeChargingService {
             // accounts that have not been processed (paid or transferred) require a separate
             // process to close
             return refundService.refundAccounts(refundContext)
-              .thenCompose(cancelAccounts(loanWithAccountData, request.getServicePointId(), staffUserId))
-              .thenCompose(accountRepository.findAccountsForLoan(loan))
-              .thenCompose(result -> {
-                if (hasLostItemFees(result.value())) {
+              .thenCompose(r -> {return cancelAccounts(loanWithAccountData);})
+              .thenCompose(res -> {return accountRepository.findAccountsForLoan(loan);})
+              .thenCompose(loanResult -> {
+                if (hasLostItemFees(loanResult.value())) {
                   log.info("Cancel/refund fees unsuccessful, aborting charging new fees");
-                  return CompletableFuture.completed(succeeded(loan));
+                  return CompletableFuture.completedFuture(succeeded(loan));
                 }
                 log.info("Existing fees removed successfully, applying new fees to loan [{}]", loan.getId());
                 return applyFees(referenceData, loanWithAccountData);
@@ -160,26 +166,38 @@ public class LostItemFeeChargingService {
       .collect(Collectors.toList());
   }
 
-  private CompletableFuture<Result<List<AccountActionResponse>>> cancelAccounts(Loan loan, String servicePointId, String userId) {
+  private CompletableFuture<Result<Loan>> cancelAccounts(Loan loan) {
     List<Account> lostItemFees = getLostItemFeeAccounts(loan);
+
+    log.info("number of lost item fees found: " + lostItemFees.size());
     if (lostItemFees.size() < 1) {
       List<AccountActionResponse> returnList;
-      return CompletableFuture.completedFuture(succeeded(returnList));
+      return CompletableFuture.completedFuture(succeeded(loan));
     }
-    return  userRepository.getUser(userId).thenCompose(result -> {
+    log.info("Current service point id:" + servicePointId);
+
+    return  userRepository.getUser(this.userId).thenCompose(result -> {
       String staffUserName = result.value().getPersonalName();
-      List<CancelAccountCommand> cancelCommands;
+      List<CancelAccountCommand> cancelCommands = new ArrayList<>();
       lostItemFees.stream().forEach(account -> {
         CancelAccountCommand command = CancelAccountCommand.builder()
           .accountId(account.getId())
-          .currentServicePointId(servicePointId)
+          .currentServicePointId(this.servicePointId)
           .cancellationReason(AccountCancelReason.CANCELLED_ITEM_DECLARED_LOST)
           .userName(staffUserName)
           .build();
         cancelCommands.add(command);
       });
+      log.info("number of cancel commands constructed: " + cancelCommands.size());
+      cancelCommands.stream().forEach(command -> {log.info("Cancel Command: " + command.toString());});
       return succeeded(cancelCommands)
-        .after(commands -> allOf(commands, command -> feeFineService.cancelAccount(command)));
+        .after(commands -> allOf(commands, command -> feeFineService.cancelAccount(command)))
+        .thenApply(r -> {
+          if (r.failed()) {
+             log.error("Cancel Account failed: " + r.cause().toString());
+          }
+          return r.map(notUsed -> loan);
+        });
     });  
   }
 

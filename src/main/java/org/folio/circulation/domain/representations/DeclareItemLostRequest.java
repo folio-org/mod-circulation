@@ -38,4 +38,8 @@ public class DeclareItemLostRequest {
     return succeeded(new DeclareItemLostRequest(loanId, dateTime, comment,
       getProperty(json, "servicePointId")));
   }
+
+  public String getServicePointId() {
+    return this.servicePointId;
+  }
 }
