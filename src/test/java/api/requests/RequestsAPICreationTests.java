@@ -96,7 +96,6 @@ import api.support.http.ItemResource;
 import api.support.http.OkapiHeaders;
 import api.support.http.ResourceClient;
 import api.support.http.UserResource;
-import api.support.matchers.ValidationErrorMatchers;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import junitparams.JUnitParamsRunner;
@@ -2055,9 +2054,8 @@ RequestsAPICreationTests extends APITests {
     assertThat(response.getJson(), hasErrors(1));
 
     assertThat(getErrorsFromResponse(response),
-      hasItem(
-        isBlockRelatedError("Patron blocked from requesting",
-          PATRON_BLOCK_NAME, emptyList())));
+      hasItem(isBlockRelatedError("Patron blocked from requesting",
+        PATRON_BLOCK_NAME, emptyList())));
   }
 
   @Test
@@ -2071,9 +2069,8 @@ RequestsAPICreationTests extends APITests {
     assertThat(response.getJson(), hasErrors(1));
 
     assertThat(getErrorsFromResponse(response),
-      hasItem(
-        isBlockRelatedError("Patron blocked from requesting",
-          PATRON_BLOCK_NAME, List.of(OVERRIDE_PATRON_BLOCK_PERMISSION))));
+      hasItem(isBlockRelatedError("Patron blocked from requesting",
+        PATRON_BLOCK_NAME, List.of(OVERRIDE_PATRON_BLOCK_PERMISSION))));
   }
 
   @Test
