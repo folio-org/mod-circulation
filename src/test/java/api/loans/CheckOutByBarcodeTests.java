@@ -32,6 +32,7 @@ import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
+import static api.support.utl.BlockOverridesUtils.getMissingPermissions;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.domain.EventType.ITEM_CHECKED_OUT;
 import static org.folio.circulation.domain.policy.DueDateManagement.KEEP_THE_CURRENT_DUE_DATE;
@@ -50,11 +51,9 @@ import static org.joda.time.DateTimeZone.UTC;
 import static org.junit.Assert.assertTrue;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.override.BlockOverrides;
@@ -1709,19 +1708,6 @@ public class CheckOutByBarcodeTests extends APITests {
     return getOkapiHeadersFromContext()
       .withRequestId("override-check-out-by-barcode-request")
       .withOkapiPermissions("[\"" + permissions + "\"]");
-  }
-
-  private List<String> getMissingPermissions(Response response) {
-    return response.getJson().getJsonArray("errors")
-      .stream()
-      .filter(JsonObject.class::isInstance)
-      .map(JsonObject.class::cast)
-      .filter(error -> Objects.nonNull(error.getJsonObject("overridableBlock")))
-      .map(error -> error.getJsonObject("overridableBlock"))
-      .map(block -> block.getJsonArray("missingPermissions"))
-      .flatMap(JsonArray::stream)
-      .map(String.class::cast)
-      .collect(Collectors.toList());
   }
 
   private void setNotLoanablePolicy() {

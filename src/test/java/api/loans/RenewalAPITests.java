@@ -1,5 +1,6 @@
 package api.loans;
 
+import static api.loans.CheckOutByBarcodeTests.OVERRIDE_PATRON_BLOCK_PERMISSION;
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
 import static api.support.builders.FixedDueDateSchedule.forDay;
@@ -29,12 +30,14 @@ import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
+import static api.support.matchers.ValidationErrorMatchers.isBlockRelatedError;
 import static org.awaitility.Awaitility.waitAtMost;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.END_OF_A_DAY;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -82,10 +85,13 @@ import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import api.support.matchers.OverdueFineMatcher;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
 public abstract class RenewalAPITests extends APITests {
+  public static final String PATRON_BLOCK_NAME = "patronBlock";
+
   abstract Response attemptRenewal(IndividualResource user, IndividualResource item);
 
   abstract IndividualResource renew(IndividualResource user, IndividualResource item);
@@ -1477,6 +1483,44 @@ public abstract class RenewalAPITests extends APITests {
       hasMessage(MAX_OUTSTANDING_FEE_FINE_BALANCE_MESSAGE))));
   }
 
+  @Test
+  public void multipleReasonsWhyCannotRenewWhenPatronIsBlockedAndNotLoanablePolicy() {
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource jessica = usersFixture.jessica();
+
+    LoanPolicyBuilder policyForCheckout = new LoanPolicyBuilder()
+      .withName("Policy for checkout")
+      .rolling(Period.days(2));
+    use(policyForCheckout);
+
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica,
+      new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
+
+    LoanPolicyBuilder nonLoanablePolicy = new LoanPolicyBuilder()
+      .withName("Non loanable policy")
+      .withLoanable(false);
+    UUID notLoanablePolicyId = loanPoliciesFixture
+      .create(nonLoanablePolicy).getId();
+    use(nonLoanablePolicy);
+
+    automatedPatronBlocksFixture.blockAction(jessica.getId().toString(), false, true, false);
+
+    final Response response = attemptRenewal(smallAngryPlanet, jessica);
+
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("item is not loanable"),
+      hasLoanPolicyIdParameter(notLoanablePolicyId),
+      hasLoanPolicyNameParameter("Non loanable policy"))));
+
+    assertThat(getErrorsFromResponse(response), hasItem(
+      isBlockRelatedError(MAX_NUMBER_OF_ITEMS_CHARGED_OUT_MESSAGE, PATRON_BLOCK_NAME,
+        List.of(OVERRIDE_PATRON_BLOCK_PERMISSION))));
+
+    assertThat(getErrorsFromResponse(response), hasItem(
+      isBlockRelatedError(MAX_OUTSTANDING_FEE_FINE_BALANCE_MESSAGE, PATRON_BLOCK_NAME,
+        List.of(OVERRIDE_PATRON_BLOCK_PERMISSION))));
+  }
+
   private void checkRenewalAttempt(DateTime expectedDueDate, UUID dueDateLimitedPolicyId) {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
@@ -1508,5 +1552,9 @@ public abstract class RenewalAPITests extends APITests {
 
   private Matcher<ValidationError> hasLoanPolicyNameParameter(String policyName) {
     return hasParameter("loanPolicyName", policyName);
+  }
+
+  private static JsonArray getErrorsFromResponse(Response response) {
+    return response.getJson().getJsonArray("errors");
   }
 }
