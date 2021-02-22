@@ -18,18 +18,21 @@ import lombok.Getter;
 
 @Getter
 public class RequestBlockValidators {
+  private final boolean overrideRequested;
   private final BlockValidator<RequestAndRelatedRecords> manualPatronBlocksValidator;
   private final BlockValidator<RequestAndRelatedRecords> automatedPatronBlocksValidator;
 
   public RequestBlockValidators(BlockOverrides blockOverrides,
     OkapiPermissions permissions, Clients clients) {
 
-    manualPatronBlocksValidator = blockOverrides.getPatronBlockOverride().isRequested()
+    overrideRequested = blockOverrides.getPatronBlockOverride().isRequested();
+
+    manualPatronBlocksValidator = overrideRequested
       ? new OverridingBlockValidator<>(PATRON_BLOCK, blockOverrides, permissions)
       : new BlockValidator<>(USER_IS_BLOCKED_MANUALLY,
       new UserManualBlocksValidator(clients)::refuseWhenUserIsBlocked);
 
-    automatedPatronBlocksValidator = blockOverrides.getPatronBlockOverride().isRequested()
+    automatedPatronBlocksValidator = overrideRequested
       ? new OverridingBlockValidator<>(PATRON_BLOCK, blockOverrides, permissions)
       : new BlockValidator<>(USER_IS_BLOCKED_AUTOMATICALLY,
       new AutomatedPatronBlocksValidator(clients)::refuseWhenRequestActionIsBlockedForPatron);

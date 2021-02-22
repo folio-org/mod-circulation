@@ -3,6 +3,7 @@ package api.requests;
 import static api.support.APITestContext.getOkapiHeadersFromContext;
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
 import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
+import static api.support.fakes.FakePubSub.getPublishedEventsAsList;
 import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.fixtures.AutomatedPatronBlocksFixture.MAX_NUMBER_OF_ITEMS_CHARGED_OUT_MESSAGE;
 import static api.support.fixtures.AutomatedPatronBlocksFixture.MAX_OUTSTANDING_FEE_FINE_BALANCE_MESSAGE;
@@ -10,6 +11,7 @@ import static api.support.http.CqlQuery.exactMatch;
 import static api.support.http.Limit.limit;
 import static api.support.http.Offset.noOffset;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
+import static api.support.matchers.JsonObjectMatcher.hasNoJsonPath;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
@@ -34,6 +36,7 @@ import static org.folio.circulation.domain.ItemStatus.PAGED;
 import static org.folio.circulation.domain.RequestType.RECALL;
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
+import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_CREATED_THROUGH_OVERRIDE;
 import static org.folio.circulation.support.ClockManager.getClockManager;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.containsString;
@@ -58,6 +61,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import org.awaitility.Awaitility;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.RequestStatus;
@@ -1971,7 +1975,7 @@ RequestsAPICreationTests extends APITests {
     createManualPatronBlockForUser(userId);
     Response response = attemptCreateRequestThroughPatronBlockOverride(
       userId, HEADERS_WITH_ALL_OVERRIDE_PERMISSIONS);
-    assertResponseSuccess(response);
+    assertOverrideResponseSuccess(response);
   }
 
   @Test
@@ -1980,7 +1984,7 @@ RequestsAPICreationTests extends APITests {
     createAutomatedPatronBlockForUser(userId);
     Response response = attemptCreateRequestThroughPatronBlockOverride(
       userId, HEADERS_WITH_ALL_OVERRIDE_PERMISSIONS);
-    assertResponseSuccess(response);
+    assertOverrideResponseSuccess(response);
   }
 
   @Test
@@ -1990,7 +1994,7 @@ RequestsAPICreationTests extends APITests {
     createAutomatedPatronBlockForUser(userId);
     Response response = attemptCreateRequestThroughPatronBlockOverride(
       userId, HEADERS_WITH_ALL_OVERRIDE_PERMISSIONS);
-    assertResponseSuccess(response);
+    assertOverrideResponseSuccess(response);
   }
 
   @Test
@@ -1998,7 +2002,7 @@ RequestsAPICreationTests extends APITests {
     UUID userId = usersFixture.jessica().getId();
     Response response = attemptCreateRequestThroughPatronBlockOverride(
       userId, HEADERS_WITH_ALL_OVERRIDE_PERMISSIONS);
-    assertResponseSuccess(response);
+    assertOverrideResponseSuccess(response);
   }
 
   @Test
@@ -2089,9 +2093,24 @@ RequestsAPICreationTests extends APITests {
       hasItem(isInsufficientPermissionsToOverridePatronBlockError()));
   }
 
-  private static void assertResponseSuccess(Response response) {
+  @Test
+  public void requestProcessingParametersAreNotStoredInRequestRecord() {
+    UUID userId = usersFixture.jessica().getId();
+    Response response = attemptCreateRequestThroughPatronBlockOverride(
+      userId, HEADERS_WITH_ALL_OVERRIDE_PERMISSIONS);
+    assertOverrideResponseSuccess(response);
+
+    assertThat(response.getJson(), hasNoJsonPath("requestProcessingParameters"));
+  }
+
+  private static void assertOverrideResponseSuccess(Response response) {
     assertThat(response, hasStatus(HTTP_CREATED));
     assertThat(response.getJson(), hasErrors(0));
+
+    Awaitility.await()
+      .atMost(1, SECONDS)
+      .until(() -> getPublishedEventsAsList(
+        byLogEventType(REQUEST_CREATED_THROUGH_OVERRIDE.value())).size() == 1);
   }
 
   private Response attemptCreateRequestThroughPatronBlockOverride(UUID requesterId,

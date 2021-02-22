@@ -1,6 +1,7 @@
 package org.folio.circulation.domain;
 
 import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_CREATED;
+import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_CREATED_THROUGH_OVERRIDE;
 import static org.folio.circulation.domain.representations.logs.RequestUpdateLogEventMapper.mapToRequestLogEventJson;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_ITEM_ID;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_USER_OR_PATRON_GROUP_ID;
@@ -16,6 +17,7 @@ import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.concurrent.CompletableFuture;
 
+import org.folio.circulation.domain.representations.logs.LogEventType;
 import org.folio.circulation.domain.validation.RequestLoanValidator;
 import org.folio.circulation.resources.RequestBlockValidators;
 import org.folio.circulation.resources.RequestNoticeSender;
@@ -76,7 +78,7 @@ public class CreateRequestService {
       .thenComposeAsync(r -> r.after(requestRepository::create))
       .thenComposeAsync(r -> r.after(updateUponRequest.updateRequestQueue::onCreate))
       .thenApplyAsync(r -> {
-        r.after(t -> eventPublisher.publishLogRecord(mapToRequestLogEventJson(t.getRequest()), REQUEST_CREATED));
+        r.after(t -> eventPublisher.publishLogRecord(mapToRequestLogEventJson(t.getRequest()), getLogEventType()));
         return r.next(requestNoticeSender::sendNoticeOnRequestCreated);
       });
   }
@@ -114,6 +116,12 @@ public class CreateRequestService {
     RequestAndRelatedRecords records) {
 
     return ofAsync(() -> records);
+  }
+
+  private LogEventType getLogEventType() {
+    return requestBlockValidators.isOverrideRequested()
+      ? REQUEST_CREATED_THROUGH_OVERRIDE
+      : REQUEST_CREATED;
   }
 
 }

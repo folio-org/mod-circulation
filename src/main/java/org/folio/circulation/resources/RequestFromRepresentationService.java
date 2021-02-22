@@ -68,6 +68,7 @@ class RequestFromRepresentationService {
       .thenApply(r -> r.next(this::refuseWhenNoItemId)
         .mapFailure(err -> errorHandler.handleValidationError(err, INVALID_ITEM_ID, r)))
       .thenApply(r -> r.map(this::removeRelatedRecordInformation))
+      .thenApply(r -> r.map(this::removeProcessingParameters))
       .thenApply(r -> r.map(Request::from))
       .thenComposeAsync(r -> r.after(when(
         this::shouldFetchItemAndLoan, this::fetchItemAndLoan, req -> ofAsync(() -> req))))
@@ -142,6 +143,12 @@ class RequestFromRepresentationService {
     representation.remove("loan");
     representation.remove("pickupServicePoint");
     representation.remove("deliveryAddress");
+
+    return representation;
+  }
+
+  private JsonObject removeProcessingParameters(JsonObject representation) {
+    representation.remove("requestProcessingParameters");
 
     return representation;
   }
