@@ -1,8 +1,6 @@
 package org.folio.circulation.resources.handlers.error;
 
 public enum CirculationErrorType {
-  DEFAULT,
-
   // Errors related to the service point
   INVALID_PICKUP_SERVICE_POINT,
   SERVICE_POINT_IS_NOT_PRESENT,
@@ -41,6 +39,9 @@ public enum CirculationErrorType {
   // Errors related to requests
   REQUESTING_DISALLOWED,
   REQUESTING_DISALLOWED_BY_POLICY,
+
+  // Errors related ro renewal
+  RENEWAL_VALIDATION_ERROR,
 
   // Errors related to block overrides
   INSUFFICIENT_OVERRIDE_PERMISSIONS

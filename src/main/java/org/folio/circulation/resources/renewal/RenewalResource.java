@@ -4,7 +4,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_USER;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FIND_SINGLE_OPEN_LOAN;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ITEM_DOES_NOT_EXIST;
-import static org.folio.circulation.resources.handlers.error.CirculationErrorType.DEFAULT;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.RENEWAL_VALIDATION_ERROR;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_BLOCKED_AUTOMATICALLY;
 import static org.folio.circulation.support.results.Result.succeeded;
 
@@ -104,10 +104,8 @@ public abstract class RenewalResource extends Resource {
 
     //TODO: Validation check for same user should be in the domain service
     JsonObject bodyAsJson = routingContext.getBodyAsJson();
-    CompletableFuture<Result<Loan>> findLoanResult = findLoan(bodyAsJson,
-      loanRepository, itemRepository, userRepository, errorHandler);
 
-    findLoanResult
+    findLoan(bodyAsJson, loanRepository, itemRepository, userRepository, errorHandler)
       .thenApply(r -> r.map(loan -> RenewalContext.create(loan, bodyAsJson, webContext.getUserId())))
       .thenComposeAsync(r ->
         refuseWhenRenewalActionIsBlockedForPatron(automatedPatronBlocksValidator, r, errorHandler))
@@ -179,7 +177,7 @@ public abstract class RenewalResource extends Resource {
     }
 
     return renewalStrategy.renew(renewalContext, clients)
-      .thenApply(r -> errorHandler.handleValidationResult(r, DEFAULT, renewalContext));
+      .thenApply(r -> errorHandler.handleValidationResult(r, RENEWAL_VALIDATION_ERROR, renewalContext));
   }
 
   private HttpResponse toResponse(JsonObject body) {

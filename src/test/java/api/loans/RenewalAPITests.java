@@ -30,7 +30,7 @@ import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
-import static api.support.utl.BlockOverridesUtils.getMissingPermissions;
+import static api.support.matchers.ValidationErrorMatchers.isBlockRelatedError;
 import static org.awaitility.Awaitility.waitAtMost;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.END_OF_A_DAY;
@@ -85,10 +85,13 @@ import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import api.support.matchers.OverdueFineMatcher;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
 public abstract class RenewalAPITests extends APITests {
+  public static final String PATRON_BLOCK_NAME = "patronBlock";
+
   abstract Response attemptRenewal(IndividualResource user, IndividualResource item);
 
   abstract IndividualResource renew(IndividualResource user, IndividualResource item);
@@ -1509,13 +1512,13 @@ public abstract class RenewalAPITests extends APITests {
       hasLoanPolicyIdParameter(notLoanablePolicyId),
       hasLoanPolicyNameParameter("Non loanable policy"))));
 
-    assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage(MAX_NUMBER_OF_ITEMS_CHARGED_OUT_MESSAGE))));
-    assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage(MAX_OUTSTANDING_FEE_FINE_BALANCE_MESSAGE))));
-    assertThat(getMissingPermissions(response), hasSize(1));
-    assertThat(getMissingPermissions(response),
-      hasItem(OVERRIDE_PATRON_BLOCK_PERMISSION));
+    assertThat(getErrorsFromResponse(response), hasItem(
+      isBlockRelatedError(MAX_NUMBER_OF_ITEMS_CHARGED_OUT_MESSAGE, PATRON_BLOCK_NAME,
+        List.of(OVERRIDE_PATRON_BLOCK_PERMISSION))));
+
+    assertThat(getErrorsFromResponse(response), hasItem(
+      isBlockRelatedError(MAX_OUTSTANDING_FEE_FINE_BALANCE_MESSAGE, PATRON_BLOCK_NAME,
+        List.of(OVERRIDE_PATRON_BLOCK_PERMISSION))));
   }
 
   private void checkRenewalAttempt(DateTime expectedDueDate, UUID dueDateLimitedPolicyId) {
@@ -1549,5 +1552,9 @@ public abstract class RenewalAPITests extends APITests {
 
   private Matcher<ValidationError> hasLoanPolicyNameParameter(String policyName) {
     return hasParameter("loanPolicyName", policyName);
+  }
+
+  private static JsonArray getErrorsFromResponse(Response response) {
+    return response.getJson().getJsonArray("errors");
   }
 }

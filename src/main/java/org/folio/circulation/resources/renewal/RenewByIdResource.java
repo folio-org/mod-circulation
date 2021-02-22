@@ -6,7 +6,7 @@ import static org.folio.circulation.resources.handlers.error.CirculationErrorTyp
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FIND_SINGLE_OPEN_LOAN;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ITEM_DOES_NOT_EXIST;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_DOES_NOT_MATCH;
-import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
+import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.concurrent.CompletableFuture;
@@ -103,9 +103,11 @@ public class RenewByIdResource extends RenewalResource {
       return succeeded(loan);
     }
     else {
-      return errorHandler.handleValidationError(
-        singleValidationError("Cannot renew item checked out to different user",
-          RenewByIdRequest.USER_ID, idRequest.getUserId()), USER_DOES_NOT_MATCH, loan);
+      Result<Loan> result = failedValidation("Cannot renew item checked out to different user",
+        RenewByIdRequest.USER_ID, idRequest.getUserId());
+
+      return result.mapFailure(failure -> errorHandler.handleValidationError(failure,
+          USER_DOES_NOT_MATCH, loan));
     }
   }
 

@@ -1,5 +1,6 @@
 package org.folio.circulation.resources.renewal;
 
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FIND_SINGLE_OPEN_LOAN;
 import static org.folio.circulation.resources.renewal.RenewByBarcodeRequest.renewalRequestFrom;
 
 import java.util.concurrent.CompletableFuture;
@@ -32,6 +33,8 @@ public class OverrideRenewalByBarcodeResource extends RenewalResource {
       itemRepository, userRepository);
 
     return renewalRequestFrom(request)
-      .after(renewal -> finder.findLoan(renewal.getItemBarcode(), renewal.getUserBarcode()));
+      .after(renewal -> finder.findLoan(renewal.getItemBarcode(), renewal.getUserBarcode())
+        .thenApply(r -> errorHandler.handleValidationResult(r, FAILED_TO_FIND_SINGLE_OPEN_LOAN,
+          (Loan) null)));
   }
 }
