@@ -19,6 +19,9 @@ public enum CirculationErrorType {
   ITEM_HAS_OPEN_LOANS,
   ITEM_LIMIT_IS_REACHED,
 
+  // Errors related to the loan
+  FAILED_TO_FIND_SINGLE_OPEN_LOAN,
+
   // Errors that represent fetch failures
   FAILED_TO_FETCH_ITEM,
   FAILED_TO_FETCH_USER,
@@ -31,10 +34,14 @@ public enum CirculationErrorType {
   USER_IS_BLOCKED_AUTOMATICALLY,
   INVALID_USER_OR_PATRON_GROUP_ID,
   INVALID_PROXY_RELATIONSHIP,
+  USER_DOES_NOT_MATCH,
 
   // Errors related to requests
   REQUESTING_DISALLOWED,
   REQUESTING_DISALLOWED_BY_POLICY,
+
+  // Errors related ro renewal
+  RENEWAL_VALIDATION_ERROR,
 
   // Errors related to block overrides
   INSUFFICIENT_OVERRIDE_PERMISSIONS
