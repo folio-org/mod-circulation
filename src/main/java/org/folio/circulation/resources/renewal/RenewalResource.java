@@ -9,7 +9,6 @@ import static org.folio.circulation.resources.handlers.error.CirculationErrorTyp
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -30,17 +29,17 @@ import org.folio.circulation.resources.LoanNoticeSender;
 import org.folio.circulation.resources.Resource;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
-import org.folio.circulation.resources.handlers.error.DeferFailureErrorHandler;
+import org.folio.circulation.resources.handlers.error.OverridingErrorHandler;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.ValidationErrorFailure;
+import org.folio.circulation.support.http.OkapiPermissions;
 import org.folio.circulation.support.http.server.HttpResponse;
 import org.folio.circulation.support.http.server.JsonHttpResponse;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.Result;
-import org.folio.circulation.support.utils.OkapiHeadersUtils;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
@@ -72,10 +71,9 @@ public abstract class RenewalResource extends Resource {
   private void renew(RoutingContext routingContext) {
     final WebContext webContext = new WebContext(routingContext);
     final Clients clients = Clients.create(webContext, client);
-    final List<String> okapiPermissions =
-      OkapiHeadersUtils.getOkapiPermissions(webContext.getHeaders());
+    final OkapiPermissions okapiPermissions = OkapiPermissions.from(webContext.getHeaders());
 
-    final CirculationErrorHandler errorHandler = new DeferFailureErrorHandler(okapiPermissions);
+    final CirculationErrorHandler errorHandler = new OverridingErrorHandler(okapiPermissions);
 
     final LoanRepository loanRepository = new LoanRepository(clients);
     final ItemRepository itemRepository = new ItemRepository(clients, true, true, true);
