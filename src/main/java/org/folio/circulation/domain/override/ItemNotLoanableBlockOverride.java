@@ -22,4 +22,3 @@ public class ItemNotLoanableBlockOverride extends BlockOverride {
       getDateTimeProperty(representation, "dueDate"));
   }
 }
-

@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.UUID;
 
 import org.folio.circulation.domain.Request;
+import org.folio.circulation.domain.override.BlockOverrides;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
@@ -53,6 +54,7 @@ public class RequestBuilder extends JsonBuilder implements Builder {
   private final UUID pickupServicePointId;
   private final Tags tags;
   private final String patronComments;
+  private final BlockOverrides blockOverrides;
 
   public RequestBuilder() {
     this(UUID.randomUUID(),
@@ -61,6 +63,7 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       UUID.randomUUID(),
       UUID.randomUUID(),
       "Hold Shelf",
+      null,
       null,
       null,
       null,
@@ -102,7 +105,8 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       getIntegerProperty(representation, "position", null),
       getUUIDProperty(representation, "pickupServicePointId"),
       new Tags((toStream(representation.getJsonObject("tags"), "tagList").collect(toList()))),
-      getProperty(representation, "patronComments")
+      getProperty(representation, "patronComments"),
+      null
     );
   }
 
@@ -154,6 +158,21 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       tags.put("tagList", this.tags.getTagList());
 
       put(request, "tags", tags);
+    }
+
+    if (blockOverrides != null) {
+      JsonObject overrideBlocks = new JsonObject();
+
+      if (blockOverrides.getPatronBlockOverride() != null &&
+        blockOverrides.getPatronBlockOverride().isRequested()) {
+
+        overrideBlocks.put("patronBlock", new JsonObject());
+      }
+
+      if (!overrideBlocks.isEmpty()) {
+        JsonObject processingParameters = new JsonObject().put("overrideBlocks", overrideBlocks);
+        put(request, "requestProcessingParameters", processingParameters);
+      }
     }
 
     return request;

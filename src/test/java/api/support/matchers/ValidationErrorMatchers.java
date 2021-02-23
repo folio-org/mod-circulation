@@ -89,7 +89,7 @@ public class ValidationErrorMatchers {
   }
 
   public static TypeSafeDiagnosingMatcher<ValidationError> hasParameter(String key, String value) {
-    return new TypeSafeDiagnosingMatcher<ValidationError>() {
+    return new TypeSafeDiagnosingMatcher<>() {
       @Override
       public void describeTo(Description description) {
         description.appendText("has parameter with key ").appendValue(key)
@@ -114,7 +114,7 @@ public class ValidationErrorMatchers {
   }
 
   public static TypeSafeDiagnosingMatcher<ValidationError> hasMessage(String message) {
-    return new TypeSafeDiagnosingMatcher<ValidationError>() {
+    return new TypeSafeDiagnosingMatcher<>() {
       @Override
       public void describeTo(Description description) {
         description.appendText("has message ").appendValue(message);
@@ -132,7 +132,7 @@ public class ValidationErrorMatchers {
   }
 
   public static TypeSafeDiagnosingMatcher<ValidationError> hasMessageContaining(String message) {
-    return new TypeSafeDiagnosingMatcher<ValidationError>() {
+    return new TypeSafeDiagnosingMatcher<>() {
       @Override
       public void describeTo(Description description) {
         description.appendText("has message ").appendValue(message);
@@ -215,4 +215,5 @@ public class ValidationErrorMatchers {
     return isInsufficientPermissionsError("patronBlock",
       List.of("circulation.override-patron-block"));
   }
+
 }

@@ -8,9 +8,11 @@ import org.apache.commons.lang3.StringUtils;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
 @Getter
+@EqualsAndHashCode
 public class ValidationError {
   private final String message;
   private final Map<String, String> parameters;

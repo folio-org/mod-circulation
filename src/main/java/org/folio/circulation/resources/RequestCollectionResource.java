@@ -1,8 +1,8 @@
 package org.folio.circulation.resources;
 
 import static org.folio.circulation.domain.representations.RequestProperties.PROXY_USER_ID;
+import static org.folio.circulation.resources.RequestBlockValidators.regularRequestBlockValidators;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
-import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQuery;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.results.AsynchronousResult.fromFutureResult;
 import static org.folio.circulation.support.results.MappingFunctions.toFixedValue;
@@ -22,14 +22,12 @@ import org.folio.circulation.domain.UpdateLoan;
 import org.folio.circulation.domain.UpdateRequestQueue;
 import org.folio.circulation.domain.UpdateRequestService;
 import org.folio.circulation.domain.UpdateUponRequest;
-import org.folio.circulation.domain.UserManualBlock;
 import org.folio.circulation.domain.notice.schedule.RequestScheduledNoticeService;
+import org.folio.circulation.domain.override.BlockOverrides;
 import org.folio.circulation.domain.validation.ClosedRequestValidator;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.RequestLoanValidator;
 import org.folio.circulation.domain.validation.ServicePointPickupLocationValidator;
-import org.folio.circulation.domain.validation.UserManualBlocksValidator;
-import org.folio.circulation.infrastructure.storage.AutomatedPatronBlocksRepository;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
@@ -39,14 +37,14 @@ import org.folio.circulation.infrastructure.storage.requests.RequestPolicyReposi
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
-import org.folio.circulation.resources.handlers.error.DeferFailureErrorHandler;
 import org.folio.circulation.resources.handlers.error.FailFastErrorHandler;
+import org.folio.circulation.resources.handlers.error.OverridingErrorHandler;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.http.server.JsonHttpResponse;
 import org.folio.circulation.support.http.server.NoContentResponse;
+import org.folio.circulation.support.http.OkapiPermissions;
 import org.folio.circulation.support.http.server.WebContext;
-import org.folio.circulation.support.utils.OkapiHeadersUtils;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
@@ -78,23 +76,22 @@ public class RequestCollectionResource extends CollectionResource {
     final var loanPolicyRepository = new LoanPolicyRepository(clients);
     final var requestNoticeSender = RequestNoticeSender.using(clients);
     final var configurationRepository = new ConfigurationRepository(clients);
-    final var userManualBlocksValidator = findWithCqlQuery(clients.userManualBlocksStorageClient(),
-      "manualblocks", UserManualBlock::from);
 
     final var updateUponRequest = new UpdateUponRequest(new UpdateItem(clients),
       new UpdateLoan(clients, loanRepository, loanPolicyRepository),
       UpdateRequestQueue.using(clients));
 
-    final var errorHandler = new DeferFailureErrorHandler(
-      OkapiHeadersUtils.getOkapiPermissions(context.getHeaders()));
+    final var okapiPermissions = OkapiPermissions.from(context.getHeaders());
+    final var blockOverrides = BlockOverrides.fromRequest(representation);
+    final var errorHandler = new OverridingErrorHandler(okapiPermissions);
+    final var requestBlocksValidators = new RequestBlockValidators(
+      blockOverrides, okapiPermissions, clients);
 
     final var createRequestService = new CreateRequestService(
       new CreateRequestRepositories(RequestRepository.using(clients),
-        new RequestPolicyRepository(clients), configurationRepository,
-        new AutomatedPatronBlocksRepository(clients)),
+        new RequestPolicyRepository(clients), configurationRepository),
       updateUponRequest, new RequestLoanValidator(loanRepository),
-      requestNoticeSender, new UserManualBlocksValidator(userManualBlocksValidator),
-      eventPublisher, errorHandler);
+      requestNoticeSender, requestBlocksValidators, eventPublisher, errorHandler);
 
     final var requestFromRepresentationService = new RequestFromRepresentationService(
       new ItemRepository(clients, true, true, true),
@@ -131,8 +128,6 @@ public class RequestCollectionResource extends CollectionResource {
     final var eventPublisher = new EventPublisher(routingContext);
     final var requestNoticeSender = RequestNoticeSender.using(clients);
     final var configurationRepository = new ConfigurationRepository(clients);
-    final var userManualBlocksValidator = findWithCqlQuery(clients.userManualBlocksStorageClient(),
-      "manualblocks", UserManualBlock::from);
 
     final var updateItem = new UpdateItem(clients);
 
@@ -143,10 +138,9 @@ public class RequestCollectionResource extends CollectionResource {
 
     final var createRequestService = new CreateRequestService(
       new CreateRequestRepositories(requestRepository,
-        new RequestPolicyRepository(clients), configurationRepository,
-        new AutomatedPatronBlocksRepository(clients)),
+        new RequestPolicyRepository(clients), configurationRepository),
       updateUponRequest, new RequestLoanValidator(loanRepository),
-      requestNoticeSender, new UserManualBlocksValidator(userManualBlocksValidator),
+      requestNoticeSender, regularRequestBlockValidators(clients),
       eventPublisher, errorHandler);
 
     final var updateRequestService = new UpdateRequestService(requestRepository,

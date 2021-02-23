@@ -1,0 +1,20 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "A collection of extended errors",
+  "type": "object",
+  "properties": {
+    "errors": {
+      "description": "List of extended errors",
+      "id": "errors",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "$ref": "extended-error.json"
+      }
+    },
+    "total_records": {
+      "description": "Total number of errors",
+      "type": "integer"
+    }
+  }
+}

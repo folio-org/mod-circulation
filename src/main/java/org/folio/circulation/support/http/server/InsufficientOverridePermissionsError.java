@@ -2,14 +2,13 @@ package org.folio.circulation.support.http.server;
 
 import static java.util.Collections.emptyMap;
 
-import java.util.List;
+import org.folio.circulation.domain.override.OverridableBlockType;
+import org.folio.circulation.support.http.OkapiPermissions;
 
-import org.folio.circulation.resources.handlers.error.OverridableBlockType;
-
-public class InsufficientOverridePermissionsError extends OverridePermissionsValidationError {
+public class InsufficientOverridePermissionsError extends BlockOverrideError {
 
   public InsufficientOverridePermissionsError(OverridableBlockType blockType,
-    List<String> missingOverridePermissions) {
+    OkapiPermissions missingOverridePermissions) {
 
     super("Insufficient override permissions", emptyMap(),
       blockType, missingOverridePermissions);

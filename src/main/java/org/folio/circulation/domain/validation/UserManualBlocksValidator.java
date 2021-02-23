@@ -1,5 +1,6 @@
 package org.folio.circulation.domain.validation;
 
+import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQuery;
 import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
@@ -13,6 +14,7 @@ import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.UserManualBlock;
+import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.FindWithCqlQuery;
 import org.folio.circulation.support.HttpFailure;
@@ -23,9 +25,13 @@ import org.joda.time.DateTime;
 public class UserManualBlocksValidator {
   private final FindWithCqlQuery<UserManualBlock> userManualBlocksFetcher;
 
-  public UserManualBlocksValidator(
-    FindWithCqlQuery<UserManualBlock> userManualBlocksFetcher) {
+  public UserManualBlocksValidator(FindWithCqlQuery<UserManualBlock> userManualBlocksFetcher) {
     this.userManualBlocksFetcher = userManualBlocksFetcher;
+  }
+
+  public UserManualBlocksValidator(Clients clients) {
+    this(findWithCqlQuery(clients.userManualBlocksStorageClient(), "manualblocks",
+      UserManualBlock::from));
   }
 
   public CompletableFuture<Result<RequestAndRelatedRecords>> refuseWhenUserIsBlocked(

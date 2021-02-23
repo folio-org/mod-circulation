@@ -321,6 +321,9 @@
           "permissionsRequired": [
             "circulation.requests.item.post"
           ],
+          "permissionsDesired" : [
+            "circulation.override-patron-block"
+          ],
           "modulePermissions": [
             "modperms.circulation.requests.item.post"
           ]

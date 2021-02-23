@@ -2,6 +2,9 @@ package api.support.http;
 
 import java.net.URL;
 
+import lombok.Getter;
+
+@Getter
 public class OkapiHeaders {
   private final URL url;
   private final String tenantId;
@@ -40,31 +43,7 @@ public class OkapiHeaders {
       this.requestId, okapiPermissions);
   }
 
-  public URL getUrl() {
-    return url;
-  }
-
-  public String getTenantId() {
-    return tenantId;
-  }
-
-  public String getToken() {
-    return token;
-  }
-
-  public String getUserId() {
-    return userId;
-  }
-
   public boolean hasUserId() {
     return userId != null;
-  }
-
-  public String getRequestId() {
-    return requestId;
-  }
-
-  public String getOkapiPermissions() {
-    return okapiPermissions;
   }
 }

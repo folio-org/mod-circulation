@@ -1,6 +1,9 @@
 package org.folio.circulation.domain.validation;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.override.OverridableBlockType.ITEM_LIMIT_BLOCK;
+import static org.folio.circulation.domain.override.OverridableBlockType.ITEM_NOT_LOANABLE_BLOCK;
+import static org.folio.circulation.domain.override.OverridableBlockType.PATRON_BLOCK;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.PROXY_USER_BARCODE;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.SERVICE_POINT_ID;
@@ -19,12 +22,8 @@ import static org.folio.circulation.resources.handlers.error.CirculationErrorTyp
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.SERVICE_POINT_IS_NOT_PRESENT;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_BLOCKED_AUTOMATICALLY;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_INACTIVE;
-import static org.folio.circulation.resources.handlers.error.OverridableBlockType.ITEM_LIMIT_BLOCK;
-import static org.folio.circulation.resources.handlers.error.OverridableBlockType.ITEM_NOT_LOANABLE_BLOCK;
-import static org.folio.circulation.resources.handlers.error.OverridableBlockType.PATRON_BLOCK;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
@@ -33,6 +32,7 @@ import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.representations.CheckOutByBarcodeRequest;
+import org.folio.circulation.domain.validation.overriding.BlockValidator;
 import org.folio.circulation.domain.validation.overriding.OverridingLoanValidator;
 import org.folio.circulation.infrastructure.storage.AutomatedPatronBlocksRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
@@ -41,6 +41,7 @@ import org.folio.circulation.resources.OverrideCheckOutStrategy;
 import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.ValidationErrorFailure;
+import org.folio.circulation.support.http.OkapiPermissions;
 import org.folio.circulation.support.results.Result;
 
 public class CheckOutValidators {
@@ -53,14 +54,14 @@ public class CheckOutValidators {
   private final InactiveUserValidator inactiveUserValidator;
   private final InactiveUserValidator inactiveProxyUserValidator;
   private final ExistingOpenLoanValidator openLoanValidator;
-  private final Validator<LoanAndRelatedRecords> itemLimitValidator;
-  private final Validator<LoanAndRelatedRecords> loanPolicyValidator;
-  private final Validator<LoanAndRelatedRecords> automatedPatronBlocksValidator;
+  private final BlockValidator<LoanAndRelatedRecords> itemLimitValidator;
+  private final BlockValidator<LoanAndRelatedRecords> loanPolicyValidator;
+  private final BlockValidator<LoanAndRelatedRecords> automatedPatronBlocksValidator;
 
   private final CirculationErrorHandler errorHandler;
 
   public CheckOutValidators(CheckOutByBarcodeRequest request, Clients clients,
-    CirculationErrorHandler errorHandler, List<String> permissions) {
+    CirculationErrorHandler errorHandler, OkapiPermissions permissions) {
 
     this.errorHandler = errorHandler;
 
@@ -247,31 +248,31 @@ public class CheckOutValidators {
       .thenApply(r -> errorHandler.handleValidationResult(r, loanPolicyValidator.getErrorType(), relatedRecords)));
   }
 
-  private Validator<LoanAndRelatedRecords> createPatronBlocksValidator(CheckOutByBarcodeRequest request,
-    List<String> permissions, AutomatedPatronBlocksRepository automatedPatronBlocksRepository) {
+  private BlockValidator<LoanAndRelatedRecords> createPatronBlocksValidator(CheckOutByBarcodeRequest request,
+    OkapiPermissions permissions, AutomatedPatronBlocksRepository automatedPatronBlocksRepository) {
 
     return request.getBlockOverrides().getPatronBlockOverride().isRequested()
       ? new OverridingLoanValidator(PATRON_BLOCK, request.getBlockOverrides(), permissions)
-      : new Validator<>(USER_IS_BLOCKED_AUTOMATICALLY,
+      : new BlockValidator<>(USER_IS_BLOCKED_AUTOMATICALLY,
       new AutomatedPatronBlocksValidator(
         automatedPatronBlocksRepository)::refuseWhenCheckOutActionIsBlockedForPatron);
   }
 
-  private Validator<LoanAndRelatedRecords> createItemLimitValidator(CheckOutByBarcodeRequest request,
-    List<String> permissions, LoanRepository loanRepository) {
+  private BlockValidator<LoanAndRelatedRecords> createItemLimitValidator(CheckOutByBarcodeRequest request,
+    OkapiPermissions permissions, LoanRepository loanRepository) {
 
     return request.getBlockOverrides().getItemLimitBlockOverride().isRequested()
       ? new OverridingLoanValidator(ITEM_LIMIT_BLOCK, request.getBlockOverrides(), permissions)
-      : new Validator<>(ITEM_LIMIT_IS_REACHED,
+      : new BlockValidator<>(ITEM_LIMIT_IS_REACHED,
       new ItemLimitValidator(request, loanRepository)::refuseWhenItemLimitIsReached);
   }
 
-  private Validator<LoanAndRelatedRecords> createLoanPolicyValidator(CheckOutByBarcodeRequest request,
-    List<String> permissions) {
+  private BlockValidator<LoanAndRelatedRecords> createLoanPolicyValidator(CheckOutByBarcodeRequest request,
+    OkapiPermissions permissions) {
 
     return request.getBlockOverrides().getItemNotLoanableBlockOverride().isRequested()
       ? new OverridingLoanValidator(ITEM_NOT_LOANABLE_BLOCK, request.getBlockOverrides(), permissions)
-      : new Validator<>(ITEM_IS_NOT_LOANABLE,
+      : new BlockValidator<>(ITEM_IS_NOT_LOANABLE,
       new LoanPolicyValidator(request)::refuseWhenItemIsNotLoanable);
   }
 

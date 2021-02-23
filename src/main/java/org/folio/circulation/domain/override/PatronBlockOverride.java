@@ -1,4 +1,3 @@
-
 package org.folio.circulation.domain.override;
 
 import io.vertx.core.json.JsonObject;
