@@ -5,20 +5,16 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
-import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.MultipleRecords;
-import org.folio.circulation.support.Clients;
+import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
 import org.folio.circulation.support.results.Result;
 
 abstract class DefaultLoansFinder implements LoanAnonymizationFinderService {
-
   private final AccountRepository accountRepository;
-  protected Clients clients;
 
-  DefaultLoansFinder(Clients clients) {
-    this.clients = clients;
-    accountRepository = new AccountRepository(clients);
+  DefaultLoansFinder(AccountRepository accountRepository) {
+    this.accountRepository = accountRepository;
   }
 
   CompletableFuture<Result<Collection<Loan>>> fetchAdditionalLoanInfo(

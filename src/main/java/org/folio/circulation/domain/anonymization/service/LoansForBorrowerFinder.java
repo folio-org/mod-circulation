@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Loan;
+import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
@@ -15,7 +16,7 @@ public class LoansForBorrowerFinder extends DefaultLoansFinder {
   private final String userId;
 
   public LoansForBorrowerFinder(Clients clients, String userId) {
-    super(clients);
+    super(new AccountRepository(clients));
     this.userId = userId;
     loanRepository = new LoanRepository(clients);
   }
