@@ -4,6 +4,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 
 import org.folio.circulation.domain.anonymization.LoanAnonymization;
 import org.folio.circulation.domain.representations.anonymization.AnonymizeLoansRepresentation;
+import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.RouteRegistration;
@@ -31,7 +32,7 @@ public class LoanAnonymizationResource extends Resource {
 
     String borrowerId = routingContext.request().getParam("userId");
 
-    final var loanAnonymization = new LoanAnonymization(clients, new LoanRepository(clients));
+    final var loanAnonymization = new LoanAnonymization(clients, new LoanRepository(clients), new AccountRepository(clients));
 
     completedFuture(loanAnonymization.byUserId(borrowerId)
       .anonymizeLoans()
