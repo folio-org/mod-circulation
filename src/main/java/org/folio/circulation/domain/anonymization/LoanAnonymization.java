@@ -33,7 +33,7 @@ public class LoanAnonymization {
     log.info("Initializing loan anonymization for borrower");
 
     return createService(new AnonymizationCheckersService(),
-      new LoansForBorrowerFinder(clients, userId, new LoanRepository(clients)));
+      new LoansForBorrowerFinder(userId, new LoanRepository(clients), new AccountRepository(clients)));
   }
 
   public LoanAnonymizationService byCurrentTenant(LoanAnonymizationConfiguration config) {
