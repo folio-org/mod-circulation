@@ -23,32 +23,37 @@ public class LoanAnonymization {
 
   public static final PageLimit FETCH_LOANS_PAGE_LIMIT = limit(5000);
 
-  private final Clients clients;
+  private final LoanRepository loanRepository;
+  private final AccountRepository accountRepository;
+  private final AnonymizeStorageLoansRepository anonymizeStorageLoansRepository;
+  private final EventPublisher eventPublisher;
 
   public LoanAnonymization(Clients clients) {
-    this.clients = clients;
+    loanRepository = new LoanRepository(clients);
+    accountRepository = new AccountRepository(clients);
+    anonymizeStorageLoansRepository = new AnonymizeStorageLoansRepository(clients);
+    eventPublisher = new EventPublisher(clients.pubSubPublishingService());
   }
 
   public LoanAnonymizationService byUserId(String userId) {
     log.info("Initializing loan anonymization for borrower");
 
     return createService(new AnonymizationCheckersService(),
-      new LoansForBorrowerFinder(userId, new LoanRepository(clients), new AccountRepository(clients)));
+      new LoansForBorrowerFinder(userId, loanRepository, accountRepository));
   }
 
   public LoanAnonymizationService byCurrentTenant(LoanAnonymizationConfiguration config) {
     log.info("Initializing loan anonymization for current tenant");
 
     return createService(new AnonymizationCheckersService(config),
-      new LoansForTenantFinder(new LoanRepository(clients), new AccountRepository(clients)));
+      new LoansForTenantFinder(loanRepository, accountRepository));
   }
 
   private DefaultLoanAnonymizationService createService(
     AnonymizationCheckersService anonymizationCheckersService,
     LoanAnonymizationFinderService loansFinderService) {
 
-    return new DefaultLoanAnonymizationService(anonymizationCheckersService, loansFinderService,
-      new AnonymizeStorageLoansRepository(clients),
-      new EventPublisher(clients.pubSubPublishingService()));
+    return new DefaultLoanAnonymizationService(anonymizationCheckersService,
+      loansFinderService, anonymizeStorageLoansRepository, eventPublisher);
   }
 }

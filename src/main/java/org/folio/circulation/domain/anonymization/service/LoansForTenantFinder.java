@@ -15,7 +15,7 @@ public class LoansForTenantFinder extends DefaultLoansFinder {
 
   public LoansForTenantFinder(LoanRepository loanRepository,
     AccountRepository accountRepository) {
-    
+
     super(accountRepository);
     this.loanRepository = loanRepository;
   }
