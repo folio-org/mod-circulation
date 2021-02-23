@@ -11,9 +11,8 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
 
 public class LoansForBorrowerFinder extends DefaultLoansFinder {
-
   private final LoanRepository loanRepository;
-  private String userId;
+  private final String userId;
 
   public LoansForBorrowerFinder(Clients clients, String userId) {
     super(clients);
