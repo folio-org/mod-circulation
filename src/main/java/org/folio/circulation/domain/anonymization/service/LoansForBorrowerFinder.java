@@ -15,15 +15,14 @@ public class LoansForBorrowerFinder extends DefaultLoansFinder {
   private final LoanRepository loanRepository;
   private final String userId;
 
-  public LoansForBorrowerFinder(Clients clients, String userId) {
+  public LoansForBorrowerFinder(Clients clients, String userId, LoanRepository loanRepository) {
     super(new AccountRepository(clients));
     this.userId = userId;
-    loanRepository = new LoanRepository(clients);
+    this.loanRepository = loanRepository;
   }
 
   @Override
   public CompletableFuture<Result<Collection<Loan>>> findLoansToAnonymize() {
-
     return loanRepository.findClosedLoans(userId, FETCH_LOANS_PAGE_LIMIT)
       .thenCompose(this::fetchAdditionalLoanInfo);
   }
