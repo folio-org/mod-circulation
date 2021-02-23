@@ -14,9 +14,9 @@ import org.folio.circulation.support.results.Result;
 public class LoansForTenantFinder extends DefaultLoansFinder {
   private final LoanRepository loanRepository;
 
-  public LoansForTenantFinder(Clients clients) {
+  public LoansForTenantFinder(Clients clients, LoanRepository loanRepository) {
     super(new AccountRepository(clients));
-    loanRepository = new LoanRepository(clients);
+    this.loanRepository = loanRepository;
   }
 
   @Override

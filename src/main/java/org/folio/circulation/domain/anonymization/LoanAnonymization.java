@@ -10,6 +10,7 @@ import org.folio.circulation.domain.anonymization.service.LoanAnonymizationFinde
 import org.folio.circulation.domain.anonymization.service.LoansForBorrowerFinder;
 import org.folio.circulation.domain.anonymization.service.LoansForTenantFinder;
 import org.folio.circulation.infrastructure.storage.loans.AnonymizeStorageLoansRepository;
+import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.http.client.PageLimit;
@@ -38,7 +39,7 @@ public class LoanAnonymization {
     log.info("Initializing loan anonymization for current tenant");
 
     return createService(new AnonymizationCheckersService(config),
-      new LoansForTenantFinder(clients));
+      new LoansForTenantFinder(clients, new LoanRepository(clients)));
   }
 
   private DefaultLoanAnonymizationService createService(
