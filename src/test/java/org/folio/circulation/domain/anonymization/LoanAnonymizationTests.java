@@ -3,6 +3,7 @@ package org.folio.circulation.domain.anonymization;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.folio.circulation.domain.anonymization.config.ClosingType.IMMEDIATELY;
+import static org.folio.circulation.domain.anonymization.config.ClosingType.NEVER;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
@@ -62,6 +63,24 @@ public class LoanAnonymizationTests {
     verifyNoMoreInteractions(loanRepository);
 
     verify(accountRepository, times(1)).findAccountsForLoans(any());
+    verifyNoMoreInteractions(accountRepository);
+  }
+
+  @SneakyThrows
+  @Test
+  void shouldNeverAnonymizeLoans() {
+    final var config = anonymizeLoans(NEVER);
+
+    final var loanAnonymization = new LoanAnonymization(clients, loanRepository,
+      accountRepository);
+
+    final var service = loanAnonymization.byCurrentTenant(config);
+
+    final var finished = service.anonymizeLoans();
+
+    finished.get(1, SECONDS);
+
+    verifyNoMoreInteractions(loanRepository);
     verifyNoMoreInteractions(accountRepository);
   }
 

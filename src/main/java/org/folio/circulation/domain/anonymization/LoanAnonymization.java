@@ -4,6 +4,7 @@ import static org.folio.circulation.support.http.client.PageLimit.limit;
 
 import java.lang.invoke.MethodHandles;
 
+import org.folio.circulation.domain.anonymization.config.ClosingType;
 import org.folio.circulation.domain.anonymization.config.LoanAnonymizationConfiguration;
 import org.folio.circulation.domain.anonymization.service.AnonymizationCheckersService;
 import org.folio.circulation.domain.anonymization.service.LoanAnonymizationFinderService;
@@ -47,8 +48,17 @@ public class LoanAnonymization {
   public LoanAnonymizationService byCurrentTenant(LoanAnonymizationConfiguration config) {
     log.info("Initializing loan anonymization for current tenant");
 
+    if (neverAnonymizeLoans(config)) {
+      return new NeverLoanAnonymizationService();
+    }
+
     return createService(new AnonymizationCheckersService(config),
       new LoansForTenantFinder(loanRepository, accountRepository));
+  }
+
+  private boolean neverAnonymizeLoans(LoanAnonymizationConfiguration config) {
+    return config.getLoanClosingType() == ClosingType.NEVER &&
+      !config.treatLoansWithFeesAndFinesDifferently();
   }
 
   private DefaultLoanAnonymizationService createService(
