@@ -617,7 +617,7 @@
             "POST"
           ],
           "pathPattern": "/circulation/scheduled-age-to-lost",
-          "permissionsRequired": [],
+          "permissionsRequired": ["circulation.scheduled-age-to-lost.post"],
           "modulePermissions": [
             "circulation-storage.loans.item.put",
             "circulation-storage.loans.item.get",
@@ -646,7 +646,7 @@
             "POST"
           ],
           "pathPattern": "/circulation/scheduled-age-to-lost-fee-charging",
-          "permissionsRequired": [],
+          "permissionsRequired": ["circulation.scheduled-age-to-lost-fee-charging.post"],
           "modulePermissions": [
             "circulation-storage.loans.item.put",
             "circulation-storage.loans.item.get",
@@ -1291,6 +1291,16 @@
       "description": "end patron action session"
     },
     {
+      "permissionName": "circulation.scheduled-age-to-lost.post",
+      "displayName": "circulation - age to lost process",
+      "description": "age some borrowed items to lost"
+    },
+    {
+      "permissionName": "circulation.scheduled-age-to-lost-fee-charging.post",
+      "displayName": "circulation - age to lost fee charging process",
+      "description": "Issue fees to patrons for items that have aged to lost"
+    },
+    {
       "permissionName": "circulation.all",
       "displayName": "circulation - all permissions",
       "description": "Entire set of permissions needed to use the circulation",
@@ -1330,7 +1340,9 @@
         "circulation.requests.instances.item.post",
         "circulation.requests.hold-shelf-clearance-report.get",
         "circulation.inventory.items-in-transit-report.get",
-        "circulation.pick-slips.get"
+        "circulation.pick-slips.get",
+        "circulation.scheduled-age-to-lost.post",
+        "circulation.scheduled-age-to-lost-fee-charging.post"
       ]
     },
     {
