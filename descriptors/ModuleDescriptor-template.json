@@ -203,6 +203,9 @@
           ],
           "modulePermissions": [
             "circulation.renew-loan"
+          ],
+          "permissionsDesired": [
+            "circulation.override-patron-block"
           ]
         },
         {

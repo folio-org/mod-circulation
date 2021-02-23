@@ -4,6 +4,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.ItemStatus.AGED_TO_LOST;
 import static org.folio.circulation.domain.ItemStatus.CLAIMED_RETURNED;
 import static org.folio.circulation.domain.ItemStatus.DECLARED_LOST;
+import static org.folio.circulation.domain.LoanAction.RENEWED_THROUGH_OVERRIDE;
 import static org.folio.circulation.domain.RequestType.HOLD;
 import static org.folio.circulation.domain.RequestType.RECALL;
 import static org.folio.circulation.resources.RenewalValidator.CAN_NOT_RENEW_ITEM_ERROR;
@@ -83,7 +84,7 @@ public class RegularRenewalStrategy implements RenewalStrategy {
         errorWhenEarlierOrSameDueDate(loan, proposedDueDateResult.value(), errors);
       }
 
-      if (errors.isEmpty()) {
+      if (errors.isEmpty() && !RENEWED_THROUGH_OVERRIDE.getValue().equals(loan.getAction())) {
         return proposedDueDateResult.map(dueDate -> loan.renew(dueDate, loanPolicy.getId()));
       } else {
         return failedValidation(errors);

@@ -30,6 +30,7 @@ import api.support.http.CqlQuery;
 import api.support.http.IndividualResource;
 import api.support.http.Limit;
 import api.support.http.Offset;
+import api.support.http.OkapiHeaders;
 import io.vertx.core.json.JsonObject;
 
 public class LoansFixture {
@@ -111,6 +112,11 @@ public class LoansFixture {
       200, "renewal-by-barcode-request"));
   }
 
+  public IndividualResource renewLoan(RenewByBarcodeRequestBuilder builder, OkapiHeaders headers) {
+    return new IndividualResource(restAssuredClient.post(builder.create(), renewByBarcodeUrl(),
+      200, headers));
+  }
+
   public IndividualResource overrideRenewalByBarcode(OverrideRenewalByBarcodeRequestBuilder request) {
     return new IndividualResource(restAssuredClient.post(request.create(),
       overrideRenewalByBarcodeUrl(), 200, "override-renewal-by-barcode-request"));
@@ -140,6 +146,14 @@ public class LoansFixture {
     return attemptRenewal(422, item, user);
   }
 
+  public Response attemptRenewal(RenewByBarcodeRequestBuilder builder) {
+    return attemptRenewal(422, builder);
+  }
+
+  public Response attemptRenewal(RenewByBarcodeRequestBuilder builder, OkapiHeaders headers) {
+    return attemptRenewal(422, builder, headers);
+  }
+
   public Response attemptRenewal(int expectedStatusCode, IndividualResource item,
       IndividualResource user) {
 
@@ -150,6 +164,23 @@ public class LoansFixture {
 
     return restAssuredClient.post(request, renewByBarcodeUrl(),
       expectedStatusCode, "renewal-by-barcode-request");
+  }
+
+  public Response attemptRenewal(int expectedStatusCode,
+    RenewByBarcodeRequestBuilder builder) {
+
+    JsonObject request = builder.create();
+
+    return restAssuredClient.post(request, renewByBarcodeUrl(), expectedStatusCode,
+      "renewal-by-barcode-request");
+  }
+
+  public Response attemptRenewal(int expectedStatusCode,
+    RenewByBarcodeRequestBuilder builder, OkapiHeaders headers) {
+
+    JsonObject request = builder.create();
+
+    return restAssuredClient.post(request, renewByBarcodeUrl(), expectedStatusCode, headers);
   }
 
   public Response attemptOverride(IndividualResource item, IndividualResource user,

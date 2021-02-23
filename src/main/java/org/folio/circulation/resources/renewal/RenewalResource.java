@@ -1,23 +1,27 @@
 package org.folio.circulation.resources.renewal;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.override.OverridableBlockType.PATRON_BLOCK;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_USER;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FIND_SINGLE_OPEN_LOAN;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ITEM_DOES_NOT_EXIST;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.RENEWAL_VALIDATION_ERROR;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_BLOCKED_AUTOMATICALLY;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getObjectProperty;
 import static org.folio.circulation.support.results.Result.succeeded;
 
-import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 import org.folio.circulation.StoreLoanAndItem;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanRepresentation;
 import org.folio.circulation.domain.notice.schedule.FeeFineScheduledNoticeService;
 import org.folio.circulation.domain.notice.schedule.LoanScheduledNoticeService;
+import org.folio.circulation.domain.override.BlockOverrides;
 import org.folio.circulation.domain.validation.AutomatedPatronBlocksValidator;
+import org.folio.circulation.domain.validation.Validator;
+import org.folio.circulation.domain.validation.overriding.BlockValidator;
+import org.folio.circulation.domain.validation.overriding.OverridingRenewValidator;
 import org.folio.circulation.infrastructure.storage.AutomatedPatronBlocksRepository;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
@@ -33,11 +37,9 @@ import org.folio.circulation.resources.handlers.error.OverridingErrorHandler;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.RouteRegistration;
-import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.OkapiPermissions;
 import org.folio.circulation.support.http.server.HttpResponse;
 import org.folio.circulation.support.http.server.JsonHttpResponse;
-import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.Result;
 
@@ -92,16 +94,15 @@ public abstract class RenewalResource extends Resource {
 
     final AutomatedPatronBlocksRepository automatedPatronBlocksRepository =
       new AutomatedPatronBlocksRepository(clients);
-    final AutomatedPatronBlocksValidator automatedPatronBlocksValidator =
-      new AutomatedPatronBlocksValidator(automatedPatronBlocksRepository,
-        messages -> new ValidationErrorFailure(messages.stream()
-          .map(message -> new ValidationError(message, new HashMap<>()))
-          .collect(Collectors.toList())));
     final FeeFineScheduledNoticeService feeFineNoticesService =
       FeeFineScheduledNoticeService.using(clients);
 
+
     //TODO: Validation check for same user should be in the domain service
     JsonObject bodyAsJson = routingContext.getBodyAsJson();
+    OkapiPermissions permissions = OkapiPermissions.from(new WebContext(routingContext).getHeaders());
+    final Validator<RenewalContext> automatedPatronBlocksValidator = createPatronBlocksValidator(bodyAsJson,
+      permissions, automatedPatronBlocksRepository);
 
     findLoan(bodyAsJson, loanRepository, itemRepository, userRepository, errorHandler)
       .thenApply(r -> r.map(loan -> RenewalContext.create(loan, bodyAsJson, webContext.getUserId())))
@@ -126,7 +127,7 @@ public abstract class RenewalResource extends Resource {
   }
 
   private CompletableFuture<Result<RenewalContext>> refuseWhenRenewalActionIsBlockedForPatron(
-    AutomatedPatronBlocksValidator validator, Result<RenewalContext> result,
+    Validator<RenewalContext> validator, Result<RenewalContext> result,
     CirculationErrorHandler errorHandler) {
 
     if (errorHandler.hasAny(ITEM_DOES_NOT_EXIST, FAILED_TO_FIND_SINGLE_OPEN_LOAN,
@@ -135,8 +136,7 @@ public abstract class RenewalResource extends Resource {
       return completedFuture(result);
     }
 
-    return result.after(renewalContext ->
-      validator.refuseWhenRenewalActionIsBlockedForPatron(renewalContext)
+    return result.after(renewalContext -> validator.validate(renewalContext)
         .thenApply(r -> errorHandler.handleValidationResult(r, USER_IS_BLOCKED_AUTOMATICALLY,
           result)));
   }
@@ -186,4 +186,17 @@ public abstract class RenewalResource extends Resource {
   protected abstract CompletableFuture<Result<Loan>> findLoan(JsonObject request,
     LoanRepository loanRepository, ItemRepository itemRepository,
     UserRepository userRepository, CirculationErrorHandler errorHandler);
+
+  private Validator<RenewalContext> createPatronBlocksValidator(JsonObject request,
+    OkapiPermissions permissions, AutomatedPatronBlocksRepository automatedPatronBlocksRepository) {
+
+    final BlockOverrides blockOverrides = BlockOverrides.from(
+      getObjectProperty(request, "overrideBlocks"));
+
+    return blockOverrides.getPatronBlockOverride().isRequested()
+      && renewalStrategy instanceof RegularRenewalStrategy
+      ? new OverridingRenewValidator(PATRON_BLOCK, blockOverrides, permissions)
+      : new BlockValidator<>(USER_IS_BLOCKED_AUTOMATICALLY, new AutomatedPatronBlocksValidator(
+      automatedPatronBlocksRepository)::refuseWhenRenewalActionIsBlockedForPatron);
+  }
 }
