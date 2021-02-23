@@ -28,8 +28,8 @@ public class LoanAnonymization {
   private final AnonymizeStorageLoansRepository anonymizeStorageLoansRepository;
   private final EventPublisher eventPublisher;
 
-  public LoanAnonymization(Clients clients) {
-    loanRepository = new LoanRepository(clients);
+  public LoanAnonymization(Clients clients, LoanRepository loanRepository) {
+    this.loanRepository = loanRepository;
     accountRepository = new AccountRepository(clients);
     anonymizeStorageLoansRepository = new AnonymizeStorageLoansRepository(clients);
     eventPublisher = new EventPublisher(clients.pubSubPublishingService());
