@@ -4,7 +4,6 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.ItemStatus.AGED_TO_LOST;
 import static org.folio.circulation.domain.ItemStatus.CLAIMED_RETURNED;
 import static org.folio.circulation.domain.ItemStatus.DECLARED_LOST;
-import static org.folio.circulation.domain.LoanAction.RENEWED_THROUGH_OVERRIDE;
 import static org.folio.circulation.domain.RequestType.HOLD;
 import static org.folio.circulation.domain.RequestType.RECALL;
 import static org.folio.circulation.resources.RenewalValidator.CAN_NOT_RENEW_ITEM_ERROR;
@@ -15,6 +14,7 @@ import static org.folio.circulation.resources.RenewalValidator.errorWhenEarlierO
 import static org.folio.circulation.resources.RenewalValidator.itemByIdValidationError;
 import static org.folio.circulation.resources.RenewalValidator.loanPolicyValidationError;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getObjectProperty;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
 import java.util.ArrayList;
@@ -26,6 +26,7 @@ import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestQueue;
+import org.folio.circulation.domain.override.BlockOverrides;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.library.ClosedLibraryStrategyService;
 import org.folio.circulation.resources.context.RenewalContext;
@@ -52,11 +53,36 @@ public class RegularRenewalStrategy implements RenewalStrategy {
   }
 
   private Result<RenewalContext> renew(RenewalContext context) {
-    Loan loan = context.getLoan();
-    RequestQueue requestQueue = context.getRequestQueue();
-
-    return renew(loan, DateTime.now(DateTimeZone.UTC), requestQueue)
+    return renew(context, DateTime.now(DateTimeZone.UTC), context.getRequestQueue())
       .map(context::withLoan);
+  }
+
+  private Result<Loan> renew(RenewalContext context, DateTime systemDate,
+    RequestQueue requestQueue) {
+
+    Loan loan = context.getLoan();
+    try {
+      final var errors = validateIfRenewIsAllowed(loan, requestQueue);
+      final var loanPolicy = loan.getLoanPolicy();
+
+      if (loanPolicy.isNotLoanable() || loanPolicy.isNotRenewable()) {
+        return failedValidation(errors);
+      }
+
+      final Result<DateTime> proposedDueDateResult = calculateNewDueDate(loan, requestQueue,
+        systemDate);
+      addErrorsIfDueDateResultFailed(loan, errors, proposedDueDateResult);
+
+      final BlockOverrides blockOverrides = BlockOverrides.from(getObjectProperty(
+        context.getRenewalRequest(), "overrideBlocks"));
+      if (errors.isEmpty() && !blockOverrides.getPatronBlockOverride().isRequested()) {
+        return proposedDueDateResult.map(dueDate -> loan.renew(dueDate, loanPolicy.getId()));
+      } else {
+        return failedValidation(errors);
+      }
+    } catch (Exception e) {
+      return failedDueToServerError(e);
+    }
   }
 
   public Result<Loan> renew(Loan loan, DateTime systemDate, RequestQueue requestQueue) {
@@ -73,24 +99,29 @@ public class RegularRenewalStrategy implements RenewalStrategy {
         calculateNewDueDate(loan, requestQueue, systemDate);
 
       //TODO: Need a more elegent way of combining validation errors
-      if (proposedDueDateResult.failed()) {
-        if (proposedDueDateResult.cause() instanceof ValidationErrorFailure) {
-          ValidationErrorFailure failureCause =
-            (ValidationErrorFailure) proposedDueDateResult.cause();
+      addErrorsIfDueDateResultFailed(loan, errors, proposedDueDateResult);
 
-          errors.addAll(failureCause.getErrors());
-        }
-      } else {
-        errorWhenEarlierOrSameDueDate(loan, proposedDueDateResult.value(), errors);
-      }
-
-      if (errors.isEmpty() && !RENEWED_THROUGH_OVERRIDE.getValue().equals(loan.getAction())) {
+      if (errors.isEmpty()) {
         return proposedDueDateResult.map(dueDate -> loan.renew(dueDate, loanPolicy.getId()));
       } else {
         return failedValidation(errors);
       }
     } catch (Exception e) {
       return failedDueToServerError(e);
+    }
+  }
+
+  private void addErrorsIfDueDateResultFailed(Loan loan, List<ValidationError> errors,
+    Result<DateTime> proposedDueDateResult) {
+
+    if (proposedDueDateResult.failed()) {
+      if (proposedDueDateResult.cause() instanceof ValidationErrorFailure) {
+        var failureCause = (ValidationErrorFailure) proposedDueDateResult.cause();
+
+        errors.addAll(failureCause.getErrors());
+      }
+    } else {
+      errorWhenEarlierOrSameDueDate(loan, proposedDueDateResult.value(), errors);
     }
   }
 
