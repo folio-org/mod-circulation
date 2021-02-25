@@ -5,6 +5,8 @@ import static org.folio.circulation.support.results.AsynchronousResultBindings.s
 import org.folio.circulation.domain.anonymization.LoanAnonymization;
 import org.folio.circulation.domain.representations.anonymization.AnonymizeLoansRepresentation;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
+import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
+import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.server.JsonHttpResponse;
@@ -21,7 +23,6 @@ import io.vertx.ext.web.RoutingContext;
  *
  */
 public class ScheduledAnonymizationProcessingResource extends Resource {
-
   public ScheduledAnonymizationProcessingResource(HttpClient client) {
     super(client);
   }
@@ -37,7 +38,8 @@ public class ScheduledAnonymizationProcessingResource extends Resource {
     final Clients clients = Clients.create(context, client);
 
     ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
-    LoanAnonymization loanAnonymization = new LoanAnonymization(clients);
+    LoanAnonymization loanAnonymization = new LoanAnonymization(clients,
+      new LoanRepository(clients), new AccountRepository(clients));
 
     safelyInitialise(configurationRepository::loanHistoryConfiguration)
       .thenCompose(r -> r.after(config -> loanAnonymization
