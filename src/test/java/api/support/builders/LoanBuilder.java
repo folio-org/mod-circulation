@@ -16,6 +16,7 @@ import io.vertx.core.json.JsonObject;
 public class LoanBuilder extends JsonBuilder implements Builder {
   private final static String OPEN_LOAN_STATUS = "Open";
   private final static String CLOSED_LOAN_STATUS = "Closed";
+  private final static String CLAIMED_RETURNED_LOAN_ACTION = "claimedReturned";
 
   private final UUID id;
   private final UUID itemId;
@@ -142,6 +143,11 @@ public class LoanBuilder extends JsonBuilder implements Builder {
   public LoanBuilder withNoStatus() {
     return new LoanBuilder(this.id, this.itemId, this.userId, this.loanDate, this.dueDate, null, this.returnDate,
         this.systemReturnDate, null, this.proxyUserId, this.checkoutServicePointId, this.checkinServicePointId,
+        this.dueDateChangedByRecall, this.policies);
+  }
+   public LoanBuilder withClaimedReturnedLoanAction() {
+    return new LoanBuilder(this.id, this.itemId, this.userId, this.loanDate, this.dueDate, null, this.returnDate,
+        this.systemReturnDate, CLAIMED_RETURNED_LOAN_ACTION, this.proxyUserId, this.checkoutServicePointId, this.checkinServicePointId,
         this.dueDateChangedByRecall, this.policies);
   }
 
