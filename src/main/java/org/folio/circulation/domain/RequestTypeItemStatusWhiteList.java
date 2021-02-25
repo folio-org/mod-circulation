@@ -17,6 +17,7 @@ import static org.folio.circulation.domain.ItemStatus.MISSING;
 import static org.folio.circulation.domain.ItemStatus.NONE;
 import static org.folio.circulation.domain.ItemStatus.ON_ORDER;
 import static org.folio.circulation.domain.ItemStatus.PAGED;
+import static org.folio.circulation.domain.ItemStatus.RESTRICTED;
 import static org.folio.circulation.domain.ItemStatus.UNAVAILABLE;
 import static org.folio.circulation.domain.ItemStatus.UNKNOWN;
 import static org.folio.circulation.domain.ItemStatus.WITHDRAWN;
@@ -53,6 +54,7 @@ public class RequestTypeItemStatusWhiteList {
     recallRules.put(PAGED, true);
     recallRules.put(ON_ORDER, true);
     recallRules.put(IN_PROCESS, true);
+    recallRules.put(RESTRICTED, true);
     recallRules.put(DECLARED_LOST, false);
     recallRules.put(CLAIMED_RETURNED, false);
     recallRules.put(WITHDRAWN, false);
@@ -77,6 +79,7 @@ public class RequestTypeItemStatusWhiteList {
     holdRules.put(PAGED, true);
     holdRules.put(ON_ORDER, true);
     holdRules.put(IN_PROCESS, true);
+    holdRules.put(RESTRICTED, true);
     holdRules.put(DECLARED_LOST, false);
     holdRules.put(CLAIMED_RETURNED, false);
     holdRules.put(WITHDRAWN, false);
@@ -94,6 +97,7 @@ public class RequestTypeItemStatusWhiteList {
     pageRules = new EnumMap<>(ItemStatus.class);
     pageRules.put(CHECKED_OUT, false);
     pageRules.put(AVAILABLE, true);
+    pageRules.put(RESTRICTED, true);
     pageRules.put(AWAITING_PICKUP, false);
     pageRules.put(AWAITING_DELIVERY, false);
     pageRules.put(IN_TRANSIT, false);
