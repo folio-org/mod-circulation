@@ -122,6 +122,19 @@ public class LoansFixture {
       overrideRenewalByBarcodeUrl(), 200, "override-renewal-by-barcode-request"));
   }
 
+  public IndividualResource overrideRenewalByBarcode(OverrideRenewalByBarcodeRequestBuilder request,
+    OkapiHeaders headers) {
+
+    return new IndividualResource(restAssuredClient.post(request.create(),
+      overrideRenewalByBarcodeUrl(), 200, headers));
+  }
+
+  public Response attemptOverrideRenewalByBarcode(OverrideRenewalByBarcodeRequestBuilder request) {
+
+    return restAssuredClient.post(request.create(), overrideRenewalByBarcodeUrl(), 422,
+      "override-renewal-by-barcode-request");
+  }
+
   public IndividualResource overrideRenewalByBarcode(IndividualResource item,
       IndividualResource user, String comment, String dueDate) {
 

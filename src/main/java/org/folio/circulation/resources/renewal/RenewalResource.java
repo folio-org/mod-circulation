@@ -18,9 +18,11 @@ import org.folio.circulation.domain.LoanRepresentation;
 import org.folio.circulation.domain.notice.schedule.FeeFineScheduledNoticeService;
 import org.folio.circulation.domain.notice.schedule.LoanScheduledNoticeService;
 import org.folio.circulation.domain.override.BlockOverrides;
+import org.folio.circulation.domain.override.PatronBlockOverride;
 import org.folio.circulation.domain.validation.AutomatedPatronBlocksValidator;
 import org.folio.circulation.domain.validation.Validator;
 import org.folio.circulation.domain.validation.overriding.BlockValidator;
+import org.folio.circulation.domain.validation.overriding.CombinedOverridingRenewValidator;
 import org.folio.circulation.domain.validation.overriding.OverridingRenewValidator;
 import org.folio.circulation.infrastructure.storage.AutomatedPatronBlocksRepository;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
@@ -30,6 +32,7 @@ import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.LoanNoticeSender;
+import org.folio.circulation.resources.OverrideCheckOutStrategy;
 import org.folio.circulation.resources.Resource;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
@@ -43,6 +46,7 @@ import org.folio.circulation.support.http.server.JsonHttpResponse;
 import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.Result;
 
+import io.netty.util.internal.StringUtil;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
@@ -106,8 +110,8 @@ public abstract class RenewalResource extends Resource {
 
     findLoan(bodyAsJson, loanRepository, itemRepository, userRepository, errorHandler)
       .thenApply(r -> r.map(loan -> RenewalContext.create(loan, bodyAsJson, webContext.getUserId())))
-      .thenComposeAsync(r ->
-        refuseWhenRenewalActionIsBlockedForPatron(automatedPatronBlocksValidator, r, errorHandler))
+      .thenComposeAsync(r -> refuseWhenRenewalActionIsBlockedForPatron(
+        automatedPatronBlocksValidator, r, errorHandler))
       .thenCompose(r -> r.after(ctx -> lookupLoanPolicy(ctx, loanPolicyRepository, errorHandler)))
       .thenComposeAsync(r -> r.after(
         ctx -> lookupRequestQueue(ctx, requestQueueRepository, errorHandler)))
@@ -189,6 +193,14 @@ public abstract class RenewalResource extends Resource {
 
   private Validator<RenewalContext> createPatronBlocksValidator(JsonObject request,
     OkapiPermissions permissions, AutomatedPatronBlocksRepository automatedPatronBlocksRepository) {
+
+    if (renewalStrategy instanceof OverrideRenewalStrategy) {
+
+      return new CombinedOverridingRenewValidator(PATRON_BLOCK, new BlockOverrides(null,
+        new PatronBlockOverride(true), null, ""), permissions,
+        new AutomatedPatronBlocksValidator(
+          automatedPatronBlocksRepository)::refuseWhenRenewalActionIsBlockedForPatron);
+    }
 
     final BlockOverrides blockOverrides = BlockOverrides.from(
       getObjectProperty(request, "overrideBlocks"));

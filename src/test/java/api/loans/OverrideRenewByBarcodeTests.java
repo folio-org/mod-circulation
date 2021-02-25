@@ -1,5 +1,7 @@
 package api.loans;
 
+import static api.loans.CheckOutByBarcodeTests.INSUFFICIENT_OVERRIDE_PERMISSIONS;
+import static api.support.APITestContext.getOkapiHeadersFromContext;
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
 import static api.support.builders.FixedDueDateSchedule.forDay;
@@ -15,12 +17,14 @@ import static api.support.matchers.LoanAccountMatcher.hasNoOverdueFine;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
+import static api.support.utl.BlockOverridesUtils.getMissingPermissions;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.awaitility.Awaitility.waitAtMost;
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
 import static org.hamcrest.CoreMatchers.allOf;
+import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -59,6 +63,7 @@ import api.support.fixtures.TemplateContextMatchers;
 import api.support.fixtures.policies.PoliciesToActivate;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
+import api.support.http.OkapiHeaders;
 import api.support.http.UserResource;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
@@ -68,6 +73,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   private static final String ITEM_IS_NOT_LOANABLE_MESSAGE = "item is not loanable";
   private static final String ACTION_COMMENT_KEY = "actionComment";
   private static final String RENEWED_THROUGH_OVERRIDE = "renewedThroughOverride";
+  private static final String OVERRIDE_PATRON_BLOCK_PERMISSION = "circulation.override-patron-block";
 
   @Test
   public void cannotOverrideRenewalWhenLoanPolicyDoesNotExist() {
@@ -767,6 +773,47 @@ public class OverrideRenewByBarcodeTests extends APITests {
     assertThat(renewedLoan, hasNoOverdueFine());
   }
 
+  @Test
+  public void canOverrideRenewalWhenItemIsAgedToLostAndPatronIsBlocked() {
+    final DateTime approximateRenewalDate = DateTime.now(UTC).plusWeeks(3);
+    val result = ageToLostFixture.createAgedToLostLoan();
+
+    automatedPatronBlocksFixture.blockAction(result.getUser().getId().toString(),
+      false, true, false);
+    final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
+      OVERRIDE_PATRON_BLOCK_PERMISSION);
+
+    final JsonObject renewedLoan = loansFixture.overrideRenewalByBarcode(
+      new OverrideRenewalByBarcodeRequestBuilder()
+        .forItem(result.getItem())
+        .forUser(result.getUser())
+        .withComment(OVERRIDE_COMMENT), okapiHeaders)
+      .getJson();
+
+    verifyRenewedLoan(result.getItem(), result.getUser(), renewedLoan);
+    assertThat(renewedLoan, hasJsonPath("item.status.name", "Checked out"));
+    assertThat(itemsClient.get(result.getItem()).getJson(), isCheckedOut());
+    assertThat(renewedLoan.getString("dueDate"), withinSecondsAfter(seconds(2),
+      approximateRenewalDate));
+  }
+
+  @Test
+  public void cannotOverrideRenewalWhenItemIsAgedToLostAndPatronIsBlockedWithNoPermissions() {
+    val result = ageToLostFixture.createAgedToLostLoan();
+    automatedPatronBlocksFixture.blockAction(result.getUser().getId().toString(),
+      false, true, false);
+
+    Response response = loansFixture.attemptOverrideRenewalByBarcode(
+      new OverrideRenewalByBarcodeRequestBuilder()
+        .forItem(result.getItem())
+        .forUser(result.getUser())
+        .withComment(OVERRIDE_COMMENT));
+
+    assertThat(response.getJson(), hasErrorWith(hasMessage(INSUFFICIENT_OVERRIDE_PERMISSIONS)));
+    assertThat(getMissingPermissions(response), hasSize(1));
+    assertThat(getMissingPermissions(response), hasItem(OVERRIDE_PATRON_BLOCK_PERMISSION));
+  }
+
   private Matcher<ValidationError> hasUserRelatedParameter(IndividualResource user) {
     return hasParameter("userBarcode", user.getJson().getString("barcode"));
   }
@@ -813,5 +860,11 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     assertThat("'actionComment' field should contain comment specified for override",
       renewedLoan.getString(ACTION_COMMENT_KEY), is(OVERRIDE_COMMENT));
+  }
+
+  private OkapiHeaders buildOkapiHeadersWithPermissions(String permissions) {
+    return getOkapiHeadersFromContext()
+      .withRequestId("override-renewal-by-barcode-request")
+      .withOkapiPermissions("[\"" + permissions + "\"]");
   }
 }

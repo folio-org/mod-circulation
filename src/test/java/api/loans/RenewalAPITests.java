@@ -1539,7 +1539,7 @@ public abstract class RenewalAPITests extends APITests {
 
     checkOutFixture.checkOutByBarcode(item, jessica,
       new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
-    automatedPatronBlocksFixture.blockAction(jessica.getId().toString(), false, true, true);
+    automatedPatronBlocksFixture.blockAction(jessica.getId().toString(), false, true, false);
 
     final Response response = attemptRenewal(item, jessica);
 
@@ -1570,7 +1570,7 @@ public abstract class RenewalAPITests extends APITests {
 
     checkOutFixture.checkOutByBarcode(item, jessica,
       new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
-    automatedPatronBlocksFixture.blockAction(jessica.getId().toString(), false, true, true);
+    automatedPatronBlocksFixture.blockAction(jessica.getId().toString(), false, true, false);
 
     Response response = loansFixture.attemptRenewal(
       new RenewByBarcodeRequestBuilder()
@@ -1591,7 +1591,7 @@ public abstract class RenewalAPITests extends APITests {
 
     checkOutFixture.checkOutByBarcode(item, jessica,
       new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
-    automatedPatronBlocksFixture.blockAction(jessica.getId().toString(), false, true, true);
+    automatedPatronBlocksFixture.blockAction(jessica.getId().toString(), false, true, false);
 
     final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
       OVERRIDE_ITEM_LIMIT_BLOCK_PERMISSION);

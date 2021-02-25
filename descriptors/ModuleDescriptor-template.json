@@ -218,6 +218,9 @@
           ],
           "modulePermissions": [
             "modperms.circulation.override-renewal-by-barcode.post"
+          ],
+          "permissionsDesired": [
+            "circulation.override-patron-block"
           ]
         },
         {
