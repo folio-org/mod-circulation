@@ -4,6 +4,8 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 
 import org.folio.circulation.domain.anonymization.LoanAnonymization;
 import org.folio.circulation.domain.representations.anonymization.AnonymizeLoansRepresentation;
+import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
+import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.server.JsonHttpResponse;
@@ -14,7 +16,6 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
 public class LoanAnonymizationResource extends Resource {
-
   public LoanAnonymizationResource(HttpClient client) {
     super(client);
   }
@@ -31,7 +32,9 @@ public class LoanAnonymizationResource extends Resource {
 
     String borrowerId = routingContext.request().getParam("userId");
 
-    completedFuture(new LoanAnonymization(clients).byUserId(borrowerId)
+    final var loanAnonymization = new LoanAnonymization(clients, new LoanRepository(clients), new AccountRepository(clients));
+
+    completedFuture(loanAnonymization.byUserId(borrowerId)
       .anonymizeLoans()
       .thenApply(AnonymizeLoansRepresentation::from)
       .thenApply(r -> r.map(JsonHttpResponse::ok))

@@ -15,6 +15,7 @@ import static org.folio.circulation.domain.ItemStatus.LONG_MISSING;
 import static org.folio.circulation.domain.ItemStatus.LOST_AND_PAID;
 import static org.folio.circulation.domain.ItemStatus.ON_ORDER;
 import static org.folio.circulation.domain.ItemStatus.PAGED;
+import static org.folio.circulation.domain.ItemStatus.RESTRICTED;
 import static org.folio.circulation.domain.ItemStatus.UNAVAILABLE;
 import static org.folio.circulation.domain.ItemStatus.UNKNOWN;
 import static org.folio.circulation.domain.ItemStatus.WITHDRAWN;
@@ -31,8 +32,7 @@ import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
 
 @RunWith(JUnitParamsRunner.class)
-public class RequestTypeItemStatusWhiteListTests {
-
+public class  RequestTypeItemStatusWhiteListTests {
   @Test
   public void canCreateHoldRequestWhenItemStatusCheckedOut() {
     assertTrue(canCreateRequestForItem(CHECKED_OUT, HOLD));
@@ -116,6 +116,16 @@ public class RequestTypeItemStatusWhiteListTests {
   @Test
   public void cannotCreateNoneRequestWhenItemStatusAwaitingDelivery() {
     assertFalse(canCreateRequestForItem(AWAITING_DELIVERY, RequestType.NONE));
+  }
+
+  @Test
+  @Parameters({
+    "Hold",
+    "Recall",
+    "Page"
+  })
+  public void canCreateRequestWhenItemIsRestricted(String requestType) {
+    assertTrue(canCreateRequestForItem(RESTRICTED, from(requestType)));
   }
 
   @Test

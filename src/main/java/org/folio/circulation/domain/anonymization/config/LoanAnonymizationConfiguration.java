@@ -9,14 +9,14 @@ import org.folio.circulation.domain.policy.Period;
 import io.vertx.core.json.JsonObject;
 
 public class LoanAnonymizationConfiguration {
-
   private static final String FEEFINE = "feeFine";
-  private JsonObject representation;
-  private ClosingType loanClosingType;
-  private ClosingType feesAndFinesClosingType;
-  private boolean treatLoansWithFeesAndFinesDifferently;
-  private Period loanClosePeriod;
-  private Period feeFineClosePeriod;
+
+  private final JsonObject representation;
+  private final ClosingType loanClosingType;
+  private final ClosingType feesAndFinesClosingType;
+  private final boolean treatLoansWithFeesAndFinesDifferently;
+  private final Period loanClosePeriod;
+  private final Period feeFineClosePeriod;
 
   private LoanAnonymizationConfiguration(JsonObject representation) {
     this.representation = representation;

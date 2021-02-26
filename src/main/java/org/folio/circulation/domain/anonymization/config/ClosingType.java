@@ -7,13 +7,12 @@ import java.util.Objects;
  * Enum for loan`s closing type representation.
  */
 public enum ClosingType {
-
   IMMEDIATELY("immediately"),
   INTERVAL("interval"),
   NEVER("never"),
   UNKNOWN("Unknown");
 
-  private String representation;
+  private final String representation;
 
   ClosingType(String representation) {
     this.representation = representation;
