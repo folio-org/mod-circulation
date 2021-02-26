@@ -1,6 +1,5 @@
 package api.requests;
 
-import static api.support.APITestContext.getOkapiHeadersFromContext;
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
 import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
 import static api.support.fakes.FakePubSub.getPublishedEventsAsList;
@@ -24,6 +23,7 @@ import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static api.support.matchers.ValidationErrorMatchers.isBlockRelatedError;
 import static api.support.matchers.ValidationErrorMatchers.isInsufficientPermissionsToOverridePatronBlockError;
+import static api.support.utl.BlockOverridesUtils.buildOkapiHeadersWithPermissions;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -2247,11 +2247,6 @@ RequestsAPICreationTests extends APITests {
     assertThat(missingItem.getResponse().getJson().getJsonObject("status").getString("name"), is(ItemStatus.MISSING.getValue()));
 
     return missingItem;
-  }
-
-  private static OkapiHeaders buildOkapiHeadersWithPermissions(String... permission) {
-    return getOkapiHeadersFromContext().withOkapiPermissions(
-      new JsonArray(List.of(permission)).encode());
   }
 
   private void createManualPatronBlockForUser(UUID requesterId) {

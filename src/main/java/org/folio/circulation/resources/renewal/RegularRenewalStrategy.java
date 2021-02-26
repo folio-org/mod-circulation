@@ -48,19 +48,15 @@ public class RegularRenewalStrategy implements RenewalStrategy {
     final ClosedLibraryStrategyService strategyService =
       ClosedLibraryStrategyService.using(clients, DateTime.now(DateTimeZone.UTC), true);
 
-    return completedFuture(renew(context))
+    return completedFuture(renew(context)
+      .map(context::withLoan))
       .thenCompose(r -> r.after(strategyService::applyClosedLibraryDueDateManagement));
   }
 
-  private Result<RenewalContext> renew(RenewalContext context) {
-    return renew(context, DateTime.now(DateTimeZone.UTC), context.getRequestQueue())
-      .map(context::withLoan);
-  }
-
-  private Result<Loan> renew(RenewalContext context, DateTime systemDate,
-    RequestQueue requestQueue) {
+  private Result<Loan> renew(RenewalContext context) {
 
     Loan loan = context.getLoan();
+    RequestQueue requestQueue = context.getRequestQueue();
     try {
       final var errors = validateIfRenewIsAllowed(loan, requestQueue);
       final var loanPolicy = loan.getLoanPolicy();
@@ -70,16 +66,22 @@ public class RegularRenewalStrategy implements RenewalStrategy {
       }
 
       final Result<DateTime> proposedDueDateResult = calculateNewDueDate(loan, requestQueue,
-        systemDate);
+        DateTime.now(DateTimeZone.UTC));
       addErrorsIfDueDateResultFailed(loan, errors, proposedDueDateResult);
 
       final BlockOverrides blockOverrides = BlockOverrides.from(getObjectProperty(
         context.getRenewalRequest(), "overrideBlocks"));
-      if (errors.isEmpty() && !blockOverrides.getPatronBlockOverride().isRequested()) {
-        return proposedDueDateResult.map(dueDate -> loan.renew(dueDate, loanPolicy.getId()));
-      } else {
-        return failedValidation(errors);
+
+      if (errors.isEmpty()) {
+        if (!blockOverrides.getPatronBlockOverride().isRequested()) {
+          return proposedDueDateResult.map(dueDate -> loan.renew(dueDate, loanPolicy.getId()));
+        }
+        if (context.isPatronBlockOverridden()) {
+          return proposedDueDateResult.map(dueDate -> loan.overrideRenewal(dueDate,
+            loanPolicy.getId(), blockOverrides.getComment()));
+        }
       }
+      return failedValidation(errors);
     } catch (Exception e) {
       return failedDueToServerError(e);
     }

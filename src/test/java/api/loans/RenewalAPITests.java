@@ -1,7 +1,6 @@
 package api.loans;
 
 import static api.loans.CheckOutByBarcodeTests.INSUFFICIENT_OVERRIDE_PERMISSIONS;
-import static api.support.APITestContext.getOkapiHeadersFromContext;
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
 import static api.support.builders.FixedDueDateSchedule.forDay;
@@ -32,6 +31,7 @@ import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static api.support.matchers.ValidationErrorMatchers.isBlockRelatedError;
+import static api.support.utl.BlockOverridesUtils.buildOkapiHeadersWithPermissions;
 import static api.support.utl.BlockOverridesUtils.getMissingPermissions;
 import static org.awaitility.Awaitility.waitAtMost;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
@@ -1663,11 +1663,5 @@ public abstract class RenewalAPITests extends APITests {
 
   private static JsonArray getErrorsFromResponse(Response response) {
     return response.getJson().getJsonArray("errors");
-  }
-
-  private OkapiHeaders buildOkapiHeadersWithPermissions(String permissions) {
-    return getOkapiHeadersFromContext()
-      .withRequestId("renewal-by-barcode-request")
-      .withOkapiPermissions("[\"" + permissions + "\"]");
   }
 }

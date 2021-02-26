@@ -195,7 +195,6 @@ public abstract class RenewalResource extends Resource {
     OkapiPermissions permissions, AutomatedPatronBlocksRepository automatedPatronBlocksRepository) {
 
     if (renewalStrategy instanceof OverrideRenewalStrategy) {
-
       return new CombinedOverridingRenewValidator(PATRON_BLOCK, new BlockOverrides(null,
         new PatronBlockOverride(true), null, ""), permissions,
         new AutomatedPatronBlocksValidator(

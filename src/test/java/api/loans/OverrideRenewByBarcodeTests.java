@@ -1,7 +1,6 @@
 package api.loans;
 
 import static api.loans.CheckOutByBarcodeTests.INSUFFICIENT_OVERRIDE_PERMISSIONS;
-import static api.support.APITestContext.getOkapiHeadersFromContext;
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
 import static api.support.builders.FixedDueDateSchedule.forDay;
@@ -10,13 +9,14 @@ import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.matchers.ItemMatchers.isCheckedOut;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
+import static api.support.matchers.LoanAccountMatcher.hasNoOverdueFine;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
-import static api.support.matchers.LoanAccountMatcher.hasNoOverdueFine;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
+import static api.support.utl.BlockOverridesUtils.buildOkapiHeadersWithPermissions;
 import static api.support.utl.BlockOverridesUtils.getMissingPermissions;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
@@ -30,6 +30,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
+import static org.joda.time.DateTime.now;
 import static org.joda.time.DateTimeConstants.APRIL;
 import static org.joda.time.DateTimeZone.UTC;
 import static org.joda.time.Seconds.seconds;
@@ -43,7 +44,6 @@ import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.hamcrest.Matcher;
-import static org.joda.time.DateTime.now;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
 import org.junit.Test;
@@ -860,11 +860,5 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     assertThat("'actionComment' field should contain comment specified for override",
       renewedLoan.getString(ACTION_COMMENT_KEY), is(OVERRIDE_COMMENT));
-  }
-
-  private OkapiHeaders buildOkapiHeadersWithPermissions(String permissions) {
-    return getOkapiHeadersFromContext()
-      .withRequestId("override-renewal-by-barcode-request")
-      .withOkapiPermissions("[\"" + permissions + "\"]");
   }
 }
