@@ -13,12 +13,7 @@ import api.support.RestAssuredClient;
 import api.support.builders.DeclareItemLostRequestBuilder;
 import io.vertx.core.json.JsonObject;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import java.lang.invoke.MethodHandles;
-
 public class DeclareLostFixtures {
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
   private final RestAssuredClient restAssuredClient;
 
   public DeclareLostFixtures() {
@@ -28,9 +23,7 @@ public class DeclareLostFixtures {
   public Response declareItemLost(DeclareItemLostRequestBuilder builder) {
 
     JsonObject request = builder.create();
-
-    log.info("Declare lost request: " + request.toString());
-
+    
     return restAssuredClient.post(request, declareLoanItemLostURL(builder.getLoanId()),
       204, "declare-item-lost-request");
   }

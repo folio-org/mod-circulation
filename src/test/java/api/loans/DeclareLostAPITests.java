@@ -70,13 +70,8 @@ import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
 import junitparams.converters.Nullable;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import java.lang.invoke.MethodHandles;
-
 @RunWith(JUnitParamsRunner.class)
 public class DeclareLostAPITests extends APITests {
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
   public DeclareLostAPITests() {
     super(true, true);
   }
@@ -95,7 +90,7 @@ public class DeclareLostAPITests extends APITests {
     String comment = "testing";
     DateTime dateTime = DateTime.now();
 
-    final DeclareItemLostRequestBuilder builder = new DeclareItemLostRequestBuilder()      
+    final DeclareItemLostRequestBuilder builder = new DeclareItemLostRequestBuilder()
       .forLoanId(checkOut.getId()).on(dateTime)
       .withComment(comment)
       .withServicePointId(servicePointId);
@@ -540,7 +535,6 @@ public class DeclareLostAPITests extends APITests {
     assertEquals(amountRemaining, 10.0, 0.01);
 
     List<JsonObject> fees = getAccountsForLoan(agedToLostLoan.getLoanId());
-    //log.info("fee data" + fees.toString());
 
     assertThat(fees, hasSize(3));
     assertThat(getOpenAccounts(fees), hasSize(1));
@@ -582,15 +576,8 @@ public class DeclareLostAPITests extends APITests {
 
     JsonObject transferredAndPaidLoan = loansClient.getById(testLoanId).getJson();
     JsonObject transferredAndPaidItemFee = getAccountForLoan(testLoanId, "Lost item fee");
-    
-    log.info("loan object: " + transferredAndPaidLoan.toString());
 
     assertThat(getAccountsForLoan(testLoanId), hasSize(1));
-
-    getAccountsForLoan(testLoanId).stream().forEach(account-> {
-      log.info("Account data: " + account.toString());
-    });
-
     assertThat(transferredAndPaidItemFee, hasJsonPath("remaining", 10.00));
     
     Double amountRemaining = transferredAndPaidLoan.getJsonObject("feesAndFines").getDouble("amountRemainingToPay");
