@@ -7,21 +7,12 @@ import static org.folio.circulation.support.results.MappingFunctions.toFixedValu
 import static org.folio.circulation.support.results.MappingFunctions.when;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
-import static org.folio.circulation.support.results.Result.failed;
 
-import java.util.Collection;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import org.folio.circulation.StoreLoanAndItem;
-import org.folio.circulation.domain.Account;
-import org.folio.circulation.domain.AccountCancelReason;
-import org.folio.circulation.domain.FeeFine;
-import org.folio.circulation.domain.Item;
-import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.notes.NoteCreator;
 import org.folio.circulation.domain.representations.DeclareItemLostRequest;
@@ -31,8 +22,6 @@ import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.notes.NotesRepository;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.services.LostItemFeeChargingService;
-import org.folio.circulation.services.LostItemFeeRefundContext;
-import org.folio.circulation.services.LostItemFeeRefundService;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.http.server.NoContentResponse;
 import org.folio.circulation.support.http.server.WebContext;
@@ -42,12 +31,7 @@ import io.vertx.core.http.HttpClient;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-
 public class DeclareLostResource extends Resource {
-  private static final Logger log = LoggerFactory.getLogger(DeclareLostResource.class);
 
   public DeclareLostResource(HttpClient client) {
     super(client);
@@ -121,6 +105,7 @@ public class DeclareLostResource extends Resource {
 
   private Result<DeclareItemLostRequest> validateDeclaredLostRequest(
     RoutingContext routingContext) {
+
     String loanId = routingContext.request().getParam("id");
     return DeclareItemLostRequest.from(routingContext.getBodyAsJson(), loanId);
   }
