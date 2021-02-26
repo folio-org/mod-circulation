@@ -1,6 +1,6 @@
 package api.loans;
 
-import static api.loans.CheckOutByBarcodeTests.OVERRIDE_PATRON_BLOCK_PERMISSION;
+import static api.loans.CheckOutByBarcodeTests.INSUFFICIENT_OVERRIDE_PERMISSIONS;
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
 import static api.support.builders.FixedDueDateSchedule.forDay;
@@ -31,6 +31,8 @@ import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static api.support.matchers.ValidationErrorMatchers.isBlockRelatedError;
+import static api.support.utl.BlockOverridesUtils.buildOkapiHeadersWithPermissions;
+import static api.support.utl.BlockOverridesUtils.getMissingPermissions;
 import static org.awaitility.Awaitility.waitAtMost;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.END_OF_A_DAY;
@@ -53,6 +55,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
 import org.awaitility.Awaitility;
+import org.folio.circulation.domain.override.BlockOverrides;
+import org.folio.circulation.domain.override.PatronBlockOverride;
 import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.Response;
@@ -77,6 +81,7 @@ import api.support.builders.ItemBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
+import api.support.builders.RenewByBarcodeRequestBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.fakes.FakePubSub;
 import api.support.fixtures.ConfigurationExample;
@@ -84,6 +89,7 @@ import api.support.fixtures.ItemExamples;
 import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
+import api.support.http.OkapiHeaders;
 import api.support.matchers.OverdueFineMatcher;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -91,6 +97,11 @@ import lombok.val;
 
 public abstract class RenewalAPITests extends APITests {
   public static final String PATRON_BLOCK_NAME = "patronBlock";
+  private static final String TEST_COMMENT = "Some comment";
+  private static final String OVERRIDE_PATRON_BLOCK_PERMISSION = "circulation.override-patron-block";
+  public static final String OVERRIDE_ITEM_LIMIT_BLOCK_PERMISSION =
+    "circulation.override-item-limit-block";
+  private static final String RENEWED_THROUGH_OVERRIDE = "renewedThroughOverride";
 
   abstract Response attemptRenewal(IndividualResource user, IndividualResource item);
 
@@ -1519,6 +1530,124 @@ public abstract class RenewalAPITests extends APITests {
     assertThat(getErrorsFromResponse(response), hasItem(
       isBlockRelatedError(MAX_OUTSTANDING_FEE_FINE_BALANCE_MESSAGE, PATRON_BLOCK_NAME,
         List.of(OVERRIDE_PATRON_BLOCK_PERMISSION))));
+  }
+
+  @Test
+  public void canOverrideRenewalWhenAutomatedBlockExistsForPatron() {
+    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource jessica = usersFixture.jessica();
+
+    checkOutFixture.checkOutByBarcode(item, jessica,
+      new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
+    automatedPatronBlocksFixture.blockAction(jessica.getId().toString(), false, true, false);
+
+    final Response response = attemptRenewal(item, jessica);
+
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(response.getJson(), hasErrorWith(hasMessage(MAX_NUMBER_OF_ITEMS_CHARGED_OUT_MESSAGE)));
+    assertThat(response.getJson(), hasErrorWith(hasMessage(MAX_OUTSTANDING_FEE_FINE_BALANCE_MESSAGE)));
+
+    final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
+      OVERRIDE_PATRON_BLOCK_PERMISSION);
+    JsonObject loan = loansFixture.renewLoan(
+      new RenewByBarcodeRequestBuilder()
+        .forItem(item)
+        .forUser(jessica)
+        .withOverrideBlocks(new BlockOverrides(null, new PatronBlockOverride(true), null,
+          TEST_COMMENT)),
+      okapiHeaders).getJson();
+
+    item = itemsClient.get(item);
+    assertThat(item, hasItemStatus(CHECKED_OUT));
+    assertThat(loan.getString("actionComment"), is(TEST_COMMENT));
+    assertThat(loan.getString("action"), is(RENEWED_THROUGH_OVERRIDE));
+  }
+
+  @Test
+  public void cannotOverridePatronBlockWhenUserDoesNotHavePermissions() {
+    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource jessica = usersFixture.jessica();
+
+    checkOutFixture.checkOutByBarcode(item, jessica,
+      new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
+    automatedPatronBlocksFixture.blockAction(jessica.getId().toString(), false, true, false);
+
+    Response response = loansFixture.attemptRenewal(
+      new RenewByBarcodeRequestBuilder()
+        .forItem(item)
+        .forUser(jessica)
+        .withOverrideBlocks(new BlockOverrides(null, new PatronBlockOverride(true), null,
+          TEST_COMMENT)));
+
+    assertThat(response.getJson(), hasErrorWith(hasMessage(INSUFFICIENT_OVERRIDE_PERMISSIONS)));
+    assertThat(getMissingPermissions(response), hasSize(1));
+    assertThat(getMissingPermissions(response), hasItem(OVERRIDE_PATRON_BLOCK_PERMISSION));
+  }
+
+  @Test
+  public void cannotOverridePatronBlockWhenUserDoesNotHaveRequiredPermissions() {
+    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource jessica = usersFixture.jessica();
+
+    checkOutFixture.checkOutByBarcode(item, jessica,
+      new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
+    automatedPatronBlocksFixture.blockAction(jessica.getId().toString(), false, true, false);
+
+    final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
+      OVERRIDE_ITEM_LIMIT_BLOCK_PERMISSION);
+    Response response = loansFixture.attemptRenewal(
+      new RenewByBarcodeRequestBuilder()
+        .forItem(item)
+        .forUser(jessica)
+        .withOverrideBlocks(new BlockOverrides(null, new PatronBlockOverride(true), null,
+          TEST_COMMENT)), okapiHeaders);
+
+    assertThat(response.getJson(), hasErrorWith(hasMessage(INSUFFICIENT_OVERRIDE_PERMISSIONS)));
+    assertThat(getMissingPermissions(response), hasSize(1));
+    assertThat(getMissingPermissions(response), hasItem(OVERRIDE_PATRON_BLOCK_PERMISSION));
+  }
+
+  @Test
+  public void cannotRenewWhenItemIsAgedToLostAndUserDoesNotHaveOverridePermissions() {
+    val result = ageToLostFixture.createAgedToLostLoan();
+    val item = result.getItem();
+    automatedPatronBlocksFixture.blockAction(result.getUser().getId().toString(),
+      false, true, false);
+
+    Response response = loansFixture.attemptRenewal(
+      new RenewByBarcodeRequestBuilder()
+        .forItem(item)
+        .forUser(result.getUser())
+        .withOverrideBlocks(new BlockOverrides(null, new PatronBlockOverride(true), null,
+          TEST_COMMENT)));
+
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("item is Aged to lost"),
+      hasUUIDParameter("itemId", item.getId()))));
+
+    assertThat(response.getJson(), hasErrorWith(hasMessage(INSUFFICIENT_OVERRIDE_PERMISSIONS)));
+    assertThat(getMissingPermissions(response), hasSize(1));
+    assertThat(getMissingPermissions(response), hasItem(OVERRIDE_PATRON_BLOCK_PERMISSION));
+  }
+
+  @Test
+  public void cannotRenewWhenOverrideBlockIsRequestedButPatronIsNotBlocked() {
+    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource user = usersFixture.jessica();
+
+    checkOutFixture.checkOutByBarcode(item, user,
+      new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
+
+    Response response = loansFixture.attemptRenewal(
+      new RenewByBarcodeRequestBuilder()
+        .forItem(item)
+        .forUser(user)
+        .withOverrideBlocks(new BlockOverrides(null, new PatronBlockOverride(true), null,
+          TEST_COMMENT)));
+
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Patron block cannot be overridden. User has no patron block"),
+      hasUUIDParameter("userId", user.getId()))));
   }
 
   private void checkRenewalAttempt(DateTime expectedDueDate, UUID dueDateLimitedPolicyId) {

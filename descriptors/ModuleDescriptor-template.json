@@ -203,6 +203,9 @@
           ],
           "modulePermissions": [
             "circulation.renew-loan"
+          ],
+          "permissionsDesired": [
+            "circulation.override-patron-block"
           ]
         },
         {
@@ -215,6 +218,9 @@
           ],
           "modulePermissions": [
             "modperms.circulation.override-renewal-by-barcode.post"
+          ],
+          "permissionsDesired": [
+            "circulation.override-patron-block"
           ]
         },
         {
