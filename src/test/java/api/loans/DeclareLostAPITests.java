@@ -520,14 +520,16 @@ public class DeclareLostAPITests extends APITests {
     Double amountRemaining = declareLostLoan.getJsonObject("feesAndFines").getDouble("amountRemainingToPay");
     assertEquals(amountRemaining, 10.0, 0.01);
 
-    assertThat(getAccountsForLoan(agedToLostLoan.getLoanId()), hasSize(3));
+    List<JsonObject> fees = getAccountsForLoan(agedToLostLoan.getLoanId());
+
+    assertThat(fees, hasSize(3));
   }
 
   @Test 
   public void shouldRefundPartiallyPaidOrTransferredLostItemFeesBeforeApplyingNewFees() {
     final double expectedItemFee = 20.0;
     UUID servicePointId = servicePointsFixture.cd1().getId();
-
+    UUID userId = usersFixture.jessica().getId();
     final LostItemFeePolicyBuilder lostPolicyBuilder = lostItemFeePoliciesFixture.ageToLostAfterOneMinutePolicy()
         .withName("age to lost with fees")
         .billPatronImmediatelyWhenAgedToLost()
@@ -577,6 +579,7 @@ public class DeclareLostAPITests extends APITests {
     mockClockManagerToReturnFixedDateTime(declareLostDate);
 
     final DeclareItemLostRequestBuilder builder = new DeclareItemLostRequestBuilder()
+
       .forLoanId(testLoanId)
       .withServicePointId(servicePointId)
       .on(declareLostDate)
