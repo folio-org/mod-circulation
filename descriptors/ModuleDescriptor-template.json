@@ -1292,13 +1292,13 @@
     },
     {
       "permissionName": "circulation.scheduled-age-to-lost.post",
-      "displayName": "circulation - age to lost process",
-      "description": "age some borrowed items to lost"
+      "displayName": "circulation - scheduled age to lost process",
+      "description": "scheduled process to age overdue borrowed items to lost"
     },
     {
       "permissionName": "circulation.scheduled-age-to-lost-fee-charging.post",
-      "displayName": "circulation - age to lost fee charging process",
-      "description": "Issue fees to patrons for items that have aged to lost"
+      "displayName": "circulation - scheduled age to lost fee charging process",
+      "description": "scheduled process to issue fees to patrons for aged to lost items"
     },
     {
       "permissionName": "circulation.all",
