@@ -606,11 +606,6 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     changeItemStatusForItemAndLoan(ItemStatus.LOST_AND_PAID);
   }
 
-  public void closeLoanAsLost() {
-    closeLoan(CLOSED_LOAN);
-    changeItemStatusForItemAndLoan(ItemStatus.DECLARED_LOST);
-  }
-
   public Loan copy() {
     final JsonObject representationCopy = representation.copy();
     return new Loan(representationCopy, item, user, proxy, checkinServicePoint,

@@ -18,8 +18,6 @@ public class DeclareItemLostRequestBuilder extends JsonBuilder implements Builde
     this(null, DateTime.now(DateTimeZone.UTC), null, null);
   }
 
-
-
   public String getLoanId() {
     return loanId;
   }

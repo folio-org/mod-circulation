@@ -121,9 +121,6 @@ public class DeclareLostResource extends Resource {
 
   private Result<DeclareItemLostRequest> validateDeclaredLostRequest(
     RoutingContext routingContext) {
-
-    log.info("Text of request: " + routingContext.getBodyAsString());
-
     String loanId = routingContext.request().getParam("id");
     return DeclareItemLostRequest.from(routingContext.getBodyAsJson(), loanId);
   }
