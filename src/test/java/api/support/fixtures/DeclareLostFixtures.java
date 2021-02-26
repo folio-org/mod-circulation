@@ -49,6 +49,7 @@ public class DeclareLostFixtures {
     final DeclareItemLostRequestBuilder builder = new DeclareItemLostRequestBuilder()
       .forLoanId(loanId)
       .on(DateTime.now(DateTimeZone.UTC))
+      .withServicePointId(UUID.randomUUID())
       .withComment("testing");
 
     return declareItemLost(builder);

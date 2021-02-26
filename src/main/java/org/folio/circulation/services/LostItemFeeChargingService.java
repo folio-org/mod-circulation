@@ -119,7 +119,7 @@ public class LostItemFeeChargingService {
               loanWithAccountData,
               reason
             );
-            // this service will refund and close any partially paid or transferred accounts.
+            // refund service will refund and close any partially paid or transferred accounts.
             // accounts that have not been processed (paid or transferred) require a separate
             // process to close
             return refundService.refundAccounts(refundContext)
@@ -127,7 +127,7 @@ public class LostItemFeeChargingService {
               .thenCompose(res -> {return accountRepository.findAccountsForLoan(loan);})
               .thenCompose(loanResult -> {
                 if (hasLostItemFees(loanResult.value())) {
-                  log.info("Cancel/refund fees unsuccessful, aborting charging new fees");
+                  log.error("Cancel/refund fees unsuccessful, aborting charging new fees");
                   return CompletableFuture.completedFuture(succeeded(loan));
                 }
                 log.info("Existing fees removed successfully, applying new fees to loan [{}]", loan.getId());
@@ -169,12 +169,10 @@ public class LostItemFeeChargingService {
   private CompletableFuture<Result<Loan>> cancelAccounts(Loan loan) {
     List<Account> lostItemFees = getLostItemFeeAccounts(loan);
 
-    log.info("number of lost item fees found: " + lostItemFees.size());
     if (lostItemFees.size() < 1) {
       List<AccountActionResponse> returnList;
       return CompletableFuture.completedFuture(succeeded(loan));
     }
-    log.info("Current service point id:" + servicePointId);
 
     return  userRepository.getUser(this.userId).thenCompose(result -> {
       String staffUserName = result.value().getPersonalName();
@@ -188,13 +186,12 @@ public class LostItemFeeChargingService {
           .build();
         cancelCommands.add(command);
       });
-      log.info("number of cancel commands constructed: " + cancelCommands.size());
-      cancelCommands.stream().forEach(command -> {log.info("Cancel Command: " + command.toString());});
+
       return succeeded(cancelCommands)
         .after(commands -> allOf(commands, command -> feeFineService.cancelAccount(command)))
         .thenApply(r -> {
           if (r.failed()) {
-             log.error("Cancel Account failed: " + r.cause().toString());
+             log.error("Account cancellations failed: " + r.cause().toString());
           }
           return r.map(notUsed -> loan);
         });
