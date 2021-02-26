@@ -1,18 +1,23 @@
 package org.folio.circulation.resources.handlers.error;
 
+import static java.util.stream.Collectors.toList;
 import static org.folio.circulation.support.results.Result.failed;
+import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.lang.invoke.MethodHandles;
+import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.List;
 
 import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.ValidationErrorFailure;
+import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class DeferFailureErrorHandler extends CirculationErrorHandler {
-  final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   public DeferFailureErrorHandler() {
     super(new LinkedHashMap<>());
@@ -53,4 +58,19 @@ public class DeferFailureErrorHandler extends CirculationErrorHandler {
       ? handleAnyError(error, errorType, otherwise)
       : failed(error);
   }
+
+  @Override
+  public <T> Result<T> failWithValidationErrors(T otherwise) {
+    List<ValidationError> validationErrors = getErrors().keySet().stream()
+      .filter(ValidationErrorFailure.class::isInstance)
+      .map(ValidationErrorFailure.class::cast)
+      .map(ValidationErrorFailure::getErrors)
+      .flatMap(Collection::stream)
+      .collect(toList());
+
+    return validationErrors.isEmpty()
+      ? succeeded(otherwise)
+      : failed(new ValidationErrorFailure(validationErrors));
+  }
+
 }

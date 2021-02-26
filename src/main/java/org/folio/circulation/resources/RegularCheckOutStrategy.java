@@ -1,14 +1,9 @@
 package org.folio.circulation.resources;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE;
-import static org.folio.circulation.resources.RenewalValidator.loanPolicyValidationError;
-import static org.folio.circulation.support.results.Result.failed;
+import static org.folio.circulation.domain.LoanAction.CHECKED_OUT_THROUGH_OVERRIDE;
 import static org.folio.circulation.support.results.Result.succeeded;
-import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Loan;
@@ -36,27 +31,14 @@ public class RegularCheckOutStrategy implements CheckOutStrategy {
     DateTime loanDate = relatedRecords.getLoan().getLoanDate();
     final ClosedLibraryStrategyService strategyService =
       ClosedLibraryStrategyService.using(clients, loanDate, false);
+    if (CHECKED_OUT_THROUGH_OVERRIDE.getValue().equals(relatedRecords.getLoan().getAction())
+      && relatedRecords.getLoan().hasDueDateChanged()) {
 
+      return completedFuture(succeeded(relatedRecords));
+    }
     return completedFuture(succeeded(relatedRecords))
-      .thenApply(r -> r.next(this::refuseWhenItemIsNotLoanable))
       .thenApply(r -> r.next(this::calculateDefaultInitialDueDate))
       .thenCompose(r -> r.after(strategyService::applyClosedLibraryDueDateManagement));
-  }
-
-  private Result<LoanAndRelatedRecords> refuseWhenItemIsNotLoanable(LoanAndRelatedRecords relatedRecords) {
-    final Loan loan = relatedRecords.getLoan();
-    final LoanPolicy loanPolicy = loan.getLoanPolicy();
-
-    if (loanPolicy.isNotLoanable()) {
-      String itemBarcode = loan.getItem().getBarcode();
-
-      Map<String, String> parameters = new HashMap<>();
-      parameters.put(ITEM_BARCODE, itemBarcode);
-      return failed(singleValidationError(
-        loanPolicyValidationError(loanPolicy,
-          "Item is not loanable", parameters)));
-    }
-    return succeeded(relatedRecords);
   }
 
   private Result<LoanAndRelatedRecords> calculateDefaultInitialDueDate(LoanAndRelatedRecords loanAndRelatedRecords) {

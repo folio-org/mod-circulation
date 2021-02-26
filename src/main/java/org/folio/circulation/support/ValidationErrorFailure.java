@@ -1,7 +1,7 @@
 package org.folio.circulation.support;
 
-import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.http.server.JsonHttpResponse.unprocessableEntity;
+import static org.folio.circulation.support.results.Result.failed;
 
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
@@ -48,7 +48,7 @@ public class ValidationErrorFailure implements HttpFailure {
     return new ValidationErrorFailure(error);
   }
 
-  private ValidationErrorFailure(ValidationError error) {
+  public ValidationErrorFailure(ValidationError error) {
     this.errors.add(error);
   }
 

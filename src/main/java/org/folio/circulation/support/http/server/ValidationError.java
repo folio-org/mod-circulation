@@ -8,7 +8,11 @@ import org.apache.commons.lang3.StringUtils;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 
+@Getter
+@EqualsAndHashCode
 public class ValidationError {
   private final String message;
   private final Map<String, String> parameters;
@@ -36,10 +40,6 @@ public class ValidationError {
     return new JsonObject()
       .put("message", message)
       .put("parameters", mappedParameters);
-  }
-
-  public String getMessage() {
-    return message;
   }
 
   public boolean hasParameter(String key) {

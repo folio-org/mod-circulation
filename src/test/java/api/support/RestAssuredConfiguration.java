@@ -1,11 +1,13 @@
 package api.support;
 
+import static org.folio.circulation.support.http.OkapiHeader.OKAPI_PERMISSIONS;
 import static org.folio.circulation.support.http.OkapiHeader.OKAPI_URL;
+import static org.folio.circulation.support.http.OkapiHeader.REQUEST_ID;
 import static org.folio.circulation.support.http.OkapiHeader.TENANT;
+import static org.folio.circulation.support.http.OkapiHeader.TOKEN;
+import static org.folio.circulation.support.http.OkapiHeader.USER_ID;
 
 import java.util.HashMap;
-
-import org.folio.circulation.support.http.OkapiHeader;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
@@ -26,11 +28,12 @@ public class RestAssuredConfiguration {
 
     headers.put(OKAPI_URL, okapiHeaders.getUrl().toString());
     headers.put(TENANT, okapiHeaders.getTenantId());
-    headers.put(OkapiHeader.TOKEN, okapiHeaders.getToken());
-    headers.put(OkapiHeader.REQUEST_ID, okapiHeaders.getRequestId());
+    headers.put(TOKEN, okapiHeaders.getToken());
+    headers.put(REQUEST_ID, okapiHeaders.getRequestId());
+    headers.put(OKAPI_PERMISSIONS, okapiHeaders.getOkapiPermissions());
 
     if (okapiHeaders.hasUserId()) {
-      headers.put(OkapiHeader.USER_ID, okapiHeaders.getUserId());
+      headers.put(USER_ID, okapiHeaders.getUserId());
     }
 
     return new RequestSpecBuilder()

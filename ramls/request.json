@@ -433,6 +433,17 @@
       "description": "Metadata about creation and changes to requests, provided by the server (client should not provide)",
       "type": "object",
       "$ref": "raml-util/schemas/metadata.schema"
+    },
+    "requestProcessingParameters": {
+      "type": "object",
+      "description": "Additional parameters used for request processing and discarded afterwards. Not part of request record.",
+      "properties": {
+        "overrideBlocks": {
+          "type": "object",
+          "description": "Blocks to override if user has corresponding permissions",
+          "$ref": "override-blocks.json"
+        }
+      }
     }
   },
   "additionalProperties": false,
