@@ -11,6 +11,7 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getObjectPr
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
 import org.folio.circulation.StoreLoanAndItem;
 import org.folio.circulation.domain.Loan;
@@ -22,7 +23,6 @@ import org.folio.circulation.domain.override.PatronBlockOverride;
 import org.folio.circulation.domain.validation.AutomatedPatronBlocksValidator;
 import org.folio.circulation.domain.validation.Validator;
 import org.folio.circulation.domain.validation.overriding.BlockValidator;
-import org.folio.circulation.domain.validation.overriding.CombinedOverridingRenewValidator;
 import org.folio.circulation.domain.validation.overriding.OverridingRenewValidator;
 import org.folio.circulation.infrastructure.storage.AutomatedPatronBlocksRepository;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
@@ -32,7 +32,6 @@ import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.LoanNoticeSender;
-import org.folio.circulation.resources.OverrideCheckOutStrategy;
 import org.folio.circulation.resources.Resource;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
@@ -46,7 +45,6 @@ import org.folio.circulation.support.http.server.JsonHttpResponse;
 import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.Result;
 
-import io.netty.util.internal.StringUtil;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
@@ -194,11 +192,14 @@ public abstract class RenewalResource extends Resource {
   private Validator<RenewalContext> createPatronBlocksValidator(JsonObject request,
     OkapiPermissions permissions, AutomatedPatronBlocksRepository automatedPatronBlocksRepository) {
 
+    Function<RenewalContext, CompletableFuture<Result<RenewalContext>>> patronBlocksValidation =
+      new AutomatedPatronBlocksValidator(
+        automatedPatronBlocksRepository)::refuseWhenRenewalActionIsBlockedForPatron;
+
     if (renewalStrategy instanceof OverrideRenewalStrategy) {
-      return new CombinedOverridingRenewValidator(PATRON_BLOCK, new BlockOverrides(null,
+      return new OverridingRenewValidator(PATRON_BLOCK, new BlockOverrides(null,
         new PatronBlockOverride(true), null, ""), permissions,
-        new AutomatedPatronBlocksValidator(
-          automatedPatronBlocksRepository)::refuseWhenRenewalActionIsBlockedForPatron);
+        patronBlocksValidation);
     }
 
     final BlockOverrides blockOverrides = BlockOverrides.from(
@@ -206,8 +207,7 @@ public abstract class RenewalResource extends Resource {
 
     return blockOverrides.getPatronBlockOverride().isRequested()
       && renewalStrategy instanceof RegularRenewalStrategy
-      ? new OverridingRenewValidator(PATRON_BLOCK, blockOverrides, permissions)
-      : new BlockValidator<>(USER_IS_BLOCKED_AUTOMATICALLY, new AutomatedPatronBlocksValidator(
-      automatedPatronBlocksRepository)::refuseWhenRenewalActionIsBlockedForPatron);
+      ? new OverridingRenewValidator(PATRON_BLOCK, blockOverrides, permissions, patronBlocksValidation)
+      : new BlockValidator<>(USER_IS_BLOCKED_AUTOMATICALLY, patronBlocksValidation);
   }
 }

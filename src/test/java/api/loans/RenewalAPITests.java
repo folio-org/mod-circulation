@@ -1611,6 +1611,8 @@ public abstract class RenewalAPITests extends APITests {
   public void cannotRenewWhenItemIsAgedToLostAndUserDoesNotHaveOverridePermissions() {
     val result = ageToLostFixture.createAgedToLostLoan();
     val item = result.getItem();
+    automatedPatronBlocksFixture.blockAction(result.getUser().getId().toString(),
+      false, true, false);
 
     Response response = loansFixture.attemptRenewal(
       new RenewByBarcodeRequestBuilder()
@@ -1626,6 +1628,26 @@ public abstract class RenewalAPITests extends APITests {
     assertThat(response.getJson(), hasErrorWith(hasMessage(INSUFFICIENT_OVERRIDE_PERMISSIONS)));
     assertThat(getMissingPermissions(response), hasSize(1));
     assertThat(getMissingPermissions(response), hasItem(OVERRIDE_PATRON_BLOCK_PERMISSION));
+  }
+
+  @Test
+  public void cannotRenewWhenOverrideBlockIsRequestedButPatronIsNotBlocked() {
+    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource user = usersFixture.jessica();
+
+    checkOutFixture.checkOutByBarcode(item, user,
+      new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
+
+    Response response = loansFixture.attemptRenewal(
+      new RenewByBarcodeRequestBuilder()
+        .forItem(item)
+        .forUser(user)
+        .withOverrideBlocks(new BlockOverrides(null, new PatronBlockOverride(true), null,
+          TEST_COMMENT)));
+
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Patron block cannot be overridden. User has no patron block"),
+      hasUUIDParameter("userId", user.getId()))));
   }
 
   private void checkRenewalAttempt(DateTime expectedDueDate, UUID dueDateLimitedPolicyId) {
