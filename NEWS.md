@@ -1,6 +1,7 @@
+
 ## 20.0.0 (in-progress)
 
-* No longer periodically excutes age to lost background processes (CIRC-1084)
+* No longer periodically executes age to lost background processes (CIRC-1084)
 * Does not charge overdue fees when fee refund period has passed (CIRC-1000)
 * Loan dates now truncate if there is a recall in any position in the item hold queue (CIRC-1018)
 
