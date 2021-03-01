@@ -1630,6 +1630,29 @@ public abstract class RenewalAPITests extends APITests {
     assertThat(getMissingPermissions(response), hasItem(OVERRIDE_PATRON_BLOCK_PERMISSION));
   }
 
+  @Test
+  public void canOverrideRenewWhenOverrideBlockIsRequestedButPatronIsNotBlocked() {
+    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource user = usersFixture.jessica();
+
+    checkOutFixture.checkOutByBarcode(item, user,
+      new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
+
+    final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
+      OVERRIDE_PATRON_BLOCK_PERMISSION);
+    JsonObject loan = loansFixture.renewLoan(
+      new RenewByBarcodeRequestBuilder()
+        .forItem(item)
+        .forUser(user)
+        .withOverrideBlocks(new BlockOverrides(null, new PatronBlockOverride(true), null,
+          TEST_COMMENT)), okapiHeaders).getJson();
+
+    item = itemsClient.get(item);
+    assertThat(item, hasItemStatus(CHECKED_OUT));
+    assertThat(loan.getString("actionComment"), is(TEST_COMMENT));
+    assertThat(loan.getString("action"), is(RENEWED_THROUGH_OVERRIDE));
+  }
+
   private void checkRenewalAttempt(DateTime expectedDueDate, UUID dueDateLimitedPolicyId) {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
