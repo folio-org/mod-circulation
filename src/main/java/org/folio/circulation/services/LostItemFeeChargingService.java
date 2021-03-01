@@ -73,8 +73,6 @@ public class LostItemFeeChargingService {
     this.locationRepository = LocationRepository.using(clients);
     this.eventPublisher = new EventPublisher(clients.pubSubPublishingService());
     this.feeFineScheduledNoticeService = FeeFineScheduledNoticeService.using(clients);
-    this.lostItemFeeRefundService = new LostItemFeeRefundService(clients);
-    this.clients = clients;
     this.refundService = new LostItemFeeRefundService(clients);
     this.accountRepository = new AccountRepository(clients);
     this.feeFineService = new FeeFineService(clients);
@@ -88,18 +86,14 @@ public class LostItemFeeChargingService {
 
     final ReferenceDataContext referenceDataContext = new ReferenceDataContext(
       loan, request, staffUserId);
-    final AccountCancelReason reason = AccountCancelReason.CANCELLED_ITEM_DECLARED_LOST;
-
-    log.info("service point data: " + request.getServicePointId());
-
     return lostItemPolicyRepository.getLostItemPolicyById(loan.getLostItemPolicyId())
       .thenApply(result -> result.map(referenceDataContext::withLostItemPolicy))
       .thenCompose(refDataResult -> refDataResult.after(referenceData -> {
         if (shouldCloseLoan(referenceData.lostItemPolicy)) {
           log.debug("Loan [{}] can be closed because no fee will be charged", loan.getId());
           return closeLoanAsLostAndPaidAndUpdateInStorage(loan)
-          .thenCompose(r -> r.after(eventPublisher::publishClosedLoanEvent))
-          .thenApply(r -> r.map(v -> loan));
+            .thenCompose(r -> r.after(eventPublisher::publishClosedLoanEvent))
+            .thenApply(r -> r.map(v -> loan));
         }
 
         log.info("Checking for existing lost item fees for loan [{}]", loan.getId());
@@ -117,7 +111,7 @@ public class LostItemFeeChargingService {
               userId,
               servicePointId,
               loanWithAccountData,
-              reason
+              AccountCancelReason.CANCELLED_ITEM_DECLARED_LOST
             );
             // refund service will refund and close any partially paid or transferred accounts.
             // accounts that have not been processed (paid or transferred) require a separate
