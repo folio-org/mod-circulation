@@ -54,8 +54,6 @@ public class LostItemFeeChargingService {
   private final LocationRepository locationRepository;
   private final EventPublisher eventPublisher;
   private final FeeFineScheduledNoticeService feeFineScheduledNoticeService;
-  private final LostItemFeeRefundService lostItemFeeRefundService;
-  private final Clients clients;
   private final LostItemFeeRefundService refundService;
   private final AccountRepository accountRepository;
   private final FeeFineService feeFineService;
