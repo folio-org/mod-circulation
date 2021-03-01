@@ -98,9 +98,4 @@ public final class RenewalValidator {
   public static ValidationError itemByIdValidationError(String reason, String itemId) {
     return new ValidationError(reason, "itemId", itemId);
   }
-
-  public static ValidationError patronHasNoPatronBlock(String userId) {
-    return new ValidationError("Patron block cannot be overridden. User has no patron block",
-      "userId", userId);
-  }
 }
