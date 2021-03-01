@@ -13,7 +13,6 @@ import static org.folio.circulation.resources.RenewalValidator.errorForRecallReq
 import static org.folio.circulation.resources.RenewalValidator.errorWhenEarlierOrSameDueDate;
 import static org.folio.circulation.resources.RenewalValidator.itemByIdValidationError;
 import static org.folio.circulation.resources.RenewalValidator.loanPolicyValidationError;
-import static org.folio.circulation.resources.RenewalValidator.patronHasNoPatronBlock;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getObjectProperty;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
@@ -77,11 +76,8 @@ public class RegularRenewalStrategy implements RenewalStrategy {
         if (!blockOverrides.getPatronBlockOverride().isRequested()) {
           return proposedDueDateResult.map(dueDate -> loan.renew(dueDate, loanPolicy.getId()));
         }
-        if (context.isPatronBlockOverridden()) {
-          return proposedDueDateResult.map(dueDate -> loan.overrideRenewal(dueDate,
-            loanPolicy.getId(), blockOverrides.getComment()));
-        }
-        errors.add(patronHasNoPatronBlock(loan.getUserId()));
+        return proposedDueDateResult.map(dueDate -> loan.overrideRenewal(dueDate,
+          loanPolicy.getId(), blockOverrides.getComment()));
       }
       return failedValidation(errors);
     } catch (Exception e) {

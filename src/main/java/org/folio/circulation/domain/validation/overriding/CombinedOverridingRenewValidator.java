@@ -11,11 +11,11 @@ import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.http.OkapiPermissions;
 import org.folio.circulation.support.results.Result;
 
-public class OverridingRenewValidator extends OverridingBlockValidator<RenewalContext> {
+public class CombinedOverridingRenewValidator extends OverridingBlockValidator<RenewalContext> {
   private final Function<RenewalContext, CompletableFuture<Result<RenewalContext>>> validationFunction;
 
-  public OverridingRenewValidator(OverridableBlockType blockType, BlockOverrides blockOverrides,
-    OkapiPermissions permissions,
+  public CombinedOverridingRenewValidator(OverridableBlockType blockType,
+    BlockOverrides blockOverrides, OkapiPermissions permissions,
     Function<RenewalContext, CompletableFuture<Result<RenewalContext>>> validationFunction) {
 
     super(blockType, blockOverrides, permissions);
@@ -27,8 +27,7 @@ public class OverridingRenewValidator extends OverridingBlockValidator<RenewalCo
     return validationFunction.apply(context)
       .thenCompose(renewalContextResult -> {
         if (renewalContextResult.failed()) {
-          return super.validate(context)
-            .thenApply(result -> result.map(ctx -> ctx.withPatronBlockOverridden(true)));
+          return super.validate(context);
         }
         return ofAsync(() -> context);
       });

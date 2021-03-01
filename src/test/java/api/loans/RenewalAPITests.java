@@ -1631,23 +1631,26 @@ public abstract class RenewalAPITests extends APITests {
   }
 
   @Test
-  public void cannotRenewWhenOverrideBlockIsRequestedButPatronIsNotBlocked() {
+  public void canOverrideRenewWhenOverrideBlockIsRequestedButPatronIsNotBlocked() {
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource user = usersFixture.jessica();
 
     checkOutFixture.checkOutByBarcode(item, user,
       new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
 
-    Response response = loansFixture.attemptRenewal(
+    final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
+      OVERRIDE_PATRON_BLOCK_PERMISSION);
+    JsonObject loan = loansFixture.renewLoan(
       new RenewByBarcodeRequestBuilder()
         .forItem(item)
         .forUser(user)
         .withOverrideBlocks(new BlockOverrides(null, new PatronBlockOverride(true), null,
-          TEST_COMMENT)));
+          TEST_COMMENT)), okapiHeaders).getJson();
 
-    assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("Patron block cannot be overridden. User has no patron block"),
-      hasUUIDParameter("userId", user.getId()))));
+    item = itemsClient.get(item);
+    assertThat(item, hasItemStatus(CHECKED_OUT));
+    assertThat(loan.getString("actionComment"), is(TEST_COMMENT));
+    assertThat(loan.getString("action"), is(RENEWED_THROUGH_OVERRIDE));
   }
 
   private void checkRenewalAttempt(DateTime expectedDueDate, UUID dueDateLimitedPolicyId) {
