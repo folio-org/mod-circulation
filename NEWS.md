@@ -1,6 +1,15 @@
 ## 20.1.0 (in-progress)
 
+## 20.1.0 (in-progress)
+
+* Refund/cancel Aged to lost fees/fines when item Declared lost (CIRC-1077)
 * Provides `declare-item-lost 0.3` (CIRC-1077)
+
+## 20.0.0 (in-progress)
+
+* No longer periodically executes age to lost background processes (CIRC-1084)
+* Does not charge overdue fees when fee refund period has passed (CIRC-1000)
+* Loan dates now truncate if there is a recall in any position in the item hold queue (CIRC-1018)
 * Refund/cancel Aged to lost fees/fines when item Declared lost (CIRC-1077)
 * No longer periodically executes age to lost background processes (CIRC-1084)
 * Does not charge overdue fees when fee refund period has passed (CIRC-1000)
