@@ -71,6 +71,7 @@ import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.OverdueFinePolicyBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.fakes.FakePubSub;
+import api.support.fakes.PublishedEvents;
 import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.CqlQuery;
 import api.support.http.IndividualResource;
@@ -1096,11 +1097,11 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     assertThat(itemsFixture.getById(ageToLostResult.getItemId()).getJson(), isAvailable());
     assertThat(loansFixture.getLoanById(ageToLostResult.getLoanId()).getJson(), isClosed());
 
-    waitAtMost(1, SECONDS)
-      // there should be 5 events published: ITEM_CHECKED_OUT, LOG_RECORDs: CHECK_OUT_EVENT
-      // LOG_RECORD: LOAN (aged to lost)
+    PublishedEvents until = waitAtMost(1, SECONDS)
+      // there should be 7 events published: ITEM_CHECKED_OUT, LOG_RECORDs: CHECK_OUT_EVENT
+      // LOG_RECORD: LOAN (aged to lost), ITEM_AGED_TO_LOST, LOG_RECORD: LOAN (status change)
       // ITEM_CHECKED_IN, LOG_RECORDs: CHECK_IN_EVENT
-      .until(FakePubSub::getPublishedEvents, hasSize(5));
+      .until(FakePubSub::getPublishedEvents, hasSize(7));
 
     assertThatPublishedLoanLogRecordEventsAreValid();
   }
