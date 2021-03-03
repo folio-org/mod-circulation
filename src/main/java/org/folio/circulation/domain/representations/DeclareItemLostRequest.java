@@ -31,7 +31,7 @@ public class DeclareItemLostRequest {
 
     String servicePointId = getProperty(json, "servicePointId");
 
-    if(StringUtils.isBlank(servicePointId)) {
+    if (StringUtils.isBlank(servicePointId)) {
       return failedValidation("No service point data provided", SERVICE_POINT_ID, servicePointId);
     }
 
