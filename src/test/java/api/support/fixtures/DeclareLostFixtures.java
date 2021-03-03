@@ -41,6 +41,10 @@ public class DeclareLostFixtures {
     final DeclareItemLostRequestBuilder builder = new DeclareItemLostRequestBuilder()
       .forLoanId(loanId)
       .on(DateTime.now(DateTimeZone.UTC))
+      //creating "real" servicepoint data here would require a lot of setup code to 
+      //initialize a ResourceClient, the intialize a service point creator, and 
+      //so on.  As this is a convenience function that's only used when the loan 
+      //settings are not integral to the test, it is easier to supply dummy data.
       .withServicePointId(UUID.randomUUID())
       .withComment("testing");
 

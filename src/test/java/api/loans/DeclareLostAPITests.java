@@ -484,7 +484,7 @@ public class DeclareLostAPITests extends APITests {
   }
 
   @Test 
-  public void shouldCancelUnpaidLostItemFeesWhenItemAgedToLostAndFeesAlreadyApplied() {
+  public void shouldCancelUnpaidLostItemFeesWhenItemDeclaredLostAndFeesAlreadyApplied() {
     final double expectedProcessingFee = 5.0;
     final double expectedItemFee = 10.0;
     UUID servicePointId = servicePointsFixture.cd1().getId();
@@ -549,7 +549,6 @@ public class DeclareLostAPITests extends APITests {
         .withName("age to lost with fees")
         .billPatronImmediatelyWhenAgedToLost()
         .withSetCost(expectedItemFee)
-
         .withNoFeeRefundInterval()
         .withChargeAmountItemPatron(false)
         .withChargeAmountItemSystem(false);
