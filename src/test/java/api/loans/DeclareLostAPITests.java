@@ -723,7 +723,7 @@ public class DeclareLostAPITests extends APITests {
   }
 
   private List<JsonObject> getOpenAccounts(List<JsonObject> accounts) {
-    return accounts.stream().filter(account -> isOpenAccount(account)).collect(Collectors.toList());
+    return accounts.stream().filter(this::isOpen).collect(Collectors.toList());
   }
 
   private Boolean isAccountOpen(JsonObject account) {
