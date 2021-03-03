@@ -726,7 +726,7 @@ public class DeclareLostAPITests extends APITests {
     return accounts.stream().filter(account -> isOpenAccount(account)).collect(Collectors.toList());
   }
 
-  private Boolean isOpenAccount(JsonObject account) {
+  private Boolean isAccountOpen(JsonObject account) {
     if (
       account.getJsonObject("status").getString("name").equals("Open")  &&
       account.getJsonObject("paymentStatus").getString("name").equals("Outstanding")  &&
