@@ -32,7 +32,7 @@ public class DeclareItemLostRequest {
     String servicePointId = getProperty(json, "servicePointId");
 
     if (StringUtils.isBlank(servicePointId)) {
-      return failedValidation("No service point data provided", SERVICE_POINT_ID, servicePointId);
+      return failedValidation("A service point is required for item to be declared lost", SERVICE_POINT_ID, servicePointId);
     }
 
     final DateTime dateTime;
