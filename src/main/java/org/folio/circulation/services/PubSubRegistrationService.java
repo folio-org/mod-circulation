@@ -47,28 +47,19 @@ public class PubSubRegistrationService {
       params.getToken());
 
     try {
-      for (EventType eventType : EventType.values()) {
+      for (EventType eventType: EventType.values()) {
         CompletableFuture<Boolean> future = new CompletableFuture<>();
         client.deletePubsubEventTypesPublishersByEventTypeName(eventType.name(),
           PubSubClientUtils.constructModuleName(), ar -> {
-            if (ar.succeeded()) {
-              int statusCode = ar.result().statusCode();
-              if (statusCode == HTTP_NO_CONTENT.toInt()) {
-                future.complete(true);
-              } else {
-                String errorMessage = String.format(
-                  "Failed to unregister publisher for event type %s in PubSub. HTTP status: %d",
-                  eventType.name(), statusCode);
-                logger.error(errorMessage);
-                future.completeExceptionally(new ModulePubSubUnregisteringException(errorMessage));
-              }
+            if (ar.statusCode() == HTTP_NO_CONTENT.toInt()) {
+              future.complete(true);
             } else {
-              String errorMessage = String.format(
-                "Failed to unregister publisher for event type %s in PubSub. Cause: %s",
-                eventType.name(), ar.cause().getMessage());
-              logger.error(errorMessage);
-              future.completeExceptionally(
-                new ModulePubSubUnregisteringException(errorMessage, ar.cause()));
+              ModulePubSubUnregisteringException exception =
+                new ModulePubSubUnregisteringException(String.format("Module's publisher for " +
+                    "event type %s was not unregistered from PubSub. HTTP status: %s",
+                  eventType.name(), ar.statusCode()));
+              logger.error(exception);
+              future.completeExceptionally(exception);
             }
           });
         list.add(future);
@@ -77,6 +68,7 @@ public class PubSubRegistrationService {
       logger.error("Module's publishers were not unregistered from PubSub.", exception);
     }
 
-    return allOf(list.toArray(new CompletableFuture[0])).thenApply(r -> true);
+    return allOf(list.toArray(new CompletableFuture[0])).thenApply(r -> true)
+      .whenComplete((r, e) -> client.close());
   }
 }
