@@ -27,7 +27,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import api.support.APITests;
-import api.support.matchers.EventTypeMatchers;
 
 public class TenantActivationResourceTests extends APITests {
 
@@ -68,27 +67,12 @@ public class TenantActivationResourceTests extends APITests {
   }
 
   @Test
-  public void tenantDeactivationFailsWhenCannotUnregisterWithPubSub() {
+  public void tenantDeactivationSucceedsWhenCannotUnregisterInPubSub() {
     setFailPubSubUnregistering(true);
 
     Response response = tenantActivationFixture.deleteTenant();
-    assertThat(response.getStatusCode(), is(HTTP_INTERNAL_SERVER_ERROR.toInt()));
-  }
-
-  @Test
-  public void tenantDeactivationSucceedsWhenCanUnregisterInPubSub() {
-    Response response = tenantActivationFixture.deleteTenant();
 
     assertThat(response.getStatusCode(), is(HTTP_NO_CONTENT.toInt()));
-
-    assertThat(getDeletedEventTypes().size(), is(6));
-    assertThat(getDeletedEventTypes(), hasItems(
-      EventTypeMatchers.ITEM_CHECKED_OUT,
-      EventTypeMatchers.ITEM_CHECKED_IN,
-      EventTypeMatchers.ITEM_DECLARED_LOST,
-      EventTypeMatchers.ITEM_CLAIMED_RETURNED,
-      EventTypeMatchers.LOAN_DUE_DATE_CHANGED,
-      EventTypeMatchers.LOG_RECORD
-    ));
+    assertThat(getDeletedEventTypes().size(), is(0));
   }
 }
