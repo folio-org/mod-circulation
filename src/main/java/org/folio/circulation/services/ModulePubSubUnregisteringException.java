@@ -4,8 +4,4 @@ public class ModulePubSubUnregisteringException extends Exception {
   public ModulePubSubUnregisteringException(String s) {
     super(s);
   }
-
-  public ModulePubSubUnregisteringException(String message, Throwable cause) {
-    super(message, cause);
-  }
 }
