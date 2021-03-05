@@ -23,7 +23,8 @@ import org.folio.circulation.domain.override.PatronBlockOverride;
 import org.folio.circulation.domain.validation.AutomatedPatronBlocksValidator;
 import org.folio.circulation.domain.validation.Validator;
 import org.folio.circulation.domain.validation.overriding.BlockValidator;
-import org.folio.circulation.domain.validation.overriding.OverridingRenewValidator;
+import org.folio.circulation.domain.validation.overriding.CombinedOverridingRenewValidator;
+import org.folio.circulation.domain.validation.overriding.OverridingBlockValidator;
 import org.folio.circulation.infrastructure.storage.AutomatedPatronBlocksRepository;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
@@ -192,22 +193,21 @@ public abstract class RenewalResource extends Resource {
   private Validator<RenewalContext> createPatronBlocksValidator(JsonObject request,
     OkapiPermissions permissions, AutomatedPatronBlocksRepository automatedPatronBlocksRepository) {
 
-    Function<RenewalContext, CompletableFuture<Result<RenewalContext>>> patronBlocksValidation =
+    Function<RenewalContext, CompletableFuture<Result<RenewalContext>>> validationFunction =
       new AutomatedPatronBlocksValidator(
         automatedPatronBlocksRepository)::refuseWhenRenewalActionIsBlockedForPatron;
 
     if (renewalStrategy instanceof OverrideRenewalStrategy) {
-      return new OverridingRenewValidator(PATRON_BLOCK, new BlockOverrides(null,
-        new PatronBlockOverride(true), null, ""), permissions,
-        patronBlocksValidation);
+      return new CombinedOverridingRenewValidator(PATRON_BLOCK, new BlockOverrides(null,
+        new PatronBlockOverride(true), null, ""), permissions, validationFunction);
     }
 
-    final BlockOverrides blockOverrides = BlockOverrides.from(
-      getObjectProperty(request, "overrideBlocks"));
+    final BlockOverrides blockOverrides = BlockOverrides.from(getObjectProperty(
+      request, "overrideBlocks"));
 
     return blockOverrides.getPatronBlockOverride().isRequested()
       && renewalStrategy instanceof RegularRenewalStrategy
-      ? new OverridingRenewValidator(PATRON_BLOCK, blockOverrides, permissions, patronBlocksValidation)
-      : new BlockValidator<>(USER_IS_BLOCKED_AUTOMATICALLY, patronBlocksValidation);
+      ? new OverridingBlockValidator<>(PATRON_BLOCK, blockOverrides, permissions)
+      : new BlockValidator<>(USER_IS_BLOCKED_AUTOMATICALLY, validationFunction);
   }
 }
