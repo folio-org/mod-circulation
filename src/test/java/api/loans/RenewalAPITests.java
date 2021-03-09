@@ -852,7 +852,7 @@ public abstract class RenewalAPITests extends APITests {
 
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(3));
+      .until(FakePubSub::getPublishedEvents, hasSize(5));
 
     assertThatPublishedLoanLogRecordEventsAreValid();
   }
