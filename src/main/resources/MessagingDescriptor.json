@@ -19,6 +19,12 @@
       "signed": false
     },
     {
+      "eventType": "ITEM_AGED_TO_LOST",
+      "description": "Item aged to lost",
+      "eventTTL": 1,
+      "signed": false
+    },
+    {
       "eventType": "ITEM_CLAIMED_RETURNED",
       "description": "Item was claimed returned",
       "eventTTL": 1,

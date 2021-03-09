@@ -73,12 +73,14 @@ public class MarkOverdueLoansAsAgedLostService {
       .thenApply(this::excludeLoansThatHaveNoItem)
       .thenApply(this::markLoansAsAgedToLost)
       .thenCompose(this::updateLoansAndItemsInStorage)
-      .thenCompose(this::publishAgedToLostEvent)
+      .thenCompose(this::publishAgedToLostEvents)
       .thenCompose(this::scheduleAgedToLostNotices);
   }
 
-  private CompletableFuture<Result<List<Loan>>> publishAgedToLostEvent(Result<List<Loan>> allLoansResult) {
-    return allLoansResult.after(allLoans -> allOf(allLoans, eventPublisher::publishAgedToLostEvent))
+  private CompletableFuture<Result<List<Loan>>> publishAgedToLostEvents(
+    Result<List<Loan>> allLoansResult) {
+
+    return allLoansResult.after(allLoans -> allOf(allLoans, eventPublisher::publishAgedToLostEvents))
       .thenApply(r -> r.next(ignored -> allLoansResult));
   }
 
