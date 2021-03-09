@@ -11,6 +11,9 @@ import static api.support.fixtures.AddressExamples.SiriusBlack;
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasItemBarcodeParameter;
 import static api.support.matchers.EventMatchers.isValidCheckInLogEvent;
 import static api.support.matchers.EventMatchers.isValidItemCheckedInEvent;
+import static api.support.matchers.EventMatchers.isValidLoanDueDateChangedEvent;
+import static api.support.matchers.EventMatchers.isValidLoanLogRecordEvent;
+import static api.support.matchers.EventTypeMatchers.LOAN_DUE_DATE_CHANGED;
 import static api.support.matchers.ItemMatchers.isAvailable;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.LoanMatchers.isClosed;
@@ -29,6 +32,7 @@ import static org.awaitility.Awaitility.waitAtMost;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.domain.EventType.ITEM_CHECKED_IN;
 import static org.folio.circulation.domain.representations.logs.LogEventType.CHECK_IN;
+import static org.folio.circulation.domain.representations.logs.LogEventType.LOAN;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.hasItems;
@@ -50,6 +54,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import api.support.http.CheckOutResource;
+import org.awaitility.Awaitility;
+import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.Response;
@@ -1073,9 +1080,8 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
   @Test
   public void canCheckInLostAndPaidItem() {
     final ItemResource item = itemsFixture.basedUponNod();
-
-    declareLostFixtures.declareItemLost(
-      checkOutFixture.checkOutByBarcode(item, usersFixture.steve()).getJson());
+    var checkOutResource = checkOutFixture.checkOutByBarcode(item, usersFixture.steve()).getJson();
+    declareLostFixtures.declareItemLost(checkOutResource);
 
     checkInFixture.checkInByBarcode(item);
 
@@ -1084,7 +1090,10 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     waitAtMost(1, SECONDS)
       .until(FakePubSub::getPublishedEvents, hasSize(6));
 
-    assertThatPublishedLoanLogRecordEventsAreValid();
+    Response response = loansClient.getById(UUID.fromString(checkOutResource.getString("id")));
+    JsonObject loan = response.getJson();
+
+    assertThatPublishedLoanLogRecordEventsAreValid(loan);
   }
 
   @Test

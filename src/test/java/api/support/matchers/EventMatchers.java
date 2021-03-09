@@ -12,6 +12,7 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getBooleanP
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.core.Is.is;
 
+import org.apache.commons.lang3.StringUtils;
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
 
@@ -107,14 +108,20 @@ public class EventMatchers {
     return allOf(JsonObjectMatcher.allOfPaths(
       hasJsonPath("eventPayload", allOf(
         hasJsonPath("logEventType", is("LOAN")),
-        hasJsonPath("itemBarcode", is(loanCtx.getString("itemBarcode"))),
-        hasJsonPath("itemId", is(loanCtx.getString("itemId"))),
-        hasJsonPath("instanceId", is(loanCtx.getString("itemBarcode"))),
-        hasJsonPath("holdingsRecordId", is(loanCtx.getString("itemId"))),
-        hasJsonPath("action", is(loanCtx.getString("action"))),
-        hasJsonPath("date", is(loanCtx.getString("date"))),
-        hasJsonPath("description", is(loanCtx.getString("description"))),
-        hasJsonPath("loanId", is(loanCtx.getString("loanId")))
+        hasJsonPath("payload", allOf(
+          hasJsonPath("loanId", is(loanCtx.getString("id"))),
+          hasJsonPath("userId", is(loanCtx.getString("userId"))),
+          hasJsonPath("itemId", is(loanCtx.getString("itemId"))),
+          hasJsonPath("itemBarcode", is(loanCtx.getJsonObject("item").getString("barcode"))),
+          hasJsonPath("instanceId", is(loanCtx.getJsonObject("item").getString("instanceId"))),
+          hasJsonPath("holdingsRecordId", is(loanCtx.getJsonObject("item").getString("holdingsRecordId"))),
+          hasJsonPath("action", is(
+            StringUtils.capitalize(StringUtils
+                .lowerCase(StringUtils
+                  .join(StringUtils
+                    .splitByCharacterTypeCamelCase(loanCtx.getString("action")), StringUtils.SPACE))
+            )))
+        ))
       ))),
       isLogRecordEventType());
   }
