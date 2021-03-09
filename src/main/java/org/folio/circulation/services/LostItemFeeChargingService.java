@@ -114,9 +114,14 @@ public class LostItemFeeChargingService {
             // refund service will refund and close any partially paid or transferred accounts.
             // accounts that have not been processed (paid or transferred) require a separate
             // process to close
-            return refundService.refundAccounts(refundContext)
-              .thenCompose(r -> {return cancelAccounts(loanWithAccountData);})
-              .thenCompose(res -> {return accountRepository.findAccountsForLoan(loan);})
+            return refundService.refundLostItemFees(refundContext)
+              //.thenCompose(r -> {return cancelAccounts(loanWithAccountData);})
+              .thenCompose(res -> {
+                if (res.failed()) {
+                  log.error(res.cause().toString());
+                }
+                return accountRepository.findAccountsForLoan(loan);
+              })
               .thenCompose(loanResult -> {
                 if (hasLostItemFees(loanResult.value())) {
                   log.error("Cancel/refund fees unsuccessful, aborting charging new fees");
