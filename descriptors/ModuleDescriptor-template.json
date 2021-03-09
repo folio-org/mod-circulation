@@ -966,10 +966,7 @@
           "methods": [
             "DELETE"
           ],
-          "pathPattern": "/_/tenant",
-          "modulePermissions": [
-            "pubsub.publishers.delete"
-          ]
+          "pathPattern": "/_/tenant"
         }
       ]
     }
