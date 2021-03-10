@@ -87,52 +87,39 @@ public class LostItemFeeChargingService {
     return lostItemPolicyRepository.getLostItemPolicyById(loan.getLostItemPolicyId())
       .thenApply(result -> result.map(referenceDataContext::withLostItemPolicy))
       .thenCompose(refDataResult -> refDataResult.after(referenceData -> {
-        if (shouldCloseLoan(referenceData.lostItemPolicy)) {
-          log.debug("Loan [{}] can be closed because no fee will be charged", loan.getId());
-          return closeLoanAsLostAndPaidAndUpdateInStorage(loan)
-            .thenCompose(r -> r.after(eventPublisher::publishClosedLoanEvent))
-            .thenApply(r -> r.map(v -> loan));
-        }
-
         log.info("Checking for existing lost item fees for loan [{}]", loan.getId());
         return accountRepository.findAccountsForLoan(loan)
           .thenCompose(result -> {
             this.loanWithAccountData = result.value();
-            if (!hasLostItemFees(loanWithAccountData)) {
+
+            if (!hasLostItemFees(loanWithAccountData) && !shouldCloseLoan(referenceData.lostItemPolicy)) {
               log.info("No existing lost item fees found, applying lost item fees to loan [{}]", loan.getId());
               return applyFees(referenceData, loanWithAccountData);
             }
+
+            if (!hasLostItemFees(loanWithAccountData) && shouldCloseLoan(referenceData.lostItemPolicy)) {
+              log.info("No existing lost item fees found, losing loan [{}] as lost and paid.", loan.getId());
+              return CloseLoanAsLostandPaidAndPublishEvent(loan);
+            }
             log.info("Existing lost item fees found for loan [{}], trying to clear", loan.getId());
-            final LostItemFeeRefundContext refundContext = new LostItemFeeRefundContext(
-              loan.getItem().getStatus(),
-              loan.getItem().getItemId(),
-              userId,
-              servicePointId,
-              loanWithAccountData,
-              AccountCancelReason.CANCELLED_ITEM_DECLARED_LOST
-            );
-            // refund service will refund and close any partially paid or transferred accounts.
-            // accounts that have not been processed (paid or transferred) require a separate
-            // process to close
-            return refundService.refundLostItemFees(refundContext)
-              //.thenCompose(r -> {return cancelAccounts(loanWithAccountData);})
-              .thenCompose(res -> {
-                if (res.failed()) {
-                  log.error(res.cause().toString());
+            return removeAndRefundFees(userId, servicePointId, loanWithAccountData)
+              .thenCompose(refundResult -> {
+                if (result.failed()) {
+                  log.error("Unable to clear lost item fees for loan [{}], aborting charge fees.", loan.getId());
+                  return CompletableFuture.completedFuture(failed(refundResult.cause()));
                 }
-                return accountRepository.findAccountsForLoan(loan);
-              })
-              .thenCompose(loanResult -> {
-                if (hasLostItemFees(loanResult.value())) {
-                  log.error("Cancel/refund fees unsuccessful, aborting charging new fees");
-                  return CompletableFuture.completedFuture(succeeded(loan));
+                log.info("Existing lost item fees cleared from loan [{}]", loan.getId());
+                if (shouldCloseLoan(referenceData.lostItemPolicy)) {
+                  log.info("Closing loan [{}] as lost and paid.", loan.getId());
+                  return CloseLoanAsLostandPaidAndPublishEvent(loan);
+                } else {
+                  log.info("Applying fees to loan [{}].", loan.getId());
+                  return applyFees(referenceData, loanWithAccountData);
                 }
-                log.info("Existing fees removed successfully, applying new fees to loan [{}]", loan.getId());
-                return applyFees(referenceData, loanWithAccountData);
               });
-          });
-      }));
-    }
+            });
+        }));
+      };
 
   private CompletableFuture<Result<Loan>> applyFees (ReferenceDataContext referenceData, Loan loan) {
     return fetchFeeFineOwner(referenceData)
@@ -141,6 +128,35 @@ public class LostItemFeeChargingService {
     .thenApply(this::buildAccountsAndActions)
     .thenCompose(r -> r.after(feeFineFacade::createAccounts))
     .thenApply(r -> r.map(notUsed -> loan));
+  }
+
+  private CompletableFuture<Result<Loan>> removeAndRefundFees(
+    String userId,
+    String servicePointId,
+    Loan loan
+    ) {
+    final LostItemFeeRefundContext refundContext = new LostItemFeeRefundContext(
+      loan.getItem().getStatus(),
+      loan.getItem().getItemId(),
+      userId,
+      servicePointId,
+      loan,
+      AccountCancelReason.CANCELLED_ITEM_DECLARED_LOST
+    );
+    return refundService.refundLostItemFees(refundContext)
+      .thenCompose(refundResult -> {
+        if (refundResult.failed()) {
+          return CompletableFuture.completedFuture(failed(refundResult.cause()));
+        } else {
+          return CompletableFuture.completedFuture(succeeded(loan));
+        }
+      });
+  }
+
+  private CompletableFuture<Result<Loan>> CloseLoanAsLostandPaidAndPublishEvent(Loan loan) {
+    return closeLoanAsLostAndPaidAndUpdateInStorage(loan)
+    .thenCompose(r -> r.after(eventPublisher::publishClosedLoanEvent))
+    .thenApply(r -> r.map(v -> loan));
   }
 
   private Boolean isOpenLostItemFee(Account account) {
@@ -161,38 +177,6 @@ public class LostItemFeeChargingService {
       .stream()
       .filter(account -> isOpenLostItemFee(account))
       .collect(Collectors.toList());
-  }
-
-  private CompletableFuture<Result<Loan>> cancelAccounts(Loan loan) {
-    List<Account> lostItemFees = getLostItemFeeAccounts(loan);
-
-    if (lostItemFees.size() < 1) {
-      List<AccountActionResponse> returnList;
-      return CompletableFuture.completedFuture(succeeded(loan));
-    }
-
-    return  userRepository.getUser(this.userId).thenCompose(result -> {
-      String staffUserName = result.value().getPersonalName();
-      List<CancelAccountCommand> cancelCommands = new ArrayList<>();
-      lostItemFees.stream().forEach(account -> {
-        CancelAccountCommand command = CancelAccountCommand.builder()
-          .accountId(account.getId())
-          .currentServicePointId(this.servicePointId)
-          .cancellationReason(AccountCancelReason.CANCELLED_ITEM_DECLARED_LOST)
-          .userName(staffUserName)
-          .build();
-        cancelCommands.add(command);
-      });
-
-      return succeeded(cancelCommands)
-        .after(commands -> allOf(commands, command -> feeFineService.cancelAccount(command)))
-        .thenApply(r -> {
-          if (r.failed()) {
-             log.error("Account cancellations failed: " + r.cause().toString());
-          }
-          return r.map(notUsed -> loan);
-        });
-    });  
   }
 
   private CompletableFuture<Result<Loan>> closeLoanAsLostAndPaidAndUpdateInStorage(Loan loan) {
