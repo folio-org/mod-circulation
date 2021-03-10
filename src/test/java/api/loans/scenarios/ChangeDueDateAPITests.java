@@ -265,7 +265,7 @@ public class ChangeDueDateAPITests extends APITests {
     final var event = publishedEvents.findFirst(byEventType(LOAN_DUE_DATE_CHANGED));
 
     assertThat(event, isValidLoanDueDateChangedEvent(updatedLoan));
-    assertThatPublishedLoanLogRecordEventsAreValid();
+    assertThatPublishedLoanLogRecordEventsAreValid(updatedLoan);
   }
 
   private void chargeFeesForLostItemToKeepLoanOpen() {

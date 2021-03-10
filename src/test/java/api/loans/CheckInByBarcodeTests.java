@@ -11,9 +11,6 @@ import static api.support.fixtures.AddressExamples.SiriusBlack;
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasItemBarcodeParameter;
 import static api.support.matchers.EventMatchers.isValidCheckInLogEvent;
 import static api.support.matchers.EventMatchers.isValidItemCheckedInEvent;
-import static api.support.matchers.EventMatchers.isValidLoanDueDateChangedEvent;
-import static api.support.matchers.EventMatchers.isValidLoanLogRecordEvent;
-import static api.support.matchers.EventTypeMatchers.LOAN_DUE_DATE_CHANGED;
 import static api.support.matchers.ItemMatchers.isAvailable;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.LoanMatchers.isClosed;
@@ -32,7 +29,6 @@ import static org.awaitility.Awaitility.waitAtMost;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.domain.EventType.ITEM_CHECKED_IN;
 import static org.folio.circulation.domain.representations.logs.LogEventType.CHECK_IN;
-import static org.folio.circulation.domain.representations.logs.LogEventType.LOAN;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.hasItems;
@@ -54,9 +50,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import api.support.http.CheckOutResource;
-import org.awaitility.Awaitility;
-import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.Response;
@@ -1103,7 +1096,8 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     checkInFixture.checkInByBarcode(ageToLostResult.getItem());
 
     assertThat(itemsFixture.getById(ageToLostResult.getItemId()).getJson(), isAvailable());
-    assertThat(loansFixture.getLoanById(ageToLostResult.getLoanId()).getJson(), isClosed());
+    var loan = loansFixture.getLoanById(ageToLostResult.getLoanId()).getJson();
+    assertThat(loan, isClosed());
 
     waitAtMost(1, SECONDS)
       // there should be 5 events published: ITEM_CHECKED_OUT, LOG_RECORDs: CHECK_OUT_EVENT
@@ -1111,7 +1105,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
       // ITEM_CHECKED_IN, LOG_RECORDs: CHECK_IN_EVENT
       .until(FakePubSub::getPublishedEvents, hasSize(5));
 
-    assertThatPublishedLoanLogRecordEventsAreValid();
+    assertThatPublishedLoanLogRecordEventsAreValid(loan);
   }
 
   @Test
@@ -1147,7 +1141,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     final var checkInLogEvent = publishedEvents.findFirst(byLogEventType(CHECK_IN.value()));
 
     assertThat(checkInLogEvent, isValidCheckInLogEvent(checkedInLoan));
-    assertThatPublishedLoanLogRecordEventsAreValid();
+    assertThatPublishedLoanLogRecordEventsAreValid(checkedInLoan);
   }
 
   private void checkPatronNoticeEvent(IndividualResource request, IndividualResource requester,
@@ -1168,8 +1162,6 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
 
     waitAtMost(1, SECONDS)
       .until(() -> FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
-
-    assertThatPublishedLogRecordEventsAreValid();
   }
 
   private void verifyCheckInOperationRecorded(UUID itemId, UUID servicePoint) {

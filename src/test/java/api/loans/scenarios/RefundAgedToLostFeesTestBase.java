@@ -73,7 +73,7 @@ public abstract class RefundAgedToLostFeesTestBase extends SpringApiTest {
     assertThat(loan, hasLostItemProcessingFee(isClosedCancelled(cancellationReason, processingFee)));
 
     assertThatBillingInformationRemoved(loan);
-    assertThatPublishedLoanLogRecordEventsAreValid();
+    assertThatPublishedLoanLogRecordEventsAreValid(loansClient.getById(loan.getId()).getJson());
   }
 
   @Test
@@ -97,7 +97,7 @@ public abstract class RefundAgedToLostFeesTestBase extends SpringApiTest {
     assertThat(loan, hasOverdueFine());
 
     assertThatBillingInformationRemoved(loan);
-    assertThatPublishedLoanLogRecordEventsAreValid();
+    assertThatPublishedLoanLogRecordEventsAreValid(loansClient.getById(loan.getId()).getJson());
   }
 
   @Test
@@ -148,7 +148,7 @@ public abstract class RefundAgedToLostFeesTestBase extends SpringApiTest {
     assertThat(loan, hasLostItemProcessingFee(isPaidFully(processingFee)));
 
     assertThatBillingInformationRemoved(loan);
-    assertThatPublishedLoanLogRecordEventsAreValid();
+    assertThatPublishedLoanLogRecordEventsAreValid(loansClient.getById(loan.getId()).getJson());
   }
 
   @Test
@@ -175,7 +175,7 @@ public abstract class RefundAgedToLostFeesTestBase extends SpringApiTest {
     // make sure fees are not assigned for the loan again
     assertThat(loan, not(hasLostItemProcessingFee(isOpen(processingFee))));
 
-    assertThatPublishedLoanLogRecordEventsAreValid();
+    assertThatPublishedLoanLogRecordEventsAreValid(loansClient.getById(loan.getId()).getJson());
   }
 
   private void assertThatBillingInformationRemoved(IndividualResource loan) {

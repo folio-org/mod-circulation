@@ -474,7 +474,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     assertThat(itemsClient.get(result.getItem()).getJson(), isCheckedOut());
     assertThat(renewedLoan.getString("dueDate"),
       withinSecondsAfter(seconds(2), approximateRenewalDate));
-    assertThatPublishedLoanLogRecordEventsAreValid();
+    assertThatPublishedLoanLogRecordEventsAreValid(renewedLoan);
   }
 
   @Test
@@ -728,10 +728,10 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     IndividualResource item = result.getItem();
     IndividualResource user = result.getUser();
-    
+
     final DateTime renewalDate = now(UTC).plusWeeks(9);
     mockClockManagerToReturnFixedDateTime(renewalDate);
-    
+
     IndividualResource renewedLoan =
       loansFixture.overrideRenewalByBarcode(item, user,
         OVERRIDE_COMMENT, null);

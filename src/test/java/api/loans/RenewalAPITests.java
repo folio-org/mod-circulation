@@ -794,7 +794,7 @@ public abstract class RenewalAPITests extends APITests {
       .atMost(1, TimeUnit.SECONDS)
       .until(FakePubSub::getPublishedEvents, hasSize(2));
 
-    assertThatPublishedLoanLogRecordEventsAreValid();
+    assertThatPublishedLoanLogRecordEventsAreValid(response.getJson());
   }
 
   @Test
@@ -854,7 +854,7 @@ public abstract class RenewalAPITests extends APITests {
       .atMost(1, TimeUnit.SECONDS)
       .until(FakePubSub::getPublishedEvents, hasSize(3));
 
-    assertThatPublishedLoanLogRecordEventsAreValid();
+    assertThatPublishedLoanLogRecordEventsAreValid(loansClient.getById(result.getLoan().getId()).getJson());
   }
 
   @Test
@@ -1473,7 +1473,7 @@ public abstract class RenewalAPITests extends APITests {
     final var event = publishedEvents.findFirst(byEventType(LOAN_DUE_DATE_CHANGED));
 
     assertThat(event, isValidLoanDueDateChangedEvent(renewedLoan));
-    assertThatPublishedLoanLogRecordEventsAreValid();
+    assertThatPublishedLoanLogRecordEventsAreValid(renewedLoan);
   }
 
   @Test

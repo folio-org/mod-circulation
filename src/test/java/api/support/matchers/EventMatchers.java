@@ -10,6 +10,7 @@ import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getBooleanProperty;
 import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.core.Is.is;
 
 import org.apache.commons.lang3.StringUtils;
@@ -114,17 +115,26 @@ public class EventMatchers {
           hasJsonPath("itemId", is(loanCtx.getString("itemId"))),
           hasJsonPath("itemBarcode", is(loanCtx.getJsonObject("item").getString("barcode"))),
           hasJsonPath("instanceId", is(loanCtx.getJsonObject("item").getString("instanceId"))),
-          hasJsonPath("holdingsRecordId", is(loanCtx.getJsonObject("item").getString("holdingsRecordId"))),
-          hasJsonPath("action", is(
-            StringUtils.capitalize(StringUtils
-                .lowerCase(StringUtils
-                  .join(StringUtils
-                    .splitByCharacterTypeCamelCase(loanCtx.getString("action")), StringUtils.SPACE))
-            )))
+          hasJsonPath("holdingsRecordId", is(loanCtx.getJsonObject("item").getString("holdingsRecordId")))
         ))
       ))),
       isLogRecordEventType());
   }
+
+  public static Matcher<JsonObject> isValidAnonymizeLoansLogRecordEvent(JsonObject loanCtx) {
+    return allOf(JsonObjectMatcher.allOfPaths(
+      hasJsonPath("eventPayload", allOf(
+        hasJsonPath("logEventType", is("LOAN")),
+        hasJsonPath("payload", allOf(
+          hasJsonPath("loanId", is(loanCtx.getString("id"))),
+          hasJsonPath("itemId", is(loanCtx.getString("itemId"))),
+          hasJsonPath("updatedByUserId", is(loanCtx.getJsonObject("metadata").getString("updatedByUserId"))),
+          hasJsonPath("action", is("Anonymize"))
+        ))
+      ))),
+      isLogRecordEventType());
+  }
+
 
   public static Matcher<JsonObject> isValidNoticeLogRecordEvent(JsonObject notice) {
     return allOf(JsonObjectMatcher.allOfPaths(
