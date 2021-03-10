@@ -97,7 +97,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
       hasJsonPath("loan.action", "checkedout")
     ));
     assertThat(scheduledNoticesClient.getAll(), hasSize(1));
-    assertThatPublishedLoanLogRecordEventsAreValid(result.getLoan().getJson());
+    assertThatPublishedLoanLogRecordEventsAreValid(loansClient.getById(result.getLoan().getId()).getJson());
   }
 
   @Test
@@ -119,7 +119,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     assertThat(result.getLoan(), hasLostItemProcessingFee(isOpen(expectedProcessingFee)));
     assertThat(result.getLoan(), hasLostItemProcessingFeeCreatedBySystemAction());
     assertThat(scheduledNoticesClient.getAll(), hasSize(1));
-    assertThatPublishedLoanLogRecordEventsAreValid(result.getLoan().getJson());
+    assertThatPublishedLoanLogRecordEventsAreValid(loansClient.getById(result.getLoan().getId()).getJson());
   }
 
   @Test
@@ -144,7 +144,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     assertThat(result.getLoan(), hasLostItemProcessingFee(isOpen(expectedProcessingFee)));
     assertThat(result.getLoan(), hasLostItemProcessingFeeCreatedBySystemAction());
     assertThat(scheduledNoticesClient.getAll(), hasSize(2));
-    assertThatPublishedLoanLogRecordEventsAreValid(result.getLoan().getJson());
+    assertThatPublishedLoanLogRecordEventsAreValid(loansClient.getById(result.getLoan().getId()).getJson());
   }
 
   @Test
@@ -163,7 +163,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     assertThat(result.getLoan(), hasNoLostItemFee());
     assertThat(result.getLoan(), hasNoLostItemProcessingFee());
     assertThat(scheduledNoticesClient.getAll(), hasSize(0));
-    assertThatPublishedLoanLogRecordEventsAreValid(result.getLoan().getJson());
+    assertThatPublishedLoanLogRecordEventsAreValid(loansClient.getById(result.getLoan().getId()).getJson());
   }
 
   @Test
@@ -178,7 +178,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
 
     assertThat(result.getLoan().getJson(), isLostItemHasBeenBilled());
     assertThat(scheduledNoticesClient.getAll(), hasSize(1));
-    assertThatPublishedLoanLogRecordEventsAreValid(result.getLoan().getJson());
+    assertThatPublishedLoanLogRecordEventsAreValid(loansClient.getById(result.getLoan().getId()).getJson());
   }
 
   @Test
@@ -194,7 +194,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
 
       assertThat(loanFromStorage, hasLostItemFee(isOpen(expectedFee)));
       assertThat(loanFromStorage, hasLostItemFeeCreatedBySystemAction());
-      assertThatPublishedLoanLogRecordEventsAreValid(loanFromStorage.getJson());
+      assertThatPublishedLoanLogRecordEventsAreValid(loansClient.getById(loan.getId()).getJson());
     });
 
   }
@@ -226,7 +226,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
 
       assertThat(loanFromStorage, hasLostItemFee(isOpen(fee)));
       assertThat(loanFromStorage, hasLostItemFeeCreatedBySystemAction());
-      assertThatPublishedLoanLogRecordEventsAreValid(loanFromStorage.getJson());
+      assertThatPublishedLoanLogRecordEventsAreValid(loansClient.getById(loan.getId()).getJson());
     });
   }
 
@@ -284,7 +284,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     assertThat(result.getLoan().getJson(), isLostItemHasNotBeenBilled());
     assertThat(result.getLoan(), hasNoLostItemFee());
     assertThat(scheduledNoticesClient.getAll(), hasSize(0));
-    assertThatPublishedLoanLogRecordEventsAreValid(result.getLoan().getJson());
+    assertThatPublishedLoanLogRecordEventsAreValid(loansClient.getById(result.getLoan().getId()).getJson());
   }
 
   @Test
@@ -303,7 +303,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
 
     assertThat(result.getLoan(), hasLostItemFees(iterableWithSize(1)));
     assertThat(scheduledNoticesClient.getAll(), hasSize(2));
-    assertThatPublishedLoanLogRecordEventsAreValid(result.getLoan().getJson());
+    assertThatPublishedLoanLogRecordEventsAreValid(loansClient.getById(result.getLoan().getId()).getJson());
   }
 
   @Test
@@ -322,7 +322,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     assertThat(result.getLoan().getJson(), isClosed());
     assertThat(result.getItem().getJson(), isLostAndPaid());
     assertThat(scheduledNoticesClient.getAll(), hasSize(0));
-    assertThatPublishedLoanLogRecordEventsAreValid(result.getLoan().getJson());
+    assertThatPublishedLoanLogRecordEventsAreValid(loansClient.getById(result.getLoan().getId()).getJson());
   }
 
   @Test

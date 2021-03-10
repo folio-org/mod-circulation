@@ -79,7 +79,7 @@ public class ScheduledAgeToLostApiTest extends SpringApiTest {
       assertThat(getLoanActions(loanFromStorage), hasAgedToLostAction());
       assertThat(loanFromStorage.getJson(), hasPatronBillingDate(loanFromStorage));
       assertThat(loanFromStorage.getJson(), hasAgedToLostDate());
-      assertThatPublishedLoanLogRecordEventsAreValid(itemFromStorage.getJson());
+      assertThatPublishedLoanLogRecordEventsAreValid(loansClient.getById(loan.getId()).getJson());
     });
   }
 
