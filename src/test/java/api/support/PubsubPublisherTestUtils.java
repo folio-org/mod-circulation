@@ -15,14 +15,16 @@ public class PubsubPublisherTestUtils {
   private PubsubPublisherTestUtils() { }
 
   public static void assertThatPublishedLoanLogRecordEventsAreValid(JsonObject loan) {
-    getPublishedEventsAsList(byLogEventType(LOAN.value())).forEach(event ->
-        assertThat(event, isValidLoanLogRecordEvent(loan))
+    getPublishedEventsAsList(byLogEventType(LOAN.value())).stream()
+      .filter(event -> event.getString("eventPayload").contains(loan.getString("id")))
+      .forEach(event -> assertThat(event, isValidLoanLogRecordEvent(loan))
     );
   }
 
   public static void assertThatPublishedAnonymizeLoanLogRecordEventsAreValid(JsonObject loan) {
-    getPublishedEventsAsList(byLogEventType(LOAN.value())).forEach(event ->
-      assertThat(event, isValidAnonymizeLoansLogRecordEvent(loan))
+    getPublishedEventsAsList(byLogEventType(LOAN.value())).stream()
+      .filter(event -> event.getString("eventPayload").contains(loan.getString("id")))
+      .forEach(event -> assertThat(event, isValidAnonymizeLoansLogRecordEvent(loan))
     );
   }
 
