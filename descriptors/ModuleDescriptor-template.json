@@ -966,10 +966,7 @@
           "methods": [
             "DELETE"
           ],
-          "pathPattern": "/_/tenant",
-          "modulePermissions": [
-            "pubsub.publishers.delete"
-          ]
+          "pathPattern": "/_/tenant"
         }
       ]
     }
@@ -2203,7 +2200,8 @@
         "scheduled-notice-storage.scheduled-notices.collection.delete",
         "scheduled-notice-storage.scheduled-notices.item.post",
         "manualblocks.collection.get",
-        "automated-patron-blocks.collection.get"
+        "automated-patron-blocks.collection.get",
+        "pubsub.publish.post"
       ],
       "visible": false
     },

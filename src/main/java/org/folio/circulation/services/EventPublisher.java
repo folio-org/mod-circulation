@@ -1,6 +1,7 @@
 package org.folio.circulation.services;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.EventType.ITEM_AGED_TO_LOST;
 import static org.folio.circulation.domain.EventType.ITEM_CHECKED_IN;
 import static org.folio.circulation.domain.EventType.ITEM_CHECKED_OUT;
 import static org.folio.circulation.domain.EventType.ITEM_CLAIMED_RETURNED;
@@ -192,9 +193,11 @@ public class EventPublisher {
     return completedFuture(succeeded(requestAndRelatedRecords));
   }
 
-  public CompletableFuture<Result<Void>> publishAgedToLostEvent(Loan loan) {
+  public CompletableFuture<Result<Loan>> publishAgedToLostEvents(Loan loan) {
     return publishLogRecord(LoanLogContext.from(loan)
-      .withDescription(String.format("Due date: %s", loan.getAgedToLostDateTime())).asJson(), LOAN);
+      .withDescription(String.format("Due date: %s", loan.getAgedToLostDateTime())).asJson(), LOAN)
+      .thenCompose(r -> r.after(v -> publishStatusChangeEvent(ITEM_AGED_TO_LOST, loan)));
+
   }
 
   public CompletableFuture<Result<Void>> publishClosedLoanEvent(Loan loan) {
