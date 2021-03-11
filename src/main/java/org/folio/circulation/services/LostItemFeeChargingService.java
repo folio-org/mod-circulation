@@ -104,7 +104,7 @@ public class LostItemFeeChargingService {
             log.info("Existing lost item fees found for loan [{}], trying to clear", loan.getId());
             return removeAndRefundFees(userId, servicePointId, loanWithAccountData)
               .thenCompose(refundResult -> {
-                if (result.failed()) {
+                if (refundResult.failed()) {
                   log.error("Unable to clear lost item fees for loan [{}], aborting charge fees.", loan.getId());
                   return CompletableFuture.completedFuture(failed(refundResult.cause()));
                 }
@@ -170,13 +170,6 @@ public class LostItemFeeChargingService {
 
   private Boolean hasLostItemFees(Loan loan) {
     return loan.getAccounts().stream().anyMatch(account -> isOpenLostItemFee(account));
-  }
-
-  private List<Account> getLostItemFeeAccounts(Loan loan) {
-    return loan.getAccounts()
-      .stream()
-      .filter(account -> isOpenLostItemFee(account))
-      .collect(Collectors.toList());
   }
 
   private CompletableFuture<Result<Loan>> closeLoanAsLostAndPaidAndUpdateInStorage(Loan loan) {
