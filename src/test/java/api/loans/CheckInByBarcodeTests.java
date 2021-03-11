@@ -2,7 +2,6 @@ package api.loans;
 
 import static api.support.APITestContext.getUserId;
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
-import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
 import static api.support.Wait.waitAtLeast;
 import static api.support.builders.ItemBuilder.INTELLECTUAL_ITEM;
 import static api.support.fakes.PublishedEvents.byEventType;
@@ -675,8 +674,6 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
 
     waitAtMost(1, SECONDS)
       .until(() -> FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
-
-    assertThatPublishedLogRecordEventsAreValid();
 
     patronNoticesClient.deleteAll();
     FakePubSub.clearPublishedEvents();

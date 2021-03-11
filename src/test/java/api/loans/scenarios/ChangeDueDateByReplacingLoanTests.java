@@ -1,6 +1,5 @@
 package api.loans.scenarios;
 
-import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
 import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
@@ -257,7 +256,6 @@ public class ChangeDueDateByReplacingLoanTests extends APITests {
       hasItems(hasEmailNoticeProperties(steve.getId(), manualDueDateChangeTemplateId, noticeContextMatchers)));
 
     assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
-    assertThatPublishedLogRecordEventsAreValid();
   }
 
   @Test

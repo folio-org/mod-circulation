@@ -2,7 +2,6 @@ package api.loans;
 
 import static api.loans.CheckOutByBarcodeTests.INSUFFICIENT_OVERRIDE_PERMISSIONS;
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
-import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
 import static api.support.builders.FixedDueDateSchedule.forDay;
 import static api.support.builders.FixedDueDateSchedule.wholeMonth;
 import static api.support.fakes.PublishedEvents.byLogEventType;
@@ -715,7 +714,6 @@ public class OverrideRenewByBarcodeTests extends APITests {
       hasEmailNoticeProperties(steve.getId(), renewalTemplateId, noticeContextMatchers)));
 
     assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
-    assertThatPublishedLogRecordEventsAreValid();
   }
 
   @Test
