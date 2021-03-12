@@ -1,6 +1,10 @@
 package api.loans.agetolost;
 
+import static api.support.fakes.FakePubSub.getPublishedEvents;
+import static api.support.fakes.PublishedEvents.byEventType;
 import static api.support.http.CqlQuery.queryFromTemplate;
+import static api.support.matchers.EventMatchers.isValidItemAgedToLostEvent;
+import static api.support.matchers.EventTypeMatchers.ITEM_AGED_TO_LOST;
 import static api.support.matchers.ItemMatchers.isAgedToLost;
 import static api.support.matchers.ItemMatchers.isCheckedOut;
 import static api.support.matchers.ItemMatchers.isClaimedReturned;
@@ -12,12 +16,15 @@ import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.iterableWithSize;
 import static org.hamcrest.Matchers.not;
 import static org.joda.time.DateTime.now;
 import static org.joda.time.DateTimeZone.UTC;
 
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -50,19 +57,20 @@ public class ScheduledAgeToLostApiTest extends SpringApiTest {
   @Before
   public void activateLostItemFeePolicy() {
     useLostItemPolicy(lostItemFeePoliciesFixture.ageToLostAfterOneMinute().getId());
-
-    checkOutItem();
   }
 
   @Test
   public void shouldAgeItemToLostWhenOverdueByMoreThanInterval() {
+    checkOutItem();
     scheduledAgeToLostClient.triggerJob();
 
     assertThat(itemsClient.get(overdueItem).getJson(), isAgedToLost());
     assertThat(getLoanActions(), hasAgedToLostAction());
     assertThat(loansStorageClient.get(overdueLoan).getJson(), hasPatronBillingDate());
     assertThat(loansStorageClient.get(overdueLoan).getJson(), hasAgedToLostDate());
+
     assertThatPublishedLoanLogRecordEventsAreValid(overdueLoan.getJson());
+    assertThatItemAgedToLostEventWasPublished(overdueLoan);
   }
 
   @Test
@@ -81,10 +89,12 @@ public class ScheduledAgeToLostApiTest extends SpringApiTest {
       assertThat(loanFromStorage.getJson(), hasAgedToLostDate());
       assertThatPublishedLoanLogRecordEventsAreValid(loansClient.getById(loan.getId()).getJson());
     });
+    assertThatItemAgedToLostEventsWerePublished(loanToItemMap.keySet());
   }
 
   @Test
   public void shouldIgnoreOverdueLoansWhenItemIsClaimedReturned() {
+    checkOutItem();
     claimItemReturnedFixture.claimItemReturned(overdueLoan.getId());
 
     scheduledAgeToLostClient.triggerJob();
@@ -133,6 +143,7 @@ public class ScheduledAgeToLostApiTest extends SpringApiTest {
 
   @Test
   public void shouldNotProcessAgedToLostItemSecondTime() {
+    checkOutItem();
     scheduledAgeToLostClient.triggerJob();
 
     mockClockManagerToReturnFixedDateTime(DateTime.now(UTC).plusMinutes(30));
@@ -217,5 +228,22 @@ public class ScheduledAgeToLostApiTest extends SpringApiTest {
 
   private Matcher<JsonObject> hasAgedToLostDate() {
     return hasJsonPath("agedToLostDelayedBilling.agedToLostDate", notNullValue());
+  }
+
+  private void assertThatItemAgedToLostEventWasPublished(IndividualResource loan) {
+    assertThatItemAgedToLostEventsWerePublished(List.of(loan));
+  }
+
+  private static void assertThatItemAgedToLostEventsWerePublished(
+    Collection<IndividualResource> loans) {
+
+    List<JsonObject> itemAgedToLostEvents = getPublishedEvents()
+      .filterToList(byEventType(ITEM_AGED_TO_LOST));
+
+    assertThat(itemAgedToLostEvents, hasSize(loans.size()));
+
+    for (IndividualResource loan : loans) {
+      assertThat(itemAgedToLostEvents, hasItem(isValidItemAgedToLostEvent(loan.getJson())));
+    }
   }
 }

@@ -1,5 +1,6 @@
 package api.support.matchers;
 
+import static api.support.matchers.EventTypeMatchers.isItemAgedToLostEventType;
 import static api.support.matchers.EventTypeMatchers.isItemCheckedInEventType;
 import static api.support.matchers.EventTypeMatchers.isItemCheckedOutEventType;
 import static api.support.matchers.EventTypeMatchers.isItemClaimedReturnedEventType;
@@ -89,6 +90,15 @@ public class EventMatchers {
         hasJsonPath("loanId", is(loan.getString("id")))
       ))),
       isItemDeclaredLostEventType());
+  }
+
+  public static Matcher<JsonObject> isValidItemAgedToLostEvent(JsonObject loan) {
+    return allOf(JsonObjectMatcher.allOfPaths(
+      hasJsonPath("eventPayload", allOf(
+        hasJsonPath("userId", is(loan.getString("userId"))),
+        hasJsonPath("loanId", is(loan.getString("id")))
+      ))),
+      isItemAgedToLostEventType());
   }
 
   public static Matcher<JsonObject> isValidLoanDueDateChangedEvent(JsonObject loan) {

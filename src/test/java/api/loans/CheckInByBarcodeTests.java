@@ -1097,10 +1097,10 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     assertThat(loan, isClosed());
 
     waitAtMost(1, SECONDS)
-      // there should be 5 events published: ITEM_CHECKED_OUT, LOG_RECORDs: CHECK_OUT_EVENT
-      // LOG_RECORD: LOAN (aged to lost)
+      // there should be 7 events published: ITEM_CHECKED_OUT, LOG_RECORDs: CHECK_OUT_EVENT
+      // LOG_RECORD: LOAN (aged to lost), ITEM_AGED_TO_LOST, LOG_RECORD: LOAN (status change)
       // ITEM_CHECKED_IN, LOG_RECORDs: CHECK_IN_EVENT
-      .until(FakePubSub::getPublishedEvents, hasSize(5));
+      .until(FakePubSub::getPublishedEvents, hasSize(7));
 
     assertThatPublishedLoanLogRecordEventsAreValid(loan);
   }
