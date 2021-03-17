@@ -1615,7 +1615,8 @@
         "pubsub.publish.post",
         "scheduled-notice-storage.scheduled-notices.item.delete",
         "accounts.refund.post",
-        "accounts.cancel.post"
+        "accounts.cancel.post",
+        "configuration.entries.collection.get"
       ],
       "visible": false
     },
