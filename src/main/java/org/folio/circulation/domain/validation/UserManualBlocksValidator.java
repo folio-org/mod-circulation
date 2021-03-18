@@ -42,13 +42,8 @@ public class UserManualBlocksValidator {
       .map(Request::getRequester).orElse(null);
 
     if (requester != null) {
-      return userManualBlocksFetcher.findByQuery(exactMatch("userId", requester.getId()))
-        .thenApply(userManualBlockResult -> userManualBlockResult
-          .failWhen(userManualBlockMultipleRecords -> of(() ->
-                isUserBlockedManually(userManualBlockMultipleRecords)),
-            userManualBlocks -> createUserBlockedValidationError(userManualBlocks,
-              "Patron blocked from requesting"))
-          .map(manualBlockMultipleRecords -> requestAndRelatedRecords));
+      return failIfPatronIsBlocked(requester.getId(), "Patron blocked from requesting")
+        .thenApply(r -> r.map(records -> requestAndRelatedRecords));
     }
     return CompletableFuture.completedFuture(Result.succeeded(requestAndRelatedRecords));
   }
@@ -56,13 +51,18 @@ public class UserManualBlocksValidator {
   public CompletableFuture<Result<LoanAndRelatedRecords>> refuseWhenUserIsBlocked(
     LoanAndRelatedRecords loanAndRelatedRecords) {
 
-      return userManualBlocksFetcher.findByQuery(exactMatch("userId", loanAndRelatedRecords.getUserId()))
-        .thenApply(userManualBlockResult -> userManualBlockResult
-          .failWhen(userManualBlockMultipleRecords -> of(() ->
+    return failIfPatronIsBlocked(loanAndRelatedRecords.getUserId(), "Patron blocked from borrowing")
+      .thenApply(r -> r.map(records -> loanAndRelatedRecords));
+  }
+
+  private CompletableFuture<Result<MultipleRecords<UserManualBlock>>> failIfPatronIsBlocked(
+    String userId, String message) {
+
+    return userManualBlocksFetcher.findByQuery(exactMatch("userId", userId))
+      .thenApply(userManualBlockResult -> userManualBlockResult
+        .failWhen(userManualBlockMultipleRecords -> of(() ->
             isUserBlockedManually(userManualBlockMultipleRecords)),
-            userManualBlocks -> createUserBlockedValidationError(userManualBlocks,
-              "Patron blocked from borrowing"))
-          .map(manualBlockMultipleRecords -> loanAndRelatedRecords));
+          userManualBlocks -> createUserBlockedValidationError(userManualBlocks, message)));
   }
 
   private HttpFailure createUserBlockedValidationError(
