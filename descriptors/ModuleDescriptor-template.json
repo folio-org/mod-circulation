@@ -1615,7 +1615,8 @@
         "pubsub.publish.post",
         "scheduled-notice-storage.scheduled-notices.item.delete",
         "accounts.refund.post",
-        "accounts.cancel.post"
+        "accounts.cancel.post",
+        "configuration.entries.collection.get"
       ],
       "visible": false
     },
@@ -2110,6 +2111,7 @@
         "inventory-storage.location-units.institutions.item.get",
         "inventory-storage.location-units.campuses.item.get",
         "inventory-storage.location-units.libraries.item.get",
+        "inventory-storage.location-units.libraries.collection.get",
         "inventory-storage.service-points.collection.get",
         "inventory-storage.service-points.item.get",
         "users.item.get",
