@@ -100,12 +100,12 @@ public class CheckOutValidators {
 
     itemLimitValidator = createItemLimitValidator(request, permissions, loanRepository);
 
-    automatedPatronBlocksValidator = createAutomatedBlocksValidator(request, permissions,
+    automatedPatronBlocksValidator = createAutomatedPatronBlocksValidator(request, permissions,
       automatedPatronBlocksRepository);
 
     loanPolicyValidator = createLoanPolicyValidator(request, permissions);
 
-    manualPatronBlocksValidator = createManualBlockValidator(request, permissions, clients);
+    manualPatronBlocksValidator = createManualPatronBlocksValidator(request, permissions, clients);
   }
 
   private ValidationErrorFailure errorWhenInIncorrectStatus(Item item) {
@@ -264,7 +264,7 @@ public class CheckOutValidators {
       .thenApply(r -> errorHandler.handleValidationResult(r, loanPolicyValidator.getErrorType(), relatedRecords)));
   }
 
-  private BlockValidator<LoanAndRelatedRecords> createAutomatedBlocksValidator(CheckOutByBarcodeRequest request,
+  private BlockValidator<LoanAndRelatedRecords> createAutomatedPatronBlocksValidator(CheckOutByBarcodeRequest request,
     OkapiPermissions permissions, AutomatedPatronBlocksRepository automatedPatronBlocksRepository) {
 
     return request.getBlockOverrides().getPatronBlockOverride().isRequested()
@@ -292,7 +292,7 @@ public class CheckOutValidators {
       new LoanPolicyValidator(request)::refuseWhenItemIsNotLoanable);
   }
 
-  private BlockValidator<LoanAndRelatedRecords> createManualBlockValidator(
+  private BlockValidator<LoanAndRelatedRecords> createManualPatronBlocksValidator(
     CheckOutByBarcodeRequest request, OkapiPermissions permissions, Clients clients) {
 
     return request.getBlockOverrides().getPatronBlockOverride().isRequested()
