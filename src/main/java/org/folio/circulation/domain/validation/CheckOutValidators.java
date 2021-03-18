@@ -100,7 +100,7 @@ public class CheckOutValidators {
 
     itemLimitValidator = createItemLimitValidator(request, permissions, loanRepository);
 
-    automatedPatronBlocksValidator = createPatronBlocksValidator(request, permissions,
+    automatedPatronBlocksValidator = createAutomatedBlocksValidator(request, permissions,
       automatedPatronBlocksRepository);
 
     loanPolicyValidator = createLoanPolicyValidator(request, permissions);
@@ -264,7 +264,7 @@ public class CheckOutValidators {
       .thenApply(r -> errorHandler.handleValidationResult(r, loanPolicyValidator.getErrorType(), relatedRecords)));
   }
 
-  private BlockValidator<LoanAndRelatedRecords> createPatronBlocksValidator(CheckOutByBarcodeRequest request,
+  private BlockValidator<LoanAndRelatedRecords> createAutomatedBlocksValidator(CheckOutByBarcodeRequest request,
     OkapiPermissions permissions, AutomatedPatronBlocksRepository automatedPatronBlocksRepository) {
 
     return request.getBlockOverrides().getPatronBlockOverride().isRequested()

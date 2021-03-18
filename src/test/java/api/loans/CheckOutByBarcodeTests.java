@@ -39,7 +39,6 @@ import static org.folio.circulation.domain.policy.DueDateManagement.KEEP_THE_CUR
 import static org.folio.circulation.domain.policy.Period.months;
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 import static org.folio.circulation.domain.representations.logs.LogEventType.CHECK_OUT;
-import static org.folio.circulation.support.ClockManager.getClockManager;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.hasItem;
@@ -78,7 +77,6 @@ import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.builders.UserBuilder;
-import api.support.builders.UserManualBlockBuilder;
 import api.support.fakes.FakePubSub;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
@@ -1654,7 +1652,7 @@ public class CheckOutByBarcodeTests extends APITests {
   public void canOverrideManualPatronBlockWhenBlockIsPresent() {
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
-    createManualPatronBlockForUser(steve.getId());
+    userManualBlocksFixture.createManualPatronBlockForUser(steve.getId());
 
     final Response response = checkOutFixture.attemptCheckOutByBarcode(item, steve);
 
@@ -1684,7 +1682,7 @@ public class CheckOutByBarcodeTests extends APITests {
   public void canOverrideManualAndAutomationPatronBlocksWhenBlocksArePresent() {
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
-    createManualPatronBlockForUser(steve.getId());
+    userManualBlocksFixture.createManualPatronBlockForUser(steve.getId());
     automatedPatronBlocksFixture.blockAction(steve.getId().toString(), true, false, false);
 
     final Response response = checkOutFixture.attemptCheckOutByBarcode(item, steve);
@@ -1790,21 +1788,5 @@ public class CheckOutByBarcodeTests extends APITests {
       noticePoliciesFixture.inactiveNotice().getId(),
       overdueFinePoliciesFixture.facultyStandard().getId(),
       lostItemFeePoliciesFixture.facultyStandard().getId());
-  }
-
-  private void createManualPatronBlockForUser(UUID requesterId) {
-    userManualBlocksFixture.create(getManualBlockBuilder()
-      .withRequests(true)
-      .withExpirationDate(getClockManager().getDateTime().plusYears(1))
-      .withUserId(requesterId.toString()));
-  }
-
-  private UserManualBlockBuilder getManualBlockBuilder() {
-    return new UserManualBlockBuilder()
-      .withType("Manual")
-      .withDesc("Display description")
-      .withStaffInformation("Staff information")
-      .withPatronMessage("Patron message")
-      .withId(UUID.randomUUID());
   }
 }
