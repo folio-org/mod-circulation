@@ -71,8 +71,7 @@ public class UserManualBlocksValidator {
     final String reason = userManualBlocks.getRecords().stream()
       .map(UserManualBlock::getDesc).collect(Collectors.joining(";"));
 
-    return singleValidationError(
-      new ValidationError(message, "reason", reason));
+    return singleValidationError(new ValidationError(message, "reason", reason));
   }
 
   private boolean isUserBlockedManually(MultipleRecords<UserManualBlock> userManualBlockMultipleRecords) {
