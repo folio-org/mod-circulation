@@ -85,7 +85,7 @@ public class LostItemFeeRefundService {
       .thenApply(r -> r.map(context -> renewalContext.withLoan(context.getLoan())));
   }
 
-  private CompletableFuture<Result<LostItemFeeRefundContext>> refundLostItemFees(
+  public CompletableFuture<Result<LostItemFeeRefundContext>> refundLostItemFees(
     LostItemFeeRefundContext refundFeeContext) {
 
     if (!refundFeeContext.shouldRefundFeesForItem()) {
