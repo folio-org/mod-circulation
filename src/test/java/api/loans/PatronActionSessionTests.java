@@ -1,6 +1,5 @@
 package api.loans;
 
-import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
 import static api.support.Wait.waitAtLeast;
 import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.fixtures.TemplateContextMatchers.getLoanPolicyContextMatchersForUnlimitedRenewals;
@@ -131,7 +130,6 @@ public class PatronActionSessionTests extends APITests {
 
     assertThat(sentNotices, hasSize(1));
     assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
-    assertThatPublishedLogRecordEventsAreValid();
 
     final var multipleLoansToJamesContextMatcher = getMultipleLoansContextMatcher(james,
       Arrays.asList(Pair.of(nodToJamesLoan, nod), Pair.of(interestingTimesToJamesLoan, interestingTimes)),
@@ -154,7 +152,6 @@ public class PatronActionSessionTests extends APITests {
 
     assertThat(patronNoticesClient.getAll(), empty());
     assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), empty());
-    assertThatPublishedLogRecordEventsAreValid();
   }
 
   @Test
@@ -236,7 +233,6 @@ public class PatronActionSessionTests extends APITests {
 
     assertThat(patronNoticesClient.getAll(), hasSize(1));
     assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
-    assertThatPublishedLogRecordEventsAreValid();
   }
 
   @Test

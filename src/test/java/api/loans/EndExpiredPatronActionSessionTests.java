@@ -1,6 +1,5 @@
 package api.loans;
 
-import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
 import static api.support.Wait.waitAtLeast;
 import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
@@ -89,7 +88,6 @@ public class EndExpiredPatronActionSessionTests extends APITests {
 
     assertThat(patronNoticesClient.getAll(), hasSize(1));
     assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
-    assertThatPublishedLogRecordEventsAreValid();
   }
 
   @Test
@@ -123,7 +121,6 @@ public class EndExpiredPatronActionSessionTests extends APITests {
 
     assertThat(patronNoticesClient.getAll(), hasSize(1));
     assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
-    assertThatPublishedLogRecordEventsAreValid();
   }
 
   @Test
@@ -156,7 +153,6 @@ public class EndExpiredPatronActionSessionTests extends APITests {
 
     assertThat(patronNoticesClient.getAll(), hasSize(1));
     assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
-    assertThatPublishedLogRecordEventsAreValid();
   }
 
   @Test
@@ -266,7 +262,6 @@ public class EndExpiredPatronActionSessionTests extends APITests {
 
     assertThat(patronNoticesClient.getAll(), hasSize(6));
     assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(6));
-    assertThatPublishedLogRecordEventsAreValid();
 
     Stream.of(CHECK_OUT_TEMPLATE_ID, CHECK_IN_TEMPLATE_ID).forEach(templateId ->
       Stream.of(james, jessica, steve).forEach(patron ->
@@ -374,7 +369,6 @@ public class EndExpiredPatronActionSessionTests extends APITests {
 
     assertThat(patronNoticesClient.getAll(), hasSize(1));
     assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
-    assertThatPublishedLogRecordEventsAreValid();
 
     assertThat(patronNoticesClient.getAll().get(0),
       hasEmailNoticeProperties(james.getId(), CHECK_OUT_TEMPLATE_ID,

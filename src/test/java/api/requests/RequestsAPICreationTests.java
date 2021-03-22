@@ -1,6 +1,5 @@
 package api.requests;
 
-import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
 import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
 import static api.support.fakes.FakePubSub.getPublishedEventsAsList;
 import static api.support.fakes.PublishedEvents.byLogEventType;
@@ -1385,7 +1384,6 @@ RequestsAPICreationTests extends APITests {
       hasEmailNoticeProperties(requester.getId(), pageConfirmationTemplateId, noticeContextMatchers)));
 
     assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
-    assertThatPublishedLogRecordEventsAreValid();
   }
 
   @Test
@@ -1452,7 +1450,6 @@ RequestsAPICreationTests extends APITests {
       hasEmailNoticeProperties(requester.getId(), holdConfirmationTemplateId, noticeContextMatchers)));
 
     assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
-    assertThatPublishedLogRecordEventsAreValid();
   }
 
   @Test
@@ -1546,7 +1543,6 @@ RequestsAPICreationTests extends APITests {
         recallNotificationContextMatchers)));
 
     assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(2));
-    assertThatPublishedLogRecordEventsAreValid();
   }
 
   @Test
@@ -1606,7 +1602,6 @@ RequestsAPICreationTests extends APITests {
       .until(patronNoticesClient::getAll, hasSize(1));
 
     assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
-    assertThatPublishedLogRecordEventsAreValid();
   }
 
   @Test
@@ -1909,7 +1904,6 @@ RequestsAPICreationTests extends APITests {
       .until(patronNoticesClient::getAll, hasSize(2));
 
     assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(2));
-    assertThatPublishedLogRecordEventsAreValid();
   }
 
   @Test

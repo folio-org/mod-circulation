@@ -1,6 +1,5 @@
 package api.requests.scenarios;
 
-import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
 import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.http.CqlQuery.exactMatch;
 import static java.util.Collections.singletonList;
@@ -208,7 +207,6 @@ public class MoveRequestPolicyTests extends APITests {
       patronNoticesClient.getAll().size(), is(2));
 
     assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(2));
-    assertThatPublishedLogRecordEventsAreValid();
   }
 
   @Test
@@ -253,7 +251,6 @@ public class MoveRequestPolicyTests extends APITests {
       .until(() -> getPatronNoticesForRecipient(charlotte).size(), is(1));
 
     assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(2));
-    assertThatPublishedLogRecordEventsAreValid();
 
     // move jessica's recall request from interestingTimes to smallAngryPlanet
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
@@ -276,7 +273,6 @@ public class MoveRequestPolicyTests extends APITests {
       patronNoticesClient.getAll(), hasSize(2));
 
     assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(2));
-    assertThatPublishedLogRecordEventsAreValid();
   }
 
   @Test
@@ -347,7 +343,6 @@ public class MoveRequestPolicyTests extends APITests {
       patronNoticesClient.getAll(), hasSize(2));
 
     assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(2));
-    assertThatPublishedLogRecordEventsAreValid();
   }
 
   @Test
@@ -408,7 +403,6 @@ public class MoveRequestPolicyTests extends APITests {
       .until(() -> getPatronNoticesForRecipient(charlotte).size(), is(1));
 
     assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(2));
-    assertThatPublishedLogRecordEventsAreValid();
 
     // move jessica's recall request from interestingTimes to smallAngryPlanet
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
@@ -431,7 +425,6 @@ public class MoveRequestPolicyTests extends APITests {
       patronNoticesClient.getAll(), hasSize(2));
 
     assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(2));
-    assertThatPublishedLogRecordEventsAreValid();
   }
 
   private MultipleJsonRecords getPatronNoticesForRecipient(IndividualResource steve) {
