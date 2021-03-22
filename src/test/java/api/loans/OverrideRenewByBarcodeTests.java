@@ -738,6 +738,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   }
 
   public void shouldNotChargeOverdueFeesDuringRenewalWhenItemIsDeclaredLostAndRefundFeePeriodHasPassed() {
+    UUID servicePointId = servicePointsFixture.cd1().getId();
     ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
     UserResource user = usersFixture.jessica();
 
@@ -758,7 +759,8 @@ public class OverrideRenewByBarcodeTests extends APITests {
     final DeclareItemLostRequestBuilder builder = new DeclareItemLostRequestBuilder()
       .forLoanId(loan.getId())
       .on(declareLostDate)
-      .withNoComment();
+      .withNoComment()
+      .withServicePointId(servicePointId);
     declareLostFixtures.declareItemLost(builder);
 
     final DateTime renewalDate = now(UTC).plusWeeks(6);
