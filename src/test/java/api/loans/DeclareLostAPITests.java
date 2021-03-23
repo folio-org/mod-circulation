@@ -278,7 +278,7 @@ public class DeclareLostAPITests extends APITests {
     verifyLoanIsClosed(loan.getId());
 
     assertThat(getAccountsForLoan(loan.getId()), hasSize(0));
-    assertThatPublishedLoanLogRecordEventsAreValid();
+    assertThatPublishedLoanLogRecordEventsAreValid(loansClient.getById(loan.getId()).getJson());
   }
 
   @Test
@@ -393,7 +393,7 @@ public class DeclareLostAPITests extends APITests {
 
     verifyLoanIsClosed(loan.getId());
     assertNoFeeAssignedForLoan(loan.getId());
-    assertThatPublishedLoanLogRecordEventsAreValid();
+    assertThatPublishedLoanLogRecordEventsAreValid(loan.getJson());
   }
 
   @Test
@@ -431,7 +431,7 @@ public class DeclareLostAPITests extends APITests {
 
     verifyLoanIsClosed(loan.getId());
     assertNoFeeAssignedForLoan(loan.getId());
-    assertThatPublishedLoanLogRecordEventsAreValid();
+    assertThatPublishedLoanLogRecordEventsAreValid(loan.getJson());
   }
 
   @Test
@@ -448,7 +448,7 @@ public class DeclareLostAPITests extends APITests {
 
     verifyLoanIsClosed(loan.getId());
     assertNoFeeAssignedForLoan(loan.getId());
-    assertThatPublishedLoanLogRecordEventsAreValid();
+    assertThatPublishedLoanLogRecordEventsAreValid(loan.getJson());
   }
 
   @Test
@@ -474,7 +474,9 @@ public class DeclareLostAPITests extends APITests {
     final var loan = loanIndividualResource.getJson();
 
     assertThat(event, isValidItemDeclaredLostEvent(loan));
-    assertThatPublishedLoanLogRecordEventsAreValid();
+
+
+    assertThatPublishedLoanLogRecordEventsAreValid(loansClient.getById(UUID.fromString(loan.getString("id"))).getJson());
   }
 
   @Test

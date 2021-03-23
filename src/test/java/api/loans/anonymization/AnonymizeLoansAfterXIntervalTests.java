@@ -1,6 +1,6 @@
 package api.loans.anonymization;
 
-import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
+import static api.support.PubsubPublisherTestUtils.assertThatPublishedAnonymizeLoanLogRecordEventsAreValid;
 import static api.support.fakes.PublishedEvents.byLogEventTypeAndAction;
 import static api.support.matchers.LoanMatchers.isAnonymized;
 import static api.support.matchers.LoanMatchers.isOpen;
@@ -134,7 +134,7 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
     assertThat(loansStorageClient.getById(loanID)
       .getJson(), isAnonymized());
 
-    assertThatPublishedLoanLogRecordEventsAreValid();
+    assertThatPublishedAnonymizeLoanLogRecordEventsAreValid(loansClient.getById(loanID).getJson());
   }
 
   /**
@@ -243,7 +243,7 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
     assertThat(loansStorageClient.getById(loanID)
       .getJson(), isAnonymized());
 
-    assertThatPublishedLoanLogRecordEventsAreValid();
+    assertThatPublishedAnonymizeLoanLogRecordEventsAreValid(loansClient.getById(loanID).getJson());
   }
 
   /**
@@ -376,8 +376,6 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
         .getJson(), isAnonymized());
     assertThat(loansStorageClient.getById(loanResource2.getId())
         .getJson(), not(isAnonymized()));
-
-    assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
   @Test
@@ -404,7 +402,6 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
       PublishedEvents.byLogEventTypeAndAction(LOAN.value(), "Anonymize"));
 
     assertThat(anonymizedLoanLogEvents, hasSize(2));
-    assertThatPublishedLoanLogRecordEventsAreValid();
     FakePubSub.clearPublishedEvents();
 
     setNextAnonymizationDateTime(ONE_MINUTE_AND_ONE);

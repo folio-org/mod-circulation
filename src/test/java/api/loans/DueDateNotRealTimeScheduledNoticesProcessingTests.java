@@ -1,6 +1,5 @@
 package api.loans;
 
-import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
 import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.fixtures.TemplateContextMatchers.getLoanPolicyContextMatchersForUnlimitedRenewals;
 import static api.support.fixtures.TemplateContextMatchers.getMultipleLoansContextMatcher;
@@ -91,8 +90,6 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
     assertThat(sentNotices, hasSize(2));
     assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(2));
 
-    assertThatPublishedLogRecordEventsAreValid();
-
     final var loanPolicyMatcher = toStringMatcher(getLoanPolicyContextMatchersForUnlimitedRenewals());
 
     final var noticeToJamesContextMatcher =
@@ -163,7 +160,6 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
 
     assertThat(patronNoticesClient.getAll(), hasSize(1));
     assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
-    assertThatPublishedLogRecordEventsAreValid();
   }
 
   @Test
@@ -427,8 +423,6 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
     assertThat(scheduledNoticesClient.getAll(), hasSize(0));
     assertThat(sentNotices, hasSize(2));
     assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(2));
-
-    assertThatPublishedLogRecordEventsAreValid();
 
     Matcher<? super String> loanPolicyMatcher = toStringMatcher(getLoanPolicyContextMatchersForUnlimitedRenewals());
 
