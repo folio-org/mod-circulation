@@ -231,8 +231,8 @@ public abstract class RenewalResource extends Resource {
       request, "overrideBlocks"));
 
     return blockOverrides.getPatronBlockOverride().isRequested()
+      && renewalStrategy instanceof RegularRenewalStrategy
       ? new OverridingBlockValidator<>(PATRON_BLOCK, blockOverrides, permissions)
-      : new BlockValidator<>(USER_IS_BLOCKED_MANUALLY,
-      new UserManualBlocksValidator(clients)::refuseWhenUserIsBlocked);
+      : new BlockValidator<>(USER_IS_BLOCKED_MANUALLY, validationFunction);
   }
 }
