@@ -102,6 +102,7 @@ public abstract class RenewalAPITests extends APITests {
   public static final String OVERRIDE_ITEM_LIMIT_BLOCK_PERMISSION =
     "circulation.override-item-limit-block";
   private static final String RENEWED_THROUGH_OVERRIDE = "renewedThroughOverride";
+  private static final String PATRON_WAS_BLOCKED_MESSAGE = "Patron blocked from renewing";
 
   abstract Response attemptRenewal(IndividualResource user, IndividualResource item);
 
@@ -1646,6 +1647,69 @@ public abstract class RenewalAPITests extends APITests {
         .forUser(user)
         .withOverrideBlocks(new BlockOverrides(null, new PatronBlockOverride(true), null,
           TEST_COMMENT)), okapiHeaders).getJson();
+
+    item = itemsClient.get(item);
+    assertThat(item, hasItemStatus(CHECKED_OUT));
+    assertThat(loan.getString("actionComment"), is(TEST_COMMENT));
+    assertThat(loan.getString("action"), is(RENEWED_THROUGH_OVERRIDE));
+  }
+
+  @Test
+  public void canOverrideRenewalWhenManualBlockExistsForPatron() {
+    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource jessica = usersFixture.jessica();
+
+    checkOutFixture.checkOutByBarcode(item, jessica,
+      new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
+    userManualBlocksFixture.createManualPatronBlockForUser(jessica.getId());
+
+    final Response response = attemptRenewal(item, jessica);
+
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(response.getJson(), hasErrorWith(hasMessage(PATRON_WAS_BLOCKED_MESSAGE)));
+
+    final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
+      OVERRIDE_PATRON_BLOCK_PERMISSION);
+    JsonObject loan = loansFixture.renewLoan(
+      new RenewByBarcodeRequestBuilder()
+        .forItem(item)
+        .forUser(jessica)
+        .withOverrideBlocks(new BlockOverrides(null, new PatronBlockOverride(true), null,
+          TEST_COMMENT)),
+      okapiHeaders).getJson();
+
+    item = itemsClient.get(item);
+    assertThat(item, hasItemStatus(CHECKED_OUT));
+    assertThat(loan.getString("actionComment"), is(TEST_COMMENT));
+    assertThat(loan.getString("action"), is(RENEWED_THROUGH_OVERRIDE));
+  }
+
+  @Test
+  public void canOverrideRenewalWhenPatronIsBlockedManuallyAndAutomatically() {
+    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource jessica = usersFixture.jessica();
+
+    checkOutFixture.checkOutByBarcode(item, jessica,
+      new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
+    userManualBlocksFixture.createManualPatronBlockForUser(jessica.getId());
+    automatedPatronBlocksFixture.blockAction(jessica.getId().toString(), false, true, false);
+
+    final Response response = attemptRenewal(item, jessica);
+
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(response.getJson(), hasErrorWith(hasMessage(PATRON_WAS_BLOCKED_MESSAGE)));
+    assertThat(response.getJson(), hasErrorWith(hasMessage(MAX_NUMBER_OF_ITEMS_CHARGED_OUT_MESSAGE)));
+    assertThat(response.getJson(), hasErrorWith(hasMessage(MAX_OUTSTANDING_FEE_FINE_BALANCE_MESSAGE)));
+
+    final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
+      OVERRIDE_PATRON_BLOCK_PERMISSION);
+    JsonObject loan = loansFixture.renewLoan(
+      new RenewByBarcodeRequestBuilder()
+        .forItem(item)
+        .forUser(jessica)
+        .withOverrideBlocks(new BlockOverrides(null, new PatronBlockOverride(true), null,
+          TEST_COMMENT)),
+      okapiHeaders).getJson();
 
     item = itemsClient.get(item);
     assertThat(item, hasItemStatus(CHECKED_OUT));

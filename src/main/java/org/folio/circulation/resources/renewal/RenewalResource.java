@@ -7,6 +7,7 @@ import static org.folio.circulation.resources.handlers.error.CirculationErrorTyp
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ITEM_DOES_NOT_EXIST;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.RENEWAL_VALIDATION_ERROR;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_BLOCKED_AUTOMATICALLY;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_BLOCKED_MANUALLY;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getObjectProperty;
 import static org.folio.circulation.support.results.Result.succeeded;
 
@@ -36,6 +37,7 @@ import org.folio.circulation.resources.LoanNoticeSender;
 import org.folio.circulation.resources.Resource;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
+import org.folio.circulation.resources.handlers.error.CirculationErrorType;
 import org.folio.circulation.resources.handlers.error.OverridingErrorHandler;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
@@ -100,7 +102,6 @@ public abstract class RenewalResource extends Resource {
     final FeeFineScheduledNoticeService feeFineNoticesService =
       FeeFineScheduledNoticeService.using(clients);
 
-
     //TODO: Validation check for same user should be in the domain service
     JsonObject bodyAsJson = routingContext.getBodyAsJson();
     OkapiPermissions permissions = OkapiPermissions.from(new WebContext(routingContext).getHeaders());
@@ -110,7 +111,7 @@ public abstract class RenewalResource extends Resource {
     findLoan(bodyAsJson, loanRepository, itemRepository, userRepository, errorHandler)
       .thenApply(r -> r.map(loan -> RenewalContext.create(loan, bodyAsJson, webContext.getUserId())))
       .thenComposeAsync(r -> refuseWhenRenewalActionIsBlockedForPatron(
-        automatedPatronBlocksValidator, r, errorHandler))
+        automatedPatronBlocksValidator, r, errorHandler, USER_IS_BLOCKED_AUTOMATICALLY))
       .thenCompose(r -> r.after(ctx -> lookupLoanPolicy(ctx, loanPolicyRepository, errorHandler)))
       .thenComposeAsync(r -> r.after(
         ctx -> lookupRequestQueue(ctx, requestQueueRepository, errorHandler)))
@@ -131,7 +132,7 @@ public abstract class RenewalResource extends Resource {
 
   private CompletableFuture<Result<RenewalContext>> refuseWhenRenewalActionIsBlockedForPatron(
     Validator<RenewalContext> validator, Result<RenewalContext> result,
-    CirculationErrorHandler errorHandler) {
+    CirculationErrorHandler errorHandler, CirculationErrorType errorType) {
 
     if (errorHandler.hasAny(ITEM_DOES_NOT_EXIST, FAILED_TO_FIND_SINGLE_OPEN_LOAN,
       FAILED_TO_FETCH_USER)) {
@@ -140,8 +141,7 @@ public abstract class RenewalResource extends Resource {
     }
 
     return result.after(renewalContext -> validator.validate(renewalContext)
-        .thenApply(r -> errorHandler.handleValidationResult(r, USER_IS_BLOCKED_AUTOMATICALLY,
-          result)));
+      .thenApply(r -> errorHandler.handleValidationResult(r, errorType, result)));
   }
 
   private CompletableFuture<Result<RenewalContext>> lookupLoanPolicy(
