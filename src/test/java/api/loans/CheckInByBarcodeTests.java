@@ -2,7 +2,6 @@ package api.loans;
 
 import static api.support.APITestContext.getUserId;
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
-import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
 import static api.support.Wait.waitAtLeast;
 import static api.support.builders.ItemBuilder.INTELLECTUAL_ITEM;
 import static api.support.fakes.PublishedEvents.byEventType;
@@ -676,8 +675,6 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     waitAtMost(1, SECONDS)
       .until(() -> FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
 
-    assertThatPublishedLogRecordEventsAreValid();
-
     patronNoticesClient.deleteAll();
     FakePubSub.clearPublishedEvents();
 
@@ -1073,9 +1070,8 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
   @Test
   public void canCheckInLostAndPaidItem() {
     final ItemResource item = itemsFixture.basedUponNod();
-
-    declareLostFixtures.declareItemLost(
-      checkOutFixture.checkOutByBarcode(item, usersFixture.steve()).getJson());
+    var checkOutResource = checkOutFixture.checkOutByBarcode(item, usersFixture.steve()).getJson();
+    declareLostFixtures.declareItemLost(checkOutResource);
 
     checkInFixture.checkInByBarcode(item);
 
@@ -1084,7 +1080,10 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     waitAtMost(1, SECONDS)
       .until(FakePubSub::getPublishedEvents, hasSize(6));
 
-    assertThatPublishedLoanLogRecordEventsAreValid();
+    Response response = loansClient.getById(UUID.fromString(checkOutResource.getString("id")));
+    JsonObject loan = response.getJson();
+
+    assertThatPublishedLoanLogRecordEventsAreValid(loan);
   }
 
   @Test
@@ -1094,7 +1093,8 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     checkInFixture.checkInByBarcode(ageToLostResult.getItem());
 
     assertThat(itemsFixture.getById(ageToLostResult.getItemId()).getJson(), isAvailable());
-    assertThat(loansFixture.getLoanById(ageToLostResult.getLoanId()).getJson(), isClosed());
+    var loan = loansFixture.getLoanById(ageToLostResult.getLoanId()).getJson();
+    assertThat(loan, isClosed());
 
     waitAtMost(1, SECONDS)
       // there should be 7 events published: ITEM_CHECKED_OUT, LOG_RECORDs: CHECK_OUT_EVENT
@@ -1102,7 +1102,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
       // ITEM_CHECKED_IN, LOG_RECORDs: CHECK_IN_EVENT
       .until(FakePubSub::getPublishedEvents, hasSize(7));
 
-    assertThatPublishedLoanLogRecordEventsAreValid();
+    assertThatPublishedLoanLogRecordEventsAreValid(loan);
   }
 
   @Test
@@ -1138,7 +1138,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     final var checkInLogEvent = publishedEvents.findFirst(byLogEventType(CHECK_IN.value()));
 
     assertThat(checkInLogEvent, isValidCheckInLogEvent(checkedInLoan));
-    assertThatPublishedLoanLogRecordEventsAreValid();
+    assertThatPublishedLoanLogRecordEventsAreValid(checkedInLoan);
   }
 
   private void checkPatronNoticeEvent(IndividualResource request, IndividualResource requester,
@@ -1159,8 +1159,6 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
 
     waitAtMost(1, SECONDS)
       .until(() -> FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
-
-    assertThatPublishedLogRecordEventsAreValid();
   }
 
   private void verifyCheckInOperationRecorded(UUID itemId, UUID servicePoint) {

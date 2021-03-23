@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import api.support.PubsubPublisherTestUtils;
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
 import org.junit.Before;
@@ -67,7 +68,8 @@ public class ScheduledAgeToLostApiTest extends SpringApiTest {
     assertThat(getLoanActions(), hasAgedToLostAction());
     assertThat(loansStorageClient.get(overdueLoan).getJson(), hasPatronBillingDate());
     assertThat(loansStorageClient.get(overdueLoan).getJson(), hasAgedToLostDate());
-    assertThatPublishedLoanLogRecordEventsAreValid();
+
+    assertThatPublishedLoanLogRecordEventsAreValid(overdueLoan.getJson());
     assertThatItemAgedToLostEventWasPublished(overdueLoan);
   }
 
@@ -85,8 +87,8 @@ public class ScheduledAgeToLostApiTest extends SpringApiTest {
       assertThat(getLoanActions(loanFromStorage), hasAgedToLostAction());
       assertThat(loanFromStorage.getJson(), hasPatronBillingDate(loanFromStorage));
       assertThat(loanFromStorage.getJson(), hasAgedToLostDate());
+      assertThatPublishedLoanLogRecordEventsAreValid(loansClient.getById(loan.getId()).getJson());
     });
-    assertThatPublishedLoanLogRecordEventsAreValid();
     assertThatItemAgedToLostEventsWerePublished(loanToItemMap.keySet());
   }
 
@@ -114,8 +116,10 @@ public class ScheduledAgeToLostApiTest extends SpringApiTest {
     scheduledAgeToLostClient.triggerJob();
 
     assertThat(itemsClient.get(overdueItem).getJson(), isCheckedOut());
-    assertThat(loansClient.get(overdueLoan).getJson(), not(hasPatronBillingDate()));
-    assertThatPublishedLoanLogRecordEventsAreValid();
+
+    var loan = loansClient.get(overdueLoan).getJson();
+    assertThat(loan, not(hasPatronBillingDate()));
+    assertThatPublishedLoanLogRecordEventsAreValid(loan);
   }
 
   @Test
@@ -131,8 +135,10 @@ public class ScheduledAgeToLostApiTest extends SpringApiTest {
     scheduledAgeToLostClient.triggerJob();
 
     assertThat(itemsClient.get(overdueItem).getJson(), isCheckedOut());
-    assertThat(loansClient.get(overdueLoan).getJson(), not(hasPatronBillingDate()));
-    assertThatPublishedLoanLogRecordEventsAreValid();
+
+    var loan = loansClient.get(overdueLoan).getJson();
+    assertThat(loan, not(hasPatronBillingDate()));
+    assertThatPublishedLoanLogRecordEventsAreValid(loan);
   }
 
   @Test
@@ -153,7 +159,7 @@ public class ScheduledAgeToLostApiTest extends SpringApiTest {
       .collect(Collectors.toList());
 
     assertThat(agedToLostActions, iterableWithSize(1));
-    assertThatPublishedLoanLogRecordEventsAreValid();
+    agedToLostActions.forEach(PubsubPublisherTestUtils::assertThatPublishedLoanLogRecordEventsAreValid);
   }
 
   private DateTime getLoanOverdueDate() {
