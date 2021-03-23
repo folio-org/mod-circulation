@@ -22,6 +22,7 @@ import org.folio.circulation.domain.notice.schedule.LoanScheduledNoticeService;
 import org.folio.circulation.domain.override.BlockOverrides;
 import org.folio.circulation.domain.override.PatronBlockOverride;
 import org.folio.circulation.domain.validation.AutomatedPatronBlocksValidator;
+import org.folio.circulation.domain.validation.UserManualBlocksValidator;
 import org.folio.circulation.domain.validation.Validator;
 import org.folio.circulation.domain.validation.overriding.BlockValidator;
 import org.folio.circulation.domain.validation.overriding.CombinedOverridingRenewValidator;
@@ -105,11 +106,15 @@ public abstract class RenewalResource extends Resource {
     //TODO: Validation check for same user should be in the domain service
     JsonObject bodyAsJson = routingContext.getBodyAsJson();
     OkapiPermissions permissions = OkapiPermissions.from(new WebContext(routingContext).getHeaders());
-    final Validator<RenewalContext> automatedPatronBlocksValidator = createPatronBlocksValidator(bodyAsJson,
-      permissions, automatedPatronBlocksRepository);
+    final Validator<RenewalContext> automatedPatronBlocksValidator =
+      createAutomatedPatronBlocksValidator(bodyAsJson, permissions, automatedPatronBlocksRepository);
+    final Validator<RenewalContext> manualPatronBlocksValidator = createManualPatronBlocksValidator(
+      bodyAsJson, permissions, clients);
 
     findLoan(bodyAsJson, loanRepository, itemRepository, userRepository, errorHandler)
       .thenApply(r -> r.map(loan -> RenewalContext.create(loan, bodyAsJson, webContext.getUserId())))
+      .thenComposeAsync(r -> refuseWhenRenewalActionIsBlockedForPatron(
+        manualPatronBlocksValidator, r, errorHandler, USER_IS_BLOCKED_MANUALLY))
       .thenComposeAsync(r -> refuseWhenRenewalActionIsBlockedForPatron(
         automatedPatronBlocksValidator, r, errorHandler, USER_IS_BLOCKED_AUTOMATICALLY))
       .thenCompose(r -> r.after(ctx -> lookupLoanPolicy(ctx, loanPolicyRepository, errorHandler)))
@@ -190,7 +195,7 @@ public abstract class RenewalResource extends Resource {
     LoanRepository loanRepository, ItemRepository itemRepository,
     UserRepository userRepository, CirculationErrorHandler errorHandler);
 
-  private Validator<RenewalContext> createPatronBlocksValidator(JsonObject request,
+  private Validator<RenewalContext> createAutomatedPatronBlocksValidator(JsonObject request,
     OkapiPermissions permissions, AutomatedPatronBlocksRepository automatedPatronBlocksRepository) {
 
     Function<RenewalContext, CompletableFuture<Result<RenewalContext>>> validationFunction =
@@ -209,5 +214,25 @@ public abstract class RenewalResource extends Resource {
       && renewalStrategy instanceof RegularRenewalStrategy
       ? new OverridingBlockValidator<>(PATRON_BLOCK, blockOverrides, permissions)
       : new BlockValidator<>(USER_IS_BLOCKED_AUTOMATICALLY, validationFunction);
+  }
+
+  private Validator<RenewalContext> createManualPatronBlocksValidator(JsonObject request,
+    OkapiPermissions permissions, Clients clients) {
+
+    Function<RenewalContext, CompletableFuture<Result<RenewalContext>>> validationFunction =
+      new UserManualBlocksValidator(clients)::refuseWhenUserIsBlocked;
+
+    if (renewalStrategy instanceof OverrideRenewalStrategy) {
+      return new CombinedOverridingRenewValidator(PATRON_BLOCK, new BlockOverrides(null,
+        new PatronBlockOverride(true), null, ""), permissions, validationFunction);
+    }
+
+    final BlockOverrides blockOverrides = BlockOverrides.from(getObjectProperty(
+      request, "overrideBlocks"));
+
+    return blockOverrides.getPatronBlockOverride().isRequested()
+      ? new OverridingBlockValidator<>(PATRON_BLOCK, blockOverrides, permissions)
+      : new BlockValidator<>(USER_IS_BLOCKED_MANUALLY,
+      new UserManualBlocksValidator(clients)::refuseWhenUserIsBlocked);
   }
 }
