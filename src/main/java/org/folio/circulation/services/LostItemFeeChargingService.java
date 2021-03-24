@@ -84,7 +84,8 @@ public class LostItemFeeChargingService {
       .thenCompose(refDataResult -> refDataResult.after(referenceData -> {
         log.info("Checking for existing lost item fees for loan [{}]", loan.getId());
         return accountRepository.findAccountsForLoan(loan)
-          .thenCompose(result -> chargeLostItemFees(result.value(), referenceData));
+          .thenCompose(result -> result.after(
+            loanWithAccountData -> chargeLostItemFees(loanWithAccountData, referenceData)));
         }));
   }
 
@@ -100,11 +101,7 @@ public class LostItemFeeChargingService {
     }
     log.info("Existing lost item fees found for loan [{}], trying to clear", loan.getId());
     return removeAndRefundFees(userId, servicePointId, loan)
-      .thenCompose(refundResult -> {
-        if (refundResult.failed()) {
-          log.error("Unable to clear lost item fees for loan [{}], aborting charge fees.", loan.getId());
-          return CompletableFuture.completedFuture(failed(refundResult.cause()));
-        }
+      .thenCompose(refundResult -> refundResult.after(unused -> {
         log.info("Existing lost item fees cleared from loan [{}]", loan.getId());
         if (shouldCloseLoan(referenceData.lostItemPolicy)) {
           log.info("Closing loan [{}] as lost and paid.", loan.getId());
@@ -113,7 +110,7 @@ public class LostItemFeeChargingService {
           log.info("Applying fees to loan [{}].", loan.getId());
           return applyFees(referenceData, loan);
         }
-      });
+      }));
   }
 
   private CompletableFuture<Result<Loan>> applyFees (ReferenceDataContext referenceData, Loan loan) {
