@@ -55,7 +55,6 @@ public class LostItemFeeChargingService {
   private final UserRepository userRepository;
   private String userId;
   private String servicePointId;
-  private Loan loanWithAccountData;
 
   public LostItemFeeChargingService(Clients clients) {
     this.lostItemPolicyRepository = new LostItemPolicyRepository(clients);
@@ -85,11 +84,7 @@ public class LostItemFeeChargingService {
       .thenCompose(refDataResult -> refDataResult.after(referenceData -> {
         log.info("Checking for existing lost item fees for loan [{}]", loan.getId());
         return accountRepository.findAccountsForLoan(loan)
-          .thenCompose(result -> {
-            this.loanWithAccountData = result.value();
-
-            return chargeLostItemFees(result.value(), referenceData);
-          });
+          .thenCompose(result -> chargeLostItemFees(result.value(), referenceData));
         }));
   }
 
