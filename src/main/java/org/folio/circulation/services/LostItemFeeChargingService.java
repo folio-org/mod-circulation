@@ -79,6 +79,7 @@ public class LostItemFeeChargingService {
 
     final ReferenceDataContext referenceDataContext = new ReferenceDataContext(
       loan, request, staffUserId);
+
     return lostItemPolicyRepository.getLostItemPolicyById(loan.getLostItemPolicyId())
       .thenApply(result -> result.map(referenceDataContext::withLostItemPolicy))
       .thenCompose(refDataResult -> refDataResult.after(referenceData -> {
@@ -87,23 +88,23 @@ public class LostItemFeeChargingService {
           .thenCompose(result -> {
             this.loanWithAccountData = result.value();
 
-            return chargeLostItemFees(loan, referenceData);
+            return chargeLostItemFees(result.value(), referenceData);
           });
         }));
   }
 
   private CompletableFuture<Result<Loan>> chargeLostItemFees(Loan loan, ReferenceDataContext referenceData) {
-    if (!hasLostItemFees(loanWithAccountData) && !shouldCloseLoan(referenceData.lostItemPolicy)) {
+    if (!hasLostItemFees(loan) && !shouldCloseLoan(referenceData.lostItemPolicy)) {
       log.info("No existing lost item fees found, applying lost item fees to loan [{}]", loan.getId());
-      return applyFees(referenceData, loanWithAccountData);
+      return applyFees(referenceData, loan);
     }
 
-    if (!hasLostItemFees(loanWithAccountData) && shouldCloseLoan(referenceData.lostItemPolicy)) {
+    if (!hasLostItemFees(loan) && shouldCloseLoan(referenceData.lostItemPolicy)) {
       log.info("No existing lost item fees found, losing loan [{}] as lost and paid.", loan.getId());
       return CloseLoanAsLostandPaidAndPublishEvent(loan);
     }
     log.info("Existing lost item fees found for loan [{}], trying to clear", loan.getId());
-    return removeAndRefundFees(userId, servicePointId, loanWithAccountData)
+    return removeAndRefundFees(userId, servicePointId, loan)
       .thenCompose(refundResult -> {
         if (refundResult.failed()) {
           log.error("Unable to clear lost item fees for loan [{}], aborting charge fees.", loan.getId());
@@ -115,7 +116,7 @@ public class LostItemFeeChargingService {
           return CloseLoanAsLostandPaidAndPublishEvent(loan);
         } else {
           log.info("Applying fees to loan [{}].", loan.getId());
-          return applyFees(referenceData, loanWithAccountData);
+          return applyFees(referenceData, loan);
         }
       });
   }
