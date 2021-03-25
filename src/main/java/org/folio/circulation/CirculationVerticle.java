@@ -10,7 +10,6 @@ import org.folio.circulation.resources.ClaimItemReturnedResource;
 import org.folio.circulation.resources.DeclareClaimedReturnedItemAsMissingResource;
 import org.folio.circulation.resources.DeclareLostResource;
 import org.folio.circulation.resources.DueDateNotRealTimeScheduledNoticeProcessingResource;
-import org.folio.circulation.resources.LoanScheduledNoticeProcessingResource;
 import org.folio.circulation.resources.EndPatronActionSessionResource;
 import org.folio.circulation.resources.ExpiredSessionProcessingResource;
 import org.folio.circulation.resources.FeeFineScheduledNoticeProcessingResource;
@@ -18,12 +17,11 @@ import org.folio.circulation.resources.ItemsInTransitResource;
 import org.folio.circulation.resources.LoanAnonymizationResource;
 import org.folio.circulation.resources.LoanCirculationRulesEngineResource;
 import org.folio.circulation.resources.LoanCollectionResource;
+import org.folio.circulation.resources.LoanScheduledNoticeProcessingResource;
 import org.folio.circulation.resources.LostItemCirculationRulesEngineResource;
 import org.folio.circulation.resources.NoticeCirculationRulesEngineResource;
 import org.folio.circulation.resources.OverdueFineCirculationRulesEngineResource;
-import org.folio.circulation.resources.OverrideCheckOutStrategy;
 import org.folio.circulation.resources.PickSlipsResource;
-import org.folio.circulation.resources.RegularCheckOutStrategy;
 import org.folio.circulation.resources.RequestByInstanceIdResource;
 import org.folio.circulation.resources.RequestCirculationRulesEngineResource;
 import org.folio.circulation.resources.RequestCollectionResource;
@@ -69,10 +67,7 @@ public class CirculationVerticle extends AbstractVerticle {
 
     new TenantActivationResource().register(router);
 
-    new CheckOutByBarcodeResource("/circulation/check-out-by-barcode",
-      client, new RegularCheckOutStrategy()).register(router);
-    new CheckOutByBarcodeResource("/circulation/override-check-out-by-barcode",
-      client, new OverrideCheckOutStrategy()).register(router);
+    new CheckOutByBarcodeResource("/circulation/check-out-by-barcode", client).register(router);
     new CheckInByBarcodeResource(client).register(router);
 
     new RenewByBarcodeResource(client).register(router);
