@@ -15,6 +15,7 @@ import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.UserManualBlock;
+import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.FindWithCqlQuery;
@@ -53,6 +54,13 @@ public class UserManualBlocksValidator {
 
     return failIfPatronIsBlocked(loanAndRelatedRecords.getUserId(), "Patron blocked from borrowing")
       .thenApply(r -> r.map(records -> loanAndRelatedRecords));
+  }
+
+  public CompletableFuture<Result<RenewalContext>> refuseWhenUserIsBlocked(
+    RenewalContext renewalContext) {
+
+    return failIfPatronIsBlocked(renewalContext.getLoan().getUserId(), "Patron blocked from renewing")
+      .thenApply(r -> r.map(records -> renewalContext));
   }
 
   private CompletableFuture<Result<MultipleRecords<UserManualBlock>>> failIfPatronIsBlocked(
