@@ -1857,8 +1857,10 @@ public class CheckOutByBarcodeTests extends APITests {
         .to(steve)
         .at(UUID.randomUUID())
         .on(TEST_LOAN_DATE)
-        .withOverrideBlocks(new BlockOverrides(
-          null, new PatronBlockOverride(true), null, TEST_COMMENT)),
+        .withOverrideBlocks(new CheckOutBlockOverrides()
+          .withPatronBlockOverride(new JsonObject())
+          .withComment(TEST_COMMENT)
+          .create()),
       okapiHeaders).getJson();
 
     item = itemsClient.get(item);
@@ -1892,8 +1894,10 @@ public class CheckOutByBarcodeTests extends APITests {
         .to(steve)
         .at(UUID.randomUUID())
         .on(TEST_LOAN_DATE)
-        .withOverrideBlocks(new BlockOverrides(
-          null, new PatronBlockOverride(true), null, TEST_COMMENT)),
+        .withOverrideBlocks(new CheckOutBlockOverrides()
+          .withPatronBlockOverride(new JsonObject())
+          .withComment(TEST_COMMENT)
+          .create()),
       okapiHeaders).getJson();
 
     item = itemsClient.get(item);
