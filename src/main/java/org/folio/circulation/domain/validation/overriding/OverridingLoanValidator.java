@@ -40,18 +40,16 @@ public class OverridingLoanValidator extends OverridingBlockValidator<LoanAndRel
       .thenApply(r -> r.next(this::refuseWhenCommentIsMissing))
       .thenApply(r -> r.next(this::refuseWhenDueDateIsMissing))
       .thenApply(r -> r.next(this::refuseWhenDueDateIsNotAfterLoanDate))
-      .thenApply(r -> r.map(this::setDueDateIfNotLoanableOverriding)
-        .map(this::setLoanAction));
+      .thenApply(r -> r.map(this::setDueDateIfNotLoanableOverriding))
+      .thenApply(r -> r.map(this::setLoanAction));
   }
 
   private Result<LoanAndRelatedRecords> refuseWhenCommentIsMissing(
     LoanAndRelatedRecords loanAndRelatedRecords) {
 
-    ItemNotLoanableBlockOverride itemNotLoanableBlockOverride = getBlockOverrides()
-      .getItemNotLoanableBlockOverride();
     String comment = getBlockOverrides().getComment();
 
-    if (itemNotLoanableBlockOverride.isRequested() && comment == null) {
+    if (comment == null) {
       return failed(singleValidationError(new ValidationError(
         COMMENT_NOT_SPECIFIED_MESSAGE, COMMENT_PARAM_NAME, null)));
     }
