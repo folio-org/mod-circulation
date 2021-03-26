@@ -54,7 +54,9 @@ public class DeclareClaimedReturnedItemAsMissingApiTests extends APITests {
     assertLoanIsClosed(TESTING_COMMENT);
     assertItemIsMissing();
     assertNoteHasBeenCreated();
-    assertThatPublishedLoanLogRecordEventsAreValid();
+
+    var loan = loansClient.getById(UUID.fromString(loanId)).getJson();
+    assertThatPublishedLoanLogRecordEventsAreValid(loan);
   }
 
   @Test

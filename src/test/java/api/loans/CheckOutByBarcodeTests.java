@@ -99,6 +99,7 @@ public class CheckOutByBarcodeTests extends APITests {
     "Insufficient override permissions";
   private static final String TEST_COMMENT = "Some comment";
   private static final String CHECKED_OUT_THROUGH_OVERRIDE = "checkedOutThroughOverride";
+  private static final String PATRON_WAS_BLOCKED_MESSAGE = "Patron blocked from borrowing";
 
   @Test
   public void canCheckOutUsingItemAndUserBarcode() {
@@ -1324,7 +1325,7 @@ public class CheckOutByBarcodeTests extends APITests {
     final var checkOutLogEvent = publishedEvents.findFirst(byLogEventType(CHECK_OUT.value()));
 
     assertThat(checkOutLogEvent, isValidCheckOutLogEvent(loan));
-    assertThatPublishedLoanLogRecordEventsAreValid();
+    assertThatPublishedLoanLogRecordEventsAreValid(loan);
   }
 
   @Test
@@ -1834,6 +1835,71 @@ public class CheckOutByBarcodeTests extends APITests {
       "Cannot check out item that already has an open loan")));
     assertThat(getMissingPermissions(response), hasSize(1));
     assertThat(getMissingPermissions(response), hasItem(OVERRIDE_PATRON_BLOCK_PERMISSION));
+  }
+
+  @Test
+  public void canOverrideManualPatronBlockWhenBlockIsPresent() {
+    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource steve = usersFixture.steve();
+    userManualBlocksFixture.createManualPatronBlockForUser(steve.getId());
+
+    final Response response = checkOutFixture.attemptCheckOutByBarcode(item, steve);
+
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(response.getJson(),
+      hasErrorWith(hasMessage(PATRON_WAS_BLOCKED_MESSAGE)));
+
+    final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
+      OVERRIDE_PATRON_BLOCK_PERMISSION);
+    JsonObject loan = checkOutFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(item)
+        .to(steve)
+        .at(UUID.randomUUID())
+        .on(TEST_LOAN_DATE)
+        .withOverrideBlocks(new BlockOverrides(
+          null, new PatronBlockOverride(true), null, TEST_COMMENT)),
+      okapiHeaders).getJson();
+
+    item = itemsClient.get(item);
+    assertThat(item, hasItemStatus(CHECKED_OUT));
+    assertThat(loan.getString("actionComment"), is(TEST_COMMENT));
+    assertThat(loan.getString("action"), is(CHECKED_OUT_THROUGH_OVERRIDE));
+  }
+
+  @Test
+  public void canOverrideManualAndAutomationPatronBlocksWhenBlocksArePresent() {
+    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource steve = usersFixture.steve();
+    userManualBlocksFixture.createManualPatronBlockForUser(steve.getId());
+    automatedPatronBlocksFixture.blockAction(steve.getId().toString(), true, false, false);
+
+    final Response response = checkOutFixture.attemptCheckOutByBarcode(item, steve);
+
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(response.getJson(),
+      hasErrorWith(hasMessage(PATRON_WAS_BLOCKED_MESSAGE)));
+    assertThat(response.getJson(),
+      hasErrorWith(hasMessage(MAX_NUMBER_OF_ITEMS_CHARGED_OUT_MESSAGE)));
+    assertThat(response.getJson(),
+      hasErrorWith(hasMessage(MAX_OUTSTANDING_FEE_FINE_BALANCE_MESSAGE)));
+
+    final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
+      OVERRIDE_PATRON_BLOCK_PERMISSION);
+    JsonObject loan = checkOutFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(item)
+        .to(steve)
+        .at(UUID.randomUUID())
+        .on(TEST_LOAN_DATE)
+        .withOverrideBlocks(new BlockOverrides(
+          null, new PatronBlockOverride(true), null, TEST_COMMENT)),
+      okapiHeaders).getJson();
+
+    item = itemsClient.get(item);
+    assertThat(item, hasItemStatus(CHECKED_OUT));
+    assertThat(loan.getString("actionComment"), is(TEST_COMMENT));
+    assertThat(loan.getString("action"), is(CHECKED_OUT_THROUGH_OVERRIDE));
   }
 
   private IndividualResource prepareLoanPolicyWithItemLimit(int itemLimit) {
