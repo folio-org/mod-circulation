@@ -49,6 +49,21 @@ public class ClosedLibraryStrategyService {
       .thenApply(mapResult(relatedRecords::withLoan));
   }
 
+  public CompletableFuture<Result<LoanAndRelatedRecords>> applyStrategyForExpiredPatron(
+    LoanAndRelatedRecords relatedRecords, ClosedLibraryStrategy strategy) {
+
+    final Loan loan = relatedRecords.getLoan();
+    final LocalDate userExpirationDate = loan.getUser().getExpirationDate().toLocalDate();
+
+    return calendarRepository.fetchTimeZoneConfiguration()
+      .thenCompose(r -> r.after(timeZone -> calendarRepository.lookupOpeningDays(
+        userExpirationDate, loan.getCheckoutServicePointId(), timeZone)))
+      .thenApply(r -> r.next(openingDays -> applyStrategy(loan, loan.getLoanPolicy(),
+        openingDays, relatedRecords.getTimeZone(), strategy)))
+      .thenApply(mapResult(loan::changeDueDate))
+      .thenApply(mapResult(relatedRecords::withLoan));
+  }
+
   public CompletableFuture<Result<RenewalContext>> applyClosedLibraryDueDateManagement(
     RenewalContext renewalContext) {
 
@@ -63,7 +78,7 @@ public class ClosedLibraryStrategyService {
     Loan loan, LoanPolicy loanPolicy, DateTimeZone timeZone) {
 
     LocalDate requestedDate = loan.getDueDate().withZone(timeZone).toLocalDate();
-    return calendarRepository.lookupOpeningDays(requestedDate, loan.getCheckoutServicePointId())
+    return calendarRepository.lookupOpeningDays(requestedDate, loan.getCheckoutServicePointId(), timeZone)
       .thenApply(r -> r.next(openingDays -> applyStrategy(loan, loanPolicy, openingDays, timeZone)));
   }
 
@@ -74,6 +89,15 @@ public class ClosedLibraryStrategyService {
     ClosedLibraryStrategy strategy = determineClosedLibraryStrategy(loanPolicy, currentDateTime, timeZone);
 
     return strategy.calculateDueDate(initialDueDate, openingDays)
+      .next(dateTime -> applyFixedDueDateLimit(dateTime, loan, loanPolicy, openingDays, timeZone));
+  }
+
+  private Result<DateTime> applyStrategy(Loan loan, LoanPolicy loanPolicy,
+    AdjacentOpeningDays openingDays, DateTimeZone timeZone, ClosedLibraryStrategy strategy) {
+
+    DateTime initialDate = loan.getUser().getExpirationDate();
+
+    return strategy.calculateDueDate(initialDate, openingDays)
       .next(dateTime -> applyFixedDueDateLimit(dateTime, loan, loanPolicy, openingDays, timeZone));
   }
 

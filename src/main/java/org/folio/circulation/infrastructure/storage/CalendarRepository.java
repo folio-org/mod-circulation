@@ -15,9 +15,9 @@ import org.folio.circulation.domain.OpeningDay;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FetchSingleRecord;
-import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.ValidationError;
+import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
@@ -39,13 +39,15 @@ public class CalendarRepository {
     this.configurationRepository = new ConfigurationRepository(clients);
   }
 
-  public CompletableFuture<Result<AdjacentOpeningDays>> lookupOpeningDays(LocalDate requestedDate, String servicePointId) {
+  public CompletableFuture<Result<AdjacentOpeningDays>> lookupOpeningDays(LocalDate requestedDate,
+    String servicePointId, DateTimeZone zone) {
+
     String path = String.format(PATH_PARAM_WITH_QUERY, servicePointId, requestedDate);
 
     //TODO: Validation error should have parameters
     return FetchSingleRecord.<AdjacentOpeningDays>forRecord(OPENING_PERIODS)
       .using(calendarClient)
-      .mapTo(this::convertToOpeningDays)
+      .mapTo(jsonObject -> convertToOpeningDays(jsonObject, zone))
       .whenNotFound(failedValidation(
         new ValidationError("Calendar open periods are not found", Collections.emptyMap())))
       .fetch(path);
@@ -64,6 +66,10 @@ public class CalendarRepository {
         Result.combined(this::getOpeningDaysFromOpeningPeriods));
   }
 
+  public CompletableFuture<Result<DateTimeZone>> fetchTimeZoneConfiguration() {
+    return configurationRepository.findTimeZoneConfiguration();
+  }
+
   private Result<Collection<OpeningDay>> getOpeningDaysFromOpeningPeriods(
     Response periodsResponse, DateTimeZone zone) {
 
@@ -75,10 +81,10 @@ public class CalendarRepository {
   private OpeningDay getOpeningDayFromOpeningPeriod(
     JsonObject openingPeriod, DateTimeZone zone) {
 
-    return OpeningDay.fromOpeningPeriodJson(openingPeriod, zone);
+    return fromJsonByDefaultKey(openingPeriod, zone);
   }
 
-  private AdjacentOpeningDays convertToOpeningDays(JsonObject jsonObject) {
+  private AdjacentOpeningDays convertToOpeningDays(JsonObject jsonObject, DateTimeZone zone) {
     if (jsonObject.isEmpty()) {
       return buildClosedOpeningDays();
     }
@@ -86,9 +92,9 @@ public class CalendarRepository {
     if (openingDaysJson.isEmpty()) {
       return buildClosedOpeningDays();
     }
-    OpeningDay previousDate = fromJsonByDefaultKey(openingDaysJson.getJsonObject(0));
-    OpeningDay requestedDate = fromJsonByDefaultKey(openingDaysJson.getJsonObject(1));
-    OpeningDay nextDate = fromJsonByDefaultKey(openingDaysJson.getJsonObject(2));
+    OpeningDay previousDate = fromJsonByDefaultKey(openingDaysJson.getJsonObject(0), zone);
+    OpeningDay requestedDate = fromJsonByDefaultKey(openingDaysJson.getJsonObject(1), zone);
+    OpeningDay nextDate = fromJsonByDefaultKey(openingDaysJson.getJsonObject(2), zone);
 
     return new AdjacentOpeningDays(previousDate, requestedDate, nextDate);
   }

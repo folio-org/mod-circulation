@@ -47,7 +47,7 @@ public class OpeningDay {
       getBooleanProperty(openingDayJson, OPEN_KEY), null);
   }
 
-  public static OpeningDay fromOpeningPeriodJson(JsonObject openingPeriod, DateTimeZone zone) {
+  public static OpeningDay fromJsonByDefaultKey(JsonObject openingPeriod, DateTimeZone zone) {
     JsonObject openingDayJson = openingPeriod.getJsonObject(OPENING_DAY_KEY);
 
     return createOpeningDay(fillOpeningDay(openingDayJson),
