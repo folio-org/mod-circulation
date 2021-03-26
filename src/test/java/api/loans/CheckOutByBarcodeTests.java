@@ -1467,7 +1467,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotOverrideItemNotLoanableBlockWhenCommentIsNotPresent() {
+  public void cannotOverrideBlockWhenCommentIsNotPresent() {
     final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
       OVERRIDE_ITEM_NOT_LOANABLE_BLOCK_PERMISSION);
 
