@@ -135,7 +135,7 @@ public class ClaimItemReturnedAPITests extends APITests {
     final var event = publishedEvents.findFirst(byEventType(ITEM_CLAIMED_RETURNED));
 
     assertThat(event, isValidItemClaimedReturnedEvent(loan.getJson()));
-    assertThatPublishedLoanLogRecordEventsAreValid();
+    assertThatPublishedLoanLogRecordEventsAreValid(loansClient.getById(loan.getId()).getJson());
   }
 
   private void assertLoanAndItem(Response response, String comment, DateTime dateTime) {

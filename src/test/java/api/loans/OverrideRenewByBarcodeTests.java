@@ -2,7 +2,6 @@ package api.loans;
 
 import static api.loans.CheckOutByBarcodeTests.INSUFFICIENT_OVERRIDE_PERMISSIONS;
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
-import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
 import static api.support.builders.FixedDueDateSchedule.forDay;
 import static api.support.builders.FixedDueDateSchedule.wholeMonth;
 import static api.support.fakes.PublishedEvents.byLogEventType;
@@ -474,7 +473,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     assertThat(itemsClient.get(result.getItem()).getJson(), isCheckedOut());
     assertThat(renewedLoan.getString("dueDate"),
       withinSecondsAfter(seconds(2), approximateRenewalDate));
-    assertThatPublishedLoanLogRecordEventsAreValid();
+    assertThatPublishedLoanLogRecordEventsAreValid(renewedLoan);
   }
 
   @Test
@@ -715,7 +714,6 @@ public class OverrideRenewByBarcodeTests extends APITests {
       hasEmailNoticeProperties(steve.getId(), renewalTemplateId, noticeContextMatchers)));
 
     assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
-    assertThatPublishedLogRecordEventsAreValid();
   }
 
   @Test
@@ -728,10 +726,10 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     IndividualResource item = result.getItem();
     IndividualResource user = result.getUser();
-    
+
     final DateTime renewalDate = now(UTC).plusWeeks(9);
     mockClockManagerToReturnFixedDateTime(renewalDate);
-    
+
     IndividualResource renewedLoan =
       loansFixture.overrideRenewalByBarcode(item, user,
         OVERRIDE_COMMENT, null);
@@ -740,6 +738,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   }
 
   public void shouldNotChargeOverdueFeesDuringRenewalWhenItemIsDeclaredLostAndRefundFeePeriodHasPassed() {
+    UUID servicePointId = servicePointsFixture.cd1().getId();
     ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
     UserResource user = usersFixture.jessica();
 
@@ -760,7 +759,8 @@ public class OverrideRenewByBarcodeTests extends APITests {
     final DeclareItemLostRequestBuilder builder = new DeclareItemLostRequestBuilder()
       .forLoanId(loan.getId())
       .on(declareLostDate)
-      .withNoComment();
+      .withNoComment()
+      .withServicePointId(servicePointId);
     declareLostFixtures.declareItemLost(builder);
 
     final DateTime renewalDate = now(UTC).plusWeeks(6);
@@ -774,7 +774,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canOverrideRenewalWhenItemIsAgedToLostAndPatronIsBlocked() {
+  public void canOverrideRenewalWhenItemIsAgedToLostAndPatronIsBlockedAutomatically() {
     final DateTime approximateRenewalDate = DateTime.now(UTC).plusWeeks(3);
     val result = ageToLostFixture.createAgedToLostLoan();
 
@@ -812,6 +812,29 @@ public class OverrideRenewByBarcodeTests extends APITests {
     assertThat(response.getJson(), hasErrorWith(hasMessage(INSUFFICIENT_OVERRIDE_PERMISSIONS)));
     assertThat(getMissingPermissions(response), hasSize(1));
     assertThat(getMissingPermissions(response), hasItem(OVERRIDE_PATRON_BLOCK_PERMISSION));
+  }
+
+  @Test
+  public void canOverrideRenewalWhenItemIsAgedToLostAndPatronIsBlockedManually() {
+    final DateTime approximateRenewalDate = DateTime.now(UTC).plusWeeks(3);
+    val result = ageToLostFixture.createAgedToLostLoan();
+
+    userManualBlocksFixture.createManualPatronBlockForUser(result.getUser().getId());
+    final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
+      OVERRIDE_PATRON_BLOCK_PERMISSION);
+
+    final JsonObject renewedLoan = loansFixture.overrideRenewalByBarcode(
+      new OverrideRenewalByBarcodeRequestBuilder()
+        .forItem(result.getItem())
+        .forUser(result.getUser())
+        .withComment(OVERRIDE_COMMENT), okapiHeaders)
+      .getJson();
+
+    verifyRenewedLoan(result.getItem(), result.getUser(), renewedLoan);
+    assertThat(renewedLoan, hasJsonPath("item.status.name", "Checked out"));
+    assertThat(itemsClient.get(result.getItem()).getJson(), isCheckedOut());
+    assertThat(renewedLoan.getString("dueDate"), withinSecondsAfter(seconds(2),
+      approximateRenewalDate));
   }
 
   private Matcher<ValidationError> hasUserRelatedParameter(IndividualResource user) {

@@ -61,7 +61,8 @@ public class CheckInDeclaredLostItemTest extends RefundDeclaredLostFeesTestBase 
 
     assertThat(firstLoan, hasLostItemFee(isOpen(firstFee)));
     assertThat(loan, hasLostItemFee(isRefundedFully(secondFee)));
-    assertThatPublishedLoanLogRecordEventsAreValid();
+
+    assertThatPublishedLoanLogRecordEventsAreValid(loansClient.getById(loan.getId()).getJson());
   }
 
   @Test
@@ -82,7 +83,6 @@ public class CheckInDeclaredLostItemTest extends RefundDeclaredLostFeesTestBase 
     assertThat(checkInResponse.getJson(), hasErrorWith(allOf(
       hasMessage("Item is lost however there is no aged to lost nor declared lost loan found"),
       hasParameter("itemId", item.getId().toString()))));
-    assertThatPublishedLoanLogRecordEventsAreValid();
   }
 
   @Test
@@ -119,7 +119,7 @@ public class CheckInDeclaredLostItemTest extends RefundDeclaredLostFeesTestBase 
 
     assertThat(response.getLoan(), nullValue());
     assertThat(loan, hasLostItemFee(isRefundedFully(setCostFee)));
-    assertThatPublishedLoanLogRecordEventsAreValid();
+    assertThatPublishedLoanLogRecordEventsAreValid(loansClient.getById(loan.getId()).getJson());
   }
 
   @Test

@@ -1,7 +1,6 @@
 package api.loans.scenarios;
 
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
-import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
 import static api.support.fakes.PublishedEvents.byEventType;
 import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.fixtures.TemplateContextMatchers.getItemContextMatchers;
@@ -242,7 +241,6 @@ public class ChangeDueDateAPITests extends APITests {
       hasEmailNoticeProperties(steve.getId(), templateId, matchers)));
 
     assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
-    assertThatPublishedLogRecordEventsAreValid();
   }
 
   @Test
@@ -265,7 +263,7 @@ public class ChangeDueDateAPITests extends APITests {
     final var event = publishedEvents.findFirst(byEventType(LOAN_DUE_DATE_CHANGED));
 
     assertThat(event, isValidLoanDueDateChangedEvent(updatedLoan));
-    assertThatPublishedLoanLogRecordEventsAreValid();
+    assertThatPublishedLoanLogRecordEventsAreValid(updatedLoan);
   }
 
   private void chargeFeesForLostItemToKeepLoanOpen() {
