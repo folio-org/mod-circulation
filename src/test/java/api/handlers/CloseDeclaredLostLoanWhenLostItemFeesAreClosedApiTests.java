@@ -27,12 +27,14 @@ public class CloseDeclaredLostLoanWhenLostItemFeesAreClosedApiTests extends APIT
 
   @Before
   public void createLoanAndDeclareItemLost() {
+    UUID servicePointId = servicePointsFixture.cd1().getId();
     useLostItemPolicy(lostItemFeePoliciesFixture.chargeFee().getId());
 
     item = itemsFixture.basedUponSmallAngryPlanet();
     loan = checkOutFixture.checkOutByBarcode(item, usersFixture.jessica());
 
     declareLostFixtures.declareItemLost(new DeclareItemLostRequestBuilder()
+      .withServicePointId(servicePointId)
       .forLoanId(loan.getId()));
   }
 
