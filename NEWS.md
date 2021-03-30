@@ -1,7 +1,9 @@
-
 ## 20.2.0 (in-progress)
 
+## 20.1.0 2021-03-30
+
 * Refund/cancel Aged to lost fees/fines when declaring an item lost (CIRC-1077)
+* Lost permissions for /circulation/check-in-by-barcode (CIRC-1099)
 * Provides `declare-item-lost 0.3` (CIRC-1077)
 
 ## 20.0.0 2021-03-12
