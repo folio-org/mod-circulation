@@ -1,8 +1,12 @@
-
 ## 21.0.0 (in-progress)
-* Refund/cancel Aged to lost fees/fines when declaring an item lost (CIRC-1077)
-* Provides `declare-item-lost 0.3` (CIRC-1077)
+
 * Remove redundant override-check-out-by-barcode endpoint (CIRC-1064)
+
+## 20.1.0 2021-03-30
+
+* Refund/cancel Aged to lost fees/fines when declaring an item lost (CIRC-1077)
+* Lost permissions for /circulation/check-in-by-barcode (CIRC-1099)
+* Provides `declare-item-lost 0.3` (CIRC-1077)
 
 ## 20.0.0 2021-03-12
 
