@@ -37,8 +37,6 @@ import org.folio.circulation.domain.validation.overriding.BlockValidator;
 import org.folio.circulation.domain.validation.overriding.OverridingLoanValidator;
 import org.folio.circulation.infrastructure.storage.AutomatedPatronBlocksRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
-import org.folio.circulation.resources.CheckOutStrategy;
-import org.folio.circulation.resources.OverrideCheckOutStrategy;
 import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.ValidationErrorFailure;
@@ -252,11 +250,9 @@ public class CheckOutValidators {
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> refuseWhenItemIsNotLoanable(
-    Result<LoanAndRelatedRecords> result, CheckOutStrategy checkOutStrategy) {
+    Result<LoanAndRelatedRecords> result) {
 
-    if (isLoanPolicyNotInitialized(result)
-      || checkOutStrategy instanceof OverrideCheckOutStrategy) {
-
+    if (isLoanPolicyNotInitialized(result)) {
       return completedFuture(result);
     }
 

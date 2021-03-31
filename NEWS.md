@@ -1,4 +1,6 @@
-## 20.2.0 (in-progress)
+## 21.0.0 (in-progress)
+
+* Remove redundant override-check-out-by-barcode endpoint (CIRC-1064)
 
 ## 20.1.0 2021-03-30
 
