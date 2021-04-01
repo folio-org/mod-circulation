@@ -2,6 +2,7 @@ package org.folio.circulation.resources;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
+import static org.folio.circulation.domain.LoanAction.CHECKED_OUT_THROUGH_OVERRIDE;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_ITEM;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_PROXY_USER;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_USER;
@@ -11,12 +12,16 @@ import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.concurrent.CompletableFuture;
 
+import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.LoanRepresentation;
 import org.folio.circulation.domain.LoanService;
+import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.UpdateRequestQueue;
 import org.folio.circulation.domain.notice.schedule.LoanScheduledNoticeService;
 import org.folio.circulation.domain.notice.session.PatronActionSessionService;
+import org.folio.circulation.domain.policy.LoanPolicy;
+import org.folio.circulation.domain.policy.library.ClosedLibraryStrategyService;
 import org.folio.circulation.domain.representations.CheckOutByBarcodeRequest;
 import org.folio.circulation.domain.validation.CheckOutValidators;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
@@ -39,6 +44,7 @@ import org.folio.circulation.support.http.OkapiPermissions;
 import org.folio.circulation.support.http.server.HttpResponse;
 import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.Result;
+import org.joda.time.DateTime;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
@@ -48,12 +54,10 @@ import io.vertx.ext.web.RoutingContext;
 public class CheckOutByBarcodeResource extends Resource {
 
   private final String rootPath;
-  private final CheckOutStrategy checkOutStrategy;
 
-  public CheckOutByBarcodeResource(String rootPath, HttpClient client, CheckOutStrategy checkOutStrategy) {
+  public CheckOutByBarcodeResource(String rootPath, HttpClient client) {
     super(client);
     this.rootPath = rootPath;
-    this.checkOutStrategy = checkOutStrategy;
   }
 
   @Override
@@ -119,14 +123,14 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenApply(validators::refuseWhenRequestedByAnotherPatron)
       .thenComposeAsync(r -> r.after(l -> lookupLoanPolicy(l, loanPolicyRepository, errorHandler)))
       .thenComposeAsync(validators::refuseWhenItemLimitIsReached)
-      .thenCompose(r -> validators.refuseWhenItemIsNotLoanable(r, checkOutStrategy))
+      .thenCompose(validators::refuseWhenItemIsNotLoanable)
       .thenApply(r -> r.next(errorHandler::failWithValidationErrors))
       .thenCompose(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
         LoanAndRelatedRecords::withTimeZone))
       .thenComposeAsync(r -> r.after(overdueFinePolicyRepository::lookupOverdueFinePolicy))
       .thenComposeAsync(r -> r.after(lostItemPolicyRepository::lookupLostItemPolicy))
       .thenApply(r -> r.next(this::setItemLocationIdAtCheckout))
-      .thenComposeAsync(r -> r.after(relatedRecords -> checkOutStrategy.checkOut(relatedRecords,
+      .thenComposeAsync(r -> r.after(relatedRecords -> checkOut(relatedRecords,
         routingContext.getBodyAsJson(), clients)))
       .thenApply(r -> r.map(this::checkOutItem))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
@@ -202,5 +206,35 @@ public class CheckOutByBarcodeResource extends Resource {
     LoanAndRelatedRecords relatedRecords) {
 
     return succeeded(relatedRecords.withItemEffectiveLocationIdAtCheckOut());
+  }
+
+  private CompletableFuture<Result<LoanAndRelatedRecords>> checkOut(
+    LoanAndRelatedRecords relatedRecords, JsonObject request, Clients clients) {
+
+    DateTime loanDate = relatedRecords.getLoan().getLoanDate();
+    final ClosedLibraryStrategyService strategyService =
+      ClosedLibraryStrategyService.using(clients, loanDate, false);
+
+    if (CHECKED_OUT_THROUGH_OVERRIDE.getValue().equals(relatedRecords.getLoan().getAction())
+      && relatedRecords.getLoan().hasDueDateChanged()) {
+
+      return completedFuture(succeeded(relatedRecords));
+    }
+
+    return completedFuture(succeeded(relatedRecords))
+      .thenApply(r -> r.next(this::calculateDefaultInitialDueDate))
+      .thenCompose(r -> r.after(strategyService::applyClosedLibraryDueDateManagement));
+  }
+
+  private Result<LoanAndRelatedRecords> calculateDefaultInitialDueDate(
+    LoanAndRelatedRecords loanAndRelatedRecords) {
+
+    Loan loan = loanAndRelatedRecords.getLoan();
+    LoanPolicy loanPolicy = loan.getLoanPolicy();
+    RequestQueue requestQueue = loanAndRelatedRecords.getRequestQueue();
+
+    return loanPolicy.calculateInitialDueDate(loan, requestQueue)
+      .map(loan::changeDueDate)
+      .map(loanAndRelatedRecords::withLoan);
   }
 }
