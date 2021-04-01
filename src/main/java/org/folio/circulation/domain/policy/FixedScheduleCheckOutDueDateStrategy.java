@@ -41,7 +41,7 @@ class FixedScheduleCheckOutDueDateStrategy extends DueDateStrategy {
 
     try {
       return fixedDueDateSchedules.findDueDateFor(loanDate)
-        .map(Result::succeeded)
+        .map(dueDate -> truncateDueDateByUserExpiration(loan, dueDate))
         .orElseGet(() -> failedValidation(
           errorForPolicy(NO_APPLICABLE_DUE_DATE_SCHEDULE_MESSAGE)));
     }

@@ -42,6 +42,7 @@ class RollingCheckOutDueDateStrategy extends DueDateStrategy {
     final DateTime loanDate = loan.getLoanDate();
 
     return initialDueDate(loanDate)
+      .next(dueDate -> truncateDueDateByUserExpiration(loan, dueDate))
       .next(dueDate -> truncateDueDateBySchedule(loanDate, dueDate));
   }
 

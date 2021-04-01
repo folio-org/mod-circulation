@@ -1,9 +1,12 @@
 package org.folio.circulation.domain.policy;
 
+import static org.folio.circulation.support.results.Result.succeeded;
+
 import java.lang.invoke.MethodHandles;
 import java.util.function.Function;
 
 import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.User;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
@@ -41,5 +44,15 @@ public abstract class DueDateStrategy {
   //TODO: Replace with exception handling in loan policy, that use toString of strategy
   void logException(Exception e, String message) {
     log.error("{}: {} ({})", message, loanPolicyName, loanPolicyId, e);
+  }
+
+  protected Result<DateTime> truncateDueDateByUserExpiration(Loan loan, DateTime dueDate) {
+    User user = loan.getUser();
+    if (user != null && user.getExpirationDate() != null
+      && user.getExpirationDate().isBefore(dueDate)) {
+
+      return succeeded(user.getExpirationDate());
+    }
+    return succeeded(dueDate);
   }
 }
