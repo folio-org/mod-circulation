@@ -1932,7 +1932,8 @@ public class CheckOutByBarcodeTests extends APITests {
         .to(steve)
         .at(CASE_ONE_DAY_IS_OPEN_NEXT_TWO_DAYS_CLOSED)).getJson();
 
-    assertThat(DateTime.parse(response.getString("dueDate")).toLocalDate(), is(FIRST_DAY_OPEN));
+    assertThat(DateTime.parse(response.getString("dueDate")).toDateTime(),
+      is(FIRST_DAY_OPEN.toDateTime(LocalTime.MIDNIGHT.minusSeconds(1), UTC)));
   }
 
   @Test
@@ -1950,7 +1951,8 @@ public class CheckOutByBarcodeTests extends APITests {
         .to(steve)
         .at(CASE_YESTERDAY_OPEN_TODAY_CLOSED_TOMORROW_OPEN)).getJson();
 
-    assertThat(DateTime.parse(response.getString("dueDate")).toLocalDate(), is(TOMORROW_OPEN_DAY));
+    assertThat(DateTime.parse(response.getString("dueDate")).toDateTime(),
+      is(TOMORROW_OPEN_DAY.toDateTime(LocalTime.MIDNIGHT.minusSeconds(1), UTC)));
   }
 
   @Test
