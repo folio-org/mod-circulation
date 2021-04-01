@@ -48,7 +48,6 @@ public abstract class DueDateStrategy {
 
   protected Result<DateTime> truncateDueDateByUserExpiration(Loan loan, DateTime dueDate) {
     User user = loan.getUser();
-
     if (user != null && user.getExpirationDate() != null
       && user.getExpirationDate().isBefore(dueDate)) {
 

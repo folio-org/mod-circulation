@@ -1998,7 +1998,7 @@ public class CheckOutByBarcodeTests extends APITests {
     use(buildLoanPolicyWithRollingLoan(MOVE_TO_END_OF_CURRENT_SERVICE_POINT_HOURS));
 
     IndividualResource item = itemsFixture.basedUponNod();
-    DateTime patronExpirationDate = DateTime.now().plusDays(1).withZone(UTC);
+    DateTime patronExpirationDate = DateTime.now().plusHours(1).withZone(UTC);
     IndividualResource steve = usersFixture.steve(user -> user.expires(patronExpirationDate));
 
     JsonObject response = checkOutFixture.checkOutByBarcode(
@@ -2016,7 +2016,7 @@ public class CheckOutByBarcodeTests extends APITests {
     use(buildLoanPolicyWithRollingLoan(MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS));
 
     IndividualResource item = itemsFixture.basedUponNod();
-    DateTime patronExpirationDate = DateTime.now().plusDays(1).withZone(UTC);
+    DateTime patronExpirationDate = DateTime.now().plusHours(1).withZone(UTC);
     IndividualResource steve = usersFixture.steve(user -> user.expires(patronExpirationDate));
 
     JsonObject response = checkOutFixture.checkOutByBarcode(
