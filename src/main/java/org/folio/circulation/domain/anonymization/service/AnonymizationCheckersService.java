@@ -20,7 +20,6 @@ import org.folio.circulation.domain.anonymization.checkers.NoAssociatedFeesAndFi
 import org.folio.circulation.domain.anonymization.config.LoanAnonymizationConfiguration;
 
 public class AnonymizationCheckersService {
-
   private final LoanAnonymizationConfiguration config;
 
   private final AnonymizationChecker manualAnonymizationChecker;

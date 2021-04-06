@@ -61,7 +61,7 @@ public class ConfigurationRepository {
       .thenApply(r -> r.map(ConfigurationRepository::getFirstConfiguration));
   }
 
-  static LoanAnonymizationConfiguration getFirstConfiguration(
+  private static LoanAnonymizationConfiguration getFirstConfiguration(
     Collection<Configuration> configurations) {
 
     final JsonObject period = configurations.stream()

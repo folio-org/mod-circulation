@@ -1,11 +1,14 @@
 package api.support.utl;
 
+import static api.support.APITestContext.getOkapiHeadersFromContext;
+
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.folio.circulation.support.http.client.Response;
 
+import api.support.http.OkapiHeaders;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -22,5 +25,10 @@ public final class BlockOverridesUtils {
       .map(String.class::cast)
       .distinct()
       .collect(Collectors.toList());
+  }
+
+  public static OkapiHeaders buildOkapiHeadersWithPermissions(String... permission) {
+    return getOkapiHeadersFromContext().withOkapiPermissions(
+      new JsonArray(List.of(permission)).encode());
   }
 }

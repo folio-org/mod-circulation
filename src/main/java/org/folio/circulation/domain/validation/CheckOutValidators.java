@@ -21,6 +21,7 @@ import static org.folio.circulation.resources.handlers.error.CirculationErrorTyp
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.PROXY_USER_IS_INACTIVE;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.SERVICE_POINT_IS_NOT_PRESENT;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_BLOCKED_AUTOMATICALLY;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_BLOCKED_MANUALLY;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_INACTIVE;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
@@ -36,8 +37,6 @@ import org.folio.circulation.domain.validation.overriding.BlockValidator;
 import org.folio.circulation.domain.validation.overriding.OverridingLoanValidator;
 import org.folio.circulation.infrastructure.storage.AutomatedPatronBlocksRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
-import org.folio.circulation.resources.CheckOutStrategy;
-import org.folio.circulation.resources.OverrideCheckOutStrategy;
 import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.ValidationErrorFailure;
@@ -57,6 +56,7 @@ public class CheckOutValidators {
   private final BlockValidator<LoanAndRelatedRecords> itemLimitValidator;
   private final BlockValidator<LoanAndRelatedRecords> loanPolicyValidator;
   private final BlockValidator<LoanAndRelatedRecords> automatedPatronBlocksValidator;
+  private final BlockValidator<LoanAndRelatedRecords> manualPatronBlocksValidator;
 
   private final CirculationErrorHandler errorHandler;
 
@@ -98,10 +98,12 @@ public class CheckOutValidators {
 
     itemLimitValidator = createItemLimitValidator(request, permissions, loanRepository);
 
-    automatedPatronBlocksValidator = createPatronBlocksValidator(request, permissions,
+    automatedPatronBlocksValidator = createAutomatedPatronBlocksValidator(request, permissions,
       automatedPatronBlocksRepository);
 
     loanPolicyValidator = createLoanPolicyValidator(request, permissions);
+
+    manualPatronBlocksValidator = createManualPatronBlocksValidator(request, permissions, clients);
   }
 
   private ValidationErrorFailure errorWhenInIncorrectStatus(Item item) {
@@ -136,7 +138,7 @@ public class CheckOutValidators {
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>>
-  refuseWhenCheckOutActionIsBlockedForPatron(Result<LoanAndRelatedRecords> result) {
+  refuseWhenCheckOutActionIsBlockedAutomaticallyForPatron(Result<LoanAndRelatedRecords> result) {
 
     if (errorHandler.hasAny(FAILED_TO_FETCH_USER)) {
       return completedFuture(result);
@@ -144,6 +146,18 @@ public class CheckOutValidators {
 
     return result.after(l -> automatedPatronBlocksValidator.validate(l)
       .thenApply(r -> errorHandler.handleValidationResult(r, automatedPatronBlocksValidator.getErrorType(), result)));
+  }
+
+  public CompletableFuture<Result<LoanAndRelatedRecords>>
+  refuseWhenCheckOutActionIsBlockedManuallyForPatron(Result<LoanAndRelatedRecords> result) {
+
+    if (errorHandler.hasAny(FAILED_TO_FETCH_USER)) {
+      return completedFuture(result);
+    }
+
+    return result.after(l -> manualPatronBlocksValidator.validate(l)
+      .thenApply(r -> errorHandler.handleValidationResult(
+        r, manualPatronBlocksValidator.getErrorType(), result)));
   }
 
   public Result<LoanAndRelatedRecords> refuseWhenProxyUserIsInactive(
@@ -236,11 +250,9 @@ public class CheckOutValidators {
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> refuseWhenItemIsNotLoanable(
-    Result<LoanAndRelatedRecords> result, CheckOutStrategy checkOutStrategy) {
+    Result<LoanAndRelatedRecords> result) {
 
-    if (isLoanPolicyNotInitialized(result)
-      || checkOutStrategy instanceof OverrideCheckOutStrategy) {
-
+    if (isLoanPolicyNotInitialized(result)) {
       return completedFuture(result);
     }
 
@@ -248,7 +260,7 @@ public class CheckOutValidators {
       .thenApply(r -> errorHandler.handleValidationResult(r, loanPolicyValidator.getErrorType(), relatedRecords)));
   }
 
-  private BlockValidator<LoanAndRelatedRecords> createPatronBlocksValidator(CheckOutByBarcodeRequest request,
+  private BlockValidator<LoanAndRelatedRecords> createAutomatedPatronBlocksValidator(CheckOutByBarcodeRequest request,
     OkapiPermissions permissions, AutomatedPatronBlocksRepository automatedPatronBlocksRepository) {
 
     return request.getBlockOverrides().getPatronBlockOverride().isRequested()
@@ -274,6 +286,15 @@ public class CheckOutValidators {
       ? new OverridingLoanValidator(ITEM_NOT_LOANABLE_BLOCK, request.getBlockOverrides(), permissions)
       : new BlockValidator<>(ITEM_IS_NOT_LOANABLE,
       new LoanPolicyValidator(request)::refuseWhenItemIsNotLoanable);
+  }
+
+  private BlockValidator<LoanAndRelatedRecords> createManualPatronBlocksValidator(
+    CheckOutByBarcodeRequest request, OkapiPermissions permissions, Clients clients) {
+
+    return request.getBlockOverrides().getPatronBlockOverride().isRequested()
+      ? new OverridingLoanValidator(PATRON_BLOCK, request.getBlockOverrides(), permissions)
+      : new BlockValidator<>(USER_IS_BLOCKED_MANUALLY,
+      new UserManualBlocksValidator(clients)::refuseWhenUserIsBlocked);
   }
 
   private boolean isLoanPolicyNotInitialized(Result<LoanAndRelatedRecords> result) {

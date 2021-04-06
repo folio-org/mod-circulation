@@ -1,5 +1,6 @@
 package api.support.matchers;
 
+import static api.support.matchers.EventTypeMatchers.isItemAgedToLostEventType;
 import static api.support.matchers.EventTypeMatchers.isItemCheckedInEventType;
 import static api.support.matchers.EventTypeMatchers.isItemCheckedOutEventType;
 import static api.support.matchers.EventTypeMatchers.isItemClaimedReturnedEventType;
@@ -91,6 +92,15 @@ public class EventMatchers {
       isItemDeclaredLostEventType());
   }
 
+  public static Matcher<JsonObject> isValidItemAgedToLostEvent(JsonObject loan) {
+    return allOf(JsonObjectMatcher.allOfPaths(
+      hasJsonPath("eventPayload", allOf(
+        hasJsonPath("userId", is(loan.getString("userId"))),
+        hasJsonPath("loanId", is(loan.getString("id")))
+      ))),
+      isItemAgedToLostEventType());
+  }
+
   public static Matcher<JsonObject> isValidLoanDueDateChangedEvent(JsonObject loan) {
     return allOf(JsonObjectMatcher.allOfPaths(
       hasJsonPath("eventPayload", allOf(
@@ -107,17 +117,32 @@ public class EventMatchers {
     return allOf(JsonObjectMatcher.allOfPaths(
       hasJsonPath("eventPayload", allOf(
         hasJsonPath("logEventType", is("LOAN")),
-        hasJsonPath("itemBarcode", is(loanCtx.getString("itemBarcode"))),
-        hasJsonPath("itemId", is(loanCtx.getString("itemId"))),
-        hasJsonPath("instanceId", is(loanCtx.getString("itemBarcode"))),
-        hasJsonPath("holdingsRecordId", is(loanCtx.getString("itemId"))),
-        hasJsonPath("action", is(loanCtx.getString("action"))),
-        hasJsonPath("date", is(loanCtx.getString("date"))),
-        hasJsonPath("description", is(loanCtx.getString("description"))),
-        hasJsonPath("loanId", is(loanCtx.getString("loanId")))
+        hasJsonPath("payload", allOf(
+          hasJsonPath("loanId", is(loanCtx.getString("id"))),
+          hasJsonPath("userId", is(loanCtx.getString("userId"))),
+          hasJsonPath("itemId", is(loanCtx.getString("itemId"))),
+          hasJsonPath("itemBarcode", is(loanCtx.getJsonObject("item").getString("barcode"))),
+          hasJsonPath("instanceId", is(loanCtx.getJsonObject("item").getString("instanceId"))),
+          hasJsonPath("holdingsRecordId", is(loanCtx.getJsonObject("item").getString("holdingsRecordId")))
+        ))
       ))),
       isLogRecordEventType());
   }
+
+  public static Matcher<JsonObject> isValidAnonymizeLoansLogRecordEvent(JsonObject loanCtx) {
+    return allOf(JsonObjectMatcher.allOfPaths(
+      hasJsonPath("eventPayload", allOf(
+        hasJsonPath("logEventType", is("LOAN")),
+        hasJsonPath("payload", allOf(
+          hasJsonPath("loanId", is(loanCtx.getString("id"))),
+          hasJsonPath("itemId", is(loanCtx.getString("itemId"))),
+          hasJsonPath("updatedByUserId", is(loanCtx.getJsonObject("metadata").getString("updatedByUserId"))),
+          hasJsonPath("action", is("Anonymize"))
+        ))
+      ))),
+      isLogRecordEventType());
+  }
+
 
   public static Matcher<JsonObject> isValidNoticeLogRecordEvent(JsonObject notice) {
     return allOf(JsonObjectMatcher.allOfPaths(

@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <artifactId>mod-circulation</artifactId>
   <groupId>org.folio</groupId>
-  <version>19.3.0-SNAPSHOT</version>
+  <version>21.0.0-SNAPSHOT</version>
   <licenses>
     <license>
       <name>Apache License 2.0</name>
@@ -154,7 +154,7 @@
     <dependency>
       <groupId>org.folio</groupId>
       <artifactId>mod-pubsub-client</artifactId>
-      <version>1.3.1</version>
+      <version>2.0.1</version>
       <exclusions>
         <exclusion>
           <groupId>org.hamcrest</groupId>

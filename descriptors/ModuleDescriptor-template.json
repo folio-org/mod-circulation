@@ -92,7 +92,7 @@
     },
     {
       "id": "declare-item-lost",
-      "version": "0.2",
+      "version": "0.3",
       "handlers": [
         {
           "methods": ["POST"],
@@ -150,7 +150,7 @@
     },
     {
       "id": "circulation",
-      "version": "9.5",
+      "version": "10.0",
       "handlers": [
         {
           "methods": [
@@ -167,18 +167,6 @@
             "circulation.override-patron-block",
             "circulation.override-item-limit-block",
             "circulation.override-item-not-loanable-block"
-          ]
-        },
-        {
-          "methods": [
-            "POST"
-          ],
-          "pathPattern": "/circulation/override-check-out-by-barcode",
-          "permissionsRequired": [
-            "circulation.override-check-out-by-barcode.post"
-          ],
-          "modulePermissions": [
-            "modperms.circulation.override-check-out-by-barcode.post"
           ]
         },
         {
@@ -203,6 +191,9 @@
           ],
           "modulePermissions": [
             "circulation.renew-loan"
+          ],
+          "permissionsDesired": [
+            "circulation.override-patron-block"
           ]
         },
         {
@@ -215,6 +206,9 @@
           ],
           "modulePermissions": [
             "modperms.circulation.override-renewal-by-barcode.post"
+          ],
+          "permissionsDesired": [
+            "circulation.override-patron-block"
           ]
         },
         {
@@ -609,6 +603,76 @@
       ]
     },
     {
+      "id": "age-to-lost-background-processes",
+      "version": "0.1",
+      "handlers": [
+        {
+          "methods": [
+            "POST"
+          ],
+          "pathPattern": "/circulation/scheduled-age-to-lost",
+          "permissionsRequired": ["circulation.scheduled-age-to-lost.post"],
+          "modulePermissions": [
+            "circulation-storage.loans.item.put",
+            "circulation-storage.loans.item.get",
+            "circulation-storage.loans.collection.get",
+            "circulation-storage.circulation-rules.get",
+            "circulation-storage.patron-notice-policies.collection.get",
+            "circulation-storage.patron-notice-policies.item.get",
+            "inventory-storage.items.item.put",
+            "inventory-storage.items.item.get",
+            "inventory-storage.items.collection.get",
+            "inventory-storage.locations.collection.get",
+            "inventory-storage.locations.item.get",
+            "inventory-storage.holdings.collection.get",
+            "inventory-storage.instances.collection.get",
+            "inventory-storage.material-types.collection.get",
+            "lost-item-fees-policies.item.get",
+            "lost-item-fees-policies.collection.get",
+            "pubsub.publish.post",
+            "users.item.get",
+            "users.collection.get",
+            "scheduled-notice-storage.scheduled-notices.item.post"
+          ]
+        },
+        {
+          "methods": [
+            "POST"
+          ],
+          "pathPattern": "/circulation/scheduled-age-to-lost-fee-charging",
+          "permissionsRequired": ["circulation.scheduled-age-to-lost-fee-charging.post"],
+          "modulePermissions": [
+            "circulation-storage.loans.item.put",
+            "circulation-storage.loans.item.get",
+            "circulation-storage.loans.collection.get",
+            "inventory-storage.items.item.put",
+            "inventory-storage.items.item.get",
+            "inventory-storage.items.collection.get",
+            "inventory-storage.locations.collection.get",
+            "inventory-storage.location-units.libraries.collection.get",
+            "inventory-storage.holdings.collection.get",
+            "inventory-storage.instances.collection.get",
+            "inventory-storage.material-types.collection.get",
+            "lost-item-fees-policies.item.get",
+            "lost-item-fees-policies.collection.get",
+            "owners.collection.get",
+            "feefines.collection.get",
+            "accounts.item.post",
+            "feefineactions.item.post",
+            "pubsub.publish.post",
+            "users.item.get",
+            "users.collection.get",
+            "circulation-storage.circulation-rules.get",
+            "circulation-storage.patron-notice-policies.item.get",
+            "circulation-storage.patron-notice-policies.collection.get",
+            "circulation.rules.notice-policy.get",
+            "inventory-storage.locations.item.get",
+            "scheduled-notice-storage.scheduled-notices.item.post"
+          ]
+        }
+      ]
+    },
+    {
       "id": "_timer",
       "version": "1.0",
       "interfaceType": "system",
@@ -849,72 +913,6 @@
           ],
           "unit": "minute",
           "delay": "1"
-        },
-        {
-          "methods": [
-            "POST"
-          ],
-          "pathPattern": "/circulation/scheduled-age-to-lost",
-          "modulePermissions": [
-            "circulation-storage.loans.item.put",
-            "circulation-storage.loans.item.get",
-            "circulation-storage.loans.collection.get",
-            "circulation-storage.circulation-rules.get",
-            "circulation-storage.patron-notice-policies.collection.get",
-            "circulation-storage.patron-notice-policies.item.get",
-            "inventory-storage.items.item.put",
-            "inventory-storage.items.item.get",
-            "inventory-storage.items.collection.get",
-            "inventory-storage.locations.collection.get",
-            "inventory-storage.locations.item.get",
-            "inventory-storage.holdings.collection.get",
-            "inventory-storage.instances.collection.get",
-            "inventory-storage.material-types.collection.get",
-            "lost-item-fees-policies.item.get",
-            "lost-item-fees-policies.collection.get",
-            "pubsub.publish.post",
-            "users.item.get",
-            "users.collection.get",
-            "scheduled-notice-storage.scheduled-notices.item.post"
-          ],
-          "unit": "minute",
-          "delay": "30"
-        },
-        {
-          "methods": [
-            "POST"
-          ],
-          "pathPattern": "/circulation/scheduled-age-to-lost-fee-charging",
-          "modulePermissions": [
-            "circulation-storage.loans.item.put",
-            "circulation-storage.loans.item.get",
-            "circulation-storage.loans.collection.get",
-            "inventory-storage.items.item.put",
-            "inventory-storage.items.item.get",
-            "inventory-storage.items.collection.get",
-            "inventory-storage.locations.collection.get",
-            "inventory-storage.location-units.libraries.collection.get",
-            "inventory-storage.holdings.collection.get",
-            "inventory-storage.instances.collection.get",
-            "inventory-storage.material-types.collection.get",
-            "lost-item-fees-policies.item.get",
-            "lost-item-fees-policies.collection.get",
-            "owners.collection.get",
-            "feefines.collection.get",
-            "accounts.item.post",
-            "feefineactions.item.post",
-            "pubsub.publish.post",
-            "users.item.get",
-            "users.collection.get",
-            "circulation-storage.circulation-rules.get",
-            "circulation-storage.patron-notice-policies.item.get",
-            "circulation-storage.patron-notice-policies.collection.get",
-            "circulation.rules.notice-policy.get",
-            "inventory-storage.locations.item.get",
-            "scheduled-notice-storage.scheduled-notices.item.post"
-          ],
-          "unit": "minute",
-          "delay": "35"
         }
       ]
     },
@@ -956,10 +954,7 @@
           "methods": [
             "DELETE"
           ],
-          "pathPattern": "/_/tenant",
-          "modulePermissions": [
-            "pubsub.publishers.delete"
-          ]
+          "pathPattern": "/_/tenant"
         }
       ]
     }
@@ -1100,11 +1095,6 @@
       "permissionName": "circulation.check-out-by-barcode.post",
       "displayName": "circulation - check out item by barcode",
       "description": "check out an item using barcodes for item and loanee"
-    },
-    {
-      "permissionName": "circulation.override-check-out-by-barcode.post",
-      "displayName": "circulation - override item checkout by barcode",
-      "description": "override item check out using barcodes for item and loanee"
     },
     {
       "permissionName": "circulation.check-in-by-barcode.post",
@@ -1287,12 +1277,21 @@
       "description": "end patron action session"
     },
     {
+      "permissionName": "circulation.scheduled-age-to-lost.post",
+      "displayName": "circulation - scheduled age to lost process",
+      "description": "scheduled process to age overdue borrowed items to lost"
+    },
+    {
+      "permissionName": "circulation.scheduled-age-to-lost-fee-charging.post",
+      "displayName": "circulation - scheduled age to lost fee charging process",
+      "description": "scheduled process to issue fees to patrons for aged to lost items"
+    },
+    {
       "permissionName": "circulation.all",
       "displayName": "circulation - all permissions",
       "description": "Entire set of permissions needed to use the circulation",
       "subPermissions": [
         "circulation.check-out-by-barcode.post",
-        "circulation.override-check-out-by-barcode.post",
         "circulation.check-in-by-barcode.post",
         "circulation.renew-by-barcode.post",
         "circulation.renew-by-id.post",
@@ -1326,7 +1325,9 @@
         "circulation.requests.instances.item.post",
         "circulation.requests.hold-shelf-clearance-report.get",
         "circulation.inventory.items-in-transit-report.get",
-        "circulation.pick-slips.get"
+        "circulation.pick-slips.get",
+        "circulation.scheduled-age-to-lost.post",
+        "circulation.scheduled-age-to-lost-fee-charging.post"
       ]
     },
     {
@@ -1477,66 +1478,6 @@
       "visible": false
     },
     {
-      "permissionName": "modperms.circulation.override-check-out-by-barcode.post",
-      "displayName" : "module permissions for one op",
-      "description" : "to reduce X-Okapi-Token size",
-      "subPermissions": [
-        "circulation-storage.loans.item.post",
-        "circulation-storage.loans.item.get",
-        "circulation-storage.loans.collection.get",
-        "circulation-storage.loan-policies.item.get",
-        "circulation-storage.loan-policies.collection.get",
-        "circulation-storage.circulation-rules.get",
-        "circulation-storage.requests.collection.get",
-        "circulation-storage.requests.item.put",
-        "circulation-storage.request-batch.item.post",
-        "circulation-storage.request-policies.item.get",
-        "circulation-storage.fixed-due-date-schedules.item.get",
-        "circulation-storage.fixed-due-date-schedules.collection.get",
-        "circulation-storage.patron-notice-policies.item.get",
-        "circulation.rules.notice-policy.get",
-        "circulation.rules.lost-item-policy.get",
-        "circulation.rules.loan-policy.get",
-        "circulation.rules.request-policy.get",
-        "circulation.rules.overdue-fine-policy.get",
-        "inventory-storage.items.item.put",
-        "inventory-storage.items.item.get",
-        "inventory-storage.items.collection.get",
-        "inventory-storage.locations.item.get",
-        "inventory-storage.locations.collection.get",
-        "inventory-storage.location-units.institutions.item.get",
-        "inventory-storage.location-units.campuses.item.get",
-        "inventory-storage.location-units.libraries.item.get",
-        "inventory-storage.holdings.collection.get",
-        "inventory-storage.holdings.item.get",
-        "inventory-storage.instances.collection.get",
-        "inventory-storage.instances.item.get",
-        "inventory-storage.service-points.collection.get",
-        "inventory-storage.service-points.item.get",
-        "inventory-storage.material-types.item.get",
-        "inventory-storage.material-types.collection.get",
-        "inventory-storage.loan-types.item.get",
-        "users.item.get",
-        "users.collection.get",
-        "proxiesfor.collection.get",
-        "patron-notice.post",
-        "lost-item-fees-policies.item.get",
-        "lost-item-fees-policies.collection.get",
-        "overdue-fines-policies.item.get",
-        "configuration.entries.collection.get",
-        "scheduled-notice-storage.scheduled-notices.item.post",
-        "usergroups.collection.get",
-        "usergroups.item.get",
-        "automated-patron-blocks.collection.get",
-        "accounts.collection.get",
-        "accounts.item.put",
-        "feefineactions.collection.get",
-        "feefineactions.item.post",
-        "pubsub.publish.post"
-      ],
-      "visible": false
-    },
-    {
       "permissionName": "modperms.circulation.check-in-by-barcode.post",
       "displayName" : "module permissions for one op",
       "description" : "to reduce X-Okapi-Token size",
@@ -1596,7 +1537,8 @@
         "pubsub.publish.post",
         "scheduled-notice-storage.scheduled-notices.item.delete",
         "accounts.refund.post",
-        "accounts.cancel.post"
+        "accounts.cancel.post",
+        "configuration.entries.collection.get"
       ],
       "visible": false
     },
@@ -2091,6 +2033,7 @@
         "inventory-storage.location-units.institutions.item.get",
         "inventory-storage.location-units.campuses.item.get",
         "inventory-storage.location-units.libraries.item.get",
+        "inventory-storage.location-units.libraries.collection.get",
         "inventory-storage.service-points.collection.get",
         "inventory-storage.service-points.item.get",
         "users.item.get",
@@ -2181,7 +2124,8 @@
         "scheduled-notice-storage.scheduled-notices.collection.delete",
         "scheduled-notice-storage.scheduled-notices.item.post",
         "manualblocks.collection.get",
-        "automated-patron-blocks.collection.get"
+        "automated-patron-blocks.collection.get",
+        "pubsub.publish.post"
       ],
       "visible": false
     },

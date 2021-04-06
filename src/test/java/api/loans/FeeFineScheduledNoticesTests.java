@@ -1,6 +1,5 @@
 package api.loans;
 
-import static api.support.PubsubPublisherTestUtils.assertThatPublishedLogRecordEventsAreValid;
 import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.matchers.PatronNoticeMatcher.hasNoticeProperties;
 import static api.support.matchers.ScheduledNoticeMatchers.hasScheduledFeeFineNotice;
@@ -363,8 +362,6 @@ public class FeeFineScheduledNoticesTests extends APITests {
     assertThat(sentNotices, hasSize(expectedTemplateIds.length));
     assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())),
       hasSize(expectedTemplateIds.length));
-
-    assertThatPublishedLogRecordEventsAreValid();
 
     Matcher<?> matcher = TemplateContextMatchers.getFeeChargeContextMatcher(account);
 

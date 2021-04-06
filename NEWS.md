@@ -1,7 +1,35 @@
-## 19.3.0 (in-progress)
+## 21.0.0 (in-progress)
 
+* Remove redundant override-check-out-by-barcode endpoint (CIRC-1064)
+
+## 20.1.0 2021-03-30
+
+* Refund/cancel Aged to lost fees/fines when declaring an item lost (CIRC-1077)
+* Lost permissions for /circulation/check-in-by-barcode (CIRC-1099)
+* Provides `declare-item-lost 0.3` (CIRC-1077)
+
+## 20.0.0 2021-03-12
+
+* No longer periodically executes age to lost background processes (CIRC-1084)
 * Does not charge overdue fees when fee refund period has passed (CIRC-1000)
-* Loan dates now truncate if there is a recall in any position in the item hold queue (CIRC-1018)
+* Loan dates are truncated when there is a recall request in the queue (CIRC-1018)
+* Schedules patron notices when items are aged to lost (CIRC-962)
+* Schedules patron notices when fees or fines are charged or adjusted (CIRC-963, CIRC-964)
+* Introduces patron comments on requests (CIRC-988, CIRC-1036, CIRC-1037)
+* Sends recalled patron notices to borrower even when due date does not change (CIRC-989)
+* Policy determines whether loans may be extended when item is recalled (CIRC-994)
+* Applies separate policy for recalled items that are aged to lost (CIRC-1005)
+* `Intellectual` items may not be checked out or checked in (CIRC-1008, CIRC-1011)
+* `Restricted` items may be requested (CIRC-1085)
+* Blocks may be overridden during check out, renewal and requesting (CIRC-1061, CIRC-1062, CIRC-1063)
+* Provides `requests-reports 0.8`
+* Provides `pick-slips 0.3`
+* Provides `circulation 9.5`
+* Provides `age-to-lost-background-processes 0.1`
+* Requires `item-storage 8.7`
+* Requires `request-storage 3.4`
+* Requires `feesfines 16.3`
+* Requires `notes 1.0 or 2.0`
 
 ## 19.2.0 2020-10-15
 

@@ -10,6 +10,10 @@
     "userBarcode": {
       "description": "Barcode of the user (representing the patron) the item has been loaned to",
       "type": "string"
+    },
+    "overrideBlocks": {
+      "description": "Blocks to override",
+      "$ref": "override-blocks.json"
     }
   },
   "additionalProperties": false,
