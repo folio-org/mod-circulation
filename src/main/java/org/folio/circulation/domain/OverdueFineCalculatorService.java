@@ -5,7 +5,7 @@ import static lombok.AccessLevel.PRIVATE;
 import static org.apache.commons.lang3.BooleanUtils.isFalse;
 import static org.folio.circulation.domain.OverdueFineCalculatorService.Scenario.CHECKIN;
 import static org.folio.circulation.domain.OverdueFineCalculatorService.Scenario.RENEWAL;
-import static org.folio.circulation.domain.LoanAction.RESOLVE_CLAIM_AS_FOUND_BY_LIBRARY;
+import static org.folio.circulation.domain.representations.CheckInByBarcodeRequest.ClaimedReturnedResolution.FOUND_BY_LIBRARY;
 import static org.folio.circulation.support.ClockManager.getClockManager;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
@@ -113,8 +113,8 @@ public class OverdueFineCalculatorService {
       return false;
     }
 
-    if(loan.isClaimedReturned() &&
-        context.getCheckInRequest().getClaimedReturnedResolution().equals(RESOLVE_CLAIM_AS_FOUND_BY_LIBRARY)) {
+    if(context.getCheckInRequest().getClaimedReturnedResolution() != null 
+        && context.getCheckInRequest().getClaimedReturnedResolution().equals(FOUND_BY_LIBRARY)) {
       return false;
     }
 

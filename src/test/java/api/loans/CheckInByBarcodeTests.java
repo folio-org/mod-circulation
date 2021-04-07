@@ -995,6 +995,52 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     waitAtLeast(1, SECONDS)
       .until(feeFineActionsClient::getAll, empty());
   }
+   
+  @Test
+  public void shouldNotCreateOverdueFineWithResolutionFoundByLibrary() {
+    useFallbackPolicies(loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId(),
+      overdueFinePoliciesFixture.facultyStandardDoNotCountClosed().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
+
+    final IndividualResource james = usersFixture.james();
+    final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
+    final IndividualResource homeLocation = locationsFixture.basedUponExampleLocation(
+      item -> item.withPrimaryServicePoint(checkInServicePointId));
+    final IndividualResource nod = itemsFixture.basedUponNod(item ->
+      item.withPermanentLocation(homeLocation.getId()));
+
+    checkOutFixture.checkOutByBarcode(nod, james,
+      new DateTime(2020, 1, 1, 12, 0, 0, UTC));
+
+    JsonObject servicePointOwner = new JsonObject();
+    servicePointOwner.put("value", homeLocation.getJson().getString("primaryServicePoint"));
+    servicePointOwner.put("label", "label");
+    UUID ownerId = UUID.randomUUID();
+    feeFineOwnersClient.create(new FeeFineOwnerBuilder()
+      .withId(ownerId)
+      .withOwner("fee-fine-owner")
+      .withServicePointOwner(Collections.singletonList(servicePointOwner)));
+
+    UUID feeFineId = UUID.randomUUID();
+    feeFinesClient.create(new FeeFineBuilder()
+      .withId(feeFineId)
+      .withFeeFineType("Overdue fine")
+      .withOwnerId(ownerId));
+
+    checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+      .forItem(nod)
+      .on(new DateTime(2020, 1, 25, 12, 0, 0, UTC))
+      .at(checkInServicePointId)
+      .claimedReturnedResolution("Found by library"));
+
+    waitAtLeast(1, SECONDS)
+      .until(accountsClient::getAll, empty());
+
+    waitAtLeast(1, SECONDS)
+      .until(feeFineActionsClient::getAll, empty());
+  }
 
   @Test
   public void overdueFineCalculatedCorrectlyWhenHourlyFeeFinePolicyIsApplied() {

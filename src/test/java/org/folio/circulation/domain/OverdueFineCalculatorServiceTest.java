@@ -81,7 +81,6 @@ public class OverdueFineCalculatorServiceTest {
     new User(new UserBuilder().withUsername("admin").create());
   private static final String LOGGED_IN_USER_ID = LOGGED_IN_USER.getId();
   private static final String CHECK_IN_SERVICE_POINT_NAME = "test service point";
-  private static final String FOUND_BY_LIBRARY_RESOLUTION = "Found by library";
 
   private static final Map<String, Integer> MINUTES_IN_INTERVAL = new HashMap<>();
   static {
@@ -484,42 +483,6 @@ public class OverdueFineCalculatorServiceTest {
   }
 
   @Test
-  public void shouldNotCreateFeeFineWhenLoanIsClaimedReturnedANDFoundByLibrary()
-    throws ExecutionException, InterruptedException {
-
-    Loan loan = createClaimReturnedLoan();
-
-    when(overdueFinePolicyRepository.findOverdueFinePolicyForLoan(any()))
-      .thenReturn(completedFuture(succeeded(loan)));
-    when(overduePeriodCalculatorService.getMinutes(any(), any()))
-      .thenReturn(completedFuture(succeeded(5)));
-    when(itemRepository.fetchItemRelatedRecords(any()))
-      .thenReturn(completedFuture(succeeded(createClaimedReturnedItem())));
-    when(feeFineRepository.getFeeFine(FEE_FINE_TYPE, true))
-      .thenReturn(completedFuture(succeeded(createFeeFine())));
-    when(feeFineOwnerRepository.findOwnerForServicePoint(SERVICE_POINT_ID.toString()))
-      .thenReturn(completedFuture(succeeded(null)));
-
-    if (renewal) {
-    }
-    else {
-      CheckInContext context = new CheckInContext(
-        CheckInByBarcodeRequest.from(
-                createCheckInByBarcodeRequestWithFoundByLibraryResolution()).value())
-        .withLoan(loan);
-
-      overdueFineCalculatorService.createOverdueFineIfNecessary(context, LOGGED_IN_USER_ID).get();
-    }
-
-    verifyNoInteractions(feeFineRepository);
-    verifyNoInteractions(overdueFinePolicyRepository);
-    verifyNoInteractions(itemRepository);
-    verifyNoInteractions(feeFineOwnerRepository);
-    verifyNoInteractions(accountRepository);
-  }
-
-
-  @Test
   public void shouldNotCreateFeeFineForRenewalWhenShouldForgiveOverdueFine()
     throws ExecutionException, InterruptedException {
 
@@ -592,15 +555,6 @@ public class OverdueFineCalculatorServiceTest {
       .create();
   }
 
-  private JsonObject createCheckInByBarcodeRequestWithFoundByLibraryResolution() {
-    return new CheckInByBarcodeRequestBuilder()
-      .withItemBarcode(BARCODE)
-      .on(DUE_DATE)
-      .at(UUID.randomUUID().toString())
-      .claimedReturnedResolution(FOUND_BY_LIBRARY_RESOLUTION)
-      .create();
-  }
-
   private Loan createLoan() {
     return createLoan(createOverdueFinePolicy());
   }
@@ -615,18 +569,6 @@ public class OverdueFineCalculatorServiceTest {
       .withDueDateChangedByRecall(dueDateChangedByRecall)
       .asDomainObject()
       .withOverdueFinePolicy(overdueFinePolicy);
-  }
-
-  private Loan createClaimReturnedLoan() {
-    return new LoanBuilder()
-      .withId(LOAN_ID)
-      .withUserId(LOAN_USER_ID)
-      .withDueDate(DUE_DATE)
-      .withClaimedReturnedLoanAction()
-      .withReturnDate(RETURNED_DATE)
-      .withDueDateChangedByRecall(dueDateChangedByRecall)
-      .asDomainObject()
-      .withOverdueFinePolicy(createOverdueFinePolicy());
   }
 
   private Item createItem() {
@@ -649,22 +591,6 @@ public class OverdueFineCalculatorServiceTest {
           .create()))
       .withInstance(new InstanceBuilder(TITLE, UUID.randomUUID()).create())
       .withMaterialType(materialType);
-  }
-
-  private Item createClaimedReturnedItem() {
-    JsonObject item = new ItemBuilder()
-      .withId(ITEM_ID)
-      .withBarcode(BARCODE)
-      .claimedReturned()
-      .create();
-
-    return Item.from(item)
-      .withLocation(
-        Location.from(new LocationBuilder()
-          .withName(LOCATION_NAME)
-          .withPrimaryServicePoint(SERVICE_POINT_ID)
-          .create()))
-      .withInstance(new InstanceBuilder(TITLE, UUID.randomUUID()).create());
   }
 
   private OverdueFinePolicy createOverdueFinePolicy() {
