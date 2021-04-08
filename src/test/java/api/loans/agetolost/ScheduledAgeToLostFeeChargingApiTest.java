@@ -355,6 +355,27 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
   }
 
   @Test
+  public void shouldAgeToLostAndChargeLostItemProcessingFeeWhenActualFeeSet() {
+    final double agedToLostLostProcessingFee = 10.00;
+    useLostItemPolicy(lostItemFeePoliciesFixture.create(
+      lostItemFeePoliciesFixture.ageToLostAfterOneMinutePolicy()
+        .doNotChargeOverdueFineWhenReturned()
+        .withNoFeeRefundInterval()
+        .withActualCost(10.00)
+        .billPatronImmediatelyWhenAgedToLost()
+        .ChargeProcessingFeeWhenAgedToLost(agedToLostLostProcessingFee)).getId());
+    
+    final ItemResource item = itemsFixture.basedUponNod();
+    final CheckOutResource checkOut = checkOutFixture.checkOutByBarcode(item);
+
+    ageToLostFixture.ageToLostAndChargeFees();
+
+    final IndividualResource loanFromStorage = loansStorageClient.get(checkOut.getId());
+    assertThat(loanFromStorage.getJson(), LoanMatchers.isAgedToLost());
+    assertThat(loanFromStorage, hasLostItemProcessingFee(isOpen(agedToLostLostProcessingFee)));
+  }
+
+  @Test
   public void declaredLostItemShouldNotBeAgedToLost() {
     final double declaredLostProcessingFee = 10.00;
     useLostItemPolicy(lostItemFeePoliciesFixture.create(
