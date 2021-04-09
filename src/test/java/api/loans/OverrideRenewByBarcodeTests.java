@@ -15,6 +15,8 @@ import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
+import static api.support.utl.BlockOverridesUtils.OVERRIDE_PATRON_BLOCK_PERMISSION;
+import static api.support.utl.BlockOverridesUtils.OVERRIDE_RENEWAL_PERMISSION;
 import static api.support.utl.BlockOverridesUtils.buildOkapiHeadersWithPermissions;
 import static api.support.utl.BlockOverridesUtils.getMissingPermissions;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -74,8 +76,6 @@ public class OverrideRenewByBarcodeTests extends APITests {
   private static final String ITEM_IS_NOT_LOANABLE_MESSAGE = "item is not loanable";
   private static final String ACTION_COMMENT_KEY = "actionComment";
   private static final String RENEWED_THROUGH_OVERRIDE = "renewedThroughOverride";
-  private static final String OVERRIDE_PATRON_BLOCK_PERMISSION = "circulation.override-patron-block";
-  private static final String OVERRIDE_RENEWAL_PERMISSION = "circulation.override-renewal-block";
 
   @Test
   public void cannotOverrideRenewalWhenLoanPolicyDoesNotExist() {

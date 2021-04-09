@@ -4,6 +4,8 @@ import static api.support.builders.FixedDueDateSchedule.wholeMonth;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
+import static api.support.utl.BlockOverridesUtils.OVERRIDE_RENEWAL_PERMISSION;
+import static api.support.utl.BlockOverridesUtils.buildOkapiHeadersWithPermissions;
 import static org.folio.circulation.resources.RenewalValidator.CAN_NOT_RENEW_ITEM_ERROR;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -13,8 +15,6 @@ import static org.joda.time.DateTimeConstants.APRIL;
 
 import java.time.LocalDate;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.domain.policy.Period;
 import api.support.http.IndividualResource;
@@ -30,6 +30,7 @@ import api.support.builders.FixedDueDateSchedulesBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.http.ItemResource;
+import api.support.http.OkapiHeaders;
 import io.vertx.core.json.JsonObject;
 
 public class RequestsAPILoanRenewalTests extends APITests {
@@ -400,11 +401,12 @@ public class RequestsAPILoanRenewalTests extends APITests {
 
     loansFixture.attemptRenewalById(smallAngryPlanet, rebecca);
 
+    final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(OVERRIDE_RENEWAL_PERMISSION);
     IndividualResource response = loansFixture.overrideRenewalByBarcode(
       smallAngryPlanet,
       rebecca,
       "Renewal override",
-      "2018-12-21T13:30:00Z");
+      "2018-12-21T13:30:00Z", okapiHeaders);
 
     assertThat(response.getJson().getString("action"), is("renewedThroughOverride"));
   }

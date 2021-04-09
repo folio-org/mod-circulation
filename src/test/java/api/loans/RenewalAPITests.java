@@ -99,11 +99,8 @@ public abstract class RenewalAPITests extends APITests {
   private static final String OVERRIDE_PATRON_BLOCK_PERMISSION = "circulation.override-patron-block";
   public static final String OVERRIDE_ITEM_LIMIT_BLOCK_PERMISSION =
     "circulation.override-item-limit-block";
-  private static final String OVERRIDE_RENEWAL_PERMISSION = "circulation.override-renewal-block";
   private static final String RENEWED_THROUGH_OVERRIDE = "renewedThroughOverride";
   private static final String PATRON_WAS_BLOCKED_MESSAGE = "Patron blocked from renewing";
-  private static final String ITEM_IS_NOT_LOANABLE_MESSAGE = "item is not loanable";
-  private static final String ACTION_COMMENT_KEY = "actionComment";
 
   abstract Response attemptRenewal(IndividualResource user, IndividualResource item);
 
