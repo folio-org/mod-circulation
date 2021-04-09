@@ -2,8 +2,10 @@ package org.folio.circulation.resources.renewal;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.override.OverridableBlockType.PATRON_BLOCK;
+import static org.folio.circulation.domain.override.OverridableBlockType.RENEWAL_BLOCK;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_USER;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FIND_SINGLE_OPEN_LOAN;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INSUFFICIENT_OVERRIDE_PERMISSIONS;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ITEM_DOES_NOT_EXIST;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.RENEWAL_VALIDATION_ERROR;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_BLOCKED_AUTOMATICALLY;
@@ -20,12 +22,10 @@ import org.folio.circulation.domain.LoanRepresentation;
 import org.folio.circulation.domain.notice.schedule.FeeFineScheduledNoticeService;
 import org.folio.circulation.domain.notice.schedule.LoanScheduledNoticeService;
 import org.folio.circulation.domain.override.BlockOverrides;
-import org.folio.circulation.domain.override.PatronBlockOverride;
 import org.folio.circulation.domain.validation.AutomatedPatronBlocksValidator;
 import org.folio.circulation.domain.validation.UserManualBlocksValidator;
 import org.folio.circulation.domain.validation.Validator;
 import org.folio.circulation.domain.validation.overriding.BlockValidator;
-import org.folio.circulation.domain.validation.overriding.CombinedOverridingRenewValidator;
 import org.folio.circulation.domain.validation.overriding.OverridingBlockValidator;
 import org.folio.circulation.infrastructure.storage.AutomatedPatronBlocksRepository;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
@@ -56,16 +56,12 @@ import io.vertx.ext.web.RoutingContext;
 
 public abstract class RenewalResource extends Resource {
   private final String rootPath;
-  private final RenewalStrategy renewalStrategy;
-  private final RenewalFeeProcessingStrategy feeProcessing;
+  private RenewalStrategy renewalStrategy;
+  private RenewalFeeProcessingStrategy feeProcessing;
 
-  RenewalResource(String rootPath, RenewalStrategy renewalStrategy,
-    RenewalFeeProcessingStrategy feeProcessing, HttpClient client) {
-
+  RenewalResource(String rootPath, HttpClient client) {
     super(client);
     this.rootPath = rootPath;
-    this.renewalStrategy = renewalStrategy;
-    this.feeProcessing = feeProcessing;
   }
 
   @Override
@@ -110,6 +106,9 @@ public abstract class RenewalResource extends Resource {
       createAutomatedPatronBlocksValidator(bodyAsJson, permissions, automatedPatronBlocksRepository);
     final Validator<RenewalContext> manualPatronBlocksValidator = createManualPatronBlocksValidator(
       bodyAsJson, permissions, clients);
+    final Validator<RenewalContext> overrideRenewValidator = new OverridingBlockValidator<>(
+      RENEWAL_BLOCK, getOverrideBlocks(bodyAsJson), permissions);
+    determineStrategy(bodyAsJson);
 
     findLoan(bodyAsJson, loanRepository, itemRepository, userRepository, errorHandler)
       .thenApply(r -> r.map(loan -> RenewalContext.create(loan, bodyAsJson, webContext.getUserId())))
@@ -117,6 +116,8 @@ public abstract class RenewalResource extends Resource {
         manualPatronBlocksValidator, r, errorHandler, USER_IS_BLOCKED_MANUALLY))
       .thenComposeAsync(r -> refuseWhenRenewalActionIsBlockedForPatron(
         automatedPatronBlocksValidator, r, errorHandler, USER_IS_BLOCKED_AUTOMATICALLY))
+      .thenComposeAsync(r -> refuseIfNoPermissionsForRenewalOverriding(
+        overrideRenewValidator, r, errorHandler))
       .thenCompose(r -> r.after(ctx -> lookupLoanPolicy(ctx, loanPolicyRepository, errorHandler)))
       .thenComposeAsync(r -> r.after(
         ctx -> lookupRequestQueue(ctx, requestQueueRepository, errorHandler)))
@@ -202,16 +203,9 @@ public abstract class RenewalResource extends Resource {
       new AutomatedPatronBlocksValidator(
         automatedPatronBlocksRepository)::refuseWhenRenewalActionIsBlockedForPatron;
 
-    if (renewalStrategy instanceof OverrideRenewalStrategy) {
-      return new CombinedOverridingRenewValidator(PATRON_BLOCK, new BlockOverrides(null,
-        new PatronBlockOverride(true), null, ""), permissions, validationFunction);
-    }
-
-    final BlockOverrides blockOverrides = BlockOverrides.from(getObjectProperty(
-      request, "overrideBlocks"));
+    final BlockOverrides blockOverrides = getOverrideBlocks(request);
 
     return blockOverrides.getPatronBlockOverride().isRequested()
-      && renewalStrategy instanceof RegularRenewalStrategy
       ? new OverridingBlockValidator<>(PATRON_BLOCK, blockOverrides, permissions)
       : new BlockValidator<>(USER_IS_BLOCKED_AUTOMATICALLY, validationFunction);
   }
@@ -222,17 +216,39 @@ public abstract class RenewalResource extends Resource {
     Function<RenewalContext, CompletableFuture<Result<RenewalContext>>> validationFunction =
       new UserManualBlocksValidator(clients)::refuseWhenUserIsBlocked;
 
-    if (renewalStrategy instanceof OverrideRenewalStrategy) {
-      return new CombinedOverridingRenewValidator(PATRON_BLOCK, new BlockOverrides(null,
-        new PatronBlockOverride(true), null, ""), permissions, validationFunction);
-    }
-
-    final BlockOverrides blockOverrides = BlockOverrides.from(getObjectProperty(
-      request, "overrideBlocks"));
+    final BlockOverrides blockOverrides = getOverrideBlocks(request);
 
     return blockOverrides.getPatronBlockOverride().isRequested()
-      && renewalStrategy instanceof RegularRenewalStrategy
       ? new OverridingBlockValidator<>(PATRON_BLOCK, blockOverrides, permissions)
       : new BlockValidator<>(USER_IS_BLOCKED_MANUALLY, validationFunction);
+  }
+
+  private BlockOverrides getOverrideBlocks(JsonObject request) {
+    return BlockOverrides.from(getObjectProperty(request, "overrideBlocks"));
+  }
+
+  private void determineStrategy(JsonObject bodyAsJson) {
+    if (getOverrideBlocks(bodyAsJson).getRenewalBlockOverride().isRequested()) {
+      renewalStrategy = new OverrideRenewalStrategy();
+      feeProcessing = new OverrideRenewalFeeProcessingStrategy();
+    } else {
+      renewalStrategy = new RegularRenewalStrategy();
+      feeProcessing = new RegularRenewalFeeProcessingStrategy();
+    }
+  }
+
+  private CompletableFuture<Result<RenewalContext>> refuseIfNoPermissionsForRenewalOverriding(
+    Validator<RenewalContext> validator, Result<RenewalContext> result,
+    CirculationErrorHandler errorHandler) {
+
+    if (errorHandler.hasAny(ITEM_DOES_NOT_EXIST, FAILED_TO_FIND_SINGLE_OPEN_LOAN)
+      || renewalStrategy instanceof RegularRenewalStrategy) {
+
+      return completedFuture(result);
+    }
+
+    return result.after(validator::validate)
+      .thenApply(r -> errorHandler.handleValidationResult(r, INSUFFICIENT_OVERRIDE_PERMISSIONS,
+        result));
   }
 }

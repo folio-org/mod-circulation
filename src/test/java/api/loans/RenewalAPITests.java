@@ -54,8 +54,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
 import org.awaitility.Awaitility;
-import org.folio.circulation.domain.override.BlockOverrides;
-import org.folio.circulation.domain.override.PatronBlockOverride;
 import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.Response;
@@ -80,6 +78,7 @@ import api.support.builders.ItemBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
+import api.support.builders.RenewBlockOverrides;
 import api.support.builders.RenewByBarcodeRequestBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.fakes.FakePubSub;
@@ -100,8 +99,11 @@ public abstract class RenewalAPITests extends APITests {
   private static final String OVERRIDE_PATRON_BLOCK_PERMISSION = "circulation.override-patron-block";
   public static final String OVERRIDE_ITEM_LIMIT_BLOCK_PERMISSION =
     "circulation.override-item-limit-block";
+  private static final String OVERRIDE_RENEWAL_PERMISSION = "circulation.override-renewal-block";
   private static final String RENEWED_THROUGH_OVERRIDE = "renewedThroughOverride";
   private static final String PATRON_WAS_BLOCKED_MESSAGE = "Patron blocked from renewing";
+  private static final String ITEM_IS_NOT_LOANABLE_MESSAGE = "item is not loanable";
+  private static final String ACTION_COMMENT_KEY = "actionComment";
 
   abstract Response attemptRenewal(IndividualResource user, IndividualResource item);
 
@@ -1548,13 +1550,8 @@ public abstract class RenewalAPITests extends APITests {
 
     final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
       OVERRIDE_PATRON_BLOCK_PERMISSION);
-    JsonObject loan = loansFixture.renewLoan(
-      new RenewByBarcodeRequestBuilder()
-        .forItem(item)
-        .forUser(jessica)
-        .withOverrideBlocks(new BlockOverrides(null, new PatronBlockOverride(true), null,
-          TEST_COMMENT)),
-      okapiHeaders).getJson();
+    JsonObject loan = loansFixture.renewLoan(buildRenewByBarcodeRequestWithPatronBlockOverride(
+      item, jessica), okapiHeaders).getJson();
 
     item = itemsClient.get(item);
     assertThat(item, hasItemStatus(CHECKED_OUT));
@@ -1572,11 +1569,7 @@ public abstract class RenewalAPITests extends APITests {
     automatedPatronBlocksFixture.blockAction(jessica.getId().toString(), false, true, false);
 
     Response response = loansFixture.attemptRenewal(
-      new RenewByBarcodeRequestBuilder()
-        .forItem(item)
-        .forUser(jessica)
-        .withOverrideBlocks(new BlockOverrides(null, new PatronBlockOverride(true), null,
-          TEST_COMMENT)));
+      buildRenewByBarcodeRequestWithPatronBlockOverride(item, jessica));
 
     assertThat(response.getJson(), hasErrorWith(hasMessage(INSUFFICIENT_OVERRIDE_PERMISSIONS)));
     assertThat(getMissingPermissions(response), hasSize(1));
@@ -1595,11 +1588,7 @@ public abstract class RenewalAPITests extends APITests {
     final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
       OVERRIDE_ITEM_LIMIT_BLOCK_PERMISSION);
     Response response = loansFixture.attemptRenewal(
-      new RenewByBarcodeRequestBuilder()
-        .forItem(item)
-        .forUser(jessica)
-        .withOverrideBlocks(new BlockOverrides(null, new PatronBlockOverride(true), null,
-          TEST_COMMENT)), okapiHeaders);
+      buildRenewByBarcodeRequestWithPatronBlockOverride(item, jessica), okapiHeaders);
 
     assertThat(response.getJson(), hasErrorWith(hasMessage(INSUFFICIENT_OVERRIDE_PERMISSIONS)));
     assertThat(getMissingPermissions(response), hasSize(1));
@@ -1614,11 +1603,7 @@ public abstract class RenewalAPITests extends APITests {
       false, true, false);
 
     Response response = loansFixture.attemptRenewal(
-      new RenewByBarcodeRequestBuilder()
-        .forItem(item)
-        .forUser(result.getUser())
-        .withOverrideBlocks(new BlockOverrides(null, new PatronBlockOverride(true), null,
-          TEST_COMMENT)));
+      buildRenewByBarcodeRequestWithPatronBlockOverride(item, result.getUser()));
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("item is Aged to lost"),
@@ -1640,11 +1625,7 @@ public abstract class RenewalAPITests extends APITests {
     final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
       OVERRIDE_PATRON_BLOCK_PERMISSION);
     JsonObject loan = loansFixture.renewLoan(
-      new RenewByBarcodeRequestBuilder()
-        .forItem(item)
-        .forUser(user)
-        .withOverrideBlocks(new BlockOverrides(null, new PatronBlockOverride(true), null,
-          TEST_COMMENT)), okapiHeaders).getJson();
+      buildRenewByBarcodeRequestWithPatronBlockOverride(item, user), okapiHeaders).getJson();
 
     item = itemsClient.get(item);
     assertThat(item, hasItemStatus(CHECKED_OUT));
@@ -1669,12 +1650,7 @@ public abstract class RenewalAPITests extends APITests {
     final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
       OVERRIDE_PATRON_BLOCK_PERMISSION);
     JsonObject loan = loansFixture.renewLoan(
-      new RenewByBarcodeRequestBuilder()
-        .forItem(item)
-        .forUser(jessica)
-        .withOverrideBlocks(new BlockOverrides(null, new PatronBlockOverride(true), null,
-          TEST_COMMENT)),
-      okapiHeaders).getJson();
+      buildRenewByBarcodeRequestWithPatronBlockOverride(item, jessica), okapiHeaders).getJson();
 
     item = itemsClient.get(item);
     assertThat(item, hasItemStatus(CHECKED_OUT));
@@ -1702,12 +1678,7 @@ public abstract class RenewalAPITests extends APITests {
     final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
       OVERRIDE_PATRON_BLOCK_PERMISSION);
     JsonObject loan = loansFixture.renewLoan(
-      new RenewByBarcodeRequestBuilder()
-        .forItem(item)
-        .forUser(jessica)
-        .withOverrideBlocks(new BlockOverrides(null, new PatronBlockOverride(true), null,
-          TEST_COMMENT)),
-      okapiHeaders).getJson();
+      buildRenewByBarcodeRequestWithPatronBlockOverride(item, jessica), okapiHeaders).getJson();
 
     item = itemsClient.get(item);
     assertThat(item, hasItemStatus(CHECKED_OUT));
@@ -1750,5 +1721,17 @@ public abstract class RenewalAPITests extends APITests {
 
   private static JsonArray getErrorsFromResponse(Response response) {
     return response.getJson().getJsonArray("errors");
+  }
+
+  private RenewByBarcodeRequestBuilder buildRenewByBarcodeRequestWithPatronBlockOverride(
+    IndividualResource item, IndividualResource jessica) {
+
+    return new RenewByBarcodeRequestBuilder()
+      .forItem(item)
+      .forUser(jessica)
+      .withOverrideBlocks(
+        new RenewBlockOverrides()
+          .withPatronBlock(new JsonObject())
+          .withComment(TEST_COMMENT).create());
   }
 }

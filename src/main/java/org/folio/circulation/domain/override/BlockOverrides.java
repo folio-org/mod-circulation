@@ -15,6 +15,7 @@ public class BlockOverrides {
   private final ItemNotLoanableBlockOverride itemNotLoanableBlockOverride;
   private final PatronBlockOverride patronBlockOverride;
   private final ItemLimitBlockOverride itemLimitBlockOverride;
+  private final RenewalBlockOverride renewalBlockOverride;
   private final String comment;
 
   public static BlockOverrides from(JsonObject representation) {
@@ -22,6 +23,7 @@ public class BlockOverrides {
       ItemNotLoanableBlockOverride.from(getObjectProperty(representation, "itemNotLoanableBlock")),
       PatronBlockOverride.from(getObjectProperty(representation, "patronBlock")),
       ItemLimitBlockOverride.from(getObjectProperty(representation, "itemLimitBlock")),
+      RenewalBlockOverride.from(getObjectProperty(representation, "renewalBlock")),
       getProperty(representation, "comment"));
   }
 

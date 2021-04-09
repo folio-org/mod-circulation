@@ -31,18 +31,21 @@ public class OverrideRenewalStrategy implements RenewalStrategy {
 
   private static final String COMMENT = "comment";
   private static final String DUE_DATE = "dueDate";
+  private static final String OVERRIDE_BLOCKS = "overrideBlocks";
+  private static final String RENEWAL_BLOCK = "renewalBlock";
 
   @Override
   public CompletableFuture<Result<RenewalContext>> renew(RenewalContext context,
     Clients clients) {
 
-    final JsonObject requestBody = context.getRenewalRequest();
-    final String comment = getProperty(requestBody, COMMENT);
+    final JsonObject overrideBlocks = context.getRenewalRequest().getJsonObject(OVERRIDE_BLOCKS);
+    final String comment = getProperty(overrideBlocks, COMMENT);
     if (StringUtils.isBlank(comment)) {
       return completedFuture(failedValidation("Override renewal request must have a comment",
         COMMENT, null));
     }
-    final DateTime overrideDueDate = getDateTimeProperty(requestBody, DUE_DATE);
+    final DateTime overrideDueDate = getDateTimeProperty(overrideBlocks.getJsonObject(
+      RENEWAL_BLOCK), DUE_DATE);
 
     Loan loan = context.getLoan();
     boolean hasRecallRequest =

@@ -119,7 +119,7 @@ RequestsAPICreationTests extends APITests {
   public static final OkapiHeaders HEADERS_WITHOUT_OVERRIDE_PERMISSIONS =
     buildOkapiHeadersWithPermissions();
   public static final BlockOverrides PATRON_BLOCK_OVERRIDE =
-    new BlockOverrides(null, new PatronBlockOverride(true), null, null);
+    new BlockOverrides(null, new PatronBlockOverride(true), null, null, null);
   public static final String PATRON_BLOCK_NAME = "patronBlock";
 
   @Override

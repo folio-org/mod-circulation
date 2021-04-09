@@ -340,9 +340,12 @@ public class OverrideRenewalStrategyTest {
 
   private JsonObject createOverrideRequest(DateTime dueDate) {
     final JsonObject json = new JsonObject();
-
-    write(json, "comment", "A comment");
-    write(json, "dueDate", dueDate);
+    final JsonObject overrideBlocks = new JsonObject();
+    final JsonObject renewalBlock = new JsonObject();
+    write(overrideBlocks, "comment", "A comment");
+    write(renewalBlock, "dueDate", dueDate);
+    write(overrideBlocks, "renewalBlock", renewalBlock);
+    write(json, "overrideBlocks", overrideBlocks);
 
     return json;
   }

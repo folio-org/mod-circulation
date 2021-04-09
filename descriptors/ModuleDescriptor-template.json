@@ -150,7 +150,7 @@
     },
     {
       "id": "circulation",
-      "version": "10.0",
+      "version": "11.0",
       "handlers": [
         {
           "methods": [
@@ -193,22 +193,8 @@
             "circulation.renew-loan"
           ],
           "permissionsDesired": [
-            "circulation.override-patron-block"
-          ]
-        },
-        {
-          "methods": [
-            "POST"
-          ],
-          "pathPattern": "/circulation/override-renewal-by-barcode",
-          "permissionsRequired": [
-            "circulation.override-renewal-by-barcode.post"
-          ],
-          "modulePermissions": [
-            "modperms.circulation.override-renewal-by-barcode.post"
-          ],
-          "permissionsDesired": [
-            "circulation.override-patron-block"
+            "circulation.override-patron-block",
+            "circulation.override-renewal-block"
           ]
         },
         {
@@ -1112,11 +1098,6 @@
       "description": "renew a loan using IDs for item and loanee"
     },
     {
-      "permissionName": "circulation.override-renewal-by-barcode.post",
-      "displayName": "circulation - override renewal by barcode",
-      "description": "override renewal using barcodes for item and loanee"
-    },
-    {
       "permissionName": "circulation.loans.collection.get",
       "displayName": "circulation - get loan collection",
       "description": "get loan collection"
@@ -1295,7 +1276,6 @@
         "circulation.check-in-by-barcode.post",
         "circulation.renew-by-barcode.post",
         "circulation.renew-by-id.post",
-        "circulation.override-renewal-by-barcode.post",
         "circulation.loans.collection.get",
         "circulation.loans.item.get",
         "circulation.loans.item.post",
@@ -1598,60 +1578,6 @@
         "scheduled-notice-storage.scheduled-notices.item.delete",
         "overdue-fines-policies.item.get",
         "lost-item-fees-policies.item.get"
-      ],
-      "visible": false
-    },
-    {
-      "permissionName": "modperms.circulation.override-renewal-by-barcode.post",
-      "displayName" : "module permissions for one op",
-      "description" : "to reduce X-Okapi-Token size",
-      "subPermissions": [
-        "circulation-storage.loans.item.put",
-        "circulation-storage.loans.item.get",
-        "circulation-storage.loans.collection.get",
-        "circulation-storage.loan-policies.item.get",
-        "circulation-storage.loan-policies.collection.get",
-        "circulation-storage.circulation-rules.get",
-        "circulation-storage.requests.collection.get",
-        "circulation-storage.requests.item.put",
-        "circulation-storage.request-policies.item.get",
-        "circulation-storage.fixed-due-date-schedules.item.get",
-        "circulation-storage.fixed-due-date-schedules.collection.get",
-        "circulation-storage.patron-notice-policies.item.get",
-        "circulation.rules.notice-policy.get",
-        "circulation.rules.loan-policy.get",
-        "circulation.rules.request-policy.get",
-        "inventory-storage.items.item.put",
-        "inventory-storage.items.item.get",
-        "inventory-storage.items.collection.get",
-        "inventory-storage.locations.item.get",
-        "inventory-storage.locations.collection.get",
-        "inventory-storage.location-units.institutions.item.get",
-        "inventory-storage.location-units.campuses.item.get",
-        "inventory-storage.location-units.libraries.item.get",
-        "inventory-storage.location-units.libraries.collection.get",
-        "inventory-storage.holdings.collection.get",
-        "inventory-storage.holdings.item.get",
-        "inventory-storage.instances.collection.get",
-        "inventory-storage.instances.item.get",
-        "inventory-storage.material-types.item.get",
-        "inventory-storage.material-types.collection.get",
-        "inventory-storage.service-points.collection.get",
-        "inventory-storage.service-points.item.get",
-        "inventory-storage.loan-types.item.get",
-        "users.item.get",
-        "users.collection.get",
-        "proxiesfor.collection.get",
-        "configuration.entries.collection.get",
-        "scheduled-notice-storage.scheduled-notices.collection.delete",
-        "scheduled-notice-storage.scheduled-notices.item.post",
-        "patron-notice.post",
-        "automated-patron-blocks.collection.get",
-        "overdue-fines-policies.item.get",
-        "lost-item-fees-policies.item.get",
-        "pubsub.publish.post",
-        "accounts.refund.post",
-        "accounts.cancel.post"
       ],
       "visible": false
     },
