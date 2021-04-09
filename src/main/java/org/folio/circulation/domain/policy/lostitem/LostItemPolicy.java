@@ -153,7 +153,7 @@ public class LostItemPolicy extends Policy {
   }
 
   public boolean canAgeLoanToLost(boolean isRecalled, DateTime loanDueDate) {
-    if (actualCostFee.isChargeable() && !ageToLostProcessingFee.isChargeable()) {
+    if (actualCostFee.isChargeable()) {
       // actual cost is not supported now
       return false;
     }

@@ -55,8 +55,11 @@ import api.support.matchers.LoanMatchers;
 import api.support.spring.SpringApiTest;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
+import org.slf4j.Logger;
+import static org.slf4j.LoggerFactory.getLogger;
 
 public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
+  private static final Logger log = getLogger(ScheduledAgeToLostFeeChargingApiTest.class);
 
   public ScheduledAgeToLostFeeChargingApiTest() {
     super(true, true);
@@ -357,13 +360,17 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
   @Test
   public void shouldAgeToLostAndChargeLostItemProcessingFeeWhenActualFeeSet() {
     final double agedToLostLostProcessingFee = 10.00;
-    useLostItemPolicy(lostItemFeePoliciesFixture.create(
+    IndividualResource lostItemPolicy = lostItemFeePoliciesFixture.create(
       lostItemFeePoliciesFixture.ageToLostAfterOneMinutePolicy()
         .doNotChargeOverdueFineWhenReturned()
         .withNoFeeRefundInterval()
         .withActualCost(10.00)
         .billPatronImmediatelyWhenAgedToLost()
-        .ChargeProcessingFeeWhenAgedToLost(agedToLostLostProcessingFee)).getId());
+        .chargeProcessingFeeWhenAgedToLost(agedToLostLostProcessingFee));
+
+    log.info("policies:" + lostItemPolicy.getJson().toString());
+
+    useLostItemPolicy(lostItemPolicy.getId());
     
     final ItemResource item = itemsFixture.basedUponNod();
     final CheckOutResource checkOut = checkOutFixture.checkOutByBarcode(item);
@@ -371,7 +378,8 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     ageToLostFixture.ageToLostAndChargeFees();
 
     final IndividualResource loanFromStorage = loansStorageClient.get(checkOut.getId());
-    assertThat(loanFromStorage.getJson(), LoanMatchers.isAgedToLost());
+
+    assertThat(itemsFixture.getById(item.getId()).getJson(), isAgedToLost());
     assertThat(loanFromStorage, hasLostItemProcessingFee(isOpen(agedToLostLostProcessingFee)));
   }
 
