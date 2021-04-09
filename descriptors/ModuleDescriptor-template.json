@@ -2103,7 +2103,8 @@
         "scheduled-notice-storage.scheduled-notices.collection.delete",
         "scheduled-notice-storage.scheduled-notices.item.post",
         "users.item.get",
-        "pubsub.publish.post"
+        "pubsub.publish.post",
+        "patron-notice.post"
       ],
       "visible": false
     },
