@@ -1,6 +1,8 @@
 package api.loans;
 
 import static api.support.matchers.ScheduledNoticeMatchers.hasScheduledLoanNotice;
+import static api.support.utl.BlockOverridesUtils.OVERRIDE_RENEWAL_PERMISSION;
+import static api.support.utl.BlockOverridesUtils.buildOkapiHeadersWithPermissions;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
@@ -38,6 +40,7 @@ import api.support.fixtures.policies.PoliciesToActivate;
 import api.support.http.CheckOutResource;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
+import api.support.http.OkapiHeaders;
 import io.vertx.core.json.JsonObject;
 
 public class DueDateScheduledNoticesTests extends APITests {
@@ -359,8 +362,9 @@ public class DueDateScheduledNoticesTests extends APITests {
       .until(scheduledNoticesClient::getAll, hasSize(6));
 
     DateTime dueDateAfterRenewal = dueDate.plusWeeks(3);
+    final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(OVERRIDE_RENEWAL_PERMISSION);
     loansFixture.overrideRenewalByBarcode(item, borrower,
-      "Renewal comment", dueDateAfterRenewal.toString());
+      "Renewal comment", dueDateAfterRenewal.toString(), okapiHeaders);
 
     Matcher<Iterable<JsonObject>> scheduledNoticesAfterRenewalMatcher = hasItems(
       hasScheduledLoanNotice(
