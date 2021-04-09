@@ -368,8 +368,6 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
         .billPatronImmediatelyWhenAgedToLost()
         .chargeProcessingFeeWhenAgedToLost(agedToLostLostProcessingFee));
 
-    log.info("policies:" + lostItemPolicy.getJson().toString());
-
     useLostItemPolicy(lostItemPolicy.getId());
     
     final ItemResource item = itemsFixture.basedUponNod();
