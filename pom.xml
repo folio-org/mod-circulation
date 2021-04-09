@@ -26,7 +26,8 @@
     <antlr4.version>4.7.2</antlr4.version>
     <drools.version>7.0.0.Final</drools.version>
     <rmb.version>31.1.0</rmb.version>
-    <vertx.version>3.9.1</vertx.version>
+    <vertx.version>4.0.0</vertx.version>
+    <raml-module-builder-version>32.2.0</raml-module-builder-version>
     <log4j2.version>2.13.3</log4j2.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -125,6 +126,12 @@
       <groupId>org.drools</groupId>
       <artifactId>drools-compiler</artifactId>
       <version>${drools.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.folio</groupId>
+      <artifactId>postgres-testing</artifactId>
+      <version>${raml-module-builder-version}</version>
+      <scope>test</scope>
     </dependency>
     <!--
     Remove xstream dependency after drools has upgraded its
