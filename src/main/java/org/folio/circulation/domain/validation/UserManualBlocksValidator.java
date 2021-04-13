@@ -9,6 +9,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
@@ -41,21 +42,36 @@ public class UserManualBlocksValidator {
       .map(Request::getRequester).orElse(null);
 
     if (requester != null) {
-      return userManualBlocksFetcher.findByQuery(exactMatch("userId", requester.getId()))
-        .thenApply(userManualBlockResult -> userManualBlockResult
-          .failWhen(userManualBlockMultipleRecords -> of(() ->
-                isUserBlockedManually(userManualBlockMultipleRecords)), this::createUserBlockedValidationError)
-          .map(manualBlockMultipleRecords -> requestAndRelatedRecords));
+      return failIfPatronIsBlocked(requester.getId(), "Patron blocked from requesting")
+        .thenApply(r -> r.map(records -> requestAndRelatedRecords));
     }
     return CompletableFuture.completedFuture(Result.succeeded(requestAndRelatedRecords));
   }
 
-  private HttpFailure createUserBlockedValidationError(MultipleRecords<UserManualBlock> userManualBlocks) {
+  public CompletableFuture<Result<LoanAndRelatedRecords>> refuseWhenUserIsBlocked(
+    LoanAndRelatedRecords loanAndRelatedRecords) {
+
+    return failIfPatronIsBlocked(loanAndRelatedRecords.getUserId(), "Patron blocked from borrowing")
+      .thenApply(r -> r.map(records -> loanAndRelatedRecords));
+  }
+
+  private CompletableFuture<Result<MultipleRecords<UserManualBlock>>> failIfPatronIsBlocked(
+    String userId, String message) {
+
+    return userManualBlocksFetcher.findByQuery(exactMatch("userId", userId))
+      .thenApply(userManualBlockResult -> userManualBlockResult
+        .failWhen(userManualBlockMultipleRecords -> of(() ->
+            isUserBlockedManually(userManualBlockMultipleRecords)),
+          userManualBlocks -> createUserBlockedValidationError(userManualBlocks, message)));
+  }
+
+  private HttpFailure createUserBlockedValidationError(
+    MultipleRecords<UserManualBlock> userManualBlocks, String message) {
+
     final String reason = userManualBlocks.getRecords().stream()
       .map(UserManualBlock::getDesc).collect(Collectors.joining(";"));
 
-    return singleValidationError(
-      new ValidationError("Patron blocked from requesting", "reason", reason));
+    return singleValidationError(new ValidationError(message, "reason", reason));
   }
 
   private boolean isUserBlockedManually(MultipleRecords<UserManualBlock> userManualBlockMultipleRecords) {

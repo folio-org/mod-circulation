@@ -1,3 +1,9 @@
+## 20.1.1 2021-04-13
+
+* Add notice post perm to change due date (CIRC-1114)
+* Adapt old checkout override tests to cover new overriding functionality (CIRC-1106)
+* Create manual block checkout validation (CIRC-1072)
+
 ## 20.1.0 2021-03-30
 
 * Refund/cancel Aged to lost fees/fines when declaring an item lost (CIRC-1077)
