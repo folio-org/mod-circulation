@@ -160,7 +160,7 @@ public abstract class RenewalResource extends Resource {
         manualPatronBlocksValidator, r, errorHandler, USER_IS_BLOCKED_MANUALLY))
       .thenComposeAsync(r -> refuseWhenRenewalActionIsBlockedForPatron(
         automatedPatronBlocksValidator, r, errorHandler, USER_IS_BLOCKED_AUTOMATICALLY))
-      .thenComposeAsync(r -> refuseIfNoPermissionsForRenewalOverriding(
+      .thenComposeAsync(r -> refuseIfNoPermissionsForRenewalOverride(
         overrideRenewValidator, r, errorHandler))
       .thenCompose(r -> r.after(ctx -> lookupLoanPolicy(ctx, loanPolicyRepository, errorHandler)))
       .thenComposeAsync(r -> r.after(
@@ -303,7 +303,7 @@ public abstract class RenewalResource extends Resource {
     return BlockOverrides.from(getObjectProperty(request, "overrideBlocks"));
   }
 
-  private CompletableFuture<Result<RenewalContext>> refuseIfNoPermissionsForRenewalOverriding(
+  private CompletableFuture<Result<RenewalContext>> refuseIfNoPermissionsForRenewalOverride(
     Validator<RenewalContext> validator, Result<RenewalContext> result,
     CirculationErrorHandler errorHandler) {
 
