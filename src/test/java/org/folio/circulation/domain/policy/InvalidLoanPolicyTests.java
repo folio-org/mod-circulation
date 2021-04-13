@@ -5,7 +5,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.RequestQueue;
-import org.folio.circulation.resources.renewal.RegularRenewalStrategy;
+import org.folio.circulation.resources.renewal.RenewByBarcodeResource;
 import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -52,7 +52,7 @@ public class InvalidLoanPolicyTests {
 
     representation.remove("loansPolicy");
 
-    RegularRenewalStrategy regularRenewalStrategy = new RegularRenewalStrategy();
+    RenewByBarcodeResource renewByBarcodeResource = new RenewByBarcodeResource(null);
     LoanPolicy loanPolicy = LoanPolicy.from(representation);
 
     DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
@@ -63,7 +63,7 @@ public class InvalidLoanPolicyTests {
       .asDomainObject()
       .withLoanPolicy(loanPolicy);
 
-    final Result<Loan> result = regularRenewalStrategy.renew(loan, DateTime.now(), new RequestQueue(Collections.emptyList()));
+    final Result<Loan> result = renewByBarcodeResource.renew(loan, DateTime.now(), new RequestQueue(Collections.emptyList()));
 
     //TODO: This is fairly ugly, replace with a better message
     assertThat(result, hasValidationFailure(

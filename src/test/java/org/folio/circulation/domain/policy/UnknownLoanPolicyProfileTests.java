@@ -5,7 +5,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.RequestQueue;
-import org.folio.circulation.resources.renewal.RegularRenewalStrategy;
+import org.folio.circulation.resources.renewal.RenewByBarcodeResource;
 import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -39,7 +39,7 @@ public class UnknownLoanPolicyProfileTests {
 
   @Test
   public void shouldFailRenewalCalculationForNonRollingProfile() {
-    RegularRenewalStrategy regularRenewalStrategy = new RegularRenewalStrategy();
+    RenewByBarcodeResource renewByBarcodeResource = new RenewByBarcodeResource(null);
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .withName("Invalid Loan Policy")
       .withLoansProfile("Unknown profile")
@@ -53,7 +53,7 @@ public class UnknownLoanPolicyProfileTests {
       .asDomainObject()
       .withLoanPolicy(loanPolicy);
 
-    final Result<Loan> result = regularRenewalStrategy.renew(loan, DateTime.now(), new RequestQueue(Collections.emptyList()));
+    final Result<Loan> result = renewByBarcodeResource.renew(loan, DateTime.now(), new RequestQueue(Collections.emptyList()));
 
     assertThat(result, hasValidationFailure(
       "profile \"Unknown profile\" in the loan policy is not recognised"));

@@ -241,14 +241,14 @@ public class RegularRenewalStrategyTest {
     final var requestQueue = new RequestQueue(singletonList(topRequest));
     final var systemDate = now(UTC);
 
-    return new RegularRenewalStrategy().renew(loan, systemDate, requestQueue);
+    return new RenewByBarcodeResource(null).renew(loan, systemDate, requestQueue);
   }
 
   private Result<Loan> renew(Loan loan) {
     final var requestQueue = new RequestQueue(emptyList());
     final var systemDate = now(UTC);
 
-    return new RegularRenewalStrategy().renew(loan, systemDate, requestQueue);
+    return new RenewByBarcodeResource(null).renew(loan, systemDate, requestQueue);
   }
 
   private Result<Loan> renew(LoanPolicy loanPolicy, Request topRequest) {

@@ -18,19 +18,26 @@ import static org.joda.time.DateTimeZone.UTC;
 import static org.joda.time.Seconds.seconds;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.policy.LoanPolicy;
+import org.folio.circulation.domain.policy.library.ClosedLibraryStrategyService;
 import org.folio.circulation.resources.context.RenewalContext;
+import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
 import org.junit.Test;
 
 import api.support.builders.LoanPolicyBuilder;
+import io.vertx.core.http.HttpClient;
+import io.vertx.core.http.impl.HttpClientImpl;
+import io.vertx.core.impl.VertxImpl;
 import io.vertx.core.json.JsonObject;
 
 public class OverrideRenewalStrategyTest {
@@ -320,7 +327,7 @@ public class OverrideRenewalStrategyTest {
   }
 
   private Result<Loan> renew(RenewalContext context) {
-    return new OverrideRenewalStrategy().renew(context, null)
+    return new RenewByBarcodeResource(null).renewThroughOverride(context)
       .getNow(Result.failed(new ServerErrorFailure("Failure")))
       .map(RenewalContext::getLoan);
   }
