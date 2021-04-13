@@ -5,6 +5,7 @@ import static org.folio.circulation.domain.ItemStatus.AGED_TO_LOST;
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
 import static org.folio.circulation.domain.ItemStatus.CLAIMED_RETURNED;
 import static org.folio.circulation.domain.ItemStatus.DECLARED_LOST;
+import static org.folio.circulation.domain.OverdueFineCalculatorService.using;
 import static org.folio.circulation.domain.RequestType.HOLD;
 import static org.folio.circulation.domain.RequestType.RECALL;
 import static org.folio.circulation.domain.override.OverridableBlockType.PATRON_BLOCK;
@@ -45,6 +46,7 @@ import org.folio.circulation.StoreLoanAndItem;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanRepresentation;
+import org.folio.circulation.domain.OverdueFineCalculatorService;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.RequestType;
@@ -72,6 +74,7 @@ import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
 import org.folio.circulation.resources.handlers.error.CirculationErrorType;
 import org.folio.circulation.resources.handlers.error.OverridingErrorHandler;
 import org.folio.circulation.services.EventPublisher;
+import org.folio.circulation.services.LostItemFeeRefundService;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.ValidationErrorFailure;
@@ -91,14 +94,13 @@ import io.vertx.ext.web.RoutingContext;
 
 public abstract class RenewalResource extends Resource {
   private final String rootPath;
-  private RenewalFeeProcessingStrategy feeProcessing;
-  private boolean isRenewalBlockOverrideRequested;
   private static final String COMMENT = "comment";
   private static final String DUE_DATE = "dueDate";
   private static final String OVERRIDE_BLOCKS = "overrideBlocks";
   private static final String RENEWAL_OVERRIDE_BLOCK = "renewalBlock";
   private static final EnumSet<ItemStatus> ITEM_STATUSES_DISALLOWED_FOR_RENEW = EnumSet.of(
     DECLARED_LOST, CLAIMED_RETURNED, AGED_TO_LOST);
+  private boolean isRenewalBlockOverrideRequested;
 
   RenewalResource(String rootPath, HttpClient client) {
     super(client);
@@ -149,7 +151,6 @@ public abstract class RenewalResource extends Resource {
       bodyAsJson, permissions, clients);
     final Validator<RenewalContext> overrideRenewValidator = new OverridingBlockValidator<>(
       RENEWAL_BLOCK, getOverrideBlocks(bodyAsJson), permissions);
-    determineStrategy(bodyAsJson);
     isRenewalBlockOverrideRequested = getOverrideBlocks(bodyAsJson).getRenewalBlockOverride()
       .isRequested();
 
@@ -169,7 +170,7 @@ public abstract class RenewalResource extends Resource {
       .thenComposeAsync(r -> r.after(context -> renew(context, clients, errorHandler)))
       .thenApply(r -> r.next(errorHandler::failWithValidationErrors))
       .thenComposeAsync(r -> r.after(storeLoanAndItem::updateLoanAndItemInStorage))
-      .thenComposeAsync(r -> r.after(context -> feeProcessing.processFeesFines(context, clients)))
+      .thenComposeAsync(r -> r.after(context -> processFeesFines(context, clients)))
       .thenApplyAsync(r -> r.next(feeFineNoticesService::scheduleOverdueFineNotices))
       .thenComposeAsync(r -> r.after(eventPublisher::publishDueDateChangedEvent))
       .thenApply(r -> r.next(scheduledNoticeService::rescheduleDueDateNotices))
@@ -177,6 +178,34 @@ public abstract class RenewalResource extends Resource {
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
       .thenApply(r -> r.map(this::toResponse))
       .thenAccept(webContext::writeResultToHttpResponse);
+  }
+
+  private CompletableFuture<Result<RenewalContext>> processFeesFines(RenewalContext renewalContext,
+    Clients clients) {
+
+    return isRenewalBlockOverrideRequested
+      ? processFeesFinesForOverriding(renewalContext, clients)
+      : processFeesFinesForRegularRenew(renewalContext, clients);
+  }
+
+  private CompletableFuture<Result<RenewalContext>> processFeesFinesForOverriding(
+    RenewalContext renewalContext, Clients clients) {
+
+    final LostItemFeeRefundService lostFeeRefundService = new LostItemFeeRefundService(clients);
+
+    return lostFeeRefundService.refundLostItemFees(renewalContext, servicePointId(renewalContext))
+      .thenCompose(r -> r.after(context -> processFeesFinesForRegularRenew(context, clients)));
+  }
+
+  private CompletableFuture<Result<RenewalContext>> processFeesFinesForRegularRenew(
+    RenewalContext renewalContext, Clients clients) {
+
+    final OverdueFineCalculatorService overdueFineService = using(clients);
+    return overdueFineService.createOverdueFineIfNecessary(renewalContext);
+  }
+
+  private String servicePointId(RenewalContext renewalContext) {
+    return renewalContext.getRenewalRequest().getString("servicePointId");
   }
 
   private CompletableFuture<Result<RenewalContext>> refuseWhenRenewalActionIsBlockedForPatron(
@@ -272,14 +301,6 @@ public abstract class RenewalResource extends Resource {
 
   private BlockOverrides getOverrideBlocks(JsonObject request) {
     return BlockOverrides.from(getObjectProperty(request, "overrideBlocks"));
-  }
-
-  private void determineStrategy(JsonObject bodyAsJson) {
-    if (getOverrideBlocks(bodyAsJson).getRenewalBlockOverride().isRequested()) {
-      feeProcessing = new OverrideRenewalFeeProcessingStrategy();
-    } else {
-      feeProcessing = new RegularRenewalFeeProcessingStrategy();
-    }
   }
 
   private CompletableFuture<Result<RenewalContext>> refuseIfNoPermissionsForRenewalOverriding(
