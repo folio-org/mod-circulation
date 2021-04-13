@@ -28,6 +28,18 @@
       "type": "object",
       "additionalProperties": false
     },
+    "renewalBlock": {
+      "description": "Renewal block",
+      "type": "object",
+      "properties": {
+        "dueDate": {
+          "description": "Due date for a new loan",
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "additionalProperties": false
+    },
     "comment": {
       "description": "Reason for override",
       "type": "string"
