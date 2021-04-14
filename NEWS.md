@@ -1,3 +1,7 @@
+## 20.1.3 2021-04-22
+
+* Aged to lost process now charges fees for actual cost items if a processing fee is set (CIRC-1115)
+
 ## 20.1.2 2021-04-21
 
 * Errors when filtering on recall requested (CIRC-1126)
