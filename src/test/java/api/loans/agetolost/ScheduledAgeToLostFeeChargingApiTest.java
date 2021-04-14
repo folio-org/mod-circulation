@@ -55,11 +55,8 @@ import api.support.matchers.LoanMatchers;
 import api.support.spring.SpringApiTest;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
-import org.slf4j.Logger;
-import static org.slf4j.LoggerFactory.getLogger;
 
 public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
-  private static final Logger log = getLogger(ScheduledAgeToLostFeeChargingApiTest.class);
 
   public ScheduledAgeToLostFeeChargingApiTest() {
     super(true, true);
