@@ -4,6 +4,7 @@ import static java.util.stream.Collectors.toList;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getIntegerProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getLocalDateProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getLocalDatePropertyForDateWithTime;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getUUIDProperty;
 import static org.folio.circulation.support.json.JsonStringArrayPropertyFetcher.toStream;
@@ -92,7 +93,7 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       getUUIDProperty(representation, "requesterId"),
       getProperty(representation, "fulfilmentPreference"),
       getUUIDProperty(representation, "deliveryAddressTypeId"),
-      getLocalDateProperty(representation, "requestExpirationDate"),
+      getLocalDatePropertyForDateWithTime(representation, "requestExpirationDate"),
       getLocalDateProperty(representation, "holdShelfExpirationDate"),
       null, //TODO, re-populate these from the representation (possibly shouldn't given use)
       null, //TODO, re-populate these from the representation (possibly shouldn't given use)

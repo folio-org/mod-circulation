@@ -6,6 +6,7 @@ import static org.joda.time.DateTime.parse;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 import java.util.function.BiFunction;
 
@@ -91,6 +92,17 @@ public class JsonPropertyFetcher {
       return parse(representation.getString(propertyName));
     } else {
       return defaultValue;
+    }
+  }
+
+  public static LocalDate getLocalDatePropertyForDateWithTime(JsonObject representation,
+    String propertyName) {
+
+    if (representation != null && representation.containsKey(propertyName)) {
+      return LocalDate.parse(representation.getString(propertyName),
+        DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSz"));
+    } else {
+      return null;
     }
   }
 
