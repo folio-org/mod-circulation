@@ -190,8 +190,7 @@
             "circulation.check-in-by-barcode.post"
           ],
           "modulePermissions": [
-            "modperms.circulation.check-in-by-barcode.post",
-            "lost-items-fees-policies.collection.get"
+            "modperms.circulation.check-in-by-barcode.post"
           ]
         },
         {
@@ -1561,6 +1560,7 @@
       "displayName" : "module permissions for one op",
       "description" : "to reduce X-Okapi-Token size",
       "subPermissions": [
+        "lost-items-fees-policies.collection.get",
         "circulation-storage.loans.item.put",
         "circulation-storage.loans.item.get",
         "circulation-storage.loans.collection.get",
