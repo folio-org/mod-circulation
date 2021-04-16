@@ -74,9 +74,9 @@ public class CirculationCheckInCheckOutLogEventMapper {
         write(logEventPayload, INSTANCE_ID.value(), item.getInstanceId());
         ofNullable(item.getInTransitDestinationServicePoint())
           .ifPresent(sp -> write(logEventPayload, DESTINATION_SERVICE_POINT.value(), sp.getName()));
-        ofNullable(item.getMaterialType())
-          .ifPresent(mt -> write(logEventPayload, SOURCE.value(), mt.getString(ITEM_SOURCE)));
       });
+    ofNullable(checkInContext.getLoan())
+      .flatMap(loan -> ofNullable(loan.getUser())).ifPresent(user -> write(logEventPayload, SOURCE.value(), user.getPersonalName()));
   }
 
   private static void populateItemData(LoanAndRelatedRecords loanAndRelatedRecords, JsonObject logEventPayload) {
@@ -87,9 +87,9 @@ public class CirculationCheckInCheckOutLogEventMapper {
         write(logEventPayload, ITEM_STATUS_NAME.value(), item.getStatusName());
         write(logEventPayload, HOLDINGS_RECORD_ID.value(), item.getHoldingsRecordId());
         write(logEventPayload, INSTANCE_ID.value(), item.getInstanceId());
-        ofNullable(item.getMaterialType())
-          .ifPresent(mt -> write(logEventPayload, SOURCE.value(), mt.getString(ITEM_SOURCE)));
       });
+    ofNullable(loanAndRelatedRecords.getLoan())
+      .flatMap(loan -> ofNullable(loan.getUser())).ifPresent(user -> write(logEventPayload, SOURCE.value(), user.getPersonalName()));
   }
 
   private static void populateLoanData(CheckInContext checkInContext, JsonObject logEventPayload) {

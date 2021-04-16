@@ -39,6 +39,7 @@ public class EventMatchers {
         hasJsonPath("dueDate", is(checkedOutLoan.getString("dueDate"))),
         hasJsonPath("userId", is(checkedOutLoan.getString("userId"))),
         hasJsonPath("itemId", is(checkedOutLoan.getString("itemId"))),
+        hasJsonPath("source", is(checkedOutLoan.getJsonObject("borrower").getString("lastName") + ", " + checkedOutLoan.getJsonObject("borrower").getString("firstName"))),
         hasJsonPath("itemBarcode", is(checkedOutLoan.getJsonObject("item").getString("barcode"))),
         hasJsonPath("itemStatusName", is(checkedOutLoan.getJsonObject("item").getJsonObject("status").getString("name")))
       ))),
@@ -65,6 +66,7 @@ public class EventMatchers {
         hasJsonPath("isLoanClosed", is(checkedInLoan.getJsonObject("status").getString("name").equals("Closed"))),
         hasJsonPath("systemReturnDate", is(checkedInLoan.getString("systemReturnDate"))),
         hasJsonPath("returnDate", is(checkedInLoan.getString("returnDate"))),
+        hasJsonPath("source", is(checkedInLoan.getJsonObject("borrower").getString("lastName") + ", " + checkedInLoan.getJsonObject("borrower").getString("firstName"))),
         hasJsonPath("dueDate", is(checkedInLoan.getString("dueDate"))),
         hasJsonPath("userId", is(checkedInLoan.getString("userId"))),
         hasJsonPath("itemId", is(checkedInLoan.getString("itemId"))),
