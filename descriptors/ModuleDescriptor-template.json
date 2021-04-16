@@ -190,7 +190,8 @@
             "circulation.check-in-by-barcode.post"
           ],
           "modulePermissions": [
-            "modperms.circulation.check-in-by-barcode.post"
+            "modperms.circulation.check-in-by-barcode.post",
+            "lost-items-fees-policies.collection.get"
           ]
         },
         {
