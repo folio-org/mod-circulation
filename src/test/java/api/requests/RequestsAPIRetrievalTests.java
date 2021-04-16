@@ -110,7 +110,7 @@ public class RequestsAPIRetrievalTests extends APITests {
     assertThat(representation.getString("itemId"), is(smallAngryPlanet.getId()));
     assertThat(representation.getString("requesterId"), is(sponsor.getId()));
     assertThat(representation.getString("fulfilmentPreference"), is("Hold Shelf"));
-    assertThat(representation.getString("requestExpirationDate"), is("2017-07-30"));
+    assertThat(representation.getString("requestExpirationDate"), is("2017-07-30T23:59:59.000Z"));
     assertThat(representation.getString("holdShelfExpirationDate"), is("2017-08-31"));
     assertThat(representation.getString("patronComments"), is("I need the book"));
     assertThat(representation.getString("pickupServicePointId"),
