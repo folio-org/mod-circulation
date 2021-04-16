@@ -41,12 +41,14 @@ import static org.joda.time.DateTimeZone.UTC;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.UUID;
 
 import org.folio.circulation.domain.User;
@@ -266,7 +268,8 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     assertThat(userContext.getString("countryId"), is(address.getCountryId()));
 
     assertThat(requestContext.getString("deliveryAddressType"), is(addressTypesFixture.home().getJson().getString("addressType")));
-    assertThat(requestContext.getString("requestExpirationDate"), isEquivalentTo(toZonedStartOfDay(requestExpiration)));
+    assertThat(requestContext.getString("requestExpirationDate"), isEquivalentTo(
+      ZonedDateTime.of(requestExpiration.atTime(23, 59, 59), ZoneOffset.UTC)));
     assertThat(requestContext.getString("holdShelfExpirationDate"), isEquivalentTo(toZonedStartOfDay(holdShelfExpiration)));
     assertThat(requestContext.getString("requestID"), is(request.getId()));
     assertThat(requestContext.getString("servicePointPickup"), is(servicePoint.getJson().getString("name")));
