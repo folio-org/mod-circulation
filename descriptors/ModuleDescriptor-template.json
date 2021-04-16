@@ -2340,7 +2340,8 @@
         "scheduled-notice-storage.scheduled-notices.collection.delete",
         "scheduled-notice-storage.scheduled-notices.item.post",
         "pubsub.publish.post",
-        "configuration.entries.collection.get"
+        "configuration.entries.collection.get",
+        "patron-notice.post"
       ],
       "visible": false
     },
