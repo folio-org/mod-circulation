@@ -25,12 +25,12 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTime
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getIntegerProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
-import static org.joda.time.DateTimeZone.UTC;
 
 import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.joda.time.LocalTime;
 
 import io.vertx.core.json.JsonObject;
@@ -331,11 +331,11 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return getProperty(requestRepresentation, "patronComments");
   }
 
-  public Request truncateRequestExpirationDateToTheEndOfTheDay() {
+  public Request truncateRequestExpirationDateToTheEndOfTheDay(DateTimeZone zone) {
     DateTime requestExpirationDate = getRequestExpirationDate();
     if (requestExpirationDate != null) {
       DateTime requestDateTime = requestExpirationDate
-        .withZoneRetainFields(UTC)
+        .withZoneRetainFields(zone)
         .withTime(LocalTime.MIDNIGHT.minusSeconds(1));
       write(requestRepresentation, REQUEST_EXPIRATION_DATE, requestDateTime);
     }
