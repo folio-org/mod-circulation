@@ -2,6 +2,7 @@ package api.requests;
 
 import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
+import static java.time.ZoneOffset.UTC;
 import static org.folio.circulation.domain.representations.RequestProperties.HOLD_SHELF_EXPIRATION_DATE;
 import static org.folio.circulation.support.ClockManager.getClockManager;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -96,7 +97,7 @@ public class RequestScheduledNoticesTests extends APITests {
     assertThat(scheduledNotice.getString("requestId"), is(request.getId().toString()));
     assertThat(scheduledNotice.getString("triggeringEvent"), is("Request expiration"));
     assertThat(scheduledNotice.getString("nextRunTime"),
-      isEquivalentTo(toZonedStartOfDay(requestExpiration)));
+      isEquivalentTo(ZonedDateTime.of(requestExpiration.atTime(23, 59, 59), UTC)));
     assertThat(noticeConfig.getString("timing"), is("Upon At"));
     assertThat(noticeConfig.getString("templateId"), is(templateId.toString()));
     assertThat(noticeConfig.getString("format"), is("Email"));
@@ -198,8 +199,8 @@ public class RequestScheduledNoticesTests extends APITests {
 
     assertThat(scheduledNotice.getString("requestId"), is(request.getId().toString()));
     assertThat(scheduledNotice.getString("triggeringEvent"), is("Request expiration"));
-    assertThat(scheduledNotice.getString("nextRunTime"),
-      isEquivalentTo(toZonedStartOfDay(requestExpiration).minusDays(3)));
+    assertThat(scheduledNotice.getString("nextRunTime"), isEquivalentTo(ZonedDateTime.of(
+      requestExpiration.atTime(23, 59, 59), UTC).minusDays(3)));
     assertThat(noticeConfig.getString("timing"), is("Before"));
     assertThat(noticeConfig.getString("templateId"), is(templateId.toString()));
     assertThat(noticeConfig.getString("format"), is("Email"));
@@ -245,7 +246,7 @@ public class RequestScheduledNoticesTests extends APITests {
     assertThat(scheduledNotice.getString("requestId"), is(request.getId().toString()));
     assertThat(scheduledNotice.getString("triggeringEvent"), is("Request expiration"));
     assertThat(scheduledNotice.getString("nextRunTime"),
-      isEquivalentTo(toZonedStartOfDay(requestExpiration)));
+      isEquivalentTo(ZonedDateTime.of(requestExpiration.atTime(23, 59, 59), UTC)));
     assertThat(noticeConfig.getString("timing"), is("Upon At"));
     assertThat(noticeConfig.getString("templateId"), is(templateId.toString()));
     assertThat(noticeConfig.getString("format"), is("Email"));
@@ -267,7 +268,7 @@ public class RequestScheduledNoticesTests extends APITests {
     assertThat(scheduledNotice.getString("requestId"), is(request.getId().toString()));
     assertThat(scheduledNotice.getString("triggeringEvent"), is("Request expiration"));
     assertThat(scheduledNotice.getString("nextRunTime"),
-      isEquivalentTo(toZonedStartOfDay(requestExpiration).plusDays(1)));
+      isEquivalentTo(ZonedDateTime.of(requestExpiration.atTime(23, 59, 59), UTC).plusDays(1)));
     assertThat(noticeConfig.getString("timing"), is("Upon At"));
     assertThat(noticeConfig.getString("templateId"), is(templateId.toString()));
     assertThat(noticeConfig.getString("format"), is("Email"));
@@ -313,8 +314,8 @@ public class RequestScheduledNoticesTests extends APITests {
 
     assertThat(scheduledNotice.getString("requestId"), is(request.getId().toString()));
     assertThat(scheduledNotice.getString("triggeringEvent"), is("Request expiration"));
-    assertThat(scheduledNotice.getString("nextRunTime"),
-      isEquivalentTo(toZonedStartOfDay(requestExpiration).minusDays(3)));
+    assertThat(scheduledNotice.getString("nextRunTime"), isEquivalentTo(ZonedDateTime.of(
+      requestExpiration.atTime(23, 59, 59), UTC).minusDays(3)));
     assertThat(noticeConfig.getString("timing"), is("Before"));
     assertThat(noticeConfig.getString("templateId"), is(templateId.toString()));
     assertThat(noticeConfig.getString("format"), is("Email"));
