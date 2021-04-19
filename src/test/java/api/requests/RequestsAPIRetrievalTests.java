@@ -1,6 +1,7 @@
 package api.requests;
 
 import static api.support.builders.ItemBuilder.CHECKED_OUT;
+import static api.support.fixtures.ConfigurationExample.newYorkTimezoneConfiguration;
 import static api.support.http.CqlQuery.noQuery;
 import static api.support.http.CqlQuery.queryFromTemplate;
 import static api.support.http.Limit.limit;
@@ -663,6 +664,56 @@ public class RequestsAPIRetrievalTests extends APITests {
     assertThat(requests.totalRecords(), is(2));
 
     requests.forEach(this::requestHasExpectedProperties);
+  }
+
+  @Test
+  public void requestExpirationDateShouldStoreInTenantsTimeZone() {
+    UUID facultyGroupId = patronGroupsFixture.faculty().getId();
+    UUID staffGroupId = patronGroupsFixture.staff().getId();
+    UUID isbnIdentifierId = identifierTypesFixture.isbn().getId();
+    String isbnValue = "9780866989732";
+
+    final ItemResource smallAngryPlanet = itemsFixture
+      .basedUponSmallAngryPlanet(
+        identity(),
+        instanceBuilder -> instanceBuilder.addIdentifier(isbnIdentifierId, isbnValue),
+        itemBuilder -> itemBuilder
+          .withCallNumber("itCn", "itCnPrefix", "itCnSuffix")
+          .withEnumeration("enumeration1")
+          .withChronology("chronology")
+          .withVolume("vol.1")
+          .withCopyNumber(ONE_COPY_NUMBER));
+
+    final IndividualResource sponsor = usersFixture.rebecca(user -> user
+      .withPatronGroupId(facultyGroupId));
+    final IndividualResource proxy = usersFixture.steve(user -> user
+      .withPatronGroupId(staffGroupId));
+    final IndividualResource cd1 = servicePointsFixture.cd1();
+    UUID pickupServicePointId = cd1.getId();
+
+    proxyRelationshipsFixture.nonExpiringProxyFor(sponsor, proxy);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet);
+    configClient.create(newYorkTimezoneConfiguration());
+
+    final IndividualResource createdRequest = requestsFixture.place(
+      new RequestBuilder()
+        //.recall()
+        .withRequestDate(new DateTime(2017, 7, 22, 10, 22, 54, UTC))
+        .forItem(smallAngryPlanet)
+        .by(sponsor)
+        .proxiedBy(proxy)
+        .fulfilToHoldShelf()
+        .withRequestExpiration(LocalDate.of(2017, 7, 30))
+        .withHoldShelfExpiration(LocalDate.of(2017, 8, 31))
+        .withPickupServicePointId(pickupServicePointId)
+        .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG)))
+        .withPatronComments("I need the book"));
+
+    Response response = requestsFixture.getById(createdRequest.getId());
+
+    assertThat(format("Failed to get request: %s", response.getBody()),
+      response.getStatusCode(), is(HttpURLConnection.HTTP_OK));
+    assertThat(response.getJson().getString("requestExpirationDate"), is("2017-07-31T03:59:59.000Z"));
   }
 
   private void requestHasExpectedProperties(JsonObject request) {

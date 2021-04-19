@@ -95,17 +95,6 @@ public class JsonPropertyFetcher {
     }
   }
 
-  public static LocalDate getLocalDatePropertyForDateWithTime(JsonObject representation,
-    String propertyName) {
-
-    if (representation != null && representation.containsKey(propertyName)) {
-      return LocalDate.parse(representation.getString(propertyName),
-        DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSz"));
-    } else {
-      return null;
-    }
-  }
-
   public static LocalDate getLocalDateProperty(JsonObject representation, String propertyName) {
     if (representation != null && representation.containsKey(propertyName)) {
       return LocalDate.parse(representation.getString(propertyName));
