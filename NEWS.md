@@ -2,6 +2,7 @@
 
 * Remove redundant override-check-out-by-barcode endpoint (CIRC-1064)
 * Aged to lost process now charges fees for actual cost items if a processing fee is set (CIRC-1115)
+* Added lost-items-fees-policies.collection.get permission to the checkin-by-barcode endpoint (CIRC-1117)
 
 ## 20.1.0 2021-03-30
 
