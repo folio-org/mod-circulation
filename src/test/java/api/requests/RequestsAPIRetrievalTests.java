@@ -668,26 +668,11 @@ public class RequestsAPIRetrievalTests extends APITests {
 
   @Test
   public void requestExpirationDateShouldStoreInTenantsTimeZone() {
-    UUID facultyGroupId = patronGroupsFixture.faculty().getId();
-    UUID staffGroupId = patronGroupsFixture.staff().getId();
-    UUID isbnIdentifierId = identifierTypesFixture.isbn().getId();
-    String isbnValue = "9780866989732";
-
-    final ItemResource smallAngryPlanet = itemsFixture
-      .basedUponSmallAngryPlanet(
-        identity(),
-        instanceBuilder -> instanceBuilder.addIdentifier(isbnIdentifierId, isbnValue),
-        itemBuilder -> itemBuilder
-          .withCallNumber("itCn", "itCnPrefix", "itCnSuffix")
-          .withEnumeration("enumeration1")
-          .withChronology("chronology")
-          .withVolume("vol.1")
-          .withCopyNumber(ONE_COPY_NUMBER));
-
+    final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource sponsor = usersFixture.rebecca(user -> user
-      .withPatronGroupId(facultyGroupId));
+      .withPatronGroupId(patronGroupsFixture.faculty().getId()));
     final IndividualResource proxy = usersFixture.steve(user -> user
-      .withPatronGroupId(staffGroupId));
+      .withPatronGroupId(patronGroupsFixture.staff().getId()));
     final IndividualResource cd1 = servicePointsFixture.cd1();
     UUID pickupServicePointId = cd1.getId();
 
@@ -697,7 +682,6 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     final IndividualResource createdRequest = requestsFixture.place(
       new RequestBuilder()
-        //.recall()
         .withRequestDate(new DateTime(2017, 7, 22, 10, 22, 54, UTC))
         .forItem(smallAngryPlanet)
         .by(sponsor)
