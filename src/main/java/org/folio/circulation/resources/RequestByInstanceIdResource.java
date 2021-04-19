@@ -267,6 +267,7 @@ public class RequestByInstanceIdResource extends Resource {
         userRepository,
         loanRepository,
         new ServicePointRepository(clients),
+        new ConfigurationRepository(clients),
         createProxyRelationshipValidator(currentItemRequest, clients),
         new ServicePointPickupLocationValidator(),
         new FailFastErrorHandler()

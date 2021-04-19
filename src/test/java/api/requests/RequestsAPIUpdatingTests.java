@@ -32,6 +32,7 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.core.Is.is;
+import static org.joda.time.DateTimeZone.UTC;
 
 import java.net.HttpURLConnection;
 import java.time.LocalDate;
@@ -75,7 +76,7 @@ public class RequestsAPIUpdatingTests extends APITests {
 
     final IndividualResource steve = usersFixture.steve();
 
-    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, UTC);
 
     final IndividualResource exampleServicePoint = servicePointsFixture.cd1();
 
@@ -112,7 +113,7 @@ public class RequestsAPIUpdatingTests extends APITests {
     assertThat(representation.getString("itemId"), is(temeraire.getId()));
     assertThat(representation.getString("requesterId"), is(charlotte.getId()));
     assertThat(representation.getString("fulfilmentPreference"), is("Hold Shelf"));
-    assertThat(representation.getString("requestExpirationDate"), is("2017-07-30"));
+    assertThat(representation.getString("requestExpirationDate"), is("2017-07-30T23:59:59.000Z"));
     assertThat(representation.getString("holdShelfExpirationDate"), is("2017-08-31"));
 
     assertThat("has information taken from item",
@@ -171,7 +172,7 @@ public class RequestsAPIUpdatingTests extends APITests {
           "Fake postal code",
           "Fake country code")));
 
-    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, UTC);
 
     final IndividualResource exampleServicePoint = servicePointsFixture.cd1();
 
@@ -592,7 +593,7 @@ public class RequestsAPIUpdatingTests extends APITests {
 
     proxyRelationshipsFixture.currentProxyFor(steve, charlotte);
 
-    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, UTC);
 
     final IndividualResource exampleServicePoint = servicePointsFixture.cd1();
 
@@ -654,7 +655,7 @@ public class RequestsAPIUpdatingTests extends APITests {
 
     final IndividualResource steve = usersFixture.steve();
 
-    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, UTC);
 
     final IndividualResource exampleServicePoint = servicePointsFixture.cd1();
 
@@ -728,7 +729,7 @@ public class RequestsAPIUpdatingTests extends APITests {
 
     final IndividualResource steve = usersFixture.steve();
 
-    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, UTC);
 
     final IndividualResource exampleServicePoint = servicePointsFixture.cd1();
 
@@ -789,7 +790,7 @@ public class RequestsAPIUpdatingTests extends APITests {
 
     final IndividualResource createdRequest = requestsClient.create(new RequestBuilder()
       .page()
-      .withRequestDate(DateTime.now(DateTimeZone.UTC))
+      .withRequestDate(DateTime.now(UTC))
       .forItem(temeraire)
       .by(steve)
       .fulfilToHoldShelf()
