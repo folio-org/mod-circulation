@@ -754,12 +754,12 @@ public class RequestsAPIUpdatingTests extends APITests {
     Response response = loansClient.getById(loan.getId());
     JsonObject updatedLoan = response.getJson();
 
-    // There should be ten events published - for "check out", for "log event: check out",
+    // There should be seven events published - for "check out", for "log event: check out",
     // for "log event: request created", for "log event: request updated" for "recall" and for "replace"
-    // and three log events for loans
+    // and one log events for loans
     final var publishedEvents = Awaitility.await()
       .atMost(1, SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(9));
+      .until(FakePubSub::getPublishedEvents, hasSize(7));
 
     final var requestCreatedLogEvent = publishedEvents.findFirst(byLogEventType(REQUEST_CREATED.value()));
     final var requestUpdatedLogEvent = publishedEvents.findFirst(byLogEventType(REQUEST_UPDATED.value()));

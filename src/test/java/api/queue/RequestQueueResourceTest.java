@@ -245,7 +245,7 @@ public class RequestQueueResourceTest extends APITests {
 
     final var publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(17));
+      .until(FakePubSub::getPublishedEvents, hasSize(15));
 
     final var reorderedLogEvents = publishedEvents.filterToList(
       byLogEventType(REQUEST_REORDERED.value()));
