@@ -28,12 +28,13 @@ public class CheckInContext {
   private final ServicePoint checkInServicePoint;
   private final Request highestPriorityFulfillableRequest;
   private final String loggedInUserId;
+  private final String loggedInUserPersonalName;
   private final DateTime checkInProcessedDateTime;
   private final boolean inHouseUse;
   private final ItemStatus itemStatusBeforeCheckIn;
 
   public CheckInContext(CheckInByBarcodeRequest checkInRequest) {
-    this(checkInRequest, null, null, null, null, null, null,
+    this(checkInRequest, null, null, null, null, null, null,null,
       ClockManager.getClockManager().getDateTime(), false, null);
   }
 
@@ -53,6 +54,7 @@ public class CheckInContext {
       this.checkInServicePoint,
       this.highestPriorityFulfillableRequest,
       this.loggedInUserId,
+      this.loggedInUserPersonalName,
       this.checkInProcessedDateTime,
       this.inHouseUse,
       this.itemStatusBeforeCheckIn);
@@ -67,6 +69,7 @@ public class CheckInContext {
       this.checkInServicePoint,
       this.highestPriorityFulfillableRequest,
       this.loggedInUserId,
+      this.loggedInUserPersonalName,
       this.checkInProcessedDateTime,
       this.inHouseUse,
       this.itemStatusBeforeCheckIn);
@@ -87,6 +90,7 @@ public class CheckInContext {
       this.checkInServicePoint,
       firstRequest,
       this.loggedInUserId,
+      this.loggedInUserPersonalName,
       this.checkInProcessedDateTime,
       this.inHouseUse,
       this.itemStatusBeforeCheckIn);
@@ -101,6 +105,7 @@ public class CheckInContext {
       checkInServicePoint,
       this.highestPriorityFulfillableRequest,
       this.loggedInUserId,
+      this.loggedInUserPersonalName,
       this.checkInProcessedDateTime,
       this.inHouseUse,
       this.itemStatusBeforeCheckIn);
@@ -115,6 +120,7 @@ public class CheckInContext {
       this.checkInServicePoint,
       request,
       loggedInUserId,
+      this.loggedInUserPersonalName,
       this.checkInProcessedDateTime,
       this.inHouseUse,
       this.itemStatusBeforeCheckIn);
@@ -129,6 +135,22 @@ public class CheckInContext {
       this.checkInServicePoint,
       this.highestPriorityFulfillableRequest,
       userId,
+      this.loggedInUserPersonalName,
+      this.checkInProcessedDateTime,
+      this.inHouseUse,
+      this.itemStatusBeforeCheckIn);
+  }
+
+  public CheckInContext withLoggedInUserPersonalName(String loggedInUserPersonalName) {
+    return new CheckInContext(
+      this.checkInRequest,
+      this.item,
+      this.loan,
+      this.requestQueue,
+      this.checkInServicePoint,
+      this.highestPriorityFulfillableRequest,
+      this.loggedInUserId,
+      loggedInUserPersonalName,
       this.checkInProcessedDateTime,
       this.inHouseUse,
       this.itemStatusBeforeCheckIn);
@@ -143,6 +165,7 @@ public class CheckInContext {
       this.checkInServicePoint,
       this.highestPriorityFulfillableRequest,
       this.loggedInUserId,
+      this.loggedInUserPersonalName,
       this.checkInProcessedDateTime,
       inHouseUse,
       this.itemStatusBeforeCheckIn);
@@ -157,6 +180,7 @@ public class CheckInContext {
       this.checkInServicePoint,
       this.highestPriorityFulfillableRequest,
       this.loggedInUserId,
+      this.loggedInUserPersonalName,
       this.checkInProcessedDateTime,
       this.inHouseUse,
       itemStatus);
@@ -208,5 +232,9 @@ public class CheckInContext {
 
   public ItemStatus getItemStatusBeforeCheckIn() {
     return itemStatusBeforeCheckIn;
+  }
+
+  public String getLoggedInUserPersonalName() {
+    return loggedInUserPersonalName;
   }
 }

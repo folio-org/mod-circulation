@@ -5,18 +5,18 @@ import org.joda.time.DateTimeZone;
 import io.vertx.core.json.JsonObject;
 
 public class LoanAndRelatedRecords implements UserRelatedRecord {
-  public static final String REASON_TO_OVERRIDE = "reasonToOverride";
-
   private final Loan loan;
   private final RequestQueue requestQueue;
   private final DateTimeZone timeZone;
   private final JsonObject logContextProperties;
+  private final String loggedInUserPersonalName;
 
-  private LoanAndRelatedRecords(Loan loan, RequestQueue requestQueue, DateTimeZone timeZone, JsonObject logContextProperties) {
+  private LoanAndRelatedRecords(Loan loan, RequestQueue requestQueue, DateTimeZone timeZone, JsonObject logContextProperties, String loggedInUserPersonalName) {
     this.loan = loan;
     this.requestQueue = requestQueue;
     this.timeZone = timeZone;
     this.logContextProperties = logContextProperties;
+    this.loggedInUserPersonalName = loggedInUserPersonalName;
   }
 
   public LoanAndRelatedRecords(Loan loan) {
@@ -24,16 +24,15 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
   }
 
   public LoanAndRelatedRecords(Loan loan, DateTimeZone timeZone) {
-    this(loan, null, timeZone, new JsonObject());
+    this(loan, null, timeZone, new JsonObject(), null);
   }
 
   public LoanAndRelatedRecords changeItemStatus(ItemStatus status) {
     return withItem(getItem().changeStatus(status));
   }
 
-
   public LoanAndRelatedRecords withLoan(Loan newLoan) {
-    return new LoanAndRelatedRecords(newLoan, requestQueue, timeZone, logContextProperties);
+    return new LoanAndRelatedRecords(newLoan, requestQueue, timeZone, logContextProperties, loggedInUserPersonalName);
   }
 
   public LoanAndRelatedRecords withRequestingUser(User newUser) {
@@ -45,8 +44,7 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
   }
 
   public LoanAndRelatedRecords withRequestQueue(RequestQueue newRequestQueue) {
-    return new LoanAndRelatedRecords(loan, newRequestQueue,
-      timeZone, logContextProperties);
+    return new LoanAndRelatedRecords(loan, newRequestQueue, timeZone, logContextProperties, loggedInUserPersonalName);
   }
 
   public LoanAndRelatedRecords withItem(Item newItem) {
@@ -58,7 +56,11 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
   }
 
   public LoanAndRelatedRecords withTimeZone(DateTimeZone newTimeZone) {
-    return new LoanAndRelatedRecords(loan, requestQueue, newTimeZone, logContextProperties);
+    return new LoanAndRelatedRecords(loan, requestQueue, newTimeZone, logContextProperties, loggedInUserPersonalName);
+  }
+
+  public LoanAndRelatedRecords withLoggedInUserPersonalName(String name) {
+    return new LoanAndRelatedRecords(loan, requestQueue, timeZone, logContextProperties, name);
   }
 
   public Loan getLoan() {
@@ -93,5 +95,9 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
 
   public JsonObject getLogContextProperties() {
     return logContextProperties;
+  }
+
+  public String getLoggedInUserPersonalName() {
+    return loggedInUserPersonalName;
   }
 }

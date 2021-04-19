@@ -4,6 +4,10 @@ import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequ
 import static org.folio.circulation.domain.validation.UserNotFoundValidator.refuseWhenLoggedInUserNotPresent;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
+import io.vertx.core.http.HttpClient;
+import io.vertx.ext.web.Router;
+import io.vertx.ext.web.RoutingContext;
+import java.util.concurrent.CompletableFuture;
 import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.notice.schedule.RequestScheduledNoticeService;
@@ -11,16 +15,13 @@ import org.folio.circulation.domain.notice.session.PatronActionSessionService;
 import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
 import org.folio.circulation.domain.representations.CheckInByBarcodeResponse;
 import org.folio.circulation.domain.validation.CheckInValidators;
+import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.ValidationErrorFailure;
-import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.RouteRegistration;
+import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.WebContext;
-
-import io.vertx.core.http.HttpClient;
-import io.vertx.ext.web.Router;
-import io.vertx.ext.web.RoutingContext;
+import org.folio.circulation.support.results.Result;
 
 public class CheckInByBarcodeResource extends Resource {
   public CheckInByBarcodeResource(HttpClient client) {
@@ -39,6 +40,8 @@ public class CheckInByBarcodeResource extends Resource {
     final WebContext context = new WebContext(routingContext);
 
     final Clients clients = Clients.create(context, client);
+
+    final UserRepository userRepository = new UserRepository(clients);
 
     final Result<CheckInByBarcodeRequest> checkInRequestResult
       = CheckInByBarcodeRequest.from(routingContext.getBodyAsJson());
@@ -62,6 +65,7 @@ public class CheckInByBarcodeResource extends Resource {
         .withItemStatusBeforeCheckIn(item.getStatus()))
       .thenApply(checkInValidators::refuseWhenItemIsNotAllowedForCheckIn)
       .thenApply(checkInValidators::refuseWhenClaimedReturnedIsNotResolved)
+      .thenComposeAsync(r -> getSourceUser(r, context, userRepository))
       .thenComposeAsync(findItemResult -> findItemResult.combineAfter(
         processAdapter::getRequestQueue, CheckInContext::withRequestQueue))
       .thenApply(findRequestQueueResult -> findRequestQueueResult.map(
@@ -110,5 +114,13 @@ public class CheckInByBarcodeResource extends Resource {
         item.getStatusName());
 
     return singleValidationError(message, ITEM_BARCODE, item.getBarcode());
+  }
+
+  private CompletableFuture<Result<CheckInContext>> getSourceUser(Result<CheckInContext> contextResult,
+    WebContext context, UserRepository userRepository) {
+
+    return userRepository.getUser(context.getUserId()).thenApply(userResult ->
+      contextResult.combine(userResult, (checkInContext, user) ->
+        checkInContext.withLoggedInUserPersonalName(user.getPersonalName())));
   }
 }

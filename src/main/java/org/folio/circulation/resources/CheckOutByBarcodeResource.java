@@ -106,6 +106,7 @@ public class CheckOutByBarcodeResource extends Resource {
       PatronActionSessionService.using(clients);
 
     ofAsync(() -> new LoanAndRelatedRecords(request.toLoan()))
+      .thenComposeAsync(r -> getSourceUser(context, userRepository, r, errorHandler))
       .thenApply(validators::refuseCheckOutWhenServicePointIsNotPresent)
       .thenComposeAsync(r -> lookupUser(request.getUserBarcode(), userRepository, r, errorHandler))
       .thenComposeAsync(validators::refuseWhenCheckOutActionIsBlockedManuallyForPatron)
@@ -236,5 +237,15 @@ public class CheckOutByBarcodeResource extends Resource {
     return loanPolicy.calculateInitialDueDate(loan, requestQueue)
       .map(loan::changeDueDate)
       .map(loanAndRelatedRecords::withLoan);
+  }
+
+  private CompletableFuture<Result<LoanAndRelatedRecords>> getSourceUser(WebContext context,
+    UserRepository userRepository, Result<LoanAndRelatedRecords> loanResult,
+    CirculationErrorHandler errorHandler) {
+
+    return userRepository.getUser(context.getUserId())
+      .thenApply(userResult -> loanResult.combine(userResult, (loanAndRelatedRecords, user) ->
+          loanAndRelatedRecords.withLoggedInUserPersonalName(user.getPersonalName())))
+      .thenApply(r -> errorHandler.handleValidationResult(r, FAILED_TO_FETCH_USER, loanResult));
   }
 }
