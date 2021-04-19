@@ -13,6 +13,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Collections;
@@ -544,7 +545,7 @@ public class ItemsInTransitReportTests extends APITests {
     assertThat(actualRequest.getString(REQUEST_CREATION_DATE), isEquivalentTo(requestDate));
 
     assertThat(actualRequest.getString(REQUEST_EXPIRATION_DATE),
-      isEquivalentTo(toZonedStartOfDay(requestExpirationDate)));
+      isEquivalentTo(ZonedDateTime.of(requestExpirationDate.atTime(23, 59, 59), ZoneOffset.UTC)));
 
     assertThat(actualRequest.getString(REQUEST_PICKUP_SERVICE_POINT_NAME), is(pickupServicePoint));
     assertThat(toList(toStream(actualRequest, TAGS)), hasItems("tag1", "tag2"));

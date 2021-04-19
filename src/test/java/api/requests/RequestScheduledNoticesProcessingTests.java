@@ -295,7 +295,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
       .create();
     setupNoticePolicyWithRequestNotice(noticeConfiguration);
 
-    final var requestExpiration = LocalDate.now(getClockManager().getClock()).plusDays(3);
+    final var requestExpiration = LocalDate.now(getClockManager().getClock()).plusDays(2);
 
     IndividualResource request = requestsFixture.place(new RequestBuilder().page()
       .forItem(item)

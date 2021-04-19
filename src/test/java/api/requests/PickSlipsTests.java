@@ -13,6 +13,7 @@ import static org.junit.Assert.fail;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.List;
@@ -225,8 +226,8 @@ public class PickSlipsTests extends APITests {
 
     assertThat(requestContext.getString("deliveryAddressType"),
       is(addressTypeResource.getJson().getString("addressType")));
-    assertThat(requestContext.getString("requestExpirationDate"),
-      isEquivalentTo(toZonedStartOfDay(requestExpiration)));
+    assertThat(requestContext.getString("requestExpirationDate"), isEquivalentTo(ZonedDateTime.of(
+      requestExpiration.atTime(23, 59, 59), ZoneOffset.UTC)));
     assertThat(requestContext.getString("holdShelfExpirationDate"),
       isEquivalentTo(toZonedStartOfDay(holdShelfExpiration)));
     assertThat(requestContext.getString("requestID"),
