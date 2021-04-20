@@ -12,29 +12,29 @@ import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.UpdatedRequestPair;
+import org.folio.circulation.domain.User;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class CirculationCheckInCheckOutLogEventMapper {
-  public static final String ITEM_SOURCE = "source";
 
   private CirculationCheckInCheckOutLogEventMapper() {
   }
 
   /**
-   * This method returns {@link JsonObject} for check-in log event payload
+   * This method returns {@link String} content for check-in log event payload
    * @param checkInContext check-in flow context {@link CheckInContext}
    * @return check-in log event payload
    */
-  public static JsonObject mapToCheckInLogEventJson(CheckInContext checkInContext) {
+  public static String mapToCheckInLogEventContent(CheckInContext checkInContext, User loggedInUser) {
     JsonObject logEventPayload = new JsonObject();
 
     write(logEventPayload, LOG_EVENT_TYPE.value(), CHECK_IN.value());
     write(logEventPayload, SERVICE_POINT_ID.value(), checkInContext.getCheckInServicePointId());
 
     populateLoanData(checkInContext, logEventPayload);
-    populateItemData(checkInContext, logEventPayload);
+    populateItemData(checkInContext, logEventPayload, loggedInUser);
 
     ofNullable(checkInContext.getCheckInRequest())
       .flatMap(checkInRequest -> ofNullable(checkInRequest.getClaimedReturnedResolution()))
@@ -42,29 +42,29 @@ public class CirculationCheckInCheckOutLogEventMapper {
 
     write(logEventPayload, REQUESTS.value(), getUpdatedRequests(checkInContext));
 
-    return logEventPayload;
+    return logEventPayload.encode();
   }
 
   /**
-   * This method returns {@link JsonObject} for check-out log event payload
+   * This method returns {@link String} content for check-out log event payload
    * @param loanAndRelatedRecords check-out flow context {@link LoanAndRelatedRecords}
    * @return check-out log event payload
    */
-  public static JsonObject mapToCheckOutLogEventJson(LoanAndRelatedRecords loanAndRelatedRecords) {
+  public static String mapToCheckOutLogEventContent(LoanAndRelatedRecords loanAndRelatedRecords, User loggedInUser) {
     JsonObject logEventPayload = new JsonObject();
 
     write(logEventPayload, LOG_EVENT_TYPE.value(), CHECK_OUT.value());
     write(logEventPayload, SERVICE_POINT_ID.value(), loanAndRelatedRecords.getLoan().getCheckoutServicePointId());
 
     populateLoanData(loanAndRelatedRecords, logEventPayload);
-    populateItemData(loanAndRelatedRecords, logEventPayload);
+    populateItemData(loanAndRelatedRecords, logEventPayload, loggedInUser);
 
     write(logEventPayload, REQUESTS.value(), getUpdatedRequests(loanAndRelatedRecords));
 
-    return logEventPayload;
+    return logEventPayload.encode();
   }
 
-  private static void populateItemData(CheckInContext checkInContext, JsonObject logEventPayload) {
+  private static void populateItemData(CheckInContext checkInContext, JsonObject logEventPayload, User loggedInUser) {
     ofNullable(checkInContext.getItem())
       .ifPresent(item -> {
         write(logEventPayload, ITEM_ID.value(), item.getItemId());
@@ -75,11 +75,10 @@ public class CirculationCheckInCheckOutLogEventMapper {
         ofNullable(item.getInTransitDestinationServicePoint())
           .ifPresent(sp -> write(logEventPayload, DESTINATION_SERVICE_POINT.value(), sp.getName()));
       });
-    ofNullable(checkInContext.getLoan())
-      .flatMap(loan -> ofNullable(loan.getUser())).ifPresent(user -> write(logEventPayload, SOURCE.value(), user.getPersonalName()));
+    write(logEventPayload, SOURCE.value(), loggedInUser.getPersonalName());
   }
 
-  private static void populateItemData(LoanAndRelatedRecords loanAndRelatedRecords, JsonObject logEventPayload) {
+  private static void populateItemData(LoanAndRelatedRecords loanAndRelatedRecords, JsonObject logEventPayload, User loggedInUser) {
     ofNullable(loanAndRelatedRecords.getLoan().getItem())
       .ifPresent(item -> {
         write(logEventPayload, ITEM_ID.value(), item.getItemId());
@@ -88,8 +87,7 @@ public class CirculationCheckInCheckOutLogEventMapper {
         write(logEventPayload, HOLDINGS_RECORD_ID.value(), item.getHoldingsRecordId());
         write(logEventPayload, INSTANCE_ID.value(), item.getInstanceId());
       });
-    ofNullable(loanAndRelatedRecords.getLoan())
-      .flatMap(loan -> ofNullable(loan.getUser())).ifPresent(user -> write(logEventPayload, SOURCE.value(), user.getPersonalName()));
+    write(logEventPayload, SOURCE.value(), loggedInUser.getPersonalName());
   }
 
   private static void populateLoanData(CheckInContext checkInContext, JsonObject logEventPayload) {
