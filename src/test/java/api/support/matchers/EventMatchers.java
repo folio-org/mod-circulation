@@ -39,7 +39,7 @@ public class EventMatchers {
         hasJsonPath("dueDate", is(checkedOutLoan.getString("dueDate"))),
         hasJsonPath("userId", is(checkedOutLoan.getString("userId"))),
         hasJsonPath("itemId", is(checkedOutLoan.getString("itemId"))),
-        hasJsonPath("source", is(checkedOutLoan.getJsonObject("borrower").getString("lastName") + ", " + checkedOutLoan.getJsonObject("borrower").getString("firstName"))),  //todo
+        hasJsonPath("source", is(checkedOutLoan.getJsonObject("borrower").getString("lastName") + ", " + checkedOutLoan.getJsonObject("borrower").getString("firstName"))),
         hasJsonPath("itemBarcode", is(checkedOutLoan.getJsonObject("item").getString("barcode"))),
         hasJsonPath("itemStatusName", is(checkedOutLoan.getJsonObject("item").getJsonObject("status").getString("name")))
       ))),

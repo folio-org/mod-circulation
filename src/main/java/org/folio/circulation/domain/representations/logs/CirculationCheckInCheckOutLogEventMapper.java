@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class CirculationCheckInCheckOutLogEventMapper {
+  public static final String ITEM_SOURCE = "source";
 
   private CirculationCheckInCheckOutLogEventMapper() {
   }
@@ -31,7 +32,6 @@ public class CirculationCheckInCheckOutLogEventMapper {
 
     write(logEventPayload, LOG_EVENT_TYPE.value(), CHECK_IN.value());
     write(logEventPayload, SERVICE_POINT_ID.value(), checkInContext.getCheckInServicePointId());
-    write(logEventPayload, SOURCE.value(), checkInContext.getLoggedInUserPersonalName());
 
     populateLoanData(checkInContext, logEventPayload);
     populateItemData(checkInContext, logEventPayload);
@@ -55,7 +55,6 @@ public class CirculationCheckInCheckOutLogEventMapper {
 
     write(logEventPayload, LOG_EVENT_TYPE.value(), CHECK_OUT.value());
     write(logEventPayload, SERVICE_POINT_ID.value(), loanAndRelatedRecords.getLoan().getCheckoutServicePointId());
-    write(logEventPayload, SOURCE.value(), loanAndRelatedRecords.getLoggedInUserPersonalName());
 
     populateLoanData(loanAndRelatedRecords, logEventPayload);
     populateItemData(loanAndRelatedRecords, logEventPayload);
@@ -76,6 +75,8 @@ public class CirculationCheckInCheckOutLogEventMapper {
         ofNullable(item.getInTransitDestinationServicePoint())
           .ifPresent(sp -> write(logEventPayload, DESTINATION_SERVICE_POINT.value(), sp.getName()));
       });
+    ofNullable(checkInContext.getLoan())
+      .flatMap(loan -> ofNullable(loan.getUser())).ifPresent(user -> write(logEventPayload, SOURCE.value(), user.getPersonalName()));
   }
 
   private static void populateItemData(LoanAndRelatedRecords loanAndRelatedRecords, JsonObject logEventPayload) {
@@ -87,6 +88,8 @@ public class CirculationCheckInCheckOutLogEventMapper {
         write(logEventPayload, HOLDINGS_RECORD_ID.value(), item.getHoldingsRecordId());
         write(logEventPayload, INSTANCE_ID.value(), item.getInstanceId());
       });
+    ofNullable(loanAndRelatedRecords.getLoan())
+      .flatMap(loan -> ofNullable(loan.getUser())).ifPresent(user -> write(logEventPayload, SOURCE.value(), user.getPersonalName()));
   }
 
   private static void populateLoanData(CheckInContext checkInContext, JsonObject logEventPayload) {
