@@ -12,7 +12,6 @@ import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.hamcrest.Matchers.closeTo;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -22,9 +21,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.folio.circulation.domain.Account;
 import org.folio.circulation.domain.FeeFineAction;
-import api.support.http.IndividualResource;
 import org.hamcrest.Matcher;
+import org.joda.time.DateTimeZone;
+import org.joda.time.LocalTime;
 
+import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 
@@ -169,8 +170,10 @@ public class TemplateContextMatchers {
 
     Map<String, Matcher<String>> tokenMatchers = new HashMap<>();
     tokenMatchers.put("request.servicePointPickup", notNullValue(String.class));
-    tokenMatchers.put("request.requestExpirationDate ",
-      isEquivalentTo(getDateTimeProperty(request, "requestExpirationDate")));
+    tokenMatchers.put("request.requestExpirationDate ", isEquivalentTo(
+      getDateTimeProperty(request, "requestExpirationDate")
+        .withZoneRetainFields(DateTimeZone.UTC)
+        .withTime(LocalTime.MIDNIGHT.minusSeconds(1))));
     tokenMatchers.put("request.holdShelfExpirationDate",
       isEquivalentTo(getDateTimeProperty(request, "holdShelfExpirationDate")));
     return tokenMatchers;
