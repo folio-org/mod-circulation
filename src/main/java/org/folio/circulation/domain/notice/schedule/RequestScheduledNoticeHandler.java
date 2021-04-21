@@ -81,8 +81,8 @@ public class RequestScheduledNoticeHandler {
     boolean closedRequest = request.isClosed();
     boolean closedExceptPickupExpiredRequest = request.isClosedExceptPickupExpired();
 
-    if (holdExpirationNotice && (
-      (!uponAtNotice && closedRequest) || (uponAtNotice && closedExceptPickupExpiredRequest))) {
+    if (holdExpirationNotice &&
+      ((!uponAtNotice && closedRequest) || (uponAtNotice && closedExceptPickupExpiredRequest))) {
 
       log.info(format("Request %s is closed, deleting hold shelf expiration scheduled notice %s",
         request.getId(), notice.getId()));
