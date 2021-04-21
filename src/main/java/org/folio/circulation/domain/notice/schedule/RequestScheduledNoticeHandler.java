@@ -76,8 +76,13 @@ public class RequestScheduledNoticeHandler {
   private CompletableFuture<Result<Boolean>> noticeIsIrrelevant(
     Request request, ScheduledNotice notice) {
 
-    if (HOLD_EXPIRATION.equals(notice.getTriggeringEvent()) &&
-      request.isClosed()) {
+    boolean holdExpirationNotice = HOLD_EXPIRATION.equals(notice.getTriggeringEvent());
+    boolean uponAtNotice = UPON_AT.equals(notice.getConfiguration().getTiming());
+    boolean closedRequest = request.isClosed();
+    boolean closedExceptPickupExpiredRequest = request.isClosedExceptPickupExpired();
+
+    if (holdExpirationNotice &&
+      ((!uponAtNotice && closedRequest) || (uponAtNotice && closedExceptPickupExpiredRequest))) {
 
       log.info(format("Request %s is closed, deleting hold shelf expiration scheduled notice %s",
         request.getId(), notice.getId()));

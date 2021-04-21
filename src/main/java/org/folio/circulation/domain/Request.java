@@ -120,6 +120,10 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return isCancelled() || isFulfilled() || isUnfilled() || isPickupExpired();
   }
 
+  public boolean isClosedExceptPickupExpired() {
+    return isClosed() && !isPickupExpired();
+  }
+
   boolean isAwaitingPickup() {
     return getStatus() == OPEN_AWAITING_PICKUP;
   }
