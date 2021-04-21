@@ -405,7 +405,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void scheduledNoticesShouldNotBeSentAfterRequestCancellation343453453() {
+  public void uponAtNoticesShouldBeSentWhenRequestPickupExpired() {
     JsonObject noticeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(templateId)
       .withHoldShelfExpirationEvent()
@@ -420,8 +420,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
       .withRequesterId(requester.getId())
       .withRequestDate(DateTime.now())
       .withStatus(OPEN_NOT_YET_FILLED)
-      .withPickupServicePoint(pickupServicePoint)
-      .withNoRequestExpiration();
+      .withPickupServicePoint(pickupServicePoint);
     IndividualResource request = requestsFixture.place(requestBuilder);
 
     checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
@@ -429,14 +428,15 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
       .withItemBarcode(item.getBarcode())
       .at(pickupServicePoint));
 
+    waitAtMost(1, SECONDS)
+      .until(scheduledNoticesClient::getAll, hasSize(1));
+    assertThat(patronNoticesClient.getAll(), empty());
+
     requestsStorageClient.replace(request.getId(), requestBuilder
       .withStatus(CLOSED_PICKUP_EXPIRED));
 
-    waitAtMost(1, SECONDS)
-      .until(scheduledNoticesClient::getAll, hasSize(1));
-
     scheduledNoticeProcessingClient.runRequestNoticesProcessing(
-      org.joda.time.LocalDate.now(UTC).plusDays(100).toDateTimeAtStartOfDay());
+      org.joda.time.LocalDate.now(UTC).plusDays(35).toDateTimeAtStartOfDay());
 
     waitAtMost(1, SECONDS)
       .until(scheduledNoticesClient::getAll, empty());
