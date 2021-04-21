@@ -1,3 +1,10 @@
+## 20.1.2 2021-04-21
+
+* Errors when filtering on recall requested (CIRC-1126)
+* Bugfest. Source of circulation actions is displaying differently in the circulation log than in the item record (CIRC-1125)
+* Request expiration should be 11:59 of day selected  (CIRC-1119)
+* Not receiving change due date notice (CIRC-1114)
+
 ## 20.1.1 2021-04-13
 
 * Add notice post perm to change due date (CIRC-1114)
