@@ -1,6 +1,7 @@
 package org.folio.circulation.services;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static java.util.concurrent.CompletableFuture.runAsync;
 import static org.folio.circulation.domain.EventType.ITEM_AGED_TO_LOST;
 import static org.folio.circulation.domain.EventType.ITEM_CHECKED_IN;
 import static org.folio.circulation.domain.EventType.ITEM_CHECKED_OUT;
@@ -10,8 +11,8 @@ import static org.folio.circulation.domain.EventType.LOAN_DUE_DATE_CHANGED;
 import static org.folio.circulation.domain.EventType.LOG_RECORD;
 import static org.folio.circulation.domain.LoanAction.CHECKED_IN;
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.LOG_EVENT_TYPE;
-import static org.folio.circulation.domain.representations.logs.CirculationCheckInCheckOutLogEventMapper.mapToCheckInLogEventJson;
-import static org.folio.circulation.domain.representations.logs.CirculationCheckInCheckOutLogEventMapper.mapToCheckOutLogEventJson;
+import static org.folio.circulation.domain.representations.logs.CirculationCheckInCheckOutLogEventMapper.mapToCheckInLogEventContent;
+import static org.folio.circulation.domain.representations.logs.CirculationCheckInCheckOutLogEventMapper.mapToCheckOutLogEventContent;
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.PAYLOAD;
 import static org.folio.circulation.domain.representations.logs.LogEventType.LOAN;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
@@ -36,6 +37,7 @@ import org.folio.circulation.domain.representations.logs.LogEventType;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.representations.logs.NoticeLogContext;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
+import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
@@ -66,7 +68,7 @@ public class EventPublisher {
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> publishItemCheckedOutEvent(
-    LoanAndRelatedRecords loanAndRelatedRecords) {
+    LoanAndRelatedRecords loanAndRelatedRecords, UserRepository userRepository) {
 
     if (loanAndRelatedRecords.getLoan() != null) {
       Loan loan = loanAndRelatedRecords.getLoan();
@@ -76,8 +78,9 @@ public class EventPublisher {
       write(payloadJsonObject, LOAN_ID_FIELD, loan.getId());
       write(payloadJsonObject, DUE_DATE_FIELD, loan.getDueDate());
 
-      JsonObject logEventPayload = mapToCheckOutLogEventJson(loanAndRelatedRecords);
-      CompletableFuture.runAsync(() -> pubSubPublishingService.publishEvent(LOG_RECORD.name(), logEventPayload.encode()));
+      runAsync(() -> userRepository.getUser(loanAndRelatedRecords.getLoggedInUserId())
+        .thenApplyAsync(r -> r.after(loggedInUser -> CompletableFuture.completedFuture(
+          Result.succeeded(pubSubPublishingService.publishEvent(LOG_RECORD.name(), mapToCheckOutLogEventContent(loanAndRelatedRecords, loggedInUser)))))));
 
       return pubSubPublishingService.publishEvent(ITEM_CHECKED_OUT.name(), payloadJsonObject.encode())
         .thenApply(r -> succeeded(loanAndRelatedRecords));
@@ -90,10 +93,11 @@ public class EventPublisher {
   }
 
   public CompletableFuture<Result<CheckInContext>> publishItemCheckedInEvents(
-    CheckInContext checkInContext) {
+    CheckInContext checkInContext, UserRepository userRepository) {
 
-    JsonObject logEventPayload = mapToCheckInLogEventJson(checkInContext);
-    CompletableFuture.runAsync(() -> pubSubPublishingService.publishEvent(LOG_RECORD.name(), logEventPayload.encode()));
+    runAsync(() -> userRepository.getUser(checkInContext.getLoggedInUserId())
+      .thenApplyAsync(r -> r.after(loggedInUser -> CompletableFuture.completedFuture(
+        Result.succeeded(pubSubPublishingService.publishEvent(LOG_RECORD.name(), mapToCheckInLogEventContent(checkInContext, loggedInUser)))))));
 
     if (checkInContext.getLoan() != null) {
       Loan loan = checkInContext.getLoan();
@@ -133,7 +137,7 @@ public class EventPublisher {
 
     LoanLogContext loanLogContext = LoanLogContext.from(loan)
       .withDescription(String.format("Additional information: %s", loan.getActionComment()));
-    CompletableFuture.runAsync(() -> publishLogRecord(loanLogContext.asJson(), LOAN));
+    runAsync(() -> publishLogRecord(loanLogContext.asJson(), LOAN));
 
     JsonObject payloadJson = new JsonObject();
     write(payloadJson, USER_ID_FIELD, loan.getUserId());
@@ -152,7 +156,7 @@ public class EventPublisher {
       write(payloadJsonObject, DUE_DATE_CHANGED_BY_RECALL_FIELD, loan.wasDueDateChangedByRecall());
 
       if (!RECALL_REQUESTED_LOAN_ACTION.equals(LogContextActionResolver.resolveAction(loan.getAction()))) {
-        CompletableFuture.runAsync(() -> publishRecallRequestedEvent(loan));
+        runAsync(() -> publishRecallRequestedEvent(loan));
       }
 
       return pubSubPublishingService.publishEvent(LOAN_DUE_DATE_CHANGED.name(),
@@ -244,7 +248,7 @@ public class EventPublisher {
   }
 
   public RequestAndRelatedRecords publishLogRecordAsync(RequestAndRelatedRecords requestAndRelatedRecords, Request originalRequest, LogEventType logEventType) {
-    CompletableFuture.runAsync(() -> publishLogRecord(mapToRequestLogEventJson(originalRequest, requestAndRelatedRecords.getRequest()), logEventType));
+    runAsync(() -> publishLogRecord(mapToRequestLogEventJson(originalRequest, requestAndRelatedRecords.getRequest()), logEventType));
     return requestAndRelatedRecords;
   }
 }
