@@ -1,10 +1,12 @@
 package org.folio.circulation.resources;
 
+import static java.util.concurrent.CompletableFuture.runAsync;
 import static org.folio.circulation.domain.notice.TemplateContextUtil.createRequestNoticeContext;
 
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
@@ -74,6 +76,7 @@ public class RequestNoticeSender {
     Loan loan = request.getLoan();
     if (request.getRequestType() == RequestType.RECALL && loan != null) {
       sendNoticeOnItemRecalledEvent(loan);
+      runAsync(() -> eventPublisher.publishRecallRequestedEvent(loan.copy().withUser(requester)));
     }
     return Result.succeeded(relatedRecords);
   }
@@ -86,6 +89,7 @@ public class RequestNoticeSender {
     Loan loan = request.getLoan();
     if (request.getRequestType() == RequestType.RECALL && loan != null) {
       sendNoticeOnItemRecalledEvent(loan);
+      runAsync(() -> eventPublisher.publishRecallRequestedEvent(loan.copy().withUser(request.getRequester())));
     }
     return Result.succeeded(relatedRecords);
   }
@@ -124,8 +128,7 @@ public class RequestNoticeSender {
         .withEventType(NoticeEventType.ITEM_RECALLED)
         .withNoticeContext(TemplateContextUtil.createLoanNoticeContext(loan))
         .build();
-      patronNoticeService.acceptNoticeEvent(itemRecalledEvent, NoticeLogContext.from(loan))
-        .thenCompose(r -> r.after(v -> eventPublisher.publishRecallRequestedEvent(loan)));
+      patronNoticeService.acceptNoticeEvent(itemRecalledEvent, NoticeLogContext.from(loan));
     }
     return Result.succeeded(null);
   }

@@ -96,7 +96,7 @@ public class RequestCollectionResource extends CollectionResource {
     final var requestFromRepresentationService = new RequestFromRepresentationService(
       new ItemRepository(clients, true, true, true),
       RequestQueueRepository.using(clients), userRepository, loanRepository,
-      new ServicePointRepository(clients),
+      new ServicePointRepository(clients), configurationRepository,
       createProxyRelationshipValidator(representation, clients),
       new ServicePointPickupLocationValidator(), errorHandler);
 
@@ -150,7 +150,7 @@ public class RequestCollectionResource extends CollectionResource {
     final var requestFromRepresentationService = new RequestFromRepresentationService(
       new ItemRepository(clients, true, true, true),
       RequestQueueRepository.using(clients), new UserRepository(clients),
-      loanRepository, new ServicePointRepository(clients),
+      loanRepository, new ServicePointRepository(clients), configurationRepository,
       createProxyRelationshipValidator(representation, clients),
       new ServicePointPickupLocationValidator(), errorHandler);
 
