@@ -30,6 +30,8 @@ import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.LocalTime;
 
 import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
@@ -327,5 +329,16 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
 
   public String getPatronComments() {
     return getProperty(requestRepresentation, "patronComments");
+  }
+
+  public Request truncateRequestExpirationDateToTheEndOfTheDay(DateTimeZone zone) {
+    DateTime requestExpirationDate = getRequestExpirationDate();
+    if (requestExpirationDate != null) {
+      DateTime requestDateTime = requestExpirationDate
+        .withZoneRetainFields(zone)
+        .withTime(LocalTime.MIDNIGHT.minusSeconds(1));
+      write(requestRepresentation, REQUEST_EXPIRATION_DATE, requestDateTime);
+    }
+    return this;
   }
 }

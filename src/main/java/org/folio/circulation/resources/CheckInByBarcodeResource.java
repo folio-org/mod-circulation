@@ -11,6 +11,7 @@ import org.folio.circulation.domain.notice.session.PatronActionSessionService;
 import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
 import org.folio.circulation.domain.representations.CheckInByBarcodeResponse;
 import org.folio.circulation.domain.validation.CheckInValidators;
+import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.ValidationErrorFailure;
@@ -54,6 +55,8 @@ public class CheckInByBarcodeResource extends Resource {
     final PatronActionSessionService patronActionSessionService =
       PatronActionSessionService.using(clients);
 
+    final UserRepository userRepository = new UserRepository(clients);
+
     refuseWhenLoggedInUserNotPresent(context)
       .next(notUsed -> checkInRequestResult)
       .map(CheckInContext::new)
@@ -94,7 +97,7 @@ public class CheckInByBarcodeResource extends Resource {
       .thenComposeAsync(r -> r.after(processAdapter::refundLostItemFees))
       .thenComposeAsync(r -> r.after(
         records -> processAdapter.createOverdueFineIfNecessary(records, context)))
-      .thenComposeAsync(r -> r.after(eventPublisher::publishItemCheckedInEvents))
+      .thenComposeAsync(r -> r.after(v -> eventPublisher.publishItemCheckedInEvents(v, userRepository)))
       .thenApply(r -> r.next(requestScheduledNoticeService::rescheduleRequestNotices))
       .thenApply(r -> r.map(CheckInByBarcodeResponse::fromRecords))
       .thenApply(r -> r.map(CheckInByBarcodeResponse::toHttpResponse))

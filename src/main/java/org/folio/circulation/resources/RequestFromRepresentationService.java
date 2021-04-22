@@ -23,6 +23,7 @@ import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.ServicePointPickupLocationValidator;
+import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
@@ -40,6 +41,7 @@ class RequestFromRepresentationService {
   private final UserRepository userRepository;
   private final LoanRepository loanRepository;
   private final ServicePointRepository servicePointRepository;
+  private final ConfigurationRepository configurationRepository;
   private final ProxyRelationshipValidator proxyRelationshipValidator;
   private final ServicePointPickupLocationValidator pickupLocationValidator;
   private final CirculationErrorHandler errorHandler;
@@ -48,6 +50,7 @@ class RequestFromRepresentationService {
   RequestFromRepresentationService(ItemRepository itemRepository,
     RequestQueueRepository requestQueueRepository, UserRepository userRepository,
     LoanRepository loanRepository, ServicePointRepository servicePointRepository,
+    ConfigurationRepository configurationRepository,
     ProxyRelationshipValidator proxyRelationshipValidator,
     ServicePointPickupLocationValidator pickupLocationValidator,
     CirculationErrorHandler errorHandler) {
@@ -57,6 +60,7 @@ class RequestFromRepresentationService {
     this.requestQueueRepository = requestQueueRepository;
     this.userRepository = userRepository;
     this.servicePointRepository = servicePointRepository;
+    this.configurationRepository = configurationRepository;
     this.proxyRelationshipValidator = proxyRelationshipValidator;
     this.pickupLocationValidator = pickupLocationValidator;
     this.errorHandler = errorHandler;
@@ -70,6 +74,8 @@ class RequestFromRepresentationService {
       .thenApply(r -> r.map(this::removeRelatedRecordInformation))
       .thenApply(r -> r.map(this::removeProcessingParameters))
       .thenApply(r -> r.map(Request::from))
+      .thenCompose(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
+        Request::truncateRequestExpirationDateToTheEndOfTheDay))
       .thenComposeAsync(r -> r.after(when(
         this::shouldFetchItemAndLoan, this::fetchItemAndLoan, req -> ofAsync(() -> req))))
       .thenComposeAsync(r -> r.combineAfter(userRepository::getUser, Request::withRequester))
