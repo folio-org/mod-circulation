@@ -1,3 +1,7 @@
+## 20.1.5 2021-04-23
+
+* Some filters not finding recent results (CIRC-1133)
+
 ## 20.1.4 2021-04-23
 
 * Fixes hold shelf expiration request notice (CIRC-1129)
