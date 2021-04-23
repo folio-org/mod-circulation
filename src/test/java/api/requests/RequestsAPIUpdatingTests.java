@@ -760,7 +760,7 @@ public class RequestsAPIUpdatingTests extends APITests {
     // and one log events for loans
     final var publishedEvents = Awaitility.await()
       .atMost(1, SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(7));
+      .until(FakePubSub::getPublishedEvents, hasSize(9));
 
     final var requestCreatedLogEvent = publishedEvents.findFirst(byLogEventType(REQUEST_CREATED.value()));
     final var requestUpdatedLogEvent = publishedEvents.findFirst(byLogEventType(REQUEST_UPDATED.value()));

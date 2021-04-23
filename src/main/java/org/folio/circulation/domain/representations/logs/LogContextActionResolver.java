@@ -6,6 +6,7 @@ import static org.folio.circulation.domain.LoanAction.CHECKED_OUT_THROUGH_OVERRI
 import static org.folio.circulation.domain.LoanAction.CLAIMED_RETURNED;
 import static org.folio.circulation.domain.LoanAction.CLOSED_LOAN;
 import static org.folio.circulation.domain.LoanAction.DECLARED_LOST;
+import static org.folio.circulation.domain.LoanAction.DUE_DATE_CHANGED;
 import static org.folio.circulation.domain.LoanAction.ITEM_AGED_TO_LOST;
 import static org.folio.circulation.domain.LoanAction.MISSING;
 import static org.folio.circulation.domain.LoanAction.RECALLREQUESTED;
@@ -28,7 +29,7 @@ public class LogContextActionResolver {
     loanLogActions.put(MISSING.getValue(), "Marked as missing");
     loanLogActions.put(CLOSED_LOAN.getValue(), "Closed loan");
     loanLogActions.put(ITEM_AGED_TO_LOST.getValue(), "Age to lost");
-    loanLogActions.put("dueDateChanged", "Changed due date");
+    loanLogActions.put(DUE_DATE_CHANGED.getValue(), "Changed due date");
   }
 
   public static String resolveAction(String action) {
