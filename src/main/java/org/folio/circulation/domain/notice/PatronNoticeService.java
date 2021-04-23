@@ -3,7 +3,6 @@ package org.folio.circulation.domain.notice;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.stream.Collectors.groupingBy;
 import static org.apache.http.HttpStatus.SC_OK;
-import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.logging.PatronNoticeLogHelper.logResponse;
 import static org.folio.circulation.support.results.Result.succeeded;
@@ -33,7 +32,6 @@ import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
 
 import io.vertx.core.json.JsonObject;
-import org.joda.time.DateTime;
 
 public class PatronNoticeService {
   public static PatronNoticeService using(Clients clients) {
@@ -174,7 +172,7 @@ public class PatronNoticeService {
   }
 
   private CompletableFuture<Result<Void>> publishAuditLogEvent(NoticeLogContext noticeLogContext) {
-    return eventPublisher.publishLogRecord(noticeLogContext.withDate(DateTime.now()).asJson(), NOTICE);
+    return eventPublisher.publishNoticeEvent(noticeLogContext);
   }
 
   private static class NoticeEventGroupDefinition {

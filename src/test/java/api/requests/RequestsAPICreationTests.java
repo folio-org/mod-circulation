@@ -168,7 +168,7 @@ RequestsAPICreationTests extends APITests {
     assertThat(representation.getString("itemId"), is(item.getId().toString()));
     assertThat(representation.getString("requesterId"), is(requester.getId().toString()));
     assertThat(representation.getString("fulfilmentPreference"), is("Hold Shelf"));
-    assertThat(representation.getString("requestExpirationDate"), is("2017-07-30"));
+    assertThat(representation.getString("requestExpirationDate"), is("2017-07-30T23:59:59.000Z"));
     assertThat(representation.getString("holdShelfExpirationDate"), is("2017-08-31"));
     assertThat(representation.getString("status"), is("Open - Not yet filled"));
     assertThat(representation.getString("pickupServicePointId"), is(pickupServicePointId.toString()));
@@ -286,7 +286,7 @@ RequestsAPICreationTests extends APITests {
     assertThat(representation.getString("itemId"), is(item.getId().toString()));
     assertThat(representation.getString("requesterId"), is(requester.getId().toString()));
     assertThat(representation.getString("fulfilmentPreference"), is("Hold Shelf"));
-    assertThat(representation.getString("requestExpirationDate"), is("2017-07-30"));
+    assertThat(representation.getString("requestExpirationDate"), is("2017-07-30T23:59:59.000Z"));
     assertThat(representation.getString("holdShelfExpirationDate"), is("2017-08-31"));
     assertThat(representation.getString("status"), is("Open - Not yet filled"));
 

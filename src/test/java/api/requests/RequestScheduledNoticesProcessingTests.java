@@ -1,5 +1,6 @@
 package api.requests;
 
+import static api.support.builders.RequestBuilder.CLOSED_PICKUP_EXPIRED;
 import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
 import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
@@ -295,7 +296,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
       .create();
     setupNoticePolicyWithRequestNotice(noticeConfiguration);
 
-    final var requestExpiration = LocalDate.now(getClockManager().getClock()).plusDays(3);
+    final var requestExpiration = LocalDate.now(getClockManager().getClock()).plusDays(2);
 
     IndividualResource request = requestsFixture.place(new RequestBuilder().page()
       .forItem(item)
@@ -400,7 +401,46 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
 
     waitAtMost(1, SECONDS)
       .until(scheduledNoticesClient::getAll, empty());
+    assertThat(patronNoticesClient.getAll(), hasSize(0));
+  }
+
+  @Test
+  public void uponAtNoticesShouldBeSentWhenRequestPickupExpired() {
+    JsonObject noticeConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(templateId)
+      .withHoldShelfExpirationEvent()
+      .withUponAtTiming()
+      .sendInRealTime(true)
+      .create();
+    setupNoticePolicyWithRequestNotice(noticeConfiguration);
+
+    RequestBuilder requestBuilder = new RequestBuilder()
+      .page()
+      .forItem(item)
+      .withRequesterId(requester.getId())
+      .withRequestDate(DateTime.now())
+      .withStatus(OPEN_NOT_YET_FILLED)
+      .withPickupServicePoint(pickupServicePoint);
+    IndividualResource request = requestsFixture.place(requestBuilder);
+
+    checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+      .forItem(item)
+      .withItemBarcode(item.getBarcode())
+      .at(pickupServicePoint));
+
+    waitAtMost(1, SECONDS)
+      .until(scheduledNoticesClient::getAll, hasSize(1));
     assertThat(patronNoticesClient.getAll(), empty());
+
+    requestsStorageClient.replace(request.getId(), requestBuilder
+      .withStatus(CLOSED_PICKUP_EXPIRED));
+
+    scheduledNoticeProcessingClient.runRequestNoticesProcessing(
+      org.joda.time.LocalDate.now(UTC).plusDays(35).toDateTimeAtStartOfDay());
+
+    waitAtMost(1, SECONDS)
+      .until(scheduledNoticesClient::getAll, empty());
+    assertThat(patronNoticesClient.getAll(), hasSize(1));
   }
 
   private void setupNoticePolicyWithRequestNotice(JsonObject noticeConfiguration) {

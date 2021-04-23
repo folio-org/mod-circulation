@@ -51,7 +51,7 @@ public class OpeningDay {
     JsonObject openingDayJson = openingPeriod.getJsonObject(OPENING_DAY_KEY);
 
     return createOpeningDay(fillOpeningDay(openingDayJson),
-      getJodaLocalDateProperty(openingDayJson, DATE_KEY),
+      getJodaLocalDateProperty(openingPeriod, DATE_KEY),
       getBooleanProperty(openingDayJson, ALL_DAY_KEY),
       getBooleanProperty(openingDayJson, OPEN_KEY), zone);
   }
