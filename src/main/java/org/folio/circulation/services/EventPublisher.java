@@ -149,7 +149,7 @@ public class EventPublisher {
   }
 
   private CompletableFuture<Result<Loan>> publishDueDateChangedEvent(Loan loan, RequestAndRelatedRecords records) {
-    runAsync(() -> publishDueDateEvent(loan.copy().withUser(records.getRequest().getRequester())));
+    runAsync(() -> publishDueDateLogEvent(loan.copy().withUser(records.getRequest().getRequester())));
     return publishDueDateChangedEvent(loan);
   }
 
@@ -236,7 +236,7 @@ public class EventPublisher {
       .withAction(LogContextActionResolver.resolveAction(RECALLREQUESTED.getValue()))
       .withDescription(String.format("New due date: %s (from %s)", loan.getDueDate(), loan.getOriginalDueDate())).asJson(), LOAN);
   }
-  public CompletableFuture<Result<Void>> publishDueDateEvent(Loan loan) {
+  public CompletableFuture<Result<Void>> publishDueDateLogEvent(Loan loan) {
     return publishLogRecord(LoanLogContext.from(loan)
       .withAction(LogContextActionResolver.resolveAction(DUE_DATE_CHANGED.getValue()))
       .withDescription(String.format("New due date: %s (from %s)", loan.getDueDate(), loan.getOriginalDueDate())).asJson(), LOAN);
