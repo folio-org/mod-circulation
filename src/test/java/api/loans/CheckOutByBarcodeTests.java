@@ -39,6 +39,7 @@ import static org.folio.circulation.domain.policy.DueDateManagement.KEEP_THE_CUR
 import static org.folio.circulation.domain.policy.Period.months;
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 import static org.folio.circulation.domain.representations.logs.LogEventType.CHECK_OUT;
+import static org.folio.circulation.domain.representations.logs.LogEventType.CHECK_OUT_THROUGH_OVERRIDE;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.hasItem;
@@ -57,6 +58,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.policy.Period;
+import org.folio.circulation.domain.representations.logs.LogEventType;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -1324,7 +1326,7 @@ public class CheckOutByBarcodeTests extends APITests {
 
     final var checkOutLogEvent = publishedEvents.findFirst(byLogEventType(CHECK_OUT.value()));
 
-    assertThat(checkOutLogEvent, isValidCheckOutLogEvent(loan));
+    assertThat(checkOutLogEvent, isValidCheckOutLogEvent(loan, LogEventType.CHECK_OUT));
     assertThatPublishedLoanLogRecordEventsAreValid(loan);
   }
 
@@ -1713,6 +1715,14 @@ public class CheckOutByBarcodeTests extends APITests {
     assertThat(item, hasItemStatus(CHECKED_OUT));
     assertThat(loan.getString("actionComment"), is(TEST_COMMENT));
     assertThat(loan.getString("action"), is(CHECKED_OUT_THROUGH_OVERRIDE));
+
+    final var publishedEvents = Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(FakePubSub::getPublishedEvents, hasSize(2));
+
+    final var checkOutLogEvent = publishedEvents.findFirst(byLogEventType(LogEventType.CHECK_OUT_THROUGH_OVERRIDE.value()));
+
+    assertThat(checkOutLogEvent, isValidCheckOutLogEvent(loan, CHECK_OUT_THROUGH_OVERRIDE));
   }
 
   @Test

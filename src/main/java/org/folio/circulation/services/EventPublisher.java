@@ -10,6 +10,8 @@ import static org.folio.circulation.domain.EventType.ITEM_DECLARED_LOST;
 import static org.folio.circulation.domain.EventType.LOAN_DUE_DATE_CHANGED;
 import static org.folio.circulation.domain.EventType.LOG_RECORD;
 import static org.folio.circulation.domain.LoanAction.CHECKED_IN;
+import static org.folio.circulation.domain.LoanAction.DUE_DATE_CHANGED;
+import static org.folio.circulation.domain.LoanAction.RECALLREQUESTED;
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.LOG_EVENT_TYPE;
 import static org.folio.circulation.domain.representations.logs.CirculationCheckInCheckOutLogEventMapper.mapToCheckInLogEventContent;
 import static org.folio.circulation.domain.representations.logs.CirculationCheckInCheckOutLogEventMapper.mapToCheckOutLogEventContent;
@@ -55,7 +57,6 @@ public class EventPublisher {
   public static final String DUE_DATE_CHANGED_BY_RECALL_FIELD = "dueDateChangedByRecall";
   public static final String FAILED_TO_PUBLISH_LOG_TEMPLATE =
     "Failed to publish {} event: loan is null";
-  public static final String RECALL_REQUESTED_LOAN_ACTION = "Recall requested";
 
   private final PubSubPublishingService pubSubPublishingService;
 
@@ -147,6 +148,11 @@ public class EventPublisher {
       .thenApply(r -> succeeded(loan));
   }
 
+  private CompletableFuture<Result<Loan>> publishDueDateChangedEvent(Loan loan, RequestAndRelatedRecords records) {
+    runAsync(() -> publishDueDateEvent(loan.copy().withUser(records.getRequest().getRequester())));
+    return publishDueDateChangedEvent(loan);
+  }
+
   private CompletableFuture<Result<Loan>> publishDueDateChangedEvent(Loan loan) {
     if (loan != null) {
       JsonObject payloadJsonObject = new JsonObject();
@@ -154,10 +160,6 @@ public class EventPublisher {
       write(payloadJsonObject, LOAN_ID_FIELD, loan.getId());
       write(payloadJsonObject, DUE_DATE_FIELD, loan.getDueDate());
       write(payloadJsonObject, DUE_DATE_CHANGED_BY_RECALL_FIELD, loan.wasDueDateChangedByRecall());
-
-      if (!RECALL_REQUESTED_LOAN_ACTION.equals(LogContextActionResolver.resolveAction(loan.getAction()))) {
-        runAsync(() -> publishRecallRequestedEvent(loan));
-      }
 
       return pubSubPublishingService.publishEvent(LOAN_DUE_DATE_CHANGED.name(),
         payloadJsonObject.encode())
@@ -194,7 +196,7 @@ public class EventPublisher {
 
     LoanRepository loanRepository = new LoanRepository(clients);
     loanRepository.findOpenLoanForRequest(requestAndRelatedRecords.getRequest())
-      .thenCompose(r -> r.after(this::publishDueDateChangedEvent));
+      .thenCompose(r -> r.after(loan -> publishDueDateChangedEvent(loan, requestAndRelatedRecords)));
 
     return completedFuture(succeeded(requestAndRelatedRecords));
   }
@@ -231,7 +233,12 @@ public class EventPublisher {
 
   public CompletableFuture<Result<Void>> publishRecallRequestedEvent(Loan loan) {
     return publishLogRecord(LoanLogContext.from(loan)
-      .withAction(RECALL_REQUESTED_LOAN_ACTION)
+      .withAction(LogContextActionResolver.resolveAction(RECALLREQUESTED.getValue()))
+      .withDescription(String.format("New due date: %s (from %s)", loan.getDueDate(), loan.getOriginalDueDate())).asJson(), LOAN);
+  }
+  public CompletableFuture<Result<Void>> publishDueDateEvent(Loan loan) {
+    return publishLogRecord(LoanLogContext.from(loan)
+      .withAction(LogContextActionResolver.resolveAction(DUE_DATE_CHANGED.getValue()))
       .withDescription(String.format("New due date: %s (from %s)", loan.getDueDate(), loan.getOriginalDueDate())).asJson(), LOAN);
   }
 

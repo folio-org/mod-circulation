@@ -258,7 +258,7 @@ public class ChangeDueDateAPITests extends APITests {
     // and one "log record"
     final var publishedEvents = Awaitility.await()
       .atMost(1, SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(4));
+      .until(FakePubSub::getPublishedEvents, hasSize(3));
 
     final var event = publishedEvents.findFirst(byEventType(LOAN_DUE_DATE_CHANGED));
 
