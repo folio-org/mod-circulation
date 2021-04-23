@@ -1482,6 +1482,7 @@
       "displayName" : "module permissions for one op",
       "description" : "to reduce X-Okapi-Token size",
       "subPermissions": [
+        "lost-items-fees-policies.collection.get",
         "circulation-storage.loans.item.put",
         "circulation-storage.loans.item.get",
         "circulation-storage.loans.collection.get",
@@ -2177,7 +2178,8 @@
         "scheduled-notice-storage.scheduled-notices.collection.delete",
         "scheduled-notice-storage.scheduled-notices.item.post",
         "users.item.get",
-        "pubsub.publish.post"
+        "pubsub.publish.post",
+        "patron-notice.post"
       ],
       "visible": false
     },
@@ -2261,7 +2263,8 @@
         "scheduled-notice-storage.scheduled-notices.collection.delete",
         "scheduled-notice-storage.scheduled-notices.item.post",
         "pubsub.publish.post",
-        "configuration.entries.collection.get"
+        "configuration.entries.collection.get",
+        "patron-notice.post"
       ],
       "visible": false
     },
