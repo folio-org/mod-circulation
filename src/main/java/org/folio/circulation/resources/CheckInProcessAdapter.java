@@ -2,6 +2,7 @@ package org.folio.circulation.resources;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.notice.TemplateContextUtil.createAvailableNoticeContext;
+import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.lang.invoke.MethodHandles;
@@ -39,6 +40,7 @@ import org.folio.circulation.storage.ItemByBarcodeInStorageFinder;
 import org.folio.circulation.storage.SingleOpenLoanForItemInStorageFinder;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
+import org.folio.circulation.support.RecordNotFoundFailure;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.server.WebContext;
 import org.slf4j.Logger;
@@ -221,20 +223,49 @@ class CheckInProcessAdapter {
 
     requestQueue.getRequests().stream()
       .findFirst()
-      .ifPresent(firstRequest -> sendAvailableNotice(context, firstRequest));
+      .ifPresent(firstRequest -> sendAvailableNotice(context, firstRequest)
+        .thenAccept(r -> {
+          if (r.failed()) {
+            log.error("Failed to send Request Pickup Notice: {}", r.cause());
+          }
+        }));
+
     return succeeded(context);
   }
 
-  private void sendAvailableNotice(CheckInContext context, Request firstRequest) {
-    servicePointRepository.getServicePointForRequest(firstRequest)
-      .thenApply(r -> r.map(firstRequest::withPickupServicePoint))
-      .thenCombine(userRepository.getUserByBarcode(firstRequest.getRequesterBarcode()),
-        (requestResult, userResult) -> requestResult.combine(userResult,
-          (request, user) -> sendAvailableNotice(request, user, context)));
+  private CompletableFuture<Result<Void>> sendAvailableNotice(CheckInContext context,
+    Request request) {
+
+    return ofAsync(() -> request)
+      .thenCompose(r -> r.combineAfter(this::fetchServicePoint, Request::withPickupServicePoint))
+      .thenCompose(r -> r.combineAfter(this::fetchRequester, Request::withRequester))
+      .thenCompose(r -> r.after(req -> sendAvailableNotice(req, context)));
   }
 
-  private Result<CheckInContext> sendAvailableNotice(Request request, User user, CheckInContext context) {
+  public CompletableFuture<Result<User>> fetchRequester(Request request) {
+    String requesterId = request.getRequesterId();
+
+    return userRepository.getUser(requesterId)
+      .thenApply(r -> r.failWhen(this::isNull,
+        user -> new RecordNotFoundFailure("user", requesterId)));
+  }
+
+  public CompletableFuture<Result<ServicePoint>> fetchServicePoint(Request request) {
+    String pickupServicePointId = request.getPickupServicePointId();
+
+    return servicePointRepository.getServicePointById(pickupServicePointId)
+      .thenApply(r -> r.failWhen(this::isNull,
+        sp -> new RecordNotFoundFailure("servicePoint", pickupServicePointId)));
+  }
+
+  private Result<Boolean> isNull(Object o) {
+    return succeeded(o == null);
+  }
+
+  private CompletableFuture<Result<Void>> sendAvailableNotice(Request request, CheckInContext context) {
     Item item = context.getItem();
+    User user = request.getRequester();
+
     if (item != null) {
       if (item.isAwaitingPickup() && item.hasChanged()) {
         PatronNoticeEvent noticeEvent = new PatronNoticeEventBuilder()
@@ -243,12 +274,14 @@ class CheckInProcessAdapter {
           .withEventType(NoticeEventType.AVAILABLE)
           .withNoticeContext(createAvailableNoticeContext(item, user, request))
           .build();
-        patronNoticeService.acceptNoticeEvent(noticeEvent, NoticeLogContext.from(item, user, request));
+
+        return patronNoticeService.acceptNoticeEvent(noticeEvent, NoticeLogContext.from(item, user, request));
       }
     } else {
       log.info("Notice was not sent. CheckInContext doesn't have a valid item.");
     }
-    return succeeded(context);
+
+    return ofAsync(() -> null);
   }
 
   CheckInContext setInHouseUse(CheckInContext checkInContext) {
