@@ -223,23 +223,24 @@ class CheckInProcessAdapter {
 
     requestQueue.getRequests().stream()
       .findFirst()
-      .ifPresent(firstRequest -> sendAvailableNotice(context, firstRequest)
+      .ifPresent(firstRequest -> fetchDataAndSendAvailableNotice(context, firstRequest)
         .thenAccept(r -> {
           if (r.failed()) {
-            log.error("Failed to send Request Pickup Notice: {}", r.cause());
+            log.error("Failed to send Request Pickup Notice for request {} and user {}. Cause: {}",
+              firstRequest.getId(), firstRequest.getRequesterId(), r.cause());
           }
         }));
 
     return succeeded(context);
   }
 
-  private CompletableFuture<Result<Void>> sendAvailableNotice(CheckInContext context,
+  private CompletableFuture<Result<Void>> fetchDataAndSendAvailableNotice(CheckInContext context,
     Request request) {
 
     return ofAsync(() -> request)
       .thenCompose(r -> r.combineAfter(this::fetchServicePoint, Request::withPickupServicePoint))
       .thenCompose(r -> r.combineAfter(this::fetchRequester, Request::withRequester))
-      .thenCompose(r -> r.after(req -> sendAvailableNotice(req, context)));
+      .thenCompose(r -> r.after(req -> sendAvailableNotice(context, req)));
   }
 
   public CompletableFuture<Result<User>> fetchRequester(Request request) {
@@ -262,7 +263,7 @@ class CheckInProcessAdapter {
     return succeeded(o == null);
   }
 
-  private CompletableFuture<Result<Void>> sendAvailableNotice(Request request, CheckInContext context) {
+  private CompletableFuture<Result<Void>> sendAvailableNotice(CheckInContext context, Request request) {
     Item item = context.getItem();
     User user = request.getRequester();
 
