@@ -40,18 +40,25 @@ public class TemplateContextMatchers {
     return getUserContextMatchers(userResource, "requester");
   }
 
-  public static Map<String, Matcher<String>> getUserContextMatchers(IndividualResource userResource) {
-    return getUserContextMatchers(userResource, "user");
+  public static Map<String, Matcher<String>> getUserContextMatchers(IndividualResource userResource, String prefix) {
+    return getUserContextMatchers(userResource.getJson(), prefix);
   }
 
-  public static Map<String, Matcher<String>> getUserContextMatchers(IndividualResource userResource, String prefix) {
-    JsonObject user = userResource.getJson();
-    JsonObject personal = getObjectProperty(user, "personal");
+  public static Map<String, Matcher<String>> getUserContextMatchers(IndividualResource userResource) {
+    return getUserContextMatchers(userResource.getJson());
+  }
+
+  public static Map<String, Matcher<String>> getUserContextMatchers(JsonObject userJson) {
+    return getUserContextMatchers(userJson, "user");
+  }
+
+  public static Map<String, Matcher<String>> getUserContextMatchers(JsonObject userJson, String prefix) {
+    JsonObject personal = getObjectProperty(userJson, "personal");
 
     Map<String, Matcher<String>> tokenMatchers = new HashMap<>();
     tokenMatchers.put(prefix + ".firstName", is(personal.getString("firstName")));
     tokenMatchers.put(prefix + ".lastName", is(personal.getString("lastName")));
-    tokenMatchers.put(prefix + ".barcode", is(user.getString("barcode")));
+    tokenMatchers.put(prefix + ".barcode", is(userJson.getString("barcode")));
     return tokenMatchers;
   }
 
