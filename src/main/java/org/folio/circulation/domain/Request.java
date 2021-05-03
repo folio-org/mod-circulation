@@ -238,6 +238,10 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return getRequesterFromRepresentation().getString("barcode", EMPTY);
   }
 
+  public String getRequesterId() {
+    return requestRepresentation.getString("requesterId", EMPTY);
+  }
+
   public User getProxy() {
     return proxy;
   }
