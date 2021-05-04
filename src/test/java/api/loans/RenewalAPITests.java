@@ -32,6 +32,7 @@ import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static api.support.matchers.ValidationErrorMatchers.isBlockRelatedError;
 import static api.support.utl.BlockOverridesUtils.buildOkapiHeadersWithPermissions;
 import static api.support.utl.BlockOverridesUtils.getMissingPermissions;
+import static api.support.utl.BlockOverridesUtils.getOverridableBlockNames;
 import static org.awaitility.Awaitility.waitAtMost;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.END_OF_A_DAY;
@@ -722,6 +723,7 @@ public abstract class RenewalAPITests extends APITests {
       hasMessage("loan is not renewable"),
       hasLoanPolicyIdParameter(notRenewablePolicyId),
       hasLoanPolicyNameParameter("Non Renewable Policy"))));
+    assertThat(getOverridableBlockNames(response), hasItem("renewalBlock"));
   }
 
   @Test
@@ -756,6 +758,7 @@ public abstract class RenewalAPITests extends APITests {
       hasMessage("loan is not renewable"),
       hasLoanPolicyIdParameter(notRenewablePolicyId),
       hasLoanPolicyNameParameter("Non Renewable Policy"))));
+    assertThat(getOverridableBlockNames(response), hasItem("renewalBlock"));
   }
 
   @Test
@@ -794,6 +797,7 @@ public abstract class RenewalAPITests extends APITests {
       .until(FakePubSub::getPublishedEvents, hasSize(2));
 
     assertThatPublishedLoanLogRecordEventsAreValid(response.getJson());
+    assertThat(getOverridableBlockNames(response), hasItem("renewalBlock"));
   }
 
   @Test
@@ -814,6 +818,7 @@ public abstract class RenewalAPITests extends APITests {
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("item is Declared lost"),
       hasUUIDParameter("itemId", smallAngryPlanet.getId()))));
+    assertThat(getOverridableBlockNames(response), hasItem("renewalBlock"));
   }
 
   @Test
@@ -837,6 +842,7 @@ public abstract class RenewalAPITests extends APITests {
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("item is Claimed returned"),
       hasUUIDParameter("itemId", smallAngryPlanet.getId()))));
+    assertThat(getOverridableBlockNames(response), hasItem("renewalBlock"));
   }
 
   @Test
@@ -848,6 +854,7 @@ public abstract class RenewalAPITests extends APITests {
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("item is Aged to lost"),
       hasUUIDParameter("itemId", result.getItem().getId()))));
+    assertThat(getOverridableBlockNames(response), hasItem("renewalBlock"));
 
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
@@ -1607,7 +1614,7 @@ public abstract class RenewalAPITests extends APITests {
       hasUUIDParameter("itemId", item.getId()))));
 
     assertThat(response.getJson(), hasErrorWith(hasMessage(INSUFFICIENT_OVERRIDE_PERMISSIONS)));
-    assertThat(getMissingPermissions(response), hasSize(1));
+    assertThat(getMissingPermissions(response), hasSize(2));
     assertThat(getMissingPermissions(response), hasItem(OVERRIDE_PATRON_BLOCK_PERMISSION));
   }
 
