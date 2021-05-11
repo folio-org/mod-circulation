@@ -42,6 +42,8 @@ public enum CirculationErrorType {
 
   // Errors related ro renewal
   RENEWAL_VALIDATION_ERROR,
+  RENEWAL_IS_BLOCKED,
+  RENEWAL_DUE_DATE_REQUIRED_IS_BLOCKED,
 
   // Errors related to block overrides
   INSUFFICIENT_OVERRIDE_PERMISSIONS
