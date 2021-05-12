@@ -153,8 +153,7 @@ public class LoanCollectionResource extends CollectionResource {
     final ServicePointLoanLocationValidator spLoanLocationValidator =
         new ServicePointLoanLocationValidator();
 
-    final ChangeDueDateValidator changeDueDateValidator
-        = new ChangeDueDateValidator(loanRepository);
+    final ChangeDueDateValidator changeDueDateValidator = new ChangeDueDateValidator();
 
     final LoanScheduledNoticeService scheduledNoticeService
         = LoanScheduledNoticeService.using(clients);
@@ -163,9 +162,10 @@ public class LoanCollectionResource extends CollectionResource {
 
     final LoanNoticeSender loanNoticeSender = LoanNoticeSender.using(clients);
 
-    completedFuture(succeeded(new LoanAndRelatedRecords(loan)))
-      .thenCompose(larrResult ->
-        getServicePointsForLoanAndRelated(larrResult, servicePointRepository))
+
+    getExistingLoan(loanRepository , loan)
+      .thenApply(e -> e.map(existingLoan -> new LoanAndRelatedRecords(loan, existingLoan)))
+      .thenCompose(larrResult -> getServicePointsForLoanAndRelated(larrResult, servicePointRepository))
       .thenApply(this::refuseWhenNotOpenOrClosed)
       .thenApply(this::refuseWhenOpenAndNoUserId)
       .thenApply(spLoanLocationValidator::checkServicePointLoanLocation)
@@ -368,5 +368,14 @@ public class LoanCollectionResource extends CollectionResource {
         item.getStatusName());
 
     return singleValidationError(message, ITEM_ID, item.getItemId());
+  }
+
+  CompletableFuture<Result<Loan>> getExistingLoan(LoanRepository loanRepository, Loan loan) {
+    return loanRepository.getById(loan.getId())
+      .thenApplyAsync(r -> r.map(exitingLoan -> {
+        exitingLoan.setPreviousDueDate(exitingLoan.getDueDate());
+        loan.setPreviousDueDate(exitingLoan.getDueDate());
+        return exitingLoan;
+      }));
   }
 }
