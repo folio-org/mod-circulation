@@ -15,6 +15,7 @@ public class RenewBlockOverrides extends JsonBuilder implements Builder {
   private final JsonObject patronBlock;
   private final JsonObject itemLimitBlock;
   private final JsonObject renewalBlock;
+  private final JsonObject renewalDueDateRequiredBlock;
   private final String comment;
 
   @Override
@@ -35,6 +36,10 @@ public class RenewBlockOverrides extends JsonBuilder implements Builder {
 
     if (renewalBlock != null) {
       put(blockOverrides, "renewalBlock", renewalBlock);
+    }
+
+    if (renewalDueDateRequiredBlock != null) {
+      put(blockOverrides, "renewalDueDateRequiredBlock", renewalDueDateRequiredBlock);
     }
 
     put(blockOverrides, "comment", comment);
