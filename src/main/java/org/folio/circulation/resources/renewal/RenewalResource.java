@@ -505,45 +505,6 @@ public abstract class RenewalResource extends Resource {
     return failedValidation(errors);
   }
 
-//  private Result<RenewalContext> renew(RenewalContext context, boolean isDueDateRequired) {
-//    Loan loan = context.getLoan();
-//    RequestQueue requestQueue = context.getRequestQueue();
-//    try {
-//      final var errors = isDueDateRequired
-//        ? validateIfRenewIsAllowedAndDueDateRequired(loan, requestQueue)
-//        : validateIfRenewIsAllowedWithoutDueDate(loan, requestQueue);
-//      final var loanPolicy = loan.getLoanPolicy();
-//
-//      if (loanPolicy.isNotLoanable() || loanPolicy.isNotRenewable()) {
-//        return failedValidation(errors);
-//      }
-//
-//      final Result<DateTime> proposedDueDateResult = calculateNewDueDate(loan, requestQueue,
-//        DateTime.now(DateTimeZone.UTC));
-//      addErrorsIfDueDateResultFailed(loan, errors, proposedDueDateResult);
-//
-//      final BlockOverrides blockOverrides = BlockOverrides.from(getObjectProperty(
-//        context.getRenewalRequest(), "overrideBlocks"));
-//
-//      if (errors.isEmpty()) {
-//        if (!blockOverrides.getPatronBlockOverride().isRequested() &&
-//          !blockOverrides.getRenewalBlockOverride().isRequested()) {
-//
-//          return proposedDueDateResult
-//            .map(dueDate -> loan.renew(dueDate, loanPolicy.getId()))
-//            .map(l -> context);
-//        }
-//        return proposedDueDateResult
-//          .map(dueDate -> loan.overrideRenewal(
-//            dueDate, loanPolicy.getId(), blockOverrides.getComment()))
-//          .map(l -> context);
-//      }
-//      return failedValidation(errors);
-//    } catch (Exception e) {
-//      return failedDueToServerError(e);
-//    }
-//  }
-
   private void addErrorsIfDueDateResultFailed(Loan loan, List<ValidationError> errors,
     Result<DateTime> proposedDueDateResult) {
 
@@ -619,52 +580,6 @@ public abstract class RenewalResource extends Resource {
             FIXED_POLICY_HAS_ALTERNATE_RENEWAL_PERIOD));
         }
       }
-    }
-
-    return errors;
-  }
-
-  private List<ValidationError> validateIfRenewIsAllowed(Loan loan, RequestQueue requestQueue) {
-    final List<ValidationError> errors = new ArrayList<>();
-    final LoanPolicy loanPolicy = loan.getLoanPolicy();
-    final Request firstRequest = getFirstRequestInQueue(requestQueue);
-
-    if (hasRecallRequest(firstRequest)) {
-      errors.add(errorForRecallRequest(
-        "items cannot be renewed when there is an active recall request",
-        firstRequest.getId()));
-    }
-
-    if (loanPolicy.isNotLoanable()) {
-      errors.add(loanPolicyValidationError(loanPolicy, "item is not loanable"));
-    } else if (loanPolicy.isNotRenewable()) {
-      errors.add(loanPolicyValidationError(loanPolicy, "loan is not renewable"));
-    }
-
-    if (isHold(firstRequest)) {
-      if (!loanPolicy.isHoldRequestRenewable()) {
-        errors.add(loanPolicyValidationError(loanPolicy, CAN_NOT_RENEW_ITEM_ERROR));
-      }
-
-      if (loanPolicy.isFixed()) {
-        if (loanPolicy.hasAlternateRenewalLoanPeriodForHolds()) {
-          errors.add(loanPolicyValidationError(loanPolicy,
-            FIXED_POLICY_HAS_ALTERNATE_RENEWAL_PERIOD_FOR_HOLDS));
-        }
-        if (loanPolicy.hasRenewalPeriod()) {
-          errors.add(loanPolicyValidationError(loanPolicy,
-            FIXED_POLICY_HAS_ALTERNATE_RENEWAL_PERIOD));
-        }
-      }
-    }
-
-    if (ITEM_STATUSES_DISALLOWED_FOR_RENEW.contains(loan.getItemStatus())) {
-      errors.add(itemByIdValidationError("item is " + loan.getItemStatusName(),
-        loan.getItemId()));
-    }
-
-    if (loanPolicy.hasReachedRenewalLimit(loan)) {
-      errors.add(loanPolicyValidationError(loanPolicy, "loan at maximum renewal number"));
     }
 
     return errors;
