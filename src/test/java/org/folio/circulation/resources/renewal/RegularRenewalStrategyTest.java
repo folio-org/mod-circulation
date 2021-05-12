@@ -1,32 +1,30 @@
 package org.folio.circulation.resources.renewal;
 
-import static api.support.matchers.ResultMatchers.hasValidationError;
-import static api.support.matchers.ResultMatchers.hasValidationErrors;
-import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.folio.circulation.domain.ItemStatus.AGED_TO_LOST;
 import static org.folio.circulation.domain.policy.Period.days;
-import static org.hamcrest.CoreMatchers.allOf;
-import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.iterableWithSize;
 import static org.joda.time.DateTime.now;
 import static org.joda.time.DateTimeZone.UTC;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.Mockito.never;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
 
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.policy.LoanPolicy;
+import org.folio.circulation.resources.context.RenewalContext;
+import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
+import org.folio.circulation.resources.handlers.error.OverridingErrorHandler;
+import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.results.Result;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -41,20 +39,23 @@ import junitparams.Parameters;
 @RunWith(JUnitParamsRunner.class)
 public class RegularRenewalStrategyTest {
   @Test
-  public void canRenewLoan() {
+  public void canRenewLoan() throws ExecutionException, InterruptedException {
     final var rollingPeriod = days(10);
     final var currentDueDate = now(UTC);
     final var expectedDueDate = currentDueDate.plus(rollingPeriod.timePeriod());
 
     final var loanPolicy = new LoanPolicyBuilder().rolling(rollingPeriod)
       .renewFromCurrentDueDate().asDomainObject();
-    final var loan = new LoanBuilder().asDomainObject().changeDueDate(currentDueDate)
+    final var loan = new LoanBuilder()
+      .withCheckoutServicePointId(UUID.randomUUID())
+      .asDomainObject().changeDueDate(currentDueDate)
       .withLoanPolicy(loanPolicy);
 
-    final var renewResult = renew(loan);
+    final var resultCompletableFuture = renew(loan, new OverridingErrorHandler(null));
 
-    assertThat(renewResult.succeeded(), is(true));
-    assertThat(renewResult.value().getDueDate().getMillis(), is(expectedDueDate.getMillis()));
+    assertThat(resultCompletableFuture.get().succeeded(), is(true));
+    assertThat(resultCompletableFuture.get().value().getDueDate().getMillis(),
+      is(expectedDueDate.getMillis()));
   }
 
   @Test
@@ -66,13 +67,20 @@ public class RegularRenewalStrategyTest {
       .changeItemStatusForItemAndLoan(AGED_TO_LOST)
       .withLoanPolicy(loanPolicy);
 
-    final var renewResult = renew(loan, recallRequest);
+    CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
+    renew(loan, recallRequest, errorHandler);
 
-    assertThat(renewResult, hasValidationErrors(
-      hasMessage("items cannot be renewed when there is an active recall request"),
-      hasMessage("item is not loanable"),
-      hasMessage("item is Aged to lost")
-    ));
+    assertEquals(3, errorHandler.getErrors().size());
+    assertTrue(errorHandler.getErrors().keySet().stream()
+      .map(ValidationErrorFailure.class::cast)
+      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(
+        "items cannot be renewed when there is an active recall request")));
+    assertTrue(errorHandler.getErrors().keySet().stream()
+      .map(ValidationErrorFailure.class::cast)
+      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason("item is not loanable")));
+    assertTrue(errorHandler.getErrors().keySet().stream()
+      .map(ValidationErrorFailure.class::cast)
+      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason("item is Aged to lost")));
   }
 
   @Test
@@ -80,32 +88,37 @@ public class RegularRenewalStrategyTest {
     final var recallRequest = new RequestBuilder().recall().asDomainObject();
     final var loanPolicy = new LoanPolicyBuilder().asDomainObject();
 
-    final var renewResult = renew(loanPolicy, recallRequest);
+    CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
+    renew(loanPolicy, recallRequest, errorHandler);
 
-    assertThat(renewResult, hasValidationError(
-      hasMessage("items cannot be renewed when there is an active recall request")));
+    assertTrue(errorHandler.getErrors().keySet().stream()
+      .map(ValidationErrorFailure.class::cast)
+      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(
+        "items cannot be renewed when there is an active recall request")));
   }
 
   @Test
   public void cannotRenewWhenItemIsNotLoanable() {
-    final var loanPolicy = new LoanPolicyBuilder().withLoanable(false)
-      .asDomainObject();
+    final var loanPolicy = new LoanPolicyBuilder().withLoanable(false).asDomainObject();
 
-    final var renewResult = renew(loanPolicy);
+    CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
+    renew(loanPolicy, errorHandler);
 
-    assertThat(renewResult, hasValidationError(
-      hasMessage("item is not loanable")));
+    assertTrue(errorHandler.getErrors().keySet().stream()
+      .map(ValidationErrorFailure.class::cast)
+      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason("item is not loanable")));
   }
 
   @Test
   public void cannotRenewWhenLoanIsNotRenewable() {
-    final var loanPolicy = new LoanPolicyBuilder().withRenewable(false)
-      .asDomainObject();
+    final var loanPolicy = new LoanPolicyBuilder().withRenewable(false).asDomainObject();
 
-    final var renewResult = renew(loanPolicy);
+    CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
+    renew(loanPolicy, errorHandler);
 
-    assertThat(renewResult, hasValidationError(
-      hasMessage("loan is not renewable")));
+    assertTrue(errorHandler.getErrors().keySet().stream()
+      .map(ValidationErrorFailure.class::cast)
+      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason("loan is not renewable")));
   }
 
   @Test
@@ -115,11 +128,13 @@ public class RegularRenewalStrategyTest {
       .withHolds(null, false, null)
       .asDomainObject();
 
-    final var renewResult = renew(loanPolicy, request);
+    CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
+    renew(loanPolicy, request, errorHandler);
 
-    assertThat(renewResult, hasValidationError(
-      hasMessage("Items with this loan policy cannot be renewed when there is an active, " +
-        "pending hold request")));
+    assertTrue(errorHandler.getErrors().keySet().stream()
+      .map(ValidationErrorFailure.class::cast)
+      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(
+        "Items with this loan policy cannot be renewed when there is an active, pending hold request")));
   }
 
   @Test
@@ -130,11 +145,13 @@ public class RegularRenewalStrategyTest {
       .withHolds(null, true, days(1))
       .asDomainObject();
 
-    final var renewResult = renew(loanPolicy, request);
+    CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
+    renew(loanPolicy, request, errorHandler);
 
-    assertThat(renewResult, hasValidationError(
-      hasMessage("Item's loan policy has fixed profile but alternative renewal " +
-        "period for holds is specified")));
+    assertTrue(errorHandler.getErrors().keySet().stream()
+      .map(ValidationErrorFailure.class::cast)
+      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(
+        "Item's loan policy has fixed profile but alternative renewal period for holds is specified")));
   }
 
   @Test
@@ -146,10 +163,13 @@ public class RegularRenewalStrategyTest {
       .withHolds(null, true, null)
       .asDomainObject();
 
-    final var renewResult = renew(loanPolicy, request);
+    CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
+    renew(loanPolicy, request, errorHandler);
 
-    assertThat(renewResult, hasValidationError(
-      hasMessage("Item's loan policy has fixed profile but renewal period is specified")));
+    assertTrue(errorHandler.getErrors().keySet().stream()
+      .map(ValidationErrorFailure.class::cast)
+      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(
+        "Item's loan policy has fixed profile but renewal period is specified")));
   }
 
   @Test
@@ -164,9 +184,13 @@ public class RegularRenewalStrategyTest {
       .withLoanPolicy(loanPolicy)
       .changeItemStatusForItemAndLoan(ItemStatus.from(itemStatus));
 
-    final var renewResult = renew(loan);
+    CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
+    renew(loan, errorHandler);
 
-    assertThat(renewResult, hasValidationError(hasMessage("item is " + itemStatus)));
+    assertTrue(errorHandler.getErrors().keySet().stream()
+      .map(ValidationErrorFailure.class::cast)
+      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(
+        "item is " + itemStatus)));
   }
 
   @Test
@@ -177,9 +201,12 @@ public class RegularRenewalStrategyTest {
     final var loan = Loan.from(new JsonObject().put("renewalCount", renewalLimit + 1))
       .withLoanPolicy(loanPolicy);
 
-    final var renewResult = renew(loan);
+    CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
+    renew(loan, errorHandler);
 
-    assertThat(renewResult, hasValidationError(hasMessage("loan at maximum renewal number")));
+    assertTrue(errorHandler.getErrors().keySet().stream()
+      .map(ValidationErrorFailure.class::cast)
+      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason("loan at maximum renewal number")));
   }
 
   @Test
@@ -187,9 +214,12 @@ public class RegularRenewalStrategyTest {
     final var loanPolicy = new LoanPolicyBuilder().rolling(days(10))
       .withRenewFrom("INVALID_RENEW_FROM").asDomainObject();
 
-    final var renewResult = renew(loanPolicy);
+    CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
+    renew(loanPolicy, errorHandler);
 
-    assertThat(renewResult, hasValidationError(hasMessage("cannot determine when to renew from")));
+    assertTrue(errorHandler.getErrors().keySet().stream()
+      .map(ValidationErrorFailure.class::cast)
+      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason("cannot determine when to renew from")));
   }
 
   @Test
@@ -204,9 +234,12 @@ public class RegularRenewalStrategyTest {
       .changeDueDate(now(UTC).plusMinutes(rollingPeriod.toMinutes() * 2))
       .withLoanPolicy(loanPolicy);
 
-    final var renewResult = renew(loan);
+    CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
+    renew(loan, errorHandler);
 
-    assertThat(renewResult, hasValidationError(hasMessage("renewal would not change the due date")));
+    assertTrue(errorHandler.getErrors().keySet().stream()
+      .map(ValidationErrorFailure.class::cast)
+      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason("renewal would not change the due date")));
   }
 
   @Test
@@ -214,13 +247,12 @@ public class RegularRenewalStrategyTest {
     final var loanPolicy = spy(new LoanPolicyBuilder()
       .withLoanable(false).asDomainObject());
 
-    final var renewResult = renew(loanPolicy);
+    CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
+    renew(loanPolicy, errorHandler);
 
-    verify(loanPolicy, never()).determineStrategy(any(), anyBoolean(), anyBoolean(), any());
-    assertThat(renewResult, hasValidationErrors(allOf(
-      iterableWithSize(1),
-      hasItem(hasMessage("item is not loanable"))
-    )));
+    assertTrue(errorHandler.getErrors().keySet().stream()
+      .map(ValidationErrorFailure.class::cast)
+      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason("item is not loanable")));
   }
 
   @Test
@@ -228,37 +260,46 @@ public class RegularRenewalStrategyTest {
     final var loanPolicy = spy(new LoanPolicyBuilder()
       .rolling(days(1)).notRenewable().asDomainObject());
 
-    final var renewResult = renew(loanPolicy);
+    CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
+    renew(loanPolicy, errorHandler);
 
-    verify(loanPolicy, never()).determineStrategy(any(), anyBoolean(), anyBoolean(), any());
-    assertThat(renewResult, hasValidationErrors(allOf(
-      iterableWithSize(1),
-      hasItem(hasMessage("loan is not renewable"))
-    )));
+    assertTrue(errorHandler.getErrors().keySet().stream()
+      .map(ValidationErrorFailure.class::cast)
+      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason("loan is not renewable")));
   }
 
-  private Result<Loan> renew(Loan loan, Request topRequest) {
-    final var requestQueue = new RequestQueue(singletonList(topRequest));
-    final var systemDate = now(UTC);
+  private CompletableFuture<Result<Loan>> renew(Loan loan, Request topRequest,
+    CirculationErrorHandler errorHandler) {
 
-    return new RenewByBarcodeResource(null).renew(loan, systemDate, requestQueue);
+    RenewalContext renewalContext = RenewalContext.create(loan, new JsonObject(), "no-user")
+      .withRequestQueue(new RequestQueue(singletonList(topRequest)));
+
+    return new RenewByBarcodeResource(null)
+      .regularRenew(renewalContext, errorHandler, now())
+      .thenApply(r -> r.map(RenewalContext::getLoan));
   }
 
-  private Result<Loan> renew(Loan loan) {
-    final var requestQueue = new RequestQueue(emptyList());
-    final var systemDate = now(UTC);
+  private CompletableFuture<Result<Loan>> renew(Loan loan, CirculationErrorHandler errorHandler) {
+    RenewalContext renewalContext = RenewalContext.create(loan, new JsonObject(), "no-user")
+      .withRequestQueue(new RequestQueue(emptyList()));
 
-    return new RenewByBarcodeResource(null).renew(loan, systemDate, requestQueue);
+    return new RenewByBarcodeResource(null)
+      .regularRenew(renewalContext, errorHandler, now())
+      .thenApply(r -> r.map(RenewalContext::getLoan));
   }
 
-  private Result<Loan> renew(LoanPolicy loanPolicy, Request topRequest) {
+  private CompletableFuture<Result<Loan>> renew(LoanPolicy loanPolicy, Request topRequest,
+    CirculationErrorHandler errorHandler) {
+
     final var loan = new LoanBuilder().asDomainObject().withLoanPolicy(loanPolicy);
 
-    return renew(loan, topRequest);
+    return renew(loan, topRequest, errorHandler);
   }
 
-  private Result<Loan> renew(LoanPolicy loanPolicy) {
+  private CompletableFuture<Result<Loan>> renew(LoanPolicy loanPolicy,
+    CirculationErrorHandler errorHandler) {
+
     final var loan = new LoanBuilder().asDomainObject().withLoanPolicy(loanPolicy);
-    return renew(loan);
+    return renew(loan, errorHandler);
   }
 }

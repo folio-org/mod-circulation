@@ -1,17 +1,20 @@
 package org.folio.circulation.domain.policy;
 
-import static api.support.matchers.FailureMatcher.hasNumberOfFailureMessages;
 import static api.support.matchers.FailureMatcher.hasValidationFailure;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
@@ -19,9 +22,13 @@ import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
+import org.folio.circulation.resources.context.RenewalContext;
+import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
+import org.folio.circulation.resources.handlers.error.OverridingErrorHandler;
 import org.folio.circulation.resources.renewal.RenewByBarcodeResource;
-import org.folio.circulation.support.results.Result;
+import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.ValidationError;
+import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
@@ -42,8 +49,6 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
   private static final String EXPECTED_REASON_OPEN_RECALL_REQUEST =
     "items cannot be renewed when there is an active recall request";
 
-  private RenewByBarcodeResource renewByBarcodeResource = new RenewByBarcodeResource(null);
-
   @Test
   public void shouldFailWhenLoanDateIsBeforeOnlyScheduleAvailable() {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
@@ -58,16 +63,18 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     DateTime renewalDate = new DateTime(2017, 12, 30, 14, 32, 21, DateTimeZone.UTC);
 
-    final Result<Loan> result = renewByBarcodeResource.renew(loan, renewalDate, new RequestQueue(Collections.emptyList()));
+    CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
+    renew(loan, renewalDate, new RequestQueue(Collections.emptyList()), errorHandler);
 
-    assertThat(result, hasValidationFailure(
-      EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES));
-
-    assertThat(result, hasNumberOfFailureMessages(1));
+    assertEquals(1, errorHandler.getErrors().size());
+    assertTrue(errorHandler.getErrors().keySet().stream()
+      .map(ValidationErrorFailure.class::cast)
+      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(
+        EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES)));
   }
 
   @Test
-  public void multipleRenewalFailuresWhenDateFallsOutsideDateRangesAndItemHasOpenRecallRequest(){
+  public void multipleRenewalFailuresWhenDateFallsOutsideDateRangesAndItemHasOpenRecallRequest() {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
       .withName("Example Fixed Schedule Loan Policy")
@@ -83,14 +90,18 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
     String requestId = UUID.randomUUID().toString();
     RequestQueue requestQueue = creteRequestQueue(requestId, RequestType.RECALL);
 
-    final Result<Loan> result = renewByBarcodeResource.renew(loan, renewalDate, requestQueue);
+    CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
+    renew(loan, renewalDate, requestQueue, errorHandler);
 
-    assertThat(result, hasValidationFailure(
-      EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES));
-
-    assertThat(result, hasValidationFailure(EXPECTED_REASON_OPEN_RECALL_REQUEST));
-
-    assertThat(result, hasNumberOfFailureMessages(2));
+    assertEquals(2, errorHandler.getErrors().size());
+    assertTrue(errorHandler.getErrors().keySet().stream()
+      .map(ValidationErrorFailure.class::cast)
+      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(
+        EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES)));
+    assertTrue(errorHandler.getErrors().keySet().stream()
+      .map(ValidationErrorFailure.class::cast)
+      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(
+        EXPECTED_REASON_OPEN_RECALL_REQUEST)));
   }
 
   @Test
@@ -107,20 +118,21 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     DateTime renewalDate = new DateTime(2019, 1, 1, 8, 10, 45, DateTimeZone.UTC);
 
-    String requestId = UUID.randomUUID().toString();
     RequestQueue requestQueue =  new RequestQueue(Collections.emptyList());
+    CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
+    renew(loan, renewalDate, requestQueue, errorHandler);
 
-
-    final Result<Loan> result = renewByBarcodeResource.renew(loan, renewalDate, requestQueue);
-
-    assertThat(result, hasValidationFailure(
-      EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES));
-
-    assertThat(result, hasNumberOfFailureMessages(1));
+    assertEquals(1, errorHandler.getErrors().size());
+    assertTrue(errorHandler.getErrors().keySet().stream()
+      .map(ValidationErrorFailure.class::cast)
+      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(
+        EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES)));
   }
 
   @Test
-  public void shouldUseOnlyScheduleAvailableWhenLoanDateFits() {
+  public void shouldUseOnlyScheduleAvailableWhenLoanDateFits()
+    throws ExecutionException, InterruptedException {
+
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
       .create())
@@ -135,14 +147,18 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
     String requestId = UUID.randomUUID().toString();
     RequestQueue requestQueue = creteRequestQueue(requestId, RequestType.PAGE);
 
-    final Result<Loan> result = renewByBarcodeResource.renew(loan, renewalDate, requestQueue);
+    CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
+    CompletableFuture<Result<Loan>> response = renew(loan, renewalDate, requestQueue, errorHandler);
 
-    assertThat(result.value().getDueDate(), is(new DateTime(2018, 12, 31, 23, 59, 59,
+    assertThat(response.get().value().getDueDate(), is(
+      new DateTime(2018, 12, 31, 23, 59, 59,
       DateTimeZone.UTC)));
   }
 
   @Test
-  public void shouldUseFirstScheduleAvailableWhenLoanDateFits() {
+  public void shouldUseFirstScheduleAvailableWhenLoanDateFits()
+    throws ExecutionException, InterruptedException {
+
     final FixedDueDateSchedule expectedSchedule = FixedDueDateSchedule.wholeMonth(2018, 2);
 
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
@@ -163,13 +179,16 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     DateTime renewalDate = new DateTime(2018, 2, 8, 11, 14, 54, DateTimeZone.UTC);
 
-    final Result<Loan> result = renewByBarcodeResource.renew(loan, renewalDate, new RequestQueue(Collections.emptyList()));
+    CompletableFuture<Result<Loan>> response = renew(loan, renewalDate,
+      new RequestQueue(Collections.emptyList()), new OverridingErrorHandler(null));
 
-    assertThat(result.value().getDueDate(), is(expectedSchedule.due));
+    assertThat(response.get().value().getDueDate(), is(expectedSchedule.due));
   }
 
   @Test
-  public void shouldUseMiddleScheduleAvailableWhenLoanDateFits() {
+  public void shouldUseMiddleScheduleAvailableWhenLoanDateFits()
+    throws ExecutionException, InterruptedException {
+
     final FixedDueDateSchedule expectedSchedule = FixedDueDateSchedule.wholeMonth(2018, 2);
 
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
@@ -185,13 +204,16 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     DateTime renewalDate = new DateTime(2018, 2, 27, 16, 23, 43, DateTimeZone.UTC);
 
-    final Result<Loan> result = renewByBarcodeResource.renew(loan, renewalDate, new RequestQueue(Collections.emptyList()));
+    CompletableFuture<Result<Loan>> response = renew(loan, renewalDate,
+      new RequestQueue(Collections.emptyList()), new OverridingErrorHandler(null));
 
-    assertThat(result.value().getDueDate(), is(expectedSchedule.due));
+    assertThat(response.get().value().getDueDate(), is(expectedSchedule.due));
   }
 
   @Test
-  public void shouldUseLastScheduleAvailableWhenLoanDateFits() {
+  public void shouldUseLastScheduleAvailableWhenLoanDateFits()
+    throws ExecutionException, InterruptedException {
+
     final FixedDueDateSchedule expectedSchedule = FixedDueDateSchedule.wholeMonth(2018, 3);
 
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
@@ -207,13 +229,16 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     DateTime renewalDate = new DateTime(2018, 3, 12, 7, 15, 23, DateTimeZone.UTC);
 
-    final Result<Loan> result = renewByBarcodeResource.renew(loan, renewalDate, new RequestQueue(Collections.emptyList()));
+    CompletableFuture<Result<Loan>> response = renew(loan, renewalDate,
+      new RequestQueue(Collections.emptyList()), new OverridingErrorHandler(null));
 
-    assertThat(result.value().getDueDate(), is(expectedSchedule.due));
+    assertThat(response.get().value().getDueDate(), is(expectedSchedule.due));
   }
 
   @Test
-  public void shouldUseAlternateScheduleWhenAvailable() {
+  public void shouldUseAlternateScheduleWhenAvailable()
+    throws ExecutionException, InterruptedException {
+
     final FixedDueDateSchedule expectedSchedule = FixedDueDateSchedule.wholeYear(2018);
 
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
@@ -232,9 +257,10 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     DateTime renewalDate = new DateTime(2018, 2, 5, 14, 22, 32, DateTimeZone.UTC);
 
-    final Result<Loan> result = renewByBarcodeResource.renew(loan, renewalDate, new RequestQueue(Collections.emptyList()));
+    CompletableFuture<Result<Loan>> renew = renew(loan, renewalDate,
+      new RequestQueue(Collections.emptyList()), new OverridingErrorHandler(null));
 
-    assertThat(result.value().getDueDate(), is(expectedSchedule.due));
+    assertThat(renew.get().value().getDueDate(), is(expectedSchedule.due));
   }
 
   @Test
@@ -312,12 +338,15 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     DateTime renewalDate = new DateTime(2017, 12, 30, 14, 32, 21, DateTimeZone.UTC);
 
-    final Result<Loan> result = renewByBarcodeResource.renew(loan, renewalDate, new RequestQueue(Collections.emptyList()));
+    CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
 
-    assertThat(result, hasValidationFailure(
-      EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES));
+    renew(loan, renewalDate, new RequestQueue(Collections.emptyList()), errorHandler);
 
-    assertThat(result, hasNumberOfFailureMessages(1));
+    assertEquals(1, errorHandler.getErrors().size());
+    assertTrue(errorHandler.getErrors().keySet().stream()
+      .map(ValidationErrorFailure.class::cast)
+      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(
+        EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES)));
   }
 
   @Test
@@ -339,10 +368,12 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     DateTime renewalDate = new DateTime(2018, 1, 3, 8, 12, 32, DateTimeZone.UTC);
 
-    final Result<Loan> result = renewByBarcodeResource.renew(loan, renewalDate, new RequestQueue(Collections.emptyList()));
+    CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
+    renew(loan, renewalDate, new RequestQueue(Collections.emptyList()), errorHandler);
 
-    assertThat(result,
-      hasValidationFailure("renewal would not change the due date"));
+    assertTrue(errorHandler.getErrors().keySet().stream()
+      .map(ValidationErrorFailure.class::cast)
+      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason("renewal would not change the due date")));
   }
 
   @Test
@@ -364,14 +395,17 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     DateTime renewalDate = new DateTime(2018, 1, 3, 8, 12, 32, DateTimeZone.UTC);
 
-    final Result<Loan> result = renewByBarcodeResource.renew(loan, renewalDate, new RequestQueue(Collections.emptyList()));
+    CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
+    renew(loan, renewalDate, new RequestQueue(Collections.emptyList()), errorHandler);
 
-    assertThat(result,
-      hasValidationFailure("renewal would not change the due date"));
+    assertTrue(errorHandler.getErrors().keySet().stream()
+      .map(ValidationErrorFailure.class::cast)
+      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason("renewal would not change the due date")));
   }
 
   @Test
-  public void shouldFailWhenRenewalWouldMeanEarlierDueDateAndReachedRenewalLimit() {
+  public void shouldFailWhenRenewalWouldMeanEarlierDueDateAndReachedRenewalLimit()
+    throws ExecutionException, InterruptedException {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
       .withName("Example Fixed Schedule Loan Policy")
@@ -389,24 +423,30 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
       .asDomainObject()
       .withLoanPolicy(loanPolicy);
 
-    loan = renewByBarcodeResource.renew(loan,
-      new DateTime(2018, 2, 1, 11, 23, 43, DateTimeZone.UTC), new RequestQueue(Collections.emptyList())).value();
+    CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
+
+    loan = renew(loan,
+      new DateTime(2018, 2, 1, 11, 23, 43, DateTimeZone.UTC),
+      new RequestQueue(Collections.emptyList()), errorHandler).get().value();
 
     DateTime renewalDate = new DateTime(2018, 3, 5, 8, 12, 32, DateTimeZone.UTC);
 
-    final Result<Loan> result = renewByBarcodeResource.renew(loan, renewalDate, new RequestQueue(Collections.emptyList()));
+    renew(loan, renewalDate, new RequestQueue(Collections.emptyList()), errorHandler);
 
-    assertThat(result, hasValidationFailure(
-      EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES));
+    assertTrue(errorHandler.getErrors().keySet().stream()
+      .map(ValidationErrorFailure.class::cast)
+      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES)));
 
-    assertThat(result, hasValidationFailure(
-      "loan at maximum renewal number"));
+    assertTrue(errorHandler.getErrors().keySet().stream()
+      .map(ValidationErrorFailure.class::cast)
+      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason("loan at maximum renewal number")));
 
-    assertThat(result, hasNumberOfFailureMessages(2));
+    assertEquals(2, errorHandler.getErrors().size());
   }
 
   @Test
-  public void multipleRenewalFailuresWhenLoanHasReachedMaximumNumberOfRenewalsAndOpenRecallRequest(){
+  public void multipleRenewalFailuresWhenLoanHasReachedMaximumNumberOfRenewalsAndOpenRecallRequest()
+    throws ExecutionException, InterruptedException {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
       .withName("Example Fixed Schedule Loan Policy")
@@ -424,26 +464,27 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
       .asDomainObject()
       .withLoanPolicy(loanPolicy);
 
-    loan = renewByBarcodeResource.renew(loan,
-      new DateTime(2018, 2, 1, 11, 23, 43, DateTimeZone.UTC), new RequestQueue(Collections.emptyList())).value();
+    CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
+    loan = renew(loan, new DateTime(2018, 2, 1, 11, 23, 43, DateTimeZone.UTC),
+      new RequestQueue(Collections.emptyList()), errorHandler).get().value();
 
     DateTime renewalDate = new DateTime(2018, 3, 5, 8, 12, 32, DateTimeZone.UTC);
-
 
     String requestId = UUID.randomUUID().toString();
     RequestQueue requestQueue = creteRequestQueue(requestId, RequestType.RECALL);
 
-    final Result<Loan> result = renewByBarcodeResource.renew(loan, renewalDate, requestQueue);
+    renew(loan, renewalDate, requestQueue, errorHandler);
 
-    assertThat(result, hasValidationFailure(
-      EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES));
-
-    assertThat(result, hasValidationFailure(
-      "loan at maximum renewal number"));
-
-    assertThat(result, hasValidationFailure(EXPECTED_REASON_OPEN_RECALL_REQUEST));
-
-    assertThat(result, hasNumberOfFailureMessages(3));
+    assertTrue(errorHandler.getErrors().keySet().stream()
+      .map(ValidationErrorFailure.class::cast)
+      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(
+        EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES)));
+    assertTrue(errorHandler.getErrors().keySet().stream()
+      .map(ValidationErrorFailure.class::cast)
+      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason("loan at maximum renewal number")));
+    assertTrue(errorHandler.getErrors().keySet().stream()
+      .map(ValidationErrorFailure.class::cast)
+      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(EXPECTED_REASON_OPEN_RECALL_REQUEST)));
   }
 
   @Test
@@ -462,10 +503,13 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     DateTime renewalDate = new DateTime(2018, 4, 1, 6, 34, 21, DateTimeZone.UTC);
 
-    final Result<Loan> result = renewByBarcodeResource.renew(loan, renewalDate, new RequestQueue(Collections.emptyList()));
+    CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
+    renew(loan, renewalDate, new RequestQueue(Collections.emptyList()), errorHandler);
 
-    assertThat(result, hasValidationFailure(
-      EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES));
+    assertTrue(errorHandler.getErrors().keySet().stream()
+      .map(ValidationErrorFailure.class::cast)
+      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(
+        EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES)));
   }
 
   @Test
@@ -483,10 +527,12 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     DateTime renewalDate = new DateTime(2018, 2, 18, 6, 34, 21, DateTimeZone.UTC);
 
-    final Result<Loan> result = renewByBarcodeResource.renew(loan, renewalDate, new RequestQueue(Collections.emptyList()));
+    CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
+    renew(loan, renewalDate, new RequestQueue(Collections.emptyList()), errorHandler);
 
-    assertThat(result, hasValidationFailure(
-      EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES));
+    assertTrue(errorHandler.getErrors().keySet().stream()
+      .map(ValidationErrorFailure.class::cast)
+      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES)));
   }
 
   @Test
@@ -502,10 +548,12 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     DateTime renewalDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
 
-    final Result<Loan> result = renewByBarcodeResource.renew(loan, renewalDate, new RequestQueue(Collections.emptyList()));
+    CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
+    renew(loan, renewalDate, new RequestQueue(Collections.emptyList()), errorHandler);
 
-    assertThat(result, hasValidationFailure(
-      EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES));
+    assertTrue(errorHandler.getErrors().keySet().stream()
+      .map(ValidationErrorFailure.class::cast)
+      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES)));
   }
 
   @Test
@@ -566,5 +614,16 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
     RequestQueue requestQueue = new RequestQueue(new ArrayList<>());
     requestQueue.add(Request.from(requestRepresentation));
     return requestQueue;
+  }
+
+  private CompletableFuture<Result<Loan>> renew(Loan loan, DateTime renewalDate,
+    RequestQueue requestQueue, CirculationErrorHandler errorHandler) {
+
+    RenewalContext renewalContext = RenewalContext.create(loan, new JsonObject(), "no-user")
+      .withRequestQueue(requestQueue);
+
+    return new RenewByBarcodeResource(null)
+      .regularRenew(renewalContext, errorHandler, renewalDate)
+      .thenApply(r -> r.map(RenewalContext::getLoan));
   }
 }

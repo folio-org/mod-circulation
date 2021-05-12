@@ -34,7 +34,6 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTime
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getObjectProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
-import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
@@ -260,11 +259,16 @@ public abstract class RenewalResource extends Resource {
       return completedFuture(succeeded(renewalContext));
     }
 
-    return isRenewalBlockOverrideRequested
-      ? renewThroughOverride(renewalContext)
-          .thenApply(r -> errorHandler.handleValidationResult(r, RENEWAL_VALIDATION_ERROR,
-            renewalContext))
-      : regularRenew(renewalContext, clients, errorHandler);
+    if (isRenewalBlockOverrideRequested) {
+      return renewThroughOverride(renewalContext)
+        .thenApply(r -> errorHandler.handleValidationResult(r, RENEWAL_VALIDATION_ERROR,
+          renewalContext));
+    }
+    final ClosedLibraryStrategyService strategyService = ClosedLibraryStrategyService.using(
+      clients, DateTime.now(DateTimeZone.UTC), true);
+
+    return regularRenew(renewalContext, errorHandler, DateTime.now(DateTimeZone.UTC))
+      .thenCompose(r -> r.after(strategyService::applyClosedLibraryDueDateManagement));
   }
 
   private HttpResponse toResponse(JsonObject body) {
@@ -433,10 +437,7 @@ public abstract class RenewalResource extends Resource {
   }
 
   public CompletableFuture<Result<RenewalContext>> regularRenew(RenewalContext context,
-    Clients clients, CirculationErrorHandler errorHandler) {
-
-    final ClosedLibraryStrategyService strategyService =
-      ClosedLibraryStrategyService.using(clients, DateTime.now(DateTimeZone.UTC), true);
+    CirculationErrorHandler errorHandler, DateTime renewDate) {
 
     return completedFuture(
       validateIfRenewIsAllowed(context, false)
@@ -445,10 +446,9 @@ public abstract class RenewalResource extends Resource {
       .next(ctx -> validateIfRenewIsAllowed(context, true)
         .mapFailure(failure -> errorHandler.handleValidationError(failure,
           RENEWAL_DUE_DATE_REQUIRED_IS_BLOCKED, context)))
-      .next(this::renew)
+      .next(ctx -> renew(ctx, renewDate))
         .mapFailure(failure -> errorHandler.handleValidationError(failure,
-          RENEWAL_VALIDATION_ERROR, context)))
-      .thenCompose(r -> r.after(strategyService::applyClosedLibraryDueDateManagement));
+          RENEWAL_VALIDATION_ERROR, context)));
   }
 
   private Result<RenewalContext> validateIfRenewIsAllowed(RenewalContext context,
@@ -476,13 +476,13 @@ public abstract class RenewalResource extends Resource {
     }
   }
 
-  private Result<RenewalContext> renew(RenewalContext context) {
+  private Result<RenewalContext> renew(RenewalContext context, DateTime renewDate) {
     final var loan = context.getLoan();
     final var requestQueue = context.getRequestQueue();
     final var loanPolicy = loan.getLoanPolicy();
 
     final Result<DateTime> proposedDueDateResult = calculateNewDueDate(loan, requestQueue,
-      DateTime.now(DateTimeZone.UTC));
+      renewDate);
     final List<ValidationError> errors = new ArrayList<>();
     addErrorsIfDueDateResultFailed(loan, errors, proposedDueDateResult);
 
@@ -544,36 +544,6 @@ public abstract class RenewalResource extends Resource {
 //    }
 //  }
 
-  public Result<Loan> renew(Loan loan, DateTime systemDate, RequestQueue requestQueue) {
-
-    //TODO: Create HttpResult wrapper that traps exceptions
-    try {
-//      final var errors = isDueDateRequired
-//        ? validateIfRenewIsAllowedAndDueDateRequired(loan, requestQueue)
-//        : validateIfRenewIsAllowedWithoutDueDate(loan, requestQueue);
-      final List<ValidationError> errors = validateIfRenewIsAllowed(loan, requestQueue);
-      final LoanPolicy loanPolicy = loan.getLoanPolicy();
-
-      if (loanPolicy.isNotLoanable() || loanPolicy.isNotRenewable()) {
-        return failedValidation(errors);
-      }
-
-      final Result<DateTime> proposedDueDateResult =
-        calculateNewDueDate(loan, requestQueue, systemDate);
-
-      //TODO: Need a more elegent way of combining validation errors
-      addErrorsIfDueDateResultFailed(loan, errors, proposedDueDateResult);
-
-      if (errors.isEmpty()) {
-        return proposedDueDateResult.map(dueDate -> loan.renew(dueDate, loanPolicy.getId()));
-      } else {
-        return failedValidation(errors);
-      }
-    } catch (Exception e) {
-      return failedDueToServerError(e);
-    }
-  }
-
   private void addErrorsIfDueDateResultFailed(Loan loan, List<ValidationError> errors,
     Result<DateTime> proposedDueDateResult) {
 
@@ -588,7 +558,9 @@ public abstract class RenewalResource extends Resource {
     }
   }
 
-  private Result<DateTime> calculateNewDueDate(Loan loan, RequestQueue requestQueue, DateTime systemDate) {
+  private Result<DateTime> calculateNewDueDate(Loan loan, RequestQueue requestQueue,
+    DateTime systemDate) {
+
     final var loanPolicy = loan.getLoanPolicy();
     final var isRenewalWithHoldRequest = isHold(getFirstRequestInQueue(requestQueue));
 
