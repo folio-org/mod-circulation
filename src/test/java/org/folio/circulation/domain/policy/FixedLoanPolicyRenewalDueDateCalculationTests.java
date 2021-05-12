@@ -13,8 +13,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
@@ -130,9 +128,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
   }
 
   @Test
-  public void shouldUseOnlyScheduleAvailableWhenLoanDateFits()
-    throws ExecutionException, InterruptedException {
-
+  public void shouldUseOnlyScheduleAvailableWhenLoanDateFits() {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
       .create())
@@ -148,17 +144,15 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
     RequestQueue requestQueue = creteRequestQueue(requestId, RequestType.PAGE);
 
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
-    CompletableFuture<Result<Loan>> response = renew(loan, renewalDate, requestQueue, errorHandler);
+    Result<Loan> result = renew(loan, renewalDate, requestQueue, errorHandler);
 
-    assertThat(response.get().value().getDueDate(), is(
+    assertThat(result.value().getDueDate(), is(
       new DateTime(2018, 12, 31, 23, 59, 59,
       DateTimeZone.UTC)));
   }
 
   @Test
-  public void shouldUseFirstScheduleAvailableWhenLoanDateFits()
-    throws ExecutionException, InterruptedException {
-
+  public void shouldUseFirstScheduleAvailableWhenLoanDateFits() {
     final FixedDueDateSchedule expectedSchedule = FixedDueDateSchedule.wholeMonth(2018, 2);
 
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
@@ -179,16 +173,14 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     DateTime renewalDate = new DateTime(2018, 2, 8, 11, 14, 54, DateTimeZone.UTC);
 
-    CompletableFuture<Result<Loan>> response = renew(loan, renewalDate,
+    Result<Loan> result = renew(loan, renewalDate,
       new RequestQueue(Collections.emptyList()), new OverridingErrorHandler(null));
 
-    assertThat(response.get().value().getDueDate(), is(expectedSchedule.due));
+    assertThat(result.value().getDueDate(), is(expectedSchedule.due));
   }
 
   @Test
-  public void shouldUseMiddleScheduleAvailableWhenLoanDateFits()
-    throws ExecutionException, InterruptedException {
-
+  public void shouldUseMiddleScheduleAvailableWhenLoanDateFits() {
     final FixedDueDateSchedule expectedSchedule = FixedDueDateSchedule.wholeMonth(2018, 2);
 
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
@@ -204,16 +196,14 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     DateTime renewalDate = new DateTime(2018, 2, 27, 16, 23, 43, DateTimeZone.UTC);
 
-    CompletableFuture<Result<Loan>> response = renew(loan, renewalDate,
-      new RequestQueue(Collections.emptyList()), new OverridingErrorHandler(null));
+    Result<Loan> result = renew(loan, renewalDate, new RequestQueue(Collections.emptyList()),
+      new OverridingErrorHandler(null));
 
-    assertThat(response.get().value().getDueDate(), is(expectedSchedule.due));
+    assertThat(result.value().getDueDate(), is(expectedSchedule.due));
   }
 
   @Test
-  public void shouldUseLastScheduleAvailableWhenLoanDateFits()
-    throws ExecutionException, InterruptedException {
-
+  public void shouldUseLastScheduleAvailableWhenLoanDateFits() {
     final FixedDueDateSchedule expectedSchedule = FixedDueDateSchedule.wholeMonth(2018, 3);
 
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
@@ -229,16 +219,14 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     DateTime renewalDate = new DateTime(2018, 3, 12, 7, 15, 23, DateTimeZone.UTC);
 
-    CompletableFuture<Result<Loan>> response = renew(loan, renewalDate,
+   Result<Loan> result = renew(loan, renewalDate,
       new RequestQueue(Collections.emptyList()), new OverridingErrorHandler(null));
 
-    assertThat(response.get().value().getDueDate(), is(expectedSchedule.due));
+    assertThat(result.value().getDueDate(), is(expectedSchedule.due));
   }
 
   @Test
-  public void shouldUseAlternateScheduleWhenAvailable()
-    throws ExecutionException, InterruptedException {
-
+  public void shouldUseAlternateScheduleWhenAvailable() {
     final FixedDueDateSchedule expectedSchedule = FixedDueDateSchedule.wholeYear(2018);
 
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
@@ -257,10 +245,10 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     DateTime renewalDate = new DateTime(2018, 2, 5, 14, 22, 32, DateTimeZone.UTC);
 
-    CompletableFuture<Result<Loan>> renew = renew(loan, renewalDate,
-      new RequestQueue(Collections.emptyList()), new OverridingErrorHandler(null));
+    Result<Loan> result = renew(loan, renewalDate, new RequestQueue(Collections.emptyList()),
+      new OverridingErrorHandler(null));
 
-    assertThat(renew.get().value().getDueDate(), is(expectedSchedule.due));
+    assertThat(result.value().getDueDate(), is(expectedSchedule.due));
   }
 
   @Test
@@ -404,8 +392,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
   }
 
   @Test
-  public void shouldFailWhenRenewalWouldMeanEarlierDueDateAndReachedRenewalLimit()
-    throws ExecutionException, InterruptedException {
+  public void shouldFailWhenRenewalWouldMeanEarlierDueDateAndReachedRenewalLimit() {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
       .withName("Example Fixed Schedule Loan Policy")
@@ -427,7 +414,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     loan = renew(loan,
       new DateTime(2018, 2, 1, 11, 23, 43, DateTimeZone.UTC),
-      new RequestQueue(Collections.emptyList()), errorHandler).get().value();
+      new RequestQueue(Collections.emptyList()), errorHandler).value();
 
     DateTime renewalDate = new DateTime(2018, 3, 5, 8, 12, 32, DateTimeZone.UTC);
 
@@ -445,8 +432,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
   }
 
   @Test
-  public void multipleRenewalFailuresWhenLoanHasReachedMaximumNumberOfRenewalsAndOpenRecallRequest()
-    throws ExecutionException, InterruptedException {
+  public void multipleRenewalFailuresWhenLoanHasReachedMaximumNumberOfRenewalsAndOpenRecallRequest() {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
       .withName("Example Fixed Schedule Loan Policy")
@@ -466,7 +452,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
     loan = renew(loan, new DateTime(2018, 2, 1, 11, 23, 43, DateTimeZone.UTC),
-      new RequestQueue(Collections.emptyList()), errorHandler).get().value();
+      new RequestQueue(Collections.emptyList()), errorHandler).value();
 
     DateTime renewalDate = new DateTime(2018, 3, 5, 8, 12, 32, DateTimeZone.UTC);
 
@@ -616,7 +602,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
     return requestQueue;
   }
 
-  private CompletableFuture<Result<Loan>> renew(Loan loan, DateTime renewalDate,
+  private Result<Loan> renew(Loan loan, DateTime renewalDate,
     RequestQueue requestQueue, CirculationErrorHandler errorHandler) {
 
     RenewalContext renewalContext = RenewalContext.create(loan, new JsonObject(), "no-user")
@@ -624,6 +610,6 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     return new RenewByBarcodeResource(null)
       .regularRenew(renewalContext, errorHandler, renewalDate)
-      .thenApply(r -> r.map(RenewalContext::getLoan));
+      .map(RenewalContext::getLoan);
   }
 }
