@@ -57,7 +57,7 @@ import api.support.builders.ItemBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
-import api.support.builders.RenewBlockOverrideBuilder;
+import api.support.builders.RenewalDueDateRequiredBlockOverrideBuilder;
 import api.support.builders.RenewBlockOverrides;
 import api.support.builders.RenewByBarcodeRequestBuilder;
 import api.support.fakes.FakePubSub;
@@ -446,7 +446,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
       .withOverrideBlocks(
         new RenewBlockOverrides()
           .withRenewalBlock(
-            new RenewBlockOverrideBuilder()
+            new RenewalDueDateRequiredBlockOverrideBuilder()
               .withDueDate(null)
               .create())
           .withComment(OVERRIDE_COMMENT)
@@ -806,7 +806,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
         .forUser(result.getUser())
         .withOverrideBlocks(
           new RenewBlockOverrides()
-            .withRenewalBlock(new RenewBlockOverrideBuilder()
+            .withRenewalBlock(new RenewalDueDateRequiredBlockOverrideBuilder()
               .create())
             .withPatronBlock(new JsonObject())
             .withComment(OVERRIDE_COMMENT)
@@ -831,7 +831,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
         .forUser(result.getUser())
         .withOverrideBlocks(
           new RenewBlockOverrides()
-            .withRenewalBlock(new RenewBlockOverrideBuilder().create())
+            .withRenewalBlock(new RenewalDueDateRequiredBlockOverrideBuilder().create())
             .withPatronBlock(new JsonObject())
             .withComment(OVERRIDE_COMMENT).create()));
 
@@ -857,7 +857,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
         .withOverrideBlocks(
           new RenewBlockOverrides()
             .withPatronBlock(new JsonObject())
-            .withRenewalBlock(new RenewBlockOverrideBuilder().create())
+            .withRenewalBlock(new RenewalDueDateRequiredBlockOverrideBuilder().create())
             .withComment(OVERRIDE_COMMENT).create()), okapiHeaders).getJson();
 
     verifyRenewedLoan(result.getItem(), result.getUser(), renewedLoan);

@@ -22,7 +22,7 @@ import org.joda.time.DateTime;
 import api.support.MultipleJsonRecords;
 import api.support.RestAssuredClient;
 import api.support.builders.LoanBuilder;
-import api.support.builders.RenewBlockOverrideBuilder;
+import api.support.builders.RenewalDueDateRequiredBlockOverrideBuilder;
 import api.support.builders.RenewBlockOverrides;
 import api.support.builders.RenewByBarcodeRequestBuilder;
 import api.support.builders.RenewByIdRequestBuilder;
@@ -275,17 +275,19 @@ public class LoansFixture {
       .forUser(user)
       .withOverrideBlocks(
         new RenewBlockOverrides()
-          .withRenewalBlock(createRenewBlockOverride(dueDate))
+          .withRenewalDueDateRequiredBlock(createRenewalDueDateRequiredBlockOverride(dueDate))
           .withComment(comment)
           .create());
   }
 
-  private JsonObject createRenewBlockOverride(String dueDate) {
-    RenewBlockOverrideBuilder renewBlockOverrideBuilder = new RenewBlockOverrideBuilder();
+  private JsonObject createRenewalDueDateRequiredBlockOverride(String dueDate) {
+    RenewalDueDateRequiredBlockOverrideBuilder renewalDueDateRequiredBlockOverrideBuilder =
+      new RenewalDueDateRequiredBlockOverrideBuilder();
     if (dueDate != null) {
-      renewBlockOverrideBuilder = renewBlockOverrideBuilder.withDueDate(DateTime.parse(dueDate));
+      renewalDueDateRequiredBlockOverrideBuilder = renewalDueDateRequiredBlockOverrideBuilder
+        .withDueDate(DateTime.parse(dueDate));
     }
 
-    return renewBlockOverrideBuilder.create();
+    return renewalDueDateRequiredBlockOverrideBuilder.create();
   }
 }

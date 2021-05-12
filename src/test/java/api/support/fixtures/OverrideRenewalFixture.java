@@ -7,7 +7,7 @@ import static api.support.utl.BlockOverridesUtils.buildOkapiHeadersWithPermissio
 import java.util.UUID;
 
 import api.support.RestAssuredClient;
-import api.support.builders.RenewBlockOverrideBuilder;
+import api.support.builders.RenewalDueDateRequiredBlockOverrideBuilder;
 import api.support.builders.RenewBlockOverrides;
 import api.support.dto.Item;
 import api.support.dto.OverrideRenewal;
@@ -42,7 +42,7 @@ public final class OverrideRenewalFixture {
       .overrideBlocks(
         new RenewBlockOverrides()
           .withRenewalBlock(
-            new RenewBlockOverrideBuilder()
+            new RenewalDueDateRequiredBlockOverrideBuilder()
               .create())
           .withComment("Override renewal"))
       .servicePointId(servicePointId.toString())
