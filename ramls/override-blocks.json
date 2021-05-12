@@ -31,6 +31,11 @@
     "renewalBlock": {
       "description": "Renewal block",
       "type": "object",
+      "additionalProperties": false
+    },
+    "renewalDueDateRequiredBlock": {
+      "description": "Renewal due date required block",
+      "type": "object",
       "properties": {
         "dueDate": {
           "description": "Due date for a new loan",

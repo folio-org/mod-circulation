@@ -264,10 +264,11 @@ public abstract class RenewalResource extends Resource {
         .thenApply(r -> errorHandler.handleValidationResult(r, RENEWAL_VALIDATION_ERROR,
           renewalContext));
     }
+    DateTime systemTime = DateTime.now(DateTimeZone.UTC);
     final ClosedLibraryStrategyService strategyService = ClosedLibraryStrategyService.using(
-      clients, DateTime.now(DateTimeZone.UTC), true);
+      clients, systemTime, true);
 
-    return regularRenew(renewalContext, errorHandler, DateTime.now(DateTimeZone.UTC))
+    return regularRenew(renewalContext, errorHandler, systemTime)
       .after(strategyService::applyClosedLibraryDueDateManagement);
   }
 
