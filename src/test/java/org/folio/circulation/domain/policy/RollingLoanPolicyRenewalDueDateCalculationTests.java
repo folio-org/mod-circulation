@@ -1,5 +1,31 @@
 package org.folio.circulation.domain.policy;
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+
+import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.Request;
+import org.folio.circulation.domain.RequestQueue;
+import org.folio.circulation.domain.RequestType;
+import org.folio.circulation.resources.context.RenewalContext;
+import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
+import org.folio.circulation.resources.handlers.error.OverridingErrorHandler;
+import org.folio.circulation.resources.renewal.RenewByBarcodeResource;
+import org.folio.circulation.support.ValidationErrorFailure;
+import org.folio.circulation.support.results.Result;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 import api.support.builders.FixedDueDateSchedule;
 import api.support.builders.FixedDueDateSchedulesBuilder;
 import api.support.builders.LoanBuilder;
@@ -7,25 +33,6 @@ import api.support.builders.LoanPolicyBuilder;
 import io.vertx.core.json.JsonObject;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
-import org.folio.circulation.domain.Loan;
-import org.folio.circulation.domain.Request;
-import org.folio.circulation.domain.RequestQueue;
-import org.folio.circulation.domain.RequestType;
-import org.folio.circulation.resources.renewal.RenewByBarcodeResource;
-import org.folio.circulation.support.results.Result;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.UUID;
-
-import static api.support.matchers.FailureMatcher.hasNumberOfFailureMessages;
-import static api.support.matchers.FailureMatcher.hasValidationFailure;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
 
 @RunWith(JUnitParamsRunner.class)
 public class RollingLoanPolicyRenewalDueDateCalculationTests {
@@ -36,8 +43,6 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
   private static final String EXPECTED_REASON_OPEN_RECALL_REQUEST =
     "items cannot be renewed when there is an active recall request";
 
-  private RenewByBarcodeResource renewByBarcodeResource = new RenewByBarcodeResource(null);
-
   @Test
   @Parameters({
     "1",
@@ -45,7 +50,9 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
     "12",
     "15"
   })
-  public void shouldApplyMonthlyRollingPolicy(int duration) {
+  public void shouldApplyMonthlyRollingPolicy(int duration)
+    throws ExecutionException, InterruptedException {
+
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .rolling(Period.months(duration))
       .renewFromSystemDate()
@@ -58,9 +65,10 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     DateTime systemDate = new DateTime(2018, 6, 1, 21, 32, 11, DateTimeZone.UTC);
 
-    final Result<Loan> calculationResult = renewByBarcodeResource.renew(loan, systemDate, new RequestQueue(Collections.emptyList()));
+    CompletableFuture<Result<Loan>> response = renew(loan, systemDate,
+      new RequestQueue(Collections.emptyList()), new OverridingErrorHandler(null));
 
-    assertThat(calculationResult.value().getDueDate(), is(systemDate.plusMonths(duration)));
+    assertThat(response.get().value().getDueDate(), is(systemDate.plusMonths(duration)));
   }
 
   @Test
@@ -71,7 +79,8 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
     "4",
     "5"
   })
-  public void shouldApplyWeeklyRollingPolicy(int duration) {
+  public void shouldApplyWeeklyRollingPolicy(int duration)
+    throws ExecutionException, InterruptedException {
 
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .rolling(Period.weeks(duration))
@@ -85,9 +94,10 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     DateTime systemDate = new DateTime(2018, 6, 1, 21, 32, 11, DateTimeZone.UTC);
 
-    final Result<Loan> calculationResult = renewByBarcodeResource.renew(loan, systemDate, new RequestQueue(Collections.emptyList()));
+    CompletableFuture<Result<Loan>> response = renew(loan, systemDate,
+      new RequestQueue(Collections.emptyList()), new OverridingErrorHandler(null));
 
-    assertThat(calculationResult.value().getDueDate(), is(systemDate.plusWeeks(duration)));
+    assertThat(response.get().value().getDueDate(), is(systemDate.plusWeeks(duration)));
   }
 
   @Test
@@ -99,7 +109,8 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
     "30",
     "100"
   })
-  public void shouldApplyDailyRollingPolicy(int duration) {
+  public void shouldApplyDailyRollingPolicy(int duration)
+    throws ExecutionException, InterruptedException {
 
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .rolling(Period.days(duration))
@@ -113,9 +124,10 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     DateTime systemDate = new DateTime(2018, 6, 1, 21, 32, 11, DateTimeZone.UTC);
 
-    final Result<Loan> calculationResult = renewByBarcodeResource.renew(loan, systemDate, new RequestQueue(Collections.emptyList()));
+    CompletableFuture<Result<Loan>> response = renew(loan, systemDate,
+      new RequestQueue(Collections.emptyList()), new OverridingErrorHandler(null));
 
-    assertThat(calculationResult.value().getDueDate(), is(systemDate.plusDays(duration)));
+    assertThat(response.get().value().getDueDate(), is(systemDate.plusDays(duration)));
   }
 
   @Test
@@ -127,7 +139,8 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
     "60",
     "24"
   })
-  public void shouldApplyHourlyRollingPolicy(int duration) {
+  public void shouldApplyHourlyRollingPolicy(int duration)
+    throws ExecutionException, InterruptedException {
 
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .rolling(Period.hours(duration))
@@ -141,9 +154,10 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     DateTime systemDate = new DateTime(2018, 6, 1, 21, 32, 11, DateTimeZone.UTC);
 
-    final Result<Loan> calculationResult = renewByBarcodeResource.renew(loan, systemDate, new RequestQueue(Collections.emptyList()));
+    CompletableFuture<Result<Loan>> response = renew(loan, systemDate,
+      new RequestQueue(Collections.emptyList()), new OverridingErrorHandler(null));
 
-    assertThat(calculationResult.value().getDueDate(), is(systemDate.plusHours(duration)));
+    assertThat(response.get().value().getDueDate(), is(systemDate.plusHours(duration)));
   }
 
   @Test
@@ -154,7 +168,9 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
     "60",
     "200"
   })
-  public void shouldApplyMinuteIntervalRollingPolicy(int duration) {
+  public void shouldApplyMinuteIntervalRollingPolicy(int duration)
+    throws ExecutionException, InterruptedException {
+
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .rolling(Period.minutes(duration))
       .renewFromSystemDate()
@@ -167,9 +183,10 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     DateTime systemDate = new DateTime(2018, 6, 1, 21, 32, 11, DateTimeZone.UTC);
 
-    final Result<Loan> calculationResult = renewByBarcodeResource.renew(loan, systemDate, new RequestQueue(Collections.emptyList()));
+    CompletableFuture<Result<Loan>> response = renew(loan, systemDate,
+      new RequestQueue(Collections.emptyList()), new OverridingErrorHandler(null));
 
-    assertThat(calculationResult.value().getDueDate(), is(systemDate.plusMinutes(duration)));
+    assertThat(response.get().value().getDueDate(), is(systemDate.plusMinutes(duration)));
   }
 
   @Test
@@ -183,10 +200,13 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     Loan loan = loanFor(loanDate, loanDate, loanPolicy);
 
-    final Result<Loan> result = renewByBarcodeResource.renew(loan, DateTime.now(), new RequestQueue(Collections.emptyList()));
+    CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
+    renew(loan, DateTime.now(), new RequestQueue(Collections.emptyList()), errorHandler);
 
-    assertThat(result, hasValidationFailure(
-      "the interval \"Unknown\" in the loan policy is not recognised"));
+    assertTrue(errorHandler.getErrors().keySet().stream()
+      .map(ValidationErrorFailure.class::cast)
+      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(
+        "the interval \"Unknown\" in the loan policy is not recognised")));
   }
 
   @Test
@@ -204,10 +224,13 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     Loan loan = loanFor(loanDate, loanDate, loanPolicy);
 
-    final Result<Loan> result = renewByBarcodeResource.renew(loan, DateTime.now(), new RequestQueue(Collections.emptyList()));
+    CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
+    renew(loan, DateTime.now(), new RequestQueue(Collections.emptyList()), errorHandler);
 
-    assertThat(result, hasValidationFailure(
-      "the loan period in the loan policy is not recognised"));
+    assertTrue(errorHandler.getErrors().keySet().stream()
+      .map(ValidationErrorFailure.class::cast)
+      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(
+        "the loan period in the loan policy is not recognised")));
   }
 
   @Test
@@ -225,10 +248,12 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     Loan loan = loanFor(loanDate, loanDate, loanPolicy);
 
-    final Result<Loan> result = renewByBarcodeResource.renew(loan, DateTime.now(), new RequestQueue(Collections.emptyList()));
+    CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
+    renew(loan, DateTime.now(), new RequestQueue(Collections.emptyList()), errorHandler);
 
-    assertThat(result, hasValidationFailure(
-      "the loan period in the loan policy is not recognised"));
+    assertTrue(errorHandler.getErrors().keySet().stream()
+      .map(ValidationErrorFailure.class::cast)
+      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason("the loan period in the loan policy is not recognised")));
   }
 
   @Test
@@ -246,10 +271,13 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     Loan loan = loanFor(loanDate, loanDate, loanPolicy);
 
-    final Result<Loan> result = renewByBarcodeResource.renew(loan, DateTime.now(), new RequestQueue(Collections.emptyList()));
+    CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
+    renew(loan, DateTime.now(), new RequestQueue(Collections.emptyList()), errorHandler);
 
-    assertThat(result, hasValidationFailure(
-      "the loan period in the loan policy is not recognised"));
+    assertTrue(errorHandler.getErrors().keySet().stream()
+      .map(ValidationErrorFailure.class::cast)
+      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(
+        "the loan period in the loan policy is not recognised")));
   }
 
   @Test
@@ -269,14 +297,18 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     Loan loan = loanFor(loanDate, loanDate, loanPolicy);
 
-    final Result<Loan> result = renewByBarcodeResource.renew(loan, DateTime.now(), new RequestQueue(Collections.emptyList()));
+    CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
+    renew(loan, DateTime.now(), new RequestQueue(Collections.emptyList()), errorHandler);
 
-    assertThat(result, hasValidationFailure(
-      String.format("the duration \"%s\" in the loan policy is invalid", duration)));
+    assertTrue(errorHandler.getErrors().keySet().stream()
+      .map(ValidationErrorFailure.class::cast)
+      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(
+        String.format("the duration \"%s\" in the loan policy is invalid", duration))));
   }
 
   @Test
-  public void shouldTruncateDueDateWhenWithinDueDateLimitSchedule() {
+  public void shouldTruncateDueDateWhenWithinDueDateLimitSchedule()
+    throws ExecutionException, InterruptedException {
     //TODO: Slight hack to use the same builder, the schedule is fed in later
     //TODO: Introduce builder for individual schedules
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
@@ -293,14 +325,17 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     Loan loan = loanFor(loanDate, loanDate.plusDays(15), loanPolicy);
 
-    final Result<Loan> result = renewByBarcodeResource.renew(loan, DateTime.now(), new RequestQueue(Collections.emptyList()));
+    CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
+    CompletableFuture<Result<Loan>> response = renew(loan, DateTime.now(),
+      new RequestQueue(Collections.emptyList()), errorHandler);
 
-    assertThat(result.value().getDueDate(),
+    assertThat(response.get().value().getDueDate(),
       is(new DateTime(2018, 4, 10, 23, 59, 59, DateTimeZone.UTC)));
   }
 
   @Test
-  public void shouldNotTruncateDueDateWhenWithinDueDateLimitScheduleButInitialDateIsSooner() {
+  public void shouldNotTruncateDueDateWhenWithinDueDateLimitScheduleButInitialDateIsSooner()
+    throws ExecutionException, InterruptedException {
     //TODO: Slight hack to use the same builder, the schedule is fed in later
     //TODO: Introduce builder for individual schedules
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
@@ -316,9 +351,10 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     Loan loan = loanFor(loanDate, loanDate.plusDays(6), loanPolicy);
 
-    final Result<Loan> result = renewByBarcodeResource.renew(loan, DateTime.now(), new RequestQueue(Collections.emptyList()));
+    CompletableFuture<Result<Loan>> response = renew(loan, DateTime.now(),
+      new RequestQueue(Collections.emptyList()), new OverridingErrorHandler(null));
 
-    assertThat(result.value().getDueDate(),
+    assertThat(response.get().value().getDueDate(),
       is(new DateTime(2018, 3, 23, 16, 21, 43, DateTimeZone.UTC)));
   }
 
@@ -341,12 +377,13 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     Loan loan = loanFor(loanDate, loanDate, loanPolicy);
 
-    final Result<Loan> result = renewByBarcodeResource.renew(loan, DateTime.now(), new RequestQueue(Collections.emptyList()));
+    CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
+    renew(loan, DateTime.now(), new RequestQueue(Collections.emptyList()), errorHandler);
 
-    assertThat(result, hasValidationFailure(
-      EXPECTED_REASON_DATE_FALLS_OTSIDE_DATE_RANGES));
-
-    assertThat(result, hasNumberOfFailureMessages(1));
+    assertEquals(1, errorHandler.getErrors().size());
+    assertTrue(errorHandler.getErrors().keySet().stream()
+      .map(ValidationErrorFailure.class::cast)
+      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(EXPECTED_REASON_DATE_FALLS_OTSIDE_DATE_RANGES)));
   }
 
   @Test
@@ -366,11 +403,12 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
     Loan loan = loanFor(loanDate, loanDate, loanPolicy);
 
     RequestQueue requestQueue = new RequestQueue(Collections.emptyList());
+    CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
+    renew(loan, DateTime.now(), requestQueue, errorHandler);
 
-    final Result<Loan> result = renewByBarcodeResource.renew(loan, DateTime.now(),requestQueue);
-
-    assertThat(result, hasValidationFailure(
-      EXPECTED_REASON_DATE_FALLS_OTSIDE_DATE_RANGES));
+    assertTrue(errorHandler.getErrors().keySet().stream()
+      .map(ValidationErrorFailure.class::cast)
+      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(EXPECTED_REASON_DATE_FALLS_OTSIDE_DATE_RANGES)));
   }
 
   @Test
@@ -389,15 +427,17 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     String requestId = UUID.randomUUID().toString();
     RequestQueue requestQueue = creteRequestQueue(requestId, RequestType.RECALL);
+    CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
+    renew(loan, DateTime.now(), requestQueue, errorHandler);
 
-    final Result<Loan> result = renewByBarcodeResource.renew(loan, DateTime.now(), requestQueue);
+    assertEquals(2, errorHandler.getErrors().size());
+    assertTrue(errorHandler.getErrors().keySet().stream()
+      .map(ValidationErrorFailure.class::cast)
+      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(EXPECTED_REASON_DATE_FALLS_OTSIDE_DATE_RANGES)));
 
-    assertThat(result, hasValidationFailure(
-      EXPECTED_REASON_DATE_FALLS_OTSIDE_DATE_RANGES));
-
-    assertThat(result, hasValidationFailure(EXPECTED_REASON_OPEN_RECALL_REQUEST));
-
-    assertThat(result, hasNumberOfFailureMessages(2));
+    assertTrue(errorHandler.getErrors().keySet().stream()
+      .map(ValidationErrorFailure.class::cast)
+      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(EXPECTED_REASON_OPEN_RECALL_REQUEST)));
   }
 
   @Test
@@ -420,10 +460,13 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     DateTime renewalDate = initialDueDate.minusDays(3);
 
-    final Result<Loan> result = renewByBarcodeResource.renew(loan, renewalDate, new RequestQueue(Collections.emptyList()));
+    CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
+    renew(loan, renewalDate, new RequestQueue(Collections.emptyList()), errorHandler);
 
-    assertThat(result,
-      hasValidationFailure("renewal would not change the due date"));
+    assertTrue(errorHandler.getErrors().keySet().stream()
+      .map(ValidationErrorFailure.class::cast)
+      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(
+        "renewal would not change the due date")));
   }
 
   @Test
@@ -446,10 +489,13 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     DateTime renewalDate = initialDueDate.minusDays(4);
 
-    final Result<Loan> result = renewByBarcodeResource.renew(loan, renewalDate, new RequestQueue(Collections.emptyList()));
+    CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
+    renew(loan, renewalDate, new RequestQueue(Collections.emptyList()), errorHandler);
 
-    assertThat(result,
-      hasValidationFailure("renewal would not change the due date"));
+    assertTrue(errorHandler.getErrors().keySet().stream()
+      .map(ValidationErrorFailure.class::cast)
+      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(
+        "renewal would not change the due date")));
   }
 
   private Loan loanFor(DateTime loanDate, LoanPolicy loanPolicy) {
@@ -473,5 +519,16 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
     RequestQueue requestQueue = new RequestQueue(new ArrayList<>());
     requestQueue.add(Request.from(requestRepresentation));
     return requestQueue;
+  }
+
+  private CompletableFuture<Result<Loan>> renew(Loan loan, DateTime renewalDate,
+    RequestQueue requestQueue, CirculationErrorHandler errorHandler) {
+
+    RenewalContext renewalContext = RenewalContext.create(loan, new JsonObject(), "no-user")
+      .withRequestQueue(requestQueue);
+
+    return new RenewByBarcodeResource(null)
+      .regularRenew(renewalContext, errorHandler, renewalDate)
+      .thenApply(r -> r.map(RenewalContext::getLoan));
   }
 }
