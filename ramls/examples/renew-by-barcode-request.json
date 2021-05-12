@@ -4,6 +4,7 @@
   "overrideBlocks": {
     "patronBlock": {},
     "renewalBlock":{},
+    "renewalDueDateRequiredBlock":{},
     "comment": "Comment"
   }
 }
