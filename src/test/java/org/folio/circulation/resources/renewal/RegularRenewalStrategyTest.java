@@ -13,8 +13,6 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.spy;
 
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Loan;
@@ -39,7 +37,7 @@ import junitparams.Parameters;
 @RunWith(JUnitParamsRunner.class)
 public class RegularRenewalStrategyTest {
   @Test
-  public void canRenewLoan() throws ExecutionException, InterruptedException {
+  public void canRenewLoan() {
     final var rollingPeriod = days(10);
     final var currentDueDate = now(UTC);
     final var expectedDueDate = currentDueDate.plus(rollingPeriod.timePeriod());
@@ -53,8 +51,8 @@ public class RegularRenewalStrategyTest {
 
     final var resultCompletableFuture = renew(loan, new OverridingErrorHandler(null));
 
-    assertThat(resultCompletableFuture.get().succeeded(), is(true));
-    assertThat(resultCompletableFuture.get().value().getDueDate().getMillis(),
+    assertThat(resultCompletableFuture.succeeded(), is(true));
+    assertThat(resultCompletableFuture.value().getDueDate().getMillis(),
       is(expectedDueDate.getMillis()));
   }
 
@@ -268,7 +266,7 @@ public class RegularRenewalStrategyTest {
       .anyMatch(httpFailure -> httpFailure.hasErrorWithReason("loan is not renewable")));
   }
 
-  private CompletableFuture<Result<Loan>> renew(Loan loan, Request topRequest,
+  private Result<Loan> renew(Loan loan, Request topRequest,
     CirculationErrorHandler errorHandler) {
 
     RenewalContext renewalContext = RenewalContext.create(loan, new JsonObject(), "no-user")
@@ -276,19 +274,19 @@ public class RegularRenewalStrategyTest {
 
     return new RenewByBarcodeResource(null)
       .regularRenew(renewalContext, errorHandler, now())
-      .thenApply(r -> r.map(RenewalContext::getLoan));
+      .map(RenewalContext::getLoan);
   }
 
-  private CompletableFuture<Result<Loan>> renew(Loan loan, CirculationErrorHandler errorHandler) {
+  private Result<Loan> renew(Loan loan, CirculationErrorHandler errorHandler) {
     RenewalContext renewalContext = RenewalContext.create(loan, new JsonObject(), "no-user")
       .withRequestQueue(new RequestQueue(emptyList()));
 
     return new RenewByBarcodeResource(null)
       .regularRenew(renewalContext, errorHandler, now())
-      .thenApply(r -> r.map(RenewalContext::getLoan));
+      .map(RenewalContext::getLoan);
   }
 
-  private CompletableFuture<Result<Loan>> renew(LoanPolicy loanPolicy, Request topRequest,
+  private Result<Loan> renew(LoanPolicy loanPolicy, Request topRequest,
     CirculationErrorHandler errorHandler) {
 
     final var loan = new LoanBuilder().asDomainObject().withLoanPolicy(loanPolicy);
@@ -296,7 +294,7 @@ public class RegularRenewalStrategyTest {
     return renew(loan, topRequest, errorHandler);
   }
 
-  private CompletableFuture<Result<Loan>> renew(LoanPolicy loanPolicy,
+  private Result<Loan> renew(LoanPolicy loanPolicy,
     CirculationErrorHandler errorHandler) {
 
     final var loan = new LoanBuilder().asDomainObject().withLoanPolicy(loanPolicy);

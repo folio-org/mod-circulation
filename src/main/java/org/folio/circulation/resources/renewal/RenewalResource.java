@@ -268,7 +268,7 @@ public abstract class RenewalResource extends Resource {
       clients, DateTime.now(DateTimeZone.UTC), true);
 
     return regularRenew(renewalContext, errorHandler, DateTime.now(DateTimeZone.UTC))
-      .thenCompose(r -> r.after(strategyService::applyClosedLibraryDueDateManagement));
+      .after(strategyService::applyClosedLibraryDueDateManagement);
   }
 
   private HttpResponse toResponse(JsonObject body) {
@@ -436,11 +436,10 @@ public abstract class RenewalResource extends Resource {
     return !newDueDateAfterCurrentDueDate(loan, calculateProposedDueDate(loan, systemDate));
   }
 
-  public CompletableFuture<Result<RenewalContext>> regularRenew(RenewalContext context,
+  public Result<RenewalContext> regularRenew(RenewalContext context,
     CirculationErrorHandler errorHandler, DateTime renewDate) {
 
-    return completedFuture(
-      validateIfRenewIsAllowed(context, false)
+    return validateIfRenewIsAllowed(context, false)
         .mapFailure(failure -> errorHandler.handleValidationError(failure,
           RENEWAL_IS_BLOCKED, context))
       .next(ctx -> validateIfRenewIsAllowed(context, true)
@@ -448,7 +447,7 @@ public abstract class RenewalResource extends Resource {
           RENEWAL_DUE_DATE_REQUIRED_IS_BLOCKED, context)))
       .next(ctx -> renew(ctx, renewDate))
         .mapFailure(failure -> errorHandler.handleValidationError(failure,
-          RENEWAL_VALIDATION_ERROR, context)));
+          RENEWAL_VALIDATION_ERROR, context));
   }
 
   private Result<RenewalContext> validateIfRenewIsAllowed(RenewalContext context,

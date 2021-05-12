@@ -5,7 +5,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Collections;
-import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.RequestQueue;
@@ -68,7 +67,7 @@ public class UnknownLoanPolicyProfileTests {
         "profile \"Unknown profile\" in the loan policy is not recognised")));
   }
 
-  private CompletableFuture<Result<Loan>> renew(Loan loan, DateTime renewalDate,
+  private Result<Loan> renew(Loan loan, DateTime renewalDate,
     RequestQueue requestQueue, CirculationErrorHandler errorHandler) {
 
     RenewalContext renewalContext = RenewalContext.create(loan, new JsonObject(), "no-user")
@@ -76,6 +75,6 @@ public class UnknownLoanPolicyProfileTests {
 
     return new RenewByBarcodeResource(null)
       .regularRenew(renewalContext, errorHandler, renewalDate)
-      .thenApply(r -> r.map(RenewalContext::getLoan));
+      .map(RenewalContext::getLoan);
   }
 }

@@ -8,8 +8,6 @@ import static org.junit.Assert.assertTrue;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Request;
@@ -50,9 +48,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
     "12",
     "15"
   })
-  public void shouldApplyMonthlyRollingPolicy(int duration)
-    throws ExecutionException, InterruptedException {
-
+  public void shouldApplyMonthlyRollingPolicy(int duration) {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .rolling(Period.months(duration))
       .renewFromSystemDate()
@@ -65,10 +61,10 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     DateTime systemDate = new DateTime(2018, 6, 1, 21, 32, 11, DateTimeZone.UTC);
 
-    CompletableFuture<Result<Loan>> response = renew(loan, systemDate,
+    Result<Loan> result = renew(loan, systemDate,
       new RequestQueue(Collections.emptyList()), new OverridingErrorHandler(null));
 
-    assertThat(response.get().value().getDueDate(), is(systemDate.plusMonths(duration)));
+    assertThat(result.value().getDueDate(), is(systemDate.plusMonths(duration)));
   }
 
   @Test
@@ -79,9 +75,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
     "4",
     "5"
   })
-  public void shouldApplyWeeklyRollingPolicy(int duration)
-    throws ExecutionException, InterruptedException {
-
+  public void shouldApplyWeeklyRollingPolicy(int duration) {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .rolling(Period.weeks(duration))
       .renewFromSystemDate()
@@ -94,10 +88,10 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     DateTime systemDate = new DateTime(2018, 6, 1, 21, 32, 11, DateTimeZone.UTC);
 
-    CompletableFuture<Result<Loan>> response = renew(loan, systemDate,
+    Result<Loan> result = renew(loan, systemDate,
       new RequestQueue(Collections.emptyList()), new OverridingErrorHandler(null));
 
-    assertThat(response.get().value().getDueDate(), is(systemDate.plusWeeks(duration)));
+    assertThat(result.value().getDueDate(), is(systemDate.plusWeeks(duration)));
   }
 
   @Test
@@ -109,9 +103,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
     "30",
     "100"
   })
-  public void shouldApplyDailyRollingPolicy(int duration)
-    throws ExecutionException, InterruptedException {
-
+  public void shouldApplyDailyRollingPolicy(int duration) {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .rolling(Period.days(duration))
       .renewFromSystemDate()
@@ -124,10 +116,10 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     DateTime systemDate = new DateTime(2018, 6, 1, 21, 32, 11, DateTimeZone.UTC);
 
-    CompletableFuture<Result<Loan>> response = renew(loan, systemDate,
+    Result<Loan> result = renew(loan, systemDate,
       new RequestQueue(Collections.emptyList()), new OverridingErrorHandler(null));
 
-    assertThat(response.get().value().getDueDate(), is(systemDate.plusDays(duration)));
+    assertThat(result.value().getDueDate(), is(systemDate.plusDays(duration)));
   }
 
   @Test
@@ -139,9 +131,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
     "60",
     "24"
   })
-  public void shouldApplyHourlyRollingPolicy(int duration)
-    throws ExecutionException, InterruptedException {
-
+  public void shouldApplyHourlyRollingPolicy(int duration) {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .rolling(Period.hours(duration))
       .renewFromSystemDate()
@@ -154,10 +144,10 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     DateTime systemDate = new DateTime(2018, 6, 1, 21, 32, 11, DateTimeZone.UTC);
 
-    CompletableFuture<Result<Loan>> response = renew(loan, systemDate,
+    Result<Loan> result = renew(loan, systemDate,
       new RequestQueue(Collections.emptyList()), new OverridingErrorHandler(null));
 
-    assertThat(response.get().value().getDueDate(), is(systemDate.plusHours(duration)));
+    assertThat(result.value().getDueDate(), is(systemDate.plusHours(duration)));
   }
 
   @Test
@@ -168,9 +158,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
     "60",
     "200"
   })
-  public void shouldApplyMinuteIntervalRollingPolicy(int duration)
-    throws ExecutionException, InterruptedException {
-
+  public void shouldApplyMinuteIntervalRollingPolicy(int duration) {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .rolling(Period.minutes(duration))
       .renewFromSystemDate()
@@ -183,10 +171,10 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     DateTime systemDate = new DateTime(2018, 6, 1, 21, 32, 11, DateTimeZone.UTC);
 
-    CompletableFuture<Result<Loan>> response = renew(loan, systemDate,
+    Result<Loan> result = renew(loan, systemDate,
       new RequestQueue(Collections.emptyList()), new OverridingErrorHandler(null));
 
-    assertThat(response.get().value().getDueDate(), is(systemDate.plusMinutes(duration)));
+    assertThat(result.value().getDueDate(), is(systemDate.plusMinutes(duration)));
   }
 
   @Test
@@ -307,8 +295,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
   }
 
   @Test
-  public void shouldTruncateDueDateWhenWithinDueDateLimitSchedule()
-    throws ExecutionException, InterruptedException {
+  public void shouldTruncateDueDateWhenWithinDueDateLimitSchedule() {
     //TODO: Slight hack to use the same builder, the schedule is fed in later
     //TODO: Introduce builder for individual schedules
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
@@ -326,16 +313,15 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
     Loan loan = loanFor(loanDate, loanDate.plusDays(15), loanPolicy);
 
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
-    CompletableFuture<Result<Loan>> response = renew(loan, DateTime.now(),
-      new RequestQueue(Collections.emptyList()), errorHandler);
+    Result<Loan> result = renew(loan, DateTime.now(), new RequestQueue(Collections.emptyList()),
+      errorHandler);
 
-    assertThat(response.get().value().getDueDate(),
+    assertThat(result.value().getDueDate(),
       is(new DateTime(2018, 4, 10, 23, 59, 59, DateTimeZone.UTC)));
   }
 
   @Test
-  public void shouldNotTruncateDueDateWhenWithinDueDateLimitScheduleButInitialDateIsSooner()
-    throws ExecutionException, InterruptedException {
+  public void shouldNotTruncateDueDateWhenWithinDueDateLimitScheduleButInitialDateIsSooner() {
     //TODO: Slight hack to use the same builder, the schedule is fed in later
     //TODO: Introduce builder for individual schedules
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
@@ -351,10 +337,10 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     Loan loan = loanFor(loanDate, loanDate.plusDays(6), loanPolicy);
 
-    CompletableFuture<Result<Loan>> response = renew(loan, DateTime.now(),
+    Result<Loan> result = renew(loan, DateTime.now(),
       new RequestQueue(Collections.emptyList()), new OverridingErrorHandler(null));
 
-    assertThat(response.get().value().getDueDate(),
+    assertThat(result.value().getDueDate(),
       is(new DateTime(2018, 3, 23, 16, 21, 43, DateTimeZone.UTC)));
   }
 
@@ -383,7 +369,8 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
     assertEquals(1, errorHandler.getErrors().size());
     assertTrue(errorHandler.getErrors().keySet().stream()
       .map(ValidationErrorFailure.class::cast)
-      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(EXPECTED_REASON_DATE_FALLS_OTSIDE_DATE_RANGES)));
+      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(
+        EXPECTED_REASON_DATE_FALLS_OTSIDE_DATE_RANGES)));
   }
 
   @Test
@@ -408,7 +395,8 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     assertTrue(errorHandler.getErrors().keySet().stream()
       .map(ValidationErrorFailure.class::cast)
-      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(EXPECTED_REASON_DATE_FALLS_OTSIDE_DATE_RANGES)));
+      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(
+        EXPECTED_REASON_DATE_FALLS_OTSIDE_DATE_RANGES)));
   }
 
   @Test
@@ -433,7 +421,8 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
     assertEquals(2, errorHandler.getErrors().size());
     assertTrue(errorHandler.getErrors().keySet().stream()
       .map(ValidationErrorFailure.class::cast)
-      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(EXPECTED_REASON_DATE_FALLS_OTSIDE_DATE_RANGES)));
+      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(
+        EXPECTED_REASON_DATE_FALLS_OTSIDE_DATE_RANGES)));
 
     assertTrue(errorHandler.getErrors().keySet().stream()
       .map(ValidationErrorFailure.class::cast)
@@ -521,7 +510,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
     return requestQueue;
   }
 
-  private CompletableFuture<Result<Loan>> renew(Loan loan, DateTime renewalDate,
+  private Result<Loan> renew(Loan loan, DateTime renewalDate,
     RequestQueue requestQueue, CirculationErrorHandler errorHandler) {
 
     RenewalContext renewalContext = RenewalContext.create(loan, new JsonObject(), "no-user")
@@ -529,6 +518,6 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     return new RenewByBarcodeResource(null)
       .regularRenew(renewalContext, errorHandler, renewalDate)
-      .thenApply(r -> r.map(RenewalContext::getLoan));
+      .map(RenewalContext::getLoan);
   }
 }
