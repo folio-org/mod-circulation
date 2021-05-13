@@ -723,7 +723,7 @@ public abstract class RenewalAPITests extends APITests {
       hasMessage("loan is not renewable"),
       hasLoanPolicyIdParameter(notRenewablePolicyId),
       hasLoanPolicyNameParameter("Non Renewable Policy"))));
-    assertThat(getOverridableBlockNames(response), hasItem("renewalBlock"));
+    assertThat(getOverridableBlockNames(response), hasItem("renewalDueDateRequiredBlock"));
   }
 
   @Test
@@ -758,7 +758,7 @@ public abstract class RenewalAPITests extends APITests {
       hasMessage("loan is not renewable"),
       hasLoanPolicyIdParameter(notRenewablePolicyId),
       hasLoanPolicyNameParameter("Non Renewable Policy"))));
-    assertThat(getOverridableBlockNames(response), hasItem("renewalBlock"));
+    assertThat(getOverridableBlockNames(response), hasItem("renewalDueDateRequiredBlock"));
   }
 
   @Test
@@ -797,7 +797,7 @@ public abstract class RenewalAPITests extends APITests {
       .until(FakePubSub::getPublishedEvents, hasSize(2));
 
     assertThatPublishedLoanLogRecordEventsAreValid(response.getJson());
-    assertThat(getOverridableBlockNames(response), hasItem("renewalBlock"));
+    assertThat(getOverridableBlockNames(response), hasItem("renewalDueDateRequiredBlock"));
   }
 
   @Test
