@@ -2,6 +2,7 @@ package org.folio.circulation.domain.representations.logs;
 
 import static java.util.Optional.ofNullable;
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.*;
+import static org.folio.circulation.domain.representations.logs.LogEventType.CHECK_OUT_THROUGH_OVERRIDE;
 import static org.folio.circulation.domain.representations.logs.LogEventType.CHECK_IN;
 import static org.folio.circulation.domain.representations.logs.LogEventType.CHECK_OUT;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
@@ -10,6 +11,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.LoanAction;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.UpdatedRequestPair;
 import org.folio.circulation.domain.User;
@@ -53,7 +55,9 @@ public class CirculationCheckInCheckOutLogEventMapper {
   public static String mapToCheckOutLogEventContent(LoanAndRelatedRecords loanAndRelatedRecords, User loggedInUser) {
     JsonObject logEventPayload = new JsonObject();
 
-    write(logEventPayload, LOG_EVENT_TYPE.value(), CHECK_OUT.value());
+    var logEventType = loanAndRelatedRecords.getLoan().getAction().equalsIgnoreCase(LoanAction.CHECKED_OUT_THROUGH_OVERRIDE.getValue()) ? CHECK_OUT_THROUGH_OVERRIDE : CHECK_OUT;
+
+    write(logEventPayload, LOG_EVENT_TYPE.value(), logEventType.value());
     write(logEventPayload, SERVICE_POINT_ID.value(), loanAndRelatedRecords.getLoan().getCheckoutServicePointId());
 
     populateLoanData(loanAndRelatedRecords, logEventPayload);

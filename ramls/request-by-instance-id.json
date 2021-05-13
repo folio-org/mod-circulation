@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "title": "A request for an item based on the specified instance ID",
-  "description": "Request for an item selected from the that might be at a different location or already checked out to another patron",
+  "title": "A request for any item based on the specified instance ID",
+  "description": "Request for any item selected from the instance that might be at a different location or already checked out to another patron",
   "type": "object",
   "properties": {
     "requestDate": {

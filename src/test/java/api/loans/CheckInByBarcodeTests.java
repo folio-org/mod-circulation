@@ -7,6 +7,7 @@ import static api.support.builders.ItemBuilder.INTELLECTUAL_ITEM;
 import static api.support.fakes.PublishedEvents.byEventType;
 import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.fixtures.AddressExamples.SiriusBlack;
+import static api.support.fixtures.TemplateContextMatchers.getUserContextMatchers;
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasItemBarcodeParameter;
 import static api.support.matchers.EventMatchers.isValidCheckInLogEvent;
 import static api.support.matchers.EventMatchers.isValidItemCheckedInEvent;
@@ -48,7 +49,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TimeZone;
 import java.util.UUID;
 
 import org.folio.circulation.domain.User;
@@ -76,6 +76,7 @@ import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.CqlQuery;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
+import api.support.http.UserResource;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
@@ -1144,6 +1145,51 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     assertThatPublishedLoanLogRecordEventsAreValid(checkedInLoan);
   }
 
+  @Test
+  public void availableNoticeIsSentUponCheckInWhenRequesterBarcodeWasChanged() {
+    UUID templateId = UUID.randomUUID();
+
+    JsonObject availableNoticeConfig = new NoticeConfigurationBuilder()
+      .withTemplateId(templateId)
+      .withAvailableEvent()
+      .create();
+
+    NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
+      .withName("Test policy")
+      .withLoanNotices(Collections.singletonList(availableNoticeConfig));
+
+    use(noticePolicy);
+
+    ItemResource requestedItem = itemsFixture.basedUponNod();
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    UserResource requester = usersFixture.steve();
+    DateTime requestDate = new DateTime(2019, 10, 9, 10, 0);
+
+    requestsFixture.place(new RequestBuilder()
+      .page()
+      .forItem(requestedItem)
+      .by(requester)
+      .withPickupServicePointId(pickupServicePointId)
+      .withRequestDate(requestDate));
+
+    DateTime checkInDate = new DateTime(2019, 10, 10, 12, 30);
+
+    JsonObject updatedRequesterJson = requester.getJson().put("barcode", "updated_barcode");
+    usersClient.replace(requester.getId(), updatedRequesterJson);
+
+    checkInFixture.checkInByBarcode(requestedItem, checkInDate, pickupServicePointId);
+
+    JsonObject patronNotice = waitAtMost(1, SECONDS)
+      .until(patronNoticesClient::getAll, hasSize(1))
+      .get(0);
+
+    assertThat(patronNotice, hasEmailNoticeProperties(requester.getId(), templateId,
+      getUserContextMatchers(updatedRequesterJson)));
+
+    waitAtMost(1, SECONDS)
+      .until(() -> FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
+  }
+
   private void checkPatronNoticeEvent(IndividualResource request, IndividualResource requester,
     ItemResource item, UUID expectedTemplateId) {
 
@@ -1153,7 +1199,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
 
     Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
-    noticeContextMatchers.putAll(TemplateContextMatchers.getUserContextMatchers(requester));
+    noticeContextMatchers.putAll(getUserContextMatchers(requester));
     noticeContextMatchers.putAll(TemplateContextMatchers.getItemContextMatchers(item, true));
     noticeContextMatchers.putAll(TemplateContextMatchers.getRequestContextMatchers(request));
 
