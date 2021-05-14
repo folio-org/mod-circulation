@@ -19,7 +19,6 @@ import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 import static org.folio.circulation.domain.representations.LoanProperties.BORROWER;
 import static org.folio.circulation.support.StreamToListMapper.toList;
-import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -34,22 +33,14 @@ import static org.junit.Assert.assertTrue;
 import java.net.HttpURLConnection;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import mockit.Mock;
-import mockit.MockUp;
-import mockit.integration.junit5.JMockitExtension;
 import org.awaitility.Awaitility;
-import org.folio.circulation.domain.Loan;
-import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
-import org.folio.circulation.resources.LoanCollectionResource;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher;
-import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
 import org.joda.time.Period;
 import org.joda.time.format.ISODateTimeFormat;
@@ -68,10 +59,13 @@ import api.support.http.UserResource;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
-@ExtendWith(JMockitExtension.class)
+@RunWith(MockitoJUnitRunner.class)
 public class LoanAPITests extends APITests {
+
   @Test
   public void canCreateALoan() {
     UUID id = UUID.randomUUID();
@@ -328,8 +322,6 @@ public class LoanAPITests extends APITests {
 
   @Test
   public void canCreateALoanAtASpecificLocation() {
-
-
     UUID id = UUID.randomUUID();
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
@@ -353,7 +345,8 @@ public class LoanAPITests extends APITests {
       .withLoanDate(loanDate)
       .withDueDate(dueDate);
 
-    prepareLoanMockUp(loanBuilder);
+    // Prepare loan
+    loansFixture.createLoan(loanBuilder.withUserId(userId));
 
     IndividualResource response = loansClient.createAtSpecificLocation(loanBuilder);
 
@@ -459,16 +452,6 @@ public class LoanAPITests extends APITests {
 
     assertThat("has item volume",
       item.getString("volume"), is("testVolume"));
-  }
-
-  private void prepareLoanMockUp(LoanBuilder loanBuilder) {
-    new MockUp<LoanCollectionResource>() {
-      @Mock
-      CompletableFuture<Result<Loan>> getExistingLoan(LoanRepository loanRepository, Loan loan) {
-        return ofAsync(() -> loanBuilder
-          .asDomainObject());
-      }
-    };
   }
 
   @Test
@@ -579,7 +562,9 @@ public class LoanAPITests extends APITests {
       .withCheckinServicePointId(checkinServicePointId)
       .closed()
       .withNoUserId();
-    prepareLoanMockUp(loanBuilder);
+
+    UUID userId = usersFixture.charlotte().getId();
+    loansFixture.createLoan(loanBuilder.withUserId(userId));
 
     loansFixture.createLoanAtSpecificLocation(loanId, loanBuilder);
 
@@ -656,7 +641,9 @@ public class LoanAPITests extends APITests {
       .withDueDate(dueDate)
       .open();
 
-    prepareLoanMockUp(loanBuilder);
+    // Prepare loan
+    UUID userId = usersFixture.charlotte().getId();
+    loansFixture.createLoan(loanBuilder.withUserId(userId));
 
     Response response = loansFixture.attemptToCreateLoanAtSpecificLocation(
       loanId, loanBuilder);
@@ -1198,7 +1185,10 @@ public class LoanAPITests extends APITests {
       .withCheckinServicePointId(checkinServicePointId)
       .closed()
       .withUserId(user.getId());
-    prepareLoanMockUp(loan1Builder);
+
+    // Prepare loan
+    loansFixture.createLoan(loan1Builder);
+
     final IndividualResource loan1 = loansClient.createAtSpecificLocation(
       loan1Builder);
 
@@ -1207,7 +1197,10 @@ public class LoanAPITests extends APITests {
       .closed()
       .withCheckinServicePointId(checkinServicePointId2)
       .withUserId(user.getId());
-    prepareLoanMockUp(loan2Builder);
+
+    // Prepare loan
+    loansFixture.createLoan(loan2Builder);
+
     final IndividualResource loan2 = loansClient.createAtSpecificLocation(
       loan2Builder);
 
@@ -1466,7 +1459,10 @@ public class LoanAPITests extends APITests {
       .withCheckinServicePointId(checkinServicePointId)
       .closed()
       .withNoUserId();
-    prepareLoanMockUp(smallAngryPlanetLoanBuilder);
+
+    UUID userId = usersFixture.charlotte().getId();
+    loansFixture.createLoan(smallAngryPlanetLoanBuilder.withUserId(userId));
+
     loansClient.createAtSpecificLocation(smallAngryPlanetLoanBuilder);
 
     LoanBuilder nodLoanBuilder = new LoanBuilder()
@@ -1474,7 +1470,9 @@ public class LoanAPITests extends APITests {
       .closed()
       .withCheckinServicePointId(checkinServicePointId2)
       .withNoUserId();
-    prepareLoanMockUp(nodLoanBuilder);
+
+    loansFixture.createLoan(nodLoanBuilder.withUserId(userId));
+
     loansClient.createAtSpecificLocation(nodLoanBuilder);
 
     final MultipleJsonRecords multipleLoans = loansFixture.getAllLoans();
@@ -1499,7 +1497,10 @@ public class LoanAPITests extends APITests {
       .withCheckinServicePointId(checkinServicePointId)
       .closed()
       .withUserId(usersFixture.steve().getId());
-    prepareLoanMockUp(firstLoanBuilder);
+
+    // Prepare loan
+    loansFixture.createLoan(firstLoanBuilder);
+
     final IndividualResource firstLoan = loansClient.createAtSpecificLocation(firstLoanBuilder);
 
     val jessicaUser = usersFixture.jessica();
@@ -1508,7 +1509,10 @@ public class LoanAPITests extends APITests {
       .closed()
       .withCheckinServicePointId(checkinServicePointId2)
       .withUserId(usersFixture.jessica().getId());
-    prepareLoanMockUp(secondLoanBuilder);
+
+    // Prepare loan
+    loansFixture.createLoan(secondLoanBuilder);
+
     final IndividualResource secondLoan = loansClient.createAtSpecificLocation(
       secondLoanBuilder);
 

@@ -1,21 +1,16 @@
 package org.folio.circulation.domain.validation;
 
 import static org.folio.circulation.support.results.Result.failed;
-import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 import java.util.UUID;
 
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
-import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.ValidationErrorFailure;
@@ -61,9 +56,6 @@ public class ChangeDueDateValidatorTest {
   })
   public void canChangeLoanWhenDueDateIsNotChanged(String itemStatus) {
     val existingLoan = createLoan(itemStatus, DateTime.now());
-
-    final LoanRepository loanRepository = mock(LoanRepository.class);
-    when(loanRepository.getById(anyString())).thenReturn(ofAsync(() -> existingLoan));
 
     changeDueDateValidator = new ChangeDueDateValidator();
 
