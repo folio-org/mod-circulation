@@ -81,6 +81,8 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   private final ServicePoint checkoutServicePoint;
 
   private final DateTime originalDueDate;
+  private DateTime previousDueDate;
+
   private final Policies policies;
   private final Collection<Account> accounts;
 
@@ -94,7 +96,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
       getProperty(representation, LOST_ITEM_POLICY_ID));
 
     return new Loan(representation, null, null, null, null, null,
-      getDateTimeProperty(representation, DUE_DATE),
+      getDateTimeProperty(representation, DUE_DATE), getDateTimeProperty(representation, DUE_DATE),
       new Policies(loanPolicy, overdueFinePolicy, lostItemPolicy), emptyList());
   }
 
@@ -261,7 +263,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public Loan replaceRepresentation(JsonObject newRepresentation) {
     return new Loan(newRepresentation, item, user, proxy, checkinServicePoint,
-      checkoutServicePoint, originalDueDate, policies, accounts);
+      checkoutServicePoint, originalDueDate, previousDueDate, policies, accounts);
   }
 
   public Loan withItem(Item newItem) {
@@ -272,7 +274,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     }
 
     return new Loan(newRepresentation, newItem, user, proxy, checkinServicePoint,
-      checkoutServicePoint, originalDueDate, policies, accounts);
+      checkoutServicePoint, originalDueDate, previousDueDate, policies, accounts);
   }
 
   public User getUser() {
@@ -287,7 +289,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     }
 
     return new Loan(newRepresentation, item, newUser, proxy, checkinServicePoint,
-      checkoutServicePoint, originalDueDate, policies, accounts);
+      checkoutServicePoint, originalDueDate, previousDueDate, policies, accounts);
   }
 
   public Loan withPatronGroupAtCheckout(PatronGroup patronGroup) {
@@ -314,29 +316,29 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     }
 
     return new Loan(newRepresentation, item, user, newProxy, checkinServicePoint,
-      checkoutServicePoint, originalDueDate, policies, accounts);
+      checkoutServicePoint, originalDueDate, previousDueDate, policies, accounts);
   }
 
   public Loan withCheckinServicePoint(ServicePoint newCheckinServicePoint) {
     return new Loan(representation, item, user, proxy, newCheckinServicePoint,
-      checkoutServicePoint, originalDueDate, policies, accounts);
+      checkoutServicePoint, originalDueDate, previousDueDate, policies, accounts);
   }
 
   public Loan withCheckoutServicePoint(ServicePoint newCheckoutServicePoint) {
     return new Loan(representation, item, user, proxy, checkinServicePoint,
-      newCheckoutServicePoint, originalDueDate, policies, accounts);
+      newCheckoutServicePoint, originalDueDate, previousDueDate, policies, accounts);
   }
 
   public Loan withAccounts(Collection<Account> newAccounts) {
     return new Loan(representation, item, user, proxy, checkinServicePoint,
-      checkoutServicePoint, originalDueDate, policies, newAccounts);
+      checkoutServicePoint, originalDueDate, previousDueDate, policies, newAccounts);
   }
 
   public Loan withLoanPolicy(LoanPolicy newLoanPolicy) {
     requireNonNull(newLoanPolicy, "newLoanPolicy cannot be null");
 
     return new Loan(representation, item, user, proxy, checkinServicePoint,
-      checkoutServicePoint, originalDueDate,
+      checkoutServicePoint, originalDueDate, previousDueDate,
       policies.withLoanPolicy(newLoanPolicy), accounts);
   }
 
@@ -344,7 +346,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     requireNonNull(newOverdueFinePolicy, "newOverdueFinePolicy cannot be null");
 
     return new Loan(representation, item, user, proxy, checkinServicePoint,
-      checkoutServicePoint, originalDueDate,
+      checkoutServicePoint, originalDueDate, previousDueDate,
       policies.withOverdueFinePolicy(newOverdueFinePolicy), accounts);
   }
 
@@ -352,7 +354,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     requireNonNull(newLostItemPolicy, "newLostItemPolicy cannot be null");
 
     return new Loan(representation, item, user, proxy, checkinServicePoint,
-      checkoutServicePoint, originalDueDate,
+      checkoutServicePoint, originalDueDate, previousDueDate,
       policies.withLostItemPolicy(newLostItemPolicy), accounts);
   }
 
@@ -609,7 +611,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   public Loan copy() {
     final JsonObject representationCopy = representation.copy();
     return new Loan(representationCopy, item, user, proxy, checkinServicePoint,
-      checkoutServicePoint, originalDueDate, policies, accounts);
+      checkoutServicePoint, originalDueDate, previousDueDate, policies, accounts);
   }
 
   public Loan ageOverdueItemToLost(DateTime ageToLostDate) {
@@ -664,6 +666,15 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public DateTime getOriginalDueDate() {
     return originalDueDate;
+  }
+
+  public Loan setPreviousDueDate(DateTime previousDateTime) {
+    this.previousDueDate = previousDateTime;
+    return this;
+  }
+
+  public DateTime getPreviousDueDate() {
+    return previousDueDate;
   }
 
   public ItemStatus getItemStatus() {
