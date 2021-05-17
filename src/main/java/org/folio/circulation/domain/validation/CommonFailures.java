@@ -18,8 +18,9 @@ public class CommonFailures {
 
   public static Supplier<HttpFailure> noItemFoundForBarcodeFailure(String itemBarcode) {
     return () -> singleValidationError(
-      format("No item with barcode %s exists", itemBarcode),
-      "itemBarcode", itemBarcode);
+        "ui-circulation.mod-circulation.noItemFoundForBarcode",
+        "No item with barcode {itemBarcode} exists",
+        "itemBarcode", itemBarcode);
   }
 
   public static Supplier<HttpFailure> noItemFoundForIdFailure(String itemId) {
