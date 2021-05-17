@@ -7,7 +7,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.junit.jupiter.api.Test;
 
-public class ValidationErrorTest {
+class ValidationErrorTest {
 
   @Test
   void singleValidationErrorOneParam() {
