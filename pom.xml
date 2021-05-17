@@ -24,7 +24,7 @@
 
   <properties>
     <antlr4.version>4.7.2</antlr4.version>
-    <drools.version>7.0.0.Final</drools.version>
+    <drools.version>7.53.0.Final</drools.version>
     <rmb.version>31.1.0</rmb.version>
     <vertx.version>3.9.1</vertx.version>
     <log4j2.version>2.13.3</log4j2.version>
@@ -126,15 +126,10 @@
       <artifactId>drools-compiler</artifactId>
       <version>${drools.version}</version>
     </dependency>
-    <!--
-    Remove xstream dependency after drools has upgraded its
-    xstream dependency to >= 1.4.15:
-    https://x-stream.github.io/CVE-2020-26259.html
-    -->
     <dependency>
-      <groupId>com.thoughtworks.xstream</groupId>
-      <artifactId>xstream</artifactId>
-      <version>1.4.15</version>
+      <groupId>org.drools</groupId>
+      <artifactId>drools-mvel</artifactId>
+      <version>${drools.version}</version>
     </dependency>
     <dependency>
       <groupId>org.antlr</groupId>
