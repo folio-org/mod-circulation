@@ -1,5 +1,6 @@
 package org.folio.circulation.domain.validation;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
@@ -9,16 +10,14 @@ import java.util.concurrent.CompletableFuture;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
-import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.ValidationErrorFailure;
 
 public class ChangeDueDateValidator {
-  private final LoanRepository loanRepository;
+
   private final ItemStatusValidator itemStatusValidator;
 
-  public ChangeDueDateValidator(LoanRepository loanRepository) {
-    this.loanRepository = loanRepository;
+  public ChangeDueDateValidator() {
     this.itemStatusValidator = new ItemStatusValidator(this::dueDateChangeFailedForItem);
   }
 
@@ -39,7 +38,7 @@ public class ChangeDueDateValidator {
 
       // If the due date is changed, then refuse processing
       // all other changes are allowed
-      return getExistingLoan(changedLoan)
+      return completedFuture(loanAndRelatedRecordsResult.map(LoanAndRelatedRecords::getExistingLoan))
         .thenApply(r -> r.failWhen(
           existingLoan -> dueDateHasChanged(existingLoan, changedLoan),
           existingLoan -> statusValidation.cause()))
@@ -50,10 +49,6 @@ public class ChangeDueDateValidator {
   private Result<Boolean> dueDateHasChanged(Loan existingLoan, Loan changedLoan) {
     return succeeded(existingLoan != null
         && !existingLoan.getDueDate().equals(changedLoan.getDueDate()));
-  }
-
-  private CompletableFuture<Result<Loan>> getExistingLoan(Loan loan) {
-    return loanRepository.getById(loan.getId());
   }
 
   private ValidationErrorFailure dueDateChangeFailedForItem(Item item) {

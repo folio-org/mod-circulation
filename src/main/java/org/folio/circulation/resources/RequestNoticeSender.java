@@ -6,13 +6,13 @@ import static org.folio.circulation.domain.notice.TemplateContextUtil.createRequ
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.representations.logs.NoticeLogContext;
+import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
@@ -40,19 +40,22 @@ public class RequestNoticeSender {
 
   public static RequestNoticeSender using(Clients clients) {
     return new RequestNoticeSender(PatronNoticeService.using(clients),
-      RequestRepository.using(clients),
+      RequestRepository.using(clients), new LoanRepository(clients),
       new EventPublisher(clients.pubSubPublishingService()));
   }
 
   private final PatronNoticeService patronNoticeService;
   private final RequestRepository requestRepository;
+  private final LoanRepository loanRepository;
   private final EventPublisher eventPublisher;
 
   public RequestNoticeSender(PatronNoticeService patronNoticeService,
                              RequestRepository requestRepository,
+                             LoanRepository loanRepository,
                              EventPublisher eventPublisher) {
     this.patronNoticeService = patronNoticeService;
     this.requestRepository = requestRepository;
+    this.loanRepository = loanRepository;
     this.eventPublisher = eventPublisher;
   }
 
@@ -76,9 +79,15 @@ public class RequestNoticeSender {
     Loan loan = request.getLoan();
     if (request.getRequestType() == RequestType.RECALL && loan != null) {
       sendNoticeOnItemRecalledEvent(loan);
-      runAsync(() -> eventPublisher.publishRecallRequestedEvent(loan.copy().withUser(requester)));
+      sendLogEvent(requester, loan);
     }
     return Result.succeeded(relatedRecords);
+  }
+
+  private void sendLogEvent(User user, Loan loan) {
+    runAsync(() -> loanRepository.getById(loan.getId())
+      .thenAccept(existingLoan -> existingLoan.map(l -> loan.setPreviousDueDate(l.getDueDate())))
+      .thenApply(vVoid -> eventPublisher.publishRecallRequestedEvent(loan.copy().withUser(user))));
   }
 
   public Result<RequestAndRelatedRecords> sendNoticeOnRequestMoved(
@@ -89,7 +98,7 @@ public class RequestNoticeSender {
     Loan loan = request.getLoan();
     if (request.getRequestType() == RequestType.RECALL && loan != null) {
       sendNoticeOnItemRecalledEvent(loan);
-      runAsync(() -> eventPublisher.publishRecallRequestedEvent(loan.copy().withUser(request.getRequester())));
+      sendLogEvent(request.getRequester(), loan);
     }
     return Result.succeeded(relatedRecords);
   }
