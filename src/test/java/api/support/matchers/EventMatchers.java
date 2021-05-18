@@ -13,6 +13,7 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getBooleanP
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.core.Is.is;
 
+import org.folio.circulation.domain.representations.logs.LogEventType;
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
 
@@ -29,16 +30,17 @@ public class EventMatchers {
       isItemCheckedOutEventType());
   }
 
-  public static Matcher<JsonObject> isValidCheckOutLogEvent(JsonObject checkedOutLoan) {
+  public static Matcher<JsonObject> isValidCheckOutLogEvent(JsonObject checkedOutLoan, LogEventType logEventType) {
     return allOf(JsonObjectMatcher.allOfPaths(
       hasJsonPath("eventPayload", allOf(
-        hasJsonPath("logEventType", is("CHECK_OUT_EVENT")),
+        hasJsonPath("logEventType", is(logEventType.value())),
         hasJsonPath("servicePointId", is(checkedOutLoan.getString("checkoutServicePointId"))),
         hasJsonPath("loanId", is(checkedOutLoan.getString("id"))),
         hasJsonPath("isLoanClosed", is(checkedOutLoan.getJsonObject("status").getString("name").equals("Closed"))),
         hasJsonPath("dueDate", is(checkedOutLoan.getString("dueDate"))),
         hasJsonPath("userId", is(checkedOutLoan.getString("userId"))),
         hasJsonPath("itemId", is(checkedOutLoan.getString("itemId"))),
+        hasJsonPath("source", is("Admin, Admin")),
         hasJsonPath("itemBarcode", is(checkedOutLoan.getJsonObject("item").getString("barcode"))),
         hasJsonPath("itemStatusName", is(checkedOutLoan.getJsonObject("item").getJsonObject("status").getString("name")))
       ))),
@@ -65,6 +67,7 @@ public class EventMatchers {
         hasJsonPath("isLoanClosed", is(checkedInLoan.getJsonObject("status").getString("name").equals("Closed"))),
         hasJsonPath("systemReturnDate", is(checkedInLoan.getString("systemReturnDate"))),
         hasJsonPath("returnDate", is(checkedInLoan.getString("returnDate"))),
+        hasJsonPath("source", is("Admin, Admin")),
         hasJsonPath("dueDate", is(checkedInLoan.getString("dueDate"))),
         hasJsonPath("userId", is(checkedInLoan.getString("userId"))),
         hasJsonPath("itemId", is(checkedInLoan.getString("itemId"))),

@@ -774,7 +774,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canOverrideRenewalWhenItemIsAgedToLostAndPatronIsBlocked() {
+  public void canOverrideRenewalWhenItemIsAgedToLostAndPatronIsBlockedAutomatically() {
     final DateTime approximateRenewalDate = DateTime.now(UTC).plusWeeks(3);
     val result = ageToLostFixture.createAgedToLostLoan();
 
@@ -812,6 +812,29 @@ public class OverrideRenewByBarcodeTests extends APITests {
     assertThat(response.getJson(), hasErrorWith(hasMessage(INSUFFICIENT_OVERRIDE_PERMISSIONS)));
     assertThat(getMissingPermissions(response), hasSize(1));
     assertThat(getMissingPermissions(response), hasItem(OVERRIDE_PATRON_BLOCK_PERMISSION));
+  }
+
+  @Test
+  public void canOverrideRenewalWhenItemIsAgedToLostAndPatronIsBlockedManually() {
+    final DateTime approximateRenewalDate = DateTime.now(UTC).plusWeeks(3);
+    val result = ageToLostFixture.createAgedToLostLoan();
+
+    userManualBlocksFixture.createManualPatronBlockForUser(result.getUser().getId());
+    final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
+      OVERRIDE_PATRON_BLOCK_PERMISSION);
+
+    final JsonObject renewedLoan = loansFixture.overrideRenewalByBarcode(
+      new OverrideRenewalByBarcodeRequestBuilder()
+        .forItem(result.getItem())
+        .forUser(result.getUser())
+        .withComment(OVERRIDE_COMMENT), okapiHeaders)
+      .getJson();
+
+    verifyRenewedLoan(result.getItem(), result.getUser(), renewedLoan);
+    assertThat(renewedLoan, hasJsonPath("item.status.name", "Checked out"));
+    assertThat(itemsClient.get(result.getItem()).getJson(), isCheckedOut());
+    assertThat(renewedLoan.getString("dueDate"), withinSecondsAfter(seconds(2),
+      approximateRenewalDate));
   }
 
   private Matcher<ValidationError> hasUserRelatedParameter(IndividualResource user) {

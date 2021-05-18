@@ -150,7 +150,7 @@
     },
     {
       "id": "circulation",
-      "version": "9.5",
+      "version": "10.0",
       "handlers": [
         {
           "methods": [
@@ -167,18 +167,6 @@
             "circulation.override-patron-block",
             "circulation.override-item-limit-block",
             "circulation.override-item-not-loanable-block"
-          ]
-        },
-        {
-          "methods": [
-            "POST"
-          ],
-          "pathPattern": "/circulation/override-check-out-by-barcode",
-          "permissionsRequired": [
-            "circulation.override-check-out-by-barcode.post"
-          ],
-          "modulePermissions": [
-            "modperms.circulation.override-check-out-by-barcode.post"
           ]
         },
         {
@@ -1109,11 +1097,6 @@
       "description": "check out an item using barcodes for item and loanee"
     },
     {
-      "permissionName": "circulation.override-check-out-by-barcode.post",
-      "displayName": "circulation - override item checkout by barcode",
-      "description": "override item check out using barcodes for item and loanee"
-    },
-    {
       "permissionName": "circulation.check-in-by-barcode.post",
       "displayName": "circulation - checkin loan by barcode",
       "description": "checkin a loan using barcodes for item and loanee"
@@ -1309,7 +1292,6 @@
       "description": "Entire set of permissions needed to use the circulation",
       "subPermissions": [
         "circulation.check-out-by-barcode.post",
-        "circulation.override-check-out-by-barcode.post",
         "circulation.check-in-by-barcode.post",
         "circulation.renew-by-barcode.post",
         "circulation.renew-by-id.post",
@@ -1491,66 +1473,6 @@
         "overdue-fines-policies.collection.get",
         "lost-item-fees-policies.item.get",
         "lost-item-fees-policies.collection.get",
-        "pubsub.publish.post"
-      ],
-      "visible": false
-    },
-    {
-      "permissionName": "modperms.circulation.override-check-out-by-barcode.post",
-      "displayName" : "module permissions for one op",
-      "description" : "to reduce X-Okapi-Token size",
-      "subPermissions": [
-        "circulation-storage.loans.item.post",
-        "circulation-storage.loans.item.get",
-        "circulation-storage.loans.collection.get",
-        "circulation-storage.loan-policies.item.get",
-        "circulation-storage.loan-policies.collection.get",
-        "circulation-storage.circulation-rules.get",
-        "circulation-storage.requests.collection.get",
-        "circulation-storage.requests.item.put",
-        "circulation-storage.request-batch.item.post",
-        "circulation-storage.request-policies.item.get",
-        "circulation-storage.fixed-due-date-schedules.item.get",
-        "circulation-storage.fixed-due-date-schedules.collection.get",
-        "circulation-storage.patron-notice-policies.item.get",
-        "circulation.rules.notice-policy.get",
-        "circulation.rules.lost-item-policy.get",
-        "circulation.rules.loan-policy.get",
-        "circulation.rules.request-policy.get",
-        "circulation.rules.overdue-fine-policy.get",
-        "inventory-storage.items.item.put",
-        "inventory-storage.items.item.get",
-        "inventory-storage.items.collection.get",
-        "inventory-storage.locations.item.get",
-        "inventory-storage.locations.collection.get",
-        "inventory-storage.location-units.institutions.item.get",
-        "inventory-storage.location-units.campuses.item.get",
-        "inventory-storage.location-units.libraries.item.get",
-        "inventory-storage.holdings.collection.get",
-        "inventory-storage.holdings.item.get",
-        "inventory-storage.instances.collection.get",
-        "inventory-storage.instances.item.get",
-        "inventory-storage.service-points.collection.get",
-        "inventory-storage.service-points.item.get",
-        "inventory-storage.material-types.item.get",
-        "inventory-storage.material-types.collection.get",
-        "inventory-storage.loan-types.item.get",
-        "users.item.get",
-        "users.collection.get",
-        "proxiesfor.collection.get",
-        "patron-notice.post",
-        "lost-item-fees-policies.item.get",
-        "lost-item-fees-policies.collection.get",
-        "overdue-fines-policies.item.get",
-        "configuration.entries.collection.get",
-        "scheduled-notice-storage.scheduled-notices.item.post",
-        "usergroups.collection.get",
-        "usergroups.item.get",
-        "automated-patron-blocks.collection.get",
-        "accounts.collection.get",
-        "accounts.item.put",
-        "feefineactions.collection.get",
-        "feefineactions.item.post",
         "pubsub.publish.post"
       ],
       "visible": false
@@ -2255,7 +2177,8 @@
         "scheduled-notice-storage.scheduled-notices.collection.delete",
         "scheduled-notice-storage.scheduled-notices.item.post",
         "users.item.get",
-        "pubsub.publish.post"
+        "pubsub.publish.post",
+        "patron-notice.post"
       ],
       "visible": false
     },
@@ -2339,7 +2262,8 @@
         "scheduled-notice-storage.scheduled-notices.collection.delete",
         "scheduled-notice-storage.scheduled-notices.item.post",
         "pubsub.publish.post",
-        "configuration.entries.collection.get"
+        "configuration.entries.collection.get",
+        "patron-notice.post"
       ],
       "visible": false
     },

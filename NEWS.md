@@ -1,6 +1,14 @@
+## 21.0.0 (in-progress)
 
-## 20.1.0 (in-progress)
+* Remove redundant override-check-out-by-barcode endpoint (CIRC-1064)
+* Aged to lost process now charges fees for actual cost items if a processing fee is set (CIRC-1115)
+* Overdue fines not charged if item due before library closes but returned after library has been closed (CIRC-1120)
+* Update version of mod-pubsub-client to fix memory leak (CIRC-1121)
+
+## 20.1.0 2021-03-30
+
 * Refund/cancel Aged to lost fees/fines when declaring an item lost (CIRC-1077)
+* Lost permissions for /circulation/check-in-by-barcode (CIRC-1099)
 * Provides `declare-item-lost 0.3` (CIRC-1077)
 
 ## 20.0.0 2021-03-12

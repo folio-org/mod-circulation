@@ -71,7 +71,7 @@ public class ChangeDueDateResource extends Resource {
     final LoanNoticeSender loanNoticeSender = LoanNoticeSender.using(clients);
 
     return succeeded(request)
-      .after(r -> loanRepository.getById(r.getLoanId()))
+      .after(r -> getExistingLoan(loanRepository, r))
       .thenApply(LoanValidator::refuseWhenLoanIsClosed)
       .thenApply(this::toLoanAndRelatedRecords)
       .thenApply(itemStatusValidator::refuseWhenItemStatusDoesNotAllowDueDateChange)
@@ -80,6 +80,11 @@ public class ChangeDueDateResource extends Resource {
       .thenComposeAsync(r -> r.after(eventPublisher::publishDueDateChangedEvent))
       .thenApply(r -> r.next(scheduledNoticeService::rescheduleDueDateNotices))
       .thenCompose(r -> r.after(loanNoticeSender::sendManualDueDateChangeNotice));
+  }
+
+  CompletableFuture<Result<Loan>> getExistingLoan(LoanRepository loanRepository, ChangeDueDateRequest changeDueDateRequest) {
+    return loanRepository.getById(changeDueDateRequest.getLoanId())
+      .thenApplyAsync(r -> r.map(exitingLoan -> exitingLoan.setPreviousDueDate(exitingLoan.getDueDate())));
   }
 
   private Result<LoanAndRelatedRecords> changeDueDate(Result<LoanAndRelatedRecords> loanResult,
