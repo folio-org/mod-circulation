@@ -17,13 +17,17 @@ import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasNullParameter;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.awaitility.Awaitility.waitAtMost;
 import static org.folio.HttpStatus.HTTP_NOT_FOUND;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
+import static org.folio.circulation.services.EventPublisher.FMT;
 import static org.hamcrest.CoreMatchers.allOf;
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.hasItems;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.joda.time.Period.weeks;
@@ -81,6 +85,15 @@ public class ChangeDueDateAPITests extends APITests {
     Response response = loansClient.getById(loan.getId());
 
     JsonObject updatedLoan = response.getJson();
+
+    var description = new JsonObject(FakePubSub.getPublishedEvents().stream()
+      .filter(json -> json.getString("eventType").equals("LOG_RECORD")
+      && json.getString("eventPayload").contains("LOAN")).collect(toList()).get(0).getString("eventPayload"))
+      .getJsonObject("payload").getString("description");
+
+    assertThat(description, notNullValue());
+    assertThat(description, containsString(dueDate.toString(FMT)));
+    assertThat(description, containsString(newDueDate.toString(FMT)));
 
     assertThat("due date is not updated",
       updatedLoan.getString("dueDate"), isEquivalentTo(newDueDate));

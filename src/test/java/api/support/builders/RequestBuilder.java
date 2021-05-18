@@ -1,5 +1,6 @@
 package api.support.builders;
 
+import static api.support.utl.DateTimeUtils.getLocalDatePropertyForDateWithTime;
 import static java.util.stream.Collectors.toList;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getIntegerProperty;
@@ -32,6 +33,7 @@ public class RequestBuilder extends JsonBuilder implements Builder {
   public static final String OPEN_IN_TRANSIT = "Open - In transit";
   public static final String CLOSED_FILLED = "Closed - Filled";
   public static final String CLOSED_CANCELLED = "Closed - Cancelled";
+  public static final String CLOSED_PICKUP_EXPIRED = "Closed - Pickup expired";
 
   private final UUID id;
   private final String requestType;
@@ -92,7 +94,7 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       getUUIDProperty(representation, "requesterId"),
       getProperty(representation, "fulfilmentPreference"),
       getUUIDProperty(representation, "deliveryAddressTypeId"),
-      getLocalDateProperty(representation, "requestExpirationDate"),
+      getLocalDatePropertyForDateWithTime(representation, "requestExpirationDate"),
       getLocalDateProperty(representation, "holdShelfExpirationDate"),
       null, //TODO, re-populate these from the representation (possibly shouldn't given use)
       null, //TODO, re-populate these from the representation (possibly shouldn't given use)

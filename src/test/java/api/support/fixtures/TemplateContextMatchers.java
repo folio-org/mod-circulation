@@ -12,7 +12,6 @@ import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.hamcrest.Matchers.closeTo;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -22,9 +21,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.folio.circulation.domain.Account;
 import org.folio.circulation.domain.FeeFineAction;
-import api.support.http.IndividualResource;
 import org.hamcrest.Matcher;
+import org.joda.time.DateTimeZone;
+import org.joda.time.LocalTime;
 
+import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 
@@ -39,18 +40,25 @@ public class TemplateContextMatchers {
     return getUserContextMatchers(userResource, "requester");
   }
 
-  public static Map<String, Matcher<String>> getUserContextMatchers(IndividualResource userResource) {
-    return getUserContextMatchers(userResource, "user");
+  public static Map<String, Matcher<String>> getUserContextMatchers(IndividualResource userResource, String prefix) {
+    return getUserContextMatchers(userResource.getJson(), prefix);
   }
 
-  public static Map<String, Matcher<String>> getUserContextMatchers(IndividualResource userResource, String prefix) {
-    JsonObject user = userResource.getJson();
-    JsonObject personal = getObjectProperty(user, "personal");
+  public static Map<String, Matcher<String>> getUserContextMatchers(IndividualResource userResource) {
+    return getUserContextMatchers(userResource.getJson());
+  }
+
+  public static Map<String, Matcher<String>> getUserContextMatchers(JsonObject userJson) {
+    return getUserContextMatchers(userJson, "user");
+  }
+
+  public static Map<String, Matcher<String>> getUserContextMatchers(JsonObject userJson, String prefix) {
+    JsonObject personal = getObjectProperty(userJson, "personal");
 
     Map<String, Matcher<String>> tokenMatchers = new HashMap<>();
     tokenMatchers.put(prefix + ".firstName", is(personal.getString("firstName")));
     tokenMatchers.put(prefix + ".lastName", is(personal.getString("lastName")));
-    tokenMatchers.put(prefix + ".barcode", is(user.getString("barcode")));
+    tokenMatchers.put(prefix + ".barcode", is(userJson.getString("barcode")));
     return tokenMatchers;
   }
 
@@ -169,8 +177,10 @@ public class TemplateContextMatchers {
 
     Map<String, Matcher<String>> tokenMatchers = new HashMap<>();
     tokenMatchers.put("request.servicePointPickup", notNullValue(String.class));
-    tokenMatchers.put("request.requestExpirationDate ",
-      isEquivalentTo(getDateTimeProperty(request, "requestExpirationDate")));
+    tokenMatchers.put("request.requestExpirationDate ", isEquivalentTo(
+      getDateTimeProperty(request, "requestExpirationDate")
+        .withZoneRetainFields(DateTimeZone.UTC)
+        .withTime(LocalTime.MIDNIGHT.minusSeconds(1))));
     tokenMatchers.put("request.holdShelfExpirationDate",
       isEquivalentTo(getDateTimeProperty(request, "holdShelfExpirationDate")));
     return tokenMatchers;

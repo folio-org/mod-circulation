@@ -30,6 +30,8 @@ import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.LocalTime;
 
 import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
@@ -116,6 +118,10 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
 
   public boolean isClosed() {
     return isCancelled() || isFulfilled() || isUnfilled() || isPickupExpired();
+  }
+
+  public boolean isClosedExceptPickupExpired() {
+    return isClosed() && !isPickupExpired();
   }
 
   boolean isAwaitingPickup() {
@@ -232,6 +238,10 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return getRequesterFromRepresentation().getString("barcode", EMPTY);
   }
 
+  public String getRequesterId() {
+    return requestRepresentation.getString("requesterId", EMPTY);
+  }
+
   public User getProxy() {
     return proxy;
   }
@@ -327,5 +337,16 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
 
   public String getPatronComments() {
     return getProperty(requestRepresentation, "patronComments");
+  }
+
+  public Request truncateRequestExpirationDateToTheEndOfTheDay(DateTimeZone zone) {
+    DateTime requestExpirationDate = getRequestExpirationDate();
+    if (requestExpirationDate != null) {
+      DateTime requestDateTime = requestExpirationDate
+        .withZoneRetainFields(zone)
+        .withTime(LocalTime.MIDNIGHT.minusSeconds(1));
+      write(requestRepresentation, REQUEST_EXPIRATION_DATE, requestDateTime);
+    }
+    return this;
   }
 }

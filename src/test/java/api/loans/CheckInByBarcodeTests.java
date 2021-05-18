@@ -7,6 +7,7 @@ import static api.support.builders.ItemBuilder.INTELLECTUAL_ITEM;
 import static api.support.fakes.PublishedEvents.byEventType;
 import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.fixtures.AddressExamples.SiriusBlack;
+import static api.support.fixtures.TemplateContextMatchers.getUserContextMatchers;
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasItemBarcodeParameter;
 import static api.support.matchers.EventMatchers.isValidCheckInLogEvent;
 import static api.support.matchers.EventMatchers.isValidItemCheckedInEvent;
@@ -41,6 +42,7 @@ import static org.joda.time.DateTimeZone.UTC;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Collections;
@@ -74,6 +76,7 @@ import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.CqlQuery;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
+import api.support.http.UserResource;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
@@ -266,7 +269,8 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     assertThat(userContext.getString("countryId"), is(address.getCountryId()));
 
     assertThat(requestContext.getString("deliveryAddressType"), is(addressTypesFixture.home().getJson().getString("addressType")));
-    assertThat(requestContext.getString("requestExpirationDate"), isEquivalentTo(toZonedStartOfDay(requestExpiration)));
+    assertThat(requestContext.getString("requestExpirationDate"), isEquivalentTo(
+      ZonedDateTime.of(requestExpiration.atTime(23, 59, 59), ZoneOffset.UTC)));
     assertThat(requestContext.getString("holdShelfExpirationDate"), isEquivalentTo(toZonedStartOfDay(holdShelfExpiration)));
     assertThat(requestContext.getString("requestID"), is(request.getId()));
     assertThat(requestContext.getString("servicePointPickup"), is(servicePoint.getJson().getString("name")));
@@ -1187,6 +1191,51 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     assertThatPublishedLoanLogRecordEventsAreValid(checkedInLoan);
   }
 
+  @Test
+  public void availableNoticeIsSentUponCheckInWhenRequesterBarcodeWasChanged() {
+    UUID templateId = UUID.randomUUID();
+
+    JsonObject availableNoticeConfig = new NoticeConfigurationBuilder()
+      .withTemplateId(templateId)
+      .withAvailableEvent()
+      .create();
+
+    NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
+      .withName("Test policy")
+      .withLoanNotices(Collections.singletonList(availableNoticeConfig));
+
+    use(noticePolicy);
+
+    ItemResource requestedItem = itemsFixture.basedUponNod();
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    UserResource requester = usersFixture.steve();
+    DateTime requestDate = new DateTime(2019, 10, 9, 10, 0);
+
+    requestsFixture.place(new RequestBuilder()
+      .page()
+      .forItem(requestedItem)
+      .by(requester)
+      .withPickupServicePointId(pickupServicePointId)
+      .withRequestDate(requestDate));
+
+    DateTime checkInDate = new DateTime(2019, 10, 10, 12, 30);
+
+    JsonObject updatedRequesterJson = requester.getJson().put("barcode", "updated_barcode");
+    usersClient.replace(requester.getId(), updatedRequesterJson);
+
+    checkInFixture.checkInByBarcode(requestedItem, checkInDate, pickupServicePointId);
+
+    JsonObject patronNotice = waitAtMost(1, SECONDS)
+      .until(patronNoticesClient::getAll, hasSize(1))
+      .get(0);
+
+    assertThat(patronNotice, hasEmailNoticeProperties(requester.getId(), templateId,
+      getUserContextMatchers(updatedRequesterJson)));
+
+    waitAtMost(1, SECONDS)
+      .until(() -> FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
+  }
+
   private void checkPatronNoticeEvent(IndividualResource request, IndividualResource requester,
     ItemResource item, UUID expectedTemplateId) {
 
@@ -1196,7 +1245,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
 
     Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
-    noticeContextMatchers.putAll(TemplateContextMatchers.getUserContextMatchers(requester));
+    noticeContextMatchers.putAll(getUserContextMatchers(requester));
     noticeContextMatchers.putAll(TemplateContextMatchers.getItemContextMatchers(item, true));
     noticeContextMatchers.putAll(TemplateContextMatchers.getRequestContextMatchers(request));
 

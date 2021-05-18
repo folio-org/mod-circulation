@@ -59,8 +59,13 @@ import api.support.http.UserResource;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.class)
 public class LoanAPITests extends APITests {
+
   @Test
   public void canCreateALoan() {
     UUID id = UUID.randomUUID();
@@ -332,13 +337,18 @@ public class LoanAPITests extends APITests {
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, UTC);
 
-    IndividualResource response = loansClient.createAtSpecificLocation(new LoanBuilder()
+    val loanBuilder = new LoanBuilder()
       .withId(id)
       .open()
       .withUserId(userId)
       .withItemId(itemId)
       .withLoanDate(loanDate)
-      .withDueDate(dueDate));
+      .withDueDate(dueDate);
+
+    // Prepare loan
+    loansFixture.createLoan(loanBuilder.withUserId(userId));
+
+    IndividualResource response = loansClient.createAtSpecificLocation(loanBuilder);
 
     JsonObject loan = response.getJson();
 
@@ -546,12 +556,17 @@ public class LoanAPITests extends APITests {
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
-    loansFixture.createLoanAtSpecificLocation(loanId, new LoanBuilder()
-        .withId(loanId)
-        .withItemId(itemId)
-        .withCheckinServicePointId(checkinServicePointId)
-        .closed()
-        .withNoUserId());
+    LoanBuilder loanBuilder = new LoanBuilder()
+      .withId(loanId)
+      .withItemId(itemId)
+      .withCheckinServicePointId(checkinServicePointId)
+      .closed()
+      .withNoUserId();
+
+    UUID userId = usersFixture.charlotte().getId();
+    loansFixture.createLoan(loanBuilder.withUserId(userId));
+
+    loansFixture.createLoanAtSpecificLocation(loanId, loanBuilder);
 
     final IndividualResource item = itemsClient.get(itemId);
 
@@ -618,14 +633,20 @@ public class LoanAPITests extends APITests {
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, UTC);
 
+    val loanBuilder = new LoanBuilder()
+      .withId(loanId)
+      .withNoUserId()
+      .withItemId(itemId)
+      .withLoanDate(loanDate)
+      .withDueDate(dueDate)
+      .open();
+
+    // Prepare loan
+    UUID userId = usersFixture.charlotte().getId();
+    loansFixture.createLoan(loanBuilder.withUserId(userId));
+
     Response response = loansFixture.attemptToCreateLoanAtSpecificLocation(
-      loanId, new LoanBuilder()
-        .withId(loanId)
-        .withNoUserId()
-        .withItemId(itemId)
-        .withLoanDate(loanDate)
-        .withDueDate(dueDate)
-        .open());
+      loanId, loanBuilder);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Open loan must have a user ID"),
@@ -1159,19 +1180,29 @@ public class LoanAPITests extends APITests {
 
     final IndividualResource user = usersFixture.jessica();
 
+    LoanBuilder loan1Builder = new LoanBuilder()
+      .withItemId(smallAngryPlanetId)
+      .withCheckinServicePointId(checkinServicePointId)
+      .closed()
+      .withUserId(user.getId());
+
+    // Prepare loan
+    loansFixture.createLoan(loan1Builder);
+
     final IndividualResource loan1 = loansClient.createAtSpecificLocation(
-      new LoanBuilder()
-        .withItemId(smallAngryPlanetId)
-        .withCheckinServicePointId(checkinServicePointId)
-        .closed()
-        .withUserId(user.getId()));
+      loan1Builder);
+
+    LoanBuilder loan2Builder = new LoanBuilder()
+      .withItemId(nodId)
+      .closed()
+      .withCheckinServicePointId(checkinServicePointId2)
+      .withUserId(user.getId());
+
+    // Prepare loan
+    loansFixture.createLoan(loan2Builder);
 
     final IndividualResource loan2 = loansClient.createAtSpecificLocation(
-      new LoanBuilder()
-        .withItemId(nodId)
-        .closed()
-        .withCheckinServicePointId(checkinServicePointId2)
-        .withUserId(user.getId()));
+      loan2Builder);
 
     JsonObject updatedLoanRequest = loan1.copyJson();
 
@@ -1423,17 +1454,26 @@ public class LoanAPITests extends APITests {
     UUID checkinServicePointId = servicePointsFixture.cd1().getId();
     UUID checkinServicePointId2 = servicePointsFixture.cd2().getId();
 
-    loansClient.createAtSpecificLocation(new LoanBuilder()
+    LoanBuilder smallAngryPlanetLoanBuilder = new LoanBuilder()
       .withItemId(smallAngryPlanetId)
       .withCheckinServicePointId(checkinServicePointId)
       .closed()
-      .withNoUserId());
+      .withNoUserId();
 
-    loansClient.createAtSpecificLocation(new LoanBuilder()
+    UUID userId = usersFixture.charlotte().getId();
+    loansFixture.createLoan(smallAngryPlanetLoanBuilder.withUserId(userId));
+
+    loansClient.createAtSpecificLocation(smallAngryPlanetLoanBuilder);
+
+    LoanBuilder nodLoanBuilder = new LoanBuilder()
       .withItemId(nodId)
       .closed()
       .withCheckinServicePointId(checkinServicePointId2)
-      .withNoUserId());
+      .withNoUserId();
+
+    loansFixture.createLoan(nodLoanBuilder.withUserId(userId));
+
+    loansClient.createAtSpecificLocation(nodLoanBuilder);
 
     final MultipleJsonRecords multipleLoans = loansFixture.getAllLoans();
 
@@ -1452,20 +1492,29 @@ public class LoanAPITests extends APITests {
     UUID checkinServicePointId2 = servicePointsFixture.cd2().getId();
 
     val steveUser = usersFixture.steve();
-    final IndividualResource firstLoan = loansClient.createAtSpecificLocation(
-      new LoanBuilder()
-        .withItemId(smallAngryPlanetId)
-        .withCheckinServicePointId(checkinServicePointId)
-        .closed()
-        .withUserId(usersFixture.steve().getId()));
+    val firstLoanBuilder = new LoanBuilder()
+      .withItemId(smallAngryPlanetId)
+      .withCheckinServicePointId(checkinServicePointId)
+      .closed()
+      .withUserId(usersFixture.steve().getId());
+
+    // Prepare loan
+    loansFixture.createLoan(firstLoanBuilder);
+
+    final IndividualResource firstLoan = loansClient.createAtSpecificLocation(firstLoanBuilder);
 
     val jessicaUser = usersFixture.jessica();
+    val secondLoanBuilder = new LoanBuilder()
+      .withItemId(nodId)
+      .closed()
+      .withCheckinServicePointId(checkinServicePointId2)
+      .withUserId(usersFixture.jessica().getId());
+
+    // Prepare loan
+    loansFixture.createLoan(secondLoanBuilder);
+
     final IndividualResource secondLoan = loansClient.createAtSpecificLocation(
-      new LoanBuilder()
-        .withItemId(nodId)
-        .closed()
-        .withCheckinServicePointId(checkinServicePointId2)
-        .withUserId(usersFixture.jessica().getId()));
+      secondLoanBuilder);
 
     final MultipleJsonRecords multipleLoans = loansFixture.getAllLoans();
 

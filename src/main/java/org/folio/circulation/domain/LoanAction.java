@@ -18,6 +18,7 @@ public enum LoanAction {
   MISSING("markedMissing"),
   CLOSED_LOAN("closedLoan"),
   ITEM_AGED_TO_LOST("itemAgedToLost"),
+  DUE_DATE_CHANGED("dueDateChanged"),
 
   RESOLVE_CLAIM_AS_RETURNED_BY_PATRON("checkedInReturnedByPatron"),
   RESOLVE_CLAIM_AS_FOUND_BY_LIBRARY("checkedInFoundByLibrary");
