@@ -58,4 +58,22 @@ public final class ClosedLibraryStrategyUtils {
     String message = "Calendar timetable is absent for requested date";
     return singleValidationError(new ValidationError(message, emptyMap()));
   }
+
+  public static ClosedLibraryStrategy determineClosedLibraryStrategyForTruncatedDueDate(
+    LoanPolicy loanPolicy, DateTime startDate, DateTimeZone zone) {
+    DueDateManagement dueDateManagement = loanPolicy.getDueDateManagement();
+
+    switch (dueDateManagement) {
+    case MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY:
+    case MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY:
+      return new EndOfPreviousDayStrategy(zone);
+    case MOVE_TO_END_OF_CURRENT_SERVICE_POINT_HOURS:
+    case MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS:
+      return new EndOfPreviousHoursStrategy(startDate, zone);
+    case KEEP_THE_CURRENT_DUE_DATE:
+    case KEEP_THE_CURRENT_DUE_DATE_TIME:
+    default:
+      return new KeepCurrentDateTimeStrategy();
+    }
+  }
 }

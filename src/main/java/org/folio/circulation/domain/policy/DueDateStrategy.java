@@ -45,14 +45,4 @@ public abstract class DueDateStrategy {
   void logException(Exception e, String message) {
     log.error("{}: {} ({})", message, loanPolicyName, loanPolicyId, e);
   }
-
-  protected Result<DateTime> truncateDueDateByUserExpiration(Loan loan, DateTime dueDate) {
-    User user = loan.getUser();
-    if (user != null && user.getExpirationDate() != null
-      && user.getExpirationDate().isBefore(dueDate)) {
-
-      return succeeded(user.getExpirationDate());
-    }
-    return succeeded(dueDate);
-  }
 }
