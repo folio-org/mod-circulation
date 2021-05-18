@@ -154,7 +154,7 @@
     <dependency>
       <groupId>org.folio</groupId>
       <artifactId>mod-pubsub-client</artifactId>
-      <version>2.0.1</version>
+      <version>2.0.7</version>
       <exclusions>
         <exclusion>
           <groupId>org.hamcrest</groupId>
