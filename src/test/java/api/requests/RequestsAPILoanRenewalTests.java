@@ -17,6 +17,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.domain.policy.Period;
+
+import api.support.http.CheckOutResource;
 import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
@@ -587,6 +589,44 @@ public class RequestsAPILoanRenewalTests extends APITests {
 
     assertThat(response.getJson(), hasErrorWith(
       hasMessage("Item's loan policy has fixed profile but renewal period is specified")));
+  }
+
+  @Test
+  public void loanDateTruncatedWhenRecalledItemItemHasBeenPreviouslyRenewed() {
+    JsonObject holds = new JsonObject();
+    holds.put("renewItemsWithRequest", false);
+    LoanPolicyBuilder dueDateLimitedPolicy = new LoanPolicyBuilder()
+      .withName("Test")
+      .withHolds(holds)
+      .rolling(Period.weeks(4))
+      .limitedRenewals(2)
+      .renewWithDifferentPeriod(true)
+      .differentRenewalPeriod(Period.days(30))
+      .renewFromSystemDate()
+      .recallReturnInterval(Period.days(2))
+      .recallsMinimumGuaranteedLoanPeriod(Period.days(14));
+
+    final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource rebecca = usersFixture.rebecca();
+
+    useWithActiveNotice(dueDateLimitedPolicy);
+    
+    final IndividualResource response = checkOutFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
+    String loanId = response.getJson().getString("loanId");
+    final DateTime renewalDate = DateTime.now(DateTimeZone.UTC).plusWeeks(4);
+    mockClockManagerToReturnFixedDateTime(renewalDate);
+
+    loansFixture.renewLoan(smallAngryPlanet, rebecca);
+
+    requestsFixture.place(new RequestBuilder()
+    .recall()
+    .forItem(smallAngryPlanet)
+    .withPickupServicePointId(servicePointsFixture.cd1().getId())
+    .by(usersFixture.charlotte()));
+
+    JsonObject loan = loansFixture.getLoanById(UUID.fromString(loanId)).getJson();
+
+    assertThat(loan.toString(), is(null));
   }
 
   private void loanPolicyWithRollingProfileAndRenewingIsForbiddenWhenHoldIsPending() {
