@@ -27,7 +27,7 @@ public class ValidationError {
    */
   public ValidationError(String code, String message, String key, String value) {
     this.code = code;
-    this.message = message.replace('{' + key + '}', value);
+    this.message = message == null ? null : message.replace('{' + key + '}', value);
     this.parameters = Map.of(key, value);
   }
 

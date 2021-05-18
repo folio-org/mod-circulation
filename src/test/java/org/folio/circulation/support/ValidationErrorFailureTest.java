@@ -2,12 +2,9 @@ package org.folio.circulation.support;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
 import org.junit.jupiter.api.Test;
 
-class ValidationErrorTest {
+class ValidationErrorFailureTest {
 
   @Test
   void singleValidationErrorOneParam() {
@@ -17,12 +14,6 @@ class ValidationErrorTest {
     assertThat(e.getCode(), is("my.code"));
     assertThat(e.getMessage(), is("foo b bar"));
     assertThat(e.getParameter("a"), is("b"));
-    assertThat(e.toJson(), is(
-        new JsonObject()
-        .put("code", "my.code")
-        .put("message", "foo b bar")
-        .put("parameters", new JsonArray().add(
-            new JsonObject().put("key", "a").put("value", "b")))));
   }
 
   @Test
@@ -34,11 +25,6 @@ class ValidationErrorTest {
     assertThat(e.getCode(), is("my.code"));
     assertThat(e.getMessage(), is("foo bcabca bar"));
     assertThat(e.getParameter("a"), is("b"));
-    assertThat(e.getParameter("b"), is("c"));
-    assertThat(e.getParameter("c"), is("a"));
-    assertThat(e.toJson().getString("code"), is("my.code"));
-    assertThat(e.toJson().getString("message"), is("foo bcabca bar"));
-    assertThat(e.toJson().getJsonArray("parameters").size(), is(3));
   }
 
 }
