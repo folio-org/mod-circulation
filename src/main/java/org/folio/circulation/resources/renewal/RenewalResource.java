@@ -441,14 +441,14 @@ public abstract class RenewalResource extends Resource {
     CirculationErrorHandler errorHandler, DateTime renewDate) {
 
     return validateIfRenewIsAllowed(context, false)
-        .mapFailure(failure -> errorHandler.handleValidationError(failure,
-          RENEWAL_IS_BLOCKED, context))
+      .mapFailure(failure -> errorHandler.handleValidationError(failure,
+        RENEWAL_IS_BLOCKED, context))
       .next(ctx -> validateIfRenewIsAllowed(context, true)
         .mapFailure(failure -> errorHandler.handleValidationError(failure,
           RENEWAL_DUE_DATE_REQUIRED_IS_BLOCKED, context)))
-      .next(ctx -> renew(ctx, renewDate))
+      .next(ctx -> renew(ctx, renewDate)
         .mapFailure(failure -> errorHandler.handleValidationError(failure,
-          RENEWAL_VALIDATION_ERROR, context));
+          RENEWAL_DUE_DATE_REQUIRED_IS_BLOCKED, context)));
   }
 
   private Result<RenewalContext> validateIfRenewIsAllowed(RenewalContext context,
