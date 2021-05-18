@@ -2015,7 +2015,7 @@ public class CheckOutByBarcodeTests extends APITests {
         .at(CASE_YESTERDAY_OPEN_TODAY_CLOSED_TOMORROW_OPEN)).getJson();
 
     assertThat(DateTime.parse(response.getString("dueDate")).toDateTime(),
-      is(TOMORROW_OPEN_DAY.toDateTime(END_TIME_FIRST_PERIOD, UTC)));
+      is(YESTERDAY_OPEN_DAY.toDateTime(END_TIME_SECOND_PERIOD, UTC)));
   }
 
   @Test
