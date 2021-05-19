@@ -13,6 +13,11 @@ import static api.support.http.Limit.maximumLimit;
 import static api.support.http.Limit.noLimit;
 import static api.support.http.Offset.noOffset;
 import static java.net.HttpURLConnection.HTTP_OK;
+import static java.time.Clock.fixed;
+import static java.time.Instant.ofEpochMilli;
+import static org.folio.circulation.support.ClockManager.getClockManager;
+import java.time.Clock;
+import static java.time.ZoneOffset.UTC;
 
 import java.net.URL;
 import java.util.UUID;
@@ -165,6 +170,30 @@ public class LoansFixture {
 
   public Response attemptRenewal(RenewByBarcodeRequestBuilder builder, OkapiHeaders headers) {
     return attemptRenewal(422, builder, headers);
+  }
+  private void moveTime(DateTime date) {
+    final Clock fixedClocks = fixed(ofEpochMilli(date.getMillis()), ZoneOffset.UTC);
+    getClockManager().setClock(fixedClocks);
+  }
+
+  private void resetTime() {
+    final Clock fixedClocks = fixed(ofEpochMilli(now(UTC)), ZoneOffset.UTC);
+    getClockManager().setClock(fixedClocks);
+  }
+
+  public Response attemptRenewalOnDate(int expectedStatusCode, IndividualResource item,
+  IndividualResource user, DateTime date) {
+    moveTime(date);
+    JsonObject request = new RenewByBarcodeRequestBuilder()
+      .forItem(item)
+      .forUser(user)
+      .create();
+
+    Response response = restAssuredClient.post(request, renewByBarcodeUrl(),
+    expectedStatusCode, "renewal-by-barcode-request");
+    resetTime();
+    return response;
+    
   }
 
   public Response attemptRenewal(int expectedStatusCode, IndividualResource item,
