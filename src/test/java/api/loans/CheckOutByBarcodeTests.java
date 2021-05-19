@@ -1931,7 +1931,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void dueDateShouldBeTruncatedToTheEndOfLastWorkingDayBeforePatronExpiration() {
+  public void dueDateShouldBeTruncatedToTheEndOfPreviousOpenDayBeforePatronExpiration() {
     use(buildLoanPolicyWithFixedLoan(MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY));
 
     IndividualResource item = itemsFixture.basedUponNod();
@@ -1948,7 +1948,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void dueDateShouldBeTruncatedToTheEndOfLastWorkingDayIfTheNextOpenDayStrategy() {
+  public void dueDateShouldBeTruncatedToTheEndOfPreviousOpenDayIfTheNextOpenDayStrategy() {
     use(buildLoanPolicyWithFixedLoan(MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY));
 
     IndividualResource item = itemsFixture.basedUponNod();
@@ -1967,7 +1967,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void dueDateShouldBeTruncatedToThePatronExpirationDateTime() {
+  public void dueDateShouldBeTruncatedToThePatronsExpirationDateTimeIfKeepCurrentDueDateStrategy() {
     use(buildLoanPolicyWithFixedLoan(KEEP_THE_CURRENT_DUE_DATE));
 
     IndividualResource item = itemsFixture.basedUponNod();
@@ -1984,7 +1984,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void dueDateShouldBeTruncatedToPatronsExpirationDate() {
+  public void dueDateShouldBeTruncatedToPatronsExpirationDateTimeIfKeepCurrentDueDateTimeStrategy() {
     use(buildLoanPolicyWithRollingLoan(KEEP_THE_CURRENT_DUE_DATE_TIME));
 
     IndividualResource item = itemsFixture.basedUponNod();
@@ -2001,7 +2001,8 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void dueDateShouldBeTruncatedToTheEndOfPreviousServicePointHours() {
+  public void
+  dueDateShouldBeTruncatedToTheEndOfPreviousServicePointHoursIfMoveToTheEndOfCurrentHoursStrategy() {
     use(buildLoanPolicyWithRollingLoan(MOVE_TO_END_OF_CURRENT_SERVICE_POINT_HOURS));
 
     IndividualResource item = itemsFixture.basedUponNod();
@@ -2019,7 +2020,8 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void dueDateShouldBeTruncatedToTheBeginningOfNextServicePointHours() {
+  public void
+  dueDateShouldBeTruncatedToTheEndOfPreviousServicePointHoursIfMoveToTheBeginningOfNextStrategy() {
     use(buildLoanPolicyWithRollingLoan(MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS));
 
     IndividualResource item = itemsFixture.basedUponNod();
