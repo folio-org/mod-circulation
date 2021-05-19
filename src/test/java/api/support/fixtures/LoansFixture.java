@@ -17,7 +17,7 @@ import static java.time.Clock.fixed;
 import static java.time.Instant.ofEpochMilli;
 import static org.folio.circulation.support.ClockManager.getClockManager;
 import java.time.Clock;
-import static java.time.ZoneOffset.UTC;
+import java.time.ZoneOffset;
 
 import java.net.URL;
 import java.util.UUID;
@@ -177,8 +177,7 @@ public class LoansFixture {
   }
 
   private void resetTime() {
-    final Clock fixedClocks = fixed(ofEpochMilli(now(UTC)), ZoneOffset.UTC);
-    getClockManager().setClock(fixedClocks);
+    getClockManager().setDefaultClock();
   }
 
   public Response attemptRenewalOnDate(int expectedStatusCode, IndividualResource item,

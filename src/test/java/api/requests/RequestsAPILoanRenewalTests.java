@@ -615,14 +615,16 @@ public class RequestsAPILoanRenewalTests extends APITests {
 
     useWithActiveNotice(dueDateLimitedPolicy);
 
-    final DateTime checkoutTime = DateTime.now(DateTimeZone.UTC);
-    
-    final IndividualResource response = checkOutFixture.checkOutByBarcode(smallAngryPlanet, rebecca, checkoutTime);
+    final DateTime checkoutDate = DateTime.now(DateTimeZone.UTC).minusDays(80);
+
+    mockClockManagerToReturnFixedDateTime(checkoutDate);
+
+    final IndividualResource response = checkOutFixture.checkOutByBarcode(smallAngryPlanet, rebecca, checkoutDate);
     String loanId = response.getJson().getString("id");
 
-    final DateTime renewalDate = DateTime.now(DateTimeZone.UTC).plusDays(80);
+    mockClockManagerToReturnDefaultDateTime();
 
-    Response response2 = loansFixture.attemptRenewalOnDate(422, smallAngryPlanet, rebecca, renewalDate);
+    Response response2 = loansFixture.attemptRenewal(422, smallAngryPlanet, rebecca);
 
     assertThat(response2.getJson().toString(), is (""));
     /*
