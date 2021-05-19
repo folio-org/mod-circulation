@@ -1953,7 +1953,7 @@ public class CheckOutByBarcodeTests extends APITests {
 
     IndividualResource item = itemsFixture.basedUponNod();
     IndividualResource steve = usersFixture.steve(user ->
-      user.expires(DateTime.now().plusDays(3))
+      user.expires(DateTime.now().plusHours(1))
         .active());
 
     JsonObject response = checkOutFixture.checkOutByBarcode(
@@ -1988,7 +1988,7 @@ public class CheckOutByBarcodeTests extends APITests {
     use(buildLoanPolicyWithRollingLoan(KEEP_THE_CURRENT_DUE_DATE_TIME));
 
     IndividualResource item = itemsFixture.basedUponNod();
-    DateTime patronExpirationDate = DateTime.now().plusDays(3).withZone(UTC);
+    DateTime patronExpirationDate = DateTime.now().plusHours(1).withZone(UTC);
     IndividualResource steve = usersFixture.steve(user -> user.expires(patronExpirationDate));
 
     JsonObject response = checkOutFixture.checkOutByBarcode(
@@ -2001,7 +2001,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void dueDateShouldBeTruncatedToTheEndOfCurrentServicePointHours() {
+  public void dueDateShouldBeTruncatedToTheEndOfPreviousServicePointHours() {
     use(buildLoanPolicyWithRollingLoan(MOVE_TO_END_OF_CURRENT_SERVICE_POINT_HOURS));
 
     IndividualResource item = itemsFixture.basedUponNod();
@@ -2045,7 +2045,7 @@ public class CheckOutByBarcodeTests extends APITests {
 
   private LoanPolicyBuilder buildLoanPolicyWithRollingLoan(DueDateManagement strategy) {
     return new LoanPolicyBuilder()
-      .rolling(Period.weeks(1))
+      .rolling(Period.days(1))
       .withClosedLibraryDueDateManagement(strategy.getValue());
   }
 
