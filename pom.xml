@@ -436,6 +436,10 @@
                     <Multi-Release>true</Multi-Release>
                   </manifestEntries>
                 </transformer>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                  <!-- otherwise Drools KieServices.Factory.get() returns null: CIRC-309, CIRC-1147 -->
+                  <resource>META-INF/kie.conf</resource>
+                </transformer>
               </transformers>
               <artifactSet />
               <outputFile>${project.build.directory}/${project.artifactId}.jar</outputFile>
