@@ -79,9 +79,10 @@ public class ValidationError {
     if (code != null) {
       jsonObject.put("code", code);
     }
-    if (message != null) {
-      jsonObject.put("message", message);
-    }
+    // We need a non-null message because it is a required property in
+    // https://github.com/folio-org/raml/blob/3126cb6ab63ec9237ccb88c436fadb1734e9e226/schemas/error.schema#L25
+    // We don't want to throw a NullPointerExeption when we are already in the error handling.
+    jsonObject.put("message", message == null ? "null" : message);
     return jsonObject.put("parameters", mappedParameters);
   }
 
@@ -100,7 +101,7 @@ public class ValidationError {
   @Override
   public String toString() {
     return (code == null ? "" : "code: " + code + ", ")
-        + (message == null ? "" : "reason: " + message + ", ")
+        + "reason : " + (message == null ? "null" : message) + ", "
         + "parameters: " + parameters.entrySet().stream()
         .map(entry -> "key: " + entry.getKey() + ", value: " + entry.getValue())
         .collect(Collectors.joining("\n"));

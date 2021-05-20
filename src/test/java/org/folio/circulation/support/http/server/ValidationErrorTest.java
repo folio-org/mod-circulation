@@ -1,9 +1,7 @@
 package org.folio.circulation.support.http.server;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 
 import io.vertx.core.json.JsonArray;
@@ -34,10 +32,10 @@ class ValidationErrorTest {
     assertThat(e.getMessage(), is(nullValue()));
     assertThat(e.getParameter("a"), is("b"));
     assertThat(e.toJson().getString("code"), is("my.code"));
-    assertThat(e.toJson().getMap(), not(hasKey("message")));
     assertThat(e.toJson(), is(
         new JsonObject()
         .put("code", "my.code")
+        .put("message", "null")
         .put("parameters", new JsonArray().add(
             new JsonObject().put("key", "a").put("value", "b")))));
   }
@@ -74,7 +72,7 @@ class ValidationErrorTest {
     assertThat(e.getParameter("b"), is("c"));
     assertThat(e.getParameter("c"), is("a"));
     assertThat(e.toJson().getString("code"), is("my.code"));
-    assertThat(e.toJson().getMap(), not(hasKey("message")));
+    assertThat(e.toJson().getString("message"), is("null"));
     assertThat(e.toJson().getJsonArray("parameters").size(), is(3));
   }
 
