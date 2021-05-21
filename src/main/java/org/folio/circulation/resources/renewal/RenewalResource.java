@@ -490,7 +490,9 @@ public abstract class RenewalResource extends Resource {
       final BlockOverrides blockOverrides = BlockOverrides.from(getObjectProperty(
         context.getRenewalRequest(), "overrideBlocks"));
 
-      if (!isRenewalBlockOverrideRequested) {
+      if (!blockOverrides.getPatronBlockOverride().isRequested() &&
+        !blockOverrides.getRenewalBlockOverride().isRequested()) {
+
         return proposedDueDateResult
           .map(dueDate -> loan.renew(dueDate, loanPolicy.getId()))
           .map(l -> context);
