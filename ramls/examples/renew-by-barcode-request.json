@@ -1,4 +1,13 @@
 {
   "userBarcode": "466983136459401",
-  "itemBarcode": "2887532577331"
+  "itemBarcode": "2887532577331",
+  "servicePointId":"7c5abc9f-f3d7-4856-b8d7-6712462ca007",
+  "overrideBlocks": {
+    "patronBlock": {},
+    "renewalBlock":{},
+    "renewalDueDateRequiredBlock":{
+      "dueDate":"2021-05-31T12:53:00Z"
+    },
+    "comment": "Comment"
+  }
 }

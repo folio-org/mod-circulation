@@ -33,7 +33,7 @@ import org.junit.Test;
 import api.support.builders.LoanPolicyBuilder;
 import io.vertx.core.json.JsonObject;
 
-public class OverrideRenewalStrategyTest {
+public class OverrideRenewalTest {
   private static final String NEW_DUE_DATE_IS_REQUIRED_ERROR =
     "New due date is required when renewal would not change the due date";
   private static final String OVERRIDE_DUE_DATE_MUST_BE_SPECIFIED_ERROR =
@@ -320,7 +320,7 @@ public class OverrideRenewalStrategyTest {
   }
 
   private Result<Loan> renew(RenewalContext context) {
-    return new OverrideRenewalStrategy().renew(context, null)
+    return new RenewByBarcodeResource(null).renewThroughOverride(context)
       .getNow(Result.failed(new ServerErrorFailure("Failure")))
       .map(RenewalContext::getLoan);
   }
@@ -340,9 +340,12 @@ public class OverrideRenewalStrategyTest {
 
   private JsonObject createOverrideRequest(DateTime dueDate) {
     final JsonObject json = new JsonObject();
-
-    write(json, "comment", "A comment");
-    write(json, "dueDate", dueDate);
+    final JsonObject overrideBlocks = new JsonObject();
+    final JsonObject renewalBlock = new JsonObject();
+    write(overrideBlocks, "comment", "A comment");
+    write(renewalBlock, "dueDate", dueDate);
+    write(overrideBlocks, "renewalDueDateRequiredBlock", renewalBlock);
+    write(json, "overrideBlocks", overrideBlocks);
 
     return json;
   }

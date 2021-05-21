@@ -145,10 +145,6 @@ public class InterfaceUrls {
     return circulationModuleUrl("/circulation/renew-by-barcode");
   }
 
-  public static URL overrideRenewalByBarcodeUrl() {
-    return circulationModuleUrl("/circulation/override-renewal-by-barcode");
-  }
-
   public static URL renewByIdUrl() {
     return circulationModuleUrl("/circulation/renew-by-id");
   }
