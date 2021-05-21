@@ -8,11 +8,11 @@ import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
-public class EndOfPreviousHoursStrategy extends ShortTermLoansBaseStrategy {
+public class EndOfPreviousOpenHoursStrategy extends ShortTermLoansBaseStrategy {
 
   private final DateTime currentTime;
 
-  public EndOfPreviousHoursStrategy(DateTime currentTime, DateTimeZone zone) {
+  public EndOfPreviousOpenHoursStrategy(DateTime currentTime, DateTimeZone zone) {
     super(zone);
     this.currentTime = currentTime;
   }

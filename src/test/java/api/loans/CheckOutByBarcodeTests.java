@@ -11,12 +11,8 @@ import static api.support.fakes.PublishedEvents.byEventType;
 import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.fixtures.AutomatedPatronBlocksFixture.MAX_NUMBER_OF_ITEMS_CHARGED_OUT_MESSAGE;
 import static api.support.fixtures.AutomatedPatronBlocksFixture.MAX_OUTSTANDING_FEE_FINE_BALANCE_MESSAGE;
-import static api.support.fixtures.CalendarExamples.CASE_ONE_DAY_IS_OPEN_NEXT_TWO_DAYS_CLOSED;
 import static api.support.fixtures.CalendarExamples.CASE_YESTERDAY_OPEN_TODAY_CLOSED_TOMORROW_OPEN;
-import static api.support.fixtures.CalendarExamples.END_TIME_FIRST_PERIOD;
 import static api.support.fixtures.CalendarExamples.END_TIME_SECOND_PERIOD;
-import static api.support.fixtures.CalendarExamples.FIRST_DAY_OPEN;
-import static api.support.fixtures.CalendarExamples.TOMORROW_OPEN_DAY;
 import static api.support.fixtures.CalendarExamples.YESTERDAY_OPEN_DAY;
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasItemBarcodeParameter;
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasLoanPolicyParameters;
@@ -1935,16 +1931,20 @@ public class CheckOutByBarcodeTests extends APITests {
     use(buildLoanPolicyWithFixedLoan(MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY));
 
     IndividualResource item = itemsFixture.basedUponNod();
-    IndividualResource steve = usersFixture.steve(user -> user.expires(DateTime.now().plusDays(3)));
+//    DateTime patronExpirationDate = DateTime.parse(SECOND_DAY_CLOSED.toString()).plusHours(10);
+    DateTime patronExpirationDate = DateTime.now().plusHours(1);
+    IndividualResource steve = usersFixture.steve(user -> user.expires(patronExpirationDate));
 
     JsonObject response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(item)
         .to(steve)
-        .at(CASE_ONE_DAY_IS_OPEN_NEXT_TWO_DAYS_CLOSED)).getJson();
+        .on(patronExpirationDate.minusHours(1))
+//        .at(CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_OPEN)).getJson();
+        .at(CASE_YESTERDAY_OPEN_TODAY_CLOSED_TOMORROW_OPEN)).getJson();
 
     assertThat(DateTime.parse(response.getString("dueDate")).toDateTime(),
-      is(FIRST_DAY_OPEN.toDateTime(LocalTime.MIDNIGHT.minusSeconds(1), UTC)));
+      is(YESTERDAY_OPEN_DAY.toDateTime(LocalTime.MIDNIGHT.minusSeconds(1), UTC)));
   }
 
   @Test
@@ -1971,14 +1971,14 @@ public class CheckOutByBarcodeTests extends APITests {
     use(buildLoanPolicyWithFixedLoan(KEEP_THE_CURRENT_DUE_DATE));
 
     IndividualResource item = itemsFixture.basedUponNod();
-    DateTime patronExpirationDate = DateTime.now().plusDays(3).withZone(UTC);
+    DateTime patronExpirationDate = DateTime.now().plusHours(1).withZone(UTC);
     IndividualResource steve = usersFixture.steve(user -> user.expires(patronExpirationDate));
 
     JsonObject response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(item)
         .to(steve)
-        .at(CASE_ONE_DAY_IS_OPEN_NEXT_TWO_DAYS_CLOSED)).getJson();
+        .at(CASE_YESTERDAY_OPEN_TODAY_CLOSED_TOMORROW_OPEN)).getJson();
 
     assertThat(DateTime.parse(response.getString("dueDate")).toDateTime(), is(patronExpirationDate));
   }
@@ -1995,7 +1995,7 @@ public class CheckOutByBarcodeTests extends APITests {
       new CheckOutByBarcodeRequestBuilder()
         .forItem(item)
         .to(steve)
-        .at(CASE_ONE_DAY_IS_OPEN_NEXT_TWO_DAYS_CLOSED)).getJson();
+        .at(CASE_YESTERDAY_OPEN_TODAY_CLOSED_TOMORROW_OPEN)).getJson();
 
     assertThat(DateTime.parse(response.getString("dueDate")).toDateTime(), is(patronExpirationDate));
   }
@@ -2041,7 +2041,7 @@ public class CheckOutByBarcodeTests extends APITests {
   private LoanPolicyBuilder buildLoanPolicyWithFixedLoan(DueDateManagement strategy) {
     return new LoanPolicyBuilder()
       .fixed(loanPoliciesFixture.createExampleFixedDueDateSchedule().getId())
-      .withLoanPeriod(Period.months(1))
+      .withLoanPeriod(Period.days(1))
       .withClosedLibraryDueDateManagement(strategy.getValue());
   }
 

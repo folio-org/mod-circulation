@@ -69,7 +69,7 @@ public final class ClosedLibraryStrategyUtils {
         return new EndOfPreviousDayStrategy(zone);
       case MOVE_TO_END_OF_CURRENT_SERVICE_POINT_HOURS:
       case MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS:
-        return new EndOfPreviousHoursStrategy(startDate, zone);
+        return new EndOfPreviousOpenHoursStrategy(startDate, zone);
       case KEEP_THE_CURRENT_DUE_DATE:
       case KEEP_THE_CURRENT_DUE_DATE_TIME:
       default:
