@@ -33,7 +33,6 @@ import org.folio.circulation.resources.TenantActivationResource;
 import org.folio.circulation.resources.agedtolost.ScheduledAgeToLostFeeChargingResource;
 import org.folio.circulation.resources.agedtolost.ScheduledAgeToLostResource;
 import org.folio.circulation.resources.handlers.LoanRelatedFeeFineClosedHandlerResource;
-import org.folio.circulation.resources.renewal.OverrideRenewalByBarcodeResource;
 import org.folio.circulation.resources.renewal.RenewByBarcodeResource;
 import org.folio.circulation.resources.renewal.RenewByIdResource;
 import org.folio.circulation.support.logging.Logging;
@@ -72,7 +71,6 @@ public class CirculationVerticle extends AbstractVerticle {
 
     new RenewByBarcodeResource(client).register(router);
     new RenewByIdResource(client).register(router);
-    new OverrideRenewalByBarcodeResource(client).register(router);
 
     new LoanCollectionResource(client).register(router);
     new RequestCollectionResource(client).register(router);

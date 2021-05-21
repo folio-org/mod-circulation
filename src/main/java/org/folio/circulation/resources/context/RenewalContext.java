@@ -22,7 +22,6 @@ public class RenewalContext {
   String loggedInUserId;
   JsonObject renewalRequest;
   FeeFineAction overdueFeeFineAction;
-  boolean patronBlockOverridden;
 
   public static RenewalContext create(Loan loan, JsonObject renewalRequest,
     String loggedInUserId) {
@@ -32,6 +31,6 @@ public class RenewalContext {
       ? loan.getItem().getStatus() : null;
 
     return new RenewalContext(loan, null, null, loanBeforeRenewal, itemStatusBeforeRenew,
-      loggedInUserId, renewalRequest, null, false);
+      loggedInUserId, renewalRequest, null);
   }
 }
