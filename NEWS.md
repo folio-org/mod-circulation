@@ -1,3 +1,8 @@
+## 20.1.6 2021-05-21
+
+* Fix memory leak caused by mod-pubsub-client (CIRC-1121)
+* Request pick up notice not sent when requester's barcode has been changed after request was created (CIRC-1139)
+
 ## 20.1.5 2021-04-23
 
 * Some filters not finding recent results (CIRC-1133)
