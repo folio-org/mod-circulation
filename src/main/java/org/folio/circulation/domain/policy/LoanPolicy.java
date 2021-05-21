@@ -482,7 +482,10 @@ public class LoanPolicy extends Policy {
     if (!loan.wasDueDateChangedByRecall()) {
       loan.changeDueDate(dueDate);
       loan.changeDueDateChangedByRecall();
-    }
+    } 
+    if (loan.wasDueDateChangedByRecall() && loan.isRenewed()) {
+      loan.changeDueDate(dueDate);
+    } 
 
     return loan;
   }

@@ -11,15 +11,12 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.joda.time.DateTimeConstants.APRIL;
 
-
 import java.time.LocalDate;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.domain.policy.Period;
-
-import api.support.http.CheckOutResource;
 import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
@@ -34,12 +31,8 @@ import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import java.lang.invoke.MethodHandles;
 
 public class RequestsAPILoanRenewalTests extends APITests {
-  final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private static final String ITEMS_CANNOT_BE_RENEWED_MSG = "items cannot be renewed when there is an active recall request";
   private static final String EXPECTED_REASON_LOAN_IS_NOT_RENEWABLE = "loan is not renewable";
@@ -594,50 +587,6 @@ public class RequestsAPILoanRenewalTests extends APITests {
 
     assertThat(response.getJson(), hasErrorWith(
       hasMessage("Item's loan policy has fixed profile but renewal period is specified")));
-  }
-
-  @Test
-  public void loanDateTruncatedWhenRecalledItemItemHasBeenPreviouslyRenewed() {
-    JsonObject holds = new JsonObject();
-    holds.put("renewItemsWithRequest", false);
-    holds.put("minimumGuaranteedLoanPeriod", Period.days(14).asJson());
-    holds.put("recallReturnInterval", Period.days(2).asJson());
-    LoanPolicyBuilder dueDateLimitedPolicy = new LoanPolicyBuilder()
-      .withName("Test")
-      .withHolds(holds)
-      .rolling(Period.days(90))
-      .limitedRenewals(2)
-      .renewWith(Period.days(30))
-      .renewFromSystemDate();
-
-    final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    final IndividualResource rebecca = usersFixture.rebecca();
-
-    useWithActiveNotice(dueDateLimitedPolicy);
-
-    final DateTime checkoutDate = DateTime.now(DateTimeZone.UTC).minusDays(80);
-
-    mockClockManagerToReturnFixedDateTime(checkoutDate);
-
-    final IndividualResource response = checkOutFixture.checkOutByBarcode(smallAngryPlanet, rebecca, checkoutDate);
-    String loanId = response.getJson().getString("id");
-
-    mockClockManagerToReturnDefaultDateTime();
-
-    Response response2 = loansFixture.attemptRenewal(422, smallAngryPlanet, rebecca);
-
-    assertThat(response2.getJson().toString(), is (""));
-    /*
-    requestsFixture.place(new RequestBuilder()
-    .recall()
-    .forItem(smallAngryPlanet)
-    .withPickupServicePointId(servicePointsFixture.cd1().getId())
-    .by(usersFixture.charlotte()));
-
-    JsonObject loan = loansFixture.getLoanById(UUID.fromString(loanId)).getJson();
-
-    assertThat(loan.toString(), is(""));
-    */
   }
 
   private void loanPolicyWithRollingProfileAndRenewingIsForbiddenWhenHoldIsPending() {

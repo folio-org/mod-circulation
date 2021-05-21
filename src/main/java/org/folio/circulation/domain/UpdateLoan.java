@@ -69,7 +69,7 @@ public class UpdateLoan {
 
   private CompletableFuture<Result<RequestAndRelatedRecords>> recall(Loan loan,
       RequestAndRelatedRecords requestAndRelatedRecords, Request request) {
-    if (loan.wasDueDateChangedByRecall()) {
+    if (loan.wasDueDateChangedByRecall() && !loan.isRenewed()) {
       // We don't need to apply the recall
       return completedFuture(succeeded(requestAndRelatedRecords));
     } else {

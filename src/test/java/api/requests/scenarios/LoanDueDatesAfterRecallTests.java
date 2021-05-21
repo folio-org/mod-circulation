@@ -36,6 +36,7 @@ import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
+import org.joda.time.DateTimeZone;
 import org.joda.time.LocalTime;
 import org.joda.time.Seconds;
 import org.joda.time.format.ISODateTimeFormat;
@@ -52,6 +53,7 @@ import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.builders.ServicePointBuilder;
 import api.support.http.IndividualResource;
+import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
@@ -799,7 +801,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
 
     final String recalledRenewalDueDate = storedLoan.getString("dueDate");
     assertThat("due date after recall should not change the renewal due date",
-        recalledRenewalDueDate, is(renewalDueDate));
+        extractDueDate(recalledRenewalDueDate), is(extractDueDate(renewalDueDate)));
   }
 
   @Test
@@ -971,5 +973,54 @@ public class LoanDueDatesAfterRecallTests extends APITests {
 
       String loanDueDate = loan.getJson().getString("dueDate");
       assertThat(loanDueDate, is(truncatedLoanDate.toString()));
+  }
+  @Test
+  public void loanDateTruncatedWhenRecalledItemItemHasBeenPreviouslyRecalledandRenewed() {
+    JsonObject holds = new JsonObject();
+    holds.put("renewItemsWithRequest", false);
+    holds.put("recallReturnInterval", Period.days(2).asJson());
+    setFallbackPolicies(new LoanPolicyBuilder()
+      .withName("Test")
+      .withHolds(holds)
+      .rolling(Period.days(90))
+      .limitedRenewals(2)
+      .withRecallsMinimumGuaranteedLoanPeriod(Period.days(14))
+      .renewWith(Period.days(30))
+      .renewFromSystemDate());
+
+    final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource rebecca = usersFixture.rebecca();
+
+    final IndividualResource response = checkOutFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
+    String loanId = response.getJson().getString("id");
+
+    IndividualResource recall = requestsFixture.place(new RequestBuilder()
+    .recall()
+    .forItem(smallAngryPlanet)
+    .withPickupServicePointId(servicePointsFixture.cd1().getId())
+    .by(usersFixture.james()));
+
+    requestsFixture.cancelRequest(recall);
+
+    loansFixture.renewLoan(smallAngryPlanet, rebecca);
+
+    requestsFixture.place(new RequestBuilder()
+    .recall()
+    .forItem(smallAngryPlanet)
+    .withPickupServicePointId(servicePointsFixture.cd1().getId())
+    .by(usersFixture.charlotte()));
+
+    String expectedDueDate = extractDueDate(DateTime.now(DateTimeZone.UTC).plusDays(14).toString());
+
+    JsonObject loan = loansFixture.getLoanById(UUID.fromString(loanId)).getJson();
+
+    String loanDueDate = extractDueDate(loan.getString("dueDate"));
+
+    assertThat(loanDueDate, is(expectedDueDate));
+  }
+  
+  private String extractDueDate(String date) {
+    String[] splitDate = date.split("T");
+    return splitDate[0];
   }
 }
