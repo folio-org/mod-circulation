@@ -88,8 +88,8 @@ public class UserManualBlocksValidator {
           userManualBlock.getExpirationDate(), userManualBlock.getRequests()));
   }
 
-  private boolean isBlockedToCreateRequests(DateTime expirationDate, boolean requests) {
+  private boolean isBlockedToCreateRequests(DateTime expirationDate, boolean isRequestingBlocked) {
     final DateTime now = ClockManager.getClockManager().getDateTime();
-    return requests && expirationDate != null && expirationDate.isAfter(now);
+    return isRequestingBlocked && (expirationDate == null || expirationDate.isAfter(now));
   }
 }
