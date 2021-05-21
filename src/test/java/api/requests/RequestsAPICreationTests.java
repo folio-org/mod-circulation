@@ -1678,22 +1678,24 @@ RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void cannotCreateRequestWhenRequesterHasActiveRequestManualBlocksAndExpirationDateIsNotSet() {
+  public void cannotCreateRequestWhenRequesterHasActiveRequestManualBlockWithoutExpirationDate() {
     final IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requester = usersFixture.rebecca();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    final UserManualBlockBuilder userManualBlockBuilder = getManualBlockBuilder()
+    userManualBlocksFixture.create(getManualBlockBuilder()
       .withRequests(true)
-      .withUserId(String.valueOf(requester.getId()));
+      .withExpirationDate(null) // no expiration date
+      .withUserId(String.valueOf(requester.getId())));
 
-    final RequestBuilder requestBuilder = createRequestBuilder(item,
-      requester,
-      pickupServicePointId,
-      new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
-
-    checkOutFixture.checkOutByBarcode(item, usersFixture.jessica());
-    userManualBlocksFixture.create(userManualBlockBuilder);
+    RequestBuilder requestBuilder = new RequestBuilder()
+      .withId(UUID.randomUUID())
+      .open()
+      .page()
+      .forItem(item)
+      .by(requester)
+      .fulfilToHoldShelf()
+      .withPickupServicePointId(pickupServicePointId);
 
     Response postResponse = requestsClient.attemptCreate(requestBuilder);
 
