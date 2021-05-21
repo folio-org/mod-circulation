@@ -1,6 +1,6 @@
 #%RAML 1.0
 title: Circulation
-version: v10.0
+version: v11.0
 protocols: [ HTTP, HTTPS ]
 baseUri: http://localhost:9130
 
@@ -93,34 +93,6 @@ resourceTypes:
         application/json:
           type: !include renew-by-id-request.json
           example: !include examples/renew-by-id-request.json
-      responses:
-        200:
-          body:
-            application/json:
-              type: loan
-              example: !include examples/loan.json
-        201:
-          body:
-            application/json:
-              type: loan
-              example: !include examples/loan.json
-        500:
-          description: "Internal server error"
-          body:
-            text/plain:
-              example: "Internal server error"
-  /override-renewal-by-barcode:
-    displayName: Override renewal of an existing loan using barcode for item and loanee
-    post:
-      description: Updates the due date of an existing loan
-      is: [
-        language,
-        validate
-      ]
-      body:
-        application/json:
-          type: !include override-renewal-by-barcode-request.json
-          example: !include examples/override-renewal-by-barcode-request.json
       responses:
         200:
           body:

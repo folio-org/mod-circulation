@@ -11,6 +11,11 @@
       "description": "Barcode of the user (representing the patron) the item has been loaned to",
       "type": "string"
     },
+    "servicePointId": {
+      "description": "Service point where an item is being processed",
+      "type": "string",
+      "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+    },
     "overrideBlocks": {
       "description": "Blocks to override",
       "$ref": "override-blocks.json"

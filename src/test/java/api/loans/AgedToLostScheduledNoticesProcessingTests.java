@@ -13,6 +13,8 @@ import static api.support.matchers.LoanMatchers.isClosed;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.ScheduledNoticeMatchers.hasScheduledFeeFineNotice;
 import static api.support.matchers.ScheduledNoticeMatchers.hasScheduledLoanNotice;
+import static api.support.utl.BlockOverridesUtils.OVERRIDE_RENEWAL_PERMISSION;
+import static api.support.utl.BlockOverridesUtils.buildOkapiHeadersWithPermissions;
 import static java.util.stream.Collectors.toList;
 import static org.folio.circulation.domain.notice.NoticeTiming.AFTER;
 import static org.folio.circulation.domain.notice.NoticeTiming.UPON_AT;
@@ -51,6 +53,7 @@ import api.support.builders.NoticePolicyBuilder;
 import api.support.fixtures.AgeToLostFixture.AgeToLostResult;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
+import api.support.http.OkapiHeaders;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
@@ -248,8 +251,9 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
   public void shouldStopSendingAgedToLostNoticesOnceItemIsRenewedThroughOverride() {
     AgeToLostResult agedToLostLoan = createRecurringAgedToLostNotice();
 
+    final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(OVERRIDE_RENEWAL_PERMISSION);
     loansFixture.overrideRenewalByBarcode(agedToLostLoan.getItem(), agedToLostLoan.getUser(),
-      "Test overriding", agedToLostLoan.getLoan().getJson().getString("dueDate"));
+      "Test overriding", agedToLostLoan.getLoan().getJson().getString("dueDate"), okapiHeaders);
     final DateTime firstRunTime = getAgedToLostDate(agedToLostLoan).plus(
       TIMING_PERIOD.timePeriod());
     scheduledNoticeProcessingClient.runLoanNoticesProcessing(

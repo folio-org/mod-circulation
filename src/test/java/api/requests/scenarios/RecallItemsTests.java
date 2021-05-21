@@ -3,6 +3,8 @@ package api.requests.scenarios;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static api.support.matchers.JsonObjectMatcher.hasNoJsonPath;
 import static api.support.matchers.LoanHistoryMatcher.hasLoanHistoryRecord;
+import static api.support.utl.BlockOverridesUtils.OVERRIDE_RENEWAL_PERMISSION;
+import static api.support.utl.BlockOverridesUtils.buildOkapiHeadersWithPermissions;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 
@@ -13,6 +15,7 @@ import org.junit.Test;
 
 import api.support.APITests;
 import api.support.builders.LoanPolicyBuilder;
+import api.support.http.OkapiHeaders;
 import lombok.val;
 
 public class RecallItemsTests extends APITests {
@@ -34,7 +37,8 @@ public class RecallItemsTests extends APITests {
     val user = usersFixture.james();
     val loan = checkOutFixture.checkOutByBarcode(item, user);
 
-    loansFixture.overrideRenewalByBarcode(item, user, overrideRenewComment, newDueDate);
+    final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(OVERRIDE_RENEWAL_PERMISSION);
+    loansFixture.overrideRenewalByBarcode(item, user, overrideRenewComment, newDueDate, okapiHeaders);
 
     requestsFixture.recallItem(item, usersFixture.charlotte());
 
