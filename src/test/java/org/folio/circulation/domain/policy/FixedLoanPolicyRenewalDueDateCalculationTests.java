@@ -46,6 +46,9 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
 
   private static final String EXPECTED_REASON_OPEN_RECALL_REQUEST =
     "items cannot be renewed when there is an active recall request";
+  private static final String RENEWAL_WOULD_NOT_CHANGE_THE_DUE_DATE =
+    "renewal would not change the due date";
+  private static final String LOAN_AT_MAXIMUM_RENEWAL_NUMBER = "loan at maximum renewal number";
 
   @Test
   public void shouldFailWhenLoanDateIsBeforeOnlyScheduleAvailable() {
@@ -65,10 +68,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
     renew(loan, renewalDate, new RequestQueue(Collections.emptyList()), errorHandler);
 
     assertEquals(1, errorHandler.getErrors().size());
-    assertTrue(errorHandler.getErrors().keySet().stream()
-      .map(ValidationErrorFailure.class::cast)
-      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(
-        EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES)));
+    assertTrue(matchErrorReason(errorHandler, EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES));
   }
 
   @Test
@@ -92,14 +92,8 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
     renew(loan, renewalDate, requestQueue, errorHandler);
 
     assertEquals(2, errorHandler.getErrors().size());
-    assertTrue(errorHandler.getErrors().keySet().stream()
-      .map(ValidationErrorFailure.class::cast)
-      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(
-        EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES)));
-    assertTrue(errorHandler.getErrors().keySet().stream()
-      .map(ValidationErrorFailure.class::cast)
-      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(
-        EXPECTED_REASON_OPEN_RECALL_REQUEST)));
+    assertTrue(matchErrorReason(errorHandler, EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES));
+    assertTrue(matchErrorReason(errorHandler, EXPECTED_REASON_OPEN_RECALL_REQUEST));
   }
 
   @Test
@@ -121,10 +115,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
     renew(loan, renewalDate, requestQueue, errorHandler);
 
     assertEquals(1, errorHandler.getErrors().size());
-    assertTrue(errorHandler.getErrors().keySet().stream()
-      .map(ValidationErrorFailure.class::cast)
-      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(
-        EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES)));
+    assertTrue(matchErrorReason(errorHandler, EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES));
   }
 
   @Test
@@ -331,10 +322,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
     renew(loan, renewalDate, new RequestQueue(Collections.emptyList()), errorHandler);
 
     assertEquals(1, errorHandler.getErrors().size());
-    assertTrue(errorHandler.getErrors().keySet().stream()
-      .map(ValidationErrorFailure.class::cast)
-      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(
-        EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES)));
+    assertTrue(matchErrorReason(errorHandler, EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES));
   }
 
   @Test
@@ -359,9 +347,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
     renew(loan, renewalDate, new RequestQueue(Collections.emptyList()), errorHandler);
 
-    assertTrue(errorHandler.getErrors().keySet().stream()
-      .map(ValidationErrorFailure.class::cast)
-      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason("renewal would not change the due date")));
+    assertTrue(matchErrorReason(errorHandler, RENEWAL_WOULD_NOT_CHANGE_THE_DUE_DATE));
   }
 
   @Test
@@ -386,9 +372,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
     renew(loan, renewalDate, new RequestQueue(Collections.emptyList()), errorHandler);
 
-    assertTrue(errorHandler.getErrors().keySet().stream()
-      .map(ValidationErrorFailure.class::cast)
-      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason("renewal would not change the due date")));
+    assertTrue(matchErrorReason(errorHandler, RENEWAL_WOULD_NOT_CHANGE_THE_DUE_DATE));
   }
 
   @Test
@@ -420,14 +404,8 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     renew(loan, renewalDate, new RequestQueue(Collections.emptyList()), errorHandler);
 
-    assertTrue(errorHandler.getErrors().keySet().stream()
-      .map(ValidationErrorFailure.class::cast)
-      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES)));
-
-    assertTrue(errorHandler.getErrors().keySet().stream()
-      .map(ValidationErrorFailure.class::cast)
-      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason("loan at maximum renewal number")));
-
+    assertTrue(matchErrorReason(errorHandler, EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES));
+    assertTrue(matchErrorReason(errorHandler, LOAN_AT_MAXIMUM_RENEWAL_NUMBER));
     assertEquals(2, errorHandler.getErrors().size());
   }
 
@@ -461,16 +439,9 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     renew(loan, renewalDate, requestQueue, errorHandler);
 
-    assertTrue(errorHandler.getErrors().keySet().stream()
-      .map(ValidationErrorFailure.class::cast)
-      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(
-        EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES)));
-    assertTrue(errorHandler.getErrors().keySet().stream()
-      .map(ValidationErrorFailure.class::cast)
-      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason("loan at maximum renewal number")));
-    assertTrue(errorHandler.getErrors().keySet().stream()
-      .map(ValidationErrorFailure.class::cast)
-      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(EXPECTED_REASON_OPEN_RECALL_REQUEST)));
+    assertTrue(matchErrorReason(errorHandler, EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES));
+    assertTrue(matchErrorReason(errorHandler, LOAN_AT_MAXIMUM_RENEWAL_NUMBER));
+    assertTrue(matchErrorReason(errorHandler, LOAN_AT_MAXIMUM_RENEWAL_NUMBER));
   }
 
   @Test
@@ -492,10 +463,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
     renew(loan, renewalDate, new RequestQueue(Collections.emptyList()), errorHandler);
 
-    assertTrue(errorHandler.getErrors().keySet().stream()
-      .map(ValidationErrorFailure.class::cast)
-      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(
-        EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES)));
+    assertTrue(matchErrorReason(errorHandler, EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES));
   }
 
   @Test
@@ -516,9 +484,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
     renew(loan, renewalDate, new RequestQueue(Collections.emptyList()), errorHandler);
 
-    assertTrue(errorHandler.getErrors().keySet().stream()
-      .map(ValidationErrorFailure.class::cast)
-      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES)));
+    assertTrue(matchErrorReason(errorHandler, EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES));
   }
 
   @Test
@@ -537,9 +503,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
     renew(loan, renewalDate, new RequestQueue(Collections.emptyList()), errorHandler);
 
-    assertTrue(errorHandler.getErrors().keySet().stream()
-      .map(ValidationErrorFailure.class::cast)
-      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES)));
+    assertTrue(matchErrorReason(errorHandler, EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES));
   }
 
   @Test
@@ -611,5 +575,11 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
     return new RenewByBarcodeResource(null)
       .regularRenew(renewalContext, errorHandler, renewalDate)
       .map(RenewalContext::getLoan);
+  }
+
+  private boolean matchErrorReason(CirculationErrorHandler errorHandler, String expectedReason) {
+    return errorHandler.getErrors().keySet().stream()
+      .map(ValidationErrorFailure.class::cast)
+      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(expectedReason));
   }
 }

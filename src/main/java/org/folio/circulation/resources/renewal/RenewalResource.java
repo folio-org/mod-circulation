@@ -188,11 +188,11 @@ public abstract class RenewalResource extends Resource {
     Clients clients) {
 
     return isRenewalBlockOverrideRequested
-      ? processFeesFinesForOverriding(renewalContext, clients)
+      ? processFeesFinesForRenewalBlockOverride(renewalContext, clients)
       : processFeesFinesForRegularRenew(renewalContext, clients);
   }
 
-  private CompletableFuture<Result<RenewalContext>> processFeesFinesForOverriding(
+  private CompletableFuture<Result<RenewalContext>> processFeesFinesForRenewalBlockOverride(
     RenewalContext renewalContext, Clients clients) {
 
     final LostItemFeeRefundService lostFeeRefundService = new LostItemFeeRefundService(clients);
@@ -490,9 +490,7 @@ public abstract class RenewalResource extends Resource {
       final BlockOverrides blockOverrides = BlockOverrides.from(getObjectProperty(
         context.getRenewalRequest(), "overrideBlocks"));
 
-      if (!blockOverrides.getPatronBlockOverride().isRequested() &&
-        !blockOverrides.getRenewalBlockOverride().isRequested()) {
-
+      if (!isRenewalBlockOverrideRequested) {
         return proposedDueDateResult
           .map(dueDate -> loan.renew(dueDate, loanPolicy.getId()))
           .map(l -> context);

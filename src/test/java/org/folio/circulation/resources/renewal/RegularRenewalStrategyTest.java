@@ -36,6 +36,24 @@ import junitparams.Parameters;
 
 @RunWith(JUnitParamsRunner.class)
 public class RegularRenewalStrategyTest {
+
+  private static final String ITEMS_CANNOT_BE_RENEWED_WHEN_THERE_IS_AN_ACTIVE_RECALL_REQUEST =
+    "items cannot be renewed when there is an active recall request";
+  private static final String ITEM_IS_NOT_LOANABLE = "item is not loanable";
+  private static final String ITEM_IS_AGED_TO_LOST = "item is Aged to lost";
+  private static final String LOAN_IS_NOT_RENEWABLE = "loan is not renewable";
+  private static final String ITEMS_CANNOT_BE_RENEWED_ACTIVE_PENDING_HOLD_REQUEST =
+    "Items with this loan policy cannot be renewed when there is an active, pending hold request";
+  private static final String ALTERNATIVE_RENEWAL_PERIOD_FOR_HOLDS_IS_SPECIFIED =
+    "Item's loan policy has fixed profile but alternative renewal period for holds is specified";
+  private static final String POLICY_HAS_FIXED_PROFILE_BUT_RENEWAL_PERIOD_IS_SPECIFIED =
+    "Item's loan policy has fixed profile but renewal period is specified";
+  private static final String LOAN_AT_MAXIMUM_RENEWAL_NUMBER = "loan at maximum renewal number";
+  private static final String CANNOT_DETERMINE_WHEN_TO_RENEW_FROM =
+    "cannot determine when to renew from";
+  private static final String RENEWAL_WOULD_NOT_CHANGE_THE_DUE_DATE =
+    "renewal would not change the due date";
+
   @Test
   public void canRenewLoan() {
     final var rollingPeriod = days(10);
@@ -69,16 +87,10 @@ public class RegularRenewalStrategyTest {
     renew(loan, recallRequest, errorHandler);
 
     assertEquals(3, errorHandler.getErrors().size());
-    assertTrue(errorHandler.getErrors().keySet().stream()
-      .map(ValidationErrorFailure.class::cast)
-      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(
-        "items cannot be renewed when there is an active recall request")));
-    assertTrue(errorHandler.getErrors().keySet().stream()
-      .map(ValidationErrorFailure.class::cast)
-      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason("item is not loanable")));
-    assertTrue(errorHandler.getErrors().keySet().stream()
-      .map(ValidationErrorFailure.class::cast)
-      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason("item is Aged to lost")));
+    assertTrue(matchErrorReason(errorHandler,
+      ITEMS_CANNOT_BE_RENEWED_WHEN_THERE_IS_AN_ACTIVE_RECALL_REQUEST));
+    assertTrue(matchErrorReason(errorHandler, ITEM_IS_NOT_LOANABLE));
+    assertTrue(matchErrorReason(errorHandler, ITEM_IS_AGED_TO_LOST));
   }
 
   @Test
@@ -89,10 +101,8 @@ public class RegularRenewalStrategyTest {
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
     renew(loanPolicy, recallRequest, errorHandler);
 
-    assertTrue(errorHandler.getErrors().keySet().stream()
-      .map(ValidationErrorFailure.class::cast)
-      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(
-        "items cannot be renewed when there is an active recall request")));
+    assertTrue(matchErrorReason(errorHandler,
+      ITEMS_CANNOT_BE_RENEWED_WHEN_THERE_IS_AN_ACTIVE_RECALL_REQUEST));
   }
 
   @Test
@@ -102,9 +112,7 @@ public class RegularRenewalStrategyTest {
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
     renew(loanPolicy, errorHandler);
 
-    assertTrue(errorHandler.getErrors().keySet().stream()
-      .map(ValidationErrorFailure.class::cast)
-      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason("item is not loanable")));
+    assertTrue(matchErrorReason(errorHandler, ITEM_IS_NOT_LOANABLE));
   }
 
   @Test
@@ -114,9 +122,7 @@ public class RegularRenewalStrategyTest {
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
     renew(loanPolicy, errorHandler);
 
-    assertTrue(errorHandler.getErrors().keySet().stream()
-      .map(ValidationErrorFailure.class::cast)
-      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason("loan is not renewable")));
+    assertTrue(matchErrorReason(errorHandler, LOAN_IS_NOT_RENEWABLE));
   }
 
   @Test
@@ -129,10 +135,8 @@ public class RegularRenewalStrategyTest {
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
     renew(loanPolicy, request, errorHandler);
 
-    assertTrue(errorHandler.getErrors().keySet().stream()
-      .map(ValidationErrorFailure.class::cast)
-      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(
-        "Items with this loan policy cannot be renewed when there is an active, pending hold request")));
+    assertTrue(matchErrorReason(errorHandler,
+      ITEMS_CANNOT_BE_RENEWED_ACTIVE_PENDING_HOLD_REQUEST));
   }
 
   @Test
@@ -146,10 +150,8 @@ public class RegularRenewalStrategyTest {
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
     renew(loanPolicy, request, errorHandler);
 
-    assertTrue(errorHandler.getErrors().keySet().stream()
-      .map(ValidationErrorFailure.class::cast)
-      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(
-        "Item's loan policy has fixed profile but alternative renewal period for holds is specified")));
+    assertTrue(matchErrorReason(errorHandler,
+      ALTERNATIVE_RENEWAL_PERIOD_FOR_HOLDS_IS_SPECIFIED));
   }
 
   @Test
@@ -164,10 +166,8 @@ public class RegularRenewalStrategyTest {
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
     renew(loanPolicy, request, errorHandler);
 
-    assertTrue(errorHandler.getErrors().keySet().stream()
-      .map(ValidationErrorFailure.class::cast)
-      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(
-        "Item's loan policy has fixed profile but renewal period is specified")));
+    assertTrue(matchErrorReason(errorHandler,
+      POLICY_HAS_FIXED_PROFILE_BUT_RENEWAL_PERIOD_IS_SPECIFIED));
   }
 
   @Test
@@ -185,10 +185,7 @@ public class RegularRenewalStrategyTest {
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
     renew(loan, errorHandler);
 
-    assertTrue(errorHandler.getErrors().keySet().stream()
-      .map(ValidationErrorFailure.class::cast)
-      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(
-        "item is " + itemStatus)));
+    assertTrue(matchErrorReason(errorHandler, "item is " + itemStatus));
   }
 
   @Test
@@ -202,9 +199,7 @@ public class RegularRenewalStrategyTest {
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
     renew(loan, errorHandler);
 
-    assertTrue(errorHandler.getErrors().keySet().stream()
-      .map(ValidationErrorFailure.class::cast)
-      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason("loan at maximum renewal number")));
+    assertTrue(matchErrorReason(errorHandler, LOAN_AT_MAXIMUM_RENEWAL_NUMBER));
   }
 
   @Test
@@ -215,9 +210,7 @@ public class RegularRenewalStrategyTest {
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
     renew(loanPolicy, errorHandler);
 
-    assertTrue(errorHandler.getErrors().keySet().stream()
-      .map(ValidationErrorFailure.class::cast)
-      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason("cannot determine when to renew from")));
+    assertTrue(matchErrorReason(errorHandler, CANNOT_DETERMINE_WHEN_TO_RENEW_FROM));
   }
 
   @Test
@@ -235,9 +228,7 @@ public class RegularRenewalStrategyTest {
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
     renew(loan, errorHandler);
 
-    assertTrue(errorHandler.getErrors().keySet().stream()
-      .map(ValidationErrorFailure.class::cast)
-      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason("renewal would not change the due date")));
+    assertTrue(matchErrorReason(errorHandler, RENEWAL_WOULD_NOT_CHANGE_THE_DUE_DATE));
   }
 
   @Test
@@ -248,9 +239,7 @@ public class RegularRenewalStrategyTest {
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
     renew(loanPolicy, errorHandler);
 
-    assertTrue(errorHandler.getErrors().keySet().stream()
-      .map(ValidationErrorFailure.class::cast)
-      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason("item is not loanable")));
+    assertTrue(matchErrorReason(errorHandler, ITEM_IS_NOT_LOANABLE));
   }
 
   @Test
@@ -261,9 +250,7 @@ public class RegularRenewalStrategyTest {
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
     renew(loanPolicy, errorHandler);
 
-    assertTrue(errorHandler.getErrors().keySet().stream()
-      .map(ValidationErrorFailure.class::cast)
-      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason("loan is not renewable")));
+    assertTrue(matchErrorReason(errorHandler, LOAN_IS_NOT_RENEWABLE));
   }
 
   private Result<Loan> renew(Loan loan, Request topRequest,
@@ -299,5 +286,11 @@ public class RegularRenewalStrategyTest {
 
     final var loan = new LoanBuilder().asDomainObject().withLoanPolicy(loanPolicy);
     return renew(loan, errorHandler);
+  }
+
+  private boolean matchErrorReason(CirculationErrorHandler errorHandler, String expectedReason) {
+    return errorHandler.getErrors().keySet().stream()
+      .map(ValidationErrorFailure.class::cast)
+      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(expectedReason));
   }
 }

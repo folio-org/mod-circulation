@@ -40,6 +40,10 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
 
   private static final String EXPECTED_REASON_OPEN_RECALL_REQUEST =
     "items cannot be renewed when there is an active recall request";
+  private static final String LOAN_PERIOD_IN_THE_LOAN_POLICY_IS_NOT_RECOGNISED =
+    "the loan period in the loan policy is not recognised";
+  private static final String RENEWAL_WOULD_NOT_CHANGE_THE_DUE_DATE =
+    "renewal would not change the due date";
 
   @Test
   @Parameters({
@@ -191,10 +195,8 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
     renew(loan, DateTime.now(), new RequestQueue(Collections.emptyList()), errorHandler);
 
-    assertTrue(errorHandler.getErrors().keySet().stream()
-      .map(ValidationErrorFailure.class::cast)
-      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(
-        "the interval \"Unknown\" in the loan policy is not recognised")));
+    assertTrue(matchErrorReason(errorHandler,
+      "the interval \"Unknown\" in the loan policy is not recognised"));
   }
 
   @Test
@@ -215,10 +217,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
     renew(loan, DateTime.now(), new RequestQueue(Collections.emptyList()), errorHandler);
 
-    assertTrue(errorHandler.getErrors().keySet().stream()
-      .map(ValidationErrorFailure.class::cast)
-      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(
-        "the loan period in the loan policy is not recognised")));
+    assertTrue(matchErrorReason(errorHandler, LOAN_PERIOD_IN_THE_LOAN_POLICY_IS_NOT_RECOGNISED));
   }
 
   @Test
@@ -239,9 +238,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
     renew(loan, DateTime.now(), new RequestQueue(Collections.emptyList()), errorHandler);
 
-    assertTrue(errorHandler.getErrors().keySet().stream()
-      .map(ValidationErrorFailure.class::cast)
-      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason("the loan period in the loan policy is not recognised")));
+    assertTrue(matchErrorReason(errorHandler, LOAN_PERIOD_IN_THE_LOAN_POLICY_IS_NOT_RECOGNISED));
   }
 
   @Test
@@ -262,10 +259,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
     renew(loan, DateTime.now(), new RequestQueue(Collections.emptyList()), errorHandler);
 
-    assertTrue(errorHandler.getErrors().keySet().stream()
-      .map(ValidationErrorFailure.class::cast)
-      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(
-        "the loan period in the loan policy is not recognised")));
+    assertTrue(matchErrorReason(errorHandler, LOAN_PERIOD_IN_THE_LOAN_POLICY_IS_NOT_RECOGNISED));
   }
 
   @Test
@@ -288,10 +282,8 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
     renew(loan, DateTime.now(), new RequestQueue(Collections.emptyList()), errorHandler);
 
-    assertTrue(errorHandler.getErrors().keySet().stream()
-      .map(ValidationErrorFailure.class::cast)
-      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(
-        String.format("the duration \"%s\" in the loan policy is invalid", duration))));
+    assertTrue(matchErrorReason(errorHandler,
+      String.format("the duration \"%s\" in the loan policy is invalid", duration)));
   }
 
   @Test
@@ -367,10 +359,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
     renew(loan, DateTime.now(), new RequestQueue(Collections.emptyList()), errorHandler);
 
     assertEquals(1, errorHandler.getErrors().size());
-    assertTrue(errorHandler.getErrors().keySet().stream()
-      .map(ValidationErrorFailure.class::cast)
-      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(
-        EXPECTED_REASON_DATE_FALLS_OTSIDE_DATE_RANGES)));
+    assertTrue(matchErrorReason(errorHandler, EXPECTED_REASON_DATE_FALLS_OTSIDE_DATE_RANGES));
   }
 
   @Test
@@ -393,10 +382,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
     renew(loan, DateTime.now(), requestQueue, errorHandler);
 
-    assertTrue(errorHandler.getErrors().keySet().stream()
-      .map(ValidationErrorFailure.class::cast)
-      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(
-        EXPECTED_REASON_DATE_FALLS_OTSIDE_DATE_RANGES)));
+    assertTrue(matchErrorReason(errorHandler, EXPECTED_REASON_DATE_FALLS_OTSIDE_DATE_RANGES));
   }
 
   @Test
@@ -419,14 +405,8 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
     renew(loan, DateTime.now(), requestQueue, errorHandler);
 
     assertEquals(2, errorHandler.getErrors().size());
-    assertTrue(errorHandler.getErrors().keySet().stream()
-      .map(ValidationErrorFailure.class::cast)
-      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(
-        EXPECTED_REASON_DATE_FALLS_OTSIDE_DATE_RANGES)));
-
-    assertTrue(errorHandler.getErrors().keySet().stream()
-      .map(ValidationErrorFailure.class::cast)
-      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(EXPECTED_REASON_OPEN_RECALL_REQUEST)));
+    assertTrue(matchErrorReason(errorHandler, EXPECTED_REASON_DATE_FALLS_OTSIDE_DATE_RANGES));
+    assertTrue(matchErrorReason(errorHandler, EXPECTED_REASON_OPEN_RECALL_REQUEST));
   }
 
   @Test
@@ -452,10 +432,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
     renew(loan, renewalDate, new RequestQueue(Collections.emptyList()), errorHandler);
 
-    assertTrue(errorHandler.getErrors().keySet().stream()
-      .map(ValidationErrorFailure.class::cast)
-      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(
-        "renewal would not change the due date")));
+    assertTrue(matchErrorReason(errorHandler, RENEWAL_WOULD_NOT_CHANGE_THE_DUE_DATE));
   }
 
   @Test
@@ -481,10 +458,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
     renew(loan, renewalDate, new RequestQueue(Collections.emptyList()), errorHandler);
 
-    assertTrue(errorHandler.getErrors().keySet().stream()
-      .map(ValidationErrorFailure.class::cast)
-      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(
-        "renewal would not change the due date")));
+    assertTrue(matchErrorReason(errorHandler, RENEWAL_WOULD_NOT_CHANGE_THE_DUE_DATE));
   }
 
   private Loan loanFor(DateTime loanDate, LoanPolicy loanPolicy) {
@@ -519,5 +493,11 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
     return new RenewByBarcodeResource(null)
       .regularRenew(renewalContext, errorHandler, renewalDate)
       .map(RenewalContext::getLoan);
+  }
+
+  private boolean matchErrorReason(CirculationErrorHandler errorHandler, String expectedReason) {
+    return errorHandler.getErrors().keySet().stream()
+      .map(ValidationErrorFailure.class::cast)
+      .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(expectedReason));
   }
 }

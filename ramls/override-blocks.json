@@ -34,7 +34,7 @@
       "additionalProperties": false
     },
     "renewalDueDateRequiredBlock": {
-      "description": "Renewal due date required block",
+      "description": "Override renewal block which requires due date field",
       "type": "object",
       "properties": {
         "dueDate": {
@@ -43,7 +43,10 @@
           "format": "date-time"
         }
       },
-      "additionalProperties": false
+      "additionalProperties": false,
+      "required": [
+        "dueDate"
+      ]
     },
     "comment": {
       "description": "Reason for override",
