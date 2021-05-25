@@ -1,43 +1,34 @@
 package api.support.builders;
 
-import org.folio.circulation.domain.override.BlockOverrides;
-
 import io.vertx.core.json.JsonObject;
 import api.support.http.IndividualResource;
 
 public class RenewByBarcodeRequestBuilder extends JsonBuilder implements Builder {
   private final String itemBarcode;
   private final String userBarcode;
-  private final BlockOverrides blockOverrides;
+  private final String servicePointId;
+  private final JsonObject overrideBlocks;
 
   public RenewByBarcodeRequestBuilder() {
-    this(null, null, null);
+    this(null, null, null, null);
   }
 
   private RenewByBarcodeRequestBuilder(String itemBarcode, String userBarcode,
-    BlockOverrides blockOverrides) {
+    String servicePointId, JsonObject overrideBlocks) {
 
     this.itemBarcode = itemBarcode;
     this.userBarcode = userBarcode;
-    this.blockOverrides = blockOverrides;
+    this.servicePointId = servicePointId;
+    this.overrideBlocks = overrideBlocks;
   }
 
   @Override
   public JsonObject create() {
     final JsonObject request = new JsonObject();
-
     put(request, "itemBarcode", this.itemBarcode);
     put(request, "userBarcode", this.userBarcode);
-    if (blockOverrides != null) {
-      JsonObject overrideBlocksJson = new JsonObject();
-      if (blockOverrides.getPatronBlockOverride() != null
-        && blockOverrides.getPatronBlockOverride().isRequested()) {
-
-        put(overrideBlocksJson, "patronBlock", new JsonObject());
-      }
-      put(overrideBlocksJson, "comment", blockOverrides.getComment());
-      put(request, "overrideBlocks", overrideBlocksJson);
-    }
+    put(request, "servicePointId", this.servicePointId);
+    put(request, "overrideBlocks", this.overrideBlocks);
 
     return request;
   }
@@ -46,21 +37,32 @@ public class RenewByBarcodeRequestBuilder extends JsonBuilder implements Builder
     return new RenewByBarcodeRequestBuilder(
       getBarcode(item),
       this.userBarcode,
-      this.blockOverrides);
+      this.servicePointId,
+      this.overrideBlocks);
   }
 
   public RenewByBarcodeRequestBuilder forUser(IndividualResource loanee) {
     return new RenewByBarcodeRequestBuilder(
       this.itemBarcode,
       getBarcode(loanee),
-      this.blockOverrides);
+      this.servicePointId,
+      this.overrideBlocks);
   }
 
-  public RenewByBarcodeRequestBuilder withOverrideBlocks(BlockOverrides blockOverrides) {
+  public RenewByBarcodeRequestBuilder withServicePointId(String servicePointId) {
     return new RenewByBarcodeRequestBuilder(
       this.itemBarcode,
       this.userBarcode,
-      blockOverrides);
+      servicePointId,
+      this.overrideBlocks);
+  }
+
+  public RenewByBarcodeRequestBuilder withOverrideBlocks(JsonObject overrideBlocks) {
+    return new RenewByBarcodeRequestBuilder(
+      this.itemBarcode,
+      this.userBarcode,
+      this.servicePointId,
+      overrideBlocks);
   }
 
   private String getBarcode(IndividualResource record) {

@@ -18,8 +18,7 @@ import io.vertx.core.json.JsonObject;
 
 public class RenewByBarcodeResource extends RenewalResource {
   public RenewByBarcodeResource(HttpClient client) {
-    super("/circulation/renew-by-barcode", new RegularRenewalStrategy(),
-      new RegularRenewalFeeProcessingStrategy(), client);
+    super("/circulation/renew-by-barcode", client);
   }
 
   @Override
