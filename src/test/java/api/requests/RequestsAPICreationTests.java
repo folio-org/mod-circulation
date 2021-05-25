@@ -119,7 +119,7 @@ RequestsAPICreationTests extends APITests {
   public static final OkapiHeaders HEADERS_WITHOUT_OVERRIDE_PERMISSIONS =
     buildOkapiHeadersWithPermissions();
   public static final BlockOverrides PATRON_BLOCK_OVERRIDE =
-    new BlockOverrides(null, new PatronBlockOverride(true), null, null);
+    new BlockOverrides(null, new PatronBlockOverride(true), null, null, null, null);
   public static final String PATRON_BLOCK_NAME = "patronBlock";
 
   @Override
@@ -1672,8 +1672,39 @@ RequestsAPICreationTests extends APITests {
     assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(postResponse.getJson(), hasErrors(1));
     assertThat(postResponse.getJson(), hasErrorWith(allOf(
-      hasMessage("Patron blocked from requesting"))));
-      hasParameter("reason", "Display description");
+      hasMessage("Patron blocked from requesting"),
+      hasParameter("reason", "Display description")))
+    );
+  }
+
+  @Test
+  public void cannotCreateRequestWhenRequesterHasActiveRequestManualBlockWithoutExpirationDate() {
+    final IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource requester = usersFixture.rebecca();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+
+    userManualBlocksFixture.create(getManualBlockBuilder()
+      .withRequests(true)
+      .withExpirationDate(null) // no expiration date
+      .withUserId(String.valueOf(requester.getId())));
+
+    RequestBuilder requestBuilder = new RequestBuilder()
+      .withId(UUID.randomUUID())
+      .open()
+      .page()
+      .forItem(item)
+      .by(requester)
+      .fulfilToHoldShelf()
+      .withPickupServicePointId(pickupServicePointId);
+
+    Response postResponse = requestsClient.attemptCreate(requestBuilder);
+
+    assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(postResponse.getJson(), hasErrors(1));
+    assertThat(postResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("Patron blocked from requesting"),
+      hasParameter("reason", "Display description")))
+    );
   }
 
   @Test
