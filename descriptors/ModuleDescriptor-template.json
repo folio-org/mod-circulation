@@ -589,76 +589,6 @@
       ]
     },
     {
-      "id": "age-to-lost-background-processes",
-      "version": "0.1",
-      "handlers": [
-        {
-          "methods": [
-            "POST"
-          ],
-          "pathPattern": "/circulation/scheduled-age-to-lost",
-          "permissionsRequired": ["circulation.scheduled-age-to-lost.post"],
-          "modulePermissions": [
-            "circulation-storage.loans.item.put",
-            "circulation-storage.loans.item.get",
-            "circulation-storage.loans.collection.get",
-            "circulation-storage.circulation-rules.get",
-            "circulation-storage.patron-notice-policies.collection.get",
-            "circulation-storage.patron-notice-policies.item.get",
-            "inventory-storage.items.item.put",
-            "inventory-storage.items.item.get",
-            "inventory-storage.items.collection.get",
-            "inventory-storage.locations.collection.get",
-            "inventory-storage.locations.item.get",
-            "inventory-storage.holdings.collection.get",
-            "inventory-storage.instances.collection.get",
-            "inventory-storage.material-types.collection.get",
-            "lost-item-fees-policies.item.get",
-            "lost-item-fees-policies.collection.get",
-            "pubsub.publish.post",
-            "users.item.get",
-            "users.collection.get",
-            "scheduled-notice-storage.scheduled-notices.item.post"
-          ]
-        },
-        {
-          "methods": [
-            "POST"
-          ],
-          "pathPattern": "/circulation/scheduled-age-to-lost-fee-charging",
-          "permissionsRequired": ["circulation.scheduled-age-to-lost-fee-charging.post"],
-          "modulePermissions": [
-            "circulation-storage.loans.item.put",
-            "circulation-storage.loans.item.get",
-            "circulation-storage.loans.collection.get",
-            "inventory-storage.items.item.put",
-            "inventory-storage.items.item.get",
-            "inventory-storage.items.collection.get",
-            "inventory-storage.locations.collection.get",
-            "inventory-storage.location-units.libraries.collection.get",
-            "inventory-storage.holdings.collection.get",
-            "inventory-storage.instances.collection.get",
-            "inventory-storage.material-types.collection.get",
-            "lost-item-fees-policies.item.get",
-            "lost-item-fees-policies.collection.get",
-            "owners.collection.get",
-            "feefines.collection.get",
-            "accounts.item.post",
-            "feefineactions.item.post",
-            "pubsub.publish.post",
-            "users.item.get",
-            "users.collection.get",
-            "circulation-storage.circulation-rules.get",
-            "circulation-storage.patron-notice-policies.item.get",
-            "circulation-storage.patron-notice-policies.collection.get",
-            "circulation.rules.notice-policy.get",
-            "inventory-storage.locations.item.get",
-            "scheduled-notice-storage.scheduled-notices.item.post"
-          ]
-        }
-      ]
-    },
-    {
       "id": "_timer",
       "version": "1.0",
       "interfaceType": "system",
@@ -899,6 +829,72 @@
           ],
           "unit": "minute",
           "delay": "1"
+        },
+        {
+          "methods": [
+            "POST"
+          ],
+          "pathPattern": "/circulation/scheduled-age-to-lost",
+          "modulePermissions": [
+            "circulation-storage.loans.item.put",
+            "circulation-storage.loans.item.get",
+            "circulation-storage.loans.collection.get",
+            "circulation-storage.circulation-rules.get",
+            "circulation-storage.patron-notice-policies.collection.get",
+            "circulation-storage.patron-notice-policies.item.get",
+            "inventory-storage.items.item.put",
+            "inventory-storage.items.item.get",
+            "inventory-storage.items.collection.get",
+            "inventory-storage.locations.collection.get",
+            "inventory-storage.locations.item.get",
+            "inventory-storage.holdings.collection.get",
+            "inventory-storage.instances.collection.get",
+            "inventory-storage.material-types.collection.get",
+            "lost-item-fees-policies.item.get",
+            "lost-item-fees-policies.collection.get",
+            "pubsub.publish.post",
+            "users.item.get",
+            "users.collection.get",
+            "scheduled-notice-storage.scheduled-notices.item.post"
+          ],
+          "unit": "minute",
+          "delay": "30"
+        },
+        {
+          "methods": [
+            "POST"
+          ],
+          "pathPattern": "/circulation/scheduled-age-to-lost-fee-charging",
+          "modulePermissions": [
+            "circulation-storage.loans.item.put",
+            "circulation-storage.loans.item.get",
+            "circulation-storage.loans.collection.get",
+            "inventory-storage.items.item.put",
+            "inventory-storage.items.item.get",
+            "inventory-storage.items.collection.get",
+            "inventory-storage.locations.collection.get",
+            "inventory-storage.location-units.libraries.collection.get",
+            "inventory-storage.holdings.collection.get",
+            "inventory-storage.instances.collection.get",
+            "inventory-storage.material-types.collection.get",
+            "lost-item-fees-policies.item.get",
+            "lost-item-fees-policies.collection.get",
+            "owners.collection.get",
+            "feefines.collection.get",
+            "accounts.item.post",
+            "feefineactions.item.post",
+            "pubsub.publish.post",
+            "users.item.get",
+            "users.collection.get",
+            "circulation-storage.circulation-rules.get",
+            "circulation-storage.patron-notice-policies.item.get",
+            "circulation-storage.patron-notice-policies.collection.get",
+            "circulation.rules.notice-policy.get",
+            "inventory-storage.locations.item.get",
+            "scheduled-notice-storage.scheduled-notices.item.post"
+          ],
+          "unit": "minute",
+          "delay": "35"
         }
       ]
     },
