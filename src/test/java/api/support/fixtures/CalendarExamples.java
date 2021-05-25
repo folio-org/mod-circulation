@@ -70,10 +70,6 @@ public class CalendarExamples {
   public static final LocalDate THIRD_DAY_CLOSED = new LocalDate(2020, 10, 31);
   public static final LocalDate THIRD_DAY_OPEN = new LocalDate(2020, 10, 31);
 
-  public static final LocalDate YESTERDAY_OPEN_DAY = new LocalDate(LocalDate.now().minusDays(1)); //TODO delete
-  public static final LocalDate TODAY_CLOSED_DAY = new LocalDate(LocalDate.now());
-  public static final LocalDate TOMORROW_OPEN_DAY = new LocalDate(LocalDate.now().plusDays(1));
-
   private static final String REQUESTED_DATE_PARAM = "requestedDate";
 
   private static final Map<String, OpeningDayPeriodBuilder> fakeOpeningPeriods = new HashMap<>();
