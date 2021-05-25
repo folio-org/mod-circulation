@@ -85,7 +85,7 @@ public class ClosedLibraryStrategyService {
     if (user != null && user.getExpirationDate() != null &&
       user.getExpirationDate().isBefore(calculatedDueDate)) {
 
-      return determineClosedLibraryStrategyForTruncatedDueDate(loanPolicy, currentDateTime, timeZone)
+      return determineClosedLibraryStrategyForTruncatedDueDate(loanPolicy, user.getExpirationDate(), timeZone)
         .calculateDueDate(user.getExpirationDate(), openingDays);
     }
     return succeeded(calculatedDueDate);

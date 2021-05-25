@@ -33,9 +33,8 @@ public class CalendarExamples {
   public static final String CASE_PREV_OPEN_AND_CURRENT_NEXT_CLOSED = "85346678-2f09-4bc9-8924-3734882d44a3";
   public static final String CASE_CALENDAR_IS_EMPTY_SERVICE_POINT_ID = "66655555-2f09-4bc9-8924-3734882d44a3";
 
-  public static final String CASE_ONE_DAY_IS_OPEN_NEXT_TWO_DAYS_CLOSED = "6ab38b7a-c889-4839-a337-86aad0297d7c";
+  public static final String CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_CLOSED = "6ab38b7a-c889-4839-a337-86aad0297d7c";
   public static final String CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_OPEN = "6ab38b7a-c889-4839-a337-86aad0297d8d";
-  public static final String CASE_YESTERDAY_OPEN_TODAY_CLOSED_TOMORROW_OPEN = "861e436e-3dba-4b7f-a11e-56641e840ef7";
 
   static final String CASE_START_DATE_MONTHS_AGO_AND_END_DATE_THU = "12345698-2f09-4bc9-8924-3734882d44a3";
 
@@ -71,7 +70,7 @@ public class CalendarExamples {
   public static final LocalDate THIRD_DAY_CLOSED = new LocalDate(2020, 10, 31);
   public static final LocalDate THIRD_DAY_OPEN = new LocalDate(2020, 10, 31);
 
-  public static final LocalDate YESTERDAY_OPEN_DAY = new LocalDate(LocalDate.now().minusDays(1));
+  public static final LocalDate YESTERDAY_OPEN_DAY = new LocalDate(LocalDate.now().minusDays(1)); //TODO delete
   public static final LocalDate TODAY_CLOSED_DAY = new LocalDate(LocalDate.now());
   public static final LocalDate TOMORROW_OPEN_DAY = new LocalDate(LocalDate.now().plusDays(1));
 
@@ -201,7 +200,8 @@ public class CalendarExamples {
         createOpeningDay(Collections.singletonList(new OpeningHour(LocalTime.MIDNIGHT, LocalTime.MIDNIGHT.plusHours(3))),
           CASE_CURRENT_IS_OPEN_IN_ONE_DAY, false, true)
       )));
-    fakeOpeningPeriods.put(CASE_ONE_DAY_IS_OPEN_NEXT_TWO_DAYS_CLOSED, new OpeningDayPeriodBuilder(CASE_ONE_DAY_IS_OPEN_NEXT_TWO_DAYS_CLOSED,
+    fakeOpeningPeriods.put(CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_CLOSED, new OpeningDayPeriodBuilder(
+      CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_CLOSED,
       // prev day
       createDayPeriod(
         createOpeningDay(Arrays.asList(new OpeningHour(START_TIME_FIRST_PERIOD, END_TIME_FIRST_PERIOD), new OpeningHour(START_TIME_SECOND_PERIOD, END_TIME_SECOND_PERIOD)),
@@ -214,23 +214,6 @@ public class CalendarExamples {
       // next day
       createDayPeriod(
         createOpeningDay(new ArrayList<>(), THIRD_DAY_CLOSED, false, false)
-      )));
-    fakeOpeningPeriods.put(CASE_YESTERDAY_OPEN_TODAY_CLOSED_TOMORROW_OPEN, new OpeningDayPeriodBuilder(CASE_YESTERDAY_OPEN_TODAY_CLOSED_TOMORROW_OPEN,
-      // prev day
-      createDayPeriod(
-        createOpeningDay(Arrays.asList(new OpeningHour(START_TIME_FIRST_PERIOD, END_TIME_FIRST_PERIOD),
-          new OpeningHour(START_TIME_SECOND_PERIOD, END_TIME_SECOND_PERIOD)),
-          YESTERDAY_OPEN_DAY, false, true)
-      ),
-      // current day
-      createDayPeriod(
-        createOpeningDay(new ArrayList<>(), TODAY_CLOSED_DAY, false, false)
-      ),
-      // next day
-      createDayPeriod(
-        createOpeningDay(Arrays.asList(new OpeningHour(START_TIME_FIRST_PERIOD, END_TIME_FIRST_PERIOD),
-          new OpeningHour(START_TIME_SECOND_PERIOD, END_TIME_SECOND_PERIOD)),
-          TOMORROW_OPEN_DAY, false, true)
       )));
     fakeOpeningPeriods.put(CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_OPEN,
       new OpeningDayPeriodBuilder(CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_OPEN,
@@ -299,10 +282,10 @@ public class CalendarExamples {
       case CASE_CURRENT_IS_OPEN:
         return new CalendarBuilder(fakeOpeningPeriods.get(serviceId));
 
-      case CASE_ONE_DAY_IS_OPEN_NEXT_TWO_DAYS_CLOSED:
+      case CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_CLOSED:
         return new CalendarBuilder(fakeOpeningPeriods.get(serviceId));
 
-      case CASE_YESTERDAY_OPEN_TODAY_CLOSED_TOMORROW_OPEN:
+      case CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_OPEN:
         return new CalendarBuilder(fakeOpeningPeriods.get(serviceId));
 
       case CASE_START_DATE_MONTHS_AGO_AND_END_DATE_THU:

@@ -66,10 +66,10 @@ public final class ClosedLibraryStrategyUtils {
     switch (dueDateManagement) {
       case MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY:
       case MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY:
-        return new EndOfPreviousDayStrategy(zone);
+        return new EndOfPreviousDayTruncateStrategy(zone);
       case MOVE_TO_END_OF_CURRENT_SERVICE_POINT_HOURS:
       case MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS:
-        return new EndOfPreviousOpenHoursStrategy(startDate, zone);
+        return new EndOfPreviousOpenHoursTruncateStrategy(startDate, zone);
       case KEEP_THE_CURRENT_DUE_DATE:
       case KEEP_THE_CURRENT_DUE_DATE_TIME:
       default:
