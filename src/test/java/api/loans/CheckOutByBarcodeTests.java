@@ -1939,7 +1939,7 @@ public class CheckOutByBarcodeTests extends APITests {
     DateTime patronExpirationDate = loanDate.plusHours(2);
     IndividualResource steve = usersFixture.steve(user -> user.expires(patronExpirationDate));
 
-    JsonObject response = executeAtFixedTime(() -> checkOutFixture.checkOutByBarcode(
+    JsonObject response = executeWithFixedDateTime(() -> checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(item)
         .to(steve)
@@ -1959,28 +1959,7 @@ public class CheckOutByBarcodeTests extends APITests {
     DateTime patronExpirationDate = loanDate.plusHours(1);
     IndividualResource steve = usersFixture.steve(user -> user.expires(patronExpirationDate));
 
-    JsonObject response = executeAtFixedTime(() -> checkOutFixture.checkOutByBarcode(
-      new CheckOutByBarcodeRequestBuilder()
-        .forItem(item)
-        .to(steve)
-        .on(loanDate)
-        .at(CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_OPEN)).getJson(), loanDate);
-
-    assertThat(DateTime.parse(response.getString("dueDate")).toDateTime(),
-      is(FIRST_DAY_OPEN.toDateTime(LocalTime.MIDNIGHT.minusSeconds(1), UTC)));
-  }
-
-  @Test
-  public void
-  dueDateShouldBeTruncatedToTheEndOfPreviousOpenDayIfTheNextOpenDayStrategyAndNextDayIsOpen() {
-    DateTime loanDate = FIRST_DAY_OPEN.toDateTime(LocalTime.MIDNIGHT.plusHours(10), UTC);
-    use(buildLoanPolicyWithFixedLoan(MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY, loanDate.plusDays(1)));
-
-    IndividualResource item = itemsFixture.basedUponNod();
-    DateTime patronExpirationDate = loanDate.plusHours(1);
-    IndividualResource steve = usersFixture.steve(user -> user.expires(patronExpirationDate));
-
-    JsonObject response = executeAtFixedTime(() -> checkOutFixture.checkOutByBarcode(
+    JsonObject response = executeWithFixedDateTime(() -> checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(item)
         .to(steve)
@@ -2000,7 +1979,7 @@ public class CheckOutByBarcodeTests extends APITests {
     DateTime patronExpirationDate = loanDate.plusHours(1);
     IndividualResource steve = usersFixture.steve(user -> user.expires(patronExpirationDate));
 
-    JsonObject response = executeAtFixedTime(() -> checkOutFixture.checkOutByBarcode(
+    JsonObject response = executeWithFixedDateTime(() -> checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(item)
         .to(steve)
@@ -2019,7 +1998,7 @@ public class CheckOutByBarcodeTests extends APITests {
     DateTime patronExpirationDate = loanDate.plusHours(1);
     IndividualResource steve = usersFixture.steve(user -> user.expires(patronExpirationDate));
 
-    JsonObject response = executeAtFixedTime(() -> checkOutFixture.checkOutByBarcode(
+    JsonObject response = executeWithFixedDateTime(() -> checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(item)
         .to(steve)
@@ -2039,7 +2018,7 @@ public class CheckOutByBarcodeTests extends APITests {
     DateTime patronExpirationDate = loanDate.plusHours(12);
     IndividualResource steve = usersFixture.steve(user -> user.expires(patronExpirationDate));
 
-    JsonObject response = executeAtFixedTime(() -> checkOutFixture.checkOutByBarcode(
+    JsonObject response = executeWithFixedDateTime(() -> checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(item)
         .to(steve)
@@ -2060,7 +2039,7 @@ public class CheckOutByBarcodeTests extends APITests {
     DateTime patronExpirationDate = loanDate.plusHours(12);
     IndividualResource steve = usersFixture.steve(user -> user.expires(patronExpirationDate));
 
-    JsonObject response = executeAtFixedTime(() -> checkOutFixture.checkOutByBarcode(
+    JsonObject response = executeWithFixedDateTime(() -> checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(item)
         .to(steve)
@@ -2163,7 +2142,7 @@ public class CheckOutByBarcodeTests extends APITests {
       lostItemFeePoliciesFixture.facultyStandard().getId());
   }
 
-  private <T> T executeAtFixedTime(Supplier<T> supplier, DateTime dateTime) {
+  private <T> T executeWithFixedDateTime(Supplier<T> supplier, DateTime dateTime) {
     DateTimeUtils.setCurrentMillisFixed(dateTime.getMillis());
     T result = supplier.get();
     DateTimeUtils.setCurrentMillisSystem();
