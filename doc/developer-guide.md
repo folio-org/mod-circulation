@@ -1,12 +1,12 @@
-# Guide
+# Developer Guide
 
 This is a guide meant to help you both use the `mod-circulation` module and
 enable you to contribute to the module.
 
 ## Automated Testing
 
-See [companion document](automated-testing.md) for information on the automated testing approach 
-used in mod-circulation. 
+See [companion document](automated-testing.md) for information on the automated testing approach
+used in mod-circulation.
 
 ## Storage
 
