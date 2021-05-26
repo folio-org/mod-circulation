@@ -13,24 +13,20 @@ import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
-public class EndOfPreviousDayStrategy implements ClosedLibraryStrategy {
+public class EndOfPreviousDayTruncateStrategy extends EndOfPreviousDayStrategy {
 
-  protected final DateTimeZone zone;
-
-  public EndOfPreviousDayStrategy(DateTimeZone zone) {
-    this.zone = zone;
+  public EndOfPreviousDayTruncateStrategy(DateTimeZone zone) {
+    super(zone);
   }
 
   @Override
   public Result<DateTime> calculateDueDate(DateTime requestedDate, AdjacentOpeningDays openingDays) {
     Objects.requireNonNull(openingDays);
-    if (openingDays.getRequestedDay().getOpen()) {
-      return succeeded(requestedDate.withZone(zone).withTime(END_OF_A_DAY));
-    }
     OpeningDay previousDay = openingDays.getPreviousDay();
     if (!previousDay.getOpen()) {
       return failed(failureForAbsentTimetable());
     }
-    return succeeded(previousDay.getDate().toDateTime(END_OF_A_DAY, zone));
+
+    return succeeded(openingDays.getPreviousDay().getDate().toDateTime(END_OF_A_DAY, zone));
   }
 }
