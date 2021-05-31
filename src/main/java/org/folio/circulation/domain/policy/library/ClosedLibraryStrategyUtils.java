@@ -73,7 +73,7 @@ public final class ClosedLibraryStrategyUtils {
       case KEEP_THE_CURRENT_DUE_DATE:
       case KEEP_THE_CURRENT_DUE_DATE_TIME:
       default:
-        return new KeepCurrentDateTimeStrategy();
+        return new KeepCurrentDateStrategy(zone);
     }
   }
 }
