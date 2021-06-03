@@ -6,7 +6,6 @@ import static api.support.MultipleJsonRecords.multipleRecordsFrom;
 import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
 import static api.support.http.CqlQuery.noQuery;
 import static api.support.http.InterfaceUrls.loansUrl;
-import static api.support.http.InterfaceUrls.overrideRenewalByBarcodeUrl;
 import static api.support.http.InterfaceUrls.renewByBarcodeUrl;
 import static api.support.http.InterfaceUrls.renewByIdUrl;
 import static api.support.http.Limit.maximumLimit;
@@ -23,7 +22,8 @@ import org.joda.time.DateTime;
 import api.support.MultipleJsonRecords;
 import api.support.RestAssuredClient;
 import api.support.builders.LoanBuilder;
-import api.support.builders.OverrideRenewalByBarcodeRequestBuilder;
+import api.support.builders.RenewalDueDateRequiredBlockOverrideBuilder;
+import api.support.builders.RenewBlockOverrides;
 import api.support.builders.RenewByBarcodeRequestBuilder;
 import api.support.builders.RenewByIdRequestBuilder;
 import api.support.http.CqlQuery;
@@ -117,32 +117,36 @@ public class LoansFixture {
       200, headers));
   }
 
-  public IndividualResource overrideRenewalByBarcode(OverrideRenewalByBarcodeRequestBuilder request) {
+  public IndividualResource overrideRenewalByBarcode(RenewByBarcodeRequestBuilder request) {
     return new IndividualResource(restAssuredClient.post(request.create(),
-      overrideRenewalByBarcodeUrl(), 200, "override-renewal-by-barcode-request"));
+      renewByBarcodeUrl(), 200, "renewal-by-barcode-request"));
   }
 
-  public IndividualResource overrideRenewalByBarcode(OverrideRenewalByBarcodeRequestBuilder request,
+  public IndividualResource overrideRenewalByBarcode(RenewByBarcodeRequestBuilder request,
     OkapiHeaders headers) {
 
     return new IndividualResource(restAssuredClient.post(request.create(),
-      overrideRenewalByBarcodeUrl(), 200, headers));
+      renewByBarcodeUrl(), 200, headers));
   }
 
-  public Response attemptOverrideRenewalByBarcode(OverrideRenewalByBarcodeRequestBuilder request) {
+  public Response attemptOverrideRenewalByBarcode(RenewByBarcodeRequestBuilder request) {
 
-    return restAssuredClient.post(request.create(), overrideRenewalByBarcodeUrl(), 422,
-      "override-renewal-by-barcode-request");
+    return restAssuredClient.post(request.create(), renewByBarcodeUrl(), 422,
+      "renewal-by-barcode-request");
   }
 
   public IndividualResource overrideRenewalByBarcode(IndividualResource item,
       IndividualResource user, String comment, String dueDate) {
 
-    return overrideRenewalByBarcode(new OverrideRenewalByBarcodeRequestBuilder()
-        .forItem(item)
-        .forUser(user)
-        .withComment(comment)
-        .withDueDate(dueDate));
+    return overrideRenewalByBarcode(
+      createRenewByBarcodeRequestWithRenewBlockOverride(item, user, comment, dueDate));
+  }
+
+  public IndividualResource overrideRenewalByBarcode(IndividualResource item,
+    IndividualResource user, String comment, String dueDate, OkapiHeaders headers) {
+
+    return overrideRenewalByBarcode(createRenewByBarcodeRequestWithRenewBlockOverride(
+      item, user, comment, dueDate), headers);
   }
 
   public IndividualResource renewLoanById(IndividualResource item, IndividualResource user) {
@@ -205,15 +209,11 @@ public class LoansFixture {
   public Response attemptOverride(int expectedStatusCode, IndividualResource item,
     IndividualResource user, String comment, String dueDate) {
 
-    JsonObject request = new OverrideRenewalByBarcodeRequestBuilder()
-      .forItem(item)
-      .forUser(user)
-      .withComment(comment)
-      .withDueDate(dueDate)
-      .create();
+    JsonObject request = createRenewByBarcodeRequestWithRenewBlockOverride(item, user, comment,
+      dueDate).create();
 
-    return restAssuredClient.post(request, overrideRenewalByBarcodeUrl(),
-      expectedStatusCode, "override-renewal-by-barcode-request");
+    return restAssuredClient.post(request, renewByBarcodeUrl(),
+      expectedStatusCode, "renewal-by-barcode-request");
   }
 
   public Response attemptRenewalById(IndividualResource item, IndividualResource user) {
@@ -266,5 +266,28 @@ public class LoansFixture {
 
   private URL urlForLoan(UUID id) {
     return loansUrl(String.format("/%s", id));
+  }
+
+  private RenewByBarcodeRequestBuilder createRenewByBarcodeRequestWithRenewBlockOverride(
+    IndividualResource item, IndividualResource user, String comment, String dueDate) {
+    return new RenewByBarcodeRequestBuilder()
+      .forItem(item)
+      .forUser(user)
+      .withOverrideBlocks(
+        new RenewBlockOverrides()
+          .withRenewalDueDateRequiredBlock(createRenewalDueDateRequiredBlockOverride(dueDate))
+          .withComment(comment)
+          .create());
+  }
+
+  private JsonObject createRenewalDueDateRequiredBlockOverride(String dueDate) {
+    RenewalDueDateRequiredBlockOverrideBuilder renewalDueDateRequiredBlockOverrideBuilder =
+      new RenewalDueDateRequiredBlockOverrideBuilder();
+    if (dueDate != null) {
+      renewalDueDateRequiredBlockOverrideBuilder = renewalDueDateRequiredBlockOverrideBuilder
+        .withDueDate(DateTime.parse(dueDate));
+    }
+
+    return renewalDueDateRequiredBlockOverrideBuilder.create();
   }
 }

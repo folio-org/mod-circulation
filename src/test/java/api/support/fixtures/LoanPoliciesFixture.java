@@ -38,16 +38,20 @@ public class LoanPoliciesFixture {
   }
 
   public IndividualResource createExampleFixedDueDateSchedule() {
-    final int currentYear = DateTime.now(DateTimeZone.UTC).getYear();
+    int currentYear = DateTime.now(DateTimeZone.UTC).getYear();
+    return createExampleFixedDueDateSchedule(currentYear,
+      new DateTime(currentYear, 12, 31, 23, 59, 59, DateTimeZone.UTC));
+  }
 
+  public IndividualResource createExampleFixedDueDateSchedule(int year, DateTime dueDate) {
     FixedDueDateSchedulesBuilder fixedDueDateSchedule =
       new FixedDueDateSchedulesBuilder()
         .withName("Example Fixed Due Date Schedule")
         .withDescription("Example Fixed Due Date Schedule")
         .addSchedule(new FixedDueDateSchedule(
-          new DateTime(currentYear, 1, 1, 0, 0, 0, DateTimeZone.UTC),
-          new DateTime(currentYear, 12, 31, 23, 59, 59, DateTimeZone.UTC),
-          new DateTime(currentYear, 12, 31, 23, 59, 59, DateTimeZone.UTC)));
+          new DateTime(year, 1, 1, 0, 0, 0, DateTimeZone.UTC),
+          new DateTime(year, 12, 31, 23, 59, 59, DateTimeZone.UTC),
+          dueDate));
 
     return createSchedule(fixedDueDateSchedule);
   }

@@ -1,7 +1,6 @@
 package api.support.dto;
 
-import java.util.Date;
-
+import api.support.builders.RenewBlockOverrides;
 import lombok.Builder;
 import lombok.Data;
 
@@ -10,7 +9,6 @@ import lombok.Data;
 public class OverrideRenewal {
   private final String itemBarcode;
   private final String userBarcode;
-  private final String comment;
-  private Date dueDate;
   private String servicePointId;
+  private RenewBlockOverrides overrideBlocks;
 }

@@ -5,6 +5,7 @@ import static lombok.AccessLevel.PRIVATE;
 import static org.apache.commons.lang3.BooleanUtils.isFalse;
 import static org.folio.circulation.domain.OverdueFineCalculatorService.Scenario.CHECKIN;
 import static org.folio.circulation.domain.OverdueFineCalculatorService.Scenario.RENEWAL;
+import static org.folio.circulation.domain.representations.CheckInByBarcodeRequest.ClaimedReturnedResolution.FOUND_BY_LIBRARY;
 import static org.folio.circulation.support.ClockManager.getClockManager;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
@@ -107,7 +108,13 @@ public class OverdueFineCalculatorService {
 
   private boolean shouldChargeOverdueFineOnCheckIn(CheckInContext context) {
     final Loan loan = context.getLoan();
+
     if (loan == null || !loan.isOverdue(loan.getReturnDate())) {
+      return false;
+    }
+
+    if(context.getCheckInRequest().getClaimedReturnedResolution() != null 
+        && context.getCheckInRequest().getClaimedReturnedResolution().equals(FOUND_BY_LIBRARY)) {
       return false;
     }
 

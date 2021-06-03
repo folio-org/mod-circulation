@@ -39,6 +39,8 @@ public class Drools {
    * @param drools A file in Drools syntax with the circulation rules.
    */
   public Drools(String drools) {
+    // if KieServices.Factory.get() returns null add AppendingTransformer for META-INF/kie.conf
+    // to maven-shade-plugin configuration (CIRC-309, CIRC-1147)
     KieServices kieServices = KieServices.Factory.get();
     KieFileSystem kfs = kieServices.newKieFileSystem();
     kfs.write("src/main/resources/circulationrules/circulation-rules.drl", drools);

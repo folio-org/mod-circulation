@@ -11,12 +11,13 @@ import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
-public abstract class ShortTermLoansBaseStrategy implements ClosedLibraryStrategy {
+public class EndOfPreviousOpenHoursTruncateStrategy extends ShortTermLoansBaseStrategy {
 
-  protected final DateTimeZone zone;
+  private final DateTime startDateTime;
 
-  protected ShortTermLoansBaseStrategy(DateTimeZone zone) {
-    this.zone = zone;
+  public EndOfPreviousOpenHoursTruncateStrategy(DateTime startDateTime, DateTimeZone zone) {
+    super(zone);
+    this.startDateTime = startDateTime;
   }
 
   @Override
@@ -29,12 +30,19 @@ public abstract class ShortTermLoansBaseStrategy implements ClosedLibraryStrateg
     if (requestedInterval == null) {
       return failed(failureForAbsentTimetable());
     }
-    if (requestedInterval.isOpen()) {
-      return succeeded(requestedDate);
-    }
+
     return calculateIfClosed(libraryTimetable, requestedInterval);
   }
 
-  protected abstract Result<DateTime> calculateIfClosed(
-    LibraryTimetable libraryTimetable, LibraryInterval requestedInterval);
+  @Override
+  protected Result<DateTime> calculateIfClosed(LibraryTimetable libraryTimetable,
+    LibraryInterval requestedInterval) {
+
+    LibraryInterval currentTimeInterval = libraryTimetable.findInterval(startDateTime);
+    if (currentTimeInterval == null) {
+      return failed(failureForAbsentTimetable());
+    }
+
+    return succeeded(currentTimeInterval.getPrevious().getEndTime());
+  }
 }
