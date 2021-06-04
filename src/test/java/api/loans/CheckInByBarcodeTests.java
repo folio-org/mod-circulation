@@ -34,6 +34,7 @@ import static org.folio.circulation.domain.RequestStatus.CLOSED_UNFILLED;
 import static org.folio.circulation.domain.representations.logs.LogEventType.CHECK_IN;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
 import static org.hamcrest.CoreMatchers.allOf;
+import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
@@ -1399,8 +1400,8 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     noticeContextMatchers.putAll(TemplateContextMatchers.getItemContextMatchers(item, true));
     noticeContextMatchers.putAll(TemplateContextMatchers.getRequestContextMatchers(request));
 
-//    assertThat(sentNotices, hasItems(
-//      hasEmailNoticeProperties(requester.getId(), expectedTemplateId, noticeContextMatchers)));
+    assertThat(sentNotices, hasItems(
+      hasEmailNoticeProperties(requester.getId(), expectedTemplateId, noticeContextMatchers)));
 
     waitAtMost(1, SECONDS)
       .until(() -> FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
