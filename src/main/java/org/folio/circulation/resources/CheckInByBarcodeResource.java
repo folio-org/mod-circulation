@@ -79,7 +79,7 @@ public class CheckInByBarcodeResource extends Resource {
         processAdapter::updateRequestQueue, CheckInContext::withRequestQueue))
       .thenComposeAsync(updateRequestQueueResult -> updateRequestQueueResult.combineAfter(
         processAdapter::updateItem, CheckInContext::withItem))
-      .thenApply(handleItemStatus -> handleItemStatus.next(processAdapter::sendItemStatusPatronNotice))
+      .thenApply(handleItemStatus -> handleItemStatus.next(processAdapter::sendRequestAwaitingPickupNotice))
       .thenComposeAsync(updateItemResult -> updateItemResult.combineAfter(
         processAdapter::getDestinationServicePoint, CheckInContext::withItem))
       .thenComposeAsync(updateItemResult -> updateItemResult.combineAfter(

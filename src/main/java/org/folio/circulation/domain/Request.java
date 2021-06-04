@@ -124,7 +124,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return isClosed() && !isPickupExpired();
   }
 
-  boolean isAwaitingPickup() {
+  public boolean isAwaitingPickup() {
     return getStatus() == OPEN_AWAITING_PICKUP;
   }
 
@@ -349,4 +349,9 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     }
     return this;
   }
+
+  public boolean hasTopPriority() {
+    return Integer.valueOf(1).equals(getPosition());
+  }
+
 }

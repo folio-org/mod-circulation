@@ -1,12 +1,12 @@
 package org.folio.circulation.resources;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.domain.notice.TemplateContextUtil.createAvailableNoticeContext;
+import static org.folio.circulation.domain.notice.TemplateContextUtil.createRequestNoticeContext;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.lang.invoke.MethodHandles;
-import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -215,32 +215,55 @@ class CheckInProcessAdapter {
       .thenApply(r -> r.map(firstRequest::withAddressType));
   }
 
-  Result<CheckInContext> sendItemStatusPatronNotice(CheckInContext context) {
-    RequestQueue requestQueue = context.getRequestQueue();
-    if (Objects.isNull(requestQueue)) {
-      return succeeded(context);
-    }
+  Result<CheckInContext> sendRequestAwaitingPickupNotice(CheckInContext context) {
+    final Item item = context.getItem();
+    final RequestQueue requestQueue = context.getRequestQueue();
 
-    requestQueue.getRequests().stream()
-      .findFirst()
-      .ifPresent(firstRequest -> fetchDataAndSendAvailableNotice(context, firstRequest)
-        .thenAccept(r -> {
-          if (r.failed()) {
-            log.error("Failed to send Request Pickup Notice for request {} and user {}. Cause: {}",
-              firstRequest.getId(), firstRequest.getRequesterId(), r.cause());
-          }
-        }));
+    if (item == null || item.isNotFound()) {
+      log.warn("Request Awaiting Pickup notice processing is aborted: item is missing");
+    }
+    else if (requestQueue == null) {
+      log.warn("Request Awaiting Pickup notice processing is aborted: request queue is null");
+    }
+    else if (item.isAwaitingPickup()) {
+      findRequestAwaitingPickup(requestQueue)
+        .map(request -> request.withItem(item))
+        .ifPresent(this::fetchDataAndSendRequestAwaitingPickupNotice);
+    }
 
     return succeeded(context);
   }
 
-  private CompletableFuture<Result<Void>> fetchDataAndSendAvailableNotice(CheckInContext context,
-    Request request) {
+  private static Optional<Request> findRequestAwaitingPickup(RequestQueue requestQueue) {
+    return requestQueue.getRequests()
+      .stream()
+      .filter(Request::hasTopPriority)
+      .filter(Request::isAwaitingPickup)
+      .filter(request -> requestStatusWasChangedToAwaitingPickup(request, requestQueue))
+      .findFirst();
+  }
 
-    return ofAsync(() -> request)
+  private static boolean requestStatusWasChangedToAwaitingPickup(
+    Request request, RequestQueue requestQueue) {
+
+    return requestQueue.getUpdatedRequests()
+      .stream()
+      .filter(pair -> StringUtils.equals(request.getId(), pair.getOriginal().getId()))
+      .anyMatch(pair -> pair.getUpdated().isAwaitingPickup() && !pair.getOriginal().isAwaitingPickup());
+  }
+
+  private void fetchDataAndSendRequestAwaitingPickupNotice(Request request) {
+    ofAsync(() -> request)
       .thenCompose(r -> r.combineAfter(this::fetchServicePoint, Request::withPickupServicePoint))
       .thenCompose(r -> r.combineAfter(this::fetchRequester, Request::withRequester))
-      .thenCompose(r -> r.after(req -> sendAvailableNotice(context, req)));
+      .thenCompose(r -> r.after(this::sendRequestAwaitingPickupNotice))
+      .thenAccept(r -> r.applySideEffect(
+        ignored -> log.info("Request Awaiting Pickup notice for request {} was sent to user {}",
+          request.getId(), request.getRequesterId()),
+        failure -> log.error(
+          "Failed to send Request Awaiting Pickup notice for request {} to user {}. Cause: {}",
+          request.getId(), request.getRequesterId(), r.cause())
+      ));
   }
 
   public CompletableFuture<Result<User>> fetchRequester(Request request) {
@@ -263,26 +286,19 @@ class CheckInProcessAdapter {
     return succeeded(o == null);
   }
 
-  private CompletableFuture<Result<Void>> sendAvailableNotice(CheckInContext context, Request request) {
-    Item item = context.getItem();
+  private CompletableFuture<Result<Void>> sendRequestAwaitingPickupNotice(Request request) {
+    Item item = request.getItem();
     User user = request.getRequester();
 
-    if (item != null) {
-      if (item.isAwaitingPickup() && item.hasChanged()) {
-        PatronNoticeEvent noticeEvent = new PatronNoticeEventBuilder()
-          .withItem(item)
-          .withUser(user)
-          .withEventType(NoticeEventType.AVAILABLE)
-          .withNoticeContext(createAvailableNoticeContext(item, user, request))
-          .build();
+    PatronNoticeEvent noticeEvent = new PatronNoticeEventBuilder()
+      .withItem(item)
+      .withUser(user)
+      .withEventType(NoticeEventType.AVAILABLE)
+      .withNoticeContext(createRequestNoticeContext(request))
+      .build();
 
-        return patronNoticeService.acceptNoticeEvent(noticeEvent, NoticeLogContext.from(item, user, request));
-      }
-    } else {
-      log.info("Notice was not sent. CheckInContext doesn't have a valid item.");
-    }
-
-    return ofAsync(() -> null);
+    return patronNoticeService.acceptNoticeEvent(noticeEvent,
+      NoticeLogContext.from(item, user, request));
   }
 
   CheckInContext setInHouseUse(CheckInContext checkInContext) {
