@@ -214,10 +214,9 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
 
   void changeStatus(RequestStatus newStatus) {
     if (getStatus() != newStatus) {
+      newStatus.writeTo(requestRepresentation);
       changedStatus = true;
     }
-
-    newStatus.writeTo(requestRepresentation);
   }
 
   Request withRequestType(RequestType type) {
