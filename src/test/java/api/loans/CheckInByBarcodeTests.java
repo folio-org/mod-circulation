@@ -797,7 +797,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
       case CLOSED_CANCELLED:
         requestsFixture.cancelRequest(firstRequest);
         break;
-      // request expiration and queue reordering is managed by mod-circulation storage
+      // request expiration and subsequent queue reordering is managed by mod-circulation-storage
       // for purposes of this test request position has to be changed manually
       case CLOSED_UNFILLED:
         requestsFixture.expireRequest(firstRequest);
