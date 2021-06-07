@@ -28,6 +28,9 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.waitAtMost;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.domain.EventType.ITEM_CHECKED_IN;
+import static org.folio.circulation.domain.RequestStatus.CLOSED_CANCELLED;
+import static org.folio.circulation.domain.RequestStatus.CLOSED_PICKUP_EXPIRED;
+import static org.folio.circulation.domain.RequestStatus.CLOSED_UNFILLED;
 import static org.folio.circulation.domain.representations.logs.LogEventType.CHECK_IN;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
 import static org.hamcrest.CoreMatchers.allOf;
@@ -39,6 +42,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNot.not;
 import static org.joda.time.DateTimeZone.UTC;
+import static org.junit.Assert.fail;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -51,6 +55,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.folio.circulation.domain.Item;
+import org.folio.circulation.domain.ItemStatus;
+import org.folio.circulation.domain.Request;
+import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.Response;
@@ -647,7 +655,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
   }
 
   @Test
-  public void availableNoticeIsSentOnceWhenItemStatusIsChangedToAwaitingPickup() {
+  public void patronNoticeIsSentOnceWhenItemAndRequestStatusIsChangedToAwaitingPickup() {
     JsonObject availableNoticeConfig = new NoticeConfigurationBuilder()
       .withTemplateId(UUID.randomUUID())
       .withAvailableEvent()
@@ -679,8 +687,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     waitAtMost(1, SECONDS)
       .until(() -> FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
 
-    patronNoticesClient.deleteAll();
-    FakePubSub.clearPublishedEvents();
+    clearPatronNoticesAndPubsubEvents();
 
     //Check-in again and verify no notice are sent
     checkInFixture.checkInByBarcode(requestedItem, checkInDate, pickupServicePointId);
@@ -690,6 +697,150 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
 
     waitAtMost(1, SECONDS)
       .until(() -> FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), empty());
+  }
+
+  @Test
+  public void patronNoticeIsSentForRequestAwaitingPickupWhenPreviousRequestWasCancelled() {
+    patronNoticeIsSentForRequestAwaitingPickupWhenPreviousRequestWasClosed(CLOSED_CANCELLED);
+  }
+
+  @Test
+  public void patronNoticeIsSentForRequestAwaitingPickupWhenPreviousRequestHasExpired() {
+    patronNoticeIsSentForRequestAwaitingPickupWhenPreviousRequestWasClosed(CLOSED_UNFILLED);
+  }
+
+  @Test
+  public void patronNoticeIsSentForRequestAwaitingPickupWhenPreviousRequestPickupExpired() {
+    patronNoticeIsSentForRequestAwaitingPickupWhenPreviousRequestWasClosed(CLOSED_PICKUP_EXPIRED);
+  }
+
+  private void patronNoticeIsSentForRequestAwaitingPickupWhenPreviousRequestWasClosed(
+    RequestStatus firstRequestUpdateStatus) {
+
+    UUID requestAwaitingPickupTemplateId = UUID.randomUUID();
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+
+    use(new NoticePolicyBuilder()
+      .withName("Policy with Request Awaiting Pickup notice")
+      .withLoanNotices(Collections.singletonList(
+        new NoticeConfigurationBuilder()
+        .withTemplateId(requestAwaitingPickupTemplateId)
+        .withAvailableEvent()
+        .create()
+      )));
+
+    DateTime requestDate = new DateTime(2020, 11, 30, 13, 30);
+    DateTime requestExpirationDateTime = requestDate.plusMonths(1);
+    LocalDate requestExpirationDate = toLocalDate(requestExpirationDateTime);
+    DateTime firstCheckInDate = requestDate.plusDays(1);
+    DateTime secondCheckInDate = firstCheckInDate.plusDays(1);
+
+
+    ItemResource item = itemsFixture.basedUponNod();
+
+    // create two requests for the same item
+
+    UserResource firstRequester = usersFixture.steve();
+    IndividualResource firstRequest = requestsFixture.place(new RequestBuilder()
+      .page()
+      .forItem(item)
+      .by(firstRequester)
+      .withPickupServicePointId(pickupServicePointId)
+      .withRequestDate(requestDate)
+      .withRequestExpiration(requestExpirationDate)
+      .withHoldShelfExpiration(requestExpirationDate));
+
+    UserResource secondRequester = usersFixture.james();
+    IndividualResource secondRequest = requestsFixture.place(new RequestBuilder()
+      .hold()
+      .forItem(item)
+      .by(secondRequester)
+      .withPickupServicePointId(pickupServicePointId)
+      .withRequestDate(requestDate)
+      .withRequestExpiration(requestExpirationDate)
+      .withHoldShelfExpiration(requestExpirationDate));
+
+    // verify that both requests are "Open - Not yet filled"
+
+    assertThatRequestStatusIs(firstRequest.getId(), RequestStatus.OPEN_NOT_YET_FILLED);
+    assertThatRequestStatusIs(secondRequest.getId(), RequestStatus.OPEN_NOT_YET_FILLED);
+
+    // check the item in
+
+    checkInFixture.checkInByBarcode(item, firstCheckInDate, pickupServicePointId);
+
+    // check that both item and first request are awaiting pickup
+
+    assertThatItemStatusIs(item.getId(), ItemStatus.AWAITING_PICKUP);
+    assertThatRequestStatusIs(firstRequest.getId(), RequestStatus.OPEN_AWAITING_PICKUP);
+
+    // verify that Request Awaiting Pickup notice was sent for first request
+
+    waitAtMost(1, SECONDS)
+      .until(patronNoticesClient::getAll, hasSize(1));
+
+    checkPatronNoticeEvent(firstRequest, firstRequester, item, requestAwaitingPickupTemplateId);
+
+    waitAtMost(1, SECONDS)
+      .until(() -> FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
+
+    clearPatronNoticesAndPubsubEvents();
+
+    // Check-in again and verify that same notice is not sent repeatedly
+
+    checkInFixture.checkInByBarcode(item, firstCheckInDate, pickupServicePointId);
+    verifyThatNoPatronNoticesWereSent();
+
+    // close first request
+
+    switch (firstRequestUpdateStatus) {
+      case CLOSED_CANCELLED:
+        requestsFixture.cancelRequest(firstRequest);
+        break;
+      // request expiration and subsequent queue reordering is managed by mod-circulation-storage
+      // for purposes of this test request position has to be changed manually
+      case CLOSED_UNFILLED:
+        requestsFixture.expireRequest(firstRequest);
+        updateRequestPosition(secondRequest, 1);
+        break;
+      case CLOSED_PICKUP_EXPIRED:
+        requestsFixture.expireRequestPickup(firstRequest);
+        updateRequestPosition(secondRequest, 1);
+        break;
+      default:
+        fail("Unsupported request status");
+    }
+
+    // verify that first request was closed, and that item is still awaiting pickup
+
+    assertThatItemStatusIs(item.getId(), ItemStatus.AWAITING_PICKUP);
+    assertThatRequestStatusIs(firstRequest.getId(), firstRequestUpdateStatus);
+
+    // check the item in again
+
+    checkInFixture.checkInByBarcode(item, secondCheckInDate, pickupServicePointId);
+
+    // verify that item is still awaiting pickup, and that second request is now awaiting pickup
+
+    assertThatItemStatusIs(item.getId(), ItemStatus.AWAITING_PICKUP);
+    assertThatRequestStatusIs(secondRequest.getId(), RequestStatus.OPEN_AWAITING_PICKUP);
+
+    // verify that Request Awaiting Pickup notice was sent to second requester
+
+    waitAtMost(1, SECONDS)
+      .until(patronNoticesClient::getAll, hasSize(1));
+
+    checkPatronNoticeEvent(secondRequest, secondRequester, item, requestAwaitingPickupTemplateId);
+
+    waitAtMost(1, SECONDS)
+      .until(() -> FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
+
+    clearPatronNoticesAndPubsubEvents();
+
+    // Check-in again and verify that same notice is not sent repeatedly
+
+    checkInFixture.checkInByBarcode(item, secondCheckInDate, pickupServicePointId);
+    verifyThatNoPatronNoticesWereSent();
   }
 
   @Test
@@ -1279,5 +1430,35 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
 
   private LocalDate toLocalDate(DateTime dateTime) {
     return LocalDate.of(dateTime.getYear(), dateTime.getMonthOfYear(), dateTime.getDayOfMonth());
+  }
+
+  private void clearPatronNoticesAndPubsubEvents() {
+    patronNoticesClient.deleteAll();
+    FakePubSub.clearPublishedEvents();
+  }
+
+  private void assertThatItemStatusIs(UUID itemId, ItemStatus status) {
+    assertThat(
+      Item.from(itemsFixture.getById(itemId).getJson()).getStatus(),
+      is(status));
+  }
+
+  private void assertThatRequestStatusIs(UUID requestId, RequestStatus status) {
+    assertThat(
+      Request.from(requestsFixture.getById(requestId).getJson()).getStatus(),
+      is(status));
+  }
+
+  private void verifyThatNoPatronNoticesWereSent() {
+    waitAtMost(1, SECONDS)
+      .until(patronNoticesClient::getAll, empty());
+
+    waitAtMost(1, SECONDS)
+      .until(() -> FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), empty());
+  }
+
+  private void updateRequestPosition(IndividualResource request, int position) {
+    requestsFixture.replaceRequest(request.getId(),
+      RequestBuilder.from(request).withPosition(position));
   }
 }

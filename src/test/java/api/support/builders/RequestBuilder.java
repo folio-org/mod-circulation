@@ -32,6 +32,7 @@ public class RequestBuilder extends JsonBuilder implements Builder {
   public static final String OPEN_AWAITING_DELIVERY = "Open - Awaiting delivery";
   public static final String OPEN_IN_TRANSIT = "Open - In transit";
   public static final String CLOSED_FILLED = "Closed - Filled";
+  public static final String CLOSED_UNFILLED = "Closed - Unfilled";
   public static final String CLOSED_CANCELLED = "Closed - Cancelled";
   public static final String CLOSED_PICKUP_EXPIRED = "Closed - Pickup expired";
 
