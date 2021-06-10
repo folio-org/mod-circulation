@@ -1991,7 +1991,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void dueDateShouldBeTruncatedToPatronsExpirationEndOfTheDayIfKeepCurrentDueDateTimeStrategy() {
+  public void dueDateShouldBeTruncatedToPatronsExpirationDateTimeIfKeepCurrentDueDateTimeStrategy() {
     DateTime loanDate = FIRST_DAY_OPEN.toDateTime(LocalTime.MIDNIGHT.plusHours(10), UTC);
     use(buildLoanPolicyWithRollingLoan(KEEP_THE_CURRENT_DUE_DATE_TIME));
     IndividualResource item = itemsFixture.basedUponNod();
@@ -2005,8 +2005,7 @@ public class CheckOutByBarcodeTests extends APITests {
         .on(loanDate)
         .at(CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_OPEN)).getJson(), loanDate);
 
-    assertThat(DateTime.parse(response.getString("dueDate")).toDateTime(),
-      is(patronExpirationDate));
+    assertThat(DateTime.parse(response.getString("dueDate")).toDateTime(), is(patronExpirationDate));
   }
 
   @Test
