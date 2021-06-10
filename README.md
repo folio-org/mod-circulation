@@ -9,7 +9,8 @@ Version 2.0. See the file "[LICENSE](LICENSE)" for more information.
 
 Further documentation about this module can be found in the [/doc/](doc) folder:
 
-* [Guide](doc/guide.md) - introduction for developers
+* [Guide](doc/developer-guide.md) - introduction for developers
+* [Operations guide](doc/operations-guide.md) - introduction for operations
 * [Circulationrules](doc/circulationrules.md) - how the circulation rules file and the circulation rules engine work
 
 ## Goal
