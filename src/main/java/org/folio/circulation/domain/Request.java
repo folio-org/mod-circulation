@@ -49,9 +49,10 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
 
   private boolean changedPosition;
   private Integer previousPosition;
+  private boolean changedStatus;
 
   public static Request from(JsonObject representation) {
-    return new Request(representation, null, null, null, null, null, null, null, false, null);
+    return new Request(representation, null, null, null, null, null, null, null, false, null, false);
   }
 
   public Request withRequestJsonRepresentation(JsonObject representation) {
@@ -64,7 +65,8 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
       getLoan(),
       getPickupServicePoint(),
       hasChangedPosition(),
-      getPreviousPosition());
+      getPreviousPosition(),
+      hasChangedStatus());
   }
 
   public Request withCancellationReasonJsonRepresentation(JsonObject representation) {
@@ -77,7 +79,8 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
       getLoan(),
       getPickupServicePoint(),
       hasChangedPosition(),
-      getPreviousPosition());
+      getPreviousPosition(),
+      hasChangedStatus());
   }
 
   public JsonObject asJson() {
@@ -124,7 +127,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return isClosed() && !isPickupExpired();
   }
 
-  boolean isAwaitingPickup() {
+  public boolean isAwaitingPickup() {
     return getStatus() == OPEN_AWAITING_PICKUP;
   }
 
@@ -143,32 +146,32 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
       requestRepresentation.put(ITEM_ID, newItem.getItemId());
     }
     return new Request(requestRepresentation, cancellationReasonRepresentation, newItem, requester, proxy, addressType,
-      loan == null ? null : loan.withItem(newItem), pickupServicePoint, changedPosition, previousPosition);
+      loan == null ? null : loan.withItem(newItem), pickupServicePoint, changedPosition, previousPosition, changedStatus);
   }
 
   public Request withRequester(User newRequester) {
     return new Request(requestRepresentation, cancellationReasonRepresentation, item, newRequester, proxy, addressType, loan,
-      pickupServicePoint, changedPosition, previousPosition);
+      pickupServicePoint, changedPosition, previousPosition, changedStatus);
   }
 
   public Request withProxy(User newProxy) {
     return new Request(requestRepresentation, cancellationReasonRepresentation, item, requester, newProxy, addressType, loan,
-      pickupServicePoint, changedPosition, previousPosition);
+      pickupServicePoint, changedPosition, previousPosition, changedStatus);
   }
 
   public Request withAddressType(AddressType addressType) {
     return new Request(requestRepresentation, cancellationReasonRepresentation, item, requester, proxy, addressType, loan,
-      pickupServicePoint, changedPosition, previousPosition);
+      pickupServicePoint, changedPosition, previousPosition, changedStatus);
   }
 
   public Request withLoan(Loan newLoan) {
     return new Request(requestRepresentation, cancellationReasonRepresentation, item, requester, proxy, addressType, newLoan,
-      pickupServicePoint, changedPosition, previousPosition);
+      pickupServicePoint, changedPosition, previousPosition, changedStatus);
   }
 
   public Request withPickupServicePoint(ServicePoint newPickupServicePoint) {
     return new Request(requestRepresentation, cancellationReasonRepresentation, item, requester, proxy, addressType, loan,
-      newPickupServicePoint, changedPosition, previousPosition );
+      newPickupServicePoint, changedPosition, previousPosition, changedStatus);
   }
 
   @Override
@@ -209,8 +212,11 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return RequestStatus.from(requestRepresentation.getString(STATUS));
   }
 
-  void changeStatus(RequestStatus status) {
-    status.writeTo(requestRepresentation);
+  void changeStatus(RequestStatus newStatus) {
+    if (getStatus() != newStatus) {
+      newStatus.writeTo(requestRepresentation);
+      changedStatus = true;
+    }
   }
 
   Request withRequestType(RequestType type) {
@@ -349,4 +355,13 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     }
     return this;
   }
+
+  public boolean hasTopPriority() {
+    return Integer.valueOf(1).equals(getPosition());
+  }
+
+  public boolean hasChangedStatus() {
+    return changedStatus;
+  }
+
 }
