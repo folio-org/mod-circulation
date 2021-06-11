@@ -35,6 +35,7 @@ public class CalendarExamples {
 
   public static final String CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_CLOSED = "6ab38b7a-c889-4839-a337-86aad0297d7c";
   public static final String CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_OPEN = "6ab38b7a-c889-4839-a337-86aad0297d8d";
+  public static final String CASE_MON_WED_FRI_OPEN_TUE_THU_CLOSED = "87291415-9f43-42ec-ba6b-d590f33509a0";
 
   static final String CASE_START_DATE_MONTHS_AGO_AND_END_DATE_THU = "12345698-2f09-4bc9-8924-3734882d44a3";
 
@@ -47,6 +48,8 @@ public class CalendarExamples {
   public static final LocalDate CASE_CURRENT_IS_OPEN_NEXT_DAY = new LocalDate(2019, 2, 6);
   public static final LocalDate CASE_CURRENT_IS_OPEN_IN_ONE_DAY = new LocalDate(2019, 2, 7);
 
+  public static final LocalDate MONDAY_DATE = new LocalDate(2018, 12, 9);
+  public static final LocalDate TUESDAY_DATE = new LocalDate(2018, 12, 10);
   public static final LocalDate WEDNESDAY_DATE = new LocalDate(2018, 12, 11);
   public static final LocalDate THURSDAY_DATE = new LocalDate(2018, 12, 12);
   public static final LocalDate FRIDAY_DATE = new LocalDate(2018, 12, 13);
@@ -301,6 +304,20 @@ public class CalendarExamples {
         DateTime endDateFriday = startDateFriday.plusMonths(1);
         return new CalendarBuilder(CASE_START_DATE_MONTHS_AGO_AND_END_DATE_THU,
           startDateFriday, endDateFriday);
+
+      case CASE_MON_WED_FRI_OPEN_TUE_THU_CLOSED:
+        LocalDate date = LocalDate.parse(queries.get(REQUESTED_DATE_PARAM));
+        if (date.isEqual(THURSDAY_DATE)) {
+          return new CalendarBuilder(new OpeningDayPeriodBuilder(CASE_MON_WED_FRI_OPEN_TUE_THU_CLOSED,
+            createDayPeriod(createOpeningDay(new ArrayList<>(), WEDNESDAY_DATE, true, true)),
+            createDayPeriod(createOpeningDay(new ArrayList<>(), THURSDAY_DATE, true, false)),
+            createDayPeriod(createOpeningDay(new ArrayList<>(), FRIDAY_DATE, true, true))));
+        }
+
+        return new CalendarBuilder(new OpeningDayPeriodBuilder(CASE_MON_WED_FRI_OPEN_TUE_THU_CLOSED,
+          createDayPeriod(createOpeningDay(new ArrayList<>(), MONDAY_DATE, true, true)),
+          createDayPeriod(createOpeningDay(new ArrayList<>(), TUESDAY_DATE, true, false)),
+          createDayPeriod(createOpeningDay(new ArrayList<>(), WEDNESDAY_DATE, true, true))));
 
       default:
         LocalDate requestedDate = LocalDate.parse(queries.get(REQUESTED_DATE_PARAM));
