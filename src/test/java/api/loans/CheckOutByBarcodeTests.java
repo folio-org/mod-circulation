@@ -13,8 +13,10 @@ import static api.support.fixtures.AutomatedPatronBlocksFixture.MAX_NUMBER_OF_IT
 import static api.support.fixtures.AutomatedPatronBlocksFixture.MAX_OUTSTANDING_FEE_FINE_BALANCE_MESSAGE;
 import static api.support.fixtures.CalendarExamples.CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_CLOSED;
 import static api.support.fixtures.CalendarExamples.CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_OPEN;
+import static api.support.fixtures.CalendarExamples.CASE_MON_WED_FRI_OPEN_TUE_THU_CLOSED;
 import static api.support.fixtures.CalendarExamples.END_TIME_SECOND_PERIOD;
 import static api.support.fixtures.CalendarExamples.FIRST_DAY_OPEN;
+import static api.support.fixtures.CalendarExamples.MONDAY_DATE;
 import static api.support.fixtures.CalendarExamples.SECOND_DAY_CLOSED;
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasItemBarcodeParameter;
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasLoanPolicyParameters;
@@ -1993,7 +1995,7 @@ public class CheckOutByBarcodeTests extends APITests {
   @Test
   public void dueDateShouldBeTruncatedToPatronsExpirationDateTimeIfKeepCurrentDueDateTimeStrategy() {
     DateTime loanDate = FIRST_DAY_OPEN.toDateTime(LocalTime.MIDNIGHT.plusHours(10), UTC);
-    use(buildLoanPolicyWithRollingLoan(KEEP_THE_CURRENT_DUE_DATE_TIME));
+    use(buildLoanPolicyWithRollingLoan(KEEP_THE_CURRENT_DUE_DATE_TIME, 1));
     IndividualResource item = itemsFixture.basedUponNod();
     DateTime patronExpirationDate = loanDate.plusHours(1);
     IndividualResource steve = usersFixture.steve(user -> user.expires(patronExpirationDate));
@@ -2012,7 +2014,7 @@ public class CheckOutByBarcodeTests extends APITests {
   public void
   dueDateShouldBeTruncatedToTheEndOfPreviousServicePointHoursIfMoveToTheEndOfCurrentHoursStrategy() {
     DateTime loanDate = FIRST_DAY_OPEN.toDateTime(LocalTime.MIDNIGHT.plusHours(16), UTC);
-    use(buildLoanPolicyWithRollingLoan(MOVE_TO_END_OF_CURRENT_SERVICE_POINT_HOURS));
+    use(buildLoanPolicyWithRollingLoan(MOVE_TO_END_OF_CURRENT_SERVICE_POINT_HOURS, 1));
 
     IndividualResource item = itemsFixture.basedUponNod();
     DateTime patronExpirationDate = loanDate.plusHours(12);
@@ -2033,7 +2035,7 @@ public class CheckOutByBarcodeTests extends APITests {
   public void
   dueDateShouldBeTruncatedToTheEndOfPreviousServicePointHoursIfMoveToTheBeginningOfNextStrategy() {
     DateTime loanDate = FIRST_DAY_OPEN.toDateTime(LocalTime.MIDNIGHT.plusHours(16), UTC);
-    use(buildLoanPolicyWithRollingLoan(MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS));
+    use(buildLoanPolicyWithRollingLoan(MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS, 1));
 
     IndividualResource item = itemsFixture.basedUponNod();
     DateTime patronExpirationDate = loanDate.plusHours(12);
@@ -2050,6 +2052,48 @@ public class CheckOutByBarcodeTests extends APITests {
       is(FIRST_DAY_OPEN.toDateTime(END_TIME_SECOND_PERIOD, UTC)));
   }
 
+  @Test
+  public void
+  shouldBeTruncatedToTheEndOfPrevOpenDayForMoveToTheEndOfPrevOpenDayStrategyWithTwoOpeningPeriods() {
+    DateTime loanDate = MONDAY_DATE.toDateTime(LocalTime.MIDNIGHT.plusHours(16), UTC);
+    use(buildLoanPolicyWithRollingLoan(MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY, 3));
+
+    IndividualResource item = itemsFixture.basedUponNod();
+    DateTime patronExpirationDate = loanDate.plusDays(1);
+    IndividualResource steve = usersFixture.steve(user -> user.expires(patronExpirationDate));
+
+    JsonObject response = executeWithFixedDateTime(() -> checkOutFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(item)
+        .to(steve)
+        .on(loanDate)
+        .at(CASE_MON_WED_FRI_OPEN_TUE_THU_CLOSED)).getJson(), loanDate);
+
+    assertThat(DateTime.parse(response.getString("dueDate")).toDateTime(),
+      is(MONDAY_DATE.toDateTime(LocalTime.MIDNIGHT.minusSeconds(1), UTC)));
+  }
+
+  @Test
+  public void
+  shouldBeTruncatedToTheEndOfPrevOpenDayForMoveToTheEndOfNextOpenDayStrategyWithTwoOpeningPeriods() {
+    DateTime loanDate = MONDAY_DATE.toDateTime(LocalTime.MIDNIGHT.plusHours(16), UTC);
+    use(buildLoanPolicyWithRollingLoan(MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY, 3));
+
+    IndividualResource item = itemsFixture.basedUponNod();
+    DateTime patronExpirationDate = loanDate.plusDays(1);
+    IndividualResource steve = usersFixture.steve(user -> user.expires(patronExpirationDate));
+
+    JsonObject response = executeWithFixedDateTime(() -> checkOutFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(item)
+        .to(steve)
+        .on(loanDate)
+        .at(CASE_MON_WED_FRI_OPEN_TUE_THU_CLOSED)).getJson(), loanDate);
+
+    assertThat(DateTime.parse(response.getString("dueDate")).toDateTime(),
+      is(MONDAY_DATE.toDateTime(LocalTime.MIDNIGHT.minusSeconds(1), UTC)));
+  }
+
   private LoanPolicyBuilder buildLoanPolicyWithFixedLoan(DueDateManagement strategy,
     DateTime dueDate) {
 
@@ -2059,9 +2103,9 @@ public class CheckOutByBarcodeTests extends APITests {
       .withClosedLibraryDueDateManagement(strategy.getValue());
   }
 
-  private LoanPolicyBuilder buildLoanPolicyWithRollingLoan(DueDateManagement strategy) {
+  private LoanPolicyBuilder buildLoanPolicyWithRollingLoan(DueDateManagement strategy, int days) {
     return new LoanPolicyBuilder()
-      .rolling(Period.days(1))
+      .rolling(Period.days(days))
       .withClosedLibraryDueDateManagement(strategy.getValue());
   }
 
