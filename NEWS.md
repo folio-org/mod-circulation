@@ -1,3 +1,7 @@
+## 20.1.7 2021-06-14
+
+* Request pickup notice not sent when item becomes available because previous request is cancelled/expires while awaiting pickup (CIRC-1141)
+
 ## 20.1.6 2021-05-21
 
 * Fix memory leak caused by mod-pubsub-client (CIRC-1121)
