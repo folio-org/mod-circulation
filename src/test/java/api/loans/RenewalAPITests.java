@@ -10,11 +10,15 @@ import static api.support.fakes.PublishedEvents.byEventType;
 import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.fixtures.AutomatedPatronBlocksFixture.MAX_NUMBER_OF_ITEMS_CHARGED_OUT_MESSAGE;
 import static api.support.fixtures.AutomatedPatronBlocksFixture.MAX_OUTSTANDING_FEE_FINE_BALANCE_MESSAGE;
+import static api.support.fixtures.CalendarExamples.CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_OPEN;
 import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_SERVICE_POINT_ID;
 import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_SERVICE_POINT_NEXT_DAY;
 import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_SERVICE_POINT_PREV_DAY;
+import static api.support.fixtures.CalendarExamples.CASE_MON_WED_FRI_OPEN_TUE_THU_CLOSED;
 import static api.support.fixtures.CalendarExamples.CASE_WED_THU_FRI_SERVICE_POINT_ID;
 import static api.support.fixtures.CalendarExamples.END_TIME_SECOND_PERIOD;
+import static api.support.fixtures.CalendarExamples.FIRST_DAY_OPEN;
+import static api.support.fixtures.CalendarExamples.MONDAY_DATE;
 import static api.support.fixtures.CalendarExamples.START_TIME_FIRST_PERIOD;
 import static api.support.fixtures.CalendarExamples.START_TIME_SECOND_PERIOD;
 import static api.support.fixtures.CalendarExamples.WEDNESDAY_DATE;
@@ -33,8 +37,15 @@ import static api.support.matchers.ValidationErrorMatchers.isBlockRelatedError;
 import static api.support.utl.BlockOverridesUtils.buildOkapiHeadersWithPermissions;
 import static api.support.utl.BlockOverridesUtils.getMissingPermissions;
 import static api.support.utl.BlockOverridesUtils.getOverridableBlockNames;
+import static api.support.utl.DateTimeUtils.executeWithFixedDateTime;
 import static org.awaitility.Awaitility.waitAtMost;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
+import static org.folio.circulation.domain.policy.DueDateManagement.KEEP_THE_CURRENT_DUE_DATE;
+import static org.folio.circulation.domain.policy.DueDateManagement.KEEP_THE_CURRENT_DUE_DATE_TIME;
+import static org.folio.circulation.domain.policy.DueDateManagement.MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS;
+import static org.folio.circulation.domain.policy.DueDateManagement.MOVE_TO_END_OF_CURRENT_SERVICE_POINT_HOURS;
+import static org.folio.circulation.domain.policy.DueDateManagement.MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY;
+import static org.folio.circulation.domain.policy.DueDateManagement.MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY;
 import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.END_OF_A_DAY;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
 import static org.hamcrest.CoreMatchers.allOf;
@@ -44,6 +55,7 @@ import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
+import static org.joda.time.DateTimeZone.UTC;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -65,6 +77,7 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
 import org.joda.time.DateTimeUtils;
 import org.joda.time.DateTimeZone;
+import org.joda.time.LocalTime;
 import org.joda.time.Seconds;
 import org.junit.Test;
 
@@ -1690,6 +1703,136 @@ public abstract class RenewalAPITests extends APITests {
     assertThat(loan.getString("action"), is(RENEWED_THROUGH_OVERRIDE));
   }
 
+  @Test
+  public void shouldBeTruncatedToTheEndOfPrevOpenDayForMoveToTheEndOfPrevOpenDayStrategy() {
+    DateTime loanDate = MONDAY_DATE.toDateTime(LocalTime.MIDNIGHT.plusHours(16), UTC);
+    use(buildLoanPolicyWithRollingLoanAndRenew(MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY, 3));
+
+    IndividualResource item = itemsFixture.basedUponNod();
+    DateTime patronExpirationDate = loanDate.plusDays(1);
+    IndividualResource steve = usersFixture.steve(user -> user.expires(patronExpirationDate));
+
+    checkOutItem(loanDate, item, MONDAY_DATE.toDateTime(END_OF_A_DAY, UTC), steve,
+      CASE_MON_WED_FRI_OPEN_TUE_THU_CLOSED);
+
+    JsonObject renewedLoan = executeWithFixedDateTime(() -> loansFixture.renewLoan(item, steve).getJson(),
+      loanDate.plusDays(1));
+    DateTime expectedDate = MONDAY_DATE.toDateTime(END_OF_A_DAY, DateTimeZone.UTC);
+
+    assertThat("due date should be " + expectedDate, renewedLoan.getString("dueDate"),
+      isEquivalentTo(expectedDate));
+  }
+
+  @Test
+  public void shouldBeTruncatedToTheEndOfPrevOpenDayForMoveToTheEndOfNextOpenDayStrategy() {
+    DateTime loanDate = MONDAY_DATE.toDateTime(LocalTime.MIDNIGHT.plusHours(16), UTC);
+    use(buildLoanPolicyWithRollingLoanAndRenew(MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY, 3));
+
+    IndividualResource item = itemsFixture.basedUponNod();
+    DateTime patronExpirationDate = loanDate.plusDays(1);
+    IndividualResource steve = usersFixture.steve(user -> user.expires(patronExpirationDate));
+
+    checkOutItem(loanDate, item, MONDAY_DATE.toDateTime(END_OF_A_DAY, UTC), steve,
+      CASE_MON_WED_FRI_OPEN_TUE_THU_CLOSED);
+
+    JsonObject renewedLoan = executeWithFixedDateTime(() -> loansFixture.renewLoan(item, steve).getJson(),
+      loanDate.plusDays(1));
+    DateTime expectedDate = MONDAY_DATE.toDateTime(END_OF_A_DAY, DateTimeZone.UTC);
+
+    assertThat("due date should be " + expectedDate, renewedLoan.getString("dueDate"),
+      isEquivalentTo(expectedDate));
+  }
+
+  @Test
+  public void shouldBeTruncatedToTheEndOfPatronExpirationDayWithKeepCurrentDueDateStrategy() {
+    DateTime loanDate = MONDAY_DATE.toDateTime(LocalTime.MIDNIGHT.plusHours(16), UTC);
+    use(buildLoanPolicyWithRollingLoanAndRenew(KEEP_THE_CURRENT_DUE_DATE, 3));
+
+    IndividualResource item = itemsFixture.basedUponNod();
+    DateTime patronExpirationDate = loanDate.plusDays(1);
+    IndividualResource steve = usersFixture.steve(user -> user.expires(patronExpirationDate));
+
+    checkOutItem(loanDate, item, patronExpirationDate, steve, CASE_MON_WED_FRI_OPEN_TUE_THU_CLOSED);
+
+    JsonObject renewedLoan = executeWithFixedDateTime(() -> loansFixture.renewLoan(item, steve).getJson(),
+      loanDate.plusDays(1));
+
+    assertThat("due date should be " + patronExpirationDate, renewedLoan.getString("dueDate"),
+      isEquivalentTo(patronExpirationDate));
+  }
+
+  @Test
+  public void dueDateShouldBeTruncatedToPatronsExpirationDateTimeIfKeepCurrentDueDateTimeStrategy() {
+    DateTime loanDate = MONDAY_DATE.toDateTime(LocalTime.MIDNIGHT.plusHours(10), UTC);
+    use(buildLoanPolicyWithRollingLoanAndRenew(KEEP_THE_CURRENT_DUE_DATE_TIME, 1));
+    IndividualResource item = itemsFixture.basedUponNod();
+    DateTime patronExpirationDate = loanDate.plusHours(1);
+    IndividualResource steve = usersFixture.steve(user -> user.expires(patronExpirationDate));
+
+    checkOutItem(loanDate, item, patronExpirationDate, steve, CASE_MON_WED_FRI_OPEN_TUE_THU_CLOSED);
+
+    JsonObject renewedLoan = executeWithFixedDateTime(() -> loansFixture.renewLoan(item, steve).getJson(),
+      loanDate.plusDays(1));
+
+    assertThat("due date should be " + patronExpirationDate, renewedLoan.getString("dueDate"),
+      isEquivalentTo(patronExpirationDate));
+  }
+
+  @Test
+  public void
+  dueDateShouldBeTruncatedToTheEndOfPreviousServicePointHoursIfMoveToTheEndOfCurrentHoursStrategy() {
+    DateTime loanDate = FIRST_DAY_OPEN.toDateTime(LocalTime.MIDNIGHT.plusHours(16), UTC);
+    use(buildLoanPolicyWithRollingLoanAndRenew(MOVE_TO_END_OF_CURRENT_SERVICE_POINT_HOURS, 1));
+
+    IndividualResource item = itemsFixture.basedUponNod();
+    DateTime patronExpirationDate = loanDate.plusHours(12);
+    IndividualResource steve = usersFixture.steve(user -> user.expires(patronExpirationDate));
+
+    checkOutItem(loanDate, item, FIRST_DAY_OPEN.toDateTime(END_TIME_SECOND_PERIOD, UTC), steve,
+      CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_OPEN);
+
+    JsonObject renewedLoan = executeWithFixedDateTime(() -> loansFixture.renewLoan(item, steve).getJson(),
+      loanDate.plusDays(1));
+
+    assertThat("due date should be " + FIRST_DAY_OPEN.toDateTime(END_TIME_SECOND_PERIOD, UTC),
+      renewedLoan.getString("dueDate"), isEquivalentTo(FIRST_DAY_OPEN.toDateTime(
+        END_TIME_SECOND_PERIOD, UTC)));
+  }
+
+  @Test
+  public void
+  dueDateShouldBeTruncatedToTheEndOfPreviousServicePointHoursIfMoveToTheBeginningOfNextStrategy() {
+    DateTime loanDate = FIRST_DAY_OPEN.toDateTime(LocalTime.MIDNIGHT.plusHours(16), UTC);
+    use(buildLoanPolicyWithRollingLoanAndRenew(MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS, 1));
+
+    IndividualResource item = itemsFixture.basedUponNod();
+    DateTime patronExpirationDate = loanDate.plusHours(12);
+    IndividualResource steve = usersFixture.steve(user -> user.expires(patronExpirationDate));
+
+    checkOutItem(loanDate, item, FIRST_DAY_OPEN.toDateTime(END_TIME_SECOND_PERIOD, UTC), steve,
+      CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_OPEN);
+
+    JsonObject renewedLoan = executeWithFixedDateTime(() -> loansFixture.renewLoan(item, steve).getJson(),
+      loanDate.plusDays(1));
+
+    assertThat("due date should be " + FIRST_DAY_OPEN.toDateTime(END_TIME_SECOND_PERIOD, UTC),
+      renewedLoan.getString("dueDate"), isEquivalentTo(FIRST_DAY_OPEN.toDateTime(
+        END_TIME_SECOND_PERIOD, UTC)));
+  }
+
+  private void checkOutItem(DateTime loanDate, IndividualResource item, DateTime expectedDueDate,
+    IndividualResource steve, String servicePointId) {
+
+    JsonObject response = executeWithFixedDateTime(() -> checkOutFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(item)
+        .to(steve)
+        .on(loanDate)
+        .at(servicePointId)).getJson(), loanDate);
+
+    assertThat(DateTime.parse(response.getString("dueDate")).toDateTime(), is(expectedDueDate));
+  }
+
   private void checkRenewalAttempt(DateTime expectedDueDate, UUID dueDateLimitedPolicyId) {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
@@ -1737,5 +1880,14 @@ public abstract class RenewalAPITests extends APITests {
         new RenewBlockOverrides()
           .withPatronBlock(new JsonObject())
           .withComment(TEST_COMMENT).create());
+  }
+
+  public static LoanPolicyBuilder buildLoanPolicyWithRollingLoanAndRenew(
+    DueDateManagement strategy, int days) {
+
+    return new LoanPolicyBuilder()
+      .rolling(Period.days(days))
+      .withClosedLibraryDueDateManagement(strategy.getValue())
+      .withRenewable(true);
   }
 }
