@@ -1744,7 +1744,7 @@ public abstract class RenewalAPITests extends APITests {
   }
 
   @Test
-  public void shouldBeTruncatedToTheEndOfPatronExpirationDayWithKeepCurrentDueDateStrategy() {
+  public void shouldBeTruncatedToThePatronsExpirationDateTimeIfKeepCurrentDueDateStrategy() {
     DateTime loanDate = MONDAY_DATE.toDateTime(LocalTime.MIDNIGHT.plusHours(16), UTC);
     use(buildLoanPolicyWithRollingLoanAndRenew(KEEP_THE_CURRENT_DUE_DATE, 3));
 
@@ -1792,6 +1792,13 @@ public abstract class RenewalAPITests extends APITests {
       CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_OPEN);
 
     JsonObject renewedLoan = executeWithFixedDateTime(() -> loansFixture.renewLoan(item, steve).getJson(),
+      loanDate.plusHours(21));
+
+    assertThat("due date should be " + FIRST_DAY_OPEN.toDateTime(END_TIME_SECOND_PERIOD, UTC),
+      renewedLoan.getString("dueDate"), isEquivalentTo(FIRST_DAY_OPEN.toDateTime(
+        END_TIME_SECOND_PERIOD, UTC)));
+
+    renewedLoan = executeWithFixedDateTime(() -> loansFixture.renewLoan(item, steve).getJson(),
       loanDate.plusDays(1));
 
     assertThat("due date should be " + FIRST_DAY_OPEN.toDateTime(END_TIME_SECOND_PERIOD, UTC),
@@ -1813,6 +1820,13 @@ public abstract class RenewalAPITests extends APITests {
       CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_OPEN);
 
     JsonObject renewedLoan = executeWithFixedDateTime(() -> loansFixture.renewLoan(item, steve).getJson(),
+      loanDate.plusHours(17));
+
+    assertThat("due date should be " + FIRST_DAY_OPEN.toDateTime(END_TIME_SECOND_PERIOD, UTC),
+      renewedLoan.getString("dueDate"), isEquivalentTo(FIRST_DAY_OPEN.toDateTime(
+        END_TIME_SECOND_PERIOD, UTC)));
+
+    renewedLoan = executeWithFixedDateTime(() -> loansFixture.renewLoan(item, steve).getJson(),
       loanDate.plusDays(1));
 
     assertThat("due date should be " + FIRST_DAY_OPEN.toDateTime(END_TIME_SECOND_PERIOD, UTC),

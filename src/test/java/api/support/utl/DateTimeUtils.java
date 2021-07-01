@@ -1,5 +1,8 @@
 package api.support.utl;
 
+import static org.joda.time.DateTimeUtils.setCurrentMillisFixed;
+import static org.joda.time.DateTimeUtils.setCurrentMillisSystem;
+
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.function.Supplier;
@@ -21,9 +24,9 @@ public class DateTimeUtils {
   }
 
   public static <T> T executeWithFixedDateTime(Supplier<T> supplier, DateTime dateTime) {
-    org.joda.time.DateTimeUtils.setCurrentMillisFixed(dateTime.getMillis());
+    setCurrentMillisFixed(dateTime.getMillis());
     T result = supplier.get();
-    org.joda.time.DateTimeUtils.setCurrentMillisSystem();
+    setCurrentMillisSystem();
     return result;
   }
 }
