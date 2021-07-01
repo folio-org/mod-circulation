@@ -40,6 +40,7 @@ import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static api.support.utl.BlockOverridesUtils.getMissingPermissions;
+import static api.support.utl.DateTimeUtils.executeWithFixedDateTime;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.domain.EventType.ITEM_CHECKED_OUT;
 import static org.folio.circulation.domain.policy.DueDateManagement.KEEP_THE_CURRENT_DUE_DATE;
@@ -2184,12 +2185,5 @@ public class CheckOutByBarcodeTests extends APITests {
       noticePoliciesFixture.inactiveNotice().getId(),
       overdueFinePoliciesFixture.facultyStandard().getId(),
       lostItemFeePoliciesFixture.facultyStandard().getId());
-  }
-
-  private <T> T executeWithFixedDateTime(Supplier<T> supplier, DateTime dateTime) {
-    DateTimeUtils.setCurrentMillisFixed(dateTime.getMillis());
-    T result = supplier.get();
-    DateTimeUtils.setCurrentMillisSystem();
-    return result;
   }
 }
