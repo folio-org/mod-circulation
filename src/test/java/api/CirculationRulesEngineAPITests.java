@@ -351,6 +351,24 @@ public class CirculationRulesEngineAPITests extends APITests {
   }
 
   @Test
+  public void rulesEvaluationFailsWhenTheProvidedLocationDoesNotExist() {
+    // The underlying rules are irrelevant
+    setRules(rules1);
+
+    final var itemType = new ItemType(UUID.randomUUID().toString());
+    final var loanType = new LoanType(UUID.randomUUID().toString());
+    final var patronGroup = new PatronGroup(UUID.randomUUID().toString());
+    final var locationThatDoesNotExist = new ItemLocation(UUID.randomUUID().toString());
+
+    final var response = circulationRulesFixture
+      .attemptToApplyRulesForRequestPolicy(itemType, loanType,
+        patronGroup, locationThatDoesNotExist);
+
+    assertThat(response.getStatusCode(), is(500));
+    assertThat(response.getBody(), is("Can`t find location"));
+  }
+
+  @Test
   public void setRulesInvalidatesCache() {
     setRules(rulesFallback);
     assertThat(applyRulesForLoanPolicy(m1, t1, g1, s1), is(lp6));
