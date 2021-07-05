@@ -115,6 +115,7 @@ public abstract class RenewalAPITests extends APITests {
     "circulation.override-item-limit-block";
   private static final String RENEWED_THROUGH_OVERRIDE = "renewedThroughOverride";
   private static final String PATRON_WAS_BLOCKED_MESSAGE = "Patron blocked from renewing";
+  private static final String RENEWED = "renewed";
 
   abstract Response attemptRenewal(IndividualResource user, IndividualResource item);
 
@@ -1481,12 +1482,14 @@ public abstract class RenewalAPITests extends APITests {
 
     final JsonObject renewedLoan = renew(smallAngryPlanet, jessica).getJson();
 
-    // There should be six events published - first for "check out",
-    // second one for log event, third for "change due date"
-    // and one "log record"
+    // There should be five events published - first for "check out",
+    // second one for log event, third for "change due date",
+    // fourth one for "log record", and fifth one for "renewed".
     final var publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(FakePubSub::getPublishedEvents, hasSize(5));
+
+    assertThat(renewedLoan.getString("action"), is(RENEWED));
 
     final var event = publishedEvents.findFirst(byEventType(LOAN_DUE_DATE_CHANGED));
 
