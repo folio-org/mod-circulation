@@ -6,8 +6,9 @@ import static api.support.builders.FixedDueDateSchedule.forDay;
 import static api.support.builders.FixedDueDateSchedule.todayOnly;
 import static api.support.builders.FixedDueDateSchedule.wholeMonth;
 import static api.support.builders.ItemBuilder.CHECKED_OUT;
-import static api.support.fakes.PublishedEvents.byEventType;
 import static api.support.fakes.PublishedEvents.byLogEventType;
+import static api.support.fakes.PublishedEvents.byLogAction;
+import static api.support.fakes.PublishedEvents.byEventType;
 import static api.support.fixtures.AutomatedPatronBlocksFixture.MAX_NUMBER_OF_ITEMS_CHARGED_OUT_MESSAGE;
 import static api.support.fixtures.AutomatedPatronBlocksFixture.MAX_OUTSTANDING_FEE_FINE_BALANCE_MESSAGE;
 import static api.support.fixtures.CalendarExamples.CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_OPEN;
@@ -22,7 +23,9 @@ import static api.support.fixtures.CalendarExamples.MONDAY_DATE;
 import static api.support.fixtures.CalendarExamples.START_TIME_FIRST_PERIOD;
 import static api.support.fixtures.CalendarExamples.START_TIME_SECOND_PERIOD;
 import static api.support.fixtures.CalendarExamples.WEDNESDAY_DATE;
+import static api.support.matchers.EventActionMatchers.ITEM_RENEWED;
 import static api.support.matchers.EventMatchers.isValidLoanDueDateChangedEvent;
+import static api.support.matchers.EventMatchers.isValidRenewedEvent;
 import static api.support.matchers.EventTypeMatchers.LOAN_DUE_DATE_CHANGED;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
@@ -1489,12 +1492,14 @@ public abstract class RenewalAPITests extends APITests {
       .atMost(1, TimeUnit.SECONDS)
       .until(FakePubSub::getPublishedEvents, hasSize(5));
 
-    assertThat(renewedLoan.getString("action"), is(RENEWED));
-
     final var event = publishedEvents.findFirst(byEventType(LOAN_DUE_DATE_CHANGED));
 
     assertThat(event, isValidLoanDueDateChangedEvent(renewedLoan));
     assertThatPublishedLoanLogRecordEventsAreValid(renewedLoan);
+
+    final var renewedEvent = publishedEvents.findFirst(byLogAction(ITEM_RENEWED));
+
+    assertThat(renewedEvent, isValidRenewedEvent(renewedLoan));
   }
 
   @Test
