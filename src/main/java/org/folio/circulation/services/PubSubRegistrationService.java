@@ -7,8 +7,8 @@ import org.folio.rest.util.OkapiConnectionParams;
 import org.folio.util.pubsub.PubSubClientUtils;
 
 import io.vertx.core.Vertx;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PubSubRegistrationService {
   private static final Logger logger = LoggerFactory.getLogger(PubSubRegistrationService.class);

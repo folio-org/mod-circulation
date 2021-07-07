@@ -26,7 +26,7 @@
     <antlr4.version>4.7.2</antlr4.version>
     <drools.version>7.53.0.Final</drools.version>
     <rmb.version>31.1.0</rmb.version>
-    <vertx.version>3.9.1</vertx.version>
+    <vertx.version>4.1.1</vertx.version>
     <log4j2.version>2.13.3</log4j2.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -346,6 +346,7 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.8.1</version>
         <configuration>
+         <showDeprecation>true</showDeprecation>
           <release>11</release>
           <encoding>UTF-8</encoding>
         </configuration>

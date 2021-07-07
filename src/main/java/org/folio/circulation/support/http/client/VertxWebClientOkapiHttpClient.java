@@ -26,6 +26,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.HttpRequest;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
+import io.vertx.core.http.HttpMethod;
 
 public class VertxWebClientOkapiHttpClient implements OkapiHttpClient {
   private static final Duration DEFAULT_TIMEOUT = Duration.of(20, SECONDS);
@@ -73,7 +74,7 @@ public class VertxWebClientOkapiHttpClient implements OkapiHttpClient {
       = new CompletableFuture<>();
 
     final HttpRequest<Buffer> request = withStandardHeaders(
-      webClient.postAbs(url));
+      webClient.requestAbs(HttpMethod.POST, url));
 
     request
       .timeout(timeout.toMillis())
@@ -91,7 +92,7 @@ public class VertxWebClientOkapiHttpClient implements OkapiHttpClient {
       = new CompletableFuture<>();
 
     final HttpRequest<Buffer> request = withStandardHeaders(
-      webClient.getAbs(url));
+      webClient.requestAbs(HttpMethod.GET, url));
 
     Stream.of(queryParameters)
       .forEach(parameter -> parameter.consume(request::addQueryParam));
@@ -136,7 +137,7 @@ public class VertxWebClientOkapiHttpClient implements OkapiHttpClient {
       = new CompletableFuture<>();
 
     final HttpRequest<Buffer> request = withStandardHeaders(
-      webClient.putAbs(url));
+      webClient.requestAbs(HttpMethod.PUT, url));
 
     request
       .timeout(timeout.toMillis())
@@ -168,7 +169,7 @@ public class VertxWebClientOkapiHttpClient implements OkapiHttpClient {
       = new CompletableFuture<>();
 
     final HttpRequest<Buffer> request = withStandardHeaders(
-      webClient.deleteAbs(url));
+      webClient.requestAbs(HttpMethod.DELETE, url));
 
     Stream.of(queryParameters)
       .forEach(parameter -> parameter.consume(request::addQueryParam));
