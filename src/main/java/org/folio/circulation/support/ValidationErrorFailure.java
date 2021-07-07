@@ -37,6 +37,38 @@ public class ValidationErrorFailure implements HttpFailure {
     return failed(new ValidationErrorFailure(errors));
   }
 
+  /**
+   * A single internationalized error message.
+   *
+   * @param code translation key
+   * @param reason fall-back message to display if there is no message for code,
+   *            any {key} is replaced by value
+   */
+  public static ValidationErrorFailure singleValidationError(
+      String code, String reason, String key, String value) {
+
+    return singleValidationError(new ValidationError(code, reason, key, value));
+  }
+
+  /**
+   * A single internationalized error message.
+   *
+   * @param code translation key
+   * @param reason fall-back message to display if there is no message for code,
+   *            any {key1} is replaced by value1, any {key2} is replaced by {value2},
+   *            any {key3} is replaced by {value3}
+   */
+  public static ValidationErrorFailure singleValidationError(
+      String code, String reason,
+      String key1, String value1, String key2, String value2, String key3, String value3) {
+
+    return singleValidationError(
+        new ValidationError(code, reason, key1, value1, key2, value2, key3, value3));
+  }
+
+  /**
+   * A single error message without translation code and without placeholder replacement.
+   */
   public static ValidationErrorFailure singleValidationError(String reason,
     String propertyName, String propertyValue) {
 
