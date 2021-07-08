@@ -5,7 +5,8 @@ import static org.folio.circulation.domain.representations.StoredFeeFineAction.S
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
-import static org.slf4j.LoggerFactory.getLogger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.Collection;
 import java.util.List;
@@ -30,10 +31,9 @@ import org.folio.circulation.services.support.CreateAccountCommand;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.CommonFailures;
 import org.folio.circulation.support.results.Result;
-import org.slf4j.Logger;
 
 public class FeeFineFacade {
-  private static final Logger log = getLogger(FeeFineFacade.class);
+  private static final Logger log = LogManager.getLogger(FeeFineFacade.class);
 
   private final AccountRepository accountRepository;
   private final FeeFineActionRepository feeFineActionRepository;

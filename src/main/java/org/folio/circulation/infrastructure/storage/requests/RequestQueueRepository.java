@@ -21,11 +21,11 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.PageLimit;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class RequestQueueRepository {
-  private static final Logger LOG = LoggerFactory.getLogger(RequestQueueRepository.class);
+  private static final Logger LOG = LogManager.getLogger(RequestQueueRepository.class);
 
   private static final PageLimit MAXIMUM_SUPPORTED_REQUEST_QUEUE_SIZE = oneThousand();
   private final RequestRepository requestRepository;

@@ -10,8 +10,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
 public class Launcher {
@@ -23,7 +23,7 @@ public class Launcher {
     Logging.initialiseFormat();
 
     this.vertxAssistant = vertxAssistant;
-    this.log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+    this.log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   }
 
   public static void main(String[] args) throws

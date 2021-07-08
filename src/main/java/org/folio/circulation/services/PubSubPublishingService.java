@@ -16,12 +16,12 @@ import org.folio.util.pubsub.PubSubClientUtils;
 
 import io.vertx.core.Context;
 import io.vertx.core.Vertx;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import io.vertx.ext.web.RoutingContext;
 
 public class PubSubPublishingService {
-  private static final Logger logger = LoggerFactory.getLogger(PubSubPublishingService.class);
+  private static final Logger logger = LogManager.getLogger(PubSubPublishingService.class);
 
   private final Map<String, String> okapiHeaders;
   private final Context vertxContext;

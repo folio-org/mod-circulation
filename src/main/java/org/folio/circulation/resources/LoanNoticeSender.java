@@ -20,8 +20,8 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.json.JsonObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class LoanNoticeSender {
 
@@ -31,7 +31,7 @@ public class LoanNoticeSender {
       new LoanPolicyRepository(clients));
   }
 
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private final PatronNoticeService patronNoticeService;
   private final LoanPolicyRepository loanPolicyRepository;
 

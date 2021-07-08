@@ -7,11 +7,11 @@ import org.folio.rest.util.OkapiConnectionParams;
 import org.folio.util.pubsub.PubSubClientUtils;
 
 import io.vertx.core.Vertx;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class PubSubRegistrationService {
-  private static final Logger logger = LoggerFactory.getLogger(PubSubRegistrationService.class);
+  private static final Logger logger = LogManager.getLogger(PubSubRegistrationService.class);
 
   private PubSubRegistrationService() {
     throw new IllegalStateException();
