@@ -14,8 +14,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.folio.circulation.rules.ItemLocation;
 import org.folio.circulation.rules.ItemType;
@@ -153,6 +151,15 @@ public class CirculationRulesFixture {
     assertThat(requestPolicyId, is(not(nullValue())));
 
     return new Policy(requestPolicyId);
+  }
+
+  public Response attemptToApplyRulesForRequestPolicy(ItemType itemType,
+    LoanType loanType, PatronGroup patronGroup, ItemLocation location) {
+
+    return restAssuredClient.get(
+      circulationRulesUrl("/request-policy"),
+      getApplyParameters(itemType, loanType, patronGroup, location),
+      "apply-rules-to-get-request-policy");
   }
 
   public JsonArray applyAllRulesForRequestPolicy(ItemType itemType,
