@@ -16,8 +16,8 @@ import org.folio.circulation.support.http.server.ClientErrorResponse;
 import org.folio.circulation.support.http.server.JsonHttpResponse;
 import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.Result;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpServerRequest;
@@ -32,7 +32,7 @@ import lombok.val;
  * item type, loan type, patron type and location.
  */
 public abstract class AbstractCirculationRulesEngineResource extends Resource {
-  protected static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+  protected static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   public static final String ITEM_TYPE_ID_NAME = "item_type_id";
   public static final String PATRON_TYPE_ID_NAME = "patron_type_id";

@@ -44,8 +44,8 @@ import org.folio.circulation.support.RecordNotFoundFailure;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import io.vertx.core.json.JsonObject;
 import lombok.AccessLevel;
@@ -54,7 +54,7 @@ import lombok.Getter;
 
 @AllArgsConstructor
 public class LoanScheduledNoticeHandler {
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private static final String ERROR_MESSAGE_TEMPLATE = "Sending scheduled notice {} failed: {}";
 
   public static LoanScheduledNoticeHandler using(Clients clients, DateTime systemTime) {

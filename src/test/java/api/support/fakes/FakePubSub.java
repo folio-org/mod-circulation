@@ -42,8 +42,8 @@ public class FakePubSub {
             .setStatusCode(HTTP_BAD_REQUEST.toInt())
             .putHeader("content-type", "text/plain; charset=utf-8")
             .putHeader("content-length", Integer.toString(buffer.length()))
-            .write(buffer)
-            .end();
+            .write(buffer);
+          routingContext.response().end();
         }
         else {
           publishedEvents.add(routingContext.getBodyAsJson());
@@ -84,8 +84,8 @@ public class FakePubSub {
         .setStatusCode(HTTP_CREATED.toInt())
         .putHeader("content-type", "application/json; charset=utf-8")
         .putHeader("content-length", Integer.toString(buffer.length()))
-        .write(buffer)
-        .end();
+        .write(buffer);
+      routingContext.response().end();
     }
   }
 

@@ -9,15 +9,15 @@ import static api.support.fixtures.LibraryHoursExamples.getLibraryHoursById;
 
 import java.lang.invoke.MethodHandles;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import api.support.fixtures.OpeningPeriodsExamples;
 import io.vertx.core.MultiMap;
 import io.vertx.ext.web.Router;
 
 public class FakeCalendarOkapi {
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   public static void registerOpeningHours(Router router) {
     router.get("/calendar/periods")

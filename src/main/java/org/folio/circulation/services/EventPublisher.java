@@ -25,8 +25,8 @@ import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import io.vertx.ext.web.RoutingContext;
 import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.EventType;
@@ -52,7 +52,7 @@ import org.joda.time.format.DateTimeFormatter;
 import java.util.concurrent.CompletableFuture;
 
 public class EventPublisher {
-  private static final Logger logger = LoggerFactory.getLogger(EventPublisher.class);
+  private static final Logger logger = LogManager.getLogger(EventPublisher.class);
 
   public static final String USER_ID_FIELD = "userId";
   public static final String LOAN_ID_FIELD = "loanId";

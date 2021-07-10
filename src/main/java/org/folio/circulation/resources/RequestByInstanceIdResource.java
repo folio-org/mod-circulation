@@ -69,8 +69,8 @@ import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
 import org.joda.time.format.ISODateTimeFormat;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
@@ -83,7 +83,7 @@ public class RequestByInstanceIdResource extends Resource {
 
   public RequestByInstanceIdResource(HttpClient client) {
     super(client);
-    log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+    log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   }
 
   @Override

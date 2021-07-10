@@ -5,7 +5,8 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
-import static org.slf4j.LoggerFactory.getLogger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Map;
@@ -18,12 +19,12 @@ import org.folio.circulation.rules.Text2Drools;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.results.Result;
-import org.slf4j.Logger;
+
 
 import io.vertx.core.json.JsonObject;
 
 public final class CirculationRulesCache {
-  private static final Logger log = getLogger(MethodHandles.lookup().lookupClass());
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   private static final CirculationRulesCache instance = new CirculationRulesCache();
   /** after this time the rules get loaded before executing the circulation rules engine */

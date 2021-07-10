@@ -42,15 +42,15 @@ import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.results.CommonFailures;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 public class ItemRepository {
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   private final CollectionResourceClient itemsClient;
   private final CollectionResourceClient holdingsClient;

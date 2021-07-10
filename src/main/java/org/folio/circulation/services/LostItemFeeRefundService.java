@@ -38,11 +38,11 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.results.CommonFailures;
 import org.folio.circulation.support.results.Result;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class LostItemFeeRefundService {
-  private static final Logger log = LoggerFactory.getLogger(LostItemFeeRefundService.class);
+  private static final Logger log = LogManager.getLogger(LostItemFeeRefundService.class);
 
   private final LostItemPolicyRepository lostItemPolicyRepository;
   private final FeeFineFacade feeFineFacade;

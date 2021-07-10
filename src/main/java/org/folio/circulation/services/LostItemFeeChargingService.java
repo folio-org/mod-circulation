@@ -35,11 +35,11 @@ import org.folio.circulation.services.feefine.FeeFineService;
 import org.folio.circulation.services.support.CreateAccountCommand;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class LostItemFeeChargingService {
-  private static final Logger log = LoggerFactory.getLogger(LostItemFeeChargingService.class);
+  private static final Logger log = LogManager.getLogger(LostItemFeeChargingService.class);
 
   private final LostItemPolicyRepository lostItemPolicyRepository;
   private final FeeFineOwnerRepository feeFineOwnerRepository;

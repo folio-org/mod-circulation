@@ -3,7 +3,8 @@ package org.folio.circulation.rules;
 import static java.lang.String.format;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.folio.circulation.support.results.Result.of;
-import static org.slf4j.LoggerFactory.getLogger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.lang.invoke.MethodHandles;
 import java.util.function.BiFunction;
@@ -13,13 +14,12 @@ import org.folio.circulation.domain.Location;
 import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.results.Result;
-import org.slf4j.Logger;
 
 import io.vertx.core.MultiMap;
 import lombok.Getter;
 
 public class ExecutableRules {
-  private static final Logger log = getLogger(MethodHandles.lookup().lookupClass());
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   @Getter()
   private final String text;

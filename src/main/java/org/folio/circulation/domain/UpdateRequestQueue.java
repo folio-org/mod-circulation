@@ -23,11 +23,11 @@ import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.utils.DateTimeUtil;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class UpdateRequestQueue {
-  private final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+  private final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   private final RequestQueueRepository requestQueueRepository;
   private final RequestRepository requestRepository;

@@ -33,8 +33,8 @@ import org.folio.circulation.support.http.server.WebContext;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.ISODateTimeFormat;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import api.support.APITestContext;
 import io.vertx.core.AbstractVerticle;
@@ -48,7 +48,7 @@ import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 
 public class FakeStorageModule extends AbstractVerticle {
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private static final Set<String> queries = Collections.synchronizedSet(new HashSet<>());
 
   private final String rootPath;
