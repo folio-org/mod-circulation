@@ -48,6 +48,7 @@ public class InstanceBuilder extends JsonBuilder implements Builder {
     final JsonObject instance = new JsonObject();
 
     put(instance, "id", id);
+    put(instance, "_version", 6);
     put(instance, "title", title);
     put(instance, "source", "Local");
     put(instance, "instanceTypeId", instanceTypeId);

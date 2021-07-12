@@ -7,6 +7,10 @@
       "type": "string",
       "description": "Unique ID of the item record"
     },
+    "_version": {
+      "type": "integer",
+      "description": "Record version for optimistic locking"
+    },
     "hrid": {
       "type": "string",
       "description": "The human readable ID, also called eye readable ID. A system-assigned sequential alternate ID"
@@ -34,6 +38,11 @@
     "barcode": {
       "type": "string",
       "description": "Unique inventory control number for physical resources, used largely for circulation purposes"
+    },
+    "effectiveShelvingOrder": {
+      "type": "string",
+      "description": "A system generated normalization of the call number that allows for call number sorting in reports and search results",
+      "readonly": true
     },
     "itemLevelCallNumber": {
       "type": "string",
