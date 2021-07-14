@@ -20,7 +20,9 @@ import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.anonymization.config.ClosingType;
 import org.folio.circulation.domain.anonymization.config.LoanAnonymizationConfiguration;
 import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
+import org.folio.circulation.infrastructure.storage.loans.AnonymizeStorageLoansRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
+import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
 import org.junit.jupiter.api.BeforeEach;
@@ -37,6 +39,10 @@ public class LoanAnonymizationTests {
   LoanRepository loanRepository;
   @Mock
   AccountRepository accountRepository;
+  @Mock
+  AnonymizeStorageLoansRepository anonymizeStorageLoansRepository;
+  @Mock
+  EventPublisher eventPublisher;
 
   @BeforeEach
   public void init() {
@@ -48,8 +54,8 @@ public class LoanAnonymizationTests {
   void shouldAnonymizeLoansImmediatelyWhenConfiguredToDoSo() {
     final var config = anonymizeLoans(IMMEDIATELY);
 
-    final var loanAnonymization = new LoanAnonymization(clients, loanRepository,
-      accountRepository);
+    final var loanAnonymization = new LoanAnonymization(loanRepository,
+      accountRepository, anonymizeStorageLoansRepository, eventPublisher);
 
     final var service = loanAnonymization.byCurrentTenant(config);
 
@@ -71,8 +77,8 @@ public class LoanAnonymizationTests {
   void shouldNeverAnonymizeLoans() {
     final var config = anonymizeLoans(NEVER);
 
-    final var loanAnonymization = new LoanAnonymization(clients, loanRepository,
-      accountRepository);
+    final var loanAnonymization = new LoanAnonymization(loanRepository,
+      accountRepository, anonymizeStorageLoansRepository, eventPublisher);
 
     final var service = loanAnonymization.byCurrentTenant(config);
 
