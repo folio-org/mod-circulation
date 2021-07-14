@@ -14,7 +14,6 @@ import org.folio.circulation.infrastructure.storage.feesandfines.AccountReposito
 import org.folio.circulation.infrastructure.storage.loans.AnonymizeStorageLoansRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.services.EventPublisher;
-import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -29,13 +28,15 @@ public class LoanAnonymization {
   private final AnonymizeStorageLoansRepository anonymizeStorageLoansRepository;
   private final EventPublisher eventPublisher;
 
-  public LoanAnonymization(Clients clients, LoanRepository loanRepository,
-    AccountRepository accountRepository) {
+  public LoanAnonymization(LoanRepository loanRepository,
+    AccountRepository accountRepository,
+    AnonymizeStorageLoansRepository anonymizeStorageLoansRepository,
+    EventPublisher eventPublisher) {
 
     this.loanRepository = loanRepository;
     this.accountRepository = accountRepository;
-    anonymizeStorageLoansRepository = new AnonymizeStorageLoansRepository(clients);
-    eventPublisher = new EventPublisher(clients.pubSubPublishingService());
+    this.anonymizeStorageLoansRepository = anonymizeStorageLoansRepository;
+    this.eventPublisher = eventPublisher;
   }
 
   public LoanAnonymizationService byUserId(String userId) {
