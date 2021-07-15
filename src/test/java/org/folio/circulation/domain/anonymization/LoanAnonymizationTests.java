@@ -22,6 +22,7 @@ import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.anonymization.config.ClosingType;
 import org.folio.circulation.domain.anonymization.config.LoanAnonymizationConfiguration;
+import org.folio.circulation.domain.anonymization.service.LoansForTenantFinder;
 import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
 import org.folio.circulation.infrastructure.storage.loans.AnonymizeStorageLoansRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
@@ -58,7 +59,8 @@ public class LoanAnonymizationTests {
     final var loanAnonymization = new LoanAnonymization(loanRepository,
       accountRepository, anonymizeStorageLoansRepository, eventPublisher);
 
-    final var service = loanAnonymization.byCurrentTenant(config);
+    final var service = loanAnonymization.byCurrentTenant(config,
+      new LoansForTenantFinder(loanRepository, accountRepository));
 
     final var loanToAnonymize = singleClosedLoanWithNoFeesFines();
 
@@ -91,7 +93,8 @@ public class LoanAnonymizationTests {
     final var loanAnonymization = new LoanAnonymization(loanRepository,
       accountRepository, anonymizeStorageLoansRepository, eventPublisher);
 
-    final var service = loanAnonymization.byCurrentTenant(config);
+    final var service = loanAnonymization.byCurrentTenant(config,
+      new LoansForTenantFinder(loanRepository, accountRepository));
 
     singleClosedLoanWithNoFeesFines();
 
