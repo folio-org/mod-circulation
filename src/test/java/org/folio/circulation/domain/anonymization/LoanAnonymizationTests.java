@@ -5,6 +5,9 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.folio.circulation.domain.anonymization.config.ClosingType.IMMEDIATELY;
 import static org.folio.circulation.domain.anonymization.config.ClosingType.NEVER;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
+import static org.folio.circulation.support.json.JsonPropertyWriter.writeByPath;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -12,7 +15,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
-import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import org.folio.circulation.domain.Loan;
@@ -23,18 +26,16 @@ import org.folio.circulation.infrastructure.storage.feesandfines.AccountReposito
 import org.folio.circulation.infrastructure.storage.loans.AnonymizeStorageLoansRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.services.EventPublisher;
-import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 
 import io.vertx.core.json.JsonObject;
 import lombok.SneakyThrows;
 
 public class LoanAnonymizationTests {
-  @Mock
-  Clients clients;
   @Mock
   LoanRepository loanRepository;
   @Mock
@@ -59,17 +60,27 @@ public class LoanAnonymizationTests {
 
     final var service = loanAnonymization.byCurrentTenant(config);
 
-    singleLoanToAnonymize();
+    final var loanToAnonymize = singleClosedLoanWithNoFeesFines();
 
     final var finished = service.anonymizeLoans();
 
     finished.get(1, SECONDS);
 
-    verify(loanRepository, times(1)).findLoansToAnonymize(any());
-    verifyNoMoreInteractions(loanRepository);
+    final var anonymizedLoansCaptor
+      = ArgumentCaptor.forClass(LoanAnonymizationRecords.class);
 
+    verify(anonymizeStorageLoansRepository, times(1))
+      .postAnonymizeStorageLoans(anonymizedLoansCaptor.capture());
+
+    assertThat(anonymizedLoansCaptor.getValue().getAnonymizedLoanIds(),
+      containsInAnyOrder(loanToAnonymize.getId()));
+
+    verify(loanRepository, times(1)).findLoansToAnonymize(any());
     verify(accountRepository, times(1)).findAccountsForLoans(any());
+
+    verifyNoMoreInteractions(loanRepository);
     verifyNoMoreInteractions(accountRepository);
+    verifyNoMoreInteractions(anonymizeStorageLoansRepository);
   }
 
   @SneakyThrows
@@ -82,25 +93,45 @@ public class LoanAnonymizationTests {
 
     final var service = loanAnonymization.byCurrentTenant(config);
 
+    singleClosedLoanWithNoFeesFines();
+
     final var finished = service.anonymizeLoans();
 
     finished.get(1, SECONDS);
 
+    verify(loanRepository, times(0)).findLoansToAnonymize(any());
+    verify(accountRepository, times(0)).findAccountsForLoans(any());
+
+    verify(anonymizeStorageLoansRepository, times(0))
+      .postAnonymizeStorageLoans(any());
+
     verifyNoMoreInteractions(loanRepository);
     verifyNoMoreInteractions(accountRepository);
+    verifyNoMoreInteractions(anonymizeStorageLoansRepository);
   }
 
-  private void singleLoanToAnonymize() {
-    final var loans = new ArrayList<Loan>();
+  private Loan singleClosedLoanWithNoFeesFines() {
+    final var loan = fakeLoan();
 
-    loans.add(fakeLoan());
+    final var loans = completedFuture(
+      Result.of(() -> new MultipleRecords<>(List.of(loan), 1)));
 
     when(loanRepository.findLoansToAnonymize(any()))
-      .thenReturn(completedFuture(Result.of(() -> new MultipleRecords<>(loans, 1))));
+      .thenReturn(loans);
+
+    when(accountRepository.findAccountsForLoans(any()))
+      .thenReturn(loans);
+
+    return loan;
   }
 
   private Loan fakeLoan() {
-    return Loan.from(new JsonObject().put("id", UUID.randomUUID().toString()));
+    final var json = new JsonObject();
+
+    write(json, "id", UUID.randomUUID());
+    writeByPath(json, "Closed", "status", "name");
+
+    return Loan.from(json);
   }
 
   private LoanAnonymizationConfiguration anonymizeLoans(ClosingType loansClosingType) {
