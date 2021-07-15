@@ -53,8 +53,8 @@ public class LoanAnonymizationTests {
   void shouldAnonymizeLoansImmediatelyWhenConfiguredToDoSo() {
     final var config = anonymizeLoans(IMMEDIATELY);
 
-    final var loanAnonymization = new LoanAnonymization(null,
-      null, anonymizeStorageLoansRepository, eventPublisher);
+    final var loanAnonymization = new LoanAnonymization(
+      anonymizeStorageLoansRepository, eventPublisher);
 
     final var service = loanAnonymization.byCurrentTenant(config,
       loansForTenantFinder);
@@ -85,8 +85,8 @@ public class LoanAnonymizationTests {
   void shouldNeverAnonymizeLoans() {
     final var config = anonymizeLoans(NEVER);
 
-    final var loanAnonymization = new LoanAnonymization(null,
-      null, anonymizeStorageLoansRepository, eventPublisher);
+    final var loanAnonymization = new LoanAnonymization(
+      anonymizeStorageLoansRepository, eventPublisher);
 
     final var service = loanAnonymization.byCurrentTenant(config,
       loansForTenantFinder);
