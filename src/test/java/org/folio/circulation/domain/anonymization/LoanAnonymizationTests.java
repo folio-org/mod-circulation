@@ -15,17 +15,16 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Loan;
-import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.anonymization.config.ClosingType;
 import org.folio.circulation.domain.anonymization.config.LoanAnonymizationConfiguration;
 import org.folio.circulation.domain.anonymization.service.LoansForTenantFinder;
-import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
 import org.folio.circulation.infrastructure.storage.loans.AnonymizeStorageLoansRepository;
-import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.results.Result;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,13 +37,11 @@ import lombok.SneakyThrows;
 
 public class LoanAnonymizationTests {
   @Mock
-  LoanRepository loanRepository;
-  @Mock
-  AccountRepository accountRepository;
-  @Mock
   AnonymizeStorageLoansRepository anonymizeStorageLoansRepository;
   @Mock
   EventPublisher eventPublisher;
+  @Mock
+  LoansForTenantFinder loansForTenantFinder;
 
   @BeforeEach
   public void init() {
@@ -56,11 +53,11 @@ public class LoanAnonymizationTests {
   void shouldAnonymizeLoansImmediatelyWhenConfiguredToDoSo() {
     final var config = anonymizeLoans(IMMEDIATELY);
 
-    final var loanAnonymization = new LoanAnonymization(loanRepository,
-      accountRepository, anonymizeStorageLoansRepository, eventPublisher);
+    final var loanAnonymization = new LoanAnonymization(null,
+      null, anonymizeStorageLoansRepository, eventPublisher);
 
     final var service = loanAnonymization.byCurrentTenant(config,
-      new LoansForTenantFinder(loanRepository, accountRepository));
+      loansForTenantFinder);
 
     final var loanToAnonymize = singleClosedLoanWithNoFeesFines();
 
@@ -77,11 +74,9 @@ public class LoanAnonymizationTests {
     assertThat(anonymizedLoansCaptor.getValue().getAnonymizedLoanIds(),
       containsInAnyOrder(loanToAnonymize.getId()));
 
-    verify(loanRepository, times(1)).findLoansToAnonymize(any());
-    verify(accountRepository, times(1)).findAccountsForLoans(any());
+    verify(loansForTenantFinder, times(1)).findLoansToAnonymize();
 
-    verifyNoMoreInteractions(loanRepository);
-    verifyNoMoreInteractions(accountRepository);
+    verifyNoMoreInteractions(loansForTenantFinder);
     verifyNoMoreInteractions(anonymizeStorageLoansRepository);
   }
 
@@ -90,11 +85,11 @@ public class LoanAnonymizationTests {
   void shouldNeverAnonymizeLoans() {
     final var config = anonymizeLoans(NEVER);
 
-    final var loanAnonymization = new LoanAnonymization(loanRepository,
-      accountRepository, anonymizeStorageLoansRepository, eventPublisher);
+    final var loanAnonymization = new LoanAnonymization(null,
+      null, anonymizeStorageLoansRepository, eventPublisher);
 
     final var service = loanAnonymization.byCurrentTenant(config,
-      new LoansForTenantFinder(loanRepository, accountRepository));
+      loansForTenantFinder);
 
     singleClosedLoanWithNoFeesFines();
 
@@ -102,28 +97,22 @@ public class LoanAnonymizationTests {
 
     finished.get(1, SECONDS);
 
-    verify(loanRepository, times(0)).findLoansToAnonymize(any());
-    verify(accountRepository, times(0)).findAccountsForLoans(any());
+    verify(loansForTenantFinder, times(0)).findLoansToAnonymize();
 
     verify(anonymizeStorageLoansRepository, times(0))
       .postAnonymizeStorageLoans(any());
 
-    verifyNoMoreInteractions(loanRepository);
-    verifyNoMoreInteractions(accountRepository);
+    verifyNoMoreInteractions(loansForTenantFinder);
     verifyNoMoreInteractions(anonymizeStorageLoansRepository);
   }
 
   private Loan singleClosedLoanWithNoFeesFines() {
     final var loan = fakeLoan();
 
-    final var loans = completedFuture(
-      Result.of(() -> new MultipleRecords<>(List.of(loan), 1)));
+    final CompletableFuture<Result<Collection<Loan>>> loans = completedFuture(
+      Result.of(() -> List.of(loan)));
 
-    when(loanRepository.findLoansToAnonymize(any()))
-      .thenReturn(loans);
-
-    when(accountRepository.findAccountsForLoans(any()))
-      .thenReturn(loans);
+    when(loansForTenantFinder.findLoansToAnonymize()).thenReturn(loans);
 
     return loan;
   }
