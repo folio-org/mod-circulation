@@ -46,15 +46,15 @@ public class LoanAnonymization {
       new LoansForBorrowerFinder(userId, loanRepository, accountRepository));
   }
 
-  public LoanAnonymizationService byCurrentTenant(LoanAnonymizationConfiguration config) {
+  public LoanAnonymizationService byCurrentTenant(
+    LoanAnonymizationConfiguration config, LoansForTenantFinder loansFinder) {
     log.info("Initializing loan anonymization for current tenant");
 
     if (neverAnonymizeLoans(config)) {
       return new NeverLoanAnonymizationService();
     }
 
-    return createService(new AnonymizationCheckersService(config),
-      new LoansForTenantFinder(loanRepository, accountRepository));
+    return createService(new AnonymizationCheckersService(config), loansFinder);
   }
 
   private boolean neverAnonymizeLoans(LoanAnonymizationConfiguration config) {

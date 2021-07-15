@@ -3,6 +3,7 @@ package org.folio.circulation.resources;
 import static org.folio.circulation.support.results.AsynchronousResultBindings.safelyInitialise;
 
 import org.folio.circulation.domain.anonymization.LoanAnonymization;
+import org.folio.circulation.domain.anonymization.service.LoansForTenantFinder;
 import org.folio.circulation.domain.representations.anonymization.AnonymizeLoansRepresentation;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
@@ -40,13 +41,19 @@ public class ScheduledAnonymizationProcessingResource extends Resource {
     final Clients clients = Clients.create(context, client);
 
     ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
-    LoanAnonymization loanAnonymization = new LoanAnonymization(
-      new LoanRepository(clients), new AccountRepository(clients),
+    final var loanRepository = new LoanRepository(clients);
+    final var accountRepository = new AccountRepository(clients);
+
+    final var loanAnonymization = new LoanAnonymization(
+      loanRepository, accountRepository,
       new AnonymizeStorageLoansRepository(clients),
       new EventPublisher(clients.pubSubPublishingService()));
 
+    final var loansFinder = new LoansForTenantFinder(loanRepository, accountRepository);
+
     safelyInitialise(configurationRepository::loanHistoryConfiguration)
-      .thenCompose(r -> r.after(config -> loanAnonymization.byCurrentTenant(config).anonymizeLoans()))
+      .thenCompose(r -> r.after(config -> loanAnonymization.byCurrentTenant(config,
+        loansFinder).anonymizeLoans()))
       .thenApply(AnonymizeLoansRepresentation::from)
       .thenApply(r -> r.map(JsonHttpResponse::ok))
       .exceptionally(CommonFailures::failedDueToServerError)
