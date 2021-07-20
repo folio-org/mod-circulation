@@ -18,11 +18,11 @@ import java.util.Objects;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.CqlSortBy;
 import org.folio.circulation.support.results.Result;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class CqlQuery implements QueryParameter {
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   private final String query;
   private final CqlSortBy sortBy;

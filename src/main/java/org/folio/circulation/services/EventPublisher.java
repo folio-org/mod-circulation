@@ -12,6 +12,7 @@ import static org.folio.circulation.domain.EventType.LOG_RECORD;
 import static org.folio.circulation.domain.LoanAction.CHECKED_IN;
 import static org.folio.circulation.domain.LoanAction.DUE_DATE_CHANGED;
 import static org.folio.circulation.domain.LoanAction.RECALLREQUESTED;
+import static org.folio.circulation.domain.LoanAction.RENEWED;
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.LOG_EVENT_TYPE;
 import static org.folio.circulation.domain.representations.logs.CirculationCheckInCheckOutLogEventMapper.mapToCheckInLogEventContent;
 import static org.folio.circulation.domain.representations.logs.CirculationCheckInCheckOutLogEventMapper.mapToCheckOutLogEventContent;
@@ -25,8 +26,8 @@ import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import io.vertx.ext.web.RoutingContext;
 import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.EventType;
@@ -53,7 +54,7 @@ import org.joda.time.format.DateTimeFormatter;
 import java.util.concurrent.CompletableFuture;
 
 public class EventPublisher {
-  private static final Logger logger = LoggerFactory.getLogger(EventPublisher.class);
+  private static final Logger logger = LogManager.getLogger(EventPublisher.class);
 
   public static final String USER_ID_FIELD = "userId";
   public static final String LOAN_ID_FIELD = "loanId";
@@ -155,10 +156,10 @@ public class EventPublisher {
   }
 
   private CompletableFuture<Result<Loan>> publishDueDateChangedEvent(Loan loan, RequestAndRelatedRecords records) {
-    return publishDueDateChangedEvent(loan, records.getRequest().getRequester());
+    return publishDueDateChangedEvent(loan, records.getRequest().getRequester(), false);
   }
 
-  private CompletableFuture<Result<Loan>> publishDueDateChangedEvent(Loan loan, User user) {
+  private CompletableFuture<Result<Loan>> publishDueDateChangedEvent(Loan loan, User user, boolean renewalContext) {
     if (loan != null) {
       JsonObject payloadJsonObject = new JsonObject();
       write(payloadJsonObject, USER_ID_FIELD, loan.getUserId());
@@ -167,6 +168,9 @@ public class EventPublisher {
       write(payloadJsonObject, DUE_DATE_CHANGED_BY_RECALL_FIELD, loan.wasDueDateChangedByRecall());
 
       runAsync(() -> publishDueDateLogEvent(loan.copy().withUser(user)));
+      if (renewalContext) {
+        runAsync(() -> publishRenewedEvent(loan.copy().withUser(user)));
+      }
 
       return pubSubPublishingService.publishEvent(LOAN_DUE_DATE_CHANGED.name(),
         payloadJsonObject.encode())
@@ -184,7 +188,7 @@ public class EventPublisher {
 
     if (loanAndRelatedRecords.getLoan() != null) {
       Loan loan = loanAndRelatedRecords.getLoan();
-      publishDueDateChangedEvent(loan, loan.getUser());
+      publishDueDateChangedEvent(loan, loan.getUser(), false);
     }
 
     return completedFuture(succeeded(loanAndRelatedRecords));
@@ -195,7 +199,7 @@ public class EventPublisher {
 
     var loan = renewalContext.getLoan();
 
-    publishDueDateChangedEvent(loan, loan.getUser());
+    publishDueDateChangedEvent(loan, loan.getUser(), true);
 
     return completedFuture(succeeded(renewalContext));
   }
@@ -251,6 +255,12 @@ public class EventPublisher {
       .withDescription(String.format("New due date: %s (from %s)", formatDateTime(loan.getDueDate()), formatDateTime(loan.getPreviousDueDate()))).asJson(), LOAN);
   }
 
+  public CompletableFuture<Result<Void>> publishRenewedEvent(Loan loan) {
+    return publishLogRecord(LoanLogContext.from(loan).withAction(LogContextActionResolver.resolveAction(RENEWED.getValue())).asJson(), LOAN);
+  }
+
+  public CompletableFuture<Result<Void>> publishNoticeEvent(NoticeLogContext noticeLogContext) {
+    return publishLogRecord(noticeLogContext.withDate(DateTime.now()).asJson(), NOTICE);
   public CompletableFuture<Result<Void>> publishNoticeLogEvent(NoticeLogContext noticeLogContext,
     Result<?> previousStepResult, Throwable throwable) {
 

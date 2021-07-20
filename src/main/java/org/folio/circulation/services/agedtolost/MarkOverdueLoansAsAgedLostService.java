@@ -11,7 +11,8 @@ import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.CqlQuery.lessThan;
 import static org.folio.circulation.support.http.client.CqlQuery.notEqual;
 import static org.folio.circulation.support.results.Result.ofAsync;
-import static org.slf4j.LoggerFactory.getLogger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -31,10 +32,9 @@ import org.folio.circulation.support.fetching.PageableFetcher;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
-import org.slf4j.Logger;
 
 public class MarkOverdueLoansAsAgedLostService {
-  private static final Logger log = getLogger(MarkOverdueLoansAsAgedLostService.class);
+  private static final Logger log = LogManager.getLogger(MarkOverdueLoansAsAgedLostService.class);
 
   private final LostItemPolicyRepository lostItemPolicyRepository;
   private final ItemRepository itemRepository;

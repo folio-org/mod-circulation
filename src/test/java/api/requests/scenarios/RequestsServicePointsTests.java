@@ -12,8 +12,8 @@ import api.support.http.IndividualResource;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import api.requests.RequestsAPICreationTests;
 import api.support.APITests;
@@ -22,7 +22,7 @@ import io.vertx.core.json.JsonObject;
 
 public class RequestsServicePointsTests extends APITests {
 
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   @Test
   public void pagedRequestCheckedInAtIntendedServicePointTest() {

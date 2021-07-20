@@ -18,8 +18,8 @@ import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.VertxWebClientOkapiHttpClient;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import api.support.fakes.FakeOkapi;
 import api.support.fakes.FakeStorageModule;
@@ -28,7 +28,7 @@ import api.support.http.URLHelper;
 import io.vertx.core.Vertx;
 
 public class APITestContext {
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   private static final String TENANT_ID = "test_tenant";
   private static String USER_ID = "79ff2a8b-d9c3-5b39-ad4a-0a84025ab085";

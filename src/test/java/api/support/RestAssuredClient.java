@@ -7,6 +7,8 @@ import static api.support.RestAssuredConfiguration.timeoutConfig;
 import static api.support.RestAssuredResponseConversion.toResponse;
 import static io.restassured.RestAssured.given;
 import static java.util.Arrays.asList;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
 
 import java.net.URL;
@@ -76,6 +78,17 @@ public class RestAssuredClient {
   public Response get(URL url, Collection<QueryStringParameter> parameters,
       int expectedStatusCode, String requestId) {
 
+    final var response = get(url, parameters, requestId);
+
+    assertThat("Unexpected status code",
+      response.getStatusCode(), is(expectedStatusCode));
+
+    return response;
+  }
+
+  public Response get(URL url, Collection<QueryStringParameter> parameters,
+    String requestId) {
+
     return toResponse(given()
       .config(config)
       .log().ifValidationFails()
@@ -84,8 +97,6 @@ public class RestAssuredClient {
       .spec(timeoutConfig())
       .when().get(url)
       .then()
-      .log().ifValidationFails()
-      .statusCode(expectedStatusCode)
       .extract().response());
   }
 

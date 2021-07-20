@@ -3,7 +3,8 @@ package org.folio.circulation.services.feefine;
 import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
-import static org.slf4j.LoggerFactory.getLogger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -11,10 +12,9 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
 import org.folio.circulation.support.results.Result;
-import org.slf4j.Logger;
 
 public class FeeFineService {
-  private static final Logger log = getLogger(FeeFineService.class);
+  private static final Logger log = LogManager.getLogger(FeeFineService.class);
 
   private final CollectionResourceClient accountRefundClient;
   private final CollectionResourceClient accountCancelClient;

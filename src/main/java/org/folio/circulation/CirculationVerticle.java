@@ -36,8 +36,8 @@ import org.folio.circulation.resources.handlers.LoanRelatedFeeFineClosedHandlerR
 import org.folio.circulation.resources.renewal.RenewByBarcodeResource;
 import org.folio.circulation.resources.renewal.RenewByIdResource;
 import org.folio.circulation.support.logging.Logging;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
@@ -53,7 +53,7 @@ public class CirculationVerticle extends AbstractVerticle {
   public void start(Promise<Void> startFuture) {
     Logging.initialiseFormat();
 
-    final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+    final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
     log.info("Starting circulation module");
 
@@ -139,7 +139,7 @@ public class CirculationVerticle extends AbstractVerticle {
 
   @Override
   public void stop(Promise<Void> stopFuture) {
-    final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+    final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
     log.info("Stopping circulation module");
 

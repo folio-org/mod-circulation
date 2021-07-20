@@ -28,6 +28,8 @@ import org.folio.circulation.support.RecordNotFoundFailure;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import io.vertx.core.json.JsonObject;
 
@@ -44,7 +46,7 @@ public class LoanScheduledNoticeHandler extends ScheduledNoticeHandler {
   @Override
   protected CompletableFuture<Result<ScheduledNoticeContext>> fetchData(
     ScheduledNoticeContext context) {
-    
+
     return ofAsync(() -> context)
       .thenApply(r -> r.next(this::failWhenNoticeHasNoLoanId))
       .thenCompose(r -> r.after(this::fetchTemplate))

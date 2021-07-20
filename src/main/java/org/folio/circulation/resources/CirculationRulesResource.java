@@ -35,8 +35,8 @@ import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.ForwardResponse;
 import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.Result;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpServerResponse;
@@ -50,7 +50,7 @@ import io.vertx.ext.web.handler.BodyHandler;
  * Write and read the circulation rules.
  */
 public class CirculationRulesResource extends Resource {
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private static final int FIRST_ELEMENT_OF_LIST = 0;
   private static final int POLICY_ID_POSITION_NUMBER = 1;
   private static final PageLimit POLICY_PAGE_LIMIT = PageLimit.limit(1000);
