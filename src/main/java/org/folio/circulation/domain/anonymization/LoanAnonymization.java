@@ -9,9 +9,6 @@ import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.anonymization.config.ClosingType;
 import org.folio.circulation.domain.anonymization.config.LoanAnonymizationConfiguration;
 import org.folio.circulation.domain.anonymization.service.AnonymizationCheckersService;
-import org.folio.circulation.domain.anonymization.service.LoanAnonymizationFinderService;
-import org.folio.circulation.domain.anonymization.service.LoansForBorrowerFinder;
-import org.folio.circulation.domain.anonymization.service.LoansForTenantFinder;
 import org.folio.circulation.infrastructure.storage.loans.AnonymizeStorageLoansRepository;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.http.client.PageLimit;
@@ -31,21 +28,21 @@ public class LoanAnonymization {
     this.eventPublisher = eventPublisher;
   }
 
-  public LoanAnonymizationService byUserId(LoansForBorrowerFinder loansFinder) {
+  public LoanAnonymizationService byUserId() {
     log.info("Initializing loan anonymization for borrower");
 
-    return createService(new AnonymizationCheckersService(), loansFinder);
+    return createService(new AnonymizationCheckersService());
   }
 
   public LoanAnonymizationService byCurrentTenant(
-    LoanAnonymizationConfiguration config, LoansForTenantFinder loansFinder) {
+          LoanAnonymizationConfiguration config) {
     log.info("Initializing loan anonymization for current tenant");
 
     if (neverAnonymizeLoans(config)) {
       return new NeverLoanAnonymizationService();
     }
 
-    return createService(new AnonymizationCheckersService(config), loansFinder);
+    return createService(new AnonymizationCheckersService(config));
   }
 
   private boolean neverAnonymizeLoans(LoanAnonymizationConfiguration config) {
@@ -54,10 +51,9 @@ public class LoanAnonymization {
   }
 
   private DefaultLoanAnonymizationService createService(
-    AnonymizationCheckersService anonymizationCheckersService,
-    LoanAnonymizationFinderService loansFinderService) {
+          AnonymizationCheckersService anonymizationCheckersService) {
 
     return new DefaultLoanAnonymizationService(anonymizationCheckersService,
-      loansFinderService, anonymizeStorageLoansRepository, eventPublisher);
+            anonymizeStorageLoansRepository, eventPublisher);
   }
 }

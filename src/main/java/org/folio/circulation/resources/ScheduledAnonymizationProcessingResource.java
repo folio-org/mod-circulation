@@ -51,8 +51,8 @@ public class ScheduledAnonymizationProcessingResource extends Resource {
     final var loansFinder = new LoansForTenantFinder(loanRepository, accountRepository);
 
     safelyInitialise(configurationRepository::loanHistoryConfiguration)
-      .thenCompose(r -> r.after(config -> loanAnonymization.byCurrentTenant(config,
-        loansFinder).anonymizeLoans()))
+      .thenCompose(r -> r.after(config -> loanAnonymization.byCurrentTenant(config
+      ).anonymizeLoans(loansFinder::findLoansToAnonymize)))
       .thenApply(AnonymizeLoansRepresentation::from)
       .thenApply(r -> r.map(JsonHttpResponse::ok))
       .exceptionally(CommonFailures::failedDueToServerError)
