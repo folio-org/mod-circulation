@@ -45,7 +45,8 @@ public class LoanAnonymizationResource extends Resource {
     final var loansFinder = new LoansForBorrowerFinder(borrowerId,
       loanRepository, accountRepository);
 
-    completedFuture(loanAnonymization.byUserId(loansFinder).anonymizeLoans()
+    completedFuture(loanAnonymization.byUserId()
+      .anonymizeLoans(loansFinder::findLoansToAnonymize)
       .thenApply(AnonymizeLoansRepresentation::from)
       .thenApply(r -> r.map(JsonHttpResponse::ok))
       .thenAccept(context::writeResultToHttpResponse));
