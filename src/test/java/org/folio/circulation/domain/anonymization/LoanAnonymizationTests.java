@@ -56,12 +56,13 @@ public class LoanAnonymizationTests {
     final var loanAnonymization = new LoanAnonymization(
       anonymizeStorageLoansRepository, eventPublisher);
 
-    final var service = loanAnonymization.byCurrentTenant(config,
-      loansForTenantFinder);
+    final var service = loanAnonymization.byCurrentTenant(config
+    );
 
     final var loanToAnonymize = singleClosedLoanWithNoFeesFines();
 
-    final var finished = service.anonymizeLoans();
+    final var finished
+      = service.anonymizeLoans(loansForTenantFinder::findLoansToAnonymize);
 
     finished.get(1, SECONDS);
 
@@ -88,12 +89,13 @@ public class LoanAnonymizationTests {
     final var loanAnonymization = new LoanAnonymization(
       anonymizeStorageLoansRepository, eventPublisher);
 
-    final var service = loanAnonymization.byCurrentTenant(config,
-      loansForTenantFinder);
+    final var service = loanAnonymization.byCurrentTenant(config
+    );
 
     singleClosedLoanWithNoFeesFines();
 
-    final var finished = service.anonymizeLoans();
+    final var finished
+      = service.anonymizeLoans(loansForTenantFinder::findLoansToAnonymize);
 
     finished.get(1, SECONDS);
 
