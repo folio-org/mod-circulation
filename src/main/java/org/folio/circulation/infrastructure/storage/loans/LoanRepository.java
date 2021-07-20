@@ -374,14 +374,7 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
       return completedFuture(succeeded(null));
     }
 
-    return getById(account.getLoanId())
-      .thenApply(result -> {
-        if (result.failed() && result.cause() instanceof RecordNotFoundFailure
-          && "loan".equals(((RecordNotFoundFailure) result.cause()).getRecordType())) {
-          return succeeded(null);
-        }
-        return result;
-      });
+    return getById(account.getLoanId());
   }
 
   @Override

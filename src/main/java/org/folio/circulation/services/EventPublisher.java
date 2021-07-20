@@ -18,6 +18,7 @@ import static org.folio.circulation.domain.representations.logs.CirculationCheck
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.PAYLOAD;
 import static org.folio.circulation.domain.representations.logs.LogEventType.LOAN;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
+import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE_ERROR;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.domain.representations.logs.RequestUpdateLogEventMapper.mapToRequestLogEventJson;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
@@ -43,6 +44,7 @@ import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
@@ -212,7 +214,6 @@ public class EventPublisher {
     return publishLogRecord(LoanLogContext.from(loan)
       .withDescription(String.format("Due date: %s", loan.getAgedToLostDateTime())).asJson(), LOAN)
       .thenCompose(r -> r.after(v -> publishStatusChangeEvent(ITEM_AGED_TO_LOST, loan)));
-
   }
 
   public CompletableFuture<Result<Void>> publishClosedLoanEvent(Loan loan) {
@@ -243,20 +244,62 @@ public class EventPublisher {
       .withAction(LogContextActionResolver.resolveAction(RECALLREQUESTED.getValue()))
       .withDescription(String.format("New due date: %s (from %s)", formatDateTime(loan.getDueDate()), formatDateTime(loan.getPreviousDueDate()))).asJson(), LOAN);
   }
+
   public CompletableFuture<Result<Void>> publishDueDateLogEvent(Loan loan) {
     return publishLogRecord(LoanLogContext.from(loan)
       .withAction(LogContextActionResolver.resolveAction(DUE_DATE_CHANGED.getValue()))
       .withDescription(String.format("New due date: %s (from %s)", formatDateTime(loan.getDueDate()), formatDateTime(loan.getPreviousDueDate()))).asJson(), LOAN);
   }
 
-  public CompletableFuture<Result<Void>> publishNoticeEvent(NoticeLogContext noticeLogContext) {
-    return publishLogRecord(noticeLogContext.withDate(DateTime.now()).asJson(), NOTICE);
+  public CompletableFuture<Result<Void>> publishNoticeLogEvent(NoticeLogContext noticeLogContext,
+    Result<?> previousStepResult, Throwable throwable) {
+
+    return throwable != null
+      ? publishNoticeErrorLogEvent(noticeLogContext, throwable)
+      : publishNoticeLogEvent(noticeLogContext, previousStepResult);
+  }
+
+  public CompletableFuture<Result<Void>> publishNoticeLogEvent(NoticeLogContext noticeLogContext,
+    Result<?> previousStepResult) {
+
+    return previousStepResult.succeeded()
+      ? publishNoticeLogEvent(noticeLogContext)
+      : publishNoticeErrorLogEvent(noticeLogContext, previousStepResult.cause());
+  }
+
+  public CompletableFuture<Result<Void>> publishNoticeLogEvent(NoticeLogContext noticeLogContext) {
+    return publishNoticeLogEvent(noticeLogContext, NOTICE);
+  }
+
+  public CompletableFuture<Result<Void>> publishNoticeLogEvent(NoticeLogContext noticeLogContext,
+    LogEventType eventType) {
+
+    return publishLogRecord(noticeLogContext.withDate(DateTime.now()).asJson(), eventType);
+  }
+
+  public CompletableFuture<Result<Void>> publishNoticeErrorLogEvent(
+    NoticeLogContext noticeLogContext, HttpFailure error) {
+
+    return publishNoticeErrorLogEvent(noticeLogContext, error.toString());
+  }
+
+  public CompletableFuture<Result<Void>> publishNoticeErrorLogEvent(
+    NoticeLogContext noticeLogContext, Throwable throwable) {
+
+    return publishNoticeErrorLogEvent(noticeLogContext, throwable.getClass().getSimpleName());
+  }
+
+  public CompletableFuture<Result<Void>> publishNoticeErrorLogEvent(
+    NoticeLogContext noticeLogContext, String errorMessage) {
+
+    return publishNoticeLogEvent(noticeLogContext.withErrorMessage(errorMessage), NOTICE_ERROR);
   }
 
   public CompletableFuture<Result<Void>> publishLogRecord(JsonObject context, LogEventType payloadType) {
     JsonObject eventJson = new JsonObject();
     write(eventJson, LOG_EVENT_TYPE.value(), payloadType.value());
     write(eventJson, PAYLOAD.value(), context);
+
     return pubSubPublishingService.publishEvent(LOG_RECORD.name(), eventJson.encode())
       .thenApply(r -> succeeded(null));
   }

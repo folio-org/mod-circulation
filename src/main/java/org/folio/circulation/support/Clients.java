@@ -52,7 +52,7 @@ public class Clients {
   private final CollectionResourceClient patronActionSessionsStorageClient;
   private final CollectionResourceClient patronExpiredSessionsStorageClient;
   private final GetManyRecordsClient userManualBlocksStorageClient;
-  private final CollectionResourceClient templateNoticeClient;
+  private final CollectionResourceClient noticeTemplatesClient;
   private final CollectionResourceClient checkInStorageClient;
   private final CollectionResourceClient automatedPatronBlocksClient;
   private final CollectionResourceClient notesClient;
@@ -110,7 +110,7 @@ public class Clients {
       patronActionSessionsStorageClient = createPatronActionSessionsStorageClient(client, context);
       patronExpiredSessionsStorageClient = createPatronExpiredSessionsStorageClient(client, context);
       userManualBlocksStorageClient = createUserManualBlocksStorageClient(client, context);
-      templateNoticeClient = createTemplateNoticeClient(client, context);
+      noticeTemplatesClient = createNoticeTemplatesClient(client, context);
       checkInStorageClient = createCheckInStorageClient(client, context);
       automatedPatronBlocksClient = createAutomatedPatronBlocksClient(client, context);
       notesClient = createNotesClient(client, context);
@@ -334,8 +334,8 @@ public class Clients {
     return new CollectionResourceClient(client, context.getOkapiBasedUrl(path));
   }
 
-  public CollectionResourceClient templateNoticeClient() {
-    return templateNoticeClient;
+  public CollectionResourceClient noticeTemplatesClient() {
+    return noticeTemplatesClient;
   }
 
   private static CirculationRulesClient createCirculationLoanRulesClient(
@@ -659,7 +659,7 @@ public class Clients {
     return getCollectionResourceClient(client, context, "/manualblocks");
   }
 
-  private CollectionResourceClient createTemplateNoticeClient(
+  private CollectionResourceClient createNoticeTemplatesClient(
     OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 

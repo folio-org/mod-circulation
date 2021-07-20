@@ -2,6 +2,7 @@ package org.folio.circulation.infrastructure.storage.feesandfines;
 
 import static java.util.Objects.isNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.fetching.MultipleCqlIndexValuesCriteria.byIndex;
@@ -30,6 +31,7 @@ import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
 import org.folio.circulation.support.GetManyRecordsClient;
+import org.folio.circulation.support.RecordNotFoundFailure;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
@@ -166,7 +168,7 @@ public class AccountRepository {
     return FetchSingleRecord.<Account>forRecord("account")
       .using(accountsStorageClient)
       .mapTo(Account::from)
-      .whenNotFound(succeeded(null))
+      .whenNotFound(failed(new RecordNotFoundFailure("account", id)))
       .fetch(id);
   }
 
