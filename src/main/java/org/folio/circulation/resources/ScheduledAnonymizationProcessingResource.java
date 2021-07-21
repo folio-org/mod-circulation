@@ -2,7 +2,12 @@ package org.folio.circulation.resources;
 
 import static org.folio.circulation.support.results.AsynchronousResultBindings.safelyInitialise;
 
-import org.folio.circulation.domain.anonymization.LoanAnonymization;
+import java.lang.invoke.MethodHandles;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.folio.circulation.domain.anonymization.DefaultLoanAnonymizationService;
+import org.folio.circulation.domain.anonymization.service.AnonymizationCheckersService;
 import org.folio.circulation.domain.anonymization.service.LoansForTenantFinder;
 import org.folio.circulation.domain.representations.anonymization.AnonymizeLoansRepresentation;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
@@ -26,6 +31,8 @@ import io.vertx.ext.web.RoutingContext;
  *
  */
 public class ScheduledAnonymizationProcessingResource extends Resource {
+  private final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
+
   public ScheduledAnonymizationProcessingResource(HttpClient client) {
     super(client);
   }
@@ -44,15 +51,17 @@ public class ScheduledAnonymizationProcessingResource extends Resource {
     final var loanRepository = new LoanRepository(clients);
     final var accountRepository = new AccountRepository(clients);
 
-    final var loanAnonymization = new LoanAnonymization(
-      new AnonymizeStorageLoansRepository(clients),
-      new EventPublisher(clients.pubSubPublishingService()));
+    final var anonymizeStorageLoansRepository = new AnonymizeStorageLoansRepository(clients);
+    final var eventPublisher = new EventPublisher(clients.pubSubPublishingService());
 
     final var loansFinder = new LoansForTenantFinder(loanRepository, accountRepository);
 
+    log.info("Initializing loan anonymization for current tenant");
+
     safelyInitialise(configurationRepository::loanHistoryConfiguration)
-      .thenCompose(r -> r.after(config -> loanAnonymization.byCurrentTenant(config
-      ).anonymizeLoans(loansFinder::findLoansToAnonymize)))
+      .thenApply(r -> r.map(config -> new DefaultLoanAnonymizationService(
+          new AnonymizationCheckersService(config), anonymizeStorageLoansRepository, eventPublisher)))
+      .thenCompose(r -> r.after(service -> service.anonymizeLoans(loansFinder::findLoansToAnonymize)))
       .thenApply(AnonymizeLoansRepresentation::from)
       .thenApply(r -> r.map(JsonHttpResponse::ok))
       .exceptionally(CommonFailures::failedDueToServerError)
