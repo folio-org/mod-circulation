@@ -68,7 +68,7 @@ public abstract class ScheduledNoticeHandler {
   }
 
   private CompletableFuture<Result<ScheduledNotice>> handleNotice(ScheduledNotice notice) {
-    log.info("Start processing scheduled notice: {}", notice);
+    log.info("Start processing scheduled notice {}", notice);
 
     return ofAsync(() -> new ScheduledNoticeContext(notice))
       .thenCompose(r -> r.after(this::fetchData))
@@ -91,11 +91,11 @@ public abstract class ScheduledNoticeHandler {
 
   protected abstract JsonObject buildNoticeContextJson(ScheduledNoticeContext context);
 
-  protected boolean shouldNotSendNotice(ScheduledNoticeContext context) {
+  protected boolean noticeShouldNotBeSent(ScheduledNoticeContext context) {
     return isNoticeIrrelevant(context);
   }
 
-  protected <T> Result<T> publishNoticeErrorEvent(HttpFailure failure,
+  protected Result<ScheduledNoticeContext> publishNoticeErrorEvent(HttpFailure failure,
     ScheduledNotice notice) {
 
     eventPublisher.publishNoticeErrorLogEvent(NoticeLogContext.from(notice), failure);
@@ -117,7 +117,7 @@ public abstract class ScheduledNoticeHandler {
     return deleteNotice(notice, "notice is no longer relevant");
   }
 
-  protected Result<ScheduledNoticeContext> failWhenReferencedEntityWasNotFound(
+  protected Result<ScheduledNoticeContext> failWhenLoanIsIncomplete(
     Result<ScheduledNoticeContext> contextResult)  {
 
     return contextResult
@@ -131,10 +131,24 @@ public abstract class ScheduledNoticeHandler {
       .next(context -> contextResult);
   }
 
+  protected Result<ScheduledNoticeContext> failWhenRequestIsIncomplete(
+    Result<ScheduledNoticeContext> contextResult)  {
+
+    return contextResult
+      .map(ScheduledNoticeContext::getRequest)
+      .failWhen(
+        request -> succeeded(request.getRequester() == null),
+        request -> new RecordNotFoundFailure("user", request.getRequesterId()))
+      .failWhen(
+        request -> succeeded(request.getItem() == null || request.getItem().isNotFound()),
+        request -> new RecordNotFoundFailure("item", request.getItemId()))
+      .next(context -> contextResult);
+  }
+
   private CompletableFuture<Result<ScheduledNoticeContext>> sendNotice(
     ScheduledNoticeContext context) {
 
-    if (shouldNotSendNotice(context)) {
+    if (noticeShouldNotBeSent(context)) {
       return ofAsync(() -> context);
     }
 

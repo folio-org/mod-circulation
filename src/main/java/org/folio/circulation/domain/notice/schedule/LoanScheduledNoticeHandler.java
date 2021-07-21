@@ -115,7 +115,7 @@ public class LoanScheduledNoticeHandler extends ScheduledNoticeHandler {
     return loanRepository.getById(context.getNotice().getLoanId())
       .thenCompose(r -> r.after(loanPolicyRepository::findPolicyForLoan))
       .thenApply(mapResult(context::withLoan))
-      .thenApply(this::failWhenReferencedEntityWasNotFound);
+      .thenApply(this::failWhenLoanIsIncomplete);
   }
 
   private CompletableFuture<Result<ScheduledNoticeContext>> fetchLostItemFeesForAgedToLostNotice(

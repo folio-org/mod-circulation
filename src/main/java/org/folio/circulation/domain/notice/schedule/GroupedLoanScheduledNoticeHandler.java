@@ -31,11 +31,11 @@ import org.slf4j.LoggerFactory;
 public class GroupedLoanScheduledNoticeHandler {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-  private final LoanScheduledNoticeHandler singleNoticeHandler;
+  private final LoanScheduledNoticeHandler loanScheduledNoticeHandler;
   private final PatronNoticeService patronNoticeService;
 
   public GroupedLoanScheduledNoticeHandler(Clients clients, DateTime systemTime) {
-    this.singleNoticeHandler = new LoanScheduledNoticeHandler(clients, systemTime);
+    this.loanScheduledNoticeHandler = new LoanScheduledNoticeHandler(clients, systemTime);
     this.patronNoticeService = PatronNoticeService.using(clients);
   }
 
@@ -49,22 +49,22 @@ public class GroupedLoanScheduledNoticeHandler {
   }
 
   private CompletableFuture<Result<List<ScheduledNotice>>> handleNoticeGroup(
-    List<ScheduledNotice> noticeGroup) {
+    List<ScheduledNotice> notices) {
 
     //TODO: user and template are the same for all notices in the group, so they can be fetched only once
-    return allResultsOf(noticeGroup, this::fetchData)
-      .thenCompose(this::discardDataCollectionFailures)
+    return allResultsOf(notices, this::fetchData)
+      .thenCompose(this::discardDataFetchingFailures)
       .thenCompose(r -> r.after(this::sendGroupedNotice))
       .thenCompose(r -> r.after(this::updateGroupedNotice))
-      .thenCompose(r -> handleResult(r, noticeGroup))
-      .exceptionally(t -> handleException(t, noticeGroup));
+      .thenCompose(r -> handleResult(r, notices))
+      .exceptionally(t -> handleException(t, notices));
   }
 
   private CompletableFuture<Result<ScheduledNoticeContext>> fetchData(ScheduledNotice notice) {
     return ofAsync(() -> new ScheduledNoticeContext(notice))
-      .thenCompose(r -> r.after(singleNoticeHandler::fetchData))
+      .thenCompose(r -> r.after(loanScheduledNoticeHandler::fetchData))
       .thenCompose(r -> handleDataCollectionFailure(r, notice))
-      .thenApply(r -> r.mapFailure(f -> singleNoticeHandler.publishNoticeErrorEvent(f, notice)));
+      .thenApply(r -> r.mapFailure(f -> loanScheduledNoticeHandler.publishNoticeErrorEvent(f, notice)));
   }
 
   protected CompletableFuture<Result<ScheduledNoticeContext>> handleDataCollectionFailure(
@@ -75,7 +75,7 @@ public class GroupedLoanScheduledNoticeHandler {
       log.error("Failed to collect data for scheduled notice: {}.\n{}", cause, notice);
 
       if (cause instanceof RecordNotFoundFailure) {
-        return singleNoticeHandler.deleteNotice(notice, cause.toString())
+        return loanScheduledNoticeHandler.deleteNotice(notice, cause.toString())
           .thenApply(r -> r.next(n -> result));
       }
     }
@@ -83,7 +83,7 @@ public class GroupedLoanScheduledNoticeHandler {
     return completedFuture(result);
   }
 
-  private CompletableFuture<Result<List<ScheduledNoticeContext>>> discardDataCollectionFailures(
+  private CompletableFuture<Result<List<ScheduledNoticeContext>>> discardDataFetchingFailures(
     List<Result<ScheduledNoticeContext>> results) {
 
     var failedResults = results.stream()
@@ -110,7 +110,7 @@ public class GroupedLoanScheduledNoticeHandler {
     }
 
     List<ScheduledNoticeContext> relevantContexts = contexts.stream()
-      .filter(not(singleNoticeHandler::isNoticeIrrelevant))
+      .filter(not(loanScheduledNoticeHandler::isNoticeIrrelevant))
       .collect(toList());
 
     if (relevantContexts.isEmpty()) {
@@ -137,7 +137,9 @@ public class GroupedLoanScheduledNoticeHandler {
       .thenApply(mapResult(v -> contexts));
   }
 
-  private static NoticeLogContext buildNoticeLogContext(List<ScheduledNoticeContext> contexts, User user) {
+  private static NoticeLogContext buildNoticeLogContext(List<ScheduledNoticeContext> contexts,
+    User user) {
+
     List<NoticeLogContextItem> items = contexts.stream()
       .map(LoanScheduledNoticeHandler::buildNoticeLogContextItem)
       .collect(toList());
@@ -150,7 +152,7 @@ public class GroupedLoanScheduledNoticeHandler {
   private CompletableFuture<Result<List<ScheduledNotice>>> updateGroupedNotice(
     List<ScheduledNoticeContext> contexts) {
 
-    return allOf(contexts, singleNoticeHandler::updateNotice);
+    return allOf(contexts, loanScheduledNoticeHandler::updateNotice);
   }
 
   private CompletableFuture<Result<List<ScheduledNotice>>> handleResult(
@@ -162,7 +164,7 @@ public class GroupedLoanScheduledNoticeHandler {
     }
 
     HttpFailure failure = result.cause();
-    log.error("Processing a group of {} scheduled notices failed: {}", notices.size(), failure);
+    log.error("Failed to process group of {} scheduled notices: {}", notices.size(), failure);
 
     return ofAsync(() -> notices);
   }

@@ -33,21 +33,25 @@ public class RequestScheduledNoticeHandler extends ScheduledNoticeHandler {
   }
 
   @Override
-  protected CompletableFuture<Result<ScheduledNoticeContext>> fetchData(ScheduledNoticeContext context) {
+  protected CompletableFuture<Result<ScheduledNoticeContext>> fetchData(
+    ScheduledNoticeContext context) {
+
     return ofAsync(() -> context)
       .thenCompose(r -> r.after(this::fetchTemplate))
       .thenCompose(r -> r.after(this::fetchRequest))
       .thenCompose(r -> r.after(this::fetchPatronNoticePolicyId));
   }
 
-  private CompletableFuture<Result<ScheduledNoticeContext>> fetchRequest(ScheduledNoticeContext context) {
+  private CompletableFuture<Result<ScheduledNoticeContext>> fetchRequest(
+    ScheduledNoticeContext context) {
+
     return requestRepository.getById(context.getNotice().getRequestId())
       .thenApply(mapResult(context::withRequest))
-      .thenApply(this::failWhenReferencedEntityWasNotFound);
+      .thenApply(this::failWhenRequestIsIncomplete);
   }
 
   @Override
-  protected Result<ScheduledNoticeContext> failWhenReferencedEntityWasNotFound(
+  protected Result<ScheduledNoticeContext> failWhenRequestIsIncomplete(
     Result<ScheduledNoticeContext> contextResult)  {
 
     return contextResult
@@ -128,8 +132,8 @@ public class RequestScheduledNoticeHandler extends ScheduledNoticeHandler {
   }
 
   @Override
-  protected boolean shouldNotSendNotice(ScheduledNoticeContext context) {
-    return super.shouldNotSendNotice(context) || isUponAtNoticeForOpenRequest(context);
+  protected boolean noticeShouldNotBeSent(ScheduledNoticeContext context) {
+    return super.noticeShouldNotBeSent(context) || isUponAtNoticeForOpenRequest(context);
   }
 
   private static boolean isUponAtNoticeForOpenRequest(ScheduledNoticeContext context) {

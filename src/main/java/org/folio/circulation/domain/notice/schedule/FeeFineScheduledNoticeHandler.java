@@ -61,7 +61,7 @@ public class FeeFineScheduledNoticeHandler extends ScheduledNoticeHandler {
     // this also fetches user and item
     return loanRepository.findLoanForAccount(context.getAccount())
       .thenApply(mapResult(context::withLoan))
-      .thenApply(this::failWhenReferencedEntityWasNotFound);
+      .thenApply(this::failWhenLoanIsIncomplete);
   }
 
   @Override
