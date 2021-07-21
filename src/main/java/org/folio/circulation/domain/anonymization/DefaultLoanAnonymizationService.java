@@ -34,6 +34,10 @@ public class DefaultLoanAnonymizationService implements LoanAnonymizationService
   public CompletableFuture<Result<LoanAnonymizationRecords>> anonymizeLoans(
     Supplier<CompletableFuture<Result<Collection<Loan>>>> loansToCheck) {
 
+    if (anonymizationCheckersService.neverAnonymizeLoans()) {
+      return completedFuture(Result.of(LoanAnonymizationRecords::new));
+    }
+
     return loansToCheck.get()
       .thenApply(r -> r.map(new LoanAnonymizationRecords()::withLoansFound))
       .thenCompose(this::segregateLoanRecords)

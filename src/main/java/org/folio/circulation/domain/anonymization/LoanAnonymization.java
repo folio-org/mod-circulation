@@ -32,10 +32,6 @@ public class LoanAnonymization {
 
     final var anonymizationCheckersService = new AnonymizationCheckersService(config);
 
-    if (anonymizationCheckersService.neverAnonymizeLoans()) {
-      return new NeverLoanAnonymizationService();
-    }
-
     return new DefaultLoanAnonymizationService(anonymizationCheckersService,
       anonymizeStorageLoansRepository, eventPublisher);
   }
