@@ -41,6 +41,11 @@ public class AnonymizationCheckersService {
   }
 
   public boolean neverAnonymizeLoans() {
+    // Without config, this cannot be determined
+    if (config == null) {
+      return false;
+    }
+
     return config.getLoanClosingType() == ClosingType.NEVER &&
       !config.treatLoansWithFeesAndFinesDifferently();
   }
