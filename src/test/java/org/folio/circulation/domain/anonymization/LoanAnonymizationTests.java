@@ -53,10 +53,7 @@ public class LoanAnonymizationTests {
   void shouldAnonymizeLoansImmediatelyWhenConfiguredToDoSo() {
     final var config = anonymizeLoans(IMMEDIATELY);
 
-    final var loanAnonymization = new LoanAnonymization(
-      anonymizeStorageLoansRepository, eventPublisher);
-
-    final var service = loanAnonymization.byCurrentTenant(config);
+    final var service = createService(config);
 
     final var loanToAnonymize = singleClosedLoanWithNoFeesFines();
 
@@ -80,15 +77,13 @@ public class LoanAnonymizationTests {
     verifyNoMoreInteractions(anonymizeStorageLoansRepository);
   }
 
+
   @SneakyThrows
   @Test
   void shouldNeverAnonymizeLoans() {
     final var config = anonymizeLoans(NEVER);
 
-    final var loanAnonymization = new LoanAnonymization(
-      anonymizeStorageLoansRepository, eventPublisher);
-
-    final var service = loanAnonymization.byCurrentTenant(config);
+    final var service = createService(config);
 
     singleClosedLoanWithNoFeesFines();
 
@@ -137,5 +132,12 @@ public class LoanAnonymizationTests {
     write(json, "treatEnabled", false);
 
     return LoanAnonymizationConfiguration.from(json);
+  }
+
+  private LoanAnonymizationService createService(LoanAnonymizationConfiguration config) {
+    final var loanAnonymization = new LoanAnonymization(
+      anonymizeStorageLoansRepository, eventPublisher);
+
+    return loanAnonymization.byCurrentTenant(config);
   }
 }
