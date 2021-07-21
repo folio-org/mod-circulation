@@ -28,32 +28,19 @@ public class LoanAnonymization {
     this.eventPublisher = eventPublisher;
   }
 
-  public LoanAnonymizationService byUserId() {
-    log.info("Initializing loan anonymization for borrower");
-
-    return createService(new AnonymizationCheckersService());
-  }
-
-  public LoanAnonymizationService byCurrentTenant(
-          LoanAnonymizationConfiguration config) {
+  public LoanAnonymizationService byCurrentTenant(LoanAnonymizationConfiguration config) {
     log.info("Initializing loan anonymization for current tenant");
 
     if (neverAnonymizeLoans(config)) {
       return new NeverLoanAnonymizationService();
     }
 
-    return createService(new AnonymizationCheckersService(config));
+    return new DefaultLoanAnonymizationService(new AnonymizationCheckersService(config),
+      anonymizeStorageLoansRepository, eventPublisher);
   }
 
   private boolean neverAnonymizeLoans(LoanAnonymizationConfiguration config) {
     return config.getLoanClosingType() == ClosingType.NEVER &&
       !config.treatLoansWithFeesAndFinesDifferently();
-  }
-
-  private DefaultLoanAnonymizationService createService(
-          AnonymizationCheckersService anonymizationCheckersService) {
-
-    return new DefaultLoanAnonymizationService(anonymizationCheckersService,
-            anonymizeStorageLoansRepository, eventPublisher);
   }
 }
