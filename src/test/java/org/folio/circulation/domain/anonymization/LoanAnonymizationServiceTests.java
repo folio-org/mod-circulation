@@ -23,6 +23,7 @@ import java.util.concurrent.CompletableFuture;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.anonymization.config.ClosingType;
 import org.folio.circulation.domain.anonymization.config.LoanAnonymizationConfiguration;
+import org.folio.circulation.domain.anonymization.service.AnonymizationCheckersService;
 import org.folio.circulation.domain.anonymization.service.LoansForTenantFinder;
 import org.folio.circulation.infrastructure.storage.loans.AnonymizeStorageLoansRepository;
 import org.folio.circulation.services.EventPublisher;
@@ -35,7 +36,7 @@ import org.mockito.Mock;
 import io.vertx.core.json.JsonObject;
 import lombok.SneakyThrows;
 
-public class LoanAnonymizationTests {
+public class LoanAnonymizationServiceTests {
   @Mock
   AnonymizeStorageLoansRepository anonymizeStorageLoansRepository;
   @Mock
@@ -76,7 +77,6 @@ public class LoanAnonymizationTests {
     verifyNoMoreInteractions(loansForTenantFinder);
     verifyNoMoreInteractions(anonymizeStorageLoansRepository);
   }
-
 
   @SneakyThrows
   @Test
@@ -135,9 +135,9 @@ public class LoanAnonymizationTests {
   }
 
   private LoanAnonymizationService createService(LoanAnonymizationConfiguration config) {
-    final var loanAnonymization = new LoanAnonymization(
-      anonymizeStorageLoansRepository, eventPublisher);
+    final var anonymizationCheckersService = new AnonymizationCheckersService(config);
 
-    return loanAnonymization.byCurrentTenant(config);
+    return new DefaultLoanAnonymizationService(anonymizationCheckersService,
+      anonymizeStorageLoansRepository, eventPublisher);
   }
 }
