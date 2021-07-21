@@ -56,8 +56,7 @@ public class LoanAnonymizationTests {
     final var loanAnonymization = new LoanAnonymization(
       anonymizeStorageLoansRepository, eventPublisher);
 
-    final var service = loanAnonymization.byCurrentTenant(config
-    );
+    final var service = loanAnonymization.byCurrentTenant(config);
 
     final var loanToAnonymize = singleClosedLoanWithNoFeesFines();
 
@@ -89,8 +88,7 @@ public class LoanAnonymizationTests {
     final var loanAnonymization = new LoanAnonymization(
       anonymizeStorageLoansRepository, eventPublisher);
 
-    final var service = loanAnonymization.byCurrentTenant(config
-    );
+    final var service = loanAnonymization.byCurrentTenant(config);
 
     singleClosedLoanWithNoFeesFines();
 

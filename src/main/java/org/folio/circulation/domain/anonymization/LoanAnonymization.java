@@ -6,7 +6,6 @@ import java.lang.invoke.MethodHandles;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.folio.circulation.domain.anonymization.config.ClosingType;
 import org.folio.circulation.domain.anonymization.config.LoanAnonymizationConfiguration;
 import org.folio.circulation.domain.anonymization.service.AnonymizationCheckersService;
 import org.folio.circulation.infrastructure.storage.loans.AnonymizeStorageLoansRepository;
@@ -31,16 +30,14 @@ public class LoanAnonymization {
   public LoanAnonymizationService byCurrentTenant(LoanAnonymizationConfiguration config) {
     log.info("Initializing loan anonymization for current tenant");
 
-    if (neverAnonymizeLoans(config)) {
+    final var anonymizationCheckersService = new AnonymizationCheckersService(config);
+
+    if (anonymizationCheckersService.neverAnonymizeLoans()) {
       return new NeverLoanAnonymizationService();
     }
 
-    return new DefaultLoanAnonymizationService(new AnonymizationCheckersService(config),
+    return new DefaultLoanAnonymizationService(anonymizationCheckersService,
       anonymizeStorageLoansRepository, eventPublisher);
   }
 
-  private boolean neverAnonymizeLoans(LoanAnonymizationConfiguration config) {
-    return config.getLoanClosingType() == ClosingType.NEVER &&
-      !config.treatLoansWithFeesAndFinesDifferently();
-  }
 }
