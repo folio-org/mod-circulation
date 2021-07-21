@@ -73,7 +73,7 @@ public abstract class ScheduledNoticeHandler {
     return ofAsync(() -> new ScheduledNoticeContext(notice))
       .thenCompose(r -> r.after(this::fetchData))
       .thenCompose(r -> r.after(this::sendNotice))
-      .thenApply(r -> r .mapFailure(f -> publishNoticeErrorEvent(f, notice)))
+      .thenApply(r -> r .mapFailure(f -> publishErrorEvent(f, notice)))
       .thenCompose(r -> r.after(this::updateNotice))
       .thenCompose(r -> handleResult(r, notice))
       .exceptionally(t -> handleException(t, notice));
@@ -95,7 +95,7 @@ public abstract class ScheduledNoticeHandler {
     return isNoticeIrrelevant(context);
   }
 
-  protected Result<ScheduledNoticeContext> publishNoticeErrorEvent(HttpFailure failure,
+  protected Result<ScheduledNoticeContext> publishErrorEvent(HttpFailure failure,
     ScheduledNotice notice) {
 
     eventPublisher.publishNoticeErrorLogEvent(NoticeLogContext.from(notice), failure);

@@ -64,7 +64,7 @@ public class GroupedLoanScheduledNoticeHandler {
     return ofAsync(() -> new ScheduledNoticeContext(notice))
       .thenCompose(r -> r.after(loanScheduledNoticeHandler::fetchData))
       .thenCompose(r -> handleDataCollectionFailure(r, notice))
-      .thenApply(r -> r.mapFailure(f -> loanScheduledNoticeHandler.publishNoticeErrorEvent(f, notice)));
+      .thenApply(r -> r.mapFailure(f -> loanScheduledNoticeHandler.publishErrorEvent(f, notice)));
   }
 
   protected CompletableFuture<Result<ScheduledNoticeContext>> handleDataCollectionFailure(
