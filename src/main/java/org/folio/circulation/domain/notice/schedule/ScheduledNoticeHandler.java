@@ -31,8 +31,8 @@ import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.RecordNotFoundFailure;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
 import org.folio.circulation.support.results.Result;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
@@ -41,7 +41,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.With;
 
 public abstract class ScheduledNoticeHandler {
-  protected static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+  protected static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   protected final ScheduledNoticesRepository scheduledNoticesRepository;
   protected final LoanRepository loanRepository;

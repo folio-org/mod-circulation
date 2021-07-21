@@ -16,8 +16,6 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
 import org.joda.time.Period;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import io.vertx.core.json.JsonObject;
 

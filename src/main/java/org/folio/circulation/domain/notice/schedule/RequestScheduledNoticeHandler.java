@@ -21,8 +21,6 @@ import org.folio.circulation.support.RecordNotFoundFailure;
 import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import io.vertx.core.json.JsonObject;
 
