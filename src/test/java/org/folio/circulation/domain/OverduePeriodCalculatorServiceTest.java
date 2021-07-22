@@ -134,12 +134,32 @@ public class OverduePeriodCalculatorServiceTest {
         new LocalDate("2020-04-09"), false, true, UTC)
     );
 
+    List<OpeningDay> allDaysClosed = Arrays.asList(
+      OpeningDay.createOpeningDay(Collections.singletonList(allDay()), new LocalDate("2020-04-08"),
+        false, false, DateTimeZone.forID("America/New_York")),
+      OpeningDay.createOpeningDay(Collections.singletonList(allDay()), new LocalDate("2020-04-09"),
+        false, false, DateTimeZone.forID("America/New_York")),
+      OpeningDay.createOpeningDay(Collections.singletonList(allDay()), new LocalDate("2020-04-10"),
+        false, false, DateTimeZone.forID("America/New_York"))
+    );
+
+    List<OpeningDay> secondDayClosed = Arrays.asList(
+      OpeningDay.createOpeningDay(Collections.singletonList(allDay()), new LocalDate("2020-04-08"),
+        true, true, DateTimeZone.forID("America/New_York")),
+      OpeningDay.createOpeningDay(Collections.singletonList(allDay()), new LocalDate("2020-04-09"),
+        false, false, DateTimeZone.forID("America/New_York")),
+      OpeningDay.createOpeningDay(Collections.singletonList(allDay()), new LocalDate("2020-04-10"),
+        true, true, DateTimeZone.forID("America/New_York"))
+    );
+
     return new Object[]{
       new Object[]{zeroDays, 0},
       new Object[]{regular, MINUTES_PER_HOUR * 21},
       new Object[]{allDay, MINUTES_PER_HOUR * 49 - 2},
       new Object[]{mixed, MINUTES_PER_HOUR * 35 - 1},
-      new Object[]{invalid, 0}
+      new Object[]{invalid, 0},
+      new Object[]{allDaysClosed, 0},
+      new Object[]{secondDayClosed, MINUTES_PER_HOUR * 25 - 1}
     };
   }
 
