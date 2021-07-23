@@ -73,6 +73,7 @@ import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -123,9 +124,8 @@ RequestsAPICreationTests extends APITests {
     new BlockOverrides(null, new PatronBlockOverride(true), null, null, null, null);
   public static final String PATRON_BLOCK_NAME = "patronBlock";
 
-  @Override
+  @After
   public void afterEach() {
-    super.afterEach();
     mockClockManagerToReturnDefaultDateTime();
   }
 

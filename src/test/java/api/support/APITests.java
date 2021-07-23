@@ -311,7 +311,8 @@ public abstract class APITests {
   }
 
   @After
-  public void afterEach() {
+  // Final to prohibit overriding, otherwise this method will not be called before @After of subclass
+  public final void baseTearDown() {
     forTenantStorage().deleteAll();
 
     mockClockManagerToReturnDefaultDateTime();

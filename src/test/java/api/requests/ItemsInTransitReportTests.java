@@ -23,6 +23,7 @@ import java.util.UUID;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.support.json.JsonPropertyFetcher;
 import org.joda.time.DateTime;
+import org.junit.After;
 import org.junit.Test;
 
 import api.support.APITests;
@@ -68,10 +69,8 @@ public class ItemsInTransitReportTests extends APITests {
   private static final String COPY_NUMBER = "copyNumber";
   private static final String EFFECTIVE_CALL_NUMBER_COMPONENTS = "effectiveCallNumberComponents";
 
-  @Override
+  @After
   public void afterEach() {
-    super.afterEach();
-
     mockClockManagerToReturnDefaultDateTime();
   }
 
