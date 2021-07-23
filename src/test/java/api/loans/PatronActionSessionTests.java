@@ -28,6 +28,7 @@ import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import api.support.fakes.FakeModNotify;
 import api.support.http.UserResource;
 import org.apache.commons.lang3.tuple.Pair;
 import org.folio.circulation.support.http.client.Response;
@@ -50,7 +51,7 @@ public class PatronActionSessionTests extends APITests {
   private static final UUID CHECK_IN_NOTICE_TEMPLATE_ID = UUID.fromString("72e7683b-76c2-4ee2-85c2-2fbca8fbcfd9");
 
   @Before
-  public void before() {
+  public void beforeEach() {
     JsonObject checkOutNoticeConfig = new NoticeConfigurationBuilder()
       .withTemplateId(CHECK_OUT_NOTICE_TEMPLATE_ID)
       .withCheckOutEvent()
@@ -126,7 +127,7 @@ public class PatronActionSessionTests extends APITests {
     waitAtLeast(1, SECONDS)
       .until(patronSessionRecordsClient::getAll, empty());
 
-    final var sentNotices = patronNoticesClient.getAll();
+    final var sentNotices = FakeModNotify.getSentPatronNotices();
 
     assertThat(sentNotices, hasSize(1));
     assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
@@ -150,7 +151,7 @@ public class PatronActionSessionTests extends APITests {
     waitAtMost(1, SECONDS)
       .until(patronSessionRecordsClient::getAll, hasSize(1));
 
-    assertThat(patronNoticesClient.getAll(), empty());
+    assertThat(FakeModNotify.getSentPatronNotices(), empty());
     assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), empty());
   }
 
@@ -167,7 +168,7 @@ public class PatronActionSessionTests extends APITests {
     waitAtMost(1, SECONDS)
       .until(patronSessionRecordsClient::getAll, hasSize(1));
 
-    assertThat(patronNoticesClient.getAll(), empty());
+    assertThat(FakeModNotify.getSentPatronNotices(), empty());
     assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), empty());
   }
 
@@ -222,7 +223,7 @@ public class PatronActionSessionTests extends APITests {
     List<JsonObject> checkInSessions = getCheckInSessions();
     assertThat(checkInSessions, hasSize(1));
 
-    assertThat(patronNoticesClient.getAll(), empty());
+    assertThat(FakeModNotify.getSentPatronNotices(), empty());
     assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), empty());
 
     endPatronSessionClient.endCheckInSession(steve.getId());
@@ -231,7 +232,7 @@ public class PatronActionSessionTests extends APITests {
     waitAtLeast(1, SECONDS)
       .until(this::getCheckInSessions, empty());
 
-    assertThat(patronNoticesClient.getAll(), hasSize(1));
+    assertThat(FakeModNotify.getSentPatronNotices(), hasSize(1));
     assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
   }
 
@@ -249,8 +250,8 @@ public class PatronActionSessionTests extends APITests {
 
     waitAtMost(1, SECONDS)
       .until(patronSessionRecordsClient::getAll, empty());
-    assertThat(patronNoticesClient.getAll(), hasSize(0));
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(patronNoticesClient.getAll().size()));
+    assertThat(FakeModNotify.getSentPatronNotices(), hasSize(0));
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(FakeModNotify.getSentPatronNotices().size()));
   }
 
   @Test
@@ -268,8 +269,8 @@ public class PatronActionSessionTests extends APITests {
 
     waitAtMost(1, SECONDS)
       .until(patronSessionRecordsClient::getAll, empty());
-    assertThat(patronNoticesClient.getAll(), hasSize(0));
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(patronNoticesClient.getAll().size()));
+    assertThat(FakeModNotify.getSentPatronNotices(), hasSize(0));
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(FakeModNotify.getSentPatronNotices().size()));
   }
 
   @Test
@@ -285,8 +286,8 @@ public class PatronActionSessionTests extends APITests {
 
     waitAtMost(1, SECONDS)
       .until(patronSessionRecordsClient::getAll, empty());
-    assertThat(patronNoticesClient.getAll(), hasSize(0));
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(patronNoticesClient.getAll().size()));
+    assertThat(FakeModNotify.getSentPatronNotices(), hasSize(0));
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(FakeModNotify.getSentPatronNotices().size()));
   }
 
   @Test
@@ -307,8 +308,8 @@ public class PatronActionSessionTests extends APITests {
 
     waitAtMost(1, SECONDS)
       .until(this::getCheckInSessions, empty());
-    assertThat(patronNoticesClient.getAll(), hasSize(0));
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(patronNoticesClient.getAll().size()));
+    assertThat(FakeModNotify.getSentPatronNotices(), hasSize(0));
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(FakeModNotify.getSentPatronNotices().size()));
   }
 
   @Test
@@ -330,8 +331,8 @@ public class PatronActionSessionTests extends APITests {
 
     waitAtMost(1, SECONDS)
       .until(this::getCheckInSessions, empty());
-    assertThat(patronNoticesClient.getAll(), hasSize(0));
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(patronNoticesClient.getAll().size()));
+    assertThat(FakeModNotify.getSentPatronNotices(), hasSize(0));
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(FakeModNotify.getSentPatronNotices().size()));
   }
 
   @Test
@@ -351,8 +352,8 @@ public class PatronActionSessionTests extends APITests {
 
     waitAtMost(1, SECONDS)
       .until(this::getCheckInSessions, empty());
-    assertThat(patronNoticesClient.getAll(), hasSize(0));
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(patronNoticesClient.getAll().size()));
+    assertThat(FakeModNotify.getSentPatronNotices(), hasSize(0));
+    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(FakeModNotify.getSentPatronNotices().size()));
   }
 
   private List<JsonObject> getCheckInSessions() {

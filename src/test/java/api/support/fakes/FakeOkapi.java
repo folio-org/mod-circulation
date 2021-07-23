@@ -282,13 +282,6 @@ public class FakeOkapi extends AbstractVerticle {
       .register(router);
 
     new FakeStorageModuleBuilder()
-      .withRecordName("patron notice")
-      .withCollectionPropertyName("patronnotices")
-      .withRootPath("/patron-notice")
-      .create()
-      .register(router);
-
-    new FakeStorageModuleBuilder()
       .withRecordName("configuration")
       .withCollectionPropertyName("configs")
       .withRootPath("/configurations/entries")
@@ -378,6 +371,7 @@ public class FakeOkapi extends AbstractVerticle {
     router.delete("/_/tenant").handler(this::removeAllData);
 
     FakePubSub.register(router);
+    FakeModNotify.register(router);
 
     new FakeStorageModuleBuilder()
       .withRecordName("automatedPatronBlock")

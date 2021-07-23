@@ -1,7 +1,6 @@
 package api.requests.scenarios;
 
 import static api.support.fakes.PublishedEvents.byLogEventType;
-import static api.support.http.CqlQuery.exactMatch;
 import static java.util.Collections.singletonList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.waitAtMost;
@@ -18,6 +17,7 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.UUID;
 
+import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.notice.NoticeEventType;
@@ -32,11 +32,11 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import api.support.APITests;
-import api.support.MultipleJsonRecords;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.MoveRequestBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
+import api.support.fakes.FakeModNotify;
 import api.support.fakes.FakePubSub;
 import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
@@ -178,7 +178,7 @@ public class MoveRequestPolicyTests extends APITests {
 
     // notice for the recall is expected
     waitAtMost(1, SECONDS)
-      .until(patronNoticesClient::getAll, hasSize(1));
+      .until(FakeModNotify::getSentPatronNotices, hasSize(1));
 
     assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
 
@@ -204,7 +204,7 @@ public class MoveRequestPolicyTests extends APITests {
       storedLoan.getString("dueDate"), is(expectedDueDate));
 
     assertThat("move recall request notice has not been sent",
-      patronNoticesClient.getAll().size(), is(2));
+      FakeModNotify.getSentPatronNotices().size(), is(2));
 
     assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(2));
   }
@@ -245,10 +245,10 @@ public class MoveRequestPolicyTests extends APITests {
 
     // There should be 2 notices for each recall
     waitAtMost(1, SECONDS)
-      .until(() -> getPatronNoticesForRecipient(steve).size(), is(1));
+      .until(() -> patronNoticesForRecipientWasSent(steve));
 
     waitAtMost(1, SECONDS)
-      .until(() -> getPatronNoticesForRecipient(charlotte).size(), is(1));
+      .until(() -> patronNoticesForRecipientWasSent(charlotte));
 
     assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(2));
 
@@ -270,7 +270,7 @@ public class MoveRequestPolicyTests extends APITests {
       storedLoan.getString("dueDate"), is(expectedDueDate));
 
     assertThat("move recall request unexpectedly sent another patron notice",
-      patronNoticesClient.getAll(), hasSize(2));
+      FakeModNotify.getSentPatronNotices(), hasSize(2));
 
     assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(2));
   }
@@ -314,7 +314,7 @@ public class MoveRequestPolicyTests extends APITests {
 
     // One notice for the recall is expected
     waitAtMost(1, SECONDS)
-      .until(patronNoticesClient::getAll, hasSize(1));
+      .until(FakeModNotify::getSentPatronNotices, hasSize(1));
 
     assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
 
@@ -340,7 +340,7 @@ public class MoveRequestPolicyTests extends APITests {
       storedLoan.getString("dueDate"), is(expectedDueDate));
 
     assertThat("move recall request notice has not been sent",
-      patronNoticesClient.getAll(), hasSize(2));
+      FakeModNotify.getSentPatronNotices(), hasSize(2));
 
     assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(2));
   }
@@ -397,10 +397,10 @@ public class MoveRequestPolicyTests extends APITests {
 
     // There should be 2 notices for each recall
     waitAtMost(1, SECONDS)
-      .until(() -> getPatronNoticesForRecipient(steve).size(), is(1));
+      .until(() -> patronNoticesForRecipientWasSent(steve));
 
     waitAtMost(1, SECONDS)
-      .until(() -> getPatronNoticesForRecipient(charlotte).size(), is(1));
+      .until(() -> patronNoticesForRecipientWasSent(charlotte));
 
     assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(2));
 
@@ -422,13 +422,18 @@ public class MoveRequestPolicyTests extends APITests {
       storedLoan.getString("dueDate"), is(expectedDueDate));
 
     assertThat("move recall request unexpectedly sent another patron notice",
-      patronNoticesClient.getAll(), hasSize(2));
+      FakeModNotify.getSentPatronNotices(), hasSize(2));
 
     assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(2));
   }
 
-  private MultipleJsonRecords getPatronNoticesForRecipient(IndividualResource steve) {
-    return patronNoticesClient.getMany(exactMatch("recipientId", steve.getId().toString()));
+  private boolean patronNoticesForRecipientWasSent(IndividualResource steve) {
+    return FakeModNotify.getSentPatronNotices()
+      .stream()
+      .anyMatch(notice -> StringUtils.equals(
+        notice.getString("recipientId"),
+        steve.getId().toString())
+      );
   }
 
   private void setRules(String rules) {

@@ -60,6 +60,7 @@ import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RenewalDueDateRequiredBlockOverrideBuilder;
 import api.support.builders.RenewBlockOverrides;
 import api.support.builders.RenewByBarcodeRequestBuilder;
+import api.support.fakes.FakeModNotify;
 import api.support.fakes.FakePubSub;
 import api.support.fixtures.ItemExamples;
 import api.support.fixtures.TemplateContextMatchers;
@@ -715,7 +716,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
         OVERRIDE_COMMENT, loanDate.plusDays(4).toString(), okapiHeaders);
 
     final var sentNotices = waitAtMost(1, SECONDS)
-      .until(patronNoticesClient::getAll, hasSize(1));
+      .until(FakeModNotify::getSentPatronNotices, hasSize(1));
 
     int expectedRenewalLimit = 0;
     int expectedRenewalsRemaining = 0;

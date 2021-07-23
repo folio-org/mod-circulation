@@ -87,6 +87,7 @@ import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.builders.UserBuilder;
 import api.support.builders.UserManualBlockBuilder;
+import api.support.fakes.FakeModNotify;
 import api.support.fakes.FakePubSub;
 import api.support.fixtures.CheckInFixture;
 import api.support.fixtures.ItemExamples;
@@ -1372,7 +1373,7 @@ RequestsAPICreationTests extends APITests {
       .withTags(new RequestBuilder.Tags(asList("new", "important"))));
 
     final var sentNotices = waitAtMost(1, SECONDS)
-      .until(patronNoticesClient::getAll, hasSize(1));
+      .until(FakeModNotify::getSentPatronNotices, hasSize(1));
 
     Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
 
@@ -1438,7 +1439,7 @@ RequestsAPICreationTests extends APITests {
       .withTags(new RequestBuilder.Tags(asList("new", "important"))));
 
     final var sentNotices = waitAtMost(1, SECONDS)
-      .until(patronNoticesClient::getAll, hasSize(1));
+      .until(FakeModNotify::getSentPatronNotices, hasSize(1));
 
     Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
 
@@ -1524,7 +1525,7 @@ RequestsAPICreationTests extends APITests {
     IndividualResource loanAfterRecall = loansClient.get(loan.getId());
 
     final var sentNotices = waitAtMost(1, SECONDS)
-      .until(patronNoticesClient::getAll, hasSize(2));
+      .until(FakeModNotify::getSentPatronNotices, hasSize(2));
 
     Map<String, Matcher<String>> recallConfirmationContextMatchers = new HashMap<>();
     recallConfirmationContextMatchers.putAll(TemplateContextMatchers.getUserContextMatchers(requester));
@@ -1599,7 +1600,7 @@ RequestsAPICreationTests extends APITests {
 
     // Recall notice to loan owner should be sent when due date hasn't been changed
     waitAtMost(1, SECONDS)
-      .until(patronNoticesClient::getAll, hasSize(1));
+      .until(FakeModNotify::getSentPatronNotices, hasSize(1));
 
     assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
   }
@@ -1932,7 +1933,7 @@ RequestsAPICreationTests extends APITests {
 
     // Recall notice to loan owner should be sent twice without changing due date
     waitAtMost(1, SECONDS)
-      .until(patronNoticesClient::getAll, hasSize(2));
+      .until(FakeModNotify::getSentPatronNotices, hasSize(2));
 
     assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(2));
   }

@@ -42,7 +42,7 @@ import api.support.builders.ItemBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
-import api.support.fakes.FakePubSub;
+import api.support.fakes.FakeModNotify;
 import api.support.fixtures.ItemExamples;
 import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.IndividualResource;
@@ -59,8 +59,6 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
 
   @Before
   public void beforeEach() {
-    FakePubSub.clearPublishedEvents();
-
     ItemBuilder itemBuilder = ItemExamples.basedUponSmallAngryPlanet(
       materialTypesFixture.book().getId(), loanTypesFixture.canCirculate().getId());
     HoldingBuilder holdingBuilder = itemsFixture.applyCallNumberHoldings(
@@ -111,7 +109,8 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
     scheduledNoticeProcessingClient.runRequestNoticesProcessing();
 
     verifyNumberOfSentNotices(1);
-    assertThat(patronNoticesClient.getAll().get(0), getTemplateContextMatcher(templateId, request));
+    assertThat(
+      FakeModNotify.getFirstSentPatronNotice(), getTemplateContextMatcher(templateId, request));
 
     verifyNumberOfScheduledNotices(0);
     verifyNumberOfPublishedEvents(NOTICE, 1);
@@ -247,7 +246,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
 
     verifyNumberOfScheduledNotices(1);
 
-    assertThat(patronNoticesClient.getAll(), empty());
+    assertThat(FakeModNotify.getSentPatronNotices(), empty());
 
     checkOutFixture.checkOutByBarcode(item, requester);
 
@@ -289,7 +288,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
     scheduledNoticeProcessingClient.runRequestNoticesProcessing();
 
     verifyNumberOfSentNotices(1);
-    assertThat(patronNoticesClient.getAll().get(0), getTemplateContextMatcher(templateId, request));
+    assertThat(FakeModNotify.getFirstSentPatronNotice(), getTemplateContextMatcher(templateId, request));
 
     verifyNumberOfScheduledNotices(0);
     verifyNumberOfPublishedEvents(NOTICE, 1);
@@ -324,15 +323,13 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
 
     scheduledNoticeProcessingClient.runRequestNoticesProcessing();
 
-    final var notices = patronNoticesClient.getAll();
-
     DateTime nextRunTimeAfterProcessing = DateTime.parse(scheduledNoticesClient.getAll()
       .get(0).getString("nextRunTime"));
 
     assertThat(nextRunTimeBeforeProcessing, is(nextRunTimeAfterProcessing.minusDays(1)));
 
     verifyNumberOfSentNotices(1);
-    assertThat(notices.get(0), getTemplateContextMatcher(templateId, request));
+    assertThat(FakeModNotify.getFirstSentPatronNotice(), getTemplateContextMatcher(templateId, request));
 
     verifyNumberOfScheduledNotices(1);
     verifyNumberOfPublishedEvents(NOTICE, 1);
@@ -371,7 +368,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
       org.joda.time.LocalDate.now(UTC).plusDays(28).toDateTimeAtStartOfDay());
 
     verifyNumberOfSentNotices(1);
-    assertThat(patronNoticesClient.getAll().get(0),
+    assertThat(FakeModNotify.getFirstSentPatronNotice(),
       getTemplateContextMatcher(templateId, requestsClient.get(request.getId())));
 
     verifyNumberOfScheduledNotices(0);
@@ -455,34 +452,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
 
   @Test
   public void scheduledNoticesShouldNotBeSentWhenTemplateWasNotFound() {
-    setupNoticePolicyWithRequestNotice(
-      new NoticeConfigurationBuilder()
-        .withTemplateId(templateId)
-        .withRequestExpirationEvent()
-        .withUponAtTiming()
-        .sendInRealTime(true)
-        .create()
-    );
-
-    requestsFixture.place(
-      new RequestBuilder()
-        .page()
-        .forItem(item)
-        .withRequesterId(requester.getId())
-        .withRequestDate(DateTime.now())
-        .withRequestExpiration(LocalDate.now())
-        .withStatus(OPEN_NOT_YET_FILLED)
-        .withPickupServicePoint(pickupServicePoint)
-    );
-
-    verifyNumberOfScheduledNotices(1);
-
-    checkInFixture.checkInByBarcode(
-      new CheckInByBarcodeRequestBuilder()
-        .forItem(item)
-        .withItemBarcode(item.getBarcode())
-        .at(pickupServicePoint)
-    );
+    prepareNotice();
 
     templateFixture.delete(templateId);
 
@@ -496,11 +466,66 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
 
   @Test
   public void scheduledNoticesShouldNotBeSentWhenRequestWasNotFound() {
+    IndividualResource request = prepareNotice();
+
+    requestsStorageClient.delete(request);
+
+    scheduledNoticeProcessingClient.runRequestNoticesProcessing(DateTime.now().plusMonths(2));
+
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfScheduledNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
+  }
+
+  @Test
+  public void scheduledNoticesShouldNotBeSentWhenUserWasNotFound() {
+    prepareNotice();
+
+    usersFixture.remove(requester);
+
+    scheduledNoticeProcessingClient.runRequestNoticesProcessing(DateTime.now().plusMonths(2));
+
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfScheduledNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
+  }
+
+  @Test
+  public void scheduledNoticesShouldNotBeSentWhenItemWasNotFound() {
+    prepareNotice();
+
+    itemsClient.delete(item);
+
+    scheduledNoticeProcessingClient.runRequestNoticesProcessing(DateTime.now().plusMonths(2));
+
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfScheduledNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
+  }
+
+  @Test
+  public void scheduledNoticesShouldNotBeSentOrDeletedWhenPatronNoticeRequestFails() {
+    prepareNotice();
+
+    FakeModNotify.setFailPatronNoticesWithBadRequest(true);
+
+    scheduledNoticeProcessingClient.runRequestNoticesProcessing(DateTime.now().plusMonths(2));
+
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfScheduledNotices(1);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
+  }
+
+  private IndividualResource prepareNotice() {
     setupNoticePolicyWithRequestNotice(
       new NoticeConfigurationBuilder()
         .withTemplateId(templateId)
         .withRequestExpirationEvent()
-        .withUponAtTiming()
+        .withAfterTiming(Period.hours(1))
         .sendInRealTime(true)
         .create()
     );
@@ -516,105 +541,9 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
         .withPickupServicePoint(pickupServicePoint)
     );
 
-   verifyNumberOfScheduledNotices(1);
-
-    checkInFixture.checkInByBarcode(
-      new CheckInByBarcodeRequestBuilder()
-        .forItem(item)
-        .withItemBarcode(item.getBarcode())
-        .at(pickupServicePoint)
-    );
-
-    requestsStorageClient.delete(request);
-
-    scheduledNoticeProcessingClient.runRequestNoticesProcessing(DateTime.now().plusMonths(2));
-
-    verifyNumberOfSentNotices(0);
-    verifyNumberOfScheduledNotices(0);
-    verifyNumberOfPublishedEvents(NOTICE, 0);
-    verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
-  }
-
-  @Test
-  public void scheduledNoticesShouldNotBeSentWhenUserWasNotFound() {
-    setupNoticePolicyWithRequestNotice(
-      new NoticeConfigurationBuilder()
-        .withTemplateId(templateId)
-        .withRequestExpirationEvent()
-        .withUponAtTiming()
-        .sendInRealTime(true)
-        .create()
-    );
-
-    requestsFixture.place(
-      new RequestBuilder()
-        .page()
-        .forItem(item)
-        .withRequesterId(requester.getId())
-        .withRequestDate(DateTime.now())
-        .withRequestExpiration(LocalDate.now())
-        .withStatus(OPEN_NOT_YET_FILLED)
-        .withPickupServicePoint(pickupServicePoint)
-    );
-
     verifyNumberOfScheduledNotices(1);
 
-    checkInFixture.checkInByBarcode(
-      new CheckInByBarcodeRequestBuilder()
-        .forItem(item)
-        .withItemBarcode(item.getBarcode())
-        .at(pickupServicePoint)
-    );
-
-    usersFixture.remove(requester);
-
-    scheduledNoticeProcessingClient.runRequestNoticesProcessing(DateTime.now().plusMonths(2));
-
-    verifyNumberOfSentNotices(0);
-    verifyNumberOfScheduledNotices(0);
-    verifyNumberOfPublishedEvents(NOTICE, 0);
-    verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
-  }
-
-  @Test
-  public void scheduledNoticesShouldNotBeSentWhenItemWasNotFound() {
-    setupNoticePolicyWithRequestNotice(
-      new NoticeConfigurationBuilder()
-        .withTemplateId(templateId)
-        .withRequestExpirationEvent()
-        .withUponAtTiming()
-        .sendInRealTime(true)
-        .create()
-    );
-
-   requestsFixture.place(
-      new RequestBuilder()
-        .page()
-        .forItem(item)
-        .withRequesterId(requester.getId())
-        .withRequestDate(DateTime.now())
-        .withRequestExpiration(LocalDate.now())
-        .withStatus(OPEN_NOT_YET_FILLED)
-        .withPickupServicePoint(pickupServicePoint)
-    );
-
-    verifyNumberOfScheduledNotices(1);
-
-    checkInFixture.checkInByBarcode(
-      new CheckInByBarcodeRequestBuilder()
-        .forItem(item)
-        .withItemBarcode(item.getBarcode())
-        .at(pickupServicePoint)
-    );
-
-    itemsClient.delete(item);
-
-    scheduledNoticeProcessingClient.runRequestNoticesProcessing(DateTime.now().plusMonths(2));
-
-    verifyNumberOfSentNotices(0);
-    verifyNumberOfScheduledNotices(0);
-    verifyNumberOfPublishedEvents(NOTICE, 0);
-    verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
+    return request;
   }
 
   private void setupNoticePolicyWithRequestNotice(JsonObject noticeConfiguration) {

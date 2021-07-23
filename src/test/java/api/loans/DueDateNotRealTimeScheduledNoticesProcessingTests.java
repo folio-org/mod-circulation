@@ -31,6 +31,7 @@ import org.junit.Test;
 import api.support.APITests;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
+import api.support.fakes.FakeModNotify;
 import api.support.fakes.FakePubSub;
 import api.support.fixtures.ConfigurationExample;
 import api.support.http.IndividualResource;
@@ -98,7 +99,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
           Pair.of(dunkirkToRebeccaLoan, dunkirk)),
         loanPolicyMatcher);
 
-    assertThat(patronNoticesClient.getAll(), hasItems(
+    assertThat(FakeModNotify.getSentPatronNotices(), hasItems(
       hasEmailNoticeProperties(james.getId(), TEMPLATE_ID, noticeToJamesContextMatcher),
       hasEmailNoticeProperties(rebecca.getId(), TEMPLATE_ID, noticeToRebeccaContextMatcher)));
 
@@ -424,7 +425,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
           Pair.of(uprootedToSteve, uprooted)),
         loanPolicyMatcher);
 
-    MatcherAssert.assertThat(patronNoticesClient.getAll(), hasItems(
+    MatcherAssert.assertThat(FakeModNotify.getSentPatronNotices(), hasItems(
       hasEmailNoticeProperties(james.getId(), TEMPLATE_ID, noticeToJamesContextMatcher),
       hasEmailNoticeProperties(steve.getId(), TEMPLATE_ID, noticeToSteveContextMatcher)));
 
@@ -466,6 +467,42 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
 
     verifyNumberOfSentNotices(0);
     verifyNumberOfScheduledNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
+  }
+
+  @Test
+  public void noticeIsNotSentOrDeletedWhenPatronNoticeRequestFails() {
+    JsonObject uponAtDueDateNoticeConfig = new NoticeConfigurationBuilder()
+      .withTemplateId(TEMPLATE_ID)
+      .withDueDateEvent()
+      .withUponAtTiming()
+      .sendInRealTime(false)
+      .create();
+
+    NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
+      .withName("Policy with due date notices")
+      .withLoanNotices(Collections.singletonList(uponAtDueDateNoticeConfig));
+
+    use(noticePolicy);
+
+    DateTime loanDate = new DateTime(2019, 8, 23, 10, 30);
+
+    IndividualResource james = usersFixture.james();
+    ItemResource nod = itemsFixture.basedUponNod();
+    IndividualResource nodToJamesLoan = checkOutFixture.checkOutByBarcode(nod, james, loanDate);
+
+    verifyNumberOfScheduledNotices(1);
+
+    DateTime dueDate = new DateTime(nodToJamesLoan.getJson().getString("dueDate"));
+    DateTime afterLoanDueDateTime = dueDate.plusDays(1);
+
+    FakeModNotify.setFailPatronNoticesWithBadRequest(true);
+
+    scheduledNoticeProcessingClient.runDueDateNotRealTimeNoticesProcessing(afterLoanDueDateTime);
+
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfScheduledNotices(1);
     verifyNumberOfPublishedEvents(NOTICE, 0);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
   }

@@ -48,6 +48,7 @@ import api.support.builders.FeeFineBuilder;
 import api.support.builders.FeeFineOwnerBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
+import api.support.fakes.FakeModNotify;
 import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
@@ -293,6 +294,23 @@ public class OverdueFineScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
+  public void noticeIsNotSentOrDeletedWhenPatronNoticeRequestFails() {
+    generateOverdueFine(createNoticeConfig(UPON_AT, false));
+
+    verifyNumberOfScheduledNotices(1);
+    assertThatScheduledNoticeExists(UPON_AT, false, actionDateTime);
+
+    FakeModNotify.setFailPatronNoticesWithBadRequest(true);
+
+    scheduledNoticeProcessingClient.runFeeFineNoticesProcessing(rightAfter(actionDateTime));
+
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfScheduledNotices(1);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
+  }
+
+  @Test
   public void noticeIsDiscardedWhenAccountIsClosed() {
     generateOverdueFine(createNoticeConfig(UPON_AT, false));
 
@@ -409,7 +427,7 @@ public class OverdueFineScheduledNoticesProcessingTests extends APITests {
   }
 
   private void assertThatNoticesWereSent(UUID... expectedTemplateIds) {
-    List<JsonObject> sentNotices = patronNoticesClient.getAll();
+    List<JsonObject> sentNotices = FakeModNotify.getSentPatronNotices();
 
     assertThat(sentNotices, hasSize(expectedTemplateIds.length));
 

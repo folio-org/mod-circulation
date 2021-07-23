@@ -11,6 +11,7 @@ import java.util.concurrent.Callable;
 
 import org.folio.circulation.domain.representations.logs.LogEventType;
 
+import api.support.fakes.FakeModNotify;
 import api.support.fakes.FakePubSub;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
@@ -20,9 +21,6 @@ public class PatronNoticeTestHelper {
   private static final ResourceClient scheduledNoticesClient =
     ResourceClient.forScheduledNotices();
 
-  private static final ResourceClient patronNoticesClient =
-    ResourceClient.forPatronNotices();
-
   private PatronNoticeTestHelper() {}
 
   public static void verifyNumberOfScheduledNotices(int numberOfNotices) {
@@ -30,7 +28,7 @@ public class PatronNoticeTestHelper {
   }
 
   public static void verifyNumberOfSentNotices(int numberOfNotices) {
-    waitForSize(patronNoticesClient::getAll, numberOfNotices);
+    waitForSize(FakeModNotify::getSentPatronNotices, numberOfNotices);
   }
 
   public static void verifyNumberOfPublishedEvents(LogEventType eventType, int eventsCount) {
@@ -43,7 +41,7 @@ public class PatronNoticeTestHelper {
   }
 
   public static void clearSentPatronNoticesAndPubsubEvents() {
-    patronNoticesClient.deleteAll();
+    FakeModNotify.clearSentPatronNotices();
     FakePubSub.clearPublishedEvents();
   }
 }

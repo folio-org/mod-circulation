@@ -54,6 +54,7 @@ import api.support.builders.ClaimItemReturnedRequestBuilder;
 import api.support.builders.LostItemFeePolicyBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
+import api.support.fakes.FakeModNotify;
 import api.support.fixtures.AgeToLostFixture.AgeToLostResult;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
@@ -84,9 +85,7 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
   public static final double PROCESSING_FEE_PAYMENT_AMOUNT = PROCESSING_FEE_AMOUNT / 2;
 
   @Before
-  public void beforeEach() throws InterruptedException {
-    super.beforeEach();
-
+  public void beforeEach() {
     templateFixture.createDummyNoticeTemplate(UPON_AT_TEMPLATE_ID);
     templateFixture.createDummyNoticeTemplate(AFTER_ONE_TIME_TEMPLATE_ID);
     templateFixture.createDummyNoticeTemplate(AFTER_RECURRING_TEMPLATE_ID);
@@ -543,8 +542,7 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
 
     final UUID userId = agedToLostResult.getUser().getId();
 
-    final List<JsonObject> sentNotices = patronNoticesClient.getAll();
-    assertThat(sentNotices, hasSize(actionsToTemplateIds.size()));
+    assertThat(FakeModNotify.getSentPatronNotices(), hasSize(actionsToTemplateIds.size()));
 
     actionsToTemplateIds.keySet().stream()
       .map(feeFineAction -> hasEmailNoticeProperties(userId, actionsToTemplateIds.get(feeFineAction),
@@ -552,13 +550,13 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
             getBaseNoticeContextMatcher(agedToLostResult),
             getFeeActionContextMatcher(feeFineAction),
             getFeeChargeContextMatcher(findAccountForFeeFineAction(feeFineAction)))))
-      .forEach(matcher -> assertThat(sentNotices, hasItem(matcher)));
+      .forEach(matcher -> assertThat(FakeModNotify.getSentPatronNotices(), hasItem(matcher)));
   }
 
   private void checkSentLoanNotices(AgeToLostResult agedToLostResult, List<UUID> templateIds) {
     final UUID userId = agedToLostResult.getUser().getId();
 
-    final List<JsonObject> sentNotices = patronNoticesClient.getAll();
+    final List<JsonObject> sentNotices = FakeModNotify.getSentPatronNotices();
     assertThat(sentNotices, hasSize(templateIds.size()));
 
     templateIds.forEach(templateId -> assertThat(sentNotices, hasItem(

@@ -17,7 +17,6 @@ import org.folio.circulation.domain.representations.logs.NoticeLogContextItem;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.rules.CirculationRuleMatch;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.RecordNotFoundFailure;
 import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -48,21 +47,6 @@ public class RequestScheduledNoticeHandler extends ScheduledNoticeHandler {
     return requestRepository.getById(context.getNotice().getRequestId())
       .thenApply(mapResult(context::withRequest))
       .thenApply(this::failWhenRequestIsIncomplete);
-  }
-
-  @Override
-  protected Result<ScheduledNoticeContext> failWhenRequestIsIncomplete(
-    Result<ScheduledNoticeContext> contextResult)  {
-
-    return contextResult
-      .map(ScheduledNoticeContext::getRequest)
-      .failWhen(
-        request -> succeeded(request.getRequester() == null),
-        request -> new RecordNotFoundFailure("user", request.getUserId()))
-      .failWhen(
-        request -> succeeded(request.getItem() == null || request.getItem().isNotFound()),
-        request -> new RecordNotFoundFailure("item", request.getItemId()))
-      .next(context -> contextResult);
   }
 
   @Override
