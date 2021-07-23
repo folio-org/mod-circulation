@@ -21,10 +21,10 @@ import io.vertx.core.json.JsonObject;
 class AnonymizeLoansTests {
   @Nested
   class WhenAnonymizingAllLoansImmediately {
-    private final AnonymizationCheckersService checker = anonymizeLoansImmediatelyChecker();
+    private final AnonymizationCheckersService checker = checker();
 
     @Test
-    public void anonymizeLoanWithoutFeesWhenClosed() {
+    public void anonymizeClosedLoanWithNoFees() {
       final var segregatedLoans = checker.segregateLoans(List.of(closedLoan()));
 
       assertThat(segregatedLoans.size(), is(1));
@@ -68,7 +68,7 @@ class AnonymizeLoansTests {
       assertThat(segregatedLoans.get("anonymizeImmediately").size(), is(1));
     }
 
-    private AnonymizationCheckersService anonymizeLoansImmediatelyChecker() {
+    private AnonymizationCheckersService checker() {
       // Fee fines closing type is deliberately different to make sure that it is ignored when
       // loans with fees should not be treated differently
       return new AnonymizationCheckersService(
@@ -79,7 +79,7 @@ class AnonymizeLoansTests {
 
   @Nested
   class WhenAnonymizingLoansWithFeesImmediately {
-    private final AnonymizationCheckersService checker = anonymizeLoansImmediatelyChecker();
+    private final AnonymizationCheckersService checker = checker();
 
     @Test
     public void anonymizeClosedLoanWithClosedFees() {
@@ -108,12 +108,70 @@ class AnonymizeLoansTests {
       assertThat(segregatedLoans.get("feesAndFinesOpen").size(), is(1));
     }
 
-    private AnonymizationCheckersService anonymizeLoansImmediatelyChecker() {
+    private AnonymizationCheckersService checker() {
       // General closing type is deliberately different to make sure that the
       // loans with fees closing type is definitely used
       return new AnonymizationCheckersService(
         new LoanAnonymizationConfiguration(null, ClosingType.NEVER,
           ClosingType.IMMEDIATELY, true, null, null));
+    }
+  }
+
+  @Nested
+  class WhenNeverAnonymizingLoans {
+    private final AnonymizationCheckersService checker = checker();
+
+    @Test
+    public void doNotAnonymizeLoanClosedWithNoFees() {
+      final var segregatedLoans = checker.segregateLoans(List.of(closedLoan()));
+
+      assertThat(segregatedLoans.size(), is(1));
+      // Partition for loans that should be annonymized
+      assertThat(segregatedLoans.get("neverAnonymizeLoans").size(), is(1));
+    }
+
+    @Test
+    public void doNotAnonymizeOpenLoanWithNoFees() {
+      final var segregatedLoans = checker.segregateLoans(List.of(openLoan()));
+
+      assertThat(segregatedLoans.size(), is(1));
+      // Partition for loans that should not be annonymized immediately
+      assertThat(segregatedLoans.get("neverAnonymizeLoans").size(), is(1));
+    }
+
+    @Test
+    public void doNotAnonymizeClosedLoanWithClosedFees() {
+      final var segregatedLoans = checker.segregateLoans(List.of(closedLoanWithClosedFee()));
+
+      assertThat(segregatedLoans.size(), is(1));
+      // Partition for loans that should be annonymized
+      assertThat(segregatedLoans.get("neverAnonymizeLoansWithFeesAndFines").size(), is(1));
+    }
+
+    @Test
+    public void doNotAnonymizeClosedLoanWithOpenFees() {
+      final var segregatedLoans = checker.segregateLoans(List.of(closedLoanWithOpenFee()));
+
+      assertThat(segregatedLoans.size(), is(1));
+      // Partition for loans that should be annonymized
+      assertThat(segregatedLoans.get("neverAnonymizeLoansWithFeesAndFines").size(), is(1));
+    }
+
+    @Test
+    public void doNotAnonymizeOpenLoanWithOpenFees() {
+      final var segregatedLoans = checker.segregateLoans(List.of(openLoanWithOpenFee()));
+
+      assertThat(segregatedLoans.size(), is(1));
+      // Partition for loans that should not be annonymized immediately
+      assertThat(segregatedLoans.get("neverAnonymizeLoansWithFeesAndFines").size(), is(1));
+    }
+
+    private AnonymizationCheckersService checker() {
+      // Fee fines closing type is deliberately different to make sure that it is ignored when
+      // loans with fees should not be treated differently
+      return new AnonymizationCheckersService(
+        new LoanAnonymizationConfiguration(null, ClosingType.NEVER,
+          ClosingType.NEVER, true, null, null));
     }
   }
 
