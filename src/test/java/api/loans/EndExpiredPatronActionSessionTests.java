@@ -28,6 +28,7 @@ import api.support.APITests;
 import api.support.builders.EndSessionBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
+import api.support.fakes.FakeModNotify;
 import api.support.fakes.FakePubSub;
 import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.IndividualResource;
@@ -42,7 +43,7 @@ public class EndExpiredPatronActionSessionTests extends APITests {
   private static final UUID CHECK_IN_TEMPLATE_ID = UUID.randomUUID();
 
   @Before
-  public void before() {
+  public void beforeEach() {
     JsonObject checkOutNoticeConfig = new NoticeConfigurationBuilder()
       .withTemplateId(CHECK_OUT_TEMPLATE_ID)
       .withCheckOutEvent()
@@ -86,7 +87,7 @@ public class EndExpiredPatronActionSessionTests extends APITests {
     waitAtLeast(1, SECONDS)
       .until(patronSessionRecordsClient::getAll, empty());
 
-    assertThat(patronNoticesClient.getAll(), hasSize(1));
+    assertThat(FakeModNotify.getSentPatronNotices(), hasSize(1));
     assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
   }
 
@@ -119,7 +120,7 @@ public class EndExpiredPatronActionSessionTests extends APITests {
     waitAtMost(1, SECONDS)
       .until(patronSessionRecordsClient::getAll,  hasSize(2));
 
-    assertThat(patronNoticesClient.getAll(), hasSize(1));
+    assertThat(FakeModNotify.getSentPatronNotices(), hasSize(1));
     assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
   }
 
@@ -151,7 +152,7 @@ public class EndExpiredPatronActionSessionTests extends APITests {
     waitAtMost(1, SECONDS)
       .until(patronSessionRecordsClient::getAll,  hasSize(2));
 
-    assertThat(patronNoticesClient.getAll(), hasSize(1));
+    assertThat(FakeModNotify.getSentPatronNotices(), hasSize(1));
     assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
   }
 
@@ -258,14 +259,12 @@ public class EndExpiredPatronActionSessionTests extends APITests {
     waitAtLeast(1, SECONDS)
       .until(patronSessionRecordsClient::getAll, empty());
 
-    List<JsonObject> patronNotices = patronNoticesClient.getAll();
-
-    assertThat(patronNoticesClient.getAll(), hasSize(6));
+    assertThat(FakeModNotify.getSentPatronNotices(), hasSize(6));
     assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(6));
 
     Stream.of(CHECK_OUT_TEMPLATE_ID, CHECK_IN_TEMPLATE_ID).forEach(templateId ->
       Stream.of(james, jessica, steve).forEach(patron ->
-        patronNotices.stream()
+        FakeModNotify.getSentPatronNotices().stream()
           .filter(pn -> pn.getString("templateId").equals(templateId.toString()))
           .filter(pn -> pn.getString("recipientId").equals(patron.getId().toString()))
           .forEach(patronNotice ->
@@ -295,7 +294,7 @@ public class EndExpiredPatronActionSessionTests extends APITests {
     waitAtLeast(1, SECONDS)
       .until(patronSessionRecordsClient::getAll, empty());
 
-    assertThat(patronNoticesClient.getAll(), empty());
+    assertThat(FakeModNotify.getSentPatronNotices(), empty());
     assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), empty());
   }
 
@@ -306,7 +305,7 @@ public class EndExpiredPatronActionSessionTests extends APITests {
     expiredSessionProcessingClient.runRequestExpiredSessionsProcessing(204);
 
     assertThat(patronSessionRecordsClient.getAll(), empty());
-    assertThat(patronNoticesClient.getAll(), empty());
+    assertThat(FakeModNotify.getSentPatronNotices(), empty());
     assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), empty());
   }
 
@@ -331,7 +330,7 @@ public class EndExpiredPatronActionSessionTests extends APITests {
     waitAtMost(1, SECONDS)
       .until(patronSessionRecordsClient::getAll, empty());
 
-    assertThat(patronNoticesClient.getAll(), empty());
+    assertThat(FakeModNotify.getSentPatronNotices(), empty());
     assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), empty());
   }
 
@@ -367,10 +366,10 @@ public class EndExpiredPatronActionSessionTests extends APITests {
     waitAtMost(1, SECONDS)
       .until(patronSessionRecordsClient::getAll,  empty());
 
-    assertThat(patronNoticesClient.getAll(), hasSize(1));
+    assertThat(FakeModNotify.getSentPatronNotices(), hasSize(1));
     assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
 
-    assertThat(patronNoticesClient.getAll().get(0),
+    assertThat(FakeModNotify.getFirstSentPatronNotice(),
       hasEmailNoticeProperties(james.getId(), CHECK_OUT_TEMPLATE_ID,
         TemplateContextMatchers.getUserContextMatchers(james)));
   }
@@ -397,7 +396,7 @@ public class EndExpiredPatronActionSessionTests extends APITests {
     waitAtMost(1, SECONDS)
       .until(patronSessionRecordsClient::getAll, empty());
 
-    assertThat(patronNoticesClient.getAll(), empty());
+    assertThat(FakeModNotify.getSentPatronNotices(), empty());
     assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), empty());
   }
 

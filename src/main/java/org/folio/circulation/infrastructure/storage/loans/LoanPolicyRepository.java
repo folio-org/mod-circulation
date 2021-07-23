@@ -66,6 +66,11 @@ public class LoanPolicyRepository extends CirculationPolicyRepository<LoanPolicy
       .thenApply(result -> result.map(loan::withLoanPolicy)));
   }
 
+  public CompletableFuture<Result<Loan>> findPolicyForLoan(Loan loan) {
+    return getLoanPolicyById(loan.getLoanPolicyId())
+        .thenApply(result -> result.map(loan::withLoanPolicy));
+  }
+
   private CompletableFuture<Result<LoanPolicy>> getLoanPolicyById(String loanPolicyId) {
     if (isNull(loanPolicyId)) {
       return ofAsync(() -> unknown(null));

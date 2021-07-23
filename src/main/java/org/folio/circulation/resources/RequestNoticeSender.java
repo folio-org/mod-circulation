@@ -28,7 +28,7 @@ import org.folio.circulation.support.results.Result;
 
 public class RequestNoticeSender {
 
-  private static Map<RequestType, NoticeEventType> requestTypeToEventMap;
+  private static final Map<RequestType, NoticeEventType> requestTypeToEventMap;
 
   static {
     Map<RequestType, NoticeEventType> map = new EnumMap<>(RequestType.class);

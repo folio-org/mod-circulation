@@ -1,19 +1,15 @@
 package org.folio.circulation.domain.notice;
 
-import static java.util.concurrent.CompletableFuture.completedFuture;
+import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.groupingBy;
 import static org.apache.http.HttpStatus.SC_OK;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
-import static org.folio.circulation.support.logging.PatronNoticeLogHelper.logResponse;
-import static org.folio.circulation.support.results.Result.succeeded;
+import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
-import static org.folio.circulation.support.http.CommonResponseInterpreters.mapToRecordInterpreter;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -28,6 +24,8 @@ import org.folio.circulation.rules.AppliedRuleConditions;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.logging.PatronNoticeLogHelper;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
 
@@ -49,25 +47,18 @@ public class PatronNoticeService {
   }
 
   public CompletableFuture<Result<Void>> acceptNoticeEvent(PatronNoticeEvent event, NoticeLogContext logContext) {
-    return acceptMultipleNoticeEvent(Collections.singletonList(new NoticeEventBundle(event, logContext)),
+    return acceptMultipleNoticeEvent(
+      singletonList(new NoticeEventBundle(event, logContext)),
       contexts -> contexts.stream().findFirst().orElse(new JsonObject()),
-      logContexts -> logContexts.stream().findFirst().orElse(new NoticeLogContext()));
+      logContexts -> logContexts.stream().findFirst().orElse(new NoticeLogContext())
+    );
   }
 
   public CompletableFuture<Result<Void>> acceptScheduledNoticeEvent(
     ScheduledNoticeConfig noticeConfig, String recipientId, JsonObject context,
     NoticeLogContext noticeLogContext) {
 
-    PatronNotice patronNotice = new PatronNotice();
-    patronNotice.setRecipientId(recipientId);
-    patronNotice.setTemplateId(noticeConfig.getTemplateId());
-    patronNotice.setDeliveryChannel(noticeConfig.getFormat().getDeliveryChannel());
-    patronNotice.setOutputFormat(noticeConfig.getFormat().getOutputFormat());
-    patronNotice.setContext(context);
-
-    return sendNotice(patronNotice)
-      .thenCompose(v -> publishAuditLogEvent(noticeLogContext))
-      .exceptionally(t -> succeeded(null));
+    return sendNotice(new PatronNotice(recipientId, context, noticeConfig), noticeLogContext);
   }
 
   public CompletableFuture<Result<Void>> acceptMultipleNoticeEvent(
@@ -131,48 +122,37 @@ public class PatronNoticeService {
     PatronNoticePolicy policy, NoticeEventGroupDefinition eventGroupDefinition,
     JsonObject noticeContext, NoticeLogContext noticeLogContext) {
 
-    Optional<NoticeConfiguration> matchingNoticeConfiguration =
-      policy.lookupNoticeConfiguration(eventGroupDefinition.eventType);
-
-    if (!matchingNoticeConfiguration.isPresent()) {
-      return completedFuture(succeeded(null));
-    }
-
-    matchingNoticeConfiguration.ifPresent(config -> {
-      noticeLogContext.setTemplateId(config.getTemplateId());
-      noticeLogContext.setTriggeringEvent(config.getNoticeEventType().getRepresentation());
-    });
-
-    return sendPatronNotice(matchingNoticeConfiguration.get(),
-      eventGroupDefinition.recipientId, noticeContext)
-      .thenCompose(r -> r.after(v -> publishAuditLogEvent(noticeLogContext)));
+    return policy.lookupNoticeConfiguration(eventGroupDefinition.eventType)
+      .map(config -> updateNoticeLogContext(noticeLogContext, config))
+      .map(config -> new PatronNotice(eventGroupDefinition.recipientId, noticeContext, config))
+      .map(notice -> sendNotice(notice, noticeLogContext))
+      .orElseGet(() -> ofAsync(() -> null));
   }
 
-  private CompletableFuture<Result<Void>> sendPatronNotice(
-    NoticeConfiguration noticeConfiguration, String recipientId, JsonObject context) {
+  private NoticeConfiguration updateNoticeLogContext(NoticeLogContext noticeLogContext,
+    NoticeConfiguration config) {
 
-    PatronNotice patronNotice = new PatronNotice();
-    patronNotice.setRecipientId(recipientId);
-    patronNotice.setTemplateId(noticeConfiguration.getTemplateId());
-    patronNotice.setDeliveryChannel(noticeConfiguration.getNoticeFormat().getDeliveryChannel());
-    patronNotice.setOutputFormat(noticeConfiguration.getNoticeFormat().getOutputFormat());
-    patronNotice.setContext(context);
+    noticeLogContext.setTemplateId(config.getTemplateId());
+    noticeLogContext.setTriggeringEvent(config.getNoticeEventType().getRepresentation());
 
-    return sendNotice(patronNotice);
+    return config;
   }
 
-  private CompletableFuture<Result<Void>> sendNotice(PatronNotice patronNotice) {
-    JsonObject body = JsonObject.mapFrom(patronNotice);
-    ResponseInterpreter<Void> responseInterpreter =
-      mapToRecordInterpreter(null, 200, 201);
+  private CompletableFuture<Result<Void>> sendNotice(PatronNotice patronNotice,
+    NoticeLogContext noticeLogContext) {
 
-    return patronNoticeClient.post(body)
-      .whenComplete((result, error) -> logResponse(result, error, SC_OK, patronNotice))
-      .thenApply(responseInterpreter::flatMap);
+    return patronNoticeClient.post(JsonObject.mapFrom(patronNotice))
+      .thenApply(r ->  new ResponseInterpreter<Response>().on(200, r).flatMap(r))
+      .whenComplete((r, t) -> logResponse(patronNotice, noticeLogContext, r, t))
+      .thenApply(r -> r.map(ignored -> null));
   }
 
-  private CompletableFuture<Result<Void>> publishAuditLogEvent(NoticeLogContext noticeLogContext) {
-    return eventPublisher.publishNoticeEvent(noticeLogContext);
+  private CompletableFuture<Result<Void>> logResponse(PatronNotice patronNotice,
+    NoticeLogContext noticeLogContext, Result<Response> result, Throwable throwable) {
+
+    PatronNoticeLogHelper.logResponse(result, throwable, SC_OK, patronNotice);
+
+    return eventPublisher.publishNoticeLogEvent(noticeLogContext, result, throwable);
   }
 
   private static class NoticeEventGroupDefinition {

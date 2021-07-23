@@ -15,16 +15,20 @@ import static api.support.matchers.ScheduledNoticeMatchers.hasScheduledFeeFineNo
 import static api.support.matchers.ScheduledNoticeMatchers.hasScheduledLoanNotice;
 import static api.support.utl.BlockOverridesUtils.OVERRIDE_RENEWAL_PERMISSION;
 import static api.support.utl.BlockOverridesUtils.buildOkapiHeadersWithPermissions;
+import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfPublishedEvents;
+import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfScheduledNotices;
+import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfSentNotices;
 import static java.util.stream.Collectors.toList;
 import static org.folio.circulation.domain.notice.NoticeTiming.AFTER;
 import static org.folio.circulation.domain.notice.NoticeTiming.UPON_AT;
 import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.AGED_TO_LOST_RETURNED;
+import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
+import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE_ERROR;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getUUIDProperty;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.iterableWithSize;
 import static org.joda.time.DateTime.now;
@@ -50,6 +54,7 @@ import api.support.builders.ClaimItemReturnedRequestBuilder;
 import api.support.builders.LostItemFeePolicyBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
+import api.support.fakes.FakeModNotify;
 import api.support.fixtures.AgeToLostFixture.AgeToLostResult;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
@@ -80,9 +85,7 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
   public static final double PROCESSING_FEE_PAYMENT_AMOUNT = PROCESSING_FEE_AMOUNT / 2;
 
   @Before
-  public void beforeEach() throws InterruptedException {
-    super.beforeEach();
-
+  public void beforeEach() {
     templateFixture.createDummyNoticeTemplate(UPON_AT_TEMPLATE_ID);
     templateFixture.createDummyNoticeTemplate(AFTER_ONE_TIME_TEMPLATE_ID);
     templateFixture.createDummyNoticeTemplate(AFTER_RECURRING_TEMPLATE_ID);
@@ -123,7 +126,7 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
     final UUID loanId = agedToLostLoan.getLoanId();
 
     // before first run, all three scheduled notices should exist
-    assertThat(patronNoticesClient.getAll(), hasSize(0));
+    verifyNumberOfSentNotices(0);
     assertThat(scheduledNoticesClient.getAll(), allOf(
       iterableWithSize(3),
       hasItems(
@@ -137,7 +140,7 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
 
     // first run, UPON_AT notice should be sent and deleted
     scheduledNoticeProcessingClient.runLoanNoticesProcessing(runTimeOfUponAtNotice.plusMinutes(1));
-    assertThat(patronNoticesClient.getAll(), hasSize(1));
+    verifyNumberOfSentNotices(1);
     assertThat(scheduledNoticesClient.getAll(), allOf(
       iterableWithSize(2),
       hasItems(
@@ -149,7 +152,7 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
 
     // second run, both AFTER notices should be sent, recurring AFTER notice should be rescheduled
     scheduledNoticeProcessingClient.runLoanNoticesProcessing(runTimeOfAfterNotices.plusMinutes(1));
-    assertThat(patronNoticesClient.getAll(), hasSize(3));
+    verifyNumberOfSentNotices(3);
     assertThat(scheduledNoticesClient.getAll(), allOf(
       iterableWithSize(1),
       hasItem(
@@ -168,8 +171,11 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
     // third run, loan is now closed so recurring notice should be deleted without sending
     scheduledNoticeProcessingClient.runLoanNoticesProcessing(
       runTimeOfAfterNotices.plus(RECURRENCE_PERIOD.timePeriod()).plusMinutes(1));
-    assertThat(patronNoticesClient.getAll(), hasSize(3));
-    assertThat(scheduledNoticesClient.getAll(), hasSize(0));
+
+    verifyNumberOfSentNotices(3);
+    verifyNumberOfScheduledNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 3);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 
   @Test
@@ -200,7 +206,7 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
 
     // first run, notice should be sent and rescheduled
     scheduledNoticeProcessingClient.runLoanNoticesProcessing(firstRunTime.plusMinutes(1));
-    assertThat(patronNoticesClient.getAll(), hasSize(1));
+    verifyNumberOfSentNotices(1);
     assertThat(scheduledNoticesClient.getAll(), allOf(
       iterableWithSize(1),
       hasItems(
@@ -213,8 +219,11 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
     // second run, notice should be deleted without sending
     scheduledNoticeProcessingClient.runLoanNoticesProcessing(
       firstRunTime.plus(RECURRENCE_PERIOD.timePeriod()).plusMinutes(1));
-    assertThat(patronNoticesClient.getAll(), hasSize(1));
-    assertThat(scheduledNoticesClient.getAll(), hasSize(0));
+
+    verifyNumberOfSentNotices(1);
+    verifyNumberOfScheduledNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 1);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 
   @Test
@@ -227,8 +236,10 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
     scheduledNoticeProcessingClient.runLoanNoticesProcessing(
       firstRunTime.plus(RECURRENCE_PERIOD.timePeriod()).plusMinutes(1));
 
-    assertThat(scheduledNoticesClient.getAll(), empty());
-    assertThat(patronNoticesClient.getAll(), empty());
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfScheduledNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 
   @Test
@@ -243,8 +254,10 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
     scheduledNoticeProcessingClient.runLoanNoticesProcessing(
       firstRunTime.plus(RECURRENCE_PERIOD.timePeriod()).plusMinutes(1));
 
-    assertThat(scheduledNoticesClient.getAll(), empty());
-    assertThat(patronNoticesClient.getAll(), empty());
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfScheduledNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 
   @Test
@@ -259,8 +272,10 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
     scheduledNoticeProcessingClient.runLoanNoticesProcessing(
       firstRunTime.plus(RECURRENCE_PERIOD.timePeriod()).plusMinutes(1));
 
-    assertThat(scheduledNoticesClient.getAll(), empty());
-    assertThat(patronNoticesClient.getAll(), empty());
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfScheduledNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 
   private AgeToLostResult createRecurringAgedToLostNotice() {
@@ -355,7 +370,7 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
     final DateTime cancelLostItemFeeActionDate = getActionDate(cancelLostItemFeeAction);
     final DateTime cancelProcessingFeeActionDate = getActionDate(cancelProcessingFeeAction);
 
-    assertThat(patronNoticesClient.getAll(), hasSize(0));
+    verifyNumberOfSentNotices(0);
     assertThat(scheduledNoticesClient.getAll(), allOf(
       iterableWithSize(4),
       hasItems(
@@ -382,7 +397,6 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
       .orElseThrow();
 
     scheduledNoticeProcessingClient.runFeeFineNoticesProcessing(maxActionDate.plusSeconds(1));
-    assertThat(scheduledNoticesClient.getAll(), hasSize(0));
 
     checkSentFeeFineNotices(agedToLostLoan, Map.of(
       refundLostItemFeeAction, UPON_AT_TEMPLATE_ID,
@@ -390,6 +404,10 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
       cancelLostItemFeeAction, UPON_AT_TEMPLATE_ID,
       cancelProcessingFeeAction, UPON_AT_TEMPLATE_ID
     ));
+
+    verifyNumberOfScheduledNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 4);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 
   @Test
@@ -467,7 +485,7 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
     final DateTime refundLostItemFeeActionDate = getActionDate(lostItemFeeRefundAction);
     final DateTime refundProcessingFeeActionDate = getActionDate(processingFeeRefundAction);
 
-    assertThat(patronNoticesClient.getAll(), hasSize(0));
+    verifyNumberOfSentNotices(0);
     assertThat(scheduledNoticesClient.getAll(), allOf(
       iterableWithSize(2),
       hasItems(
@@ -484,12 +502,15 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
       .orElseThrow();
 
     scheduledNoticeProcessingClient.runFeeFineNoticesProcessing(maxActionDate.plusSeconds(1));
-    assertThat(scheduledNoticesClient.getAll(), hasSize(0));
 
     checkSentFeeFineNotices(agedToLostLoan, Map.of(
       lostItemFeeRefundAction, UPON_AT_TEMPLATE_ID,
       processingFeeRefundAction, UPON_AT_TEMPLATE_ID
     ));
+
+    verifyNumberOfScheduledNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 2);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 
   private JsonObject findFeeFineAction(String actionType, double actionAmount) {
@@ -521,8 +542,7 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
 
     final UUID userId = agedToLostResult.getUser().getId();
 
-    final List<JsonObject> sentNotices = patronNoticesClient.getAll();
-    assertThat(sentNotices, hasSize(actionsToTemplateIds.size()));
+    assertThat(FakeModNotify.getSentPatronNotices(), hasSize(actionsToTemplateIds.size()));
 
     actionsToTemplateIds.keySet().stream()
       .map(feeFineAction -> hasEmailNoticeProperties(userId, actionsToTemplateIds.get(feeFineAction),
@@ -530,13 +550,13 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
             getBaseNoticeContextMatcher(agedToLostResult),
             getFeeActionContextMatcher(feeFineAction),
             getFeeChargeContextMatcher(findAccountForFeeFineAction(feeFineAction)))))
-      .forEach(matcher -> assertThat(sentNotices, hasItem(matcher)));
+      .forEach(matcher -> assertThat(FakeModNotify.getSentPatronNotices(), hasItem(matcher)));
   }
 
   private void checkSentLoanNotices(AgeToLostResult agedToLostResult, List<UUID> templateIds) {
     final UUID userId = agedToLostResult.getUser().getId();
 
-    final List<JsonObject> sentNotices = patronNoticesClient.getAll();
+    final List<JsonObject> sentNotices = FakeModNotify.getSentPatronNotices();
     assertThat(sentNotices, hasSize(templateIds.size()));
 
     templateIds.forEach(templateId -> assertThat(sentNotices, hasItem(

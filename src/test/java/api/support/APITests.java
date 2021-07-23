@@ -19,6 +19,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.support.ClockManager;
+
+import api.support.fakes.FakeModNotify;
 import api.support.http.IndividualResource;
 import org.joda.time.DateTime;
 import org.junit.After;
@@ -146,9 +148,6 @@ public abstract class APITests {
 
   private final ResourceClient contributorNameTypesClient
     = ResourceClient.forContributorNameTypes();
-
-  protected final ResourceClient patronNoticesClient =
-    ResourceClient.forPatronNotices();
 
   protected final ResourceClient scheduledNoticesClient =
     ResourceClient.forScheduledNotices();
@@ -295,7 +294,8 @@ public abstract class APITests {
   }
 
   @Before
-  public void beforeEach() throws InterruptedException {
+  // Final to prohibit overriding, otherwise this method will not be called before @Before of subclass
+  public final void baseSetUp() {
     if (initialiseCirculationRules) {
       useDefaultRollingPolicyCirculationRules();
     }
@@ -305,10 +305,14 @@ public abstract class APITests {
 
     FakePubSub.clearPublishedEvents();
     FakePubSub.setFailPublishingWithBadRequestError(false);
+
+    FakeModNotify.clearSentPatronNotices();
+    FakeModNotify.setFailPatronNoticesWithBadRequest(false);
   }
 
   @After
-  public void afterEach() {
+  // Final to prohibit overriding, otherwise this method will not be called before @After of subclass
+  public final void baseTearDown() {
     forTenantStorage().deleteAll();
 
     mockClockManagerToReturnDefaultDateTime();
