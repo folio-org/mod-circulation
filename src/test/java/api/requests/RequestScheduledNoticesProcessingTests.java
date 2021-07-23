@@ -149,6 +149,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
 
   @Test
   @Ignore("notice is deleted once the request status is changed to 'Closed - Pickup expired'")
+  //TODO fix this test and make it useful again
   public void uponAtHoldExpirationNoticeShouldBeSentAndDeletedWhenHoldExpirationDateHasPassed() {
     JsonObject noticeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(templateId)

@@ -40,8 +40,4 @@ public class PatronNoticeTestHelper {
       .until(supplier, hasSize(expectedSize));
   }
 
-  public static void clearSentPatronNoticesAndPubsubEvents() {
-    FakeModNotify.clearSentPatronNotices();
-    FakePubSub.clearPublishedEvents();
-  }
 }
