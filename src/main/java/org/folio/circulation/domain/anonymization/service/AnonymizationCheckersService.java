@@ -17,6 +17,7 @@ import org.folio.circulation.domain.anonymization.checkers.LoanClosePeriodChecke
 import org.folio.circulation.domain.anonymization.checkers.NeverAnonymizeLoansChecker;
 import org.folio.circulation.domain.anonymization.checkers.NeverAnonymizeLoansWithFeeFinesChecker;
 import org.folio.circulation.domain.anonymization.checkers.NoAssociatedFeesAndFinesChecker;
+import org.folio.circulation.domain.anonymization.config.ClosingType;
 import org.folio.circulation.domain.anonymization.config.LoanAnonymizationConfiguration;
 
 public class AnonymizationCheckersService {
@@ -25,7 +26,6 @@ public class AnonymizationCheckersService {
   private final AnonymizationChecker manualAnonymizationChecker;
   private AnonymizationChecker feesAndFinesCheckersFromLoanHistory;
   private AnonymizationChecker closedLoansCheckersFromLoanHistory;
-
 
   public AnonymizationCheckersService(LoanAnonymizationConfiguration config) {
     this.config = config;
@@ -38,6 +38,16 @@ public class AnonymizationCheckersService {
 
   public AnonymizationCheckersService() {
     this(null);
+  }
+
+  public boolean neverAnonymizeLoans() {
+    // Without config, this cannot be determined
+    if (config == null) {
+      return false;
+    }
+
+    return config.getLoanClosingType() == ClosingType.NEVER &&
+      !config.treatLoansWithFeesAndFinesDifferently();
   }
 
   public Map<String, Set<String>> segregateLoans(Collection<Loan> loans) {
