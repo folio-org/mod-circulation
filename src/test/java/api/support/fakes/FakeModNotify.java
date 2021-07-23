@@ -21,8 +21,6 @@ public class FakeModNotify {
   private static boolean failPatronNoticesWithBadRequest;
 
   public static void register(Router router) {
-    router.route().handler(BodyHandler.create());
-
     router.post("/patron-notice")
       .handler(routingContext -> {
         if (failPatronNoticesWithBadRequest) {
