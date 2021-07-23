@@ -38,6 +38,7 @@ import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
+import api.support.fakes.FakeModNotify;
 import api.support.fakes.FakePubSub;
 import api.support.fixtures.ItemExamples;
 import api.support.fixtures.TemplateContextMatchers;
@@ -243,7 +244,7 @@ public class ChangeDueDateByReplacingLoanTests extends APITests {
     IndividualResource loanAfterUpdate = loansClient.get(loan);
 
     final var sentNotices = waitAtMost(1, SECONDS)
-      .until(patronNoticesClient::getAll, hasSize(1));
+      .until(FakeModNotify::getSentPatronNotices, hasSize(1));
 
     Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
 

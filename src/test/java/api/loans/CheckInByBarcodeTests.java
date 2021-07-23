@@ -79,6 +79,7 @@ import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.OverdueFinePolicyBuilder;
 import api.support.builders.RequestBuilder;
+import api.support.fakes.FakeModNotify;
 import api.support.fakes.FakePubSub;
 import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.CqlQuery;
@@ -534,7 +535,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
       loanRepresentation, notNullValue());
 
     waitAtLeast(1, SECONDS)
-      .until(patronNoticesClient::getAll, empty());
+      .until(FakeModNotify::getSentPatronNotices, empty());
 
     waitAtLeast(1, SECONDS)
       .until(() -> FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), empty());
@@ -572,7 +573,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
       checkInResponse.getJson().containsKey("loan"), is(false));
 
     waitAtLeast(1, SECONDS)
-      .until(patronNoticesClient::getAll, empty());
+      .until(FakeModNotify::getSentPatronNotices, empty());
 
     waitAtLeast(1, SECONDS)
       .until(() -> FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), empty());
@@ -682,7 +683,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     checkInFixture.checkInByBarcode(requestedItem, checkInDate, pickupServicePointId);
 
     waitAtMost(1, SECONDS)
-      .until(patronNoticesClient::getAll, hasSize(1));
+      .until(FakeModNotify::getSentPatronNotices, hasSize(1));
 
     waitAtMost(1, SECONDS)
       .until(() -> FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
@@ -693,7 +694,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     checkInFixture.checkInByBarcode(requestedItem, checkInDate, pickupServicePointId);
 
     waitAtMost(1, SECONDS)
-      .until(patronNoticesClient::getAll, empty());
+      .until(FakeModNotify::getSentPatronNotices, empty());
 
     waitAtMost(1, SECONDS)
       .until(() -> FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), empty());
@@ -777,7 +778,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     // verify that Request Awaiting Pickup notice was sent for first request
 
     waitAtMost(1, SECONDS)
-      .until(patronNoticesClient::getAll, hasSize(1));
+      .until(FakeModNotify::getSentPatronNotices, hasSize(1));
 
     checkPatronNoticeEvent(firstRequest, firstRequester, item, requestAwaitingPickupTemplateId);
 
@@ -828,7 +829,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     // verify that Request Awaiting Pickup notice was sent to second requester
 
     waitAtMost(1, SECONDS)
-      .until(patronNoticesClient::getAll, hasSize(1));
+      .until(FakeModNotify::getSentPatronNotices, hasSize(1));
 
     checkPatronNoticeEvent(secondRequest, secondRequester, item, requestAwaitingPickupTemplateId);
 
@@ -1377,7 +1378,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     checkInFixture.checkInByBarcode(requestedItem, checkInDate, pickupServicePointId);
 
     JsonObject patronNotice = waitAtMost(1, SECONDS)
-      .until(patronNoticesClient::getAll, hasSize(1))
+      .until(FakeModNotify::getSentPatronNotices, hasSize(1))
       .get(0);
 
     assertThat(patronNotice, hasEmailNoticeProperties(requester.getId(), templateId,
@@ -1391,16 +1392,14 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     ItemResource item, UUID expectedTemplateId) {
 
     waitAtMost(1, SECONDS)
-      .until(patronNoticesClient::getAll, hasSize(1));
-
-    List<JsonObject> sentNotices = patronNoticesClient.getAll();
+      .until(FakeModNotify::getSentPatronNotices, hasSize(1));
 
     Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
     noticeContextMatchers.putAll(getUserContextMatchers(requester));
     noticeContextMatchers.putAll(TemplateContextMatchers.getItemContextMatchers(item, true));
     noticeContextMatchers.putAll(TemplateContextMatchers.getRequestContextMatchers(request));
 
-    assertThat(sentNotices, hasItems(
+    assertThat(FakeModNotify.getSentPatronNotices(), hasItems(
       hasEmailNoticeProperties(requester.getId(), expectedTemplateId, noticeContextMatchers)));
 
     waitAtMost(1, SECONDS)
@@ -1433,7 +1432,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
   }
 
   private void clearPatronNoticesAndPubsubEvents() {
-    patronNoticesClient.deleteAll();
+    FakeModNotify.clearSentPatronNotices();
     FakePubSub.clearPublishedEvents();
   }
 
@@ -1451,7 +1450,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
 
   private void verifyThatNoPatronNoticesWereSent() {
     waitAtMost(1, SECONDS)
-      .until(patronNoticesClient::getAll, empty());
+      .until(FakeModNotify::getSentPatronNotices, empty());
 
     waitAtMost(1, SECONDS)
       .until(() -> FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), empty());

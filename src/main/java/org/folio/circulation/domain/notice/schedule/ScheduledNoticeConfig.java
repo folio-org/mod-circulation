@@ -53,7 +53,6 @@ public class ScheduledNoticeConfig {
       "timing='" + timing.getRepresentation() + '\'' +
       ", recurringPeriod=" + recurringPeriod +
       ", templateId='" + templateId + '\'' +
-      ", format='" + format.getRepresentation() + '\'' +
       ", sendInRealTime=" + sendInRealTime +
       '}';
   }

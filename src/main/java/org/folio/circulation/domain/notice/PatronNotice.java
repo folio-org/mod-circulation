@@ -1,62 +1,31 @@
 package org.folio.circulation.domain.notice;
 
+import org.folio.circulation.domain.notice.schedule.ScheduledNoticeConfig;
+
 import io.vertx.core.json.JsonObject;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
+@Getter
+@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public class PatronNotice {
+  private final String recipientId;
+  private final String templateId;
+  private final String deliveryChannel;
+  private final String outputFormat;
+  private final JsonObject context;
 
-  private String recipientId;
-
-  private String deliveryChannel;
-
-  private String templateId;
-
-  private String outputFormat;
-
-  private JsonObject context;
-
-  public String getRecipientId() {
-    return recipientId;
+  public PatronNotice(String recipientId, JsonObject context, ScheduledNoticeConfig config) {
+    this(recipientId, context, config.getTemplateId(), config.getFormat());
   }
 
-  public PatronNotice setRecipientId(String recipientId) {
-    this.recipientId = recipientId;
-    return this;
+  public PatronNotice(String recipientId, JsonObject context, NoticeConfiguration config) {
+    this(recipientId, context, config.getTemplateId(), config.getNoticeFormat());
   }
 
-  public String getDeliveryChannel() {
-    return deliveryChannel;
-  }
-
-  public PatronNotice setDeliveryChannel(String deliveryChannel) {
-    this.deliveryChannel = deliveryChannel;
-    return this;
-  }
-
-  public String getTemplateId() {
-    return templateId;
-  }
-
-  public PatronNotice setTemplateId(String templateId) {
-    this.templateId = templateId;
-    return this;
-  }
-
-  public String getOutputFormat() {
-    return outputFormat;
-  }
-
-  public PatronNotice setOutputFormat(String outputFormat) {
-    this.outputFormat = outputFormat;
-    return this;
-  }
-
-  public JsonObject getContext() {
-    return context;
-  }
-
-  public PatronNotice setContext(JsonObject context) {
-    this.context = context;
-    return this;
+  private PatronNotice(String recipientId, JsonObject context, String templateId, NoticeFormat format) {
+    this(recipientId, templateId, format.getDeliveryChannel(), format.getOutputFormat(), context);
   }
 
   @Override

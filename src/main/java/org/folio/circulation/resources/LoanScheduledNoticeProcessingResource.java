@@ -42,10 +42,8 @@ public class LoanScheduledNoticeProcessingResource extends ScheduledNoticeProces
   protected CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> handleNotices(
     Clients clients, MultipleRecords<ScheduledNotice> noticesResult) {
 
-    final LoanScheduledNoticeHandler loanNoticeHandler =
-      LoanScheduledNoticeHandler.using(clients, DateTime.now(DateTimeZone.UTC));
-
-    return loanNoticeHandler.handleNotices(noticesResult.getRecords())
+    return new LoanScheduledNoticeHandler(clients, DateTime.now(DateTimeZone.UTC))
+      .handleNotices(noticesResult.getRecords())
       .thenApply(mapResult(v -> noticesResult));
   }
 }
