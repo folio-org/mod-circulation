@@ -71,12 +71,19 @@ public abstract class ScheduledNoticeHandler {
     log.info("Start processing scheduled notice {}", notice);
 
     return ofAsync(() -> new ScheduledNoticeContext(notice))
-      .thenCompose(r -> r.after(this::fetchData))
-      .thenApply(r -> r .mapFailure(f -> publishErrorEvent(f, notice)))
+      .thenCompose(r -> r.after(this::fetchNoticeData))
       .thenCompose(r -> r.after(this::sendNotice))
       .thenCompose(r -> r.after(this::updateNotice))
       .thenCompose(r -> handleResult(r, notice))
       .exceptionally(t -> handleException(t, notice));
+  }
+
+  protected CompletableFuture<Result<ScheduledNoticeContext>> fetchNoticeData(
+    ScheduledNoticeContext context) {
+
+    return ofAsync(() -> context)
+      .thenCompose(r -> r.after(this::fetchData))
+      .thenApply(r -> r.mapFailure(f -> publishErrorEvent(f, context.notice)));
   }
 
   protected abstract CompletableFuture<Result<ScheduledNoticeContext>> fetchData(

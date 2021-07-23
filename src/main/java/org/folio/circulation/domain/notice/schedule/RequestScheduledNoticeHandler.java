@@ -5,7 +5,6 @@ import static org.folio.circulation.domain.notice.NoticeTiming.UPON_AT;
 import static org.folio.circulation.domain.notice.TemplateContextUtil.createRequestNoticeContext;
 import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.HOLD_EXPIRATION;
 import static org.folio.circulation.support.results.Result.ofAsync;
-import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
 import java.util.concurrent.CompletableFuture;

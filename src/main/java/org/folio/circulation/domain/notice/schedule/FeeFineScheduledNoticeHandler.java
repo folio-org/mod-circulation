@@ -28,7 +28,8 @@ public class FeeFineScheduledNoticeHandler extends ScheduledNoticeHandler {
   }
 
   @Override
-  protected CompletableFuture<Result<ScheduledNoticeContext>> fetchData(ScheduledNoticeContext context) {
+  protected CompletableFuture<Result<ScheduledNoticeContext>> fetchData(
+    ScheduledNoticeContext context) {
     return ofAsync(() -> context)
       .thenCompose(r -> r.after(this::fetchTemplate))
       .thenCompose(r -> r.after(this::fetchAction))
