@@ -7,7 +7,9 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedSt
 import org.folio.circulation.domain.policy.Period;
 
 import io.vertx.core.json.JsonObject;
+import lombok.AllArgsConstructor;
 
+@AllArgsConstructor
 public class LoanAnonymizationConfiguration {
   private static final String FEEFINE = "feeFine";
 
@@ -18,23 +20,16 @@ public class LoanAnonymizationConfiguration {
   private final Period loanClosePeriod;
   private final Period feeFineClosePeriod;
 
-  private LoanAnonymizationConfiguration(JsonObject representation) {
-    this.representation = representation;
-    this.feesAndFinesClosingType = ClosingType.from(
-        getNestedStringProperty(representation, "closingType", FEEFINE));
-    this.loanClosingType = ClosingType.from(
-        getNestedStringProperty(representation, "closingType", "loan"));
-    this.treatLoansWithFeesAndFinesDifferently = getBooleanProperty(representation, "treatEnabled");
-    this.loanClosePeriod = Period.from(
-      getNestedIntegerProperty(representation, "loan", "duration"),
-      getNestedStringProperty(representation, "loan", "intervalId"));
-    this.feeFineClosePeriod = Period.from(
-      getNestedIntegerProperty(representation, FEEFINE, "duration"),
-      getNestedStringProperty(representation, FEEFINE, "intervalId"));
-  }
-
   public static LoanAnonymizationConfiguration from(JsonObject jsonObject) {
-    return new LoanAnonymizationConfiguration(jsonObject);
+    return new LoanAnonymizationConfiguration(jsonObject,
+        ClosingType.from(getNestedStringProperty(jsonObject, "closingType", "loan")),
+        ClosingType.from(getNestedStringProperty(jsonObject, "closingType", FEEFINE)),
+        getBooleanProperty(jsonObject, "treatEnabled"),
+        Period.from(getNestedIntegerProperty(jsonObject, "loan", "duration"),
+            getNestedStringProperty(jsonObject, "loan", "intervalId")),
+        Period.from(
+            getNestedIntegerProperty(jsonObject, FEEFINE, "duration"),
+            getNestedStringProperty(jsonObject, FEEFINE, "intervalId")));
   }
 
   public JsonObject getRepresentation() {
