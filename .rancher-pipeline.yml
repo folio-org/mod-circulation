@@ -1,0 +1,26 @@
+stages:
+  - name: Build
+    steps:
+      - runScriptConfig:
+          image: maven:3.6.3-openjdk-11
+          shellScript: git submodule init && git submodule update && mvn package -DskipTests
+  - name: Build Docker with DIND
+    steps:
+      - publishImageConfig:
+          dockerfilePath: ./Dockerfile
+          buildContext: .
+          tag: docker.dev.folio.org/mod-circulation:master-vega-rancher
+          pushRemote: true
+          registry: docker.dev.folio.org
+  - name: Deploy
+    steps:
+      - applyAppConfig:
+          catalogTemplate: p-jqjbc:vega-helmcharts-mod-circulation
+          version: 0.1.32
+          answers:
+            image.repository: docker.dev.folio.org/mod-circulation
+            image.tag: master-vega-rancher
+          targetNamespace: vega
+          name: mod-circulation
+timeout: 60
+notification: {}
