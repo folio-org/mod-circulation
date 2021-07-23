@@ -1652,7 +1652,7 @@ public abstract class RenewalAPITests extends APITests {
 
     checkOutFixture.checkOutByBarcode(item, jessica,
       new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
-    userManualBlocksFixture.createManualPatronBlockForUser(jessica.getId());
+    userManualBlocksFixture.createRenewalsManualPatronBlockForUser(jessica.getId());
 
     final Response response = attemptRenewal(item, jessica);
 
@@ -1677,7 +1677,7 @@ public abstract class RenewalAPITests extends APITests {
 
     checkOutFixture.checkOutByBarcode(item, jessica,
       new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
-    userManualBlocksFixture.createManualPatronBlockForUser(jessica.getId());
+    userManualBlocksFixture.createRenewalsManualPatronBlockForUser(jessica.getId());
     automatedPatronBlocksFixture.blockAction(jessica.getId().toString(), false, true, false);
 
     final Response response = attemptRenewal(item, jessica);
