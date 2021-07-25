@@ -39,7 +39,8 @@ public enum LogEventPayloadField {
   NEW_REQUEST_STATUS("newRequestStatus"),
   PICK_UP_SERVICE_POINT("pickUpServicePoint"),
   REQUEST_TYPE("requestType"),
-  REQUEST_ADDRESS_TYPE("addressType");
+  REQUEST_ADDRESS_TYPE("addressType"),
+  ERROR_MESSAGE("errorMessage");
 
   private final String value;
 

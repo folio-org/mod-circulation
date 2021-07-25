@@ -1,23 +1,21 @@
 package api.loans;
 
-import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.fixtures.TemplateContextMatchers.getLoanPolicyContextMatchersForUnlimitedRenewals;
 import static api.support.fixtures.TemplateContextMatchers.getMultipleLoansContextMatcher;
 import static api.support.matchers.JsonObjectMatcher.toStringMatcher;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.awaitility.Awaitility.waitAtMost;
+import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfPublishedEvents;
+import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfScheduledNotices;
+import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfSentNotices;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
+import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE_ERROR;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.empty;
-import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 import java.util.UUID;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -33,6 +31,7 @@ import org.junit.Test;
 import api.support.APITests;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
+import api.support.fakes.FakeModNotify;
 import api.support.fakes.FakePubSub;
 import api.support.fixtures.ConfigurationExample;
 import api.support.http.IndividualResource;
@@ -69,26 +68,18 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
     IndividualResource nodToJamesLoan = checkOutFixture.checkOutByBarcode(nod, james, loanDate);
     IndividualResource interestingTimesToJamesLoan = checkOutFixture.checkOutByBarcode(interestingTimes, james, loanDate);
 
-
     IndividualResource rebecca = usersFixture.rebecca();
     ItemResource temeraire = itemsFixture.basedUponTemeraire();
     ItemResource dunkirk = itemsFixture.basedUponDunkirk();
     IndividualResource temeraireToRebeccaLoan = checkOutFixture.checkOutByBarcode(temeraire, rebecca, loanDate);
     IndividualResource dunkirkToRebeccaLoan = checkOutFixture.checkOutByBarcode(dunkirk, rebecca, loanDate);
 
-    waitAtMost(1, SECONDS)
-      .until(scheduledNoticesClient::getAll, hasSize(4));
+    verifyNumberOfScheduledNotices(4);
 
     DateTime dueDate = new DateTime(nodToJamesLoan.getJson().getString("dueDate"));
     DateTime afterLoanDueDateTime = dueDate.plusDays(1);
 
     scheduledNoticeProcessingClient.runDueDateNotRealTimeNoticesProcessing(afterLoanDueDateTime);
-
-    final var sentNotices = patronNoticesClient.getAll();
-
-    assertThat(scheduledNoticesClient.getAll(), empty());
-    assertThat(sentNotices, hasSize(2));
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(2));
 
     final var loanPolicyMatcher = toStringMatcher(getLoanPolicyContextMatchersForUnlimitedRenewals());
 
@@ -108,9 +99,14 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
           Pair.of(dunkirkToRebeccaLoan, dunkirk)),
         loanPolicyMatcher);
 
-    assertThat(sentNotices, hasItems(
+    assertThat(FakeModNotify.getSentPatronNotices(), hasItems(
       hasEmailNoticeProperties(james.getId(), TEMPLATE_ID, noticeToJamesContextMatcher),
       hasEmailNoticeProperties(rebecca.getId(), TEMPLATE_ID, noticeToRebeccaContextMatcher)));
+
+    verifyNumberOfSentNotices(2);
+    verifyNumberOfScheduledNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 2);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 
   @Test
@@ -139,8 +135,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
     IndividualResource nodToJamesLoan = checkOutFixture.checkOutByBarcode(itemsFixture.basedUponNod(), james, loanDate);
     checkOutFixture.checkOutByBarcode(itemsFixture.basedUponInterestingTimes(), james, loanDate);
 
-    waitAtMost(1, SECONDS)
-      .until(scheduledNoticesClient::getAll, hasSize(2));
+    verifyNumberOfScheduledNotices(2);
 
     DateTime dueDate = new DateTime(nodToJamesLoan.getJson().getString("dueDate"));
 
@@ -149,26 +144,25 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
 
     scheduledNoticeProcessingClient.runDueDateNotRealTimeNoticesProcessing(nextDayAfterBeforeNoticeShouldBeSend);
 
-    List<JsonObject> scheduledNotices = scheduledNoticesClient.getAll();
-
     DateTime newNextRunTime = timeForNoticeToBeSent.plus(recurringPeriod.timePeriod());
 
-    assertTrue("all scheduled notices are rescheduled", scheduledNotices.stream()
+    assertTrue("all scheduled notices are rescheduled", scheduledNoticesClient.getAll().stream()
       .map(entries -> entries.getString("nextRunTime"))
       .map(DateTime::parse)
       .allMatch(newNextRunTime::isEqual));
 
-    assertThat(patronNoticesClient.getAll(), hasSize(1));
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
+    verifyNumberOfSentNotices(1);
+    verifyNumberOfScheduledNotices(2);
+    verifyNumberOfPublishedEvents(NOTICE, 1);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 
   @Test
   public void beforeNoticesAreNotSentIfLoanIsClosed() {
-    UUID templateId = UUID.randomUUID();
     Period beforePeriod = Period.weeks(1);
 
     JsonObject uponAtDueDateNoticeConfig = new NoticeConfigurationBuilder()
-      .withTemplateId(templateId)
+      .withTemplateId(TEMPLATE_ID)
       .withDueDateEvent()
       .withBeforeTiming(beforePeriod)
       .sendInRealTime(false)
@@ -185,8 +179,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
     ItemResource nod = itemsFixture.basedUponNod();
     IndividualResource nodToJamesLoan = checkOutFixture.checkOutByBarcode(nod, james, loanDate);
 
-    waitAtMost(1, SECONDS)
-      .until(scheduledNoticesClient::getAll, hasSize(1));
+    verifyNumberOfScheduledNotices(1);
 
     DateTime dueDate = new DateTime(nodToJamesLoan.getJson().getString("dueDate"));
 
@@ -197,17 +190,18 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
 
     scheduledNoticeProcessingClient.runDueDateNotRealTimeNoticesProcessing(nextDayAfterBeforeNoticeShouldBeSend);
 
-    assertThat(patronNoticesClient.getAll(), empty());
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), empty());
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfScheduledNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 
   @Test
   public void processingTakesNoticesLimitedByConfiguration() {
-    UUID templateId = UUID.randomUUID();
     Period beforePeriod = Period.weeks(1);
 
     JsonObject uponAtDueDateNoticeConfig = new NoticeConfigurationBuilder()
-      .withTemplateId(templateId)
+      .withTemplateId(TEMPLATE_ID)
       .withDueDateEvent()
       .withBeforeTiming(beforePeriod)
       .sendInRealTime(false)
@@ -234,8 +228,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
         itemsFixture.basedUponNod((b -> b.withBarcode(baseBarcode + "3"))), rebecca);
     }
 
-    waitAtMost(1, SECONDS)
-      .until(scheduledNoticesClient::getAll, hasSize(12));
+    verifyNumberOfScheduledNotices(12);
 
     int noticesLimitConfig = 10;
     configClient.create(ConfigurationExample.schedulerNoticesLimitConfiguration(Integer.toString(noticesLimitConfig)));
@@ -247,14 +240,16 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
 
     scheduledNoticeProcessingClient.runDueDateNotRealTimeNoticesProcessing(runTime);
 
-    final var scheduledNotices = scheduledNoticesClient.getAll();
-    assertThat(scheduledNotices, hasSize(4));
-
-    long numberOfUniqueUserIds = scheduledNotices.stream()
+    long numberOfUniqueUserIds = scheduledNoticesClient.getAll().stream()
       .map(notice -> notice.getString("recipientUserId"))
       .distinct().count();
 
     assertThat(numberOfUniqueUserIds, is(1L));
+
+    verifyNumberOfSentNotices(2);
+    verifyNumberOfScheduledNotices(4);
+    verifyNumberOfPublishedEvents(NOTICE, 2);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 
   @Test
@@ -280,25 +275,23 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
 
     loansStorageClient.delete(nodToJamesLoan);
 
-    waitAtMost(1, SECONDS)
-      .until(scheduledNoticesClient::getAll, hasSize(1));
+    verifyNumberOfScheduledNotices(1);
 
     DateTime dueDate = new DateTime(nodToJamesLoan.getJson().getString("dueDate"));
     DateTime afterLoanDueDateTime = dueDate.plusDays(1);
 
     scheduledNoticeProcessingClient.runDueDateNotRealTimeNoticesProcessing(afterLoanDueDateTime);
 
-    assertThat(scheduledNoticesClient.getAll(), empty());
-    assertThat(patronNoticesClient.getAll(), empty());
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), empty());
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfScheduledNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
   }
 
   @Test
   public void noticeIsDeletedIfReferencedItemDoesNotExist() {
-    UUID templateId = UUID.randomUUID();
-
     JsonObject uponAtDueDateNoticeConfig = new NoticeConfigurationBuilder()
-      .withTemplateId(templateId)
+      .withTemplateId(TEMPLATE_ID)
       .withDueDateEvent()
       .withUponAtTiming()
       .sendInRealTime(false)
@@ -318,25 +311,23 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
 
     itemsClient.delete(nod);
 
-    waitAtMost(1, SECONDS)
-      .until(scheduledNoticesClient::getAll, hasSize(1));
+    verifyNumberOfScheduledNotices(1);
 
     DateTime dueDate = new DateTime(nodToJamesLoan.getJson().getString("dueDate"));
     DateTime afterLoanDueDateTime = dueDate.plusDays(1);
 
     scheduledNoticeProcessingClient.runDueDateNotRealTimeNoticesProcessing(afterLoanDueDateTime);
 
-    assertThat(scheduledNoticesClient.getAll(), hasSize(0));
-    assertThat(patronNoticesClient.getAll(), hasSize(0));
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(0));
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfScheduledNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
   }
 
   @Test
   public void noticeIsDeletedIfReferencedUserDoesNotExist() {
-    UUID templateId = UUID.randomUUID();
-
     JsonObject uponAtDueDateNoticeConfig = new NoticeConfigurationBuilder()
-      .withTemplateId(templateId)
+      .withTemplateId(TEMPLATE_ID)
       .withDueDateEvent()
       .withUponAtTiming()
       .sendInRealTime(false)
@@ -356,17 +347,17 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
 
     usersFixture.remove(james);
 
-    waitAtMost(1, SECONDS)
-      .until(scheduledNoticesClient::getAll, hasSize(1));
+    verifyNumberOfScheduledNotices(1);
 
     DateTime dueDate = new DateTime(nodToJamesLoan.getJson().getString("dueDate"));
     DateTime afterLoanDueDateTime = dueDate.plusDays(1);
 
     scheduledNoticeProcessingClient.runDueDateNotRealTimeNoticesProcessing(afterLoanDueDateTime);
 
-    assertThat(scheduledNoticesClient.getAll(), empty());
-    assertThat(patronNoticesClient.getAll(), empty());
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), empty());
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfScheduledNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
   }
 
   @Test
@@ -411,18 +402,11 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
     itemsClient.delete(times);
     usersFixture.remove(jessica);
 
-    waitAtMost(1, SECONDS)
-      .until(scheduledNoticesClient::getAll, hasSize(6));
+    verifyNumberOfScheduledNotices(6);
 
     DateTime dueDate = new DateTime(nodToJames.getJson().getString("dueDate"));
 
     scheduledNoticeProcessingClient.runDueDateNotRealTimeNoticesProcessing(dueDate.plusDays(1));
-
-    List<JsonObject> sentNotices = patronNoticesClient.getAll();
-
-    assertThat(scheduledNoticesClient.getAll(), hasSize(0));
-    assertThat(sentNotices, hasSize(2));
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(2));
 
     Matcher<? super String> loanPolicyMatcher = toStringMatcher(getLoanPolicyContextMatchersForUnlimitedRenewals());
 
@@ -441,9 +425,14 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
           Pair.of(uprootedToSteve, uprooted)),
         loanPolicyMatcher);
 
-    MatcherAssert.assertThat(sentNotices, hasItems(
+    MatcherAssert.assertThat(FakeModNotify.getSentPatronNotices(), hasItems(
       hasEmailNoticeProperties(james.getId(), TEMPLATE_ID, noticeToJamesContextMatcher),
       hasEmailNoticeProperties(steve.getId(), TEMPLATE_ID, noticeToSteveContextMatcher)));
+
+    verifyNumberOfSentNotices(2);
+    verifyNumberOfScheduledNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 2);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 3);
   }
 
   @Test
@@ -469,29 +458,53 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
 
     templateFixture.delete(TEMPLATE_ID);
 
-    waitAtMost(1, SECONDS)
-      .until(scheduledNoticesClient::getAll, hasSize(1));
+    verifyNumberOfScheduledNotices(1);
 
     DateTime dueDate = new DateTime(nodToJamesLoan.getJson().getString("dueDate"));
     DateTime afterLoanDueDateTime = dueDate.plusDays(1);
 
     scheduledNoticeProcessingClient.runDueDateNotRealTimeNoticesProcessing(afterLoanDueDateTime);
 
-    assertThat(scheduledNoticesClient.getAll(), empty());
-    assertThat(patronNoticesClient.getAll(), empty());
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), empty());
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfScheduledNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
   }
 
   @Test
-  public void scheduledNotRealTimeNoticesIsSentAfterMidnightInTenantsTimeZone() {
-    // A notice should be sent when the processing is run one minute after
-    // midnight (in tenant's time zone)
-    scheduledNotRealTimeNoticesShouldBeSentAtMidnightInTenantsTimeZone(1, 0, 1);
-  }
+  public void noticeIsNotSentOrDeletedWhenPatronNoticeRequestFails() {
+    JsonObject uponAtDueDateNoticeConfig = new NoticeConfigurationBuilder()
+      .withTemplateId(TEMPLATE_ID)
+      .withDueDateEvent()
+      .withUponAtTiming()
+      .sendInRealTime(false)
+      .create();
 
-  @Test
-  public void scheduledNotRealTimeNoticesIsNotSentBeforeMidnightInTenantsTimeZone() {
-    scheduledNotRealTimeNoticesShouldBeSentAtMidnightInTenantsTimeZone(-1, 1, 0);
+    NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
+      .withName("Policy with due date notices")
+      .withLoanNotices(Collections.singletonList(uponAtDueDateNoticeConfig));
+
+    use(noticePolicy);
+
+    DateTime loanDate = new DateTime(2019, 8, 23, 10, 30);
+
+    IndividualResource james = usersFixture.james();
+    ItemResource nod = itemsFixture.basedUponNod();
+    IndividualResource nodToJamesLoan = checkOutFixture.checkOutByBarcode(nod, james, loanDate);
+
+    verifyNumberOfScheduledNotices(1);
+
+    DateTime dueDate = new DateTime(nodToJamesLoan.getJson().getString("dueDate"));
+    DateTime afterLoanDueDateTime = dueDate.plusDays(1);
+
+    FakeModNotify.setFailPatronNoticesWithBadRequest(true);
+
+    scheduledNoticeProcessingClient.runDueDateNotRealTimeNoticesProcessing(afterLoanDueDateTime);
+
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfScheduledNotices(1);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
   }
 
   @Test
@@ -515,19 +528,32 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
     ItemResource dunkirk = itemsFixture.basedUponDunkirk();
     checkOutFixture.checkOutByBarcode(dunkirk, steve, loanDate);
 
-    waitAtMost(1, SECONDS)
-      .until(scheduledNoticesClient::getAll, hasSize(1));
-    assertThat(patronNoticesClient.getAll(), empty());
+    verifyNumberOfScheduledNotices(1);
+    verifyNumberOfSentNotices(0);
 
     FakePubSub.setFailPublishingWithBadRequestError(true);
 
     scheduledNoticeProcessingClient.runDueDateNotRealTimeNoticesProcessing();
     scheduledNoticeProcessingClient.runDueDateNotRealTimeNoticesProcessing();
 
-    assertThat(scheduledNoticesClient.getAll(), hasSize(1));
-    assertThat(patronNoticesClient.getAll(), hasSize(1));
+    verifyNumberOfSentNotices(1);
+    verifyNumberOfScheduledNotices(1);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
 
     FakePubSub.setFailPublishingWithBadRequestError(false);
+  }
+
+  @Test
+  public void scheduledNotRealTimeNoticesIsSentAfterMidnightInTenantsTimeZone() {
+    // A notice should be sent when the processing is run one minute after
+    // midnight (in tenant's time zone)
+    scheduledNotRealTimeNoticesShouldBeSentAtMidnightInTenantsTimeZone(1, 0, 1);
+  }
+
+  @Test
+  public void scheduledNotRealTimeNoticesIsNotSentBeforeMidnightInTenantsTimeZone() {
+    scheduledNotRealTimeNoticesShouldBeSentAtMidnightInTenantsTimeZone(-1, 1, 0);
   }
 
   private void scheduledNotRealTimeNoticesShouldBeSentAtMidnightInTenantsTimeZone(
@@ -560,12 +586,13 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
 
     checkOutFixture.checkOutByBarcode(nod, james, loanDate);
 
-    waitAtMost(1, SECONDS)
-      .until(scheduledNoticesClient::getAll, hasSize(1));
+    verifyNumberOfScheduledNotices(1);
 
     scheduledNoticeProcessingClient.runDueDateNotRealTimeNoticesProcessing(systemTime);
 
-    assertThat(scheduledNoticesClient.getAll(), hasSize(scheduledNoticesNumber));
-    assertThat(patronNoticesClient.getAll(), hasSize(sentNoticesNumber));
+    verifyNumberOfSentNotices(sentNoticesNumber);
+    verifyNumberOfScheduledNotices(scheduledNoticesNumber);
+    verifyNumberOfPublishedEvents(NOTICE, sentNoticesNumber);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 }

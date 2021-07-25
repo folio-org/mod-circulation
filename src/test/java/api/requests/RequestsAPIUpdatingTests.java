@@ -57,6 +57,7 @@ import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.builders.UserBuilder;
+import api.support.fakes.FakeModNotify;
 import api.support.fakes.FakePubSub;
 import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.IndividualResource;
@@ -505,7 +506,7 @@ public class RequestsAPIUpdatingTests extends APITests {
     requestsClient.replace(createdRequest.getId(), updatedRequest);
 
     final var sentNotices = waitAtMost(1, SECONDS)
-      .until(patronNoticesClient::getAll, hasSize(1));
+      .until(FakeModNotify::getSentPatronNotices, hasSize(1));
 
     Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
 
@@ -565,7 +566,7 @@ public class RequestsAPIUpdatingTests extends APITests {
 
     final var sentNotices = Awaitility.await()
       .atMost(1, SECONDS)
-      .until(patronNoticesClient::getAll, hasSize(1));
+      .until(FakeModNotify::getSentPatronNotices, hasSize(1));
 
     Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
 

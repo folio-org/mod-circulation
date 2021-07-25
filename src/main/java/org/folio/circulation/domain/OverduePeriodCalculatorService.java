@@ -75,6 +75,7 @@ public class OverduePeriodCalculatorService {
 
     return succeeded(
       openingDays.stream()
+        .filter(OpeningDay::getOpen)
         .mapToInt(day -> getOpeningDayDurationMinutes(day, dueDate, returnDate))
         .sum());
   }

@@ -3,6 +3,7 @@ package org.folio.circulation.domain.representations.logs;
 public enum LogEventType {
   LOAN("LOAN"),
   NOTICE("NOTICE"),
+  NOTICE_ERROR("NOTICE_ERROR"),
   CHECK_IN("CHECK_IN_EVENT"),
   CHECK_OUT("CHECK_OUT_EVENT"),
   CHECK_OUT_THROUGH_OVERRIDE("CHECK_OUT_THROUGH_OVERRIDE_EVENT"),

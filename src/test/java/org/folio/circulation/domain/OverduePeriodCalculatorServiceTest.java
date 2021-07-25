@@ -3,6 +3,7 @@ package org.folio.circulation.domain;
 import static api.support.fixtures.OpeningHourExamples.afternoon;
 import static api.support.fixtures.OpeningHourExamples.allDay;
 import static api.support.fixtures.OpeningHourExamples.morning;
+import static java.util.Collections.singletonList;
 import static org.joda.time.DateTimeConstants.MINUTES_PER_DAY;
 import static org.joda.time.DateTimeConstants.MINUTES_PER_HOUR;
 import static org.joda.time.DateTimeConstants.MINUTES_PER_WEEK;
@@ -40,6 +41,8 @@ import junitparams.Parameters;
 public class OverduePeriodCalculatorServiceTest {
   private static final OverduePeriodCalculatorService calculator =
     new OverduePeriodCalculatorService(null, null);
+  private static final DateTimeZone NEW_YORK = DateTimeZone.forID("America/New_York");
+  private static final DateTimeZone LONDON = DateTimeZone.forID("Europe/London");
 
   @Test
   public void preconditionsCheckLoanHasNoDueDate() {
@@ -114,24 +117,42 @@ public class OverduePeriodCalculatorServiceTest {
       createOpeningDay(false, new LocalDate("2020-04-10"), UTC));
 
     List<OpeningDay> allDay = Arrays.asList(
-      createOpeningDay(true, new LocalDate("2020-04-08"), DateTimeZone.forID("America/New_York")),
-      createOpeningDay(true, new LocalDate("2020-04-09"), DateTimeZone.forID("America/New_York")),
-      createOpeningDay(true, new LocalDate("2020-04-10"), DateTimeZone.forID("America/New_York")));
+      createOpeningDay(true, new LocalDate("2020-04-08"), NEW_YORK),
+      createOpeningDay(true, new LocalDate("2020-04-09"), NEW_YORK),
+      createOpeningDay(true, new LocalDate("2020-04-10"), NEW_YORK));
 
     List<OpeningDay> mixed = Arrays.asList(
-      createOpeningDay(false, new LocalDate("2020-04-08"), DateTimeZone.forID("Europe/London")),
-      createOpeningDay(true, new LocalDate("2020-04-09"), DateTimeZone.forID("Europe/London")),
-      createOpeningDay(false, new LocalDate("2020-04-10"), DateTimeZone.forID("Europe/London")));
+      createOpeningDay(false, new LocalDate("2020-04-08"), LONDON),
+      createOpeningDay(true, new LocalDate("2020-04-09"), LONDON),
+      createOpeningDay(false, new LocalDate("2020-04-10"), LONDON));
 
     LocalTime now = LocalTime.now(UTC);
 
     List<OpeningDay> invalid = Arrays.asList(
       OpeningDay.createOpeningDay(
-        Collections.singletonList(new OpeningHour(null, null)),
+        singletonList(new OpeningHour(null, null)),
         new LocalDate("2020-04-08"), false, true, UTC),
       OpeningDay.createOpeningDay(
-        Collections.singletonList(new OpeningHour(now, now.minusHours(1))),
+        singletonList(new OpeningHour(now, now.minusHours(1))),
         new LocalDate("2020-04-09"), false, true, UTC)
+    );
+
+    List<OpeningDay> allDaysClosed = Arrays.asList(
+      OpeningDay.createOpeningDay(singletonList(allDay()), new LocalDate("2020-04-08"),
+        true, false, NEW_YORK),
+      OpeningDay.createOpeningDay(singletonList(allDay()), new LocalDate("2020-04-09"),
+        true, false, NEW_YORK),
+      OpeningDay.createOpeningDay(singletonList(allDay()), new LocalDate("2020-04-10"),
+        true, false, NEW_YORK)
+    );
+
+    List<OpeningDay> secondDayClosed = Arrays.asList(
+      OpeningDay.createOpeningDay(singletonList(allDay()), new LocalDate("2020-04-08"),
+        true, true, NEW_YORK),
+      OpeningDay.createOpeningDay(singletonList(allDay()), new LocalDate("2020-04-09"),
+        true, false, NEW_YORK),
+      OpeningDay.createOpeningDay(singletonList(allDay()), new LocalDate("2020-04-10"),
+        true, true, NEW_YORK)
     );
 
     return new Object[]{
@@ -139,7 +160,9 @@ public class OverduePeriodCalculatorServiceTest {
       new Object[]{regular, MINUTES_PER_HOUR * 21},
       new Object[]{allDay, MINUTES_PER_HOUR * 49 - 2},
       new Object[]{mixed, MINUTES_PER_HOUR * 35 - 1},
-      new Object[]{invalid, 0}
+      new Object[]{invalid, 0},
+      new Object[]{allDaysClosed, 0},
+      new Object[]{secondDayClosed, MINUTES_PER_HOUR * 25 - 1}
     };
   }
 
@@ -231,7 +254,7 @@ public class OverduePeriodCalculatorServiceTest {
     boolean allDay, LocalDate date, DateTimeZone dateTimeZone) {
 
     return OpeningDay.createOpeningDay(
-      allDay ? Collections.singletonList(allDay()) : Arrays.asList(morning(), afternoon()),
+      allDay ? singletonList(allDay()) : Arrays.asList(morning(), afternoon()),
       date, allDay, true, dateTimeZone
       );
   }

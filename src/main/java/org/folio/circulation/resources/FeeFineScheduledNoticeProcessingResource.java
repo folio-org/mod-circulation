@@ -49,7 +49,7 @@ public class FeeFineScheduledNoticeProcessingResource extends ScheduledNoticePro
   protected CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> handleNotices(
     Clients clients, MultipleRecords<ScheduledNotice> scheduledNotices) {
 
-    return FeeFineScheduledNoticeHandler.using(clients)
+    return new FeeFineScheduledNoticeHandler(clients)
       .handleNotices(scheduledNotices.getRecords())
       .thenApply(mapResult(v -> scheduledNotices));
   }
