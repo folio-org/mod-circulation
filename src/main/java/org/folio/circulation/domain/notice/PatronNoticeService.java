@@ -1,14 +1,13 @@
 package org.folio.circulation.domain.notice;
 
-import static java.util.concurrent.CompletableFuture.completedFuture;
+import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.groupingBy;
 import static org.apache.http.HttpStatus.SC_OK;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
-import static org.folio.circulation.support.results.Result.succeeded;
+import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -48,9 +47,11 @@ public class PatronNoticeService {
   }
 
   public CompletableFuture<Result<Void>> acceptNoticeEvent(PatronNoticeEvent event, NoticeLogContext logContext) {
-    return acceptMultipleNoticeEvent(Collections.singletonList(new NoticeEventBundle(event, logContext)),
+    return acceptMultipleNoticeEvent(
+      singletonList(new NoticeEventBundle(event, logContext)),
       contexts -> contexts.stream().findFirst().orElse(new JsonObject()),
-      logContexts -> logContexts.stream().findFirst().orElse(new NoticeLogContext()));
+      logContexts -> logContexts.stream().findFirst().orElse(new NoticeLogContext())
+    );
   }
 
   public CompletableFuture<Result<Void>> acceptScheduledNoticeEvent(
@@ -125,7 +126,7 @@ public class PatronNoticeService {
       .map(config -> updateNoticeLogContext(noticeLogContext, config))
       .map(config -> new PatronNotice(eventGroupDefinition.recipientId, noticeContext, config))
       .map(notice -> sendNotice(notice, noticeLogContext))
-      .orElseGet(() -> completedFuture(succeeded(null)));
+      .orElseGet(() -> ofAsync(() -> null));
   }
 
   private NoticeConfiguration updateNoticeLogContext(NoticeLogContext noticeLogContext,
@@ -141,9 +142,9 @@ public class PatronNoticeService {
     NoticeLogContext noticeLogContext) {
 
     return patronNoticeClient.post(JsonObject.mapFrom(patronNotice))
-      .thenApply(r ->  new ResponseInterpreter<Response>().on(200, r).on(201, r).flatMap(r))
+      .thenApply(r ->  new ResponseInterpreter<Response>().on(200, r).flatMap(r))
       .whenComplete((r, t) -> logResponse(patronNotice, noticeLogContext, r, t))
-      .thenApply(ignored -> succeeded(null));
+      .thenApply(r -> r.map(ignored -> null));
   }
 
   private CompletableFuture<Result<Void>> logResponse(PatronNotice patronNotice,

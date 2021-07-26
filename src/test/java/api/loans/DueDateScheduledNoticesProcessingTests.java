@@ -1,10 +1,10 @@
 package api.loans;
 
-import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.fixtures.ItemExamples.basedUponSmallAngryPlanet;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.ScheduledNoticeMatchers.hasScheduledLoanNotice;
 import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfPublishedEvents;
+import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfScheduledNotices;
 import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfSentNotices;
 import static java.util.Comparator.comparing;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
@@ -41,6 +41,7 @@ import api.support.builders.HoldingBuilder;
 import api.support.builders.ItemBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
+import api.support.fakes.FakeModNotify;
 import api.support.fakes.FakePubSub;
 import api.support.fixtures.ConfigurationExample;
 import api.support.fixtures.TemplateContextMatchers;
@@ -77,8 +78,6 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
 
   @Before
   public void beforeEach() {
-    FakePubSub.clearPublishedEvents();
-
     ItemBuilder itemBuilder = basedUponSmallAngryPlanet(
       materialTypesFixture.book().getId(), loanTypesFixture.canCirculate().getId());
 
@@ -90,6 +89,10 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
 
     item = itemsFixture.basedUponSmallAngryPlanet(itemBuilder, holdingBuilder);
     borrower = usersFixture.steve();
+
+    templateFixture.createDummyNoticeTemplate(beforeTemplateId);
+    templateFixture.createDummyNoticeTemplate(uponAtTemplateId);
+    templateFixture.createDummyNoticeTemplate(afterTemplateId);
   }
 
   @Test
@@ -97,7 +100,6 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
     generateLoanAndScheduledNotices(true, false, false);
 
     DateTime beforeDueDateTime = dueDate.minus(beforePeriod.timePeriod()).plusSeconds(1);
-    templateFixture.createDummyNoticeTemplate(beforeTemplateId);
     scheduledNoticeProcessingClient.runLoanNoticesProcessing(beforeDueDateTime);
     checkSentNotices(beforeTemplateId);
 
@@ -120,7 +122,6 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
     generateLoanAndScheduledNotices(true, false, false);
 
     DateTime justBeforeDueDateTime = dueDate.minusSeconds(1);
-    templateFixture.createDummyNoticeTemplate(beforeTemplateId);
     scheduledNoticeProcessingClient.runLoanNoticesProcessing(justBeforeDueDateTime);
 
     checkSentNotices(beforeTemplateId);
@@ -140,7 +141,6 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
     generateLoanAndScheduledNotices(false, true, false);
 
     DateTime justAfterDueDateTime = dueDate.plusSeconds(1);
-    templateFixture.createDummyNoticeTemplate(uponAtTemplateId);
     scheduledNoticeProcessingClient.runLoanNoticesProcessing(justAfterDueDateTime);
 
     checkSentNotices(uponAtTemplateId);
@@ -160,10 +160,9 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
     generateLoanAndScheduledNotices(false, false, true);
 
     DateTime justAfterDueDateTime = dueDate.plusSeconds(1);
-    templateFixture.createDummyNoticeTemplate(afterTemplateId);
     scheduledNoticeProcessingClient.runLoanNoticesProcessing(justAfterDueDateTime);
     //Clear all sent notices before actual test
-    patronNoticesClient.deleteAll();
+    FakeModNotify.clearSentPatronNotices();
 
     DateTime afterNoticeRunTime = dueDate.plus(afterPeriod.timePeriod()).plusSeconds(1);
     scheduledNoticeProcessingClient.runLoanNoticesProcessing(afterNoticeRunTime);
@@ -195,7 +194,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
 
     checkInFixture.checkInByBarcode(item);
     //Clear sent notices again
-    patronNoticesClient.deleteAll();
+    FakeModNotify.clearSentPatronNotices();
     FakePubSub.clearPublishedEvents();
 
     //Run after loan is closed
@@ -204,6 +203,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
 
     checkSentNotices();
     checkScheduledNotices(null, null, null);
+
     verifyNumberOfPublishedEvents(NOTICE, 0);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
@@ -230,7 +230,6 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
     }
 
     scheduledNoticeProcessingClient.runLoanNoticesProcessing();
-    List<JsonObject> unprocessedScheduledNotices = scheduledNoticesClient.getAll();
 
     Comparator<JsonObject> nextRunTimeComparator =
       comparing(json -> getDateTimeProperty(json, NEXT_RUN_TIME));
@@ -239,11 +238,11 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
       .limit(expectedNumberOfUnprocessedNoticesInThePast)
       .toArray(JsonObject[]::new);
 
-    assertThat(unprocessedScheduledNotices,
-      hasSize(expectedNumberOfUnprocessedNoticesInThePast + numberOfNoticesInTheFuture));
+    List<JsonObject> unprocessedScheduledNotices = scheduledNoticesClient.getAll();
     assertThat(unprocessedScheduledNotices, hasItems(expectedUnprocessedNoticesInThePast));
     assertThat(unprocessedScheduledNotices, hasItems(noticesInTheFuture.toArray(new JsonObject[0])));
 
+    verifyNumberOfScheduledNotices(expectedNumberOfUnprocessedNoticesInThePast + numberOfNoticesInTheFuture);
     verifyNumberOfPublishedEvents(NOTICE, 0);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
@@ -254,17 +253,14 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
 
     int noticesLimitConfig = 200;
     int numberOfNotices = 300;
-    int expectedNumberOfUnprocessedNotices = numberOfNotices - noticesLimitConfig;
 
     // create a new configuration
     configClient.create(ConfigurationExample.schedulerNoticesLimitConfiguration(Integer.toString(noticesLimitConfig)));
 
     createNotices(numberOfNotices);
     scheduledNoticeProcessingClient.runLoanNoticesProcessing();
-    List<JsonObject> unprocessedScheduledNotices = scheduledNoticesClient.getAll();
 
-    assertThat(unprocessedScheduledNotices, hasSize(expectedNumberOfUnprocessedNotices));
-
+    verifyNumberOfScheduledNotices(numberOfNotices - noticesLimitConfig);
     verifyNumberOfPublishedEvents(NOTICE, 0);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
@@ -274,17 +270,14 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
     generateLoanAndScheduledNotices(false, false, false);
 
     int numberOfNotices = 259;
-    int expectedNumberOfUnprocessedNotices = numberOfNotices - SCHEDULED_NOTICES_PROCESSING_LIMIT;
 
     // create a incorrect configuration
     configClient.create(ConfigurationExample.schedulerNoticesLimitConfiguration("IncorrectVal"));
 
     createNotices(numberOfNotices);
     scheduledNoticeProcessingClient.runLoanNoticesProcessing();
-    List<JsonObject> unprocessedScheduledNotices = scheduledNoticesClient.getAll();
 
-    assertThat(unprocessedScheduledNotices, hasSize(expectedNumberOfUnprocessedNotices));
-
+    verifyNumberOfScheduledNotices(numberOfNotices - SCHEDULED_NOTICES_PROCESSING_LIMIT);
     verifyNumberOfPublishedEvents(NOTICE, 0);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
@@ -293,14 +286,10 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
   public void testDefaultNumberOfProcessedNotices() {
     generateLoanAndScheduledNotices(false, false, false);
 
-    int expectedNumberOfUnprocessedNotices = 0;
-
     createNotices(SCHEDULED_NOTICES_PROCESSING_LIMIT);
     scheduledNoticeProcessingClient.runLoanNoticesProcessing();
-    List<JsonObject> unprocessedScheduledNotices = scheduledNoticesClient.getAll();
 
-    assertThat(unprocessedScheduledNotices, hasSize(expectedNumberOfUnprocessedNotices));
-
+    verifyNumberOfScheduledNotices(0);
     verifyNumberOfPublishedEvents(NOTICE, 0);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
@@ -308,8 +297,6 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
   @Test
   public void testNoticeIsDeletedIfItHasNoLoanId() {
     generateLoanAndScheduledNotices(false, false, false);
-
-    int expectedNumberOfUnprocessedNotices = 0;
 
     JsonObject brokenNotice = createNoticesOverTime(dueDate.minusMinutes(1)::minusHours, 1).get(0);
     brokenNotice.remove("loanId");
@@ -319,9 +306,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
 
     checkSentNotices();
 
-    List<JsonObject> unprocessedScheduledNotices = scheduledNoticesClient.getAll();
-    assertThat(unprocessedScheduledNotices, hasSize(expectedNumberOfUnprocessedNotices));
-
+    verifyNumberOfScheduledNotices(0);
     verifyNumberOfPublishedEvents(NOTICE, 0);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
   }
@@ -329,8 +314,6 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
   @Test
   public void testNoticeIsDeletedIfReferencedLoanDoesNotExist() {
     generateLoanAndScheduledNotices(false, false, false);
-
-    int expectedNumberOfUnprocessedNotices = 0;
 
     JsonObject brokenNotice = createNoticesOverTime(dueDate.minusMinutes(1)::minusHours, 1).get(0);
     brokenNotice.put("loanId", UUID.randomUUID().toString());
@@ -340,9 +323,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
 
     checkSentNotices();
 
-    List<JsonObject> unprocessedScheduledNotices = scheduledNoticesClient.getAll();
-    assertThat(unprocessedScheduledNotices, hasSize(expectedNumberOfUnprocessedNotices));
-
+    verifyNumberOfScheduledNotices(0);
     verifyNumberOfPublishedEvents(NOTICE, 0);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
   }
@@ -350,8 +331,6 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
   @Test
   public void testNoticeIsDeletedIfReferencedItemDoesNotExist() {
     generateLoanAndScheduledNotices(false, false, false);
-
-    int expectedNumberOfUnprocessedNotices = 0;
 
     JsonObject brokenNotice = createNoticesOverTime(dueDate.minusMinutes(1)::minusHours, 1).get(0);
 
@@ -362,9 +341,8 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
 
     checkSentNotices();
 
-    List<JsonObject> unprocessedScheduledNotices = scheduledNoticesClient.getAll();
-    assertThat(unprocessedScheduledNotices, hasSize(expectedNumberOfUnprocessedNotices));
 
+    verifyNumberOfScheduledNotices(0);
     verifyNumberOfPublishedEvents(NOTICE, 0);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
   }
@@ -372,8 +350,6 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
   @Test
   public void testNoticeIsDeletedIfReferencedUserDoesNotExist() {
     generateLoanAndScheduledNotices(false, false, false);
-
-    int expectedNumberOfUnprocessedNotices = 0;
 
     JsonObject brokenNotice = createNoticesOverTime(dueDate.minusMinutes(1)::minusHours, 1).get(0);
 
@@ -384,9 +360,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
 
     checkSentNotices();
 
-    List<JsonObject> unprocessedScheduledNotices = scheduledNoticesClient.getAll();
-    assertThat(unprocessedScheduledNotices, hasSize(expectedNumberOfUnprocessedNotices));
-
+    verifyNumberOfScheduledNotices(0);
     verifyNumberOfPublishedEvents(NOTICE, 0);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
   }
@@ -395,16 +369,27 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
   public void testNoticeIsDeletedIfReferencedTemplateDoesNotExist() {
     generateLoanAndScheduledNotices(false, true, false);
 
-    int expectedNumberOfUnprocessedNotices = 0;
-
     templateFixture.delete(uponAtTemplateId);
     scheduledNoticeProcessingClient.runLoanNoticesProcessing(dueDate.plusSeconds(1));
 
     checkSentNotices();
 
-    List<JsonObject> unprocessedScheduledNotices = scheduledNoticesClient.getAll();
-    assertThat(unprocessedScheduledNotices, hasSize(expectedNumberOfUnprocessedNotices));
+    verifyNumberOfScheduledNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
+  }
 
+  @Test
+  public void testNoticeIsNotSentOrDeletedWhenPatronNoticeRequestFails() {
+    generateLoanAndScheduledNotices(false, true, false);
+
+    FakeModNotify.setFailPatronNoticesWithBadRequest(true);
+
+    scheduledNoticeProcessingClient.runLoanNoticesProcessing(dueDate.plusSeconds(1));
+
+    checkSentNotices();
+
+    verifyNumberOfScheduledNotices(1);
     verifyNumberOfPublishedEvents(NOTICE, 0);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
   }
@@ -434,15 +419,12 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
 
     checkSentNotices(expectedSentTemplateId1, expectedSentTemplateId2);
 
-    List<JsonObject> unprocessedScheduledNotices = scheduledNoticesClient.getAll();
-    assertThat(unprocessedScheduledNotices, hasSize(expectedNumberOfUnprocessedNotices));
-
+    verifyNumberOfScheduledNotices(expectedNumberOfUnprocessedNotices);
     verifyNumberOfPublishedEvents(NOTICE, 2);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 2);
   }
 
   private void createNotices(int numberOfNotices) {
-
     DateTime systemTime = DateTime.now(DateTimeZone.UTC);
     List<JsonObject> notices = createNoticesOverTime(systemTime::minusHours, numberOfNotices);
     for (JsonObject notice : notices) {
@@ -568,7 +550,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
       .map(templateId -> hasEmailNoticeProperties(borrower.getId(), templateId, noticeContextMatchers))
       .toArray(Matcher[]::new);
 
-    List<JsonObject> sentNotices = patronNoticesClient.getAll();
+    List<JsonObject> sentNotices = FakeModNotify.getSentPatronNotices();
 
     assertThat(sentNotices, hasSize(expectedTemplateIds.length));
     assertThat(sentNotices, hasItems(matchers));
