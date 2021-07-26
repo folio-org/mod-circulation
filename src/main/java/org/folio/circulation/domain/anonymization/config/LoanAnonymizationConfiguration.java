@@ -13,7 +13,6 @@ import lombok.AllArgsConstructor;
 public class LoanAnonymizationConfiguration {
   private static final String FEEFINE = "feeFine";
 
-  private final JsonObject representation;
   private final ClosingType loanClosingType;
   private final ClosingType feesAndFinesClosingType;
   private final boolean treatLoansWithFeesAndFinesDifferently;
@@ -21,7 +20,7 @@ public class LoanAnonymizationConfiguration {
   private final Period feeFineClosePeriod;
 
   public static LoanAnonymizationConfiguration from(JsonObject jsonObject) {
-    return new LoanAnonymizationConfiguration(jsonObject,
+    return new LoanAnonymizationConfiguration(
         ClosingType.from(getNestedStringProperty(jsonObject, "closingType", "loan")),
         ClosingType.from(getNestedStringProperty(jsonObject, "closingType", FEEFINE)),
         getBooleanProperty(jsonObject, "treatEnabled"),
@@ -30,10 +29,6 @@ public class LoanAnonymizationConfiguration {
         Period.from(
             getNestedIntegerProperty(jsonObject, FEEFINE, "duration"),
             getNestedStringProperty(jsonObject, FEEFINE, "intervalId")));
-  }
-
-  public JsonObject getRepresentation() {
-    return representation;
   }
 
   public ClosingType getLoanClosingType() {

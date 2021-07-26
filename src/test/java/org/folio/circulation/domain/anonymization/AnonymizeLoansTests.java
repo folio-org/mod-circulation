@@ -46,7 +46,6 @@ class AnonymizeLoansTests {
       final var segregatedLoans = checker.segregateLoans(List.of(openLoan()));
 
       assertThat(segregatedLoans.size(), is(1));
-      // Partition for loans that should not be annonymized immediately
       assertThat(segregatedLoans.get("anonymizeImmediately").size(), is(1));
     }
 
@@ -55,7 +54,6 @@ class AnonymizeLoansTests {
       final var segregatedLoans = checker.segregateLoans(List.of(closedLoanWithOpenFee()));
 
       assertThat(segregatedLoans.size(), is(1));
-      // Partition for loans that should be annonymized
       assertThat(segregatedLoans.get("anonymizeImmediately").size(), is(1));
     }
 
@@ -64,7 +62,6 @@ class AnonymizeLoansTests {
       final var segregatedLoans = checker.segregateLoans(List.of(openLoanWithOpenFee()));
 
       assertThat(segregatedLoans.size(), is(1));
-      // Partition for loans that should not be annonymized immediately
       assertThat(segregatedLoans.get("anonymizeImmediately").size(), is(1));
     }
 
@@ -72,8 +69,8 @@ class AnonymizeLoansTests {
       // Fee fines closing type is deliberately different to make sure that it is ignored when
       // loans with fees should not be treated differently
       return new AnonymizationCheckersService(
-        new LoanAnonymizationConfiguration(null, ClosingType.IMMEDIATELY,
-          ClosingType.NEVER, false, null, null));
+        new LoanAnonymizationConfiguration(ClosingType.IMMEDIATELY, ClosingType.NEVER,
+          false, null, null));
     }
   }
 
@@ -86,7 +83,6 @@ class AnonymizeLoansTests {
       final var segregatedLoans = checker.segregateLoans(List.of(closedLoanWithClosedFee()));
 
       assertThat(segregatedLoans.size(), is(1));
-      // Partition for loans that should be annonymized
       assertThat(segregatedLoans.get("_").size(), is(1));
     }
 
@@ -95,7 +91,6 @@ class AnonymizeLoansTests {
       final var segregatedLoans = checker.segregateLoans(List.of(closedLoanWithOpenFee()));
 
       assertThat(segregatedLoans.size(), is(1));
-      // Partition for loans that should be annonymized
       assertThat(segregatedLoans.get("feesAndFinesOpen").size(), is(1));
     }
 
@@ -104,7 +99,6 @@ class AnonymizeLoansTests {
       final var segregatedLoans = checker.segregateLoans(List.of(openLoanWithOpenFee()));
 
       assertThat(segregatedLoans.size(), is(1));
-      // Partition for loans that should not be annonymized immediately
       assertThat(segregatedLoans.get("feesAndFinesOpen").size(), is(1));
     }
 
@@ -112,8 +106,8 @@ class AnonymizeLoansTests {
       // General closing type is deliberately different to make sure that the
       // loans with fees closing type is definitely used
       return new AnonymizationCheckersService(
-        new LoanAnonymizationConfiguration(null, ClosingType.NEVER,
-          ClosingType.IMMEDIATELY, true, null, null));
+        new LoanAnonymizationConfiguration(ClosingType.NEVER, ClosingType.IMMEDIATELY,
+          true, null, null));
     }
   }
 
@@ -126,7 +120,6 @@ class AnonymizeLoansTests {
       final var segregatedLoans = checker.segregateLoans(List.of(closedLoan()));
 
       assertThat(segregatedLoans.size(), is(1));
-      // Partition for loans that should be annonymized
       assertThat(segregatedLoans.get("neverAnonymizeLoans").size(), is(1));
     }
 
@@ -135,43 +128,101 @@ class AnonymizeLoansTests {
       final var segregatedLoans = checker.segregateLoans(List.of(openLoan()));
 
       assertThat(segregatedLoans.size(), is(1));
-      // Partition for loans that should not be annonymized immediately
       assertThat(segregatedLoans.get("neverAnonymizeLoans").size(), is(1));
     }
 
     @Test
     public void doNotAnonymizeClosedLoanWithClosedFees() {
-      final var segregatedLoans = checker.segregateLoans(List.of(closedLoanWithClosedFee()));
+      final var segregatedLoans = checker.segregateLoans(
+        List.of(closedLoanWithClosedFee()));
 
       assertThat(segregatedLoans.size(), is(1));
-      // Partition for loans that should be annonymized
-      assertThat(segregatedLoans.get("neverAnonymizeLoansWithFeesAndFines").size(), is(1));
+      assertThat(segregatedLoans.get("neverAnonymizeLoansWithFeesAndFines").size(),
+        is(1));
     }
 
     @Test
     public void doNotAnonymizeClosedLoanWithOpenFees() {
-      final var segregatedLoans = checker.segregateLoans(List.of(closedLoanWithOpenFee()));
+      final var segregatedLoans = checker.segregateLoans(
+        List.of(closedLoanWithOpenFee()));
 
       assertThat(segregatedLoans.size(), is(1));
-      // Partition for loans that should be annonymized
-      assertThat(segregatedLoans.get("neverAnonymizeLoansWithFeesAndFines").size(), is(1));
+      assertThat(segregatedLoans.get("neverAnonymizeLoansWithFeesAndFines").size(),
+        is(1));
     }
 
     @Test
     public void doNotAnonymizeOpenLoanWithOpenFees() {
-      final var segregatedLoans = checker.segregateLoans(List.of(openLoanWithOpenFee()));
+      final var segregatedLoans = checker.segregateLoans(
+        List.of(openLoanWithOpenFee()));
 
       assertThat(segregatedLoans.size(), is(1));
-      // Partition for loans that should not be annonymized immediately
-      assertThat(segregatedLoans.get("neverAnonymizeLoansWithFeesAndFines").size(), is(1));
+      assertThat(segregatedLoans.get("neverAnonymizeLoansWithFeesAndFines").size(),
+        is(1));
     }
 
     private AnonymizationCheckersService checker() {
       // Fee fines closing type is deliberately different to make sure that it is ignored when
       // loans with fees should not be treated differently
       return new AnonymizationCheckersService(
-        new LoanAnonymizationConfiguration(null, ClosingType.NEVER,
-          ClosingType.NEVER, true, null, null));
+        new LoanAnonymizationConfiguration(ClosingType.NEVER, ClosingType.NEVER,
+          true, null, null));
+    }
+  }
+
+  @Nested
+  class WhenManuallyAnonymizingLoans {
+    private final AnonymizationCheckersService checker = checker();
+
+    @Test
+    public void anonymizeLoanClosedWithNoFees() {
+      final var segregatedLoans = checker.segregateLoans(List.of(closedLoan()));
+
+      assertThat(segregatedLoans.size(), is(1));
+      assertThat(segregatedLoans.get("_").size(), is(1));
+    }
+
+    @Test
+    public void doNotAnonymizeOpenLoanWithNoFees() {
+      final var segregatedLoans = checker.segregateLoans(List.of(openLoan()));
+
+      assertThat(segregatedLoans.size(), is(1));
+      assertThat(segregatedLoans.get("_").size(), is(1));
+    }
+
+    @Test
+    public void doNotAnonymizeClosedLoanWithClosedFees() {
+      final var segregatedLoans = checker.segregateLoans(
+        List.of(closedLoanWithClosedFee()));
+
+      assertThat(segregatedLoans.size(), is(1));
+      assertThat(segregatedLoans.get("haveAssociatedFeesAndFines").size(),
+        is(1));
+    }
+
+    @Test
+    public void doNotAnonymizeClosedLoanWithOpenFees() {
+      final var segregatedLoans = checker.segregateLoans(
+        List.of(closedLoanWithOpenFee()));
+
+      assertThat(segregatedLoans.size(), is(1));
+      assertThat(segregatedLoans.get("haveAssociatedFeesAndFines").size(),
+        is(1));
+    }
+
+    @Test
+    public void doNotAnonymizeOpenLoanWithOpenFees() {
+      final var segregatedLoans = checker.segregateLoans(
+        List.of(openLoanWithOpenFee()));
+
+      assertThat(segregatedLoans.size(), is(1));
+      assertThat(segregatedLoans.get("haveAssociatedFeesAndFines").size(),
+        is(1));
+    }
+
+    private AnonymizationCheckersService checker() {
+      // Manual anonymization is triggered by providing no config
+      return new AnonymizationCheckersService(null);
     }
   }
 
