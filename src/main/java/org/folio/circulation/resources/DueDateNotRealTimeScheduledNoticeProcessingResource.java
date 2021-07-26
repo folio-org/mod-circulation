@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.folio.circulation.domain.MultipleRecords;
-import org.folio.circulation.domain.notice.schedule.DueDateNotRealTimeScheduledNoticeHandler;
+import org.folio.circulation.domain.notice.schedule.GroupedLoanScheduledNoticeHandler;
 import org.folio.circulation.domain.notice.schedule.ScheduledNotice;
 import org.folio.circulation.domain.notice.schedule.ScheduledNoticeGroupDefinition;
 import org.folio.circulation.domain.notice.schedule.TriggeringEvent;
@@ -75,9 +75,6 @@ public class DueDateNotRealTimeScheduledNoticeProcessingResource extends Schedul
   protected CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> handleNotices(
     Clients clients, MultipleRecords<ScheduledNotice> notices) {
 
-    final DueDateNotRealTimeScheduledNoticeHandler dueDateNoticeHandler =
-      DueDateNotRealTimeScheduledNoticeHandler.using(clients, DateTime.now(DateTimeZone.UTC));
-
     Map<ScheduledNoticeGroupDefinition, List<ScheduledNotice>> orderedGroups =
       notices.getRecords().stream().collect(Collectors.groupingBy(
         ScheduledNoticeGroupDefinition::from,
@@ -97,7 +94,8 @@ public class DueDateNotRealTimeScheduledNoticeProcessingResource extends Schedul
       .map(Map.Entry::getValue)
       .collect(Collectors.toList());
 
-    return dueDateNoticeHandler.handleNotices(noticeGroups)
+    return new GroupedLoanScheduledNoticeHandler(clients, DateTime.now(DateTimeZone.UTC))
+      .handleNotices(noticeGroups)
       .thenApply(mapResult(v -> notices));
   }
 }

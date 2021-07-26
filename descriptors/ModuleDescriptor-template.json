@@ -724,7 +724,8 @@
             "configuration.entries.collection.get",
             "pubsub.publish.post",
             "circulation-storage.circulation-rules.get",
-            "circulation.rules.notice-policy.get"
+            "circulation.rules.notice-policy.get",
+            "templates.item.get"
           ],
           "unit": "minute",
           "delay": "2"
@@ -771,7 +772,8 @@
             "inventory-storage.loan-types.collection.get",
             "users.item.get",
             "users.collection.get",
-            "pubsub.publish.post"
+            "pubsub.publish.post",
+            "templates.item.get"
           ],
           "unit": "minute",
           "delay": "2"

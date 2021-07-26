@@ -71,6 +71,14 @@ public abstract class CirculationPolicyRepository<T> {
       .thenApply(result -> result.next(json -> mapToPolicy(json, conditionsEntity)));
   }
 
+  public CompletableFuture<Result<CirculationRuleMatch>> lookupPolicyId(Loan loan) {
+    return lookupPolicyId(loan.getItem(), loan.getUser());
+  }
+
+  public CompletableFuture<Result<CirculationRuleMatch>> lookupPolicyId(Request request) {
+    return lookupPolicyId(request.getItem(), request.getRequester());
+  }
+
   public CompletableFuture<Result<CirculationRuleMatch>> lookupPolicyId(Item item, User user) {
     if (item == null){
       return completedFuture(failedDueToServerError(

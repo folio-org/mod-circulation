@@ -282,8 +282,7 @@ class CheckInProcessAdapter {
       .withNoticeContext(createRequestNoticeContext(request))
       .build();
 
-    return patronNoticeService.acceptNoticeEvent(noticeEvent,
-      NoticeLogContext.from(item, user, request));
+    return patronNoticeService.acceptNoticeEvent(noticeEvent, NoticeLogContext.from(request));
   }
 
   CheckInContext setInHouseUse(CheckInContext checkInContext) {

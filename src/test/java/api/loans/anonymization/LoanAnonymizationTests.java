@@ -12,6 +12,8 @@ import org.folio.circulation.domain.representations.anonymization.LoanAnonymizat
 import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
+import org.junit.After;
+import org.junit.Before;
 
 import api.support.APITests;
 import api.support.builders.AccountBuilder;
@@ -27,19 +29,15 @@ abstract class LoanAnonymizationTests extends APITests {
   protected IndividualResource user;
   protected IndividualResource servicePoint;
 
-  @Override
-  public void beforeEach() throws InterruptedException {
-    super.beforeEach();
-
+  @Before
+  public void beforeEach() {
     item1 = itemsFixture.basedUponSmallAngryPlanet();
     user = usersFixture.charlotte();
     servicePoint = servicePointsFixture.cd1();
   }
 
-  @Override
+  @After
   public void afterEach() {
-    super.afterEach();
-
     mockClockManagerToReturnDefaultDateTime();
     FakePubSub.clearPublishedEvents();
   }

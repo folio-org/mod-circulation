@@ -98,6 +98,7 @@ import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RenewBlockOverrides;
 import api.support.builders.RenewByBarcodeRequestBuilder;
 import api.support.builders.RequestBuilder;
+import api.support.fakes.FakeModNotify;
 import api.support.fakes.FakePubSub;
 import api.support.fixtures.ConfigurationExample;
 import api.support.fixtures.ItemExamples;
@@ -1341,7 +1342,7 @@ public abstract class RenewalAPITests extends APITests {
     IndividualResource loanAfterRenewal = loansFixture.renewLoan(smallAngryPlanet, steve);
 
     final var sentNotices = waitAtMost(1, TimeUnit.SECONDS)
-      .until(patronNoticesClient::getAll, hasSize(1));
+      .until(FakeModNotify::getSentPatronNotices, hasSize(1));
 
     int expectedRenewalLimit = 3;
     int expectedRenewalsRemaining = 2;
