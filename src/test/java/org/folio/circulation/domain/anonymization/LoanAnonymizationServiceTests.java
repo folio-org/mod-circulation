@@ -28,6 +28,7 @@ import org.folio.circulation.domain.anonymization.service.LoansForTenantFinder;
 import org.folio.circulation.infrastructure.storage.loans.AnonymizeStorageLoansRepository;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.results.Result;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -135,7 +136,8 @@ class LoanAnonymizationServiceTests {
   }
 
   private LoanAnonymizationService createService(LoanAnonymizationConfiguration config) {
-    final var anonymizationCheckersService = new AnonymizationCheckersService(config);
+    final var anonymizationCheckersService = new AnonymizationCheckersService(config,
+      ClockUtil::getDateTime);
 
     return new DefaultLoanAnonymizationService(anonymizationCheckersService,
       anonymizeStorageLoansRepository, eventPublisher);

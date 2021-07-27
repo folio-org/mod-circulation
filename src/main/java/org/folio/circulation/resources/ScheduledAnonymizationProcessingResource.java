@@ -21,6 +21,7 @@ import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.server.JsonHttpResponse;
 import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.CommonFailures;
+import org.folio.circulation.support.utils.ClockUtil;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.ext.web.Router;
@@ -62,7 +63,8 @@ public class ScheduledAnonymizationProcessingResource extends Resource {
 
     safelyInitialise(configurationRepository::loanHistoryConfiguration)
       .thenApply(r -> r.map(config -> new DefaultLoanAnonymizationService(
-          new AnonymizationCheckersService(config), anonymizeStorageLoansRepository, eventPublisher)))
+          new AnonymizationCheckersService(config, ClockUtil::getDateTime),
+          anonymizeStorageLoansRepository, eventPublisher)))
       .thenCompose(r -> r.after(service -> service.anonymizeLoans(loansFinder::findLoansToAnonymize)))
       .thenApply(AnonymizeLoansRepresentation::from)
       .thenApply(r -> r.map(JsonHttpResponse::ok))

@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.folio.circulation.Clock;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.anonymization.checkers.AnonymizationChecker;
 import org.folio.circulation.domain.anonymization.checkers.AnonymizeLoansImmediatelyChecker;
@@ -19,16 +20,20 @@ import org.folio.circulation.domain.anonymization.checkers.NeverAnonymizeLoansWi
 import org.folio.circulation.domain.anonymization.checkers.NoAssociatedFeesAndFinesChecker;
 import org.folio.circulation.domain.anonymization.config.ClosingType;
 import org.folio.circulation.domain.anonymization.config.LoanAnonymizationConfiguration;
+import org.folio.circulation.support.utils.ClockUtil;
 
 public class AnonymizationCheckersService {
   private final LoanAnonymizationConfiguration config;
+  private final Clock clock;
 
   private final AnonymizationChecker manualAnonymizationChecker;
   private AnonymizationChecker feesAndFinesCheckersFromLoanHistory;
   private AnonymizationChecker closedLoansCheckersFromLoanHistory;
 
-  public AnonymizationCheckersService(LoanAnonymizationConfiguration config) {
+  public AnonymizationCheckersService(LoanAnonymizationConfiguration config, Clock clock) {
     this.config = config;
+    this.clock = clock;
+
     if ( config != null) {
       feesAndFinesCheckersFromLoanHistory = getFeesAndFinesCheckersFromLoanHistory();
       closedLoansCheckersFromLoanHistory = getClosedLoansCheckersFromLoanHistory();
@@ -37,7 +42,7 @@ public class AnonymizationCheckersService {
   }
 
   public AnonymizationCheckersService() {
-    this(null);
+    this(null, ClockUtil::getDateTime);
   }
 
   public boolean neverAnonymizeLoans() {
@@ -87,7 +92,7 @@ public class AnonymizationCheckersService {
         checker = new AnonymizeLoansImmediatelyChecker();
         break;
       case INTERVAL:
-        checker = new LoanClosePeriodChecker(config.getLoanClosePeriod());
+        checker = new LoanClosePeriodChecker(config.getLoanClosePeriod(), clock);
         break;
       case UNKNOWN:
       case NEVER:
@@ -105,7 +110,8 @@ public class AnonymizationCheckersService {
         checker = new AnonymizeLoansWithFeeFinesImmediatelyChecker();
         break;
       case INTERVAL:
-        checker = new FeesAndFinesClosePeriodChecker(config.getFeeFineClosePeriod());
+        checker = new FeesAndFinesClosePeriodChecker(
+          config.getFeeFineClosePeriod(), clock);
         break;
       case UNKNOWN:
       case NEVER:

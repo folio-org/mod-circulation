@@ -13,6 +13,7 @@ import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.anonymization.config.ClosingType;
 import org.folio.circulation.domain.anonymization.config.LoanAnonymizationConfiguration;
 import org.folio.circulation.domain.anonymization.service.AnonymizationCheckersService;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -70,7 +71,8 @@ class AnonymizeLoansTests {
       // loans with fees should not be treated differently
       return new AnonymizationCheckersService(
         new LoanAnonymizationConfiguration(ClosingType.IMMEDIATELY, ClosingType.NEVER,
-          false, null, null));
+          false, null, null),
+        ClockUtil::getDateTime);
     }
   }
 
@@ -107,7 +109,7 @@ class AnonymizeLoansTests {
       // loans with fees closing type is definitely used
       return new AnonymizationCheckersService(
         new LoanAnonymizationConfiguration(ClosingType.NEVER, ClosingType.IMMEDIATELY,
-          true, null, null));
+          true, null, null), ClockUtil::getDateTime);
     }
   }
 
@@ -166,7 +168,7 @@ class AnonymizeLoansTests {
       // loans with fees should not be treated differently
       return new AnonymizationCheckersService(
         new LoanAnonymizationConfiguration(ClosingType.NEVER, ClosingType.NEVER,
-          true, null, null));
+          true, null, null), ClockUtil::getDateTime);
     }
   }
 
@@ -222,7 +224,7 @@ class AnonymizeLoansTests {
 
     private AnonymizationCheckersService checker() {
       // Manual anonymization is triggered by providing no config
-      return new AnonymizationCheckersService(null);
+      return new AnonymizationCheckersService(null, ClockUtil::getDateTime);
     }
   }
 
