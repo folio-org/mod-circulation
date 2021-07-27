@@ -43,7 +43,11 @@ public class FeesAndFinesClosePeriodChecker implements AnonymizationChecker {
   }
 
   boolean latestAccountClosedEarlierThanPeriod(DateTime lastAccountClosed) {
-    return lastAccountClosed != null && ClockUtil.getDateTime()
+    if (lastAccountClosed == null) {
+      return false;
+    }
+
+    return ClockUtil.getDateTime()
       .isAfter(lastAccountClosed.plus(period.timePeriod()));
   }
 }
