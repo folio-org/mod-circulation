@@ -63,7 +63,7 @@ public class ScheduledAnonymizationProcessingResource extends Resource {
 
     safelyInitialise(configurationRepository::loanHistoryConfiguration)
       .thenApply(r -> r.map(config -> new DefaultLoanAnonymizationService(
-          new AnonymizationCheckersService(config, ClockUtil::getDateTime),
+          new AnonymizationCheckersService(config, ClockUtil::getZonedDateTime),
           anonymizeStorageLoansRepository, eventPublisher)))
       .thenCompose(r -> r.after(service -> service.anonymizeLoans(loansFinder::findLoansToAnonymize)))
       .thenApply(AnonymizeLoansRepresentation::from)

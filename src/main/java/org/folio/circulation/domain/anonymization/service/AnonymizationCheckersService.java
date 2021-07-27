@@ -42,7 +42,7 @@ public class AnonymizationCheckersService {
   }
 
   public AnonymizationCheckersService() {
-    this(null, ClockUtil::getDateTime);
+    this(null, ClockUtil::getZonedDateTime);
   }
 
   public boolean neverAnonymizeLoans() {

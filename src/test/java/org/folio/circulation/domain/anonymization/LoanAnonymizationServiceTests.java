@@ -137,7 +137,7 @@ class LoanAnonymizationServiceTests {
 
   private LoanAnonymizationService createService(LoanAnonymizationConfiguration config) {
     final var anonymizationCheckersService = new AnonymizationCheckersService(config,
-      ClockUtil::getDateTime);
+      ClockUtil::getZonedDateTime);
 
     return new DefaultLoanAnonymizationService(anonymizationCheckersService,
       anonymizeStorageLoansRepository, eventPublisher);

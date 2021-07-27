@@ -1,9 +1,10 @@
 package org.folio.circulation.domain.anonymization.checkers;
 
+import java.time.ZonedDateTime;
+
 import org.folio.circulation.Clock;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.policy.Period;
-import org.joda.time.DateTime;
 
 public class LoanClosePeriodChecker implements AnonymizationChecker {
   private final Period period;
@@ -24,11 +25,11 @@ public class LoanClosePeriodChecker implements AnonymizationChecker {
     return "loanClosedPeriodNotPassed";
   }
 
-  boolean itemReturnedEarlierThanPeriod(DateTime startDate) {
-    if (startDate == null) {
+  boolean itemReturnedEarlierThanPeriod(ZonedDateTime returnDate) {
+    if (returnDate == null) {
       return false;
     }
 
-    return clock.now().isAfter(startDate.plus(period.timePeriod()));
+    return clock.now().isAfter(period.plusDate(returnDate));
   }
 }

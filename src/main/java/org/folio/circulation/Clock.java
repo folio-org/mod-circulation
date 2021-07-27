@@ -1,8 +1,8 @@
 package org.folio.circulation;
 
-import org.joda.time.DateTime;
+import java.time.ZonedDateTime;
 
 @FunctionalInterface
 public interface Clock {
-  DateTime now();
+  ZonedDateTime now();
 }

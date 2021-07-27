@@ -29,6 +29,11 @@ public class FeesAndFinesClosePeriodChecker implements AnonymizationChecker {
       .orElse(false);
   }
 
+  @Override
+  public String getReason() {
+    return "intervalAfterFeesAndFinesCloseNotPassed";
+  }
+
   private Optional<ZonedDateTime> findLatestAccountCloseDate(Loan loan) {
     return loan.getAccounts()
       .stream()
@@ -38,16 +43,7 @@ public class FeesAndFinesClosePeriodChecker implements AnonymizationChecker {
       .max(DateTimeUtil::compareToMillis);
   }
 
-  @Override
-  public String getReason() {
-    return "intervalAfterFeesAndFinesCloseNotPassed";
-  }
-
-  boolean latestAccountClosedEarlierThanPeriod(DateTime lastAccountClosed) {
-    if (lastAccountClosed == null) {
-      return false;
-    }
-
-    return clock.now().isAfter(lastAccountClosed.plus(period.timePeriod()));
+  boolean latestAccountClosedEarlierThanPeriod(ZonedDateTime lastAccountClosed) {
+    return clock.now().isAfter(period.plusDate(lastAccountClosed));
   }
 }
