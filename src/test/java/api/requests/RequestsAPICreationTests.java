@@ -1998,7 +1998,7 @@ RequestsAPICreationTests extends APITests {
   @Test
   public void shouldOverrideManualPatronBlockWhenUserHasPermissions() {
     UUID userId = usersFixture.jessica().getId();
-    userManualBlocksFixture.createManualPatronBlockForUser(userId);
+    userManualBlocksFixture.createRequestsManualPatronBlockForUser(userId);
     Response response = attemptCreateRequestThroughPatronBlockOverride(
       userId, HEADERS_WITH_ALL_OVERRIDE_PERMISSIONS);
     assertOverrideResponseSuccess(response);
@@ -2016,7 +2016,7 @@ RequestsAPICreationTests extends APITests {
   @Test
   public void shouldOverrideManualAndAutomatedPatronBlocksWhenUserHasPermissions() {
     UUID userId = usersFixture.jessica().getId();
-    userManualBlocksFixture.createManualPatronBlockForUser(userId);
+    userManualBlocksFixture.createRequestsManualPatronBlockForUser(userId);
     createAutomatedPatronBlockForUser(userId);
     Response response = attemptCreateRequestThroughPatronBlockOverride(
       userId, HEADERS_WITH_ALL_OVERRIDE_PERMISSIONS);
@@ -2043,7 +2043,7 @@ RequestsAPICreationTests extends APITests {
 
   private void shouldFailToOverridePatronBlockWithInsufficientPermissions(String... permissions) {
     UUID userId = usersFixture.jessica().getId();
-    userManualBlocksFixture.createManualPatronBlockForUser(userId);
+    userManualBlocksFixture.createRequestsManualPatronBlockForUser(userId);
     Response response = attemptCreateRequestThroughPatronBlockOverride(
       userId, buildOkapiHeadersWithPermissions(permissions));
 
@@ -2058,7 +2058,7 @@ RequestsAPICreationTests extends APITests {
   public void shouldFailToOverridePatronBlockWhenUserHasNoPermissionsAndNonOverridableErrorOccurs() {
     UserResource inactiveSteve = usersFixture.steve(UserBuilder::inactive);
     UUID userId = inactiveSteve.getId();
-    userManualBlocksFixture.createManualPatronBlockForUser(userId);
+    userManualBlocksFixture.createRequestsManualPatronBlockForUser(userId);
     Response response = attemptCreateRequestThroughPatronBlockOverride(
       userId, buildOkapiHeadersWithPermissions(CREATE_REQUEST_PERMISSION));
 
@@ -2076,7 +2076,7 @@ RequestsAPICreationTests extends APITests {
   @Test
   public void shouldFailToCreateRequestWhenBlockExistsAndUserHasPermissionsButOverrideIsNotRequested() {
     UUID userId = usersFixture.steve().getId();
-    userManualBlocksFixture.createManualPatronBlockForUser(userId);
+    userManualBlocksFixture.createRequestsManualPatronBlockForUser(userId);
     Response response = attemptCreateRequestThroughOverride(userId,
       HEADERS_WITH_ALL_OVERRIDE_PERMISSIONS, null);
 
@@ -2091,7 +2091,7 @@ RequestsAPICreationTests extends APITests {
   @Test
   public void shouldFailToCreateRequestWhenBlockExistsButUserHasNoPermissionsAndOverrideIsNotRequested() {
     UUID userId = usersFixture.steve().getId();
-    userManualBlocksFixture.createManualPatronBlockForUser(userId);
+    userManualBlocksFixture.createRequestsManualPatronBlockForUser(userId);
     Response response = attemptCreateRequestThroughOverride(userId,
       buildOkapiHeadersWithPermissions(CREATE_REQUEST_PERMISSION), null);
 
@@ -2106,7 +2106,7 @@ RequestsAPICreationTests extends APITests {
   @Test
   public void overrideResponseDoesNotContainDuplicateInsufficientOverridePermissionsErrors() {
     UUID userId = usersFixture.steve().getId();
-    userManualBlocksFixture.createManualPatronBlockForUser(userId);
+    userManualBlocksFixture.createRequestsManualPatronBlockForUser(userId);
     createAutomatedPatronBlockForUser(userId);
 
     Response response = attemptCreateRequestThroughPatronBlockOverride(

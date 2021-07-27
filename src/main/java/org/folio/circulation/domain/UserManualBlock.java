@@ -11,12 +11,17 @@ public class UserManualBlock {
   private final String desc;
   private final DateTime expirationDate;
   private final boolean requests;
+  private final boolean renewals;
+  private final boolean borrowing;
 
   private UserManualBlock(String desc, DateTime expirationDate,
-                          boolean requests) {
+    boolean requests, boolean renewals, boolean borrowing) {
+
     this.desc = desc;
     this.expirationDate = expirationDate;
     this.requests = requests;
+    this.renewals = renewals;
+    this.borrowing = borrowing;
   }
 
   public DateTime getExpirationDate() {
@@ -31,11 +36,21 @@ public class UserManualBlock {
     return requests;
   }
 
+  public boolean getRenewals() {
+    return renewals;
+  }
+
+  public boolean getBorrowing() {
+    return borrowing;
+  }
+
   public static UserManualBlock from(JsonObject representation) {
     return new UserManualBlock(
       getProperty(representation, "desc"),
       getDateTimeProperty(representation, "expirationDate"),
-      getBooleanProperty(representation, "requests")
-    );
+      getBooleanProperty(representation, "requests"),
+      getBooleanProperty(representation, "renewals"),
+      getBooleanProperty(representation, "borrowing")
+      );
   }
 }
