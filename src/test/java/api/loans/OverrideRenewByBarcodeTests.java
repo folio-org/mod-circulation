@@ -849,7 +849,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     final DateTime approximateRenewalDate = DateTime.now(UTC).plusWeeks(3);
     val result = ageToLostFixture.createAgedToLostLoan();
 
-    userManualBlocksFixture.createManualPatronBlockForUser(result.getUser().getId());
+    userManualBlocksFixture.createRenewalsManualPatronBlockForUser(result.getUser().getId());
     final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
       OVERRIDE_PATRON_BLOCK_PERMISSION, OVERRIDE_RENEWAL_PERMISSION);
 

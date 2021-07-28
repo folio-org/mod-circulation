@@ -4,9 +4,11 @@ import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQ
 import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
+import static org.folio.circulation.support.results.Result.ofAsync;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.LoanAndRelatedRecords;
@@ -39,37 +41,40 @@ public class UserManualBlocksValidator {
   public CompletableFuture<Result<RequestAndRelatedRecords>> refuseWhenUserIsBlocked(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
-    final User requester = Optional.ofNullable(requestAndRelatedRecords.getRequest())
-      .map(Request::getRequester).orElse(null);
-
-    if (requester != null) {
-      return failIfPatronIsBlocked(requester.getId(), "Patron blocked from requesting")
-        .thenApply(r -> r.map(records -> requestAndRelatedRecords));
-    }
-    return CompletableFuture.completedFuture(Result.succeeded(requestAndRelatedRecords));
+    return Optional.ofNullable(requestAndRelatedRecords.getRequest())
+      .map(Request::getRequester)
+      .map(user -> failIfPatronIsBlocked(userManualBlock -> isBlockedAction(
+        userManualBlock.getExpirationDate(), userManualBlock.getRequests()), user.getId(),
+        "Patron blocked from requesting")
+        .thenApply(r -> r.map(records -> requestAndRelatedRecords)))
+      .orElseGet(() -> ofAsync(() -> requestAndRelatedRecords));
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> refuseWhenUserIsBlocked(
     LoanAndRelatedRecords loanAndRelatedRecords) {
 
-    return failIfPatronIsBlocked(loanAndRelatedRecords.getUserId(), "Patron blocked from borrowing")
+    return failIfPatronIsBlocked(userManualBlock -> isBlockedAction(
+        userManualBlock.getExpirationDate(), userManualBlock.getBorrowing()),
+        loanAndRelatedRecords.getUserId(), "Patron blocked from borrowing")
       .thenApply(r -> r.map(records -> loanAndRelatedRecords));
   }
 
   public CompletableFuture<Result<RenewalContext>> refuseWhenUserIsBlocked(
     RenewalContext renewalContext) {
 
-    return failIfPatronIsBlocked(renewalContext.getLoan().getUserId(), "Patron blocked from renewing")
+    return failIfPatronIsBlocked(userManualBlock -> isBlockedAction(
+        userManualBlock.getExpirationDate(), userManualBlock.getRenewals()),
+        renewalContext.getLoan().getUserId(), "Patron blocked from renewing")
       .thenApply(r -> r.map(records -> renewalContext));
   }
 
   private CompletableFuture<Result<MultipleRecords<UserManualBlock>>> failIfPatronIsBlocked(
-    String userId, String message) {
+    Predicate<UserManualBlock> isUserBlocked, String userId, String message) {
 
     return userManualBlocksFetcher.findByQuery(exactMatch("userId", userId))
       .thenApply(userManualBlockResult -> userManualBlockResult
         .failWhen(userManualBlockMultipleRecords -> of(() ->
-            isUserBlockedManually(userManualBlockMultipleRecords)),
+            isUserBlockedManually(userManualBlockMultipleRecords, isUserBlocked)),
           userManualBlocks -> createUserBlockedValidationError(userManualBlocks, message)));
   }
 
@@ -82,14 +87,15 @@ public class UserManualBlocksValidator {
     return singleValidationError(new ValidationError(message, "reason", reason));
   }
 
-  private boolean isUserBlockedManually(MultipleRecords<UserManualBlock> userManualBlockMultipleRecords) {
+  private boolean isUserBlockedManually(MultipleRecords<UserManualBlock> userManualBlockMultipleRecords,
+    Predicate<UserManualBlock> isUserBlocked) {
+
     return userManualBlockMultipleRecords.getRecords().stream()
-        .anyMatch(userManualBlock -> isBlockedToCreateRequests(
-          userManualBlock.getExpirationDate(), userManualBlock.getRequests()));
+        .anyMatch(isUserBlocked);
   }
 
-  private boolean isBlockedToCreateRequests(DateTime expirationDate, boolean isRequestingBlocked) {
+  private boolean isBlockedAction(DateTime expirationDate, boolean isBlocked) {
     final DateTime now = ClockManager.getClockManager().getDateTime();
-    return isRequestingBlocked && (expirationDate == null || expirationDate.isAfter(now));
+    return isBlocked && (expirationDate == null || expirationDate.isAfter(now));
   }
 }

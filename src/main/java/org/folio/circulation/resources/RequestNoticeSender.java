@@ -97,15 +97,15 @@ public class RequestNoticeSender {
     Loan loan = request.getLoan();
     if (request.getRequestType() == RequestType.RECALL && loan != null) {
       sendNoticeOnItemRecalledEvent(loan);
-      sendLogEvent(requester, loan);
+      sendLogEvent(loan);
     }
     return Result.succeeded(relatedRecords);
   }
 
-  private void sendLogEvent(User user, Loan loan) {
+  private void sendLogEvent(Loan loan) {
     runAsync(() -> loanRepository.getById(loan.getId())
       .thenAccept(existingLoan -> existingLoan.map(l -> loan.setPreviousDueDate(l.getDueDate())))
-      .thenApply(vVoid -> eventPublisher.publishRecallRequestedEvent(loan.copy().withUser(user))));
+      .thenApply(vVoid -> eventPublisher.publishRecallRequestedEvent(loan)));
   }
 
   public Result<RequestAndRelatedRecords> sendNoticeOnRequestMoved(
@@ -116,7 +116,7 @@ public class RequestNoticeSender {
     Loan loan = request.getLoan();
     if (request.getRequestType() == RequestType.RECALL && loan != null) {
       sendNoticeOnItemRecalledEvent(loan);
-      sendLogEvent(request.getRequester(), loan);
+      sendLogEvent(loan);
     }
     return Result.succeeded(relatedRecords);
   }
