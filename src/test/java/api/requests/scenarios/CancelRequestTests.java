@@ -1,43 +1,34 @@
 package api.requests.scenarios;
 
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
-import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfPublishedEvents;
 import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfSentNotices;
 import static java.util.Arrays.asList;
 import static org.folio.circulation.domain.RequestStatus.CLOSED_CANCELLED;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE_ERROR;
-import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.joda.time.DateTimeZone.UTC;
 
 import java.time.LocalDate;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 
 import org.folio.circulation.domain.MultipleRecords;
-
-import api.support.builders.NoticeConfigurationBuilder;
-import api.support.builders.NoticePolicyBuilder;
-import api.support.fakes.FakeModNotify;
-import api.support.fixtures.TemplateContextMatchers;
-import api.support.http.IndividualResource;
-
-import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
 
 import api.support.APITests;
 import api.support.MultipleJsonRecords;
+import api.support.builders.NoticeConfigurationBuilder;
+import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
+import api.support.fakes.FakeModNotify;
+import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 
@@ -276,61 +267,6 @@ public class CancelRequestTests extends APITests {
     verifyNumberOfSentNotices(0);
     verifyNumberOfPublishedEvents(NOTICE, 0);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
-  }
-
-  @Test
-  public void patronNoticeIsSentWhenConfiguredInPatronNoticePolicy() {
-    UUID requestCancelledTemplateId = UUID.randomUUID();
-
-    NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
-      .withName("test policy")
-      .withLoanNotices(Collections.singletonList(new NoticeConfigurationBuilder()
-        .withTemplateId(requestCancelledTemplateId)
-        .withEventType("Request cancellation")
-        .create()));
-
-    useFallbackPolicies(
-      loanPoliciesFixture.canCirculateRolling().getId(),
-      requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.create(noticePolicy).getId(),
-      overdueFinePoliciesFixture.facultyStandard().getId(),
-      lostItemFeePoliciesFixture.facultyStandard().getId());
-
-    UUID id = UUID.randomUUID();
-    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
-    ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
-    IndividualResource requester = usersFixture.steve();
-    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
-    IndividualResource request = requestsFixture.place(new RequestBuilder()
-      .withId(id)
-      .open()
-      .page()
-      .forItem(item)
-      .by(requester)
-      .withRequestDate(requestDate)
-      .fulfilToHoldShelf()
-      .withRequestExpiration(LocalDate.of(2017, 7, 30))
-      .withHoldShelfExpiration(LocalDate.of(2017, 8, 31))
-      .withPickupServicePointId(pickupServicePointId)
-      .withTags(new RequestBuilder.Tags(asList("new", "important"))));
-
-    verifyNumberOfSentNotices(0);
-    verifyNumberOfPublishedEvents(NOTICE, 0);
-    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
-
-    requestsFixture.cancelRequest(request);
-
-    Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
-    noticeContextMatchers.putAll(TemplateContextMatchers.getUserContextMatchers(requester));
-    noticeContextMatchers.putAll(TemplateContextMatchers.getItemContextMatchers(item, true));
-    noticeContextMatchers.putAll(TemplateContextMatchers.getRequestContextMatchers(request));
-
-    assertThat(FakeModNotify.getSentPatronNotices(), hasItems(
-      hasEmailNoticeProperties(requester.getId(), requestCancelledTemplateId, noticeContextMatchers)));
-
-    verifyNumberOfSentNotices(1);
-    verifyNumberOfPublishedEvents(NOTICE, 1);
-    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 
   @Test
