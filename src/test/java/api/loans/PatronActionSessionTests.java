@@ -1,7 +1,5 @@
 package api.loans;
 
-import static api.support.Wait.waitAtLeast;
-import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.fixtures.TemplateContextMatchers.getLoanPolicyContextMatchersForUnlimitedRenewals;
 import static api.support.fixtures.TemplateContextMatchers.getMultipleLoansContextMatcher;
 import static api.support.matchers.JsonObjectMatcher.toStringMatcher;
@@ -9,27 +7,25 @@ import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.awaitility.Awaitility.waitAtMost;
+import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfExistingActionSessions;
+import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfPublishedEvents;
+import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfSentNotices;
 import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.ACTION_TYPE;
 import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.LOAN_ID;
 import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.PATRON_ID;
+import static org.folio.circulation.domain.notice.session.PatronActionType.CHECK_IN;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
+import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE_ERROR;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasSize;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
-import api.support.fakes.FakeModNotify;
-import api.support.http.UserResource;
 import org.apache.commons.lang3.tuple.Pair;
 import org.folio.circulation.support.http.client.Response;
 import org.junit.Before;
@@ -39,9 +35,10 @@ import api.support.APITests;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
-import api.support.fakes.FakePubSub;
+import api.support.fakes.FakeModNotify;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
+import api.support.http.UserResource;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -119,25 +116,23 @@ public class PatronActionSessionTests extends APITests {
     IndividualResource nodToJamesLoan = checkOutFixture.checkOutByBarcode(nod, james);
     IndividualResource interestingTimesToJamesLoan = checkOutFixture.checkOutByBarcode(interestingTimes, james);
 
-    assertThat(patronSessionRecordsClient.getAll(), hasSize(2));
+    verifyNumberOfExistingActionSessions(2);
 
     endPatronSessionClient.endCheckOutSession(james.getId());
 
     //Wait until session records are deleted
-    waitAtLeast(1, SECONDS)
-      .until(patronSessionRecordsClient::getAll, empty());
-
-    final var sentNotices = FakeModNotify.getSentPatronNotices();
-
-    assertThat(sentNotices, hasSize(1));
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
+    verifyNumberOfExistingActionSessions(0);
 
     final var multipleLoansToJamesContextMatcher = getMultipleLoansContextMatcher(james,
       Arrays.asList(Pair.of(nodToJamesLoan, nod), Pair.of(interestingTimesToJamesLoan, interestingTimes)),
       toStringMatcher(getLoanPolicyContextMatchersForUnlimitedRenewals()));
 
-    assertThat(sentNotices, hasItems(
+    assertThat(FakeModNotify.getSentPatronNotices(), hasItems(
       hasEmailNoticeProperties(james.getId(), CHECK_OUT_NOTICE_TEMPLATE_ID, multipleLoansToJamesContextMatcher)));
+
+    verifyNumberOfSentNotices(1);
+    verifyNumberOfPublishedEvents(NOTICE, 1);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 
   @Test
@@ -148,11 +143,10 @@ public class PatronActionSessionTests extends APITests {
     checkOutFixture.checkOutByBarcode(itemsFixture.basedUponNod(), patronForCheckOut);
     endPatronSessionClient.endCheckOutSession(otherPatron.getId());
 
-    waitAtMost(1, SECONDS)
-      .until(patronSessionRecordsClient::getAll, hasSize(1));
-
-    assertThat(FakeModNotify.getSentPatronNotices(), empty());
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), empty());
+    verifyNumberOfExistingActionSessions(1);
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 
   @Test
@@ -165,11 +159,10 @@ public class PatronActionSessionTests extends APITests {
     endPatronSessionClient.endCheckInSession(james.getId());
 
     //Waits to ensure check-out session records are not deleted and no notices are sent
-    waitAtMost(1, SECONDS)
-      .until(patronSessionRecordsClient::getAll, hasSize(1));
-
-    assertThat(FakeModNotify.getSentPatronNotices(), empty());
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), empty());
+    verifyNumberOfExistingActionSessions(1);
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 
   @Test
@@ -185,10 +178,9 @@ public class PatronActionSessionTests extends APITests {
         .forItem(nod)
         .at(checkInServicePointId));
 
-    assertThat(patronSessionRecordsClient.getAll(), hasSize(2));
+    verifyNumberOfExistingActionSessions(2);
 
-    List<JsonObject> checkInSessions = getCheckInSessions();
-    assertThat(checkInSessions, hasSize(1));
+    List<JsonObject> checkInSessions = verifyNumberOfExistingActionSessions(1, CHECK_IN);
 
     JsonObject checkInSession = checkInSessions.get(0);
     assertThat(checkInSession.getString(PATRON_ID), is(james.getId().toString()));
@@ -205,7 +197,7 @@ public class PatronActionSessionTests extends APITests {
         .forItem(nod)
         .at(checkInServicePointId));
 
-    assertThat(patronSessionRecordsClient.getAll(), empty());
+    verifyNumberOfExistingActionSessions(0);
   }
 
   @Test
@@ -220,20 +212,18 @@ public class PatronActionSessionTests extends APITests {
         .forItem(nod)
         .at(checkInServicePointId));
 
-    List<JsonObject> checkInSessions = getCheckInSessions();
-    assertThat(checkInSessions, hasSize(1));
-
-    assertThat(FakeModNotify.getSentPatronNotices(), empty());
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), empty());
+    verifyNumberOfExistingActionSessions(1, CHECK_IN);
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
 
     endPatronSessionClient.endCheckInSession(steve.getId());
 
     //Wait until session records are deleted
-    waitAtLeast(1, SECONDS)
-      .until(this::getCheckInSessions, empty());
-
-    assertThat(FakeModNotify.getSentPatronNotices(), hasSize(1));
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
+    verifyNumberOfExistingActionSessions(0, CHECK_IN);
+    verifyNumberOfSentNotices(1);
+    verifyNumberOfPublishedEvents(NOTICE, 1);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 
   @Test
@@ -242,16 +232,15 @@ public class PatronActionSessionTests extends APITests {
     ItemResource nod = itemsFixture.basedUponNod();
 
     checkOutFixture.checkOutByBarcode(nod, james);
-    List<JsonObject> sessions = patronSessionRecordsClient.getAll();
-    assertThat(sessions, hasSize(1));
+    List<JsonObject> sessions = verifyNumberOfExistingActionSessions(1);
     String loanId = sessions.get(0).getString(LOAN_ID);
     loansFixture.deleteLoan(UUID.fromString(loanId));
     endPatronSessionClient.endCheckOutSession(james.getId());
 
-    waitAtMost(1, SECONDS)
-      .until(patronSessionRecordsClient::getAll, empty());
-    assertThat(FakeModNotify.getSentPatronNotices(), hasSize(0));
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(FakeModNotify.getSentPatronNotices().size()));
+    verifyNumberOfExistingActionSessions(0);
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
   }
 
   @Test
@@ -260,17 +249,16 @@ public class PatronActionSessionTests extends APITests {
     ItemResource nod = itemsFixture.basedUponNod();
 
     checkOutFixture.checkOutByBarcode(nod, james);
-    List<JsonObject> sessions = patronSessionRecordsClient.getAll();
-    assertThat(sessions, hasSize(1));
+    List<JsonObject> sessions = verifyNumberOfExistingActionSessions(1);
     UUID loanId = UUID.fromString(sessions.get(0).getString(LOAN_ID));
     IndividualResource loan = loansFixture.getLoanById(loanId);
     itemsClient.delete(UUID.fromString(loan.getJson().getString("itemId")));
     endPatronSessionClient.endCheckOutSession(james.getId());
 
-    waitAtMost(1, SECONDS)
-      .until(patronSessionRecordsClient::getAll, empty());
-    assertThat(FakeModNotify.getSentPatronNotices(), hasSize(0));
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(FakeModNotify.getSentPatronNotices().size()));
+    verifyNumberOfExistingActionSessions(0);
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
   }
 
   @Test
@@ -279,15 +267,14 @@ public class PatronActionSessionTests extends APITests {
     ItemResource nod = itemsFixture.basedUponNod();
 
     checkOutFixture.checkOutByBarcode(nod, steve);
-    List<JsonObject> sessions = patronSessionRecordsClient.getAll();
-    assertThat(sessions, hasSize(1));
+    verifyNumberOfExistingActionSessions(1);
     usersFixture.remove(steve);
     endPatronSessionClient.endCheckOutSession(steve.getId());
 
-    waitAtMost(1, SECONDS)
-      .until(patronSessionRecordsClient::getAll, empty());
-    assertThat(FakeModNotify.getSentPatronNotices(), hasSize(0));
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(FakeModNotify.getSentPatronNotices().size()));
+    verifyNumberOfExistingActionSessions(0);
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
   }
 
   @Test
@@ -300,16 +287,15 @@ public class PatronActionSessionTests extends APITests {
     checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(nod)
       .at(checkInServicePointId));
-    List<JsonObject> sessions = getCheckInSessions();
-    assertThat(sessions, hasSize(1));
+    List<JsonObject> sessions = verifyNumberOfExistingActionSessions(1, CHECK_IN);
     String loanId = sessions.get(0).getString(LOAN_ID);
     loansFixture.deleteLoan(UUID.fromString(loanId));
     endPatronSessionClient.endCheckInSession(james.getId());
 
-    waitAtMost(1, SECONDS)
-      .until(this::getCheckInSessions, empty());
-    assertThat(FakeModNotify.getSentPatronNotices(), hasSize(0));
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(FakeModNotify.getSentPatronNotices().size()));
+    verifyNumberOfExistingActionSessions(0, CHECK_IN);
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
   }
 
   @Test
@@ -322,17 +308,16 @@ public class PatronActionSessionTests extends APITests {
     checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(nod)
       .at(checkInServicePointId));
-    List<JsonObject> sessions = getCheckInSessions();
-    assertThat(sessions, hasSize(1));
+    List<JsonObject> sessions = verifyNumberOfExistingActionSessions(1, CHECK_IN);
     UUID loanId = UUID.fromString(sessions.get(0).getString(LOAN_ID));
     IndividualResource loan = loansFixture.getLoanById(loanId);
     itemsClient.delete(UUID.fromString(loan.getJson().getString("itemId")));
     endPatronSessionClient.endCheckInSession(james.getId());
 
-    waitAtMost(1, SECONDS)
-      .until(this::getCheckInSessions, empty());
-    assertThat(FakeModNotify.getSentPatronNotices(), hasSize(0));
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(FakeModNotify.getSentPatronNotices().size()));
+    verifyNumberOfExistingActionSessions(0, CHECK_IN);
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
   }
 
   @Test
@@ -345,23 +330,65 @@ public class PatronActionSessionTests extends APITests {
     checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(nod)
       .at(checkInServicePointId));
-    List<JsonObject> sessions = getCheckInSessions();
-    assertThat(sessions, hasSize(1));
+    verifyNumberOfExistingActionSessions(1, CHECK_IN);
     usersFixture.remove(steve);
     endPatronSessionClient.endCheckInSession(steve.getId());
 
-    waitAtMost(1, SECONDS)
-      .until(this::getCheckInSessions, empty());
-    assertThat(FakeModNotify.getSentPatronNotices(), hasSize(0));
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(FakeModNotify.getSentPatronNotices().size()));
+    verifyNumberOfExistingActionSessions(0, CHECK_IN);
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
   }
 
-  private List<JsonObject> getCheckInSessions() {
-    Predicate<JsonObject> isCheckInSession = json -> json.getString(ACTION_TYPE).equals("Check-in");
+  @Test
+  public void checkInSessionShouldNotBeDeletedWhenPatronNoticeRequestFails() {
+    UserResource steve = usersFixture.steve();
+    ItemResource nod = itemsFixture.basedUponNod();
+    UUID checkInServicePointId = servicePointsFixture.cd1().getId();
 
-    return patronSessionRecordsClient.getAll().stream()
-      .filter(isCheckInSession)
-      .collect(Collectors.toList());
+    checkOutFixture.checkOutByBarcode(nod, steve);
+    checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+      .forItem(nod)
+      .at(checkInServicePointId));
+
+    verifyNumberOfExistingActionSessions(1, CHECK_IN);
+
+    FakeModNotify.setFailPatronNoticesWithBadRequest(true);
+
+    endPatronSessionClient.endCheckInSession(steve.getId());
+
+    verifyNumberOfExistingActionSessions(0, CHECK_IN);
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
+  }
+
+  @Test
+  public void noticeForOneCheckInSessionIsSentWhenOtherCheckInSessionForSameUserIsInvalid() {
+    UserResource steve = usersFixture.steve();
+    ItemResource nod = itemsFixture.basedUponNod();
+    ItemResource dunkirk = itemsFixture.basedUponDunkirk();
+    UUID checkInServicePointId = servicePointsFixture.cd1().getId();
+
+    checkOutFixture.checkOutByBarcode(nod, steve);
+    checkOutFixture.checkOutByBarcode(dunkirk, steve);
+
+    checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+      .forItem(nod)
+      .at(checkInServicePointId));
+
+    checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+      .forItem(dunkirk)
+      .at(checkInServicePointId));
+
+    verifyNumberOfExistingActionSessions(2, CHECK_IN);
+    itemsClient.delete(dunkirk);
+    endPatronSessionClient.endCheckInSession(steve.getId());
+
+    verifyNumberOfExistingActionSessions(0, CHECK_IN);
+    verifyNumberOfSentNotices(1);
+    verifyNumberOfPublishedEvents(NOTICE, 1);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
   }
 
   private JsonObject wrapInObjectWithArray(JsonObject body) {

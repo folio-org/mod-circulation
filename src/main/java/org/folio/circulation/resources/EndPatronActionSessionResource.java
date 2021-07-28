@@ -43,7 +43,7 @@ public class EndPatronActionSessionResource extends Resource {
         result.cause().writeTo(routingContext.response());
       } else {
         EndPatronSessionRequest endSessionRequest = result.value();
-        patronActionSessionService.endSession(
+        patronActionSessionService.endSessions(
           endSessionRequest.getPatronId(),
           endSessionRequest.getActionType());
 

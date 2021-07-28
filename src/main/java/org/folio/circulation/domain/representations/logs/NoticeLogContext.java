@@ -21,12 +21,14 @@ import lombok.With;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.User;
+import org.folio.circulation.domain.notice.PatronNotice;
 import org.folio.circulation.domain.notice.schedule.ScheduledNotice;
+import org.folio.circulation.domain.notice.session.PatronSessionRecord;
 import org.joda.time.DateTime;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Objects;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -43,6 +45,7 @@ public class NoticeLogContext {
   public static NoticeLogContext from(Loan loan) {
     return new NoticeLogContext()
       .withUser(loan.getUser())
+      .withUserId(loan.getUserId())
       .withItems(singletonList(NoticeLogContextItem.from(loan)));
   }
 
@@ -66,30 +69,62 @@ public class NoticeLogContext {
       ));
   }
 
+  public static NoticeLogContext from(PatronNotice patronNotice) {
+    return new NoticeLogContext()
+      .withUserId(patronNotice.getRecipientId())
+      .withItems(singletonList(
+        new NoticeLogContextItem()
+          .withTemplateId(patronNotice.getTemplateId())
+      ));
+  }
+
+  // it is assumed that all sessions have same user and action type
+  public static NoticeLogContext from(List<PatronSessionRecord> sessions) {
+    if (sessions.isEmpty()) {
+      return new NoticeLogContext();
+    }
+
+    PatronSessionRecord sessionSample = sessions.get(0);
+    String triggeringEvent = sessionSample.getActionType().getRepresentation();
+    String userId = sessionSample.getPatronId().toString();
+
+    return new NoticeLogContext()
+      .withUserId(userId)
+      .withItems(
+        sessions.stream()
+          .map(PatronSessionRecord::getLoan)
+          .filter(Objects::nonNull)
+          .map(NoticeLogContextItem::from)
+          .map(item -> item.withTriggeringEvent(triggeringEvent))
+          .collect(toList())
+      );
+  }
+
   public NoticeLogContext withUser(User user) {
     if (user != null) {
-      userBarcode = user.getBarcode();
-      userId = user.getId();
+      return withUserBarcode(user.getBarcode())
+        .withUserId(user.getId());
     }
+
     return this;
   }
 
-  public void setNoticePolicyId(String noticePolicyId) {
-    items = items.stream()
+  public NoticeLogContext withNoticePolicyId(String noticePolicyId) {
+    return withItems(items.stream()
       .map(item -> item.withNoticePolicyId(noticePolicyId))
-      .collect(Collectors.toList());
+      .collect(toList()));
   }
 
-  public void setTemplateId(String templateId) {
-    items = items.stream()
+  public NoticeLogContext withTemplateId(String templateId) {
+    return withItems(items.stream()
       .map(item -> item.withTemplateId(templateId))
-      .collect(Collectors.toList());
+      .collect(toList()));
   }
 
-  public void setTriggeringEvent(String triggeringEvent) {
-    items = items.stream()
+  public NoticeLogContext withTriggeringEvent(String triggeringEvent) {
+    return withItems(items.stream()
       .map(item -> item.withTriggeringEvent(triggeringEvent))
-      .collect(Collectors.toList());
+      .collect(toList()));
   }
 
   public JsonObject asJson() {

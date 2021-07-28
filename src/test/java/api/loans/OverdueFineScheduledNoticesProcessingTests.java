@@ -92,6 +92,8 @@ public class OverdueFineScheduledNoticesProcessingTests extends APITests {
     verifyNumberOfScheduledNotices(1);
     assertThatScheduledNoticeExists(UPON_AT, false, actionDateTime);
 
+    FakeModNotify.setFailPatronNoticesWithBadRequest(true);
+
     scheduledNoticeProcessingClient.runFeeFineNoticesProcessing(rightAfter(actionDateTime));
 
     assertThatNoticesWereSent(TEMPLATE_IDS.get(UPON_AT));

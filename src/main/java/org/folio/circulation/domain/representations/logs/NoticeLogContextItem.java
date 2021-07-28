@@ -1,6 +1,5 @@
 package org.folio.circulation.domain.representations.logs;
 
-import static java.util.Optional.ofNullable;
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.HOLDINGS_RECORD_ID;
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.INSTANCE_ID;
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.ITEM_BARCODE;
@@ -37,14 +36,21 @@ public class NoticeLogContextItem {
   private String triggeringEvent;
 
   public static NoticeLogContextItem from(Loan loan) {
+    NoticeLogContextItem noticeLogContextItem = new NoticeLogContextItem()
+      .withItemId(loan.getItemId())
+      .withLoanId(loan.getId())
+      .withServicePointId(loan.getCheckoutServicePointId());
+
     Item item = loan.getItem();
-    return new NoticeLogContextItem()
-        .withItemId(item.getItemId())
+
+    if (item != null) {
+      noticeLogContextItem = noticeLogContextItem
         .withItemBarcode(item.getBarcode())
         .withInstanceId(item.getInstanceId())
-        .withHoldingsRecordId(item.getHoldingsRecordId())
-        .withLoanId(loan.getId())
-        .withServicePointId(loan.getCheckoutServicePointId());
+        .withHoldingsRecordId(item.getHoldingsRecordId());
+    }
+
+    return noticeLogContextItem;
   }
 
   public static NoticeLogContextItem from(Request request) {
@@ -74,8 +80,8 @@ public class NoticeLogContextItem {
     write(json, ITEM_ID.value(), itemId);
     write(json, INSTANCE_ID.value(), instanceId);
     write(json, HOLDINGS_RECORD_ID.value(), holdingsRecordId);
-    ofNullable(loanId).ifPresent(s -> write(json, LOAN_ID.value(), loanId));
-    ofNullable(servicePointId).ifPresent(s -> write(json, SERVICE_POINT_ID.value(), servicePointId));
+    write(json, LOAN_ID.value(), loanId);
+    write(json, SERVICE_POINT_ID.value(), servicePointId);
     write(json, TEMPLATE_ID.value(), templateId);
     write(json, NOTICE_POLICY_ID.value(), noticePolicyId);
     write(json, TRIGGERING_EVENT.value(), triggeringEvent);

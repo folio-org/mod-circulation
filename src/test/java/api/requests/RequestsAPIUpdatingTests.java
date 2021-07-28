@@ -11,15 +11,17 @@ import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
+import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfPublishedEvents;
+import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfSentNotices;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.function.Function.identity;
-import static org.awaitility.Awaitility.waitAtMost;
 import static org.folio.HttpStatus.HTTP_NO_CONTENT;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.domain.EventType.LOAN_DUE_DATE_CHANGED;
 import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_NAME;
 import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_PUBLIC_DESCRIPTION;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
+import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE_ERROR;
 import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_CREATED;
 import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_UPDATED;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
@@ -505,8 +507,9 @@ public class RequestsAPIUpdatingTests extends APITests {
       .create();
     requestsClient.replace(createdRequest.getId(), updatedRequest);
 
-    final var sentNotices = waitAtMost(1, SECONDS)
-      .until(FakeModNotify::getSentPatronNotices, hasSize(1));
+    verifyNumberOfSentNotices(1);
+    verifyNumberOfPublishedEvents(NOTICE, 1);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
 
     Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
 
@@ -517,10 +520,8 @@ public class RequestsAPIUpdatingTests extends APITests {
     noticeContextMatchers.put("request.reasonForCancellation",
       is(itemNotAvailable.getJson().getString(CANCELLATION_REASON_PUBLIC_DESCRIPTION)));
 
-    assertThat(sentNotices, hasItems(
+    assertThat(FakeModNotify.getSentPatronNotices(), hasItems(
       hasEmailNoticeProperties(requester.getId(), requestCancellationTemplateId, noticeContextMatchers)));
-
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
   }
 
   @Test
@@ -564,9 +565,9 @@ public class RequestsAPIUpdatingTests extends APITests {
 
     requestsClient.replace(createdRequest.getId(), updatedRequest);
 
-    final var sentNotices = Awaitility.await()
-      .atMost(1, SECONDS)
-      .until(FakeModNotify::getSentPatronNotices, hasSize(1));
+    verifyNumberOfSentNotices(1);
+    verifyNumberOfPublishedEvents(NOTICE, 1);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
 
     Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
 
@@ -577,10 +578,8 @@ public class RequestsAPIUpdatingTests extends APITests {
     noticeContextMatchers.put("request.reasonForCancellation",
       is(courseReserves.getJson().getString(CANCELLATION_REASON_NAME)));
 
-    assertThat(sentNotices, hasItems(
+    assertThat(FakeModNotify.getSentPatronNotices(), hasItems(
       hasEmailNoticeProperties(requester.getId(), requestCancellationTemplateId, noticeContextMatchers)));
-
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
   }
 
   @Test
