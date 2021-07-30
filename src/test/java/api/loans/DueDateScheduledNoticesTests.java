@@ -41,7 +41,6 @@ import api.support.http.CheckOutResource;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import api.support.http.OkapiHeaders;
-import api.support.utl.PatronNoticeTestHelper;
 import io.vertx.core.json.JsonObject;
 
 public class DueDateScheduledNoticesTests extends APITests {

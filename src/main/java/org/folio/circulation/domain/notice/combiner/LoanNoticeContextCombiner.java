@@ -21,9 +21,9 @@ public class LoanNoticeContextCombiner implements NoticeContextCombiner {
       .filter(Objects::nonNull)
       .collect(collectingAndThen(
         Collectors.toList(),
-        loans -> new JsonObject()
+        contexts -> new JsonObject()
           .put("user", createUserContext(events.iterator().next().getUser()))
-          .put("loans", loans)
+          .put("loans", contexts)
       ));
   }
 

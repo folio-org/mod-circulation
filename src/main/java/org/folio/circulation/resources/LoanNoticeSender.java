@@ -2,6 +2,7 @@ package org.folio.circulation.resources;
 
 import static org.folio.circulation.domain.notice.TemplateContextUtil.createLoanNoticeContext;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
+import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.lang.invoke.MethodHandles;
@@ -21,7 +22,9 @@ import org.folio.circulation.domain.notice.SingleImmediatePatronNoticeService;
 import org.folio.circulation.domain.representations.logs.NoticeLogContext;
 import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
 import org.folio.circulation.resources.context.RenewalContext;
+import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
 
@@ -33,11 +36,13 @@ public class LoanNoticeSender {
 
   private final ImmediatePatronNoticeService patronNoticeService;
   private final LoanPolicyRepository loanPolicyRepository;
+  private final EventPublisher eventPublisher;
 
   public static LoanNoticeSender using(Clients clients) {
     return new LoanNoticeSender(
       new SingleImmediatePatronNoticeService(clients),
-      new LoanPolicyRepository(clients)
+      new LoanPolicyRepository(clients),
+      new EventPublisher(clients.pubSubPublishingService())
     );
   }
 
@@ -61,7 +66,9 @@ public class LoanNoticeSender {
   }
 
   private CompletableFuture<Result<Void>> sendLoanNotice(Loan loan, NoticeEventType eventType) {
-    return validateLoan(loan)
+    return succeeded(loan)
+      .next(this::validateLoan)
+      .mapFailure(failure -> publishNoticeErrorEvent(failure, loan, eventType))
       .after(l -> sendNotice(loan, eventType));
   }
 
@@ -83,6 +90,21 @@ public class LoanNoticeSender {
       ? succeeded(loan)
       : failedValidation(errors);
   }
+
+  private Result<Loan> publishNoticeErrorEvent(HttpFailure failure, Loan loan,
+    NoticeEventType eventType) {
+
+    if (loan == null) {
+      log.error("Failed to send {} notice and circulation log event: loan is null", eventType);
+    } else {
+      NoticeLogContext noticeLogContext = NoticeLogContext.from(loan)
+        .withTriggeringEvent(eventType.getRepresentation());
+      eventPublisher.publishNoticeErrorLogEvent(noticeLogContext, failure);
+    }
+
+    return failed(failure);
+  }
+
 
   private CompletableFuture<Result<Void>> sendNotice(Loan loan, NoticeEventType eventType) {
     PatronNoticeEvent noticeEvent = new PatronNoticeEventBuilder()

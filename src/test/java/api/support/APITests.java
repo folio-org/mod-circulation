@@ -82,7 +82,7 @@ public abstract class APITests {
 
   private final boolean initialiseCirculationRules;
 
-  protected final ResourceClient servicePointsClient = ResourceClient.forServicePoints();
+  private final ResourceClient servicePointsClient = ResourceClient.forServicePoints();
 
   private final ResourceClient institutionsClient = ResourceClient.forInstitutions();
   private final ResourceClient campusesClient = ResourceClient.forCampuses();
