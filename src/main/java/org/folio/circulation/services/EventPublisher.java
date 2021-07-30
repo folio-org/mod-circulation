@@ -254,7 +254,7 @@ public class EventPublisher {
   }
 
   public CompletableFuture<Result<Void>> publishRenewedEvent(Loan loan) {
-    return publishLogRecord(LoanLogContext.from(loan).withAction(LogContextActionResolver.resolveAction(RENEWED.getValue())).asJson(), LOAN);
+    return publishLogRecord(LoanLogContext.from(loan).asJson(), LOAN);
   }
 
   public CompletableFuture<Result<Void>> publishNoticeEvent(NoticeLogContext noticeLogContext) {
