@@ -106,6 +106,7 @@ import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import api.support.http.OkapiHeaders;
+import api.support.http.ResourceClient;
 import api.support.matchers.OverdueFineMatcher;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -131,6 +132,29 @@ public abstract class RenewalAPITests extends APITests {
 
   abstract Matcher<ValidationError> hasItemNotFoundMessage(IndividualResource item);
 
+  @Test
+  public void cannotRenewWhenUserIsInactive() {
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource jessica = usersFixture.jessica();
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica,
+    new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
+
+    final UUID userId = jessica.getId();
+    JsonObject userRecord = jessica.copyJson();
+    userRecord.put("active", false);
+
+    final ResourceClient usersClient = ResourceClient.forUsers();
+
+    usersClient.replace(userId, userRecord);
+
+    jessica = usersClient.get(userId);
+
+    Response response = attemptRenewal(smallAngryPlanet, jessica);
+
+    assertThat(response.getJson(), hasErrorWith(
+      hasMessage("Cannot check out to inactive user")));
+  }
+  
   @Test
   public void canRenewRollingLoanFromSystemDate() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();

@@ -223,7 +223,7 @@ public class UserBuilder extends JsonBuilder implements Builder {
     return withActive(null);
   }
 
-  private UserBuilder withActive(Boolean active) {
+  public UserBuilder withActive(Boolean active) {
     return new UserBuilder(
       this.id,
       this.username,
