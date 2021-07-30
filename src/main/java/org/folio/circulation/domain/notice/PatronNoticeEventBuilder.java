@@ -2,6 +2,7 @@ package org.folio.circulation.domain.notice;
 
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.User;
+import org.folio.circulation.domain.representations.logs.NoticeLogContext;
 
 import io.vertx.core.json.JsonObject;
 
@@ -11,6 +12,8 @@ public class PatronNoticeEventBuilder {
   private User user;
   private NoticeEventType eventType;
   private JsonObject noticeContext;
+  private NoticeLogContext noticeLogContext;
+  private String patronNoticePolicyId;
 
   public PatronNoticeEventBuilder withItem(Item item) {
     this.item = item;
@@ -32,7 +35,17 @@ public class PatronNoticeEventBuilder {
     return this;
   }
 
+  public PatronNoticeEventBuilder withNoticeLogContext(NoticeLogContext noticeLogContext) {
+    this.noticeLogContext = noticeLogContext;
+    return this;
+  }
+
+  public PatronNoticeEventBuilder withPatronNoticePolicyId(String patronNoticePolicyId) {
+    this.patronNoticePolicyId = patronNoticePolicyId;
+    return this;
+  }
+
   public PatronNoticeEvent build() {
-    return new PatronNoticeEvent(item, user, eventType, noticeContext);
+    return new PatronNoticeEvent(item, user, eventType, noticeContext, noticeLogContext, patronNoticePolicyId);
   }
 }

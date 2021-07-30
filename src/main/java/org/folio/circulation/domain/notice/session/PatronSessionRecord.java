@@ -73,4 +73,14 @@ public class PatronSessionRecord {
       .map(patronActionType -> new PatronSessionRecord(id, patronId, loanId, patronActionType))
       .orElse(null);
   }
+
+  @Override
+  public String toString() {
+    return "PatronSessionRecord{" +
+      "id=" + id +
+      ", patronId=" + patronId +
+      ", loanId=" + loanId +
+      ", actionType=" + actionType +
+      '}';
+  }
 }

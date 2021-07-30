@@ -7,11 +7,14 @@ import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
+import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfPublishedEvents;
+import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfSentNotices;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.waitAtMost;
 import static org.folio.HttpStatus.HTTP_NO_CONTENT;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
+import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE_ERROR;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.hasItems;
@@ -243,8 +246,9 @@ public class ChangeDueDateByReplacingLoanTests extends APITests {
 
     IndividualResource loanAfterUpdate = loansClient.get(loan);
 
-    final var sentNotices = waitAtMost(1, SECONDS)
-      .until(FakeModNotify::getSentPatronNotices, hasSize(1));
+    verifyNumberOfSentNotices(1);
+    verifyNumberOfPublishedEvents(NOTICE, 1);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
 
     Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
 
@@ -253,10 +257,8 @@ public class ChangeDueDateByReplacingLoanTests extends APITests {
     noticeContextMatchers.putAll(TemplateContextMatchers.getLoanContextMatchers(loanAfterUpdate));
     noticeContextMatchers.putAll(TemplateContextMatchers.getLoanPolicyContextMatchers(renewalLimit, renewalLimit));
 
-    assertThat(sentNotices,
+    assertThat(FakeModNotify.getSentPatronNotices(),
       hasItems(hasEmailNoticeProperties(steve.getId(), manualDueDateChangeTemplateId, noticeContextMatchers)));
-
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
   }
 
   @Test

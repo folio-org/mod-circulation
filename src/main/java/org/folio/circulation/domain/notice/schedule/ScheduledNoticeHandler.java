@@ -17,7 +17,8 @@ import org.folio.circulation.domain.Account;
 import org.folio.circulation.domain.FeeFineAction;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Request;
-import org.folio.circulation.domain.notice.PatronNoticeService;
+
+import org.folio.circulation.domain.notice.ScheduledPatronNoticeService;
 import org.folio.circulation.domain.representations.logs.NoticeLogContext;
 import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
@@ -48,7 +49,7 @@ public abstract class ScheduledNoticeHandler {
   protected final AccountRepository accountRepository;
   protected final PatronNoticePolicyRepository patronNoticePolicyRepository;
   protected final CollectionResourceClient templateNoticesClient;
-  protected final PatronNoticeService patronNoticeService;
+  protected final ScheduledPatronNoticeService patronNoticeService;
   protected final EventPublisher eventPublisher;
 
   protected ScheduledNoticeHandler(Clients clients) {
@@ -57,7 +58,7 @@ public abstract class ScheduledNoticeHandler {
     this.accountRepository = new AccountRepository(clients);
     this.patronNoticePolicyRepository = new PatronNoticePolicyRepository(clients);
     this.templateNoticesClient = clients.noticeTemplatesClient();
-    this.patronNoticeService = PatronNoticeService.using(clients);
+    this.patronNoticeService = new ScheduledPatronNoticeService(clients);
     this.eventPublisher = new EventPublisher(clients.pubSubPublishingService());
   }
 
@@ -159,7 +160,7 @@ public abstract class ScheduledNoticeHandler {
       return ofAsync(() -> context);
     }
 
-    return patronNoticeService.acceptScheduledNoticeEvent(
+    return patronNoticeService.sendNotice(
       context.getNotice().getConfiguration(),
       context.getNotice().getRecipientUserId(),
       buildNoticeContextJson(context),
