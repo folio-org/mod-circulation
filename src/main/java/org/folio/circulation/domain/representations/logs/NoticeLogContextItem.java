@@ -18,6 +18,7 @@ import lombok.With;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Request;
+import org.folio.circulation.domain.notice.session.PatronSessionRecord;
 
 import java.util.Objects;
 
@@ -36,21 +37,31 @@ public class NoticeLogContextItem {
   private String triggeringEvent;
 
   public static NoticeLogContextItem from(Loan loan) {
-    NoticeLogContextItem noticeLogContextItem = new NoticeLogContextItem()
-      .withItemId(loan.getItemId())
-      .withLoanId(loan.getId())
-      .withServicePointId(loan.getCheckoutServicePointId());
+    NoticeLogContextItem noticeLogContextItem = new NoticeLogContextItem();
 
-    Item item = loan.getItem();
-
-    if (item != null) {
+    if (loan != null) {
       noticeLogContextItem = noticeLogContextItem
-        .withItemBarcode(item.getBarcode())
-        .withInstanceId(item.getInstanceId())
-        .withHoldingsRecordId(item.getHoldingsRecordId());
+        .withItemId(loan.getItemId())
+        .withLoanId(loan.getId())
+        .withServicePointId(loan.getCheckoutServicePointId());
+
+      Item item = loan.getItem();
+
+      if (item != null) {
+        noticeLogContextItem = noticeLogContextItem
+          .withItemBarcode(item.getBarcode())
+          .withInstanceId(item.getInstanceId())
+          .withHoldingsRecordId(item.getHoldingsRecordId());
+      }
     }
 
     return noticeLogContextItem;
+  }
+
+  public static NoticeLogContextItem from(PatronSessionRecord patronSession) {
+    return from(patronSession.getLoan())
+      .withLoanId(patronSession.getLoanId().toString())
+      .withTriggeringEvent(patronSession.getActionType().getRepresentation());
   }
 
   public static NoticeLogContextItem from(Request request) {

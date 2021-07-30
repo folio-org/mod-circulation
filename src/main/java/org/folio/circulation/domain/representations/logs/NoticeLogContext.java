@@ -12,23 +12,22 @@ import static org.folio.circulation.domain.representations.logs.LogEventPayloadF
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.USER_ID;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.Request;
+import org.folio.circulation.domain.User;
+import org.folio.circulation.domain.notice.schedule.ScheduledNotice;
+import org.folio.circulation.domain.notice.session.PatronSessionRecord;
+import org.joda.time.DateTime;
+
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.With;
-import org.folio.circulation.domain.Loan;
-import org.folio.circulation.domain.Request;
-import org.folio.circulation.domain.User;
-import org.folio.circulation.domain.notice.PatronNotice;
-import org.folio.circulation.domain.notice.schedule.ScheduledNotice;
-import org.folio.circulation.domain.notice.session.PatronSessionRecord;
-import org.joda.time.DateTime;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -69,33 +68,17 @@ public class NoticeLogContext {
       ));
   }
 
-  public static NoticeLogContext from(PatronNotice patronNotice) {
-    return new NoticeLogContext()
-      .withUserId(patronNotice.getRecipientId())
-      .withItems(singletonList(
-        new NoticeLogContextItem()
-          .withTemplateId(patronNotice.getTemplateId())
-      ));
-  }
-
   // it is assumed that all sessions have same user and action type
   public static NoticeLogContext from(List<PatronSessionRecord> sessions) {
     if (sessions.isEmpty()) {
       return new NoticeLogContext();
     }
 
-    PatronSessionRecord sessionSample = sessions.get(0);
-    String triggeringEvent = sessionSample.getActionType().getRepresentation();
-    String userId = sessionSample.getPatronId().toString();
-
     return new NoticeLogContext()
-      .withUserId(userId)
+      .withUserId(sessions.get(0).getPatronId().toString())
       .withItems(
         sessions.stream()
-          .map(PatronSessionRecord::getLoan)
-          .filter(Objects::nonNull)
           .map(NoticeLogContextItem::from)
-          .map(item -> item.withTriggeringEvent(triggeringEvent))
           .collect(toList())
       );
   }
