@@ -1799,13 +1799,13 @@ public abstract class RenewalAPITests extends APITests {
     DateTime loanDate = MONDAY_DATE.toDateTime(LocalTime.MIDNIGHT.plusHours(10), UTC);
     use(buildLoanPolicyWithRollingLoanAndRenew(KEEP_THE_CURRENT_DUE_DATE_TIME, 1));
     IndividualResource item = itemsFixture.basedUponNod();
-    DateTime patronExpirationDate = loanDate.plusHours(1);
+    DateTime patronExpirationDate = loanDate.plusHours(12);
     IndividualResource steve = usersFixture.steve(user -> user.expires(patronExpirationDate));
 
     checkOutItem(loanDate, item, patronExpirationDate, steve, CASE_MON_WED_FRI_OPEN_TUE_THU_CLOSED);
 
     JsonObject renewedLoan = executeWithFixedDateTime(() -> loansFixture.renewLoan(item, steve).getJson(),
-      loanDate.plusDays(1));
+      loanDate.plusHours(10));
 
     assertThat("due date should be " + patronExpirationDate, renewedLoan.getString("dueDate"),
       isEquivalentTo(patronExpirationDate));
@@ -1830,13 +1830,6 @@ public abstract class RenewalAPITests extends APITests {
     assertThat("due date should be " + FIRST_DAY_OPEN.toDateTime(END_TIME_SECOND_PERIOD, UTC),
       renewedLoan.getString("dueDate"), isEquivalentTo(FIRST_DAY_OPEN.toDateTime(
         END_TIME_SECOND_PERIOD, UTC)));
-
-    renewedLoan = executeWithFixedDateTime(() -> loansFixture.renewLoan(item, steve).getJson(),
-      loanDate.plusDays(1));
-
-    assertThat("due date should be " + FIRST_DAY_OPEN.toDateTime(END_TIME_SECOND_PERIOD, UTC),
-      renewedLoan.getString("dueDate"), isEquivalentTo(FIRST_DAY_OPEN.toDateTime(
-        END_TIME_SECOND_PERIOD, UTC)));
   }
 
   @Test
@@ -1854,13 +1847,6 @@ public abstract class RenewalAPITests extends APITests {
 
     JsonObject renewedLoan = executeWithFixedDateTime(() -> loansFixture.renewLoan(item, steve).getJson(),
       loanDate.plusHours(17));
-
-    assertThat("due date should be " + FIRST_DAY_OPEN.toDateTime(END_TIME_SECOND_PERIOD, UTC),
-      renewedLoan.getString("dueDate"), isEquivalentTo(FIRST_DAY_OPEN.toDateTime(
-        END_TIME_SECOND_PERIOD, UTC)));
-
-    renewedLoan = executeWithFixedDateTime(() -> loansFixture.renewLoan(item, steve).getJson(),
-      loanDate.plusDays(1));
 
     assertThat("due date should be " + FIRST_DAY_OPEN.toDateTime(END_TIME_SECOND_PERIOD, UTC),
       renewedLoan.getString("dueDate"), isEquivalentTo(FIRST_DAY_OPEN.toDateTime(
