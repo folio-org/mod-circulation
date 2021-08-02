@@ -1,5 +1,6 @@
 package org.folio.circulation.domain.validation;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.succeeded;
@@ -7,11 +8,9 @@ import static org.folio.circulation.support.results.Result.succeeded;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.User;
-import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.http.server.ValidationError;
-import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.Result;
 
 public class InactiveUserRenewalValidator {
@@ -19,18 +18,10 @@ public class InactiveUserRenewalValidator {
   private final String isInactiveReason = "User is inactive.";
   private final String cannotDetermineMessage = "Cannot determine if user is active.";
   private final String cannotDetermineReason = "Cannot determine if user active.";
-  private final WebContext context;
-  private final UserRepository repository;
-
-  public InactiveUserRenewalValidator(WebContext context, UserRepository userRepository) {
-    this.context = context;
-    this.repository = userRepository;
-  }
 
   public CompletableFuture<Result<RenewalContext>> refuseWhenPatronIsInactive(
     RenewalContext renewalContext) {
-    return repository.getUser(context.getUserId())
-      .thenApply(u -> refuseWhenUserIsInactive(u.value(), renewalContext));
+    return completedFuture(refuseWhenUserIsInactive(renewalContext.getLoan().getUser(), renewalContext));
   }
 
   private Result<RenewalContext> refuseWhenUserIsInactive(
@@ -46,7 +37,6 @@ public class InactiveUserRenewalValidator {
   }
 
   private HttpFailure createInactiveUserValidationError(String message, String reason) {
-
     return singleValidationError(new ValidationError(message, "reason", reason));
   }
 }
