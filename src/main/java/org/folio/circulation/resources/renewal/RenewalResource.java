@@ -151,8 +151,6 @@ public abstract class RenewalResource extends Resource {
     JsonObject bodyAsJson = routingContext.getBodyAsJson();
     BlockOverrides overrideBlocks = getOverrideBlocks(bodyAsJson);
     OkapiPermissions permissions = OkapiPermissions.from(new WebContext(routingContext).getHeaders());
-    final Validator<RenewalContext> inactivePatronValidator =
-      createInactivePatronValidator();
     final Validator<RenewalContext> automatedPatronBlocksValidator =
       createAutomatedPatronBlocksValidator(bodyAsJson, permissions, automatedPatronBlocksRepository);
     final Validator<RenewalContext> manualPatronBlocksValidator = createManualPatronBlocksValidator(
@@ -161,9 +159,10 @@ public abstract class RenewalResource extends Resource {
       RENEWAL_BLOCK, overrideBlocks, permissions);
     isRenewalBlockOverrideRequested = overrideBlocks.getRenewalBlockOverride().isRequested() ||
       overrideBlocks.getRenewalDueDateRequiredBlockOverride().isRequested();
+
     findLoan(bodyAsJson, loanRepository, itemRepository, userRepository, errorHandler)
       .thenApply(r -> r.map(loan -> RenewalContext.create(loan, bodyAsJson, webContext.getUserId())))
-      .thenComposeAsync(r-> refuseWhenPatronIsinactive(inactivePatronValidator, r, errorHandler, USER_IS_INACTIVE))
+      .thenComposeAsync(r-> refuseWhenPatronIsInactive(r, errorHandler, USER_IS_INACTIVE))
       .thenComposeAsync(r -> refuseWhenRenewalActionIsBlockedForPatron(
         manualPatronBlocksValidator, r, errorHandler, USER_IS_BLOCKED_MANUALLY))
       .thenComposeAsync(r -> refuseWhenRenewalActionIsBlockedForPatron(
@@ -216,15 +215,20 @@ public abstract class RenewalResource extends Resource {
     return renewalContext.getRenewalRequest().getString("servicePointId");
   }
 
-  private CompletableFuture<Result<RenewalContext>> refuseWhenPatronIsinactive(
-    Validator<RenewalContext> validator, Result<RenewalContext> result,
-    CirculationErrorHandler errorHandler, CirculationErrorType errorType) {
+  private CompletableFuture<Result<RenewalContext>> refuseWhenPatronIsInactive(
+    Result<RenewalContext> result, CirculationErrorHandler errorHandler,
+    CirculationErrorType errorType) {
 
     if (errorHandler.hasAny(ITEM_DOES_NOT_EXIST, FAILED_TO_FIND_SINGLE_OPEN_LOAN,
       FAILED_TO_FETCH_USER)) {
 
       return completedFuture(result);
     }
+
+    final var inactiveUserRenewalValidator = new InactiveUserRenewalValidator();
+
+    final var validator = new BlockValidator<>(USER_IS_INACTIVE,
+      inactiveUserRenewalValidator::refuseWhenPatronIsInactive);
 
     return result.after(renewalContext -> validator.validate(renewalContext)
       .thenApply(r -> errorHandler.handleValidationResult(r, errorType, result)));
