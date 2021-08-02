@@ -14,7 +14,7 @@ import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
 
 public class InactiveUserRenewalValidator {
-  private final String isInactiveMessage = "Cannot check out to inactive user";
+  private final String isInactiveMessage = "Cannot renew loan when user is inactive or expired";
   private final String isInactiveReason = "User is inactive.";
   private final String cannotDetermineMessage = "Cannot determine if user is active.";
   private final String cannotDetermineReason = "Cannot determine if user active.";
