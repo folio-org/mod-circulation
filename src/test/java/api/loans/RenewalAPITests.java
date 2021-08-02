@@ -655,9 +655,9 @@ public abstract class RenewalAPITests extends APITests {
     Response response = attemptRenewal(smallAngryPlanet, jessica);
 
     assertThat(response.getJson(), hasErrorWith(
-      hasMessage("Cannot check out to inactive user")));
+      hasMessage("Cannot renew loan when user is inactive or expired")));
   }
-  
+
   @Test
   public void multipleRenewalFailuresWhenLoanHasReachedMaximumNumberOfRenewalsAndOpenRecallRequest() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
