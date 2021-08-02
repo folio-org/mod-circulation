@@ -23,6 +23,9 @@ import static api.support.matchers.TextDateTimeMatcher.withinSecondsBeforeNow;
 import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
+import static api.support.utl.PatronNoticeTestHelper.clearSentPatronNoticesAndPubsubEvents;
+import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfPublishedEvents;
+import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfSentNotices;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.waitAtMost;
@@ -33,6 +36,7 @@ import static org.folio.circulation.domain.RequestStatus.CLOSED_PICKUP_EXPIRED;
 import static org.folio.circulation.domain.RequestStatus.CLOSED_UNFILLED;
 import static org.folio.circulation.domain.representations.logs.LogEventType.CHECK_IN;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
+import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE_ERROR;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -86,6 +90,7 @@ import api.support.http.CqlQuery;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import api.support.http.UserResource;
+import api.support.utl.PatronNoticeTestHelper;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
@@ -534,11 +539,9 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     assertThat("Closed loan should be present",
       loanRepresentation, notNullValue());
 
-    waitAtLeast(1, SECONDS)
-      .until(FakeModNotify::getSentPatronNotices, empty());
-
-    waitAtLeast(1, SECONDS)
-      .until(() -> FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), empty());
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 
   @Test
@@ -572,11 +575,9 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     assertThat("Response should not include a loan",
       checkInResponse.getJson().containsKey("loan"), is(false));
 
-    waitAtLeast(1, SECONDS)
-      .until(FakeModNotify::getSentPatronNotices, empty());
-
-    waitAtLeast(1, SECONDS)
-      .until(() -> FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), empty());
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 
   @Test
@@ -682,22 +683,88 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
 
     checkInFixture.checkInByBarcode(requestedItem, checkInDate, pickupServicePointId);
 
-    waitAtMost(1, SECONDS)
-      .until(FakeModNotify::getSentPatronNotices, hasSize(1));
+    verifyNumberOfSentNotices(1);
+    verifyNumberOfPublishedEvents(NOTICE, 1);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
 
-    waitAtMost(1, SECONDS)
-      .until(() -> FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
-
-    clearPatronNoticesAndPubsubEvents();
+    clearSentPatronNoticesAndPubsubEvents();
 
     //Check-in again and verify no notice are sent
     checkInFixture.checkInByBarcode(requestedItem, checkInDate, pickupServicePointId);
 
-    waitAtMost(1, SECONDS)
-      .until(FakeModNotify::getSentPatronNotices, empty());
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+  }
 
-    waitAtMost(1, SECONDS)
-      .until(() -> FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), empty());
+  @Test
+  public void requestAwaitingPickupNoticeIsNotSentWhenUserWasNotFound() {
+    JsonObject availableNoticeConfig = new NoticeConfigurationBuilder()
+      .withTemplateId(UUID.randomUUID())
+      .withAvailableEvent()
+      .create();
+    NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
+      .withName("Policy with available notice")
+      .withLoanNotices(Collections.singletonList(availableNoticeConfig));
+
+    use(noticePolicy);
+
+    ItemResource requestedItem = itemsFixture.basedUponNod();
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+
+    DateTime requestDate = new DateTime(2019, 10, 9, 10, 0);
+    UserResource steve = usersFixture.steve();
+    requestsFixture.place(new RequestBuilder()
+      .page()
+      .forItem(requestedItem)
+      .by(steve)
+      .withPickupServicePointId(pickupServicePointId)
+      .withRequestDate(requestDate));
+
+    DateTime checkInDate = new DateTime(2019, 10, 10, 12, 30);
+
+    usersClient.delete(steve);
+
+    checkInFixture.checkInByBarcode(requestedItem, checkInDate, pickupServicePointId);
+
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
+  }
+
+  @Test
+  public void requestAwaitingPickupNoticeIsNotSentWhenPatronNoticeRequestsFails() {
+    JsonObject availableNoticeConfig = new NoticeConfigurationBuilder()
+      .withTemplateId(UUID.randomUUID())
+      .withAvailableEvent()
+      .create();
+    NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
+      .withName("Policy with available notice")
+      .withLoanNotices(Collections.singletonList(availableNoticeConfig));
+
+    use(noticePolicy);
+
+    ItemResource requestedItem = itemsFixture.basedUponNod();
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+
+    DateTime requestDate = new DateTime(2019, 10, 9, 10, 0);
+    UserResource steve = usersFixture.steve();
+    requestsFixture.place(new RequestBuilder()
+      .page()
+      .forItem(requestedItem)
+      .by(steve)
+      .withPickupServicePointId(pickupServicePointId)
+      .withRequestDate(requestDate));
+
+    DateTime checkInDate = new DateTime(2019, 10, 10, 12, 30);
+
+    FakeModNotify.setFailPatronNoticesWithBadRequest(true);
+
+    checkInFixture.checkInByBarcode(requestedItem, checkInDate, pickupServicePointId);
+
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
   }
 
   @Test
@@ -777,20 +844,21 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
 
     // verify that Request Awaiting Pickup notice was sent for first request
 
-    waitAtMost(1, SECONDS)
-      .until(FakeModNotify::getSentPatronNotices, hasSize(1));
+    verifyNumberOfSentNotices(1);
+    verifyNumberOfPublishedEvents(NOTICE, 1);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
 
     checkPatronNoticeEvent(firstRequest, firstRequester, item, requestAwaitingPickupTemplateId);
 
-    waitAtMost(1, SECONDS)
-      .until(() -> FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
-
-    clearPatronNoticesAndPubsubEvents();
+    clearSentPatronNoticesAndPubsubEvents();
 
     // Check-in again and verify that same notice is not sent repeatedly
 
     checkInFixture.checkInByBarcode(item, firstCheckInDate, pickupServicePointId);
-    verifyThatNoPatronNoticesWereSent();
+
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
 
     // close first request
 
@@ -828,20 +896,21 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
 
     // verify that Request Awaiting Pickup notice was sent to second requester
 
-    waitAtMost(1, SECONDS)
-      .until(FakeModNotify::getSentPatronNotices, hasSize(1));
+    verifyNumberOfSentNotices(1);
+    verifyNumberOfPublishedEvents(NOTICE, 1);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
 
     checkPatronNoticeEvent(secondRequest, secondRequester, item, requestAwaitingPickupTemplateId);
 
-    waitAtMost(1, SECONDS)
-      .until(() -> FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
-
-    clearPatronNoticesAndPubsubEvents();
+    clearSentPatronNoticesAndPubsubEvents();
 
     // Check-in again and verify that same notice is not sent repeatedly
 
     checkInFixture.checkInByBarcode(item, secondCheckInDate, pickupServicePointId);
-    verifyThatNoPatronNoticesWereSent();
+
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 
   @Test
@@ -1377,22 +1446,18 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
 
     checkInFixture.checkInByBarcode(requestedItem, checkInDate, pickupServicePointId);
 
-    JsonObject patronNotice = waitAtMost(1, SECONDS)
-      .until(FakeModNotify::getSentPatronNotices, hasSize(1))
-      .get(0);
+    verifyNumberOfSentNotices(1);
+    verifyNumberOfPublishedEvents(NOTICE, 1);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
 
-    assertThat(patronNotice, hasEmailNoticeProperties(requester.getId(), templateId,
+    assertThat(FakeModNotify.getFirstSentPatronNotice(), hasEmailNoticeProperties(requester.getId(), templateId,
       getUserContextMatchers(updatedRequesterJson)));
-
-    waitAtMost(1, SECONDS)
-      .until(() -> FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
   }
 
   private void checkPatronNoticeEvent(IndividualResource request, IndividualResource requester,
     ItemResource item, UUID expectedTemplateId) {
 
-    waitAtMost(1, SECONDS)
-      .until(FakeModNotify::getSentPatronNotices, hasSize(1));
+    verifyNumberOfSentNotices(1);
 
     Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
     noticeContextMatchers.putAll(getUserContextMatchers(requester));
@@ -1402,8 +1467,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     assertThat(FakeModNotify.getSentPatronNotices(), hasItems(
       hasEmailNoticeProperties(requester.getId(), expectedTemplateId, noticeContextMatchers)));
 
-    waitAtMost(1, SECONDS)
-      .until(() -> FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
+    verifyNumberOfPublishedEvents(NOTICE, 1);
   }
 
   private void verifyCheckInOperationRecorded(UUID itemId, UUID servicePoint) {

@@ -16,7 +16,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.User;
-import org.folio.circulation.domain.notice.PatronNoticeService;
+import org.folio.circulation.domain.notice.ScheduledPatronNoticeService;
 import org.folio.circulation.domain.notice.schedule.ScheduledNoticeHandler.ScheduledNoticeContext;
 import org.folio.circulation.domain.representations.logs.NoticeLogContext;
 import org.folio.circulation.domain.representations.logs.NoticeLogContextItem;
@@ -32,11 +32,11 @@ public class GroupedLoanScheduledNoticeHandler {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private final LoanScheduledNoticeHandler loanScheduledNoticeHandler;
-  private final PatronNoticeService patronNoticeService;
+  private final ScheduledPatronNoticeService patronNoticeService;
 
   public GroupedLoanScheduledNoticeHandler(Clients clients, DateTime systemTime) {
     this.loanScheduledNoticeHandler = new LoanScheduledNoticeHandler(clients, systemTime);
-    this.patronNoticeService = PatronNoticeService.using(clients);
+    this.patronNoticeService = new ScheduledPatronNoticeService(clients);
   }
 
   public CompletableFuture<Result<List<List<ScheduledNotice>>>> handleNotices(
@@ -129,7 +129,7 @@ public class GroupedLoanScheduledNoticeHandler {
     log.info("Attempting to send a grouped notice for {} scheduled notices",
       relevantContexts.size());
 
-    return patronNoticeService.acceptScheduledNoticeEvent(
+    return patronNoticeService.sendNotice(
       contextSample.getNotice().getConfiguration(),
       user.getId(),
       createMultiLoanNoticeContext(user, loans),

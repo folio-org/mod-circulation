@@ -41,7 +41,8 @@ import static api.support.utl.BlockOverridesUtils.buildOkapiHeadersWithPermissio
 import static api.support.utl.BlockOverridesUtils.getMissingPermissions;
 import static api.support.utl.BlockOverridesUtils.getOverridableBlockNames;
 import static api.support.utl.DateTimeUtils.executeWithFixedDateTime;
-import static org.awaitility.Awaitility.waitAtMost;
+import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfPublishedEvents;
+import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfSentNotices;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.domain.policy.DueDateManagement.KEEP_THE_CURRENT_DUE_DATE;
 import static org.folio.circulation.domain.policy.DueDateManagement.KEEP_THE_CURRENT_DUE_DATE_TIME;
@@ -51,6 +52,7 @@ import static org.folio.circulation.domain.policy.DueDateManagement.MOVE_TO_THE_
 import static org.folio.circulation.domain.policy.DueDateManagement.MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY;
 import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.END_OF_A_DAY;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
+import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE_ERROR;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.hasItem;
@@ -103,6 +105,7 @@ import api.support.fakes.FakePubSub;
 import api.support.fixtures.ConfigurationExample;
 import api.support.fixtures.ItemExamples;
 import api.support.fixtures.TemplateContextMatchers;
+import api.support.http.CheckOutResource;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import api.support.http.OkapiHeaders;
@@ -1317,6 +1320,61 @@ public abstract class RenewalAPITests extends APITests {
   }
 
   @Test
+  public void renewalNoticeIsNotSentWhenPatronNoticeRequestFails() {
+    UUID renewalTemplateId = UUID.randomUUID();
+    JsonObject renewalNoticeConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(renewalTemplateId)
+      .withRenewalEvent()
+      .create();
+    JsonObject checkInNoticeConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(UUID.randomUUID())
+      .withCheckInEvent()
+      .create();
+
+    NoticePolicyBuilder policyWithRenewalNotice = new NoticePolicyBuilder()
+      .withName("Policy with renewal notice")
+      .withLoanNotices(Arrays.asList(renewalNoticeConfiguration, checkInNoticeConfiguration));
+
+    LoanPolicyBuilder limitedRenewalsLoanPolicy = new LoanPolicyBuilder()
+      .withName("Limited renewals loan policy")
+      .rolling(Period.months(1))
+      .limitedRenewals(3);
+
+    use(limitedRenewalsLoanPolicy, policyWithRenewalNotice);
+
+    ItemBuilder itemBuilder = ItemExamples.basedUponSmallAngryPlanet(
+      materialTypesFixture.book().getId(),
+      loanTypesFixture.canCirculate().getId(),
+      StringUtils.EMPTY,
+      "ItemPrefix",
+      "ItemSuffix",
+      "");
+
+    ItemResource smallAngryPlanet
+      = itemsFixture.basedUponSmallAngryPlanet(itemBuilder, itemsFixture.thirdFloorHoldings());
+
+    final IndividualResource steve = usersFixture.steve();
+
+    final DateTime loanDate =
+      new DateTime(2018, 3, 18, 11, 43, 54, DateTimeZone.UTC);
+
+    checkOutFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(smallAngryPlanet)
+        .to(steve)
+        .on(loanDate)
+        .at(UUID.randomUUID()));
+
+    FakeModNotify.setFailPatronNoticesWithBadRequest(true);
+
+    IndividualResource loanAfterRenewal = loansFixture.renewLoan(smallAngryPlanet, steve);
+
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
+  }
+
+  @Test
   public void renewalNoticeIsSentWhenPolicyDefinesRenewalNoticeConfiguration() {
     UUID renewalTemplateId = UUID.randomUUID();
     JsonObject renewalNoticeConfiguration = new NoticeConfigurationBuilder()
@@ -1364,8 +1422,9 @@ public abstract class RenewalAPITests extends APITests {
 
     IndividualResource loanAfterRenewal = loansFixture.renewLoan(smallAngryPlanet, steve);
 
-    final var sentNotices = waitAtMost(1, TimeUnit.SECONDS)
-      .until(FakeModNotify::getSentPatronNotices, hasSize(1));
+    verifyNumberOfSentNotices(1);
+    verifyNumberOfPublishedEvents(NOTICE, 1);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
 
     int expectedRenewalLimit = 3;
     int expectedRenewalsRemaining = 2;
@@ -1376,10 +1435,8 @@ public abstract class RenewalAPITests extends APITests {
     noticeContextMatchers.putAll(TemplateContextMatchers.getLoanPolicyContextMatchers(
       expectedRenewalLimit, expectedRenewalsRemaining));
 
-    assertThat(sentNotices, hasItems(
+    assertThat(FakeModNotify.getSentPatronNotices(), hasItems(
       hasEmailNoticeProperties(steve.getId(), renewalTemplateId, noticeContextMatchers)));
-
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
   }
 
   @Test

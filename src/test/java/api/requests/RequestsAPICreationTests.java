@@ -23,6 +23,9 @@ import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static api.support.matchers.ValidationErrorMatchers.isBlockRelatedError;
 import static api.support.matchers.ValidationErrorMatchers.isInsufficientPermissionsToOverridePatronBlockError;
 import static api.support.utl.BlockOverridesUtils.buildOkapiHeadersWithPermissions;
+import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfPublishedEvents;
+import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfScheduledNotices;
+import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfSentNotices;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -35,6 +38,7 @@ import static org.folio.circulation.domain.ItemStatus.PAGED;
 import static org.folio.circulation.domain.RequestType.RECALL;
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
+import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE_ERROR;
 import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_CREATED_THROUGH_OVERRIDE;
 import static org.folio.circulation.support.ClockManager.getClockManager;
 import static org.hamcrest.CoreMatchers.allOf;
@@ -1372,19 +1376,64 @@ RequestsAPICreationTests extends APITests {
       .withPickupServicePointId(pickupServicePointId)
       .withTags(new RequestBuilder.Tags(asList("new", "important"))));
 
-    final var sentNotices = waitAtMost(1, SECONDS)
-      .until(FakeModNotify::getSentPatronNotices, hasSize(1));
+    verifyNumberOfSentNotices(1);
+    verifyNumberOfPublishedEvents(NOTICE, 1);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
 
     Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
-
     noticeContextMatchers.putAll(TemplateContextMatchers.getUserContextMatchers(requester));
     noticeContextMatchers.putAll(TemplateContextMatchers.getItemContextMatchers(item, true));
     noticeContextMatchers.putAll(TemplateContextMatchers.getRequestContextMatchers(request));
 
-    assertThat(sentNotices, hasItems(
+    assertThat(FakeModNotify.getSentPatronNotices(), hasItems(
       hasEmailNoticeProperties(requester.getId(), pageConfirmationTemplateId, noticeContextMatchers)));
+  }
 
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
+  @Test
+  public void pageRequestNoticeIsNotSentWhenPatronNoticeRequestFails() {
+    UUID pageConfirmationTemplateId = UUID.randomUUID();
+    JsonObject pageConfirmationConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(pageConfirmationTemplateId)
+      .withEventType(PAGING_REQUEST_EVENT)
+      .create();
+    JsonObject holdConfirmationConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(UUID.randomUUID())
+      .withEventType(HOLD_REQUEST_EVENT)
+      .create();
+    NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
+      .withName("Policy with page notice")
+      .withLoanNotices(Arrays.asList(pageConfirmationConfiguration, holdConfirmationConfiguration));
+    useFallbackPolicies(
+      loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.create(noticePolicy).getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
+
+    UUID id = UUID.randomUUID();
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource requester = usersFixture.steve();
+    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+
+    FakeModNotify.setFailPatronNoticesWithBadRequest(true);
+
+    IndividualResource request = requestsFixture.place(new RequestBuilder()
+      .withId(id)
+      .open()
+      .page()
+      .forItem(item)
+      .by(requester)
+      .withRequestDate(requestDate)
+      .fulfilToHoldShelf()
+      .withRequestExpiration(LocalDate.of(2017, 7, 30))
+      .withHoldShelfExpiration(LocalDate.of(2017, 8, 31))
+      .withPickupServicePointId(pickupServicePointId)
+      .withTags(new RequestBuilder.Tags(asList("new", "important"))));
+
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
   }
 
   @Test
@@ -1438,19 +1487,75 @@ RequestsAPICreationTests extends APITests {
       .withPickupServicePointId(pickupServicePointId)
       .withTags(new RequestBuilder.Tags(asList("new", "important"))));
 
-    final var sentNotices = waitAtMost(1, SECONDS)
-      .until(FakeModNotify::getSentPatronNotices, hasSize(1));
+    verifyNumberOfSentNotices(1);
+    verifyNumberOfPublishedEvents(NOTICE, 1);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
 
     Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
-
     noticeContextMatchers.putAll(TemplateContextMatchers.getUserContextMatchers(requester));
     noticeContextMatchers.putAll(TemplateContextMatchers.getItemContextMatchers(item, true));
     noticeContextMatchers.putAll(TemplateContextMatchers.getRequestContextMatchers(request));
 
-    assertThat(sentNotices, hasItems(
+    assertThat(FakeModNotify.getSentPatronNotices(), hasItems(
       hasEmailNoticeProperties(requester.getId(), holdConfirmationTemplateId, noticeContextMatchers)));
+  }
 
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
+  @Test
+  public void holdRequestNoticeIsNotSentWhenPatronNoticeRequestFails() {
+    UUID holdConfirmationTemplateId = UUID.randomUUID();
+    JsonObject holdConfirmationConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(holdConfirmationTemplateId)
+      .withEventType(HOLD_REQUEST_EVENT)
+      .create();
+    JsonObject recallConfirmationConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(UUID.randomUUID())
+      .withEventType(RECALL_REQUEST_EVENT)
+      .create();
+    NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
+      .withName("Policy with hold notice")
+      .withLoanNotices(Arrays.asList(holdConfirmationConfiguration, recallConfirmationConfiguration));
+    useFallbackPolicies(
+      loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.create(noticePolicy).getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
+
+
+    UUID id = UUID.randomUUID();
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+
+    ItemBuilder itemBuilder = ItemExamples.basedUponSmallAngryPlanet(materialTypesFixture.book().getId(), loanTypesFixture.canCirculate().getId());
+    HoldingBuilder holdingBuilder = itemsFixture.applyCallNumberHoldings(
+      "CN",
+      "Prefix",
+      "Suffix",
+      Collections.singletonList("CopyNumbers"));
+    ItemResource item = itemsFixture.basedUponSmallAngryPlanet(itemBuilder, holdingBuilder);
+
+    IndividualResource requester = usersFixture.steve();
+    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+
+    checkOutFixture.checkOutByBarcode(item, usersFixture.jessica());
+
+    FakeModNotify.setFailPatronNoticesWithBadRequest(true);
+
+    IndividualResource request = requestsFixture.place(new RequestBuilder()
+      .withId(id)
+      .open()
+      .hold()
+      .forItem(item)
+      .by(requester)
+      .withRequestDate(requestDate)
+      .fulfilToHoldShelf()
+      .withRequestExpiration(LocalDate.of(2017, 7, 30))
+      .withHoldShelfExpiration(LocalDate.of(2017, 8, 31))
+      .withPickupServicePointId(pickupServicePointId)
+      .withTags(new RequestBuilder.Tags(asList("new", "important"))));
+
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
   }
 
   @Test
@@ -1524,26 +1629,104 @@ RequestsAPICreationTests extends APITests {
       .withTags(new RequestBuilder.Tags(asList("new", "important"))));
     IndividualResource loanAfterRecall = loansClient.get(loan.getId());
 
-    final var sentNotices = waitAtMost(1, SECONDS)
-      .until(FakeModNotify::getSentPatronNotices, hasSize(2));
+    verifyNumberOfSentNotices(2);
+    verifyNumberOfPublishedEvents(NOTICE, 2);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
 
     Map<String, Matcher<String>> recallConfirmationContextMatchers = new HashMap<>();
     recallConfirmationContextMatchers.putAll(TemplateContextMatchers.getUserContextMatchers(requester));
     recallConfirmationContextMatchers.putAll(TemplateContextMatchers.getItemContextMatchers(item, false));
     recallConfirmationContextMatchers.putAll(TemplateContextMatchers.getLoanContextMatchers(loanAfterRecall));
     recallConfirmationContextMatchers.putAll(TemplateContextMatchers.getRequestContextMatchers(request));
+
     Map<String, Matcher<String>> recallNotificationContextMatchers = new HashMap<>();
     recallNotificationContextMatchers.putAll(TemplateContextMatchers.getUserContextMatchers(loanOwner));
     recallNotificationContextMatchers.putAll(TemplateContextMatchers.getItemContextMatchers(item, false));
     recallNotificationContextMatchers.putAll(TemplateContextMatchers.getLoanContextMatchers(loanAfterRecall));
 
-    assertThat(sentNotices, hasItems(
+    assertThat(FakeModNotify.getSentPatronNotices(), hasItems(
       hasEmailNoticeProperties(requester.getId(), recallConfirmationTemplateId,
         recallConfirmationContextMatchers),
       hasEmailNoticeProperties(loanOwner.getId(), recallToLoaneeTemplateId,
         recallNotificationContextMatchers)));
+  }
 
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(2));
+  @Test
+  public void recallRequestNoticeIsNotSentWhenPatronNoticeRequestFails() {
+    UUID recallConfirmationTemplateId = UUID.randomUUID();
+    UUID recallToLoaneeTemplateId = UUID.randomUUID();
+    JsonObject recallConfirmationConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(recallConfirmationTemplateId)
+      .withEventType(RECALL_REQUEST_EVENT)
+      .create();
+    JsonObject recallToLoaneeConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(recallToLoaneeTemplateId)
+      .withEventType(ITEM_RECALLED)
+      .create();
+    JsonObject pageConfirmationConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(UUID.randomUUID())
+      .withEventType(PAGING_REQUEST_EVENT)
+      .create();
+    NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
+      .withName("Policy with recall notice")
+      .withLoanNotices(Arrays.asList(
+        recallConfirmationConfiguration,
+        recallToLoaneeConfiguration,
+        pageConfirmationConfiguration));
+
+    LoanPolicyBuilder loanPolicy = new LoanPolicyBuilder()
+      .withName("Can Circulate Rolling With Recalls")
+      .rolling(Period.weeks(3))
+      .withRecallsMinimumGuaranteedLoanPeriod(Period.weeks(2))
+      .withRecallsRecallReturnInterval(Period.weeks(1));
+
+    useFallbackPolicies(
+      loanPoliciesFixture.create(loanPolicy).getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.create(noticePolicy).getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
+
+    UUID id = UUID.randomUUID();
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+
+    ItemBuilder itemBuilder = ItemExamples.basedUponSmallAngryPlanet(
+      materialTypesFixture.book().getId(),
+      loanTypesFixture.canCirculate().getId(),
+      "ItemCN",
+      "ItemPrefix",
+      "ItemSuffix",
+      "CopyNumber");
+
+    ItemResource item = itemsFixture.basedUponSmallAngryPlanet(itemBuilder, itemsFixture.thirdFloorHoldings());
+    IndividualResource requester = usersFixture.steve();
+    IndividualResource loanOwner = usersFixture.jessica();
+
+    DateTime loanDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+    IndividualResource loan = checkOutFixture.checkOutByBarcode(item, loanOwner, loanDate);
+
+    DateTime requestDate = loanDate.plusDays(1);
+    mockClockManagerToReturnFixedDateTime(requestDate);
+
+    FakeModNotify.setFailPatronNoticesWithBadRequest(true);
+
+    IndividualResource request = requestsFixture.place(new RequestBuilder()
+      .withId(id)
+      .open()
+      .recall()
+      .forItem(item)
+      .by(requester)
+      .withRequestDate(requestDate)
+      .fulfilToHoldShelf()
+      .withRequestExpiration(LocalDate.of(2017, 7, 30))
+      .withHoldShelfExpiration(LocalDate.of(2017, 8, 31))
+      .withPickupServicePointId(pickupServicePointId)
+      .withTags(new RequestBuilder.Tags(asList("new", "important"))));
+    IndividualResource loanAfterRecall = loansClient.get(loan.getId());
+
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 2);
   }
 
   @Test
@@ -1599,10 +1782,9 @@ RequestsAPICreationTests extends APITests {
       .withTags(new RequestBuilder.Tags(asList("new", "important"))));
 
     // Recall notice to loan owner should be sent when due date hasn't been changed
-    waitAtMost(1, SECONDS)
-      .until(FakeModNotify::getSentPatronNotices, hasSize(1));
-
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
+    verifyNumberOfSentNotices(1);
+    verifyNumberOfPublishedEvents(NOTICE, 1);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 
   @Test
@@ -1932,10 +2114,9 @@ RequestsAPICreationTests extends APITests {
         RECALL.getValue()));
 
     // Recall notice to loan owner should be sent twice without changing due date
-    waitAtMost(1, SECONDS)
-      .until(FakeModNotify::getSentPatronNotices, hasSize(2));
-
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(2));
+    verifyNumberOfSentNotices(2);
+    verifyNumberOfPublishedEvents(NOTICE, 2);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 
   @Test
