@@ -154,7 +154,7 @@ public abstract class RenewalAPITests extends APITests {
     assertThat(response.getJson(), hasErrorWith(
       hasMessage("Cannot check out to inactive user")));
   }
-  
+
   @Test
   public void canRenewRollingLoanFromSystemDate() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();

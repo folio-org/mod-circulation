@@ -152,7 +152,7 @@ public abstract class RenewalResource extends Resource {
     BlockOverrides overrideBlocks = getOverrideBlocks(bodyAsJson);
     OkapiPermissions permissions = OkapiPermissions.from(new WebContext(routingContext).getHeaders());
     final Validator<RenewalContext> inactivePatronValidator =
-      createInactivePatronValidator(webContext, userRepository);
+      createInactivePatronValidator();
     final Validator<RenewalContext> automatedPatronBlocksValidator =
       createAutomatedPatronBlocksValidator(bodyAsJson, permissions, automatedPatronBlocksRepository);
     final Validator<RenewalContext> manualPatronBlocksValidator = createManualPatronBlocksValidator(
@@ -313,13 +313,10 @@ public abstract class RenewalResource extends Resource {
       : new BlockValidator<>(USER_IS_BLOCKED_AUTOMATICALLY, validationFunction);
   }
 
-  private Validator<RenewalContext> createInactivePatronValidator(
-    WebContext context, UserRepository userRepository) {
+  private Validator<RenewalContext> createInactivePatronValidator() {
+    final var inactiveUserRenewalValidator = new InactiveUserRenewalValidator();
 
-  Function<RenewalContext, CompletableFuture<Result<RenewalContext>>> validationFunction =
-    new InactiveUserRenewalValidator(context, userRepository)::refuseWhenPatronIsInactive;
-
-  return new BlockValidator<>(USER_IS_INACTIVE, validationFunction);
+    return new BlockValidator<>(USER_IS_INACTIVE, inactiveUserRenewalValidator::refuseWhenPatronIsInactive);
 }
 
   private Validator<RenewalContext> createManualPatronBlocksValidator(JsonObject request,
