@@ -178,7 +178,7 @@ public class TemplateContextUtil {
       .put("numberOfPieces", item.getNumberOfPieces())
       .put("descriptionOfPieces", item.getDescriptionOfPieces());
 
-    Location location = item.getLocation();
+    Location location = item.getEffectiveLocation();
 
     if (location != null) {
       itemContext

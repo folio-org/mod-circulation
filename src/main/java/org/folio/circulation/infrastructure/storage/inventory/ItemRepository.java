@@ -96,14 +96,14 @@ public class ItemRepository {
 
   private CompletableFuture<Result<Item>> fetchLocation(Result<Item> result) {
     return fetchLocation
-      ? result.combineAfter(locationRepository::getLocation, Item::withLocation)
+      ? result.combineAfter(locationRepository::getLocation, Item::withEffectiveLocation)
           .thenComposeAsync(this::fetchPrimaryServicePoint)
       : completedFuture(result);
   }
 
   private CompletableFuture<Result<Item>> fetchPrimaryServicePoint(Result<Item> itemResult) {
     return itemResult.combineAfter(item ->
-      fetchPrimaryServicePoint(item.getLocation()), Item::withPrimaryServicePoint);
+      fetchPrimaryServicePoint(item.getEffectiveLocation()), Item::withPrimaryServicePoint);
   }
 
   private CompletableFuture<Result<ServicePoint>> fetchPrimaryServicePoint(Location location) {
@@ -171,9 +171,9 @@ public class ItemRepository {
   private Function<Item, Item> populateItemLocations(Map<String, Location> locations) {
     return item -> {
       final Location permLocation = locations.get(item.getPermanentLocationId());
-      final Location location = locations.get(item.getLocationId());
+      final Location location = locations.get(item.getEffectiveLocationId());
 
-      return item.withLocation(location).withPermanentLocation(permLocation);
+      return item.withEffectiveLocation(location).withPermanentLocation(permLocation);
     };
   }
 

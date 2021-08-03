@@ -55,7 +55,7 @@ public class ItemReportRepresentation {
       writeServicePoint(itemReport, inTransitDestinationServicePoint, "inTransitDestinationServicePoint");
     }
 
-    final Location location = item.getLocation();
+    final Location location = item.getEffectiveLocation();
     if (location != null) {
       writeLocation(itemReport, location);
     }

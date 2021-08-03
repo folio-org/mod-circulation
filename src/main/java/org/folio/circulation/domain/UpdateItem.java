@@ -47,7 +47,7 @@ public class UpdateItem {
     if (requestQueue.hasOutstandingFulfillableRequests()) {
       return changeItemWithOutstandingRequest(item, requestQueue, checkInServicePointId);
     } else {
-      if(Optional.ofNullable(item.getLocation())
+      if(Optional.ofNullable(item.getEffectiveLocation())
         .map(location -> location.homeLocationIsServedBy(checkInServicePointId))
         .orElse(false)) {
         return succeeded(item.available());

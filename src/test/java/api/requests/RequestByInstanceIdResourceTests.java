@@ -56,22 +56,22 @@ public class RequestByInstanceIdResourceTests extends APITests {
     Item item1 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
       .withTemporaryLocation(UUID.fromString(location1.getString("id")))
       .create())
-      .withLocation(Location.from(location1));
+      .withEffectiveLocation(Location.from(location1));
 
     Item item2 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
       .withTemporaryLocation(UUID.fromString(location2.getString("id")))
       .create())
-      .withLocation(Location.from(location2));
+      .withEffectiveLocation(Location.from(location2));
 
     Item item3 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
       .withTemporaryLocation(UUID.fromString(location3.getString("id")))
       .create())
-      .withLocation(Location.from(location3));
+      .withEffectiveLocation(Location.from(location3));
 
     Item item4 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
       .withTemporaryLocation(UUID.fromString(location4.getString("id")))
       .create())
-      .withLocation(Location.from(location4));
+      .withEffectiveLocation(Location.from(location4));
 
     final ArrayList<Item> items = new ArrayList<>();
 
@@ -110,19 +110,19 @@ public class RequestByInstanceIdResourceTests extends APITests {
 
     Item item1 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
                       .withTemporaryLocation(UUID.randomUUID()).create())
-      .withLocation(Location.from(location));
+      .withEffectiveLocation(Location.from(location));
 
     Item item2 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
                       .withTemporaryLocation(UUID.randomUUID()).create())
-      .withLocation(Location.from(location));
+      .withEffectiveLocation(Location.from(location));
 
     Item item3 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
                       .withTemporaryLocation(UUID.randomUUID()).create())
-      .withLocation(Location.from(location));
+      .withEffectiveLocation(Location.from(location));
 
     Item item4 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
                       .withTemporaryLocation(UUID.randomUUID()).create())
-      .withLocation(Location.from(location));
+      .withEffectiveLocation(Location.from(location));
 
     //order added is important so the test deliberately add items in a certain order
     List<Item> items = new ArrayList<>();

@@ -27,7 +27,7 @@ public class EffectiveLocationTests extends APITests {
         .create()
     ).withInstance(instanceBuilder().create());
 
-    assertThat(item.getLocationId(), nullValue());
+    assertThat(item.getEffectiveLocationId(), nullValue());
   }
 
   @Test
@@ -41,7 +41,7 @@ public class EffectiveLocationTests extends APITests {
         .create()
       ).withInstance(instanceBuilder().create());
 
-    assertThat(item.getLocationId(), nullValue());
+    assertThat(item.getEffectiveLocationId(), nullValue());
   }
 
   private InstanceBuilder instanceBuilder() {

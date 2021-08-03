@@ -37,8 +37,8 @@ public final class RulesExecutionParameters {
   }
 
   public static RulesExecutionParameters forItem(Item item, User user) {
-    return new RulesExecutionParameters(item.determineLoanTypeForItem(), item.getLocationId(),
-      item.getMaterialTypeId(), user.getPatronGroupId(), item.getLocation());
+    return new RulesExecutionParameters(item.determineLoanTypeForItem(), item.getEffectiveLocationId(),
+      item.getMaterialTypeId(), user.getPatronGroupId(), item.getEffectiveLocation());
   }
 
   public static RulesExecutionParameters forRequest(WebContext context) {

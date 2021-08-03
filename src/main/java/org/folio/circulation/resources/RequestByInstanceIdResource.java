@@ -299,7 +299,7 @@ public class RequestByInstanceIdResource extends Resource {
     return of(() -> {
 
       Map<Boolean, List<Item>> itemsPartitionedByLocationServedByPickupPoint = unsortedAvailableItems.stream()
-        .collect(Collectors.partitioningBy(i -> Optional.ofNullable(i.getLocation())
+        .collect(Collectors.partitioningBy(i -> Optional.ofNullable(i.getEffectiveLocation())
           .map(location -> location.homeLocationIsServedBy(pickupServicePointId))
           .orElse(false)));
 
