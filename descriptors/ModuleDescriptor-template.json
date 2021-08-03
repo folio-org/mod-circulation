@@ -2259,15 +2259,13 @@
       ],
       "visible": false
     }
-
-
   ],
   "launchDescriptor": {
     "dockerImage": "${artifactId}:${version}",
     "dockerPull": false,
     "dockerArgs": {
       "HostConfig": {
-        "Memory": 715827882,
+        "Memory": 1073741824,
         "PortBindings": { "9801/tcp": [ { "HostPort": "%p" } ] }
       }
     },
