@@ -1,3 +1,7 @@
+## 22.0.2 2021-08-03
+
+* Increases the number of loans to be checked for scheduled anonymization to 50 000 (CIRC-1178)
+
 ## 22.0.1 2021-08-03
 
 * User asked to override patron block on renewing when no patron block exists on renewing (CIRC-1185)
