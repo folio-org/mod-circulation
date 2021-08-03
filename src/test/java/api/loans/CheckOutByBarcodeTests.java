@@ -1339,7 +1339,10 @@ public class CheckOutByBarcodeTests extends APITests {
 
     final var checkedOutEvent = publishedEvents.findFirst(byEventType(ITEM_CHECKED_OUT.name()));
 
-    assertThat(checkedOutEvent, isValidItemCheckedOutEvent(loan, loanPolicy.getJson()));
+    JsonObject gracePeriod = loanPolicy.getJson().getJsonObject("loansPolicy")
+      .getJsonObject("gracePeriod");
+
+    assertThat(checkedOutEvent, isValidItemCheckedOutEvent(loan, gracePeriod));
 
     final var checkOutLogEvent = publishedEvents.findFirst(byLogEventType(CHECK_OUT.value()));
 
