@@ -6,6 +6,7 @@ import java.lang.invoke.MethodHandles;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.Environment;
 import org.folio.circulation.domain.anonymization.DefaultLoanAnonymizationService;
 import org.folio.circulation.domain.anonymization.service.AnonymizationCheckersService;
 import org.folio.circulation.domain.anonymization.service.LoansForTenantFinder;
@@ -54,7 +55,8 @@ public class ScheduledAnonymizationProcessingResource extends Resource {
     final var anonymizeStorageLoansRepository = new AnonymizeStorageLoansRepository(clients);
     final var eventPublisher = new EventPublisher(clients.pubSubPublishingService());
 
-    final var loansFinder = new LoansForTenantFinder(loanRepository, accountRepository);
+    final var loansFinder = new LoansForTenantFinder(loanRepository, accountRepository,
+      Environment.getScheduledAnonymizationNumberOfLoansToCheck());
 
     log.info("Initializing loan anonymization for current tenant");
 
