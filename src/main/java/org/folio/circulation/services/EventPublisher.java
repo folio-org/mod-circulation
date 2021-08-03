@@ -60,6 +60,7 @@ public class EventPublisher {
   public static final String LOAN_ID_FIELD = "loanId";
   public static final String DUE_DATE_FIELD = "dueDate";
   public static final String RETURN_DATE_FIELD = "returnDate";
+  public static final String GRACE_PERIOD_FIELD = "gracePeriod";
   public static final String DUE_DATE_CHANGED_BY_RECALL_FIELD = "dueDateChangedByRecall";
   public static final String FAILED_TO_PUBLISH_LOG_TEMPLATE =
     "Failed to publish {} event: loan is null";
@@ -85,6 +86,7 @@ public class EventPublisher {
       write(payloadJsonObject, USER_ID_FIELD, loan.getUserId());
       write(payloadJsonObject, LOAN_ID_FIELD, loan.getId());
       write(payloadJsonObject, DUE_DATE_FIELD, loan.getDueDate());
+      write(payloadJsonObject, GRACE_PERIOD_FIELD, loan.getLoanPolicy().getGracePeriod());
 
       runAsync(() -> userRepository.getUser(loanAndRelatedRecords.getLoggedInUserId())
         .thenApplyAsync(r -> r.after(loggedInUser -> CompletableFuture.completedFuture(

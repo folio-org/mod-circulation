@@ -21,12 +21,14 @@ import org.joda.time.DateTime;
 import io.vertx.core.json.JsonObject;
 
 public class EventMatchers {
-  public static Matcher<JsonObject> isValidItemCheckedOutEvent(JsonObject loan) {
+  public static Matcher<JsonObject> isValidItemCheckedOutEvent(JsonObject loan, JsonObject loanPolicy) {
     return allOf(JsonObjectMatcher.allOfPaths(
       hasJsonPath("eventPayload", allOf(
         hasJsonPath("userId", is(loan.getString("userId"))),
         hasJsonPath("loanId", is(loan.getString("id"))),
-        hasJsonPath("dueDate", is(loan.getString("dueDate")))
+        hasJsonPath("dueDate", is(loan.getString("dueDate"))),
+        hasJsonPath("gracePeriod", is(loanPolicy.getJsonObject("loansPolicy")
+          .getString("gracePeriod")))
       ))),
       isItemCheckedOutEventType());
   }
