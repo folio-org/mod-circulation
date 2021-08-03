@@ -1,11 +1,15 @@
 package api.requests.scenarios;
 
 import static api.support.fakes.PublishedEvents.byLogEventType;
+import static api.support.http.CqlQuery.exactMatch;
+import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfPublishedEvents;
+import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfSentNotices;
 import static java.util.Collections.singletonList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.waitAtMost;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_TYPE;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
+import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE_ERROR;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
@@ -177,10 +181,9 @@ public class MoveRequestPolicyTests extends APITests {
       interestingTimes, jessica, DateTime.now(DateTimeZone.UTC), RequestType.RECALL.getValue());
 
     // notice for the recall is expected
-    waitAtMost(1, SECONDS)
-      .until(FakeModNotify::getSentPatronNotices, hasSize(1));
-
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
+    verifyNumberOfSentNotices(1);
+    verifyNumberOfPublishedEvents(NOTICE, 1);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
 
     // move jessica's recall request from interestingTimes to smallAngryPlanet
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
@@ -203,10 +206,9 @@ public class MoveRequestPolicyTests extends APITests {
     assertThat("due date is not the current date",
       storedLoan.getString("dueDate"), is(expectedDueDate));
 
-    assertThat("move recall request notice has not been sent",
-      FakeModNotify.getSentPatronNotices().size(), is(2));
-
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(2));
+    verifyNumberOfSentNotices(2);
+    verifyNumberOfPublishedEvents(NOTICE, 2);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 
   @Test
@@ -250,7 +252,9 @@ public class MoveRequestPolicyTests extends APITests {
     waitAtMost(1, SECONDS)
       .until(() -> patronNoticesForRecipientWasSent(charlotte));
 
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(2));
+    verifyNumberOfSentNotices(2);
+    verifyNumberOfPublishedEvents(NOTICE, 2);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
 
     // move jessica's recall request from interestingTimes to smallAngryPlanet
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
@@ -272,7 +276,9 @@ public class MoveRequestPolicyTests extends APITests {
     assertThat("move recall request unexpectedly sent another patron notice",
       FakeModNotify.getSentPatronNotices(), hasSize(2));
 
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(2));
+    verifyNumberOfSentNotices(2);
+    verifyNumberOfPublishedEvents(NOTICE, 2);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 
   @Test
@@ -313,10 +319,9 @@ public class MoveRequestPolicyTests extends APITests {
       interestingTimes, jessica, DateTime.now(DateTimeZone.UTC), RequestType.RECALL.getValue());
 
     // One notice for the recall is expected
-    waitAtMost(1, SECONDS)
-      .until(FakeModNotify::getSentPatronNotices, hasSize(1));
-
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
+    verifyNumberOfSentNotices(1);
+    verifyNumberOfPublishedEvents(NOTICE, 1);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
 
     // move jessica's recall request from interestingTimes to smallAngryPlanet
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
@@ -342,7 +347,9 @@ public class MoveRequestPolicyTests extends APITests {
     assertThat("move recall request notice has not been sent",
       FakeModNotify.getSentPatronNotices(), hasSize(2));
 
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(2));
+    verifyNumberOfSentNotices(2);
+    verifyNumberOfPublishedEvents(NOTICE, 2);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 
   @Test
@@ -402,7 +409,9 @@ public class MoveRequestPolicyTests extends APITests {
     waitAtMost(1, SECONDS)
       .until(() -> patronNoticesForRecipientWasSent(charlotte));
 
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(2));
+    verifyNumberOfSentNotices(2);
+    verifyNumberOfPublishedEvents(NOTICE, 2);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
 
     // move jessica's recall request from interestingTimes to smallAngryPlanet
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
@@ -424,7 +433,9 @@ public class MoveRequestPolicyTests extends APITests {
     assertThat("move recall request unexpectedly sent another patron notice",
       FakeModNotify.getSentPatronNotices(), hasSize(2));
 
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(2));
+    verifyNumberOfSentNotices(2);
+    verifyNumberOfPublishedEvents(NOTICE, 2);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 
   private boolean patronNoticesForRecipientWasSent(IndividualResource steve) {

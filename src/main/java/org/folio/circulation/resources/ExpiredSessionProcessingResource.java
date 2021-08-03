@@ -3,6 +3,7 @@ package org.folio.circulation.resources;
 import static org.folio.circulation.domain.notice.session.PatronActionType.ALL;
 import static org.folio.circulation.support.results.AsynchronousResultBindings.safelyInitialise;
 import static org.folio.circulation.support.results.MappingFunctions.toFixedValue;
+import static org.folio.circulation.support.results.Result.ofAsync;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -56,8 +57,8 @@ public class ExpiredSessionProcessingResource extends Resource {
     safelyInitialise(configurationRepository::lookupSessionTimeout)
       .thenCompose(r -> r.after(this::defineExpiredTime))
       .thenCompose(r -> r.after(inactivityTime ->
-        patronExpiredSessionRepository.findPatronExpiredSessions(ALL, inactivityTime.toString())))
-      .thenCompose(r -> r.after(expiredSessions -> attemptEndSession(
+        patronExpiredSessionRepository.findPatronExpiredSessions(ALL, inactivityTime)))
+      .thenCompose(r -> r.after(expiredSessions -> attemptEndSessions(
         patronSessionService, expiredSessions)))
       .thenApply(r -> r.map(toFixedValue(NoContentResponse::noContent)))
       .exceptionally(CommonFailures::failedDueToServerError)
@@ -70,17 +71,18 @@ public class ExpiredSessionProcessingResource extends Resource {
     return CompletableFuture.completedFuture(dateTimeResult);
   }
 
-  private CompletableFuture<Result<Void>> attemptEndSession(
+  private CompletableFuture<Result<Void>> attemptEndSessions(
     PatronActionSessionService patronSessionService, List<ExpiredSession> expiredSessions) {
 
+    //TODO: sessions without patronId will not be cleared?
     List<ExpiredSession> existingExpiredSessions = expiredSessions.stream()
       .filter(session -> StringUtils.isNotBlank(session.getPatronId()))
       .collect(Collectors.toList());
 
     if (existingExpiredSessions.isEmpty()) {
-      return CompletableFuture.completedFuture(Result.succeeded(null));
+      return ofAsync(() -> null);
     }
 
-    return patronSessionService.endSession(expiredSessions);
+    return patronSessionService.endExpiredSessions(expiredSessions);
   }
 }

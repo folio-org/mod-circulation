@@ -12,16 +12,18 @@ import org.folio.circulation.support.results.Result;
 
 public class LoansForTenantFinder extends DefaultLoansFinder {
   private final LoanRepository loanRepository;
+  private final int numberOfLoansToCheck;
 
   public LoansForTenantFinder(LoanRepository loanRepository,
-    AccountRepository accountRepository) {
+    AccountRepository accountRepository, int numberOfLoansToCheck) {
 
     super(accountRepository);
     this.loanRepository = loanRepository;
+    this.numberOfLoansToCheck = numberOfLoansToCheck;
   }
 
   public CompletableFuture<Result<Collection<Loan>>> findLoansToAnonymize() {
-    return loanRepository.findLoansToAnonymize(limit(5000))
+    return loanRepository.findLoansToAnonymize(limit(numberOfLoansToCheck))
       .thenCompose(this::fetchAdditionalLoanInfo);
   }
 }
