@@ -1,5 +1,6 @@
 package api.support.matchers;
 
+import static api.support.matchers.EventActionMatchers.isItemRenewedEventAction;
 import static api.support.matchers.EventTypeMatchers.isItemAgedToLostEventType;
 import static api.support.matchers.EventTypeMatchers.isItemCheckedInEventType;
 import static api.support.matchers.EventTypeMatchers.isItemCheckedOutEventType;
@@ -114,6 +115,16 @@ public class EventMatchers {
           is(getBooleanProperty(loan, "dueDateChangedByRecall")))
       ))),
       isLoanDueDateChangedEventType());
+  }
+
+  public static Matcher<JsonObject> isValidRenewedEvent(JsonObject loan) {
+    return allOf(JsonObjectMatcher.allOfPaths(
+      hasJsonPath("eventPayload", allOf(
+        hasJsonPath("payload", allOf(
+          hasJsonPath("userId", is(loan.getString("userId"))),
+          hasJsonPath("loanId", is(loan.getString("id")))
+        ))))),
+      isItemRenewedEventAction());
   }
 
   public static Matcher<JsonObject> isValidLoanLogRecordEvent(JsonObject loanCtx) {

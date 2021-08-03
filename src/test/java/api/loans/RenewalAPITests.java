@@ -6,8 +6,9 @@ import static api.support.builders.FixedDueDateSchedule.forDay;
 import static api.support.builders.FixedDueDateSchedule.todayOnly;
 import static api.support.builders.FixedDueDateSchedule.wholeMonth;
 import static api.support.builders.ItemBuilder.CHECKED_OUT;
-import static api.support.fakes.PublishedEvents.byEventType;
 import static api.support.fakes.PublishedEvents.byLogEventType;
+import static api.support.fakes.PublishedEvents.byLogAction;
+import static api.support.fakes.PublishedEvents.byEventType;
 import static api.support.fixtures.AutomatedPatronBlocksFixture.MAX_NUMBER_OF_ITEMS_CHARGED_OUT_MESSAGE;
 import static api.support.fixtures.AutomatedPatronBlocksFixture.MAX_OUTSTANDING_FEE_FINE_BALANCE_MESSAGE;
 import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_SERVICE_POINT_ID;
@@ -18,7 +19,9 @@ import static api.support.fixtures.CalendarExamples.END_TIME_SECOND_PERIOD;
 import static api.support.fixtures.CalendarExamples.START_TIME_FIRST_PERIOD;
 import static api.support.fixtures.CalendarExamples.START_TIME_SECOND_PERIOD;
 import static api.support.fixtures.CalendarExamples.WEDNESDAY_DATE;
+import static api.support.matchers.EventActionMatchers.ITEM_RENEWED;
 import static api.support.matchers.EventMatchers.isValidLoanDueDateChangedEvent;
+import static api.support.matchers.EventMatchers.isValidRenewedEvent;
 import static api.support.matchers.EventTypeMatchers.LOAN_DUE_DATE_CHANGED;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
@@ -102,6 +105,7 @@ public abstract class RenewalAPITests extends APITests {
     "circulation.override-item-limit-block";
   private static final String RENEWED_THROUGH_OVERRIDE = "renewedThroughOverride";
   private static final String PATRON_WAS_BLOCKED_MESSAGE = "Patron blocked from renewing";
+  private static final String RENEWED = "renewed";
 
   abstract Response attemptRenewal(IndividualResource user, IndividualResource item);
 
@@ -1468,17 +1472,21 @@ public abstract class RenewalAPITests extends APITests {
 
     final JsonObject renewedLoan = renew(smallAngryPlanet, jessica).getJson();
 
-    // There should be six events published - first for "check out",
-    // second one for log event, third for "change due date"
-    // and one "log record"
+    // There should be five events published - first for "check out",
+    // second one for log event, third for "change due date",
+    // fourth one for "log record", and fifth one for "renewed".
     final var publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(4));
+      .until(FakePubSub::getPublishedEvents, hasSize(5));
 
     final var event = publishedEvents.findFirst(byEventType(LOAN_DUE_DATE_CHANGED));
 
     assertThat(event, isValidLoanDueDateChangedEvent(renewedLoan));
     assertThatPublishedLoanLogRecordEventsAreValid(renewedLoan);
+
+    final var renewedEvent = publishedEvents.findFirst(byLogAction(ITEM_RENEWED));
+
+    assertThat(renewedEvent, isValidRenewedEvent(renewedLoan));
   }
 
   @Test
@@ -1644,7 +1652,7 @@ public abstract class RenewalAPITests extends APITests {
 
     checkOutFixture.checkOutByBarcode(item, jessica,
       new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
-    userManualBlocksFixture.createManualPatronBlockForUser(jessica.getId());
+    userManualBlocksFixture.createRenewalsManualPatronBlockForUser(jessica.getId());
 
     final Response response = attemptRenewal(item, jessica);
 
@@ -1669,7 +1677,7 @@ public abstract class RenewalAPITests extends APITests {
 
     checkOutFixture.checkOutByBarcode(item, jessica,
       new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
-    userManualBlocksFixture.createManualPatronBlockForUser(jessica.getId());
+    userManualBlocksFixture.createRenewalsManualPatronBlockForUser(jessica.getId());
     automatedPatronBlocksFixture.blockAction(jessica.getId().toString(), false, true, false);
 
     final Response response = attemptRenewal(item, jessica);

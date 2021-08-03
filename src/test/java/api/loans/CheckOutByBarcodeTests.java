@@ -1867,7 +1867,7 @@ public class CheckOutByBarcodeTests extends APITests {
   public void canOverrideManualPatronBlockWhenBlockIsPresent() {
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
-    userManualBlocksFixture.createManualPatronBlockForUser(steve.getId());
+    userManualBlocksFixture.createBorrowingManualPatronBlockForUser(steve.getId());
 
     final Response response = checkOutFixture.attemptCheckOutByBarcode(item, steve);
 
@@ -1899,7 +1899,7 @@ public class CheckOutByBarcodeTests extends APITests {
   public void canOverrideManualAndAutomationPatronBlocksWhenBlocksArePresent() {
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
-    userManualBlocksFixture.createManualPatronBlockForUser(steve.getId());
+    userManualBlocksFixture.createBorrowingManualPatronBlockForUser(steve.getId());
     automatedPatronBlocksFixture.blockAction(steve.getId().toString(), true, false, false);
 
     final Response response = checkOutFixture.attemptCheckOutByBarcode(item, steve);

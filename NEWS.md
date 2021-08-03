@@ -1,3 +1,8 @@
+## 22.0.1 2021-08-03
+
+* User asked to override patron block on renewing when no patron block exists on renewing (CIRC-1185)
+* Circ log filter for renewed doesn't work (CIRC-1165)
+
 ## 22.0.0 2021-06-14
 
 * Due date will be truncated by patron expiration (CIRC-886, CIRC-1159)
