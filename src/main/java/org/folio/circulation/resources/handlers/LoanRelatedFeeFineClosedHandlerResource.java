@@ -55,7 +55,7 @@ public class LoanRelatedFeeFineClosedHandlerResource extends Resource {
 
     createAndValidateRequest(routingContext)
       .after(request -> processEvent(context, request))
-      .thenCompose(r -> r.after(eventPublisher::publishClosedLoanEvent))
+      .thenCompose(r -> r.after(eventPublisher::publishClosedLoanEvents))
       .exceptionally(CommonFailures::failedDueToServerError)
       .thenApply(r -> r.map(toFixedValue(NoContentResponse::noContent)))
       .thenAccept(result -> result.applySideEffect(context::write, failure -> {

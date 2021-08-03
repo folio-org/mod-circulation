@@ -286,7 +286,7 @@ public class ChargeLostFeesWhenAgedToLostService {
   }
 
   private CompletableFuture<Result<Void>> publishClosedLoansLogEvents(Result<List<Loan>> loansResult) {
-    return loansResult.after(loans -> allOf(loans, eventPublisher::publishClosedLoanEvent))
+    return loansResult.after(loans -> allOf(loans, eventPublisher::publishClosedLoanEvents))
       .thenApply(r -> r.map(v -> null));
   }
 }

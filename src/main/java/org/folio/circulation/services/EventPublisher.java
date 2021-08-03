@@ -7,6 +7,7 @@ import static org.folio.circulation.domain.EventType.ITEM_CHECKED_IN;
 import static org.folio.circulation.domain.EventType.ITEM_CHECKED_OUT;
 import static org.folio.circulation.domain.EventType.ITEM_CLAIMED_RETURNED;
 import static org.folio.circulation.domain.EventType.ITEM_DECLARED_LOST;
+import static org.folio.circulation.domain.EventType.LOAN_CLOSED;
 import static org.folio.circulation.domain.EventType.LOAN_DUE_DATE_CHANGED;
 import static org.folio.circulation.domain.EventType.LOG_RECORD;
 import static org.folio.circulation.domain.LoanAction.CHECKED_IN;
@@ -23,6 +24,7 @@ import static org.folio.circulation.domain.representations.logs.LogEventType.NOT
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.domain.representations.logs.RequestUpdateLogEventMapper.mapToRequestLogEventJson;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
+import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import io.vertx.core.json.JsonObject;
@@ -128,7 +130,9 @@ public class EventPublisher {
   }
 
   public CompletableFuture<Result<Loan>> publishDeclaredLostEvent(Loan loan) {
-    return publishStatusChangeEvent(ITEM_DECLARED_LOST, loan);
+    return loan.isDeclaredLost()
+      ? publishStatusChangeEvent(ITEM_DECLARED_LOST, loan)
+      : ofAsync(() -> loan);
   }
 
   public CompletableFuture<Result<Loan>> publishItemClaimedReturnedEvent(Loan loan) {
@@ -152,6 +156,22 @@ public class EventPublisher {
     write(payloadJson, LOAN_ID_FIELD, loan.getId());
 
     return pubSubPublishingService.publishEvent(eventName, payloadJson.encode())
+      .thenApply(r -> succeeded(loan));
+  }
+
+  private CompletableFuture<Result<Loan>> publishLoanClosedEvent(Loan loan) {
+    String eventName = LOAN_CLOSED.name();
+
+    if (loan == null) {
+      logger.error(FAILED_TO_PUBLISH_LOG_TEMPLATE, eventName);
+      return ofAsync(() -> null);
+    }
+
+    JsonObject payload = new JsonObject();
+    write(payload, USER_ID_FIELD, loan.getUserId());
+    write(payload, LOAN_ID_FIELD, loan.getId());
+
+    return pubSubPublishingService.publishEvent(eventName, payload.encode())
       .thenApply(r -> succeeded(loan));
   }
 
@@ -220,10 +240,11 @@ public class EventPublisher {
       .thenCompose(r -> r.after(v -> publishStatusChangeEvent(ITEM_AGED_TO_LOST, loan)));
   }
 
-  public CompletableFuture<Result<Void>> publishClosedLoanEvent(Loan loan) {
+  public CompletableFuture<Result<Void>> publishClosedLoanEvents(Loan loan) {
     if (!CHECKED_IN.getValue().equalsIgnoreCase(loan.getAction())) {
-      return publishLogRecord(LoanLogContext.from(loan)
-        .withServicePointId(loan.getCheckoutServicePointId()).asJson(), LOAN);
+      return publishLoanClosedEvent(loan)
+        .thenCompose(r -> r.after(ignored -> publishLogRecord(LoanLogContext.from(loan)
+        .withServicePointId(loan.getCheckoutServicePointId()).asJson(), LOAN)));
     }
     return CompletableFuture.completedFuture(succeeded(null));
   }
