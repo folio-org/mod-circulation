@@ -125,7 +125,7 @@ public class FeeFineFacadeTest {
 
   private CreateAccountCommand.CreateAccountCommandBuilder createCommandBuilder() {
     final Item item = Item.from(new JsonObject())
-      .withLocation(Location.from(new JsonObject().put("name", "Main library")));
+      .withEffectiveLocation(Location.from(new JsonObject().put("name", "Main library")));
 
     return CreateAccountCommand.builder()
       .withAmount(new FeeAmount(10.0))

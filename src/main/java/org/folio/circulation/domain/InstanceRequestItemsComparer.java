@@ -66,8 +66,8 @@ public class InstanceRequestItemsComparer {
     if (destinationServicePointId == null)
       return 0;
 
-    Location item1Location = item1.getLocation();
-    Location item2Location = item2.getLocation();
+    Location item1Location = item1.getEffectiveLocation();
+    Location item2Location = item2.getEffectiveLocation();
 
     if (item1Location != null && item1Location.homeLocationIsServedBy(destinationServicePointId)){
       return -1;

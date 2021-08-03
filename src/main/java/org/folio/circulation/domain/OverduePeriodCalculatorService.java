@@ -158,6 +158,6 @@ public class OverduePeriodCalculatorService {
   }
 
   private UUID getItemLocationPrimaryServicePoint(Loan loan) {
-    return loan.getItem().getLocation().getPrimaryServicePointId();
+    return loan.getItem().getEffectiveLocation().getPrimaryServicePointId();
   }
 }

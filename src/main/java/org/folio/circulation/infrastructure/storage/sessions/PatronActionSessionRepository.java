@@ -9,7 +9,6 @@ import static org.folio.circulation.domain.notice.session.PatronActionSessionPro
 import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.PATRON_ID;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.http.ResponseMapping.flatMapUsingJson;
-import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.CqlQuery.noQuery;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
@@ -271,12 +270,12 @@ public class PatronActionSessionRepository {
       return loan;
     }
 
-    Location oldLocation = item.getLocation();
+    Location oldLocation = item.getEffectiveLocation();
 
     JsonObject campus = campuses.get(oldLocation.getCampusId());
     Location locationWithCampus = oldLocation.withCampusRepresentation(campus);
 
-    return loan.withItem(item.withLocation(locationWithCampus));
+    return loan.withItem(item.withEffectiveLocation(locationWithCampus));
   }
 
   private CompletableFuture<Result<MultipleRecords<Loan>>> fetchInstitutionsForLoanItems(
@@ -299,12 +298,12 @@ public class PatronActionSessionRepository {
       return loan;
     }
 
-    Location oldLocation = item.getLocation();
+    Location oldLocation = item.getEffectiveLocation();
 
     JsonObject institution = institutions.get(oldLocation.getInstitutionId());
     Location locationWithInstitution = oldLocation.withInstitutionRepresentation(institution);
 
-    return loan.withItem(item.withLocation(locationWithInstitution));
+    return loan.withItem(item.withEffectiveLocation(locationWithInstitution));
   }
 
   private static MultipleRecords<PatronSessionRecord> setLoansForSessionRecords(
@@ -320,7 +319,7 @@ public class PatronActionSessionRepository {
     return loans.getRecords().stream()
       .map(Loan::getItem)
       .filter(Item::isFound)
-      .map(Item::getLocation)
+      .map(Item::getEffectiveLocation)
       .filter(Objects::nonNull)
       .collect(Collectors.toList());
   }

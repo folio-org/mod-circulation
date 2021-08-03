@@ -33,7 +33,7 @@ public class LoanCheckInServiceTest {
     CheckInByBarcodeRequest checkInRequest = getCheckInRequest(checkInServicePoint);
 
     Item item = Item.from(itemRepresentation)
-      .withLocation(Location.from(locationRepresentation));
+      .withEffectiveLocation(Location.from(locationRepresentation));
 
     assertTrue(loanCheckInService.isInHouseUse(item, createEmptyQueue(),
       checkInRequest));
@@ -54,7 +54,7 @@ public class LoanCheckInServiceTest {
     CheckInByBarcodeRequest checkInRequest = getCheckInRequest(checkInServicePoint);
 
     Item item = Item.from(itemRepresentation)
-      .withLocation(Location.from(locationRepresentation));
+      .withEffectiveLocation(Location.from(locationRepresentation));
 
     assertTrue(loanCheckInService.isInHouseUse(item, createEmptyQueue(), checkInRequest));
   }
@@ -73,7 +73,7 @@ public class LoanCheckInServiceTest {
     CheckInByBarcodeRequest checkInRequest = getCheckInRequest(checkInServicePoint);
 
     Item item = Item.from(itemRepresentation)
-      .withLocation(Location.from(locationRepresentation));
+      .withEffectiveLocation(Location.from(locationRepresentation));
 
     assertFalse(loanCheckInService.isInHouseUse(item, createEmptyQueue(),
       checkInRequest));
@@ -93,7 +93,7 @@ public class LoanCheckInServiceTest {
     CheckInByBarcodeRequest checkInRequest = getCheckInRequest(checkInServicePoint);
 
     Item item = Item.from(itemRepresentation)
-      .withLocation(Location.from(locationRepresentation));
+      .withEffectiveLocation(Location.from(locationRepresentation));
 
     RequestQueue requestQueue = new RequestQueue(Collections
       .singleton(Request.from(new JsonObject())));
@@ -115,7 +115,7 @@ public class LoanCheckInServiceTest {
     CheckInByBarcodeRequest checkInRequest = getCheckInRequest(UUID.randomUUID());
 
     Item item = Item.from(itemRepresentation)
-      .withLocation(Location.from(locationRepresentation));
+      .withEffectiveLocation(Location.from(locationRepresentation));
 
     assertFalse(loanCheckInService.isInHouseUse(item, createEmptyQueue(), checkInRequest));
   }

@@ -29,7 +29,7 @@ public class EffectiveLocationApiTests extends APITests {
         .create()
       ).withInstance(instanceBuilder().create());
 
-    assertThat(item.getLocationId(), is(popularReadingLocationId));
+    assertThat(item.getEffectiveLocationId(), is(popularReadingLocationId));
   }
 
   private InstanceBuilder instanceBuilder() {

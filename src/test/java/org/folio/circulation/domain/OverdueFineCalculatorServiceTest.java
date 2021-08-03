@@ -584,7 +584,7 @@ public class OverdueFineCalculatorServiceTest {
       .put("name", ITEM_MATERIAL_TYPE_NAME);
 
     return Item.from(item)
-      .withLocation(
+      .withEffectiveLocation(
         Location.from(new LocationBuilder()
           .withName(LOCATION_NAME)
           .withPrimaryServicePoint(SERVICE_POINT_ID)

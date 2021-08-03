@@ -113,7 +113,7 @@ public class OverdueFineCalculatorService {
       return false;
     }
 
-    if(context.getCheckInRequest().getClaimedReturnedResolution() != null 
+    if(context.getCheckInRequest().getClaimedReturnedResolution() != null
         && context.getCheckInRequest().getClaimedReturnedResolution().equals(FOUND_BY_LIBRARY)) {
       return false;
     }
@@ -205,7 +205,7 @@ public class OverdueFineCalculatorService {
     CalculationParameters params) {
 
     return Optional.ofNullable(params.item)
-      .map(Item::getLocation)
+      .map(Item::getEffectiveLocation)
       .map(Location::getPrimaryServicePointId)
       .map(UUID::toString)
       .map(id -> repos.feeFineOwnerRepository.findOwnerForServicePoint(id)

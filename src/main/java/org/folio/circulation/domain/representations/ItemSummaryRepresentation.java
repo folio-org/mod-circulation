@@ -70,7 +70,7 @@ public class ItemSummaryRepresentation {
         destinationServicePointSummary);
     }
 
-    final Location location = item.getLocation();
+    final Location location = item.getEffectiveLocation();
 
     if(location != null) {
       itemSummary.put("location", new JsonObject()

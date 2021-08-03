@@ -25,7 +25,7 @@ public class LogCheckInService {
       .withServicePointId(checkInContext.getCheckInServicePointId().toString())
       .withPerformedByUserId(checkInContext.getLoggedInUserId())
       .withItemStatusPriorToCheckIn(checkInContext.getItem().getStatusName())
-      .withItemLocationId(checkInContext.getItem().getLocationId())
+      .withItemLocationId(checkInContext.getItem().getEffectiveLocationId())
       .withRequestQueueSize(checkInContext.getRequestQueue().size())
       .build();
 

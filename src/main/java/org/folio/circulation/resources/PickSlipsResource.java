@@ -129,7 +129,7 @@ public class PickSlipsResource extends Resource {
     Collection<Item> items, Collection<Location> locationsForServicePoint, Clients clients) {
 
     Set<String> locationIdsFromItems = items.stream()
-      .map(Item::getLocationId)
+      .map(Item::getEffectiveLocationId)
       .filter(StringUtils::isNoneBlank)
       .collect(toSet());
 
@@ -158,7 +158,7 @@ public class PickSlipsResource extends Resource {
 
     return succeeded(
       items.stream()
-        .map(item -> item.withLocation(locationsMap.getOrDefault(item.getLocationId(), null)))
+        .map(item -> item.withEffectiveLocation(locationsMap.getOrDefault(item.getEffectiveLocationId(), null)))
         .collect(toSet())
     );
   }

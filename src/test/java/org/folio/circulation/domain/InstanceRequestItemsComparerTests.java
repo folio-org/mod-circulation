@@ -258,6 +258,6 @@ public class InstanceRequestItemsComparerTests {
     }
 
     return Item.from(itemRepresentation)
-      .withLocation(location);
+      .withEffectiveLocation(location);
   }
 }

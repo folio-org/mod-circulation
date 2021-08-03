@@ -57,11 +57,11 @@ public class LocationRepository {
   }
 
   public CompletableFuture<Result<Location>> getLocation(Item item) {
-    if(isNull(item) || isNull(item.getLocationId())) {
+    if(isNull(item) || isNull(item.getEffectiveLocationId())) {
       return ofAsync(() -> null);
     }
 
-    return fetchLocationById(item.getLocationId())
+    return fetchLocationById(item.getEffectiveLocationId())
       .thenCompose(r -> r.after(this::loadLibrary))
       .thenCompose(r -> r.after(this::loadCampus))
       .thenCompose(r -> r.after(this::loadInstitution));
@@ -82,7 +82,7 @@ public class LocationRepository {
     Collection<Item> inventoryRecords) {
 
     final Set<String> locationIds = inventoryRecords.stream()
-      .flatMap(item -> Stream.of(item.getPermanentLocationId(), item.getLocationId()))
+      .flatMap(item -> Stream.of(item.getPermanentLocationId(), item.getEffectiveLocationId()))
       .filter(StringUtils::isNotBlank)
       .collect(Collectors.toSet());
 
@@ -199,5 +199,4 @@ public class LocationRepository {
             campuses.getOrDefault(location.getCampusId(), null)))
           .collect(toSet()))));
   }
-
 }

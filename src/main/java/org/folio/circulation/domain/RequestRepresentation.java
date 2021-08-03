@@ -69,7 +69,7 @@ public class RequestRepresentation {
     write(itemSummary, "instanceId", item.getInstanceId());
 
 
-    final Location location = item.getLocation();
+    final Location location = item.getEffectiveLocation();
 
     if (location != null) {
       write(itemSummary, "location", locationSummary(location));

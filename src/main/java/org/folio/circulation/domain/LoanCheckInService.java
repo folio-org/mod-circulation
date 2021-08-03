@@ -39,7 +39,7 @@ public class LoanCheckInService {
 
     return item.isAvailable()
       && requestQueue.getRequests().isEmpty()
-      && item.getLocation().homeLocationIsServedBy(checkInByBarcodeRequest
+      && item.getEffectiveLocation().homeLocationIsServedBy(checkInByBarcodeRequest
       .getServicePointId());
   }
 

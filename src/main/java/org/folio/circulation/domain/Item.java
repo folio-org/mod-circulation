@@ -43,7 +43,7 @@ public class Item {
   private final JsonObject itemRepresentation;
   private final JsonObject holdingRepresentation;
   private final JsonObject instanceRepresentation;
-  private final Location location;
+  private final Location effectiveLocation;
   private final JsonObject materialTypeRepresentation;
   private final ServicePoint primaryServicePoint;
   private final JsonObject loanTypeRepresentation;
@@ -186,8 +186,8 @@ public class Item {
     return getNestedStringProperty(getItem(), STATUS_PROPERTY, "date");
   }
 
-  public Location getLocation() {
-    return location;
+  public Location getEffectiveLocation() {
+    return effectiveLocation;
   }
 
   public Location getPermanentLocation() {
@@ -213,7 +213,7 @@ public class Item {
     return getProperty(getItem(), ItemProperties.MATERIAL_TYPE_ID);
   }
 
-  public String getLocationId() {
+  public String getEffectiveLocationId() {
     return getProperty(getItem(), EFFECTIVE_LOCATION_ID);
   }
 
@@ -295,7 +295,7 @@ public class Item {
 
   Item inTransitToHome() {
     return changeStatus(IN_TRANSIT)
-      .changeDestination(location.getPrimaryServicePointId())
+      .changeDestination(effectiveLocation.getPrimaryServicePointId())
       .changeInTransitDestinationServicePoint(getPrimaryServicePoint());
   }
 
@@ -359,7 +359,7 @@ public class Item {
     return firstNonBlank(itemLocation, holdingsLocation);
   }
 
-  public Item withLocation(Location newLocation) {
+  public Item withEffectiveLocation(Location newLocation) {
     return new Item(
       this.itemRepresentation,
       this.holdingRepresentation,
@@ -380,7 +380,7 @@ public class Item {
       this.itemRepresentation,
       this.holdingRepresentation,
       this.instanceRepresentation,
-      this.location,
+      this.effectiveLocation,
       newMaterialType,
       this.primaryServicePoint,
       this.loanTypeRepresentation,
@@ -396,7 +396,7 @@ public class Item {
       this.itemRepresentation,
       newHoldingsRecordRepresentation,
       this.instanceRepresentation,
-      this.location,
+      this.effectiveLocation,
       this.materialTypeRepresentation,
       this.primaryServicePoint,
       this.loanTypeRepresentation,
@@ -412,7 +412,7 @@ public class Item {
       this.itemRepresentation,
       this.holdingRepresentation,
       newInstanceRepresentation,
-      this.location,
+      this.effectiveLocation,
       this.materialTypeRepresentation,
       this.primaryServicePoint,
       this.loanTypeRepresentation,
@@ -428,7 +428,7 @@ public class Item {
       this.itemRepresentation,
       this.holdingRepresentation,
       this.instanceRepresentation,
-      this.location,
+      this.effectiveLocation,
       this.materialTypeRepresentation,
       servicePoint,
       this.loanTypeRepresentation,
@@ -444,7 +444,7 @@ public class Item {
       this.itemRepresentation,
       this.holdingRepresentation,
       this.instanceRepresentation,
-      this.location,
+      this.effectiveLocation,
       this.materialTypeRepresentation,
       this.primaryServicePoint,
       newLoanTypeRepresentation,
@@ -460,7 +460,7 @@ public class Item {
       this.itemRepresentation,
       this.holdingRepresentation,
       this.instanceRepresentation,
-      this.location,
+      this.effectiveLocation,
       this.materialTypeRepresentation,
       this.primaryServicePoint,
       this.loanTypeRepresentation,
@@ -476,7 +476,7 @@ public class Item {
       this.itemRepresentation,
       this.holdingRepresentation,
       this.instanceRepresentation,
-      this.location,
+      this.effectiveLocation,
       this.materialTypeRepresentation,
       this.primaryServicePoint,
       this.loanTypeRepresentation,
