@@ -5,13 +5,9 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty
 
 import java.util.UUID;
 
-import org.folio.circulation.domain.policy.Period;
-
-import api.support.builders.LoanPolicyBuilder;
-import api.support.http.IndividualResource;
-
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.OverdueFinePolicyBuilder;
+import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
 
 public class OverdueFinePoliciesFixture {
