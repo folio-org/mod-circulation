@@ -147,7 +147,7 @@ public class LostItemFeeChargingService {
 
   private CompletableFuture<Result<Loan>> closeLoanAsLostAndPaidAndPublishEvent(Loan loan) {
     return closeLoanAsLostAndPaidAndUpdateInStorage(loan)
-    .thenCompose(r -> r.after(eventPublisher::publishClosedLoanEvents))
+    .thenCompose(r -> r.after(eventPublisher::publishClosedLoanEvent))
     .thenApply(r -> r.map(v -> loan));
   }
 

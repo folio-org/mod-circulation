@@ -240,7 +240,7 @@ public class EventPublisher {
       .thenCompose(r -> r.after(v -> publishStatusChangeEvent(ITEM_AGED_TO_LOST, loan)));
   }
 
-  public CompletableFuture<Result<Void>> publishClosedLoanEvents(Loan loan) {
+  public CompletableFuture<Result<Void>> publishClosedLoanEvent(Loan loan) {
     if (!CHECKED_IN.getValue().equalsIgnoreCase(loan.getAction())) {
       return publishLoanClosedEvent(loan)
         .thenCompose(r -> r.after(ignored -> publishLogRecord(LoanLogContext.from(loan)
