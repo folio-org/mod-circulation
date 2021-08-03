@@ -828,7 +828,7 @@
             "pubsub.publish.post"
           ],
           "unit": "minute",
-          "delay": "1"
+          "delay": "60"
         },
         {
           "methods": [
