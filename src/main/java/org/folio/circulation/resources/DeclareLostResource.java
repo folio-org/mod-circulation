@@ -50,9 +50,21 @@ public class DeclareLostResource extends Resource {
 
     validateDeclaredLostRequest(routingContext)
       .after(request -> declareItemLost(request, clients, context))
-      .thenComposeAsync(r -> r.after(eventPublisher::publishDeclaredLostEvent))
+      .thenComposeAsync(r -> r.after(loan -> publishEvent(loan, eventPublisher)))
       .thenApply(r -> r.map(toFixedValue(NoContentResponse::noContent)))
       .thenAccept(context::writeResultToHttpResponse);
+  }
+
+  private CompletableFuture<Result<Loan>> publishEvent(Loan loan, EventPublisher eventPublisher) {
+    if (loan.isDeclaredLost()) {
+      return eventPublisher.publishDeclaredLostEvent(loan);
+    }
+
+    if (loan.isClosed()) {
+      return eventPublisher.publishLoanClosedEvent(loan);
+    }
+
+    return ofAsync(() -> null);
   }
 
   private CompletableFuture<Result<Loan>> declareItemLost(DeclareItemLostRequest request,

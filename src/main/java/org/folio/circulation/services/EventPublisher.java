@@ -13,7 +13,6 @@ import static org.folio.circulation.domain.EventType.LOG_RECORD;
 import static org.folio.circulation.domain.LoanAction.CHECKED_IN;
 import static org.folio.circulation.domain.LoanAction.DUE_DATE_CHANGED;
 import static org.folio.circulation.domain.LoanAction.RECALLREQUESTED;
-import static org.folio.circulation.domain.LoanAction.RENEWED;
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.LOG_EVENT_TYPE;
 import static org.folio.circulation.domain.representations.logs.CirculationCheckInCheckOutLogEventMapper.mapToCheckInLogEventContent;
 import static org.folio.circulation.domain.representations.logs.CirculationCheckInCheckOutLogEventMapper.mapToCheckOutLogEventContent;
@@ -130,9 +129,7 @@ public class EventPublisher {
   }
 
   public CompletableFuture<Result<Loan>> publishDeclaredLostEvent(Loan loan) {
-    return loan.isDeclaredLost()
-      ? publishStatusChangeEvent(ITEM_DECLARED_LOST, loan)
-      : ofAsync(() -> loan);
+    return publishStatusChangeEvent(ITEM_DECLARED_LOST, loan);
   }
 
   public CompletableFuture<Result<Loan>> publishItemClaimedReturnedEvent(Loan loan) {
@@ -159,7 +156,7 @@ public class EventPublisher {
       .thenApply(r -> succeeded(loan));
   }
 
-  private CompletableFuture<Result<Loan>> publishLoanClosedEvent(Loan loan) {
+  public CompletableFuture<Result<Loan>> publishLoanClosedEvent(Loan loan) {
     String eventName = LOAN_CLOSED.name();
 
     if (loan == null) {
@@ -242,9 +239,8 @@ public class EventPublisher {
 
   public CompletableFuture<Result<Void>> publishClosedLoanEvent(Loan loan) {
     if (!CHECKED_IN.getValue().equalsIgnoreCase(loan.getAction())) {
-      return publishLoanClosedEvent(loan)
-        .thenCompose(r -> r.after(ignored -> publishLogRecord(LoanLogContext.from(loan)
-        .withServicePointId(loan.getCheckoutServicePointId()).asJson(), LOAN)));
+      return publishLogRecord(LoanLogContext.from(loan)
+        .withServicePointId(loan.getCheckoutServicePointId()).asJson(), LOAN);
     }
     return CompletableFuture.completedFuture(succeeded(null));
   }
