@@ -1,3 +1,7 @@
+## 22.0.3 IN-PROGRESS
+
+* Disallows inactive / expired borrower from renewing outstanding loans (CIRC-1187)
+
 ## 22.0.2 2021-08-03
 
 * Increases the number of loans to be checked for scheduled anonymization to 50 000 (CIRC-1178)
