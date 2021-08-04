@@ -6,9 +6,9 @@ import static api.support.builders.FixedDueDateSchedule.forDay;
 import static api.support.builders.FixedDueDateSchedule.todayOnly;
 import static api.support.builders.FixedDueDateSchedule.wholeMonth;
 import static api.support.builders.ItemBuilder.CHECKED_OUT;
-import static api.support.fakes.PublishedEvents.byLogEventType;
-import static api.support.fakes.PublishedEvents.byLogAction;
 import static api.support.fakes.PublishedEvents.byEventType;
+import static api.support.fakes.PublishedEvents.byLogAction;
+import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.fixtures.AutomatedPatronBlocksFixture.MAX_NUMBER_OF_ITEMS_CHARGED_OUT_MESSAGE;
 import static api.support.fixtures.AutomatedPatronBlocksFixture.MAX_OUTSTANDING_FEE_FINE_BALANCE_MESSAGE;
 import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_SERVICE_POINT_ID;
@@ -92,6 +92,7 @@ import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import api.support.http.OkapiHeaders;
+import api.support.http.ResourceClient;
 import api.support.matchers.OverdueFineMatcher;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -105,7 +106,6 @@ public abstract class RenewalAPITests extends APITests {
     "circulation.override-item-limit-block";
   private static final String RENEWED_THROUGH_OVERRIDE = "renewedThroughOverride";
   private static final String PATRON_WAS_BLOCKED_MESSAGE = "Patron blocked from renewing";
-  private static final String RENEWED = "renewed";
 
   abstract Response attemptRenewal(IndividualResource user, IndividualResource item);
 
@@ -619,6 +619,29 @@ public abstract class RenewalAPITests extends APITests {
       hasMessage("loan at maximum renewal number"),
       hasLoanPolicyIdParameter(limitedRenewalsPolicyId),
       hasLoanPolicyNameParameter("Limited Renewals Policy"))));
+  }
+
+  @Test
+  public void cannotRenewWhenUserIsInactive() {
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource jessica = usersFixture.jessica();
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica,
+      new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
+
+    final UUID userId = jessica.getId();
+    JsonObject userRecord = jessica.copyJson();
+    userRecord.put("active", false);
+
+    final ResourceClient usersClient = ResourceClient.forUsers();
+
+    usersClient.replace(userId, userRecord);
+
+    jessica = usersClient.get(userId);
+
+    Response response = attemptRenewal(smallAngryPlanet, jessica);
+
+    assertThat(response.getJson(), hasErrorWith(
+      hasMessage("Cannot renew loan when user is inactive or expired")));
   }
 
   @Test
@@ -1697,7 +1720,7 @@ public abstract class RenewalAPITests extends APITests {
     assertThat(loan.getString("actionComment"), is(TEST_COMMENT));
     assertThat(loan.getString("action"), is(RENEWED_THROUGH_OVERRIDE));
   }
-
+  
   private void checkRenewalAttempt(DateTime expectedDueDate, UUID dueDateLimitedPolicyId) {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();

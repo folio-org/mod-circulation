@@ -29,6 +29,7 @@ import static org.folio.circulation.resources.handlers.error.CirculationErrorTyp
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.RENEWAL_VALIDATION_ERROR;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_BLOCKED_AUTOMATICALLY;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_BLOCKED_MANUALLY;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_INACTIVE;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getObjectProperty;
@@ -58,6 +59,7 @@ import org.folio.circulation.domain.override.BlockOverrides;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.library.ClosedLibraryStrategyService;
 import org.folio.circulation.domain.validation.AutomatedPatronBlocksValidator;
+import org.folio.circulation.domain.validation.InactiveUserRenewalValidator;
 import org.folio.circulation.domain.validation.UserManualBlocksValidator;
 import org.folio.circulation.domain.validation.Validator;
 import org.folio.circulation.domain.validation.overriding.BlockValidator;
@@ -160,6 +162,7 @@ public abstract class RenewalResource extends Resource {
 
     findLoan(bodyAsJson, loanRepository, itemRepository, userRepository, errorHandler)
       .thenApply(r -> r.map(loan -> RenewalContext.create(loan, bodyAsJson, webContext.getUserId())))
+      .thenComposeAsync(r-> refuseWhenPatronIsInactive(r, errorHandler, USER_IS_INACTIVE))
       .thenComposeAsync(r -> refuseWhenRenewalActionIsBlockedForPatron(
         manualPatronBlocksValidator, r, errorHandler, USER_IS_BLOCKED_MANUALLY))
       .thenComposeAsync(r -> refuseWhenRenewalActionIsBlockedForPatron(
@@ -210,6 +213,25 @@ public abstract class RenewalResource extends Resource {
 
   private String servicePointId(RenewalContext renewalContext) {
     return renewalContext.getRenewalRequest().getString("servicePointId");
+  }
+
+  private CompletableFuture<Result<RenewalContext>> refuseWhenPatronIsInactive(
+    Result<RenewalContext> result, CirculationErrorHandler errorHandler,
+    CirculationErrorType errorType) {
+
+    if (errorHandler.hasAny(ITEM_DOES_NOT_EXIST, FAILED_TO_FIND_SINGLE_OPEN_LOAN,
+      FAILED_TO_FETCH_USER)) {
+
+      return completedFuture(result);
+    }
+
+    final var inactiveUserRenewalValidator = new InactiveUserRenewalValidator();
+
+    final var validator = new BlockValidator<>(USER_IS_INACTIVE,
+      inactiveUserRenewalValidator::refuseWhenPatronIsInactive);
+
+    return result.after(renewalContext -> validator.validate(renewalContext)
+      .thenApply(r -> errorHandler.handleValidationResult(r, errorType, result)));
   }
 
   private CompletableFuture<Result<RenewalContext>> refuseWhenRenewalActionIsBlockedForPatron(
@@ -294,6 +316,12 @@ public abstract class RenewalResource extends Resource {
       ? new OverridingBlockValidator<>(PATRON_BLOCK, blockOverrides, permissions)
       : new BlockValidator<>(USER_IS_BLOCKED_AUTOMATICALLY, validationFunction);
   }
+
+  private Validator<RenewalContext> createInactivePatronValidator() {
+    final var inactiveUserRenewalValidator = new InactiveUserRenewalValidator();
+
+    return new BlockValidator<>(USER_IS_INACTIVE, inactiveUserRenewalValidator::refuseWhenPatronIsInactive);
+}
 
   private Validator<RenewalContext> createManualPatronBlocksValidator(JsonObject request,
     OkapiPermissions permissions, Clients clients) {

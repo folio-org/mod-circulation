@@ -34,7 +34,7 @@ public class User {
     return new User(representation, newPatronGroup);
   }
 
-  public boolean canDetermineStatus() {
+  public boolean cannotDetermineStatus() {
     return !representation.containsKey("active");
   }
 
