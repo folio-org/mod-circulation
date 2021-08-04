@@ -1,4 +1,4 @@
-## 22.0.3 IN-PROGRESS
+## 22.0.3 2021-08-04
 
 * Disallows inactive / expired borrower from renewing outstanding loans (CIRC-1187)
 
