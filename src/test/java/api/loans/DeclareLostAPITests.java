@@ -279,7 +279,6 @@ public class DeclareLostAPITests extends APITests {
     verifyLoanIsClosed(loan.getId());
 
     assertThat(getAccountsForLoan(loan.getId()), hasSize(0));
-    loansClient.getById(loan.getId()).getJson();
     assertThatPublishedLoanLogRecordEventsAreValid(loansClient.getById(loan.getId()).getJson());
 
     verifyNumberOfPublishedEvents(ITEM_DECLARED_LOST, 0);
@@ -306,8 +305,6 @@ public class DeclareLostAPITests extends APITests {
       hasMessage("No fee/fine owner found for item's permanent location"),
       hasParameter("locationId", permanentLocation.getId().toString())
     )));
-
-    verifyNumberOfPublishedEvents(ITEM_DECLARED_LOST, 0);
   }
 
   @Test
