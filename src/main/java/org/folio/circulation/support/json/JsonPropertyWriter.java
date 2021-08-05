@@ -5,7 +5,6 @@ import static org.joda.time.DateTimeZone.UTC;
 import java.util.UUID;
 
 import org.apache.commons.lang3.StringUtils;
-import org.folio.circulation.domain.policy.Period;
 import org.joda.time.DateTime;
 import org.joda.time.format.ISODateTimeFormat;
 
@@ -31,15 +30,6 @@ public class JsonPropertyWriter {
     Double value) {
       to.put(propertyName, value);
     }
-
-  public static void write(
-    JsonObject to,
-    String propertyName,
-    Period value) {
-    to.put(propertyName, value.asJson());
-  }
-
-
   public static void write(
     JsonObject to,
     String propertyName,

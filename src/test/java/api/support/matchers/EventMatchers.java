@@ -10,14 +10,14 @@ import static api.support.matchers.EventTypeMatchers.isLoanDueDateChangedEventTy
 import static api.support.matchers.EventTypeMatchers.isLogRecordEventType;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath;
+import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasNoJsonPath;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getBooleanProperty;
 import static org.hamcrest.Matchers.allOf;
-import static org.hamcrest.Matchers.hasProperty;
-import static org.hamcrest.Matchers.hasValue;
 import static org.hamcrest.core.Is.is;
 
 import org.folio.circulation.domain.representations.logs.LogEventType;
 import org.hamcrest.Matcher;
+import org.hamcrest.core.IsNull;
 import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
@@ -25,15 +25,18 @@ import io.vertx.core.json.JsonObject;
 public class EventMatchers {
   public static Matcher<JsonObject> isValidItemCheckedOutEvent(JsonObject loan,
     JsonObject gracePeriod) {
+    Matcher<Object> gracePeriodMatcher = gracePeriod != null
+      ? hasJsonPath("gracePeriod", allOf(
+      hasJsonPath("duration", is(gracePeriod.getInteger("duration"))),
+      hasJsonPath("intervalId", is(gracePeriod.getString("intervalId")))
+    )): hasNoJsonPath("gracePeriod");
+
     return allOf(JsonObjectMatcher.allOfPaths(
       hasJsonPath("eventPayload", allOf(
         hasJsonPath("userId", is(loan.getString("userId"))),
         hasJsonPath("loanId", is(loan.getString("id"))),
         hasJsonPath("dueDate", is(loan.getString("dueDate"))),
-        hasJsonPath("gracePeriod", allOf(
-          hasJsonPath("duration", is(gracePeriod.getInteger("duration"))),
-          hasJsonPath("intervalId", is(gracePeriod.getString("intervalId")))
-      ))))),
+        gracePeriodMatcher))),
       isItemCheckedOutEventType());
   }
 

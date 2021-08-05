@@ -1319,7 +1319,35 @@ public class CheckOutByBarcodeTests extends APITests {
 
   @Test
   public void itemCheckedOutEventIsPublished() {
-    IndividualResource loanPolicy = loanPoliciesFixture.hasGracePeriod();
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource steve = usersFixture.steve();
+
+    final IndividualResource response = checkOutFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(smallAngryPlanet)
+        .to(steve)
+        .on(DateTime.now(UTC))
+        .at(UUID.randomUUID()));
+
+    final JsonObject loan = response.getJson();
+
+    final var publishedEvents = Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(FakePubSub::getPublishedEvents, hasSize(2));
+
+    final var checkedOutEvent = publishedEvents.findFirst(byEventType(ITEM_CHECKED_OUT.name()));
+
+    assertThat(checkedOutEvent, isValidItemCheckedOutEvent(loan,null));
+
+    final var checkOutLogEvent = publishedEvents.findFirst(byLogEventType(CHECK_OUT.value()));
+
+    assertThat(checkOutLogEvent, isValidCheckOutLogEvent(loan, LogEventType.CHECK_OUT));
+    assertThatPublishedLoanLogRecordEventsAreValid(loan);
+  }
+
+  @Test
+  public void itemCheckedOutEventIsPublishedWithNotEmptyGracePeriod() {
+    IndividualResource loanPolicy = loanPoliciesFixture.canCirculateRolling();
     use(defaultRollingPolicies().loanPolicy(loanPolicy));
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();

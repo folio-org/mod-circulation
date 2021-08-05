@@ -36,6 +36,7 @@ import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.anonymization.LoanAnonymizationRecords;
+import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.domain.representations.logs.LoanLogContext;
 import org.folio.circulation.domain.representations.logs.LogContextActionResolver;
 import org.folio.circulation.domain.representations.logs.LogEventType;
@@ -86,7 +87,10 @@ public class EventPublisher {
       write(payloadJsonObject, USER_ID_FIELD, loan.getUserId());
       write(payloadJsonObject, LOAN_ID_FIELD, loan.getId());
       write(payloadJsonObject, DUE_DATE_FIELD, loan.getDueDate());
-      write(payloadJsonObject, GRACE_PERIOD_FIELD, loan.getLoanPolicy().getGracePeriod());
+      JsonObject gracePeriod = loan.getLoanPolicy().getGracePeriod().asJson();
+      write(payloadJsonObject, GRACE_PERIOD_FIELD,
+        (gracePeriod.getInteger("duration") == null
+          || gracePeriod.getString("intervalId") == null) ? null : gracePeriod);
 
       runAsync(() -> userRepository.getUser(loanAndRelatedRecords.getLoggedInUserId())
         .thenApplyAsync(r -> r.after(loggedInUser -> CompletableFuture.completedFuture(
