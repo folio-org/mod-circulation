@@ -37,6 +37,12 @@
       "signed": false
     },
     {
+      "eventType": "LOAN_CLOSED",
+      "description": "Loan was closed",
+      "eventTTL": 1,
+      "signed": false
+    },
+    {
       "eventType": "LOG_RECORD",
       "description": "Created log record event",
       "eventTTL": 1,

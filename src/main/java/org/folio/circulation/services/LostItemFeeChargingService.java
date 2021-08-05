@@ -96,8 +96,8 @@ public class LostItemFeeChargingService {
     }
 
     if (!hasLostItemFees(loan) && shouldCloseLoan(referenceData.lostItemPolicy)) {
-      log.info("No existing lost item fees found, losing loan [{}] as lost and paid.", loan.getId());
-      return CloseLoanAsLostandPaidAndPublishEvent(loan);
+      log.info("No existing lost item fees found, closing loan [{}] as lost and paid.", loan.getId());
+      return closeLoanAsLostAndPaidAndPublishEvent(loan);
     }
     log.info("Existing lost item fees found for loan [{}], trying to clear", loan.getId());
     return removeAndRefundFees(userId, servicePointId, loan)
@@ -105,7 +105,7 @@ public class LostItemFeeChargingService {
         log.info("Existing lost item fees cleared from loan [{}]", loan.getId());
         if (shouldCloseLoan(referenceData.lostItemPolicy)) {
           log.info("Closing loan [{}] as lost and paid.", loan.getId());
-          return CloseLoanAsLostandPaidAndPublishEvent(loan);
+          return closeLoanAsLostAndPaidAndPublishEvent(loan);
         } else {
           log.info("Applying fees to loan [{}].", loan.getId());
           return applyFees(referenceData, loan);
@@ -145,7 +145,7 @@ public class LostItemFeeChargingService {
       });
   }
 
-  private CompletableFuture<Result<Loan>> CloseLoanAsLostandPaidAndPublishEvent(Loan loan) {
+  private CompletableFuture<Result<Loan>> closeLoanAsLostAndPaidAndPublishEvent(Loan loan) {
     return closeLoanAsLostAndPaidAndUpdateInStorage(loan)
     .thenCompose(r -> r.after(eventPublisher::publishClosedLoanEvent))
     .thenApply(r -> r.map(v -> loan));

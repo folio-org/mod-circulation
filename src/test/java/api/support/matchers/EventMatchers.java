@@ -6,6 +6,7 @@ import static api.support.matchers.EventTypeMatchers.isItemCheckedInEventType;
 import static api.support.matchers.EventTypeMatchers.isItemCheckedOutEventType;
 import static api.support.matchers.EventTypeMatchers.isItemClaimedReturnedEventType;
 import static api.support.matchers.EventTypeMatchers.isItemDeclaredLostEventType;
+import static api.support.matchers.EventTypeMatchers.isLoanClosedEventType;
 import static api.support.matchers.EventTypeMatchers.isLoanDueDateChangedEventType;
 import static api.support.matchers.EventTypeMatchers.isLogRecordEventType;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
@@ -103,6 +104,15 @@ public class EventMatchers {
         hasJsonPath("loanId", is(loan.getString("id")))
       ))),
       isItemDeclaredLostEventType());
+  }
+
+  public static Matcher<JsonObject> isValidLoanClosedEvent(JsonObject loan) {
+    return allOf(JsonObjectMatcher.allOfPaths(
+        hasJsonPath("eventPayload", allOf(
+          hasJsonPath("userId", is(loan.getString("userId"))),
+          hasJsonPath("loanId", is(loan.getString("id")))
+        ))),
+      isLoanClosedEventType());
   }
 
   public static Matcher<JsonObject> isValidItemAgedToLostEvent(JsonObject loan) {
