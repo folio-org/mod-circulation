@@ -1349,7 +1349,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     assertThat(itemsClient.getById(item.getId()).getJson(), isAvailable());
 
     waitAtMost(1, SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(6));
+      .until(FakePubSub::getPublishedEvents, hasSize(5));
 
     Response response = loansClient.getById(UUID.fromString(checkOutResource.getString("id")));
     JsonObject loan = response.getJson();
