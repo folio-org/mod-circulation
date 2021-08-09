@@ -924,7 +924,7 @@
             "pubsub.publish.post"
           ],
           "unit": "minute",
-          "delay": "1"
+          "delay": "60"
         }
       ]
     },
@@ -2426,21 +2426,23 @@
       ],
       "visible": false
     }
-
-
   ],
   "launchDescriptor": {
     "dockerImage": "${artifactId}:${version}",
     "dockerPull": false,
     "dockerArgs": {
       "HostConfig": {
-        "Memory": 715827882,
+        "Memory": 1073741824,
         "PortBindings": { "9801/tcp": [ { "HostPort": "%p" } ] }
       }
     },
     "env": [
       { "name": "JAVA_OPTIONS",
         "value": "-XX:MaxRAMPercentage=66.0"
+      },
+      {
+        "name": "SCHEDULED_ANONYMIZATION_NUMBER_OF_LOANS_TO_CHECK",
+        "value": "50000"
       }
     ]
   }

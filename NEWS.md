@@ -1,3 +1,7 @@
+## 20.1.8 IN-PROGRESS
+
+* Increases the number of loans to be checked for scheduled anonymization to 50 000 (CIRC-1178)
+
 ## 20.1.7 2021-06-14
 
 * Request pickup notice not sent when item becomes available because previous request is cancelled/expires while awaiting pickup (CIRC-1141)
