@@ -1,4 +1,4 @@
-## 20.1.8 IN-PROGRESS
+## 20.1.8 2021-08-09
 
 * Increases the number of loans to be checked for scheduled anonymization to 50 000 (CIRC-1178)
 
