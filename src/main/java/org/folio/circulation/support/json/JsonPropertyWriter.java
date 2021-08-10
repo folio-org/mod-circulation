@@ -30,6 +30,7 @@ public class JsonPropertyWriter {
     Double value) {
       to.put(propertyName, value);
     }
+
   public static void write(
     JsonObject to,
     String propertyName,
