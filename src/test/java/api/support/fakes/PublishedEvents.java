@@ -15,7 +15,7 @@ import io.vertx.core.json.JsonObject;
 
 public class PublishedEvents extends ArrayList<JsonObject> {
   public static Predicate<JsonObject> byEventType(EventType eventType) {
-    return evt -> eventType.name().equalsIgnoreCase(evt.getString("eventType"));
+    return byEventType(eventType.name());
   }
 
   public static Predicate<JsonObject> byEventType(String eventType) {

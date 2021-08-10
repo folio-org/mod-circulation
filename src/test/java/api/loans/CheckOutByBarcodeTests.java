@@ -1320,6 +1320,9 @@ public class CheckOutByBarcodeTests extends APITests {
 
   @Test
   public void itemCheckedOutEventIsPublished() {
+    IndividualResource loanPolicy = loanPoliciesFixture.canCirculateRolling();
+    use(defaultRollingPolicies().loanPolicy(loanPolicy));
+
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
 
@@ -1338,7 +1341,7 @@ public class CheckOutByBarcodeTests extends APITests {
 
     final var checkedOutEvent = publishedEvents.findFirst(byEventType(ITEM_CHECKED_OUT.name()));
 
-    assertThat(checkedOutEvent, isValidItemCheckedOutEvent(loan,null));
+    assertThat(checkedOutEvent, isValidItemCheckedOutEvent(loan, loanPolicy));
 
     final var checkOutLogEvent = publishedEvents.findFirst(byLogEventType(CHECK_OUT.value()));
 
