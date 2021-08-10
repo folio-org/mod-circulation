@@ -76,7 +76,7 @@ public class LoanPoliciesFixture {
     holds.put("renewItemsWithRequest", true);
 
     final LoanPolicyBuilder canCirculateRollingPolicy = new LoanPolicyBuilder()
-      .withName("Can Circulate Rolling")
+      .withName("Can Circulate Rolling" + (gracePeriod == null ? "" : " with grace period"))
       .withDescription("Can circulate item")
       .withHolds(holds)
       .rolling(Period.weeks(3))
