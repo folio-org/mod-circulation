@@ -61,6 +61,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.nullValue;
 import static org.joda.time.DateTimeZone.UTC;
 import static org.junit.Assert.assertTrue;
 
@@ -1347,25 +1348,24 @@ public class CheckOutByBarcodeTests extends APITests {
 
   @Test
   public void itemCheckedOutEventIsPublishedWithGracePeriod() {
-    itemCheckedOutEventIsPublishedWithGracePeriodDefinedInLoanPolicy(true);
+    Period gracePeriod = Period.weeks(3);
+    IndividualResource loanPolicy = loanPoliciesFixture.canCirculateRolling(gracePeriod);
+    assertThat(getGracePeriod(loanPolicy), is(gracePeriod.asJson()));
+    itemCheckedOutEventIsPublishedWithGracePeriodDefinedInLoanPolicy(loanPolicy);
   }
 
   @Test
   public void itemCheckedOutEventIsPublishedWithoutGracePeriod() {
-    itemCheckedOutEventIsPublishedWithGracePeriodDefinedInLoanPolicy(false);
+    IndividualResource loanPolicy = loanPoliciesFixture.canCirculateRolling();
+    assertThat(getGracePeriod(loanPolicy), is(nullValue()));
+    itemCheckedOutEventIsPublishedWithGracePeriodDefinedInLoanPolicy(loanPolicy);
   }
 
-  private void itemCheckedOutEventIsPublishedWithGracePeriodDefinedInLoanPolicy(boolean withGracePeriod) {
-    Period gracePeriod = withGracePeriod ? Period.weeks(3) : null;
-    IndividualResource loanPolicy = loanPoliciesFixture.canCirculateRolling(gracePeriod);
-
-    JsonObject gracePeriodFromLoanPolicy = loanPolicy.getJson()
-      .getJsonObject("loansPolicy")
-      .getJsonObject("gracePeriod");
-
-    assertThat(gracePeriodFromLoanPolicy, is(withGracePeriod ? gracePeriod.asJson() : null));
+  private void itemCheckedOutEventIsPublishedWithGracePeriodDefinedInLoanPolicy(
+    IndividualResource loanPolicy) {
 
     use(defaultRollingPolicies().loanPolicy(loanPolicy));
+
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
 
@@ -2230,5 +2230,11 @@ public class CheckOutByBarcodeTests extends APITests {
       noticePoliciesFixture.inactiveNotice().getId(),
       overdueFinePoliciesFixture.facultyStandard().getId(),
       lostItemFeePoliciesFixture.facultyStandard().getId());
+  }
+
+  private static JsonObject getGracePeriod(IndividualResource loanPolicy) {
+    return loanPolicy.getJson()
+      .getJsonObject("loansPolicy")
+      .getJsonObject("gracePeriod");
   }
 }
