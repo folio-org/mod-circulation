@@ -70,7 +70,7 @@ public class LoanPoliciesFixture {
     return fixedDueDateScheduleRecordCreator.createIfAbsent(builder);
   }
 
-  public IndividualResource canCirculateRolling(boolean hasGracePeriod) {
+  public IndividualResource canCirculateRolling(Period gracePeriod) {
     JsonObject holds = new JsonObject();
     holds.put("alternateRenewalLoanPeriod", Period.weeks(3).asJson());
     holds.put("renewItemsWithRequest", true);
@@ -81,17 +81,14 @@ public class LoanPoliciesFixture {
       .withHolds(holds)
       .rolling(Period.weeks(3))
       .unlimitedRenewals()
+      .withGracePeriod(gracePeriod)
       .renewFromSystemDate();
-
-    if (hasGracePeriod){
-      canCirculateRollingPolicy.withGracePeriod(Period.weeks(3));
-    }
 
     return loanPolicyRecordCreator.createIfAbsent(canCirculateRollingPolicy);
   }
 
   public IndividualResource canCirculateRolling() {
-    return canCirculateRolling(false);
+    return canCirculateRolling(null);
   }
 
   public IndividualResource canCirculateFixed() {

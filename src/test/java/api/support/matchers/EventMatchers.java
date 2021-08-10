@@ -12,33 +12,44 @@ import static api.support.matchers.EventTypeMatchers.isLogRecordEventType;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath;
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasNoJsonPath;
+import static java.util.Optional.ofNullable;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getBooleanProperty;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.core.Is.is;
 
 import org.folio.circulation.domain.representations.logs.LogEventType;
 import org.hamcrest.Matcher;
-import org.hamcrest.core.IsNull;
 import org.joda.time.DateTime;
 
+import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
 
 public class EventMatchers {
   public static Matcher<JsonObject> isValidItemCheckedOutEvent(JsonObject loan,
-    JsonObject gracePeriod) {
-    Matcher<Object> gracePeriodMatcher = gracePeriod != null
-      ? hasJsonPath("gracePeriod", allOf(
-      hasJsonPath("duration", is(gracePeriod.getInteger("duration"))),
-      hasJsonPath("intervalId", is(gracePeriod.getString("intervalId")))
-    )): hasNoJsonPath("gracePeriod");
+    IndividualResource loanPolicy) {
 
     return allOf(JsonObjectMatcher.allOfPaths(
       hasJsonPath("eventPayload", allOf(
         hasJsonPath("userId", is(loan.getString("userId"))),
         hasJsonPath("loanId", is(loan.getString("id"))),
         hasJsonPath("dueDate", is(loan.getString("dueDate"))),
-        gracePeriodMatcher))),
+        buildGracePeriodMatcher(loanPolicy)))),
       isItemCheckedOutEventType());
+  }
+
+  private static Matcher<Object> buildGracePeriodMatcher(IndividualResource loanPolicy) {
+    return ofNullable(loanPolicy)
+      .map(IndividualResource::getJson)
+      .map(lp -> lp.getJsonObject("loansPolicy"))
+      .map(lp -> lp.getJsonObject("gracePeriod"))
+      .map(EventMatchers::buildGracePeriodMatcher)
+      .orElse(hasNoJsonPath("gracePeriod"));
+  }
+
+  private static Matcher<Object> buildGracePeriodMatcher(JsonObject gracePeriodJson) {
+    return hasJsonPath("gracePeriod", allOf(
+      hasJsonPath("duration", is(gracePeriodJson.getInteger("duration"))),
+      hasJsonPath("intervalId", is(gracePeriodJson.getString("intervalId")))));
   }
 
   public static Matcher<JsonObject> isValidCheckOutLogEvent(JsonObject checkedOutLoan, LogEventType logEventType) {

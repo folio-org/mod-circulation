@@ -1346,8 +1346,17 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void itemCheckedOutEventIsPublishedWithNotEmptyGracePeriod() {
-    IndividualResource loanPolicy = loanPoliciesFixture.canCirculateRolling();
+  public void itemCheckedOutEventIsPublishedWithGracePeriod() {
+    itemCheckedOutEventIsPublishedWithGracePeriodDefinedInLoanPolicy(Period.weeks(3));
+  }
+
+  @Test
+  public void itemCheckedOutEventIsPublishedWithoutGracePeriod() {
+    itemCheckedOutEventIsPublishedWithGracePeriodDefinedInLoanPolicy(null);
+  }
+
+  private void itemCheckedOutEventIsPublishedWithGracePeriodDefinedInLoanPolicy(Period gracePeriod) {
+    IndividualResource loanPolicy = loanPoliciesFixture.canCirculateRolling(gracePeriod);
     use(defaultRollingPolicies().loanPolicy(loanPolicy));
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
@@ -1365,14 +1374,11 @@ public class CheckOutByBarcodeTests extends APITests {
       .atMost(1, TimeUnit.SECONDS)
       .until(FakePubSub::getPublishedEvents, hasSize(2));
 
-    final var checkedOutEvent = publishedEvents.findFirst(byEventType(ITEM_CHECKED_OUT.name()));
+    final var checkedOutEvent = publishedEvents.findFirst(byEventType(ITEM_CHECKED_OUT));
 
-    JsonObject gracePeriod = loanPolicy.getJson().getJsonObject("loansPolicy")
-      .getJsonObject("gracePeriod");
+    assertThat(checkedOutEvent, isValidItemCheckedOutEvent(loan, loanPolicy));
 
-    assertThat(checkedOutEvent, isValidItemCheckedOutEvent(loan, gracePeriod));
-
-    final var checkOutLogEvent = publishedEvents.findFirst(byLogEventType(CHECK_OUT.value()));
+    final var checkOutLogEvent = publishedEvents.findFirst(byLogEventType(CHECK_OUT));
 
     assertThat(checkOutLogEvent, isValidCheckOutLogEvent(loan, LogEventType.CHECK_OUT));
     assertThatPublishedLoanLogRecordEventsAreValid(loan);
