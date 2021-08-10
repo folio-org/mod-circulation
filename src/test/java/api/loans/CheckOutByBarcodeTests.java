@@ -1347,16 +1347,24 @@ public class CheckOutByBarcodeTests extends APITests {
 
   @Test
   public void itemCheckedOutEventIsPublishedWithGracePeriod() {
-    itemCheckedOutEventIsPublishedWithGracePeriodDefinedInLoanPolicy(Period.weeks(3));
+    itemCheckedOutEventIsPublishedWithGracePeriodDefinedInLoanPolicy(true);
   }
 
   @Test
   public void itemCheckedOutEventIsPublishedWithoutGracePeriod() {
-    itemCheckedOutEventIsPublishedWithGracePeriodDefinedInLoanPolicy(null);
+    itemCheckedOutEventIsPublishedWithGracePeriodDefinedInLoanPolicy(false);
   }
 
-  private void itemCheckedOutEventIsPublishedWithGracePeriodDefinedInLoanPolicy(Period gracePeriod) {
+  private void itemCheckedOutEventIsPublishedWithGracePeriodDefinedInLoanPolicy(boolean withGracePeriod) {
+    Period gracePeriod = withGracePeriod ? Period.weeks(3) : null;
     IndividualResource loanPolicy = loanPoliciesFixture.canCirculateRolling(gracePeriod);
+
+    JsonObject gracePeriodFromLoanPolicy = loanPolicy.getJson()
+      .getJsonObject("loansPolicy")
+      .getJsonObject("gracePeriod");
+
+    assertThat(gracePeriodFromLoanPolicy, is(withGracePeriod ? gracePeriod.asJson() : null));
+
     use(defaultRollingPolicies().loanPolicy(loanPolicy));
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
