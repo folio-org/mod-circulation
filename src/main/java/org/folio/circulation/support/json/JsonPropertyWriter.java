@@ -31,7 +31,6 @@ public class JsonPropertyWriter {
       to.put(propertyName, value);
     }
 
-
   public static void write(
     JsonObject to,
     String propertyName,

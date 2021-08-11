@@ -211,6 +211,10 @@ public class Period {
     return ZERO_DURATION_PERIOD;
   }
 
+  public boolean isValid() {
+    return duration != null && interval != null;
+  }
+
   @Override
   public String toString() {
     return "Period{" +
