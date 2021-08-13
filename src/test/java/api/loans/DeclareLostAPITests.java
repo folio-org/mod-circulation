@@ -1,27 +1,32 @@
 package api.loans;
 
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
+import static api.support.fakes.FakePubSub.getPublishedEvents;
+import static api.support.fakes.FakePubSub.getPublishedEventsAsList;
 import static api.support.fakes.PublishedEvents.byEventType;
 import static api.support.http.CqlQuery.exactMatch;
 import static api.support.http.CqlQuery.queryFromTemplate;
 import static api.support.matchers.EventMatchers.isValidItemDeclaredLostEvent;
-import static api.support.matchers.EventTypeMatchers.ITEM_DECLARED_LOST;
+import static api.support.matchers.EventMatchers.isValidLoanClosedEvent;
+import static api.support.matchers.ItemMatchers.isAgedToLost;
 import static api.support.matchers.ItemMatchers.isDeclaredLost;
 import static api.support.matchers.ItemMatchers.isLostAndPaid;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
+import static api.support.matchers.LoanAccountMatcher.hasNoOverdueFine;
 import static api.support.matchers.LoanMatchers.hasLoanProperty;
 import static api.support.matchers.LoanMatchers.hasStatus;
 import static api.support.matchers.LoanMatchers.isClosed;
 import static api.support.matchers.LoanMatchers.isOpen;
-import static api.support.matchers.ItemMatchers.isAgedToLost;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsBeforeNow;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
-import static api.support.matchers.LoanAccountMatcher.hasNoOverdueFine;
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasNoJsonPath;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
+import static org.folio.circulation.domain.EventType.ITEM_DECLARED_LOST;
+import static org.folio.circulation.domain.EventType.LOAN_CLOSED;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
@@ -30,22 +35,18 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.joda.time.DateTime.now;
+import static org.joda.time.DateTimeZone.UTC;
 import static org.joda.time.Seconds.seconds;
 import static org.junit.Assert.assertEquals;
-import static org.mockito.ArgumentMatchers.isNull;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
-import static org.joda.time.DateTime.now;
-import static org.joda.time.DateTimeZone.UTC;
-
 import org.awaitility.Awaitility;
-import org.folio.circulation.domain.Loan;
-import org.folio.circulation.domain.policy.Period;
+import org.folio.circulation.domain.EventType;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
@@ -60,11 +61,11 @@ import api.support.builders.DeclareItemLostRequestBuilder;
 import api.support.builders.ItemBuilder;
 import api.support.builders.LostItemFeePolicyBuilder;
 import api.support.fakes.FakePubSub;
-import api.support.fixtures.FeeFineAccountFixture;
 import api.support.fixtures.AgeToLostFixture.AgeToLostResult;
 import api.support.fixtures.policies.PoliciesToActivate;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
+import api.support.matchers.EventTypeMatchers;
 import io.vertx.core.json.JsonObject;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
@@ -279,6 +280,10 @@ public class DeclareLostAPITests extends APITests {
 
     assertThat(getAccountsForLoan(loan.getId()), hasSize(0));
     assertThatPublishedLoanLogRecordEventsAreValid(loansClient.getById(loan.getId()).getJson());
+
+    verifyNumberOfPublishedEvents(ITEM_DECLARED_LOST, 0);
+    verifyNumberOfPublishedEvents(LOAN_CLOSED, 1);
+    verifyThatFirstPublishedLoanClosedEventIsValid(loan);
   }
 
   @Test
@@ -373,6 +378,10 @@ public class DeclareLostAPITests extends APITests {
 
     verifyLoanIsClosed(loan.getId());
     assertNoFeeAssignedForLoan(loan.getId());
+
+    verifyNumberOfPublishedEvents(LOAN_CLOSED, 1);
+    verifyNumberOfPublishedEvents(ITEM_DECLARED_LOST, 0);
+    verifyThatFirstPublishedLoanClosedEventIsValid(loan);
   }
 
   @Test
@@ -394,6 +403,10 @@ public class DeclareLostAPITests extends APITests {
     verifyLoanIsClosed(loan.getId());
     assertNoFeeAssignedForLoan(loan.getId());
     assertThatPublishedLoanLogRecordEventsAreValid(loan.getJson());
+
+    verifyNumberOfPublishedEvents(LOAN_CLOSED, 1);
+    verifyNumberOfPublishedEvents(ITEM_DECLARED_LOST, 0);
+    verifyThatFirstPublishedLoanClosedEventIsValid(loan);
   }
 
   @Test
@@ -432,6 +445,10 @@ public class DeclareLostAPITests extends APITests {
     verifyLoanIsClosed(loan.getId());
     assertNoFeeAssignedForLoan(loan.getId());
     assertThatPublishedLoanLogRecordEventsAreValid(loan.getJson());
+
+    verifyNumberOfPublishedEvents(LOAN_CLOSED, 1);
+    verifyNumberOfPublishedEvents(ITEM_DECLARED_LOST, 0);
+    verifyThatFirstPublishedLoanClosedEventIsValid(loan);
   }
 
   @Test
@@ -449,6 +466,10 @@ public class DeclareLostAPITests extends APITests {
     verifyLoanIsClosed(loan.getId());
     assertNoFeeAssignedForLoan(loan.getId());
     assertThatPublishedLoanLogRecordEventsAreValid(loan.getJson());
+
+    verifyNumberOfPublishedEvents(LOAN_CLOSED, 1);
+    verifyNumberOfPublishedEvents(ITEM_DECLARED_LOST, 0);
+    verifyThatFirstPublishedLoanClosedEventIsValid(loan);
   }
 
   @Test
@@ -467,14 +488,14 @@ public class DeclareLostAPITests extends APITests {
     // There should be five events published - "check out", "log event", "declared lost"
     // and one "log record"
     final var publishedEvents = Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
+      .atMost(1, SECONDS)
       .until(FakePubSub::getPublishedEvents, hasSize(4));
 
-    final var event = publishedEvents.findFirst(byEventType(ITEM_DECLARED_LOST));
+    final var event = publishedEvents.findFirst(byEventType(EventTypeMatchers.ITEM_DECLARED_LOST));
     final var loan = loanIndividualResource.getJson();
 
     assertThat(event, isValidItemDeclaredLostEvent(loan));
-
+    verifyNumberOfPublishedEvents(LOAN_CLOSED, 0);
 
     assertThatPublishedLoanLogRecordEventsAreValid(loansClient.getById(UUID.fromString(loan.getString("id"))).getJson());
   }
@@ -657,6 +678,8 @@ public class DeclareLostAPITests extends APITests {
 	    .on(declareLostDate)
 	    .withNoComment();
 
+	  FakePubSub.clearPublishedEvents();
+
 	  declareLostFixtures.declareItemLost(builder);
 
 	  JsonObject declareLostLoan = loansClient.getById(testLoanId).getJson();
@@ -670,9 +693,12 @@ public class DeclareLostAPITests extends APITests {
 	  List<JsonObject> accounts = getAccountsForLoan(testLoanId);
 
 	  assertThat(accounts, hasSize(1));
-	  assertThat(getOpenAccounts(accounts), hasSize(0));  
-  }
+	  assertThat(getOpenAccounts(accounts), hasSize(0));
 
+    verifyNumberOfPublishedEvents(LOAN_CLOSED, 1);
+    verifyNumberOfPublishedEvents(ITEM_DECLARED_LOST, 0);
+    verifyThatFirstPublishedLoanClosedEventIsValid(declareLostLoan);
+  }
 
   @Test
   public void shouldNotChargeOverdueFeesDuringCheckInWhenItemDeclaredLostAndRefundFeePeriodHasPassed() {
@@ -871,5 +897,19 @@ public class DeclareLostAPITests extends APITests {
     assertThat(notes.size(), is(1));
     assertThat(notes.get(0).getString("title"), is("Claimed returned item marked declared lost"));
     assertThat(notes.get(0).getString("domain"), is("users"));
+  }
+
+  private static void verifyNumberOfPublishedEvents(EventType eventType, int eventCount) {
+    assertThat(getPublishedEventsAsList(byEventType(eventType.toString())), hasSize(eventCount));
+  }
+
+  private static void verifyThatFirstPublishedLoanClosedEventIsValid(IndividualResource loan) {
+    verifyThatFirstPublishedLoanClosedEventIsValid(loan.getJson());
+  }
+
+  private static void verifyThatFirstPublishedLoanClosedEventIsValid(JsonObject loan) {
+    assertThat(
+      getPublishedEvents().findFirst(byEventType(LOAN_CLOSED.toString())),
+      isValidLoanClosedEvent(loan));
   }
 }

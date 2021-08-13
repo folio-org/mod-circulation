@@ -1,5 +1,6 @@
 package org.folio.circulation.services;
 
+import static java.util.Optional.ofNullable;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.concurrent.CompletableFuture.runAsync;
 import static org.folio.circulation.domain.EventType.ITEM_AGED_TO_LOST;
@@ -7,12 +8,12 @@ import static org.folio.circulation.domain.EventType.ITEM_CHECKED_IN;
 import static org.folio.circulation.domain.EventType.ITEM_CHECKED_OUT;
 import static org.folio.circulation.domain.EventType.ITEM_CLAIMED_RETURNED;
 import static org.folio.circulation.domain.EventType.ITEM_DECLARED_LOST;
+import static org.folio.circulation.domain.EventType.LOAN_CLOSED;
 import static org.folio.circulation.domain.EventType.LOAN_DUE_DATE_CHANGED;
 import static org.folio.circulation.domain.EventType.LOG_RECORD;
 import static org.folio.circulation.domain.LoanAction.CHECKED_IN;
 import static org.folio.circulation.domain.LoanAction.DUE_DATE_CHANGED;
 import static org.folio.circulation.domain.LoanAction.RECALLREQUESTED;
-import static org.folio.circulation.domain.LoanAction.RENEWED;
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.LOG_EVENT_TYPE;
 import static org.folio.circulation.domain.representations.logs.CirculationCheckInCheckOutLogEventMapper.mapToCheckInLogEventContent;
 import static org.folio.circulation.domain.representations.logs.CirculationCheckInCheckOutLogEventMapper.mapToCheckOutLogEventContent;
@@ -23,6 +24,7 @@ import static org.folio.circulation.domain.representations.logs.LogEventType.NOT
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.domain.representations.logs.RequestUpdateLogEventMapper.mapToRequestLogEventJson;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
+import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import io.vertx.core.json.JsonObject;
@@ -36,6 +38,8 @@ import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.anonymization.LoanAnonymizationRecords;
+import org.folio.circulation.domain.policy.LoanPolicy;
+import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.domain.representations.logs.LoanLogContext;
 import org.folio.circulation.domain.representations.logs.LogContextActionResolver;
 import org.folio.circulation.domain.representations.logs.LogEventType;
@@ -60,6 +64,7 @@ public class EventPublisher {
   public static final String LOAN_ID_FIELD = "loanId";
   public static final String DUE_DATE_FIELD = "dueDate";
   public static final String RETURN_DATE_FIELD = "returnDate";
+  public static final String GRACE_PERIOD_FIELD = "gracePeriod";
   public static final String DUE_DATE_CHANGED_BY_RECALL_FIELD = "dueDateChangedByRecall";
   public static final String FAILED_TO_PUBLISH_LOG_TEMPLATE =
     "Failed to publish {} event: loan is null";
@@ -85,6 +90,12 @@ public class EventPublisher {
       write(payloadJsonObject, USER_ID_FIELD, loan.getUserId());
       write(payloadJsonObject, LOAN_ID_FIELD, loan.getId());
       write(payloadJsonObject, DUE_DATE_FIELD, loan.getDueDate());
+
+      ofNullable(loan.getLoanPolicy())
+        .map(LoanPolicy::getGracePeriod)
+        .filter(Period::isValid)
+        .map(Period::asJson)
+        .ifPresent(json -> write(payloadJsonObject, GRACE_PERIOD_FIELD, json));
 
       runAsync(() -> userRepository.getUser(loanAndRelatedRecords.getLoggedInUserId())
         .thenApplyAsync(r -> r.after(loggedInUser -> CompletableFuture.completedFuture(
@@ -152,6 +163,22 @@ public class EventPublisher {
     write(payloadJson, LOAN_ID_FIELD, loan.getId());
 
     return pubSubPublishingService.publishEvent(eventName, payloadJson.encode())
+      .thenApply(r -> succeeded(loan));
+  }
+
+  public CompletableFuture<Result<Loan>> publishLoanClosedEvent(Loan loan) {
+    String eventName = LOAN_CLOSED.name();
+
+    if (loan == null) {
+      logger.error(FAILED_TO_PUBLISH_LOG_TEMPLATE, eventName);
+      return ofAsync(() -> null);
+    }
+
+    JsonObject payload = new JsonObject();
+    write(payload, USER_ID_FIELD, loan.getUserId());
+    write(payload, LOAN_ID_FIELD, loan.getId());
+
+    return pubSubPublishingService.publishEvent(eventName, payload.encode())
       .thenApply(r -> succeeded(loan));
   }
 

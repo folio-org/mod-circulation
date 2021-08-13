@@ -1,9 +1,11 @@
 package org.folio.circulation.domain.policy;
 
+import static org.hamcrest.Matchers.is;
 import static org.joda.time.DateTime.now;
 import static org.joda.time.DateTimeZone.UTC;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
@@ -143,4 +145,20 @@ public class PeriodTest {
       // additional check to make the test stable
       || period.hasPassedSinceDateTillNow(startDate));
   }
+
+  @Test
+  @Parameters
+  public void isValid(String interval, Integer duration, boolean expectedResult) {
+    assertThat(Period.from(duration, interval).isValid(), is(expectedResult));
+  }
+
+  private Object[] parametersForIsValid() {
+    return new Object[] {
+      new Object[] { "Minutes", 1 , true },
+      new Object[] { "Minutes" , null, false },
+      new Object[] { null , 1, false },
+      new Object[] { null , null, false }
+    };
+  }
+
 }
