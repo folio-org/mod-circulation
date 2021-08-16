@@ -26,6 +26,7 @@ import static org.folio.circulation.resources.handlers.error.CirculationErrorTyp
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ITEM_DOES_NOT_EXIST;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.RENEWAL_DUE_DATE_REQUIRED_IS_BLOCKED;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.RENEWAL_IS_BLOCKED;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.RENEWAL_IS_NOT_ALLOWED;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.RENEWAL_VALIDATION_ERROR;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_BLOCKED_AUTOMATICALLY;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_BLOCKED_MANUALLY;
@@ -101,10 +102,8 @@ public abstract class RenewalResource extends Resource {
   private static final String COMMENT = "comment";
   private static final String DUE_DATE = "dueDate";
   private static final String OVERRIDE_BLOCKS = "overrideBlocks";
-  private static final String RENEWAL_OVERRIDE_BLOCK = "renewalBlock";
   private static final String RENEWAL_DUE_DATE_REQUIRED_OVERRIDE_BLOCK = "renewalDueDateRequiredBlock";
-  private static final EnumSet<ItemStatus> ITEM_STATUSES_DISALLOWED_FOR_RENEW = EnumSet.of(
-    DECLARED_LOST, CLAIMED_RETURNED, AGED_TO_LOST);
+  private static final EnumSet<ItemStatus> ITEM_STATUSES_DISALLOWED_FOR_RENEW = EnumSet.of(CLAIMED_RETURNED);
   private boolean isRenewalBlockOverrideRequested;
 
   RenewalResource(String rootPath, HttpClient client) {
@@ -474,6 +473,9 @@ public abstract class RenewalResource extends Resource {
       .next(ctx -> validateIfRenewIsAllowed(context, true)
         .mapFailure(failure -> errorHandler.handleValidationError(failure,
           RENEWAL_DUE_DATE_REQUIRED_IS_BLOCKED, context)))
+      .next(this::validateIfRenewIsAllowed)
+        .mapFailure(failure -> errorHandler.handleValidationError(failure,
+          RENEWAL_IS_NOT_ALLOWED, context))
       .next(ctx -> renew(ctx, renewDate)
         .mapFailure(failure -> errorHandler.handleValidationError(failure,
           RENEWAL_DUE_DATE_REQUIRED_IS_BLOCKED, context)));
@@ -489,7 +491,6 @@ public abstract class RenewalResource extends Resource {
         ? validateIfRenewIsAllowedAndDueDateRequired(loan, requestQueue)
         : validateIfRenewIsAllowedWithoutDueDate(loan, requestQueue);
       final var loanPolicy = loan.getLoanPolicy();
-
       if (loanPolicy.isNotLoanable() || loanPolicy.isNotRenewable()) {
         return failedValidation(errors);
       }
@@ -502,6 +503,16 @@ public abstract class RenewalResource extends Resource {
     } catch (Exception e) {
       return failedDueToServerError(e);
     }
+  }
+
+  private Result<RenewalContext> validateIfRenewIsAllowed(RenewalContext context) {
+    Loan loan = context.getLoan();
+    if (ITEM_STATUSES_DISALLOWED_FOR_RENEW.contains(loan.getItemStatus())) {
+      final List<ValidationError> errors = new ArrayList<>();
+      errors.add(itemByIdValidationError("item is " + loan.getItemStatusName(), loan.getItemId()));
+      return failedValidation(errors);
+    }
+    return succeeded(context);
   }
 
   private Result<RenewalContext> renew(RenewalContext context, DateTime renewDate) {
@@ -569,7 +580,8 @@ public abstract class RenewalResource extends Resource {
         "items cannot be renewed when there is an active recall request",
         firstRequest.getId()));
     }
-    if (ITEM_STATUSES_DISALLOWED_FOR_RENEW.contains(loan.getItemStatus())) {
+    ItemStatus itemStatus = loan.getItemStatus();
+    if (itemStatus == AGED_TO_LOST || itemStatus == DECLARED_LOST) {
       errors.add(itemByIdValidationError("item is " + loan.getItemStatusName(),
         loan.getItemId()));
     }
