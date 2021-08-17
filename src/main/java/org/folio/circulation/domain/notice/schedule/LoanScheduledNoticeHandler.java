@@ -7,6 +7,7 @@ import static org.folio.circulation.domain.ItemStatus.CLAIMED_RETURNED;
 import static org.folio.circulation.domain.ItemStatus.DECLARED_LOST;
 import static org.folio.circulation.domain.notice.NoticeTiming.BEFORE;
 import static org.folio.circulation.domain.notice.TemplateContextUtil.createLoanNoticeContext;
+import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.AGED_TO_LOST;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.ofAsync;
@@ -122,7 +123,7 @@ public class LoanScheduledNoticeHandler extends ScheduledNoticeHandler {
 
     ScheduledNotice notice = context.getNotice();
 
-    if (TriggeringEvent.AGED_TO_LOST != notice.getTriggeringEvent()) {
+    if (AGED_TO_LOST != notice.getTriggeringEvent()) {
       return ofAsync(() -> context);
     }
 
