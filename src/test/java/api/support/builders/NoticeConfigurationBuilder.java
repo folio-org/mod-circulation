@@ -131,7 +131,7 @@ public class NoticeConfigurationBuilder extends JsonBuilder implements Builder {
       this.eventType,
       this.timing,
       this.timingPeriod,
-      recurringPeriod.asJson(),
+      recurringPeriod != null ? recurringPeriod.asJson() : null,
       this.sendInRealTime);
   }
 
