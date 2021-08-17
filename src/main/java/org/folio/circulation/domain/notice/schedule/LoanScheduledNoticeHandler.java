@@ -3,10 +3,10 @@ package org.folio.circulation.domain.notice.schedule;
 import static java.util.Collections.singletonList;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 import static org.folio.circulation.domain.FeeFine.lostItemFeeTypes;
+import static org.folio.circulation.domain.ItemStatus.CLAIMED_RETURNED;
+import static org.folio.circulation.domain.ItemStatus.DECLARED_LOST;
 import static org.folio.circulation.domain.notice.NoticeTiming.BEFORE;
 import static org.folio.circulation.domain.notice.TemplateContextUtil.createLoanNoticeContext;
-import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.AGED_TO_LOST;
-import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.DUE_DATE;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.ofAsync;
@@ -28,7 +28,6 @@ import org.folio.circulation.support.RecordNotFoundFailure;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
-
 
 import io.vertx.core.json.JsonObject;
 
@@ -123,7 +122,7 @@ public class LoanScheduledNoticeHandler extends ScheduledNoticeHandler {
 
     ScheduledNotice notice = context.getNotice();
 
-    if (AGED_TO_LOST != notice.getTriggeringEvent()) {
+    if (TriggeringEvent.AGED_TO_LOST != notice.getTriggeringEvent()) {
       return ofAsync(() -> context);
     }
 
@@ -136,71 +135,70 @@ public class LoanScheduledNoticeHandler extends ScheduledNoticeHandler {
 
   private boolean dueDateNoticeIsNotRelevant(ScheduledNoticeContext context) {
     Loan loan = context.getLoan();
+    DateTime dueDate = loan.getDueDate();
+    String loanId = loan.getId();
+
     ScheduledNotice notice = context.getNotice();
+    ScheduledNoticeConfig noticeConfig = notice.getConfiguration();
+
     List<String> logMessages = new ArrayList<>();
 
-    if (beforeDueDateNoticeIsNotRelevant(notice, loan)) {
-      logMessages.add(String.format("Due date of loan %s is before now", loan.getId()));
-    }
-    if (loan.isDeclaredLost()) {
-      logMessages.add(String.format("Item %s was declared lost", loan.getItemId()));
-    }
-    if (loan.getItem().getStatus() == ItemStatus.AGED_TO_LOST) {
-      logMessages.add(String.format("Item %s was aged to lost", loan.getItemId()));
-    }
-    if (loan.isRenewed()) {
-      logMessages.add(String.format("Item %s was renewed", loan.getItemId()));
-    }
-    if (loan.getItem().isClaimedReturned()) {
-      logMessages.add(String.format("Item %s was claimed returned", loan.getItemId()));
-    }
-    if (loan.hasDueDateChanged() && loan.getDueDate().isAfter(systemTime)) {
-      logMessages.add(String.format("Due date for the loan %s was changed", loan.getId()));
-    }
     if (loan.isClosed()) {
-      logMessages.add(String.format("Loan %s is closed", loan.getId()));
+      logMessages.add("Loan is closed");
     }
-    if (!logMessages.isEmpty()) {
-      log.warn("Due Date notice {} is irrelevant: {}", notice.getId(), logMessages);
-      return true;
+    if (noticeConfig.hasBeforeTiming() && dueDate.isBefore(systemTime)) {
+      logMessages.add("Loan is overdue");
+    }
+    if (isRecurringAfterNotice(notice) &&
+      loan.hasItemWithAnyStatus(DECLARED_LOST, ItemStatus.AGED_TO_LOST, CLAIMED_RETURNED)) {
+
+      logMessages.add(String.format("Recurring overdue notice for item in status \"%s\"",
+        loan.getItemStatus()));
     }
 
-    return false;
+    if (logMessages.isEmpty()) {
+      return false;
+    }
+
+    log.warn("Due Date notice {} for loan {} is irrelevant: {}", notice.getId(), loanId, logMessages);
+    return true;
   }
 
   private boolean agedToLostNoticeIsNotRelevant(ScheduledNoticeContext context) {
     Loan loan = context.getLoan();
+    ScheduledNotice notice = context.getNotice();
     List<String> logMessages = new ArrayList<>();
 
-    if (loan.isDeclaredLost()) {
-      logMessages.add(String.format("Item %s was declared lost", loan.getItemId()));
+    if (!isRecurringAfterNotice(notice)) {
+      return false;
     }
-    if (loan.getItem().isClaimedReturned()) {
-      logMessages.add(String.format("Item %s was claimed returned", loan.getItemId()));
+
+    if (loan.hasItemWithAnyStatus(DECLARED_LOST, CLAIMED_RETURNED)) {
+      logMessages.add(
+        String.format("Recurring notice for item in status \"%s\"", loan.getItemStatus()));
     }
     if (loan.isRenewed()) {
-      logMessages.add(String.format("Item %s was renewed", loan.getItemId()));
+      logMessages.add("Loan was renewed");
     }
     if (loan.isClosed()) {
-      logMessages.add(String.format("Loan %s is closed", loan.getId()));
+      logMessages.add("Loan is closed");
     }
     if (context.isLostItemFeesForAgedToLostNoticeExist()) {
-      logMessages.add(String.format("Loan %s was charged Lost Item Fee(s)", loan.getItemId()));
-    }
-    if (!logMessages.isEmpty()) {
-      log.warn("Aged To Lost notice {} is irrelevant: {}", context.getNotice().getId(), logMessages);
-      return true;
+      logMessages.add("Loan was charged Lost Item Fee(s)");
     }
 
-    return false;
+    if (logMessages.isEmpty()) {
+      return false;
+    }
+
+    log.warn("Aged To Lost notice {} for loan {} is irrelevant: {}",
+      notice.getId(), loan.getId(), logMessages);
+
+    return true;
   }
 
-  private boolean beforeDueDateNoticeIsNotRelevant(ScheduledNotice notice, Loan loan) {
-    ScheduledNoticeConfig noticeConfig = notice.getConfiguration();
-
-    return notice.getTriggeringEvent() == DUE_DATE
-      && noticeConfig.getTiming() == BEFORE
-      && loan.getDueDate().isBefore(systemTime);
+  private static boolean isRecurringAfterNotice(ScheduledNotice notice) {
+    return notice.getConfiguration().isRecurring() && notice.getConfiguration().hasAfterTiming();
   }
 
   private static boolean nextRecurringNoticeIsNotRelevant(ScheduledNotice notice, Loan loan) {
