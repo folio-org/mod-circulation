@@ -57,6 +57,7 @@ import static org.joda.time.DateTimeZone.UTC;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -470,15 +471,20 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public boolean isRenewed() {
-    if (getAction() != null) {
-      return LoanAction.from(getAction()) == RENEWED
-        || LoanAction.from(getAction()) == RENEWED_THROUGH_OVERRIDE;
+    String action = getAction();
+    if (action != null) {
+      LoanAction loanAction = LoanAction.from(action);
+      return loanAction == RENEWED || loanAction == RENEWED_THROUGH_OVERRIDE;
     }
     return false;
   }
 
   public boolean hasItemWithStatus(ItemStatus itemStatus) {
-    return Objects.nonNull(item) && item.isInStatus(itemStatus);
+    return hasItemWithAnyStatus(itemStatus);
+  }
+
+  public boolean hasItemWithAnyStatus(ItemStatus... itemStatuses) {
+    return item != null && Stream.of(itemStatuses).anyMatch(item::isInStatus);
   }
 
   private void incrementRenewalCount() {

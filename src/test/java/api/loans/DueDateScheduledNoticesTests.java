@@ -4,16 +4,11 @@ import static api.support.matchers.ScheduledNoticeMatchers.hasScheduledLoanNotic
 import static api.support.utl.BlockOverridesUtils.OVERRIDE_RENEWAL_PERMISSION;
 import static api.support.utl.BlockOverridesUtils.buildOkapiHeadersWithPermissions;
 import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfScheduledNotices;
-import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfSentNotices;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.hamcrest.CoreMatchers.hasItems;
-import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.joda.time.DateTime.now;
-import static org.joda.time.DateTimeZone.UTC;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -28,18 +23,12 @@ import org.joda.time.DateTimeZone;
 import org.junit.Test;
 
 import api.support.APITests;
-import api.support.builders.ChangeDueDateRequestBuilder;
-import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
-import api.support.builders.ClaimItemReturnedRequestBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
-import api.support.fixtures.policies.PoliciesToActivate;
-import api.support.http.CheckOutResource;
 import api.support.http.IndividualResource;
-import api.support.http.ItemResource;
 import api.support.http.OkapiHeaders;
 import io.vertx.core.json.JsonObject;
 
@@ -47,8 +36,6 @@ public class DueDateScheduledNoticesTests extends APITests {
   private static final String BEFORE_TIMING = "Before";
   private static final String UPON_AT_TIMING = "Upon At";
   private static final String AFTER_TIMING = "After";
-  private static final Period TIMING_PERIOD_AFTER = Period.minutes(5);
-  private static final Period TIMING_PERIOD_RECURRING = Period.minutes(10);
 
   @Test
   public void allDueDateNoticesShouldBeScheduledOnCheckoutWhenPolicyDefinesDueDateNoticeConfiguration() {
@@ -544,225 +531,4 @@ public class DueDateScheduledNoticesTests extends APITests {
     verifyNumberOfScheduledNotices(6);
   }
 
-  @Test
-  public void scheduledOverdueNoticesShouldBeDeletedAfterOverdueFineIsCharged() {
-    UUID uponAtTemplateId = UUID.randomUUID();
-
-    UUID afterTemplateId = UUID.randomUUID();
-    Period afterPeriod = Period.days(3);
-    Period afterRecurringPeriod = Period.hours(4);
-
-    JsonObject uponAtDueDateNoticeConfiguration = new NoticeConfigurationBuilder()
-      .withTemplateId(uponAtTemplateId)
-      .withDueDateEvent()
-      .withUponAtTiming()
-      .sendInRealTime(false)
-      .create();
-
-    JsonObject afterDueDateNoticeConfiguration = new NoticeConfigurationBuilder()
-      .withTemplateId(afterTemplateId)
-      .withDueDateEvent()
-      .withAfterTiming(afterPeriod)
-      .recurring(afterRecurringPeriod)
-      .sendInRealTime(true)
-      .create();
-
-    NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
-      .withName("Policy with due date notices")
-      .withLoanNotices(Arrays.asList(
-        uponAtDueDateNoticeConfiguration,
-        afterDueDateNoticeConfiguration));
-
-    useFallbackPolicies(loanPoliciesFixture.canCirculateRolling().getId(),
-      requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.create(noticePolicy).getId(),
-      overdueFinePoliciesFixture.facultyStandardDoNotCountClosed().getId(),
-      lostItemFeePoliciesFixture.facultyStandard().getId());
-
-    final IndividualResource james = usersFixture.james();
-    final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
-    final IndividualResource homeLocation = locationsFixture.basedUponExampleLocation(
-      item -> item.withPrimaryServicePoint(checkInServicePointId));
-    final IndividualResource nod = itemsFixture.basedUponNod(item ->
-      item.withPermanentLocation(homeLocation.getId()));
-    DateTime loanDate = new DateTime(2020, 1, 1, 12, 0, 0, UTC);
-
-    final IndividualResource loan = checkOutFixture.checkOutByBarcode(
-      new CheckOutByBarcodeRequestBuilder()
-        .forItem(nod)
-        .to(james)
-        .on(loanDate)
-        .at(UUID.randomUUID()));
-
-    DateTime dueDate = getDateTimeProperty(loan.getJson(), "dueDate");
-
-    verifyNumberOfScheduledNotices(2);
-
-    List<JsonObject> scheduledNotices = scheduledNoticesClient.getAll();
-    assertThat(scheduledNotices,
-      hasItems(
-        hasScheduledLoanNotice(
-          loan.getId(), dueDate,
-          UPON_AT_TIMING, uponAtTemplateId,
-          null, false),
-        hasScheduledLoanNotice(
-          loan.getId(), dueDate.plus(afterPeriod.timePeriod()),
-          AFTER_TIMING, afterTemplateId,
-          afterRecurringPeriod, true)));
-
-    UUID ownerId = feeFineOwnerFixture.ownerForServicePoint(
-      UUID.fromString(homeLocation.getJson().getString("primaryServicePoint"))).getId();
-    feeFineTypeFixture.overdueFine(ownerId);
-
-    DateTime checkInDate = new DateTime(2020, 1, 25, 12, 0, 0, UTC);
-
-    checkInFixture.checkInByBarcode(
-      new CheckInByBarcodeRequestBuilder()
-        .forItem(nod)
-        .on(checkInDate)
-        .at(checkInServicePointId));
-
-    verifyNumberOfScheduledNotices(0);
-  }
-
-  @Test
-  public void scheduledOverdueNoticesShouldBeDeletedAfterAgedToLost() {
-    NoticePolicyBuilder noticePolicy = createNoticePolicy();
-    activatePolicies(noticePolicy);
-    createLoan(new DateTime(2020, 1, 1, 12, 0, 0, UTC));
-
-    var agedToLostLoan = ageToLostFixture.createAgedToLostLoan(noticePolicy);
-    var dueDate = getDateTimeProperty(agedToLostLoan.getLoan().getJson(), "dueDate");
-
-    scheduledNoticeProcessingClient.runLoanNoticesProcessing(dueDate.plusHours(1));
-
-    verifyNumberOfScheduledNotices(0);
-    verifyNumberOfSentNotices(0);
-  }
-
-  @Test
-  public void scheduledOverDueNoticeShouldBeDeletedAfterClaimedReturned() {
-    activatePolicies(createNoticePolicy());
-    IndividualResource loan = createLoan(now());
-
-    claimItemReturnedFixture
-      .claimItemReturned(new ClaimItemReturnedRequestBuilder()
-        .forLoan(loan.getId().toString())
-        .withItemClaimedReturnedDate(now()));
-
-    var dueDate = getDateTimeProperty(loan.getJson(), "dueDate");
-    scheduledNoticeProcessingClient.runLoanNoticesProcessing(dueDate.plusHours(1));
-
-    verifyNumberOfScheduledNotices(0);
-    verifyNumberOfSentNotices(0);
-  }
-
-  @Test
-  public void scheduledOverdueNoticesShouldBeDeletedAfterDeclaredLost() {
-    activatePolicies(createNoticePolicy());
-    IndividualResource loan = createLoan(now());
-
-    declareLostFixtures.declareItemLost(loan.getJson());
-    var dueDate = getDateTimeProperty(loan.getJson(), "dueDate");
-    scheduledNoticeProcessingClient.runLoanNoticesProcessing(dueDate.plusHours(1));
-
-    verifyNumberOfScheduledNotices(0);
-    verifyNumberOfSentNotices(0);
-  }
-
-  @Test
-  public void scheduledOverdueNoticesShouldBeDeletedAfterDueDateChange() {
-    activatePolicies(createNoticePolicy());
-    IndividualResource loan = createLoan(new DateTime(2020, 1, 1, 12, 0, 0, UTC));
-
-    var dueDate = getDateTimeProperty(loan.getJson(), "dueDate");
-    scheduledNoticeProcessingClient.runLoanNoticesProcessing(dueDate);
-
-    verifyNumberOfScheduledNotices(1);
-
-    assertThat(scheduledNoticesClient.getAll().get(0).getString("nextRunTime"),
-      is(dueDate.plusMinutes(5).toString()));
-
-    changeDueDateFixture.changeDueDate(new ChangeDueDateRequestBuilder()
-      .forLoan(loan.getId())
-      .withDueDate(dueDate.plusWeeks(2)));
-
-    scheduledNoticeProcessingClient.runLoanNoticesProcessing(dueDate.plusHours(1));
-
-    verifyNumberOfScheduledNotices(1);
-
-    assertThat(scheduledNoticesClient.getAll().get(0).getString("nextRunTime"),
-      is(dueDate.plusWeeks(2).plusMinutes(5).toString()));
-  }
-
-  @Test
-  public void scheduledOverdueNoticesShouldBeDeletedAfterRenew() {
-    activatePolicies(createNoticePolicy());
-    IndividualResource user = usersFixture.steve();
-    ItemResource item = itemsFixture.basedUponNod();
-    IndividualResource loan = createLoan(item, user, now());
-
-    loansFixture.renewLoan(item, user);
-    var dueDate = getDateTimeProperty(loan.getJson(), "dueDate");
-    scheduledNoticeProcessingClient.runLoanNoticesProcessing(dueDate.plusHours(1));
-
-    verifyNumberOfScheduledNotices(0);
-    verifyNumberOfSentNotices(0);
-  }
-
-  @Test
-  public void scheduledOverdueNoticesShouldBeDeletedIfLoanIsClosed() {
-    activatePolicies(createNoticePolicy());
-    IndividualResource user = usersFixture.steve();
-    ItemResource item = itemsFixture.basedUponNod();
-    IndividualResource loan = createLoan(item, user, now());
-
-    checkInFixture.checkInByBarcode(item);
-    var dueDate = getDateTimeProperty(loan.getJson(), "dueDate");
-    scheduledNoticeProcessingClient.runLoanNoticesProcessing(dueDate.plusHours(1));
-
-    verifyNumberOfScheduledNotices(0);
-    verifyNumberOfSentNotices(0);
-  }
-
-  private NoticePolicyBuilder createNoticePolicy() {
-    UUID templateId = UUID.randomUUID();
-    JsonObject loanNotice = new NoticeConfigurationBuilder()
-      .withTemplateId(templateId)
-      .withDueDateEvent()
-      .withAfterTiming(TIMING_PERIOD_AFTER)
-      .recurring(TIMING_PERIOD_RECURRING)
-      .sendInRealTime(true)
-      .create();
-    templateFixture.createDummyNoticeTemplate(templateId);
-
-    return new NoticePolicyBuilder()
-      .withName("loan policy")
-      .withLoanNotices(Collections.singletonList(loanNotice));
-  }
-
-  private void activatePolicies(NoticePolicyBuilder noticePolicy) {
-    policiesActivation.use(PoliciesToActivate.builder()
-      .noticePolicy(noticePoliciesFixture.create(noticePolicy))
-      .lostItemPolicy(lostItemFeePoliciesFixture.chargeFee()));
-  }
-
-  private IndividualResource createLoan(DateTime loanDate) {
-    return createLoan(itemsFixture.basedUponNod(), usersFixture.steve(), loanDate);
-  }
-
-  private IndividualResource createLoan(ItemResource item, IndividualResource user,
-    DateTime loanDate) {
-
-    CheckOutResource loan = checkOutFixture.checkOutByBarcode(
-      new CheckOutByBarcodeRequestBuilder()
-        .forItem(item)
-        .to(user)
-        .on(loanDate)
-        .at(servicePointsFixture.cd1()));
-
-    verifyNumberOfScheduledNotices(1);
-
-    return loan;
-  }
 }
