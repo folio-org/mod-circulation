@@ -1,3 +1,7 @@
+## 22.0.4 2021-08-18
+
+* Enables sending of scheduled Overdue and Courtesy notices for renewed loans (CIRC-1205)
+
 ## 22.0.3 2021-08-04
 
 * Disallows inactive / expired borrower from renewing outstanding loans (CIRC-1187)

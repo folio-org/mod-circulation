@@ -3,17 +3,14 @@ package api.loans;
 import static api.support.matchers.ScheduledNoticeMatchers.hasScheduledLoanNotice;
 import static api.support.utl.BlockOverridesUtils.OVERRIDE_RENEWAL_PERMISSION;
 import static api.support.utl.BlockOverridesUtils.buildOkapiHeadersWithPermissions;
+import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfScheduledNotices;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.hamcrest.CoreMatchers.hasItems;
-import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasSize;
-import static org.joda.time.DateTime.now;
 import static org.joda.time.DateTimeZone.UTC;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -24,22 +21,16 @@ import org.folio.circulation.support.json.JsonPropertyWriter;
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.junit.Test;
 
 import api.support.APITests;
-import api.support.builders.ChangeDueDateRequestBuilder;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
-import api.support.builders.ClaimItemReturnedRequestBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
-import api.support.fixtures.policies.PoliciesToActivate;
-import api.support.http.CheckOutResource;
 import api.support.http.IndividualResource;
-import api.support.http.ItemResource;
 import api.support.http.OkapiHeaders;
 import io.vertx.core.json.JsonObject;
 
@@ -47,8 +38,6 @@ public class DueDateScheduledNoticesTests extends APITests {
   private static final String BEFORE_TIMING = "Before";
   private static final String UPON_AT_TIMING = "Upon At";
   private static final String AFTER_TIMING = "After";
-  private static final Period TIMING_PERIOD_AFTER = Period.minutes(5);
-  private static final Period TIMING_PERIOD_RECURRING = Period.minutes(10);
 
   @Test
   public void allDueDateNoticesShouldBeScheduledOnCheckoutWhenPolicyDefinesDueDateNoticeConfiguration() {
@@ -95,7 +84,7 @@ public class DueDateScheduledNoticesTests extends APITests {
     final IndividualResource steve = usersFixture.steve();
 
     final DateTime loanDate =
-      new DateTime(2018, 3, 18, 11, 43, 54, DateTimeZone.UTC);
+      new DateTime(2018, 3, 18, 11, 43, 54, UTC);
 
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -105,9 +94,7 @@ public class DueDateScheduledNoticesTests extends APITests {
         .at(UUID.randomUUID()));
     DateTime dueDate = getDateTimeProperty(loan.getJson(), "dueDate");
 
-    Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
-      .until(scheduledNoticesClient::getAll, hasSize(3));
+    verifyNumberOfScheduledNotices(3);
 
     List<JsonObject> scheduledNotices = scheduledNoticesClient.getAll();
     assertThat(scheduledNotices,
@@ -159,7 +146,7 @@ public class DueDateScheduledNoticesTests extends APITests {
     final IndividualResource steve = usersFixture.steve();
 
     final DateTime loanDate =
-      new DateTime(2018, 3, 18, 11, 43, 54, DateTimeZone.UTC);
+      new DateTime(2018, 3, 18, 11, 43, 54, UTC);
 
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -169,9 +156,7 @@ public class DueDateScheduledNoticesTests extends APITests {
         .at(UUID.randomUUID()));
     DateTime dueDate = getDateTimeProperty(loan.getJson(), "dueDate");
 
-    Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
-      .until(scheduledNoticesClient::getAll, hasSize(2));
+    verifyNumberOfScheduledNotices(2);
 
     List<JsonObject> scheduledNotices = scheduledNoticesClient.getAll();
     assertThat(scheduledNotices,
@@ -212,7 +197,7 @@ public class DueDateScheduledNoticesTests extends APITests {
     final IndividualResource steve = usersFixture.steve();
 
     final DateTime loanDate =
-      new DateTime(2018, 3, 18, 11, 43, 54, DateTimeZone.UTC);
+      new DateTime(2018, 3, 18, 11, 43, 54, UTC);
 
       checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -275,9 +260,7 @@ public class DueDateScheduledNoticesTests extends APITests {
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(item, borrower);
     checkOutFixture.checkOutByBarcode(itemsFixture.basedUponNod(), usersFixture.jessica());
 
-    Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
-      .until(scheduledNoticesClient::getAll, hasSize(6));
+    verifyNumberOfScheduledNotices(6);
 
     IndividualResource renewedLoan = loansFixture.renewLoan(item, borrower);
     DateTime dueDateAfterRenewal = getDateTimeProperty(renewedLoan.getJson(), "dueDate");
@@ -300,7 +283,8 @@ public class DueDateScheduledNoticesTests extends APITests {
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(scheduledNoticesClient::getAll, scheduledNoticesAfterRenewalMatcher);
-    assertThat(scheduledNoticesClient.getAll(), hasSize(6));
+
+    verifyNumberOfScheduledNotices(6);
   }
 
   @Test
@@ -357,9 +341,7 @@ public class DueDateScheduledNoticesTests extends APITests {
     DateTime dueDate = getDateTimeProperty(loan.getJson(), "dueDate");
     checkOutFixture.checkOutByBarcode(itemsFixture.basedUponNod(), usersFixture.jessica());
 
-    Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
-      .until(scheduledNoticesClient::getAll, hasSize(6));
+    verifyNumberOfScheduledNotices(6);
 
     DateTime dueDateAfterRenewal = dueDate.plusWeeks(3);
     final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(OVERRIDE_RENEWAL_PERMISSION);
@@ -384,7 +366,8 @@ public class DueDateScheduledNoticesTests extends APITests {
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(scheduledNoticesClient::getAll, scheduledNoticesAfterRenewalMatcher);
-    assertThat(scheduledNoticesClient.getAll(), hasSize(6));
+
+    verifyNumberOfScheduledNotices(6);
   }
 
   @Test
@@ -440,9 +423,7 @@ public class DueDateScheduledNoticesTests extends APITests {
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(item, borrower);
     checkOutFixture.checkOutByBarcode(itemsFixture.basedUponNod(), usersFixture.jessica());
 
-    Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
-      .until(scheduledNoticesClient::getAll, hasSize(6));
+    verifyNumberOfScheduledNotices(6);
 
     requestsFixture.place(new RequestBuilder()
       .open()
@@ -470,7 +451,8 @@ public class DueDateScheduledNoticesTests extends APITests {
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(scheduledNoticesClient::getAll, scheduledNoticesAfterRecallMatcher);
-    assertThat(scheduledNoticesClient.getAll(), hasSize(6));
+
+    verifyNumberOfScheduledNotices(6);
   }
 
   @Test
@@ -521,9 +503,7 @@ public class DueDateScheduledNoticesTests extends APITests {
     IndividualResource loan = checkOutFixture.checkOutByBarcode(item, borrower);
     checkOutFixture.checkOutByBarcode(itemsFixture.basedUponNod(), usersFixture.jessica());
 
-    Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
-      .until(scheduledNoticesClient::getAll, hasSize(6));
+    verifyNumberOfScheduledNotices(6);
 
     JsonObject loanJson = loan.getJson();
     DateTime dueDate = getDateTimeProperty(loanJson, "dueDate");
@@ -549,7 +529,8 @@ public class DueDateScheduledNoticesTests extends APITests {
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(scheduledNoticesClient::getAll, scheduledNoticesAfterRecallMatcher);
-    assertThat(scheduledNoticesClient.getAll(), hasSize(6));
+
+    verifyNumberOfScheduledNotices(6);
   }
 
   @Test
@@ -637,146 +618,4 @@ public class DueDateScheduledNoticesTests extends APITests {
       .until(scheduledNoticesClient::getAll, hasSize(0));
   }
 
-  @Test
-  public void scheduledOverdueNoticesShouldBeDeletedAfterAgedToLost() {
-    NoticePolicyBuilder noticePolicy = createNoticePolicy();
-    activatePolicies(noticePolicy);
-    createLoan(new DateTime(2020, 1, 1, 12, 0, 0, UTC));
-
-    var agedToLostLoan = ageToLostFixture.createAgedToLostLoan(noticePolicy);
-    var dueDate = getDateTimeProperty(agedToLostLoan.getLoan().getJson(), "dueDate");
-
-    scheduledNoticeProcessingClient.runLoanNoticesProcessing(dueDate.plusHours(1));
-
-    assertThat(scheduledNoticesClient.getAll(), empty());
-    assertThat(patronNoticesClient.getAll(), empty());
-  }
-
-  @Test
-  public void scheduledOverDueNoticeShouldBeDeletedAfterClaimedReturned() {
-    activatePolicies(createNoticePolicy());
-    IndividualResource loan = createLoan(now());
-
-    claimItemReturnedFixture
-      .claimItemReturned(new ClaimItemReturnedRequestBuilder()
-        .forLoan(loan.getId().toString())
-        .withItemClaimedReturnedDate(now()));
-
-    var dueDate = getDateTimeProperty(loan.getJson(), "dueDate");
-    scheduledNoticeProcessingClient.runLoanNoticesProcessing(dueDate.plusHours(1));
-
-    assertThat(scheduledNoticesClient.getAll(), empty());
-    assertThat(patronNoticesClient.getAll(), empty());
-  }
-
-  @Test
-  public void scheduledOverdueNoticesShouldBeDeletedAfterDeclaredLost() {
-    activatePolicies(createNoticePolicy());
-    IndividualResource loan = createLoan(now());
-
-    declareLostFixtures.declareItemLost(loan.getJson());
-    var dueDate = getDateTimeProperty(loan.getJson(), "dueDate");
-    scheduledNoticeProcessingClient.runLoanNoticesProcessing(dueDate.plusHours(1));
-
-    assertThat(scheduledNoticesClient.getAll(), empty());
-    assertThat(patronNoticesClient.getAll(), empty());
-  }
-
-  @Test
-  public void scheduledOverdueNoticesShouldBeDeletedAfterDueDateChange() {
-    activatePolicies(createNoticePolicy());
-    IndividualResource loan = createLoan(new DateTime(2020, 1, 1, 12, 0, 0, UTC));
-
-    var dueDate = getDateTimeProperty(loan.getJson(), "dueDate");
-    scheduledNoticeProcessingClient.runLoanNoticesProcessing(dueDate);
-
-    Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
-      .until(scheduledNoticesClient::getAll, hasSize(1));
-    assertThat(scheduledNoticesClient.getAll().get(0).getString("nextRunTime"),
-      is(dueDate.plusMinutes(5).toString()));
-
-    changeDueDateFixture.changeDueDate(new ChangeDueDateRequestBuilder()
-      .forLoan(loan.getId())
-      .withDueDate(dueDate.plusWeeks(2)));
-
-    scheduledNoticeProcessingClient.runLoanNoticesProcessing(dueDate.plusHours(1));
-
-    assertThat(scheduledNoticesClient.getAll(), hasSize(1));
-    assertThat(scheduledNoticesClient.getAll().get(0).getString("nextRunTime"),
-      is(dueDate.plusWeeks(2).plusMinutes(5).toString()));
-  }
-
-  @Test
-  public void scheduledOverdueNoticesShouldBeDeletedAfterRenew() {
-    activatePolicies(createNoticePolicy());
-    IndividualResource user = usersFixture.steve();
-    ItemResource item = itemsFixture.basedUponNod();
-    IndividualResource loan = createLoan(item, user, now());
-
-    loansFixture.renewLoan(item, user);
-    var dueDate = getDateTimeProperty(loan.getJson(), "dueDate");
-    scheduledNoticeProcessingClient.runLoanNoticesProcessing(dueDate.plusHours(1));
-
-    assertThat(scheduledNoticesClient.getAll(), empty());
-    assertThat(patronNoticesClient.getAll(), empty());
-  }
-
-  @Test
-  public void scheduledOverdueNoticesShouldBeDeletedIfLoanIsClosed() {
-    activatePolicies(createNoticePolicy());
-    IndividualResource user = usersFixture.steve();
-    ItemResource item = itemsFixture.basedUponNod();
-    IndividualResource loan = createLoan(item, user, now());
-
-    checkInFixture.checkInByBarcode(item);
-    var dueDate = getDateTimeProperty(loan.getJson(), "dueDate");
-    scheduledNoticeProcessingClient.runLoanNoticesProcessing(dueDate.plusHours(1));
-
-    assertThat(scheduledNoticesClient.getAll(), empty());
-    assertThat(patronNoticesClient.getAll(), empty());
-  }
-
-  private NoticePolicyBuilder createNoticePolicy() {
-    UUID templateId = UUID.randomUUID();
-    JsonObject loanNotice = new NoticeConfigurationBuilder()
-      .withTemplateId(templateId)
-      .withDueDateEvent()
-      .withAfterTiming(TIMING_PERIOD_AFTER)
-      .recurring(TIMING_PERIOD_RECURRING)
-      .sendInRealTime(true)
-      .create();
-    templateFixture.createDummyNoticeTemplate(templateId);
-
-    return new NoticePolicyBuilder()
-      .withName("loan policy")
-      .withLoanNotices(Collections.singletonList(loanNotice));
-  }
-
-  private void activatePolicies(NoticePolicyBuilder noticePolicy) {
-    policiesActivation.use(PoliciesToActivate.builder()
-      .noticePolicy(noticePoliciesFixture.create(noticePolicy))
-      .lostItemPolicy(lostItemFeePoliciesFixture.chargeFee()));
-  }
-
-  private IndividualResource createLoan(DateTime loanDate) {
-    return createLoan(itemsFixture.basedUponNod(), usersFixture.steve(), loanDate);
-  }
-
-  private IndividualResource createLoan(ItemResource item, IndividualResource user,
-    DateTime loanDate) {
-
-    CheckOutResource loan = checkOutFixture.checkOutByBarcode(
-      new CheckOutByBarcodeRequestBuilder()
-        .forItem(item)
-        .to(user)
-        .on(loanDate)
-        .at(servicePointsFixture.cd1()));
-
-    Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
-      .until(scheduledNoticesClient::getAll, hasSize(1));
-
-    return loan;
-  }
 }
