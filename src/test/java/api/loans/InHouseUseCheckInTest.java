@@ -8,19 +8,19 @@ import static api.support.matchers.TextDateTimeMatcher.withinSecondsBeforeNow;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.UUID;
 
-import api.support.http.IndividualResource;
 import org.joda.time.Seconds;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.CheckInByBarcodeResponse;
 import api.support.MultipleJsonRecords;
 import api.support.builders.RequestBuilder;
 import api.support.http.CqlQuery;
+import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
 
 public class InHouseUseCheckInTest extends APITests {

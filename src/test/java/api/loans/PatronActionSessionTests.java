@@ -28,8 +28,8 @@ import java.util.UUID;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.folio.circulation.support.http.client.Response;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
@@ -47,7 +47,7 @@ public class PatronActionSessionTests extends APITests {
   private static final UUID CHECK_OUT_NOTICE_TEMPLATE_ID = UUID.fromString("72e7683b-76c2-4ee2-85c2-2fbca8fbcfd8");
   private static final UUID CHECK_IN_NOTICE_TEMPLATE_ID = UUID.fromString("72e7683b-76c2-4ee2-85c2-2fbca8fbcfd9");
 
-  @Before
+  @BeforeEach
   public void beforeEach() {
     JsonObject checkOutNoticeConfig = new NoticeConfigurationBuilder()
       .withTemplateId(CHECK_OUT_NOTICE_TEMPLATE_ID)

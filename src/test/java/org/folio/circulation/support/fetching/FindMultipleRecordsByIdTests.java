@@ -27,19 +27,20 @@ import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.results.Result;
 import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import io.vertx.core.json.JsonObject;
-import junitparams.JUnitParamsRunner;
-import junitparams.Parameters;
 
-@RunWith(JUnitParamsRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class FindMultipleRecordsByIdTests {
   @Rule
   public MockitoRule mockitoRule = MockitoJUnit.rule();
@@ -71,8 +72,11 @@ public class FindMultipleRecordsByIdTests {
     assertThat(generatedCqlQueries.getValue().value(), is(expectedQuery));
   }
 
-  @Test
-  @Parameters({ "50", "30" })
+  @ParameterizedTest
+  @ValueSource(strings = {
+    "50",
+    "30"
+   })
   public void shouldUseMultipleCqlQueriesForFindingSmallNumberOfRecordsById(
     int maximumValuesPerCqlQuery) {
 
@@ -121,9 +125,6 @@ public class FindMultipleRecordsByIdTests {
   @Test
   public void shouldAssumeNoRecordsAreFoundWhenSearchingForNoIds()
       throws InterruptedException, ExecutionException, TimeoutException {
-
-    when(queryFinder.findByQuery(any(), any())).thenReturn(
-      CompletableFuture.completedFuture(Result.succeeded(MultipleRecords.empty())));
 
     final FindWithMultipleCqlIndexValues<JsonObject> fetcher
       = new CqlIndexValuesFinder<>(queryFinder);

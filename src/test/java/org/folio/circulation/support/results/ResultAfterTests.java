@@ -12,7 +12,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.util.concurrent.ExecutionException;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class ResultAfterTests {
   @Test

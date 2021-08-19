@@ -20,7 +20,7 @@ import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;

@@ -13,20 +13,20 @@ import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.support.FindWithCqlQuery;
 import org.folio.circulation.support.GetManyRecordsClient;
-import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.results.Result;
 import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import junitparams.JUnitParamsRunner;
 
-@RunWith(JUnitParamsRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class FindMultipleRecordsUsingCqlTests {
   @Rule
   public MockitoRule mockitoRule = MockitoJUnit.rule();

@@ -1,14 +1,15 @@
 package org.folio.circulation.domain;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Collections;
 import java.util.UUID;
 
 import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
 import org.joda.time.DateTime;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.ItemBuilder;

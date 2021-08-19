@@ -6,21 +6,21 @@ import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static org.folio.HttpStatus.HTTP_INTERNAL_SERVER_ERROR;
 import static org.hamcrest.CoreMatchers.allOf;
-import static org.hamcrest.core.Is.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.hamcrest.core.Is.is;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
-import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.RequestBuilder;
+import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
 
 public class RequestPolicyTests extends APITests {

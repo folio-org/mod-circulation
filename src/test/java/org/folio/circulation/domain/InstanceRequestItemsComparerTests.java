@@ -1,7 +1,7 @@
 package org.folio.circulation.domain;
 
 import static org.folio.circulation.domain.InstanceRequestItemsComparer.sortRequestQueues;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -9,7 +9,8 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.joda.time.DateTime;
-import org.junit.Test;
+import org.junit.jupiter.api.Test
+;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;

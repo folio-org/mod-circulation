@@ -7,16 +7,16 @@ import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
-import api.support.http.IndividualResource;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
+import api.support.http.IndividualResource;
 
 public class MultipleOutOfOrderRequestsTests extends APITests {
-  @Ignore("Disabled since introducing position in queue, " +
+  @Disabled("Disabled since introducing position in queue, " +
     "need to decide if will support this, in the interim before allowing changing of position")
   @Test
   public void statusOfOldestRequestCreatedOutOfOrderChangesToAwaitingPickupWhenItemCheckedIn() {

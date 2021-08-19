@@ -1,30 +1,27 @@
 package org.folio.circulation.domain.validation;
 
-import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
+import static org.folio.circulation.support.results.Result.succeeded;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
-import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.ValidationErrorFailure;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.folio.circulation.support.results.Result;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import io.vertx.core.json.JsonObject;
-import junitparams.JUnitParamsRunner;
-import junitparams.Parameters;
 import lombok.val;
 
-@RunWith(JUnitParamsRunner.class)
 public class ItemStatusValidatorTest {
 
-  @Test
-  @Parameters({
+  @ParameterizedTest
+  @ValueSource(strings = {
     "Long missing",
     "In process (non-requestable)",
     "Restricted",
@@ -41,8 +38,8 @@ public class ItemStatusValidatorTest {
     assertThat(validationResult.value(), notNullValue());
   }
 
-  @Test
-  @Parameters({
+  @ParameterizedTest
+  @ValueSource(strings = {
     "Declared lost",
     "Claimed returned",
     "Aged to lost",
@@ -58,8 +55,8 @@ public class ItemStatusValidatorTest {
     assertThat(validationResult.cause(), instanceOf(ValidationErrorFailure.class));
   }
 
-  @Test
-  @Parameters({
+  @ParameterizedTest
+  @ValueSource(strings = {
     "Declared lost",
     "Claimed returned",
     "Aged to lost"

@@ -31,8 +31,8 @@ import java.util.stream.Stream;
 import org.folio.circulation.domain.policy.Period;
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
@@ -77,7 +77,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
   private UUID loanId;
   private DateTime dueDate;
 
-  @Before
+  @BeforeEach
   public void beforeEach() {
     ItemBuilder itemBuilder = basedUponSmallAngryPlanet(
       materialTypesFixture.book().getId(), loanTypesFixture.canCirculate().getId());

@@ -16,9 +16,9 @@ import org.folio.circulation.support.json.JsonPropertyFetcher;
 import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITestContext;
 import api.support.APITests;
@@ -30,12 +30,12 @@ public class ItemLastCheckInTests extends APITests {
 
   private static final DateTime fixedCheckInDateTime = new DateTime(2019, 4, 3, 2, 10, UTC);
 
-  @Before
+  @BeforeEach
   public void beforeEach() {
     mockClockManagerToReturnFixedDateTime(fixedCheckInDateTime);
   }
 
-  @After
+  @AfterEach
   public void afterEach() {
     mockClockManagerToReturnDefaultDateTime();
   }

@@ -17,7 +17,7 @@ import static org.joda.time.DateTime.now;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.http.IndividualResource;

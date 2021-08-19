@@ -6,8 +6,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.util.UUID;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import io.vertx.core.json.JsonObject;
 
@@ -17,7 +17,7 @@ public class OverdueFinePolicyTest {
 
   private OverdueFinePolicy overdueFinePolicy;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     overdueFinePolicyJsonObject = new JsonObject()
       .put("id", UUID.randomUUID().toString())

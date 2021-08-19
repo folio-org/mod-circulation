@@ -1,7 +1,5 @@
 package api.requests.scenarios;
 
-import static api.support.fakes.PublishedEvents.byLogEventType;
-import static api.support.http.CqlQuery.exactMatch;
 import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfPublishedEvents;
 import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfSentNotices;
 import static java.util.Collections.singletonList;
@@ -31,9 +29,9 @@ import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.ISODateTimeFormat;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.LoanPolicyBuilder;
@@ -55,19 +53,19 @@ public class MoveRequestPolicyTests extends APITests {
 
   private NoticePolicyBuilder noticePolicy;
 
-  @BeforeClass
+  @BeforeAll
   public static void setUpBeforeClass() {
     clock = Clock.fixed(Instant.now(), ZoneOffset.UTC);
     FakePubSub.clearPublishedEvents();
   }
 
-  @Before
+  @BeforeEach
   public void setUp() {
     // reset the clock before each test (just in case)
     ClockManager.getClockManager().setClock(clock);
   }
 
-  @Before
+  @BeforeEach
   public void setUpNoticePolicy() {
     UUID recallToLoaneeTemplateId = UUID.randomUUID();
     JsonObject recallToLoaneeConfiguration = new NoticeConfigurationBuilder()

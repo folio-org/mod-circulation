@@ -1,13 +1,13 @@
 package org.folio.circulation.services.agedtolost;
 
 import static org.folio.circulation.services.agedtolost.LoanToChargeFees.usingLoan;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.domain.policy.lostitem.LostItemPolicy;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.builders.LostItemFeePolicyBuilder;
 import io.vertx.core.json.JsonObject;

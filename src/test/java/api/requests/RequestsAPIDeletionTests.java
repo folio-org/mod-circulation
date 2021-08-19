@@ -8,7 +8,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
 import org.folio.circulation.domain.MultipleRecords;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.RequestBuilder;

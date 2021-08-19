@@ -5,8 +5,8 @@ import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -29,7 +29,7 @@ import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.builders.FixedDueDateSchedule;
 import api.support.builders.FixedDueDateSchedulesBuilder;

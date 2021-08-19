@@ -4,14 +4,14 @@ import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyU
 import static org.joda.time.DateTimeConstants.JANUARY;
 import static org.joda.time.DateTimeZone.UTC;
 import static org.joda.time.DateTimeZone.forOffsetHours;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.stream.IntStream;
 
 import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class KeepCurrentStrategyTest {
 

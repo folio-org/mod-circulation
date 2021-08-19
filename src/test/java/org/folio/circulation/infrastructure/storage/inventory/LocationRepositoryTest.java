@@ -1,14 +1,14 @@
 package org.folio.circulation.infrastructure.storage.inventory;
 
 import static org.folio.circulation.infrastructure.storage.inventory.LocationRepository.using;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.results.Result;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import lombok.val;
 

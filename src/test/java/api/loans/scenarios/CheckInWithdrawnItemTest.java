@@ -9,7 +9,7 @@ import static api.support.matchers.RequestMatchers.isOpenInTransit;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 import api.support.http.IndividualResource;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.ItemBuilder;

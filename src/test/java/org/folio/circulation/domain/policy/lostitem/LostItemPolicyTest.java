@@ -8,33 +8,30 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.joda.time.DateTime.now;
 import static org.joda.time.DateTimeZone.UTC;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Instant;
 import java.time.ZoneOffset;
 
 import org.folio.circulation.domain.policy.Period;
 import org.joda.time.DateTime;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import api.support.builders.LostItemFeePolicyBuilder;
-import junitparams.JUnitParamsRunner;
-import junitparams.Parameters;
-import junitparams.converters.Nullable;
 
-@RunWith(JUnitParamsRunner.class)
 public class LostItemPolicyTest {
 
-  @Before
+  @BeforeEach
   public void useDefaultClocks() {
     getClockManager().setDefaultClock();
   }
 
-  @Test
-  @Parameters( {
+  @ParameterizedTest
+  @CsvSource(value = {
     "Minutes, 78",
     "Hours, 9",
     "Days, 66",
@@ -48,8 +45,8 @@ public class LostItemPolicyTest {
     assertFalse(lostItemPolicy.canAgeLoanToLost(false, now(UTC).plusMinutes(1)));
   }
 
-  @Test
-  @Parameters( {
+  @ParameterizedTest
+  @CsvSource(value = {
     "Minutes, 43",
     "Hours, 12",
     "Days, 29",
@@ -67,8 +64,8 @@ public class LostItemPolicyTest {
     assertTrue(lostItemPolicy.canAgeLoanToLost(false, loanDueDate));
   }
 
-  @Test
-  @Parameters( {
+  @ParameterizedTest
+  @CsvSource(value = {
     "Minutes, 43",
     "Hours, 12",
     "Days, 29",
@@ -86,8 +83,8 @@ public class LostItemPolicyTest {
     assertTrue(lostItemPolicy.canAgeLoanToLost(true, loanDueDate));
   }
 
-  @Test
-  @Parameters( {
+  @ParameterizedTest
+  @CsvSource(value = {
     "Minutes, 123",
     "Hours, 99",
     "Days, 64",
@@ -112,8 +109,8 @@ public class LostItemPolicyTest {
     assertFalse(lostItemPolicy.canAgeLoanToLost(false, now(UTC)));
   }
 
-  @Test
-  @Parameters( {
+  @ParameterizedTest
+  @CsvSource(value = {
     "Minutes, 123",
     "Hours, 99",
     "Days, 64",
@@ -131,8 +128,8 @@ public class LostItemPolicyTest {
     assertTrue(lostItemPolicy.shouldRefundFees(lostDateTime));
   }
 
-  @Test
-  @Parameters( {
+  @ParameterizedTest
+  @CsvSource(value = {
     "Minutes, 656",
     "Hours, 6",
     "Days, 98",
@@ -153,8 +150,8 @@ public class LostItemPolicyTest {
     assertTrue(lostItemPolicy.shouldRefundFees(lostDateTime));
   }
 
-  @Test
-  @Parameters( {
+  @ParameterizedTest
+  @CsvSource(value = {
     "Minutes, 656",
     "Hours, 6",
     "Days, 98",
@@ -183,17 +180,17 @@ public class LostItemPolicyTest {
     assertFalse(lostItemPolicy.canAgeLoanToLost(false, now(UTC)));
   }
 
-  @Test
-  @Parameters( {
+  @ParameterizedTest
+  @CsvSource(value = {
     "Minutes, 0",
     "Hours, 0",
     "Days, 0",
     "Weeks, 0",
     "Months, 0",
     "null, null"
-  })
+  }, nullValues = {"null"})
   public void canCalculateBillingDateWhenPatronIsBilledImmediatelyForNotRecalledItem(
-    @Nullable String interval, @Nullable Integer duration) {
+    String interval, Integer duration) {
 
     final Period billPatronInterval = duration == null && interval == null
       ? null : Period.from(duration, interval);

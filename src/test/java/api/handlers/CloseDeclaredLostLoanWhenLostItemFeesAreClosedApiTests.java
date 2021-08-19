@@ -15,8 +15,8 @@ import java.util.UUID;
 
 import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.DeclareItemLostRequestBuilder;
@@ -25,7 +25,7 @@ public class CloseDeclaredLostLoanWhenLostItemFeesAreClosedApiTests extends APIT
   private IndividualResource loan;
   private IndividualResource item;
 
-  @Before
+  @BeforeEach
   public void createLoanAndDeclareItemLost() {
     UUID servicePointId = servicePointsFixture.cd1().getId();
     useLostItemPolicy(lostItemFeePoliciesFixture.chargeFee().getId());

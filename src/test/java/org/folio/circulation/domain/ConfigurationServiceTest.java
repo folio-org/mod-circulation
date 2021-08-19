@@ -1,17 +1,18 @@
 package org.folio.circulation.domain;
 
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.Collections;
+import java.util.List;
+
+import org.joda.time.DateTimeZone;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import api.support.builders.ConfigRecordBuilder;
 import api.support.builders.ConfigurationBuilder;
 import io.vertx.core.json.JsonObject;
-import java.util.List;
-import org.joda.time.DateTimeZone;
-import org.junit.BeforeClass;
-import org.junit.Test;
 
 public class ConfigurationServiceTest {
 
@@ -22,7 +23,7 @@ public class ConfigurationServiceTest {
   private static ConfigurationService service;
 
 
-  @BeforeClass
+  @BeforeAll
   public static void before() {
     service = new ConfigurationService();
   }
@@ -74,7 +75,7 @@ public class ConfigurationServiceTest {
 
     Integer actualSessionTimeout = service.findSessionTimeout(records);
 
-    assertEquals(actualSessionTimeout, new Integer(1));
+    assertEquals(actualSessionTimeout, Integer.valueOf(1));
   }
 
   @Test
@@ -85,7 +86,7 @@ public class ConfigurationServiceTest {
 
     Integer actualSessionTimeout = service.findSessionTimeout(records);
 
-    assertEquals(actualSessionTimeout, new Integer(1));
+    assertEquals(actualSessionTimeout, Integer.valueOf(1));
   }
 
   @Test

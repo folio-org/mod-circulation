@@ -38,7 +38,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.joda.time.DateTime.now;
 import static org.joda.time.DateTimeZone.UTC;
 import static org.joda.time.Seconds.seconds;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.List;
 import java.util.UUID;
@@ -50,9 +50,11 @@ import org.folio.circulation.domain.EventType;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import api.support.APITests;
 import api.support.MultipleJsonRecords;
@@ -67,17 +69,13 @@ import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import api.support.matchers.EventTypeMatchers;
 import io.vertx.core.json.JsonObject;
-import junitparams.JUnitParamsRunner;
-import junitparams.Parameters;
-import junitparams.converters.Nullable;
 
-@RunWith(JUnitParamsRunner.class)
 public class DeclareLostAPITests extends APITests {
   public DeclareLostAPITests() {
     super(true, true);
   }
 
-  @Before
+  @BeforeEach
   public void setup() {
     useLostItemPolicy(lostItemFeePoliciesFixture.chargeFee().getId());
   }
@@ -359,8 +357,8 @@ public class DeclareLostAPITests extends APITests {
 	  assertThat(response.getStatusCode(), is(422));
   }
 
-  @Test
-  @Parameters( {
+  @ParameterizedTest
+  @ValueSource(strings = {
     "0",
     "10.00"
   })
@@ -384,12 +382,12 @@ public class DeclareLostAPITests extends APITests {
     verifyThatFirstPublishedLoanClosedEventIsValid(loan);
   }
 
-  @Test
-  @Parameters( {
-    "null",
+  @ParameterizedTest
+  @NullSource
+  @ValueSource(strings = {
     "0.0"
   })
-  public void shouldNotAssignItemSetCostFeeIfAmountMissing(@Nullable Double itemFee) {
+  public void shouldNotAssignItemSetCostFeeIfAmountMissing(Double itemFee) {
     final LostItemFeePolicyBuilder lostItemPolicy = lostItemFeePoliciesFixture
       .facultyStandardPolicy()
       .withName("Declared lost fee test policy")
@@ -426,12 +424,12 @@ public class DeclareLostAPITests extends APITests {
     assertNoFeeAssignedForLoan(loan.getId());
   }
 
-  @Test
-  @Parameters( {
-    "null",
+  @ParameterizedTest
+  @NullSource
+  @ValueSource(strings = {
     "0.0"
   })
-  public void shouldNotAssignItemProcessingFeeIfAmountMissing(@Nullable Double processingFee) {
+  public void shouldNotAssignItemProcessingFeeIfAmountMissing(Double processingFee) {
     final LostItemFeePolicyBuilder lostItemPolicy = lostItemFeePoliciesFixture
       .facultyStandardPolicy()
       .withName("Declared lost fee test policy")
@@ -533,14 +531,14 @@ public class DeclareLostAPITests extends APITests {
         .withChargeAmountItemPatron(false)
         .withChargeAmountItemSystem(true);
 
-    JsonObject lostPolicy = lostItemFeePoliciesFixture.create(lostPolicyBuilder).getJson();
+    lostItemFeePoliciesFixture.create(lostPolicyBuilder).getJson();
 
     useLostItemPolicy(lostItemFeePoliciesFixture.create(lostPolicyBuilder).getId());
 
     AgeToLostResult agedToLostLoan = ageToLostFixture.createLoanAgeToLostAndChargeFees(lostPolicyBuilder);
     
     JsonObject item = itemsFixture.getById(agedToLostLoan.getItemId()).getJson();
-    JsonObject loan = loansClient.getById(agedToLostLoan.getLoanId()).getJson();
+    loansClient.getById(agedToLostLoan.getLoanId()).getJson();
 
     assertThat(item, isAgedToLost());
 
@@ -588,7 +586,7 @@ public class DeclareLostAPITests extends APITests {
         .withChargeAmountItemPatron(false)
         .withChargeAmountItemSystem(false);
 
-    JsonObject lostPolicy = lostItemFeePoliciesFixture.create(lostPolicyBuilder).getJson();
+    lostItemFeePoliciesFixture.create(lostPolicyBuilder).getJson();
 
     useLostItemPolicy(lostItemFeePoliciesFixture.create(lostPolicyBuilder).getId());
 
@@ -596,7 +594,7 @@ public class DeclareLostAPITests extends APITests {
     UUID testLoanId = agedToLostResult.getLoanId();
     UUID itemId = agedToLostResult.getItemId();
     
-    JsonObject ageToLostLoan = loansClient.getById(testLoanId).getJson();
+    loansClient.getById(testLoanId).getJson();
     JsonObject AgeToLostItem = itemsFixture.getById(itemId).getJson();
 
     assertThat(AgeToLostItem, isAgedToLost());
@@ -887,9 +885,6 @@ public class DeclareLostAPITests extends APITests {
         hasJsonPath("loan.action", "closedLoan"),
         hasJsonPath("loan.itemStatus", "Lost and paid"))
     ));
-  }
-  private Matcher<JsonObject> isLostItemHasBeenBilled() {
-    return hasJsonPath("agedToLostDelayedBilling.lostItemHasBeenBilled", true);
   }
 
   private void assertNoteHasBeenCreated() {

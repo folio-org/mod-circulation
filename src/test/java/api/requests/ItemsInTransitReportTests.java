@@ -8,11 +8,10 @@ import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.joda.time.DateTimeZone.UTC;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDate;
-import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
@@ -23,8 +22,8 @@ import java.util.UUID;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.support.json.JsonPropertyFetcher;
 import org.joda.time.DateTime;
-import org.junit.After;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
@@ -69,7 +68,7 @@ public class ItemsInTransitReportTests extends APITests {
   private static final String COPY_NUMBER = "copyNumber";
   private static final String EFFECTIVE_CALL_NUMBER_COMPONENTS = "effectiveCallNumberComponents";
 
-  @After
+  @AfterEach
   public void afterEach() {
     mockClockManagerToReturnDefaultDateTime();
   }
@@ -625,11 +624,5 @@ public class ItemsInTransitReportTests extends APITests {
       .withEnumeration("smallAngryPlanetEnumeration")
       .withVolume("smallAngryPlanetVolume")
       .withYearCaption(Collections.singletonList("2019"));
-  }
-
-  private ZonedDateTime toZonedStartOfDay(LocalDate date) {
-    final var startOfDay = date.atStartOfDay();
-
-    return ZonedDateTime.of(startOfDay, ZoneId.systemDefault().normalized());
   }
 }

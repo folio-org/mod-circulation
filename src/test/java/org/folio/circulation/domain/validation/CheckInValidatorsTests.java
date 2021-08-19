@@ -7,22 +7,19 @@ import static org.folio.circulation.support.ValidationErrorFailure.singleValidat
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.support.ValidationErrorFailure;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import io.vertx.core.json.JsonObject;
-import junitparams.JUnitParamsRunner;
-import junitparams.Parameters;
 import lombok.val;
 
-@RunWith(JUnitParamsRunner.class)
 public class CheckInValidatorsTests {
-  @Test
-  @Parameters({
+  @ParameterizedTest
+  @ValueSource(strings = {
     "Available",
     "Long missing",
     "In process (non-requestable)",
@@ -42,8 +39,8 @@ public class CheckInValidatorsTests {
     assertThat(validationResult.value(), is(item));
   }
 
-  @Test
-  @Parameters({
+  @ParameterizedTest
+  @ValueSource(strings = {
     "Intellectual item"
   })
   public void cannotCheckInItemInDisallowedStatus(String itemStatus) {

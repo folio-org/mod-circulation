@@ -22,8 +22,8 @@ import org.folio.circulation.rules.PatronGroup;
 import org.folio.circulation.rules.Policy;
 import org.folio.circulation.rules.cache.CirculationRulesCache;
 import org.folio.circulation.support.http.client.Response;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.LoanPolicyBuilder;
@@ -117,7 +117,7 @@ public class CirculationRulesEngineAPITests extends APITests {
     "b " + c1 + ": l " + lp4 + " r " + rp2 + " n " + np2 + " o " + op2 + " i " + lip2
   );
 
-  @Before
+  @BeforeEach
   public void setUp() {
     CirculationRulesCache.getInstance().dropCache();
     setPoliciesIdsToTheFixture();

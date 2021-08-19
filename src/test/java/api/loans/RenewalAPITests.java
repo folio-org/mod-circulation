@@ -8,7 +8,6 @@ import static api.support.builders.FixedDueDateSchedule.wholeMonth;
 import static api.support.builders.ItemBuilder.CHECKED_OUT;
 import static api.support.fakes.PublishedEvents.byEventType;
 import static api.support.fakes.PublishedEvents.byLogAction;
-import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.fixtures.AutomatedPatronBlocksFixture.MAX_NUMBER_OF_ITEMS_CHARGED_OUT_MESSAGE;
 import static api.support.fixtures.AutomatedPatronBlocksFixture.MAX_OUTSTANDING_FEE_FINE_BALANCE_MESSAGE;
 import static api.support.fixtures.CalendarExamples.CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_OPEN;
@@ -84,7 +83,7 @@ import org.joda.time.DateTimeUtils;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalTime;
 import org.joda.time.Seconds;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
@@ -105,7 +104,6 @@ import api.support.fakes.FakePubSub;
 import api.support.fixtures.ConfigurationExample;
 import api.support.fixtures.ItemExamples;
 import api.support.fixtures.TemplateContextMatchers;
-import api.support.http.CheckOutResource;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import api.support.http.OkapiHeaders;
@@ -1367,7 +1365,7 @@ public abstract class RenewalAPITests extends APITests {
 
     FakeModNotify.setFailPatronNoticesWithBadRequest(true);
 
-    IndividualResource loanAfterRenewal = loansFixture.renewLoan(smallAngryPlanet, steve);
+    loansFixture.renewLoan(smallAngryPlanet, steve);
 
     verifyNumberOfSentNotices(0);
     verifyNumberOfPublishedEvents(NOTICE, 0);

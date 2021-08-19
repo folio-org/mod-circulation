@@ -2,7 +2,7 @@ package org.folio.circulation.resources.renewal;
 
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.results.Result;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static api.support.matchers.FailureMatchers.errorResultFor;
 import static org.hamcrest.CoreMatchers.is;

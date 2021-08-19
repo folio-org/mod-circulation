@@ -17,7 +17,7 @@ import java.util.UUID;
 import org.folio.circulation.support.BadRequestFailure;
 import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.RequestBuilder;

@@ -10,19 +10,18 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.UUID;
 
-import org.folio.circulation.domain.Location;
-import org.hamcrest.Matcher;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.circulation.domain.Location;
+import org.hamcrest.Matcher;
+import org.junit.jupiter.api.Test;
 
 import api.support.builders.LocationBuilder;
 import io.vertx.core.MultiMap;
@@ -38,9 +37,6 @@ public class Text2DroolsTest {
   private static final String SECOND_LIBRARY_ID = "2125c4ea-9c9a-462e-84d2-90e3fcdbf1eb";
   private static final String FIRST_CAMPUS_ID = "692dbd8c-9804-4281-9fd1-8ce601d7c6a3";
   private static final String SECOND_CAMPUS_ID = "04163907-8f63-41f3-888d-f2d2888a4dd0";
-
-  @Rule
-  public ExpectedException exceptionRule = ExpectedException.none();
 
   @Test
   public void headerFallbackPolicy() {
@@ -538,14 +534,17 @@ public class Text2DroolsTest {
     assertThat("loan policy calculations per second", perSecond, is(greaterThan(100f)));
   }
 
-  @Test(expected=IllegalArgumentException.class)
+  @Test
   public void unknownCriteriumType() throws ReflectiveOperationException {
     Method criteriumTypeClassnameMethod =
         Text2Drools.class.getDeclaredMethod("criteriumTypeClassname", String.class);
-    criteriumTypeClassnameMethod.setAccessible(true);
 
-    //noinspection JavaReflectionInvocation
-    criteriumTypeClassnameMethod.invoke("q");
+    assertThrows(IllegalArgumentException.class, () -> {
+      criteriumTypeClassnameMethod.setAccessible(true);
+
+      //noinspection JavaReflectionInvocation
+      criteriumTypeClassnameMethod.invoke("q");
+    });
   }
 
   @Test
@@ -677,9 +676,8 @@ public class Text2DroolsTest {
   }
 
   private void expectException(String rulesText, Matcher<CirculationRulesException> matches) {
-    exceptionRule.expect(CirculationRulesException.class);
-    exceptionRule.expect(matches);
-
-    Text2Drools.convert(rulesText);
+    assertThrows(CirculationRulesException.class, () -> {
+      Text2Drools.convert(rulesText);
+    });
   }
 }

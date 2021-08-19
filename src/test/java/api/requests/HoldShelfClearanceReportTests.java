@@ -14,7 +14,7 @@ import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.CheckInByBarcodeRequestBuilder;

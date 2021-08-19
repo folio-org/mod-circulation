@@ -6,7 +6,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import java.util.UUID;
 
 import org.folio.circulation.domain.Item;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.HoldingBuilder;

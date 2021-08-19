@@ -13,7 +13,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.results.Result;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import io.vertx.core.json.JsonObject;
 

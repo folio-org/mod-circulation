@@ -12,12 +12,12 @@ import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
 import static org.folio.circulation.domain.policy.Period.weeks;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.json.JsonPropertyWriter.writeByPath;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.joda.time.DateTime.now;
 import static org.joda.time.DateTimeZone.UTC;
 import static org.joda.time.Seconds.seconds;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
@@ -28,7 +28,7 @@ import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.builders.LoanPolicyBuilder;
 import io.vertx.core.json.JsonObject;

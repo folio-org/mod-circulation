@@ -4,7 +4,7 @@ import static api.support.matchers.ItemMatchers.isCheckedOut;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 import org.joda.time.DateTime;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import api.support.fixtures.OverrideRenewalFixture;

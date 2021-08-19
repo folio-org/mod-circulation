@@ -46,7 +46,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNot.not;
 import static org.joda.time.DateTimeZone.UTC;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -69,7 +69,7 @@ import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
 import org.joda.time.Seconds;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.CheckInByBarcodeResponse;
@@ -90,7 +90,6 @@ import api.support.http.CqlQuery;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import api.support.http.UserResource;
-import api.support.utl.PatronNoticeTestHelper;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
@@ -1495,11 +1494,6 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     return LocalDate.of(dateTime.getYear(), dateTime.getMonthOfYear(), dateTime.getDayOfMonth());
   }
 
-  private void clearPatronNoticesAndPubsubEvents() {
-    FakeModNotify.clearSentPatronNotices();
-    FakePubSub.clearPublishedEvents();
-  }
-
   private void assertThatItemStatusIs(UUID itemId, ItemStatus status) {
     assertThat(
       Item.from(itemsFixture.getById(itemId).getJson()).getStatus(),
@@ -1510,14 +1504,6 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     assertThat(
       Request.from(requestsFixture.getById(requestId).getJson()).getStatus(),
       is(status));
-  }
-
-  private void verifyThatNoPatronNoticesWereSent() {
-    waitAtMost(1, SECONDS)
-      .until(FakeModNotify::getSentPatronNotices, empty());
-
-    waitAtMost(1, SECONDS)
-      .until(() -> FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), empty());
   }
 
   private void updateRequestPosition(IndividualResource request, int position) {

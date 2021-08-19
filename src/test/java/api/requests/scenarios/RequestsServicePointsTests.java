@@ -11,7 +11,7 @@ import org.folio.circulation.domain.RequestStatus;
 import api.support.http.IndividualResource;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

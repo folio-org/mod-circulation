@@ -1,21 +1,19 @@
 package org.folio.circulation.domain;
 
-import api.support.builders.ProxyRelationshipBuilder;
-import junitparams.JUnitParamsRunner;
-import junitparams.Parameters;
-import org.joda.time.DateTime;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-
-import java.util.UUID;
-
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-@RunWith(JUnitParamsRunner.class)
+import java.util.UUID;
+
+import org.joda.time.DateTime;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+
+import api.support.builders.ProxyRelationshipBuilder;
+
 public class ProxyRelationshipTests {
-  @Test
-  @Parameters({
+  @ParameterizedTest
+  @ValueSource(strings = {
     "false",
     "true"
   })
@@ -32,8 +30,8 @@ public class ProxyRelationshipTests {
     assertThat(relationship.isActive(), is(true));
   }
 
-  @Test
-  @Parameters({
+  @ParameterizedTest
+  @ValueSource(strings = {
     "false",
     "true"
   })
@@ -50,8 +48,8 @@ public class ProxyRelationshipTests {
     assertThat(relationship.isActive(), is(true));
   }
 
-  @Test
-  @Parameters({
+  @ParameterizedTest
+  @ValueSource(strings = {
     "false",
     "true"
   })
@@ -68,8 +66,8 @@ public class ProxyRelationshipTests {
     assertThat(relationship.isActive(), is(false));
   }
 
-  @Test
-  @Parameters({
+  @ParameterizedTest
+  @ValueSource(strings = {
     "false",
     "true"
   })
@@ -87,8 +85,8 @@ public class ProxyRelationshipTests {
   }
 
 
-  @Test
-  @Parameters({
+  @ParameterizedTest
+  @ValueSource(strings = {
     "false",
     "true"
   })
@@ -106,8 +104,8 @@ public class ProxyRelationshipTests {
   }
 
 
-  @Test
-  @Parameters({
+  @ParameterizedTest
+  @ValueSource(strings = {
     "false",
     "true"
   })

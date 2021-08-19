@@ -10,7 +10,7 @@ import static org.joda.time.DateTimeZone.UTC;
 
 import org.folio.circulation.domain.Loan;
 import org.joda.time.DateTime;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import io.vertx.core.json.JsonObject;
 import lombok.val;

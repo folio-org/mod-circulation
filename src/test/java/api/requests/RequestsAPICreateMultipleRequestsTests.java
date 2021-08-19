@@ -8,7 +8,7 @@ import java.util.UUID;
 import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.core.Is;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.RequestBuilder;

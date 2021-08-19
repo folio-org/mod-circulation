@@ -17,7 +17,7 @@ import java.util.UUID;
 
 import org.folio.circulation.domain.representations.anonymization.LoanAnonymizationAPIResponse;
 import org.joda.time.DateTime;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.LoanHistoryConfigurationBuilder;

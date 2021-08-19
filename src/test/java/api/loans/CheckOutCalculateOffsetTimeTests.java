@@ -34,7 +34,7 @@ import org.joda.time.DateTimeZone;
 import org.joda.time.Hours;
 import org.joda.time.LocalDate;
 import org.joda.time.LocalTime;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
@@ -394,7 +394,7 @@ public class CheckOutCalculateOffsetTimeTests extends APITests {
       .toDateTime(new LocalTime(6, 0), DateTimeZone.UTC);
     LocalDate expectedDate = dayPeriod.getOpeningDay().getDate();
     LocalTime expectedTime = START_TIME_FIRST_PERIOD.plusMinutes(offsetDuration);
-    DateTime expectedDueDate = timeZoneWrapper(expectedDate.toDateTime(expectedTime));
+    timeZoneWrapper(expectedDate.toDateTime(expectedTime));
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();

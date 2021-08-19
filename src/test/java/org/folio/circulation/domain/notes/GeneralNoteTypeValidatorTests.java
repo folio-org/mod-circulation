@@ -8,7 +8,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.folio.circulation.support.results.Result;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import lombok.val;
 

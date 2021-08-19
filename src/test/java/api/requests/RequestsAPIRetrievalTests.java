@@ -24,7 +24,7 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.core.Is.is;
 import static org.joda.time.DateTimeZone.UTC;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.net.HttpURLConnection;
 import java.time.LocalDate;
@@ -33,7 +33,7 @@ import java.util.UUID;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.CoreMatchers;
 import org.joda.time.DateTime;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.MultipleJsonRecords;

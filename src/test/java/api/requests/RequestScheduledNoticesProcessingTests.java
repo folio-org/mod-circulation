@@ -29,10 +29,10 @@ import java.util.UUID;
 import org.folio.circulation.domain.policy.Period;
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
-import org.junit.Before;
 import org.junit.FixMethodOrder;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.junit.runners.MethodSorters;
 
 import api.support.APITests;
@@ -57,7 +57,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
   private UserResource requester;
   private IndividualResource pickupServicePoint;
 
-  @Before
+  @BeforeEach
   public void beforeEach() {
     ItemBuilder itemBuilder = ItemExamples.basedUponSmallAngryPlanet(
       materialTypesFixture.book().getId(), loanTypesFixture.canCirculate().getId());
@@ -148,7 +148,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  @Ignore("notice is deleted once the request status is changed to 'Closed - Pickup expired'")
+  @Disabled("notice is deleted once the request status is changed to 'Closed - Pickup expired'")
   //TODO fix this test and make it useful again
   public void uponAtHoldExpirationNoticeShouldBeSentAndDeletedWhenHoldExpirationDateHasPassed() {
     JsonObject noticeConfiguration = new NoticeConfigurationBuilder()

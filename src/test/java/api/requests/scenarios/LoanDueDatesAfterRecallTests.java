@@ -39,11 +39,12 @@ import org.joda.time.DateTimeConstants;
 import org.joda.time.LocalTime;
 import org.joda.time.Seconds;
 import org.joda.time.format.ISODateTimeFormat;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import api.support.APITests;
 import api.support.MultipleJsonRecords;
@@ -53,10 +54,6 @@ import api.support.builders.RequestBuilder;
 import api.support.builders.ServicePointBuilder;
 import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
-import junitparams.JUnitParamsRunner;
-import junitparams.Parameters;
-import junitparams.converters.Nullable;
-import junitparams.naming.TestCaseName;
 
 /**
  * Notes:<br>
@@ -65,7 +62,6 @@ import junitparams.naming.TestCaseName;
  *
  * @see <a href="https://issues.folio.org/browse/CIRC-203">CIRC-203</a>
  */
-@RunWith(JUnitParamsRunner.class)
 public class LoanDueDatesAfterRecallTests extends APITests {
   private static Clock clock;
 
@@ -73,18 +69,18 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     super(true, true);
   }
 
-  @BeforeClass
+  @BeforeAll
   public static void setUpBeforeClass() {
     clock = Clock.fixed(Instant.now(), ZoneOffset.UTC);
   }
 
-  @Before
+  @BeforeEach
   public void setUp() {
     // reset the clock before each test (just in case)
     ClockManager.getClockManager().setClock(clock);
   }
 
-  @After
+  @AfterEach
   public void after() {
     // reset the clock before each test (just in case)
     ClockManager.getClockManager().setClock(Clock.systemUTC());
@@ -319,22 +315,21 @@ public class LoanDueDatesAfterRecallTests extends APITests {
         storedLoan.getString("dueDate"), is(expectedDueDate));
   }
 
-  @Test
-  @Parameters({
+  @ParameterizedTest(name = "{index}: {0} {1} {2} {3} {4}")
+  @CsvSource(value = {
     // MGD duration|MGD interval|RD duration|RD interval|expected string
-    "null|null|1|Months|the \"minimumGuaranteedLoanPeriod\" in the loan policy is not recognized",
-    "1|Months|null|null|the \"recallReturnInterval\" in the loan policy is not recognized",
-    "1|Years|1|Months|the interval \"Years\" in \"minimumGuaranteedLoanPeriod\" is not recognized",
-    "1|Months|1|Years|the interval \"Years\" in \"recallReturnInterval\" is not recognized",
-    "-100|Months|1|Months|the duration \"-100\" in \"minimumGuaranteedLoanPeriod\" is invalid",
-    "1|Months|-100|Months|the duration \"-100\" in \"recallReturnInterval\" is invalid"
-  })
-  @TestCaseName("{method}: {params}")
+    "null,null,1,Months,the \"minimumGuaranteedLoanPeriod\" in the loan policy is not recognized",
+    "1,Months,null,null,the \"recallReturnInterval\" in the loan policy is not recognized",
+    "1,Years,1,Months,the interval \"Years\" in \"minimumGuaranteedLoanPeriod\" is not recognized",
+    "1,Months,1,Years,the interval \"Years\" in \"recallReturnInterval\" is not recognized",
+    "-100,Months,1,Months,the duration \"-100\" in \"minimumGuaranteedLoanPeriod\" is invalid",
+    "1,Months,-100,Months,the duration \"-100\" in \"recallReturnInterval\" is invalid"
+  }, nullValues={"null"})
   public void loanPolicyWithInvalidMGDOrRDPeriodValuesReturnsErrorOnRecallCreation(
-      @Nullable Integer mgdDuration,
-      @Nullable String mgdInterval,
-      @Nullable Integer rdDuration,
-      @Nullable String rdInterval,
+      Integer mgdDuration,
+      String mgdInterval,
+      Integer rdDuration,
+      String rdInterval,
       String expectedMessage) {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requestServicePoint = servicePointsFixture.cd1();
@@ -441,8 +436,6 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     setFallbackPolicies(canCirculateRollingPolicy);
 
     clockManager.setClock(fixed(Instant.parse("2020-01-24T08:34:21Z"), ZoneId.of("UTC")));
-
-    final var loanDate = clockManager.getDateTime();
 
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(smallAngryPlanet, steve);
 

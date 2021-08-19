@@ -12,7 +12,7 @@ import static org.folio.circulation.domain.representations.logs.LogEventType.NOT
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -25,8 +25,8 @@ import org.hamcrest.MatcherAssert;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalTime;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.NoticeConfigurationBuilder;
@@ -42,7 +42,7 @@ import lombok.val;
 public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests {
   private final static UUID TEMPLATE_ID = UUID.randomUUID();
 
-  @Before
+  @BeforeEach
   public void setUp() {
     templateFixture.createDummyNoticeTemplate(TEMPLATE_ID);
   }
@@ -146,10 +146,11 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
 
     DateTime newNextRunTime = timeForNoticeToBeSent.plus(recurringPeriod.timePeriod());
 
-    assertTrue("all scheduled notices are rescheduled", scheduledNoticesClient.getAll().stream()
+    assertTrue(scheduledNoticesClient.getAll().stream()
       .map(entries -> entries.getString("nextRunTime"))
       .map(DateTime::parse)
-      .allMatch(newNextRunTime::isEqual));
+      .allMatch(newNextRunTime::isEqual),
+      "all scheduled notices are rescheduled");
 
     verifyNumberOfSentNotices(1);
     verifyNumberOfScheduledNotices(2);

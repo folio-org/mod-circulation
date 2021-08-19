@@ -11,7 +11,7 @@ import static org.hamcrest.Matchers.allOf;
 import org.folio.circulation.domain.policy.Period;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.LoanPolicyBuilder;

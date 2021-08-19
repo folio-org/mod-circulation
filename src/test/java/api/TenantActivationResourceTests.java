@@ -25,14 +25,14 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
 import org.folio.circulation.support.http.client.Response;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 
 public class TenantActivationResourceTests extends APITests {
 
-  @Before
+  @BeforeEach
   public void init() {
     setFailPubSubRegistration(false);
     setFailPubSubUnregistering(false);

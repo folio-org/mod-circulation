@@ -11,7 +11,7 @@ import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.builders.FixedDueDateSchedule;
 import api.support.builders.FixedDueDateSchedulesBuilder;

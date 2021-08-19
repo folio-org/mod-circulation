@@ -1,22 +1,21 @@
 package api.loans;
 
-import static api.support.http.InterfaceUrls.loansUrl;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
-import static org.hamcrest.core.Is.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
 import static org.joda.time.DateTimeZone.UTC;
 
 import java.util.UUID;
 
-import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.LoanBuilder;
+import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
 
 public class LoanAPIProxyTests extends APITests {

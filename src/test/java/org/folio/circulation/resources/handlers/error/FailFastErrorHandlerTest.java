@@ -3,12 +3,16 @@ package org.folio.circulation.resources.handlers.error;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_ITEM_ID;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.succeeded;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.results.Result;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class FailFastErrorHandlerTest {
   private static final HttpFailure TEST_ERROR = new ServerErrorFailure("test error");
@@ -148,8 +152,10 @@ public class FailFastErrorHandlerTest {
     handler.handleValidationError(TEST_ERROR, INVALID_ITEM_ID, SUCCEEDED_RESULT);
   }
 
-  @Test(expected = UnsupportedOperationException.class)
+  @Test
   public void attemptToAddErrorToMapThrowsException() {
-    handler.getErrors().put(TEST_ERROR, INVALID_ITEM_ID);
+    assertThrows(UnsupportedOperationException.class, () -> {
+      handler.getErrors().put(TEST_ERROR, INVALID_ITEM_ID);
+    });
   }
 }

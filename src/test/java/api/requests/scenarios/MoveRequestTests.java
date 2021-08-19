@@ -23,7 +23,7 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -44,8 +44,8 @@ import org.folio.circulation.domain.policy.Period;
 import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.junit.After;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.LoanPolicyBuilder;
@@ -64,7 +64,7 @@ import lombok.val;
  */
 public class MoveRequestTests extends APITests {
 
-  @After
+  @AfterEach
   public void after() {
     getClockManager().setClock(Clock.systemUTC());
   }
@@ -1040,10 +1040,6 @@ public class MoveRequestTests extends APITests {
     assertThat(updatedCreatedFromEventPayload.getItemId(), equalTo(itemCopyA.getId().toString()));
 
     assertThat(events.get(LOAN_DUE_DATE_CHANGED.name()).get(1), isValidLoanDueDateChangedEvent(itemCopyALoan.getJson()));
-  }
-
-  private void freezeTime(DateTime dateTime) {
-    freezeTime(Instant.ofEpochMilli(dateTime.getMillis()));
   }
 
   private void freezeTime(Instant dateTime) {

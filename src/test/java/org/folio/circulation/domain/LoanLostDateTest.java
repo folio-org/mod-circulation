@@ -1,14 +1,14 @@
 package org.folio.circulation.domain;
 
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.joda.time.DateTime.now;
 import static org.joda.time.DateTimeZone.UTC;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.builders.LoanBuilder;
 

@@ -1,9 +1,9 @@
 package org.folio.circulation.domain.validation;
 
-import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQuery;
-import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
+import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQuery;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
+import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.results.Result.ofAsync;
 
 import java.util.Optional;
@@ -15,15 +15,14 @@ import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
-import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.UserManualBlock;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.FindWithCqlQuery;
 import org.folio.circulation.support.HttpFailure;
-import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.server.ValidationError;
+import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
 
 public class UserManualBlocksValidator {

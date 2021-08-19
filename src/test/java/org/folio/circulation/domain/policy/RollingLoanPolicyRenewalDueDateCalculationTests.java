@@ -2,8 +2,8 @@ package org.folio.circulation.domain.policy;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -21,18 +21,16 @@ import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import api.support.builders.FixedDueDateSchedule;
 import api.support.builders.FixedDueDateSchedulesBuilder;
 import api.support.builders.LoanBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import io.vertx.core.json.JsonObject;
-import junitparams.JUnitParamsRunner;
-import junitparams.Parameters;
 
-@RunWith(JUnitParamsRunner.class)
 public class RollingLoanPolicyRenewalDueDateCalculationTests {
 
   private static final String EXPECTED_REASON_DATE_FALLS_OTSIDE_DATE_RANGES =
@@ -45,8 +43,8 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
   private static final String RENEWAL_WOULD_NOT_CHANGE_THE_DUE_DATE =
     "renewal would not change the due date";
 
-  @Test
-  @Parameters({
+  @ParameterizedTest
+  @ValueSource(strings = {
     "1",
     "8",
     "12",
@@ -71,8 +69,8 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
     assertThat(result.value().getDueDate(), is(systemDate.plusMonths(duration)));
   }
 
-  @Test
-  @Parameters({
+  @ParameterizedTest
+  @ValueSource(strings = {
     "1",
     "2",
     "3",
@@ -98,8 +96,8 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
     assertThat(result.value().getDueDate(), is(systemDate.plusWeeks(duration)));
   }
 
-  @Test
-  @Parameters({
+  @ParameterizedTest
+  @ValueSource(strings = {
     "1",
     "7",
     "14",
@@ -126,8 +124,8 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
     assertThat(result.value().getDueDate(), is(systemDate.plusDays(duration)));
   }
 
-  @Test
-  @Parameters({
+  @ParameterizedTest
+  @ValueSource(strings = {
     "2",
     "5",
     "30",
@@ -154,8 +152,8 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
     assertThat(result.value().getDueDate(), is(systemDate.plusHours(duration)));
   }
 
-  @Test
-  @Parameters({
+  @ParameterizedTest
+  @ValueSource(strings = {
     "1",
     "5",
     "30",
@@ -262,8 +260,8 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
     assertTrue(matchErrorReason(errorHandler, LOAN_PERIOD_IN_THE_LOAN_POLICY_IS_NOT_RECOGNISED));
   }
 
-  @Test
-  @Parameters({
+  @ParameterizedTest
+  @ValueSource(strings = {
     "0",
     "-1",
   })
@@ -459,10 +457,6 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
     renew(loan, renewalDate, new RequestQueue(Collections.emptyList()), errorHandler);
 
     assertTrue(matchErrorReason(errorHandler, RENEWAL_WOULD_NOT_CHANGE_THE_DUE_DATE));
-  }
-
-  private Loan loanFor(DateTime loanDate, LoanPolicy loanPolicy) {
-    return loanFor(loanDate, loanDate.plusWeeks(2), loanPolicy);
   }
 
   private Loan loanFor(DateTime loanDate, DateTime dueDate, LoanPolicy loanPolicy) {

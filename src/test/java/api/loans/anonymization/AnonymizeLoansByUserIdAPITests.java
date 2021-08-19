@@ -10,7 +10,7 @@ import java.util.UUID;
 import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.http.ItemResource;

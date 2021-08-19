@@ -2,7 +2,7 @@ package org.folio.circulation;
 
 import io.vertx.core.json.JsonObject;
 import api.support.fakes.FakeCQLToJSONInterpreter;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Collection;

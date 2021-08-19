@@ -8,8 +8,8 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.joda.time.DateTime.now;
 import static org.joda.time.DateTimeZone.UTC;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.spy;
 
 import java.util.UUID;
@@ -24,17 +24,18 @@ import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
 import org.folio.circulation.resources.handlers.error.OverridingErrorHandler;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.results.Result;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import api.support.builders.LoanBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.RequestBuilder;
 import io.vertx.core.json.JsonObject;
-import junitparams.JUnitParamsRunner;
-import junitparams.Parameters;
 
-@RunWith(JUnitParamsRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class RegularRenewalTest {
 
   private static final String ITEMS_CANNOT_BE_RENEWED_WHEN_THERE_IS_AN_ACTIVE_RECALL_REQUEST =
@@ -170,8 +171,8 @@ public class RegularRenewalTest {
       POLICY_HAS_FIXED_PROFILE_BUT_RENEWAL_PERIOD_IS_SPECIFIED));
   }
 
-  @Test
-  @Parameters({
+  @ParameterizedTest
+  @ValueSource(strings = {
     "Declared lost",
     "Aged to lost",
     "Claimed returned",

@@ -4,7 +4,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.resources.context.RenewalContext.create;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.results.Result.succeeded;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -22,28 +22,27 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 
-import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
-import org.folio.circulation.infrastructure.storage.loans.LostItemPolicyRepository;
 import org.folio.circulation.domain.policy.OverdueFinePolicy;
-import org.folio.circulation.infrastructure.storage.loans.OverdueFinePolicyRepository;
 import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
 import org.folio.circulation.domain.representations.StoredAccount;
 import org.folio.circulation.domain.representations.StoredFeeFineAction;
+import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineActionRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineOwnerRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineRepository;
-import org.folio.circulation.infrastructure.storage.ServicePointRepository;
+import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
+import org.folio.circulation.infrastructure.storage.loans.LostItemPolicyRepository;
+import org.folio.circulation.infrastructure.storage.loans.OverdueFinePolicyRepository;
+import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.ClockManager;
-import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 
 import api.support.builders.CheckInByBarcodeRequestBuilder;
@@ -58,7 +57,6 @@ import api.support.builders.OverdueFinePolicyBuilder;
 import api.support.builders.UserBuilder;
 import io.vertx.core.json.JsonObject;
 
-@RunWith(value = Parameterized.class)
 public class OverdueFineCalculatorServiceTest {
   private static final UUID LOAN_ID = UUID.randomUUID();
   private static final UUID LOAN_USER_ID = UUID.randomUUID();
@@ -104,61 +102,8 @@ public class OverdueFineCalculatorServiceTest {
   private LostItemPolicyRepository lostItemPolicyRepository;
   private ScheduledNoticesRepository scheduledNoticesRepository;
   private ServicePointRepository servicePointRepository;
-  private Boolean renewal;
-  private Boolean dueDateChangedByRecall;
-  private Double overdueFine;
-  private String overdueFineInterval;
-  private Double maxOverdueFine;
-  private Double overdueRecallFine;
-  private String overdueRecallFineInterval;
-  private Double maxOverdueRecallFine;
-  private Integer periodCalculatorResult;
-  private Double correctOverdueFine;
 
-  public OverdueFineCalculatorServiceTest(
-    Boolean renewal, Boolean dueDateChangedByRecall, Double overdueFine, String overdueFineInterval,
-    Double maxOverdueFine, Double overdueRecallFine, String overdueRecallFineInterval,
-    Double maxOverdueRecallFine, Integer periodCalculatorResult, Double correctOverdueFine) {
-
-    this.renewal = renewal;
-    this.dueDateChangedByRecall = dueDateChangedByRecall;
-    this.overdueFine = overdueFine;
-    this.overdueFineInterval = overdueFineInterval;
-    this.maxOverdueFine = maxOverdueFine;
-    this.overdueRecallFine = overdueRecallFine;
-    this.overdueRecallFineInterval = overdueRecallFineInterval;
-    this.maxOverdueRecallFine = maxOverdueRecallFine;
-    this.periodCalculatorResult = periodCalculatorResult;
-    this.correctOverdueFine = correctOverdueFine;
-  }
-
-  @Parameterized.Parameters
-  public static Collection<Object[]> testParameters() {
-    List<Object[]> parameters = new ArrayList<>();
-    Stream.of(new String[] {"minute", "hour", "day", "week", "month", "year"})
-      .forEach(interval -> {
-        int minutesInInterval = MINUTES_IN_INTERVAL.get(interval);
-        parameters.add(new Object[]
-          {false, false, 1.0, interval, 10.0, 1.0, interval, 10.0, 5 * minutesInInterval, 5.0});
-        parameters.add(new Object[]
-          {false, false, 1.0, interval, 10.0, 1.0, interval, 10.0, 15 * minutesInInterval, 10.0});
-        parameters.add(new Object[]
-          {false, true, 1.0, interval, 10.0, 3.0, interval, 30.0, 5 * minutesInInterval, 15.0});
-        parameters.add(new Object[]
-          {false, true, 1.0, interval, 10.0, 3.0, interval, 30.0, 15 * minutesInInterval, 30.0});
-        parameters.add(new Object[]
-          {true, false, 1.0, interval, 10.0, 1.0, interval, 10.0, 5 * minutesInInterval, 5.0});
-        parameters.add(new Object[]
-          {true, false, 1.0, interval, 10.0, 1.0, interval, 10.0, 15 * minutesInInterval, 10.0});
-        parameters.add(new Object[]
-          {true, true, 1.0, interval, 10.0, 3.0, interval, 30.0, 5 * minutesInInterval, 15.0});
-        parameters.add(new Object[]
-          {true, true, 1.0, interval, 10.0, 3.0, interval, 30.0, 15 * minutesInInterval, 30.0});
-      });
-    return parameters;
-  }
-
-  @Before
+  @BeforeEach
   public void setUp() {
     overdueFinePolicyRepository = mock(OverdueFinePolicyRepository.class);
     accountRepository = mock(AccountRepository.class);
@@ -183,9 +128,13 @@ public class OverdueFineCalculatorServiceTest {
       completedFuture(succeeded(LOGGED_IN_USER)));
   }
 
-  @Test
-  public void shouldNotCreateFeeFineRecordWhenLoanIsNotProvided()
-    throws ExecutionException, InterruptedException {
+  @ParameterizedTest
+  @MethodSource("testParameters")
+  public void shouldNotCreateFeeFineRecordWhenLoanIsNotProvided(
+      Boolean renewal, Boolean dueDateChangedByRecall, Double overdueFine, String overdueFineInterval,
+      Double maxOverdueFine, Double overdueRecallFine, String overdueRecallFineInterval,
+      Double maxOverdueRecallFine, Integer periodCalculatorResult, Double correctOverdueFine)
+      throws ExecutionException, InterruptedException {
 
     if (renewal) {
       RenewalContext context = createRenewalContext(null);
@@ -203,10 +152,16 @@ public class OverdueFineCalculatorServiceTest {
     verifyNoInteractions(feeFineActionRepository);
   }
 
-  @Test
-  public void shouldCreateFeeFineRecordWhenAmountIsPositive()
-    throws ExecutionException, InterruptedException {
-    Loan loan = createLoan();
+  @ParameterizedTest
+  @MethodSource("testParameters")
+  public void shouldCreateFeeFineRecordWhenAmountIsPositive(
+      Boolean renewal, Boolean dueDateChangedByRecall, Double overdueFine, String overdueFineInterval,
+      Double maxOverdueFine, Double overdueRecallFine, String overdueRecallFineInterval,
+      Double maxOverdueRecallFine, Integer periodCalculatorResult, Double correctOverdueFine)
+      throws ExecutionException, InterruptedException {
+    Loan loan = createLoan(overdueFine, overdueFineInterval, overdueRecallFine,
+      overdueRecallFineInterval, maxOverdueFine, maxOverdueRecallFine,
+      dueDateChangedByRecall);
 
     when(overdueFinePolicyRepository.findOverdueFinePolicyForLoan(any()))
       .thenReturn(completedFuture(succeeded(loan)));
@@ -218,7 +173,8 @@ public class OverdueFineCalculatorServiceTest {
       .thenReturn(completedFuture(succeeded(createFeeFineOwner())));
     when(feeFineRepository.getFeeFine(FEE_FINE_TYPE, true))
       .thenReturn(completedFuture(succeeded(createFeeFine())));
-    when(accountRepository.create(any())).thenReturn(completedFuture(succeeded(createAccount())));
+    when(accountRepository.create(any())).thenReturn(completedFuture(
+      succeeded(createAccount(correctOverdueFine))));
     when(servicePointRepository.findServicePointsForLoan(any()))
       .thenReturn(completedFuture(succeeded(loan.withCheckinServicePoint(createServicePoint()))));
 
@@ -276,10 +232,16 @@ public class OverdueFineCalculatorServiceTest {
     assertEquals(FEE_FINE_TYPE, feeFineAction.getValue().getString("typeAction"));
   }
 
-  @Test
-  public void shouldNotCreateFeeFineRecordWhenAmountIsNotPositive()
-    throws ExecutionException, InterruptedException {
-    Loan loan = createLoan();
+  @ParameterizedTest
+  @MethodSource("testParameters")
+  public void shouldNotCreateFeeFineRecordWhenAmountIsNotPositive(
+      Boolean renewal, Boolean dueDateChangedByRecall, Double overdueFine, String overdueFineInterval,
+      Double maxOverdueFine, Double overdueRecallFine, String overdueRecallFineInterval,
+      Double maxOverdueRecallFine, Integer periodCalculatorResult, Double correctOverdueFine)
+      throws ExecutionException, InterruptedException {
+    Loan loan = createLoan(overdueFine, overdueFineInterval, overdueRecallFine,
+      overdueRecallFineInterval, maxOverdueFine, maxOverdueRecallFine,
+      dueDateChangedByRecall);
 
     when(overdueFinePolicyRepository.findOverdueFinePolicyForLoan(any()))
       .thenReturn(completedFuture(succeeded(loan)));
@@ -303,10 +265,16 @@ public class OverdueFineCalculatorServiceTest {
     verifyNoInteractions(feeFineActionRepository);
   }
 
-  @Test
-  public void shouldNotCreateFeeFineRecordWhenItemDoesNotExist()
-    throws ExecutionException, InterruptedException {
-    Loan loan = createLoan();
+  @ParameterizedTest
+  @MethodSource("testParameters")
+  public void shouldNotCreateFeeFineRecordWhenItemDoesNotExist(
+      Boolean renewal, Boolean dueDateChangedByRecall, Double overdueFine, String overdueFineInterval,
+      Double maxOverdueFine, Double overdueRecallFine, String overdueRecallFineInterval,
+      Double maxOverdueRecallFine, Integer periodCalculatorResult, Double correctOverdueFine)
+      throws ExecutionException, InterruptedException {
+    Loan loan = createLoan(overdueFine, overdueFineInterval, overdueRecallFine,
+      overdueRecallFineInterval, maxOverdueFine, maxOverdueRecallFine,
+      dueDateChangedByRecall);
 
     when(overdueFinePolicyRepository.findOverdueFinePolicyForLoan(any()))
       .thenReturn(completedFuture(succeeded(loan)));
@@ -337,10 +305,16 @@ public class OverdueFineCalculatorServiceTest {
     verifyNoInteractions(feeFineActionRepository);
   }
 
-  @Test
-  public void shouldNotCreateFeeFineRecordWhenOwnerDoesNotExist()
-    throws ExecutionException, InterruptedException {
-    Loan loan = createLoan();
+  @ParameterizedTest
+  @MethodSource("testParameters")
+  public void shouldNotCreateFeeFineRecordWhenOwnerDoesNotExist(
+      Boolean renewal, Boolean dueDateChangedByRecall, Double overdueFine, String overdueFineInterval,
+      Double maxOverdueFine, Double overdueRecallFine, String overdueRecallFineInterval,
+      Double maxOverdueRecallFine, Integer periodCalculatorResult, Double correctOverdueFine)
+      throws ExecutionException, InterruptedException {
+    Loan loan = createLoan(overdueFine, overdueFineInterval, overdueRecallFine,
+      overdueRecallFineInterval, maxOverdueFine, maxOverdueRecallFine,
+      dueDateChangedByRecall);
 
     when(overdueFinePolicyRepository.findOverdueFinePolicyForLoan(any()))
       .thenReturn(completedFuture(succeeded(loan)));
@@ -369,10 +343,16 @@ public class OverdueFineCalculatorServiceTest {
     verifyNoInteractions(accountRepository);
   }
 
-  @Test
-  public void shouldNotCreateFeeFineRecordWhenFeeFineDoesNotExist()
-    throws ExecutionException, InterruptedException {
-    Loan loan = createLoan();
+  @ParameterizedTest
+  @MethodSource("testParameters")
+  public void shouldNotCreateFeeFineRecordWhenFeeFineDoesNotExist(
+      Boolean renewal, Boolean dueDateChangedByRecall, Double overdueFine, String overdueFineInterval,
+      Double maxOverdueFine, Double overdueRecallFine, String overdueRecallFineInterval,
+      Double maxOverdueRecallFine, Integer periodCalculatorResult, Double correctOverdueFine)
+      throws ExecutionException, InterruptedException {
+    Loan loan = createLoan(overdueFine, overdueFineInterval, overdueRecallFine,
+      overdueRecallFineInterval, maxOverdueFine, maxOverdueRecallFine,
+      dueDateChangedByRecall);
 
     when(overdueFinePolicyRepository.findOverdueFinePolicyForLoan(any()))
       .thenReturn(completedFuture(succeeded(loan)));
@@ -403,11 +383,18 @@ public class OverdueFineCalculatorServiceTest {
     verifyNoInteractions(accountRepository);
   }
 
-  @Test
-  public void shouldNotCreateFeeFineRecordWhenOverduePolicyDoesNotExist()
-    throws ExecutionException, InterruptedException {
+  @ParameterizedTest
+  @MethodSource("testParameters")
+  public void shouldNotCreateFeeFineRecordWhenOverduePolicyDoesNotExist(
+      Boolean renewal, Boolean dueDateChangedByRecall, Double overdueFine, String overdueFineInterval,
+      Double maxOverdueFine, Double overdueRecallFine, String overdueRecallFineInterval,
+      Double maxOverdueRecallFine, Integer periodCalculatorResult, Double correctOverdueFine)
+      throws ExecutionException, InterruptedException {
 
-    final Loan loan = createLoan().withOverdueFinePolicy(OverdueFinePolicy.unknown(null));
+    Loan loan = createLoan(overdueFine, overdueFineInterval, overdueRecallFine,
+      overdueRecallFineInterval, maxOverdueFine, maxOverdueRecallFine,
+      dueDateChangedByRecall)
+      .withOverdueFinePolicy(OverdueFinePolicy.unknown(null));
 
     when(overdueFinePolicyRepository.findOverdueFinePolicyForLoan(any()))
       .thenReturn(completedFuture(succeeded(loan)));
@@ -431,9 +418,13 @@ public class OverdueFineCalculatorServiceTest {
     verifyNoInteractions(accountRepository);
   }
 
-  @Test
-  public void shouldNotCreateFeeFineRecordWhenLoanIsNull()
-    throws ExecutionException, InterruptedException {
+  @ParameterizedTest
+  @MethodSource("testParameters")
+  public void shouldNotCreateFeeFineRecordWhenLoanIsNull(
+      Boolean renewal, Boolean dueDateChangedByRecall, Double overdueFine, String overdueFineInterval,
+      Double maxOverdueFine, Double overdueRecallFine, String overdueRecallFineInterval,
+      Double maxOverdueRecallFine, Integer periodCalculatorResult, Double correctOverdueFine)
+      throws ExecutionException, InterruptedException {
 
     if (renewal) {
       RenewalContext context = createRenewalContext(null);
@@ -455,12 +446,18 @@ public class OverdueFineCalculatorServiceTest {
     verifyNoInteractions(accountRepository);
   }
 
-  @Test
-  public void shouldNotCreateFeeFineWhenLoanIsNotOverdue()
-    throws ExecutionException, InterruptedException {
+  @ParameterizedTest
+  @MethodSource("testParameters")
+  public void shouldNotCreateFeeFineWhenLoanIsNotOverdue(
+      Boolean renewal, Boolean dueDateChangedByRecall, Double overdueFine, String overdueFineInterval,
+      Double maxOverdueFine, Double overdueRecallFine, String overdueRecallFineInterval,
+      Double maxOverdueRecallFine, Integer periodCalculatorResult, Double correctOverdueFine)
+      throws ExecutionException, InterruptedException {
 
     DateTime dueDateInFuture = DateTime.now(DateTimeZone.UTC).plusDays(1);
-    final Loan loan = createLoan().changeDueDate(dueDateInFuture);
+    Loan loan = createLoan(overdueFine, overdueFineInterval, overdueRecallFine,
+      overdueRecallFineInterval, maxOverdueFine, maxOverdueRecallFine,
+      dueDateChangedByRecall).changeDueDate(dueDateInFuture);
 
     if (renewal) {
       RenewalContext context = createRenewalContext(loan);
@@ -482,15 +479,22 @@ public class OverdueFineCalculatorServiceTest {
     verifyNoInteractions(accountRepository);
   }
 
-  @Test
-  public void shouldNotCreateFeeFineForRenewalWhenShouldForgiveOverdueFine()
-    throws ExecutionException, InterruptedException {
+  @ParameterizedTest
+  @MethodSource("testParameters")
+  public void shouldNotCreateFeeFineForRenewalWhenShouldForgiveOverdueFine(
+      Boolean renewal, Boolean dueDateChangedByRecall, Double overdueFine, String overdueFineInterval,
+      Double maxOverdueFine, Double overdueRecallFine, String overdueRecallFineInterval,
+      Double maxOverdueRecallFine, Integer periodCalculatorResult, Double correctOverdueFine)
+      throws ExecutionException, InterruptedException {
 
-    JsonObject overdueFinePolicyJson = createOverdueFinePolicyJson()
+    JsonObject overdueFinePolicyJson = createOverdueFinePolicyJson(
+      overdueFine, overdueFineInterval, overdueRecallFine,
+      overdueRecallFineInterval, maxOverdueFine, maxOverdueRecallFine)
       .put("forgiveOverdueFine", true);
     OverdueFinePolicy overdueFinePolicy = createOverdueFinePolicy(overdueFinePolicyJson);
-    final Loan loan = createLoan()
-      .withOverdueFinePolicy(overdueFinePolicy);
+    Loan loan = createLoan(overdueFine, overdueFineInterval, overdueRecallFine,
+      overdueRecallFineInterval, maxOverdueFine, maxOverdueRecallFine,
+      dueDateChangedByRecall).withOverdueFinePolicy(overdueFinePolicy);
 
     when(overdueFinePolicyRepository.findOverdueFinePolicyForLoan(any()))
       .thenReturn(completedFuture(succeeded(loan)));
@@ -504,10 +508,16 @@ public class OverdueFineCalculatorServiceTest {
     verifyNoInteractions(accountRepository);
   }
 
-  @Test
-  public void shouldDeleteOverdueNoticesWhenFeeFineRecordCreated()
-    throws ExecutionException, InterruptedException {
-    Loan loan = createLoan();
+  @ParameterizedTest
+  @MethodSource("testParameters")
+  public void shouldDeleteOverdueNoticesWhenFeeFineRecordCreated(
+      Boolean renewal, Boolean dueDateChangedByRecall, Double overdueFine, String overdueFineInterval,
+      Double maxOverdueFine, Double overdueRecallFine, String overdueRecallFineInterval,
+      Double maxOverdueRecallFine, Integer periodCalculatorResult, Double correctOverdueFine)
+      throws ExecutionException, InterruptedException {
+    Loan loan = createLoan(overdueFine, overdueFineInterval, overdueRecallFine,
+      overdueRecallFineInterval, maxOverdueFine, maxOverdueRecallFine,
+      dueDateChangedByRecall);
 
     when(overdueFinePolicyRepository.findOverdueFinePolicyForLoan(any()))
       .thenReturn(completedFuture(succeeded(loan)));
@@ -519,7 +529,7 @@ public class OverdueFineCalculatorServiceTest {
       .thenReturn(completedFuture(succeeded(createFeeFineOwner())));
     when(feeFineRepository.getFeeFine(FEE_FINE_TYPE, true))
       .thenReturn(completedFuture(succeeded(createFeeFine())));
-    when(accountRepository.create(any())).thenReturn(completedFuture(succeeded(createAccount())));
+    when(accountRepository.create(any())).thenReturn(completedFuture(succeeded(createAccount(correctOverdueFine))));
     when(feeFineActionRepository.create(any()))
       .thenReturn(completedFuture(succeeded(createFeeFineAction())));
     when(scheduledNoticesRepository.deleteOverdueNotices(any()))
@@ -555,11 +565,19 @@ public class OverdueFineCalculatorServiceTest {
       .create();
   }
 
-  private Loan createLoan() {
-    return createLoan(createOverdueFinePolicy());
+  private Loan createLoan(
+      Double overdueFine, String overdueFineInterval,
+      Double overdueRecallFine, String overdueRecallFineInterval,
+      Double maxOverdueFine, Double maxOverdueRecallFine,
+      Boolean dueDateChangedByRecall) {
+    return createLoan(createOverdueFinePolicy(overdueFine,
+      overdueFineInterval, overdueRecallFine, overdueRecallFineInterval,
+      maxOverdueFine, maxOverdueRecallFine), dueDateChangedByRecall);
   }
 
-  private Loan createLoan(OverdueFinePolicy overdueFinePolicy) {
+
+  private Loan createLoan(OverdueFinePolicy overdueFinePolicy,
+      Boolean dueDateChangedByRecall) {
     return new LoanBuilder()
       .withId(LOAN_ID)
       .withUserId(LOAN_USER_ID)
@@ -593,15 +611,23 @@ public class OverdueFineCalculatorServiceTest {
       .withMaterialType(materialType);
   }
 
-  private OverdueFinePolicy createOverdueFinePolicy() {
-    return OverdueFinePolicy.from(createOverdueFinePolicyJson());
+  private OverdueFinePolicy createOverdueFinePolicy(
+      Double overdueFine, String overdueFineInterval,
+      Double overdueRecallFine, String overdueRecallFineInterval,
+      Double maxOverdueFine, Double maxOverdueRecallFine) {
+    return OverdueFinePolicy.from(createOverdueFinePolicyJson(overdueFine,
+      overdueFineInterval, overdueRecallFine, overdueRecallFineInterval,
+      maxOverdueFine, maxOverdueRecallFine));
   }
 
   private OverdueFinePolicy createOverdueFinePolicy(JsonObject policyJson) {
     return OverdueFinePolicy.from(policyJson);
   }
 
-  private JsonObject createOverdueFinePolicyJson() {
+  private JsonObject createOverdueFinePolicyJson(
+      Double overdueFine, String overdueFineInterval,
+      Double overdueRecallFine, String overdueRecallFineInterval,
+      Double maxOverdueFine, Double maxOverdueRecallFine) {
     JsonObject overdueFineObject = new JsonObject();
     overdueFineObject.put("quantity", overdueFine);
     overdueFineObject.put("intervalId", overdueFineInterval);
@@ -640,7 +666,7 @@ public class OverdueFineCalculatorServiceTest {
       .create());
   }
 
-  private Account createAccount() {
+  private Account createAccount(Double correctOverdueFine) {
     return new Account(ACCOUNT_ID.toString(),
       new AccountRelatedRecordsInfo(
         new AccountFeeFineOwnerInfo(FEE_FINE_OWNER_ID.toString(), FEE_FINE_OWNER),
@@ -660,5 +686,30 @@ public class OverdueFineCalculatorServiceTest {
       .put("id", UUID.randomUUID().toString())
       .put("name", CHECK_IN_SERVICE_POINT_NAME)
     );
+  }
+
+  private static Collection<Object[]> testParameters() {
+    List<Object[]> parameters = new ArrayList<>();
+    Stream.of(new String[] {"minute", "hour", "day", "week", "month", "year"})
+      .forEach(interval -> {
+        int minutesInInterval = MINUTES_IN_INTERVAL.get(interval);
+        parameters.add(new Object[]
+          {false, false, 1.0, interval, 10.0, 1.0, interval, 10.0, 5 * minutesInInterval, 5.0});
+        parameters.add(new Object[]
+          {false, false, 1.0, interval, 10.0, 1.0, interval, 10.0, 15 * minutesInInterval, 10.0});
+        parameters.add(new Object[]
+          {false, true, 1.0, interval, 10.0, 3.0, interval, 30.0, 5 * minutesInInterval, 15.0});
+        parameters.add(new Object[]
+          {false, true, 1.0, interval, 10.0, 3.0, interval, 30.0, 15 * minutesInInterval, 30.0});
+        parameters.add(new Object[]
+          {true, false, 1.0, interval, 10.0, 1.0, interval, 10.0, 5 * minutesInInterval, 5.0});
+        parameters.add(new Object[]
+          {true, false, 1.0, interval, 10.0, 1.0, interval, 10.0, 15 * minutesInInterval, 10.0});
+        parameters.add(new Object[]
+          {true, true, 1.0, interval, 10.0, 3.0, interval, 30.0, 5 * minutesInInterval, 15.0});
+        parameters.add(new Object[]
+          {true, true, 1.0, interval, 10.0, 3.0, interval, 30.0, 15 * minutesInInterval, 30.0});
+      });
+    return parameters;
   }
 }

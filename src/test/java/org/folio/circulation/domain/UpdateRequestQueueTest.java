@@ -5,7 +5,7 @@ import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -26,10 +26,10 @@ import org.folio.circulation.resources.context.ReorderRequestContext;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.ForwardOnFailure;
-import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.client.Response;
-import org.junit.Before;
-import org.junit.Test;
+import org.folio.circulation.support.results.Result;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import api.support.builders.RequestBuilder;
 import io.vertx.core.json.JsonObject;
@@ -43,7 +43,7 @@ public class UpdateRequestQueueTest {
   private RequestQueueRepository requestQueueRepository;
   private RequestRepository requestRepository;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     Clients clients = createServerErrorMockBatchRequestClient();
 

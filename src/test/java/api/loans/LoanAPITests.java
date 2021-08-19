@@ -28,7 +28,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.joda.time.DateTimeZone.UTC;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.net.HttpURLConnection;
 import java.util.Set;
@@ -44,7 +44,7 @@ import org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher;
 import org.joda.time.DateTime;
 import org.joda.time.Period;
 import org.joda.time.format.ISODateTimeFormat;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.MultipleJsonRecords;
@@ -59,11 +59,7 @@ import api.support.http.UserResource;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
 
-@RunWith(MockitoJUnitRunner.class)
 public class LoanAPITests extends APITests {
 
   @Test

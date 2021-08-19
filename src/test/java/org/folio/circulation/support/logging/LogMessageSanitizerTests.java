@@ -1,6 +1,6 @@
 package org.folio.circulation.support.logging;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.folio.circulation.support.logging.LogMessageSanitizer.sanitizeLogParameter;
 import static org.hamcrest.MatcherAssert.assertThat;

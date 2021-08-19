@@ -39,8 +39,8 @@ import java.util.stream.Collectors;
 import org.folio.circulation.domain.policy.Period;
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import api.support.builders.FeeFineOwnerBuilder;
 import api.support.builders.ItemBuilder;
@@ -62,7 +62,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     super(true, true);
   }
 
-  @Before
+  @BeforeEach
   public void createOwnersAndFeeFineTypes() {
     feeFineOwnerFixture.cd1Owner();
     feeFineTypeFixture.lostItemFee();

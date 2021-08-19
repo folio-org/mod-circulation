@@ -24,13 +24,11 @@ import static api.support.matchers.ValidationErrorMatchers.isBlockRelatedError;
 import static api.support.matchers.ValidationErrorMatchers.isInsufficientPermissionsToOverridePatronBlockError;
 import static api.support.utl.BlockOverridesUtils.buildOkapiHeadersWithPermissions;
 import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfPublishedEvents;
-import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfScheduledNotices;
 import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfSentNotices;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.function.Function.identity;
-import static org.awaitility.Awaitility.waitAtMost;
 import static org.folio.HttpStatus.HTTP_BAD_REQUEST;
 import static org.folio.HttpStatus.HTTP_CREATED;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
@@ -49,10 +47,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.emptyString;
 import static org.hamcrest.Matchers.hasItem;
-import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDate;
 import java.util.Arrays;
@@ -77,9 +74,11 @@ import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.junit.After;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import api.support.APITests;
 import api.support.builders.Address;
@@ -93,7 +92,6 @@ import api.support.builders.RequestBuilder;
 import api.support.builders.UserBuilder;
 import api.support.builders.UserManualBlockBuilder;
 import api.support.fakes.FakeModNotify;
-import api.support.fakes.FakePubSub;
 import api.support.fixtures.CheckInFixture;
 import api.support.fixtures.ItemExamples;
 import api.support.fixtures.ItemsFixture;
@@ -107,10 +105,7 @@ import api.support.http.ResourceClient;
 import api.support.http.UserResource;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import junitparams.JUnitParamsRunner;
-import junitparams.Parameters;
 
-@RunWith(JUnitParamsRunner.class)
 public class
 RequestsAPICreationTests extends APITests {
   private static final String PAGING_REQUEST_EVENT = "Paging request";
@@ -128,7 +123,7 @@ RequestsAPICreationTests extends APITests {
     new BlockOverrides(null, new PatronBlockOverride(true), null, null, null, null);
   public static final String PATRON_BLOCK_NAME = "patronBlock";
 
-  @After
+  @AfterEach
   public void afterEach() {
     mockClockManagerToReturnDefaultDateTime();
   }
@@ -439,8 +434,8 @@ RequestsAPICreationTests extends APITests {
       hasUUIDParameter("userId", rebecca.getId()))));
   }
 
-  @Test
-  @Parameters({
+  @ParameterizedTest
+  @ValueSource(strings = {
     "Open - Not yet filled",
     "Open - Awaiting pickup",
     "Open - In transit",
@@ -471,10 +466,10 @@ RequestsAPICreationTests extends APITests {
   }
 
   //TODO: Replace with validation error message
-  @Test
-  @Parameters({
+  @ParameterizedTest
+  @EmptySource
+  @ValueSource(strings = {
     "Non-existent status",
-    ""
   })
   public void cannotCreateARequestWithInvalidStatus(String status) {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
@@ -501,10 +496,10 @@ RequestsAPICreationTests extends APITests {
   }
 
   //TODO: Replace with validation error message
-  @Test
-  @Parameters({
+  @ParameterizedTest
+  @EmptySource
+  @ValueSource(strings = {
     "Non-existent status",
-    ""
   })
   public void cannotCreateARequestAtASpecificLocationWithInvalidStatus(String status) {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
@@ -1418,7 +1413,7 @@ RequestsAPICreationTests extends APITests {
 
     FakeModNotify.setFailPatronNoticesWithBadRequest(true);
 
-    IndividualResource request = requestsFixture.place(new RequestBuilder()
+    requestsFixture.place(new RequestBuilder()
       .withId(id)
       .open()
       .page()
@@ -1540,7 +1535,7 @@ RequestsAPICreationTests extends APITests {
 
     FakeModNotify.setFailPatronNoticesWithBadRequest(true);
 
-    IndividualResource request = requestsFixture.place(new RequestBuilder()
+    requestsFixture.place(new RequestBuilder()
       .withId(id)
       .open()
       .hold()
@@ -1710,7 +1705,7 @@ RequestsAPICreationTests extends APITests {
 
     FakeModNotify.setFailPatronNoticesWithBadRequest(true);
 
-    IndividualResource request = requestsFixture.place(new RequestBuilder()
+    requestsFixture.place(new RequestBuilder()
       .withId(id)
       .open()
       .recall()
@@ -1722,7 +1717,7 @@ RequestsAPICreationTests extends APITests {
       .withHoldShelfExpiration(LocalDate.of(2017, 8, 31))
       .withPickupServicePointId(pickupServicePointId)
       .withTags(new RequestBuilder.Tags(asList("new", "important"))));
-    IndividualResource loanAfterRecall = loansClient.get(loan.getId());
+    loansClient.get(loan.getId());
 
     verifyNumberOfSentNotices(0);
     verifyNumberOfPublishedEvents(NOTICE, 0);

@@ -15,12 +15,13 @@ import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.RequestStatus;
-import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.server.ValidationError;
+import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import api.support.builders.FixedDueDateSchedule;
 import api.support.builders.FixedDueDateSchedulesBuilder;
@@ -29,14 +30,11 @@ import api.support.builders.LoanBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.RequestBuilder;
 import io.vertx.core.json.JsonObject;
-import junitparams.JUnitParamsRunner;
-import junitparams.Parameters;
 
-@RunWith(JUnitParamsRunner.class)
 public class RollingLoanPolicyCheckOutDueDateCalculationTests {
 
-  @Test
-  @Parameters({
+  @ParameterizedTest
+  @ValueSource(strings = {
     "1",
     "8",
     "12",
@@ -57,8 +55,8 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
     assertThat(calculationResult.value(), is(loanDate.plusMonths(duration)));
   }
 
-  @Test
-  @Parameters({
+  @ParameterizedTest
+  @ValueSource(strings = {
     "1",
     "2",
     "3",
@@ -81,8 +79,8 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
     assertThat(calculationResult.value(), is(loanDate.plusWeeks(duration)));
   }
 
-  @Test
-  @Parameters({
+  @ParameterizedTest
+  @ValueSource(strings = {
     "1",
     "7",
     "14",
@@ -106,8 +104,8 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
     assertThat(calculationResult.value(), is(loanDate.plusDays(duration)));
   }
 
-  @Test
-  @Parameters({
+  @ParameterizedTest
+  @ValueSource(strings = {
     "2",
     "5",
     "30",
@@ -131,8 +129,8 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
     assertThat(calculationResult.value(), is(loanDate.plusHours(duration)));
   }
 
-  @Test
-  @Parameters({
+  @ParameterizedTest
+  @ValueSource(strings = {
     "1",
     "5",
     "30",
@@ -294,8 +292,8 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
       "the loan period in the loan policy is not recognised"));
   }
 
-  @Test
-  @Parameters({
+  @ParameterizedTest
+  @ValueSource(strings = {
     "0",
     "-1",
   })

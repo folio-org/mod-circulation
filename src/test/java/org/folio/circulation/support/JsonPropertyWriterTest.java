@@ -5,7 +5,7 @@ import static org.folio.circulation.support.json.JsonPropertyWriter.writeByPath;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import io.vertx.core.json.JsonObject;
 

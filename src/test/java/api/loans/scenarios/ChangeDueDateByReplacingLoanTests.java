@@ -1,6 +1,5 @@
 package api.loans.scenarios;
 
-import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
@@ -9,8 +8,6 @@ import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfPublishedEvents;
 import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfSentNotices;
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.awaitility.Awaitility.waitAtMost;
 import static org.folio.HttpStatus.HTTP_NO_CONTENT;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
@@ -19,7 +16,6 @@ import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.Is.is;
 
 import java.util.Arrays;
@@ -32,7 +28,7 @@ import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
 import org.joda.time.Period;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.ClaimItemReturnedRequestBuilder;
@@ -42,7 +38,6 @@ import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.fakes.FakeModNotify;
-import api.support.fakes.FakePubSub;
 import api.support.fixtures.ItemExamples;
 import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.IndividualResource;

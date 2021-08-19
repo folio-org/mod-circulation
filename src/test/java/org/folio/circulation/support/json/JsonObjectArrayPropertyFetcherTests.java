@@ -14,7 +14,7 @@ import static org.hamcrest.collection.IsEmptyCollection.empty;
 import java.util.List;
 
 import org.hamcrest.Matcher;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;

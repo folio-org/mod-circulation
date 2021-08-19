@@ -8,7 +8,7 @@ import static org.hamcrest.collection.IsEmptyCollection.empty;
 
 import java.util.stream.Stream;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import lombok.val;
 

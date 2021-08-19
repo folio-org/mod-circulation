@@ -12,7 +12,7 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class NameConverterTest {
   private Map<String,Map<String,String>> name2uuid = new HashMap<>();

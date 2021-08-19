@@ -7,17 +7,17 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsNull.notNullValue;
 
-import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
-import org.hamcrest.junit.MatcherAssert;
+import org.hamcrest.MatcherAssert;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.CheckInByBarcodeResponse;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
+import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
 
 public class ServicePointCheckOutTests extends APITests {

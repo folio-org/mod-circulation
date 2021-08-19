@@ -63,7 +63,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.nullValue;
 import static org.joda.time.DateTimeZone.UTC;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.Random;
@@ -79,7 +79,7 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalTime;
 import org.joda.time.Seconds;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.CheckOutBlockOverrides;
@@ -1433,7 +1433,7 @@ public class CheckOutByBarcodeTests extends APITests {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final UserResource steve = usersFixture.steve();
 
-    IndividualResource loanPolicy = loanPoliciesFixture.create(new LoanPolicyBuilder()
+    loanPoliciesFixture.create(new LoanPolicyBuilder()
       .withId(UUID.randomUUID())
       .withName("Example loan policy")
       .withLoanable(true)

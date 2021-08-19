@@ -25,13 +25,12 @@ import static org.folio.circulation.domain.RequestType.RECALL;
 import static org.folio.circulation.domain.RequestType.from;
 import static org.folio.circulation.domain.RequestTypeItemStatusWhiteList.canCreateRequestForItem;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 
-import junitparams.JUnitParamsRunner;
-import junitparams.Parameters;
 
-@RunWith(JUnitParamsRunner.class)
 public class  RequestTypeItemStatusWhiteListTests {
   @Test
   public void canCreateHoldRequestWhenItemStatusCheckedOut() {
@@ -118,8 +117,8 @@ public class  RequestTypeItemStatusWhiteListTests {
     assertFalse(canCreateRequestForItem(AWAITING_DELIVERY, RequestType.NONE));
   }
 
-  @Test
-  @Parameters({
+  @ParameterizedTest
+  @ValueSource(strings = {
     "Hold",
     "Recall",
     "Page"
@@ -128,9 +127,9 @@ public class  RequestTypeItemStatusWhiteListTests {
     assertTrue(canCreateRequestForItem(RESTRICTED, from(requestType)));
   }
 
-  @Test
-  @Parameters({
-    "",
+  @ParameterizedTest
+  @EmptySource
+  @ValueSource(strings = {
     "Hold",
     "Recall",
     "Page"
@@ -139,9 +138,9 @@ public class  RequestTypeItemStatusWhiteListTests {
     assertFalse(canCreateRequestForItem(DECLARED_LOST, from(requestType)));
   }
 
-  @Test
-  @Parameters({
-    "",
+  @ParameterizedTest
+  @EmptySource
+  @ValueSource(strings = {
     "Hold",
     "Recall",
     "Page"
@@ -150,9 +149,9 @@ public class  RequestTypeItemStatusWhiteListTests {
     assertFalse(canCreateRequestForItem(CLAIMED_RETURNED, from(requestType)));
   }
 
-  @Test
-  @Parameters({
-    "",
+  @ParameterizedTest
+  @EmptySource
+  @ValueSource(strings = {
     "Hold",
     "Recall",
     "Page"
@@ -161,9 +160,9 @@ public class  RequestTypeItemStatusWhiteListTests {
     assertFalse(canCreateRequestForItem(WITHDRAWN, from(requestType)));
   }
 
-  @Test
-  @Parameters({
-    "",
+  @ParameterizedTest
+  @EmptySource
+  @ValueSource(strings = {
     "Hold",
     "Recall",
     "Page"
@@ -172,9 +171,9 @@ public class  RequestTypeItemStatusWhiteListTests {
     assertFalse(canCreateRequestForItem(LOST_AND_PAID, from(requestType)));
   }
 
-  @Test
-  @Parameters({
-    "",
+  @ParameterizedTest
+  @EmptySource
+  @ValueSource(strings = {
     "Hold",
     "Recall",
     "Page"
@@ -183,9 +182,9 @@ public class  RequestTypeItemStatusWhiteListTests {
     assertFalse(canCreateRequestForItem(AGED_TO_LOST, from(requestType)));
   }
 
-  @Test
-  @Parameters({
-    "",
+  @ParameterizedTest
+  @EmptySource
+  @ValueSource(strings = {
     "Hold",
     "Recall",
     "Page"
@@ -194,9 +193,9 @@ public class  RequestTypeItemStatusWhiteListTests {
     assertFalse(canCreateRequestForItem(INTELLECTUAL_ITEM, from(requestType)));
   }
 
-  @Test
-  @Parameters({
-    "",
+  @ParameterizedTest
+  @EmptySource
+  @ValueSource(strings = {
     "Hold",
     "Recall",
     "Page"
@@ -205,9 +204,9 @@ public class  RequestTypeItemStatusWhiteListTests {
     assertFalse(canCreateRequestForItem(IN_PROCESS_NON_REQUESTABLE, from(requestType)));
   }
 
-  @Test
-  @Parameters({
-    "",
+  @ParameterizedTest
+  @EmptySource
+  @ValueSource(strings = {
     "Hold",
     "Recall",
     "Page"
@@ -216,9 +215,9 @@ public class  RequestTypeItemStatusWhiteListTests {
     assertFalse(canCreateRequestForItem(LONG_MISSING, from(requestType)));
   }
 
-  @Test
-  @Parameters({
-    "",
+  @ParameterizedTest
+  @EmptySource
+  @ValueSource(strings = {
     "Hold",
     "Recall",
     "Page"
@@ -227,9 +226,9 @@ public class  RequestTypeItemStatusWhiteListTests {
     assertFalse(canCreateRequestForItem(UNAVAILABLE, from(requestType)));
   }
 
-  @Test
-  @Parameters({
-    "",
+  @ParameterizedTest
+  @EmptySource
+  @ValueSource(strings = {
     "Hold",
     "Recall",
     "Page"

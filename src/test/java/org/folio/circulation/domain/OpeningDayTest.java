@@ -5,22 +5,19 @@ import static api.support.fixtures.OpeningHourExamples.allDay;
 import static api.support.fixtures.OpeningHourExamples.morning;
 import static org.folio.circulation.domain.OpeningDay.fromOpeningPeriodJson;
 import static org.joda.time.DateTimeZone.UTC;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 import java.util.Collections;
 
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
 
 import api.support.OpeningPeriod;
 import io.vertx.core.json.JsonObject;
-import junitparams.JUnitParamsRunner;
 
-@RunWith(JUnitParamsRunner.class)
 public class OpeningDayTest {
 
   @Test

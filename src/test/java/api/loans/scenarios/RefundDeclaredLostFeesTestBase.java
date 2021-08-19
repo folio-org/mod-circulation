@@ -16,8 +16,8 @@ import static org.joda.time.DateTimeZone.UTC;
 
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import api.support.builders.DeclareItemLostRequestBuilder;
 import api.support.http.IndividualResource;
@@ -40,7 +40,7 @@ public abstract class RefundDeclaredLostFeesTestBase extends SpringApiTest {
 
   protected abstract void performActionThatRequiresRefund(DateTime actionDate);
 
-  @Before
+  @BeforeEach
   public void activateChargeableLostItemFeePolicy() {
     useLostItemPolicy(lostItemFeePoliciesFixture.chargeFee().getId());
   }

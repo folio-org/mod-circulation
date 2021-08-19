@@ -31,8 +31,8 @@ import java.util.stream.Collectors;
 import api.support.PubsubPublisherTestUtils;
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import api.support.MultipleJsonRecords;
@@ -54,7 +54,7 @@ public class ScheduledAgeToLostApiTest extends SpringApiTest {
     super(true, true);
   }
 
-  @Before
+  @BeforeEach
   public void activateLostItemFeePolicy() {
     useLostItemPolicy(lostItemFeePoliciesFixture.ageToLostAfterOneMinute().getId());
   }
