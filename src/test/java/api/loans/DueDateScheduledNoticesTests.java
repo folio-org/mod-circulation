@@ -20,7 +20,7 @@ import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
@@ -32,13 +32,13 @@ import api.support.http.IndividualResource;
 import api.support.http.OkapiHeaders;
 import io.vertx.core.json.JsonObject;
 
-public class DueDateScheduledNoticesTests extends APITests {
+class DueDateScheduledNoticesTests extends APITests {
   private static final String BEFORE_TIMING = "Before";
   private static final String UPON_AT_TIMING = "Upon At";
   private static final String AFTER_TIMING = "After";
 
   @Test
-  public void allDueDateNoticesShouldBeScheduledOnCheckoutWhenPolicyDefinesDueDateNoticeConfiguration() {
+  void allDueDateNoticesShouldBeScheduledOnCheckoutWhenPolicyDefinesDueDateNoticeConfiguration() {
     UUID beforeTemplateId = UUID.randomUUID();
     Period beforePeriod = Period.days(2);
     Period beforeRecurringPeriod = Period.hours(6);
@@ -113,7 +113,7 @@ public class DueDateScheduledNoticesTests extends APITests {
   }
 
   @Test
-  public void checkOutSchedulesDifferentBeforeDueDateNotices() {
+  void checkOutSchedulesDifferentBeforeDueDateNotices() {
     UUID firstBeforeTemplateId = UUID.randomUUID();
     Period firstBeforePeriod = Period.weeks(1);
     UUID secondBeforeTemplateId = UUID.randomUUID();
@@ -171,7 +171,7 @@ public class DueDateScheduledNoticesTests extends APITests {
   }
 
   @Test
-  public void noNoticesShouldBeScheduledOnCheckOutWhenPolicyDoesNotDefineTimeBasedNotices()
+  void noNoticesShouldBeScheduledOnCheckOutWhenPolicyDoesNotDefineTimeBasedNotices()
     throws InterruptedException {
 
     JsonObject checkOutNoticeConfiguration = new NoticeConfigurationBuilder()
@@ -211,7 +211,7 @@ public class DueDateScheduledNoticesTests extends APITests {
   }
 
   @Test
-  public void noticesShouldBeRescheduledAfterRenewal() {
+  void noticesShouldBeRescheduledAfterRenewal() {
     UUID beforeTemplateId = UUID.randomUUID();
     Period beforePeriod = Period.days(2);
     Period beforeRecurringPeriod = Period.hours(6);
@@ -286,7 +286,7 @@ public class DueDateScheduledNoticesTests extends APITests {
   }
 
   @Test
-  public void noticesShouldBeRescheduledAfterRenewalOverride() {
+  void noticesShouldBeRescheduledAfterRenewalOverride() {
     UUID beforeTemplateId = UUID.randomUUID();
     Period beforePeriod = Period.days(2);
     Period beforeRecurringPeriod = Period.hours(6);
@@ -369,7 +369,7 @@ public class DueDateScheduledNoticesTests extends APITests {
   }
 
   @Test
-  public void noticesShouldBeRescheduledAfterRecall() {
+  void noticesShouldBeRescheduledAfterRecall() {
     UUID beforeTemplateId = UUID.randomUUID();
     Period beforePeriod = Period.days(2);
     Period beforeRecurringPeriod = Period.hours(6);
@@ -454,7 +454,7 @@ public class DueDateScheduledNoticesTests extends APITests {
   }
 
   @Test
-  public void noticesShouldBeRescheduledAfterManualDueDateChange() {
+  void noticesShouldBeRescheduledAfterManualDueDateChange() {
     UUID beforeTemplateId = UUID.randomUUID();
     Period beforePeriod = Period.days(2);
     Period beforeRecurringPeriod = Period.hours(6);

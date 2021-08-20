@@ -1,26 +1,27 @@
 package org.folio.circulation.domain;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Collections;
 import java.util.UUID;
 
 import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
 import org.joda.time.DateTime;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.ItemBuilder;
 import api.support.builders.LocationBuilder;
 import io.vertx.core.json.JsonObject;
 
-public class LoanCheckInServiceTest {
+class LoanCheckInServiceTest {
 
   private LoanCheckInService loanCheckInService = new LoanCheckInService();
 
   @Test
-  public void isInHouseUseWhenServicePointIsPrimaryForHomeLocation() {
+  void isInHouseUseWhenServicePointIsPrimaryForHomeLocation() {
     final UUID checkInServicePoint = UUID.randomUUID();
     JsonObject itemRepresentation = new ItemBuilder()
       .available()
@@ -40,7 +41,7 @@ public class LoanCheckInServiceTest {
   }
 
   @Test
-  public void isInHouseUseWhenNonPrimaryServicePointServesHomeLocation() {
+  void isInHouseUseWhenNonPrimaryServicePointServesHomeLocation() {
     final UUID checkInServicePoint = UUID.randomUUID();
     JsonObject itemRepresentation = new ItemBuilder()
       .available()
@@ -60,7 +61,7 @@ public class LoanCheckInServiceTest {
   }
 
   @Test
-  public void isNotInHouseUseWhenItemIsUnavailable() {
+  void isNotInHouseUseWhenItemIsUnavailable() {
     final UUID checkInServicePoint = UUID.randomUUID();
     JsonObject itemRepresentation = new ItemBuilder()
       .checkOut()
@@ -80,7 +81,7 @@ public class LoanCheckInServiceTest {
   }
 
   @Test
-  public void isNotInHouseUseWhenItemIsRequested() {
+  void isNotInHouseUseWhenItemIsRequested() {
     final UUID checkInServicePoint = UUID.randomUUID();
     JsonObject itemRepresentation = new ItemBuilder()
       .available()
@@ -102,7 +103,7 @@ public class LoanCheckInServiceTest {
   }
 
   @Test
-  public void isNotInHouseUseWhenServicePointDoesNotServeHomeLocation() {
+  void isNotInHouseUseWhenServicePointDoesNotServeHomeLocation() {
     JsonObject itemRepresentation = new ItemBuilder()
       .available()
       .create();

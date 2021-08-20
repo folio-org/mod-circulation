@@ -7,11 +7,11 @@ import static org.folio.circulation.support.results.ResultExamples.somethingWent
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class ResultNextTests {
+class ResultNextTests {
   @Test
-  public void shouldSucceedWhenNextStepIsSuccessful() {
+  void shouldSucceedWhenNextStepIsSuccessful() {
     final Result<Integer> result = succeeded(10)
       .next(value -> succeeded(value + 10));
 
@@ -20,7 +20,7 @@ public class ResultNextTests {
   }
 
   @Test
-  public void shouldFailWhenAlreadyFailed() {
+  void shouldFailWhenAlreadyFailed() {
     final Result<Integer> result = alreadyFailed()
       .next(value -> succeeded(value + 10));
 
@@ -28,7 +28,7 @@ public class ResultNextTests {
   }
 
   @Test
-  public void shouldFailWhenExceptionThrownDuringNextStep() {
+  void shouldFailWhenExceptionThrownDuringNextStep() {
     final Result<Integer> result = succeeded(10)
       .next(value -> { throw somethingWentWrong(); });
 

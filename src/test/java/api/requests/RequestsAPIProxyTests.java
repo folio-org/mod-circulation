@@ -11,16 +11,16 @@ import java.util.UUID;
 
 import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.RequestBuilder;
 import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 
-public class RequestsAPIProxyTests extends APITests {
+class RequestsAPIProxyTests extends APITests {
   @Test
-  public void canCreateProxiedRequestWhenCurrentActiveRelationship() {
+  void canCreateProxiedRequestWhenCurrentActiveRelationship() {
     final IndividualResource smallAngryPlanet
       = itemsFixture.basedUponSmallAngryPlanet();
 
@@ -62,7 +62,7 @@ public class RequestsAPIProxyTests extends APITests {
   }
 
   @Test
-  public void canCreateProxiedRequestWhenNonExpiringRelationship() {
+  void canCreateProxiedRequestWhenNonExpiringRelationship() {
     final IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
 
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -86,7 +86,7 @@ public class RequestsAPIProxyTests extends APITests {
   }
 
   @Test
-  public void cannotCreateProxiedRequestWhenRelationshipIsInactive() {
+  void cannotCreateProxiedRequestWhenRelationshipIsInactive() {
     final IndividualResource smallAngryPlanet
       = itemsFixture.basedUponSmallAngryPlanet();
 
@@ -113,7 +113,7 @@ public class RequestsAPIProxyTests extends APITests {
   }
 
   @Test
-  public void cannotCreateProxiedRequestWhenRelationshipHasExpired() {
+  void cannotCreateProxiedRequestWhenRelationshipHasExpired() {
     final IndividualResource smallAngryPlanet
       = itemsFixture.basedUponSmallAngryPlanet();
 
@@ -140,7 +140,7 @@ public class RequestsAPIProxyTests extends APITests {
   }
 
   @Test
-  public void cannotCreateProxiedRequestWhenRelationshipIsForOtherSponsor() {
+  void cannotCreateProxiedRequestWhenRelationshipIsForOtherSponsor() {
     final IndividualResource smallAngryPlanet
       = itemsFixture.basedUponSmallAngryPlanet();
 
@@ -166,7 +166,7 @@ public class RequestsAPIProxyTests extends APITests {
   }
 
   @Test
-  public void canUpdateProxiedRequestWhenValidProxyRelationship() {
+  void canUpdateProxiedRequestWhenValidProxyRelationship() {
     final ItemResource temeraire = itemsFixture.basedUponTemeraire();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
@@ -213,7 +213,7 @@ public class RequestsAPIProxyTests extends APITests {
   }
 
   @Test
-  public void cannotUpdateProxiedRequestWhenRelationshipHasExpired() {
+  void cannotUpdateProxiedRequestWhenRelationshipHasExpired() {
     final ItemResource temeraire = itemsFixture.basedUponTemeraire();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
@@ -244,7 +244,7 @@ public class RequestsAPIProxyTests extends APITests {
   }
 
   @Test
-  public void cannotUpdateProxiedRequestWhenRelationshipIsForOtherSponsor() {
+  void cannotUpdateProxiedRequestWhenRelationshipIsForOtherSponsor() {
     final ItemResource temeraire = itemsFixture.basedUponTemeraire();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 

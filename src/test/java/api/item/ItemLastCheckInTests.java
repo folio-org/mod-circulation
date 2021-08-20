@@ -16,9 +16,9 @@ import org.folio.circulation.support.json.JsonPropertyFetcher;
 import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITestContext;
 import api.support.APITests;
@@ -26,22 +26,22 @@ import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.http.OkapiHeaders;
 import io.vertx.core.json.JsonObject;
 
-public class ItemLastCheckInTests extends APITests {
+class ItemLastCheckInTests extends APITests {
 
   private static final DateTime fixedCheckInDateTime = new DateTime(2019, 4, 3, 2, 10, UTC);
 
-  @Before
+  @BeforeEach
   public void beforeEach() {
     mockClockManagerToReturnFixedDateTime(fixedCheckInDateTime);
   }
 
-  @After
+  @AfterEach
   public void afterEach() {
     mockClockManagerToReturnDefaultDateTime();
   }
 
   @Test
-  public void checkedInItemWithLoanShouldHaveLastCheckedInFields() {
+  void checkedInItemWithLoanShouldHaveLastCheckedInFields() {
 
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource user = usersFixture.jessica();
@@ -63,7 +63,7 @@ public class ItemLastCheckInTests extends APITests {
   }
 
   @Test
-  public void cannotCheckInWhenNoLoggedInUser() {
+  void cannotCheckInWhenNoLoggedInUser() {
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     UUID servicePointId = servicePointsFixture.cd1().getId();
 
@@ -87,7 +87,7 @@ public class ItemLastCheckInTests extends APITests {
   }
 
   @Test
-  public void shouldNotFailCheckInWithInvalidLoggedInUserId() {
+  void shouldNotFailCheckInWithInvalidLoggedInUserId() {
 
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     UUID servicePointId = servicePointsFixture.cd1().getId();
@@ -112,7 +112,7 @@ public class ItemLastCheckInTests extends APITests {
   }
 
   @Test
-  public void shouldBeAbleToCheckinItemWithoutLoan() {
+  void shouldBeAbleToCheckinItemWithoutLoan() {
 
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     UUID servicePointId = servicePointsFixture.cd1().getId();
@@ -131,7 +131,7 @@ public class ItemLastCheckInTests extends APITests {
   }
 
   @Test
-  public void shouldBeAbleCheckinItemWithoutLoanMultipleTimes() {
+  void shouldBeAbleCheckinItemWithoutLoanMultipleTimes() {
 
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     UUID servicePointId = servicePointsFixture.cd1().getId();
@@ -172,7 +172,7 @@ public class ItemLastCheckInTests extends APITests {
   }
 
   @Test
-  public void shouldDisplaySystemDateIfCheckinWasBackdated() {
+  void shouldDisplaySystemDateIfCheckinWasBackdated() {
 
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     UUID servicePointId = servicePointsFixture.cd1().getId();

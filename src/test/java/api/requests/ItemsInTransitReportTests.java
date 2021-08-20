@@ -8,11 +8,10 @@ import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.joda.time.DateTimeZone.UTC;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDate;
-import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
@@ -23,8 +22,8 @@ import java.util.UUID;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.support.json.JsonPropertyFetcher;
 import org.joda.time.DateTime;
-import org.junit.After;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
@@ -37,7 +36,7 @@ import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
-public class ItemsInTransitReportTests extends APITests {
+class ItemsInTransitReportTests extends APITests {
   private static final String NAME = "name";
   private static final String CODE = "code";
   private static final String LIBRARY = "libraryName";
@@ -69,20 +68,20 @@ public class ItemsInTransitReportTests extends APITests {
   private static final String COPY_NUMBER = "copyNumber";
   private static final String EFFECTIVE_CALL_NUMBER_COMPONENTS = "effectiveCallNumberComponents";
 
-  @After
+  @AfterEach
   public void afterEach() {
     mockClockManagerToReturnDefaultDateTime();
   }
 
   @Test
-  public void reportIsEmptyWhenThereAreNoItemsInTransit() {
+  void reportIsEmptyWhenThereAreNoItemsInTransit() {
     List<JsonObject> items = ResourceClient.forItemsInTransitReport().getAll();
 
     assertTrue(items.isEmpty());
   }
 
   @Test
-  public void reportIncludesItemInTransit() {
+  void reportIncludesItemInTransit() {
     final ItemResource smallAngryPlanet = createSmallAngryPlanet();
 
     final IndividualResource steve = usersFixture.steve();
@@ -113,7 +112,7 @@ public class ItemsInTransitReportTests extends APITests {
   }
 
   @Test
-  public void reportIncludesMultipleDifferentItemsInTransit() {
+  void reportIncludesMultipleDifferentItemsInTransit() {
     final ItemResource smallAngryPlanet = createSmallAngryPlanet();
     final ItemResource nod = createNod();
 
@@ -169,7 +168,7 @@ public class ItemsInTransitReportTests extends APITests {
   }
 
   @Test
-  public void reportExcludesItemsThatAreNotInTransit() {
+  void reportExcludesItemsThatAreNotInTransit() {
     final ItemResource smallAngryPlanet = createSmallAngryPlanet();
     final ItemResource nod = createNod();
 
@@ -204,7 +203,7 @@ public class ItemsInTransitReportTests extends APITests {
   }
 
   @Test
-  public void reportIncludesItemsInTransitToDifferentServicePoints() {
+  void reportIncludesItemsInTransitToDifferentServicePoints() {
     final ItemResource smallAngryPlanet = createSmallAngryPlanet();
     final ItemResource nod = createNod();
 
@@ -261,7 +260,7 @@ public class ItemsInTransitReportTests extends APITests {
   }
 
   @Test
-  public void reportIncludesItemsInTransitWithMoreThanOneOpenRequestInQueue() {
+  void reportIncludesItemsInTransitWithMoreThanOneOpenRequestInQueue() {
     final ItemResource smallAngryPlanet = createSmallAngryPlanet();
     final ItemResource nod = createNod();
 
@@ -327,7 +326,7 @@ public class ItemsInTransitReportTests extends APITests {
   }
 
   @Test
-  public void reportIncludesItemsInTransitWithEmptyRequestQueue() {
+  void reportIncludesItemsInTransitWithEmptyRequestQueue() {
     final ItemResource smallAngryPlanet = createSmallAngryPlanet();
     final ItemResource nod = createNod();
 
@@ -373,7 +372,7 @@ public class ItemsInTransitReportTests extends APITests {
   }
 
   @Test
-  public void reportItemsInTransitSortedByCheckInServicePoint() {
+  void reportItemsInTransitSortedByCheckInServicePoint() {
     final ItemResource smallAngryPlanet = createSmallAngryPlanet();
     final ItemResource nod = createNod();
     final ItemResource smallAngryPlanetWithFourthCheckInServicePoint = itemsFixture
@@ -449,7 +448,7 @@ public class ItemsInTransitReportTests extends APITests {
   }
 
   @Test
-  public void reportWillNotFailWithUriTooLargeError() {
+  void reportWillNotFailWithUriTooLargeError() {
     final UUID firstServicePointId = servicePointsFixture.cd1().getId();
     final UUID forthServicePointLocationId = locationsFixture.fourthServicePoint().getId();
 
@@ -625,11 +624,5 @@ public class ItemsInTransitReportTests extends APITests {
       .withEnumeration("smallAngryPlanetEnumeration")
       .withVolume("smallAngryPlanetVolume")
       .withYearCaption(Collections.singletonList("2019"));
-  }
-
-  private ZonedDateTime toZonedStartOfDay(LocalDate date) {
-    final var startOfDay = date.atStartOfDay();
-
-    return ZonedDateTime.of(startOfDay, ZoneId.systemDefault().normalized());
   }
 }

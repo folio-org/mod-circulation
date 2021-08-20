@@ -10,15 +10,15 @@ import java.util.UUID;
 
 import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 
-public class LoanAPIRelatedRecordsTests extends APITests {
+class LoanAPIRelatedRecordsTests extends APITests {
   @Test
-  public void holdingIdAndInstanceIdIncludedWhenHoldingAndInstanceAreAvailable() {
+  void holdingIdAndInstanceIdIncludedWhenHoldingAndInstanceAreAvailable() {
 
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
@@ -64,7 +64,7 @@ public class LoanAPIRelatedRecordsTests extends APITests {
   }
 
   @Test
-  public void holdingAndInstanceIdComesFromMultipleRecordsForMultipleLoans() {
+  void holdingAndInstanceIdComesFromMultipleRecordsForMultipleLoans() {
 
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final ItemResource temeraire = itemsFixture.basedUponTemeraire();

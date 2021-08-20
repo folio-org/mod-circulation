@@ -16,8 +16,8 @@ import static org.joda.time.DateTimeZone.UTC;
 
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import api.support.builders.DeclareItemLostRequestBuilder;
 import api.support.http.IndividualResource;
@@ -40,13 +40,13 @@ public abstract class RefundDeclaredLostFeesTestBase extends SpringApiTest {
 
   protected abstract void performActionThatRequiresRefund(DateTime actionDate);
 
-  @Before
+  @BeforeEach
   public void activateChargeableLostItemFeePolicy() {
     useLostItemPolicy(lostItemFeePoliciesFixture.chargeFee().getId());
   }
 
   @Test
-  public void shouldCancelItemFeeOnlyWhenNoOtherFeesCharged() {
+  void shouldCancelItemFeeOnlyWhenNoOtherFeesCharged() {
     final double itemFee = 15.00;
 
     useLostItemPolicy(lostItemFeePoliciesFixture.create(
@@ -63,7 +63,7 @@ public abstract class RefundDeclaredLostFeesTestBase extends SpringApiTest {
   }
 
   @Test
-  public void shouldCancelItemProcessingFeeOnlyWhenNoOtherFeesChargedAndNoPaymentsMade() {
+  void shouldCancelItemProcessingFeeOnlyWhenNoOtherFeesChargedAndNoPaymentsMade() {
     final double processingFee = 12.99;
 
     useLostItemPolicy(lostItemFeePoliciesFixture.create(
@@ -80,7 +80,7 @@ public abstract class RefundDeclaredLostFeesTestBase extends SpringApiTest {
   }
 
   @Test
-  public void shouldNotRefundProcessingFeeWhenPolicyStatesNotTo() {
+  void shouldNotRefundProcessingFeeWhenPolicyStatesNotTo() {
     final double processingFee = 12.99;
 
     useLostItemPolicy(lostItemFeePoliciesFixture.create(
@@ -100,7 +100,7 @@ public abstract class RefundDeclaredLostFeesTestBase extends SpringApiTest {
   }
 
   @Test
-  public void shouldNotRefundFeesWhenReturnedAfterRefundPeriod() {
+  void shouldNotRefundFeesWhenReturnedAfterRefundPeriod() {
     final double setCostFee = 10.55;
     final double processingFee = 12.99;
 
@@ -118,7 +118,7 @@ public abstract class RefundDeclaredLostFeesTestBase extends SpringApiTest {
   }
 
   @Test
-  public void shouldRefundFeesAtAnyPointWhenNoMaximumRefundPeriod() {
+  void shouldRefundFeesAtAnyPointWhenNoMaximumRefundPeriod() {
     final double setCostFee = 10.55;
     final double processingFee = 12.99;
 
@@ -141,7 +141,7 @@ public abstract class RefundDeclaredLostFeesTestBase extends SpringApiTest {
   }
 
   @Test
-  public void shouldCancelBothItemAndProcessingFeesWhenNeitherHaveBeenPaid() {
+  void shouldCancelBothItemAndProcessingFeesWhenNeitherHaveBeenPaid() {
     final double processingFee = 5.0;
     final double itemFee = 10.0;
 
@@ -154,7 +154,7 @@ public abstract class RefundDeclaredLostFeesTestBase extends SpringApiTest {
   }
 
   @Test
-  public void shouldRefundTransferredFee() {
+  void shouldRefundTransferredFee() {
     final double setCostFee = 10.89;
     final double processingFee = 5.00;
 
@@ -171,7 +171,7 @@ public abstract class RefundDeclaredLostFeesTestBase extends SpringApiTest {
   }
 
   @Test
-  public void shouldRefundPaidFee() {
+  void shouldRefundPaidFee() {
     final double setCostFee = 9.99;
     final double processingFee = 5.00;
 
@@ -188,7 +188,7 @@ public abstract class RefundDeclaredLostFeesTestBase extends SpringApiTest {
   }
 
   @Test
-  public void shouldRefundPaidAndTransferredFee() {
+  void shouldRefundPaidAndTransferredFee() {
     final double transferAmount = 6.0;
     final double paymentAmount = 4.0;
     final double setCostFee = transferAmount + paymentAmount;
@@ -208,7 +208,7 @@ public abstract class RefundDeclaredLostFeesTestBase extends SpringApiTest {
   }
 
   @Test
-  public void shouldRefundPartiallyPaidAndTransferredFeeAndCancelRemainingAmount() {
+  void shouldRefundPartiallyPaidAndTransferredFeeAndCancelRemainingAmount() {
     final double transferAmount = 6.0;
     final double paymentAmount = 4.0;
     final double remainingAmount = 5.99;
@@ -229,7 +229,7 @@ public abstract class RefundDeclaredLostFeesTestBase extends SpringApiTest {
   }
 
   @Test
-  public void shouldChargeOverdueFineWhenStatedByPolicyAndLostFeesCanceled() {
+  void shouldChargeOverdueFineWhenStatedByPolicyAndLostFeesCanceled() {
     final double processingFee = 12.99;
 
     // Create overdue fine type
@@ -251,7 +251,7 @@ public abstract class RefundDeclaredLostFeesTestBase extends SpringApiTest {
   }
 
   @Test
-  public void shouldNotChargeOverdueFineWhenNotStatedByPolicy() {
+  void shouldNotChargeOverdueFineWhenNotStatedByPolicy() {
     final double processingFee = 12.99;
 
     // Create overdue fine type
@@ -273,7 +273,7 @@ public abstract class RefundDeclaredLostFeesTestBase extends SpringApiTest {
   }
 
   @Test
-  public void shouldNotChargeOverdueFineWhenLostFeeIsNotCancelled() {
+  void shouldNotChargeOverdueFineWhenLostFeeIsNotCancelled() {
     final double itemFee = 11.55;
 
     feeFineTypeFixture.overdueFine();
@@ -295,7 +295,7 @@ public abstract class RefundDeclaredLostFeesTestBase extends SpringApiTest {
   }
 
   @Test
-  public void shouldNotChargeOverdueFineWhenProcessingFeeIsNotRefundable() {
+  void shouldNotChargeOverdueFineWhenProcessingFeeIsNotRefundable() {
     final double processingFee = 14.37;
 
     feeFineTypeFixture.overdueFine();

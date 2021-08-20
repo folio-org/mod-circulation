@@ -4,19 +4,19 @@ import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyU
 import static org.joda.time.DateTimeConstants.JANUARY;
 import static org.joda.time.DateTimeZone.UTC;
 import static org.joda.time.DateTimeZone.forOffsetHours;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.stream.IntStream;
 
 import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class KeepCurrentStrategyTest {
+class KeepCurrentStrategyTest {
 
   @Test
-  public void testKeepCurrentDateStrategy() {
+  void testKeepCurrentDateStrategy() {
     ClosedLibraryStrategy keepCurrentStrategy = new KeepCurrentDateStrategy(UTC);
     DateTime requestDate = new DateTime(2019, JANUARY, 1, 0, 0)
       .withZoneRetainFields(UTC);
@@ -28,7 +28,7 @@ public class KeepCurrentStrategyTest {
   }
 
   @Test
-  public void testKeepCurrentDateTimeStrategy() {
+  void testKeepCurrentDateTimeStrategy() {
     ClosedLibraryStrategy keepCurrentStrategy = new KeepCurrentDateTimeStrategy();
     DateTime requestDate = new DateTime(2019, JANUARY, 1, 0, 0)
       .withZoneRetainFields(UTC);
@@ -39,7 +39,7 @@ public class KeepCurrentStrategyTest {
   }
 
   @Test
-  public void shouldAlwaysKeepCurrentDateWhenConvertingToTimeZone() {
+  void shouldAlwaysKeepCurrentDateWhenConvertingToTimeZone() {
     final int year = 2020;
     final int month = 11;
     final int dayOfMonth = 17;

@@ -9,18 +9,18 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import api.support.http.IndividualResource;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import io.vertx.core.json.JsonObject;
 
-public class ItemStatusApiTests extends APITests {
+class ItemStatusApiTests extends APITests {
 
   private static final String ITEM_STATUS = "status";
   private static final String ITEM_STATUS_DATE = "date";
 
   @Test
-  public void itemStatusDateShouldExistsAfterCheckout() {
+  void itemStatusDateShouldExistsAfterCheckout() {
 
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource user = usersFixture.jessica();

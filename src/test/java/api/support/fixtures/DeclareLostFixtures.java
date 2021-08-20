@@ -22,7 +22,7 @@ public class DeclareLostFixtures {
 
   public Response declareItemLost(DeclareItemLostRequestBuilder builder) {
 
-    JsonObject request = builder.create();    
+    JsonObject request = builder.create();
     return restAssuredClient.post(request, declareLoanItemLostURL(builder.getLoanId()),
       204, "declare-item-lost-request");
   }

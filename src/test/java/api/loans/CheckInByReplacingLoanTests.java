@@ -15,15 +15,15 @@ import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.ISODateTimeFormat;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.LoanBuilder;
 import io.vertx.core.json.JsonObject;
 
-public class CheckInByReplacingLoanTests extends APITests {
+class CheckInByReplacingLoanTests extends APITests {
   @Test
-  public void canCompleteALoanByReturningTheItem() {
+  void canCompleteALoanByReturningTheItem() {
 
     DateTime loanDate = new DateTime(2017, 3, 1, 13, 25, 46, DateTimeZone.UTC);
 
@@ -88,7 +88,7 @@ public class CheckInByReplacingLoanTests extends APITests {
   }
 
   @Test
-  public void cannotCloseALoanWithoutAServicePoint() {
+  void cannotCloseALoanWithoutAServicePoint() {
 
     DateTime loanDate = new DateTime(2017, 3, 1, 13, 25, 46, DateTimeZone.UTC);
 
@@ -114,7 +114,7 @@ public class CheckInByReplacingLoanTests extends APITests {
   }
 
   @Test
-  public void cannotUpdateALoanWithAnUnknownServicePoint() {
+  void cannotUpdateALoanWithAnUnknownServicePoint() {
 
     DateTime loanDate = new DateTime(2017, 3, 1, 13, 25, 46, DateTimeZone.UTC);
 

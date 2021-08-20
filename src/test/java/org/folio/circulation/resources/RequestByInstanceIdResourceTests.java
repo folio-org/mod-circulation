@@ -1,7 +1,7 @@
 package org.folio.circulation.resources;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Collection;
 import java.util.LinkedList;
@@ -12,21 +12,25 @@ import org.folio.circulation.domain.InstanceRequestRelatedRecords;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.representations.RequestByInstanceIdRequest;
-import org.folio.circulation.support.*;
+import org.folio.circulation.support.BadRequestFailure;
+import org.folio.circulation.support.ForwardOnFailure;
+import org.folio.circulation.support.HttpFailure;
+import org.folio.circulation.support.ServerErrorFailure;
+import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.ISODateTimeFormat;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.fixtures.ItemExamples;
 import io.vertx.core.json.JsonObject;
 
 public class RequestByInstanceIdResourceTests {
   @Test
-  public void canTransformInstanceToItemRequests(){
+  void canTransformInstanceToItemRequests(){
 
     UUID loanTypeId = UUID.randomUUID();
     RequestByInstanceIdRequest requestByInstanceIdRequest = RequestByInstanceIdRequest.from(getJsonInstanceRequest(null)).value();
@@ -66,7 +70,7 @@ public class RequestByInstanceIdResourceTests {
   }
 
   @Test
-  public void getExpectedErrorMessages() {
+  void getExpectedErrorMessages() {
     HttpFailure validationError = ValidationErrorFailure.singleValidationError
       (new ValidationError("validationError", "someParam", "null"));
     String errorMessage = RequestByInstanceIdResource.getErrorMessage(validationError);

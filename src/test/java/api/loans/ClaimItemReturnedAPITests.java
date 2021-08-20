@@ -26,8 +26,8 @@ import java.util.concurrent.TimeUnit;
 import org.awaitility.Awaitility;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.ClaimItemReturnedRequestBuilder;
@@ -36,12 +36,12 @@ import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 
-public class ClaimItemReturnedAPITests extends APITests {
+class ClaimItemReturnedAPITests extends APITests {
   private ItemResource item;
   private IndividualResource loan;
   private String loanId;
 
-  @Before
+  @BeforeEach
   public void setUpItemAndLoan() {
     item = itemsFixture.basedUponSmallAngryPlanet();
     loan = checkOutFixture.checkOutByBarcode(item, usersFixture.charlotte());
@@ -49,7 +49,7 @@ public class ClaimItemReturnedAPITests extends APITests {
   }
 
   @Test
-  public void canClaimItemReturnedWithComment() {
+  void canClaimItemReturnedWithComment() {
     final String comment = "testing";
     final DateTime dateTime = DateTime.now();
 
@@ -63,7 +63,7 @@ public class ClaimItemReturnedAPITests extends APITests {
   }
 
   @Test
-  public void canClaimItemReturnedWithoutComment() {
+  void canClaimItemReturnedWithoutComment() {
     final DateTime dateTime = DateTime.now();
 
     final Response response = claimItemReturnedFixture
@@ -75,7 +75,7 @@ public class ClaimItemReturnedAPITests extends APITests {
   }
 
   @Test
-  public void cannotClaimItemReturnedWhenLoanIsClosed() {
+  void cannotClaimItemReturnedWhenLoanIsClosed() {
     final DateTime dateTime = DateTime.now();
 
     checkInFixture.checkInByBarcode(item);
@@ -92,7 +92,7 @@ public class ClaimItemReturnedAPITests extends APITests {
   }
 
   @Test
-  public void cannotClaimItemReturnedWhenDateTimeIsNotProvided() {
+  void cannotClaimItemReturnedWhenDateTimeIsNotProvided() {
     final Response response = claimItemReturnedFixture
       .attemptClaimItemReturned(new ClaimItemReturnedRequestBuilder()
         .forLoan(loanId)
@@ -105,7 +105,7 @@ public class ClaimItemReturnedAPITests extends APITests {
   }
 
   @Test
-  public void cannotClaimItemReturnedWhenLoanIsNotFound() {
+  void cannotClaimItemReturnedWhenLoanIsNotFound() {
     final String notExistentLoanId = UUID.randomUUID().toString();
 
     final Response response = claimItemReturnedFixture
@@ -116,7 +116,7 @@ public class ClaimItemReturnedAPITests extends APITests {
   }
 
   @Test
-  public void itemClaimedReturnedEventIsPublished() {
+  void itemClaimedReturnedEventIsPublished() {
     final DateTime dateTime = DateTime.now();
 
     final Response response = claimItemReturnedFixture

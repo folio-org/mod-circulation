@@ -9,7 +9,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.folio.circulation.support.http.client.Response;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.LoanPolicyBuilder;
@@ -18,18 +18,18 @@ import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.OverdueFinePolicyBuilder;
 import io.vertx.core.json.JsonObject;
 
-public class CirculationRulesAPITests extends APITests {
+class CirculationRulesAPITests extends APITests {
 
   private static final String CIRCULATION_RULE_TEMPLATE =
     "priority: t, s, c, b, a, m, g\nfallback-policy: l %s r %s n %s o %s i %s \n";
 
   @Test
-  public void canGet() {
+  void canGet() {
     getRulesText();
   }
 
   @Test
-  public void canPutAndGet() {
+  void canPutAndGet() {
     UUID lp1 = UUID.randomUUID();
     UUID lp2 = UUID.randomUUID();
     UUID rp1 = UUID.randomUUID();
@@ -81,7 +81,7 @@ public class CirculationRulesAPITests extends APITests {
   }
 
   @Test
-  public void canDefineFallbackPoliciesInAnyOrder() {
+  void canDefineFallbackPoliciesInAnyOrder() {
 
     UUID loanPolicyId = UUID.randomUUID();
     UUID requestPolicyId = UUID.randomUUID();
@@ -141,7 +141,7 @@ public class CirculationRulesAPITests extends APITests {
   }
 
   @Test
-  public void canDefinePoliciesForARuleInAnOrder() {
+  void canDefinePoliciesForARuleInAnOrder() {
 
     UUID loanPolicyId = UUID.randomUUID();
     UUID requestPolicyId = UUID.randomUUID();
@@ -204,7 +204,7 @@ public class CirculationRulesAPITests extends APITests {
   }
 
   @Test
-  public void cannotUpdateCirculationRulesWithInvalidLoanPolicyId() {
+  void cannotUpdateCirculationRulesWithInvalidLoanPolicyId() {
 
     String rule = circulationRulesFixture.soleFallbackPolicyRule(
       UUID.randomUUID(),
@@ -222,7 +222,7 @@ public class CirculationRulesAPITests extends APITests {
   }
 
   @Test
-  public void cannotUpdateCirculationRulesWithInvalidNoticePolicyId() {
+  void cannotUpdateCirculationRulesWithInvalidNoticePolicyId() {
 
     String rule = circulationRulesFixture.soleFallbackPolicyRule(
       loanPoliciesFixture.canCirculateFixed().getId(),
@@ -240,7 +240,7 @@ public class CirculationRulesAPITests extends APITests {
   }
 
   @Test
-  public void cannotUpdateCirculationRulesWithInvalidRequestPolicyId() {
+  void cannotUpdateCirculationRulesWithInvalidRequestPolicyId() {
 
     String rule = circulationRulesFixture.soleFallbackPolicyRule(
       loanPoliciesFixture.canCirculateFixed().getId(),
@@ -258,7 +258,7 @@ public class CirculationRulesAPITests extends APITests {
   }
 
   @Test
-  public void cannotUpdateCirculationRulesWithOverdueFinePolicyId() {
+  void cannotUpdateCirculationRulesWithOverdueFinePolicyId() {
 
     String rule = circulationRulesFixture.soleFallbackPolicyRule(
       loanPoliciesFixture.canCirculateFixed().getId(),
@@ -276,7 +276,7 @@ public class CirculationRulesAPITests extends APITests {
   }
 
   @Test
-  public void cannotUpdateCirculationRulesWithLostItemPolicyId() {
+  void cannotUpdateCirculationRulesWithLostItemPolicyId() {
 
     String rule = circulationRulesFixture.soleFallbackPolicyRule(
       loanPoliciesFixture.canCirculateFixed().getId(),
@@ -293,7 +293,7 @@ public class CirculationRulesAPITests extends APITests {
   }
 
   @Test
-  public void canUpdateCirculationRulesWithTwentyExistingLoanPolicies() {
+  void canUpdateCirculationRulesWithTwentyExistingLoanPolicies() {
 
     Set<UUID> loanPolicyIds = getSetOfPolicyIds(20);
     createLoanPolicies(loanPolicyIds);
@@ -314,7 +314,7 @@ public class CirculationRulesAPITests extends APITests {
   }
 
   @Test
-  public void canUpdateCirculationRulesWithTwentyExistingNoticePolicies() {
+  void canUpdateCirculationRulesWithTwentyExistingNoticePolicies() {
 
     Set<UUID> noticePolicyIds = getSetOfPolicyIds(20);
     createNoticePolicies(noticePolicyIds);
@@ -336,7 +336,7 @@ public class CirculationRulesAPITests extends APITests {
   }
 
   @Test
-  public void canUpdateCirculationRulesWithTwentyExistingRequestPolicies() {
+  void canUpdateCirculationRulesWithTwentyExistingRequestPolicies() {
 
     Set<UUID> requestPolicyIds = getSetOfPolicyIds(20);
     requestPolicyIds.forEach(requestPoliciesFixture::allowAllRequestPolicy);
@@ -360,7 +360,7 @@ public class CirculationRulesAPITests extends APITests {
   }
 
   @Test
-  public void canUpdateCirculationRulesWithTwentyExistingOverdueFinePolicies() {
+  void canUpdateCirculationRulesWithTwentyExistingOverdueFinePolicies() {
 
     Set<UUID> overdueFinePolicyIds = getSetOfPolicyIds(20);
     createOverdueFinePolicies(overdueFinePolicyIds);
@@ -382,7 +382,7 @@ public class CirculationRulesAPITests extends APITests {
   }
 
   @Test
-  public void canUpdateCirculationRulesWithTwentyExistingLostItemFeePolicies() {
+  void canUpdateCirculationRulesWithTwentyExistingLostItemFeePolicies() {
 
     Set<UUID> lostItemFeePolicyIds = getSetOfPolicyIds(20);
     createLostItemFeePolicies(lostItemFeePolicyIds);
@@ -404,14 +404,14 @@ public class CirculationRulesAPITests extends APITests {
   }
 
   @Test
-  public void canReportInvalidJson() {
+  void canReportInvalidJson() {
     final Response response = circulationRulesFixture.putRules("foo");
 
     assertThat(response.getStatusCode(), is(422));
   }
 
   @Test
-  public void canReportValidationError() {
+  void canReportValidationError() {
     JsonObject rules = new JsonObject();
     rules.put("rulesAsText", "\t");
 

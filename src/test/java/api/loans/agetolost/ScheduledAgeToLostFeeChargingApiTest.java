@@ -39,8 +39,8 @@ import java.util.stream.Collectors;
 import org.folio.circulation.domain.policy.Period;
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import api.support.builders.FeeFineOwnerBuilder;
 import api.support.builders.ItemBuilder;
@@ -56,13 +56,13 @@ import api.support.spring.SpringApiTest;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
-public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
+class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
 
   public ScheduledAgeToLostFeeChargingApiTest() {
     super(true, true);
   }
 
-  @Before
+  @BeforeEach
   public void createOwnersAndFeeFineTypes() {
     feeFineOwnerFixture.cd1Owner();
     feeFineTypeFixture.lostItemFee();
@@ -70,7 +70,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
   }
 
   @Test
-  public void shouldChargeItemFee() {
+  void shouldChargeItemFee() {
     final double expectedSetCost = 12.88;
     final IndividualResource permanentLocation = locationsFixture.fourthFloor();
     final UUID ownerServicePoint = servicePointsFixture.cd6().getId();
@@ -101,7 +101,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
   }
 
   @Test
-  public void shouldChargeItemProcessingFee() {
+  void shouldChargeItemProcessingFee() {
     final double expectedProcessingFee = 99.54;
 
     val lostItemFeePolicy = new LostItemFeePolicyBuilder()
@@ -123,7 +123,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
   }
 
   @Test
-  public void shouldChargeItemAndProcessingFee() {
+  void shouldChargeItemAndProcessingFee() {
     final double expectedItemFee = 99.54;
     final double expectedProcessingFee = 99.54;
 
@@ -148,7 +148,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
   }
 
   @Test
-  public void shouldNotChargeFeesIfStatedByPolicy() {
+  void shouldNotChargeFeesIfStatedByPolicy() {
     val lostItemFeePolicy = lostItemFeePoliciesFixture
       .ageToLostAfterOneMinutePolicy()
       .withNoChargeAmountItem()
@@ -167,7 +167,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
   }
 
   @Test
-  public void shouldSkipChargingFeesWhenActualCostFeeShouldBeIssued() {
+  void shouldSkipChargingFeesWhenActualCostFeeShouldBeIssued() {
     val lostItemFeePolicy = lostItemFeePoliciesFixture
       .ageToLostAfterOneMinutePolicy()
       .withSetCost(10.00)
@@ -182,7 +182,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
   }
 
   @Test
-  public void shouldChargeFeesToMultipleItems() {
+  void shouldChargeFeesToMultipleItems() {
     val loanToFeeMap = checkoutTenItems();
 
     ageToLostFixture.ageToLostAndChargeFees();
@@ -200,7 +200,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
   }
 
   @Test
-  public void shouldContinueToProcessLoansAfterChargingFeesForSomeHaveFailed() {
+  void shouldContinueToProcessLoansAfterChargingFeesForSomeHaveFailed() {
     val loanToFeeMap = checkoutTenItems();
     val loansExpectedToBeFailed = loanToFeeMap.entrySet().stream()
       .limit(2)
@@ -231,7 +231,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
   }
 
   @Test
-  public void cannotChargeFeesWhenNoProcessingFeeType() {
+  void cannotChargeFeesWhenNoProcessingFeeType() {
     feeFineTypeFixture.delete(feeFineTypeFixture.lostItemProcessingFee());
 
     val policy = lostItemFeePoliciesFixture
@@ -252,7 +252,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
   }
 
   @Test
-  public void cannotChargeFeesWhenNoItemFeeType() {
+  void cannotChargeFeesWhenNoItemFeeType() {
     feeFineTypeFixture.delete(feeFineTypeFixture.lostItemFee());
 
     val policy = lostItemFeePoliciesFixture
@@ -272,7 +272,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
   }
 
   @Test
-  public void shouldNotChargeFeesWhenDelayedBillingPeriodHasNotPassed() {
+  void shouldNotChargeFeesWhenDelayedBillingPeriodHasNotPassed() {
     val lostItemFeePolicy = lostItemFeePoliciesFixture
       .ageToLostAfterOneMinutePolicy()
       .withSetCost(11.00)
@@ -288,7 +288,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
   }
 
   @Test
-  public void shouldNotChargeFeesMoreThanOnce() {
+  void shouldNotChargeFeesMoreThanOnce() {
     val lostItemFeePolicy = lostItemFeePoliciesFixture
       .ageToLostAfterOneMinutePolicy()
       .withSetCost(11.00);
@@ -307,7 +307,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
   }
 
   @Test
-  public void shouldCloseLoanWhenNoFeesToCharge() {
+  void shouldCloseLoanWhenNoFeesToCharge() {
     val lostItemFeePolicy = lostItemFeePoliciesFixture
       .ageToLostAfterOneMinutePolicy()
       .withPatronBilledAfterItemAgedToLost(Period.weeks(1))
@@ -326,7 +326,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
   }
 
   @Test
-  public void shouldNotChargeOverdueFeesDuringCheckInWhenItemHasAgedToLostAndRefundFeePeriodHasPassed() {
+  void shouldNotChargeOverdueFeesDuringCheckInWhenItemHasAgedToLostAndRefundFeePeriodHasPassed() {
     // for a loan that charges both lost fees and overdue fines
     // where the policies are set such that:
     // 1. the item charges overdue fees on checkin
@@ -355,7 +355,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
   }
 
   @Test
-  public void shouldAgeToLostAndChargeLostItemProcessingFeeWhenActualFeeSet() {
+  void shouldAgeToLostAndChargeLostItemProcessingFeeWhenActualFeeSet() {
     final double agedToLostLostProcessingFee = 10.00;
     IndividualResource lostItemPolicy = lostItemFeePoliciesFixture.create(
       lostItemFeePoliciesFixture.ageToLostAfterOneMinutePolicy()
@@ -366,7 +366,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
         .chargeProcessingFeeWhenAgedToLost(agedToLostLostProcessingFee));
 
     useLostItemPolicy(lostItemPolicy.getId());
-    
+
     final ItemResource item = itemsFixture.basedUponNod();
     final CheckOutResource checkOut = checkOutFixture.checkOutByBarcode(item);
 
@@ -379,7 +379,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
   }
 
   @Test
-  public void declaredLostItemShouldNotBeAgedToLost() {
+  void declaredLostItemShouldNotBeAgedToLost() {
     final double declaredLostProcessingFee = 10.00;
     useLostItemPolicy(lostItemFeePoliciesFixture.create(
       lostItemFeePoliciesFixture.ageToLostAfterOneMinutePolicy()
@@ -405,7 +405,7 @@ public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
   }
 
   @Test
-  public void loanWithRemovedItemShouldBeSkipped() {
+  void loanWithRemovedItemShouldBeSkipped() {
     useLostItemPolicy(lostItemFeePoliciesFixture.ageToLostAfterOneMinute().getId());
 
     final var firstItem = itemsFixture.basedUponNod(ItemBuilder::withRandomBarcode);

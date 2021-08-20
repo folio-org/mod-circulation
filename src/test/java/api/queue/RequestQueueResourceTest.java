@@ -6,10 +6,10 @@ import static org.folio.circulation.domain.representations.logs.LogEventType.REQ
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Comparator;
 import java.util.List;
@@ -20,9 +20,11 @@ import java.util.stream.Collectors;
 import org.awaitility.Awaitility;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.Matcher;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ArgumentsSource;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import api.support.APITests;
 import api.support.builders.ReorderQueueBuilder;
@@ -31,11 +33,8 @@ import api.support.fakes.FakePubSub;
 import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import junitparams.JUnitParamsRunner;
-import junitparams.Parameters;
 
-@RunWith(JUnitParamsRunner.class)
-public class RequestQueueResourceTest extends APITests {
+class RequestQueueResourceTest extends APITests {
   private IndividualResource item;
   private IndividualResource jessica;
   private IndividualResource steve;
@@ -43,7 +42,7 @@ public class RequestQueueResourceTest extends APITests {
   private IndividualResource rebecca;
   private IndividualResource charlotte;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     item = itemsFixture.basedUponSmallAngryPlanet();
 
@@ -55,7 +54,7 @@ public class RequestQueueResourceTest extends APITests {
   }
 
   @Test
-  public void validationErrorOnItemDoNotExists() {
+  void validationErrorOnItemDoNotExists() {
     Response response = requestQueueFixture.attemptReorderQueue(
       UUID.randomUUID().toString(),
       new ReorderQueueBuilder()
@@ -68,7 +67,7 @@ public class RequestQueueResourceTest extends APITests {
   }
 
   @Test
-  public void refuseAttemptToMovePageRequestFromFirstPosition() {
+  void refuseAttemptToMovePageRequestFromFirstPosition() {
     IndividualResource pageRequest = pageRequest(steve);
     IndividualResource recallRequest = recallRequest(jessica);
 
@@ -84,7 +83,7 @@ public class RequestQueueResourceTest extends APITests {
   }
 
   @Test
-  public void refuseAttemptToMoveRequestBeingFulfilledFromFirstPosition() {
+  void refuseAttemptToMoveRequestBeingFulfilledFromFirstPosition() {
     checkOutFixture.checkOutByBarcode(item, usersFixture.rebecca());
 
     IndividualResource inFulfillmentRequest = inFulfillmentRecallRequest(steve);
@@ -102,7 +101,7 @@ public class RequestQueueResourceTest extends APITests {
   }
 
   @Test
-  public void refuseAttemptToTryingToAddRequestToQueueDuringReorder() {
+  void refuseAttemptToTryingToAddRequestToQueueDuringReorder() {
     checkOutFixture.checkOutByBarcode(item, usersFixture.rebecca());
 
     IndividualResource firstRecallRequest = recallRequest(steve);
@@ -121,7 +120,7 @@ public class RequestQueueResourceTest extends APITests {
   }
 
   @Test
-  public void refuseWhenNotAllRequestsProvidedInReorderedQueue() {
+  void refuseWhenNotAllRequestsProvidedInReorderedQueue() {
     checkOutFixture.checkOutByBarcode(item, usersFixture.rebecca());
 
     holdRequest(steve);
@@ -138,8 +137,8 @@ public class RequestQueueResourceTest extends APITests {
       is("There is inconsistency between provided reordered queue and item queue."));
   }
 
-  @Test
-  @Parameters({
+  @ParameterizedTest
+  @CsvSource(value = {
     "1, 2, 5, 4",
     "0, 2, 3, 4",
     "6, 2, 3, 1",
@@ -148,7 +147,7 @@ public class RequestQueueResourceTest extends APITests {
     "1, 2, 4, 5",
     "1, 2, 3, 5",
   })
-  public void refuseWhenPositionsAreNotSequential(int firstPosition,
+  void refuseWhenPositionsAreNotSequential(int firstPosition,
     int secondPosition, int thirdPosition, int fourthPosition) {
 
     checkOutFixture.checkOutByBarcode(item, rebecca);
@@ -172,7 +171,7 @@ public class RequestQueueResourceTest extends APITests {
   }
 
   @Test
-  public void refuseAttemptToReorderRequestsWithDuplicatedPositions() {
+  void refuseAttemptToReorderRequestsWithDuplicatedPositions() {
     checkOutFixture.checkOutByBarcode(item, usersFixture.rebecca());
 
     IndividualResource holdRequest = holdRequest(steve);
@@ -188,8 +187,8 @@ public class RequestQueueResourceTest extends APITests {
     verifyValidationFailure(response, is("Positions must have sequential order."));
   }
 
-  @Test
-  @Parameters({
+  @ParameterizedTest
+  @CsvSource(value = {
     "1, 2, 3, 4",
     "1, 2, 4, 3",
     "2, 1, 3, 4",
@@ -199,7 +198,7 @@ public class RequestQueueResourceTest extends APITests {
     "3, 4, 2, 1",
     "3, 4, 1, 2",
   })
-  public void shouldReorderQueueSuccessfully(int firstPosition,
+  void shouldReorderQueueSuccessfully(int firstPosition,
     int secondPosition, int thirdPosition, int fourthPosition) {
 
     checkOutFixture.checkOutByBarcode(item, rebecca);
@@ -223,7 +222,7 @@ public class RequestQueueResourceTest extends APITests {
   }
 
   @Test
-  public void logRecordEventIsPublished() {
+  void logRecordEventIsPublished() {
     checkOutFixture.checkOutByBarcode(item, rebecca);
 
     IndividualResource firstHoldRequest = holdRequest(steve);
@@ -270,8 +269,8 @@ public class RequestQueueResourceTest extends APITests {
     });
   }
 
-  @Test
-  @Parameters(source = ReorderQueueTestDataSource.class)
+  @ParameterizedTest
+  @ArgumentsSource(ReorderQueueTestDataSource.class)
   public void canReorderQueueTwice(Integer[] initialState, Integer[] targetState) {
     checkOutFixture.checkOutByBarcode(item, rebecca);
 
@@ -355,8 +354,8 @@ public class RequestQueueResourceTest extends APITests {
       .sorted(Comparator.comparingInt(request -> request.getInteger("newPosition")))
       .collect(Collectors.toList());
 
-    assertEquals("Expected number of requests and actual do not match",
-      expectedRequests.size(), reorderedRequests.size());
+    assertEquals(expectedRequests.size(), reorderedRequests.size(),
+      "Expected number of requests and actual do not match");
 
     assertQueue(expectedRequests, reorderedRequests);
 
@@ -364,8 +363,8 @@ public class RequestQueueResourceTest extends APITests {
       .retrieveQueue(item.getId().toString())
       .getJsonArray("requests");
 
-    assertEquals("Requests in DB and actual do not match",
-      reorderedRequests.size(), requestsFromDb.size());
+    assertEquals(reorderedRequests.size(), requestsFromDb.size(),
+      "Requests in DB and actual do not match");
 
     assertQueue(expectedRequests, requestsFromDb);
   }

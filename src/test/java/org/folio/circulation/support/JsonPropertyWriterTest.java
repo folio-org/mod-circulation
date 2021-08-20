@@ -5,13 +5,13 @@ import static org.folio.circulation.support.json.JsonPropertyWriter.writeByPath;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import io.vertx.core.json.JsonObject;
 
-public class JsonPropertyWriterTest {
+class JsonPropertyWriterTest {
   @Test
-  public void shouldCreateMissingObjectsInThePath() {
+  void shouldCreateMissingObjectsInThePath() {
     final String[] paths = {"1", "2", "3", "4", "5"};
     final JsonObject object2 = new JsonObject()
       .put("21", 2.1)

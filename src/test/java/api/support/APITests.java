@@ -23,10 +23,10 @@ import org.folio.circulation.support.ClockManager;
 import api.support.fakes.FakeModNotify;
 import api.support.http.IndividualResource;
 import org.joda.time.DateTime;
-import org.junit.After;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 
 import api.support.fakes.FakePubSub;
 import api.support.fixtures.AddressTypesFixture;
@@ -274,7 +274,7 @@ public abstract class APITests {
     setLoanHistoryEnabled(enableLoanHistory);
   }
 
-  @BeforeClass
+  @BeforeAll
   public static void beforeAll() throws InterruptedException, ExecutionException,
     TimeoutException {
 
@@ -293,8 +293,8 @@ public abstract class APITests {
     okapiAlreadyDeployed = true;
   }
 
-  @Before
-  // Final to prohibit overriding, otherwise this method will not be called before @Before of subclass
+  @BeforeEach
+  // Final to prohibit overriding, otherwise this method will not be called before @BeforeEach of subclass
   public final void baseSetUp() {
     if (initialiseCirculationRules) {
       useDefaultRollingPolicyCirculationRules();
@@ -310,10 +310,11 @@ public abstract class APITests {
     FakeModNotify.setFailPatronNoticesWithBadRequest(false);
   }
 
-  @After
-  // Final to prohibit overriding, otherwise this method will not be called before @After of subclass
+  @AfterEach
+  // Final to prohibit overriding, otherwise this method will not be called before @AfterEach of subclass
   public final void baseTearDown() {
     forTenantStorage().deleteAll();
+    scheduledNoticesClient.deleteAll();
 
     mockClockManagerToReturnDefaultDateTime();
   }

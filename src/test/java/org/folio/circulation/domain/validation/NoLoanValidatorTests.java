@@ -10,13 +10,13 @@ import java.util.Optional;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.ServerErrorFailure;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.builders.LoanBuilder;
 
-public class NoLoanValidatorTests {
+class NoLoanValidatorTests {
   @Test
-  public void allowSingleLoan() {
+  void allowSingleLoan() {
     final NoLoanValidator validator = new NoLoanValidator(
       () -> new ServerErrorFailure("No loan"));
 
@@ -30,7 +30,7 @@ public class NoLoanValidatorTests {
   }
 
   @Test
-  public void failWhenNoLoans() {
+  void failWhenNoLoans() {
     final NoLoanValidator validator = new NoLoanValidator(
       () -> new ServerErrorFailure("No loan"));
 
