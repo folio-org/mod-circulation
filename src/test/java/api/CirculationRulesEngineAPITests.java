@@ -34,7 +34,7 @@ import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
-public class CirculationRulesEngineAPITests extends APITests {
+class CirculationRulesEngineAPITests extends APITests {
   public CirculationRulesEngineAPITests() {
     super(false, false);
   }

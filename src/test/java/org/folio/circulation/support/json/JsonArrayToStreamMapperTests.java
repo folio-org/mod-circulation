@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import io.vertx.core.json.JsonArray;
 import lombok.val;
 
-public class JsonArrayToStreamMapperTests {
+class JsonArrayToStreamMapperTests {
   @Test
   void shouldMapNullToEmptyStream() {
     val mapper = new JsonArrayToStreamMapper<>(identity());

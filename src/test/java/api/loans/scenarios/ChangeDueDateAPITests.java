@@ -62,7 +62,7 @@ import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 
-public class ChangeDueDateAPITests extends APITests {
+class ChangeDueDateAPITests extends APITests {
   private ItemResource item;
   private IndividualResource loan;
   private DateTime dueDate;

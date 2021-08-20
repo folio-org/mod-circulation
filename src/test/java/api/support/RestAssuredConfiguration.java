@@ -22,7 +22,7 @@ import io.restassured.config.RestAssuredConfig;
 import io.restassured.specification.RequestSpecification;
 import io.vertx.core.json.JsonObject;
 
-public class RestAssuredConfiguration {
+class RestAssuredConfiguration {
   public static RequestSpecification standardHeaders(OkapiHeaders okapiHeaders) {
     final HashMap<String, String> headers = new HashMap<>();
 

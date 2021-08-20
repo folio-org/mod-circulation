@@ -48,7 +48,7 @@ import io.vertx.core.json.JsonObject;
  *  MGD = Minimum guaranteed due date<br>
  *  RD = Recall due date<br>
  */
-public class MoveRequestPolicyTests extends APITests {
+class MoveRequestPolicyTests extends APITests {
   private static Clock clock;
 
   private NoticePolicyBuilder noticePolicy;

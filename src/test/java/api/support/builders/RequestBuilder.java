@@ -26,7 +26,7 @@ import lombok.With;
 
 @With
 @AllArgsConstructor
-public class RequestBuilder extends JsonBuilder implements Builder {
+class RequestBuilder extends JsonBuilder implements Builder {
   public static final String OPEN_NOT_YET_FILLED = "Open - Not yet filled";
   public static final String OPEN_AWAITING_PICKUP = "Open - Awaiting pickup";
   public static final String OPEN_AWAITING_DELIVERY = "Open - Awaiting delivery";

@@ -71,7 +71,7 @@ import api.support.http.UserResource;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
-public class OverrideRenewByBarcodeTests extends APITests {
+class OverrideRenewByBarcodeTests extends APITests {
   private static final String OVERRIDE_COMMENT = "Comment to override";
   private static final String ITEM_IS_NOT_LOANABLE_MESSAGE = "item is not loanable";
   private static final String ACTION_COMMENT_KEY = "actionComment";

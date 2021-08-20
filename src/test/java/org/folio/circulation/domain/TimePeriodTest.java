@@ -8,7 +8,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
 
-public class TimePeriodTest {
+class TimePeriodTest {
 
   @ParameterizedTest
   @CsvSource(value = {
@@ -18,7 +18,7 @@ public class TimePeriodTest {
     "2020-07-12T00:00:00.000Z, 2020-07-19T00:00:00.000Z, Weeks, 1",
     "2020-07-12T00:00:00.000Z, 2020-09-12T00:00:00.000Z, Months, 2",
   })
-  public void canCalculateIntervalBetweenDates(String dateFromString, String dateToString,
+  void canCalculateIntervalBetweenDates(String dateFromString, String dateToString,
     String intervalId, long expectedAmount) {
 
     final TimePeriod timePeriod = new TimePeriod(1, intervalId);
@@ -36,7 +36,7 @@ public class TimePeriodTest {
     "2020-07-20T00:00:00.000Z, 2020-07-13T00:00:00.000Z, Weeks, -1",
     "2020-12-12T00:00:00.000Z, 2020-09-12T00:00:00.000Z, Months, -3",
   })
-  public void canCalculateIntervalIfFromBeforeAfter(String dateFromString, String dateToString,
+  void canCalculateIntervalIfFromBeforeAfter(String dateFromString, String dateToString,
     String intervalId, long expectedAmount) {
 
     final TimePeriod timePeriod = new TimePeriod(1, intervalId);
@@ -54,7 +54,7 @@ public class TimePeriodTest {
     "2020-07-12T00:00:00.000Z, 2020-07-25T00:00:00.000Z, Weeks, 1",
     "2020-07-12T00:00:00.000Z, 2020-10-01T00:00:00.000Z, Months, 2",
   })
-  public void intervalSetToFloorWhenNumberOfIntervalsIsFraction(
+  void intervalSetToFloorWhenNumberOfIntervalsIsFraction(
     String dateFromString, String dateToString, String intervalId, long expectedAmount) {
 
     final TimePeriod timePeriod = new TimePeriod(1, intervalId);

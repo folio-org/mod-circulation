@@ -19,7 +19,7 @@ import api.support.builders.UserBuilder;
 import api.support.http.ResourceClient;
 import api.support.http.UserResource;
 
-public class UsersFixture {
+class UsersFixture {
   private final RecordCreator userRecordCreator;
   private final PatronGroupsFixture patronGroupsFixture;
 

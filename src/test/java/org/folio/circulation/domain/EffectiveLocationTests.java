@@ -12,7 +12,7 @@ import api.support.builders.HoldingBuilder;
 import api.support.builders.InstanceBuilder;
 import api.support.builders.ItemBuilder;
 
-public class EffectiveLocationTests extends APITests {
+class EffectiveLocationTests extends APITests {
 
   @Test
   void noLocations() {

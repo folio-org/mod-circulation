@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Test;
 
 import io.vertx.core.json.JsonObject;
 
-public class InactiveUserValidatorTests {
+class InactiveUserValidatorTests {
   @Test
   void allowActiveUser() {
     final User steve = new User(basedUponStevenJones().create());

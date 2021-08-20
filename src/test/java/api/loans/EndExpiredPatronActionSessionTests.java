@@ -37,7 +37,7 @@ import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
-public class EndExpiredPatronActionSessionTests extends APITests {
+class EndExpiredPatronActionSessionTests extends APITests {
   private static final String CHECK_OUT = "Check-out";
   private static final String CHECK_IN = "Check-in";
   private static final UUID CHECK_OUT_TEMPLATE_ID = UUID.randomUUID();

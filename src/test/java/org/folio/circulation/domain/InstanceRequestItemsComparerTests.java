@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
-public class InstanceRequestItemsComparerTests {
+class InstanceRequestItemsComparerTests {
 
   @Test
   void canSortRequestQueuesWhenFirstQueueIsLessThanSecondQueue() {

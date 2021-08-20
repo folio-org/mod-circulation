@@ -23,7 +23,7 @@ import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
 
-public class CheckInDeclaredLostItemTest extends RefundDeclaredLostFeesTestBase {
+class CheckInDeclaredLostItemTest extends RefundDeclaredLostFeesTestBase {
   public CheckInDeclaredLostItemTest() {
     super("Cancelled item returned");
   }

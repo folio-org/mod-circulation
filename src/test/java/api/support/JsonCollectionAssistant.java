@@ -9,7 +9,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import io.vertx.core.json.JsonObject;
 
-public class JsonCollectionAssistant {
+class JsonCollectionAssistant {
   public static Optional<JsonObject> getRecordById(
     Collection<JsonObject> collection, UUID id) {
 

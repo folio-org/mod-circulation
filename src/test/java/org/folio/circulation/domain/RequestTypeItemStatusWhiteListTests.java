@@ -31,7 +31,7 @@ import org.junit.jupiter.params.provider.EmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 
-public class  RequestTypeItemStatusWhiteListTests {
+class  RequestTypeItemStatusWhiteListTests {
   @Test
   void canCreateHoldRequestWhenItemStatusCheckedOut() {
     assertTrue(canCreateRequestForItem(CHECKED_OUT, HOLD));
@@ -123,7 +123,7 @@ public class  RequestTypeItemStatusWhiteListTests {
     "Recall",
     "Page"
   })
-  public void canCreateRequestWhenItemIsRestricted(String requestType) {
+  void canCreateRequestWhenItemIsRestricted(String requestType) {
     assertTrue(canCreateRequestForItem(RESTRICTED, from(requestType)));
   }
 
@@ -134,7 +134,7 @@ public class  RequestTypeItemStatusWhiteListTests {
     "Recall",
     "Page"
   })
-  public void cannotCreateRequestWhenItemStatusDeclaredLostItem(String requestType) {
+  void cannotCreateRequestWhenItemStatusDeclaredLostItem(String requestType) {
     assertFalse(canCreateRequestForItem(DECLARED_LOST, from(requestType)));
   }
 
@@ -145,7 +145,7 @@ public class  RequestTypeItemStatusWhiteListTests {
     "Recall",
     "Page"
   })
-  public void cannotCreateRequestWhenItemStatusClaimedReturned(String requestType) {
+  void cannotCreateRequestWhenItemStatusClaimedReturned(String requestType) {
     assertFalse(canCreateRequestForItem(CLAIMED_RETURNED, from(requestType)));
   }
 
@@ -156,7 +156,7 @@ public class  RequestTypeItemStatusWhiteListTests {
     "Recall",
     "Page"
   })
-  public void cannotCreateRequestWhenItemStatusWithdrawn(String requestType) {
+  void cannotCreateRequestWhenItemStatusWithdrawn(String requestType) {
     assertFalse(canCreateRequestForItem(WITHDRAWN, from(requestType)));
   }
 
@@ -167,7 +167,7 @@ public class  RequestTypeItemStatusWhiteListTests {
     "Recall",
     "Page"
   })
-  public void cannotCreateRequestWhenItemStatusLostAndPaid(String requestType) {
+  void cannotCreateRequestWhenItemStatusLostAndPaid(String requestType) {
     assertFalse(canCreateRequestForItem(LOST_AND_PAID, from(requestType)));
   }
 
@@ -178,7 +178,7 @@ public class  RequestTypeItemStatusWhiteListTests {
     "Recall",
     "Page"
   })
-  public void cannotCreateRequestWhenItemIsAgedToLost(String requestType) {
+  void cannotCreateRequestWhenItemIsAgedToLost(String requestType) {
     assertFalse(canCreateRequestForItem(AGED_TO_LOST, from(requestType)));
   }
 
@@ -189,7 +189,7 @@ public class  RequestTypeItemStatusWhiteListTests {
     "Recall",
     "Page"
   })
-  public void cannotCreateRequestWhenItemHasIntellectualItemStatus(String requestType) {
+  void cannotCreateRequestWhenItemHasIntellectualItemStatus(String requestType) {
     assertFalse(canCreateRequestForItem(INTELLECTUAL_ITEM, from(requestType)));
   }
 
@@ -200,7 +200,7 @@ public class  RequestTypeItemStatusWhiteListTests {
     "Recall",
     "Page"
   })
-  public void cannotCreateRequestWhenItemIsInProcessNonRequestable(String requestType) {
+  void cannotCreateRequestWhenItemIsInProcessNonRequestable(String requestType) {
     assertFalse(canCreateRequestForItem(IN_PROCESS_NON_REQUESTABLE, from(requestType)));
   }
 
@@ -211,7 +211,7 @@ public class  RequestTypeItemStatusWhiteListTests {
     "Recall",
     "Page"
   })
-  public void cannotCreateRequestWhenItemIsLongMissing(String requestType) {
+  void cannotCreateRequestWhenItemIsLongMissing(String requestType) {
     assertFalse(canCreateRequestForItem(LONG_MISSING, from(requestType)));
   }
 
@@ -222,7 +222,7 @@ public class  RequestTypeItemStatusWhiteListTests {
     "Recall",
     "Page"
   })
-  public void cannotCreateRequestWhenItemIsUnavailable(String requestType) {
+  void cannotCreateRequestWhenItemIsUnavailable(String requestType) {
     assertFalse(canCreateRequestForItem(UNAVAILABLE, from(requestType)));
   }
 
@@ -233,7 +233,7 @@ public class  RequestTypeItemStatusWhiteListTests {
     "Recall",
     "Page"
   })
-  public void cannotCreateRequestWhenItemIsUnknown(String requestType) {
+  void cannotCreateRequestWhenItemIsUnknown(String requestType) {
     assertFalse(canCreateRequestForItem(UNKNOWN, from(requestType)));
   }
 }

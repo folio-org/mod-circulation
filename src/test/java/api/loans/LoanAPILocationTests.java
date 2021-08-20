@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
 import api.support.APITests;
 import io.vertx.core.json.JsonObject;
 
-public class LoanAPILocationTests extends APITests {
+class LoanAPILocationTests extends APITests {
   @Test
   void locationIsIncludedForSingleLoan() {
 

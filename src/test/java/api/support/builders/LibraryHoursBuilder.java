@@ -6,7 +6,7 @@ import io.vertx.core.json.JsonObject;
 import java.util.List;
 import java.util.stream.Collector;
 
-public class LibraryHoursBuilder extends JsonBuilder implements Builder {
+class LibraryHoursBuilder extends JsonBuilder implements Builder {
 
   private static final String OPENING_PERIODS_KEY = "openingPeriods";
   private static final String TOTAL_RECORDS_KEY = "totalRecords";

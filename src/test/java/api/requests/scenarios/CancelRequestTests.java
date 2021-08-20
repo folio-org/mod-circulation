@@ -32,7 +32,7 @@ import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 
-public class CancelRequestTests extends APITests {
+class CancelRequestTests extends APITests {
   @Test
   void canCancelRequest() {
 

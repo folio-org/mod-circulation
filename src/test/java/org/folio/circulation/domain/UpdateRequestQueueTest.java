@@ -34,7 +34,7 @@ import org.junit.jupiter.api.Test;
 import api.support.builders.RequestBuilder;
 import io.vertx.core.json.JsonObject;
 
-public class UpdateRequestQueueTest {
+class UpdateRequestQueueTest {
 
   private final Response serverErrorBatchResponse =
     new Response(500, "Server Error", "text/plain");

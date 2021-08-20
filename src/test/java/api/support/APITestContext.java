@@ -27,7 +27,7 @@ import api.support.http.OkapiHeaders;
 import api.support.http.URLHelper;
 import io.vertx.core.Vertx;
 
-public class APITestContext {
+class APITestContext {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   private static final String TENANT_ID = "test_tenant";

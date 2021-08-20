@@ -18,7 +18,7 @@ import api.support.builders.FixedDueDateSchedulesBuilder;
 import api.support.builders.LoanBuilder;
 import api.support.builders.LoanPolicyBuilder;
 
-public class FixedLoanPolicyCheckOutDueDateCalculationTests {
+class FixedLoanPolicyCheckOutDueDateCalculationTests {
   @Test
   void shouldUseOnlyScheduleAvailableWhenLoanDateFits() {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()

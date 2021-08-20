@@ -19,7 +19,7 @@ import org.junit.jupiter.api.Test;
 import api.support.APITests;
 import api.support.builders.RequestBuilder;
 
-public class SingleClosedRequestTests extends APITests {
+class SingleClosedRequestTests extends APITests {
   @Test
   void closedRequestDoesNotStopCheckOutToRequester() {
 

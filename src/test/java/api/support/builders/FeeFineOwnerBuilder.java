@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
-public class FeeFineOwnerBuilder extends JsonBuilder implements Builder {
+class FeeFineOwnerBuilder extends JsonBuilder implements Builder {
   private final UUID id;
   private final String owner;
   private final String desc;

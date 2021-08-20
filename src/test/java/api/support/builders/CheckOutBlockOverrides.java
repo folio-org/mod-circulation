@@ -8,7 +8,7 @@ import lombok.With;
 @NoArgsConstructor(force = true)
 @AllArgsConstructor
 @With
-public class CheckOutBlockOverrides extends JsonBuilder implements Builder {
+class CheckOutBlockOverrides extends JsonBuilder implements Builder {
   private final JsonObject itemNotLoanableBlockOverride;
   private final JsonObject patronBlockOverride;
   private final JsonObject itemLimitBlockOverride;

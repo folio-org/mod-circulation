@@ -7,7 +7,7 @@ import org.joda.time.DateTime;
 
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
-public class UserManualBlockBuilder extends JsonBuilder implements Builder {
+class UserManualBlockBuilder extends JsonBuilder implements Builder {
 
   private final UUID id;
   private final String type;

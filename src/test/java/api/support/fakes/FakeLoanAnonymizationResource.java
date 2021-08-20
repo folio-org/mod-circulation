@@ -16,7 +16,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 
-public class FakeLoanAnonymizationResource implements Handler<RoutingContext> {
+class FakeLoanAnonymizationResource implements Handler<RoutingContext> {
   @Override
   public void handle(RoutingContext routingContext) {
     routingContext.request().bodyHandler(body -> {

@@ -27,7 +27,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import io.vertx.core.json.JsonObject;
 
 @ExtendWith(MockitoExtension.class)
-public class LogCheckInServiceTest {
+class LogCheckInServiceTest {
   @Mock
   private Clients clients;
   @Mock

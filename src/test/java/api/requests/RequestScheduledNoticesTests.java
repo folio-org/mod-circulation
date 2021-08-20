@@ -36,7 +36,7 @@ import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 
-public class RequestScheduledNoticesTests extends APITests {
+class RequestScheduledNoticesTests extends APITests {
   private final UUID templateId = UUID.randomUUID();
   private ItemResource item;
   private IndividualResource requester;

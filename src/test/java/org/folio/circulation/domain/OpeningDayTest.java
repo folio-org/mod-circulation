@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test;
 import api.support.OpeningPeriod;
 import io.vertx.core.json.JsonObject;
 
-public class OpeningDayTest {
+class OpeningDayTest {
 
   @Test
   void getOpeningDayFromOpeningPeriodJsonTest() {

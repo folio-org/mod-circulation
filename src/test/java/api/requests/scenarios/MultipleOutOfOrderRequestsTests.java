@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import api.support.APITests;
 import api.support.http.IndividualResource;
 
-public class MultipleOutOfOrderRequestsTests extends APITests {
+class MultipleOutOfOrderRequestsTests extends APITests {
   @Disabled("Disabled since introducing position in queue, " +
     "need to decide if will support this, in the interim before allowing changing of position")
   @Test

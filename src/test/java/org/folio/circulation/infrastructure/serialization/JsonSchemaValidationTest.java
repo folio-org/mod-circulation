@@ -23,7 +23,7 @@ import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.RequestBuilder;
 import io.vertx.core.json.JsonObject;
 
-public class JsonSchemaValidationTest {
+class JsonSchemaValidationTest {
   @Test
   void validationSucceedWithCompleteExample() throws IOException {
     final JsonSchemaValidator validator = JsonSchemaValidator

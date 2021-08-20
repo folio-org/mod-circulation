@@ -18,7 +18,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
-public class ItemStatusValidatorTest {
+class ItemStatusValidatorTest {
 
   @ParameterizedTest
   @ValueSource(strings = {
@@ -28,7 +28,7 @@ public class ItemStatusValidatorTest {
     "Unavailable",
     "Unknown"
   })
-  public void canCheckOutItemInAllowedStatus(String itemStatus) {
+  void canCheckOutItemInAllowedStatus(String itemStatus) {
     val validator = new ItemStatusValidator(this::validationError);
 
     val validationResult  = validator
@@ -45,7 +45,7 @@ public class ItemStatusValidatorTest {
     "Aged to lost",
     "Intellectual item"
   })
-  public void cannotCheckOutItemInDisallowedStatus(String itemStatus) {
+  void cannotCheckOutItemInDisallowedStatus(String itemStatus) {
     val validator = new ItemStatusValidator(this::validationError);
 
     val validationResult  = validator
@@ -61,7 +61,7 @@ public class ItemStatusValidatorTest {
     "Claimed returned",
     "Aged to lost"
   })
-  public void cannotChangeDueDateForItemInDisallowedStatus(String itemStatus) {
+  void cannotChangeDueDateForItemInDisallowedStatus(String itemStatus) {
     val validator = new ItemStatusValidator(this::validationError);
 
     val validationResult  = validator

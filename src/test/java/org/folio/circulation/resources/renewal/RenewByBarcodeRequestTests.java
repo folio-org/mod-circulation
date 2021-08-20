@@ -8,7 +8,7 @@ import static api.support.matchers.FailureMatchers.errorResultFor;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class RenewByBarcodeRequestTests {
+class RenewByBarcodeRequestTests {
   @Test
   void propertiesAreReadFromJson() {
     final Result<RenewByBarcodeRequest> request = RenewByBarcodeRequest.renewalRequestFrom(

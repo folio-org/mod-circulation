@@ -15,7 +15,7 @@ import api.support.APITests;
 import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 
-public class LoanAPITitleTests extends APITests {
+class LoanAPITitleTests extends APITests {
 
   @Test
   void titleIsFromInstanceWhenHoldingAndInstanceAreAvailable() {

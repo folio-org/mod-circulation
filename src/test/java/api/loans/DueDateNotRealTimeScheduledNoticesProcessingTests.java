@@ -39,7 +39,7 @@ import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
-public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests {
+class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests {
   private final static UUID TEMPLATE_ID = UUID.randomUUID();
 
   @BeforeEach

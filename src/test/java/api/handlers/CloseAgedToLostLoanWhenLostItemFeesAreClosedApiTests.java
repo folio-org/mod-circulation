@@ -17,7 +17,7 @@ import api.support.builders.ItemBuilder;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
-public class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends APITests {
+class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends APITests {
   private IndividualResource loan;
   private IndividualResource item;
 

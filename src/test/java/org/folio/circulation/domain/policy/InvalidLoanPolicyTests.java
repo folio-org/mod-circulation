@@ -21,7 +21,7 @@ import api.support.builders.LoanBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import io.vertx.core.json.JsonObject;
 
-public class InvalidLoanPolicyTests {
+class InvalidLoanPolicyTests {
   @Test
   void shouldFailCheckOutCalculationWhenNoLoanPolicyProvided() {
     final JsonObject representation = new LoanPolicyBuilder()

@@ -7,7 +7,7 @@ import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
 import org.joda.time.LocalTime;
 
-public class OpeningPeriod {
+class OpeningPeriod {
   private static final String OPENING_DAY_KEY = "openingDay";
   private static final String DATE_KEY = "date";
 

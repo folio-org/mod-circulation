@@ -26,7 +26,7 @@ import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.http.OkapiHeaders;
 import io.vertx.core.json.JsonObject;
 
-public class ItemLastCheckInTests extends APITests {
+class ItemLastCheckInTests extends APITests {
 
   private static final DateTime fixedCheckInDateTime = new DateTime(2019, 4, 3, 2, 10, UTC);
 

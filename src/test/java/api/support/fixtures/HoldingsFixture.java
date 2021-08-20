@@ -6,7 +6,7 @@ import api.support.builders.HoldingBuilder;
 import api.support.http.IndividualResource;
 import api.support.http.ResourceClient;
 
-public class HoldingsFixture {
+class HoldingsFixture {
   private final ResourceClient holdingsClient;
 
   public HoldingsFixture() {

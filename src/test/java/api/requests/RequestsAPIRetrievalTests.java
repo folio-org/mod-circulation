@@ -45,7 +45,7 @@ import api.support.http.ItemResource;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
-public class RequestsAPIRetrievalTests extends APITests {
+class RequestsAPIRetrievalTests extends APITests {
   private static final String NEW_TAG = "new";
   private static final String IMPORTANT_TAG = "important";
   private static final String ONE_COPY_NUMBER = "1";

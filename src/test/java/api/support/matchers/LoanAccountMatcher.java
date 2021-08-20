@@ -17,7 +17,7 @@ import api.support.MultipleJsonRecords;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
 
-public class LoanAccountMatcher extends TypeSafeMatcher<IndividualResource> {
+class LoanAccountMatcher extends TypeSafeMatcher<IndividualResource> {
   private final ResourceClient accountsClient;
   private final String feeFineType;
   private final Matcher<Iterable<JsonObject>> accountsMatcher;

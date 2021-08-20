@@ -17,7 +17,7 @@ import api.support.builders.ServicePointBuilder;
 import api.support.builders.UserBuilder;
 import io.vertx.core.json.JsonObject;
 
-public class RequestRepresentationTests {
+class RequestRepresentationTests {
   private static final UUID REQUEST_ID = UUID.randomUUID();
   private static final UUID ITEM_ID = UUID.randomUUID();
   private static final UUID ADDRESS_ID = UUID.randomUUID();

@@ -8,7 +8,7 @@ import org.folio.circulation.support.http.client.Response;
 import api.support.RestAssuredClient;
 import io.vertx.core.json.JsonObject;
 
-public class RequestQueueFixture {
+class RequestQueueFixture {
   private final RestAssuredClient restAssuredClient;
 
   public RequestQueueFixture(RestAssuredClient restAssuredClient) {

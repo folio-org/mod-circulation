@@ -7,7 +7,7 @@ import java.util.UUID;
 
 import api.support.APITestContext;
 
-public class InterfaceUrls {
+class InterfaceUrls {
   static URL materialTypesStorageUrl(String subPath) {
     return APITestContext.viaOkapiModuleUrl("/material-types" + subPath);
   }

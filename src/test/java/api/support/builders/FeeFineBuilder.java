@@ -6,7 +6,7 @@ import java.util.UUID;
 
 import io.vertx.core.json.JsonObject;
 
-public class FeeFineBuilder extends JsonBuilder implements Builder {
+class FeeFineBuilder extends JsonBuilder implements Builder {
   private final UUID id;
   private final UUID ownerId;
   private final String feeFineType;

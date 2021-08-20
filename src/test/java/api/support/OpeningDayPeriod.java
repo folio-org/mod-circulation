@@ -4,7 +4,7 @@ import org.folio.circulation.domain.OpeningDay;
 
 import io.vertx.core.json.JsonObject;
 
-public class OpeningDayPeriod {
+class OpeningDayPeriod {
   private static final String OPENING_DAY_KEY = "openingDay";
 
   private final OpeningDay openingDay;

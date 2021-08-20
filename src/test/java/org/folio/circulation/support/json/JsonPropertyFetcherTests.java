@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import io.vertx.core.json.JsonObject;
 
-public class JsonPropertyFetcherTests {
+class JsonPropertyFetcherTests {
   @Test
   void shouldReturnDateTimePropertyByPath() {
     final String[] paths = {"1", "2", "3", "4", "5"};

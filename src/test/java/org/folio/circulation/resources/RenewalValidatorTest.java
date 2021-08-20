@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
-public class RenewalValidatorTest {
+class RenewalValidatorTest {
   @Test
   void shouldDisallowRenewalWhenDueDateIsEarlierOrSame() {
     val dueDate = now(UTC);

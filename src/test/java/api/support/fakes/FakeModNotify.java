@@ -12,7 +12,7 @@ import io.vertx.ext.web.Router;
 import lombok.Getter;
 import lombok.Setter;
 
-public class FakeModNotify {
+class FakeModNotify {
   @Getter
   private static final List<JsonObject> sentPatronNotices = new ArrayList<>();
 

@@ -102,7 +102,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
-public class CheckOutByBarcodeTests extends APITests {
+class CheckOutByBarcodeTests extends APITests {
   private static final DateTime TEST_LOAN_DATE =
     new DateTime(2019, 4, 10, 11, 35, 48, DateTimeZone.UTC);
   private static final DateTime TEST_DUE_DATE =

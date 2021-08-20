@@ -13,7 +13,7 @@ import org.joda.time.LocalDate;
 import api.support.OpeningPeriod;
 import api.support.builders.OpeningPeriodsBuilder;
 
-public class OpeningPeriodsExamples {
+class OpeningPeriodsExamples {
   public static OpeningPeriodsBuilder oneDayPeriod() {
     return new OpeningPeriodsBuilder(Arrays.asList(
       new OpeningPeriod(new DateTime(2020, 1, 22, 0, 0, 0, UTC).toLocalDate(),

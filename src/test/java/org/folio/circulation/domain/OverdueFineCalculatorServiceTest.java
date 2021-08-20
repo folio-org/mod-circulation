@@ -57,7 +57,7 @@ import api.support.builders.OverdueFinePolicyBuilder;
 import api.support.builders.UserBuilder;
 import io.vertx.core.json.JsonObject;
 
-public class OverdueFineCalculatorServiceTest {
+class OverdueFineCalculatorServiceTest {
   private static final UUID LOAN_ID = UUID.randomUUID();
   private static final UUID LOAN_USER_ID = UUID.randomUUID();
   private static final DateTime DUE_DATE = new DateTime(2020, 1, 1, 0, 0, 0, DateTimeZone.UTC);
@@ -130,7 +130,7 @@ public class OverdueFineCalculatorServiceTest {
 
   @ParameterizedTest
   @MethodSource("testParameters")
-  public void shouldNotCreateFeeFineRecordWhenLoanIsNotProvided(
+  void shouldNotCreateFeeFineRecordWhenLoanIsNotProvided(
       Boolean renewal, Boolean dueDateChangedByRecall, Double overdueFine, String overdueFineInterval,
       Double maxOverdueFine, Double overdueRecallFine, String overdueRecallFineInterval,
       Double maxOverdueRecallFine, Integer periodCalculatorResult, Double correctOverdueFine)
@@ -154,7 +154,7 @@ public class OverdueFineCalculatorServiceTest {
 
   @ParameterizedTest
   @MethodSource("testParameters")
-  public void shouldCreateFeeFineRecordWhenAmountIsPositive(
+  void shouldCreateFeeFineRecordWhenAmountIsPositive(
       Boolean renewal, Boolean dueDateChangedByRecall, Double overdueFine, String overdueFineInterval,
       Double maxOverdueFine, Double overdueRecallFine, String overdueRecallFineInterval,
       Double maxOverdueRecallFine, Integer periodCalculatorResult, Double correctOverdueFine)
@@ -234,7 +234,7 @@ public class OverdueFineCalculatorServiceTest {
 
   @ParameterizedTest
   @MethodSource("testParameters")
-  public void shouldNotCreateFeeFineRecordWhenAmountIsNotPositive(
+  void shouldNotCreateFeeFineRecordWhenAmountIsNotPositive(
       Boolean renewal, Boolean dueDateChangedByRecall, Double overdueFine, String overdueFineInterval,
       Double maxOverdueFine, Double overdueRecallFine, String overdueRecallFineInterval,
       Double maxOverdueRecallFine, Integer periodCalculatorResult, Double correctOverdueFine)
@@ -267,7 +267,7 @@ public class OverdueFineCalculatorServiceTest {
 
   @ParameterizedTest
   @MethodSource("testParameters")
-  public void shouldNotCreateFeeFineRecordWhenItemDoesNotExist(
+  void shouldNotCreateFeeFineRecordWhenItemDoesNotExist(
       Boolean renewal, Boolean dueDateChangedByRecall, Double overdueFine, String overdueFineInterval,
       Double maxOverdueFine, Double overdueRecallFine, String overdueRecallFineInterval,
       Double maxOverdueRecallFine, Integer periodCalculatorResult, Double correctOverdueFine)
@@ -307,7 +307,7 @@ public class OverdueFineCalculatorServiceTest {
 
   @ParameterizedTest
   @MethodSource("testParameters")
-  public void shouldNotCreateFeeFineRecordWhenOwnerDoesNotExist(
+  void shouldNotCreateFeeFineRecordWhenOwnerDoesNotExist(
       Boolean renewal, Boolean dueDateChangedByRecall, Double overdueFine, String overdueFineInterval,
       Double maxOverdueFine, Double overdueRecallFine, String overdueRecallFineInterval,
       Double maxOverdueRecallFine, Integer periodCalculatorResult, Double correctOverdueFine)
@@ -345,7 +345,7 @@ public class OverdueFineCalculatorServiceTest {
 
   @ParameterizedTest
   @MethodSource("testParameters")
-  public void shouldNotCreateFeeFineRecordWhenFeeFineDoesNotExist(
+  void shouldNotCreateFeeFineRecordWhenFeeFineDoesNotExist(
       Boolean renewal, Boolean dueDateChangedByRecall, Double overdueFine, String overdueFineInterval,
       Double maxOverdueFine, Double overdueRecallFine, String overdueRecallFineInterval,
       Double maxOverdueRecallFine, Integer periodCalculatorResult, Double correctOverdueFine)
@@ -385,7 +385,7 @@ public class OverdueFineCalculatorServiceTest {
 
   @ParameterizedTest
   @MethodSource("testParameters")
-  public void shouldNotCreateFeeFineRecordWhenOverduePolicyDoesNotExist(
+  void shouldNotCreateFeeFineRecordWhenOverduePolicyDoesNotExist(
       Boolean renewal, Boolean dueDateChangedByRecall, Double overdueFine, String overdueFineInterval,
       Double maxOverdueFine, Double overdueRecallFine, String overdueRecallFineInterval,
       Double maxOverdueRecallFine, Integer periodCalculatorResult, Double correctOverdueFine)
@@ -420,7 +420,7 @@ public class OverdueFineCalculatorServiceTest {
 
   @ParameterizedTest
   @MethodSource("testParameters")
-  public void shouldNotCreateFeeFineRecordWhenLoanIsNull(
+  void shouldNotCreateFeeFineRecordWhenLoanIsNull(
       Boolean renewal, Boolean dueDateChangedByRecall, Double overdueFine, String overdueFineInterval,
       Double maxOverdueFine, Double overdueRecallFine, String overdueRecallFineInterval,
       Double maxOverdueRecallFine, Integer periodCalculatorResult, Double correctOverdueFine)
@@ -448,7 +448,7 @@ public class OverdueFineCalculatorServiceTest {
 
   @ParameterizedTest
   @MethodSource("testParameters")
-  public void shouldNotCreateFeeFineWhenLoanIsNotOverdue(
+  void shouldNotCreateFeeFineWhenLoanIsNotOverdue(
       Boolean renewal, Boolean dueDateChangedByRecall, Double overdueFine, String overdueFineInterval,
       Double maxOverdueFine, Double overdueRecallFine, String overdueRecallFineInterval,
       Double maxOverdueRecallFine, Integer periodCalculatorResult, Double correctOverdueFine)
@@ -481,7 +481,7 @@ public class OverdueFineCalculatorServiceTest {
 
   @ParameterizedTest
   @MethodSource("testParameters")
-  public void shouldNotCreateFeeFineForRenewalWhenShouldForgiveOverdueFine(
+  void shouldNotCreateFeeFineForRenewalWhenShouldForgiveOverdueFine(
       Boolean renewal, Boolean dueDateChangedByRecall, Double overdueFine, String overdueFineInterval,
       Double maxOverdueFine, Double overdueRecallFine, String overdueRecallFineInterval,
       Double maxOverdueRecallFine, Integer periodCalculatorResult, Double correctOverdueFine)
@@ -510,7 +510,7 @@ public class OverdueFineCalculatorServiceTest {
 
   @ParameterizedTest
   @MethodSource("testParameters")
-  public void shouldDeleteOverdueNoticesWhenFeeFineRecordCreated(
+  void shouldDeleteOverdueNoticesWhenFeeFineRecordCreated(
       Boolean renewal, Boolean dueDateChangedByRecall, Double overdueFine, String overdueFineInterval,
       Double maxOverdueFine, Double overdueRecallFine, String overdueRecallFineInterval,
       Double maxOverdueRecallFine, Integer periodCalculatorResult, Double correctOverdueFine)

@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import io.vertx.core.json.JsonObject;
 
-public class RequestByInstanceIdRequestTests {
+class RequestByInstanceIdRequestTests {
 
   private static final String REQUEST_DATE = "requestDate";
   private static final String REQUESTER_ID = "requesterId";

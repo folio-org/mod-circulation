@@ -8,7 +8,7 @@ import org.hamcrest.collection.IsMapContaining;
 
 import java.util.Map;
 
-public class RequestItemMatcher extends ValidationErrorMatchers {
+class RequestItemMatcher extends ValidationErrorMatchers {
 
   public static TypeSafeDiagnosingMatcher<JsonObject> hasItemLocationProperties(
     Matcher<Map<String, String>> matcher) {

@@ -22,7 +22,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
-public class ChangeDueDateValidatorTest {
+class ChangeDueDateValidatorTest {
   private ChangeDueDateValidator changeDueDateValidator;
 
   @BeforeEach
@@ -36,7 +36,7 @@ public class ChangeDueDateValidatorTest {
     "Claimed returned",
     "Aged to lost"
   })
-  public void cannotChangeDueDateForItemInDisallowedStatus(String itemStatus) {
+  void cannotChangeDueDateForItemInDisallowedStatus(String itemStatus) {
     val validationResult  = changeDueDateValidator
       .refuseChangeDueDateForItemInDisallowedStatus(loanAndRelatedRecords(itemStatus))
       .getNow(failed(new ServerErrorFailure("timed out")));
@@ -51,7 +51,7 @@ public class ChangeDueDateValidatorTest {
     "Claimed returned",
     "Aged to lost"
   })
-  public void canChangeLoanWhenDueDateIsNotChanged(String itemStatus) {
+  void canChangeLoanWhenDueDateIsNotChanged(String itemStatus) {
     val existingLoan = createLoan(itemStatus, DateTime.now());
 
     changeDueDateValidator = new ChangeDueDateValidator();

@@ -8,7 +8,7 @@ import org.joda.time.DateTime;
 import api.support.builders.ProxyRelationshipBuilder;
 import api.support.http.ResourceClient;
 
-public class ProxyRelationshipsFixture {
+class ProxyRelationshipsFixture {
   private final ResourceClient proxyRelationshipsClient;
 
   public ProxyRelationshipsFixture(ResourceClient proxyRelationshipsClient) {

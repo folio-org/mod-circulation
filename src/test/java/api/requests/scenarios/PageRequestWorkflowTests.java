@@ -23,7 +23,7 @@ import org.junit.jupiter.api.Test;
 import api.support.APITests;
 import api.support.builders.RequestBuilder;
 
-public class PageRequestWorkflowTests extends APITests {
+class PageRequestWorkflowTests extends APITests {
   @Test
   void canBeFulfilledWithoutPriorCheckIn() {
 

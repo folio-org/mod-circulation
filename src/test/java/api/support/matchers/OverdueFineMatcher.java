@@ -17,7 +17,7 @@ import org.hamcrest.Matcher;
 
 import io.vertx.core.json.JsonObject;
 
-public class OverdueFineMatcher {
+class OverdueFineMatcher {
 
   public static Matcher<JsonObject> isValidOverdueFine(JsonObject loan,
     IndividualResource item, String location, UUID ownerId, UUID feeFineId, Double amount) {

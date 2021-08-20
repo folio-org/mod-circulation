@@ -20,7 +20,7 @@ import api.support.APITests;
 import io.vertx.core.json.JsonObject;
 
 //TODO: Maybe move these tests to scenarios which better describe the situation
-public class RequestQueueTests extends APITests {
+class RequestQueueTests extends APITests {
   @Test
   void fulfilledRequestShouldBeRemovedFromQueue() {
 

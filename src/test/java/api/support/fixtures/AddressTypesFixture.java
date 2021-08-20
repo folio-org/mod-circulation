@@ -10,7 +10,7 @@ import api.support.http.IndividualResource;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
 
-public class AddressTypesFixture {
+class AddressTypesFixture {
   private final RecordCreator addressTypeRecordCreator;
 
   public AddressTypesFixture(ResourceClient addressTypesClient) {

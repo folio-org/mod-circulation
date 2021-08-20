@@ -93,7 +93,7 @@ import api.support.http.UserResource;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
-public class CheckInByBarcodeTests extends APITests {
+class CheckInByBarcodeTests extends APITests {
   @Test
   void canCloseAnOpenLoanByCheckingInTheItem() {
     final IndividualResource james = usersFixture.james();

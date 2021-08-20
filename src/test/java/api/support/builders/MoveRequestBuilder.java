@@ -4,7 +4,7 @@ import java.util.UUID;
 
 import io.vertx.core.json.JsonObject;
 
-public class MoveRequestBuilder extends JsonBuilder implements Builder {
+class MoveRequestBuilder extends JsonBuilder implements Builder {
 
   private final UUID id;
   private final UUID destinationItemId;

@@ -36,7 +36,7 @@ import api.support.builders.RequestBuilder;
 import io.vertx.core.json.JsonObject;
 
 @ExtendWith(MockitoExtension.class)
-public class RegularRenewalTest {
+class RegularRenewalTest {
 
   private static final String ITEMS_CANNOT_BE_RENEWED_WHEN_THERE_IS_AN_ACTIVE_RECALL_REQUEST =
     "items cannot be renewed when there is an active recall request";
@@ -177,7 +177,7 @@ public class RegularRenewalTest {
     "Aged to lost",
     "Claimed returned",
   })
-  public void cannotRenewItemsWithDisallowedStatuses(String itemStatus) {
+  void cannotRenewItemsWithDisallowedStatuses(String itemStatus) {
     final var loanPolicy = new LoanPolicyBuilder().asDomainObject();
     final var loan = new LoanBuilder().asDomainObject()
       .withLoanPolicy(loanPolicy)

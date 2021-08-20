@@ -23,7 +23,7 @@ import api.support.builders.LocationBuilder;
 import api.support.fixtures.ItemExamples;
 import io.vertx.core.json.JsonObject;
 
-public class RequestByInstanceIdResourceTests extends APITests {
+class RequestByInstanceIdResourceTests extends APITests {
 
   @Test
   void canGetOrderedAvailableItemsList() {

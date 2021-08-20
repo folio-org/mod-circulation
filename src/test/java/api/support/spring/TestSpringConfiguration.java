@@ -27,7 +27,7 @@ import io.vertx.core.json.JsonObject;
 
 @Configuration
 @SuppressWarnings("unused")
-public class TestSpringConfiguration {
+class TestSpringConfiguration {
   @Bean
   public RestAssuredClient restAssuredClient(RestAssuredConfig config) {
     return new RestAssuredClient(getOkapiHeadersFromContext(), config);

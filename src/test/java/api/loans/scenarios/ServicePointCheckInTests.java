@@ -33,7 +33,7 @@ import api.support.matchers.JsonObjectMatcher;
 import api.support.matchers.TextDateTimeMatcher;
 import io.vertx.core.json.JsonObject;
 
-public class ServicePointCheckInTests extends APITests {
+class ServicePointCheckInTests extends APITests {
   @Test
   void isPlacedAwaitingPickupWhenCheckedInAtPickupServicePoint() {
     final IndividualResource checkInServicePoint = servicePointsFixture.cd1();

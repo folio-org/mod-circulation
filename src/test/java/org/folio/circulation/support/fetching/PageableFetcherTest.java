@@ -29,7 +29,7 @@ import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.results.Result;
 import org.junit.jupiter.api.Test;
 
-public class PageableFetcherTest {
+class PageableFetcherTest {
   @Test
   void shouldProcessPages() {
     final var pageSize = limit(10);

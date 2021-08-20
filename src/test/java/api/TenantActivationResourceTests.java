@@ -30,7 +30,7 @@ import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 
-public class TenantActivationResourceTests extends APITests {
+class TenantActivationResourceTests extends APITests {
 
   @BeforeEach
   public void init() {

@@ -4,7 +4,7 @@ import java.util.UUID;
 
 import api.support.builders.InstanceBuilder;
 
-public class InstanceExamples {
+class InstanceExamples {
   public static InstanceBuilder basedUponSmallAngryPlanet(
     UUID booksInstanceTypeId,
     UUID personalContributorNameTypeId) {
@@ -41,7 +41,7 @@ public class InstanceExamples {
   static InstanceBuilder basedUponInterestingTimes(
     UUID booksInstanceTypeId,
     UUID personalContributorNameTypeId) {
-    
+
     return new InstanceBuilder("Interesting Times", booksInstanceTypeId)
       .withContributor("Pratchett, Terry", personalContributorNameTypeId);
   }

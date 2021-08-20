@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import lombok.val;
 
-public class GeneralNoteTypeValidatorTests {
+class GeneralNoteTypeValidatorTests {
   @Test
   void allowSingleNoteType() {
     val validator = new GeneralNoteTypeValidator();

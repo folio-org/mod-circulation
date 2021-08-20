@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import api.support.APITests;
 import api.support.builders.RequestBuilder;
 
-public class RequestsAPICreateMultipleRequestsTests extends APITests {
+class RequestsAPICreateMultipleRequestsTests extends APITests {
 
   @Test
   void canCreateMultipleRequestsOfSameTypeForSameItem() {

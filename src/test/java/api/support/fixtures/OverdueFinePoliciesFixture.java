@@ -11,7 +11,7 @@ import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.OverdueFinePolicyBuilder;
 import io.vertx.core.json.JsonObject;
 
-public class OverdueFinePoliciesFixture {
+class OverdueFinePoliciesFixture {
   private final RecordCreator overdueFinePolicyRecordCreator;
 
   public OverdueFinePoliciesFixture() {

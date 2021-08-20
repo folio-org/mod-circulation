@@ -5,7 +5,7 @@ import org.joda.time.DateTime;
 
 import java.util.UUID;
 
-public class ProxyRelationshipBuilder implements Builder {
+class ProxyRelationshipBuilder implements Builder {
 
   private UUID id;
   private String userId;

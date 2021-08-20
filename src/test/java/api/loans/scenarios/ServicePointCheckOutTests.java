@@ -20,7 +20,7 @@ import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
 
-public class ServicePointCheckOutTests extends APITests {
+class ServicePointCheckOutTests extends APITests {
   @Test
   void isInTransitWhenCheckedOutAtNonPickupServicePoint() {
     final IndividualResource checkInServicePoint = servicePointsFixture.cd1();

@@ -18,7 +18,7 @@ import api.support.builders.LoanBuilder;
 import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
 
-public class LoanAPIProxyTests extends APITests {
+class LoanAPIProxyTests extends APITests {
   @Test
   void canCreateProxiedLoanWhenCurrentActiveRelationship() {
     UUID id = UUID.randomUUID();

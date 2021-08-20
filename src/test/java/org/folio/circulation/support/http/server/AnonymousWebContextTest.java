@@ -14,7 +14,7 @@ import io.vertx.core.http.HttpServerRequest;
 import io.vertx.ext.web.RoutingContext;
 
 @ExtendWith(MockitoExtension.class)
-public class AnonymousWebContextTest {
+class AnonymousWebContextTest {
   @Mock
   private RoutingContext routingContext;
   @Mock

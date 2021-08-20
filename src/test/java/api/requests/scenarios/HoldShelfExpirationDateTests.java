@@ -40,7 +40,7 @@ import api.support.fixtures.ConfigurationExample;
 import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
 
-public class HoldShelfExpirationDateTests extends APITests{
+class HoldShelfExpirationDateTests extends APITests{
   private static Clock clock;
 
   @BeforeAll
@@ -60,7 +60,7 @@ public class HoldShelfExpirationDateTests extends APITests{
     "cd5,MINUTES,42",
     "cd6,HOURS,9"
   })
-  public void requestWithShelfExpirationDateForSpExpiryInHoursAndMinutes(
+  void requestWithShelfExpirationDateForSpExpiryInHoursAndMinutes(
     String servicePoint, ChronoUnit interval, int amount) {
 
     final IndividualResource checkInServicePoint;
@@ -102,7 +102,7 @@ public class HoldShelfExpirationDateTests extends APITests{
     "cd2,MONTHS,6",
     "cd4,WEEKS,2"
   })
-  public void requestWithShelfExpirationDateForSpExpiryInDaysWeeksMonths(
+  void requestWithShelfExpirationDateForSpExpiryInDaysWeeksMonths(
     String servicePoint, ChronoUnit interval, int amount) {
 
     final IndividualResource checkInServicePoint;

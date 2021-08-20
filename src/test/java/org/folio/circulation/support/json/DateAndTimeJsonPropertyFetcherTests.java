@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import io.vertx.core.json.JsonObject;
 
-public class DateAndTimeJsonPropertyFetcherTests {
+class DateAndTimeJsonPropertyFetcherTests {
   @Test
   void shouldReturnCorrectDateAndTimeWhenPropertyIsPresent() {
     final var json = new JsonObject();

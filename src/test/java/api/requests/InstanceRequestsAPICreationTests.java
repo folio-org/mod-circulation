@@ -31,7 +31,7 @@ import api.support.builders.RequestByInstanceIdRequestBuilder;
 import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
 
-public class InstanceRequestsAPICreationTests extends APITests {
+class InstanceRequestsAPICreationTests extends APITests {
   @Test
   void canCreateATitleLevelRequestForMultipleAvailableItemsAndAMatchingPickupLocationId() {
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();

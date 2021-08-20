@@ -18,7 +18,7 @@ import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.OverdueFinePolicyBuilder;
 import io.vertx.core.json.JsonObject;
 
-public class CirculationRulesAPITests extends APITests {
+class CirculationRulesAPITests extends APITests {
 
   private static final String CIRCULATION_RULE_TEMPLATE =
     "priority: t, s, c, b, a, m, g\nfallback-policy: l %s r %s n %s o %s i %s \n";

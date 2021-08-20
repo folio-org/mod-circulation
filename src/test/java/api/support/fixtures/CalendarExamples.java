@@ -21,7 +21,7 @@ import api.support.builders.CalendarBuilder;
 import api.support.builders.OpeningDayPeriodBuilder;
 import io.vertx.core.MultiMap;
 
-public class CalendarExamples {
+class CalendarExamples {
   public static final String ROLLOVER_SCENARIO_SERVICE_POINT_ID = "22211111-2f09-4bc9-8924-3734882d44a3";
   public static final String ROLLOVER_SCENARIO_NEXT_DAY_CLOSED_SERVICE_POINT_ID = "33311111-2f09-4bc9-8924-3734882d44a3";
 

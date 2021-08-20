@@ -23,7 +23,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 
 import api.support.builders.LostItemFeePolicyBuilder;
 
-public class LostItemPolicyTest {
+class LostItemPolicyTest {
 
   @BeforeEach
   public void useDefaultClocks() {
@@ -38,7 +38,7 @@ public class LostItemPolicyTest {
     "Weeks, 23",
     "Months, 13",
   })
-  public void shouldNotAgeItemToLostIfDueDateIsInTheFuture(String interval, int duration) {
+  void shouldNotAgeItemToLostIfDueDateIsInTheFuture(String interval, int duration) {
     final Period period = from(duration, interval);
     final LostItemPolicy lostItemPolicy = lostItemPolicyWithAgePeriod(period);
 
@@ -53,7 +53,7 @@ public class LostItemPolicyTest {
     "Weeks, 1",
     "Months, 5",
   })
-  public void shouldAgeToLostIfAgeToLostPeriodHasPassedSinceDueDateAndItemNotRecalled(
+  void shouldAgeToLostIfAgeToLostPeriodHasPassedSinceDueDateAndItemNotRecalled(
     String interval, int duration) {
 
     final Period period = from(duration, interval);
@@ -72,7 +72,7 @@ public class LostItemPolicyTest {
     "Weeks, 1",
     "Months, 5",
   })
-  public void shouldAgeToLostIfAgeToLostPeriodHasPassedSinceDueDateAndItemRecalled(
+  void shouldAgeToLostIfAgeToLostPeriodHasPassedSinceDueDateAndItemRecalled(
     String interval, int duration) {
 
     final Period period = from(duration, interval);
@@ -91,7 +91,7 @@ public class LostItemPolicyTest {
     "Weeks, 2",
     "Months, 3",
   })
-  public void shouldAgeItemToLostIfAgeToLostPeriodArePassingExactlyNowSinceDueDate(
+  void shouldAgeItemToLostIfAgeToLostPeriodArePassingExactlyNowSinceDueDate(
     String interval, int duration) {
 
     final Period period = from(duration, interval);
@@ -117,7 +117,7 @@ public class LostItemPolicyTest {
     "Weeks, 2",
     "Months, 3",
   })
-  public void shouldRefundLostFeesIfPeriodHasNotPassed(String interval, int duration) {
+  void shouldRefundLostFeesIfPeriodHasNotPassed(String interval, int duration) {
     final Period period = from(duration, interval);
     final LostItemFeePolicyBuilder builder = new LostItemFeePolicyBuilder()
       .withFeeRefundInterval(period);
@@ -136,7 +136,7 @@ public class LostItemPolicyTest {
     "Weeks, 43",
     "Months, 6",
   })
-  public void shouldRefundLostFeesIfPeriodIsPassing(String interval, int duration) {
+  void shouldRefundLostFeesIfPeriodIsPassing(String interval, int duration) {
     final Period period = from(duration, interval);
     final LostItemFeePolicyBuilder builder = new LostItemFeePolicyBuilder()
       .withFeeRefundInterval(period);
@@ -158,7 +158,7 @@ public class LostItemPolicyTest {
     "Weeks, 43",
     "Months, 44",
   })
-  public void shouldNotRefundLostFeesIfPeriodHasPassed(String interval, int duration) {
+  void shouldNotRefundLostFeesIfPeriodHasPassed(String interval, int duration) {
     final Period period = from(duration, interval);
     final LostItemFeePolicyBuilder builder = new LostItemFeePolicyBuilder()
       .withFeeRefundInterval(period);

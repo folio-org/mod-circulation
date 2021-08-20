@@ -43,7 +43,7 @@ import io.vertx.core.json.JsonObject;
  * If SPID-1 is determined to be CLOSED for system-calculated due date and timestamp
  * Then the due date timestamp should be changed to the endTime of the current service point for SPID-1 (i.e., truncating the loan length)
  */
-public class CheckOutCalculateDueDateShortTermTests extends APITests {
+class CheckOutCalculateDueDateShortTermTests extends APITests {
 
   private static final String LOAN_POLICY_NAME = "Move to the end of the current service point hours";
   private static final String INTERVAL_HOURS = "Hours";

@@ -20,7 +20,7 @@ import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 
-public class SingleOpenDeliveryRequestTests extends APITests {
+class SingleOpenDeliveryRequestTests extends APITests {
 
   @Test
   void statusChangesToAwaitingDeliveryWhenItemCheckedIn() {

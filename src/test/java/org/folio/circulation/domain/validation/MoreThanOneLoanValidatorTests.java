@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test;
 
 import api.support.builders.LoanBuilder;
 
-public class MoreThanOneLoanValidatorTests {
+class MoreThanOneLoanValidatorTests {
   @Test
   void allowSingleLoan() {
     final MoreThanOneLoanValidator validator = new MoreThanOneLoanValidator(

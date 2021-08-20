@@ -14,7 +14,7 @@ import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeDiagnosingMatcher;
 import org.hamcrest.core.IsIterableContaining;
 
-public class FailureMatcher {
+class FailureMatcher {
   public static <T> Matcher<Result<T>> hasValidationFailure(String expectedReason) {
     return new TypeSafeDiagnosingMatcher<Result<T>>() {
       @Override

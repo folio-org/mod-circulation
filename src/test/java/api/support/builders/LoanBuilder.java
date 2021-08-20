@@ -13,7 +13,7 @@ import org.joda.time.Period;
 
 import io.vertx.core.json.JsonObject;
 
-public class LoanBuilder extends JsonBuilder implements Builder {
+class LoanBuilder extends JsonBuilder implements Builder {
   private final static String OPEN_LOAN_STATUS = "Open";
   private final static String CLOSED_LOAN_STATUS = "Closed";
 

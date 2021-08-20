@@ -20,7 +20,7 @@ import api.support.RestAssuredClient;
 import api.support.builders.Builder;
 import io.vertx.core.json.JsonObject;
 
-public class ResourceClient {
+class ResourceClient {
   private final RestAssuredClient restAssuredClient;
   private final UrlMaker urlMaker;
   private final String collectionArrayPropertyName;

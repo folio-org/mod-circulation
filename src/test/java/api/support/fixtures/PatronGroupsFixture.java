@@ -5,7 +5,7 @@ import api.support.http.IndividualResource;
 
 import api.support.http.ResourceClient;
 
-public class PatronGroupsFixture {
+class PatronGroupsFixture {
   private final RecordCreator patronGroupRecordCreator;
 
   public PatronGroupsFixture(ResourceClient patronGroupsClient) {

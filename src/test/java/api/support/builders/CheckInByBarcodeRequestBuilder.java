@@ -8,7 +8,7 @@ import org.joda.time.DateTimeZone;
 
 import io.vertx.core.json.JsonObject;
 
-public class CheckInByBarcodeRequestBuilder extends JsonBuilder implements Builder {
+class CheckInByBarcodeRequestBuilder extends JsonBuilder implements Builder {
   private final String itemBarcode;
   private final DateTime checkInDate;
   private final String servicePointId;

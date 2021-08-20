@@ -14,7 +14,7 @@ import api.support.builders.RequestBuilder;
 import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 
-public class RequestsAPILoanHistoryTests extends APITests {
+class RequestsAPILoanHistoryTests extends APITests {
   @Test
   void creatingRecallRequestChangesTheOpenLoanForTheSameItem() {
 

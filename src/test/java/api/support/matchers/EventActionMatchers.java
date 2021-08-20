@@ -7,7 +7,7 @@ import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.core.Is.is;
 
-public class EventActionMatchers {
+class EventActionMatchers {
   public static final String ITEM_RENEWED = "Renewed";
 
   public static Matcher<JsonObject> isItemRenewedEventAction() {

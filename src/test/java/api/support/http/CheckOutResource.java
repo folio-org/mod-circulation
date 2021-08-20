@@ -6,7 +6,7 @@ import java.time.OffsetDateTime;
 
 import org.folio.circulation.support.http.client.Response;
 
-public class CheckOutResource extends IndividualResource {
+class CheckOutResource extends IndividualResource {
   public CheckOutResource(Response response) {
     super(response);
   }

@@ -44,7 +44,7 @@ import api.support.spring.clients.ScheduledJobClient;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
-public class ScheduledAgeToLostApiTest extends SpringApiTest {
+class ScheduledAgeToLostApiTest extends SpringApiTest {
   private IndividualResource overdueLoan;
   private IndividualResource overdueItem;
   @Autowired

@@ -1,6 +1,6 @@
 package api.support.http;
 
-public class UserResource extends IndividualResource {
+class UserResource extends IndividualResource {
   public UserResource(IndividualResource resource) {
     super(resource.getResponse());
   }

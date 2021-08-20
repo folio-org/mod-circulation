@@ -60,7 +60,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
-public class LoanAPITests extends APITests {
+class LoanAPITests extends APITests {
 
   @Test
   void canCreateALoan() {

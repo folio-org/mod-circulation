@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 
 import api.support.builders.UserBuilder;
 
-public class UserTests {
+class UserTests {
   @Test
   void personalNameComesFromPersonalDetails() {
     final User activeUser = new User(new UserBuilder()

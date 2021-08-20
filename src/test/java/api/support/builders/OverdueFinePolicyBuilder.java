@@ -4,7 +4,7 @@ import java.util.UUID;
 
 import io.vertx.core.json.JsonObject;
 
-public class OverdueFinePolicyBuilder extends JsonBuilder implements Builder  {
+class OverdueFinePolicyBuilder extends JsonBuilder implements Builder  {
 
   private final UUID id;
   private final String name;

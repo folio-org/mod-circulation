@@ -32,7 +32,7 @@ import org.hamcrest.core.IsIterableContaining;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
-public class ValidationErrorMatchers {
+class ValidationErrorMatchers {
   public static TypeSafeDiagnosingMatcher<JsonObject> hasErrorWith(Matcher<ValidationError> matcher) {
     return new TypeSafeDiagnosingMatcher<JsonObject>() {
       @Override

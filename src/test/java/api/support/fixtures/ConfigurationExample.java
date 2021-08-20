@@ -5,7 +5,7 @@ import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import api.support.builders.ConfigRecordBuilder;
 import io.vertx.core.json.JsonObject;
 
-public class ConfigurationExample {
+class ConfigurationExample {
   private static final String DEFAULT_TIME_ZONE_MODULE_NAME = "ORG";
   private static final String DEFAULT_TIME_ZONE_CONFIG_NAME = "localeSettings";
   private static final String US_LOCALE = "en-US";

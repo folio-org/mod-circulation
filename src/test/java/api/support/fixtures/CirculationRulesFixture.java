@@ -27,7 +27,7 @@ import api.support.http.QueryStringParameter;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
-public class CirculationRulesFixture {
+class CirculationRulesFixture {
   private final RestAssuredClient restAssuredClient;
 
   public CirculationRulesFixture(RestAssuredClient restAssuredClient) {

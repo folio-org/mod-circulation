@@ -41,7 +41,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import io.vertx.core.json.JsonObject;
 
 @ExtendWith(MockitoExtension.class)
-public class FindMultipleRecordsByIdTests {
+class FindMultipleRecordsByIdTests {
   @Rule
   public MockitoRule mockitoRule = MockitoJUnit.rule();
 
@@ -77,7 +77,7 @@ public class FindMultipleRecordsByIdTests {
     "50",
     "30"
    })
-  public void shouldUseMultipleCqlQueriesForFindingSmallNumberOfRecordsById(
+  void shouldUseMultipleCqlQueriesForFindingSmallNumberOfRecordsById(
     int maximumValuesPerCqlQuery) {
 
     when(queryFinder.findByQuery(any(), any())).thenReturn(

@@ -14,7 +14,7 @@ import api.support.builders.ConfigRecordBuilder;
 import api.support.builders.ConfigurationBuilder;
 import io.vertx.core.json.JsonObject;
 
-public class ConfigurationServiceTest {
+class ConfigurationServiceTest {
 
   private static final String US_LOCALE = "en-US";
   private static final String VALUE = "value";

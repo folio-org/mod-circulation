@@ -8,7 +8,7 @@ import api.support.http.IndividualResource;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
 
-public class CancellationReasonsFixture {
+class CancellationReasonsFixture {
   private final RecordCreator cancellationReasonsRecordCreator;
 
   public CancellationReasonsFixture(ResourceClient cancellationReasonsClient) {

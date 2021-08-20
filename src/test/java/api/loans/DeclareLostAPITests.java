@@ -70,7 +70,7 @@ import api.support.http.ItemResource;
 import api.support.matchers.EventTypeMatchers;
 import io.vertx.core.json.JsonObject;
 
-public class DeclareLostAPITests extends APITests {
+class DeclareLostAPITests extends APITests {
   public DeclareLostAPITests() {
     super(true, true);
   }
@@ -362,7 +362,7 @@ public class DeclareLostAPITests extends APITests {
     "0",
     "10.00"
   })
-  public void shouldNotAssignProcessingFeeIfDisabled(double processingFee) {
+  void shouldNotAssignProcessingFeeIfDisabled(double processingFee) {
     final LostItemFeePolicyBuilder lostItemPolicy = lostItemFeePoliciesFixture
       .facultyStandardPolicy()
       .withName("Declared lost fee test policy")
@@ -387,7 +387,7 @@ public class DeclareLostAPITests extends APITests {
   @ValueSource(strings = {
     "0.0"
   })
-  public void shouldNotAssignItemSetCostFeeIfAmountMissing(Double itemFee) {
+  void shouldNotAssignItemSetCostFeeIfAmountMissing(Double itemFee) {
     final LostItemFeePolicyBuilder lostItemPolicy = lostItemFeePoliciesFixture
       .facultyStandardPolicy()
       .withName("Declared lost fee test policy")
@@ -429,7 +429,7 @@ public class DeclareLostAPITests extends APITests {
   @ValueSource(strings = {
     "0.0"
   })
-  public void shouldNotAssignItemProcessingFeeIfAmountMissing(Double processingFee) {
+  void shouldNotAssignItemProcessingFeeIfAmountMissing(Double processingFee) {
     final LostItemFeePolicyBuilder lostItemPolicy = lostItemFeePoliciesFixture
       .facultyStandardPolicy()
       .withName("Declared lost fee test policy")

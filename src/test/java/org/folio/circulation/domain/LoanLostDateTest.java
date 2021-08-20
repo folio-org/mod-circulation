@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import api.support.builders.LoanBuilder;
 
-public class LoanLostDateTest {
+class LoanLostDateTest {
   @Test
   void declaredLostDateReturnedWhenSet() {
     final var declaredLostDate = now(UTC);

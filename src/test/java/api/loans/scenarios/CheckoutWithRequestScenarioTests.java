@@ -23,7 +23,7 @@ import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.http.ItemResource;
 
-public class CheckoutWithRequestScenarioTests extends APITests {
+class CheckoutWithRequestScenarioTests extends APITests {
 
   @Test
   void canCheckoutPagedItem() {

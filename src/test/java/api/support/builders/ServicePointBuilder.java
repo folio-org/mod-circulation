@@ -6,7 +6,7 @@ import api.support.http.IndividualResource;
 
 import static org.folio.circulation.support.json.JsonPropertyFetcher.*;
 
-public class ServicePointBuilder extends JsonBuilder implements Builder {
+class ServicePointBuilder extends JsonBuilder implements Builder {
   private final UUID id;
   private final String name;
   private final String code;

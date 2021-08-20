@@ -6,7 +6,7 @@ import org.folio.circulation.support.http.client.Response;
 
 import lombok.val;
 
-public class RestAssuredResponseConversion {
+class RestAssuredResponseConversion {
   public static Response toResponse(io.restassured.response.Response response) {
     val mappedHeaders = caseInsensitiveMultiMap();
 

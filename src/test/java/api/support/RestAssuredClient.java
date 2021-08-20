@@ -27,7 +27,7 @@ import api.support.http.QueryStringParameter;
 import io.restassured.config.RestAssuredConfig;
 import io.restassured.specification.RequestSpecification;
 
-public class RestAssuredClient {
+class RestAssuredClient {
   private final OkapiHeaders defaultHeaders;
   private final RestAssuredConfig config;
 

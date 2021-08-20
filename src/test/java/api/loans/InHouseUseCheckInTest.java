@@ -23,7 +23,7 @@ import api.support.http.CqlQuery;
 import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
 
-public class InHouseUseCheckInTest extends APITests {
+class InHouseUseCheckInTest extends APITests {
 
   @Test
   void isInHouseUseWhenCheckInServicePointIsPrimaryForHomeLocation() {

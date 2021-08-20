@@ -8,7 +8,7 @@ import io.vertx.core.json.JsonObject;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
-public class DeclareItemLostRequestBuilder extends JsonBuilder implements Builder {
+class DeclareItemLostRequestBuilder extends JsonBuilder implements Builder {
   private final String loanId;
   private final DateTime dateTime;
   private final String comment;

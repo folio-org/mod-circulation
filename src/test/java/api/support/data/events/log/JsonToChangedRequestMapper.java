@@ -8,7 +8,7 @@ import java.util.List;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
-public class JsonToChangedRequestMapper {
+class JsonToChangedRequestMapper {
   ChangedRequest fromJson(JsonObject json) {
     return ChangedRequest.builder()
       .id(getProperty(json, "id"))

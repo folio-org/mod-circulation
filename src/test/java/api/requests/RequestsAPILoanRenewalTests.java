@@ -33,7 +33,7 @@ import api.support.http.ItemResource;
 import api.support.http.OkapiHeaders;
 import io.vertx.core.json.JsonObject;
 
-public class RequestsAPILoanRenewalTests extends APITests {
+class RequestsAPILoanRenewalTests extends APITests {
 
   private static final String ITEMS_CANNOT_BE_RENEWED_MSG = "items cannot be renewed when there is an active recall request";
   private static final String EXPECTED_REASON_LOAN_IS_NOT_RENEWABLE = "loan is not renewable";

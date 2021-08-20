@@ -13,7 +13,7 @@ import api.support.builders.LostItemFeePolicyBuilder;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
-public class LoanToChargeFeesTest {
+class LoanToChargeFeesTest {
 
   @Test
   void shouldCloseLoanIfNoFeesToChargeForImmediateBilling() {

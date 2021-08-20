@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.LoanHistoryConfigurationBuilder;
 
-public class AnonymizeLoansImmediatelyAPITests extends LoanAnonymizationTests {
+class AnonymizeLoansImmediatelyAPITests extends LoanAnonymizationTests {
 
   /**
    *     Given:

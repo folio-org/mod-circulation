@@ -5,7 +5,7 @@ import api.support.OpeningDayPeriod;
 import java.util.Arrays;
 import java.util.List;
 
-public class OpeningDayPeriodBuilder {
+class OpeningDayPeriodBuilder {
   private String serviceId;
   private List<OpeningDayPeriod> openingDays;
 

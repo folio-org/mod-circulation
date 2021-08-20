@@ -48,7 +48,7 @@ import org.mockito.stubbing.Answer;
 import io.vertx.core.json.JsonObject;
 
 @ExtendWith(MockitoExtension.class)
-public class FeeFineFacadeTest {
+class FeeFineFacadeTest {
   @Mock
   private Clients clients;
   @Mock

@@ -45,7 +45,7 @@ import api.support.matchers.UUIDMatcher;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
-public class PickSlipsTests extends APITests {
+class PickSlipsTests extends APITests {
   private static final String TOTAL_RECORDS = "totalRecords";
   private static final String PICK_SLIPS_KEY = "pickSlips";
   private static final String ITEM_KEY = "item";

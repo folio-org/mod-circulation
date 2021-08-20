@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import io.vertx.core.json.JsonObject;
 
-public class JsonPropertyWriterTest {
+class JsonPropertyWriterTest {
   @Test
   void shouldCreateMissingObjectsInThePath() {
     final String[] paths = {"1", "2", "3", "4", "5"};

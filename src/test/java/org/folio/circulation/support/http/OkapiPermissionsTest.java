@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test;
 
 import io.vertx.core.json.JsonArray;
 
-public class OkapiPermissionsTest {
+class OkapiPermissionsTest {
   private static final String PERMISSIONS_HEADER = "X-Okapi-Permissions";
   private static final String PERMISSION_1 = "users.item.get";
   private static final String PERMISSION_2 = "pubsub.publish.post";

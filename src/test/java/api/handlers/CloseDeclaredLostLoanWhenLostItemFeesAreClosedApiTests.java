@@ -21,7 +21,7 @@ import org.junit.jupiter.api.Test;
 import api.support.APITests;
 import api.support.builders.DeclareItemLostRequestBuilder;
 
-public class CloseDeclaredLostLoanWhenLostItemFeesAreClosedApiTests extends APITests {
+class CloseDeclaredLostLoanWhenLostItemFeesAreClosedApiTests extends APITests {
   private IndividualResource loan;
   private IndividualResource item;
 

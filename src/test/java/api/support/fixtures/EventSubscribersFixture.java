@@ -13,7 +13,7 @@ import org.folio.circulation.support.http.client.Response;
 import api.support.RestAssuredClient;
 import io.vertx.core.json.JsonObject;
 
-public class EventSubscribersFixture {
+class EventSubscribersFixture {
   private final RestAssuredClient restAssuredClient = defaultRestAssuredClient();
 
   public void publishLoanRelatedFeeFineClosedEvent(UUID loanId) {

@@ -13,7 +13,7 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.jupiter.api.Test;
 
-public class KeepCurrentStrategyTest {
+class KeepCurrentStrategyTest {
 
   @Test
   void testKeepCurrentDateStrategy() {

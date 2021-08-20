@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class FixedDueDateSchedulesTests {
+class FixedDueDateSchedulesTests {
   @Test
   void shouldHaveNoSchedulesWhenPropertyMissingInJSON() {
     final FixedDueDateSchedules schedules = FixedDueDateSchedules.from(new JsonObject());

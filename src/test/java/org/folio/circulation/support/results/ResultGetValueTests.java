@@ -7,7 +7,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 import org.junit.jupiter.api.Test;
 
-public class ResultGetValueTests {
+class ResultGetValueTests {
   @Test
   void shouldBeValueWhenSucceeded() {
     final Integer result = succeeded(10)

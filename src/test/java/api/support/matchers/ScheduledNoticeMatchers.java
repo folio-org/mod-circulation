@@ -16,7 +16,7 @@ import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
 
-public class ScheduledNoticeMatchers {
+class ScheduledNoticeMatchers {
 
   private static final String LOAN_ID = "loanId";
   private static final String FEE_FINE_ACTION_ID = "feeFineActionId";

@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Test;
 
 import io.vertx.core.json.JsonObject;
 
-public class ResponseInterpretationTests {
+class ResponseInterpretationTests {
   @Test
   void shouldApplyOnlyMapperWhenMatchesStatusCode() {
     final JsonObject body = new JsonObject()

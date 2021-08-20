@@ -50,7 +50,7 @@ import api.support.http.ItemResource;
 import api.support.http.UserResource;
 import io.vertx.core.json.JsonObject;
 
-public class DueDateScheduledNoticesProcessingTests extends APITests {
+class DueDateScheduledNoticesProcessingTests extends APITests {
   private static final String BEFORE_TIMING = "Before";
   private static final String UPON_AT_TIMING = "Upon At";
   private static final String AFTER_TIMING = "After";

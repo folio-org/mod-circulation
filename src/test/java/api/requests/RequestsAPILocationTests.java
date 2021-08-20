@@ -21,7 +21,7 @@ import api.support.builders.RequestBuilder;
 import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 
-public class RequestsAPILocationTests extends APITests {
+class RequestsAPILocationTests extends APITests {
   @Test
   void locationIsIncludedForSingleRequest() {
 

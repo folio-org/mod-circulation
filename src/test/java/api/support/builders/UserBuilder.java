@@ -10,7 +10,7 @@ import org.joda.time.DateTime;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
-public class UserBuilder extends JsonBuilder implements Builder {
+class UserBuilder extends JsonBuilder implements Builder {
   private final UUID id;
   private final String username;
   private final String lastName;

@@ -11,7 +11,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 import org.junit.jupiter.api.Test;
 
-public class ResultFailWhenTests {
+class ResultFailWhenTests {
   @Test
   void shouldPassThroughResultWhenConditionIsFalse() {
     final Result<Integer> result = succeeded(10)

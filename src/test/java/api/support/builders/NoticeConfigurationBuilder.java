@@ -6,7 +6,7 @@ import org.folio.circulation.domain.policy.Period;
 
 import io.vertx.core.json.JsonObject;
 
-public class NoticeConfigurationBuilder extends JsonBuilder implements Builder {
+class NoticeConfigurationBuilder extends JsonBuilder implements Builder {
 
   private final UUID templateId;
   private final String format;

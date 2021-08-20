@@ -15,7 +15,7 @@ import org.awaitility.Awaitility;
 import org.folio.circulation.support.HttpFailure;
 import org.junit.jupiter.api.Test;
 
-public class ResultApplySideEffectTests {
+class ResultApplySideEffectTests {
   @Test
   void shouldApplySuccessConsumerWhenSuccessful() {
     final AtomicInteger appliedSuccess = new AtomicInteger();

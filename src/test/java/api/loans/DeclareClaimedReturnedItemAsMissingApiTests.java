@@ -27,7 +27,7 @@ import api.support.builders.DeclareClaimedReturnedItemAsMissingRequestBuilder;
 import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 
-public class DeclareClaimedReturnedItemAsMissingApiTests extends APITests {
+class DeclareClaimedReturnedItemAsMissingApiTests extends APITests {
   private static final String TESTING_COMMENT = "testing";
 
   private ItemResource item;

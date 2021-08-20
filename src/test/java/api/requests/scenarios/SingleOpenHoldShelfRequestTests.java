@@ -43,7 +43,7 @@ import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
-public class SingleOpenHoldShelfRequestTests extends APITests {
+class SingleOpenHoldShelfRequestTests extends APITests {
   @Test
   void statusChangesToAwaitingPickupWhenItemCheckedIn() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();

@@ -14,7 +14,7 @@ import java.util.concurrent.ExecutionException;
 
 import org.junit.jupiter.api.Test;
 
-public class ResultCombineAfterTests {
+class ResultCombineAfterTests {
   @Test
   void shouldSucceedWhenNextStepIsSuccessful()
     throws ExecutionException,

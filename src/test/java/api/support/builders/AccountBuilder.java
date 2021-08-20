@@ -9,7 +9,7 @@ import api.support.http.IndividualResource;
 
 import io.vertx.core.json.JsonObject;
 
-public class AccountBuilder extends JsonBuilder implements Builder {
+class AccountBuilder extends JsonBuilder implements Builder {
 
   private String id;
   private String loanId;

@@ -62,7 +62,7 @@ import io.vertx.core.json.JsonObject;
  *
  * @see <a href="https://issues.folio.org/browse/CIRC-203">CIRC-203</a>
  */
-public class LoanDueDatesAfterRecallTests extends APITests {
+class LoanDueDatesAfterRecallTests extends APITests {
   private static Clock clock;
 
   public LoanDueDatesAfterRecallTests() {

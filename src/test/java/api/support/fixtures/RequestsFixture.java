@@ -29,7 +29,7 @@ import api.support.http.Offset;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
 
-public class RequestsFixture {
+class RequestsFixture {
   private final String REQUESTS_COLLECTION_PROPERTY_NAME = "requests";
 
   private final ResourceClient requestsClient;

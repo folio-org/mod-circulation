@@ -2,7 +2,7 @@ package api.support.builders;
 
 import io.vertx.core.json.JsonObject;
 
-public class ConfigRecordBuilder extends JsonBuilder implements Builder {
+class ConfigRecordBuilder extends JsonBuilder implements Builder {
 
   private static final String MODULE_KEY = "module";
   private static final String CONFIG_NAME_KEY = "configName";

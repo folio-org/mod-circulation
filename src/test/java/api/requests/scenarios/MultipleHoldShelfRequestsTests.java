@@ -23,7 +23,7 @@ import api.support.APITests;
 import api.support.http.IndividualResource;
 import lombok.val;
 
-public class MultipleHoldShelfRequestsTests extends APITests {
+class MultipleHoldShelfRequestsTests extends APITests {
   @Test
   void statusOfOldestRequestChangesToAwaitingPickupWhenItemCheckedIn() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
@@ -59,7 +59,7 @@ public class MultipleHoldShelfRequestsTests extends APITests {
     "Hold,Checked out",
     "Recall,Checked out"
   })
-  public void statusOfOldestHoldAndRecallRequestsChangeToFulfilledWhenItemCheckedOutToRequester(
+  void statusOfOldestHoldAndRecallRequestsChangeToFulfilledWhenItemCheckedOutToRequester(
     String requestType, String itemStatus) {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();

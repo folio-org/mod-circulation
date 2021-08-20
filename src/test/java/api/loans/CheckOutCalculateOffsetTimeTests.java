@@ -51,7 +51,7 @@ import io.vertx.core.json.JsonObject;
  * If SPID-1 is determined to be CLOSED for system-calculated due date and timestamp
  * Then the due date timestamp should be changed to the earliest SPID-1 startTime for the closest next Open=true available hours for SPID-1
  */
-public class CheckOutCalculateOffsetTimeTests extends APITests {
+class CheckOutCalculateOffsetTimeTests extends APITests {
 
   private static final String LOAN_POLICY_NAME = "Move to the beginning of the next open service point hours";
   private static final String INTERVAL_HOURS = "Hours";

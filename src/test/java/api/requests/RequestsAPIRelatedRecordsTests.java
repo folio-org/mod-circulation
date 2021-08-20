@@ -17,7 +17,7 @@ import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 
-public class RequestsAPIRelatedRecordsTests extends APITests {
+class RequestsAPIRelatedRecordsTests extends APITests {
   private static final String TWO_COPY_NUMBER = "2";
 
   @Test

@@ -3,7 +3,7 @@ package api.support.builders;
 import io.vertx.core.json.JsonObject;
 import api.support.http.IndividualResource;
 
-public class RenewByIdRequestBuilder extends JsonBuilder implements Builder {
+class RenewByIdRequestBuilder extends JsonBuilder implements Builder {
   private final String itemId;
   private final String userId;
 

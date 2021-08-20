@@ -14,7 +14,7 @@ import org.joda.time.DateTimeUtils;
 
 import api.support.http.TimedTaskClient;
 
-public class ScheduledNoticeProcessingClient {
+class ScheduledNoticeProcessingClient {
   private final TimedTaskClient timedTaskClient;
 
   public ScheduledNoticeProcessingClient() {

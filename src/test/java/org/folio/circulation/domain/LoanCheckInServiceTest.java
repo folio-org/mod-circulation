@@ -16,7 +16,7 @@ import api.support.builders.ItemBuilder;
 import api.support.builders.LocationBuilder;
 import io.vertx.core.json.JsonObject;
 
-public class LoanCheckInServiceTest {
+class LoanCheckInServiceTest {
 
   private LoanCheckInService loanCheckInService = new LoanCheckInService();
 

@@ -51,7 +51,7 @@ import api.support.http.UserResource;
 import io.vertx.core.json.JsonObject;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-public class RequestScheduledNoticesProcessingTests extends APITests {
+class RequestScheduledNoticesProcessingTests extends APITests {
   private final UUID templateId = UUID.randomUUID();
   private ItemResource item;
   private UserResource requester;

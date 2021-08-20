@@ -23,7 +23,7 @@ import org.folio.circulation.support.ServerErrorFailure;
 import org.joda.time.DateTime;
 import org.junit.jupiter.api.Test;
 
-public class CqlQueryTests {
+class CqlQueryTests {
   @Test
   void queryIsUrlEncoded() {
     final Result<CqlQuery> query = exactMatch("barcode", "  12345  ")

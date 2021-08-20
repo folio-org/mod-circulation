@@ -15,7 +15,7 @@ import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.fixtures.AgeToLostFixture;
 import io.vertx.core.json.JsonObject;
 
-public class CheckInAgedToLostItemTest extends RefundAgedToLostFeesTestBase {
+class CheckInAgedToLostItemTest extends RefundAgedToLostFeesTestBase {
   public CheckInAgedToLostItemTest() {
     super("Cancelled item returned");
   }

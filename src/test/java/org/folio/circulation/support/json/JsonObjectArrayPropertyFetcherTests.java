@@ -20,7 +20,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
-public class JsonObjectArrayPropertyFetcherTests {
+class JsonObjectArrayPropertyFetcherTests {
   @Test
   void StreamShouldContainSameContentsAsArray() {
     val json = objectWithJsonArrayOf(createObjectWithName("Foo"),

@@ -10,7 +10,7 @@ import lombok.With;
 @AllArgsConstructor
 @Getter
 @With
-public class RenewBlockOverrides extends JsonBuilder implements Builder {
+class RenewBlockOverrides extends JsonBuilder implements Builder {
   private final JsonObject itemNotLoanableBlock;
   private final JsonObject patronBlock;
   private final JsonObject itemLimitBlock;

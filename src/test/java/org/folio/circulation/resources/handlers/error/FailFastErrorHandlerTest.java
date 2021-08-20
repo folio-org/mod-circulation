@@ -14,7 +14,7 @@ import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.results.Result;
 import org.junit.jupiter.api.Test;
 
-public class FailFastErrorHandlerTest {
+class FailFastErrorHandlerTest {
   private static final HttpFailure TEST_ERROR = new ServerErrorFailure("test error");
   private static final Result<String> FAILED_RESULT = failed(TEST_ERROR);
   private static final Result<String> SUCCEEDED_RESULT = succeeded("success");

@@ -9,7 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import api.support.fixtures.OverrideRenewalFixture;
 
-public class OverrideRenewDeclaredLostItemTest extends RefundDeclaredLostFeesTestBase {
+class OverrideRenewDeclaredLostItemTest extends RefundDeclaredLostFeesTestBase {
   @Autowired
   private OverrideRenewalFixture overrideRenewalFixture;
 

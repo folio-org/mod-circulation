@@ -14,7 +14,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
-public class InstanceBuilder extends JsonBuilder implements Builder {
+class InstanceBuilder extends JsonBuilder implements Builder {
   private final UUID id;
   private final String title;
   private final UUID instanceTypeId;

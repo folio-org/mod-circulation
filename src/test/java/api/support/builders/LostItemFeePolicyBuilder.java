@@ -12,7 +12,7 @@ import lombok.With;
 @With
 @AllArgsConstructor
 @ToString
-public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
+class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
   private final UUID id;
   private final String name;
   private final String description;

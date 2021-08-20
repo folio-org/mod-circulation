@@ -7,7 +7,7 @@ import java.net.URL;
 import api.support.APITestContext;
 import api.support.RestAssuredClient;
 
-public class ExpiredSessionProcessingClient {
+class ExpiredSessionProcessingClient {
   public void runRequestExpiredSessionsProcessing(int expectedStatusCode) {
     final RestAssuredClient restAssuredClient = new RestAssuredClient(
       APITestContext.getOkapiHeadersFromContext());

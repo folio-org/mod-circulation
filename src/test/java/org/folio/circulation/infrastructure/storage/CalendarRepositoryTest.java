@@ -17,7 +17,7 @@ import org.joda.time.DateTime;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
-public class CalendarRepositoryTest {
+class CalendarRepositoryTest {
   private static final String QUERY_PARAMETERS = "servicePointId=%s&startDate=%s&endDate=%s&includeClosedDays=false&limit=10000";
 
   @Test

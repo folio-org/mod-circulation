@@ -24,7 +24,7 @@ import api.support.http.ItemResource;
 import api.support.matchers.JsonObjectMatcher;
 import io.vertx.core.json.JsonObject;
 
-public class InTransitToHomeLocationTests extends APITests {
+class InTransitToHomeLocationTests extends APITests {
   @Test
   void isPlacedInTransitWhenCheckedInToReturnItemAtServicePointNotServingHomeLocation() {
 

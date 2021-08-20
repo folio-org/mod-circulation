@@ -62,7 +62,7 @@ import api.support.http.OkapiHeaders;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
-public class AgedToLostScheduledNoticesProcessingTests extends APITests {
+class AgedToLostScheduledNoticesProcessingTests extends APITests {
   private static final UUID UPON_AT_TEMPLATE_ID = UUID.randomUUID();
   private static final UUID AFTER_ONE_TIME_TEMPLATE_ID = UUID.randomUUID();
   private static final UUID AFTER_RECURRING_TEMPLATE_ID = UUID.randomUUID();

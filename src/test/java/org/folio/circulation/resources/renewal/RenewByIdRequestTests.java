@@ -10,7 +10,7 @@ import static api.support.matchers.FailureMatchers.errorResultFor;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class RenewByIdRequestTests {
+class RenewByIdRequestTests {
   @Test
   void propertiesAreReadFromJson() {
     final UUID itemId = UUID.randomUUID();

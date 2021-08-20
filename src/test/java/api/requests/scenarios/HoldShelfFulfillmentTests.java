@@ -24,7 +24,7 @@ import org.junit.jupiter.api.Test;
 import api.support.APITests;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
 
-public class HoldShelfFulfillmentTests extends APITests {
+class HoldShelfFulfillmentTests extends APITests {
   @Test
   void itemIsReadyForPickUpWhenCheckedInAtPickupServicePoint() {
 

@@ -16,7 +16,7 @@ import api.support.http.ItemResource;
 import api.support.http.UserResource;
 import io.vertx.core.json.JsonObject;
 
-public class RequestsAPIDeletionTests extends APITests {
+class RequestsAPIDeletionTests extends APITests {
   @Test
   void canDeleteRequestInQueue() {
     final var nod = itemsFixture.basedUponNod();

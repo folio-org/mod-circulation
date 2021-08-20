@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import io.vertx.core.json.JsonObject;
 
-public class OverdueFinePolicyTest {
+class OverdueFinePolicyTest {
 
   private static JsonObject overdueFinePolicyJsonObject;
 

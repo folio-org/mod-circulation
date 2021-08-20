@@ -5,7 +5,7 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty
 
 import io.vertx.core.json.JsonObject;
 
-public class JsonToCheckInLogEventMapper {
+class JsonToCheckInLogEventMapper {
   public CheckInLogEvent fromJson(JsonObject json) {
     final var changedRequestMapper = new JsonToChangedRequestMapper();
 

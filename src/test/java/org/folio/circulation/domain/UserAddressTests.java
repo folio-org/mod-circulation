@@ -17,7 +17,7 @@ import api.support.builders.Address;
 import api.support.builders.UserBuilder;
 import io.vertx.core.json.JsonObject;
 
-public class UserAddressTests {
+class UserAddressTests {
   @Test
   void noAddressFoundWhenNoAddresses() {
     final User user = new User(new UserBuilder()

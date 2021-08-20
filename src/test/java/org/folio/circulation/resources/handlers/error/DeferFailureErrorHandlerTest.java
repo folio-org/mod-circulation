@@ -21,7 +21,7 @@ import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
 import org.junit.jupiter.api.Test;
 
-public class DeferFailureErrorHandlerTest {
+class DeferFailureErrorHandlerTest {
   private static final HttpFailure SERVER_ERROR = new ServerErrorFailure("server error");
   private static final HttpFailure VALIDATION_ERROR = new ValidationErrorFailure(
     List.of(new ValidationError("validation failed", "key", "value")));

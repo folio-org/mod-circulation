@@ -34,7 +34,7 @@ import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
-public class RequestQueueResourceTest extends APITests {
+class RequestQueueResourceTest extends APITests {
   private IndividualResource item;
   private IndividualResource jessica;
   private IndividualResource steve;
@@ -147,7 +147,7 @@ public class RequestQueueResourceTest extends APITests {
     "1, 2, 4, 5",
     "1, 2, 3, 5",
   })
-  public void refuseWhenPositionsAreNotSequential(int firstPosition,
+  void refuseWhenPositionsAreNotSequential(int firstPosition,
     int secondPosition, int thirdPosition, int fourthPosition) {
 
     checkOutFixture.checkOutByBarcode(item, rebecca);
@@ -198,7 +198,7 @@ public class RequestQueueResourceTest extends APITests {
     "3, 4, 2, 1",
     "3, 4, 1, 2",
   })
-  public void shouldReorderQueueSuccessfully(int firstPosition,
+  void shouldReorderQueueSuccessfully(int firstPosition,
     int secondPosition, int thirdPosition, int fourthPosition) {
 
     checkOutFixture.checkOutByBarcode(item, rebecca);

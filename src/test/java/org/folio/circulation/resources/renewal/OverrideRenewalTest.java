@@ -33,7 +33,7 @@ import org.junit.jupiter.api.Test;
 import api.support.builders.LoanPolicyBuilder;
 import io.vertx.core.json.JsonObject;
 
-public class OverrideRenewalTest {
+class OverrideRenewalTest {
   private static final String NEW_DUE_DATE_IS_REQUIRED_ERROR =
     "New due date is required when renewal would not change the due date";
   private static final String OVERRIDE_DUE_DATE_MUST_BE_SPECIFIED_ERROR =

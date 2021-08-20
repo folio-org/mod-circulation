@@ -12,7 +12,7 @@ import api.support.http.IndividualResource;
 import api.support.builders.RequestPolicyBuilder;
 import api.support.http.ResourceClient;
 
-public class RequestPoliciesFixture {
+class RequestPoliciesFixture {
   private final RecordCreator requestPolicyRecordCreator;
 
   public RequestPoliciesFixture(ResourceClient requestPoliciesClient) {

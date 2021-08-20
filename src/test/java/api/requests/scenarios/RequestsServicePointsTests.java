@@ -20,7 +20,7 @@ import api.support.APITests;
 import api.support.builders.RequestBuilder;
 import io.vertx.core.json.JsonObject;
 
-public class RequestsServicePointsTests extends APITests {
+class RequestsServicePointsTests extends APITests {
 
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 

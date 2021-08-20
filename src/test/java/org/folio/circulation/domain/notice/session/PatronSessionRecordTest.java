@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import io.vertx.core.json.JsonObject;
 
-public class PatronSessionRecordTest {
+class PatronSessionRecordTest {
 
   @Test
   void shouldMapJsonRepresentationToPatronSessionRecord() {

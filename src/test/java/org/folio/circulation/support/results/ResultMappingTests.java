@@ -9,7 +9,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 import org.junit.jupiter.api.Test;
 
-public class ResultMappingTests {
+class ResultMappingTests {
   @Test
   void shouldSucceedWhenMapIsApplied() {
     final Result<Integer> mappedResult = succeeded(10)

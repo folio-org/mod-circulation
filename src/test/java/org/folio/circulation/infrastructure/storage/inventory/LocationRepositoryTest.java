@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import lombok.val;
 
-public class LocationRepositoryTest {
+class LocationRepositoryTest {
 
   @Test
   void shouldReturnNullWhenLocationIdIsNull() {

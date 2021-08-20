@@ -36,7 +36,7 @@ import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 
-public class ClaimItemReturnedAPITests extends APITests {
+class ClaimItemReturnedAPITests extends APITests {
   private ItemResource item;
   private IndividualResource loan;
   private String loanId;

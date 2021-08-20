@@ -12,7 +12,7 @@ import api.support.builders.HoldingBuilder;
 import api.support.builders.ItemBuilder;
 import lombok.val;
 
-public class ItemPermanentLocationTest {
+class ItemPermanentLocationTest {
 
   @Test
   void itemLocationTakesPriorityOverHoldings() {

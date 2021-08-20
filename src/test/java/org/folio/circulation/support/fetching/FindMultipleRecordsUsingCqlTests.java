@@ -27,7 +27,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 @ExtendWith(MockitoExtension.class)
-public class FindMultipleRecordsUsingCqlTests {
+class FindMultipleRecordsUsingCqlTests {
   @Rule
   public MockitoRule mockitoRule = MockitoJUnit.rule();
 

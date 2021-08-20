@@ -33,7 +33,7 @@ import api.support.http.Offset;
 import api.support.http.OkapiHeaders;
 import io.vertx.core.json.JsonObject;
 
-public class LoansFixture {
+class LoansFixture {
   private final RestAssuredClient restAssuredClient;
 
   public LoansFixture() {

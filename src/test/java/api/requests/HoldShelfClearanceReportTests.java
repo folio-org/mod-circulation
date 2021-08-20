@@ -26,7 +26,7 @@ import api.support.http.UserResource;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
-public class HoldShelfClearanceReportTests extends APITests {
+class HoldShelfClearanceReportTests extends APITests {
 
   private static final String TOTAL_RECORDS = "totalRecords";
   private static final String REQUESTS_KEY = "requests";

@@ -9,7 +9,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 import io.vertx.core.json.JsonObject;
 
-public class PubsubPublisherTestUtils {
+class PubsubPublisherTestUtils {
   private PubsubPublisherTestUtils() { }
 
   public static void assertThatPublishedLoanLogRecordEventsAreValid(JsonObject loan) {

@@ -13,7 +13,7 @@ import api.support.http.IndividualResource;
 import api.support.builders.ServicePointBuilder;
 import api.support.http.ResourceClient;
 
-public class ServicePointsFixture {
+class ServicePointsFixture {
   private final RecordCreator servicePointRecordCreator;
 
   public ServicePointsFixture(ResourceClient client) {

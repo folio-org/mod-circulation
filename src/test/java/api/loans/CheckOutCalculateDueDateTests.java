@@ -59,7 +59,7 @@ import api.support.builders.LoanPolicyBuilder;
 import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
 
-public class CheckOutCalculateDueDateTests extends APITests {
+class CheckOutCalculateDueDateTests extends APITests {
   private static final String INTERVAL_MONTHS = "Months";
   private static final String INTERVAL_HOURS = "Hours";
   private static final String INTERVAL_MINUTES = "Minutes";

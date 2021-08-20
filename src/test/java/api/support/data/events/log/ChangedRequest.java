@@ -5,7 +5,7 @@ import lombok.Builder;
 
 @AllArgsConstructor
 @Builder
-public class ChangedRequest {
+class ChangedRequest {
   public final String id;
   public final String requestType;
   public final String oldRequestStatus;

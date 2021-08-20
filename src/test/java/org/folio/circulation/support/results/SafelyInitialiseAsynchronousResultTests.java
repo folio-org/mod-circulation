@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Test;
 
 import lombok.val;
 
-public class SafelyInitialiseAsynchronousResultTests {
+class SafelyInitialiseAsynchronousResultTests {
   @Test
   void shouldSucceedWhenSupplierSucceeds() throws ExecutionException,
     InterruptedException, TimeoutException {

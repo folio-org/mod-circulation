@@ -24,7 +24,7 @@ import api.support.builders.RequestBuilder;
 import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
 
-public class ClosedRequestTests extends APITests {
+class ClosedRequestTests extends APITests {
   @Test
   void canCancelARequest() {
 

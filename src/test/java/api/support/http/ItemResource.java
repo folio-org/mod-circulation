@@ -2,7 +2,7 @@ package api.support.http;
 
 import java.util.UUID;
 
-public class ItemResource extends IndividualResource {
+class ItemResource extends IndividualResource {
   private final IndividualResource holdingsRecord;
   private final IndividualResource instance;
 

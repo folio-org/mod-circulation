@@ -10,7 +10,7 @@ import api.support.http.ResourceClient;
 
 import api.support.http.IndividualResource;
 
-public class UserManualBlocksFixture {
+class UserManualBlocksFixture {
   private final RecordCreator userManualBlocksRecordCreator;
 
   public UserManualBlocksFixture(ResourceClient manualBlocksClient) {

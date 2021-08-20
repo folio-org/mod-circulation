@@ -27,7 +27,7 @@ import api.support.builders.LocationBuilder;
 import io.vertx.core.MultiMap;
 import io.vertx.core.json.JsonArray;
 
-public class Text2DroolsTest {
+class Text2DroolsTest {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   private static final String HEADER = "priority: last-line\nfallback-policy: l no-loan r no-hold n basic-notice o overdue i lost-item\n";

@@ -2,7 +2,7 @@ package api.support.builders;
 
 import java.util.UUID;
 
-public class Address {
+class Address {
   private UUID type;
   private String addressLineOne;
   private String addressLineTwo;

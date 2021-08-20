@@ -25,7 +25,7 @@ import api.support.http.IndividualResource;
 import api.support.http.UserResource;
 import lombok.val;
 
-public class MultipleMixedFulfilmentRequestsTests extends APITests {
+class MultipleMixedFulfilmentRequestsTests extends APITests {
   private static final DateTime DATE_TIME_2017 = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
   private static final DateTime DATE_TIME_2018 = new DateTime(2018, 1, 10, 15, 34, 21, DateTimeZone.UTC);
 

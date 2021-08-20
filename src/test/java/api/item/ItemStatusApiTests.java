@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
 import api.support.APITests;
 import io.vertx.core.json.JsonObject;
 
-public class ItemStatusApiTests extends APITests {
+class ItemStatusApiTests extends APITests {
 
   private static final String ITEM_STATUS = "status";
   private static final String ITEM_STATUS_DATE = "date";

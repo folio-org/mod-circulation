@@ -16,13 +16,13 @@ import org.junit.jupiter.params.provider.MethodSource;
 import api.support.builders.LoanPolicyBuilder;
 import io.vertx.core.json.JsonObject;
 
-public class DetermineClosedLibraryStrategyTest {
+class DetermineClosedLibraryStrategyTest {
 
   private ClosedLibraryStrategy closedLibraryStrategy;
 
   @ParameterizedTest
   @MethodSource("testDetermineClosedLibraryStrategyParameters")
-  public void testDetermineClosedLibraryStrategy(DueDateManagement dueDateManagement, Class<?> expectedClass) {
+  void testDetermineClosedLibraryStrategy(DueDateManagement dueDateManagement, Class<?> expectedClass) {
     JsonObject representation = new LoanPolicyBuilder()
       .withName("Loan policy")
       .withClosedLibraryDueDateManagement(dueDateManagement.getValue())

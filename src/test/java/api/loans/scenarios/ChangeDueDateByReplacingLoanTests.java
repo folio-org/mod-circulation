@@ -44,7 +44,7 @@ import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 
-public class ChangeDueDateByReplacingLoanTests extends APITests {
+class ChangeDueDateByReplacingLoanTests extends APITests {
   @Test
   void canManuallyChangeTheDueDateOfLoan() {
     final ItemResource item = itemsFixture.basedUponNod();

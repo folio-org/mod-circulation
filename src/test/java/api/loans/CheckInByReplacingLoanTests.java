@@ -21,7 +21,7 @@ import api.support.APITests;
 import api.support.builders.LoanBuilder;
 import io.vertx.core.json.JsonObject;
 
-public class CheckInByReplacingLoanTests extends APITests {
+class CheckInByReplacingLoanTests extends APITests {
   @Test
   void canCompleteALoanByReturningTheItem() {
 

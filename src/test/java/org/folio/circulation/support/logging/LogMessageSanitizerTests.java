@@ -7,7 +7,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 
-public class LogMessageSanitizerTests {
+class LogMessageSanitizerTests {
   @Test
   void shouldRemoveNewLineCharactersFromLogMessageParameters() {
     final String unsanitizedParameter = "Some \n multiple \r line string";

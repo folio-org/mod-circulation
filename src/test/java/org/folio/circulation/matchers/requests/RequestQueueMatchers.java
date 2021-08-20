@@ -9,7 +9,7 @@ import org.hamcrest.FeatureMatcher;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeDiagnosingMatcher;
 
-public class RequestQueueMatchers {
+class RequestQueueMatchers {
   public static Matcher<RequestQueue> hasSize(Integer expectedSize) {
     return new SizeMatcher(expectedSize);
   }

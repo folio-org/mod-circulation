@@ -8,7 +8,7 @@ import org.folio.circulation.support.http.client.Response;
 import api.support.RestAssuredClient;
 import api.support.builders.ChangeDueDateRequestBuilder;
 
-public class ChangeDueDateFixture {
+class ChangeDueDateFixture {
   private final RestAssuredClient restAssuredClient;
 
   public ChangeDueDateFixture() {

@@ -51,7 +51,7 @@ import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
 
-public class OverdueFineScheduledNoticesProcessingTests extends APITests {
+class OverdueFineScheduledNoticesProcessingTests extends APITests {
   private static final Period AFTER_PERIOD = Period.days(1);
   private static final Period RECURRING_PERIOD = Period.hours(6);
   private static final String OVERDUE_FINE = "Overdue fine";
@@ -73,7 +73,7 @@ public class OverdueFineScheduledNoticesProcessingTests extends APITests {
 
   @ParameterizedTest
   @MethodSource("testParameters")
-  public void uponAtNoticeIsSentAndDeleted(TriggeringEvent triggeringEvent) {
+  void uponAtNoticeIsSentAndDeleted(TriggeringEvent triggeringEvent) {
     generateOverdueFine(triggeringEvent, createNoticeConfig(triggeringEvent, UPON_AT, false));
 
     verifyNumberOfScheduledNotices(1);
@@ -90,7 +90,7 @@ public class OverdueFineScheduledNoticesProcessingTests extends APITests {
 
   @ParameterizedTest
   @MethodSource("testParameters")
-  public void oneTimeAfterNoticeIsSentAndDeleted(TriggeringEvent triggeringEvent) {
+  void oneTimeAfterNoticeIsSentAndDeleted(TriggeringEvent triggeringEvent) {
     generateOverdueFine(triggeringEvent, createNoticeConfig(triggeringEvent, AFTER, false));
 
     DateTime expectedNextRunTime = actionDateTime.plus(AFTER_PERIOD.timePeriod());
@@ -109,7 +109,7 @@ public class OverdueFineScheduledNoticesProcessingTests extends APITests {
 
   @ParameterizedTest
   @MethodSource("testParameters")
-  public void recurringAfterNoticeIsSentAndRescheduled(TriggeringEvent triggeringEvent) {
+  void recurringAfterNoticeIsSentAndRescheduled(TriggeringEvent triggeringEvent) {
     generateOverdueFine(triggeringEvent, createNoticeConfig(triggeringEvent, AFTER, true));
 
     DateTime expectedFirstRunTime = actionDateTime.plus(AFTER_PERIOD.timePeriod());
@@ -131,7 +131,7 @@ public class OverdueFineScheduledNoticesProcessingTests extends APITests {
 
   @ParameterizedTest
   @MethodSource("testParameters")
-  public void recurringNoticeIsRescheduledCorrectlyWhenNextCalculatedRunTimeIsBeforeNow(TriggeringEvent triggeringEvent) {
+  void recurringNoticeIsRescheduledCorrectlyWhenNextCalculatedRunTimeIsBeforeNow(TriggeringEvent triggeringEvent) {
     generateOverdueFine(triggeringEvent, createNoticeConfig(triggeringEvent, AFTER, true));
 
     DateTime expectedFirstRunTime = actionDateTime.plus(AFTER_PERIOD.timePeriod());
@@ -156,7 +156,7 @@ public class OverdueFineScheduledNoticesProcessingTests extends APITests {
 
   @ParameterizedTest
   @MethodSource("testParameters")
-  public void multipleScheduledNoticesAreProcessedDuringOneProcessingIteration(TriggeringEvent triggeringEvent) {
+  void multipleScheduledNoticesAreProcessedDuringOneProcessingIteration(TriggeringEvent triggeringEvent) {
     generateOverdueFine(triggeringEvent,
       createNoticeConfig(triggeringEvent, UPON_AT, false),
       createNoticeConfig(triggeringEvent, AFTER, false),
@@ -184,7 +184,7 @@ public class OverdueFineScheduledNoticesProcessingTests extends APITests {
 
   @ParameterizedTest
   @MethodSource("testParameters")
-  public void noticeIsDiscardedWhenReferencedActionDoesNotExist(TriggeringEvent triggeringEvent) {
+  void noticeIsDiscardedWhenReferencedActionDoesNotExist(TriggeringEvent triggeringEvent) {
     generateOverdueFine(triggeringEvent, createNoticeConfig(triggeringEvent, UPON_AT, false));
 
     verifyNumberOfScheduledNotices(1);
@@ -202,7 +202,7 @@ public class OverdueFineScheduledNoticesProcessingTests extends APITests {
 
   @ParameterizedTest
   @MethodSource("testParameters")
-  public void noticeIsDiscardedWhenReferencedAccountDoesNotExist(TriggeringEvent triggeringEvent) {
+  void noticeIsDiscardedWhenReferencedAccountDoesNotExist(TriggeringEvent triggeringEvent) {
     generateOverdueFine(triggeringEvent, createNoticeConfig(triggeringEvent, UPON_AT, false));
 
     verifyNumberOfScheduledNotices(1);
@@ -220,7 +220,7 @@ public class OverdueFineScheduledNoticesProcessingTests extends APITests {
 
   @ParameterizedTest
   @MethodSource("testParameters")
-  public void noticeIsDiscardedWhenReferencedLoanDoesNotExist(TriggeringEvent triggeringEvent) {
+  void noticeIsDiscardedWhenReferencedLoanDoesNotExist(TriggeringEvent triggeringEvent) {
     generateOverdueFine(triggeringEvent, createNoticeConfig(triggeringEvent, UPON_AT, false));
 
     verifyNumberOfScheduledNotices(1);
@@ -238,7 +238,7 @@ public class OverdueFineScheduledNoticesProcessingTests extends APITests {
 
   @ParameterizedTest
   @MethodSource("testParameters")
-  public void noticeIsDiscardedWhenReferencedItemDoesNotExist(TriggeringEvent triggeringEvent) {
+  void noticeIsDiscardedWhenReferencedItemDoesNotExist(TriggeringEvent triggeringEvent) {
     generateOverdueFine(triggeringEvent, createNoticeConfig(triggeringEvent, UPON_AT, false));
 
     verifyNumberOfScheduledNotices(1);
@@ -256,7 +256,7 @@ public class OverdueFineScheduledNoticesProcessingTests extends APITests {
 
   @ParameterizedTest
   @MethodSource("testParameters")
-  public void noticeIsDiscardedWhenReferencedUserDoesNotExist(TriggeringEvent triggeringEvent) {
+  void noticeIsDiscardedWhenReferencedUserDoesNotExist(TriggeringEvent triggeringEvent) {
     generateOverdueFine(triggeringEvent, createNoticeConfig(triggeringEvent, UPON_AT, false));
 
     verifyNumberOfScheduledNotices(1);
@@ -274,7 +274,7 @@ public class OverdueFineScheduledNoticesProcessingTests extends APITests {
 
   @ParameterizedTest
   @MethodSource("testParameters")
-  public void noticeIsDiscardedWhenReferencedTemplateDoesNotExist(TriggeringEvent triggeringEvent) {
+  void noticeIsDiscardedWhenReferencedTemplateDoesNotExist(TriggeringEvent triggeringEvent) {
     generateOverdueFine(triggeringEvent, createNoticeConfig(triggeringEvent, UPON_AT, false));
 
     verifyNumberOfScheduledNotices(1);
@@ -292,7 +292,7 @@ public class OverdueFineScheduledNoticesProcessingTests extends APITests {
 
   @ParameterizedTest
   @MethodSource("testParameters")
-  public void noticeIsNotSentOrDeletedWhenPatronNoticeRequestFails(TriggeringEvent triggeringEvent) {
+  void noticeIsNotSentOrDeletedWhenPatronNoticeRequestFails(TriggeringEvent triggeringEvent) {
     generateOverdueFine(triggeringEvent, createNoticeConfig(triggeringEvent, UPON_AT, false));
 
     verifyNumberOfScheduledNotices(1);
@@ -310,7 +310,7 @@ public class OverdueFineScheduledNoticesProcessingTests extends APITests {
 
   @ParameterizedTest
   @MethodSource("testParameters")
-  public void noticeIsDiscardedWhenAccountIsClosed(TriggeringEvent triggeringEvent) {
+  void noticeIsDiscardedWhenAccountIsClosed(TriggeringEvent triggeringEvent) {
     generateOverdueFine(triggeringEvent, createNoticeConfig(triggeringEvent, UPON_AT, false));
 
     verifyNumberOfScheduledNotices(1);

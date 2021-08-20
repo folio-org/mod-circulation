@@ -17,7 +17,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
-public class CheckInValidatorsTests {
+class CheckInValidatorsTests {
   @ParameterizedTest
   @ValueSource(strings = {
     "Available",
@@ -27,7 +27,7 @@ public class CheckInValidatorsTests {
     "Unavailable",
     "Unknown"
   })
-  public void canCheckInItemInAllowedStatus(String itemStatus) {
+  void canCheckInItemInAllowedStatus(String itemStatus) {
     final var validator = new CheckInValidators(this::validationError);
 
     final var item = itemIn(itemStatus);
@@ -43,7 +43,7 @@ public class CheckInValidatorsTests {
   @ValueSource(strings = {
     "Intellectual item"
   })
-  public void cannotCheckInItemInDisallowedStatus(String itemStatus) {
+  void cannotCheckInItemInDisallowedStatus(String itemStatus) {
     val validator = new CheckInValidators(this::validationError);
 
     val validationResult = validator

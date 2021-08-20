@@ -18,7 +18,7 @@ import api.support.builders.RequestBuilder;
 import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 
-public class RequestsAPIProxyTests extends APITests {
+class RequestsAPIProxyTests extends APITests {
   @Test
   void canCreateProxiedRequestWhenCurrentActiveRelationship() {
     final IndividualResource smallAngryPlanet

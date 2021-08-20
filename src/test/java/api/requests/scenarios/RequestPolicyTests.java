@@ -23,7 +23,7 @@ import api.support.builders.RequestBuilder;
 import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
 
-public class RequestPolicyTests extends APITests {
+class RequestPolicyTests extends APITests {
 
   private final IndividualResource requestPickupServicePoint;
 

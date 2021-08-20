@@ -7,7 +7,7 @@ import api.support.http.IndividualResource;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
 
-public class IdentifierTypesFixture {
+class IdentifierTypesFixture {
   private final RecordCreator identifierTypesCreator;
 
   public IdentifierTypesFixture() {

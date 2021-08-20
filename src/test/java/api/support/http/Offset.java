@@ -2,7 +2,7 @@ package api.support.http;
 
 import java.util.Map;
 
-public class Offset implements QueryStringParameter {
+class Offset implements QueryStringParameter {
   private final Integer offset;
 
   public static Offset offset(int offset) {

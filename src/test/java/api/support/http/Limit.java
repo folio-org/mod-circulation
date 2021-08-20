@@ -4,7 +4,7 @@ import static java.lang.Integer.MAX_VALUE;
 
 import java.util.Map;
 
-public class Limit implements QueryStringParameter {
+class Limit implements QueryStringParameter {
   private final Integer limit;
 
   public static Limit limit(int limit) {

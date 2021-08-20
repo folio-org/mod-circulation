@@ -8,7 +8,7 @@ import org.hamcrest.Matcher;
 
 import io.vertx.core.json.JsonObject;
 
-public class PubSubRegistrationMatchers {
+class PubSubRegistrationMatchers {
   public static Matcher<JsonObject> isValidPublishersRegistration() {
     return JsonObjectMatcher.allOfPaths(
       hasJsonPath("moduleId", is(constructModuleName())),

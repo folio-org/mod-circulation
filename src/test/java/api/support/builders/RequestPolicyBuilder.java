@@ -8,7 +8,7 @@ import org.folio.circulation.domain.RequestType;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
-public class RequestPolicyBuilder extends JsonBuilder implements Builder {
+class RequestPolicyBuilder extends JsonBuilder implements Builder {
   private final UUID id;
   private final String name;
   private final String description;

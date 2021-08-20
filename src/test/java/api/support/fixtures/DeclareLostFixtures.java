@@ -13,7 +13,7 @@ import api.support.RestAssuredClient;
 import api.support.builders.DeclareItemLostRequestBuilder;
 import io.vertx.core.json.JsonObject;
 
-public class DeclareLostFixtures {
+class DeclareLostFixtures {
   private final RestAssuredClient restAssuredClient;
 
   public DeclareLostFixtures() {
@@ -22,7 +22,7 @@ public class DeclareLostFixtures {
 
   public Response declareItemLost(DeclareItemLostRequestBuilder builder) {
 
-    JsonObject request = builder.create();    
+    JsonObject request = builder.create();
     return restAssuredClient.post(request, declareLoanItemLostURL(builder.getLoanId()),
       204, "declare-item-lost-request");
   }

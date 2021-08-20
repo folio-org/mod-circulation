@@ -5,7 +5,7 @@ import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
-public class User {
+class User {
   private String id;
   private String barcode;
 }

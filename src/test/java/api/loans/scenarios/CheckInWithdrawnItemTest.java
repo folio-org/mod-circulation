@@ -17,7 +17,7 @@ import api.support.builders.RequestBuilder;
 import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 
-public class CheckInWithdrawnItemTest extends APITests {
+class CheckInWithdrawnItemTest extends APITests {
   @Test
   void canCheckInAtHomeLocation() {
     final ItemResource item = itemsFixture

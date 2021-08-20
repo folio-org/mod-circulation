@@ -13,7 +13,7 @@ import org.folio.circulation.domain.representations.logs.LogEventType;
 
 import io.vertx.core.json.JsonObject;
 
-public class PublishedEvents extends ArrayList<JsonObject> {
+class PublishedEvents extends ArrayList<JsonObject> {
   public static Predicate<JsonObject> byEventType(EventType eventType) {
     return byEventType(eventType.name());
   }

@@ -15,7 +15,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import lombok.val;
 
-public class PeriodTest {
+class PeriodTest {
 
   @ParameterizedTest
   @CsvSource(value = {
@@ -25,7 +25,7 @@ public class PeriodTest {
     "Weeks, 3, 30240",
     "Months, 2, 89280"
   })
-  public void toMinutes(String interval, Integer duration, int expectedResult) {
+  void toMinutes(String interval, Integer duration, int expectedResult) {
     assertEquals(expectedResult, Period.from(duration, interval).toMinutes());
   }
 
@@ -55,7 +55,7 @@ public class PeriodTest {
     "Weeks, 3",
     "Months, 10"
   })
-  public void hasPassedSinceDateTillNowWhenNowAfterTheDate(String interval, int duration) {
+  void hasPassedSinceDateTillNowWhenNowAfterTheDate(String interval, int duration) {
     val period = Period.from(duration, interval);
     val startDate = now(UTC).minus(period.timePeriod()).minusSeconds(1);
 
@@ -71,7 +71,7 @@ public class PeriodTest {
     "Weeks, 7",
     "Months, 23"
   })
-  public void hasPassedSinceDateTillNowWhenNowIsTheDate(String interval, int duration) {
+  void hasPassedSinceDateTillNowWhenNowIsTheDate(String interval, int duration) {
     val period = Period.from(duration, interval);
     val startDate = now(UTC).minus(period.timePeriod());
 
@@ -87,7 +87,7 @@ public class PeriodTest {
     "Weeks, 12",
     "Months, 3"
   })
-  public void hasPassedSinceDateTillNowIsFalse(String interval, int duration) {
+  void hasPassedSinceDateTillNowIsFalse(String interval, int duration) {
     val period = Period.from(duration, interval);
     val startDate = now(UTC);
 
@@ -103,7 +103,7 @@ public class PeriodTest {
     "Weeks, 23",
     "Months, 4"
   })
-  public void hasNotPassedSinceDateTillNow(String interval, int duration) {
+  void hasNotPassedSinceDateTillNow(String interval, int duration) {
     val period = Period.from(duration, interval);
     val startDate = now(UTC).plus(period.timePeriod());
 
@@ -119,7 +119,7 @@ public class PeriodTest {
     "Weeks, 3",
     "Months, 9"
   })
-  public void hasNotPassedSinceDateTillNowIsFalseWhenPassed(String interval, int duration) {
+  void hasNotPassedSinceDateTillNowIsFalseWhenPassed(String interval, int duration) {
     val period = Period.from(duration, interval);
     val startDate = now(UTC).minus(period.timePeriod()).minusSeconds(1);
 
@@ -135,7 +135,7 @@ public class PeriodTest {
     "Weeks, 12",
     "Months, 3"
   })
-  public void isEqualToDateTillNow(String interval, int duration) {
+  void isEqualToDateTillNow(String interval, int duration) {
     val period = Period.from(duration, interval);
     val startDate = now(UTC).minus(period.timePeriod());
 
@@ -147,7 +147,7 @@ public class PeriodTest {
 
   @ParameterizedTest
   @MethodSource("isValidParameters")
-  public void isValid(String interval, Integer duration, boolean expectedResult) {
+  void isValid(String interval, Integer duration, boolean expectedResult) {
     assertThat(Period.from(duration, interval).isValid(), is(expectedResult));
   }
 

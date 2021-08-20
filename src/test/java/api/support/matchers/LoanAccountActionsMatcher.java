@@ -20,7 +20,7 @@ import api.support.MultipleJsonRecords;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
 
-public class LoanAccountActionsMatcher extends TypeSafeDiagnosingMatcher<IndividualResource> {
+class LoanAccountActionsMatcher extends TypeSafeDiagnosingMatcher<IndividualResource> {
   private static final String LOST_ITEM_FEE = "Lost item fee";
   private static final String LOST_ITEM_PROCESSING_FEE = "Lost item processing fee";
 

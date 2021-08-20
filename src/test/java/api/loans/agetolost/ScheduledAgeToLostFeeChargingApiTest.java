@@ -56,7 +56,7 @@ import api.support.spring.SpringApiTest;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
-public class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
+class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
 
   public ScheduledAgeToLostFeeChargingApiTest() {
     super(true, true);

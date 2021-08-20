@@ -26,7 +26,7 @@ import api.support.fakes.PublishedEvents;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 
-public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
+class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
 
   private DateTime lastAnonymizationDateTime = null;
 

@@ -8,7 +8,7 @@ import org.folio.circulation.support.http.client.Response;
 
 import io.vertx.core.json.JsonObject;
 
-public class CheckInByBarcodeResponse extends IndividualResource {
+class CheckInByBarcodeResponse extends IndividualResource {
   public CheckInByBarcodeResponse(Response response) {
     super(response);
   }

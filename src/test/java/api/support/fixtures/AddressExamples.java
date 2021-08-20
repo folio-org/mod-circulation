@@ -4,7 +4,7 @@ import java.util.UUID;
 
 import api.support.builders.Address;
 
-public class AddressExamples {
+class AddressExamples {
   public static final UUID WORK_ADDRESS_TYPE = UUID.randomUUID();
   public static final UUID HOME_ADDRESS_TYPE = UUID.randomUUID();
   //Would prefer realistic examples, however these at least make it obvious they are fake

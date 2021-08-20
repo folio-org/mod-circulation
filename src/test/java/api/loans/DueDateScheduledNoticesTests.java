@@ -32,7 +32,7 @@ import api.support.http.IndividualResource;
 import api.support.http.OkapiHeaders;
 import io.vertx.core.json.JsonObject;
 
-public class DueDateScheduledNoticesTests extends APITests {
+class DueDateScheduledNoticesTests extends APITests {
   private static final String BEFORE_TIMING = "Before";
   private static final String UPON_AT_TIMING = "Upon At";
   private static final String AFTER_TIMING = "After";

@@ -36,7 +36,7 @@ import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
-public class ItemsInTransitReportTests extends APITests {
+class ItemsInTransitReportTests extends APITests {
   private static final String NAME = "name";
   private static final String CODE = "code";
   private static final String LIBRARY = "libraryName";

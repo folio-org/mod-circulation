@@ -8,7 +8,7 @@ import api.support.http.IndividualResource;
 
 import io.vertx.core.json.JsonObject;
 
-public class PatronGroupBuilder extends JsonBuilder implements Builder {
+class PatronGroupBuilder extends JsonBuilder implements Builder {
   private final UUID id;
   private final String group;
   private final String desc;

@@ -7,7 +7,7 @@ import lombok.Builder;
 
 @AllArgsConstructor
 @Builder
-public class CheckOutLogEvent {
+class CheckOutLogEvent {
   public final String loanId;
   public final List<ChangedRequest> changedRequests;
 

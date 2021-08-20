@@ -31,7 +31,7 @@ import api.support.builders.LoanBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import io.vertx.core.json.JsonObject;
 
-public class RollingLoanPolicyRenewalDueDateCalculationTests {
+class RollingLoanPolicyRenewalDueDateCalculationTests {
 
   private static final String EXPECTED_REASON_DATE_FALLS_OTSIDE_DATE_RANGES =
     "renewal date falls outside of date ranges in the loan policy";
@@ -50,7 +50,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
     "12",
     "15"
   })
-  public void shouldApplyMonthlyRollingPolicy(int duration) {
+  void shouldApplyMonthlyRollingPolicy(int duration) {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .rolling(Period.months(duration))
       .renewFromSystemDate()
@@ -77,7 +77,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
     "4",
     "5"
   })
-  public void shouldApplyWeeklyRollingPolicy(int duration) {
+  void shouldApplyWeeklyRollingPolicy(int duration) {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .rolling(Period.weeks(duration))
       .renewFromSystemDate()
@@ -105,7 +105,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
     "30",
     "100"
   })
-  public void shouldApplyDailyRollingPolicy(int duration) {
+  void shouldApplyDailyRollingPolicy(int duration) {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .rolling(Period.days(duration))
       .renewFromSystemDate()
@@ -133,7 +133,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
     "60",
     "24"
   })
-  public void shouldApplyHourlyRollingPolicy(int duration) {
+  void shouldApplyHourlyRollingPolicy(int duration) {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .rolling(Period.hours(duration))
       .renewFromSystemDate()
@@ -160,7 +160,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
     "60",
     "200"
   })
-  public void shouldApplyMinuteIntervalRollingPolicy(int duration) {
+  void shouldApplyMinuteIntervalRollingPolicy(int duration) {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .rolling(Period.minutes(duration))
       .renewFromSystemDate()
@@ -265,7 +265,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
     "0",
     "-1",
   })
-  public void shouldFailWhenDurationIsInvalid(int duration) {
+  void shouldFailWhenDurationIsInvalid(int duration) {
     final JsonObject representation = new LoanPolicyBuilder()
       .rolling(Period.minutes(duration))
       .withName("Invalid Loan Policy")

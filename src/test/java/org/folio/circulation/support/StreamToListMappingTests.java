@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import lombok.val;
 
-public class StreamToListMappingTests {
+class StreamToListMappingTests {
   @Test
   void listShouldContainSameContentsAsStream() {
     val stream = Stream.of("Foo", "Bar", "Lorem", "Ipsum");

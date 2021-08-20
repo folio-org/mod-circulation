@@ -31,7 +31,7 @@ import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.RequestBuilder;
 import io.vertx.core.json.JsonObject;
 
-public class RollingLoanPolicyCheckOutDueDateCalculationTests {
+class RollingLoanPolicyCheckOutDueDateCalculationTests {
 
   @ParameterizedTest
   @ValueSource(strings = {
@@ -40,7 +40,7 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
     "12",
     "15"
   })
-  public void shouldApplyMonthlyRollingPolicy(int duration) {
+  void shouldApplyMonthlyRollingPolicy(int duration) {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .rolling(Period.months(duration))
       .create());
@@ -63,7 +63,7 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
     "4",
     "5"
   })
-  public void shouldApplyWeeklyRollingPolicy(int duration) {
+  void shouldApplyWeeklyRollingPolicy(int duration) {
 
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .rolling(Period.weeks(duration))
@@ -88,7 +88,7 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
     "30",
     "100"
   })
-  public void shouldApplyDailyRollingPolicy(int duration) {
+  void shouldApplyDailyRollingPolicy(int duration) {
 
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .rolling(Period.days(duration))
@@ -113,7 +113,7 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
     "60",
     "24"
   })
-  public void shouldApplyHourlyRollingPolicy(int duration) {
+  void shouldApplyHourlyRollingPolicy(int duration) {
 
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .rolling(Period.hours(duration))
@@ -137,7 +137,7 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
     "60",
     "200"
   })
-  public void shouldApplyMinuteIntervalRollingPolicy(int duration) {
+  void shouldApplyMinuteIntervalRollingPolicy(int duration) {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .rolling(Period.minutes(duration))
       .create());
@@ -297,7 +297,7 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
     "0",
     "-1",
   })
-  public void shouldFailWhenDurationIsInvalid(int duration) {
+  void shouldFailWhenDurationIsInvalid(int duration) {
     final JsonObject representation = new LoanPolicyBuilder()
       .rolling(Period.minutes(duration))
       .withName("Invalid Loan Policy")

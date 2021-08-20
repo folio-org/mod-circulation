@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collector;
 
-public class CalendarBuilder extends JsonBuilder implements Builder {
+class CalendarBuilder extends JsonBuilder implements Builder {
 
   private static final String CALENDAR_NAME = "Calendar Name";
   private static final String START_DATE = DateTime.now().minusMonths(1).toString();

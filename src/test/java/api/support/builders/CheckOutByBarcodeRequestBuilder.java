@@ -7,7 +7,7 @@ import org.joda.time.DateTime;
 import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
 
-public class CheckOutByBarcodeRequestBuilder extends JsonBuilder implements Builder {
+class CheckOutByBarcodeRequestBuilder extends JsonBuilder implements Builder {
   private final String itemBarcode;
   private final String userBarcode;
   private final String proxyBarcode;

@@ -14,7 +14,7 @@ import java.util.concurrent.TimeoutException;
 
 import org.junit.jupiter.api.Test;
 
-public class ResultInitialisationTests {
+class ResultInitialisationTests {
   @Test
   void shouldSucceedWhenInitialValue() {
     final Result<Integer> result = of(() -> 10);

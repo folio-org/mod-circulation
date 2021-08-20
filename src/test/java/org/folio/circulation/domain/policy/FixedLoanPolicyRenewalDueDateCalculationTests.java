@@ -39,7 +39,7 @@ import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.RequestBuilder;
 import io.vertx.core.json.JsonObject;
 
-public class FixedLoanPolicyRenewalDueDateCalculationTests {
+class FixedLoanPolicyRenewalDueDateCalculationTests {
 
   private static final String EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES =
     "renewal date falls outside of date ranges in fixed loan policy";

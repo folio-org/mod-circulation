@@ -4,7 +4,7 @@ import java.util.UUID;
 
 import api.support.builders.ItemBuilder;
 
-public class ItemExamples {
+class ItemExamples {
   public static ItemBuilder basedUponSmallAngryPlanet(
     UUID bookMaterialTypeId,
     UUID loanTypeId) {

@@ -16,7 +16,7 @@ import api.support.builders.RequestBuilder;
 import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 
-public class RequestsAPITitleTests extends APITests {
+class RequestsAPITitleTests extends APITests {
 
   @Test
   void titleIsFromInstanceWhenCreatingRequestWithHoldingAndInstance() {

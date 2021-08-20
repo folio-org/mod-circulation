@@ -22,7 +22,7 @@ import api.support.builders.LoanBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import io.vertx.core.json.JsonObject;
 
-public class UnknownLoanPolicyProfileTests {
+class UnknownLoanPolicyProfileTests {
   @Test
   void shouldFailCheckOutCalculationForNonRollingProfile() {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()

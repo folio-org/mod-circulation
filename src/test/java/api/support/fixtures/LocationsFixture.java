@@ -12,7 +12,7 @@ import api.support.examples.LocationExamples;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
 
-public class LocationsFixture {
+class LocationsFixture {
   private final RecordCreator locationRecordCreator;
   private final ServicePointsFixture servicePointsFixture;
   private final RecordCreator institutionRecordCreator;

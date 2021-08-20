@@ -7,7 +7,7 @@ import api.support.http.IndividualResource;
 
 import io.vertx.core.json.JsonObject;
 
-public class HoldingBuilder extends JsonBuilder implements Builder {
+class HoldingBuilder extends JsonBuilder implements Builder {
   private final UUID instanceId;
   private final UUID permanentLocationId;
   private final UUID temporaryLocationId;

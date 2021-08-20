@@ -17,7 +17,7 @@ import org.apache.logging.log4j.Logger;
 
 import io.vertx.core.json.JsonObject;
 
-public class FakeCQLToJSONInterpreter {
+class FakeCQLToJSONInterpreter {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   public List<JsonObject> execute(Collection<JsonObject> records, String query) {

@@ -5,7 +5,7 @@ import java.net.URL;
 import lombok.Getter;
 
 @Getter
-public class OkapiHeaders {
+class OkapiHeaders {
   private final URL url;
   private final String tenantId;
   private final String token;

@@ -7,7 +7,7 @@ import org.hamcrest.TypeSafeDiagnosingMatcher;
 
 import java.util.UUID;
 
-public class UUIDMatcher {
+class UUIDMatcher {
   public static TypeSafeDiagnosingMatcher<String> is(UUID expected) {
     return new TypeSafeDiagnosingMatcher<String>() {
       @Override

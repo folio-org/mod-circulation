@@ -27,7 +27,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
  * Test cases for scenarios when due date calculated by CLDDM
  * extends beyond the DueDate for the configured Fixed due date schedule
  */
-public class CheckOutByBarcodeFixedDueDateScenariosTest extends APITests {
+class CheckOutByBarcodeFixedDueDateScenariosTest extends APITests {
 
   @Test
   void shouldUseMoveToThePreviousOpenDayStrategyForLongTermLoanPolicyWhenDueDateExtendsBeyondFixedDueDate() {

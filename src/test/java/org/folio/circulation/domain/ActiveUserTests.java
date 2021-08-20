@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class ActiveUserTests {
+class ActiveUserTests {
   @Test
   void userIsActiveWhenActivePropertyIsTrue() {
     final User activeUser = new User(new UserBuilder()

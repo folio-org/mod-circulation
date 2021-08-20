@@ -13,7 +13,7 @@ import api.support.builders.HoldingBuilder;
 import api.support.builders.InstanceBuilder;
 import api.support.http.ItemResource;
 
-public class EffectiveLocationApiTests extends APITests {
+class EffectiveLocationApiTests extends APITests {
 
   @Test
   void effectiveLocationReturnedWhenPresent() {

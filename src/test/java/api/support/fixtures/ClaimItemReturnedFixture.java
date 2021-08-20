@@ -11,7 +11,7 @@ import api.support.RestAssuredClient;
 import api.support.builders.ClaimItemReturnedRequestBuilder;
 import api.support.builders.DeclareClaimedReturnedItemAsMissingRequestBuilder;
 
-public class ClaimItemReturnedFixture {
+class ClaimItemReturnedFixture {
   private final RestAssuredClient restAssuredClient;
 
   public ClaimItemReturnedFixture(RestAssuredClient restAssuredClient) {

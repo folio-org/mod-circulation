@@ -36,7 +36,7 @@ import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.OverdueFinePolicyBuilder;
 import io.vertx.core.json.JsonObject;
 
-public class OverduePeriodCalculatorServiceTest {
+class OverduePeriodCalculatorServiceTest {
   private static final OverduePeriodCalculatorService calculator =
     new OverduePeriodCalculatorService(null, null);
   private static final DateTimeZone NEW_YORK = DateTimeZone.forID("America/New_York");
@@ -96,7 +96,7 @@ public class OverduePeriodCalculatorServiceTest {
 
   @ParameterizedTest
   @MethodSource("getOpeningDayDurationTestParameters")
-  public void getOpeningDayDurationTest(List<OpeningDay> openingDays, int expectedResult) {
+  void getOpeningDayDurationTest(List<OpeningDay> openingDays, int expectedResult) {
 
     LocalDateTime dueDate = new LocalDateTime("2020-04-08T14:00:00.000");
     LocalDateTime returnDate = new LocalDateTime("2020-04-10T15:00:00.000");
@@ -166,7 +166,7 @@ public class OverduePeriodCalculatorServiceTest {
 
   @ParameterizedTest
   @MethodSource("gracePeriodAdjustmentTestParameters")
-  public void gracePeriodAdjustmentTest(
+  void gracePeriodAdjustmentTest(
     int overdueMinutes,
     String gracePeriodInterval,
     int gracePeriodDuration,

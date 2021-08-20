@@ -106,7 +106,7 @@ import api.support.http.UserResource;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
-public class
+class
 RequestsAPICreationTests extends APITests {
   private static final String PAGING_REQUEST_EVENT = "Paging request";
   private static final String HOLD_REQUEST_EVENT = "Hold request";
@@ -441,7 +441,7 @@ RequestsAPICreationTests extends APITests {
     "Open - In transit",
     "Closed - Filled"
   })
-  public void canCreateARequestWithValidStatus(String status) {
+  void canCreateARequestWithValidStatus(String status) {
     final ItemResource smallAngryPlanet =
       itemsFixture.basedUponSmallAngryPlanet(itemBuilder -> itemBuilder
         .withBarcode("036000291452"));
@@ -471,7 +471,7 @@ RequestsAPICreationTests extends APITests {
   @ValueSource(strings = {
     "Non-existent status",
   })
-  public void cannotCreateARequestWithInvalidStatus(String status) {
+  void cannotCreateARequestWithInvalidStatus(String status) {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
     final IndividualResource jessica = usersFixture.jessica();
@@ -501,7 +501,7 @@ RequestsAPICreationTests extends APITests {
   @ValueSource(strings = {
     "Non-existent status",
   })
-  public void cannotCreateARequestAtASpecificLocationWithInvalidStatus(String status) {
+  void cannotCreateARequestAtASpecificLocationWithInvalidStatus(String status) {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
     final IndividualResource jessica = usersFixture.jessica();

@@ -62,7 +62,7 @@ import lombok.val;
  * @see <a href="https://issues.folio.org/browse/CIRC-333">CIRC-333</a>
  * @see <a href="https://issues.folio.org/browse/CIRC-395">CIRC-395</a>
  */
-public class MoveRequestTests extends APITests {
+class MoveRequestTests extends APITests {
 
   @AfterEach
   public void after() {

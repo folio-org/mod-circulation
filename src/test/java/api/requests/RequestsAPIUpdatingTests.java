@@ -68,7 +68,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
-public class RequestsAPIUpdatingTests extends APITests {
+class RequestsAPIUpdatingTests extends APITests {
   private static final String REQUEST_CANCELLATION = "Request cancellation";
 
   @Test

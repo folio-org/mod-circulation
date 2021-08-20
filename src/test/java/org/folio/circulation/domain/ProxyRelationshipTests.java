@@ -11,13 +11,13 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import api.support.builders.ProxyRelationshipBuilder;
 
-public class ProxyRelationshipTests {
+class ProxyRelationshipTests {
   @ParameterizedTest
   @ValueSource(strings = {
     "false",
     "true"
   })
-  public void shouldBeActiveWhenActiveAndDoesNotExpire(boolean useMetaObject) {
+  void shouldBeActiveWhenActiveAndDoesNotExpire(boolean useMetaObject) {
     final ProxyRelationship relationship = new ProxyRelationship(
       new ProxyRelationshipBuilder()
         .proxy(UUID.randomUUID())
@@ -35,7 +35,7 @@ public class ProxyRelationshipTests {
     "false",
     "true"
   })
-  public void shouldBeActiveWhenActiveAndNotExpired(boolean useMetaObject) {
+  void shouldBeActiveWhenActiveAndNotExpired(boolean useMetaObject) {
     final ProxyRelationship relationship = new ProxyRelationship(
       new ProxyRelationshipBuilder()
         .proxy(UUID.randomUUID())
@@ -53,7 +53,7 @@ public class ProxyRelationshipTests {
     "false",
     "true"
   })
-  public void shouldBeInactiveWhenActiveAndExpired(boolean useMetaObject) {
+  void shouldBeInactiveWhenActiveAndExpired(boolean useMetaObject) {
     final ProxyRelationship relationship = new ProxyRelationship(
       new ProxyRelationshipBuilder()
         .proxy(UUID.randomUUID())
@@ -71,7 +71,7 @@ public class ProxyRelationshipTests {
     "false",
     "true"
   })
-  public void shouldBeInactiveWhenInactiveAndDoesNotExpire(boolean useMetaObject) {
+  void shouldBeInactiveWhenInactiveAndDoesNotExpire(boolean useMetaObject) {
     final ProxyRelationship relationship = new ProxyRelationship(
       new ProxyRelationshipBuilder()
         .proxy(UUID.randomUUID())
@@ -90,7 +90,7 @@ public class ProxyRelationshipTests {
     "false",
     "true"
   })
-  public void shouldBeInactiveWhenInactiveAndNotExpired(boolean useMetaObject) {
+  void shouldBeInactiveWhenInactiveAndNotExpired(boolean useMetaObject) {
     final ProxyRelationship relationship = new ProxyRelationship(
       new ProxyRelationshipBuilder()
         .proxy(UUID.randomUUID())
@@ -109,7 +109,7 @@ public class ProxyRelationshipTests {
     "false",
     "true"
   })
-  public void shouldBeInactiveWhenInactiveAndExpired(boolean useMetaObject) {
+  void shouldBeInactiveWhenInactiveAndExpired(boolean useMetaObject) {
     final ProxyRelationship relationship = new ProxyRelationship(
       new ProxyRelationshipBuilder()
         .proxy(UUID.randomUUID())
