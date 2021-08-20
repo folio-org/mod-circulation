@@ -8,7 +8,7 @@ import org.folio.circulation.domain.Account;
 import org.folio.circulation.domain.FeeAmount;
 import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.domain.User;
-import org.folio.circulation.support.ClockManager;
+import org.folio.circulation.support.utils.ClockManager;
 
 import io.vertx.core.json.JsonObject;
 

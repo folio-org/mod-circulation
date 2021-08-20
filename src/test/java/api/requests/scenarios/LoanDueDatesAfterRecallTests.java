@@ -31,8 +31,8 @@ import java.util.UUID;
 
 import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.Period;
-import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.utils.ClockManager;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
 import org.joda.time.LocalTime;

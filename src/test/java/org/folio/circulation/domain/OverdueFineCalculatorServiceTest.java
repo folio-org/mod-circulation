@@ -37,7 +37,7 @@ import org.folio.circulation.infrastructure.storage.loans.OverdueFinePolicyRepos
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.context.RenewalContext;
-import org.folio.circulation.support.ClockManager;
+import org.folio.circulation.support.utils.ClockManager;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.jupiter.api.BeforeEach;

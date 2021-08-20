@@ -1,4 +1,4 @@
-package org.folio.circulation.support;
+package org.folio.circulation.support.utils;
 
 import static java.time.ZoneOffset.UTC;
 
@@ -15,6 +15,10 @@ import org.joda.time.LocalTime;
  */
 public class ClockManager {
   private static Clock clock = Clock.systemUTC();
+
+  private ClockManager() {
+    throw new UnsupportedOperationException("Do not instantiate");
+  }
 
   /**
    * Set the clock assigned to the clock manager to a given clock.

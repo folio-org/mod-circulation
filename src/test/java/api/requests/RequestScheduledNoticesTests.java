@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.policy.Period;
-import org.folio.circulation.support.ClockManager;
+import org.folio.circulation.support.utils.ClockManager;
 import org.joda.time.DateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

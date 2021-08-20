@@ -12,8 +12,8 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.folio.circulation.infrastructure.serialization.JsonSchemaValidator;
-import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.results.Result;
+import org.folio.circulation.support.utils.ClockManager;
 
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;

@@ -17,10 +17,10 @@ import java.util.function.Function;
 import java.util.function.IntFunction;
 import java.util.function.Supplier;
 
-import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
+import org.folio.circulation.support.utils.ClockManager;
 import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;

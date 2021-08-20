@@ -25,10 +25,10 @@ import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.resources.RenewalValidator;
 import org.folio.circulation.rules.AppliedRuleConditions;
-import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
+import org.folio.circulation.support.utils.ClockManager;
 import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;

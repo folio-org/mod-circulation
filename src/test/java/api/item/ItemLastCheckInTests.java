@@ -11,9 +11,9 @@ import static org.joda.time.DateTimeZone.UTC;
 
 import java.util.UUID;
 
-import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.json.JsonPropertyFetcher;
+import org.folio.circulation.support.utils.ClockManager;
 import org.joda.time.DateTime;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;

@@ -4,7 +4,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
-import org.folio.circulation.support.ClockManager;
+import org.folio.circulation.support.utils.ClockManager;
 import org.joda.time.DateTime;
 
 import lombok.AllArgsConstructor;

@@ -12,8 +12,8 @@ import org.folio.circulation.domain.representations.logs.NoticeLogContext;
 import org.folio.circulation.domain.representations.logs.NoticeLogContextItem;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineActionRepository;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.results.Result;
+import org.folio.circulation.support.utils.ClockManager;
 import org.joda.time.DateTime;
 import org.joda.time.Period;
 

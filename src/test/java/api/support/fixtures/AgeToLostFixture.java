@@ -7,7 +7,6 @@ import static api.support.http.ResourceClient.forLoansStorage;
 import static api.support.matchers.ItemMatchers.isAgedToLost;
 import static java.time.Clock.fixed;
 import static java.time.Instant.ofEpochMilli;
-import org.folio.circulation.support.ClockManager;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.joda.time.DateTime.now;
 
@@ -17,6 +16,7 @@ import java.util.UUID;
 import java.util.function.UnaryOperator;
 
 import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.utils.ClockManager;
 import org.joda.time.DateTime;
 
 import api.support.builders.HoldingBuilder;

@@ -18,11 +18,11 @@ import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.UserManualBlock;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.FindWithCqlQuery;
 import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
+import org.folio.circulation.support.utils.ClockManager;
 import org.joda.time.DateTime;
 
 public class UserManualBlocksValidator {

@@ -19,11 +19,11 @@ import org.folio.circulation.domain.notice.schedule.TriggeringEvent;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.CqlSortBy;
 import org.folio.circulation.support.CqlSortClause;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.results.Result;
+import org.folio.circulation.support.utils.ClockManager;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 

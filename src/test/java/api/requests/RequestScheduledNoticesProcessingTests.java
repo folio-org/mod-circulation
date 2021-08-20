@@ -26,7 +26,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.folio.circulation.domain.policy.Period;
-import org.folio.circulation.support.ClockManager;
+import org.folio.circulation.support.utils.ClockManager;
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
 import org.junit.FixMethodOrder;

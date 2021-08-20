@@ -7,7 +7,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.Objects;
 import java.util.stream.Stream;
 
-import org.folio.circulation.support.ClockManager;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 

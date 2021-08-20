@@ -18,7 +18,7 @@ import java.time.ZoneOffset;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-import org.folio.circulation.support.ClockManager;
+import org.folio.circulation.support.utils.ClockManager;
 import org.joda.time.DateTime;
 import org.junit.Assert;
 import org.junit.jupiter.api.AfterEach;

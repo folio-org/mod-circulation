@@ -7,7 +7,7 @@ import static api.support.http.InterfaceUrls.loanHistoryStorageUrl;
 import java.util.Map;
 import java.util.UUID;
 
-import org.folio.circulation.support.ClockManager;
+import org.folio.circulation.support.utils.ClockManager;
 
 import io.vertx.core.json.JsonObject;
 

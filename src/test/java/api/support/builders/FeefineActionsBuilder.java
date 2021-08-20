@@ -4,7 +4,7 @@ import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
 import java.util.UUID;
 
-import org.folio.circulation.support.ClockManager;
+import org.folio.circulation.support.utils.ClockManager;
 import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;

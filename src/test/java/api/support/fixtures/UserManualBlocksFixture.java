@@ -4,7 +4,7 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty
 
 import java.util.UUID;
 
-import org.folio.circulation.support.ClockManager;
+import org.folio.circulation.support.utils.ClockManager;
 
 import api.support.builders.UserManualBlockBuilder;
 import api.support.http.IndividualResource;

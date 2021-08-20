@@ -24,8 +24,8 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 
-import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.utils.ClockManager;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.jupiter.api.BeforeAll;

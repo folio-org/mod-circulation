@@ -1,7 +1,7 @@
 package org.folio.circulation.domain.anonymization.checkers;
 
 import org.folio.circulation.domain.policy.Period;
-import org.folio.circulation.support.ClockManager;
+import org.folio.circulation.support.utils.ClockManager;
 import org.joda.time.DateTime;
 
 abstract class TimePeriodChecker implements AnonymizationChecker {
