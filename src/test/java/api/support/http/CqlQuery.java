@@ -4,7 +4,7 @@ import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
-class CqlQuery implements QueryStringParameter {
+public class CqlQuery implements QueryStringParameter {
   private final String query;
 
   public static CqlQuery queryFromTemplate(String queryTemplate,

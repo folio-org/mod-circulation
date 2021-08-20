@@ -13,7 +13,7 @@ import api.support.RestAssuredClient;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
-class EndPatronSessionClient {
+public class EndPatronSessionClient {
 
   private static final String REQUEST_ID = "end-patron-session-request";
 

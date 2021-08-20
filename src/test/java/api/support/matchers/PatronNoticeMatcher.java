@@ -10,7 +10,7 @@ import org.hamcrest.Matcher;
 
 import io.vertx.core.json.JsonObject;
 
-class PatronNoticeMatcher {
+public class PatronNoticeMatcher {
 
   private static final String RECIPIENT_ID = "recipientId";
   private static final String TEMPLATE_ID = "templateId";

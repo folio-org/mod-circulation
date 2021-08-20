@@ -2,7 +2,7 @@ package api.support.builders;
 
 import io.vertx.core.json.JsonObject;
 
-class LoanHistoryConfigurationBuilder extends JsonBuilder implements Builder {
+public class LoanHistoryConfigurationBuilder extends JsonBuilder implements Builder {
 
   private boolean exceptionForFeesAndFines;
   private String loanClosingType;

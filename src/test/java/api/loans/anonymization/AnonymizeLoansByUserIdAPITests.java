@@ -16,7 +16,7 @@ import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 
-class AnonymizeLoansByUserIdAPITests extends LoanAnonymizationTests {
+public class AnonymizeLoansByUserIdAPITests extends LoanAnonymizationTests {
 
   @Test
   void canNotAnonymizeNotClosedLoans() {

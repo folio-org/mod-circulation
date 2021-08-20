@@ -12,7 +12,7 @@ import org.joda.time.format.ISODateTimeFormat;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
-class JsonBuilder {
+public class JsonBuilder {
   protected void put(JsonObject representation, String property, String value) {
     if(value != null) {
       representation.put(property, value);

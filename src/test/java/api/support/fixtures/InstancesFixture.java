@@ -11,7 +11,7 @@ import api.support.builders.InstanceBuilder;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
 
-class InstancesFixture {
+public class InstancesFixture {
   private final RecordCreator instanceTypeRecordCreator;
   private final RecordCreator contributorNameTypeRecordCreator;
   private final ResourceClient instancesClient;

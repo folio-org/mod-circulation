@@ -8,7 +8,7 @@ import api.support.http.IndividualResource;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
 
-class MaterialTypesFixture {
+public class MaterialTypesFixture {
   private final RecordCreator materialTypeRecordCreator;
 
   public MaterialTypesFixture(ResourceClient materialTypesClient) {

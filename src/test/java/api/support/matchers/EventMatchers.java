@@ -24,7 +24,7 @@ import org.joda.time.DateTime;
 import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
 
-class EventMatchers {
+public class EventMatchers {
   public static Matcher<JsonObject> isValidItemCheckedOutEvent(JsonObject loan,
     IndividualResource loanPolicy) {
 

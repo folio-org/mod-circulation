@@ -37,7 +37,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
-class FakeOkapi extends AbstractVerticle {
+public class FakeOkapi extends AbstractVerticle {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   private static final int PORT_TO_USE = nextFreePort();

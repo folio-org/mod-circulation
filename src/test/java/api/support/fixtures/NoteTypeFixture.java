@@ -7,7 +7,7 @@ import api.support.http.IndividualResource;
 import api.support.builders.NoteTypeBuilder;
 import api.support.http.ResourceClient;
 
-class NoteTypeFixture extends RecordCreator {
+public class NoteTypeFixture extends RecordCreator {
 
   public NoteTypeFixture() {
     super(ResourceClient.forNoteTypes(), json -> json.getString("noteTypes"));

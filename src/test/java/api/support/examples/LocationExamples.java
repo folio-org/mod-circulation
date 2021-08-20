@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 
 import api.support.builders.LocationBuilder;
 
-class LocationExamples {
+public class LocationExamples {
 
   private final UUID djanoglyLibraryId;
   private final UUID institutionId;

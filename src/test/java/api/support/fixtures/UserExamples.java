@@ -2,7 +2,7 @@ package api.support.fixtures;
 
 import api.support.builders.UserBuilder;
 
-class UserExamples {
+public class UserExamples {
   public static UserBuilder basedUponStevenJones() {
     return new UserBuilder()
       .withName("Jones", "Steven", "Jacob")

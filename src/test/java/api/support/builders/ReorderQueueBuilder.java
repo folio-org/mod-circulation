@@ -5,7 +5,7 @@ import org.folio.circulation.domain.reorder.ReorderQueueRequest;
 
 import io.vertx.core.json.JsonObject;
 
-class ReorderQueueBuilder implements Builder {
+public class ReorderQueueBuilder implements Builder {
   private final ReorderQueueRequest reorderQueueRequest = new ReorderQueueRequest();
 
   @Override

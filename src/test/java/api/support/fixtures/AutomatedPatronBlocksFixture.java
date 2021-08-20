@@ -8,7 +8,7 @@ import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
-class AutomatedPatronBlocksFixture {
+public class AutomatedPatronBlocksFixture {
   public static final String MAX_NUMBER_OF_ITEMS_CHARGED_OUT_MESSAGE =
     "Patron has reached maximum allowed number of items charged out";
   public static final String MAX_OUTSTANDING_FEE_FINE_BALANCE_MESSAGE =

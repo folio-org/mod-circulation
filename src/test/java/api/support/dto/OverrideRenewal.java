@@ -6,7 +6,7 @@ import lombok.Data;
 
 @Data
 @Builder
-class OverrideRenewal {
+public class OverrideRenewal {
   private final String itemBarcode;
   private final String userBarcode;
   private String servicePointId;

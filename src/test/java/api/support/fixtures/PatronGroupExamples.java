@@ -2,7 +2,7 @@ package api.support.fixtures;
 
 import api.support.builders.PatronGroupBuilder;
 
-class PatronGroupExamples {
+public class PatronGroupExamples {
  static PatronGroupBuilder regular() {
     return new PatronGroupBuilder("Regular Group", "Regular group");
   }

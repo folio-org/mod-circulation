@@ -10,7 +10,7 @@ import org.hamcrest.FeatureMatcher;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeDiagnosingMatcher;
 
-class RequestMatchers {
+public class RequestMatchers {
   public static Matcher<Request> hasNoPosition() {
     return new NoPositionMatcher();
   }

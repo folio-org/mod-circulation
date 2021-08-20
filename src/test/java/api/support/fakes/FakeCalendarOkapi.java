@@ -16,7 +16,7 @@ import api.support.fixtures.OpeningPeriodsExamples;
 import io.vertx.core.MultiMap;
 import io.vertx.ext.web.Router;
 
-class FakeCalendarOkapi {
+public class FakeCalendarOkapi {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   public static void registerOpeningHours(Router router) {

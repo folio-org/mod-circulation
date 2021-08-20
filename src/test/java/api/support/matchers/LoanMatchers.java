@@ -11,7 +11,7 @@ import org.hamcrest.TypeSafeDiagnosingMatcher;
 
 import io.vertx.core.json.JsonObject;
 
-class LoanMatchers {
+public class LoanMatchers {
   public static TypeSafeDiagnosingMatcher<JsonObject> isOpen() {
     return hasStatus("Open");
   }

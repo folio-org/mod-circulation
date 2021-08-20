@@ -20,7 +20,7 @@ import api.support.http.ItemResource;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
 
-class ItemsFixture {
+public class ItemsFixture {
   private final ResourceClient itemsClient;
   private final ResourceClient holdingsClient;
   private final ResourceClient instancesClient;

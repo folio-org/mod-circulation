@@ -5,7 +5,7 @@ import org.folio.circulation.support.ValidationErrorFailure;
 import org.hamcrest.Description;
 import org.hamcrest.TypeSafeDiagnosingMatcher;
 
-class FailureMatchers {
+public class FailureMatchers {
   public static <T> TypeSafeDiagnosingMatcher<Result<T>> errorResultFor(
     String propertyName,
     String reason) {

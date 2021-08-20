@@ -9,7 +9,7 @@ import org.joda.time.DateTimeZone;
 
 import io.vertx.core.json.JsonObject;
 
-class ClaimItemReturnedRequestBuilder implements Builder {
+public class ClaimItemReturnedRequestBuilder implements Builder {
   private final DateTime itemClaimedReturnedDate;
   private final String comment;
   private final String loanId;

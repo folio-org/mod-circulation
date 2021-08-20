@@ -16,7 +16,7 @@ import api.support.http.IndividualResource;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
 
-class LoanHistoryMatcher<T extends Iterable<?>> extends TypeSafeMatcher<IndividualResource> {
+public class LoanHistoryMatcher<T extends Iterable<?>> extends TypeSafeMatcher<IndividualResource> {
   private final ResourceClient loanHistoryClient;
   private final Matcher<T> matcher;
 

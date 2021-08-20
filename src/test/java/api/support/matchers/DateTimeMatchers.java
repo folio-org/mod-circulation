@@ -9,7 +9,7 @@ import java.time.OffsetDateTime;
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
 
-class DateTimeMatchers {
+public class DateTimeMatchers {
   private DateTimeMatchers() { }
 
   public static Matcher<OffsetDateTime> isEquivalentTo(DateTime expected) {

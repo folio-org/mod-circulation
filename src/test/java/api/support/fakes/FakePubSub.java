@@ -19,7 +19,7 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 
-class FakePubSub {
+public class FakePubSub {
   private static final PublishedEvents publishedEvents = new PublishedEvents();
   private static final List<JsonObject> createdEventTypes = new ArrayList<>();
   private static final List<JsonObject> registeredPublishers = new ArrayList<>();

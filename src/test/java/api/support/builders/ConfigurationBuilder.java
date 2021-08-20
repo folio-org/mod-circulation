@@ -6,7 +6,7 @@ import io.vertx.core.json.JsonObject;
 import java.util.List;
 import java.util.stream.Collector;
 
-class ConfigurationBuilder extends JsonBuilder implements Builder {
+public class ConfigurationBuilder extends JsonBuilder implements Builder {
 
   private static final String CONFIGS_KEY = "configs";
   private static final String TOTAL_RECORDS_KEY = "totalRecords";

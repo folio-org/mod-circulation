@@ -14,7 +14,7 @@ import org.hamcrest.TypeSafeMatcher;
 import org.joda.time.DateTime;
 import org.joda.time.Seconds;
 
-class TextDateTimeMatcher {
+public class TextDateTimeMatcher {
   public static Matcher<String> isEquivalentTo(DateTime expected) {
     return new TypeSafeMatcher<>() {
       @Override

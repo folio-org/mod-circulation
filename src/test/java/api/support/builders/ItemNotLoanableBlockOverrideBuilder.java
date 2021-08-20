@@ -10,7 +10,7 @@ import lombok.With;
 @NoArgsConstructor(force = true)
 @AllArgsConstructor
 @With
-class ItemNotLoanableBlockOverrideBuilder extends JsonBuilder implements Builder {
+public class ItemNotLoanableBlockOverrideBuilder extends JsonBuilder implements Builder {
   private final DateTime dueDate;
 
   @Override

@@ -4,7 +4,7 @@ import java.util.UUID;
 
 import api.support.builders.InstanceBuilder;
 
-class InstanceExamples {
+public class InstanceExamples {
   public static InstanceBuilder basedUponSmallAngryPlanet(
     UUID booksInstanceTypeId,
     UUID personalContributorNameTypeId) {

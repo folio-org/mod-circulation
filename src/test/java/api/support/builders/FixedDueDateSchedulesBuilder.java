@@ -7,7 +7,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-class FixedDueDateSchedulesBuilder extends JsonBuilder implements Builder {
+public class FixedDueDateSchedulesBuilder extends JsonBuilder implements Builder {
 
   private final UUID id;
   private final String name;

@@ -5,7 +5,7 @@ import java.util.UUID;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
 
-class TemplateFixture {
+public class TemplateFixture {
   private final ResourceClient templateClient;
 
   public TemplateFixture(ResourceClient templateClient) {

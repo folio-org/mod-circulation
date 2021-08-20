@@ -13,7 +13,7 @@ import api.support.RestAssuredClient;
 import api.support.builders.DeclareItemLostRequestBuilder;
 import io.vertx.core.json.JsonObject;
 
-class DeclareLostFixtures {
+public class DeclareLostFixtures {
   private final RestAssuredClient restAssuredClient;
 
   public DeclareLostFixtures() {

@@ -14,7 +14,7 @@ import lombok.With;
 
 @With
 @AllArgsConstructor
-class RequestByInstanceIdRequestBuilder implements Builder {
+public class RequestByInstanceIdRequestBuilder implements Builder {
   private final DateTime requestDate;
   private final UUID requesterId;
   private final UUID instanceId;

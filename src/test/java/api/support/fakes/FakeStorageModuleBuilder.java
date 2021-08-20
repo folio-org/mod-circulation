@@ -14,7 +14,7 @@ import org.folio.circulation.support.results.Result;
 import api.support.APITestContext;
 import io.vertx.core.json.JsonObject;
 
-class FakeStorageModuleBuilder {
+public class FakeStorageModuleBuilder {
   private final String rootPath;
   private final String collectionPropertyName;
   private final String tenantId;

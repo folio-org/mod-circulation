@@ -6,7 +6,7 @@ import java.util.UUID;
 
 import io.vertx.core.json.JsonObject;
 
-class NoticePolicyBuilder extends JsonBuilder implements Builder {
+public class NoticePolicyBuilder extends JsonBuilder implements Builder {
   private final UUID id;
   private final String name;
   private final String description;

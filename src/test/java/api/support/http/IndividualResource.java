@@ -6,7 +6,7 @@ import org.folio.circulation.support.http.client.Response;
 
 import io.vertx.core.json.JsonObject;
 
-class IndividualResource {
+public class IndividualResource {
   protected final Response response;
 
   public IndividualResource(Response response) {

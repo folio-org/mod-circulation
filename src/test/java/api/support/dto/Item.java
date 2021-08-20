@@ -5,7 +5,7 @@ import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
-class Item {
+public class Item {
   String id;
   String barcode;
 }

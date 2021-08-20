@@ -12,7 +12,7 @@ import lombok.With;
 
 @With
 @AllArgsConstructor
-class LoanPolicyBuilder extends JsonBuilder implements Builder {
+public class LoanPolicyBuilder extends JsonBuilder implements Builder {
   private static final String RENEW_FROM_SYSTEM_DATE = "SYSTEM_DATE";
   private static final String RENEW_FROM_DUE_DATE = "CURRENT_DUE_DATE";
 

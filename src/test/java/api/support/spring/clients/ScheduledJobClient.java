@@ -6,7 +6,7 @@ import api.support.RestAssuredClient;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-class ScheduledJobClient {
+public class ScheduledJobClient {
   private final URL baseUrl;
   private final RestAssuredClient client;
 

@@ -6,7 +6,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.awaitility.core.ConditionFactory;
 
-class Wait {
+public class Wait {
   private Wait() { }
 
   public static ConditionFactory waitAtLeast(int delay, TimeUnit timeUnit) {

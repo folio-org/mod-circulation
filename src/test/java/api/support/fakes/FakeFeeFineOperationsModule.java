@@ -22,7 +22,7 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import lombok.SneakyThrows;
 
-class FakeFeeFineOperationsModule {
+public class FakeFeeFineOperationsModule {
   @SneakyThrows
   public void register(Router router) {
     router.post("/accounts/:accountId/refund")

@@ -20,7 +20,7 @@ import api.support.fakes.FakePubSub;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
 
-class PatronNoticeTestHelper {
+public class PatronNoticeTestHelper {
 
   private static final ResourceClient scheduledNoticesClient =
     ResourceClient.forScheduledNotices();

@@ -29,7 +29,7 @@ import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 
-class TemplateContextMatchers {
+public class TemplateContextMatchers {
 
   private static final String ITEM_REPRESENTATION_PREFIX = "itemLevel%s";
 

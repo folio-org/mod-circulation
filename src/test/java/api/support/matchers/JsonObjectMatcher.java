@@ -18,7 +18,7 @@ import com.jayway.jsonpath.matchers.JsonPathMatchers;
 
 import io.vertx.core.json.JsonObject;
 
-class JsonObjectMatcher {
+public class JsonObjectMatcher {
 
   public static <T> Matcher<JsonObject> hasJsonPath(String jsonPath, Matcher<T> valueMatcher) {
     return new TypeSafeDiagnosingMatcher<JsonObject>() {

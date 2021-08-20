@@ -3,7 +3,7 @@ package api.support.builders;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
-class FixedDueDateSchedule {
+public class FixedDueDateSchedule {
   final DateTime from;
   final DateTime to;
   public final DateTime due;

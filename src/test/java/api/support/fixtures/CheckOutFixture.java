@@ -15,7 +15,7 @@ import api.support.http.IndividualResource;
 import api.support.http.OkapiHeaders;
 import io.vertx.core.json.JsonObject;
 
-class CheckOutFixture {
+public class CheckOutFixture {
   private final UsersFixture usersFixture;
   private final ServicePointsFixture servicePointsFixture;
   private final RestAssuredClient restAssuredClient;

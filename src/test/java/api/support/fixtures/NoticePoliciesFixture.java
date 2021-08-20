@@ -7,7 +7,7 @@ import api.support.http.IndividualResource;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.http.ResourceClient;
 
-class NoticePoliciesFixture {
+public class NoticePoliciesFixture {
   private final RecordCreator noticePolicyRecordCreator;
 
   public NoticePoliciesFixture(ResourceClient noticePoliciesClient) {

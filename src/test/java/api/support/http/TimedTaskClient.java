@@ -6,7 +6,7 @@ import org.folio.circulation.support.http.client.Response;
 
 import api.support.RestAssuredClient;
 
-class TimedTaskClient {
+public class TimedTaskClient {
   private final RestAssuredClient restAssuredClient;
 
   public TimedTaskClient(OkapiHeaders defaultHeaders) {

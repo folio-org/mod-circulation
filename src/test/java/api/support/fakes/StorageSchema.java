@@ -4,7 +4,7 @@ import java.io.IOException;
 
 import org.folio.circulation.infrastructure.serialization.JsonSchemaValidator;
 
-class StorageSchema {
+public class StorageSchema {
   private StorageSchema() { }
 
   public static JsonSchemaValidator validatorForStorageItemSchema() throws IOException {

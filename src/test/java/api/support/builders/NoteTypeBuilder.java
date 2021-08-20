@@ -10,7 +10,7 @@ import lombok.With;
 
 @With
 @AllArgsConstructor
-class NoteTypeBuilder extends JsonBuilder implements Builder {
+public class NoteTypeBuilder extends JsonBuilder implements Builder {
   private final UUID id;
   private final String typeName;
   public NoteTypeBuilder() {

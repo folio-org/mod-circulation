@@ -5,7 +5,7 @@ import static org.folio.circulation.domain.notice.session.PatronActionSessionPro
 
 import io.vertx.core.json.JsonObject;
 
-class EndSessionBuilder extends JsonBuilder implements Builder {
+public class EndSessionBuilder extends JsonBuilder implements Builder {
 
   private final String patronId;
   private final String actionType;

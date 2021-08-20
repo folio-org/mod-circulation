@@ -9,7 +9,7 @@ import org.joda.time.DateTimeZone;
 
 import io.vertx.core.json.JsonObject;
 
-class ChangeDueDateRequestBuilder implements Builder {
+public class ChangeDueDateRequestBuilder implements Builder {
   private final DateTime dueDate;
   private final String loanId;
 

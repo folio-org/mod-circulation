@@ -3,7 +3,7 @@ package api.support.builders;
 import io.vertx.core.json.JsonObject;
 import api.support.http.IndividualResource;
 
-class RenewByBarcodeRequestBuilder extends JsonBuilder implements Builder {
+public class RenewByBarcodeRequestBuilder extends JsonBuilder implements Builder {
   private final String itemBarcode;
   private final String userBarcode;
   private final String servicePointId;

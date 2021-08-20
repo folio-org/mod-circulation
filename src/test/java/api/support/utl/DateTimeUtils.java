@@ -11,7 +11,7 @@ import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
 
-class DateTimeUtils {
+public class DateTimeUtils {
   public static LocalDate getLocalDatePropertyForDateWithTime(JsonObject representation,
     String propertyName) {
 

@@ -15,7 +15,7 @@ import api.support.builders.LoanPolicyBuilder;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
 
-class LoanPoliciesFixture {
+public class LoanPoliciesFixture {
   private final RecordCreator loanPolicyRecordCreator;
   private final RecordCreator fixedDueDateScheduleRecordCreator;
 

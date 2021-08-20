@@ -14,7 +14,7 @@ import org.folio.circulation.support.http.client.Response;
 
 import io.vertx.core.json.JsonObject;
 
-class MultipleJsonRecords implements Iterable<JsonObject> {
+public class MultipleJsonRecords implements Iterable<JsonObject> {
   private final List<JsonObject> records;
   private final int totalRecords;
 

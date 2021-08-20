@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
-class LocationBuilder extends JsonBuilder implements Builder {
+public class LocationBuilder extends JsonBuilder implements Builder {
 
   private final String name;
   private final String code;

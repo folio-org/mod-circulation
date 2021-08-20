@@ -6,7 +6,7 @@ import java.util.Map;
 
 import api.support.http.QueryStringParameter;
 
-class NamedQueryStringParameter implements QueryStringParameter {
+public class NamedQueryStringParameter implements QueryStringParameter {
   private final String name;
   private final String value;
 

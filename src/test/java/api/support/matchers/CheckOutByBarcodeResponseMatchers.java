@@ -7,7 +7,7 @@ import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.hamcrest.Matcher;
 
-class CheckOutByBarcodeResponseMatchers {
+public class CheckOutByBarcodeResponseMatchers {
   public static Matcher<ValidationError> hasUserBarcodeParameter(IndividualResource user) {
     return hasParameter("userBarcode", user.getJson().getString("barcode"));
   }

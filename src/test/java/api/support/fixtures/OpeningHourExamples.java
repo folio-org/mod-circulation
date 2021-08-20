@@ -3,7 +3,7 @@ package api.support.fixtures;
 import org.folio.circulation.domain.OpeningHour;
 import org.joda.time.LocalTime;
 
-class OpeningHourExamples {
+public class OpeningHourExamples {
   public static OpeningHour allDay() {
     return new OpeningHour(new LocalTime(0, 0), new LocalTime(23, 59));
   }

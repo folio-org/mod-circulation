@@ -9,7 +9,7 @@ import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
 
-class FeefineActionsBuilder extends JsonBuilder implements Builder {
+public class FeefineActionsBuilder extends JsonBuilder implements Builder {
 
   private String id;
   private DateTime dateAction = ClockManager.getClockManager().getDateTime();

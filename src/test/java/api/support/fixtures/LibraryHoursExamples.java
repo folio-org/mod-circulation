@@ -10,7 +10,7 @@ import java.util.Map;
 
 import static api.support.fixtures.CalendarExamples.*;
 
-class LibraryHoursExamples {
+public class LibraryHoursExamples {
 
   public static final String CASE_CALENDAR_IS_UNAVAILABLE_SERVICE_POINT_ID = "55555555-2f09-4bc9-8924-3734882d44a3";
 

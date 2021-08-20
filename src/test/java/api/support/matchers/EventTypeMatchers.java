@@ -7,7 +7,7 @@ import org.hamcrest.Matcher;
 
 import io.vertx.core.json.JsonObject;
 
-class EventTypeMatchers {
+public class EventTypeMatchers {
   public static final String ITEM_CHECKED_OUT = "ITEM_CHECKED_OUT";
   public static final String ITEM_CHECKED_IN = "ITEM_CHECKED_IN";
   public static final String ITEM_DECLARED_LOST = "ITEM_DECLARED_LOST";

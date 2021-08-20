@@ -11,7 +11,7 @@ import api.support.http.IndividualResource;
 
 import api.support.builders.LostItemFeePolicyBuilder;
 
-class LostItemFeePoliciesFixture {
+public class LostItemFeePoliciesFixture {
   private final RecordCreator lostItemFeePolicyRecordCreator;
   private final FeeFineTypeFixture feeFineTypeFixture;
   private final FeeFineOwnerFixture feeFineOwnerFixture;

@@ -28,7 +28,7 @@ import org.junit.jupiter.api.Test;
 import api.support.fixtures.ItemExamples;
 import io.vertx.core.json.JsonObject;
 
-class RequestByInstanceIdResourceTests {
+public class RequestByInstanceIdResourceTests {
   @Test
   void canTransformInstanceToItemRequests(){
 

@@ -4,7 +4,7 @@ import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
 import io.vertx.core.json.JsonObject;
 
-class DeclareClaimedReturnedItemAsMissingRequestBuilder implements Builder {
+public class DeclareClaimedReturnedItemAsMissingRequestBuilder implements Builder {
   private final String comment;
   private final String loanId;
 
