@@ -83,7 +83,7 @@ public class LoanPolicy extends Policy {
   }
 
   public Result<DateTime> calculateInitialDueDate(Loan loan, RequestQueue requestQueue) {
-    final DateTime systemTime = ClockManager.getClockManager().getDateTime();
+    final DateTime systemTime = ClockManager.getDateTime();
     return determineStrategy(requestQueue, false, false, systemTime).calculateDueDate(loan);
   }
 
@@ -437,7 +437,7 @@ public class LoanPolicy extends Policy {
         getDueDate("minimumGuaranteedLoanPeriod", recalls,
             loan.getLoanDate(), null);
 
-    final DateTime systemDate = ClockManager.getClockManager().getDateTime();
+    final DateTime systemDate = ClockManager.getDateTime();
 
     final Result<DateTime> recallDueDateResult =
         loan.isOverdue() &&

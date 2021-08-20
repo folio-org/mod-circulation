@@ -293,7 +293,7 @@ public class UpdateRequestQueue {
   private ZonedDateTime calculateHoldShelfExpirationDate(
     TimePeriod holdShelfExpiryPeriod, DateTimeZone tenantTimeZone) {
 
-    ZonedDateTime now = Instant.now(ClockManager.getClockManager().getClock())
+    ZonedDateTime now = Instant.now(ClockManager.getClock())
       .atZone(tenantTimeZone.toTimeZone().toZoneId());
 
     ZonedDateTime holdShelfExpirationDate = holdShelfExpiryPeriod.getInterval()

@@ -677,7 +677,7 @@ class OverdueFineCalculatorServiceTest {
       ),
       new FeeAmount(correctOverdueFine), new FeeAmount(correctOverdueFine), "Open", "Outstanding",
       Collections.emptyList(),
-      ClockManager.getClockManager().getDateTime()
+      ClockManager.getDateTime()
     );
   }
 

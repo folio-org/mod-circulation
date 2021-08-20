@@ -94,7 +94,7 @@ public class UserManualBlocksValidator {
   }
 
   private boolean isBlockedAction(DateTime expirationDate, boolean isBlocked) {
-    final DateTime now = ClockManager.getClockManager().getDateTime();
+    final DateTime now = ClockManager.getDateTime();
     return isBlocked && (expirationDate == null || expirationDate.isAfter(now));
   }
 }

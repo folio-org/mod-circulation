@@ -116,7 +116,7 @@ public class FakeFeeFineOperationsModule {
     final String feeFineActionId = UUID.randomUUID().toString();
 
     final JsonObject feeFineAction = new JsonObject()
-      .put("dateAction", ClockManager.getClockManager().getDateTime().toString())
+      .put("dateAction", ClockManager.getDateTime().toString())
       .put("typeAction", actionType)
       .put("notify", false)
       .put("amountAction", actionAmount)

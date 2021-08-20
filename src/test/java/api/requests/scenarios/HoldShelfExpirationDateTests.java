@@ -46,13 +46,13 @@ class HoldShelfExpirationDateTests extends APITests{
   @BeforeAll
   public static void setUpBeforeClass() {
     clock = Clock.fixed(Instant.now(), ZoneOffset.UTC);
-    ClockManager.getClockManager().setClock(clock);
+    ClockManager.setClock(clock);
   }
 
   @BeforeEach
   public void setUp() {
     // reset the clock before each test (just in case)
-    ClockManager.getClockManager().setClock(clock);
+    ClockManager.setClock(clock);
   }
 
   @ParameterizedTest
@@ -253,7 +253,7 @@ class HoldShelfExpirationDateTests extends APITests{
 
     Clock not30Days = Clock.fixed(Instant.EPOCH, ZoneOffset.UTC);
 
-    ClockManager.getClockManager().setClock(not30Days);
+    ClockManager.setClock(not30Days);
 
     checkInFixture.checkInByBarcode(
         new CheckInByBarcodeRequestBuilder()

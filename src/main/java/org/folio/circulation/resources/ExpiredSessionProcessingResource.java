@@ -66,7 +66,7 @@ public class ExpiredSessionProcessingResource extends Resource {
   }
 
   private CompletableFuture<Result<DateTime>> defineExpiredTime(Integer timeout) {
-    final DateTime now = ClockManager.getClockManager().getDateTime();
+    final DateTime now = ClockManager.getDateTime();
     Result<DateTime> dateTimeResult = Result.succeeded(now.minusMinutes(timeout));
     return CompletableFuture.completedFuture(dateTimeResult);
   }

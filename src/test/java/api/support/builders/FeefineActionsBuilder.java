@@ -12,7 +12,7 @@ import io.vertx.core.json.JsonObject;
 public class FeefineActionsBuilder extends JsonBuilder implements Builder {
 
   private String id;
-  private DateTime dateAction = ClockManager.getClockManager().getDateTime();
+  private DateTime dateAction = ClockManager.getDateTime();
   private Double balance;
   private Double actionAmount;
   private String paymentMethod;

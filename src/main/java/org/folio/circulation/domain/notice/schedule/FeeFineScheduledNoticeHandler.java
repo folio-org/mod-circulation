@@ -2,7 +2,6 @@ package org.folio.circulation.domain.notice.schedule;
 
 import static java.util.Collections.singletonList;
 import static org.folio.circulation.domain.notice.TemplateContextUtil.createFeeFineNoticeContext;
-import static org.folio.circulation.support.ClockManager.getClockManager;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
@@ -13,6 +12,7 @@ import org.folio.circulation.domain.representations.logs.NoticeLogContext;
 import org.folio.circulation.domain.representations.logs.NoticeLogContextItem;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineActionRepository;
 import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
 import org.joda.time.Period;
@@ -106,7 +106,7 @@ public class FeeFineScheduledNoticeHandler extends ScheduledNoticeHandler {
   private static ScheduledNotice getNextRecurringNotice(ScheduledNotice notice) {
     Period recurringPeriod = notice.getConfiguration().getRecurringPeriod().timePeriod();
     DateTime nextRunTime = notice.getNextRunTime().plus(recurringPeriod);
-    DateTime now = getClockManager().getDateTime();
+    DateTime now = ClockManager.getDateTime();
 
     if (nextRunTime.isBefore(now)) {
       nextRunTime = now.plus(recurringPeriod);

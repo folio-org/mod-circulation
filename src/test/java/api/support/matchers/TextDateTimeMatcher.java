@@ -100,6 +100,6 @@ public class TextDateTimeMatcher {
   }
 
   public static Matcher<String> withinSecondsBeforeNow(Seconds seconds) {
-    return withinSecondsBefore(seconds, ClockManager.getClockManager().getDateTime());
+    return withinSecondsBefore(seconds, ClockManager.getDateTime());
   }
 }

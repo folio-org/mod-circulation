@@ -2,13 +2,13 @@ package api.support.fixtures;
 
 import static api.support.APITestContext.circulationModuleUrl;
 import static api.support.APITestContext.getOkapiHeadersFromContext;
-import static org.folio.circulation.support.ClockManager.getClockManager;
 
 import java.net.URL;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
 
+import org.folio.circulation.support.ClockManager;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeUtils;
 
@@ -80,13 +80,13 @@ public class ScheduledNoticeProcessingClient {
 
     private void runWithFrozenClock(Runnable runnable, DateTime mockSystemTime) {
     try {
-      getClockManager().setClock(
+      ClockManager.setClock(
         Clock.fixed(
           Instant.ofEpochMilli(mockSystemTime.getMillis()),
           ZoneOffset.UTC));
       runnable.run();
     } finally {
-      getClockManager().setDefaultClock();
+      ClockManager.setDefaultClock();
     }
   }
 

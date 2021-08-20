@@ -20,7 +20,7 @@ public class LogCheckInService {
     CheckInContext checkInContext) {
 
     final CheckInRecord checkInRecord = CheckInRecord.builder()
-      .withOccurredDateTime(ClockManager.getClockManager().getDateTime())
+      .withOccurredDateTime(ClockManager.getDateTime())
       .withItemId(checkInContext.getItem().getItemId())
       .withServicePointId(checkInContext.getCheckInServicePointId().toString())
       .withPerformedByUserId(checkInContext.getLoggedInUserId())

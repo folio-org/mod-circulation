@@ -362,7 +362,7 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
       .withFeeFineType(OVERDUE_FINE)
       .withAutomatic(true));
 
-    final DateTime checkOutDate = ClockManager.getClockManager().getDateTime().minusYears(1);
+    final DateTime checkOutDate = ClockManager.getDateTime().minusYears(1);
     final DateTime checkInDate = checkOutDate.plusMonths(1);
 
     IndividualResource checkOutResponse = checkOutFixture.checkOutByBarcode(item, user, checkOutDate);

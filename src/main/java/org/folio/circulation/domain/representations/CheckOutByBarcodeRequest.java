@@ -49,7 +49,7 @@ public class CheckOutByBarcodeRequest {
   private static String defaultLoanDate(String loanDate) {
     return isNotBlank(loanDate)
       ? loanDate
-      : ClockManager.getClockManager().getDateTime().toString(dateTime());
+      : ClockManager.getDateTime().toString(dateTime());
   }
 
   public Loan toLoan() {

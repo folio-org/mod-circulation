@@ -57,7 +57,7 @@ public class DueDateNotRealTimeScheduledNoticeProcessingResource extends Schedul
   }
 
   private DateTime startOfTodayInTimeZone(DateTimeZone zone) {
-    return ClockManager.getClockManager().getDateTime()
+    return ClockManager.getDateTime()
       .withZone(zone)
       .withTimeAtStartOfDay();
   }

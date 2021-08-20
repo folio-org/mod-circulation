@@ -19,15 +19,13 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.support.ClockManager;
+import org.joda.time.DateTime;
+import org.junit.Assert;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 
 import api.support.fakes.FakeModNotify;
-import api.support.http.IndividualResource;
-import org.joda.time.DateTime;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.Assert;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.BeforeAll;
-
 import api.support.fakes.FakePubSub;
 import api.support.fixtures.AddressTypesFixture;
 import api.support.fixtures.AgeToLostFixture;
@@ -70,6 +68,7 @@ import api.support.fixtures.TenantActivationFixture;
 import api.support.fixtures.UserManualBlocksFixture;
 import api.support.fixtures.UsersFixture;
 import api.support.fixtures.policies.PoliciesActivationFixture;
+import api.support.http.IndividualResource;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
 import lombok.experimental.Delegate;
@@ -382,13 +381,13 @@ public abstract class APITests {
   }
 
   protected void mockClockManagerToReturnFixedDateTime(DateTime dateTime) {
-    ClockManager.getClockManager().setClock(
+    ClockManager.setClock(
       Clock.fixed(
         Instant.ofEpochMilli(dateTime.getMillis()),
         ZoneOffset.UTC));
   }
 
   protected void mockClockManagerToReturnDefaultDateTime() {
-    ClockManager.getClockManager().setDefaultClock();
+    ClockManager.setDefaultClock();
   }
 }
