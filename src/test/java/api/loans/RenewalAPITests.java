@@ -886,7 +886,7 @@ public abstract class RenewalAPITests extends APITests {
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("item is Claimed returned"),
       hasUUIDParameter("itemId", smallAngryPlanet.getId()))));
-    assertThat(getOverridableBlockNames(response), hasItem("renewalBlock"));
+    assertThat(getOverridableBlockNames(response), hasSize(0));
   }
 
   @Test
