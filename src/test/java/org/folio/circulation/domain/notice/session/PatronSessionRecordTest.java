@@ -16,7 +16,7 @@ import io.vertx.core.json.JsonObject;
 public class PatronSessionRecordTest {
 
   @Test
-  public void shouldMapJsonRepresentationToPatronSessionRecord() {
+  void shouldMapJsonRepresentationToPatronSessionRecord() {
     String id = UUID.randomUUID().toString();
     String patronId = UUID.randomUUID().toString();
     String loanId = UUID.randomUUID().toString();

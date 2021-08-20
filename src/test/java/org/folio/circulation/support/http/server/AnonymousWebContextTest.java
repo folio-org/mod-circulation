@@ -26,7 +26,7 @@ public class AnonymousWebContextTest {
   }
 
   @Test
-  public void shouldReturnNullIfNoUserIdHeader() {
+  void shouldReturnNullIfNoUserIdHeader() {
     // For scheduled jobs there will be no user id
     // we have to make sure that default value is null
     // otherwise metadata.updatedByUserId might be corrupted

@@ -75,7 +75,7 @@ public class FeeFineFacadeTest {
   }
 
   @Test
-  public void shouldForwardFailureIfAnAccountIsNotCreated() {
+  void shouldForwardFailureIfAnAccountIsNotCreated() {
     final String expectedError = "Fee fine account failed to be created";
 
     when(accountClient.post(any()))
@@ -94,7 +94,7 @@ public class FeeFineFacadeTest {
   }
 
   @Test
-  public void shouldForwardFailureIfAnAccountIsNotRefunded() throws Exception {
+  void shouldForwardFailureIfAnAccountIsNotRefunded() throws Exception {
     final String expectedError = "Fee fine account failed to be refunded";
 
     when(accountRefundClient.post(any(JsonObject.class), anyString()))

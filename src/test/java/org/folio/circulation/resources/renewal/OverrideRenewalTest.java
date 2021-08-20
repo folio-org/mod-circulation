@@ -40,7 +40,7 @@ public class OverrideRenewalTest {
     "New due date must be specified when due date calculation fails";
 
   @Test
-  public void shouldUseOverrideDateWhenLoanIsNotLoanable() {
+  void shouldUseOverrideDateWhenLoanIsNotLoanable() {
     final DateTime overrideDate = now().plusMonths(1);
     final JsonObject loanPolicyJson = new LoanPolicyBuilder()
       .withLoanable(false)
@@ -53,7 +53,7 @@ public class OverrideRenewalTest {
   }
 
   @Test
-  public void shouldUseOverrideDateWhenLoanIsNotRenewable() {
+  void shouldUseOverrideDateWhenLoanIsNotRenewable() {
     final DateTime overrideDate = now().plusMonths(1);
     final JsonObject loanPolicyJson = new LoanPolicyBuilder()
       .notRenewable()
@@ -66,7 +66,7 @@ public class OverrideRenewalTest {
   }
 
   @Test
-  public void overrideDateIsRequiredWhenLoanIsNotRenewable() {
+  void overrideDateIsRequiredWhenLoanIsNotRenewable() {
     final JsonObject loanPolicyJson = new LoanPolicyBuilder()
       .notRenewable()
       .create();
@@ -77,7 +77,7 @@ public class OverrideRenewalTest {
   }
 
   @Test
-  public void overrideDateIsRequiredWhenLoanIsNotLoanable() {
+  void overrideDateIsRequiredWhenLoanIsNotLoanable() {
     final JsonObject loanPolicyJson = new LoanPolicyBuilder()
       .withLoanable(false)
       .create();
@@ -88,7 +88,7 @@ public class OverrideRenewalTest {
   }
 
   @Test
-  public void shouldUseOverrideDateWhenUnableToCalculateCalculatedDueDate() {
+  void shouldUseOverrideDateWhenUnableToCalculateCalculatedDueDate() {
     final DateTime overrideDate = now().plusMonths(1);
     final JsonObject loanPolicyJson = rollingPolicy().create();
 
@@ -102,7 +102,7 @@ public class OverrideRenewalTest {
   }
 
   @Test
-  public void overrideDateIsRequiredWhenUnableToCalculateCalculatedDueDate() {
+  void overrideDateIsRequiredWhenUnableToCalculateCalculatedDueDate() {
     final JsonObject loanPolicyJson = rollingPolicy().create();
 
     writeByPath(loanPolicyJson, "UNDEFINED_STRATEGY", "renewalsPolicy", "renewFromId");
@@ -113,7 +113,7 @@ public class OverrideRenewalTest {
   }
 
   @Test
-  public void shouldUseOverrideDateWhenReachedNumberOfRenewalsAndNewDueDateBeforeCurrent() {
+  void shouldUseOverrideDateWhenReachedNumberOfRenewalsAndNewDueDateBeforeCurrent() {
     final DateTime overrideDueDate = now(UTC).plusWeeks(2);
     final LoanPolicy loanPolicy = LoanPolicy.from(rollingPolicy()
       .limitedRenewals(1)
@@ -131,7 +131,7 @@ public class OverrideRenewalTest {
   }
 
   @Test
-  public void shouldUseCalculatedDueDateWhenReachedNumberOfRenewalsAndNewDueDateAfterCurrent() {
+  void shouldUseCalculatedDueDateWhenReachedNumberOfRenewalsAndNewDueDateAfterCurrent() {
     final DateTime estimatedDueDate = now(UTC).plusWeeks(1);
     final LoanPolicy loanPolicy = LoanPolicy.from(rollingPolicy()
       .limitedRenewals(1)
@@ -148,7 +148,7 @@ public class OverrideRenewalTest {
   }
 
   @Test
-  public void overrideDateIsRequiredWhenReachedNumberOfRenewalsAndNewDueDateBeforeCurrent() {
+  void overrideDateIsRequiredWhenReachedNumberOfRenewalsAndNewDueDateBeforeCurrent() {
     final LoanPolicy loanPolicy = LoanPolicy.from(rollingPolicy()
       .limitedRenewals(1).create());
 
@@ -162,7 +162,7 @@ public class OverrideRenewalTest {
   }
 
   @Test
-  public void shouldUseOverrideDateWhenRecallRequestedAndNewDateIsBeforeCurrent() {
+  void shouldUseOverrideDateWhenRecallRequestedAndNewDateIsBeforeCurrent() {
     final DateTime overrideDueDate = now(UTC).plusDays(9);
     final Loan loan = createLoanWithDueDateAfterCalculated();
 
@@ -173,7 +173,7 @@ public class OverrideRenewalTest {
   }
 
   @Test
-  public void overrideDateIsRequiredWhenRecallRequestedAndNewDateIsBeforeCurrent() {
+  void overrideDateIsRequiredWhenRecallRequestedAndNewDateIsBeforeCurrent() {
     final Loan loan = createLoanWithDueDateAfterCalculated();
 
     final Result<Loan> renewedLoan = renewWithRecall(loan, null);
@@ -182,7 +182,7 @@ public class OverrideRenewalTest {
   }
 
   @Test
-  public void shouldUseCalculatedDateWhenRecallRequestedAndNewDateIsAfterCurrent() {
+  void shouldUseCalculatedDateWhenRecallRequestedAndNewDateIsAfterCurrent() {
     final DateTime estimatedDueDate = now(UTC).plusWeeks(1);
     final Loan loan = createLoanWithDefaultPolicy();
 
@@ -193,7 +193,7 @@ public class OverrideRenewalTest {
   }
 
   @Test
-  public void shouldUseOverrideDateWhenItemLostAndNewDateIsBeforeCurrent() {
+  void shouldUseOverrideDateWhenItemLostAndNewDateIsBeforeCurrent() {
     final DateTime overrideDueDate = now(UTC).plusDays(9);
 
     final Loan loan = createLoanWithDueDateAfterCalculated()
@@ -206,7 +206,7 @@ public class OverrideRenewalTest {
   }
 
   @Test
-  public void overrideDateIsRequiredWhenItemLostAndNewDateIsBeforeCurrent() {
+  void overrideDateIsRequiredWhenItemLostAndNewDateIsBeforeCurrent() {
     final Loan loan = createLoanWithDueDateAfterCalculated()
       .withItem(createDeclaredLostItem());
 
@@ -216,7 +216,7 @@ public class OverrideRenewalTest {
   }
 
   @Test
-  public void shouldUseCalculatedDateWhenItemLostAndNewDateIsAfterCurrent() {
+  void shouldUseCalculatedDateWhenItemLostAndNewDateIsAfterCurrent() {
     final DateTime estimatedDueDate = now(UTC).plusWeeks(1);
     final Loan loan = createLoanWithDefaultPolicy()
       .withItem(createDeclaredLostItem());
@@ -228,7 +228,7 @@ public class OverrideRenewalTest {
   }
 
   @Test
-  public void canOverrideLoanWhenCurrentDueDateIsAfterCalculated() {
+  void canOverrideLoanWhenCurrentDueDateIsAfterCalculated() {
     final DateTime overrideDate = now(UTC).plusDays(9);
     final Loan loan = createLoanWithDueDateAfterCalculated();
 
@@ -239,7 +239,7 @@ public class OverrideRenewalTest {
   }
 
   @Test
-  public void overrideDateIsRequiredWhenCurrentDueDateIsAfterCalculated() {
+  void overrideDateIsRequiredWhenCurrentDueDateIsAfterCalculated() {
     final Loan loan = createLoanWithDueDateAfterCalculated();
 
     final Result<Loan> renewedLoan = renew(loan, null);
@@ -248,7 +248,7 @@ public class OverrideRenewalTest {
   }
 
   @Test
-  public void cannotOverrideWhenCurrentDueDateIsBeforeCalculated() {
+  void cannotOverrideWhenCurrentDueDateIsBeforeCalculated() {
     final Loan loan = createLoanWithDefaultPolicy();
 
     final Result<Loan> renewedLoan = renew(loan, now(UTC).plusDays(9));
@@ -258,7 +258,7 @@ public class OverrideRenewalTest {
   }
 
   @Test
-  public void cannotOverrideWhenOverrideDateBeforeCurrentDueDate() {
+  void cannotOverrideWhenOverrideDateBeforeCurrentDueDate() {
     final DateTime overrideDate = now(UTC).plusWeeks(1).plusSeconds(1);
     final Loan loan = createLoanWithDueDateAfterCalculated();
 
@@ -268,7 +268,7 @@ public class OverrideRenewalTest {
   }
 
   @Test
-  public void nonLoanableAgedToLostItemShouldBeProperlyRenewed() {
+  void nonLoanableAgedToLostItemShouldBeProperlyRenewed() {
     final DateTime newDueDate = now(UTC).plusWeeks(1);
     final DateTime ageToLostDate = now(UTC);
 

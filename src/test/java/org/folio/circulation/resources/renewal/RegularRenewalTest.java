@@ -56,7 +56,7 @@ public class RegularRenewalTest {
     "renewal would not change the due date";
 
   @Test
-  public void canRenewLoan() {
+  void canRenewLoan() {
     final var rollingPeriod = days(10);
     final var currentDueDate = now(UTC);
     final var expectedDueDate = currentDueDate.plus(rollingPeriod.timePeriod());
@@ -76,7 +76,7 @@ public class RegularRenewalTest {
   }
 
   @Test
-  public void cannotRenewWhenRecallRequestedAndPolicyNorLoanableAndItemLost() {
+  void cannotRenewWhenRecallRequestedAndPolicyNorLoanableAndItemLost() {
     final var recallRequest = new RequestBuilder().recall().asDomainObject();
     final var loanPolicy = new LoanPolicyBuilder()
       .withLoanable(false).withRenewable(false).asDomainObject();
@@ -95,7 +95,7 @@ public class RegularRenewalTest {
   }
 
   @Test
-  public void cannotRenewWhenRecallRequested() {
+  void cannotRenewWhenRecallRequested() {
     final var recallRequest = new RequestBuilder().recall().asDomainObject();
     final var loanPolicy = new LoanPolicyBuilder().asDomainObject();
 
@@ -107,7 +107,7 @@ public class RegularRenewalTest {
   }
 
   @Test
-  public void cannotRenewWhenItemIsNotLoanable() {
+  void cannotRenewWhenItemIsNotLoanable() {
     final var loanPolicy = new LoanPolicyBuilder().withLoanable(false).asDomainObject();
 
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
@@ -117,7 +117,7 @@ public class RegularRenewalTest {
   }
 
   @Test
-  public void cannotRenewWhenLoanIsNotRenewable() {
+  void cannotRenewWhenLoanIsNotRenewable() {
     final var loanPolicy = new LoanPolicyBuilder().withRenewable(false).asDomainObject();
 
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
@@ -127,7 +127,7 @@ public class RegularRenewalTest {
   }
 
   @Test
-  public void cannotRenewWhenHoldRequestIsNotRenewable() {
+  void cannotRenewWhenHoldRequestIsNotRenewable() {
     final var request = new RequestBuilder().hold().asDomainObject();
     final var loanPolicy = new LoanPolicyBuilder()
       .withHolds(null, false, null)
@@ -141,7 +141,7 @@ public class RegularRenewalTest {
   }
 
   @Test
-  public void cannotRenewWhenHoldRequestedAndFixedPolicyHasAlternativeRenewPeriod() {
+  void cannotRenewWhenHoldRequestedAndFixedPolicyHasAlternativeRenewPeriod() {
     final var request = new RequestBuilder().hold().asDomainObject();
     final var loanPolicy = new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
@@ -156,7 +156,7 @@ public class RegularRenewalTest {
   }
 
   @Test
-  public void cannotRenewWhenHoldRequestedAndFixedPolicyHasRenewPeriod() {
+  void cannotRenewWhenHoldRequestedAndFixedPolicyHasRenewPeriod() {
     final var request = new RequestBuilder().hold().asDomainObject();
     final var loanPolicy = new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
@@ -190,7 +190,7 @@ public class RegularRenewalTest {
   }
 
   @Test
-  public void cannotRenewLoanThatReachedRenewalLimit() {
+  void cannotRenewLoanThatReachedRenewalLimit() {
     final var renewalLimit = 2;
     final var loanPolicy = new LoanPolicyBuilder()
       .withRenewable(true).limitedRenewals(renewalLimit).asDomainObject();
@@ -204,7 +204,7 @@ public class RegularRenewalTest {
   }
 
   @Test
-  public void cannotRenewWhenDueDateCannotBeCalculated() {
+  void cannotRenewWhenDueDateCannotBeCalculated() {
     final var loanPolicy = new LoanPolicyBuilder().rolling(days(10))
       .withRenewFrom("INVALID_RENEW_FROM").asDomainObject();
 
@@ -215,7 +215,7 @@ public class RegularRenewalTest {
   }
 
   @Test
-  public void cannotRenewWhenPolicyDueDateIsEarlierThanCurrentDueDate() {
+  void cannotRenewWhenPolicyDueDateIsEarlierThanCurrentDueDate() {
     final var rollingPeriod = days(11);
     final var loanPolicy = new LoanPolicyBuilder()
       .rolling(rollingPeriod)
@@ -233,7 +233,7 @@ public class RegularRenewalTest {
   }
 
   @Test
-  public void shouldNotAttemptToCalculateDueDateWhenPolicyIsNotLoanable() {
+  void shouldNotAttemptToCalculateDueDateWhenPolicyIsNotLoanable() {
     final var loanPolicy = spy(new LoanPolicyBuilder()
       .withLoanable(false).asDomainObject());
 
@@ -244,7 +244,7 @@ public class RegularRenewalTest {
   }
 
   @Test
-  public void shouldNotAttemptToCalculateDueDateWhenPolicyIsNotRenewable() {
+  void shouldNotAttemptToCalculateDueDateWhenPolicyIsNotRenewable() {
     final var loanPolicy = spy(new LoanPolicyBuilder()
       .rolling(days(1)).notRenewable().asDomainObject());
 

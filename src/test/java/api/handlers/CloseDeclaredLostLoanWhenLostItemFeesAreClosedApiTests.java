@@ -39,7 +39,7 @@ public class CloseDeclaredLostLoanWhenLostItemFeesAreClosedApiTests extends APIT
   }
 
   @Test
-  public void shouldCloseLoanWhenAllFeesClosed() {
+  void shouldCloseLoanWhenAllFeesClosed() {
     feeFineAccountFixture.payLostItemFee(loan.getId());
     feeFineAccountFixture.payLostItemProcessingFee(loan.getId());
 
@@ -50,7 +50,7 @@ public class CloseDeclaredLostLoanWhenLostItemFeesAreClosedApiTests extends APIT
   }
 
   @Test
-  public void shouldDisregardNonLostFeeTypes() {
+  void shouldDisregardNonLostFeeTypes() {
     feeFineAccountFixture.payLostItemFee(loan.getId());
     feeFineAccountFixture.payLostItemProcessingFee(loan.getId());
 
@@ -66,7 +66,7 @@ public class CloseDeclaredLostLoanWhenLostItemFeesAreClosedApiTests extends APIT
   }
 
   @Test
-  public void shouldNotCloseLoanWhenProcessingFeeIsNotClosed() {
+  void shouldNotCloseLoanWhenProcessingFeeIsNotClosed() {
     feeFineAccountFixture.payLostItemFee(loan.getId());
 
     eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loan.getId());
@@ -76,7 +76,7 @@ public class CloseDeclaredLostLoanWhenLostItemFeesAreClosedApiTests extends APIT
   }
 
   @Test
-  public void shouldNotCloseLoanIfSetCostFeeIsNotClosed() {
+  void shouldNotCloseLoanIfSetCostFeeIsNotClosed() {
     feeFineAccountFixture.payLostItemProcessingFee(loan.getId());
 
     eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loan.getId());
@@ -86,7 +86,7 @@ public class CloseDeclaredLostLoanWhenLostItemFeesAreClosedApiTests extends APIT
   }
 
   @Test
-  public void shouldNotCloseLoanIfActualCostFeeShouldBeCharged() {
+  void shouldNotCloseLoanIfActualCostFeeShouldBeCharged() {
     useLostItemPolicy(lostItemFeePoliciesFixture.create(
       lostItemFeePoliciesFixture.facultyStandardPolicy()
         .chargeProcessingFeeWhenDeclaredLost(10.00)
@@ -101,7 +101,7 @@ public class CloseDeclaredLostLoanWhenLostItemFeesAreClosedApiTests extends APIT
   }
 
   @Test
-  public void shouldNotCloseRefundedLoan() {
+  void shouldNotCloseRefundedLoan() {
     feeFineAccountFixture.payLostItemFee(loan.getId());
     feeFineAccountFixture.payLostItemProcessingFee(loan.getId());
 
@@ -121,7 +121,7 @@ public class CloseDeclaredLostLoanWhenLostItemFeesAreClosedApiTests extends APIT
   }
 
   @Test
-  public void shouldNotCloseCheckedOutLoan() {
+  void shouldNotCloseCheckedOutLoan() {
     item = itemsFixture.basedUponNod();
     loan = checkOutFixture.checkOutByBarcode(item, usersFixture.jessica());
 
@@ -132,7 +132,7 @@ public class CloseDeclaredLostLoanWhenLostItemFeesAreClosedApiTests extends APIT
   }
 
   @Test
-  public void shouldIgnoreErrorWhenNoLoanIdSpecifiedInPayload() {
+  void shouldIgnoreErrorWhenNoLoanIdSpecifiedInPayload() {
     final Response response = eventSubscribersFixture
       .attemptPublishLoanRelatedFeeFineClosedEvent(null, UUID.randomUUID());
 
@@ -140,7 +140,7 @@ public class CloseDeclaredLostLoanWhenLostItemFeesAreClosedApiTests extends APIT
   }
 
   @Test
-  public void shouldIgnoreErrorWhenNonExistentLoanIdProvided() {
+  void shouldIgnoreErrorWhenNonExistentLoanIdProvided() {
     final UUID loanId = UUID.randomUUID();
     final Response response = eventSubscribersFixture
       .attemptPublishLoanRelatedFeeFineClosedEvent(loanId,

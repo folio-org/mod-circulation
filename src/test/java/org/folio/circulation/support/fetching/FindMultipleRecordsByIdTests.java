@@ -52,7 +52,7 @@ public class FindMultipleRecordsByIdTests {
   private FindWithCqlQuery<JsonObject> queryFinder;
 
   @Test
-  public void shouldUseSingleCqlQueryForFindingSmallNumberOfRecordsById() {
+  void shouldUseSingleCqlQueryForFindingSmallNumberOfRecordsById() {
     final int MAX_VALUES_PER_CQL_SEARCH_QUERY = 50;
 
     when(queryFinder.findByQuery(any(), any())).thenReturn(
@@ -102,7 +102,7 @@ public class FindMultipleRecordsByIdTests {
   }
 
   @Test
-  public void shouldIncludeAdditionalQuery() {
+  void shouldIncludeAdditionalQuery() {
     when(queryFinder.findByQuery(any(), any())).thenReturn(
       CompletableFuture.completedFuture(Result.succeeded(MultipleRecords.empty())));
 
@@ -123,7 +123,7 @@ public class FindMultipleRecordsByIdTests {
   }
 
   @Test
-  public void shouldAssumeNoRecordsAreFoundWhenSearchingForNoIds()
+  void shouldAssumeNoRecordsAreFoundWhenSearchingForNoIds()
       throws InterruptedException, ExecutionException, TimeoutException {
 
     final FindWithMultipleCqlIndexValues<JsonObject> fetcher

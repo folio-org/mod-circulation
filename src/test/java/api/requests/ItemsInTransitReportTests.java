@@ -74,14 +74,14 @@ public class ItemsInTransitReportTests extends APITests {
   }
 
   @Test
-  public void reportIsEmptyWhenThereAreNoItemsInTransit() {
+  void reportIsEmptyWhenThereAreNoItemsInTransit() {
     List<JsonObject> items = ResourceClient.forItemsInTransitReport().getAll();
 
     assertTrue(items.isEmpty());
   }
 
   @Test
-  public void reportIncludesItemInTransit() {
+  void reportIncludesItemInTransit() {
     final ItemResource smallAngryPlanet = createSmallAngryPlanet();
 
     final IndividualResource steve = usersFixture.steve();
@@ -112,7 +112,7 @@ public class ItemsInTransitReportTests extends APITests {
   }
 
   @Test
-  public void reportIncludesMultipleDifferentItemsInTransit() {
+  void reportIncludesMultipleDifferentItemsInTransit() {
     final ItemResource smallAngryPlanet = createSmallAngryPlanet();
     final ItemResource nod = createNod();
 
@@ -168,7 +168,7 @@ public class ItemsInTransitReportTests extends APITests {
   }
 
   @Test
-  public void reportExcludesItemsThatAreNotInTransit() {
+  void reportExcludesItemsThatAreNotInTransit() {
     final ItemResource smallAngryPlanet = createSmallAngryPlanet();
     final ItemResource nod = createNod();
 
@@ -203,7 +203,7 @@ public class ItemsInTransitReportTests extends APITests {
   }
 
   @Test
-  public void reportIncludesItemsInTransitToDifferentServicePoints() {
+  void reportIncludesItemsInTransitToDifferentServicePoints() {
     final ItemResource smallAngryPlanet = createSmallAngryPlanet();
     final ItemResource nod = createNod();
 
@@ -260,7 +260,7 @@ public class ItemsInTransitReportTests extends APITests {
   }
 
   @Test
-  public void reportIncludesItemsInTransitWithMoreThanOneOpenRequestInQueue() {
+  void reportIncludesItemsInTransitWithMoreThanOneOpenRequestInQueue() {
     final ItemResource smallAngryPlanet = createSmallAngryPlanet();
     final ItemResource nod = createNod();
 
@@ -326,7 +326,7 @@ public class ItemsInTransitReportTests extends APITests {
   }
 
   @Test
-  public void reportIncludesItemsInTransitWithEmptyRequestQueue() {
+  void reportIncludesItemsInTransitWithEmptyRequestQueue() {
     final ItemResource smallAngryPlanet = createSmallAngryPlanet();
     final ItemResource nod = createNod();
 
@@ -372,7 +372,7 @@ public class ItemsInTransitReportTests extends APITests {
   }
 
   @Test
-  public void reportItemsInTransitSortedByCheckInServicePoint() {
+  void reportItemsInTransitSortedByCheckInServicePoint() {
     final ItemResource smallAngryPlanet = createSmallAngryPlanet();
     final ItemResource nod = createNod();
     final ItemResource smallAngryPlanetWithFourthCheckInServicePoint = itemsFixture
@@ -448,7 +448,7 @@ public class ItemsInTransitReportTests extends APITests {
   }
 
   @Test
-  public void reportWillNotFailWithUriTooLargeError() {
+  void reportWillNotFailWithUriTooLargeError() {
     final UUID firstServicePointId = servicePointsFixture.cd1().getId();
     final UUID forthServicePointLocationId = locationsFixture.fourthServicePoint().getId();
 

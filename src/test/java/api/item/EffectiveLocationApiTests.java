@@ -16,7 +16,7 @@ import api.support.http.ItemResource;
 public class EffectiveLocationApiTests extends APITests {
 
   @Test
-  public void effectiveLocationReturnedWhenPresent() {
+  void effectiveLocationReturnedWhenPresent() {
     final UUID popularReadingLocationId = UUID.randomUUID();
 
     ItemResource createdItem = itemsFixture

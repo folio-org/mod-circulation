@@ -19,7 +19,7 @@ import io.vertx.core.json.JsonObject;
 public class AnonymizeLoansByUserIdAPITests extends LoanAnonymizationTests {
 
   @Test
-  public void canNotAnonymizeNotClosedLoans() {
+  void canNotAnonymizeNotClosedLoans() {
 
     IndividualResource loanResource = checkOutFixture.checkOutByBarcode(
         new CheckOutByBarcodeRequestBuilder().forItem(item1)
@@ -37,7 +37,7 @@ public class AnonymizeLoansByUserIdAPITests extends LoanAnonymizationTests {
   }
 
   @Test
-  public void canAonymizeLoansForParticularUser() {
+  void canAonymizeLoansForParticularUser() {
 
     IndividualResource loanResource1 = checkOutFixture.checkOutByBarcode(
         new CheckOutByBarcodeRequestBuilder().forItem(item1)
@@ -68,7 +68,7 @@ public class AnonymizeLoansByUserIdAPITests extends LoanAnonymizationTests {
   }
 
   @Test
-  public void canAnonymizeClosedLoansWithNoFeesAndFines() {
+  void canAnonymizeClosedLoansWithNoFeesAndFines() {
 
     IndividualResource loanResource = checkOutFixture.checkOutByBarcode(
         new CheckOutByBarcodeRequestBuilder().forItem(item1)
@@ -85,7 +85,7 @@ public class AnonymizeLoansByUserIdAPITests extends LoanAnonymizationTests {
   }
 
   @Test
-  public void canNotAnonymizeClosedLoansWithClosedFeesAndFines() {
+  void canNotAnonymizeClosedLoansWithClosedFeesAndFines() {
 
     IndividualResource loanResource = checkOutFixture.checkOutByBarcode(
         new CheckOutByBarcodeRequestBuilder().forItem(item1)
@@ -104,7 +104,7 @@ public class AnonymizeLoansByUserIdAPITests extends LoanAnonymizationTests {
   }
 
   @Test
-  public void canAnonymizeMultipleClosedLoansWithClosedFeesAndFines() {
+  void canAnonymizeMultipleClosedLoansWithClosedFeesAndFines() {
 
     IndividualResource loanResource1 = checkOutFixture.checkOutByBarcode(
         new CheckOutByBarcodeRequestBuilder().forItem(item1)
@@ -135,7 +135,7 @@ public class AnonymizeLoansByUserIdAPITests extends LoanAnonymizationTests {
   }
 
   @Test
-  public void doesNotAnonymizeLoansWithOpenFeesAndFines() {
+  void doesNotAnonymizeLoansWithOpenFeesAndFines() {
 
     IndividualResource loanResource = checkOutFixture.checkOutByBarcode
         (new CheckOutByBarcodeRequestBuilder().forItem(item1)

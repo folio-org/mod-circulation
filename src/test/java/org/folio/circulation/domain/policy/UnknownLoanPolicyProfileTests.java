@@ -24,7 +24,7 @@ import io.vertx.core.json.JsonObject;
 
 public class UnknownLoanPolicyProfileTests {
   @Test
-  public void shouldFailCheckOutCalculationForNonRollingProfile() {
+  void shouldFailCheckOutCalculationForNonRollingProfile() {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .withName("Invalid Loan Policy")
       .withLoansProfile("Unknown profile")
@@ -44,7 +44,7 @@ public class UnknownLoanPolicyProfileTests {
   }
 
   @Test
-  public void shouldFailRenewalCalculationForNonRollingProfile() {
+  void shouldFailRenewalCalculationForNonRollingProfile() {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .withName("Invalid Loan Policy")
       .withLoansProfile("Unknown profile")

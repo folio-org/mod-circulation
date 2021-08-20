@@ -34,7 +34,7 @@ import io.vertx.core.json.JsonObject;
 
 public class CancelRequestTests extends APITests {
   @Test
-  public void canCancelRequest() {
+  void canCancelRequest() {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource james = usersFixture.james();
@@ -63,7 +63,7 @@ public class CancelRequestTests extends APITests {
   }
 
   @Test
-  public void canCancelRequestInMiddleOfTheQueue() {
+  void canCancelRequestInMiddleOfTheQueue() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
@@ -107,7 +107,7 @@ public class CancelRequestTests extends APITests {
   }
 
   @Test
-  public void canCancelRequestAtTheBeginningOfTheQueue() {
+  void canCancelRequestAtTheBeginningOfTheQueue() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
@@ -151,7 +151,7 @@ public class CancelRequestTests extends APITests {
   }
 
   @Test
-  public void canCancelRequestAtTheEndOfTheQueue() {
+  void canCancelRequestAtTheEndOfTheQueue() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
@@ -199,7 +199,7 @@ public class CancelRequestTests extends APITests {
    * to retain the request fulfilment related status after being cancelled
    */
   @Test
-  public void cancellingAPartiallyFulfilledPageRequestShouldNotChangeItemStatus() {
+  void cancellingAPartiallyFulfilledPageRequestShouldNotChangeItemStatus() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource jessica = usersFixture.jessica();
@@ -221,7 +221,7 @@ public class CancelRequestTests extends APITests {
   }
 
   @Test
-  public void patronNoticeIsNotSentWhenPatronNoticeRequestFails() {
+  void patronNoticeIsNotSentWhenPatronNoticeRequestFails() {
     UUID requestCancelledTemplateId = UUID.randomUUID();
 
     NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
@@ -270,7 +270,7 @@ public class CancelRequestTests extends APITests {
   }
 
   @Test
-  public void shouldAllowToCancelRequestWithNoPosition() {
+  void shouldAllowToCancelRequestWithNoPosition() {
     IndividualResource requesterId = usersFixture.rebecca();
     final ItemResource nod = itemsFixture.basedUponNod();
 

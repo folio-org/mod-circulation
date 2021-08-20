@@ -38,7 +38,7 @@ public class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends APITes
   }
 
   @Test
-  public void shouldCloseLoanWhenAllFeesClosed() {
+  void shouldCloseLoanWhenAllFeesClosed() {
     feeFineAccountFixture.payLostItemFee(loan.getId());
     feeFineAccountFixture.payLostItemProcessingFee(loan.getId());
 
@@ -49,7 +49,7 @@ public class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends APITes
   }
 
   @Test
-  public void shouldIgnoreFeesThatAreNotDueToLosingItem() {
+  void shouldIgnoreFeesThatAreNotDueToLosingItem() {
     feeFineAccountFixture.payLostItemFee(loan.getId());
     feeFineAccountFixture.payLostItemProcessingFee(loan.getId());
 
@@ -65,7 +65,7 @@ public class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends APITes
   }
 
   @Test
-  public void shouldNotCloseLoanWhenProcessingFeeIsNotClosed() {
+  void shouldNotCloseLoanWhenProcessingFeeIsNotClosed() {
     feeFineAccountFixture.payLostItemFee(loan.getId());
 
     eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loan.getId());
@@ -75,7 +75,7 @@ public class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends APITes
   }
 
   @Test
-  public void shouldNotCloseLoanIfSetCostFeeIsNotClosed() {
+  void shouldNotCloseLoanIfSetCostFeeIsNotClosed() {
     feeFineAccountFixture.payLostItemProcessingFee(loan.getId());
 
     eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loan.getId());
@@ -85,7 +85,7 @@ public class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends APITes
   }
 
   @Test
-  public void shouldNotCloseLoanIfActualCostFeeShouldBeCharged() {
+  void shouldNotCloseLoanIfActualCostFeeShouldBeCharged() {
     item = itemsFixture.basedUponNod(ItemBuilder::withRandomBarcode);
     loan = checkOutFixture.checkOutByBarcode(item, usersFixture.steve());
 
@@ -104,7 +104,7 @@ public class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends APITes
   }
 
   @Test
-  public void shouldNotCloseCheckedOutLoan() {
+  void shouldNotCloseCheckedOutLoan() {
     item = itemsFixture.basedUponNod();
     loan = checkOutFixture.checkOutByBarcode(item, usersFixture.jessica());
 

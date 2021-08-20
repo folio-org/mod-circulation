@@ -21,7 +21,7 @@ import api.support.builders.RequestBuilder;
 
 public class SingleClosedRequestTests extends APITests {
   @Test
-  public void closedRequestDoesNotStopCheckOutToRequester() {
+  void closedRequestDoesNotStopCheckOutToRequester() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
@@ -56,7 +56,7 @@ public class SingleClosedRequestTests extends APITests {
   }
 
   @Test
-  public void closedRequestDoesNotStopCheckOutToOtherPatron() {
+  void closedRequestDoesNotStopCheckOutToOtherPatron() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();

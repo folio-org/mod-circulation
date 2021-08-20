@@ -30,7 +30,7 @@ import io.vertx.core.json.JsonObject;
 
 public class RequestByInstanceIdResourceTests {
   @Test
-  public void canTransformInstanceToItemRequests(){
+  void canTransformInstanceToItemRequests(){
 
     UUID loanTypeId = UUID.randomUUID();
     RequestByInstanceIdRequest requestByInstanceIdRequest = RequestByInstanceIdRequest.from(getJsonInstanceRequest(null)).value();
@@ -70,7 +70,7 @@ public class RequestByInstanceIdResourceTests {
   }
 
   @Test
-  public void getExpectedErrorMessages() {
+  void getExpectedErrorMessages() {
     HttpFailure validationError = ValidationErrorFailure.singleValidationError
       (new ValidationError("validationError", "someParam", "null"));
     String errorMessage = RequestByInstanceIdResource.getErrorMessage(validationError);

@@ -15,7 +15,7 @@ import api.support.builders.ItemBuilder;
 public class EffectiveLocationTests extends APITests {
 
   @Test
-  public void noLocations() {
+  void noLocations() {
     final Item item = Item.from(new ItemBuilder()
       .withNoPermanentLocation()
       .withNoTemporaryLocation()
@@ -31,7 +31,7 @@ public class EffectiveLocationTests extends APITests {
   }
 
   @Test
-  public void noItem() {
+  void noItem() {
     final UUID secondFloorEconomicsLocationId = UUID.randomUUID();
 
     final Item item = Item.from(null)

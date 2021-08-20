@@ -22,7 +22,7 @@ import io.vertx.core.json.JsonObject;
 //TODO: Maybe move these tests to scenarios which better describe the situation
 public class RequestQueueTests extends APITests {
   @Test
-  public void fulfilledRequestShouldBeRemovedFromQueue() {
+  void fulfilledRequestShouldBeRemovedFromQueue() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
@@ -83,7 +83,7 @@ public class RequestQueueTests extends APITests {
   }
 
   @Test
-  public void deletedRequestShouldBeRemovedFromQueue() {
+  void deletedRequestShouldBeRemovedFromQueue() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
@@ -132,7 +132,7 @@ public class RequestQueueTests extends APITests {
   }
 
   @Test
-  public void canFetchTheRequestQueueForAnItem() {
+  void canFetchTheRequestQueueForAnItem() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();

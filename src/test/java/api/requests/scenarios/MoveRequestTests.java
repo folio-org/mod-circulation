@@ -70,7 +70,7 @@ public class MoveRequestTests extends APITests {
   }
 
   @Test
-  public void canMoveRequestFromOneItemCopyToAnother() {
+  void canMoveRequestFromOneItemCopyToAnother() {
 
     final IndividualResource secondFloorEconomics = locationsFixture.secondFloorEconomics();
     final IndividualResource mezzanineDisplayCase = locationsFixture.mezzanineDisplayCase();
@@ -170,7 +170,7 @@ public class MoveRequestTests extends APITests {
   }
 
   @Test
-  public void canMoveAShelfHoldRequestToAnAvailableItem() {
+  void canMoveAShelfHoldRequestToAnAvailableItem() {
     IndividualResource smallAngryPlanet = itemsFixture
       .basedUponSmallAngryPlanet(itemsFixture.addCallNumberStringComponents("sap"));
     IndividualResource interestingTimes = itemsFixture
@@ -225,7 +225,7 @@ public class MoveRequestTests extends APITests {
   }
 
   @Test
-  public void canMoveARecallRequest() {
+  void canMoveARecallRequest() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource interestingTimes = itemsFixture.basedUponInterestingTimes();
@@ -304,7 +304,7 @@ public class MoveRequestTests extends APITests {
   }
 
   @Test
-  public void canMoveTwoRequests() {
+  void canMoveTwoRequests() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource interestingTimes = itemsFixture.basedUponInterestingTimes();
@@ -387,7 +387,7 @@ public class MoveRequestTests extends APITests {
   }
 
   @Test
-  public void canMoveAHoldShelfRequestLeavingEmptyQueueAndItemStatusChange() {
+  void canMoveAHoldShelfRequestLeavingEmptyQueueAndItemStatusChange() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource interestingTimes = itemsFixture.basedUponInterestingTimes();
@@ -422,7 +422,7 @@ public class MoveRequestTests extends APITests {
   }
 
   @Test
-  public void canMoveAHoldShelfRequestToAnEmptyQueue() {
+  void canMoveAHoldShelfRequestToAnEmptyQueue() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource interestingTimes = itemsFixture.basedUponInterestingTimes();
@@ -464,7 +464,7 @@ public class MoveRequestTests extends APITests {
   }
 
   @Test
-  public void canMoveAHoldShelfRequestReorderingDestinationRequestQueue() {
+  void canMoveAHoldShelfRequestReorderingDestinationRequestQueue() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource interestingTimes = itemsFixture.basedUponInterestingTimes();
@@ -543,7 +543,7 @@ public class MoveRequestTests extends APITests {
   }
 
   @Test
-  public void canMoveAHoldShelfRequestPreventDisplacingOpenRequest() {
+  void canMoveAHoldShelfRequestPreventDisplacingOpenRequest() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource interestingTimes = itemsFixture.basedUponInterestingTimes();
@@ -625,7 +625,7 @@ public class MoveRequestTests extends APITests {
   }
 
   @Test
-  public void canMoveARecallRequestAsHoldRequest() {
+  void canMoveARecallRequestAsHoldRequest() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource interestingTimes = itemsFixture.basedUponInterestingTimes();
@@ -710,7 +710,7 @@ public class MoveRequestTests extends APITests {
 
   //This scenerio utilizes two items of the same instance, but the logic in question applies as well for two separate instances.
   @Test
-  public void cannotDisplacePagedRequest() {
+  void cannotDisplacePagedRequest() {
     val secondFloorEconomics = locationsFixture.secondFloorEconomics();
     val mezzanineDisplayCase = locationsFixture.mezzanineDisplayCase();
 
@@ -784,7 +784,7 @@ public class MoveRequestTests extends APITests {
   }
 
   @Test
-  public void checkoutItemStatusDoesNotChangeOnPagedRequest() {
+  void checkoutItemStatusDoesNotChangeOnPagedRequest() {
     val secondFloorEconomics = locationsFixture.secondFloorEconomics();
     val mezzanineDisplayCase = locationsFixture.mezzanineDisplayCase();
 
@@ -858,7 +858,7 @@ public class MoveRequestTests extends APITests {
    *
    */
   @Test
-  public void canUpdateSourceAndDestinationLoanDueDateOnMoveRecallRequest() {
+  void canUpdateSourceAndDestinationLoanDueDateOnMoveRecallRequest() {
     // Recall placed 2 hours from now
     final Instant expectedJamesLoanDueDate = LocalDateTime
       .now().plusHours(2).toInstant(ZoneOffset.UTC);
@@ -915,7 +915,7 @@ public class MoveRequestTests extends APITests {
   }
 
   @Test
-  public void changedDueDateAfterRecallingAnItemShouldRespectTenantTimezone() {
+  void changedDueDateAfterRecallingAnItemShouldRespectTenantTimezone() {
     final String stockholmTimeZone = "Europe/Stockholm";
 
     val sourceItem = itemsFixture.basedUponSmallAngryPlanet("65654345643");
@@ -974,7 +974,7 @@ public class MoveRequestTests extends APITests {
   }
 
   @Test
-  public void dueDateChangedEventIsPublished() {
+  void dueDateChangedEventIsPublished() {
     val secondFloorEconomics = locationsFixture.secondFloorEconomics();
     val mezzanineDisplayCase = locationsFixture.mezzanineDisplayCase();
 

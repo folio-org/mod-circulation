@@ -14,14 +14,14 @@ import lombok.val;
 
 public class JsonArrayToStreamMapperTests {
   @Test
-  public void shouldMapNullToEmptyStream() {
+  void shouldMapNullToEmptyStream() {
     val mapper = new JsonArrayToStreamMapper<>(identity());
 
     assertThat(mapper.toStream(null).toArray(), emptyArray());
   }
 
   @Test
-  public void shouldSkipNullElements() {
+  void shouldSkipNullElements() {
     val mapper = new JsonArrayToStreamMapper<>(identity());
 
     val array = new JsonArray(toList(of("Foo", "Bar", null, "Ipsum")));

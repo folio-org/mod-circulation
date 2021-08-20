@@ -46,7 +46,7 @@ import io.vertx.core.json.JsonObject;
 
 public class ChangeDueDateByReplacingLoanTests extends APITests {
   @Test
-  public void canManuallyChangeTheDueDateOfLoan() {
+  void canManuallyChangeTheDueDateOfLoan() {
     final ItemResource item = itemsFixture.basedUponNod();
 
     IndividualResource loan = checkOutFixture.checkOutByBarcode(item);
@@ -100,7 +100,7 @@ public class ChangeDueDateByReplacingLoanTests extends APITests {
   }
 
   @Test
-  public void canManuallyReapplyTheDueDateOfClaimedReturnedLoan() {
+  void canManuallyReapplyTheDueDateOfClaimedReturnedLoan() {
     final ItemResource item = itemsFixture.basedUponNod();
 
     IndividualResource loan = checkOutFixture.checkOutByBarcode(item);
@@ -124,7 +124,7 @@ public class ChangeDueDateByReplacingLoanTests extends APITests {
   }
 
   @Test
-  public void canChangeDueDateOfLoanWithOpenRequest() {
+  void canChangeDueDateOfLoanWithOpenRequest() {
     final ItemResource item = itemsFixture.basedUponNod();
 
     IndividualResource loan = checkOutFixture.checkOutByBarcode(item);
@@ -185,7 +185,7 @@ public class ChangeDueDateByReplacingLoanTests extends APITests {
 
 
   @Test
-  public void manualDueDateChangeNoticeIsSentWhenPolicyDefinesManualDueDateChangeNoticeConfiguration() {
+  void manualDueDateChangeNoticeIsSentWhenPolicyDefinesManualDueDateChangeNoticeConfiguration() {
     UUID manualDueDateChangeTemplateId = UUID.randomUUID();
     JsonObject manualDueDateChangeNoticeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(manualDueDateChangeTemplateId)
@@ -257,7 +257,7 @@ public class ChangeDueDateByReplacingLoanTests extends APITests {
   }
 
   @Test
-  public void shouldRejectDueDateChangeWhenItemIsInDisallowedStatus() {
+  void shouldRejectDueDateChangeWhenItemIsInDisallowedStatus() {
     useLostItemPolicy(lostItemFeePoliciesFixture.chargeFee().getId());
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();

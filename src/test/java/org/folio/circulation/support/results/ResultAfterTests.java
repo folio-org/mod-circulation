@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test;
 
 public class ResultAfterTests {
   @Test
-  public void shouldSucceedWhenNextStepIsSuccessful()
+  void shouldSucceedWhenNextStepIsSuccessful()
     throws ExecutionException,
     InterruptedException {
 
@@ -29,7 +29,7 @@ public class ResultAfterTests {
   }
 
   @Test
-  public void shouldFailWhenAlreadyFailed()
+  void shouldFailWhenAlreadyFailed()
     throws ExecutionException,
     InterruptedException {
 
@@ -41,7 +41,7 @@ public class ResultAfterTests {
   }
 
   @Test
-  public void shouldFailWhenExceptionThrownDuringNextStep()
+  void shouldFailWhenExceptionThrownDuringNextStep()
     throws ExecutionException,
     InterruptedException {
 
@@ -53,7 +53,7 @@ public class ResultAfterTests {
   }
 
   @Test
-  public void shouldFailWhenFutureFailsAsynchronously()
+  void shouldFailWhenFutureFailsAsynchronously()
     throws ExecutionException,
     InterruptedException {
 

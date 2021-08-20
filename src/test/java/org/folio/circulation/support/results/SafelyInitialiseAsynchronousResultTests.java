@@ -19,7 +19,7 @@ import lombok.val;
 
 public class SafelyInitialiseAsynchronousResultTests {
   @Test
-  public void shouldSucceedWhenSupplierSucceeds() throws ExecutionException,
+  void shouldSucceedWhenSupplierSucceeds() throws ExecutionException,
     InterruptedException, TimeoutException {
 
     val result = safelyInitialise(() -> completedFuture(of(() -> 10)))
@@ -30,7 +30,7 @@ public class SafelyInitialiseAsynchronousResultTests {
   }
 
   @Test
-  public void shouldFailWhenSupplierFails() throws ExecutionException,
+  void shouldFailWhenSupplierFails() throws ExecutionException,
     InterruptedException, TimeoutException {
 
     val result = safelyInitialise(() -> completedFuture(actionFailed()))
@@ -40,7 +40,7 @@ public class SafelyInitialiseAsynchronousResultTests {
   }
 
   @Test
-  public void shouldFailWhenSupplierIsNull() throws ExecutionException,
+  void shouldFailWhenSupplierIsNull() throws ExecutionException,
     InterruptedException, TimeoutException {
 
     val result = safelyInitialise(null)
@@ -50,7 +50,7 @@ public class SafelyInitialiseAsynchronousResultTests {
   }
 
   @Test
-  public void shouldFailWhenSupplierThrowsException() throws ExecutionException,
+  void shouldFailWhenSupplierThrowsException() throws ExecutionException,
     InterruptedException, TimeoutException {
 
     val result = safelyInitialise(() -> { throw somethingWentWrong(); })

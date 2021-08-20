@@ -26,7 +26,7 @@ import io.vertx.core.json.JsonObject;
 
 public class ClosedRequestTests extends APITests {
   @Test
-  public void canCancelARequest() {
+  void canCancelARequest() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
@@ -62,7 +62,7 @@ public class ClosedRequestTests extends APITests {
   }
 
   @Test
-  public void cannotEditCancelledRequest() {
+  void cannotEditCancelledRequest() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
@@ -89,7 +89,7 @@ public class ClosedRequestTests extends APITests {
   }
 
   @Test
-  public void cannotEditFulfilledRequest() {
+  void cannotEditFulfilledRequest() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
@@ -121,7 +121,7 @@ public class ClosedRequestTests extends APITests {
   }
 
   @Test
-  public void canCancelARequestLeavingEmptyQueueAndItemStatusChange() {
+  void canCancelARequestLeavingEmptyQueueAndItemStatusChange() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 

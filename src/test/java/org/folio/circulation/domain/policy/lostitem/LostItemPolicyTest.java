@@ -103,7 +103,7 @@ public class LostItemPolicyTest {
   }
 
   @Test
-  public void shouldNotAgeItemToLostIfPeriodIsMissingInPolicy() {
+  void shouldNotAgeItemToLostIfPeriodIsMissingInPolicy() {
     final LostItemPolicy lostItemPolicy = lostItemPolicyWithAgePeriod(null);
 
     assertFalse(lostItemPolicy.canAgeLoanToLost(false, now(UTC)));
@@ -170,7 +170,7 @@ public class LostItemPolicyTest {
   }
 
   @Test
-  public void shouldNotAgeItemToLostIfActualCostIsUsed() {
+  void shouldNotAgeItemToLostIfActualCostIsUsed() {
     final LostItemFeePolicyBuilder builder = new LostItemFeePolicyBuilder()
       .withItemAgedToLostAfterOverdue(minutes(1))
       .withActualCost(10.0);
@@ -211,7 +211,7 @@ public class LostItemPolicyTest {
   }
 
   @Test
-  public void canCalculateBillingDateWhenPatronBillingIsDelayedForNotRecalledItem() {
+  void canCalculateBillingDateWhenPatronBillingIsDelayedForNotRecalledItem() {
     final Period billPatronAfterPeriod = Period.weeks(1);
     final DateTime ageToLostDate = DateTime.now();
     final DateTime expectedBillingDate = ageToLostDate.plus(billPatronAfterPeriod.timePeriod());
@@ -230,7 +230,7 @@ public class LostItemPolicyTest {
   }
 
   @Test
-  public void shouldUseRecallIntervalForBillingDateWhenItemRecalled() {
+  void shouldUseRecallIntervalForBillingDateWhenItemRecalled() {
     final Period billPatronAfterPeriod = Period.weeks(2);
     final DateTime ageToLostDate = DateTime.now();
     final DateTime expectedBillingDate = ageToLostDate.plus(billPatronAfterPeriod.timePeriod());
@@ -249,7 +249,7 @@ public class LostItemPolicyTest {
   }
 
   @Test
-  public void shouldNotUseRecallIntervalForNotRecalledItem() {
+  void shouldNotUseRecallIntervalForNotRecalledItem() {
     final Period ageToLostBillingPeriod = Period.weeks(1);
     final Period recallBillingPeriod = Period.weeks(2);
     final DateTime ageToLostDate = DateTime.now();
@@ -270,7 +270,7 @@ public class LostItemPolicyTest {
   }
 
   @Test
-  public void ageToLostProcessingFeeIsNotChargeableIfAmountIsSetButFlagIsFalse() {
+  void ageToLostProcessingFeeIsNotChargeableIfAmountIsSetButFlagIsFalse() {
     final LostItemPolicy lostItemPolicy = LostItemPolicy.from(
       new LostItemFeePolicyBuilder()
         .doNotChargeProcessingFeeWhenAgedToLost()
@@ -282,7 +282,7 @@ public class LostItemPolicyTest {
   }
 
   @Test
-  public void ageToLostProcessingFeeIsChargeableEvenIfDeclaredLostFlagIsFalse() {
+  void ageToLostProcessingFeeIsChargeableEvenIfDeclaredLostFlagIsFalse() {
     final LostItemPolicy lostItemPolicy = LostItemPolicy.from(
       new LostItemFeePolicyBuilder()
         .doNotChargeProcessingFeeWhenDeclaredLost()

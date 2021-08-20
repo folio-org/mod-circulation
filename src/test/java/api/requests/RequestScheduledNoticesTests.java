@@ -59,7 +59,7 @@ public class RequestScheduledNoticesTests extends APITests {
   }
 
   @Test
-  public void requestExpirationUponAtNoticeShouldBeScheduledWhenCreatedRequestIsSetToExpire() {
+  void requestExpirationUponAtNoticeShouldBeScheduledWhenCreatedRequestIsSetToExpire() {
     JsonObject requestNotice = new NoticeConfigurationBuilder()
       .withTemplateId(templateId)
       .withRequestExpirationEvent()
@@ -104,7 +104,7 @@ public class RequestScheduledNoticesTests extends APITests {
   }
 
   @Test
-  public void requestExpirationUponAtNoticeShouldNotBeScheduledWhenCreatedRequestIsNotSetToExpire() {
+  void requestExpirationUponAtNoticeShouldNotBeScheduledWhenCreatedRequestIsNotSetToExpire() {
     JsonObject requestNotice = new NoticeConfigurationBuilder()
       .withTemplateId(templateId)
       .withRequestExpirationEvent()
@@ -131,7 +131,7 @@ public class RequestScheduledNoticesTests extends APITests {
   }
 
   @Test
-  public void requestExpirationNoticeShouldNotBeScheduledWhenCreatedRequestDoesNotExpire()
+  void requestExpirationNoticeShouldNotBeScheduledWhenCreatedRequestDoesNotExpire()
     throws InterruptedException {
 
     JsonObject requestNotice = new NoticeConfigurationBuilder()
@@ -162,7 +162,7 @@ public class RequestScheduledNoticesTests extends APITests {
   }
 
   @Test
-  public void requestExpirationBeforeNoticeShouldBeScheduledWhenCreatedRequestIsSetToExpire() {
+  void requestExpirationBeforeNoticeShouldBeScheduledWhenCreatedRequestIsSetToExpire() {
     JsonObject requestNotice = new NoticeConfigurationBuilder()
       .withTemplateId(templateId)
       .withRequestExpirationEvent()
@@ -207,7 +207,7 @@ public class RequestScheduledNoticesTests extends APITests {
   }
 
   @Test
-  public void requestExpirationUponAtNoticeShouldBeRescheduledWhenUpdatedRequestIsSetToExpire() {
+  void requestExpirationUponAtNoticeShouldBeRescheduledWhenUpdatedRequestIsSetToExpire() {
     JsonObject requestNotice = new NoticeConfigurationBuilder()
       .withTemplateId(templateId)
       .withRequestExpirationEvent()
@@ -275,7 +275,7 @@ public class RequestScheduledNoticesTests extends APITests {
   }
 
   @Test
-  public void recurringRequestExpirationNoticeShouldBeDeletedWhenExpirationDateIsRemovedDuringUpdate() {
+  void recurringRequestExpirationNoticeShouldBeDeletedWhenExpirationDateIsRemovedDuringUpdate() {
     JsonObject requestNotice = new NoticeConfigurationBuilder()
       .withTemplateId(templateId)
       .withRequestExpirationEvent()
@@ -328,7 +328,7 @@ public class RequestScheduledNoticesTests extends APITests {
   }
 
   @Test
-  public void holdShelfExpirationNoticeShouldBeScheduledOnCheckIn() {
+  void holdShelfExpirationNoticeShouldBeScheduledOnCheckIn() {
     JsonObject requestNotice = new NoticeConfigurationBuilder()
       .withTemplateId(templateId)
       .withHoldShelfExpirationEvent()
@@ -385,7 +385,7 @@ public class RequestScheduledNoticesTests extends APITests {
   }
 
   @Test
-  public void requestExpirationAndHoldShelfExpirationNoticesAreCreatedWhenPickupReminderIsFirstInPolicy() {
+  void requestExpirationAndHoldShelfExpirationNoticesAreCreatedWhenPickupReminderIsFirstInPolicy() {
     JsonObject pickupReminder = new NoticeConfigurationBuilder()
       .withTemplateId(templateId)
       .withAvailableEvent()

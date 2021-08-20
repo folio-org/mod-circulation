@@ -11,7 +11,7 @@ import io.vertx.core.json.JsonObject;
 
 public class JsonPropertyWriterTest {
   @Test
-  public void shouldCreateMissingObjectsInThePath() {
+  void shouldCreateMissingObjectsInThePath() {
     final String[] paths = {"1", "2", "3", "4", "5"};
     final JsonObject object2 = new JsonObject()
       .put("21", 2.1)

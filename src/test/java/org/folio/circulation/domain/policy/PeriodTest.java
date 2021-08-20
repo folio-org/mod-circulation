@@ -30,19 +30,19 @@ public class PeriodTest {
   }
 
   @Test
-  public void toMinutesWithNullInterval() {
+  void toMinutesWithNullInterval() {
     Period period = Period.from(10, null);
     assertEquals(0, period.toMinutes());
   }
 
   @Test
-  public void toMinutesWithNullDuration() {
+  void toMinutesWithNullDuration() {
     Period period = Period.from(null, "Minutes");
     assertEquals(0, period.toMinutes());
   }
 
   @Test
-  public void toMinutesWithUnknownInterval() {
+  void toMinutesWithUnknownInterval() {
     Period period = Period.from(10, "Unknown interval");
     assertEquals(0, period.toMinutes());
   }

@@ -51,7 +51,7 @@ public class RequestsAPIRetrievalTests extends APITests {
   private static final String ONE_COPY_NUMBER = "1";
 
   @Test
-  public void canGetARequestById() {
+  void canGetARequestById() {
     UUID facultyGroupId = patronGroupsFixture.faculty().getId();
     UUID staffGroupId = patronGroupsFixture.staff().getId();
     UUID isbnIdentifierId = identifierTypesFixture.isbn().getId();
@@ -220,7 +220,7 @@ public class RequestsAPIRetrievalTests extends APITests {
   }
 
   @Test
-  public void canGetARequestToBeFulfilledByDeliveryToAnAddressById() {
+  void canGetARequestToBeFulfilledByDeliveryToAnAddressById() {
     final IndividualResource smallAngryPlanet =
       itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::available);
 
@@ -268,14 +268,14 @@ public class RequestsAPIRetrievalTests extends APITests {
   }
 
   @Test
-  public void requestNotFoundForUnknownId() {
+  void requestNotFoundForUnknownId() {
     Response getResponse = requestsFixture.getById(UUID.randomUUID());
 
     assertThat(getResponse.getStatusCode(), is(HttpURLConnection.HTTP_NOT_FOUND));
   }
 
   @Test
-  public void canGetMultipleRequests() {
+  void canGetMultipleRequests() {
     final IndividualResource cd1 = servicePointsFixture.cd1();
     final IndividualResource cd2 = servicePointsFixture.cd2();
     UUID pickupServicePointId = cd1.getId();
@@ -376,7 +376,7 @@ public class RequestsAPIRetrievalTests extends APITests {
   }
 
   @Test
-  public void fulfilledByDeliveryIncludesAddressWhenFindingMultipleRequests() {
+  void fulfilledByDeliveryIncludesAddressWhenFindingMultipleRequests() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
     final IndividualResource workAddressType = addressTypesFixture.work();
@@ -427,7 +427,7 @@ public class RequestsAPIRetrievalTests extends APITests {
   }
 
   @Test
-  public void closedLoanForItemIsNotIncludedWhenFindingMultipleRequests() {
+  void closedLoanForItemIsNotIncludedWhenFindingMultipleRequests() {
     final IndividualResource smallAngryPlanet
       = itemsFixture.basedUponSmallAngryPlanet();
 
@@ -459,7 +459,7 @@ public class RequestsAPIRetrievalTests extends APITests {
   }
 
   @Test
-  public void canPageAllRequests() {
+  void canPageAllRequests() {
     UUID requesterId = usersFixture.charlotte().getId();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
@@ -515,7 +515,7 @@ public class RequestsAPIRetrievalTests extends APITests {
   }
 
   @Test
-  public void canSearchForRequestsByRequesterLastName() {
+  void canSearchForRequestsByRequesterLastName() {
     UUID firstRequester = usersFixture.steve().getId();
     UUID secondRequester = usersFixture.jessica().getId();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -566,7 +566,7 @@ public class RequestsAPIRetrievalTests extends APITests {
   }
 
   @Test
-  public void canSearchForRequestsByProxyLastName() {
+  void canSearchForRequestsByProxyLastName() {
     final IndividualResource sponsor = usersFixture.jessica();
 
     final IndividualResource firstProxy = usersFixture.charlotte();
@@ -617,7 +617,7 @@ public class RequestsAPIRetrievalTests extends APITests {
   }
 
   @Test
-  public void canSearchForRequestsByItemTitle() {
+  void canSearchForRequestsByItemTitle() {
     UUID requesterId = usersFixture.charlotte().getId();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
@@ -667,7 +667,7 @@ public class RequestsAPIRetrievalTests extends APITests {
   }
 
   @Test
-  public void requestExpirationDateShouldStoreInTenantsTimeZone() {
+  void requestExpirationDateShouldStoreInTenantsTimeZone() {
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource sponsor = usersFixture.rebecca(user -> user
       .withPatronGroupId(patronGroupsFixture.faculty().getId()));

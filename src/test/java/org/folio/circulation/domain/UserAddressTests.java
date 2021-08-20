@@ -19,7 +19,7 @@ import io.vertx.core.json.JsonObject;
 
 public class UserAddressTests {
   @Test
-  public void noAddressFoundWhenNoAddresses() {
+  void noAddressFoundWhenNoAddresses() {
     final User user = new User(new UserBuilder()
       .withNoAddresses()
       .create());
@@ -30,7 +30,7 @@ public class UserAddressTests {
   }
 
   @Test
-  public void addressFoundWhenOnlyAddressHasSameType() {
+  void addressFoundWhenOnlyAddressHasSameType() {
     final User user = new User(new UserBuilder()
       .withAddress(RamkinResidence())
       .create());
@@ -43,7 +43,7 @@ public class UserAddressTests {
   }
 
   @Test
-  public void addressFoundWhenOtherAddressesAreDifferentTypes() {
+  void addressFoundWhenOtherAddressesAreDifferentTypes() {
     final User user = new User(new UserBuilder()
       .withAddress(SiriusBlack())
       .withAddress(patriciansPalace())
@@ -58,7 +58,7 @@ public class UserAddressTests {
   }
 
   @Test
-  public void firstAddressFoundWhenMultipleAddressesOfSameType() {
+  void firstAddressFoundWhenMultipleAddressesOfSameType() {
     final User user = new User(new UserBuilder()
       .withAddress(SiriusBlack())
       .withAddress(RamkinResidence())
@@ -72,7 +72,7 @@ public class UserAddressTests {
   }
 
   @Test
-  public void noAddressFoundWhenOnlyOtherTypeAddresses() {
+  void noAddressFoundWhenOnlyOtherTypeAddresses() {
     final User user = new User(new UserBuilder()
       .withAddress(RamkinResidence())
       .create());
@@ -83,7 +83,7 @@ public class UserAddressTests {
   }
 
   @Test
-  public void noAddressFoundWhenOnlyAddressHasNoType() {
+  void noAddressFoundWhenOnlyAddressHasNoType() {
     //TODO: Replace with address builder
     final User user = new User(new UserBuilder()
       .withAddress(new Address(null, "Fake address", null, null, null, null, null))

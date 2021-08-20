@@ -45,7 +45,7 @@ import lombok.val;
 
 public class SingleOpenHoldShelfRequestTests extends APITests {
   @Test
-  public void statusChangesToAwaitingPickupWhenItemCheckedIn() {
+  void statusChangesToAwaitingPickupWhenItemCheckedIn() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     val james = usersFixture.james();
     val jessica = usersFixture.jessica();
@@ -87,7 +87,7 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
   }
 
   @Test
-  public void statusChangesToFulfilledWhenItemCheckedOutToRequester() {
+  void statusChangesToFulfilledWhenItemCheckedOutToRequester() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     val james = usersFixture.james();
     val jessica = usersFixture.jessica();
@@ -130,7 +130,7 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
   }
 
   @Test
-  public void itemCannotBeCheckedOutToOtherPatronWhenRequestIsAwaitingPickup() {
+  void itemCannotBeCheckedOutToOtherPatronWhenRequestIsAwaitingPickup() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     val james = usersFixture.james();
     val jessica = usersFixture.jessica();
@@ -163,7 +163,7 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
   }
 
   @Test
-  public void checkingInLoanThatFulfilsRequestShouldMakeItemAvailable() {
+  void checkingInLoanThatFulfilsRequestShouldMakeItemAvailable() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     val james = usersFixture.james();
     val jessica = usersFixture.jessica();
@@ -185,7 +185,7 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
   }
 
   @Test
-  public void closedRequestShouldNotAffectFurtherLoans() {
+  void closedRequestShouldNotAffectFurtherLoans() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     val james = usersFixture.james();
     val jessica = usersFixture.jessica();
@@ -216,7 +216,7 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
   }
 
   @Test
-  public void itemCannotBeCheckedInWhenRequestIsMissingPickupServicePoint() {
+  void itemCannotBeCheckedInWhenRequestIsMissingPickupServicePoint() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     val james = usersFixture.james();
     val jessica = usersFixture.jessica();

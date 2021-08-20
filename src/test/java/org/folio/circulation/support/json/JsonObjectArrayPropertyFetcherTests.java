@@ -22,7 +22,7 @@ import lombok.val;
 
 public class JsonObjectArrayPropertyFetcherTests {
   @Test
-  public void StreamShouldContainSameContentsAsArray() {
+  void StreamShouldContainSameContentsAsArray() {
     val json = objectWithJsonArrayOf(createObjectWithName("Foo"),
       createObjectWithName("Bar"), createObjectWithName("Lorem"), createObjectWithName("Ipsum"));
 
@@ -31,14 +31,14 @@ public class JsonObjectArrayPropertyFetcherTests {
   }
 
   @Test
-  public void shouldMapEmptyArrayToEmptyStream() {
+  void shouldMapEmptyArrayToEmptyStream() {
     val json = objectWithJsonArrayOf();
 
     assertThat(toList(toStream(json, "array")), is(empty()));
   }
 
   @Test
-  public void shouldSkipNonObjectElements() {
+  void shouldSkipNonObjectElements() {
     val array = new JsonArray(toList(of(createObjectWithName("Foo"), "Bar",
       createObjectWithName("Lorem"), createObjectWithName("Ipsum"))));
 
@@ -49,7 +49,7 @@ public class JsonObjectArrayPropertyFetcherTests {
   }
 
   @Test
-  public void ListShouldContainMappedContents() {
+  void ListShouldContainMappedContents() {
     val json = objectWithJsonArrayOf(createObjectWithName("Foo"),
       createObjectWithName("Bar"), createObjectWithName("Lorem"), createObjectWithName("Ipsum"));
 

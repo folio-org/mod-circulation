@@ -25,7 +25,7 @@ import api.support.builders.RequestBuilder;
 
 public class PageRequestWorkflowTests extends APITests {
   @Test
-  public void canBeFulfilledWithoutPriorCheckIn() {
+  void canBeFulfilledWithoutPriorCheckIn() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource jessica = usersFixture.jessica();
@@ -52,7 +52,7 @@ public class PageRequestWorkflowTests extends APITests {
   }
 
   @Test
-  public void itemCannotBeCheckedOutToOtherPatronWhenItemIsPagedAndNotYetBeingFulfilled() {
+  void itemCannotBeCheckedOutToOtherPatronWhenItemIsPagedAndNotYetBeingFulfilled() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource jessica = usersFixture.jessica();

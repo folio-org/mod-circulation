@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 
 public class ResultMappingTests {
   @Test
-  public void shouldSucceedWhenMapIsApplied() {
+  void shouldSucceedWhenMapIsApplied() {
     final Result<Integer> mappedResult = succeeded(10)
       .map(value -> value + 10);
 
@@ -20,7 +20,7 @@ public class ResultMappingTests {
   }
 
   @Test
-  public void shouldFailWhenAlreadyFailed() {
+  void shouldFailWhenAlreadyFailed() {
     final Result<Integer> result = alreadyFailed()
       .map(value -> value + 10);
 
@@ -28,7 +28,7 @@ public class ResultMappingTests {
   }
 
   @Test
-  public void shouldFailWhenExceptionThrownDuringMapping() {
+  void shouldFailWhenExceptionThrownDuringMapping() {
     final Result<Integer> result = succeeded(10)
       .map(value -> { throw somethingWentWrong(); });
 

@@ -25,7 +25,7 @@ import lombok.val;
 
 public class MultipleHoldShelfRequestsTests extends APITests {
   @Test
-  public void statusOfOldestRequestChangesToAwaitingPickupWhenItemCheckedIn() {
+  void statusOfOldestRequestChangesToAwaitingPickupWhenItemCheckedIn() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     val james = usersFixture.james();
     val jessica = usersFixture.jessica();
@@ -92,7 +92,7 @@ public class MultipleHoldShelfRequestsTests extends APITests {
   }
 
   @Test
-  public void checkingInLoanThatFulfilsRequestShouldMakeItemAvailableForPickupToNextRequester() {
+  void checkingInLoanThatFulfilsRequestShouldMakeItemAvailableForPickupToNextRequester() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     val james = usersFixture.james();
     val jessica = usersFixture.jessica();
@@ -126,7 +126,7 @@ public class MultipleHoldShelfRequestsTests extends APITests {
   }
 
   @Test
-  public void itemCannotBeCheckedOutToOtherPatronWhenOldestRequestIsAwaitingPickup() {
+  void itemCannotBeCheckedOutToOtherPatronWhenOldestRequestIsAwaitingPickup() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     val james = usersFixture.james();
     val jessica = usersFixture.jessica();
@@ -165,7 +165,7 @@ public class MultipleHoldShelfRequestsTests extends APITests {
   }
 
   @Test
-  public void itemCannotBeCheckedOutToOtherRequesterWhenOldestRequestIsAwaitingPickup() {
+  void itemCannotBeCheckedOutToOtherRequesterWhenOldestRequestIsAwaitingPickup() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     val james = usersFixture.james();
     val jessica = usersFixture.jessica();

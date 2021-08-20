@@ -87,7 +87,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
   }
 
   @Test
-  public void recallRequestWithNoPolicyValuesChangesDueDateToSystemDate() {
+  void recallRequestWithNoPolicyValuesChangesDueDateToSystemDate() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requestServicePoint = servicePointsFixture.cd1();
     final IndividualResource steve = usersFixture.steve();
@@ -112,7 +112,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
   }
 
   @Test
-  public void recallRequestWithMGDAndRDValuesChangesDueDateToRD() {
+  void recallRequestWithMGDAndRDValuesChangesDueDateToRD() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requestServicePoint = servicePointsFixture.cd1();
     final IndividualResource steve = usersFixture.steve();
@@ -148,7 +148,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
   }
 
   @Test
-  public void recallRequestWithMGDAndRDValuesChangesDueDateToMGD() {
+  void recallRequestWithMGDAndRDValuesChangesDueDateToMGD() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requestServicePoint = servicePointsFixture.cd1();
     final IndividualResource steve = usersFixture.steve();
@@ -187,7 +187,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
   }
 
   @Test
-  public void recallRequestWithRDAndNoMGDValuesChangesDueDateToRD() {
+  void recallRequestWithRDAndNoMGDValuesChangesDueDateToRD() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requestServicePoint = servicePointsFixture.cd1();
     final IndividualResource steve = usersFixture.steve();
@@ -225,7 +225,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
   }
 
   @Test
-  public void recallRequestWithMGDAndNoRDValuesChangesDueDateToMGD() {
+  void recallRequestWithMGDAndNoRDValuesChangesDueDateToMGD() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requestServicePoint = servicePointsFixture.cd1();
     final IndividualResource steve = usersFixture.steve();
@@ -263,7 +263,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
   }
 
   @Test
-  public void recallRequestWithMGDAndRDValuesChangesDueDateToMGDWithCLDDM() {
+  void recallRequestWithMGDAndRDValuesChangesDueDateToMGDWithCLDDM() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final UUID checkOutServicePointId = UUID.fromString(CASE_FRI_SAT_MON_SERVICE_POINT_ID);
     final IndividualResource steve = usersFixture.steve();
@@ -364,7 +364,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
   }
 
   @Test
-  public void initialLoanDueDateOnCreateWithPrexistingRequests() {
+  void initialLoanDueDateOnCreateWithPrexistingRequests() {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requestServicePoint = servicePointsFixture.cd1();
@@ -412,7 +412,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
   }
 
   @Test
-  public void changedDueDateAfterRecallingAnItemShouldRespectTenantTimezone() {
+  void changedDueDateAfterRecallingAnItemShouldRespectTenantTimezone() {
     final String stockholmTimeZone = "Europe/Stockholm";
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
@@ -458,7 +458,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
   }
 
   @Test
-  public void pagedItemRecalledThenLoanedAndNextRecallDoesNotChangeDueDate() {
+  void pagedItemRecalledThenLoanedAndNextRecallDoesNotChangeDueDate() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requestServicePoint = servicePointsFixture.cd1();
     final IndividualResource jessica = usersFixture.jessica();
@@ -505,7 +505,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
   }
 
   @Test
-  public void pagedItemRecalledThenLoanedBecomesOverdueAndNextRecallDoesNotChangeDueDate() {
+  void pagedItemRecalledThenLoanedBecomesOverdueAndNextRecallDoesNotChangeDueDate() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requestServicePoint = servicePointsFixture.cd1();
     final IndividualResource jessica = usersFixture.jessica();
@@ -553,7 +553,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
   }
 
   @Test
-  public void secondRecallRequestWithMGDTruncationInPlaceDoesNotChangeDueDate() {
+  void secondRecallRequestWithMGDTruncationInPlaceDoesNotChangeDueDate() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requestServicePoint = servicePointsFixture.cd1();
     final IndividualResource steve = usersFixture.steve();
@@ -600,7 +600,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
   }
 
   @Test
-  public void secondRecallRequestWithMGDTruncationInPlaceAndLoanOverdueDoesNotChangeDueDate() {
+  void secondRecallRequestWithMGDTruncationInPlaceAndLoanOverdueDoesNotChangeDueDate() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requestServicePoint = servicePointsFixture.cd1();
     final IndividualResource steve = usersFixture.steve();
@@ -648,7 +648,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
   }
 
   @Test
-  public void secondRecallRequestWithRDTruncationInPlaceDoesNotChangeDueDate() {
+  void secondRecallRequestWithRDTruncationInPlaceDoesNotChangeDueDate() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requestServicePoint = servicePointsFixture.cd1();
     final IndividualResource steve = usersFixture.steve();
@@ -694,7 +694,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
   }
 
   @Test
-  public void secondRecallRequestWithRDTruncationInPlaceAndLoanOverdueDoesNotChangeDueDate() {
+  void secondRecallRequestWithRDTruncationInPlaceAndLoanOverdueDoesNotChangeDueDate() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requestServicePoint = servicePointsFixture.cd1();
     final IndividualResource steve = usersFixture.steve();
@@ -742,7 +742,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
   }
 
   @Test
-  public void itemRecalledThenCancelledAndNextRecallDoesNotChangeDueDate() {
+  void itemRecalledThenCancelledAndNextRecallDoesNotChangeDueDate() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requestServicePoint = servicePointsFixture.cd1();
     final IndividualResource jessica = usersFixture.jessica();
@@ -796,7 +796,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
   }
 
   @Test
-  public void shouldNotExtendLoanDueDateIfOverdueLoanIsRecalled() {
+  void shouldNotExtendLoanDueDateIfOverdueLoanIsRecalled() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
     final Period loanPeriod = Period.weeks(3);
@@ -838,7 +838,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
   }
 
   @Test
-  public void shouldExtendLoanDueDateByAlternatePeriodWhenOverdueLoanIsRecalledAndPolicyAllowsExtension() {
+  void shouldExtendLoanDueDateByAlternatePeriodWhenOverdueLoanIsRecalledAndPolicyAllowsExtension() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
     final Period alternateLoanPeriod = Period.weeks(3);
@@ -918,7 +918,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
   }
 
   @Test
-  public void loanDueDateTruncatedOnCheckoutWhenRecallAnywhereInQueue() {
+  void loanDueDateTruncatedOnCheckoutWhenRecallAnywhereInQueue() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requestServicePoint = servicePointsFixture.cd1();
     final IndividualResource jessica = usersFixture.jessica();

@@ -16,7 +16,7 @@ import lombok.val;
 public class LoanToChargeFeesTest {
 
   @Test
-  public void shouldCloseLoanIfNoFeesToChargeForImmediateBilling() {
+  void shouldCloseLoanIfNoFeesToChargeForImmediateBilling() {
     val lostItemPolicy = new LostItemFeePolicyBuilder()
       .billPatronImmediatelyWhenAgedToLost()
       .withNoChargeAmountItem()
@@ -26,7 +26,7 @@ public class LoanToChargeFeesTest {
   }
 
   @Test
-  public void shouldCloseLoanIfNoFeesToChargeForDelayedBilling() {
+  void shouldCloseLoanIfNoFeesToChargeForDelayedBilling() {
     val lostItemPolicy = new LostItemFeePolicyBuilder()
       .withPatronBilledAfterItemAgedToLost(Period.minutes(1));
 
@@ -34,7 +34,7 @@ public class LoanToChargeFeesTest {
   }
 
   @Test
-  public void shouldNotCloseLoanIfProcessingFeeHasToBeCharged() {
+  void shouldNotCloseLoanIfProcessingFeeHasToBeCharged() {
     val lostItemPolicy = new LostItemFeePolicyBuilder()
       .billPatronImmediatelyWhenAgedToLost()
       .chargeProcessingFeeWhenAgedToLost(10.00);
@@ -43,7 +43,7 @@ public class LoanToChargeFeesTest {
   }
 
   @Test
-  public void shouldNotCloseLoanIfActualCostFeeHasToBeCharged() {
+  void shouldNotCloseLoanIfActualCostFeeHasToBeCharged() {
     val lostItemPolicy = new LostItemFeePolicyBuilder()
       .billPatronImmediatelyWhenAgedToLost()
       .withActualCost(11.00);
@@ -52,7 +52,7 @@ public class LoanToChargeFeesTest {
   }
 
   @Test
-  public void shouldNotCloseLoanIfSetCostFeeHasToBeCharged() {
+  void shouldNotCloseLoanIfSetCostFeeHasToBeCharged() {
     val lostItemPolicy = new LostItemFeePolicyBuilder()
       .billPatronImmediatelyWhenAgedToLost()
       .withSetCost(11.00);

@@ -15,7 +15,7 @@ import lombok.val;
 public class ItemPermanentLocationTest {
 
   @Test
-  public void itemLocationTakesPriorityOverHoldings() {
+  void itemLocationTakesPriorityOverHoldings() {
     val itemLocation = UUID.randomUUID();
     val holdingsLocation = UUID.randomUUID();
 
@@ -28,7 +28,7 @@ public class ItemPermanentLocationTest {
   }
 
   @Test
-  public void holdingsLocationIsReturnedByDefault() {
+  void holdingsLocationIsReturnedByDefault() {
     val holdingsLocation = UUID.randomUUID();
 
     val itemJson = new ItemBuilder().withPermanentLocation((UUID) null).create();
@@ -40,7 +40,7 @@ public class ItemPermanentLocationTest {
   }
 
   @Test
-  public void nullIsReturnedWhenNoHoldingsJsonPresent() {
+  void nullIsReturnedWhenNoHoldingsJsonPresent() {
     val itemJson = new ItemBuilder().withPermanentLocation((UUID) null).create();
 
     val item = Item.from(itemJson).withHoldingsRecord(null);

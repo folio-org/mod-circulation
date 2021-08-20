@@ -17,7 +17,7 @@ import lombok.val;
 
 public class RenewalValidatorTest {
   @Test
-  public void shouldDisallowRenewalWhenDueDateIsEarlierOrSame() {
+  void shouldDisallowRenewalWhenDueDateIsEarlierOrSame() {
     val dueDate = now(UTC);
     val proposedDueDate = dueDate.minusWeeks(2);
     val loan = createLoan(dueDate);
@@ -29,7 +29,7 @@ public class RenewalValidatorTest {
   }
 
   @Test
-  public void shouldAllowRenewalWhenDueDateAfterCurrentDueDate() {
+  void shouldAllowRenewalWhenDueDateAfterCurrentDueDate() {
     val dueDate = now(UTC);
     val proposedDueDate = dueDate.plusWeeks(1);
     val loan = createLoan(dueDate);

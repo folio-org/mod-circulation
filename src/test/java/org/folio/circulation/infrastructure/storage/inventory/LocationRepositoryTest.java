@@ -15,7 +15,7 @@ import lombok.val;
 public class LocationRepositoryTest {
 
   @Test
-  public void shouldReturnNullWhenLocationIdIsNull() {
+  void shouldReturnNullWhenLocationIdIsNull() {
     final LocationRepository repository = using(mock(Clients.class));
 
     val result = repository.fetchLocationById(null)

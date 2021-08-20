@@ -28,7 +28,7 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
    *     Then do not anonymize the loan
   */
   @Test
-  public void testClosedLoansWithFeesAndFinesNotAnonymized() {
+  void testClosedLoansWithFeesAndFinesNotAnonymized() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
       .loanCloseAnonymizeNever()
@@ -61,7 +61,7 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
    *     Then anonymize the loan
    */
   @Test
-  public void testClosedLoansWithFeesAndFinesAnonymizedWhenFeesFinesClose() {
+  void testClosedLoansWithFeesAndFinesAnonymizedWhenFeesFinesClose() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
         .loanCloseAnonymizeNever()
@@ -94,7 +94,7 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
    *     Then do not anonymize the loan
    */
   @Test
-  public void testClosedLoansWithFeesAndFinesNeverAnonymized() {
+  void testClosedLoansWithFeesAndFinesNeverAnonymized() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
         .loanCloseAnonymizeNever()
@@ -127,7 +127,7 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
    *     Then do not anonymize the loan
    */
   @Test
-  public void testClosedLoanWithFeesAndFinesNeverAnonymizedWhenFeesFinesClose() {
+  void testClosedLoanWithFeesAndFinesNeverAnonymizedWhenFeesFinesClose() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
         .loanCloseAnonymizeNever()
@@ -160,7 +160,7 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
    *     Then do not anonymize the loan
    */
   @Test
-  public void testOpenLoanWithFeesAndFinesNeverAnonymizedWhenFeesFinesClose() {
+  void testOpenLoanWithFeesAndFinesNeverAnonymizedWhenFeesFinesClose() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
         .loanCloseAnonymizeNever()
@@ -193,7 +193,7 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
    *     Then do not anonymize the loan
  */
   @Test
-  public void testClosedLoanWithClosedFeesAndFinesNeverAnonymizedWhenFeesFinesClose() {
+  void testClosedLoanWithClosedFeesAndFinesNeverAnonymizedWhenFeesFinesClose() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
         .loanCloseAnonymizeNever()
@@ -226,7 +226,7 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
    *     Then do not anonymize the loan
    */
   @Test
-  public void testClosedLoanWithFeesAndFinesNeverAnonymizedWhenXIntervalNotPassed() {
+  void testClosedLoanWithFeesAndFinesNeverAnonymizedWhenXIntervalNotPassed() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig =
         new LoanHistoryConfigurationBuilder()
@@ -261,7 +261,7 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
    *     Then anonymize the loan
    */
   @Test
-  public void testClosedLoanWithFeesAndFinesNeverAnonymizedWhenXIntervalPassed() {
+  void testClosedLoanWithFeesAndFinesNeverAnonymizedWhenXIntervalPassed() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig =
         new LoanHistoryConfigurationBuilder()
@@ -287,7 +287,7 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
   }
 
   @Test
-  public void testClosedLoansWithoutFeesAndFinesNeverAnonymized() {
+  void testClosedLoansWithoutFeesAndFinesNeverAnonymized() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig =
         new LoanHistoryConfigurationBuilder()
@@ -310,7 +310,7 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
 
 
   @Test
-  public void testClosedLoansWithoutFeesAndFinesNeverAnonymized2() {
+  void testClosedLoansWithoutFeesAndFinesNeverAnonymized2() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig =
         new LoanHistoryConfigurationBuilder()
@@ -332,7 +332,7 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
   }
 
   @Test
-  public void testClosedLoansWithoutFeesAndFinesNeverAnonymized3() {
+  void testClosedLoansWithoutFeesAndFinesNeverAnonymized3() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig =
         new LoanHistoryConfigurationBuilder()

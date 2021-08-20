@@ -43,7 +43,7 @@ public class OverduePeriodCalculatorServiceTest {
   private static final DateTimeZone LONDON = DateTimeZone.forID("Europe/London");
 
   @Test
-  public void preconditionsCheckLoanHasNoDueDate() {
+  void preconditionsCheckLoanHasNoDueDate() {
     DateTime systemTime = DateTime.now(UTC);
     Loan loan = new LoanBuilder().asDomainObject();
 
@@ -51,7 +51,7 @@ public class OverduePeriodCalculatorServiceTest {
   }
 
   @Test
-  public void preconditionsCheckLoanDueDateIsInFuture() {
+  void preconditionsCheckLoanDueDateIsInFuture() {
     DateTime systemTime = DateTime.now(UTC);
     Loan loan = new LoanBuilder()
       .withDueDate(systemTime.plusDays(1))
@@ -61,7 +61,7 @@ public class OverduePeriodCalculatorServiceTest {
   }
 
   @Test
-  public void preconditionsCheckCountClosedIsNull() {
+  void preconditionsCheckCountClosedIsNull() {
     DateTime systemTime = DateTime.now(UTC);
     Loan loan = new LoanBuilder()
       .withDueDate(systemTime.minusDays(1))
@@ -71,7 +71,7 @@ public class OverduePeriodCalculatorServiceTest {
   }
 
   @Test
-  public void allPreconditionsAreMet() {
+  void allPreconditionsAreMet() {
     DateTime systemTime = DateTime.now(UTC);
     Loan loan = new LoanBuilder()
       .withDueDate(systemTime.minusDays(1))
@@ -81,7 +81,7 @@ public class OverduePeriodCalculatorServiceTest {
   }
 
   @Test
-  public void countOverdueMinutesWithClosedDays() throws ExecutionException, InterruptedException {
+  void countOverdueMinutesWithClosedDays() throws ExecutionException, InterruptedException {
     int expectedResult = MINUTES_PER_WEEK + MINUTES_PER_DAY + MINUTES_PER_HOUR + 1;
     DateTime systemTime = DateTime.now(UTC);
 

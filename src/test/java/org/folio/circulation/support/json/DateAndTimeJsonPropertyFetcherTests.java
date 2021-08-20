@@ -16,7 +16,7 @@ import io.vertx.core.json.JsonObject;
 
 public class DateAndTimeJsonPropertyFetcherTests {
   @Test
-  public void shouldReturnCorrectDateAndTimeWhenPropertyIsPresent() {
+  void shouldReturnCorrectDateAndTimeWhenPropertyIsPresent() {
     final var json = new JsonObject();
 
     writeOffsetDateTimeProperty(json, "2020-11-18T22:11:34-04:00");
@@ -28,19 +28,19 @@ public class DateAndTimeJsonPropertyFetcherTests {
   }
 
   @Test
-  public void shouldReturnNullWhenPropertyIsNotPresent() {
+  void shouldReturnNullWhenPropertyIsNotPresent() {
     final var json = new JsonObject();
 
     assertThat(getOffsetDateTime(json), nullValue());
   }
 
   @Test
-  public void shouldReturnNullWhenJsonObjectIsNull() {
+  void shouldReturnNullWhenJsonObjectIsNull() {
     assertThat(getOffsetDateTime(null), nullValue());
   }
 
   @Test
-  public void shouldReturnNullWhenPropertyIsBlank() {
+  void shouldReturnNullWhenPropertyIsBlank() {
     final var json = new JsonObject();
 
     writeOffsetDateTimeProperty(json, "    ");

@@ -23,7 +23,7 @@ import io.vertx.core.json.JsonObject;
 
 public class RequestsAPILocationTests extends APITests {
   @Test
-  public void locationIsIncludedForSingleRequest() {
+  void locationIsIncludedForSingleRequest() {
 
     final IndividualResource thirdFloor = locationsFixture.thirdFloor();
     final IndividualResource secondFloorEconomics = locationsFixture.secondFloorEconomics();
@@ -75,7 +75,7 @@ public class RequestsAPILocationTests extends APITests {
   }
 
   @Test
-  public void locationIncludedForMultipleRequests() {
+  void locationIncludedForMultipleRequests() {
 
     final IndividualResource thirdFloor = locationsFixture.thirdFloor();
     final IndividualResource secondFloorEconomics = locationsFixture.secondFloorEconomics();

@@ -53,7 +53,7 @@ public class PickSlipsTests extends APITests {
   private static final String REQUESTER_KEY = "requester";
 
   @Test
-  public void responseContainsNoPickSlipsForNonExistentServicePointId() {
+  void responseContainsNoPickSlipsForNonExistentServicePointId() {
     UUID servicePointId = servicePointsFixture.cd1().getId();
     ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
 
@@ -70,7 +70,7 @@ public class PickSlipsTests extends APITests {
   }
 
   @Test
-  public void responseContainsNoPickSlipsForWrongServicePointId() {
+  void responseContainsNoPickSlipsForWrongServicePointId() {
     UUID servicePointId = servicePointsFixture.cd1().getId();
     ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
 
@@ -90,7 +90,7 @@ public class PickSlipsTests extends APITests {
   }
 
   @Test
-  public void responseContainsNoPickSlipsWhenThereAreNoPagedItems() {
+  void responseContainsNoPickSlipsWhenThereAreNoPagedItems() {
     UUID servicePointId = servicePointsFixture.cd1().getId();
     Response response = ResourceClient.forPickSlips().getById(servicePointId);
 
@@ -99,7 +99,7 @@ public class PickSlipsTests extends APITests {
   }
 
   @Test
-  public void responseContainsNoPickSlipsWhenItemHasOpenPageRequestWithWrongStatus() {
+  void responseContainsNoPickSlipsWhenItemHasOpenPageRequestWithWrongStatus() {
     UUID servicePointId = servicePointsFixture.cd1().getId();
     ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
 
@@ -117,7 +117,7 @@ public class PickSlipsTests extends APITests {
   }
 
   @Test
-  public void responseContainsPickSlipWithAllAvailableTokens() {
+  void responseContainsPickSlipWithAllAvailableTokens() {
     IndividualResource servicePoint = servicePointsFixture.cd1();
     UUID servicePointId = servicePoint.getId();
     IndividualResource locationResource = locationsFixture.thirdFloor();
@@ -238,7 +238,7 @@ public class PickSlipsTests extends APITests {
   }
 
   @Test
-  public void responseContainsPickSlipsForRequestsOfTypePageOnly() {
+  void responseContainsPickSlipsForRequestsOfTypePageOnly() {
     UUID servicePointId = servicePointsFixture.cd1().getId();
     val item = itemsFixture.basedUponSmallAngryPlanet();
     val james = usersFixture.james();
@@ -268,7 +268,7 @@ public class PickSlipsTests extends APITests {
   }
 
   @Test
-  public void responseIncludesItemsFromDifferentLocationsForSameServicePoint() {
+  void responseIncludesItemsFromDifferentLocationsForSameServicePoint() {
     UUID circDesk1 = servicePointsFixture.cd1().getId();
 
     // Circ desk 1: Second floor
@@ -318,7 +318,7 @@ public class PickSlipsTests extends APITests {
   }
 
   @Test
-  public void responseDoesNotIncludePickSlipsFromDifferentServicePoint() {
+  void responseDoesNotIncludePickSlipsFromDifferentServicePoint() {
     UUID circDesk1 = servicePointsFixture.cd1().getId();
     UUID circDesk4 = servicePointsFixture.cd4().getId();
 
@@ -376,7 +376,7 @@ public class PickSlipsTests extends APITests {
   }
 
   @Test
-  public void responseContainsPickSlipsWhenServicePointHasManyLocations() {
+  void responseContainsPickSlipsWhenServicePointHasManyLocations() {
     final UUID servicePointId = servicePointsFixture.cd1().getId();
     final int numberOfLocations = 100;
 

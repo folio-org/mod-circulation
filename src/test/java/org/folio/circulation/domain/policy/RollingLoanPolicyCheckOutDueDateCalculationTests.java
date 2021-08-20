@@ -153,7 +153,7 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
   }
 
   @Test
-  public void shouldApplyAlternateScheduleWhenQueuedRequestIsHoldAndRolling() {
+  void shouldApplyAlternateScheduleWhenQueuedRequestIsHoldAndRolling() {
     final Period alternateCheckoutLoanPeriod = Period.from(2, "Weeks");
 
     final DateTime systemTime = new DateTime(2019, 6, 14, 11, 23, 43, DateTimeZone.UTC);
@@ -213,7 +213,7 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
   }
 
   @Test
-  public void shouldFailForUnrecognisedInterval() {
+  void shouldFailForUnrecognisedInterval() {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .rolling(Period.from(5, "Unknown"))
       .withName("Invalid Loan Policy")
@@ -230,7 +230,7 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
   }
 
   @Test
-  public void shouldFailWhenNoPeriodProvided() {
+  void shouldFailWhenNoPeriodProvided() {
     final JsonObject representation = new LoanPolicyBuilder()
       .rolling(Period.from(5, "Unknown"))
       .withName("Invalid Loan Policy")
@@ -251,7 +251,7 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
   }
 
   @Test
-  public void shouldFailWhenNoPeriodDurationProvided() {
+  void shouldFailWhenNoPeriodDurationProvided() {
     final JsonObject representation = new LoanPolicyBuilder()
       .rolling(Period.weeks(5))
       .withName("Invalid Loan Policy")
@@ -272,7 +272,7 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
   }
 
   @Test
-  public void shouldFailWhenNoPeriodIntervalProvided() {
+  void shouldFailWhenNoPeriodIntervalProvided() {
     final JsonObject representation = new LoanPolicyBuilder()
       .rolling(Period.weeks(5))
       .withName("Invalid Loan Policy")
@@ -317,7 +317,7 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
   }
 
   @Test
-  public void shouldTruncateDueDateWhenWithinDueDateLimitSchedule() {
+  void shouldTruncateDueDateWhenWithinDueDateLimitSchedule() {
     //TODO: Slight hack to use the same builder, the schedule is fed in later
     //TODO: Introduce builder for individual schedules
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
@@ -339,7 +339,7 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
   }
 
   @Test
-  public void shouldNotTruncateDueDateWhenWithinDueDateLimitScheduleButInitialDateIsSooner() {
+  void shouldNotTruncateDueDateWhenWithinDueDateLimitScheduleButInitialDateIsSooner() {
     //TODO: Slight hack to use the same builder, the schedule is fed in later
     //TODO: Introduce builder for individual schedules
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
@@ -360,7 +360,7 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
   }
 
   @Test
-  public void shouldFailWhenNotWithinOneOfProvidedDueDateLimitSchedules() {
+  void shouldFailWhenNotWithinOneOfProvidedDueDateLimitSchedules() {
     //TODO: Slight hack to use the same builder, the schedule is fed in later
     //TODO: Introduce builder for individual schedules
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
@@ -384,7 +384,7 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
   }
 
   @Test
-  public void shouldFailWhenNoDueDateLimitSchedules() {
+  void shouldFailWhenNoDueDateLimitSchedules() {
     //TODO: Slight hack to use the same builder, the schedule is fed in later
     //TODO: Introduce builder for individual schedules
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()

@@ -13,7 +13,7 @@ import api.support.builders.RequestBuilder;
 
 public class RequestsForDifferentItemsTests extends APITests {
   @Test
-  public void requestsCreatedForDifferentItemsAreInDifferentQueues() {
+  void requestsCreatedForDifferentItemsAreInDifferentQueues() {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource nod = itemsFixture.basedUponNod();

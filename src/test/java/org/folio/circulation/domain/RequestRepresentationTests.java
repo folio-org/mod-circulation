@@ -24,7 +24,7 @@ public class RequestRepresentationTests {
   private static final UUID SERVICE_POINT_ID = UUID.randomUUID();
 
   @Test
-  public void testExtendedRepresentation() {
+  void testExtendedRepresentation() {
     RequestRepresentation requestRepresentation = new RequestRepresentation();
     Request request = createMockRequest();
     JsonObject extendedRepresentation = requestRepresentation.extendedRepresentation(request);
@@ -37,7 +37,7 @@ public class RequestRepresentationTests {
   }
 
   @Test
-  public void testStoredRequest() {
+  void testStoredRequest() {
     Request request = createMockRequest();
 
     JsonObject extendedRepresentation

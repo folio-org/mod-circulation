@@ -26,7 +26,7 @@ import io.vertx.core.json.JsonObject;
 public class RequestByInstanceIdResourceTests extends APITests {
 
   @Test
-  public void canGetOrderedAvailableItemsList() {
+  void canGetOrderedAvailableItemsList() {
 
     UUID primaryServicePointId = servicePointsFixture.cd2().getId();
     UUID secondaryServicePointId = UUID.randomUUID();
@@ -100,7 +100,7 @@ public class RequestByInstanceIdResourceTests extends APITests {
   }
 
   @Test
-  public void canGetOrderedAvailableItemsListWithoutMatchingLocations() {
+  void canGetOrderedAvailableItemsListWithoutMatchingLocations() {
 
     UUID bookMaterialTypeId = UUID.randomUUID();
 

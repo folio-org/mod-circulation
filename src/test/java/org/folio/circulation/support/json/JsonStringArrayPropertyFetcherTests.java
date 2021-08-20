@@ -16,21 +16,21 @@ import lombok.val;
 
 public class JsonStringArrayPropertyFetcherTests {
   @Test
-  public void StreamShouldContainSameContentsAsArray() {
+  void StreamShouldContainSameContentsAsArray() {
     val json = objectWithJsonArrayOf("Foo", "Bar", "Lorem", "Ipsum");
 
     assertThat(toList(toStream(json, "array")), contains("Foo", "Bar", "Lorem", "Ipsum"));
   }
 
   @Test
-  public void shouldMapEmptyArrayToEmptyStream() {
+  void shouldMapEmptyArrayToEmptyStream() {
     val json = objectWithJsonArrayOf();
 
     assertThat(toList(toStream(json, "array")), is(empty()));
   }
 
   @Test
-  public void shouldSkipNonStringElements() {
+  void shouldSkipNonStringElements() {
     val array = new JsonArray(toList(of("Foo", "Bar", new JsonObject(), "Lorem", "Ipsum")));
 
     val json = new JsonObject().put("array", array);

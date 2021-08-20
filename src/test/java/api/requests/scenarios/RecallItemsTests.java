@@ -24,7 +24,7 @@ public class RecallItemsTests extends APITests {
   }
 
   @Test
-  public void loanActionCommentIsRemovedOnRecall() {
+  void loanActionCommentIsRemovedOnRecall() {
     // using non renewable loan policy just to be able to specify action comment
     // on override renew
     use(new LoanPolicyBuilder().withName("loanActionCommentIsRemovedOnRecall")

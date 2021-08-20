@@ -86,7 +86,7 @@ public class MoveRequestPolicyTests extends APITests {
   }
 
   @Test
-  public void cannotMoveRecallRequestsWithRequestPolicyNotAllowingHolds() {
+  void cannotMoveRecallRequestsWithRequestPolicyNotAllowingHolds() {
     final String anyNoticePolicy = noticePoliciesFixture.activeNotice().getId().toString();
     final String anyLoanPolicy = loanPoliciesFixture.canCirculateRolling().getId().toString();
     final String bookMaterialType = materialTypesFixture.book().getId().toString();
@@ -158,7 +158,7 @@ public class MoveRequestPolicyTests extends APITests {
   }
 
   @Test
-  public void moveRecallRequestWithoutExistingRecallsAndWithNoPolicyValuesChangesDueDateToSystemDate() {
+  void moveRecallRequestWithoutExistingRecallsAndWithNoPolicyValuesChangesDueDateToSystemDate() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource interestingTimes = itemsFixture.basedUponInterestingTimes();
     final IndividualResource steve = usersFixture.steve();
@@ -210,7 +210,7 @@ public class MoveRequestPolicyTests extends APITests {
   }
 
   @Test
-  public void moveRecallRequestWithExistingRecallsAndWithNoPolicyValuesChangesDueDateToSystemDate() {
+  void moveRecallRequestWithExistingRecallsAndWithNoPolicyValuesChangesDueDateToSystemDate() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource interestingTimes = itemsFixture.basedUponInterestingTimes();
     final IndividualResource steve = usersFixture.steve();
@@ -280,7 +280,7 @@ public class MoveRequestPolicyTests extends APITests {
   }
 
   @Test
-  public void moveRecallRequestWithoutExistingRecallsAndWithMGDAndRDValuesChangesDueDateToRD() {
+  void moveRecallRequestWithoutExistingRecallsAndWithMGDAndRDValuesChangesDueDateToRD() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource interestingTimes = itemsFixture.basedUponInterestingTimes();
     final IndividualResource steve = usersFixture.steve();
@@ -351,7 +351,7 @@ public class MoveRequestPolicyTests extends APITests {
   }
 
   @Test
-  public void moveRecallRequestWithExistingRecallsAndWithMGDAndRDValuesChangesDueDateToRD() {
+  void moveRecallRequestWithExistingRecallsAndWithMGDAndRDValuesChangesDueDateToRD() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource interestingTimes = itemsFixture.basedUponInterestingTimes();
     final IndividualResource steve = usersFixture.steve();

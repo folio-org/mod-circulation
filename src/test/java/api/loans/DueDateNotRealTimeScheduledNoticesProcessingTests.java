@@ -48,7 +48,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
   }
 
   @Test
-  public void uponAtDueDateNoticesShouldBeSentInGroups() {
+  void uponAtDueDateNoticesShouldBeSentInGroups() {
     JsonObject uponAtDueDateNoticeConfig = new NoticeConfigurationBuilder()
       .withTemplateId(TEMPLATE_ID)
       .withDueDateEvent()
@@ -110,7 +110,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
   }
 
   @Test
-  public void beforeRecurringNoticesAreRescheduled() {
+  void beforeRecurringNoticesAreRescheduled() {
     configClient.create(ConfigurationExample.utcTimezoneConfiguration());
 
     Period beforePeriod = Period.weeks(1);
@@ -159,7 +159,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
   }
 
   @Test
-  public void beforeNoticesAreNotSentIfLoanIsClosed() {
+  void beforeNoticesAreNotSentIfLoanIsClosed() {
     Period beforePeriod = Period.weeks(1);
 
     JsonObject uponAtDueDateNoticeConfig = new NoticeConfigurationBuilder()
@@ -198,7 +198,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
   }
 
   @Test
-  public void processingTakesNoticesLimitedByConfiguration() {
+  void processingTakesNoticesLimitedByConfiguration() {
     Period beforePeriod = Period.weeks(1);
 
     JsonObject uponAtDueDateNoticeConfig = new NoticeConfigurationBuilder()
@@ -254,7 +254,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
   }
 
   @Test
-  public void noticeIsDeletedIfReferencedLoanDoesNotExist() {
+  void noticeIsDeletedIfReferencedLoanDoesNotExist() {
     JsonObject uponAtDueDateNoticeConfig = new NoticeConfigurationBuilder()
       .withTemplateId(TEMPLATE_ID)
       .withDueDateEvent()
@@ -290,7 +290,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
   }
 
   @Test
-  public void noticeIsDeletedIfReferencedItemDoesNotExist() {
+  void noticeIsDeletedIfReferencedItemDoesNotExist() {
     JsonObject uponAtDueDateNoticeConfig = new NoticeConfigurationBuilder()
       .withTemplateId(TEMPLATE_ID)
       .withDueDateEvent()
@@ -326,7 +326,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
   }
 
   @Test
-  public void noticeIsDeletedIfReferencedUserDoesNotExist() {
+  void noticeIsDeletedIfReferencedUserDoesNotExist() {
     JsonObject uponAtDueDateNoticeConfig = new NoticeConfigurationBuilder()
       .withTemplateId(TEMPLATE_ID)
       .withDueDateEvent()
@@ -362,7 +362,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
   }
 
   @Test
-  public void missingReferencedEntitiesDoNotBlockProcessing() {
+  void missingReferencedEntitiesDoNotBlockProcessing() {
     JsonObject uponAtDueDateNoticeConfig = new NoticeConfigurationBuilder()
       .withTemplateId(TEMPLATE_ID)
       .withDueDateEvent()
@@ -437,7 +437,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
   }
 
   @Test
-  public void noticeIsDeletedIfReferencedTemplateDoesNotExist() {
+  void noticeIsDeletedIfReferencedTemplateDoesNotExist() {
     JsonObject uponAtDueDateNoticeConfig = new NoticeConfigurationBuilder()
       .withTemplateId(TEMPLATE_ID)
       .withDueDateEvent()
@@ -473,7 +473,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
   }
 
   @Test
-  public void noticeIsNotSentOrDeletedWhenPatronNoticeRequestFails() {
+  void noticeIsNotSentOrDeletedWhenPatronNoticeRequestFails() {
     JsonObject uponAtDueDateNoticeConfig = new NoticeConfigurationBuilder()
       .withTemplateId(TEMPLATE_ID)
       .withDueDateEvent()
@@ -509,7 +509,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
   }
 
   @Test
-  public void scheduledNotRealTimeNoticesShouldBeSentOnlyOncePerDayIfPubSubReturnsError() {
+  void scheduledNotRealTimeNoticesShouldBeSentOnlyOncePerDayIfPubSubReturnsError() {
     JsonObject afterDueDateNoticeConfig = new NoticeConfigurationBuilder()
       .withTemplateId(TEMPLATE_ID)
       .withDueDateEvent()
@@ -546,14 +546,14 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
   }
 
   @Test
-  public void scheduledNotRealTimeNoticesIsSentAfterMidnightInTenantsTimeZone() {
+  void scheduledNotRealTimeNoticesIsSentAfterMidnightInTenantsTimeZone() {
     // A notice should be sent when the processing is run one minute after
     // midnight (in tenant's time zone)
     scheduledNotRealTimeNoticesShouldBeSentAtMidnightInTenantsTimeZone(1, 0, 1);
   }
 
   @Test
-  public void scheduledNotRealTimeNoticesIsNotSentBeforeMidnightInTenantsTimeZone() {
+  void scheduledNotRealTimeNoticesIsNotSentBeforeMidnightInTenantsTimeZone() {
     scheduledNotRealTimeNoticesShouldBeSentAtMidnightInTenantsTimeZone(-1, 1, 0);
   }
 

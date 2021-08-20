@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Test;
 
 public class ResultApplySideEffectTests {
   @Test
-  public void shouldApplySuccessConsumerWhenSuccessful() {
+  void shouldApplySuccessConsumerWhenSuccessful() {
     final AtomicInteger appliedSuccess = new AtomicInteger();
     final AtomicBoolean appliedFailure = new AtomicBoolean();
 
@@ -33,7 +33,7 @@ public class ResultApplySideEffectTests {
   }
 
   @Test
-  public void shouldApplyFailureConsumerWhenFailed() {
+  void shouldApplyFailureConsumerWhenFailed() {
     final AtomicBoolean appliedSuccess = new AtomicBoolean();
     final AtomicReference<HttpFailure> appliedFailure = new AtomicReference<>();
 

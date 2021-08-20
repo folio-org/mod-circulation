@@ -33,87 +33,87 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 public class  RequestTypeItemStatusWhiteListTests {
   @Test
-  public void canCreateHoldRequestWhenItemStatusCheckedOut() {
+  void canCreateHoldRequestWhenItemStatusCheckedOut() {
     assertTrue(canCreateRequestForItem(CHECKED_OUT, HOLD));
   }
 
   @Test
-  public void canCreateRecallRequestWhenItemStatusCheckedOut() {
+  void canCreateRecallRequestWhenItemStatusCheckedOut() {
     assertTrue(canCreateRequestForItem(CHECKED_OUT, RECALL));
   }
 
   @Test
-  public void cannotCreatePagedRequestWhenItemStatusCheckedOut() {
+  void cannotCreatePagedRequestWhenItemStatusCheckedOut() {
     assertFalse(canCreateRequestForItem(CHECKED_OUT, PAGE));
   }
 
   @Test
-  public void cannotCreateNoneRequestWhenItemStatusIsAnything() {
+  void cannotCreateNoneRequestWhenItemStatusIsAnything() {
     assertFalse(canCreateRequestForItem(CHECKED_OUT, RequestType.NONE));
   }
 
   @Test
-  public void canCreateHoldRequestWhenItemStatusOnOrder() {
+  void canCreateHoldRequestWhenItemStatusOnOrder() {
     assertTrue(canCreateRequestForItem(ON_ORDER, HOLD));
   }
 
   @Test
-  public void canCreateRecallRequestWhenItemStatusOnOrder() {
+  void canCreateRecallRequestWhenItemStatusOnOrder() {
     assertTrue(canCreateRequestForItem(ON_ORDER, RECALL));
   }
 
   @Test
-  public void cannotCreatePagedRequestWhenItemStatusOnOrder() {
+  void cannotCreatePagedRequestWhenItemStatusOnOrder() {
     assertFalse(canCreateRequestForItem(ON_ORDER, PAGE));
   }
 
   @Test
-  public void canCreateHoldRequestWhenItemStatusInProcess() {
+  void canCreateHoldRequestWhenItemStatusInProcess() {
     assertTrue(canCreateRequestForItem(IN_PROCESS, HOLD));
   }
 
   @Test
-  public void canCreateRecallRequestWhenItemStatusInProcess() {
+  void canCreateRecallRequestWhenItemStatusInProcess() {
     assertTrue(canCreateRequestForItem(IN_PROCESS, RECALL));
   }
 
   @Test
-  public void cannotCreatePagedRequestWhenItemStatusInProcess() {
+  void cannotCreatePagedRequestWhenItemStatusInProcess() {
     assertFalse(canCreateRequestForItem(IN_PROCESS, PAGE));
   }
 
   @Test
-  public void canCreateRecallRequestWhenItemStatusPaged() {
+  void canCreateRecallRequestWhenItemStatusPaged() {
     assertTrue(canCreateRequestForItem(PAGED, RECALL));
   }
 
   @Test
-  public void cannotCreatePagedRequestWhenItemStatusIsNone() {
+  void cannotCreatePagedRequestWhenItemStatusIsNone() {
     assertFalse(canCreateRequestForItem(ItemStatus.NONE, PAGE));
   }
 
   @Test
-  public void canCreatePagedRequestWhenItemStatusIsAvailable() {
+  void canCreatePagedRequestWhenItemStatusIsAvailable() {
     assertTrue(canCreateRequestForItem(AVAILABLE, PAGE));
   }
 
   @Test
-  public void canCreateHoldRequestWhenItemStatusAwaitingDelivery() {
+  void canCreateHoldRequestWhenItemStatusAwaitingDelivery() {
     assertTrue(canCreateRequestForItem(AWAITING_DELIVERY, HOLD));
   }
 
   @Test
-  public void canCreateRecallRequestWhenItemStatusAwaitingDelivery() {
+  void canCreateRecallRequestWhenItemStatusAwaitingDelivery() {
     assertTrue(canCreateRequestForItem(AWAITING_DELIVERY, RECALL));
   }
 
   @Test
-  public void cannotCreatePagedRequestWhenItemStatusAwaitingDelivery() {
+  void cannotCreatePagedRequestWhenItemStatusAwaitingDelivery() {
     assertFalse(canCreateRequestForItem(AWAITING_DELIVERY, PAGE));
   }
 
   @Test
-  public void cannotCreateNoneRequestWhenItemStatusAwaitingDelivery() {
+  void cannotCreateNoneRequestWhenItemStatusAwaitingDelivery() {
     assertFalse(canCreateRequestForItem(AWAITING_DELIVERY, RequestType.NONE));
   }
 

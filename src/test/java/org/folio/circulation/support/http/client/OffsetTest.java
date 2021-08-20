@@ -13,21 +13,21 @@ import org.junit.jupiter.api.Test;
 public class OffsetTest {
 
   @Test
-  public void shouldCalculateOffsetWhenPageLimitAndOffsetValuesNonNull() {
+  void shouldCalculateOffsetWhenPageLimitAndOffsetValuesNonNull() {
     final Offset offset = offset(14).nextPage(limit(7));
 
     assertEquals(21, offset.getOffset());
   }
 
   @Test
-  public void shouldCalculateOffsetWhenOffsetValueIsNull() {
+  void shouldCalculateOffsetWhenOffsetValueIsNull() {
     final Offset offset = noOffset().nextPage(limit(10));
 
     assertEquals(10, offset.getOffset());
   }
 
   @Test
-  public void shouldThrowExceptionWhenPageLimitIsZero() {
+  void shouldThrowExceptionWhenPageLimitIsZero() {
     final Exception exception = assertThrows(IllegalArgumentException.class, () -> {
       offset(11).nextPage(noLimit());
     });
@@ -36,7 +36,7 @@ public class OffsetTest {
   }
 
   @Test
-  public void shouldThrowExceptionWhenPageLimitIsNull() {
+  void shouldThrowExceptionWhenPageLimitIsNull() {
     final Exception exception = assertThrows(IllegalArgumentException.class, () -> {
       offset(5).nextPage(null);
     });

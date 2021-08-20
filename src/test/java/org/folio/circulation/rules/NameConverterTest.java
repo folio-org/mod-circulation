@@ -70,12 +70,12 @@ public class NameConverterTest {
   }
 
   @Test
-  public void replaceNames() {
+  void replaceNames() {
     assertThat(convertNames(circulationRulesNames, name2uuid), is(circulationRulesUuids));
   }
 
   @Test
-  public void replaceUuids() {
+  void replaceUuids() {
     assertThat(convertNames(circulationRulesUuids, uuid2name), is(circulationRulesNames));
   }
 }

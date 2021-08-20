@@ -72,7 +72,7 @@ public class PatronActionSessionTests extends APITests {
   }
 
   @Test
-  public void cannotEndSessionWhenPatronIdIsNotSpecified() {
+  void cannotEndSessionWhenPatronIdIsNotSpecified() {
     JsonObject body = new JsonObject()
       .put(ACTION_TYPE, "Check-out");
 
@@ -83,7 +83,7 @@ public class PatronActionSessionTests extends APITests {
   }
 
   @Test
-  public void cannotEndSessionWhenActionTypeIsNotSpecified() {
+  void cannotEndSessionWhenActionTypeIsNotSpecified() {
     JsonObject body = new JsonObject()
       .put(PATRON_ID, UUID.randomUUID().toString());
 
@@ -94,7 +94,7 @@ public class PatronActionSessionTests extends APITests {
   }
 
   @Test
-  public void cannotEndSessionWhenActionTypeIsNotValid() {
+  void cannotEndSessionWhenActionTypeIsNotValid() {
     String invalidActionType = "invalidActionType";
 
     JsonObject body = new JsonObject()
@@ -109,7 +109,7 @@ public class PatronActionSessionTests extends APITests {
   }
 
   @Test
-  public void checkOutNoticeWithMultipleItemsIsSentWhenCorrespondingSessionIsEnded() {
+  void checkOutNoticeWithMultipleItemsIsSentWhenCorrespondingSessionIsEnded() {
     IndividualResource james = usersFixture.james();
     ItemResource nod = itemsFixture.basedUponNod();
     ItemResource interestingTimes = itemsFixture.basedUponInterestingTimes();
@@ -136,7 +136,7 @@ public class PatronActionSessionTests extends APITests {
   }
 
   @Test
-  public void checkOutSessionIsNotEndedSentWhenSessionEndsForDifferentUser() {
+  void checkOutSessionIsNotEndedSentWhenSessionEndsForDifferentUser() {
     IndividualResource patronForCheckOut = usersFixture.james();
     IndividualResource otherPatron = usersFixture.jessica();
 
@@ -150,7 +150,7 @@ public class PatronActionSessionTests extends APITests {
   }
 
   @Test
-  public void checkOutSessionIsNotEndedWhenCheckInSessionEnds() {
+  void checkOutSessionIsNotEndedWhenCheckInSessionEnds() {
     IndividualResource james = usersFixture.james();
 
     checkOutFixture.checkOutByBarcode(itemsFixture.basedUponNod(), james);
@@ -166,7 +166,7 @@ public class PatronActionSessionTests extends APITests {
   }
 
   @Test
-  public void checkInSessionShouldBeCreatedWhenLoanedItemIsCheckedInByBarcode() {
+  void checkInSessionShouldBeCreatedWhenLoanedItemIsCheckedInByBarcode() {
     IndividualResource james = usersFixture.james();
     UUID checkInServicePointId = servicePointsFixture.cd1().getId();
     ItemResource nod = itemsFixture.basedUponNod();
@@ -188,7 +188,7 @@ public class PatronActionSessionTests extends APITests {
   }
 
   @Test
-  public void checkInSessionShouldNotBeCreatedWhenItemWithoutOpenLoanIsCheckedInByBarcode() {
+  void checkInSessionShouldNotBeCreatedWhenItemWithoutOpenLoanIsCheckedInByBarcode() {
     UUID checkInServicePointId = servicePointsFixture.cd1().getId();
     ItemResource nod = itemsFixture.basedUponNod();
 
@@ -201,7 +201,7 @@ public class PatronActionSessionTests extends APITests {
   }
 
   @Test
-  public void patronNoticesShouldBeSentWhenCheckInSessionIsEnded() {
+  void patronNoticesShouldBeSentWhenCheckInSessionIsEnded() {
     IndividualResource steve = usersFixture.steve();
     UUID checkInServicePointId = servicePointsFixture.cd1().getId();
     ItemResource nod = itemsFixture.basedUponNod();
@@ -227,7 +227,7 @@ public class PatronActionSessionTests extends APITests {
   }
 
   @Test
-  public void checkOutSessionWithNonExistentLoanShouldBeEnded() {
+  void checkOutSessionWithNonExistentLoanShouldBeEnded() {
     IndividualResource james = usersFixture.james();
     ItemResource nod = itemsFixture.basedUponNod();
 
@@ -244,7 +244,7 @@ public class PatronActionSessionTests extends APITests {
   }
 
   @Test
-  public void checkOutSessionWithNonExistentItemShouldBeEnded() {
+  void checkOutSessionWithNonExistentItemShouldBeEnded() {
     IndividualResource james = usersFixture.james();
     ItemResource nod = itemsFixture.basedUponNod();
 
@@ -262,7 +262,7 @@ public class PatronActionSessionTests extends APITests {
   }
 
   @Test
-  public void checkOutSessionWithNonExistentUserShouldBeEnded() {
+  void checkOutSessionWithNonExistentUserShouldBeEnded() {
     UserResource steve = usersFixture.steve();
     ItemResource nod = itemsFixture.basedUponNod();
 
@@ -278,7 +278,7 @@ public class PatronActionSessionTests extends APITests {
   }
 
   @Test
-  public void checkInSessionWithNonExistentLoanShouldBeEnded() {
+  void checkInSessionWithNonExistentLoanShouldBeEnded() {
     IndividualResource james = usersFixture.james();
     ItemResource nod = itemsFixture.basedUponNod();
     UUID checkInServicePointId = servicePointsFixture.cd1().getId();
@@ -299,7 +299,7 @@ public class PatronActionSessionTests extends APITests {
   }
 
   @Test
-  public void checkInSessionWithNonExistentItemShouldBeEnded() {
+  void checkInSessionWithNonExistentItemShouldBeEnded() {
     IndividualResource james = usersFixture.james();
     ItemResource nod = itemsFixture.basedUponNod();
     UUID checkInServicePointId = servicePointsFixture.cd1().getId();
@@ -321,7 +321,7 @@ public class PatronActionSessionTests extends APITests {
   }
 
   @Test
-  public void checkInSessionWithNonExistentUserShouldBeEnded() {
+  void checkInSessionWithNonExistentUserShouldBeEnded() {
     UserResource steve = usersFixture.steve();
     ItemResource nod = itemsFixture.basedUponNod();
     UUID checkInServicePointId = servicePointsFixture.cd1().getId();
@@ -341,7 +341,7 @@ public class PatronActionSessionTests extends APITests {
   }
 
   @Test
-  public void checkInSessionShouldNotBeDeletedWhenPatronNoticeRequestFails() {
+  void checkInSessionShouldNotBeDeletedWhenPatronNoticeRequestFails() {
     UserResource steve = usersFixture.steve();
     ItemResource nod = itemsFixture.basedUponNod();
     UUID checkInServicePointId = servicePointsFixture.cd1().getId();
@@ -364,7 +364,7 @@ public class PatronActionSessionTests extends APITests {
   }
 
   @Test
-  public void noticeForOneCheckInSessionIsSentWhenOtherCheckInSessionForSameUserIsInvalid() {
+  void noticeForOneCheckInSessionIsSentWhenOtherCheckInSessionForSameUserIsInvalid() {
     UserResource steve = usersFixture.steve();
     ItemResource nod = itemsFixture.basedUponNod();
     ItemResource dunkirk = itemsFixture.basedUponDunkirk();

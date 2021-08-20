@@ -19,7 +19,7 @@ import io.vertx.core.json.JsonObject;
 
 public class CheckInWithdrawnItemTest extends APITests {
   @Test
-  public void canCheckInAtHomeLocation() {
+  void canCheckInAtHomeLocation() {
     final ItemResource item = itemsFixture
       .basedUponSmallAngryPlanet(ItemBuilder::withdrawn);
 
@@ -31,7 +31,7 @@ public class CheckInWithdrawnItemTest extends APITests {
   }
 
   @Test
-  public void canCheckInAtNonHomeLocation() {
+  void canCheckInAtNonHomeLocation() {
     final ItemResource item = itemsFixture
       .basedUponSmallAngryPlanet(ItemBuilder::withdrawn);
 
@@ -43,7 +43,7 @@ public class CheckInWithdrawnItemTest extends APITests {
   }
 
   @Test
-  public void shouldStartRequestFulfillmentIfCheckedInAtPickupLocation() {
+  void shouldStartRequestFulfillmentIfCheckedInAtPickupLocation() {
     final ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
 
     final IndividualResource request = requestsFixture.place(new RequestBuilder()
@@ -64,7 +64,7 @@ public class CheckInWithdrawnItemTest extends APITests {
   }
 
   @Test
-  public void shouldStartRequestFulfillmentIfCheckedInAtNotPickupLocation() {
+  void shouldStartRequestFulfillmentIfCheckedInAtNotPickupLocation() {
     final ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
 
     final IndividualResource request = requestsFixture.place(new RequestBuilder()

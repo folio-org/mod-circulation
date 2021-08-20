@@ -70,7 +70,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
       .toDateTime(TEST_TIME_MORNING, UTC);
 
   @Test
-  public void testRespectSelectedTimezoneForDueDateCalculations() {
+  void testRespectSelectedTimezoneForDueDateCalculations() {
     configClient.create(newYorkTimezoneConfiguration());
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
@@ -94,7 +94,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
   }
 
   @Test
-  public void testRespectUtcTimezoneForDueDateCalculations() {
+  void testRespectUtcTimezoneForDueDateCalculations() {
     configClient.create(utcTimezoneConfiguration());
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
@@ -125,7 +125,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
    * Test period: WED=open, THU=open, FRI=open
    */
   @Test
-  public void testKeepCurrentDueDateLongTermLoansFixed() {
+  void testKeepCurrentDueDateLongTermLoansFixed() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
     final UUID checkoutServicePointId = UUID.randomUUID();
@@ -154,7 +154,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
    * Test period: WED=open, THU=open, FRI=open
    */
   @Test
-  public void testMoveToEndOfPreviousAllOpenDayFixed() {
+  void testMoveToEndOfPreviousAllOpenDayFixed() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
     final UUID checkoutServicePointId = UUID.fromString(CASE_WED_THU_FRI_DAY_ALL_SERVICE_POINT_ID);
@@ -183,7 +183,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
    * Test period: WED=open, THU=open, FRI=open
    */
   @Test
-  public void testMoveToEndOfPreviousOpenDayFixed() {
+  void testMoveToEndOfPreviousOpenDayFixed() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
     final UUID checkoutServicePointId = UUID.fromString(CASE_WED_THU_FRI_SERVICE_POINT_ID);
@@ -212,7 +212,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
    * Test period: WED=open, THU=open, FRI=open
    */
   @Test
-  public void testMoveToEndOfNextAllOpenDayFixed() {
+  void testMoveToEndOfNextAllOpenDayFixed() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
     final UUID checkoutServicePointId = UUID.fromString(CASE_WED_THU_FRI_DAY_ALL_SERVICE_POINT_ID);
@@ -241,7 +241,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
    * Test period: WED=open, THU=open, FRI=open
    */
   @Test
-  public void testMoveToEndOfNextOpenDayFixed() {
+  void testMoveToEndOfNextOpenDayFixed() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
     final UUID checkoutServicePointId = UUID.fromString(CASE_WED_THU_FRI_SERVICE_POINT_ID);
@@ -274,7 +274,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
    * Then the due date timestamp should be changed to the latest SPID-1 endTime for the closest previous Open=true day for SPID-1
    */
   @Test
-  public void testMoveToEndOfPreviousAllOpenDay() {
+  void testMoveToEndOfPreviousAllOpenDay() {
     String servicePointId = CASE_FRI_SAT_MON_DAY_ALL_SERVICE_POINT_ID;
     int duration = 3;
 
@@ -303,7 +303,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
    * Then the due date timestamp should be changed to the latest SPID-1 endTime for the closest previous Open=true day for SPID-1
    */
   @Test
-  public void testMoveToEndOfPreviousOpenDayTime() {
+  void testMoveToEndOfPreviousOpenDayTime() {
     String servicePointId = CASE_FRI_SAT_MON_SERVICE_POINT_ID;
     int duration = 2;
 
@@ -331,7 +331,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
    * Then the due date timestamp should be changed to the latest SPID-1 endTime for the closest next Open=true day for SPID-1
    */
   @Test
-  public void testMoveToEndOfNextAllOpenDay() {
+  void testMoveToEndOfNextAllOpenDay() {
     String servicePointId = CASE_FRI_SAT_MON_DAY_ALL_SERVICE_POINT_ID;
     int duration = 5;
 
@@ -360,7 +360,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
    * Then the due date timestamp should be changed to the latest SPID-1 endTime for the closest next Open=true day for SPID-1
    */
   @Test
-  public void testMoveToEndOfNextOpenDay() {
+  void testMoveToEndOfNextOpenDay() {
     String servicePointId = CASE_FRI_SAT_MON_SERVICE_POINT_ID;
     int duration = 5;
 
@@ -391,7 +391,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
    * the system should consider the '...beginning of the next open service point hours' to be 8AM. <NEED TO COME BACK TO THIS
    */
   @Test
-  public void testMoveToBeginningOfNextOpenServicePointHours() {
+  void testMoveToBeginningOfNextOpenServicePointHours() {
     String servicePointId = CASE_FRI_SAT_MON_SERVICE_POINT_ID;
     int duration = 5;
 
@@ -416,7 +416,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
    * Then the due date timestamp should be changed to the earliest SPID-1 startTime for the closest next Open=true available hours for SPID-1
    */
   @Test
-  public void testMoveToBeginningOfNextOpenServicePointHoursAllDay() {
+  void testMoveToBeginningOfNextOpenServicePointHoursAllDay() {
     String servicePointId = CASE_FRI_SAT_MON_DAY_ALL_SERVICE_POINT_ID;
     int duration = 5;
 
@@ -441,7 +441,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
    * Then the due date timestamp should be changed to the earliest SPID-1 startTime for the closest next Open=true available hours for SPID-1
    */
   @Test
-  public void testMoveToBeginningOfNextOpenServicePointHoursAllDayCase2() {
+  void testMoveToBeginningOfNextOpenServicePointHoursAllDayCase2() {
     String servicePointId = CASE_WED_THU_FRI_DAY_ALL_SERVICE_POINT_ID;
     int duration = 5;
 
@@ -468,7 +468,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
    * Then the due date timestamp should be changed to the earliest SPID-1 startTime for the closest next Open=true available hours for SPID-1
    */
   @Test
-  public void testMoveToBeginningOfNextOpenServicePointMinutesCase1() {
+  void testMoveToBeginningOfNextOpenServicePointMinutesCase1() {
     String servicePointId = CASE_FRI_SAT_MON_SERVICE_POINT_ID;
     int duration = 30;
     String interval = INTERVAL_MINUTES;
@@ -495,7 +495,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
    * Then the due date timestamp should be changed to the earliest SPID-1 startTime for the closest next Open=true available hours for SPID-1
    */
   @Test
-  public void testMoveToBeginningOfNextOpenServicePointMinutesAllDay() {
+  void testMoveToBeginningOfNextOpenServicePointMinutesAllDay() {
     String servicePointId = CASE_WED_THU_FRI_DAY_ALL_SERVICE_POINT_ID;
     int duration = 30;
     String interval = INTERVAL_MINUTES;
@@ -521,7 +521,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
    * Then the due date timestamp should be changed to the earliest SPID-1 startTime for the closest next Open=true available hours for SPID-1
    */
   @Test
-  public void testMoveToBeginningOfNextOpenServicePointMinutesAllDayCase1() {
+  void testMoveToBeginningOfNextOpenServicePointMinutesAllDayCase1() {
     String servicePointId = CASE_FRI_SAT_MON_DAY_ALL_SERVICE_POINT_ID;
     int duration = 30;
     String interval = INTERVAL_MINUTES;
@@ -546,7 +546,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
    * Then the due date timestamp should remain unchanged from system calculated due date timestamp
    */
   @Test
-  public void testKeepCurrentDueDateShortTermLoans() {
+  void testKeepCurrentDueDateShortTermLoans() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
     final UUID checkoutServicePointId = UUID.randomUUID();
@@ -580,7 +580,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
    * - Loanable = N
    */
   @Test
-  public void testItemIsNotLoanable() {
+  void testItemIsNotLoanable() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
     final UUID checkoutServicePointId = UUID.randomUUID();
@@ -601,7 +601,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
   }
 
   @Test
-  public void testScenarioWhenCalendarApiIsUnavailable() {
+  void testScenarioWhenCalendarApiIsUnavailable() {
     useLoanPolicy(createLoanPolicy("Calendar API is unavailable", true,
       KEEP_THE_CURRENT_DUE_DATE_TIME.getValue(), 1, INTERVAL_HOURS));
 
@@ -617,7 +617,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
   }
 
   @Test
-  public void testScenarioWhenCalendarApiIsEmpty() {
+  void testScenarioWhenCalendarApiIsEmpty() {
     final var duration = 1;
 
     useLoanPolicy(createLoanPolicy(

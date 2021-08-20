@@ -16,7 +16,7 @@ import api.support.builders.LoanBuilder;
 
 public class NoLoanValidatorTests {
   @Test
-  public void allowSingleLoan() {
+  void allowSingleLoan() {
     final NoLoanValidator validator = new NoLoanValidator(
       () -> new ServerErrorFailure("No loan"));
 
@@ -30,7 +30,7 @@ public class NoLoanValidatorTests {
   }
 
   @Test
-  public void failWhenNoLoans() {
+  void failWhenNoLoans() {
     final NoLoanValidator validator = new NoLoanValidator(
       () -> new ServerErrorFailure("No loan"));
 

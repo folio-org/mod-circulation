@@ -33,7 +33,7 @@ public class RequestPolicyTests extends APITests {
   }
 
   @Test
-  public void canCreateRecallRequestsWithRequestPolicyAllowingRecalls() {
+  void canCreateRecallRequestsWithRequestPolicyAllowingRecalls() {
 
     final String undergradPatronGroup = patronGroupsFixture.undergrad().getId().toString();
     final String anyNoticePolicy = noticePoliciesFixture.activeNotice().getId().toString();
@@ -72,7 +72,7 @@ public class RequestPolicyTests extends APITests {
   }
 
   @Test
-  public void cannotCreateRecallRequestsWithRequestPolicyNotAllowingRecalls() {
+  void cannotCreateRecallRequestsWithRequestPolicyNotAllowingRecalls() {
 
     final String undergradPatronGroupPolicy = patronGroupsFixture.undergrad().getId().toString();
     final String anyNoticePolicy = noticePoliciesFixture.activeNotice().getId().toString();
@@ -115,7 +115,7 @@ public class RequestPolicyTests extends APITests {
   }
 
   @Test
-  public void canCreateHoldRequestsWithRequestWithReqestPolicyAllowingHolds() {
+  void canCreateHoldRequestsWithRequestWithReqestPolicyAllowingHolds() {
 
     final String holdRequestPolicy = requestPoliciesFixture.holdRequestPolicy().getId().toString();
     final String anyNoticePolicy = noticePoliciesFixture.activeNotice().getId().toString();
@@ -154,7 +154,7 @@ public class RequestPolicyTests extends APITests {
   }
 
   @Test
-  public void cannotCreateHoldRequestsWithRequestPolicyNotAllowingHolds() {
+  void cannotCreateHoldRequestsWithRequestPolicyNotAllowingHolds() {
 
     final String anyNoticePolicy = noticePoliciesFixture.activeNotice().getId().toString();
     final String anyLoanPolicy = loanPoliciesFixture.canCirculateRolling().getId().toString();
@@ -196,7 +196,7 @@ public class RequestPolicyTests extends APITests {
   }
 
   @Test
-  public void canCreatePageRequestsWithRequestPolicyAllowingPageRequests() {
+  void canCreatePageRequestsWithRequestPolicyAllowingPageRequests() {
 
     final String nonCirculatingLoanTypePolicy = loanPoliciesFixture.canCirculateFixed().getId().toString();
     final String anyNoticePolicy = noticePoliciesFixture.activeNotice().getId().toString();
@@ -228,7 +228,7 @@ public class RequestPolicyTests extends APITests {
   }
 
   @Test
-  public void cannotCreatePageRequestsWithRequestPolicyNotAllowingPagings() {
+  void cannotCreatePageRequestsWithRequestPolicyNotAllowingPagings() {
 
     final String anyNoticePolicy = noticePoliciesFixture.activeNotice().getId().toString();
     final String nonCirculatingLoanTypePolicy = loanPoliciesFixture.canCirculateFixed().getId().toString();
@@ -262,7 +262,7 @@ public class RequestPolicyTests extends APITests {
   }
 
   @Test
-  public void canCreateRecallRequestsWithRequestPolicyUsingFallbackRules() {
+  void canCreateRecallRequestsWithRequestPolicyUsingFallbackRules() {
 
     final String undergradPatronGroup = patronGroupsFixture.undergrad().getId().toString();
     final String anyNoticePolicy = noticePoliciesFixture.activeNotice().getId().toString();
@@ -300,7 +300,7 @@ public class RequestPolicyTests extends APITests {
   }
 
   @Test
-  public void cannotCreatePageRequestsWithoutCirculationRulesDefined() {
+  void cannotCreatePageRequestsWithoutCirculationRulesDefined() {
 
     //In order to not have any request policy around, need to remove the default one which was created before each test run
     final String defaultRequestPolicyName = "Example Request Policy";
@@ -323,7 +323,7 @@ public class RequestPolicyTests extends APITests {
   }
 
   @Test
-  public void cannotCreatePageRequestsWithoutMatchingCirculationRules() {
+  void cannotCreatePageRequestsWithoutMatchingCirculationRules() {
 
     //In order to not have any request policy around, need to remove the default one which was created before each test run
     final String defaultRequestPolicyName = "Example Request Policy";

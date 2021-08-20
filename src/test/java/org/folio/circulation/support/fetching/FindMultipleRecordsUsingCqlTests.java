@@ -32,7 +32,7 @@ public class FindMultipleRecordsUsingCqlTests {
   public MockitoRule mockitoRule = MockitoJUnit.rule();
 
   @Test
-  public void shouldFetchRecordsInSinglePage() {
+  void shouldFetchRecordsInSinglePage() {
     final GetManyRecordsClient client = clientThatAlwaysReturnsCannedResponse();
 
     final FindWithCqlQuery<JsonObject> fetcher = findWithCqlQuery(

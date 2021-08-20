@@ -21,7 +21,7 @@ public class LoanCheckInServiceTest {
   private LoanCheckInService loanCheckInService = new LoanCheckInService();
 
   @Test
-  public void isInHouseUseWhenServicePointIsPrimaryForHomeLocation() {
+  void isInHouseUseWhenServicePointIsPrimaryForHomeLocation() {
     final UUID checkInServicePoint = UUID.randomUUID();
     JsonObject itemRepresentation = new ItemBuilder()
       .available()
@@ -41,7 +41,7 @@ public class LoanCheckInServiceTest {
   }
 
   @Test
-  public void isInHouseUseWhenNonPrimaryServicePointServesHomeLocation() {
+  void isInHouseUseWhenNonPrimaryServicePointServesHomeLocation() {
     final UUID checkInServicePoint = UUID.randomUUID();
     JsonObject itemRepresentation = new ItemBuilder()
       .available()
@@ -61,7 +61,7 @@ public class LoanCheckInServiceTest {
   }
 
   @Test
-  public void isNotInHouseUseWhenItemIsUnavailable() {
+  void isNotInHouseUseWhenItemIsUnavailable() {
     final UUID checkInServicePoint = UUID.randomUUID();
     JsonObject itemRepresentation = new ItemBuilder()
       .checkOut()
@@ -81,7 +81,7 @@ public class LoanCheckInServiceTest {
   }
 
   @Test
-  public void isNotInHouseUseWhenItemIsRequested() {
+  void isNotInHouseUseWhenItemIsRequested() {
     final UUID checkInServicePoint = UUID.randomUUID();
     JsonObject itemRepresentation = new ItemBuilder()
       .available()
@@ -103,7 +103,7 @@ public class LoanCheckInServiceTest {
   }
 
   @Test
-  public void isNotInHouseUseWhenServicePointDoesNotServeHomeLocation() {
+  void isNotInHouseUseWhenServicePointDoesNotServeHomeLocation() {
     JsonObject itemRepresentation = new ItemBuilder()
       .available()
       .create();

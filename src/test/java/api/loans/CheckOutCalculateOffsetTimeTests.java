@@ -74,7 +74,7 @@ public class CheckOutCalculateOffsetTimeTests extends APITests {
    * Test period: FRI=open, SAT=close, MON=open
    */
   @Test
-  public void testOffsetIntervalHoursIfCurrentDayIsClosed() throws Exception {
+  void testOffsetIntervalHoursIfCurrentDayIsClosed() throws Exception {
     String servicePointId = CASE_FRI_SAT_MON_DAY_ALL_SERVICE_POINT_ID;
     int duration = 1;
     int offsetDuration = 3;
@@ -98,7 +98,7 @@ public class CheckOutCalculateOffsetTimeTests extends APITests {
    * Test period: FRI=open, SAT=close, MON=open
    */
   @Test
-  public void testOffsetIntervalMinutesIfCurrentDayIsClosed() throws Exception {
+  void testOffsetIntervalMinutesIfCurrentDayIsClosed() throws Exception {
     String servicePointId = CASE_FRI_SAT_MON_DAY_ALL_SERVICE_POINT_ID;
     int duration = 1;
     int offsetDuration = 3;
@@ -122,7 +122,7 @@ public class CheckOutCalculateOffsetTimeTests extends APITests {
    * Test period: FRI=open, SAT=close, MON=open
    */
   @Test
-  public void testOffsetIntervalHoursIfCurrentDayIsClosedWithPeriod() throws Exception {
+  void testOffsetIntervalHoursIfCurrentDayIsClosedWithPeriod() throws Exception {
     String servicePointId = CASE_FRI_SAT_MON_SERVICE_POINT_ID;
     int duration = 3;
     int offsetDuration = 2;
@@ -153,7 +153,7 @@ public class CheckOutCalculateOffsetTimeTests extends APITests {
    * Test period: FRI=open, SAT=close, MON=open
    */
   @Test
-  public void testOffsetIntervalMinutesIfCurrentDayIsClosedWithPeriod() throws Exception {
+  void testOffsetIntervalMinutesIfCurrentDayIsClosedWithPeriod() throws Exception {
     String servicePointId = CASE_FRI_SAT_MON_SERVICE_POINT_ID;
     int duration = 2;
     int offsetDuration = 3;
@@ -177,7 +177,7 @@ public class CheckOutCalculateOffsetTimeTests extends APITests {
    * Test period: WED=open, THU=open, FRI=open
    */
   @Test
-  public void testOffsetIntervalHoursIfCurrentAllDayOpen() throws Exception {
+  void testOffsetIntervalHoursIfCurrentAllDayOpen() throws Exception {
     int duration = 1;
     int offsetDuration = 3;
 
@@ -200,7 +200,7 @@ public class CheckOutCalculateOffsetTimeTests extends APITests {
    * Test period: WED=open, THU=open, FRI=open
    */
   @Test
-  public void testOffsetIntervalMinutesIfCurrentAllDayOpen() throws Exception {
+  void testOffsetIntervalMinutesIfCurrentAllDayOpen() throws Exception {
     int duration = 15;
     int offsetDuration = 20;
 
@@ -223,7 +223,7 @@ public class CheckOutCalculateOffsetTimeTests extends APITests {
    * Test period: WED=open, THU=open, FRI=open
    */
   @Test
-  public void testOffsetIntervalHoursForPeriod() throws Exception {
+  void testOffsetIntervalHoursForPeriod() throws Exception {
     int duration = 2;
     int offsetDuration = START_VAL;
 
@@ -245,7 +245,7 @@ public class CheckOutCalculateOffsetTimeTests extends APITests {
    * Test period: WED=open, THU=open, FRI=open
    */
   @Test
-  public void testOffsetDurationWithinDayHours() throws Exception {
+  void testOffsetDurationWithinDayHours() throws Exception {
     String servicePointId = CASE_WED_THU_FRI_SERVICE_POINT_ID;
     int duration;
     int offsetDuration = HOURS_PER_DAY;
@@ -279,7 +279,7 @@ public class CheckOutCalculateOffsetTimeTests extends APITests {
    * Test period: WED=open, THU=open, FRI=open
    */
   @Test
-  public void testOffsetIntervalHoursForPeriodCase1() throws Exception {
+  void testOffsetIntervalHoursForPeriodCase1() throws Exception {
     String servicePointId = CASE_WED_THU_FRI_SERVICE_POINT_ID;
     int duration;
     int offsetDuration = START_VAL;
@@ -313,7 +313,7 @@ public class CheckOutCalculateOffsetTimeTests extends APITests {
    * Test period: WED=open, THU=open, FRI=open
    */
   @Test
-  public void testOffsetIntervalHoursForPeriodCase2() throws Exception {
+  void testOffsetIntervalHoursForPeriodCase2() throws Exception {
     int duration;
     int offsetDuration = 1;
 
@@ -342,7 +342,7 @@ public class CheckOutCalculateOffsetTimeTests extends APITests {
    * Test period: WED=open, THU=open, FRI=open
    */
   @Test
-  public void testOffsetIntervalMinutesForPeriod() throws Exception {
+  void testOffsetIntervalMinutesForPeriod() throws Exception {
     int duration = 1;
     int offsetDuration = 1;
 
@@ -362,7 +362,7 @@ public class CheckOutCalculateOffsetTimeTests extends APITests {
    * Test period: WED=open, THU=open, FRI=open
    */
   @Test
-  public void testOffsetIntervalMinutesCurrentDay() throws Exception {
+  void testOffsetIntervalMinutesCurrentDay() throws Exception {
     int duration = 1;
     int offsetDuration = 1;
 

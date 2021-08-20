@@ -72,7 +72,7 @@ public class RequestsAPIUpdatingTests extends APITests {
   private static final String REQUEST_CANCELLATION = "Request cancellation";
 
   @Test
-  public void canReplaceAnExistingRequest() {
+  void canReplaceAnExistingRequest() {
     final ItemResource temeraire = itemsFixture.basedUponTemeraire();
 
     checkOutFixture.checkOutByBarcode(temeraire);
@@ -158,7 +158,7 @@ public class RequestsAPIUpdatingTests extends APITests {
 
   //TODO: Check does not have pickup service point any more
   @Test
-  public void canReplaceAnExistingRequestWithDeliveryAddress() {
+  void canReplaceAnExistingRequestWithDeliveryAddress() {
     final ItemResource temeraire = itemsFixture.basedUponTemeraire();
 
     checkOutFixture.checkOutByBarcode(temeraire);
@@ -218,7 +218,7 @@ public class RequestsAPIUpdatingTests extends APITests {
   }
 
   @Test
-  public void replacingAnExistingRequestRemovesItemInformationWhenItemDoesNotExist() {
+  void replacingAnExistingRequestRemovesItemInformationWhenItemDoesNotExist() {
     final ItemResource nod = itemsFixture.basedUponNod();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
@@ -251,7 +251,7 @@ public class RequestsAPIUpdatingTests extends APITests {
   }
 
   @Test
-  public void replacingAnExistingRequestRemovesRequesterInformationWhenUserDoesNotExist() {
+  void replacingAnExistingRequestRemovesRequesterInformationWhenUserDoesNotExist() {
     final ItemResource nod = itemsFixture.basedUponNod();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
@@ -281,7 +281,7 @@ public class RequestsAPIUpdatingTests extends APITests {
   }
 
   @Test
-  public void replacingAnExistingRequestRemovesRequesterBarcodeWhenNonePresent() {
+  void replacingAnExistingRequestRemovesRequesterBarcodeWhenNonePresent() {
     final ItemResource nod = itemsFixture.basedUponNod();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
@@ -327,7 +327,7 @@ public class RequestsAPIUpdatingTests extends APITests {
   }
 
   @Test
-  public void replacingAnExistingRequestIncludesRequesterMiddleNameWhenPresent() {
+  void replacingAnExistingRequestIncludesRequesterMiddleNameWhenPresent() {
     final ItemResource nod = itemsFixture.basedUponNod();
 
     checkOutFixture.checkOutByBarcode(nod);
@@ -375,7 +375,7 @@ public class RequestsAPIUpdatingTests extends APITests {
   }
 
   @Test
-  public void replacingAnExistingRequestRemovesItemBarcodeWhenNonePresent() {
+  void replacingAnExistingRequestRemovesItemBarcodeWhenNonePresent() {
     final ItemResource temeraire = itemsFixture.basedUponTemeraire();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
@@ -414,7 +414,7 @@ public class RequestsAPIUpdatingTests extends APITests {
   }
 
   @Test
-  public void cannotReplaceAnExistingRequestWithServicePointThatIsNotForPickup() {
+  void cannotReplaceAnExistingRequestWithServicePointThatIsNotForPickup() {
     final ItemResource temeraire = itemsFixture.basedUponTemeraire();
 
     checkOutFixture.checkOutByBarcode(temeraire);
@@ -439,7 +439,7 @@ public class RequestsAPIUpdatingTests extends APITests {
   }
 
   @Test
-  public void cannotReplaceAnExistingRequestWithUnknownPickupLocation() {
+  void cannotReplaceAnExistingRequestWithUnknownPickupLocation() {
     final ItemResource temeraire = itemsFixture.basedUponTemeraire();
 
     checkOutFixture.checkOutByBarcode(temeraire);
@@ -468,7 +468,7 @@ public class RequestsAPIUpdatingTests extends APITests {
   }
 
   @Test
-  public void cancellationReasonPublicDescriptionIsUsedAsReasonForCancellationToken() {
+  void cancellationReasonPublicDescriptionIsUsedAsReasonForCancellationToken() {
     UUID requestCancellationTemplateId = UUID.randomUUID();
     JsonObject requestCancellationConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(requestCancellationTemplateId)
@@ -525,7 +525,7 @@ public class RequestsAPIUpdatingTests extends APITests {
   }
 
   @Test
-  public void cancellationReasonNameIsUsedAsReasonForCancellationTokenWhenPublicDescriptionIsNotPresent() {
+  void cancellationReasonNameIsUsedAsReasonForCancellationTokenWhenPublicDescriptionIsNotPresent() {
     UUID requestCancellationTemplateId = UUID.randomUUID();
     JsonObject requestCancellationConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(requestCancellationTemplateId)
@@ -583,7 +583,7 @@ public class RequestsAPIUpdatingTests extends APITests {
   }
 
   @Test
-  public void replacedRequestShouldOnlyIncludeStoredPropertiesInStorage() {
+  void replacedRequestShouldOnlyIncludeStoredPropertiesInStorage() {
     final ItemResource temeraire = itemsFixture.basedUponTemeraire();
 
     checkOutFixture.checkOutByBarcode(temeraire);
@@ -648,7 +648,7 @@ public class RequestsAPIUpdatingTests extends APITests {
   }
 
   @Test
-  public void canReplaceRequestWithAnInactiveUser() {
+  void canReplaceRequestWithAnInactiveUser() {
     final ItemResource temeraire = itemsFixture.basedUponTemeraire();
 
     checkOutFixture.checkOutByBarcode(temeraire);
@@ -683,7 +683,7 @@ public class RequestsAPIUpdatingTests extends APITests {
   }
 
   @Test
-  public void instanceIdentifiersAreUpdatedWhenRequestIsUpdated() {
+  void instanceIdentifiersAreUpdatedWhenRequestIsUpdated() {
     final UUID instanceId = UUID.randomUUID();
     final UUID isbnIdentifierId = identifierTypesFixture.isbn().getId();
     final String isbnValue = "9780866989732";
@@ -722,7 +722,7 @@ public class RequestsAPIUpdatingTests extends APITests {
   }
 
   @Test
-  public void eventsShouldBePublished() {
+  void eventsShouldBePublished() {
     final ItemResource temeraire = itemsFixture.basedUponTemeraire();
 
     IndividualResource loan = checkOutFixture.checkOutByBarcode(temeraire);
@@ -784,7 +784,7 @@ public class RequestsAPIUpdatingTests extends APITests {
   }
 
   @Test
-  public void cannotUpdatePatronComments() {
+  void cannotUpdatePatronComments() {
     final ItemResource temeraire = itemsFixture.basedUponTemeraire();
     final IndividualResource steve = usersFixture.steve();
 

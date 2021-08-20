@@ -180,7 +180,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
   }
 
   @Test
-  public void shouldFailForUnrecognisedInterval() {
+  void shouldFailForUnrecognisedInterval() {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .rolling(Period.from(5, "Unknown"))
       .withName("Invalid Loan Policy")
@@ -198,7 +198,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
   }
 
   @Test
-  public void shouldFailWhenNoPeriodProvided() {
+  void shouldFailWhenNoPeriodProvided() {
     final JsonObject representation = new LoanPolicyBuilder()
       .rolling(Period.from(5, "Unknown"))
       .withName("Invalid Loan Policy")
@@ -219,7 +219,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
   }
 
   @Test
-  public void shouldFailWhenNoPeriodDurationProvided() {
+  void shouldFailWhenNoPeriodDurationProvided() {
     final JsonObject representation = new LoanPolicyBuilder()
       .rolling(Period.from(5, "Weeks"))
       .withName("Invalid Loan Policy")
@@ -240,7 +240,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
   }
 
   @Test
-  public void shouldFailWhenNoPeriodIntervalProvided() {
+  void shouldFailWhenNoPeriodIntervalProvided() {
     final JsonObject representation = new LoanPolicyBuilder()
       .rolling(Period.from(5, "Weeks"))
       .withName("Invalid Loan Policy")
@@ -285,7 +285,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
   }
 
   @Test
-  public void shouldTruncateDueDateWhenWithinDueDateLimitSchedule() {
+  void shouldTruncateDueDateWhenWithinDueDateLimitSchedule() {
     //TODO: Slight hack to use the same builder, the schedule is fed in later
     //TODO: Introduce builder for individual schedules
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
@@ -311,7 +311,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
   }
 
   @Test
-  public void shouldNotTruncateDueDateWhenWithinDueDateLimitScheduleButInitialDateIsSooner() {
+  void shouldNotTruncateDueDateWhenWithinDueDateLimitScheduleButInitialDateIsSooner() {
     //TODO: Slight hack to use the same builder, the schedule is fed in later
     //TODO: Introduce builder for individual schedules
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
@@ -335,7 +335,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
   }
 
   @Test
-  public void shouldFailWhenNotWithinOneOfProvidedDueDateLimitSchedules() {
+  void shouldFailWhenNotWithinOneOfProvidedDueDateLimitSchedules() {
     //TODO: Slight hack to use the same builder, the schedule is fed in later
     //TODO: Introduce builder for individual schedules
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
@@ -361,7 +361,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
   }
 
   @Test
-  public void shouldFailWhenNoDueDateLimitSchedules() {
+  void shouldFailWhenNoDueDateLimitSchedules() {
     //TODO: Slight hack to use the same builder, the schedule is fed in later
     //TODO: Introduce builder for individual schedules
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
@@ -384,7 +384,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
   }
 
   @Test
-  public void multipleRenewalFailuresWhenDateFallsOutsideDateRangesAndItemHasOpenRecallRequest() {
+  void multipleRenewalFailuresWhenDateFallsOutsideDateRangesAndItemHasOpenRecallRequest() {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .rolling(Period.months(1))
       .withName("One Month")
@@ -408,7 +408,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
   }
 
   @Test
-  public void shouldFailWhenRenewalWouldNotChangeDueDate() {
+  void shouldFailWhenRenewalWouldNotChangeDueDate() {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .rolling(Period.weeks(2))
       .withName("Example Rolling Loan Policy")
@@ -434,7 +434,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
   }
 
   @Test
-  public void shouldFailWhenRenewalWouldMeanEarlierDueDate() {
+  void shouldFailWhenRenewalWouldMeanEarlierDueDate() {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .rolling(Period.weeks(2))
       .withName("Example Rolling Loan Policy")

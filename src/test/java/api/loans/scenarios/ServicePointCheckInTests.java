@@ -35,7 +35,7 @@ import io.vertx.core.json.JsonObject;
 
 public class ServicePointCheckInTests extends APITests {
   @Test
-  public void isPlacedAwaitingPickupWhenCheckedInAtPickupServicePoint() {
+  void isPlacedAwaitingPickupWhenCheckedInAtPickupServicePoint() {
     final IndividualResource checkInServicePoint = servicePointsFixture.cd1();
 
     final IndividualResource james = usersFixture.james();
@@ -122,7 +122,7 @@ public class ServicePointCheckInTests extends APITests {
   }
 
   @Test
-  public void isPlacedInTransitWhenCheckedInAtAlternatePickupServicePoint() {
+  void isPlacedInTransitWhenCheckedInAtAlternatePickupServicePoint() {
     final IndividualResource checkInServicePoint = servicePointsFixture.cd1();
     final IndividualResource requestServicePoint = servicePointsFixture.cd2();
     final IndividualResource primaryServicePoint = servicePointsFixture.cd3();

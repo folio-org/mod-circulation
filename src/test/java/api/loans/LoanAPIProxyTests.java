@@ -20,7 +20,7 @@ import io.vertx.core.json.JsonObject;
 
 public class LoanAPIProxyTests extends APITests {
   @Test
-  public void canCreateProxiedLoanWhenCurrentActiveRelationship() {
+  void canCreateProxiedLoanWhenCurrentActiveRelationship() {
     UUID id = UUID.randomUUID();
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
@@ -52,7 +52,7 @@ public class LoanAPIProxyTests extends APITests {
   }
 
   @Test
-  public void canCreateProxiedLoanWhenNonExpiringRelationship() {
+  void canCreateProxiedLoanWhenNonExpiringRelationship() {
     UUID id = UUID.randomUUID();
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
@@ -84,7 +84,7 @@ public class LoanAPIProxyTests extends APITests {
   }
 
   @Test
-  public void cannotCreateProxiedLoanWhenRelationshipIsInactive() {
+  void cannotCreateProxiedLoanWhenRelationshipIsInactive() {
     UUID id = UUID.randomUUID();
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
@@ -113,7 +113,7 @@ public class LoanAPIProxyTests extends APITests {
   }
 
   @Test
-  public void cannotCreateProxiedLoanWhenRelationshipHasExpired() {
+  void cannotCreateProxiedLoanWhenRelationshipHasExpired() {
     UUID id = UUID.randomUUID();
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
@@ -142,7 +142,7 @@ public class LoanAPIProxyTests extends APITests {
   }
 
   @Test
-  public void cannotCreateProxiedLoanWhenRelationshipIsForOtherSponsor() {
+  void cannotCreateProxiedLoanWhenRelationshipIsForOtherSponsor() {
     UUID id = UUID.randomUUID();
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
@@ -172,7 +172,7 @@ public class LoanAPIProxyTests extends APITests {
   }
 
   @Test
-  public void cannotCreateProxiedLoanWhenNoRelationship() {
+  void cannotCreateProxiedLoanWhenNoRelationship() {
     UUID id = UUID.randomUUID();
 
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, UTC);
@@ -199,7 +199,7 @@ public class LoanAPIProxyTests extends APITests {
   }
 
   @Test
-  public void canUpdateProxiedLoanWhenValidProxyRelationship() {
+  void canUpdateProxiedLoanWhenValidProxyRelationship() {
     UUID id = UUID.randomUUID();
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
@@ -235,7 +235,7 @@ public class LoanAPIProxyTests extends APITests {
   }
 
   @Test
-  public void cannotUpdateProxiedLoanWhenRelationshipHasExpired() {
+  void cannotUpdateProxiedLoanWhenRelationshipHasExpired() {
     UUID id = UUID.randomUUID();
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
@@ -274,7 +274,7 @@ public class LoanAPIProxyTests extends APITests {
   }
 
   @Test
-  public void cannotUpdateProxiedLoanWhenRelationshipIsForOtherSponsor() {
+  void cannotUpdateProxiedLoanWhenRelationshipIsForOtherSponsor() {
     UUID id = UUID.randomUUID();
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
@@ -314,7 +314,7 @@ public class LoanAPIProxyTests extends APITests {
   }
 
   @Test
-  public void cannotUpdateProxiedLoanWhenNoRelationship() {
+  void cannotUpdateProxiedLoanWhenNoRelationship() {
     UUID id = UUID.randomUUID();
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 

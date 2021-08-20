@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 
 public class ResultGetValueTests {
   @Test
-  public void shouldBeValueWhenSucceeded() {
+  void shouldBeValueWhenSucceeded() {
     final Integer result = succeeded(10)
       .orElse(5);
 
@@ -17,7 +17,7 @@ public class ResultGetValueTests {
   }
 
   @Test
-  public void shouldBeAlternativeWhenFailed() {
+  void shouldBeAlternativeWhenFailed() {
     final Integer result = alreadyFailed()
       .orElse(5);
 

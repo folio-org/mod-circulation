@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test;
 public class KeepCurrentStrategyTest {
 
   @Test
-  public void testKeepCurrentDateStrategy() {
+  void testKeepCurrentDateStrategy() {
     ClosedLibraryStrategy keepCurrentStrategy = new KeepCurrentDateStrategy(UTC);
     DateTime requestDate = new DateTime(2019, JANUARY, 1, 0, 0)
       .withZoneRetainFields(UTC);
@@ -28,7 +28,7 @@ public class KeepCurrentStrategyTest {
   }
 
   @Test
-  public void testKeepCurrentDateTimeStrategy() {
+  void testKeepCurrentDateTimeStrategy() {
     ClosedLibraryStrategy keepCurrentStrategy = new KeepCurrentDateTimeStrategy();
     DateTime requestDate = new DateTime(2019, JANUARY, 1, 0, 0)
       .withZoneRetainFields(UTC);
@@ -39,7 +39,7 @@ public class KeepCurrentStrategyTest {
   }
 
   @Test
-  public void shouldAlwaysKeepCurrentDateWhenConvertingToTimeZone() {
+  void shouldAlwaysKeepCurrentDateWhenConvertingToTimeZone() {
     final int year = 2020;
     final int month = 11;
     final int dayOfMonth = 17;

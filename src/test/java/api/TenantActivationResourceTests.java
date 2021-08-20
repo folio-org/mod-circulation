@@ -39,7 +39,7 @@ public class TenantActivationResourceTests extends APITests {
   }
 
   @Test
-  public void tenantActivationFailsWhenCannotRegisterWithPubSub() {
+  void tenantActivationFailsWhenCannotRegisterWithPubSub() {
     setFailPubSubRegistration(true);
 
     Response response = tenantActivationFixture.postTenant();
@@ -47,7 +47,7 @@ public class TenantActivationResourceTests extends APITests {
   }
 
   @Test
-  public void tenantActivationSucceedsWhenCanRegisterInPubSub() {
+  void tenantActivationSucceedsWhenCanRegisterInPubSub() {
     Response response = tenantActivationFixture.postTenant();
 
     assertThat(response.getStatusCode(), is(HTTP_CREATED.toInt()));
@@ -71,7 +71,7 @@ public class TenantActivationResourceTests extends APITests {
   }
 
   @Test
-  public void tenantDeactivationSucceedsWhenCannotUnregisterInPubSub() {
+  void tenantDeactivationSucceedsWhenCannotUnregisterInPubSub() {
     setFailPubSubUnregistering(true);
 
     Response response = tenantActivationFixture.deleteTenant();

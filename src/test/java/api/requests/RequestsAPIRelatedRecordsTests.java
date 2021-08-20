@@ -21,7 +21,7 @@ public class RequestsAPIRelatedRecordsTests extends APITests {
   private static final String TWO_COPY_NUMBER = "2";
 
   @Test
-  public void holdingIdAndInstanceIdIncludedWhenHoldingAndInstanceAreAvailable() {
+  void holdingIdAndInstanceIdIncludedWhenHoldingAndInstanceAreAvailable() {
 
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -71,7 +71,7 @@ public class RequestsAPIRelatedRecordsTests extends APITests {
   }
 
   @Test
-  public void checkRelatedRecordsForMultipleRequests() {
+  void checkRelatedRecordsForMultipleRequests() {
 
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
       itemBuilder -> itemBuilder.withCopyNumber(TWO_COPY_NUMBER)

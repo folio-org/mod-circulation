@@ -12,7 +12,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 public class RenewByIdRequestTests {
   @Test
-  public void propertiesAreReadFromJson() {
+  void propertiesAreReadFromJson() {
     final UUID itemId = UUID.randomUUID();
     final UUID userId = UUID.randomUUID();
 
@@ -27,7 +27,7 @@ public class RenewByIdRequestTests {
   }
 
   @Test
-  public void failWhenNoItemBarcode() {
+  void failWhenNoItemBarcode() {
     final Result<RenewByIdRequest> result = RenewByIdRequest.from(
       new JsonObject()
         .put("userId", UUID.randomUUID().toString()));
@@ -37,7 +37,7 @@ public class RenewByIdRequestTests {
   }
 
   @Test
-  public void failWhenNoUserBarcode() {
+  void failWhenNoUserBarcode() {
     final Result<RenewByIdRequest> result = RenewByIdRequest.from(
       new JsonObject()
         .put("itemId", UUID.randomUUID().toString()));

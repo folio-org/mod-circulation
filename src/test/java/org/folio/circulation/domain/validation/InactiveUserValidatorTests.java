@@ -19,7 +19,7 @@ import io.vertx.core.json.JsonObject;
 
 public class InactiveUserValidatorTests {
   @Test
-  public void allowActiveUser() {
+  void allowActiveUser() {
     final User steve = new User(basedUponStevenJones().create());
 
     final InactiveUserValidator validator = forUser(steve.getBarcode());
@@ -31,7 +31,7 @@ public class InactiveUserValidatorTests {
   }
 
   @Test
-  public void refuseInactiveUser() {
+  void refuseInactiveUser() {
     final User steve = new User(basedUponStevenJones()
       .inactive()
       .create());
@@ -45,7 +45,7 @@ public class InactiveUserValidatorTests {
   }
 
   @Test
-  public void refuseWhenUserIsNeitherActiveNorInactive() {
+  void refuseWhenUserIsNeitherActiveNorInactive() {
     final User steve = new User(basedUponStevenJones()
       .neitherActiveOrInactive()
       .create());
@@ -59,7 +59,7 @@ public class InactiveUserValidatorTests {
   }
 
   @Test
-  public void allowNullUser() {
+  void allowNullUser() {
     final InactiveUserValidator validator = forUser("");
 
     final Result<LoanAndRelatedRecords> result =
@@ -69,7 +69,7 @@ public class InactiveUserValidatorTests {
   }
 
   @Test
-  public void failsWhenExceptionIsThrown() {
+  void failsWhenExceptionIsThrown() {
     new User(basedUponStevenJones()
       .neitherActiveOrInactive()
       .create());

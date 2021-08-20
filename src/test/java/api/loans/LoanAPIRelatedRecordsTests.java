@@ -18,7 +18,7 @@ import io.vertx.core.json.JsonObject;
 
 public class LoanAPIRelatedRecordsTests extends APITests {
   @Test
-  public void holdingIdAndInstanceIdIncludedWhenHoldingAndInstanceAreAvailable() {
+  void holdingIdAndInstanceIdIncludedWhenHoldingAndInstanceAreAvailable() {
 
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
@@ -64,7 +64,7 @@ public class LoanAPIRelatedRecordsTests extends APITests {
   }
 
   @Test
-  public void holdingAndInstanceIdComesFromMultipleRecordsForMultipleLoans() {
+  void holdingAndInstanceIdComesFromMultipleRecordsForMultipleLoans() {
 
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final ItemResource temeraire = itemsFixture.basedUponTemeraire();

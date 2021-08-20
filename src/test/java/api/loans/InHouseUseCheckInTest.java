@@ -26,7 +26,7 @@ import io.vertx.core.json.JsonObject;
 public class InHouseUseCheckInTest extends APITests {
 
   @Test
-  public void isInHouseUseWhenCheckInServicePointIsPrimaryForHomeLocation() {
+  void isInHouseUseWhenCheckInServicePointIsPrimaryForHomeLocation() {
     final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
 
     final IndividualResource homeLocation = locationsFixture.basedUponExampleLocation(
@@ -45,7 +45,7 @@ public class InHouseUseCheckInTest extends APITests {
   }
 
   @Test
-  public void isInHouseUseWhenItemHasClosedRequests() {
+  void isInHouseUseWhenItemHasClosedRequests() {
     final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
 
     final IndividualResource homeLocation = locationsFixture.basedUponExampleLocation(
@@ -86,7 +86,7 @@ public class InHouseUseCheckInTest extends APITests {
   }
 
   @Test
-  public void isNotInHouseUseWhenItemIsRequested() {
+  void isNotInHouseUseWhenItemIsRequested() {
     final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
 
     final IndividualResource homeLocation = locationsFixture.basedUponExampleLocation(
@@ -112,7 +112,7 @@ public class InHouseUseCheckInTest extends APITests {
   }
 
   @Test
-  public void isNotInHouseUseWhenCheckInServicePointIsNotServingHomeLocation() {
+  void isNotInHouseUseWhenCheckInServicePointIsNotServingHomeLocation() {
     final UUID itemServicePointId = servicePointsFixture.cd1().getId();
     final UUID checkInServicePointId = servicePointsFixture.cd2().getId();
 

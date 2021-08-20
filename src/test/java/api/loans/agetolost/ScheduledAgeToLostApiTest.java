@@ -60,7 +60,7 @@ public class ScheduledAgeToLostApiTest extends SpringApiTest {
   }
 
   @Test
-  public void shouldAgeItemToLostWhenOverdueByMoreThanInterval() {
+  void shouldAgeItemToLostWhenOverdueByMoreThanInterval() {
     checkOutItem();
     scheduledAgeToLostClient.triggerJob();
 
@@ -74,7 +74,7 @@ public class ScheduledAgeToLostApiTest extends SpringApiTest {
   }
 
   @Test
-  public void canAgeTenItemsToLostWhenOverdueByMoreThanInterval() {
+  void canAgeTenItemsToLostWhenOverdueByMoreThanInterval() {
     val loanToItemMap = checkOutTenItems();
 
     scheduledAgeToLostClient.triggerJob();
@@ -93,7 +93,7 @@ public class ScheduledAgeToLostApiTest extends SpringApiTest {
   }
 
   @Test
-  public void shouldIgnoreOverdueLoansWhenItemIsClaimedReturned() {
+  void shouldIgnoreOverdueLoansWhenItemIsClaimedReturned() {
     checkOutItem();
     claimItemReturnedFixture.claimItemReturned(overdueLoan.getId());
 
@@ -104,7 +104,7 @@ public class ScheduledAgeToLostApiTest extends SpringApiTest {
   }
 
   @Test
-  public void shouldNotAgeAnyItemsToLostIfNoIntervalDefined() {
+  void shouldNotAgeAnyItemsToLostIfNoIntervalDefined() {
     val policy = lostItemFeePoliciesFixture.ageToLostAfterOneMinutePolicy()
       .withName("Aged to lost disabled")
       .withItemAgedToLostAfterOverdue(null);
@@ -123,7 +123,7 @@ public class ScheduledAgeToLostApiTest extends SpringApiTest {
   }
 
   @Test
-  public void shouldNotAgeItemToLostWhenNotOverdueByMoreThanIntervalYet() {
+  void shouldNotAgeItemToLostWhenNotOverdueByMoreThanIntervalYet() {
     overdueItem = itemsFixture.basedUponNod();
     overdueLoan = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -142,7 +142,7 @@ public class ScheduledAgeToLostApiTest extends SpringApiTest {
   }
 
   @Test
-  public void shouldNotProcessAgedToLostItemSecondTime() {
+  void shouldNotProcessAgedToLostItemSecondTime() {
     checkOutItem();
     scheduledAgeToLostClient.triggerJob();
 

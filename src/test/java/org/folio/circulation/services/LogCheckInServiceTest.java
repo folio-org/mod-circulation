@@ -42,7 +42,7 @@ public class LogCheckInServiceTest {
   }
 
   @Test
-  public void logCheckInOperationPropagatesException() {
+  void logCheckInOperationPropagatesException() {
     final CheckInContext context = checkInProcessRecords();
 
     final ServerErrorFailure postError = new ServerErrorFailure("ServerError");

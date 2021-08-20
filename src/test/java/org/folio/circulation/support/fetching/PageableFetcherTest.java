@@ -31,7 +31,7 @@ import org.junit.jupiter.api.Test;
 
 public class PageableFetcherTest {
   @Test
-  public void shouldProcessPages() {
+  void shouldProcessPages() {
     final var pageSize = limit(10);
     final var repository = spy(repository(100));
     final var pageProcessor = spy(dummyProcessor());
@@ -80,7 +80,7 @@ public class PageableFetcherTest {
   }
 
   @Test
-  public void shouldAbortFetchingWhenRecordCountLimitIsReached() {
+  void shouldAbortFetchingWhenRecordCountLimitIsReached() {
     final var pageSize = limit(10);
     final var recordLimit = 90;
     final GetManyRecordsRepository<Integer> repository = repository(recordLimit + 10);
@@ -97,7 +97,7 @@ public class PageableFetcherTest {
   }
 
   @Test
-  public void shouldNotAbortFetchingWhenRecordCountLimitIsReachedButAllPagesFetched() {
+  void shouldNotAbortFetchingWhenRecordCountLimitIsReachedButAllPagesFetched() {
     final var pageSize = limit(10);
     final var recordLimit = 91;
     final GetManyRecordsRepository<Integer> repository = repository(recordLimit);

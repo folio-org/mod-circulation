@@ -19,7 +19,7 @@ public class MultipleOutOfOrderRequestsTests extends APITests {
   @Disabled("Disabled since introducing position in queue, " +
     "need to decide if will support this, in the interim before allowing changing of position")
   @Test
-  public void statusOfOldestRequestCreatedOutOfOrderChangesToAwaitingPickupWhenItemCheckedIn() {
+  void statusOfOldestRequestCreatedOutOfOrderChangesToAwaitingPickupWhenItemCheckedIn() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();

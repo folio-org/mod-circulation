@@ -21,7 +21,7 @@ public class CalendarRepositoryTest {
   private static final String QUERY_PARAMETERS = "servicePointId=%s&startDate=%s&endDate=%s&includeClosedDays=false&limit=10000";
 
   @Test
-  public void shouldCreateCorrectRawQueryStringParameters() {
+  void shouldCreateCorrectRawQueryStringParameters() {
     Clients clients = mock(Clients.class);
     CollectionResourceClient collectionResourceClient = mock(CollectionResourceClient.class);
     when(clients.calendarStorageClient()).thenReturn(collectionResourceClient);

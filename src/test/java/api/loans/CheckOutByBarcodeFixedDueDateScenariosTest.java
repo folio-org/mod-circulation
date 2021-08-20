@@ -30,7 +30,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class CheckOutByBarcodeFixedDueDateScenariosTest extends APITests {
 
   @Test
-  public void shouldUseMoveToThePreviousOpenDayStrategyForLongTermLoanPolicyWhenDueDateExtendsBeyondFixedDueDate() {
+  void shouldUseMoveToThePreviousOpenDayStrategyForLongTermLoanPolicyWhenDueDateExtendsBeyondFixedDueDate() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource jessica = usersFixture.jessica();
@@ -70,7 +70,7 @@ public class CheckOutByBarcodeFixedDueDateScenariosTest extends APITests {
   }
 
   @Test
-  public void shouldUseMoveToThePreviousOpenDayStrategyForFixedLoanPolicyWhenDueDateExtendsBeyondFixedDueDate() {
+  void shouldUseMoveToThePreviousOpenDayStrategyForFixedLoanPolicyWhenDueDateExtendsBeyondFixedDueDate() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource jessica = usersFixture.jessica();
@@ -111,7 +111,7 @@ public class CheckOutByBarcodeFixedDueDateScenariosTest extends APITests {
 
 
   @Test
-  public void shouldUseSelectedClosedLibraryStrategyWhenDueDateDoesNotExtendBeyondFixedDueDate() {
+  void shouldUseSelectedClosedLibraryStrategyWhenDueDateDoesNotExtendBeyondFixedDueDate() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource jessica = usersFixture.jessica();

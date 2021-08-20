@@ -16,7 +16,7 @@ import io.vertx.core.json.JsonObject;
 
 public class LoanAPILocationTests extends APITests {
   @Test
-  public void locationIsIncludedForSingleLoan() {
+  void locationIsIncludedForSingleLoan() {
 
     final IndividualResource thirdFloor = locationsFixture.thirdFloor();
     final IndividualResource secondFloorEconomics = locationsFixture.secondFloorEconomics();
@@ -57,7 +57,7 @@ public class LoanAPILocationTests extends APITests {
   }
 
   @Test
-  public void locationIncludedForMultipleLoans() {
+  void locationIncludedForMultipleLoans() {
 
     final IndividualResource thirdFloor = locationsFixture.thirdFloor();
     final IndividualResource secondFloorEconomics = locationsFixture.secondFloorEconomics();

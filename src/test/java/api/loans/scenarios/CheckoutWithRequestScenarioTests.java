@@ -26,7 +26,7 @@ import api.support.http.ItemResource;
 public class CheckoutWithRequestScenarioTests extends APITests {
 
   @Test
-  public void canCheckoutPagedItem() {
+  void canCheckoutPagedItem() {
 
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource charlotte = usersFixture.charlotte();
@@ -47,7 +47,7 @@ public class CheckoutWithRequestScenarioTests extends APITests {
   }
 
   @Test
-  public void checkingOutWithHoldRequestAppliesAlternatePeriod() {
+  void checkingOutWithHoldRequestAppliesAlternatePeriod() {
 
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource charlotte = usersFixture.charlotte();
@@ -101,7 +101,7 @@ public class CheckoutWithRequestScenarioTests extends APITests {
   }
 
   @Test
-  public void checkingOutWithHoldRequestAppliesAlternatePeriodAndScheduledForFixedPolicy() {
+  void checkingOutWithHoldRequestAppliesAlternatePeriodAndScheduledForFixedPolicy() {
 
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource charlotte = usersFixture.charlotte();

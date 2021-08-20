@@ -23,7 +23,7 @@ import io.vertx.core.json.JsonObject;
 
 public class CheckInByReplacingLoanTests extends APITests {
   @Test
-  public void canCompleteALoanByReturningTheItem() {
+  void canCompleteALoanByReturningTheItem() {
 
     DateTime loanDate = new DateTime(2017, 3, 1, 13, 25, 46, DateTimeZone.UTC);
 
@@ -88,7 +88,7 @@ public class CheckInByReplacingLoanTests extends APITests {
   }
 
   @Test
-  public void cannotCloseALoanWithoutAServicePoint() {
+  void cannotCloseALoanWithoutAServicePoint() {
 
     DateTime loanDate = new DateTime(2017, 3, 1, 13, 25, 46, DateTimeZone.UTC);
 
@@ -114,7 +114,7 @@ public class CheckInByReplacingLoanTests extends APITests {
   }
 
   @Test
-  public void cannotUpdateALoanWithAnUnknownServicePoint() {
+  void cannotUpdateALoanWithAnUnknownServicePoint() {
 
     DateTime loanDate = new DateTime(2017, 3, 1, 13, 25, 46, DateTimeZone.UTC);
 

@@ -21,7 +21,7 @@ import io.vertx.core.json.JsonObject;
 public class OpeningDayTest {
 
   @Test
-  public void getOpeningDayFromOpeningPeriodJsonTest() {
+  void getOpeningDayFromOpeningPeriodJsonTest() {
     LocalDate date = new LocalDate("2020-04-08");
     OpeningDay original = createOpeningDay(false, date, UTC);
     OpeningPeriod period = new OpeningPeriod(date, original);
@@ -31,7 +31,7 @@ public class OpeningDayTest {
   }
 
   @Test
-  public void getOpeningDayFromOpeningPeriodJsonWithNullDateTest() {
+  void getOpeningDayFromOpeningPeriodJsonWithNullDateTest() {
     LocalDate date = new LocalDate("2020-04-08");
     OpeningDay original = createOpeningDay(false, date, UTC);
     OpeningPeriod period = new OpeningPeriod(date, original);

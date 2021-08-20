@@ -79,7 +79,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
    * FIXME: remove the cause that make this method fail when executed after the others of this class.
    */
   @Test
-  public void aUponAtRequestExpirationNoticeShouldBeSentAndDeletedWhenRequestExpirationDateHasPassed() {
+  void aUponAtRequestExpirationNoticeShouldBeSentAndDeletedWhenRequestExpirationDateHasPassed() {
     JsonObject noticeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(templateId)
       .withRequestExpirationEvent()
@@ -118,7 +118,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void uponAtRequestExpirationNoticeShouldNotBeSentWhenRequestExpirationDateHasPassedAndRequestIsNotClosed() {
+  void uponAtRequestExpirationNoticeShouldNotBeSentWhenRequestExpirationDateHasPassedAndRequestIsNotClosed() {
     JsonObject noticeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(templateId)
       .withRequestExpirationEvent()
@@ -189,7 +189,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void uponAtHoldExpirationNoticeShouldNotBeSentWhenHoldExpirationDateHasPassedAndRequestIsNotClosed() {
+  void uponAtHoldExpirationNoticeShouldNotBeSentWhenHoldExpirationDateHasPassedAndRequestIsNotClosed() {
     JsonObject noticeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(templateId)
       .withHoldShelfExpirationEvent()
@@ -223,7 +223,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void uponAtHoldExpirationNoticeShouldNotBeSentWhenHoldExpirationDateHasPassedAndItemCheckedOut() {
+  void uponAtHoldExpirationNoticeShouldNotBeSentWhenHoldExpirationDateHasPassedAndItemCheckedOut() {
     JsonObject noticeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(templateId)
       .withHoldShelfExpirationEvent()
@@ -265,7 +265,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void beforeRequestExpirationNoticeShouldBeSentAndDeletedWhenIsNotRecurring() {
+  void beforeRequestExpirationNoticeShouldBeSentAndDeletedWhenIsNotRecurring() {
     JsonObject noticeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(templateId)
       .withRequestExpirationEvent()
@@ -297,7 +297,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void beforeRequestExpirationRecurringNoticeShouldBeSentAndUpdatedWhenFirstThresholdBeforeExpirationHasPassed() {
+  void beforeRequestExpirationRecurringNoticeShouldBeSentAndUpdatedWhenFirstThresholdBeforeExpirationHasPassed() {
     JsonObject noticeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(templateId)
       .withRequestExpirationEvent()
@@ -338,7 +338,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void beforeHoldExpirationNoticeShouldBeSentAndDeletedWhenIsNotRecurring() {
+  void beforeHoldExpirationNoticeShouldBeSentAndDeletedWhenIsNotRecurring() {
     JsonObject noticeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(templateId)
       .withHoldShelfExpirationEvent()
@@ -378,7 +378,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void scheduledNoticesShouldNotBeSentAfterRequestCancellation() {
+  void scheduledNoticesShouldNotBeSentAfterRequestCancellation() {
     JsonObject noticeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(templateId)
       .withHoldShelfExpirationEvent()
@@ -414,7 +414,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void uponAtNoticesShouldBeSentWhenRequestPickupExpired() {
+  void uponAtNoticesShouldBeSentWhenRequestPickupExpired() {
     JsonObject noticeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(templateId)
       .withHoldShelfExpirationEvent()
@@ -452,7 +452,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void scheduledNoticesShouldNotBeSentWhenTemplateWasNotFound() {
+  void scheduledNoticesShouldNotBeSentWhenTemplateWasNotFound() {
     prepareNotice();
 
     templateFixture.delete(templateId);
@@ -466,7 +466,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void scheduledNoticesShouldNotBeSentWhenRequestWasNotFound() {
+  void scheduledNoticesShouldNotBeSentWhenRequestWasNotFound() {
     IndividualResource request = prepareNotice();
 
     requestsStorageClient.delete(request);
@@ -480,7 +480,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void scheduledNoticesShouldNotBeSentWhenUserWasNotFound() {
+  void scheduledNoticesShouldNotBeSentWhenUserWasNotFound() {
     prepareNotice();
 
     usersFixture.remove(requester);
@@ -494,7 +494,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void scheduledNoticesShouldNotBeSentWhenItemWasNotFound() {
+  void scheduledNoticesShouldNotBeSentWhenItemWasNotFound() {
     prepareNotice();
 
     itemsClient.delete(item);
@@ -508,7 +508,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void scheduledNoticesShouldNotBeSentOrDeletedWhenPatronNoticeRequestFails() {
+  void scheduledNoticesShouldNotBeSentOrDeletedWhenPatronNoticeRequestFails() {
     prepareNotice();
 
     FakeModNotify.setFailPatronNoticesWithBadRequest(true);

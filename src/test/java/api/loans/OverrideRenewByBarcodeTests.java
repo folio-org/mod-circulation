@@ -78,7 +78,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   private static final String RENEWED_THROUGH_OVERRIDE = "renewedThroughOverride";
 
   @Test
-  public void cannotOverrideRenewalWhenLoanPolicyDoesNotExist() {
+  void cannotOverrideRenewalWhenLoanPolicyDoesNotExist() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
@@ -107,7 +107,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotOverrideRenewalWhenLoaneeCannotBeFound() {
+  void cannotOverrideRenewalWhenLoaneeCannotBeFound() {
     val smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     val steve = usersFixture.steve();
 
@@ -125,7 +125,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotOverrideRenewalWhenItemCannotBeFound() {
+  void cannotOverrideRenewalWhenItemCannotBeFound() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
 
@@ -142,7 +142,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotOverrideRenewalLoanForDifferentUser() {
+  void cannotOverrideRenewalLoanForDifferentUser() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
     final IndividualResource jessica = usersFixture.jessica();
@@ -159,7 +159,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotOverrideRenewalWhenCommentPropertyIsBlank() {
+  void cannotOverrideRenewalWhenCommentPropertyIsBlank() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica);
@@ -173,7 +173,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canOverrideRenewalWhenItemIsNotRenewableAndNewDueDateIsNotSpecified() {
+  void canOverrideRenewalWhenItemIsNotRenewableAndNewDueDateIsNotSpecified() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
@@ -198,7 +198,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canOverrideRenewalWhenItemIsNotRenewableAndNewDueDateIsSpecified() {
+  void canOverrideRenewalWhenItemIsNotRenewableAndNewDueDateIsSpecified() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
@@ -239,7 +239,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canOverrideRenewalWhenDateFallsOutsideOfTheDateRangesInTheFixedLoanPolicyAndDueDateIsNotSpecified() {
+  void canOverrideRenewalWhenDateFallsOutsideOfTheDateRangesInTheFixedLoanPolicyAndDueDateIsNotSpecified() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
@@ -271,7 +271,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canOverrideRenewalWhenDateFallsOutsideOfTheDateRangesInTheFixedLoanPolicyAndDueDateIsSpecified() {
+  void canOverrideRenewalWhenDateFallsOutsideOfTheDateRangesInTheFixedLoanPolicyAndDueDateIsSpecified() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
@@ -327,7 +327,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canOverrideRenewalWhenDateFallsOutsideOfTheDateRangesInTheRollingLoanPolicy() {
+  void canOverrideRenewalWhenDateFallsOutsideOfTheDateRangesInTheRollingLoanPolicy() {
     final DateTime renewalDate = DateTime.now();
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
@@ -382,7 +382,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canOverrideRenewalWhenLoanReachedRenewalLimitAndDueDateIsNotSpecified() {
+  void canOverrideRenewalWhenLoanReachedRenewalLimitAndDueDateIsNotSpecified() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
@@ -418,7 +418,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canOverrideRenewalWhenItemIsDeclaredLost() {
+  void canOverrideRenewalWhenItemIsDeclaredLost() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
     LoanPolicyBuilder limitedRenewalsPolicy = new LoanPolicyBuilder()
@@ -473,7 +473,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canOverrideRenewalWhenItemIsAgedToLost() {
+  void canOverrideRenewalWhenItemIsAgedToLost() {
     final DateTime approximateRenewalDate = DateTime.now(UTC).plusWeeks(3);
     val result = ageToLostFixture.createAgedToLostLoan();
 
@@ -492,7 +492,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotOverrideRenewalWhenLoanDoesNotMatchAnyOfOverrideCases() {
+  void cannotOverrideRenewalWhenLoanDoesNotMatchAnyOfOverrideCases() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
@@ -521,7 +521,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   }
 
   @Test
-  public void renewalRemovesActionCommentAfterOverride() {
+  void renewalRemovesActionCommentAfterOverride() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
@@ -554,7 +554,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   }
 
   @Test
-  public void checkInRemovesActionCommentAfterOverride() {
+  void checkInRemovesActionCommentAfterOverride() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
@@ -582,7 +582,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotOverrideRenewalWhenItemIsNotLoanableAndNewDueDateIsNotSpecified() {
+  void cannotOverrideRenewalWhenItemIsNotLoanableAndNewDueDateIsNotSpecified() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
@@ -609,7 +609,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canOverrideRenewalWhenItemIsNotLoanableAndNewDueDateIsSpecified() {
+  void canOverrideRenewalWhenItemIsNotLoanableAndNewDueDateIsSpecified() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
@@ -644,7 +644,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
 
   @Test
-  public void cannotOverrideRenewalWhenDueDateIsEarlierOrSameAsCurrentLoanDueDate() {
+  void cannotOverrideRenewalWhenDueDateIsEarlierOrSameAsCurrentLoanDueDate() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
@@ -667,7 +667,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   }
 
   @Test
-  public void renewalNoticeIsSentWhenPolicyDefinesRenewalNoticeConfiguration() {
+  void renewalNoticeIsSentWhenPolicyDefinesRenewalNoticeConfiguration() {
     UUID renewalTemplateId = UUID.randomUUID();
     JsonObject renewalNoticeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(renewalTemplateId)
@@ -732,7 +732,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   }
 
   @Test
-  public void shouldNotChargeOverdueFeesDuringRenewalWhenItemHasAgedToLostAndRefundFeePeriodHasPassed() {
+  void shouldNotChargeOverdueFeesDuringRenewalWhenItemHasAgedToLostAndRefundFeePeriodHasPassed() {
 
     IndividualResource overDueFinePolicy = overdueFinePoliciesFixture.facultyStandard();
     IndividualResource lostItemPolicy = lostItemFeePoliciesFixture.ageToLostAfterOneWeek();
@@ -753,7 +753,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   }
 
   @Test
-  public void shouldNotChargeOverdueFeesDuringRenewalWhenItemIsDeclaredLostAndRefundFeePeriodHasPassed() {
+  void shouldNotChargeOverdueFeesDuringRenewalWhenItemIsDeclaredLostAndRefundFeePeriodHasPassed() {
     UUID servicePointId = servicePointsFixture.cd1().getId();
     ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
     UserResource user = usersFixture.jessica();
@@ -790,7 +790,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canOverrideRenewalWhenItemIsAgedToLostAndPatronIsBlockedAutomatically() {
+  void canOverrideRenewalWhenItemIsAgedToLostAndPatronIsBlockedAutomatically() {
     final DateTime approximateRenewalDate = DateTime.now(UTC).plusWeeks(3);
     val result = ageToLostFixture.createAgedToLostLoan();
 
@@ -819,7 +819,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotOverrideRenewalWhenItemIsAgedToLostAndPatronIsBlockedWithNoPermissions() {
+  void cannotOverrideRenewalWhenItemIsAgedToLostAndPatronIsBlockedWithNoPermissions() {
     val result = ageToLostFixture.createAgedToLostLoan();
     automatedPatronBlocksFixture.blockAction(result.getUser().getId().toString(),
       false, true, false);
@@ -841,7 +841,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canOverrideRenewalWhenItemIsAgedToLostAndPatronIsBlockedManually() {
+  void canOverrideRenewalWhenItemIsAgedToLostAndPatronIsBlockedManually() {
     final DateTime approximateRenewalDate = DateTime.now(UTC).plusWeeks(3);
     val result = ageToLostFixture.createAgedToLostLoan();
 

@@ -77,7 +77,7 @@ public class ChangeDueDateAPITests extends APITests {
   }
 
   @Test
-  public void canChangeTheDueDate() {
+  void canChangeTheDueDate() {
     final DateTime newDueDate = dueDate.plus(Period.days(14));
 
     changeDueDateFixture.changeDueDate(new ChangeDueDateRequestBuilder()
@@ -102,7 +102,7 @@ public class ChangeDueDateAPITests extends APITests {
   }
 
   @Test
-  public void cannotChangeDueDateWhenDueDateIsNotProvided() {
+  void cannotChangeDueDateWhenDueDateIsNotProvided() {
     final Response response = changeDueDateFixture
       .attemptChangeDueDate(new ChangeDueDateRequestBuilder()
         .forLoan(loan.getId())
@@ -116,7 +116,7 @@ public class ChangeDueDateAPITests extends APITests {
   }
 
   @Test
-  public void cannotChangeDueDateWhenLoanIsNotFound() {
+  void cannotChangeDueDateWhenLoanIsNotFound() {
     final String nonExistentLoanId = UUID.randomUUID().toString();
     final DateTime newDueDate = dueDate.plus(Period.days(14));
 
@@ -129,7 +129,7 @@ public class ChangeDueDateAPITests extends APITests {
   }
 
   @Test
-  public void cannotChangeDueDateWhenLoanIsClosed() {
+  void cannotChangeDueDateWhenLoanIsClosed() {
     final DateTime newDueDate = dueDate.plus(Period.days(14));
 
     checkInFixture.checkInByBarcode(item);
@@ -147,7 +147,7 @@ public class ChangeDueDateAPITests extends APITests {
   }
 
   @Test
-  public void shouldRejectDueDateChangeWhenItemIsInDisallowedStatus() {
+  void shouldRejectDueDateChangeWhenItemIsInDisallowedStatus() {
     final DateTime newDueDate = dueDate.plus(Period.days(14));
 
     claimItemReturnedFixture.claimItemReturned(new ClaimItemReturnedRequestBuilder()
@@ -168,7 +168,7 @@ public class ChangeDueDateAPITests extends APITests {
   }
 
   @Test
-  public void canChangeDueDateWithOpenRequest() {
+  void canChangeDueDateWithOpenRequest() {
     final DateTime newDueDate = dueDate.plus(Period.days(14));
 
     requestsFixture.place(new RequestBuilder()
@@ -190,7 +190,7 @@ public class ChangeDueDateAPITests extends APITests {
   }
 
   @Test
-  public void changeDueDateNoticeIsSentWhenPolicyIsDefined() {
+  void changeDueDateNoticeIsSentWhenPolicyIsDefined() {
     UUID templateId = UUID.randomUUID();
 
     JsonObject changeNoticeConfiguration = new NoticeConfigurationBuilder()
@@ -258,7 +258,7 @@ public class ChangeDueDateAPITests extends APITests {
   }
 
   @Test
-  public void changeDueDateNoticeIsNotSentWhenPatronNoticeRequestFails() {
+  void changeDueDateNoticeIsNotSentWhenPatronNoticeRequestFails() {
     UUID templateId = UUID.randomUUID();
 
     JsonObject changeNoticeConfiguration = new NoticeConfigurationBuilder()
@@ -316,7 +316,7 @@ public class ChangeDueDateAPITests extends APITests {
   }
 
   @Test
-  public void dueDateChangedEventIsPublished() {
+  void dueDateChangedEventIsPublished() {
     final DateTime newDueDate = dueDate.plus(Period.days(14));
     changeDueDateFixture.changeDueDate(new ChangeDueDateRequestBuilder()
       .forLoan(loan.getId())

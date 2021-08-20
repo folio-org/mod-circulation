@@ -9,7 +9,7 @@ import static org.hamcrest.Matchers.nullValue;
 
 public class LogMessageSanitizerTests {
   @Test
-  public void shouldRemoveNewLineCharactersFromLogMessageParameters() {
+  void shouldRemoveNewLineCharactersFromLogMessageParameters() {
     final String unsanitizedParameter = "Some \n multiple \r line string";
 
     assertThat(sanitizeLogParameter(unsanitizedParameter),
@@ -17,7 +17,7 @@ public class LogMessageSanitizerTests {
   }
 
   @Test
-  public void shouldRemoveTabCharactersFromLogMessageParameters() {
+  void shouldRemoveTabCharactersFromLogMessageParameters() {
     final String unsanitizedParameter = "Some \t tabbed \t string";
 
     assertThat(sanitizeLogParameter(unsanitizedParameter),
@@ -25,7 +25,7 @@ public class LogMessageSanitizerTests {
   }
 
   @Test
-  public void shouldNotSanitizeNullParameters() {
+  void shouldNotSanitizeNullParameters() {
     assertThat(sanitizeLogParameter(null), nullValue());
   }
 }

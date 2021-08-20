@@ -19,7 +19,7 @@ import io.vertx.core.json.JsonObject;
 
 public class ResponseInterpretationTests {
   @Test
-  public void shouldApplyOnlyMapperWhenMatchesStatusCode() {
+  void shouldApplyOnlyMapperWhenMatchesStatusCode() {
     final JsonObject body = new JsonObject()
       .put("foo", "hello")
       .put("bar", "world");
@@ -33,7 +33,7 @@ public class ResponseInterpretationTests {
   }
 
   @Test
-  public void shouldApplyCorrectMapperWhenMultipleDefined() {
+  void shouldApplyCorrectMapperWhenMultipleDefined() {
     Result<String> result = new ResponseInterpreter<String>()
       .flatMapOn(200, response -> of(() -> "incorrect"))
       .flatMapOn(400, response -> of(() -> "correct"))
@@ -44,7 +44,7 @@ public class ResponseInterpretationTests {
   }
 
   @Test
-  public void canMapToKnownResult() {
+  void canMapToKnownResult() {
     Result<String> result = new ResponseInterpreter<String>()
       .on(200, of(() -> "correct"))
       .apply(new Response(200, "", TEXT_PLAIN.toString()));
@@ -54,7 +54,7 @@ public class ResponseInterpretationTests {
   }
 
   @Test
-  public void shouldProvideDiagnosticFailureOnUnexpectedResponse() {
+  void shouldProvideDiagnosticFailureOnUnexpectedResponse() {
     Result<JsonObject> result = new ResponseInterpreter<JsonObject>()
       .flatMapOn(200, response -> of(response::getJson))
       .apply(serverError());
@@ -69,7 +69,7 @@ public class ResponseInterpretationTests {
   }
 
   @Test
-  public void shouldUseProvidedUnexpectedResponseHandler() {
+  void shouldUseProvidedUnexpectedResponseHandler() {
     Result<String> result = new ResponseInterpreter<String>()
       .flatMapOn(200, response -> of(() -> "ok"))
       .otherwise(response -> of(() -> "unexpected response"))
@@ -80,7 +80,7 @@ public class ResponseInterpretationTests {
   }
 
   @Test
-  public void shouldRetainMappingsWhenProvidingUnexpectedResponseHandler() {
+  void shouldRetainMappingsWhenProvidingUnexpectedResponseHandler() {
     Result<String> result = new ResponseInterpreter<String>()
       .flatMapOn(200, response -> of(response::getBody))
       .otherwise(response -> of(() -> "unexpected response"))
@@ -91,7 +91,7 @@ public class ResponseInterpretationTests {
   }
 
   @Test
-  public void shouldCaptureErrorWhenMappingFailsAtRuntime() {
+  void shouldCaptureErrorWhenMappingFailsAtRuntime() {
     final JsonObject body = new JsonObject()
       .put("foo", "hello")
       .put("bar", "world");
@@ -110,7 +110,7 @@ public class ResponseInterpretationTests {
   }
 
   @Test
-  public void nullResponseShouldFail() {
+  void nullResponseShouldFail() {
     Result<String> result = new ResponseInterpreter<String>()
       .flatMapOn(200, response -> of(() -> "ok"))
       .apply(null);

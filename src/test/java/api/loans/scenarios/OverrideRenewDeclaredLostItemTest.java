@@ -25,7 +25,7 @@ public class OverrideRenewDeclaredLostItemTest extends RefundDeclaredLostFeesTes
   }
 
   @Test
-  public void lostFeeCancellationDoesNotTriggerMarkingItemAsLostAndPaid() {
+  void lostFeeCancellationDoesNotTriggerMarkingItemAsLostAndPaid() {
     useChargeableRefundableLostItemFee(15.00, 0.0);
 
     declareItemLost();

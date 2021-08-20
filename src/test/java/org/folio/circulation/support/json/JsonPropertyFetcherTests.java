@@ -13,7 +13,7 @@ import io.vertx.core.json.JsonObject;
 
 public class JsonPropertyFetcherTests {
   @Test
-  public void shouldReturnDateTimePropertyByPath() {
+  void shouldReturnDateTimePropertyByPath() {
     final String[] paths = {"1", "2", "3", "4", "5"};
     final DateTime expectedDate = DateTime.parse("2020-12-12T20:00:00.123Z");
 
@@ -25,7 +25,7 @@ public class JsonPropertyFetcherTests {
   }
 
   @Test
-  public void shouldReturnNullWhenObjectsInThePathAreNotPresent() {
+  void shouldReturnNullWhenObjectsInThePathAreNotPresent() {
     final String[] paths = {"1", "2", "3", "4", "5"};
     final JsonObject object = new JsonObject()
       .put("1", new JsonObject().put("2", new JsonObject()));
@@ -36,7 +36,7 @@ public class JsonPropertyFetcherTests {
   }
 
   @Test
-  public void shouldReturnNullIfPropertyIsNull() {
+  void shouldReturnNullIfPropertyIsNull() {
     final String[] paths = {"1", "2"};
     final JsonObject object = new JsonObject()
       .put("1", new JsonObject().put("2", (String) null));

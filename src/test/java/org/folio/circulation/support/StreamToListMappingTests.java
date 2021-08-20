@@ -14,21 +14,21 @@ import lombok.val;
 
 public class StreamToListMappingTests {
   @Test
-  public void listShouldContainSameContentsAsStream() {
+  void listShouldContainSameContentsAsStream() {
     val stream = Stream.of("Foo", "Bar", "Lorem", "Ipsum");
 
     assertThat(toList(stream), contains("Foo", "Bar", "Lorem", "Ipsum"));
   }
 
   @Test
-  public void shouldMapEmptyStreamToEmptyList() {
+  void shouldMapEmptyStreamToEmptyList() {
     val emptyStream = Stream.empty();
 
     assertThat(toList(emptyStream), is(empty()));
   }
 
   @Test
-  public void shouldMapNullToEmptyList() {
+  void shouldMapNullToEmptyList() {
     assertThat(toList(null), is(empty()));
   }
 }

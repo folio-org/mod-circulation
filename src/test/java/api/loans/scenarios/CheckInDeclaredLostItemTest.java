@@ -42,7 +42,7 @@ public class CheckInDeclaredLostItemTest extends RefundDeclaredLostFeesTestBase 
   }
 
   @Test
-  public void shouldRefundOnlyLastLoanForLostAndPaidItem() {
+  void shouldRefundOnlyLastLoanForLostAndPaidItem() {
     final double firstFee = 20.00;
     final double secondFee = 30.00;
 
@@ -66,7 +66,7 @@ public class CheckInDeclaredLostItemTest extends RefundDeclaredLostFeesTestBase 
   }
 
   @Test
-  public void shouldFailIfNoLoanForLostAndPaidItem() {
+  void shouldFailIfNoLoanForLostAndPaidItem() {
     final double setCost = 20.00;
 
     declareItemLost(setCost);
@@ -86,7 +86,7 @@ public class CheckInDeclaredLostItemTest extends RefundDeclaredLostFeesTestBase 
   }
 
   @Test
-  public void shouldFailIfLastLoanIsNotDeclaredLostForLostAndPaidItem() {
+  void shouldFailIfLastLoanIsNotDeclaredLostForLostAndPaidItem() {
     loan = checkOutFixture.checkOutByBarcode(item, usersFixture.jessica());
 
     checkInFixture.checkInByBarcode(item);
@@ -106,7 +106,7 @@ public class CheckInDeclaredLostItemTest extends RefundDeclaredLostFeesTestBase 
   }
 
   @Test
-  public void shouldRefundPaidAmountForLostAndPaidItem() {
+  void shouldRefundPaidAmountForLostAndPaidItem() {
     final double setCostFee = 10.00;
 
     declareItemLost(setCostFee);
@@ -123,7 +123,7 @@ public class CheckInDeclaredLostItemTest extends RefundDeclaredLostFeesTestBase 
   }
 
   @Test
-  public void lostFeeCancellationDoesNotTriggerMarkingItemAsLostAndPaid() {
+  void lostFeeCancellationDoesNotTriggerMarkingItemAsLostAndPaid() {
     useChargeableRefundableLostItemFee(15.00, 0.0);
 
     declareItemLost();

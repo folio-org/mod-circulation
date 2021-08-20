@@ -14,7 +14,7 @@ import api.support.builders.LoanBuilder;
 
 public class LoanLostDateTest {
   @Test
-  public void declaredLostDateReturnedWhenSet() {
+  void declaredLostDateReturnedWhenSet() {
     final var declaredLostDate = now(UTC);
     final var loan = new LoanBuilder().asDomainObject()
       .declareItemLost("Lost", declaredLostDate);
@@ -23,7 +23,7 @@ public class LoanLostDateTest {
   }
 
   @Test
-  public void agedToLostDateReturnedWhenSet() {
+  void agedToLostDateReturnedWhenSet() {
     final var agedToLostDate = now(UTC);
     final var loan = new LoanBuilder().asDomainObject()
       .ageOverdueItemToLost(agedToLostDate);
@@ -32,7 +32,7 @@ public class LoanLostDateTest {
   }
 
   @Test
-  public void declaredLostDateReturnedWhenIsAfterAgedToLostDate() {
+  void declaredLostDateReturnedWhenIsAfterAgedToLostDate() {
     final var agedToLostDate = now(UTC).minusDays(2);
     final var declaredLostDate = now(UTC);
 
@@ -49,7 +49,7 @@ public class LoanLostDateTest {
   }
 
   @Test
-  public void agedToLostDateReturnedWhenIsAfterDeclaredLostDate() {
+  void agedToLostDateReturnedWhenIsAfterDeclaredLostDate() {
     final var declaredLostDate = now(UTC).minusDays(3);
     final var agedToLostDate = now(UTC);
 
@@ -66,7 +66,7 @@ public class LoanLostDateTest {
   }
 
   @Test
-  public void lostDateIsNotNullWhenBothLostDatesAreEqual() {
+  void lostDateIsNotNullWhenBothLostDatesAreEqual() {
     final var lostDate = now(UTC);
 
     final var loan = new LoanBuilder().asDomainObject()
@@ -77,7 +77,7 @@ public class LoanLostDateTest {
   }
 
   @Test
-  public void lostDateIsNullWhenLoanWasNeverLost() {
+  void lostDateIsNullWhenLoanWasNeverLost() {
     final var loan = new LoanBuilder().asDomainObject();
 
     assertNull(loan.getLostDate());

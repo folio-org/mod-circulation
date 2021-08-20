@@ -25,7 +25,7 @@ public class RequestsServicePointsTests extends APITests {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   @Test
-  public void pagedRequestCheckedInAtIntendedServicePointTest() {
+  void pagedRequestCheckedInAtIntendedServicePointTest() {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource servicePoint = servicePointsFixture.cd1();
@@ -50,7 +50,7 @@ public class RequestsServicePointsTests extends APITests {
   }
 
   @Test
-  public void pagedRequestForItemWithIntransitStatusCheckedInAtIntendedServicePointTest() {
+  void pagedRequestForItemWithIntransitStatusCheckedInAtIntendedServicePointTest() {
 
     //setup item in IN_TRANSIT status
     final IndividualResource requestPickupServicePoint = servicePointsFixture.cd1();
@@ -69,7 +69,7 @@ public class RequestsServicePointsTests extends APITests {
   }
 
   @Test
-  public void pagedRequestCheckedInAtUnIntendedServicePointTest() {
+  void pagedRequestCheckedInAtUnIntendedServicePointTest() {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requestPickupServicePoint = servicePointsFixture.cd1();

@@ -20,7 +20,7 @@ public class ItemStatusApiTests extends APITests {
   private static final String ITEM_STATUS_DATE = "date";
 
   @Test
-  public void itemStatusDateShouldExistsAfterCheckout() {
+  void itemStatusDateShouldExistsAfterCheckout() {
 
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource user = usersFixture.jessica();

@@ -16,7 +16,7 @@ import api.support.builders.RequestBuilder;
 public class RequestsAPICreateMultipleRequestsTests extends APITests {
 
   @Test
-  public void canCreateMultipleRequestsOfSameTypeForSameItem() {
+  void canCreateMultipleRequestsOfSameTypeForSameItem() {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -47,7 +47,7 @@ public class RequestsAPICreateMultipleRequestsTests extends APITests {
   }
 
   @Test
-  public void canCreateMultipleRequestsOfDifferentTypeForSameItem() {
+  void canCreateMultipleRequestsOfDifferentTypeForSameItem() {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -78,7 +78,7 @@ public class RequestsAPICreateMultipleRequestsTests extends APITests {
   }
 
   @Test
-  public void cannotCreateMultipleRequestsWithPageRequestForSameItemWhenItIsCheckedOut() {
+  void cannotCreateMultipleRequestsWithPageRequestForSameItemWhenItIsCheckedOut() {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -112,7 +112,7 @@ public class RequestsAPICreateMultipleRequestsTests extends APITests {
   }
 
   @Test
-  public void canCreateMultipleRequestsAtSpecificLocation() {
+  void canCreateMultipleRequestsAtSpecificLocation() {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();

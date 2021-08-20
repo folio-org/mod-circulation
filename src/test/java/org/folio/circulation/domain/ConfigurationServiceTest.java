@@ -29,7 +29,7 @@ public class ConfigurationServiceTest {
   }
 
   @Test
-  public void testUtcTimeZone() {
+  void testUtcTimeZone() {
     String timeZoneValue = getTimezoneValue("UTC");
     JsonObject jsonObject = getJsonObject(timeZoneValue);
 
@@ -37,7 +37,7 @@ public class ConfigurationServiceTest {
   }
 
   @Test
-  public void testEuropeTimeZone() {
+  void testEuropeTimeZone() {
     String zone = "Europe/Kiev";
     String timeZoneValue = getTimezoneValue(zone);
     JsonObject jsonObject = getJsonObject(timeZoneValue);
@@ -46,7 +46,7 @@ public class ConfigurationServiceTest {
   }
 
   @Test
-  public void testEmptyTimeZoneValue() {
+  void testEmptyTimeZoneValue() {
     String timeZoneValue = getTimezoneValue("");
     JsonObject jsonObject = getJsonObject(timeZoneValue);
 
@@ -54,21 +54,21 @@ public class ConfigurationServiceTest {
   }
 
   @Test
-  public void testEmptyJsonValue() {
+  void testEmptyJsonValue() {
     JsonObject jsonObject = getJsonObject("");
 
     assertEquals(DateTimeZone.UTC, service.findDateTimeZone(jsonObject));
   }
 
   @Test
-  public void testEmptyJson() {
+  void testEmptyJson() {
     JsonObject jsonObject = new JsonObject();
 
     assertEquals(DateTimeZone.UTC, service.findDateTimeZone(jsonObject));
   }
 
   @Test
-  public void shouldUseConfiguredCheckoutTimeoutDurationWhenAnInteger() {
+  void shouldUseConfiguredCheckoutTimeoutDurationWhenAnInteger() {
     JsonObject jsonConfig = new JsonObject()
       .put(VALUE, getJsonConfigWithCheckoutTimeoutDurationAsInteger());
     List<Configuration> records = Collections.singletonList(new Configuration(jsonConfig));
@@ -79,7 +79,7 @@ public class ConfigurationServiceTest {
   }
 
   @Test
-  public void shouldUseConfiguredCheckoutTimeoutDurationWhenIsAnIntegerString() {
+  void shouldUseConfiguredCheckoutTimeoutDurationWhenIsAnIntegerString() {
     JsonObject jsonConfig = new JsonObject()
       .put(VALUE, getJsonConfigWithCheckoutTimeoutDurationAsString("1"));
     List<Configuration> records = Collections.singletonList(new Configuration(jsonConfig));
@@ -90,7 +90,7 @@ public class ConfigurationServiceTest {
   }
 
   @Test
-  public void shouldUseDefaultCheckoutTimeoutDurationWhenConfiguredValueIsNotAnInteger() {
+  void shouldUseDefaultCheckoutTimeoutDurationWhenConfiguredValueIsNotAnInteger() {
     JsonObject jsonConfig = new JsonObject()
       .put(VALUE, getJsonConfigWithCheckoutTimeoutDurationAsString("test"));
     List<Configuration> records = Collections.singletonList(new Configuration(jsonConfig));

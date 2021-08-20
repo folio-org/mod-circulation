@@ -96,7 +96,7 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void agedToLostLoanNoticesAreCreatedAndProcessed() {
+  void agedToLostLoanNoticesAreCreatedAndProcessed() {
     val agedToLostLoan = ageToLostFixture.createAgedToLostLoan(
       new NoticePolicyBuilder()
         .active()
@@ -179,7 +179,7 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void shouldStopSendingAgedToLostNoticesOnceLostItemFeeWasCharged() {
+  void shouldStopSendingAgedToLostNoticesOnceLostItemFeeWasCharged() {
     val agedToLostLoan = ageToLostFixture.createAgedToLostLoan(
       new NoticePolicyBuilder()
         .active()
@@ -227,7 +227,7 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void shouldStopSendingAgedToLostNoticesOnceItemIsDeclaredLost() {
+  void shouldStopSendingAgedToLostNoticesOnceItemIsDeclaredLost() {
     AgeToLostResult agedToLostLoan = createRecurringAgedToLostNotice();
 
     declareLostFixtures.declareItemLost(agedToLostLoan.getLoan().getJson());
@@ -243,7 +243,7 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void shouldStopSendingAgedToLostNoticesOnceItemIsClaimedReturned() {
+  void shouldStopSendingAgedToLostNoticesOnceItemIsClaimedReturned() {
     AgeToLostResult agedToLostLoan = createRecurringAgedToLostNotice();
 
     claimItemReturnedFixture.claimItemReturned(new ClaimItemReturnedRequestBuilder()
@@ -261,7 +261,7 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void shouldStopSendingAgedToLostNoticesOnceItemIsRenewedThroughOverride() {
+  void shouldStopSendingAgedToLostNoticesOnceItemIsRenewedThroughOverride() {
     AgeToLostResult agedToLostLoan = createRecurringAgedToLostNotice();
 
     final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(OVERRIDE_RENEWAL_PERMISSION);
@@ -298,7 +298,7 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void patronNoticesForForAgedToLostFineAdjustmentsAreCreatedAndProcessed() {
+  void patronNoticesForForAgedToLostFineAdjustmentsAreCreatedAndProcessed() {
     LostItemFeePolicyBuilder lostItemFeePolicyBuilder = lostItemFeePoliciesFixture
       .ageToLostAfterOneMinutePolicy()
       .withSetCost(LOST_ITEM_FEE_AMOUNT)
@@ -411,7 +411,7 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void patronNoticeForAdjustmentOfFullyPaidLostItemFeeIsCreatedAndProcessed() {
+  void patronNoticeForAdjustmentOfFullyPaidLostItemFeeIsCreatedAndProcessed() {
     LostItemFeePolicyBuilder lostItemFeePolicyBuilder = lostItemFeePoliciesFixture
       .ageToLostAfterOneMinutePolicy()
       .withSetCost(LOST_ITEM_FEE_AMOUNT)

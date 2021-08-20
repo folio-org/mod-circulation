@@ -18,7 +18,7 @@ import api.support.builders.LoanBuilder;
 
 public class MoreThanOneLoanValidatorTests {
   @Test
-  public void allowSingleLoan() {
+  void allowSingleLoan() {
     final MoreThanOneLoanValidator validator = new MoreThanOneLoanValidator(
       () -> new ServerErrorFailure("More than one loan"));
 
@@ -32,7 +32,7 @@ public class MoreThanOneLoanValidatorTests {
   }
 
   @Test
-  public void failWhenMoreThanOneLoan() {
+  void failWhenMoreThanOneLoan() {
     final MoreThanOneLoanValidator validator = new MoreThanOneLoanValidator(
       () -> new ServerErrorFailure("More than one loan"));
 
@@ -47,7 +47,7 @@ public class MoreThanOneLoanValidatorTests {
   }
 
   @Test
-  public void allowWhenNoLoans() {
+  void allowWhenNoLoans() {
     final MoreThanOneLoanValidator validator = new MoreThanOneLoanValidator(
       () -> new ServerErrorFailure("More than one loan"));
 

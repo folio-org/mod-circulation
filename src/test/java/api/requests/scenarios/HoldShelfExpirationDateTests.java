@@ -141,7 +141,7 @@ public class HoldShelfExpirationDateTests extends APITests{
   }
 
   @Test
-  public void shouldUseTenantTimeZoneForLongTerm() {
+  void shouldUseTenantTimeZoneForLongTerm() {
     final ChronoUnit interval = ChronoUnit.DAYS;
     final int amount = 30;
     final ZoneId tenantTimeZone = ZoneId.of("America/New_York");
@@ -179,7 +179,7 @@ public class HoldShelfExpirationDateTests extends APITests{
   }
 
   @Test
-  public void shouldUseTenantTimeZoneForShortTerm() {
+  void shouldUseTenantTimeZoneForShortTerm() {
     final ChronoUnit interval = ChronoUnit.MINUTES;
     final int amount = 42;
     final ZoneId tenantTimeZone = ZoneId.of("America/New_York");
@@ -217,7 +217,7 @@ public class HoldShelfExpirationDateTests extends APITests{
   }
 
   @Test
-  public void requestWithHoldShelfExpirationDateAlreadySet() {
+  void requestWithHoldShelfExpirationDateAlreadySet() {
     final IndividualResource checkInServicePoint = servicePointsFixture.cd1();
 
     final IndividualResource james = usersFixture.james();
@@ -278,7 +278,7 @@ public class HoldShelfExpirationDateTests extends APITests{
   }
 
   @Test
-  public void requestRemoveHoldShelfExpirationDateWhenItemIsInTransit() {
+  void requestRemoveHoldShelfExpirationDateWhenItemIsInTransit() {
     final IndividualResource checkInServicePoint = servicePointsFixture.cd1();
     final IndividualResource alternateCheckInServicePoint = servicePointsFixture.cd2();
 
@@ -329,7 +329,7 @@ public class HoldShelfExpirationDateTests extends APITests{
   }
 
   @Test
-  public void pageRequestWithHoldShelfExpirationDate() {
+  void pageRequestWithHoldShelfExpirationDate() {
     final IndividualResource checkInServicePoint = servicePointsFixture.cd1();
 
     final IndividualResource jessica = usersFixture.jessica();
@@ -364,7 +364,7 @@ public class HoldShelfExpirationDateTests extends APITests{
   }
 
   @Test
-  public void requestHoldShelfExpirationDateWhenItemIsInTransit() {
+  void requestHoldShelfExpirationDateWhenItemIsInTransit() {
     final IndividualResource checkInServicePoint = servicePointsFixture.cd1();
     final IndividualResource alternateCheckInServicePoint = servicePointsFixture.cd2();
 
@@ -403,7 +403,7 @@ public class HoldShelfExpirationDateTests extends APITests{
   }
 
   @Test
-  public void pageRequestInTransitWithHoldShelfExpirationDate() {
+  void pageRequestInTransitWithHoldShelfExpirationDate() {
     final IndividualResource checkInServicePoint = servicePointsFixture.cd1();
     final IndividualResource alternateServicePoint = servicePointsFixture.cd2();
 
@@ -441,7 +441,7 @@ public class HoldShelfExpirationDateTests extends APITests{
   }
 
   @Test
-  public void requestInTransitRemainsInTransit() {
+  void requestInTransitRemainsInTransit() {
     final IndividualResource checkInServicePoint = servicePointsFixture.cd1();
     final IndividualResource alternateCheckInServicePoint = servicePointsFixture.cd2();
     final IndividualResource transitCheckInServicePoint = servicePointsFixture.cd4();

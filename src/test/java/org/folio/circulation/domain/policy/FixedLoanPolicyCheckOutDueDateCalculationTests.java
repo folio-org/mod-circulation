@@ -20,7 +20,7 @@ import api.support.builders.LoanPolicyBuilder;
 
 public class FixedLoanPolicyCheckOutDueDateCalculationTests {
   @Test
-  public void shouldUseOnlyScheduleAvailableWhenLoanDateFits() {
+  void shouldUseOnlyScheduleAvailableWhenLoanDateFits() {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
       .create())
@@ -40,7 +40,7 @@ public class FixedLoanPolicyCheckOutDueDateCalculationTests {
   }
 
   @Test
-  public void shouldUseOnlyScheduleAvailableWhenLoanDateTimeAfterMidnight() {
+  void shouldUseOnlyScheduleAvailableWhenLoanDateTimeAfterMidnight() {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
       .create())
@@ -65,7 +65,7 @@ public class FixedLoanPolicyCheckOutDueDateCalculationTests {
   }
 
   @Test
-  public void shouldUseOnlyScheduleAvailableWhenLoanDateTimeAfterMidnightAndTimeZoneIsNotUTC() {
+  void shouldUseOnlyScheduleAvailableWhenLoanDateTimeAfterMidnightAndTimeZoneIsNotUTC() {
     DateTimeZone timeZone = DateTimeZone.forOffsetHours(4);
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
@@ -88,7 +88,7 @@ public class FixedLoanPolicyCheckOutDueDateCalculationTests {
   }
 
   @Test
-  public void shouldFailWhenLoanDateIsBeforeOnlyScheduleAvailable() {
+  void shouldFailWhenLoanDateIsBeforeOnlyScheduleAvailable() {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
       .withName("Example Fixed Schedule Loan Policy")
@@ -108,7 +108,7 @@ public class FixedLoanPolicyCheckOutDueDateCalculationTests {
   }
 
   @Test
-  public void shouldFailWhenLoanDateIsAfterOnlyScheduleAvailable() {
+  void shouldFailWhenLoanDateIsAfterOnlyScheduleAvailable() {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
       .withName("Example Fixed Schedule Loan Policy")
@@ -128,7 +128,7 @@ public class FixedLoanPolicyCheckOutDueDateCalculationTests {
   }
 
   @Test
-  public void shouldUseFirstScheduleAvailableWhenLoanDateFits() {
+  void shouldUseFirstScheduleAvailableWhenLoanDateFits() {
     final FixedDueDateSchedule expectedSchedule = FixedDueDateSchedule.wholeMonth(2018, 1);
 
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
@@ -151,7 +151,7 @@ public class FixedLoanPolicyCheckOutDueDateCalculationTests {
   }
 
   @Test
-  public void shouldUseMiddleScheduleAvailableWhenLoanDateFits() {
+  void shouldUseMiddleScheduleAvailableWhenLoanDateFits() {
     final FixedDueDateSchedule expectedSchedule = FixedDueDateSchedule.wholeMonth(2018, 2);
 
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
@@ -174,7 +174,7 @@ public class FixedLoanPolicyCheckOutDueDateCalculationTests {
   }
 
   @Test
-  public void shouldUseLastScheduleAvailableWhenLoanDateFits() {
+  void shouldUseLastScheduleAvailableWhenLoanDateFits() {
     final FixedDueDateSchedule expectedSchedule = FixedDueDateSchedule.wholeMonth(2018, 3);
 
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
@@ -197,7 +197,7 @@ public class FixedLoanPolicyCheckOutDueDateCalculationTests {
   }
 
   @Test
-  public void shouldFailWhenLoanDateIsBeforeAllSchedules() {
+  void shouldFailWhenLoanDateIsBeforeAllSchedules() {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
       .withName("Example Fixed Schedule Loan Policy")
@@ -219,7 +219,7 @@ public class FixedLoanPolicyCheckOutDueDateCalculationTests {
   }
 
   @Test
-  public void shouldFailWhenLoanDateIsAfterAllSchedules() {
+  void shouldFailWhenLoanDateIsAfterAllSchedules() {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
       .withName("Example Fixed Schedule Loan Policy")
@@ -241,7 +241,7 @@ public class FixedLoanPolicyCheckOutDueDateCalculationTests {
   }
 
   @Test
-  public void shouldFailWhenLoanDateIsInBetweenSchedules() {
+  void shouldFailWhenLoanDateIsInBetweenSchedules() {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
       .withName("Example Fixed Schedule Loan Policy")
@@ -262,7 +262,7 @@ public class FixedLoanPolicyCheckOutDueDateCalculationTests {
   }
 
   @Test
-  public void shouldFailWhenNoSchedulesDefined() {
+  void shouldFailWhenNoSchedulesDefined() {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
       .withName("Example Fixed Schedule Loan Policy")
@@ -280,7 +280,7 @@ public class FixedLoanPolicyCheckOutDueDateCalculationTests {
   }
 
   @Test
-  public void shouldFailWhenSchedulesCollectionIsNull() {
+  void shouldFailWhenSchedulesCollectionIsNull() {
     final FixedScheduleCheckOutDueDateStrategy calculator =
       new FixedScheduleCheckOutDueDateStrategy(UUID.randomUUID().toString(),
         "Example Fixed Schedule Loan Policy", null, s -> new ValidationError(s, null, null));
@@ -297,7 +297,7 @@ public class FixedLoanPolicyCheckOutDueDateCalculationTests {
   }
 
   @Test
-  public void shouldFailWhenNoSchedules() {
+  void shouldFailWhenNoSchedules() {
     final FixedScheduleCheckOutDueDateStrategy calculator =
       new FixedScheduleCheckOutDueDateStrategy(UUID.randomUUID().toString(),
         "Example Fixed Schedule Loan Policy", new NoFixedDueDateSchedules(),

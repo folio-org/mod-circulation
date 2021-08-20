@@ -8,7 +8,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 public class FixedDueDateSchedulesTests {
   @Test
-  public void shouldHaveNoSchedulesWhenPropertyMissingInJSON() {
+  void shouldHaveNoSchedulesWhenPropertyMissingInJSON() {
     final FixedDueDateSchedules schedules = FixedDueDateSchedules.from(new JsonObject());
 
     assertThat(schedules.isEmpty(), is(true));

@@ -30,7 +30,7 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
   private static final DateTime DATE_TIME_2018 = new DateTime(2018, 1, 10, 15, 34, 21, DateTimeZone.UTC);
 
   @Test
-  public void itemCantBeCheckedOutToAnotherRequesterWhenStatusIsAwaitingDelivery() {
+  void itemCantBeCheckedOutToAnotherRequesterWhenStatusIsAwaitingDelivery() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     val james = usersFixture.james();
     val jessica = usersFixture.jessica();
@@ -65,7 +65,7 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
   }
 
   @Test
-  public void deliveryRequestIsProcessedWhenItIsNextInQueueAndItemCheckedIn() {
+  void deliveryRequestIsProcessedWhenItIsNextInQueueAndItemCheckedIn() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     val james = usersFixture.james();
     val jessica = usersFixture.jessica();
@@ -101,7 +101,7 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
   }
 
   @Test
-  public void holdShelfRequestIsProcessedWhenItIsNextInQueueAndItemCheckedIn() {
+  void holdShelfRequestIsProcessedWhenItIsNextInQueueAndItemCheckedIn() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     val james = usersFixture.james();
     val jessica = usersFixture.jessica();
@@ -133,7 +133,7 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
   }
 
   @Test
-  public void itemCanBeCheckedOutToDeliveryRequestRequester() {
+  void itemCanBeCheckedOutToDeliveryRequestRequester() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     val james = usersFixture.james();
     val jessica = usersFixture.jessica();

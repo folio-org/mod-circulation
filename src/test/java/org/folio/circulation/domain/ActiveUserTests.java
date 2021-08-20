@@ -9,7 +9,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 public class ActiveUserTests {
   @Test
-  public void userIsActiveWhenActivePropertyIsTrue() {
+  void userIsActiveWhenActivePropertyIsTrue() {
     final User activeUser = new User(new UserBuilder()
       .active()
       .create());
@@ -19,7 +19,7 @@ public class ActiveUserTests {
   }
 
   @Test
-  public void userIsInactiveWhenActivePropertyIsFalse() {
+  void userIsInactiveWhenActivePropertyIsFalse() {
     final User activeUser = new User(new UserBuilder()
       .inactive()
       .create());
@@ -29,7 +29,7 @@ public class ActiveUserTests {
   }
 
   @Test
-  public void userIsInactiveWhenExpiredInThePast() {
+  void userIsInactiveWhenExpiredInThePast() {
     final User activeUser = new User(new UserBuilder()
       .active()
       .expires(new DateTime().minusDays(10))
@@ -40,7 +40,7 @@ public class ActiveUserTests {
   }
 
   @Test
-  public void userIsActiveWhenExpiresInTheFuture() {
+  void userIsActiveWhenExpiresInTheFuture() {
     final User activeUser = new User(new UserBuilder()
       .active()
       .expires(new DateTime().plusDays(30))
@@ -51,7 +51,7 @@ public class ActiveUserTests {
   }
 
   @Test
-  public void userIsActiveWhenDoesNotExpire() {
+  void userIsActiveWhenDoesNotExpire() {
     final User activeUser = new User(new UserBuilder()
       .active()
       .noExpiration()

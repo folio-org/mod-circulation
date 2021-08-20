@@ -23,7 +23,7 @@ import io.vertx.core.json.JsonObject;
 
 public class InvalidLoanPolicyTests {
   @Test
-  public void shouldFailCheckOutCalculationWhenNoLoanPolicyProvided() {
+  void shouldFailCheckOutCalculationWhenNoLoanPolicyProvided() {
     final JsonObject representation = new LoanPolicyBuilder()
       .rolling(Period.from(5, "Unknown"))
       .withName("Invalid Loan Policy")
@@ -48,7 +48,7 @@ public class InvalidLoanPolicyTests {
   }
 
   @Test
-  public void shouldFailRenewalWhenNoLoanPolicyProvided() {
+  void shouldFailRenewalWhenNoLoanPolicyProvided() {
     final JsonObject representation = new LoanPolicyBuilder()
       .rolling(Period.from(5, "Unknown"))
       .withName("Invalid Loan Policy")

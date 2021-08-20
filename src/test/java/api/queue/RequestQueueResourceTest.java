@@ -54,7 +54,7 @@ public class RequestQueueResourceTest extends APITests {
   }
 
   @Test
-  public void validationErrorOnItemDoNotExists() {
+  void validationErrorOnItemDoNotExists() {
     Response response = requestQueueFixture.attemptReorderQueue(
       UUID.randomUUID().toString(),
       new ReorderQueueBuilder()
@@ -67,7 +67,7 @@ public class RequestQueueResourceTest extends APITests {
   }
 
   @Test
-  public void refuseAttemptToMovePageRequestFromFirstPosition() {
+  void refuseAttemptToMovePageRequestFromFirstPosition() {
     IndividualResource pageRequest = pageRequest(steve);
     IndividualResource recallRequest = recallRequest(jessica);
 
@@ -83,7 +83,7 @@ public class RequestQueueResourceTest extends APITests {
   }
 
   @Test
-  public void refuseAttemptToMoveRequestBeingFulfilledFromFirstPosition() {
+  void refuseAttemptToMoveRequestBeingFulfilledFromFirstPosition() {
     checkOutFixture.checkOutByBarcode(item, usersFixture.rebecca());
 
     IndividualResource inFulfillmentRequest = inFulfillmentRecallRequest(steve);
@@ -101,7 +101,7 @@ public class RequestQueueResourceTest extends APITests {
   }
 
   @Test
-  public void refuseAttemptToTryingToAddRequestToQueueDuringReorder() {
+  void refuseAttemptToTryingToAddRequestToQueueDuringReorder() {
     checkOutFixture.checkOutByBarcode(item, usersFixture.rebecca());
 
     IndividualResource firstRecallRequest = recallRequest(steve);
@@ -120,7 +120,7 @@ public class RequestQueueResourceTest extends APITests {
   }
 
   @Test
-  public void refuseWhenNotAllRequestsProvidedInReorderedQueue() {
+  void refuseWhenNotAllRequestsProvidedInReorderedQueue() {
     checkOutFixture.checkOutByBarcode(item, usersFixture.rebecca());
 
     holdRequest(steve);
@@ -171,7 +171,7 @@ public class RequestQueueResourceTest extends APITests {
   }
 
   @Test
-  public void refuseAttemptToReorderRequestsWithDuplicatedPositions() {
+  void refuseAttemptToReorderRequestsWithDuplicatedPositions() {
     checkOutFixture.checkOutByBarcode(item, usersFixture.rebecca());
 
     IndividualResource holdRequest = holdRequest(steve);
@@ -222,7 +222,7 @@ public class RequestQueueResourceTest extends APITests {
   }
 
   @Test
-  public void logRecordEventIsPublished() {
+  void logRecordEventIsPublished() {
     checkOutFixture.checkOutByBarcode(item, rebecca);
 
     IndividualResource firstHoldRequest = holdRequest(steve);
