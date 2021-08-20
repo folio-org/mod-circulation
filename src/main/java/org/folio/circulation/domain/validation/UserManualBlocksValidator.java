@@ -22,7 +22,7 @@ import org.folio.circulation.support.FindWithCqlQuery;
 import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
-import org.folio.circulation.support.utils.ClockManager;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
 
 public class UserManualBlocksValidator {
@@ -94,7 +94,7 @@ public class UserManualBlocksValidator {
   }
 
   private boolean isBlockedAction(DateTime expirationDate, boolean isBlocked) {
-    final DateTime now = ClockManager.getDateTime();
+    final DateTime now = ClockUtil.getDateTime();
     return isBlocked && (expirationDate == null || expirationDate.isAfter(now));
   }
 }

@@ -7,7 +7,7 @@ import org.folio.circulation.domain.CheckInRecord;
 import org.folio.circulation.infrastructure.storage.CheckInStorageRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
-import org.folio.circulation.support.utils.ClockManager;
+import org.folio.circulation.support.utils.ClockUtil;
 
 public class LogCheckInService {
   private final CheckInStorageRepository checkInStorageRepository;
@@ -20,7 +20,7 @@ public class LogCheckInService {
     CheckInContext checkInContext) {
 
     final CheckInRecord checkInRecord = CheckInRecord.builder()
-      .withOccurredDateTime(ClockManager.getDateTime())
+      .withOccurredDateTime(ClockUtil.getDateTime())
       .withItemId(checkInContext.getItem().getItemId())
       .withServicePointId(checkInContext.getCheckInServicePointId().toString())
       .withPerformedByUserId(checkInContext.getLoggedInUserId())

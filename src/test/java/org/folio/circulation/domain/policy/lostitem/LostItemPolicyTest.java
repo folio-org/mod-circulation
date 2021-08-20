@@ -14,7 +14,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 
 import org.folio.circulation.domain.policy.Period;
-import org.folio.circulation.support.utils.ClockManager;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,7 +27,7 @@ class LostItemPolicyTest {
 
   @BeforeEach
   public void useDefaultClocks() {
-    ClockManager.setDefaultClock();
+    ClockUtil.setDefaultClock();
   }
 
   @ParameterizedTest
@@ -144,7 +144,7 @@ class LostItemPolicyTest {
     final LostItemPolicy lostItemPolicy = LostItemPolicy.from(builder.create());
 
     final DateTime now = now(UTC);
-    ClockManager.setClock(fixed(Instant.ofEpochMilli(now.getMillis()), ZoneOffset.UTC));
+    ClockUtil.setClock(fixed(Instant.ofEpochMilli(now.getMillis()), ZoneOffset.UTC));
 
     final DateTime lostDateTime = now.minus(period.timePeriod());
     assertTrue(lostItemPolicy.shouldRefundFees(lostDateTime));

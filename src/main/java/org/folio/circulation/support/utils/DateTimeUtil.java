@@ -192,7 +192,7 @@ public class DateTimeUtil {
    * @return The converted dateTime.
    */
   public static DateTime toDateTime(org.joda.time.LocalDate date, org.joda.time.LocalTime time) {
-    return date.toDateTime(time, ClockManager.getDateTimeZone());
+    return date.toDateTime(time, ClockUtil.getDateTimeZone());
   }
 
   /**

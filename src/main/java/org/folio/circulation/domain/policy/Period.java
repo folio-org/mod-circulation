@@ -20,7 +20,7 @@ import java.util.function.Supplier;
 import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
-import org.folio.circulation.support.utils.ClockManager;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
@@ -186,7 +186,7 @@ public class Period {
   }
 
   public boolean hasPassedSinceDateTillNow(DateTime startDate) {
-    final DateTime now = ClockManager.getDateTime();
+    final DateTime now = ClockUtil.getDateTime();
     final DateTime startPlusPeriod = startDate.plus(timePeriod());
 
     return startPlusPeriod.isBefore(now) || startPlusPeriod.isEqual(now);
@@ -197,7 +197,7 @@ public class Period {
   }
 
   public boolean isEqualToDateTillNow(DateTime startDate) {
-    final DateTime now = ClockManager.getDateTime();
+    final DateTime now = ClockUtil.getDateTime();
     final DateTime startPlusPeriod = startDate.plus(timePeriod());
 
     return now.isEqual(startPlusPeriod);

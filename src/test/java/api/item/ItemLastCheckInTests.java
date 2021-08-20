@@ -13,7 +13,7 @@ import java.util.UUID;
 
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.json.JsonPropertyFetcher;
-import org.folio.circulation.support.utils.ClockManager;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -148,7 +148,7 @@ class ItemLastCheckInTests extends APITests {
     assertThat(lastCheckIn.getString("servicePointId"), is(servicePointId.toString()));
     assertThat(lastCheckIn.getString("staffMemberId"), is(APITestContext.getUserId()));
 
-    DateTime secondCheckInDateTime = ClockManager.getDateTime();
+    DateTime secondCheckInDateTime = ClockUtil.getDateTime();
     UUID servicePointId2 = servicePointsFixture.cd2().getId();
 
     final String randomUserId = UUID.randomUUID().toString();
@@ -176,7 +176,7 @@ class ItemLastCheckInTests extends APITests {
 
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     UUID servicePointId = servicePointsFixture.cd1().getId();
-    DateTime checkInDateTimeInPast = ClockManager.getDateTime()
+    DateTime checkInDateTimeInPast = ClockUtil.getDateTime()
       .minusHours(1);
 
     checkInFixture.checkInByBarcode(item, checkInDateTimeInPast, servicePointId);

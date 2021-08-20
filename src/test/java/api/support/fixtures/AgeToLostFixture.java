@@ -16,7 +16,7 @@ import java.util.UUID;
 import java.util.function.UnaryOperator;
 
 import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.utils.ClockManager;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
 
 import api.support.builders.HoldingBuilder;
@@ -149,7 +149,7 @@ public final class AgeToLostFixture {
 
     timedTaskClient.start(scheduledAgeToLostUrl(), 204, "scheduled-age-to-lost");
 
-    ClockManager.setDefaultClock();
+    ClockUtil.setDefaultClock();
   }
 
   public void chargeFees() {
@@ -158,7 +158,7 @@ public final class AgeToLostFixture {
     timedTaskClient.start(scheduledAgeToLostFeeChargingUrl(), 204,
       "scheduled-age-to-lost-fee-charging");
 
-    ClockManager.setDefaultClock();
+    ClockUtil.setDefaultClock();
   }
 
   public void ageToLostAndChargeFees() {
@@ -174,7 +174,7 @@ public final class AgeToLostFixture {
     final Response response = timedTaskClient.attemptRun(scheduledAgeToLostFeeChargingUrl(),
       "scheduled-age-to-lost-fee-charging");
 
-    ClockManager.setDefaultClock();
+    ClockUtil.setDefaultClock();
 
     return response;
   }
@@ -191,7 +191,7 @@ public final class AgeToLostFixture {
     final DateTime newDateTime = now().plusWeeks(weeks);
     final Clock fixedClocks = fixed(ofEpochMilli(newDateTime.getMillis()), ZoneOffset.UTC);
 
-    ClockManager.setClock(fixedClocks);
+    ClockUtil.setClock(fixedClocks);
   }
 
   @Getter

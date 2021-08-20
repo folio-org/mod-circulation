@@ -25,7 +25,7 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 
 import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.utils.ClockManager;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.jupiter.api.BeforeAll;
@@ -46,13 +46,13 @@ class HoldShelfExpirationDateTests extends APITests{
   @BeforeAll
   public static void setUpBeforeClass() {
     clock = Clock.fixed(Instant.now(), ZoneOffset.UTC);
-    ClockManager.setClock(clock);
+    ClockUtil.setClock(clock);
   }
 
   @BeforeEach
   public void setUp() {
     // reset the clock before each test (just in case)
-    ClockManager.setClock(clock);
+    ClockUtil.setClock(clock);
   }
 
   @ParameterizedTest
@@ -253,7 +253,7 @@ class HoldShelfExpirationDateTests extends APITests{
 
     Clock not30Days = Clock.fixed(Instant.EPOCH, ZoneOffset.UTC);
 
-    ClockManager.setClock(not30Days);
+    ClockUtil.setClock(not30Days);
 
     checkInFixture.checkInByBarcode(
         new CheckInByBarcodeRequestBuilder()

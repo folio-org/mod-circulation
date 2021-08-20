@@ -8,7 +8,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
 
-import org.folio.circulation.support.utils.ClockManager;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeUtils;
 
@@ -80,13 +80,13 @@ public class ScheduledNoticeProcessingClient {
 
     private void runWithFrozenClock(Runnable runnable, DateTime mockSystemTime) {
     try {
-      ClockManager.setClock(
+      ClockUtil.setClock(
         Clock.fixed(
           Instant.ofEpochMilli(mockSystemTime.getMillis()),
           ZoneOffset.UTC));
       runnable.run();
     } finally {
-      ClockManager.setDefaultClock();
+      ClockUtil.setDefaultClock();
     }
   }
 

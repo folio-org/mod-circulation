@@ -52,7 +52,7 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.fetching.PageableFetcher;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.results.Result;
-import org.folio.circulation.support.utils.ClockManager;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
 
 import lombok.val;
@@ -232,7 +232,7 @@ public class ChargeLostFeesWhenAgedToLostService {
     final String lostItemHasBeenBilled = AGED_TO_LOST_DELAYED_BILLING + "."
       + LOST_ITEM_HAS_BEEN_BILLED;
 
-    final DateTime currentDate = ClockManager.getDateTime();
+    final DateTime currentDate = ClockUtil.getDateTime();
 
     final Result<CqlQuery> billingDateQuery = lessThanOrEqualTo(billingDateProperty, currentDate);
     final Result<CqlQuery> agedToLostQuery = exactMatch(ITEM_STATUS, AGED_TO_LOST.getValue());

@@ -25,7 +25,7 @@ import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.notice.NoticeEventType;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.utils.ClockManager;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.ISODateTimeFormat;
@@ -62,7 +62,7 @@ class MoveRequestPolicyTests extends APITests {
   @BeforeEach
   public void setUp() {
     // reset the clock before each test (just in case)
-    ClockManager.setClock(clock);
+    ClockUtil.setClock(clock);
   }
 
   @BeforeEach
@@ -200,7 +200,7 @@ class MoveRequestPolicyTests extends APITests {
     assertThat("due date is the original date",
       storedLoan.getString("dueDate"), not(originalDueDate));
 
-    final String expectedDueDate = ClockManager.getDateTime().toString(ISODateTimeFormat.dateTime());
+    final String expectedDueDate = ClockUtil.getDateTime().toString(ISODateTimeFormat.dateTime());
     assertThat("due date is not the current date",
       storedLoan.getString("dueDate"), is(expectedDueDate));
 
@@ -232,7 +232,7 @@ class MoveRequestPolicyTests extends APITests {
     assertThat("due date is the original date",
       storedLoan.getString("dueDate"), not(originalDueDate));
 
-    final String expectedDueDate = ClockManager.getDateTime().toString(ISODateTimeFormat.dateTime());
+    final String expectedDueDate = ClockUtil.getDateTime().toString(ISODateTimeFormat.dateTime());
     assertThat("due date is not the current date",
       storedLoan.getString("dueDate"), is(expectedDueDate));
 
@@ -338,7 +338,7 @@ class MoveRequestPolicyTests extends APITests {
     assertThat("due date is the original date",
       storedLoan.getString("dueDate"), not(originalDueDate));
 
-    final String expectedDueDate = ClockManager.getDateTime().plusMonths(2).toString(ISODateTimeFormat.dateTime());
+    final String expectedDueDate = ClockUtil.getDateTime().plusMonths(2).toString(ISODateTimeFormat.dateTime());
     assertThat("due date is not the recall due date (2 months)",
       storedLoan.getString("dueDate"), is(expectedDueDate));
 
@@ -389,7 +389,7 @@ class MoveRequestPolicyTests extends APITests {
     assertThat("due date is the original date",
       storedLoan.getString("dueDate"), not(originalDueDate));
 
-    final String expectedDueDate = ClockManager.getDateTime().plusMonths(2).toString(ISODateTimeFormat.dateTime());
+    final String expectedDueDate = ClockUtil.getDateTime().plusMonths(2).toString(ISODateTimeFormat.dateTime());
     assertThat("due date is not the recall due date (2 months)",
       storedLoan.getString("dueDate"), is(expectedDueDate));
 

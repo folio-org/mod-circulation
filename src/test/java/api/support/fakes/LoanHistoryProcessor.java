@@ -7,7 +7,7 @@ import static api.support.http.InterfaceUrls.loanHistoryStorageUrl;
 import java.util.Map;
 import java.util.UUID;
 
-import org.folio.circulation.support.utils.ClockManager;
+import org.folio.circulation.support.utils.ClockUtil;
 
 import io.vertx.core.json.JsonObject;
 
@@ -25,7 +25,7 @@ public final class LoanHistoryProcessor {
     final JsonObject historyRecord = new JsonObject()
       .put("id", id)
       .put("operation", operation)
-      .put("createdDate", ClockManager.getDateTime().toString())
+      .put("createdDate", ClockUtil.getDateTime().toString())
       .put("loan", newLoan);
 
     getLoanHistoryStorage().put(id, historyRecord);

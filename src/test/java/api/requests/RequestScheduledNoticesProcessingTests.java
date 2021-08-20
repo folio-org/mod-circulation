@@ -26,7 +26,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.folio.circulation.domain.policy.Period;
-import org.folio.circulation.support.utils.ClockManager;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
 import org.junit.FixMethodOrder;
@@ -88,7 +88,7 @@ class RequestScheduledNoticesProcessingTests extends APITests {
       .create();
     setupNoticePolicyWithRequestNotice(noticeConfiguration);
 
-    final var requestExpiration = LocalDate.now(ClockManager.getClock()).minusDays(1);
+    final var requestExpiration = LocalDate.now(ClockUtil.getClock()).minusDays(1);
 
     IndividualResource request = requestsFixture.place(new RequestBuilder().page()
       .forItem(item)
@@ -127,7 +127,7 @@ class RequestScheduledNoticesProcessingTests extends APITests {
       .create();
     setupNoticePolicyWithRequestNotice(noticeConfiguration);
 
-    final var requestExpiration = LocalDate.now(ClockManager.getClock()).minusDays(1);
+    final var requestExpiration = LocalDate.now(ClockUtil.getClock()).minusDays(1);
 
     requestsFixture.place(new RequestBuilder().page()
       .forItem(item)
@@ -274,7 +274,7 @@ class RequestScheduledNoticesProcessingTests extends APITests {
       .create();
     setupNoticePolicyWithRequestNotice(noticeConfiguration);
 
-    final var requestExpiration = LocalDate.now(ClockManager.getClock()).plusDays(4);
+    final var requestExpiration = LocalDate.now(ClockUtil.getClock()).plusDays(4);
 
     IndividualResource request = requestsFixture.place(new RequestBuilder().page()
       .forItem(item)
@@ -307,7 +307,7 @@ class RequestScheduledNoticesProcessingTests extends APITests {
       .create();
     setupNoticePolicyWithRequestNotice(noticeConfiguration);
 
-    final var requestExpiration = LocalDate.now(ClockManager.getClock()).plusDays(2);
+    final var requestExpiration = LocalDate.now(ClockUtil.getClock()).plusDays(2);
 
     IndividualResource request = requestsFixture.place(new RequestBuilder().page()
       .forItem(item)
@@ -347,7 +347,7 @@ class RequestScheduledNoticesProcessingTests extends APITests {
       .create();
     setupNoticePolicyWithRequestNotice(noticeConfiguration);
 
-    final var requestExpiration = LocalDate.now(ClockManager.getClock()).plusMonths(3);
+    final var requestExpiration = LocalDate.now(ClockUtil.getClock()).plusMonths(3);
 
     IndividualResource request = requestsFixture.place(new RequestBuilder().page()
       .forItem(item)

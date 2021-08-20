@@ -4,7 +4,7 @@ import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
 import java.util.UUID;
 
-import org.folio.circulation.support.utils.ClockManager;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
@@ -12,7 +12,7 @@ import io.vertx.core.json.JsonObject;
 public class FeefineActionsBuilder extends JsonBuilder implements Builder {
 
   private String id;
-  private DateTime dateAction = ClockManager.getDateTime();
+  private DateTime dateAction = ClockUtil.getDateTime();
   private Double balance;
   private Double actionAmount;
   private String paymentMethod;

@@ -65,7 +65,7 @@ import org.folio.circulation.domain.policy.OverdueFinePolicy;
 import org.folio.circulation.domain.policy.lostitem.LostItemPolicy;
 import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.support.results.Result;
-import org.folio.circulation.support.utils.ClockManager;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
@@ -547,7 +547,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public boolean isOverdue() {
-    return isOverdue(ClockManager.getDateTime());
+    return isOverdue(ClockUtil.getDateTime());
   }
 
   public boolean isOverdue(DateTime systemTime) {

@@ -23,7 +23,7 @@ import org.folio.circulation.support.CqlSortBy;
 import org.folio.circulation.support.CqlSortClause;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.results.Result;
-import org.folio.circulation.support.utils.ClockManager;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
@@ -57,7 +57,7 @@ public class DueDateNotRealTimeScheduledNoticeProcessingResource extends Schedul
   }
 
   private DateTime startOfTodayInTimeZone(DateTimeZone zone) {
-    return ClockManager.getDateTime()
+    return ClockUtil.getDateTime()
       .withZone(zone)
       .withTimeAtStartOfDay();
   }

@@ -4,7 +4,7 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty
 
 import java.util.UUID;
 
-import org.folio.circulation.support.utils.ClockManager;
+import org.folio.circulation.support.utils.ClockUtil;
 
 import api.support.builders.UserManualBlockBuilder;
 import api.support.http.IndividualResource;
@@ -31,21 +31,21 @@ public class UserManualBlocksFixture {
   public void createRequestsManualPatronBlockForUser(UUID requesterId) {
     create(getManualBlockBuilder()
       .withRequests(true)
-      .withExpirationDate(ClockManager.getDateTime().plusYears(1))
+      .withExpirationDate(ClockUtil.getDateTime().plusYears(1))
       .withUserId(requesterId.toString()));
   }
 
   public void createRenewalsManualPatronBlockForUser(UUID requesterId) {
     create(getManualBlockBuilder()
       .withRenewals(true)
-      .withExpirationDate(ClockManager.getDateTime().plusYears(1))
+      .withExpirationDate(ClockUtil.getDateTime().plusYears(1))
       .withUserId(requesterId.toString()));
   }
 
   public void createBorrowingManualPatronBlockForUser(UUID requesterId) {
     create(getManualBlockBuilder()
       .withBorrowing(true)
-      .withExpirationDate(ClockManager.getDateTime().plusYears(1))
+      .withExpirationDate(ClockUtil.getDateTime().plusYears(1))
       .withUserId(requesterId.toString()));
   }
 

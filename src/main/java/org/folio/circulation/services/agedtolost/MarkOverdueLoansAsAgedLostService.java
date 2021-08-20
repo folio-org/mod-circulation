@@ -30,7 +30,7 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.fetching.PageableFetcher;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.results.Result;
-import org.folio.circulation.support.utils.ClockManager;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
 
 public class MarkOverdueLoansAsAgedLostService {
@@ -92,7 +92,7 @@ public class MarkOverdueLoansAsAgedLostService {
 
   private Loan ageItemToLost(Loan loan) {
     final LostItemPolicy lostItemPolicy = loan.getLostItemPolicy();
-    final DateTime ageToLostDate = ClockManager.getDateTime();
+    final DateTime ageToLostDate = ClockUtil.getDateTime();
     final boolean isRecalled = loan.wasDueDateChangedByRecall();
 
     final DateTime whenToBill = lostItemPolicy
@@ -138,7 +138,7 @@ public class MarkOverdueLoansAsAgedLostService {
 
   private Result<CqlQuery> loanFetchQuery() {
     final Result<CqlQuery> statusQuery = exactMatch("status.name", "Open");
-    final Result<CqlQuery> dueDateQuery = lessThan("dueDate", ClockManager.getDateTime());
+    final Result<CqlQuery> dueDateQuery = lessThan("dueDate", ClockUtil.getDateTime());
     final Result<CqlQuery> claimedReturnedQuery = notEqual("itemStatus", CLAIMED_RETURNED.getValue());
     final Result<CqlQuery> agedToLostQuery = notEqual("itemStatus", AGED_TO_LOST.getValue());
     final Result<CqlQuery> declaredLostQuery = notEqual("itemStatus", DECLARED_LOST.getValue());

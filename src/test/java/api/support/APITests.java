@@ -18,7 +18,7 @@ import java.time.ZoneOffset;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-import org.folio.circulation.support.utils.ClockManager;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
 import org.junit.Assert;
 import org.junit.jupiter.api.AfterEach;
@@ -381,13 +381,13 @@ public abstract class APITests {
   }
 
   protected void mockClockManagerToReturnFixedDateTime(DateTime dateTime) {
-    ClockManager.setClock(
+    ClockUtil.setClock(
       Clock.fixed(
         Instant.ofEpochMilli(dateTime.getMillis()),
         ZoneOffset.UTC));
   }
 
   protected void mockClockManagerToReturnDefaultDateTime() {
-    ClockManager.setDefaultClock();
+    ClockUtil.setDefaultClock();
   }
 }

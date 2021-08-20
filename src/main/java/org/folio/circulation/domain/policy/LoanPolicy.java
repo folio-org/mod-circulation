@@ -28,7 +28,7 @@ import org.folio.circulation.rules.AppliedRuleConditions;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
-import org.folio.circulation.support.utils.ClockManager;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
@@ -83,7 +83,7 @@ public class LoanPolicy extends Policy {
   }
 
   public Result<DateTime> calculateInitialDueDate(Loan loan, RequestQueue requestQueue) {
-    final DateTime systemTime = ClockManager.getDateTime();
+    final DateTime systemTime = ClockUtil.getDateTime();
     return determineStrategy(requestQueue, false, false, systemTime).calculateDueDate(loan);
   }
 
@@ -437,7 +437,7 @@ public class LoanPolicy extends Policy {
         getDueDate("minimumGuaranteedLoanPeriod", recalls,
             loan.getLoanDate(), null);
 
-    final DateTime systemDate = ClockManager.getDateTime();
+    final DateTime systemDate = ClockUtil.getDateTime();
 
     final Result<DateTime> recallDueDateResult =
         loan.isOverdue() &&

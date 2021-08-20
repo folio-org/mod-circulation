@@ -13,10 +13,10 @@ import org.joda.time.LocalTime;
 /**
  * A clock manager for safely getting and setting the time.
  */
-public class ClockManager {
+public class ClockUtil {
   private static Clock clock = Clock.systemUTC();
 
-  private ClockManager() {
+  private ClockUtil() {
     throw new UnsupportedOperationException("Do not instantiate");
   }
 
@@ -28,7 +28,7 @@ public class ClockManager {
       throw new IllegalArgumentException("clock cannot be null");
     }
 
-    ClockManager.clock = clock;
+    ClockUtil.clock = clock;
   }
 
   /**

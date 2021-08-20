@@ -4,7 +4,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
-import org.folio.circulation.support.utils.ClockManager;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
 
 import lombok.AllArgsConstructor;
@@ -34,7 +34,7 @@ public class CheckInContext {
 
   public CheckInContext(CheckInByBarcodeRequest checkInRequest) {
     this(checkInRequest, null, null, null, null, null, null,
-      ClockManager.getDateTime(), false, null);
+      ClockUtil.getDateTime(), false, null);
   }
 
   public CheckInContext withItem(Item item) {

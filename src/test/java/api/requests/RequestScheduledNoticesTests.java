@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.policy.Period;
-import org.folio.circulation.support.utils.ClockManager;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -73,7 +73,7 @@ class RequestScheduledNoticesTests extends APITests {
 
     useDefaultRollingPoliciesAndOnlyAllowPageRequests(noticePolicyBuilder);
 
-    final var requestExpiration = java.time.LocalDate.now(ClockManager.getClock()).plusMonths(3);
+    final var requestExpiration = java.time.LocalDate.now(ClockUtil.getClock()).plusMonths(3);
 
     IndividualResource request = requestsFixture.place(new RequestBuilder().page()
       .forItem(item)
@@ -176,7 +176,7 @@ class RequestScheduledNoticesTests extends APITests {
 
     useDefaultRollingPoliciesAndOnlyAllowPageRequests(noticePolicyBuilder);
 
-    final var requestExpiration = java.time.LocalDate.now(ClockManager.getClock()).plusMonths(3);
+    final var requestExpiration = java.time.LocalDate.now(ClockUtil.getClock()).plusMonths(3);
 
     IndividualResource request = requestsFixture.place(new RequestBuilder().page()
       .forItem(item)
@@ -221,7 +221,7 @@ class RequestScheduledNoticesTests extends APITests {
 
     useDefaultRollingPoliciesAndOnlyAllowPageRequests(noticePolicyBuilder);
 
-    final var requestExpiration = java.time.LocalDate.now(ClockManager.getClock()).plusMonths(3);
+    final var requestExpiration = java.time.LocalDate.now(ClockUtil.getClock()).plusMonths(3);
 
     RequestBuilder requestBuilder = new RequestBuilder().page()
       .forItem(item)
@@ -290,7 +290,7 @@ class RequestScheduledNoticesTests extends APITests {
 
     useDefaultRollingPoliciesAndOnlyAllowPageRequests(noticePolicyBuilder);
 
-    final var requestExpiration = java.time.LocalDate.now(ClockManager.getClock()).plusMonths(3);
+    final var requestExpiration = java.time.LocalDate.now(ClockUtil.getClock()).plusMonths(3);
 
     RequestBuilder requestBuilder = new RequestBuilder().page()
       .forItem(item)
@@ -342,7 +342,7 @@ class RequestScheduledNoticesTests extends APITests {
 
     useDefaultRollingPoliciesAndOnlyAllowPageRequests(noticePolicyBuilder);
 
-    final var requestExpiration = java.time.LocalDate.now(ClockManager.getClock()).plusMonths(3);
+    final var requestExpiration = java.time.LocalDate.now(ClockUtil.getClock()).plusMonths(3);
 
     RequestBuilder requestBuilder = new RequestBuilder().page()
       .forItem(item)
@@ -412,7 +412,7 @@ class RequestScheduledNoticesTests extends APITests {
 
     useDefaultRollingPoliciesAndOnlyAllowPageRequests(noticePolicyBuilder);
 
-    final var requestExpiration = java.time.LocalDate.now(ClockManager.getClock()).plusMonths(3);
+    final var requestExpiration = java.time.LocalDate.now(ClockUtil.getClock()).plusMonths(3);
 
     RequestBuilder requestBuilder = new RequestBuilder().page()
       .forItem(item)

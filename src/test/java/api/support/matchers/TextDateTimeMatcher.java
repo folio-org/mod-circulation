@@ -7,7 +7,7 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 
-import org.folio.circulation.support.utils.ClockManager;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
@@ -100,6 +100,6 @@ public class TextDateTimeMatcher {
   }
 
   public static Matcher<String> withinSecondsBeforeNow(Seconds seconds) {
-    return withinSecondsBefore(seconds, ClockManager.getDateTime());
+    return withinSecondsBefore(seconds, ClockUtil.getDateTime());
   }
 }
