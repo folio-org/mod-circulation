@@ -100,7 +100,7 @@ public class DateTimeUtil {
   }
 
   /**
-   * Get the last second of the day.
+   * Get the first second of the day.
    * <p>
    * This operates in the time zone specified by dateTime.
    * <p>
@@ -130,7 +130,37 @@ public class DateTimeUtil {
   }
 
   /**
+   * Get the first second of the day.
+   * <p>
+   * This operates in the time zone specified by dateTime.
+   * <p>
+   * This will truncate to seconds.
+   *
+   * @param LocalDate The localDate to convert.
+   * @return The converted localDate.
+   */
+  public static ZonedDateTime atStartOfTheDay(java.time.LocalDate localDate) {
+    return localDate.atStartOfDay(ClockUtil.getZoneId())
+      .truncatedTo(ChronoUnit.SECONDS);
+  }
+
+  /**
    * Get the last second of the day.
+   * <p>
+   * This operates in the time zone specified by dateTime.
+   * <p>
+   * This will truncate to seconds.
+   *
+   * @param dateTime The localDate to convert.
+   * @return The converted localDate.
+   */
+  public static ZonedDateTime atEndOfTheDay(java.time.LocalDate localDate) {
+    return ZonedDateTime.of(localDate.atTime(23, 59, 59, 0)
+      .truncatedTo(ChronoUnit.SECONDS), ClockUtil.getZoneId());
+  }
+
+  /**
+   * Get the first second of the day.
    *
    * TODO: Remove this after migrating from JodaTime to JavaTime.
    *
@@ -154,6 +184,32 @@ public class DateTimeUtil {
   }
 
   /**
+   * Get the first second of the day.
+   *
+   * TODO: Remove this after migrating from JodaTime to JavaTime.
+   *
+   * @param LocalDate The localDate to convert.
+   * @return The converted localDate.
+   */
+  public static DateTime atStartOfTheDay(org.joda.time.LocalDate localDate) {
+    return localDate.toDateTimeAtStartOfDay();
+  }
+
+  /**
+   * Get the last second of the day.
+   *
+   * TODO: Remove this after migrating from JodaTime to JavaTime.
+   *
+   * @param dateTime The localDate to convert.
+   * @return The converted localDate.
+   */
+  public static DateTime atEndOfTheDay(org.joda.time.LocalDate localDate) {
+    return localDate.toDateTime(org.joda.time.LocalTime.now()
+      .withHourOfDay(23).withMinuteOfHour(59).withSecondOfMinute(59)
+      .withMillisOfSecond(0), DateTimeZone.UTC);
+  }
+
+  /**
    * Finds the most recent dateTime from a series of dateTimes.
    *
    * @param dates A series of dateTimes.
@@ -164,6 +220,20 @@ public class DateTimeUtil {
     return Stream.of(dates)
       .filter(Objects::nonNull)
       .max(DateTime::compareTo)
+      .orElse(null);
+  }
+
+  /**
+   * Finds the most recent dateTime from a series of dateTimes.
+   *
+   * @param dates A series of dateTimes.
+   * @return The dateTime that is most recent or NULL if no valid dateTimes
+   * provided.
+   */
+  public static ZonedDateTime mostRecentDate(ZonedDateTime... dates) {
+    return Stream.of(dates)
+      .filter(Objects::nonNull)
+      .max(ZonedDateTime::compareTo)
       .orElse(null);
   }
 

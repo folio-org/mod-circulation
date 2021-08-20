@@ -3,6 +3,11 @@ package org.folio.circulation.support.utils;
 import static java.time.ZoneOffset.UTC;
 
 import java.time.Clock;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -46,6 +51,28 @@ public class ClockUtil {
    */
   public static Clock getClock() {
     return clock;
+  }
+
+  /**
+   * Get the current system time according to the clock manager.
+   *
+   * @return
+   *   A ZonedDateTime as if now() is called.
+   *   Time is truncated to milliseconds.
+   */
+  public static ZonedDateTime getZonedDateTime() {
+    return ZonedDateTime.now(clock).truncatedTo(ChronoUnit.MILLIS);
+  }
+
+  /**
+   * Get the current system time according to the clock manager.
+   *
+   * @return
+   *   An OffsetDateTime as if now() is called.
+   *   Time is truncated to milliseconds.
+   */
+  public static OffsetDateTime getOffsetDateTime() {
+    return OffsetDateTime.now(clock).truncatedTo(ChronoUnit.MILLIS);
   }
 
   /**
@@ -131,6 +158,27 @@ public class ClockUtil {
    */
   public static DateTimeZone getDateTimeZone() {
     return jodaTimezone();
+  }
+
+  /**
+   * Get the timezone of the system clock according to the clock manager.
+   *
+   * @return
+   *   The current timezone as a ZoneId.
+   */
+  public static ZoneId getZoneId() {
+    return clock.getZone();
+  }
+
+  /**
+   * Get the timezone of the system clock according to the clock manager.
+   *
+   * @return
+   *   The current timezone as a ZoneOffset.
+   */
+  public static ZoneOffset getZoneOffset() {
+    return ZoneOffset.of(clock.getZone().getRules().getOffset(clock.instant())
+      .getId());
   }
 
   /**
