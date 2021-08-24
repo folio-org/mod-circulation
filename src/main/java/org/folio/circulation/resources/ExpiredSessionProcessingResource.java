@@ -15,12 +15,12 @@ import org.folio.circulation.domain.notice.session.PatronActionSessionService;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.sessions.PatronExpiredSessionRepository;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.server.NoContentResponse;
 import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.CommonFailures;
 import org.folio.circulation.support.results.Result;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
 
 import io.vertx.core.http.HttpClient;
@@ -66,7 +66,7 @@ public class ExpiredSessionProcessingResource extends Resource {
   }
 
   private CompletableFuture<Result<DateTime>> defineExpiredTime(Integer timeout) {
-    final DateTime now = ClockManager.getClockManager().getDateTime();
+    final DateTime now = ClockUtil.getDateTime();
     Result<DateTime> dateTimeResult = Result.succeeded(now.minusMinutes(timeout));
     return CompletableFuture.completedFuture(dateTimeResult);
   }

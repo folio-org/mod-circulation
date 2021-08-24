@@ -17,7 +17,6 @@ import static org.folio.circulation.domain.policy.DueDateManagement.KEEP_THE_CUR
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_TYPE;
 import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_MOVED;
-import static org.folio.circulation.support.ClockManager.getClockManager;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -41,6 +40,7 @@ import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.policy.Period;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -66,7 +66,7 @@ class MoveRequestTests extends APITests {
 
   @AfterEach
   public void after() {
-    getClockManager().setClock(Clock.systemUTC());
+    ClockUtil.setClock(Clock.systemUTC());
   }
 
   @Test
@@ -925,8 +925,6 @@ class MoveRequestTests extends APITests {
     val steve = usersFixture.steve();
     val jessica = usersFixture.jessica();
 
-    final var clockManager = getClockManager();
-
     configClient.create(timezoneConfigurationFor(stockholmTimeZone));
 
     final LoanPolicyBuilder canCirculateRollingPolicy = new LoanPolicyBuilder()
@@ -946,21 +944,21 @@ class MoveRequestTests extends APITests {
       overdueFinePoliciesFixture.facultyStandard().getId(),
       lostItemFeePoliciesFixture.facultyStandard().getId());
 
-    clockManager.setClock(fixed(Instant.parse("2021-02-15T11:24:45Z"), ZoneId.of("UTC")));
+    ClockUtil.setClock(fixed(Instant.parse("2021-02-15T11:24:45Z"), ZoneId.of("UTC")));
 
     checkOutFixture.checkOutByBarcode(sourceItem, steve);
 
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(destinationItem, steve);
 
     //3 days later
-    clockManager.setClock(offset(clockManager.getClock(), ofDays(3)));
+    ClockUtil.setClock(offset(ClockUtil.getClock(), ofDays(3)));
 
     final IndividualResource recallRequest = requestsFixture.place(
       new RequestBuilder()
         .recall()
         .forItem(sourceItem)
         .by(jessica)
-        .withRequestDate(clockManager.getDateTime())
+        .withRequestDate(ClockUtil.getDateTime())
         .withPickupServicePoint(requestServicePoint));
 
     requestsFixture.move(new MoveRequestBuilder(recallRequest.getId(),
@@ -1043,7 +1041,7 @@ class MoveRequestTests extends APITests {
   }
 
   private void freezeTime(Instant dateTime) {
-    getClockManager().setClock(
+    ClockUtil.setClock(
       fixed(dateTime, ZoneOffset.UTC));
   }
 
