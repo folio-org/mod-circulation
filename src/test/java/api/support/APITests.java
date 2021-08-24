@@ -381,10 +381,8 @@ public abstract class APITests {
   }
 
   protected void mockClockManagerToReturnFixedDateTime(DateTime dateTime) {
-    ClockUtil.setClock(
-      Clock.fixed(
-        Instant.ofEpochMilli(dateTime.getMillis()),
-        ZoneOffset.UTC));
+    ClockUtil.setClock(Clock.fixed(Instant.ofEpochMilli(dateTime.getMillis()),
+      ZoneOffset.UTC));
   }
 
   protected void mockClockManagerToReturnDefaultDateTime() {

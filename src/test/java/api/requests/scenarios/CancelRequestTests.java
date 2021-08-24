@@ -10,7 +10,6 @@ import static org.folio.circulation.domain.representations.logs.LogEventType.NOT
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
-import static org.joda.time.DateTimeZone.UTC;
 
 import java.time.LocalDate;
 import java.util.Collection;
@@ -18,6 +17,7 @@ import java.util.Collections;
 import java.util.UUID;
 
 import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.jupiter.api.Test;
@@ -43,7 +43,7 @@ class CancelRequestTests extends APITests {
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     final IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, jessica, DateTime.now(UTC).minusHours(5));
+      smallAngryPlanet, jessica, ClockUtil.getDateTime().minusHours(5));
 
     requestsFixture.cancelRequest(requestByJessica);
 
@@ -75,16 +75,16 @@ class CancelRequestTests extends APITests {
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     final IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, jessica, DateTime.now(UTC).minusHours(5));
+      smallAngryPlanet, jessica, ClockUtil.getDateTime().minusHours(5));
 
     final IndividualResource requestBySteve = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, steve, DateTime.now(UTC).minusHours(4));
+      smallAngryPlanet, steve, ClockUtil.getDateTime().minusHours(4));
 
     final IndividualResource requestByCharlotte = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, charlotte, DateTime.now(UTC).minusHours(3));
+      smallAngryPlanet, charlotte, ClockUtil.getDateTime().minusHours(3));
 
     final IndividualResource requestByRebecca = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, rebecca, DateTime.now(UTC).minusHours(2));
+      smallAngryPlanet, rebecca, ClockUtil.getDateTime().minusHours(2));
 
     requestsFixture.cancelRequest(requestBySteve);
 
@@ -119,16 +119,16 @@ class CancelRequestTests extends APITests {
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     final IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, jessica, DateTime.now(UTC).minusHours(5));
+      smallAngryPlanet, jessica, ClockUtil.getDateTime().minusHours(5));
 
     final IndividualResource requestBySteve = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, steve, DateTime.now(UTC).minusHours(4));
+      smallAngryPlanet, steve, ClockUtil.getDateTime().minusHours(4));
 
     final IndividualResource requestByCharlotte = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, charlotte, DateTime.now(UTC).minusHours(3));
+      smallAngryPlanet, charlotte, ClockUtil.getDateTime().minusHours(3));
 
     final IndividualResource requestByRebecca = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, rebecca, DateTime.now(UTC).minusHours(2));
+      smallAngryPlanet, rebecca, ClockUtil.getDateTime().minusHours(2));
 
     requestsFixture.cancelRequest(requestByJessica);
 
@@ -163,16 +163,16 @@ class CancelRequestTests extends APITests {
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     final IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, jessica, DateTime.now(UTC).minusHours(5));
+      smallAngryPlanet, jessica, ClockUtil.getDateTime().minusHours(5));
 
     final IndividualResource requestBySteve = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, steve, DateTime.now(UTC).minusHours(4));
+      smallAngryPlanet, steve, ClockUtil.getDateTime().minusHours(4));
 
     final IndividualResource requestByCharlotte = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, charlotte, DateTime.now(UTC).minusHours(3));
+      smallAngryPlanet, charlotte, ClockUtil.getDateTime().minusHours(3));
 
     final IndividualResource requestByRebecca = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, rebecca, DateTime.now(UTC).minusHours(2));
+      smallAngryPlanet, rebecca, ClockUtil.getDateTime().minusHours(2));
 
     requestsFixture.cancelRequest(requestByRebecca);
 

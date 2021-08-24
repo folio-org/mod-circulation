@@ -10,8 +10,7 @@ import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.library.ClosedLibraryStrategyService;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
+import org.folio.circulation.support.utils.ClockUtil;
 
 public class LoanService {
 
@@ -19,7 +18,7 @@ public class LoanService {
 
   public LoanService(Clients clients) {
     closedLibraryStrategyService = ClosedLibraryStrategyService.using(clients,
-      DateTime.now(DateTimeZone.UTC), false);
+      ClockUtil.getDateTime(), false);
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> truncateLoanWhenItemRecalled(

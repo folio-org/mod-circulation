@@ -454,7 +454,7 @@ class OverdueFineCalculatorServiceTest {
       Double maxOverdueRecallFine, Integer periodCalculatorResult, Double correctOverdueFine)
       throws ExecutionException, InterruptedException {
 
-    DateTime dueDateInFuture = DateTime.now(DateTimeZone.UTC).plusDays(1);
+    DateTime dueDateInFuture = ClockUtil.getDateTime().plusDays(1);
     Loan loan = createLoan(overdueFine, overdueFineInterval, overdueRecallFine,
       overdueRecallFineInterval, maxOverdueFine, maxOverdueRecallFine,
       dueDateChangedByRecall).changeDueDate(dueDateInFuture);

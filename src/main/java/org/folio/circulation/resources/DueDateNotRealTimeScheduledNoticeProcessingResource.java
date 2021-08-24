@@ -94,7 +94,7 @@ public class DueDateNotRealTimeScheduledNoticeProcessingResource extends Schedul
       .map(Map.Entry::getValue)
       .collect(Collectors.toList());
 
-    return new GroupedLoanScheduledNoticeHandler(clients, DateTime.now(DateTimeZone.UTC))
+    return new GroupedLoanScheduledNoticeHandler(clients, ClockUtil.getDateTime())
       .handleNotices(noticeGroups)
       .thenApply(mapResult(v -> notices));
   }

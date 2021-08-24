@@ -1,19 +1,21 @@
 package api.support.builders;
 
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
-import api.support.OpeningDayPeriod;
-
-import org.joda.time.DateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collector;
 
+import org.folio.circulation.support.utils.ClockUtil;
+import org.joda.time.DateTime;
+
+import api.support.OpeningDayPeriod;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
+
 public class CalendarBuilder extends JsonBuilder implements Builder {
 
   private static final String CALENDAR_NAME = "Calendar Name";
-  private static final String START_DATE = DateTime.now().minusMonths(1).toString();
-  private static final String END_DATE = DateTime.now().plusMonths(6).toString();
+  private static final String START_DATE = ClockUtil.getDateTime().minusMonths(1).toString();
+  private static final String END_DATE = ClockUtil.getDateTime().plusMonths(6).toString();
 
   private static final String ID_KEY = "id";
   private static final String SERVICE_POINT_ID_KEY = "servicePointId";

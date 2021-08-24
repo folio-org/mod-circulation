@@ -9,7 +9,6 @@ import static org.folio.HttpStatus.HTTP_CREATED;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.joda.time.DateTime.now;
 import static org.joda.time.DateTimeZone.UTC;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -22,6 +21,7 @@ import java.util.UUID;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
 import org.junit.jupiter.api.Test;
 
@@ -332,8 +332,8 @@ class InstanceRequestsAPICreationTests extends APITests {
       itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(),
         locationsResource.getId());
 
-    loansFixture.createLoan(item1, usersFixture.charlotte(), now().plusDays(2));
-    loansFixture.createLoan(item2, usersFixture.charlotte(), now());
+    loansFixture.createLoan(item1, usersFixture.charlotte(), ClockUtil.getDateTime().plusDays(2));
+    loansFixture.createLoan(item2, usersFixture.charlotte(), ClockUtil.getDateTime());
 
     //Set up request queues. Item1 has requests (1 queued request), Item2 is requests (1 queued), either should be satisfied.
     placeHoldRequest(item1, pickupServicePointId, usersFixture.jessica(),
@@ -498,8 +498,8 @@ class InstanceRequestsAPICreationTests extends APITests {
       itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(),
         locationsResource.getId());
 
-    loansFixture.createLoan(item1, usersFixture.james(),  now());
-    loansFixture.createLoan(item2, usersFixture.rebecca(), now().plusDays(5));
+    loansFixture.createLoan(item1, usersFixture.james(),  ClockUtil.getDateTime());
+    loansFixture.createLoan(item2, usersFixture.rebecca(), ClockUtil.getDateTime().plusDays(5));
 
     IndividualResource instanceRequester = usersFixture.charlotte();
 
@@ -555,9 +555,9 @@ class InstanceRequestsAPICreationTests extends APITests {
       itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(),
         locationsResource.getId());
 
-    loansFixture.createLoan(item1, usersFixture.james(),  now().plusDays(5));
-    loansFixture.createLoan(item2, usersFixture.rebecca(), now().plusDays(3));
-    loansFixture.createLoan(item3, usersFixture.steve(), now().plusDays(10));
+    loansFixture.createLoan(item1, usersFixture.james(),  ClockUtil.getDateTime().plusDays(5));
+    loansFixture.createLoan(item2, usersFixture.rebecca(), ClockUtil.getDateTime().plusDays(3));
+    loansFixture.createLoan(item3, usersFixture.steve(), ClockUtil.getDateTime().plusDays(10));
 
     IndividualResource instanceRequester = usersFixture.charlotte();
 
@@ -612,8 +612,8 @@ class InstanceRequestsAPICreationTests extends APITests {
       itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(),
         locationsResource.getId());
 
-    loansFixture.createLoan(item1, usersFixture.james(),  now().plusDays(21));
-    loansFixture.createLoan(item2, usersFixture.rebecca(), now().plusDays(5));
+    loansFixture.createLoan(item1, usersFixture.james(),  ClockUtil.getDateTime().plusDays(21));
+    loansFixture.createLoan(item2, usersFixture.rebecca(), ClockUtil.getDateTime().plusDays(5));
 
     //Set up request queues. Item1 has requests (1 queued request), Item2 is requests (1 queued), either should be satisfied
     //but only item2 should a request be placed on because its due date is nearest.
@@ -684,7 +684,7 @@ class InstanceRequestsAPICreationTests extends APITests {
         cd4Location.getId());
 
     //All of these items are checked out, have the same queue length, and due dates
-    DateTime sameCheckoutDate = now();
+    DateTime sameCheckoutDate = ClockUtil.getDateTime();
     loansFixture.createLoan(item1, usersFixture.steve(), sameCheckoutDate );
     loansFixture.createLoan(item2, usersFixture.jessica(), sameCheckoutDate );
     loansFixture.createLoan(item3, usersFixture.james(), sameCheckoutDate );
@@ -728,7 +728,7 @@ class InstanceRequestsAPICreationTests extends APITests {
 
     //For simplicity and by default, these items' request queue lengths are 0.
     //One item is "Checked out", the other item is  "In process"
-    loansFixture.createLoan(item2, usersFixture.steve(), now());
+    loansFixture.createLoan(item2, usersFixture.steve(), ClockUtil.getDateTime());
 
     JsonObject requestBody = createInstanceRequestObject(
       instanceMultipleCopies.getId(),

@@ -40,7 +40,6 @@ import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static api.support.utl.BlockOverridesUtils.getMissingPermissions;
-import static api.support.utl.DateTimeUtils.executeWithFixedDateTime;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.domain.EventType.ITEM_CHECKED_OUT;
 import static org.folio.circulation.domain.policy.DueDateManagement.KEEP_THE_CURRENT_DUE_DATE;
@@ -75,6 +74,7 @@ import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.domain.representations.logs.LogEventType;
 import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalTime;
@@ -268,7 +268,7 @@ class CheckOutByBarcodeTests extends APITests {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
 
-    final DateTime loanDate = DateTime.now(UTC)
+    final DateTime loanDate = ClockUtil.getDateTime()
       .withMonthOfYear(3)
       .withDayOfMonth(18)
       .withHourOfDay(11)
@@ -372,7 +372,7 @@ class CheckOutByBarcodeTests extends APITests {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
 
-    final DateTime requestDate = DateTime.now();
+    final DateTime requestDate = ClockUtil.getDateTime();
 
     final IndividualResource response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -1330,7 +1330,7 @@ class CheckOutByBarcodeTests extends APITests {
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
-        .on(DateTime.now(UTC))
+        .on(ClockUtil.getDateTime())
         .at(UUID.randomUUID()));
 
     final JsonObject loan = response.getJson();
@@ -1376,7 +1376,7 @@ class CheckOutByBarcodeTests extends APITests {
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
-        .on(DateTime.now(UTC))
+        .on(ClockUtil.getDateTime())
         .at(UUID.randomUUID()));
 
     final JsonObject loan = response.getJson();
@@ -1421,7 +1421,7 @@ class CheckOutByBarcodeTests extends APITests {
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
-        .on(DateTime.now(UTC))
+        .on(ClockUtil.getDateTime())
         .at(UUID.randomUUID()));
 
     assertThat(response.getBody(), containsString(
@@ -1443,7 +1443,7 @@ class CheckOutByBarcodeTests extends APITests {
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
-        .on(DateTime.now(UTC))
+        .on(ClockUtil.getDateTime())
         .at(UUID.randomUUID()));
 
     usersFixture.remove(steve);
@@ -1990,12 +1990,14 @@ class CheckOutByBarcodeTests extends APITests {
     DateTime patronExpirationDate = loanDate.plusHours(2);
     IndividualResource steve = usersFixture.steve(user -> user.expires(patronExpirationDate));
 
-    JsonObject response = executeWithFixedDateTime(() -> checkOutFixture.checkOutByBarcode(
+    mockClockManagerToReturnFixedDateTime(loanDate);
+    JsonObject response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(item)
         .to(steve)
         .on(loanDate)
-        .at(CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_CLOSED)).getJson(), loanDate);
+        .at(CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_CLOSED)).getJson();
+    mockClockManagerToReturnDefaultDateTime();
 
     assertThat(DateTime.parse(response.getString("dueDate")).toDateTime(),
       is(FIRST_DAY_OPEN.toDateTime(LocalTime.MIDNIGHT.minusSeconds(1), UTC)));
@@ -2010,12 +2012,14 @@ class CheckOutByBarcodeTests extends APITests {
     DateTime patronExpirationDate = loanDate.plusHours(1);
     IndividualResource steve = usersFixture.steve(user -> user.expires(patronExpirationDate));
 
-    JsonObject response = executeWithFixedDateTime(() -> checkOutFixture.checkOutByBarcode(
+    mockClockManagerToReturnFixedDateTime(loanDate);
+    JsonObject response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(item)
         .to(steve)
         .on(loanDate)
-        .at(CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_OPEN)).getJson(), loanDate);
+        .at(CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_OPEN)).getJson();
+    mockClockManagerToReturnDefaultDateTime();
 
     assertThat(DateTime.parse(response.getString("dueDate")).toDateTime(),
       is(FIRST_DAY_OPEN.toDateTime(LocalTime.MIDNIGHT.minusSeconds(1), UTC)));
@@ -2030,12 +2034,14 @@ class CheckOutByBarcodeTests extends APITests {
     DateTime patronExpirationDate = loanDate.plusHours(1);
     IndividualResource steve = usersFixture.steve(user -> user.expires(patronExpirationDate));
 
-    JsonObject response = executeWithFixedDateTime(() -> checkOutFixture.checkOutByBarcode(
+    mockClockManagerToReturnFixedDateTime(loanDate);
+    JsonObject response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(item)
         .to(steve)
         .on(loanDate)
-        .at(CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_OPEN)).getJson(), loanDate);
+        .at(CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_OPEN)).getJson();
+    mockClockManagerToReturnDefaultDateTime();
 
     assertThat(DateTime.parse(response.getString("dueDate")).toDateTime(),
       is(patronExpirationDate));
@@ -2049,12 +2055,14 @@ class CheckOutByBarcodeTests extends APITests {
     DateTime patronExpirationDate = loanDate.plusHours(1);
     IndividualResource steve = usersFixture.steve(user -> user.expires(patronExpirationDate));
 
-    JsonObject response = executeWithFixedDateTime(() -> checkOutFixture.checkOutByBarcode(
+    mockClockManagerToReturnFixedDateTime(loanDate);
+    JsonObject response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(item)
         .to(steve)
         .on(loanDate)
-        .at(CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_OPEN)).getJson(), loanDate);
+        .at(CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_OPEN)).getJson();
+    mockClockManagerToReturnDefaultDateTime();
 
     assertThat(DateTime.parse(response.getString("dueDate")).toDateTime(), is(patronExpirationDate));
   }
@@ -2069,12 +2077,14 @@ class CheckOutByBarcodeTests extends APITests {
     DateTime patronExpirationDate = loanDate.plusHours(12);
     IndividualResource steve = usersFixture.steve(user -> user.expires(patronExpirationDate));
 
-    JsonObject response = executeWithFixedDateTime(() -> checkOutFixture.checkOutByBarcode(
+    mockClockManagerToReturnFixedDateTime(loanDate);
+    JsonObject response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(item)
         .to(steve)
         .on(loanDate)
-        .at(CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_OPEN)).getJson(), loanDate);
+        .at(CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_OPEN)).getJson();
+    mockClockManagerToReturnDefaultDateTime();
 
     assertThat(DateTime.parse(response.getString("dueDate")).toDateTime(),
       is(FIRST_DAY_OPEN.toDateTime(END_TIME_SECOND_PERIOD, UTC)));
@@ -2090,12 +2100,14 @@ class CheckOutByBarcodeTests extends APITests {
     DateTime patronExpirationDate = loanDate.plusHours(12);
     IndividualResource steve = usersFixture.steve(user -> user.expires(patronExpirationDate));
 
-    JsonObject response = executeWithFixedDateTime(() -> checkOutFixture.checkOutByBarcode(
+    mockClockManagerToReturnFixedDateTime(loanDate);
+    JsonObject response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(item)
         .to(steve)
         .on(loanDate)
-        .at(CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_OPEN)).getJson(), loanDate);
+        .at(CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_OPEN)).getJson();
+    mockClockManagerToReturnDefaultDateTime();
 
     assertThat(DateTime.parse(response.getString("dueDate")).toDateTime(),
       is(FIRST_DAY_OPEN.toDateTime(END_TIME_SECOND_PERIOD, UTC)));
@@ -2111,12 +2123,14 @@ class CheckOutByBarcodeTests extends APITests {
     DateTime patronExpirationDate = loanDate.plusDays(1);
     IndividualResource steve = usersFixture.steve(user -> user.expires(patronExpirationDate));
 
-    JsonObject response = executeWithFixedDateTime(() -> checkOutFixture.checkOutByBarcode(
+    mockClockManagerToReturnFixedDateTime(loanDate);
+    JsonObject response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(item)
         .to(steve)
         .on(loanDate)
-        .at(CASE_MON_WED_FRI_OPEN_TUE_THU_CLOSED)).getJson(), loanDate);
+        .at(CASE_MON_WED_FRI_OPEN_TUE_THU_CLOSED)).getJson();
+    mockClockManagerToReturnDefaultDateTime();
 
     assertThat(DateTime.parse(response.getString("dueDate")).toDateTime(),
       is(MONDAY_DATE.toDateTime(LocalTime.MIDNIGHT.minusSeconds(1), UTC)));
@@ -2132,12 +2146,14 @@ class CheckOutByBarcodeTests extends APITests {
     DateTime patronExpirationDate = loanDate.plusDays(1);
     IndividualResource steve = usersFixture.steve(user -> user.expires(patronExpirationDate));
 
-    JsonObject response = executeWithFixedDateTime(() -> checkOutFixture.checkOutByBarcode(
+    mockClockManagerToReturnFixedDateTime(loanDate);
+    JsonObject response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(item)
         .to(steve)
         .on(loanDate)
-        .at(CASE_MON_WED_FRI_OPEN_TUE_THU_CLOSED)).getJson(), loanDate);
+        .at(CASE_MON_WED_FRI_OPEN_TUE_THU_CLOSED)).getJson();
+    mockClockManagerToReturnDefaultDateTime();
 
     assertThat(DateTime.parse(response.getString("dueDate")).toDateTime(),
       is(MONDAY_DATE.toDateTime(LocalTime.MIDNIGHT.minusSeconds(1), UTC)));

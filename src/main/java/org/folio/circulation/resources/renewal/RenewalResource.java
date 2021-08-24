@@ -89,8 +89,8 @@ import org.folio.circulation.support.http.server.JsonHttpResponse;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.Result;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
@@ -288,7 +288,7 @@ public abstract class RenewalResource extends Resource {
         .thenApply(r -> errorHandler.handleValidationResult(r, RENEWAL_VALIDATION_ERROR,
           renewalContext));
     }
-    DateTime systemTime = DateTime.now(DateTimeZone.UTC);
+    DateTime systemTime = ClockUtil.getDateTime();
     final ClosedLibraryStrategyService strategyService = ClosedLibraryStrategyService.using(
       clients, systemTime, true);
 
@@ -363,7 +363,7 @@ public abstract class RenewalResource extends Resource {
         .map(r -> r.getRequestType() == RequestType.RECALL)
         .orElse(false);
 
-    return completedFuture(overrideRenewal(loan, DateTime.now(DateTimeZone.UTC),
+    return completedFuture(overrideRenewal(loan, ClockUtil.getDateTime(),
       overrideDueDate, comment, hasRecallRequest))
       .thenApply(mapResult(context::withLoan));
   }

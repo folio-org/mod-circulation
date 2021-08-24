@@ -19,10 +19,8 @@ import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.Period;
-import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeUtils;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalTime;
 import org.junit.jupiter.api.Test;
@@ -31,6 +29,7 @@ import api.support.APITests;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.fixtures.ConfigurationExample;
+import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
 
 /**
@@ -186,14 +185,14 @@ class CheckOutCalculateDueDateShortTermTests extends APITests {
     useFallbackPolicies(loanPolicy.getId(), requestPolicyId, noticePolicyId,
       overdueFinePolicy.getId(), lostItemFeePolicy.getId());
 
-    DateTimeUtils.setCurrentMillisFixed(loanDate.getMillis());
+    mockClockManagerToReturnFixedDateTime(loanDate);
     final IndividualResource response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
         .on(loanDate)
         .at(checkoutServicePointId));
-    DateTimeUtils.setCurrentMillisSystem();
+    mockClockManagerToReturnDefaultDateTime();
 
     final JsonObject loan = response.getJson();
 

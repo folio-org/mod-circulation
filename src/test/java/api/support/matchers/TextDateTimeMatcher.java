@@ -47,8 +47,10 @@ public class TextDateTimeMatcher {
 
       @Override
       protected boolean matchesSafely(String textRepresentation) {
+
         //response representation might vary from request representation
-        final var actual = OffsetDateTime.parse(textRepresentation);
+        final var actual = OffsetDateTime.parse(textRepresentation)
+          .truncatedTo(MILLIS);
 
         //The zoned date time could have a higher precision than milliseconds
         //This makes comparison to an ISO formatted date time using milliseconds

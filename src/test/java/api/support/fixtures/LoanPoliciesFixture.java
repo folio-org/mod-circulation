@@ -3,15 +3,14 @@ package api.support.fixtures;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 
 import org.folio.circulation.domain.policy.Period;
-
-import api.support.http.IndividualResource;
-
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
 import api.support.builders.FixedDueDateSchedule;
 import api.support.builders.FixedDueDateSchedulesBuilder;
 import api.support.builders.LoanPolicyBuilder;
+import api.support.http.IndividualResource;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
 
@@ -40,7 +39,7 @@ public class LoanPoliciesFixture {
   }
 
   public IndividualResource createExampleFixedDueDateSchedule() {
-    int currentYear = DateTime.now(DateTimeZone.UTC).getYear();
+    int currentYear = ClockUtil.getDateTime().getYear();
     return createExampleFixedDueDateSchedule(currentYear,
       new DateTime(currentYear, 12, 31, 23, 59, 59, DateTimeZone.UTC));
   }

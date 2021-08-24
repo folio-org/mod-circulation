@@ -20,6 +20,7 @@ import java.util.UUID;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.folio.circulation.domain.policy.Period;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.hamcrest.Matcher;
 import org.hamcrest.MatcherAssert;
 import org.joda.time.DateTime;
@@ -236,7 +237,7 @@ class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests {
 
     //Should fetch 10 notices, when total records is 12
     //So that notices for one of the users should not be processed
-    final DateTime runTime = DateTime.now(DateTimeZone.UTC).plusDays(15);
+    final DateTime runTime = ClockUtil.getDateTime().plusDays(15);
     mockClockManagerToReturnFixedDateTime(runTime);
 
     scheduledNoticeProcessingClient.runDueDateNotRealTimeNoticesProcessing(runTime);
@@ -523,7 +524,7 @@ class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests {
       .withLoanNotices(Collections.singletonList(afterDueDateNoticeConfig));
     use(noticePolicy);
 
-    DateTime loanDate = DateTime.now().minusMonths(1);
+    DateTime loanDate = ClockUtil.getDateTime().minusMonths(1);
 
     IndividualResource steve = usersFixture.steve();
     ItemResource dunkirk = itemsFixture.basedUponDunkirk();

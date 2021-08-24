@@ -15,6 +15,7 @@ import static org.hamcrest.core.Is.is;
 import java.time.LocalDate;
 
 import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.jupiter.api.Test;
@@ -132,7 +133,7 @@ class ClosedRequestTests extends APITests {
       .page()
       .fulfilToHoldShelf()
       .withItemId(smallAngryPlanet.getId())
-      .withRequestDate(DateTime.now(DateTimeZone.UTC).minusHours(4))
+      .withRequestDate(ClockUtil.getDateTime().minusHours(4))
       .withRequesterId(jessica.getId())
       .withPickupServicePointId(servicePointsFixture.cd1().getId()));
 
@@ -147,7 +148,7 @@ class ClosedRequestTests extends APITests {
           .cancelled()
           .withCancellationReasonId(courseReservesCancellationReason.getId())
           .withCancelledByUserId(jessica.getId())
-          .withCancelledDate(DateTime.now(DateTimeZone.UTC).minusHours(3)));
+          .withCancelledDate(ClockUtil.getDateTime().minusHours(3)));
 
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
     assertThat(smallAngryPlanet, hasItemStatus(AVAILABLE));

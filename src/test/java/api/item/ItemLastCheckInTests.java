@@ -48,7 +48,7 @@ class ItemLastCheckInTests extends APITests {
     UUID servicePointId = servicePointsFixture.cd1().getId();
 
     checkOutFixture.checkOutByBarcode(item, user);
-    checkInFixture.checkInByBarcode(item, DateTime.now(UTC), servicePointId);
+    checkInFixture.checkInByBarcode(item, ClockUtil.getDateTime(), servicePointId);
     JsonObject lastCheckIn = itemsClient.get(item.getId()).getJson()
       .getJsonObject("lastCheckIn");
 
@@ -135,7 +135,7 @@ class ItemLastCheckInTests extends APITests {
 
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     UUID servicePointId = servicePointsFixture.cd1().getId();
-    DateTime firstCheckInDateTime = DateTime.now(UTC);
+    DateTime firstCheckInDateTime = ClockUtil.getDateTime();
 
     checkInFixture.checkInByBarcode(item, firstCheckInDateTime, servicePointId);
     JsonObject lastCheckIn = itemsClient.get(item.getId()).getJson()

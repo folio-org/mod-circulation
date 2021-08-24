@@ -14,27 +14,28 @@ import static org.folio.circulation.domain.EventType.LOG_RECORD;
 import static org.folio.circulation.domain.LoanAction.CHECKED_IN;
 import static org.folio.circulation.domain.LoanAction.DUE_DATE_CHANGED;
 import static org.folio.circulation.domain.LoanAction.RECALLREQUESTED;
-import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.LOG_EVENT_TYPE;
 import static org.folio.circulation.domain.representations.logs.CirculationCheckInCheckOutLogEventMapper.mapToCheckInLogEventContent;
 import static org.folio.circulation.domain.representations.logs.CirculationCheckInCheckOutLogEventMapper.mapToCheckOutLogEventContent;
+import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.LOG_EVENT_TYPE;
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.PAYLOAD;
 import static org.folio.circulation.domain.representations.logs.LogEventType.LOAN;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE_ERROR;
-import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.domain.representations.logs.RequestUpdateLogEventMapper.mapToRequestLogEventJson;
+import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
-import io.vertx.core.json.JsonObject;
+import java.util.concurrent.CompletableFuture;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import io.vertx.ext.web.RoutingContext;
 import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.EventType;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
+import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.anonymization.LoanAnonymizationRecords;
@@ -43,7 +44,6 @@ import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.domain.representations.logs.LoanLogContext;
 import org.folio.circulation.domain.representations.logs.LogContextActionResolver;
 import org.folio.circulation.domain.representations.logs.LogEventType;
-import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.representations.logs.NoticeLogContext;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
@@ -51,11 +51,13 @@ import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.results.Result;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
-import java.util.concurrent.CompletableFuture;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.RoutingContext;
 
 public class EventPublisher {
   private static final Logger logger = LogManager.getLogger(EventPublisher.class);
@@ -309,7 +311,7 @@ public class EventPublisher {
   public CompletableFuture<Result<Void>> publishNoticeLogEvent(NoticeLogContext noticeLogContext,
     LogEventType eventType) {
 
-    return publishLogRecord(noticeLogContext.withDate(DateTime.now()).asJson(), eventType);
+    return publishLogRecord(noticeLogContext.withDate(ClockUtil.getDateTime()).asJson(), eventType);
   }
 
   public CompletableFuture<Result<Void>> publishNoticeErrorLogEvent(

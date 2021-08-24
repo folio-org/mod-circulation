@@ -13,6 +13,7 @@ import org.folio.circulation.resources.handlers.error.OverridingErrorHandler;
 import org.folio.circulation.resources.renewal.RenewByBarcodeResource;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.results.Result;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.jupiter.api.Test;
@@ -70,7 +71,7 @@ class InvalidLoanPolicyTests {
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
     RenewalContext renewalContext = RenewalContext.create(loan, new JsonObject(), "no-user")
       .withRequestQueue(new RequestQueue(emptyList()));
-    renewByBarcodeResource.regularRenew(renewalContext, errorHandler, DateTime.now());
+    renewByBarcodeResource.regularRenew(renewalContext, errorHandler, ClockUtil.getDateTime());
 
     //TODO: This is fairly ugly, replace with a better message
     assertTrue(errorHandler.getErrors().keySet().stream()
