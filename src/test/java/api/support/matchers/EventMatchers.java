@@ -1,14 +1,18 @@
 package api.support.matchers;
 
+import static api.support.matchers.EventActionMatchers.isItemRenewedEventAction;
 import static api.support.matchers.EventTypeMatchers.isItemAgedToLostEventType;
 import static api.support.matchers.EventTypeMatchers.isItemCheckedInEventType;
 import static api.support.matchers.EventTypeMatchers.isItemCheckedOutEventType;
 import static api.support.matchers.EventTypeMatchers.isItemClaimedReturnedEventType;
 import static api.support.matchers.EventTypeMatchers.isItemDeclaredLostEventType;
+import static api.support.matchers.EventTypeMatchers.isLoanClosedEventType;
 import static api.support.matchers.EventTypeMatchers.isLoanDueDateChangedEventType;
 import static api.support.matchers.EventTypeMatchers.isLogRecordEventType;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath;
+import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasNoJsonPath;
+import static java.util.Optional.ofNullable;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getBooleanProperty;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.core.Is.is;
@@ -17,17 +21,35 @@ import org.folio.circulation.domain.representations.logs.LogEventType;
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
 
+import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
 
 public class EventMatchers {
-  public static Matcher<JsonObject> isValidItemCheckedOutEvent(JsonObject loan) {
+  public static Matcher<JsonObject> isValidItemCheckedOutEvent(JsonObject loan,
+    IndividualResource loanPolicy) {
+
     return allOf(JsonObjectMatcher.allOfPaths(
       hasJsonPath("eventPayload", allOf(
         hasJsonPath("userId", is(loan.getString("userId"))),
         hasJsonPath("loanId", is(loan.getString("id"))),
-        hasJsonPath("dueDate", is(loan.getString("dueDate")))
-      ))),
+        hasJsonPath("dueDate", is(loan.getString("dueDate"))),
+        buildGracePeriodMatcher(loanPolicy)))),
       isItemCheckedOutEventType());
+  }
+
+  private static Matcher<Object> buildGracePeriodMatcher(IndividualResource loanPolicy) {
+    return ofNullable(loanPolicy)
+      .map(IndividualResource::getJson)
+      .map(lp -> lp.getJsonObject("loansPolicy"))
+      .map(lp -> lp.getJsonObject("gracePeriod"))
+      .map(EventMatchers::buildGracePeriodMatcher)
+      .orElse(hasNoJsonPath("gracePeriod"));
+  }
+
+  private static Matcher<Object> buildGracePeriodMatcher(JsonObject gracePeriodJson) {
+    return hasJsonPath("gracePeriod", allOf(
+      hasJsonPath("duration", is(gracePeriodJson.getInteger("duration"))),
+      hasJsonPath("intervalId", is(gracePeriodJson.getString("intervalId")))));
   }
 
   public static Matcher<JsonObject> isValidCheckOutLogEvent(JsonObject checkedOutLoan, LogEventType logEventType) {
@@ -95,6 +117,15 @@ public class EventMatchers {
       isItemDeclaredLostEventType());
   }
 
+  public static Matcher<JsonObject> isValidLoanClosedEvent(JsonObject loan) {
+    return allOf(JsonObjectMatcher.allOfPaths(
+        hasJsonPath("eventPayload", allOf(
+          hasJsonPath("userId", is(loan.getString("userId"))),
+          hasJsonPath("loanId", is(loan.getString("id")))
+        ))),
+      isLoanClosedEventType());
+  }
+
   public static Matcher<JsonObject> isValidItemAgedToLostEvent(JsonObject loan) {
     return allOf(JsonObjectMatcher.allOfPaths(
       hasJsonPath("eventPayload", allOf(
@@ -114,6 +145,16 @@ public class EventMatchers {
           is(getBooleanProperty(loan, "dueDateChangedByRecall")))
       ))),
       isLoanDueDateChangedEventType());
+  }
+
+  public static Matcher<JsonObject> isValidRenewedEvent(JsonObject loan) {
+    return allOf(JsonObjectMatcher.allOfPaths(
+      hasJsonPath("eventPayload", allOf(
+        hasJsonPath("payload", allOf(
+          hasJsonPath("userId", is(loan.getString("userId"))),
+          hasJsonPath("loanId", is(loan.getString("id")))
+        ))))),
+      isItemRenewedEventAction());
   }
 
   public static Matcher<JsonObject> isValidLoanLogRecordEvent(JsonObject loanCtx) {

@@ -4,7 +4,8 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.http.client.Offset.zeroOffset;
 import static org.folio.circulation.support.http.client.PageLimit.limit;
 import static org.folio.circulation.support.results.Result.failed;
-import static org.slf4j.LoggerFactory.getLogger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -14,13 +15,12 @@ import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.Offset;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.results.Result;
-import org.slf4j.Logger;
 
 import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
 public final class PageableFetcher<T> {
-  private static final Logger log = getLogger(PageableFetcher.class);
+  private static final Logger log = LogManager.getLogger(PageableFetcher.class);
 
   // This limit needed to prevent stack overflow for recursive fetch
   private static final int DEFAULT_MAX_ALLOWED_RECORDS_LIMIT = 1_000_000;

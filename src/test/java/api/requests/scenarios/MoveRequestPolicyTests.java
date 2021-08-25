@@ -1,12 +1,13 @@
 package api.requests.scenarios;
 
-import static api.support.fakes.PublishedEvents.byLogEventType;
-import static api.support.http.CqlQuery.exactMatch;
+import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfPublishedEvents;
+import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfSentNotices;
 import static java.util.Collections.singletonList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.waitAtMost;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_TYPE;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
+import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE_ERROR;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
@@ -18,25 +19,26 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.UUID;
 
+import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.notice.NoticeEventType;
 import org.folio.circulation.domain.policy.Period;
-import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.ISODateTimeFormat;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
-import api.support.MultipleJsonRecords;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.MoveRequestBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
+import api.support.fakes.FakeModNotify;
 import api.support.fakes.FakePubSub;
 import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
@@ -46,24 +48,24 @@ import io.vertx.core.json.JsonObject;
  *  MGD = Minimum guaranteed due date<br>
  *  RD = Recall due date<br>
  */
-public class MoveRequestPolicyTests extends APITests {
+class MoveRequestPolicyTests extends APITests {
   private static Clock clock;
 
   private NoticePolicyBuilder noticePolicy;
 
-  @BeforeClass
+  @BeforeAll
   public static void setUpBeforeClass() {
     clock = Clock.fixed(Instant.now(), ZoneOffset.UTC);
     FakePubSub.clearPublishedEvents();
   }
 
-  @Before
+  @BeforeEach
   public void setUp() {
     // reset the clock before each test (just in case)
-    ClockManager.getClockManager().setClock(clock);
+    ClockUtil.setClock(clock);
   }
 
-  @Before
+  @BeforeEach
   public void setUpNoticePolicy() {
     UUID recallToLoaneeTemplateId = UUID.randomUUID();
     JsonObject recallToLoaneeConfiguration = new NoticeConfigurationBuilder()
@@ -84,7 +86,7 @@ public class MoveRequestPolicyTests extends APITests {
   }
 
   @Test
-  public void cannotMoveRecallRequestsWithRequestPolicyNotAllowingHolds() {
+  void cannotMoveRecallRequestsWithRequestPolicyNotAllowingHolds() {
     final String anyNoticePolicy = noticePoliciesFixture.activeNotice().getId().toString();
     final String anyLoanPolicy = loanPoliciesFixture.canCirculateRolling().getId().toString();
     final String bookMaterialType = materialTypesFixture.book().getId().toString();
@@ -156,7 +158,7 @@ public class MoveRequestPolicyTests extends APITests {
   }
 
   @Test
-  public void moveRecallRequestWithoutExistingRecallsAndWithNoPolicyValuesChangesDueDateToSystemDate() {
+  void moveRecallRequestWithoutExistingRecallsAndWithNoPolicyValuesChangesDueDateToSystemDate() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource interestingTimes = itemsFixture.basedUponInterestingTimes();
     final IndividualResource steve = usersFixture.steve();
@@ -177,10 +179,9 @@ public class MoveRequestPolicyTests extends APITests {
       interestingTimes, jessica, DateTime.now(DateTimeZone.UTC), RequestType.RECALL.getValue());
 
     // notice for the recall is expected
-    waitAtMost(1, SECONDS)
-      .until(patronNoticesClient::getAll, hasSize(1));
-
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
+    verifyNumberOfSentNotices(1);
+    verifyNumberOfPublishedEvents(NOTICE, 1);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
 
     // move jessica's recall request from interestingTimes to smallAngryPlanet
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
@@ -199,18 +200,17 @@ public class MoveRequestPolicyTests extends APITests {
     assertThat("due date is the original date",
       storedLoan.getString("dueDate"), not(originalDueDate));
 
-    final String expectedDueDate = ClockManager.getClockManager().getDateTime().toString(ISODateTimeFormat.dateTime());
+    final String expectedDueDate = ClockUtil.getDateTime().toString(ISODateTimeFormat.dateTime());
     assertThat("due date is not the current date",
       storedLoan.getString("dueDate"), is(expectedDueDate));
 
-    assertThat("move recall request notice has not been sent",
-      patronNoticesClient.getAll().size(), is(2));
-
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(2));
+    verifyNumberOfSentNotices(2);
+    verifyNumberOfPublishedEvents(NOTICE, 2);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 
   @Test
-  public void moveRecallRequestWithExistingRecallsAndWithNoPolicyValuesChangesDueDateToSystemDate() {
+  void moveRecallRequestWithExistingRecallsAndWithNoPolicyValuesChangesDueDateToSystemDate() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource interestingTimes = itemsFixture.basedUponInterestingTimes();
     final IndividualResource steve = usersFixture.steve();
@@ -232,7 +232,7 @@ public class MoveRequestPolicyTests extends APITests {
     assertThat("due date is the original date",
       storedLoan.getString("dueDate"), not(originalDueDate));
 
-    final String expectedDueDate = ClockManager.getClockManager().getDateTime().toString(ISODateTimeFormat.dateTime());
+    final String expectedDueDate = ClockUtil.getDateTime().toString(ISODateTimeFormat.dateTime());
     assertThat("due date is not the current date",
       storedLoan.getString("dueDate"), is(expectedDueDate));
 
@@ -245,12 +245,14 @@ public class MoveRequestPolicyTests extends APITests {
 
     // There should be 2 notices for each recall
     waitAtMost(1, SECONDS)
-      .until(() -> getPatronNoticesForRecipient(steve).size(), is(1));
+      .until(() -> patronNoticesForRecipientWasSent(steve));
 
     waitAtMost(1, SECONDS)
-      .until(() -> getPatronNoticesForRecipient(charlotte).size(), is(1));
+      .until(() -> patronNoticesForRecipientWasSent(charlotte));
 
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(2));
+    verifyNumberOfSentNotices(2);
+    verifyNumberOfPublishedEvents(NOTICE, 2);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
 
     // move jessica's recall request from interestingTimes to smallAngryPlanet
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
@@ -270,13 +272,15 @@ public class MoveRequestPolicyTests extends APITests {
       storedLoan.getString("dueDate"), is(expectedDueDate));
 
     assertThat("move recall request unexpectedly sent another patron notice",
-      patronNoticesClient.getAll(), hasSize(2));
+      FakeModNotify.getSentPatronNotices(), hasSize(2));
 
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(2));
+    verifyNumberOfSentNotices(2);
+    verifyNumberOfPublishedEvents(NOTICE, 2);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 
   @Test
-  public void moveRecallRequestWithoutExistingRecallsAndWithMGDAndRDValuesChangesDueDateToRD() {
+  void moveRecallRequestWithoutExistingRecallsAndWithMGDAndRDValuesChangesDueDateToRD() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource interestingTimes = itemsFixture.basedUponInterestingTimes();
     final IndividualResource steve = usersFixture.steve();
@@ -313,10 +317,9 @@ public class MoveRequestPolicyTests extends APITests {
       interestingTimes, jessica, DateTime.now(DateTimeZone.UTC), RequestType.RECALL.getValue());
 
     // One notice for the recall is expected
-    waitAtMost(1, SECONDS)
-      .until(patronNoticesClient::getAll, hasSize(1));
-
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
+    verifyNumberOfSentNotices(1);
+    verifyNumberOfPublishedEvents(NOTICE, 1);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
 
     // move jessica's recall request from interestingTimes to smallAngryPlanet
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
@@ -335,18 +338,20 @@ public class MoveRequestPolicyTests extends APITests {
     assertThat("due date is the original date",
       storedLoan.getString("dueDate"), not(originalDueDate));
 
-    final String expectedDueDate = ClockManager.getClockManager().getDateTime().plusMonths(2).toString(ISODateTimeFormat.dateTime());
+    final String expectedDueDate = ClockUtil.getDateTime().plusMonths(2).toString(ISODateTimeFormat.dateTime());
     assertThat("due date is not the recall due date (2 months)",
       storedLoan.getString("dueDate"), is(expectedDueDate));
 
     assertThat("move recall request notice has not been sent",
-      patronNoticesClient.getAll(), hasSize(2));
+      FakeModNotify.getSentPatronNotices(), hasSize(2));
 
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(2));
+    verifyNumberOfSentNotices(2);
+    verifyNumberOfPublishedEvents(NOTICE, 2);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 
   @Test
-  public void moveRecallRequestWithExistingRecallsAndWithMGDAndRDValuesChangesDueDateToRD() {
+  void moveRecallRequestWithExistingRecallsAndWithMGDAndRDValuesChangesDueDateToRD() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource interestingTimes = itemsFixture.basedUponInterestingTimes();
     final IndividualResource steve = usersFixture.steve();
@@ -384,7 +389,7 @@ public class MoveRequestPolicyTests extends APITests {
     assertThat("due date is the original date",
       storedLoan.getString("dueDate"), not(originalDueDate));
 
-    final String expectedDueDate = ClockManager.getClockManager().getDateTime().plusMonths(2).toString(ISODateTimeFormat.dateTime());
+    final String expectedDueDate = ClockUtil.getDateTime().plusMonths(2).toString(ISODateTimeFormat.dateTime());
     assertThat("due date is not the recall due date (2 months)",
       storedLoan.getString("dueDate"), is(expectedDueDate));
 
@@ -397,12 +402,14 @@ public class MoveRequestPolicyTests extends APITests {
 
     // There should be 2 notices for each recall
     waitAtMost(1, SECONDS)
-      .until(() -> getPatronNoticesForRecipient(steve).size(), is(1));
+      .until(() -> patronNoticesForRecipientWasSent(steve));
 
     waitAtMost(1, SECONDS)
-      .until(() -> getPatronNoticesForRecipient(charlotte).size(), is(1));
+      .until(() -> patronNoticesForRecipientWasSent(charlotte));
 
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(2));
+    verifyNumberOfSentNotices(2);
+    verifyNumberOfPublishedEvents(NOTICE, 2);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
 
     // move jessica's recall request from interestingTimes to smallAngryPlanet
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
@@ -422,13 +429,20 @@ public class MoveRequestPolicyTests extends APITests {
       storedLoan.getString("dueDate"), is(expectedDueDate));
 
     assertThat("move recall request unexpectedly sent another patron notice",
-      patronNoticesClient.getAll(), hasSize(2));
+      FakeModNotify.getSentPatronNotices(), hasSize(2));
 
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(2));
+    verifyNumberOfSentNotices(2);
+    verifyNumberOfPublishedEvents(NOTICE, 2);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 
-  private MultipleJsonRecords getPatronNoticesForRecipient(IndividualResource steve) {
-    return patronNoticesClient.getMany(exactMatch("recipientId", steve.getId().toString()));
+  private boolean patronNoticesForRecipientWasSent(IndividualResource steve) {
+    return FakeModNotify.getSentPatronNotices()
+      .stream()
+      .anyMatch(notice -> StringUtils.equals(
+        notice.getString("recipientId"),
+        steve.getId().toString())
+      );
   }
 
   private void setRules(String rules) {

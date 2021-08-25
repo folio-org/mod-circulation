@@ -12,11 +12,11 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class ResultInitialisationTests {
+class ResultInitialisationTests {
   @Test
-  public void shouldSucceedWhenInitialValue() {
+  void shouldSucceedWhenInitialValue() {
     final Result<Integer> result = of(() -> 10);
 
     assertThat(result.succeeded(), is(true));
@@ -24,7 +24,7 @@ public class ResultInitialisationTests {
   }
 
   @Test
-  public void shouldFailWhenExceptionThrownForInitialValue() {
+  void shouldFailWhenExceptionThrownForInitialValue() {
     final Result<String> result = of(() -> {
       throw exampleException("Initialisation failed");
     });
@@ -33,7 +33,7 @@ public class ResultInitialisationTests {
   }
 
   @Test
-  public void shouldSucceedWhenInitialValueAsync()
+  void shouldSucceedWhenInitialValueAsync()
     throws InterruptedException,
     ExecutionException,
     TimeoutException {

@@ -59,8 +59,8 @@ import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
 import org.folio.circulation.support.results.CommonFailures;
 import org.folio.circulation.support.utils.CollectionUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import io.vertx.core.json.JsonObject;
 
@@ -70,7 +70,7 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
   private final CollectionResourceClient loansStorageClient;
   private final ItemRepository itemRepository;
   private final UserRepository userRepository;
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private static final String ITEM_STATUS = "itemStatus";
   private static final String ITEM_ID = "itemId";
   private static final String USER_ID = "userId";
@@ -374,14 +374,7 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
       return completedFuture(succeeded(null));
     }
 
-    return getById(account.getLoanId())
-      .thenApply(result -> {
-        if (result.failed() && result.cause() instanceof RecordNotFoundFailure
-          && "loan".equals(((RecordNotFoundFailure) result.cause()).getRecordType())) {
-          return succeeded(null);
-        }
-        return result;
-      });
+    return getById(account.getLoanId());
   }
 
   @Override

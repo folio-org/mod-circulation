@@ -41,7 +41,7 @@ public class InstanceExamples {
   static InstanceBuilder basedUponInterestingTimes(
     UUID booksInstanceTypeId,
     UUID personalContributorNameTypeId) {
-    
+
     return new InstanceBuilder("Interesting Times", booksInstanceTypeId)
       .withContributor("Pratchett, Terry", personalContributorNameTypeId);
   }

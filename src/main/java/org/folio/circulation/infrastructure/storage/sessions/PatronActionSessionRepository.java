@@ -1,6 +1,7 @@
 package org.folio.circulation.infrastructure.storage.sessions;
 
 import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.toSet;
 import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.ACTION_TYPE;
 import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.ID;
 import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.LOAN_ID;
@@ -8,7 +9,6 @@ import static org.folio.circulation.domain.notice.session.PatronActionSessionPro
 import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.PATRON_ID;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.http.ResponseMapping.flatMapUsingJson;
-import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.CqlQuery.noQuery;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
@@ -21,7 +21,7 @@ import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
 import java.lang.invoke.MethodHandles;
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -31,6 +31,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Location;
@@ -50,14 +52,12 @@ import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
 import org.folio.circulation.support.results.Result;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import io.vertx.core.json.JsonObject;
 
 public class PatronActionSessionRepository {
 
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private final CollectionResourceClient patronActionSessionsStorageClient;
   private final LoanRepository loanRepository;
   private final LoanPolicyRepository loanPolicyRepository;
@@ -98,17 +98,18 @@ public class PatronActionSessionRepository {
       .thenApply(responseInterpreter::flatMap);
   }
 
-  public CompletableFuture<Result<Void>> delete(PatronSessionRecord record) {
-    final ResponseInterpreter<Void> interpreter = new ResponseInterpreter<Void>()
-      .on(204, of(() -> null))
+  public CompletableFuture<Result<PatronSessionRecord>> delete(PatronSessionRecord session) {
+    var interpreter = new ResponseInterpreter<PatronSessionRecord>()
+      .on(204, of(() -> session))
       .otherwise(response -> {
-        log.info("Error has occurred while deleting PatronSessionRecord with id: {} and action type: {}", record.getId(), record.getActionType().name());
+        log.info("Error has occurred while deleting PatronSessionRecord with id {} and action type {}",
+          session.getId(), session.getActionType().name());
         return failed(new ForwardOnFailure(response));
       });
 
-    log.info("Deleting PatronSessionRecord with id: {} and action type: {}", record.getId(), record.getActionType().name());
+    log.info("Deleting {}", session);
 
-    return patronActionSessionsStorageClient.delete(record.getId().toString())
+    return patronActionSessionsStorageClient.delete(session.getId().toString())
       .thenApply(flatMapResult(interpreter::apply));
   }
 
@@ -132,7 +133,7 @@ public class PatronActionSessionRepository {
     return succeeded(patronSessionRecord);
   }
 
-  public CompletableFuture<Result<MultipleRecords<PatronSessionRecord>>> findPatronActionSessions(
+  public CompletableFuture<Result<List<PatronSessionRecord>>> findPatronActionSessions(
     String patronId, PatronActionType actionType, PageLimit pageLimit) {
 
     Result<CqlQuery> sessionsQuery = exactMatch(PATRON_ID, patronId);
@@ -141,17 +142,17 @@ public class PatronActionSessionRepository {
 
     return sessionsQuery
       .after(query -> findBy(query, pageLimit))
-      .thenCompose(r -> r.combineAfter(
-        () -> userRepository.getUser(patronId), this::setUserForLoans));
+      .thenCompose(r -> r.combineAfter(() -> userRepository.getUser(patronId), this::setUserForLoans))
+      .thenApply(mapResult(this::toList));
   }
 
-  public CompletableFuture<Result<MultipleRecords<PatronSessionRecord>>> findPatronActionSessions(
+  public CompletableFuture<Result<List<PatronSessionRecord>>> findPatronActionSessions(
     List<ExpiredSession> expiredSessions) {
 
     Set<String> patronIds = expiredSessions.stream()
-      .filter(expiredSession -> StringUtils.isNotBlank(expiredSession.getPatronId()))
       .map(ExpiredSession::getPatronId)
-      .collect(Collectors.toCollection(HashSet::new));
+      .filter(StringUtils::isNotBlank)
+      .collect(toSet());
 
     if (patronIds.isEmpty()) {
       log.info("List of patron IDs is empty. Doing nothing.");
@@ -166,7 +167,12 @@ public class PatronActionSessionRepository {
       .findByIdIndexAndQuery(patronIds, PATRON_ID, actionTypeQuery)
       .thenCompose(r -> r.after(this::fetchLoans))
       .thenCompose(r -> r.combineAfter(
-        () -> userRepository.getUsersForUserIds(patronIds), this::setUsersForLoans));
+        () -> userRepository.getUsersForUserIds(patronIds), this::setUsersForLoans))
+      .thenApply(mapResult(this::toList));
+  }
+
+  private <T> List<T> toList(MultipleRecords<T> records) {
+    return new ArrayList<>(records.getRecords());
   }
 
   private Result<CqlQuery> addActionTypeToCqlQuery(
@@ -259,6 +265,11 @@ public class PatronActionSessionRepository {
 
   private Loan setCampusForLoanItem(Loan loan, Map<String, JsonObject> campuses) {
     Item item = loan.getItem();
+
+    if (item.isNotFound()) {
+      return loan;
+    }
+
     Location oldLocation = item.getLocation();
 
     JsonObject campus = campuses.get(oldLocation.getCampusId());
@@ -282,6 +293,11 @@ public class PatronActionSessionRepository {
 
   private Loan setInstitutionForLoanItem(Loan loan, Map<String, JsonObject> institutions) {
     Item item = loan.getItem();
+
+    if (item.isNotFound()) {
+      return loan;
+    }
+
     Location oldLocation = item.getLocation();
 
     JsonObject institution = institutions.get(oldLocation.getInstitutionId());
@@ -302,6 +318,7 @@ public class PatronActionSessionRepository {
   private List<Location> getLocations(MultipleRecords<Loan> loans) {
     return loans.getRecords().stream()
       .map(Loan::getItem)
+      .filter(Item::isFound)
       .map(Item::getLocation)
       .filter(Objects::nonNull)
       .collect(Collectors.toList());

@@ -47,13 +47,20 @@ public class ScheduledNoticeConfig {
     return recurringPeriod != null;
   }
 
+  public boolean hasBeforeTiming() {
+    return timing == NoticeTiming.BEFORE;
+  }
+
+  public boolean hasAfterTiming() {
+    return timing == NoticeTiming.AFTER;
+  }
+
   @Override
   public String toString() {
     return "ScheduledNoticeConfig{" +
       "timing='" + timing.getRepresentation() + '\'' +
       ", recurringPeriod=" + recurringPeriod +
       ", templateId='" + templateId + '\'' +
-      ", format='" + format.getRepresentation() + '\'' +
       ", sendInRealTime=" + sendInRealTime +
       '}';
   }

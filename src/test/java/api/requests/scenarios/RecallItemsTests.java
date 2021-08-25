@@ -11,20 +11,20 @@ import static org.hamcrest.Matchers.allOf;
 import org.folio.circulation.domain.policy.Period;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.http.OkapiHeaders;
 import lombok.val;
 
-public class RecallItemsTests extends APITests {
+class RecallItemsTests extends APITests {
   public RecallItemsTests() {
     super(true,true);
   }
 
   @Test
-  public void loanActionCommentIsRemovedOnRecall() {
+  void loanActionCommentIsRemovedOnRecall() {
     // using non renewable loan policy just to be able to specify action comment
     // on override renew
     use(new LoanPolicyBuilder().withName("loanActionCommentIsRemovedOnRecall")

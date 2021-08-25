@@ -10,12 +10,12 @@ import java.util.UUID;
 import api.support.http.IndividualResource;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.LoanHistoryConfigurationBuilder;
 
-public class AnonymizeLoansImmediatelyAPITests extends LoanAnonymizationTests {
+class AnonymizeLoansImmediatelyAPITests extends LoanAnonymizationTests {
 
   /**
    *     Given:
@@ -26,7 +26,7 @@ public class AnonymizeLoansImmediatelyAPITests extends LoanAnonymizationTests {
    *     Then do not anonymize the loan
    */
   @Test
-  public void shouldNotAnonymizeClosedLoansWithOpenFeesAndFinesAndSettingsOfAnonymizeImmediately() {
+  void shouldNotAnonymizeClosedLoansWithOpenFeesAndFinesAndSettingsOfAnonymizeImmediately() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
       .loanCloseAnonymizeImmediately()
@@ -56,7 +56,7 @@ public class AnonymizeLoansImmediatelyAPITests extends LoanAnonymizationTests {
    *     Then anonymize the loan
    */
   @Test
-  public void shouldAnonymizeClosedLoansWhenFeesAndFinesCloseAndSettingsOfAnonymizeImmediately() {
+  void shouldAnonymizeClosedLoansWhenFeesAndFinesCloseAndSettingsOfAnonymizeImmediately() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
       .loanCloseAnonymizeImmediately()
@@ -89,7 +89,7 @@ public class AnonymizeLoansImmediatelyAPITests extends LoanAnonymizationTests {
    *     Then do not anonymize the loan
    */
   @Test
-  public void shouldNotAnonymizeWhenLoansWithOpenFeesAndFinesCloseAndSettingsOfNeverAnonymizeLoansWithFeesAndFines() {
+  void shouldNotAnonymizeWhenLoansWithOpenFeesAndFinesCloseAndSettingsOfNeverAnonymizeLoansWithFeesAndFines() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
       .loanCloseAnonymizeImmediately()
@@ -120,7 +120,7 @@ public class AnonymizeLoansImmediatelyAPITests extends LoanAnonymizationTests {
    *     Then do not anonymize the loan
    */
   @Test
-  public void shouldNotAnonymizeOpenLoansWhenFeesAndFinesCloseAndSettingsOfNeverAnonymizeLoansWithFeesAndFines() {
+  void shouldNotAnonymizeOpenLoansWhenFeesAndFinesCloseAndSettingsOfNeverAnonymizeLoansWithFeesAndFines() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
       .loanCloseAnonymizeImmediately()
@@ -150,7 +150,7 @@ public class AnonymizeLoansImmediatelyAPITests extends LoanAnonymizationTests {
    *     Then do not anonymize the loan
    */
   @Test
-  public void shouldNotAnonymizeClosedLoansWithClosedFeesAndFinesWhenAnonymizationIntervalForLoansWithFeesAndFinesHasNotPassed() {
+  void shouldNotAnonymizeClosedLoansWithClosedFeesAndFinesWhenAnonymizationIntervalForLoansWithFeesAndFinesHasNotPassed() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
       .loanCloseAnonymizeImmediately()
@@ -182,7 +182,7 @@ public class AnonymizeLoansImmediatelyAPITests extends LoanAnonymizationTests {
    *     Then anonymize the loan
    */
   @Test
-  public void shouldAnonymizeClosedLoansWhenFeesAndFinesCloseAndAnonymizationIntervalForLoansWithFeesAndFinesHasPassed() {
+  void shouldAnonymizeClosedLoansWhenFeesAndFinesCloseAndAnonymizationIntervalForLoansWithFeesAndFinesHasPassed() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
       .loanCloseAnonymizeImmediately()

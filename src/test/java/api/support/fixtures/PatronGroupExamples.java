@@ -2,9 +2,7 @@ package api.support.fixtures;
 
 import api.support.builders.PatronGroupBuilder;
 
-import java.util.UUID;
-
-class PatronGroupExamples {
+public class PatronGroupExamples {
  static PatronGroupBuilder regular() {
     return new PatronGroupBuilder("Regular Group", "Regular group");
   }

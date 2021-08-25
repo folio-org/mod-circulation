@@ -1,10 +1,37 @@
-## 22.0.0 (in-progress)
+## 22.1.0 IN-PROGRESS
 
+* Increases the number of loans to be checked for scheduled anonymization to 50 000 (CIRC-1178)
+
+## 22.0.0 2021-06-14
+
+* Due date will be truncated by patron expiration (CIRC-886, CIRC-1159)
+* Will charge overdue fines at check in when claimed returned (CIRC-997)
+* Renewals can be overridden using the same API as non-overridden requests (CIRC-1143)
 * Remove redundant override-check-out-by-barcode endpoint (CIRC-1064)
+* Remove redundant override-renewal-by-barcode endpoint (CIRC-1091)
+* Manual blocks for renewals can be overridden (CIRC-1092)
 * Aged to lost process now charges fees for actual cost items if a processing fee is set (CIRC-1115)
 * Overdue fines not charged if item due before library closes but returned after library has been closed (CIRC-1120)
+* Items cannot be requested by blocked patron even when the block does not expire (CIRC-1078)
+* Pickup notice is sent when higher priority request is cancelled or expires (CIRC-1141)
 * Update version of mod-pubsub-client to fix memory leak (CIRC-1121)
 * Use `_timer` interface to periodically execute age to lost background processes (CIRC-1144)
+* Add notice post perm to change due date (CIRC-1114)
+* Adapt old checkout override tests to cover new overriding functionality (CIRC-1106)
+* Checks manual blocks during checkout (CIRC-1072)
+* Errors when filtering on recall requested (CIRC-1126)
+* Source of circulation actions is displaying differently in the circulation log than in the item record (CIRC-1125)
+* Request expiration should be 23:59 of day selected (CIRC-1119)
+* Not receiving change due date notice (CIRC-1114)
+  * Circulation log will contain entry when due date is changed (CIRC-1140)
+* Fixes hold shelf expiration request notice (CIRC-1129)
+* Overdue fines not charged if item due before library closes but returned after library has been closed (CIRC-1120)
+* Added lost-items-fees-policies.collection.get permission to the checkin-by-barcode endpoint (CIRC-1117)
+* Some filters not finding recent results (CIRC-1133)
+* Fix memory leak caused by mod-pubsub-client (CIRC-1121)
+* Request pick up notice not sent when requester's barcode has been changed after request was created (CIRC-1139)
+* Provides `circulation 11.0`
+* Provides `declare-item-lost 0.3`
 
 ## 20.1.0 2021-03-30
 

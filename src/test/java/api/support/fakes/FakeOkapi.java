@@ -26,8 +26,8 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.results.Result;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
@@ -38,7 +38,7 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
 public class FakeOkapi extends AbstractVerticle {
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   private static final int PORT_TO_USE = nextFreePort();
   private static final String address =
@@ -282,13 +282,6 @@ public class FakeOkapi extends AbstractVerticle {
       .register(router);
 
     new FakeStorageModuleBuilder()
-      .withRecordName("patron notice")
-      .withCollectionPropertyName("patronnotices")
-      .withRootPath("/patron-notice")
-      .create()
-      .register(router);
-
-    new FakeStorageModuleBuilder()
       .withRecordName("configuration")
       .withCollectionPropertyName("configs")
       .withRootPath("/configurations/entries")
@@ -378,6 +371,7 @@ public class FakeOkapi extends AbstractVerticle {
     router.delete("/_/tenant").handler(this::removeAllData);
 
     FakePubSub.register(router);
+    FakeModNotify.register(router);
 
     new FakeStorageModuleBuilder()
       .withRecordName("automatedPatronBlock")

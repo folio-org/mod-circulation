@@ -3,14 +3,18 @@ package org.folio.circulation.resources.handlers.error;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_ITEM_ID;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.succeeded;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.results.Result;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class FailFastErrorHandlerTest {
+class FailFastErrorHandlerTest {
   private static final HttpFailure TEST_ERROR = new ServerErrorFailure("test error");
   private static final Result<String> FAILED_RESULT = failed(TEST_ERROR);
   private static final Result<String> SUCCEEDED_RESULT = succeeded("success");
@@ -18,7 +22,7 @@ public class FailFastErrorHandlerTest {
   private final FailFastErrorHandler handler = new FailFastErrorHandler();
 
   @Test
-  public void handleAnyErrorReturnsFailedResultWithError() {
+  void handleAnyErrorReturnsFailedResultWithError() {
     Result<String> output = handler.handleAnyError(TEST_ERROR, INVALID_ITEM_ID, SUCCEEDED_RESULT);
 
     assertTrue(output.failed());
@@ -26,7 +30,7 @@ public class FailFastErrorHandlerTest {
   }
 
   @Test
-  public void handleAnyErrorHandlesNullsCorrectly() {
+  void handleAnyErrorHandlesNullsCorrectly() {
     Result<String> output = handler.handleAnyError(null, null, null);
 
     assertTrue(output.failed());
@@ -34,7 +38,7 @@ public class FailFastErrorHandlerTest {
   }
 
   @Test
-  public void handledAnyResultSucceeded() {
+  void handledAnyResultSucceeded() {
     Result<String> input = succeeded("input result");
     Result<String> output = handler.handleAnyResult(input, INVALID_ITEM_ID, SUCCEEDED_RESULT);
 
@@ -42,21 +46,21 @@ public class FailFastErrorHandlerTest {
   }
 
   @Test
-  public void handleAnyResultFailed() {
+  void handleAnyResultFailed() {
     Result<String> output = handler.handleAnyResult(FAILED_RESULT, INVALID_ITEM_ID, SUCCEEDED_RESULT);
 
     assertSame(FAILED_RESULT, output);
   }
 
   @Test
-  public void handleAnyResultHandlesNullsCorrectly() {
+  void handleAnyResultHandlesNullsCorrectly() {
     Result<String> output = handler.handleAnyResult(null, null, null);
 
     assertNull(output);
   }
 
   @Test
-  public void handleAnyResultHandlesNullsWithinResultsCorrectly() {
+  void handleAnyResultHandlesNullsWithinResultsCorrectly() {
     Result<String> input = failed(null);
     Result<String> output = handler.handleAnyResult(input, null, succeeded(null));
 
@@ -64,7 +68,7 @@ public class FailFastErrorHandlerTest {
   }
 
   @Test
-  public void handleValidationErrorReturnsFailedResultWithError() {
+  void handleValidationErrorReturnsFailedResultWithError() {
     Result<String> output = handler.handleValidationError(TEST_ERROR, INVALID_ITEM_ID, SUCCEEDED_RESULT);
 
     assertTrue(output.failed());
@@ -72,7 +76,7 @@ public class FailFastErrorHandlerTest {
   }
 
   @Test
-  public void handleValidationErrorHandlesNullsCorrectly() {
+  void handleValidationErrorHandlesNullsCorrectly() {
     Result<String> output = handler.handleValidationError(null, null, null);
 
     assertTrue(output.failed());
@@ -80,7 +84,7 @@ public class FailFastErrorHandlerTest {
   }
 
   @Test
-  public void handledValidationResultSucceeded() {
+  void handledValidationResultSucceeded() {
     Result<String> input = succeeded("input result");
     Result<String> output = handler.handleValidationResult(input, INVALID_ITEM_ID, SUCCEEDED_RESULT);
 
@@ -88,7 +92,7 @@ public class FailFastErrorHandlerTest {
   }
 
   @Test
-  public void handleValidationResultFailed() {
+  void handleValidationResultFailed() {
     Result<String> input = failed(TEST_ERROR);
     Result<String> output = handler.handleValidationResult(input, INVALID_ITEM_ID, SUCCEEDED_RESULT);
 
@@ -96,14 +100,14 @@ public class FailFastErrorHandlerTest {
   }
 
   @Test
-  public void handleValidationResultHandlesNullsCorrectly() {
+  void handleValidationResultHandlesNullsCorrectly() {
     Result<String> output = handler.handleValidationResult(null, null, (String) null);
 
     assertNull(output);
   }
 
   @Test
-  public void handleValidationResultHandlesNullsWithinResultsCorrectly() {
+  void handleValidationResultHandlesNullsWithinResultsCorrectly() {
     Result<String> input = failed(null);
     Result<String> output = handler.handleValidationResult(input, null, succeeded(null));
 
@@ -111,28 +115,28 @@ public class FailFastErrorHandlerTest {
   }
 
   @Test
-  public void errorMapRemainsEmpty() {
+  void errorMapRemainsEmpty() {
     callAllHandlerMethods();
 
     assertTrue(handler.getErrors().isEmpty());
   }
 
   @Test
-  public void hasAnyAlwaysReturnsFalse() {
+  void hasAnyAlwaysReturnsFalse() {
     callAllHandlerMethods();
 
     assertFalse(handler.hasAny(INVALID_ITEM_ID));
   }
 
   @Test
-  public void hasNoneAlwaysReturnsTrue() {
+  void hasNoneAlwaysReturnsTrue() {
     callAllHandlerMethods();
 
     assertTrue(handler.hasNone(INVALID_ITEM_ID));
   }
 
   @Test
-  public void failWithValidationErrorsIfHasAnyAlwaysReturnsSucceededResult() {
+  void failWithValidationErrorsIfHasAnyAlwaysReturnsSucceededResult() {
     callAllHandlerMethods();
     String otherwise = "otherwise";
     Result<String> output = handler.failWithValidationErrors(otherwise);
@@ -148,8 +152,10 @@ public class FailFastErrorHandlerTest {
     handler.handleValidationError(TEST_ERROR, INVALID_ITEM_ID, SUCCEEDED_RESULT);
   }
 
-  @Test(expected = UnsupportedOperationException.class)
-  public void attemptToAddErrorToMapThrowsException() {
-    handler.getErrors().put(TEST_ERROR, INVALID_ITEM_ID);
+  @Test
+  void attemptToAddErrorToMapThrowsException() {
+    assertThrows(UnsupportedOperationException.class, () -> {
+      handler.getErrors().put(TEST_ERROR, INVALID_ITEM_ID);
+    });
   }
 }

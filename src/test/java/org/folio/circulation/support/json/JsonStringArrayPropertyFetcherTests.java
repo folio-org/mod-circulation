@@ -8,29 +8,29 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.collection.IsEmptyCollection.empty;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
-public class JsonStringArrayPropertyFetcherTests {
+class JsonStringArrayPropertyFetcherTests {
   @Test
-  public void StreamShouldContainSameContentsAsArray() {
+  void StreamShouldContainSameContentsAsArray() {
     val json = objectWithJsonArrayOf("Foo", "Bar", "Lorem", "Ipsum");
 
     assertThat(toList(toStream(json, "array")), contains("Foo", "Bar", "Lorem", "Ipsum"));
   }
 
   @Test
-  public void shouldMapEmptyArrayToEmptyStream() {
+  void shouldMapEmptyArrayToEmptyStream() {
     val json = objectWithJsonArrayOf();
 
     assertThat(toList(toStream(json, "array")), is(empty()));
   }
 
   @Test
-  public void shouldSkipNonStringElements() {
+  void shouldSkipNonStringElements() {
     val array = new JsonArray(toList(of("Foo", "Bar", new JsonObject(), "Lorem", "Ipsum")));
 
     val json = new JsonObject().put("array", array);

@@ -1,14 +1,14 @@
 package api.support.fixtures;
 
-import static org.folio.circulation.support.ClockManager.getClockManager;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 
 import java.util.UUID;
 
-import api.support.builders.UserManualBlockBuilder;
-import api.support.http.ResourceClient;
+import org.folio.circulation.support.utils.ClockUtil;
 
+import api.support.builders.UserManualBlockBuilder;
 import api.support.http.IndividualResource;
+import api.support.http.ResourceClient;
 
 public class UserManualBlocksFixture {
   private final RecordCreator userManualBlocksRecordCreator;
@@ -28,10 +28,24 @@ public class UserManualBlocksFixture {
     userManualBlocksRecordCreator.cleanUp();
   }
 
-  public void createManualPatronBlockForUser(UUID requesterId) {
+  public void createRequestsManualPatronBlockForUser(UUID requesterId) {
     create(getManualBlockBuilder()
       .withRequests(true)
-      .withExpirationDate(getClockManager().getDateTime().plusYears(1))
+      .withExpirationDate(ClockUtil.getDateTime().plusYears(1))
+      .withUserId(requesterId.toString()));
+  }
+
+  public void createRenewalsManualPatronBlockForUser(UUID requesterId) {
+    create(getManualBlockBuilder()
+      .withRenewals(true)
+      .withExpirationDate(ClockUtil.getDateTime().plusYears(1))
+      .withUserId(requesterId.toString()));
+  }
+
+  public void createBorrowingManualPatronBlockForUser(UUID requesterId) {
+    create(getManualBlockBuilder()
+      .withBorrowing(true)
+      .withExpirationDate(ClockUtil.getDateTime().plusYears(1))
       .withUserId(requesterId.toString()));
   }
 

@@ -30,25 +30,25 @@ import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.services.feefine.AccountActionResponse;
-import org.folio.circulation.services.support.RefundAndCancelAccountCommand;
 import org.folio.circulation.services.support.CreateAccountCommand;
+import org.folio.circulation.services.support.RefundAndCancelAccountCommand;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.results.Result;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.stubbing.Answer;
 
 import io.vertx.core.json.JsonObject;
 
-@RunWith(MockitoJUnitRunner.class)
-public class FeeFineFacadeTest {
+@ExtendWith(MockitoExtension.class)
+class FeeFineFacadeTest {
   @Mock
   private Clients clients;
   @Mock
@@ -63,7 +63,7 @@ public class FeeFineFacadeTest {
   private CollectionResourceClient accountRefundClient;
   private FeeFineFacade feeFineFacade;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     when(clients.accountsStorageClient()).thenReturn(accountClient);
     when(clients.feeFineActionsStorageClient()).thenReturn(accountActionsClient);
@@ -72,17 +72,10 @@ public class FeeFineFacadeTest {
     when(clients.accountsRefundClient()).thenReturn(accountRefundClient);
 
     feeFineFacade = new FeeFineFacade(clients);
-
-    when(userClient.get(anyString()))
-      .thenReturn(ofAsync(() -> emptyJsonResponse(200)));
-    when(servicePointClient.get(anyString()))
-      .thenReturn(ofAsync(() -> emptyJsonResponse(200)));
-    when(accountActionsClient.post(any(JsonObject.class)))
-      .thenReturn(ofAsync(() -> emptyJsonResponse(201)));
   }
 
   @Test
-  public void shouldForwardFailureIfAnAccountIsNotCreated() {
+  void shouldForwardFailureIfAnAccountIsNotCreated() {
     final String expectedError = "Fee fine account failed to be created";
 
     when(accountClient.post(any()))
@@ -101,7 +94,7 @@ public class FeeFineFacadeTest {
   }
 
   @Test
-  public void shouldForwardFailureIfAnAccountIsNotRefunded() throws Exception {
+  void shouldForwardFailureIfAnAccountIsNotRefunded() throws Exception {
     final String expectedError = "Fee fine account failed to be refunded";
 
     when(accountRefundClient.post(any(JsonObject.class), anyString()))

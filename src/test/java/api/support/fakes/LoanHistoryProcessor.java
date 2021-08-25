@@ -3,10 +3,11 @@ package api.support.fakes;
 import static api.support.APITestContext.getTenantId;
 import static api.support.fakes.Storage.getStorage;
 import static api.support.http.InterfaceUrls.loanHistoryStorageUrl;
-import static org.folio.circulation.support.ClockManager.getClockManager;
 
 import java.util.Map;
 import java.util.UUID;
+
+import org.folio.circulation.support.utils.ClockUtil;
 
 import io.vertx.core.json.JsonObject;
 
@@ -24,7 +25,7 @@ public final class LoanHistoryProcessor {
     final JsonObject historyRecord = new JsonObject()
       .put("id", id)
       .put("operation", operation)
-      .put("createdDate", getClockManager().getDateTime().toString())
+      .put("createdDate", ClockUtil.getDateTime().toString())
       .put("loan", newLoan);
 
     getLoanHistoryStorage().put(id, historyRecord);

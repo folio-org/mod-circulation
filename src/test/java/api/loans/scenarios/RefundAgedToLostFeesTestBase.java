@@ -20,8 +20,8 @@ import static org.joda.time.DateTime.now;
 import static org.joda.time.DateTimeZone.UTC;
 
 import org.joda.time.DateTime;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import api.support.fixtures.AgeToLostFixture;
 import api.support.http.IndividualResource;
@@ -40,7 +40,7 @@ public abstract class RefundAgedToLostFeesTestBase extends SpringApiTest {
     this.cancellationReason = cancellationReason;
   }
 
-  @Before
+  @BeforeEach
   public void createOwnerAndFeeTypes() {
     feeFineOwnerFixture.cd1Owner();
     feeFineTypeFixture.lostItemProcessingFee();
@@ -52,7 +52,7 @@ public abstract class RefundAgedToLostFeesTestBase extends SpringApiTest {
     DateTime actionDate);
 
   @Test
-  public void shouldRefundPartiallyPaidAmountAndCancelRemaining() {
+  void shouldRefundPartiallyPaidAmountAndCancelRemaining() {
     final double setCostFee = 10.55;
     final double processingFee = 12.99;
 
@@ -77,7 +77,7 @@ public abstract class RefundAgedToLostFeesTestBase extends SpringApiTest {
   }
 
   @Test
-  public void shouldChargeOverdueFine() {
+  void shouldChargeOverdueFine() {
     final double processingFee = 12.99;
 
     val policy = lostItemFeePoliciesFixture.ageToLostAfterOneMinutePolicy()
@@ -101,7 +101,7 @@ public abstract class RefundAgedToLostFeesTestBase extends SpringApiTest {
   }
 
   @Test
-  public void shouldChargeOverdueFineIfNoFeesChargedYet() {
+  void shouldChargeOverdueFineIfNoFeesChargedYet() {
     val policy = lostItemFeePoliciesFixture.ageToLostAfterOneMinutePolicy()
       .withName("shouldChargeOverdueFine")
       .chargeProcessingFeeWhenAgedToLost(12.99)
@@ -121,7 +121,7 @@ public abstract class RefundAgedToLostFeesTestBase extends SpringApiTest {
   }
 
   @Test
-  public void shouldNotRefundFeesWhenReturnedAfterRefundPeriod() {
+  void shouldNotRefundFeesWhenReturnedAfterRefundPeriod() {
     final double setCostFee = 10.55;
     final double processingFee = 12.99;
     final int feeRefundPeriodMinutes = 1;
@@ -152,7 +152,7 @@ public abstract class RefundAgedToLostFeesTestBase extends SpringApiTest {
   }
 
   @Test
-  public void subsequentRunOfChargeFeeProcessNotAssignsFeesWhenItemAlreadyReturned() {
+  void subsequentRunOfChargeFeeProcessNotAssignsFeesWhenItemAlreadyReturned() {
     final double processingFee = 12.99;
 
     val policy = lostItemFeePoliciesFixture.ageToLostAfterOneMinutePolicy()

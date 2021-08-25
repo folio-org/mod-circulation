@@ -28,15 +28,15 @@ import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.CommonFailures;
 import org.folio.circulation.support.results.Result;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
 public class LoanRelatedFeeFineClosedHandlerResource extends Resource {
-  private static final Logger log = LoggerFactory.getLogger(
+  private static final Logger log = LogManager.getLogger(
     LoanRelatedFeeFineClosedHandlerResource.class);
 
   public LoanRelatedFeeFineClosedHandlerResource(HttpClient client) {

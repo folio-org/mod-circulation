@@ -1,7 +1,7 @@
 package org.folio.circulation.infrastructure.storage;
 
 import static org.joda.time.DateTimeZone.UTC;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -14,14 +14,14 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
-public class CalendarRepositoryTest {
+class CalendarRepositoryTest {
   private static final String QUERY_PARAMETERS = "servicePointId=%s&startDate=%s&endDate=%s&includeClosedDays=false&limit=10000";
 
   @Test
-  public void shouldCreateCorrectRawQueryStringParameters() {
+  void shouldCreateCorrectRawQueryStringParameters() {
     Clients clients = mock(Clients.class);
     CollectionResourceClient collectionResourceClient = mock(CollectionResourceClient.class);
     when(clients.calendarStorageClient()).thenReturn(collectionResourceClient);

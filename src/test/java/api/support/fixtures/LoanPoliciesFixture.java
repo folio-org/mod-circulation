@@ -3,7 +3,9 @@ package api.support.fixtures;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 
 import org.folio.circulation.domain.policy.Period;
+
 import api.support.http.IndividualResource;
+
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
@@ -68,20 +70,30 @@ public class LoanPoliciesFixture {
     return fixedDueDateScheduleRecordCreator.createIfAbsent(builder);
   }
 
+  public IndividualResource canCirculateRolling(Period gracePeriod) {
+    final LoanPolicyBuilder policyBuilder = canCirculateRollingBuilder()
+      .withGracePeriod(gracePeriod)
+      .withName("Can Circulate Rolling with grace period");
+
+    return loanPolicyRecordCreator.createIfAbsent(policyBuilder);
+  }
+
   public IndividualResource canCirculateRolling() {
+    return loanPolicyRecordCreator.createIfAbsent(canCirculateRollingBuilder());
+  }
+
+  private static LoanPolicyBuilder canCirculateRollingBuilder() {
     JsonObject holds = new JsonObject();
     holds.put("alternateRenewalLoanPeriod", Period.weeks(3).asJson());
     holds.put("renewItemsWithRequest", true);
 
-    final LoanPolicyBuilder canCirculateRollingPolicy = new LoanPolicyBuilder()
+    return new LoanPolicyBuilder()
       .withName("Can Circulate Rolling")
       .withDescription("Can circulate item")
       .withHolds(holds)
       .rolling(Period.weeks(3))
       .unlimitedRenewals()
       .renewFromSystemDate();
-
-    return loanPolicyRecordCreator.createIfAbsent(canCirculateRollingPolicy);
   }
 
   public IndividualResource canCirculateFixed() {

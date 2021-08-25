@@ -60,7 +60,7 @@ public class InactiveUserValidator {
     if(user == null) {
       return succeeded(records);
     }
-    else if (user.canDetermineStatus()) {
+    else if (user.cannotDetermineStatus()) {
       return failed(inactiveUserErrorFunction.apply(cannotDetermineMessage));
     }
     if (user.isInactive()) {

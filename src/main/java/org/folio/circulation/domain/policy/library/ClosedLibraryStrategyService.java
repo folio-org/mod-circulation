@@ -2,6 +2,7 @@ package org.folio.circulation.domain.policy.library;
 
 import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.determineClosedLibraryStrategy;
 import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.determineClosedLibraryStrategyForTruncatedDueDate;
+import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
@@ -65,8 +66,11 @@ public class ClosedLibraryStrategyService {
     Loan loan, LoanPolicy loanPolicy, DateTimeZone timeZone) {
 
     LocalDate requestedDate = loan.getDueDate().withZone(timeZone).toLocalDate();
+
     return calendarRepository.lookupOpeningDays(requestedDate, loan.getCheckoutServicePointId())
-      .thenApply(r -> r.next(openingDays -> applyStrategy(loan, loanPolicy, openingDays, timeZone)));
+      .thenApply(r -> r.next(openingDays -> applyStrategy(loan, loanPolicy, openingDays, timeZone)))
+      .thenCompose(r -> r.after(dueDate -> truncateDueDateIfPatronExpiresEarlier(dueDate, loan,
+        loanPolicy, timeZone)));
   }
 
   private Result<DateTime> applyStrategy(
@@ -74,21 +78,30 @@ public class ClosedLibraryStrategyService {
 
     return determineClosedLibraryStrategy(loanPolicy, currentDateTime, timeZone)
       .calculateDueDate(loan.getDueDate(), openingDays)
-      .next(calculatedDueDate -> truncateDueDateIfPatronExpiresEarlier(calculatedDueDate,
-        loan.getUser(), loanPolicy, timeZone, openingDays))
       .next(dateTime -> applyFixedDueDateLimit(dateTime, loan, loanPolicy, openingDays, timeZone));
   }
 
-  private Result<DateTime> truncateDueDateIfPatronExpiresEarlier(DateTime calculatedDueDate,
-    User user, LoanPolicy loanPolicy, DateTimeZone timeZone, AdjacentOpeningDays openingDays) {
+  private CompletableFuture<Result<DateTime>> truncateDueDateIfPatronExpiresEarlier(
+    DateTime dueDate, Loan loan, LoanPolicy loanPolicy, DateTimeZone timeZone) {
 
+    User user = loan.getUser();
     if (user != null && user.getExpirationDate() != null &&
-      user.getExpirationDate().isBefore(calculatedDueDate)) {
+      user.getExpirationDate().isBefore(dueDate)) {
 
-      return determineClosedLibraryStrategyForTruncatedDueDate(loanPolicy, user.getExpirationDate(), timeZone)
-        .calculateDueDate(user.getExpirationDate(), openingDays);
+      return calendarRepository.lookupOpeningDays(user.getExpirationDate().toLocalDate(),
+        loan.getCheckoutServicePointId())
+        .thenApply(r -> r.next(openingDays -> calculateTruncatedDueDate(user.getExpirationDate(),
+          loanPolicy, timeZone, openingDays)));
     }
-    return succeeded(calculatedDueDate);
+
+    return ofAsync(() -> dueDate);
+  }
+
+  private Result<DateTime> calculateTruncatedDueDate(DateTime patronExpirationDate,
+    LoanPolicy loanPolicy, DateTimeZone timeZone, AdjacentOpeningDays openingDays) {
+
+      return determineClosedLibraryStrategyForTruncatedDueDate(loanPolicy, patronExpirationDate, timeZone)
+        .calculateDueDate(patronExpirationDate, openingDays);
   }
 
   private Result<DateTime> applyFixedDueDateLimit(

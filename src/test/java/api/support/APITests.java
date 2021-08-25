@@ -18,14 +18,14 @@ import java.time.ZoneOffset;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-import org.folio.circulation.support.ClockManager;
-import api.support.http.IndividualResource;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 
+import api.support.fakes.FakeModNotify;
 import api.support.fakes.FakePubSub;
 import api.support.fixtures.AddressTypesFixture;
 import api.support.fixtures.AgeToLostFixture;
@@ -68,6 +68,7 @@ import api.support.fixtures.TenantActivationFixture;
 import api.support.fixtures.UserManualBlocksFixture;
 import api.support.fixtures.UsersFixture;
 import api.support.fixtures.policies.PoliciesActivationFixture;
+import api.support.http.IndividualResource;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
 import lombok.experimental.Delegate;
@@ -146,9 +147,6 @@ public abstract class APITests {
 
   private final ResourceClient contributorNameTypesClient
     = ResourceClient.forContributorNameTypes();
-
-  protected final ResourceClient patronNoticesClient =
-    ResourceClient.forPatronNotices();
 
   protected final ResourceClient scheduledNoticesClient =
     ResourceClient.forScheduledNotices();
@@ -275,7 +273,7 @@ public abstract class APITests {
     setLoanHistoryEnabled(enableLoanHistory);
   }
 
-  @BeforeClass
+  @BeforeAll
   public static void beforeAll() throws InterruptedException, ExecutionException,
     TimeoutException {
 
@@ -294,8 +292,9 @@ public abstract class APITests {
     okapiAlreadyDeployed = true;
   }
 
-  @Before
-  public void beforeEach() throws InterruptedException {
+  @BeforeEach
+  // Final to prohibit overriding, otherwise this method will not be called before @BeforeEach of subclass
+  public final void baseSetUp() {
     if (initialiseCirculationRules) {
       useDefaultRollingPolicyCirculationRules();
     }
@@ -305,11 +304,16 @@ public abstract class APITests {
 
     FakePubSub.clearPublishedEvents();
     FakePubSub.setFailPublishingWithBadRequestError(false);
+
+    FakeModNotify.clearSentPatronNotices();
+    FakeModNotify.setFailPatronNoticesWithBadRequest(false);
   }
 
-  @After
-  public void afterEach() {
+  @AfterEach
+  // Final to prohibit overriding, otherwise this method will not be called before @AfterEach of subclass
+  public final void baseTearDown() {
     forTenantStorage().deleteAll();
+    scheduledNoticesClient.deleteAll();
 
     mockClockManagerToReturnDefaultDateTime();
   }
@@ -377,13 +381,13 @@ public abstract class APITests {
   }
 
   protected void mockClockManagerToReturnFixedDateTime(DateTime dateTime) {
-    ClockManager.getClockManager().setClock(
+    ClockUtil.setClock(
       Clock.fixed(
         Instant.ofEpochMilli(dateTime.getMillis()),
         ZoneOffset.UTC));
   }
 
   protected void mockClockManagerToReturnDefaultDateTime() {
-    ClockManager.getClockManager().setDefaultClock();
+    ClockUtil.setDefaultClock();
   }
 }

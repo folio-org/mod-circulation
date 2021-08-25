@@ -1,8 +1,9 @@
 package api.loans;
 
 import static api.support.Wait.waitAtLeast;
-import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
+import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfPublishedEvents;
+import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfSentNotices;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.waitAtMost;
 import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.ACTION_TYPE;
@@ -10,6 +11,7 @@ import static org.folio.circulation.domain.notice.session.PatronActionSessionPro
 import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.LOAN_ID;
 import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.PATRON_ID;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
+import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE_ERROR;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasSize;
@@ -21,27 +23,27 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.folio.circulation.domain.notice.session.PatronActionType;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.EndSessionBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
-import api.support.fakes.FakePubSub;
+import api.support.fakes.FakeModNotify;
 import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
-public class EndExpiredPatronActionSessionTests extends APITests {
+class EndExpiredPatronActionSessionTests extends APITests {
   private static final String CHECK_OUT = "Check-out";
   private static final String CHECK_IN = "Check-in";
   private static final UUID CHECK_OUT_TEMPLATE_ID = UUID.randomUUID();
   private static final UUID CHECK_IN_TEMPLATE_ID = UUID.randomUUID();
 
-  @Before
+  @BeforeEach
   public void before() {
     JsonObject checkOutNoticeConfig = new NoticeConfigurationBuilder()
       .withTemplateId(CHECK_OUT_TEMPLATE_ID)
@@ -65,7 +67,7 @@ public class EndExpiredPatronActionSessionTests extends APITests {
   }
 
   @Test
-  public void expiredEndSessionAfterCheckOut() {
+  void expiredEndSessionAfterCheckOut() {
     IndividualResource james = usersFixture.james();
     checkOutFixture.checkOutByBarcode(itemsFixture.basedUponNod(), james);
     checkOutFixture.checkOutByBarcode(itemsFixture.basedUponInterestingTimes(), james);
@@ -86,12 +88,13 @@ public class EndExpiredPatronActionSessionTests extends APITests {
     waitAtLeast(1, SECONDS)
       .until(patronSessionRecordsClient::getAll, empty());
 
-    assertThat(patronNoticesClient.getAll(), hasSize(1));
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
+    verifyNumberOfSentNotices(1);
+    verifyNumberOfPublishedEvents(NOTICE, 1);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 
   @Test
-  public void patronHasSomeSessionsAndOnlySessionsWithSameActionTypeShouldBeExpiredByTimeout() {
+  void patronHasSomeSessionsAndOnlySessionsWithSameActionTypeShouldBeExpiredByTimeout() {
     IndividualResource james = usersFixture.james();
     ItemResource nod = itemsFixture.basedUponNod();
     ItemResource interestingTimes = itemsFixture.basedUponInterestingTimes();
@@ -119,12 +122,13 @@ public class EndExpiredPatronActionSessionTests extends APITests {
     waitAtMost(1, SECONDS)
       .until(patronSessionRecordsClient::getAll,  hasSize(2));
 
-    assertThat(patronNoticesClient.getAll(), hasSize(1));
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
+    verifyNumberOfSentNotices(1);
+    verifyNumberOfPublishedEvents(NOTICE, 1);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 
   @Test
-  public void patronHasSeveralSessionsAndOnlyOneShouldBeExpiredByTimeout() {
+  void patronHasSeveralSessionsAndOnlyOneShouldBeExpiredByTimeout() {
     IndividualResource james = usersFixture.james();
     ItemResource nod = itemsFixture.basedUponNod();
     ItemResource interestingTimes = itemsFixture.basedUponInterestingTimes();
@@ -151,12 +155,13 @@ public class EndExpiredPatronActionSessionTests extends APITests {
     waitAtMost(1, SECONDS)
       .until(patronSessionRecordsClient::getAll,  hasSize(2));
 
-    assertThat(patronNoticesClient.getAll(), hasSize(1));
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
+    verifyNumberOfSentNotices(1);
+    verifyNumberOfPublishedEvents(NOTICE, 1);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 
   @Test
-  public void noExpiredEndSessionAfterCheckOut() {
+  void noExpiredEndSessionAfterCheckOut() {
     IndividualResource james = usersFixture.james();
     checkOutFixture.checkOutByBarcode(itemsFixture.basedUponNod(), james);
     checkOutFixture.checkOutByBarcode(itemsFixture.basedUponInterestingTimes(), james);
@@ -173,7 +178,7 @@ public class EndExpiredPatronActionSessionTests extends APITests {
   }
 
   @Test
-  public void noExpiredEndSessionAfterCheckIn() {
+  void noExpiredEndSessionAfterCheckIn() {
     IndividualResource james = usersFixture.james();
     ItemResource nod = itemsFixture.basedUponNod();
     ItemResource interestingTimes = itemsFixture.basedUponInterestingTimes();
@@ -195,7 +200,7 @@ public class EndExpiredPatronActionSessionTests extends APITests {
   }
 
   @Test
-  public void notFailEndSessionProcessingWhenServerIsNotResponding() {
+  void notFailEndSessionProcessingWhenServerIsNotResponding() {
     IndividualResource james = usersFixture.james();
     ItemResource nod = itemsFixture.basedUponNod();
     ItemResource interestingTimes = itemsFixture.basedUponInterestingTimes();
@@ -215,7 +220,7 @@ public class EndExpiredPatronActionSessionTests extends APITests {
   }
 
   @Test
-  public void patronsHaveSessionsAndAllShouldBeExpiredByTimeout() {
+  void patronsHaveSessionsAndAllShouldBeExpiredByTimeout() {
     IndividualResource james = usersFixture.james();
     IndividualResource jessica = usersFixture.jessica();
     IndividualResource steve = usersFixture.steve();
@@ -258,23 +263,23 @@ public class EndExpiredPatronActionSessionTests extends APITests {
     waitAtLeast(1, SECONDS)
       .until(patronSessionRecordsClient::getAll, empty());
 
-    List<JsonObject> patronNotices = patronNoticesClient.getAll();
-
-    assertThat(patronNoticesClient.getAll(), hasSize(6));
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(6));
 
     Stream.of(CHECK_OUT_TEMPLATE_ID, CHECK_IN_TEMPLATE_ID).forEach(templateId ->
       Stream.of(james, jessica, steve).forEach(patron ->
-        patronNotices.stream()
+        FakeModNotify.getSentPatronNotices().stream()
           .filter(pn -> pn.getString("templateId").equals(templateId.toString()))
           .filter(pn -> pn.getString("recipientId").equals(patron.getId().toString()))
           .forEach(patronNotice ->
             assertThat(patronNotice, hasEmailNoticeProperties(patron.getId(), templateId,
               TemplateContextMatchers.getUserContextMatchers(patron))))));
+
+    verifyNumberOfSentNotices(6);
+    verifyNumberOfPublishedEvents(NOTICE, 6);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 
   @Test
-  public void expiredSessionWithNonExistentLoanShouldBeEnded() {
+  void expiredSessionWithNonExistentLoanShouldBeEnded() {
     IndividualResource james = usersFixture.james();
     ItemResource nod = itemsFixture.basedUponNod();
 
@@ -295,23 +300,53 @@ public class EndExpiredPatronActionSessionTests extends APITests {
     waitAtLeast(1, SECONDS)
       .until(patronSessionRecordsClient::getAll, empty());
 
-    assertThat(patronNoticesClient.getAll(), empty());
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), empty());
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
   }
 
   @Test
-  public void shouldNotFailIfSessionRecordsAreEmpty() {
+  void expiredSessionWithNonExistentItemShouldBeEnded() {
+    IndividualResource james = usersFixture.james();
+    ItemResource nod = itemsFixture.basedUponNod();
+
+    checkOutFixture.checkOutByBarcode(nod, james);
+    expiredEndSessionClient.deleteAll();
+
+    List<JsonObject> sessions = patronSessionRecordsClient.getAll();
+    assertThat(sessions, hasSize(1));
+
+    sessions.get(0).getString(LOAN_ID);
+    String patronId = sessions.get(0).getString(PATRON_ID);
+
+    itemsClient.delete(nod);
+    createExpiredEndSession(patronId, CHECK_OUT);
+
+    expiredSessionProcessingClient.runRequestExpiredSessionsProcessing(204);
+
+    waitAtLeast(1, SECONDS)
+      .until(patronSessionRecordsClient::getAll, empty());
+
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
+  }
+
+  @Test
+  void shouldNotFailIfSessionRecordsAreEmpty() {
     createExpiredEndSession(UUID.randomUUID().toString(), CHECK_OUT);
 
     expiredSessionProcessingClient.runRequestExpiredSessionsProcessing(204);
 
     assertThat(patronSessionRecordsClient.getAll(), empty());
-    assertThat(patronNoticesClient.getAll(), empty());
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), empty());
+
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 
   @Test
-  public void expiredSessionWithNonExistentUserShouldBeEnded() {
+  void expiredSessionWithNonExistentUserShouldBeEnded() {
     val steve = usersFixture.steve();
     val nod = itemsFixture.basedUponNod();
 
@@ -331,27 +366,28 @@ public class EndExpiredPatronActionSessionTests extends APITests {
     waitAtMost(1, SECONDS)
       .until(patronSessionRecordsClient::getAll, empty());
 
-    assertThat(patronNoticesClient.getAll(), empty());
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), empty());
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
   }
 
   @Test
-  public void shouldNotFailWithUriTooLargeErrorDuringEndingExpiredCheckOutSessions() {
+  void shouldNotFailWithUriTooLargeErrorDuringEndingExpiredCheckOutSessions() {
     checkThatBunchOfExpiredSessionsWereAddedAndRemovedByTimer(100, CHECK_OUT);
   }
 
   @Test
-  public void shouldNotFailWithUriTooLargeErrorDuringEndingExpiredCheckInSessions() {
+  void shouldNotFailWithUriTooLargeErrorDuringEndingExpiredCheckInSessions() {
     checkThatBunchOfExpiredSessionsWereAddedAndRemovedByTimer(100, CHECK_IN);
   }
 
   @Test
-  public void sessionsWithNotSpecifiedActionTypeShouldBeEnded() {
+  void sessionsWithNotSpecifiedActionTypeShouldBeEnded() {
     checkThatBunchOfExpiredSessionsWereAddedAndRemovedByTimer(100, "");
   }
 
   @Test
-  public void patronNoticeContextContainsUserTokensWhenNoticeIsTriggeredByExpiredSession() {
+  void patronNoticeContextContainsUserTokensWhenNoticeIsTriggeredByExpiredSession() {
     IndividualResource james = usersFixture.james();
     ItemResource nod = itemsFixture.basedUponNod();
     checkOutFixture.checkOutByBarcode(nod, james);
@@ -367,16 +403,17 @@ public class EndExpiredPatronActionSessionTests extends APITests {
     waitAtMost(1, SECONDS)
       .until(patronSessionRecordsClient::getAll,  empty());
 
-    assertThat(patronNoticesClient.getAll(), hasSize(1));
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
+    verifyNumberOfSentNotices(1);
+    verifyNumberOfPublishedEvents(NOTICE, 1);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
 
-    assertThat(patronNoticesClient.getAll().get(0),
+    assertThat(FakeModNotify.getFirstSentPatronNotice(),
       hasEmailNoticeProperties(james.getId(), CHECK_OUT_TEMPLATE_ID,
         TemplateContextMatchers.getUserContextMatchers(james)));
   }
 
   @Test
-  public void expiredSessionWithNonExistentItemIdShouldBeEnded() {
+  void expiredSessionWithNonExistentItemIdShouldBeEnded() {
     IndividualResource james = usersFixture.james();
     ItemResource nod = itemsFixture.basedUponNod();
 
@@ -397,8 +434,9 @@ public class EndExpiredPatronActionSessionTests extends APITests {
     waitAtMost(1, SECONDS)
       .until(patronSessionRecordsClient::getAll, empty());
 
-    assertThat(patronNoticesClient.getAll(), empty());
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), empty());
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
   }
 
   private void checkThatBunchOfExpiredSessionsWereAddedAndRemovedByTimer(

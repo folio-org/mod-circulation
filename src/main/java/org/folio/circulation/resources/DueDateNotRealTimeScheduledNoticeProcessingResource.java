@@ -12,18 +12,18 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.folio.circulation.domain.MultipleRecords;
-import org.folio.circulation.domain.notice.schedule.DueDateNotRealTimeScheduledNoticeHandler;
+import org.folio.circulation.domain.notice.schedule.GroupedLoanScheduledNoticeHandler;
 import org.folio.circulation.domain.notice.schedule.ScheduledNotice;
 import org.folio.circulation.domain.notice.schedule.ScheduledNoticeGroupDefinition;
 import org.folio.circulation.domain.notice.schedule.TriggeringEvent;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.CqlSortBy;
 import org.folio.circulation.support.CqlSortClause;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.results.Result;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
@@ -57,7 +57,7 @@ public class DueDateNotRealTimeScheduledNoticeProcessingResource extends Schedul
   }
 
   private DateTime startOfTodayInTimeZone(DateTimeZone zone) {
-    return ClockManager.getClockManager().getDateTime()
+    return ClockUtil.getDateTime()
       .withZone(zone)
       .withTimeAtStartOfDay();
   }
@@ -74,9 +74,6 @@ public class DueDateNotRealTimeScheduledNoticeProcessingResource extends Schedul
   @Override
   protected CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> handleNotices(
     Clients clients, MultipleRecords<ScheduledNotice> notices) {
-
-    final DueDateNotRealTimeScheduledNoticeHandler dueDateNoticeHandler =
-      DueDateNotRealTimeScheduledNoticeHandler.using(clients, DateTime.now(DateTimeZone.UTC));
 
     Map<ScheduledNoticeGroupDefinition, List<ScheduledNotice>> orderedGroups =
       notices.getRecords().stream().collect(Collectors.groupingBy(
@@ -97,7 +94,8 @@ public class DueDateNotRealTimeScheduledNoticeProcessingResource extends Schedul
       .map(Map.Entry::getValue)
       .collect(Collectors.toList());
 
-    return dueDateNoticeHandler.handleNotices(noticeGroups)
+    return new GroupedLoanScheduledNoticeHandler(clients, DateTime.now(DateTimeZone.UTC))
+      .handleNotices(noticeGroups)
       .thenApply(mapResult(v -> notices));
   }
 }

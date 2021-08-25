@@ -1,11 +1,10 @@
 package org.folio.circulation.domain.policy;
 
-import static org.folio.circulation.support.ClockManager.getClockManager;
+import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getIntegerProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.succeeded;
-import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.joda.time.DateTimeConstants.MINUTES_PER_DAY;
 import static org.joda.time.DateTimeConstants.MINUTES_PER_HOUR;
 import static org.joda.time.DateTimeConstants.MINUTES_PER_WEEK;
@@ -19,8 +18,9 @@ import java.util.function.IntFunction;
 import java.util.function.Supplier;
 
 import org.folio.circulation.support.HttpFailure;
-import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.server.ValidationError;
+import org.folio.circulation.support.results.Result;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
@@ -186,7 +186,7 @@ public class Period {
   }
 
   public boolean hasPassedSinceDateTillNow(DateTime startDate) {
-    final DateTime now = getClockManager().getDateTime();
+    final DateTime now = ClockUtil.getDateTime();
     final DateTime startPlusPeriod = startDate.plus(timePeriod());
 
     return startPlusPeriod.isBefore(now) || startPlusPeriod.isEqual(now);
@@ -197,7 +197,7 @@ public class Period {
   }
 
   public boolean isEqualToDateTillNow(DateTime startDate) {
-    final DateTime now = getClockManager().getDateTime();
+    final DateTime now = ClockUtil.getDateTime();
     final DateTime startPlusPeriod = startDate.plus(timePeriod());
 
     return now.isEqual(startPlusPeriod);
@@ -209,6 +209,10 @@ public class Period {
 
   public static Period zeroDurationPeriod() {
     return ZERO_DURATION_PERIOD;
+  }
+
+  public boolean isValid() {
+    return duration != null && interval != null;
   }
 
   @Override

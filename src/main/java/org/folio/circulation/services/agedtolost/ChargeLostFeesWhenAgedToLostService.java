@@ -9,7 +9,6 @@ import static org.folio.circulation.domain.representations.LoanProperties.DATE_L
 import static org.folio.circulation.domain.representations.LoanProperties.ITEM_STATUS;
 import static org.folio.circulation.domain.representations.LoanProperties.LOST_ITEM_HAS_BEEN_BILLED;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
-import static org.folio.circulation.support.ClockManager.getClockManager;
 import static org.folio.circulation.support.CqlSortBy.ascending;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
@@ -30,6 +29,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.StoreLoanAndItem;
 import org.folio.circulation.domain.FeeFine;
 import org.folio.circulation.domain.FeeFineOwner;
@@ -51,14 +52,13 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.fetching.PageableFetcher;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.results.Result;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import lombok.val;
 
 public class ChargeLostFeesWhenAgedToLostService {
-  private static final Logger log = LoggerFactory.getLogger(ChargeLostFeesWhenAgedToLostService.class);
+  private static final Logger log = LogManager.getLogger(ChargeLostFeesWhenAgedToLostService.class);
 
   private final LostItemPolicyRepository lostItemPolicyRepository;
   private final FeeFineOwnerRepository feeFineOwnerRepository;
@@ -232,7 +232,7 @@ public class ChargeLostFeesWhenAgedToLostService {
     final String lostItemHasBeenBilled = AGED_TO_LOST_DELAYED_BILLING + "."
       + LOST_ITEM_HAS_BEEN_BILLED;
 
-    final DateTime currentDate = getClockManager().getDateTime();
+    final DateTime currentDate = ClockUtil.getDateTime();
 
     final Result<CqlQuery> billingDateQuery = lessThanOrEqualTo(billingDateProperty, currentDate);
     final Result<CqlQuery> agedToLostQuery = exactMatch(ITEM_STATUS, AGED_TO_LOST.getValue());

@@ -153,6 +153,20 @@ public class RequestsFixture {
     requestsClient.replace(request.getId(), cancelledRequestBySteve);
   }
 
+  public void expireRequest(IndividualResource request) {
+    requestsClient.replace(request.getId(),
+      RequestBuilder.from(request)
+        .withPosition(null)
+        .withStatus(RequestBuilder.CLOSED_UNFILLED));
+  }
+
+  public void expireRequestPickup(IndividualResource request) {
+    requestsClient.replace(request.getId(),
+      RequestBuilder.from(request)
+        .withPosition(null)
+        .withStatus(RequestBuilder.CLOSED_PICKUP_EXPIRED));
+  }
+
   public IndividualResource move(MoveRequestBuilder requestToBuild) {
     final JsonObject representation = requestToBuild.create();
 

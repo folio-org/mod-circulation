@@ -57,6 +57,8 @@ public class CheckInByBarcodeResource extends Resource {
 
     final UserRepository userRepository = new UserRepository(clients);
 
+    final RequestNoticeSender requestNoticeSender = RequestNoticeSender.using(clients);
+
     refuseWhenLoggedInUserNotPresent(context)
       .next(notUsed -> checkInRequestResult)
       .map(CheckInContext::new)
@@ -79,7 +81,8 @@ public class CheckInByBarcodeResource extends Resource {
         processAdapter::updateRequestQueue, CheckInContext::withRequestQueue))
       .thenComposeAsync(updateRequestQueueResult -> updateRequestQueueResult.combineAfter(
         processAdapter::updateItem, CheckInContext::withItem))
-      .thenApply(handleItemStatus -> handleItemStatus.next(processAdapter::sendItemStatusPatronNotice))
+      .thenApply(handleItemStatus -> handleItemStatus.next(
+        requestNoticeSender::sendNoticeOnRequestAwaitingPickup))
       .thenComposeAsync(updateItemResult -> updateItemResult.combineAfter(
         processAdapter::getDestinationServicePoint, CheckInContext::withItem))
       .thenComposeAsync(updateItemResult -> updateItemResult.combineAfter(

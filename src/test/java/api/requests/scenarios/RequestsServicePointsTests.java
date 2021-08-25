@@ -11,21 +11,21 @@ import org.folio.circulation.domain.RequestStatus;
 import api.support.http.IndividualResource;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.junit.jupiter.api.Test;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import api.requests.RequestsAPICreationTests;
 import api.support.APITests;
 import api.support.builders.RequestBuilder;
 import io.vertx.core.json.JsonObject;
 
-public class RequestsServicePointsTests extends APITests {
+class RequestsServicePointsTests extends APITests {
 
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   @Test
-  public void pagedRequestCheckedInAtIntendedServicePointTest() {
+  void pagedRequestCheckedInAtIntendedServicePointTest() {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource servicePoint = servicePointsFixture.cd1();
@@ -50,7 +50,7 @@ public class RequestsServicePointsTests extends APITests {
   }
 
   @Test
-  public void pagedRequestForItemWithIntransitStatusCheckedInAtIntendedServicePointTest() {
+  void pagedRequestForItemWithIntransitStatusCheckedInAtIntendedServicePointTest() {
 
     //setup item in IN_TRANSIT status
     final IndividualResource requestPickupServicePoint = servicePointsFixture.cd1();
@@ -69,7 +69,7 @@ public class RequestsServicePointsTests extends APITests {
   }
 
   @Test
-  public void pagedRequestCheckedInAtUnIntendedServicePointTest() {
+  void pagedRequestCheckedInAtUnIntendedServicePointTest() {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requestPickupServicePoint = servicePointsFixture.cd1();

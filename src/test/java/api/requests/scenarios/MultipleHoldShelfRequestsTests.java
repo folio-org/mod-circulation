@@ -15,19 +15,17 @@ import static org.hamcrest.Matchers.is;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import api.support.APITests;
 import api.support.http.IndividualResource;
-import junitparams.JUnitParamsRunner;
-import junitparams.Parameters;
 import lombok.val;
 
-@RunWith(JUnitParamsRunner.class)
-public class MultipleHoldShelfRequestsTests extends APITests {
+class MultipleHoldShelfRequestsTests extends APITests {
   @Test
-  public void statusOfOldestRequestChangesToAwaitingPickupWhenItemCheckedIn() {
+  void statusOfOldestRequestChangesToAwaitingPickupWhenItemCheckedIn() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     val james = usersFixture.james();
     val jessica = usersFixture.jessica();
@@ -56,12 +54,12 @@ public class MultipleHoldShelfRequestsTests extends APITests {
     assertThat(smallAngryPlanet, hasItemStatus(AWAITING_PICKUP));
   }
 
-  @Test
-  @Parameters({
-    "Hold|Checked out",
-    "Recall|Checked out"
+  @ParameterizedTest
+  @CsvSource(value = {
+    "Hold,Checked out",
+    "Recall,Checked out"
   })
-  public void statusOfOldestHoldAndRecallRequestsChangeToFulfilledWhenItemCheckedOutToRequester(
+  void statusOfOldestHoldAndRecallRequestsChangeToFulfilledWhenItemCheckedOutToRequester(
     String requestType, String itemStatus) {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
@@ -94,7 +92,7 @@ public class MultipleHoldShelfRequestsTests extends APITests {
   }
 
   @Test
-  public void checkingInLoanThatFulfilsRequestShouldMakeItemAvailableForPickupToNextRequester() {
+  void checkingInLoanThatFulfilsRequestShouldMakeItemAvailableForPickupToNextRequester() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     val james = usersFixture.james();
     val jessica = usersFixture.jessica();
@@ -128,7 +126,7 @@ public class MultipleHoldShelfRequestsTests extends APITests {
   }
 
   @Test
-  public void itemCannotBeCheckedOutToOtherPatronWhenOldestRequestIsAwaitingPickup() {
+  void itemCannotBeCheckedOutToOtherPatronWhenOldestRequestIsAwaitingPickup() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     val james = usersFixture.james();
     val jessica = usersFixture.jessica();
@@ -167,7 +165,7 @@ public class MultipleHoldShelfRequestsTests extends APITests {
   }
 
   @Test
-  public void itemCannotBeCheckedOutToOtherRequesterWhenOldestRequestIsAwaitingPickup() {
+  void itemCannotBeCheckedOutToOtherRequesterWhenOldestRequestIsAwaitingPickup() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     val james = usersFixture.james();
     val jessica = usersFixture.jessica();

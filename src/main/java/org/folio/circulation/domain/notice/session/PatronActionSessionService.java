@@ -1,52 +1,50 @@
 package org.folio.circulation.domain.notice.session;
 
+import static java.util.Collections.singletonList;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.stream.Collectors.groupingBy;
-import static java.util.stream.Collectors.toList;
 import static org.folio.circulation.domain.notice.TemplateContextUtil.createLoanNoticeContextWithoutUser;
-import static org.folio.circulation.domain.notice.TemplateContextUtil.createUserContext;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
+import static org.folio.circulation.support.http.client.PageLimit.limit;
+import static org.folio.circulation.support.results.AsynchronousResultBindings.safelyInitialise;
 import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
-import static org.folio.circulation.support.http.client.PageLimit.limit;
 
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
-import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.User;
-import org.folio.circulation.domain.representations.logs.NoticeLogContext;
+import org.folio.circulation.domain.notice.ImmediatePatronNoticeService;
 import org.folio.circulation.domain.notice.NoticeEventType;
-import org.folio.circulation.domain.notice.NoticeEventBundle;
+import org.folio.circulation.domain.notice.PatronNoticeEvent;
 import org.folio.circulation.domain.notice.PatronNoticeEventBuilder;
-import org.folio.circulation.domain.notice.PatronNoticeService;
+import org.folio.circulation.domain.notice.combiner.LoanNoticeContextCombiner;
+import org.folio.circulation.domain.representations.logs.NoticeLogContext;
 import org.folio.circulation.infrastructure.storage.sessions.PatronActionSessionRepository;
+import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.client.PageLimit;
+import org.folio.circulation.support.results.Result;
 
-import io.vertx.core.json.JsonObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.AllArgsConstructor;
 
+@AllArgsConstructor
 public class PatronActionSessionService {
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private static final PageLimit DEFAULT_SESSION_SIZE_PAGE_LIMIT = limit(200);
-
-  private static EnumMap<PatronActionType, NoticeEventType> actionToEventMap;
+  private static final EnumMap<PatronActionType, NoticeEventType> actionToEventMap;
 
   static {
     actionToEventMap = new EnumMap<>(PatronActionType.class);
@@ -55,139 +53,26 @@ public class PatronActionSessionService {
   }
 
   private final PatronActionSessionRepository patronActionSessionRepository;
-  private final PatronNoticeService patronNoticeService;
+  private final ImmediatePatronNoticeService patronNoticeService;
+  protected final EventPublisher eventPublisher;
 
   public static PatronActionSessionService using(Clients clients) {
     return new PatronActionSessionService(
       PatronActionSessionRepository.using(clients),
-      PatronNoticeService.using(clients));
+      new ImmediatePatronNoticeService(clients, new LoanNoticeContextCombiner()),
+      new EventPublisher(clients.pubSubPublishingService()));
   }
 
-  public PatronActionSessionService(
-    PatronActionSessionRepository patronActionSessionRepository,
-    PatronNoticeService patronNoticeService) {
-    this.patronActionSessionRepository = patronActionSessionRepository;
-    this.patronNoticeService = patronNoticeService;
-  }
+  public CompletableFuture<Result<LoanAndRelatedRecords>> saveCheckOutSessionRecord(
+    LoanAndRelatedRecords records) {
 
-  public CompletableFuture<Result<LoanAndRelatedRecords>> saveCheckOutSessionRecord(LoanAndRelatedRecords records) {
     UUID patronId = UUID.fromString(records.getUserId());
     UUID loanId = UUID.fromString(records.getLoan().getId());
 
-    PatronSessionRecord patronSessionRecord =
-      new PatronSessionRecord(UUID.randomUUID(),
-        patronId, loanId, PatronActionType.CHECK_OUT);
+    PatronSessionRecord patronSessionRecord = new PatronSessionRecord(UUID.randomUUID(), patronId,
+      loanId, PatronActionType.CHECK_OUT);
 
     return patronActionSessionRepository.create(patronSessionRecord)
-      .thenApply(mapResult(v -> records));
-  }
-
-  public CompletableFuture<Result<Void>> endSession(String patronId, PatronActionType actionType) {
-
-    return patronActionSessionRepository.findPatronActionSessions(patronId,
-      actionType, DEFAULT_SESSION_SIZE_PAGE_LIMIT)
-      .thenCompose(r -> r.after(this::sendNotices))
-      .thenCompose(r -> r.after(records ->
-        allOf(Objects.isNull(records)
-          ? Collections.emptyList()
-          : records.getRecords(), patronActionSessionRepository::delete)))
-      .thenApply(mapResult(v -> null));
-  }
-
-  public CompletableFuture<Result<Void>> endSession(List<ExpiredSession> expiredSessions) {
-
-    log.info("Attempting to delete expired sessions by timeout.");
-
-    return patronActionSessionRepository.findPatronActionSessions(expiredSessions)
-      .thenCompose(r -> r.after(this::endSessionsForRecords));
-  }
-
-  public CompletableFuture<Result<Void>> endSessionsForRecords(
-    MultipleRecords<PatronSessionRecord> records) {
-
-    return sendNoticesForAllUsers(records)
-      .thenCompose(r -> deleteRecords(records));
-  }
-
-  public CompletableFuture<Result<Void>> deleteRecords(
-    MultipleRecords<PatronSessionRecord> records) {
-
-    if (records == null) {
-      log.info("PatronSessionRecords are empty, nothing to delete.");
-      return completedFuture(succeeded(null));
-    }
-
-    log.info("{} session records will be deleted.", records.size());
-
-    return allOf(records.getRecords(), patronActionSessionRepository::delete)
-      .thenApply(mapResult(v -> null));
-  }
-
-  private CompletableFuture<Result<MultipleRecords<PatronSessionRecord>>> sendNotices(
-    MultipleRecords<PatronSessionRecord> records) {
-
-    if (records.isEmpty()) {
-      log.info("PatronSessionRecords are empty, notices will not be sent.");
-      return completedFuture(succeeded(null));
-    }
-    List<PatronSessionRecord> sessionRecords = new ArrayList<>(records.getRecords());
-
-    PatronSessionRecord recordSample = sessionRecords.get(0);
-
-    if (recordSample.getLoan() == null) {
-      log.info("Notice was not sent. Session: {} doesn't have a valid loan.", recordSample.getId());
-      return completedFuture(succeeded(records));
-    }
-
-    if (recordSample.getLoan().getItem() == null || recordSample.getLoan().getItem().getItem() == null) {
-      log.info("Notice was not sent. Session: {} doesn't have a valid item.", recordSample.getId());
-      return completedFuture(succeeded(records));
-    }
-
-    if (recordSample.getLoan().getUser() == null) {
-      log.info("Notice was not sent. Session: {} doesn't have a valid user.", recordSample.getId());
-      return completedFuture(succeeded(records));
-    }
-
-    //The user is the same for all records
-    User user = recordSample.getLoan().getUser();
-
-    List<NoticeEventBundle> bundles = sessionRecords.stream()
-      .map(r -> new NoticeEventBundle(new PatronNoticeEventBuilder()
-        .withItem(r.getLoan().getItem())
-        .withUser(r.getLoan().getUser())
-        .withEventType(actionToEventMap.get(r.getActionType()))
-        .withNoticeContext(createLoanNoticeContextWithoutUser(r.getLoan()))
-        .build(),
-        NoticeLogContext.from(r.getLoan())))
-      .collect(Collectors.toList());
-
-    return patronNoticeService.acceptMultipleNoticeEvent(bundles,
-      loanContexts -> new JsonObject()
-        .put("user", createUserContext(user))
-        .put("loans", loanContexts),
-      logContexts -> new NoticeLogContext()
-        .withUser(user)
-        .withItems(logContexts.stream()
-          .map(NoticeLogContext::getItems)
-          .flatMap(Collection::stream)
-          .collect(toList())))
-      .thenApply(mapResult(v -> records));
-  }
-
-  private CompletableFuture<Result<MultipleRecords<PatronSessionRecord>>> sendNoticesForAllUsers(
-    MultipleRecords<PatronSessionRecord> records) {
-
-    List<MultipleRecords<PatronSessionRecord>> recordsGroupedByUser = records.getRecords().stream()
-      .filter(record -> record.getLoan() != null && record.getLoan().getUser() != null)
-      .collect(groupingBy(record -> record.getLoan().getUserId()))
-      .values().stream()
-      .map(recordsList -> new MultipleRecords<>(recordsList, recordsList.size()))
-      .collect(Collectors.toList());
-
-    log.info("Attempting to send {} notices for expired sessions before they will be deleted by timeout.", recordsGroupedByUser.size());
-
-    return allOf(recordsGroupedByUser, this::sendNotices)
       .thenApply(mapResult(v -> records));
   }
 
@@ -206,4 +91,145 @@ public class PatronActionSessionService {
     return patronActionSessionRepository.create(patronSessionRecord)
       .thenApply(mapResult(v -> context));
   }
+
+  public CompletableFuture<Result<Void>> endSessions(String patronId, PatronActionType actionType) {
+    return safelyInitialise(() -> findSessions(patronId, actionType))
+      .thenCompose(r -> r.after(this::processSessions))
+      .thenApply(this::handleResult);
+  }
+
+  public CompletableFuture<Result<Void>> endExpiredSessions(List<ExpiredSession> expiredSessions) {
+    return ofAsync(() -> expiredSessions)
+      .thenCompose(r -> r.after(this::findSessions))
+      .thenCompose(r -> r.after(this::groupAndProcessSessions))
+      .thenApply(this::handleResult);
+  }
+
+  private CompletableFuture<Result<List<PatronSessionRecord>>> findSessions(String patronId,
+    PatronActionType actionType) {
+
+    return patronActionSessionRepository.findPatronActionSessions(patronId, actionType,
+      DEFAULT_SESSION_SIZE_PAGE_LIMIT);
+  }
+
+  private CompletableFuture<Result<List<PatronSessionRecord>>> findSessions(
+    List<ExpiredSession> expiredSessions) {
+
+    return patronActionSessionRepository.findPatronActionSessions(expiredSessions);
+  }
+
+  private CompletableFuture<Result<List<PatronSessionRecord>>> processSessions(
+    List<PatronSessionRecord> sessions) {
+
+    return ofAsync(() -> sessions)
+      .thenApply(mapResult(this::discardInvalidSessions))
+      .thenCompose(r -> r.after(this::sendNotice))
+      .thenCompose(ignored -> deleteSessions(sessions));
+  }
+
+  private List<PatronSessionRecord> discardInvalidSessions(List<PatronSessionRecord> sessions) {
+    List<PatronSessionRecord> validSessions = new ArrayList<>();
+
+    for (PatronSessionRecord session : sessions) {
+      Loan loan = session.getLoan();
+      String errorMessage = null;
+
+      if (loan == null) {
+        errorMessage = "referenced loan was not found";
+      } else {
+        if (loan.getItem() == null || loan.getItem().isNotFound()) {
+          errorMessage = "referenced item was not found";
+        }
+        if (loan.getUser() == null) {
+          errorMessage = "referenced user was not found";
+        }
+      }
+
+      if (errorMessage != null) {
+        errorMessage += ". " + session;
+        log.error("Failed to send notice for patron action session: {}", errorMessage);
+        publishNoticeErrorEvent(singletonList(session), errorMessage);
+      } else {
+        validSessions.add(session);
+      }
+    }
+
+    if (validSessions.size() < sessions.size()) {
+      log.warn("{} session(s) are invalid in the group of {} session(s)",
+        sessions.size() - validSessions.size(), sessions.size());
+    }
+
+    return validSessions;
+  }
+
+  private CompletableFuture<Result<Void>> groupAndProcessSessions(
+    List<PatronSessionRecord> sessions) {
+
+    var groupedSessions = sessions.stream()
+      .collect(groupingBy(PatronSessionRecord::getPatronId))
+      .values();
+
+    return allOf(groupedSessions, this::processSessions)
+      .thenApply(mapResult(v -> null));
+  }
+
+  // all sessions must be for the same patron
+  private CompletableFuture<Result<List<PatronSessionRecord>>> sendNotice(
+    List<PatronSessionRecord> sessions) {
+
+    if (sessions.isEmpty()) {
+      log.info("No patron action sessions to process");
+      return ofAsync(() -> null);
+    }
+
+    //The user is the same for all sessions
+    User user = sessions.get(0).getLoan().getUser();
+
+    log.info("Attempting to send a notice for a group of {} action sessions to user {}",
+      sessions.size(), user.getId());
+
+    return patronNoticeService.acceptNoticeEvents(buildNoticeEvents(sessions))
+      .thenApply(mapResult(v -> sessions));
+  }
+
+  private CompletableFuture<Result<Void>> publishNoticeErrorEvent(
+    List<PatronSessionRecord> sessions, String errorMessage) {
+
+    return eventPublisher.publishNoticeErrorLogEvent(NoticeLogContext.from(sessions), errorMessage);
+  }
+
+  private CompletableFuture<Result<List<PatronSessionRecord>>> deleteSessions(
+    List<PatronSessionRecord> sessions) {
+
+    return sessions == null || sessions.isEmpty()
+      ? ofAsync(() -> sessions)
+      : allOf(sessions, patronActionSessionRepository::delete);
+  }
+
+  private Result<Void> handleResult(Result<?> result) {
+    if (result.failed()) {
+      log.error("Failed to process patron action sessions: {}", result.cause());
+    }
+
+    return succeeded(null);
+  }
+
+  private static List<PatronNoticeEvent> buildNoticeEvents(List<PatronSessionRecord> sessions) {
+    return sessions.stream()
+      .map(PatronActionSessionService::buildPatronNoticeEvent)
+      .collect(Collectors.toList());
+  }
+
+  private static PatronNoticeEvent buildPatronNoticeEvent(PatronSessionRecord session) {
+    Loan loan = session.getLoan();
+
+    return new PatronNoticeEventBuilder()
+      .withItem(loan.getItem())
+      .withUser(loan.getUser())
+      .withEventType(actionToEventMap.get(session.getActionType()))
+      .withNoticeContext(createLoanNoticeContextWithoutUser(loan))
+      .withNoticeLogContext(NoticeLogContext.from(loan))
+      .build();
+  }
+
 }

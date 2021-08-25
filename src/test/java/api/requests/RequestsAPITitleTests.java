@@ -9,17 +9,17 @@ import java.util.UUID;
 
 import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.RequestBuilder;
 import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 
-public class RequestsAPITitleTests extends APITests {
+class RequestsAPITitleTests extends APITests {
 
   @Test
-  public void titleIsFromInstanceWhenCreatingRequestWithHoldingAndInstance() {
+  void titleIsFromInstanceWhenCreatingRequestWithHoldingAndInstance() {
 
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -55,7 +55,7 @@ public class RequestsAPITitleTests extends APITests {
   }
 
   @Test
-  public void titleIsChangedWhenRequestUpdatedAndInstanceTitleChanged() {
+  void titleIsChangedWhenRequestUpdatedAndInstanceTitleChanged() {
 
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -91,7 +91,7 @@ public class RequestsAPITitleTests extends APITests {
   }
 
   @Test
-  public void titlesComeFromMultipleInstancesForMultipleRequests() {
+  void titlesComeFromMultipleInstancesForMultipleRequests() {
 
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final ItemResource temeraire = itemsFixture.basedUponTemeraire();

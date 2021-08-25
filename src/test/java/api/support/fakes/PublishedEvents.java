@@ -8,9 +8,16 @@ import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+import org.folio.circulation.domain.EventType;
+import org.folio.circulation.domain.representations.logs.LogEventType;
+
 import io.vertx.core.json.JsonObject;
 
 public class PublishedEvents extends ArrayList<JsonObject> {
+  public static Predicate<JsonObject> byEventType(EventType eventType) {
+    return byEventType(eventType.name());
+  }
+
   public static Predicate<JsonObject> byEventType(String eventType) {
     return evt -> eventType.equalsIgnoreCase(evt.getString("eventType"));
   }
@@ -21,6 +28,10 @@ public class PublishedEvents extends ArrayList<JsonObject> {
         .equals(logEventType);
 
     return byEventType(LOG_RECORD).and(byLogEventType);
+  }
+
+  public static Predicate<JsonObject> byLogEventType(LogEventType eventType) {
+    return byLogEventType(eventType.value());
   }
 
   public static Predicate<JsonObject> byLogAction(String action) {

@@ -4,13 +4,11 @@ import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static java.time.ZoneOffset.UTC;
 import static org.folio.circulation.domain.representations.RequestProperties.HOLD_SHELF_EXPIRATION_DATE;
-import static org.folio.circulation.support.ClockManager.getClockManager;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Collections;
@@ -21,9 +19,10 @@ import java.util.stream.Collectors;
 
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.policy.Period;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
@@ -37,13 +36,13 @@ import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 
-public class RequestScheduledNoticesTests extends APITests {
+class RequestScheduledNoticesTests extends APITests {
   private final UUID templateId = UUID.randomUUID();
   private ItemResource item;
   private IndividualResource requester;
   private IndividualResource pickupServicePoint;
 
-  @Before
+  @BeforeEach
   public void beforeEach() {
     ItemBuilder itemBuilder = ItemExamples.basedUponSmallAngryPlanet(
       materialTypesFixture.book().getId(), loanTypesFixture.canCirculate().getId());
@@ -60,7 +59,7 @@ public class RequestScheduledNoticesTests extends APITests {
   }
 
   @Test
-  public void requestExpirationUponAtNoticeShouldBeScheduledWhenCreatedRequestIsSetToExpire() {
+  void requestExpirationUponAtNoticeShouldBeScheduledWhenCreatedRequestIsSetToExpire() {
     JsonObject requestNotice = new NoticeConfigurationBuilder()
       .withTemplateId(templateId)
       .withRequestExpirationEvent()
@@ -74,7 +73,7 @@ public class RequestScheduledNoticesTests extends APITests {
 
     useDefaultRollingPoliciesAndOnlyAllowPageRequests(noticePolicyBuilder);
 
-    final var requestExpiration = java.time.LocalDate.now(getClockManager().getClock()).plusMonths(3);
+    final var requestExpiration = java.time.LocalDate.now(ClockUtil.getClock()).plusMonths(3);
 
     IndividualResource request = requestsFixture.place(new RequestBuilder().page()
       .forItem(item)
@@ -105,7 +104,7 @@ public class RequestScheduledNoticesTests extends APITests {
   }
 
   @Test
-  public void requestExpirationUponAtNoticeShouldNotBeScheduledWhenCreatedRequestIsNotSetToExpire() {
+  void requestExpirationUponAtNoticeShouldNotBeScheduledWhenCreatedRequestIsNotSetToExpire() {
     JsonObject requestNotice = new NoticeConfigurationBuilder()
       .withTemplateId(templateId)
       .withRequestExpirationEvent()
@@ -132,7 +131,7 @@ public class RequestScheduledNoticesTests extends APITests {
   }
 
   @Test
-  public void requestExpirationNoticeShouldNotBeScheduledWhenCreatedRequestDoesNotExpire()
+  void requestExpirationNoticeShouldNotBeScheduledWhenCreatedRequestDoesNotExpire()
     throws InterruptedException {
 
     JsonObject requestNotice = new NoticeConfigurationBuilder()
@@ -163,7 +162,7 @@ public class RequestScheduledNoticesTests extends APITests {
   }
 
   @Test
-  public void requestExpirationBeforeNoticeShouldBeScheduledWhenCreatedRequestIsSetToExpire() {
+  void requestExpirationBeforeNoticeShouldBeScheduledWhenCreatedRequestIsSetToExpire() {
     JsonObject requestNotice = new NoticeConfigurationBuilder()
       .withTemplateId(templateId)
       .withRequestExpirationEvent()
@@ -177,7 +176,7 @@ public class RequestScheduledNoticesTests extends APITests {
 
     useDefaultRollingPoliciesAndOnlyAllowPageRequests(noticePolicyBuilder);
 
-    final var requestExpiration = java.time.LocalDate.now(getClockManager().getClock()).plusMonths(3);
+    final var requestExpiration = java.time.LocalDate.now(ClockUtil.getClock()).plusMonths(3);
 
     IndividualResource request = requestsFixture.place(new RequestBuilder().page()
       .forItem(item)
@@ -208,7 +207,7 @@ public class RequestScheduledNoticesTests extends APITests {
   }
 
   @Test
-  public void requestExpirationUponAtNoticeShouldBeRescheduledWhenUpdatedRequestIsSetToExpire() {
+  void requestExpirationUponAtNoticeShouldBeRescheduledWhenUpdatedRequestIsSetToExpire() {
     JsonObject requestNotice = new NoticeConfigurationBuilder()
       .withTemplateId(templateId)
       .withRequestExpirationEvent()
@@ -222,7 +221,7 @@ public class RequestScheduledNoticesTests extends APITests {
 
     useDefaultRollingPoliciesAndOnlyAllowPageRequests(noticePolicyBuilder);
 
-    final var requestExpiration = java.time.LocalDate.now(getClockManager().getClock()).plusMonths(3);
+    final var requestExpiration = java.time.LocalDate.now(ClockUtil.getClock()).plusMonths(3);
 
     RequestBuilder requestBuilder = new RequestBuilder().page()
       .forItem(item)
@@ -276,7 +275,7 @@ public class RequestScheduledNoticesTests extends APITests {
   }
 
   @Test
-  public void recurringRequestExpirationNoticeShouldBeDeletedWhenExpirationDateIsRemovedDuringUpdate() {
+  void recurringRequestExpirationNoticeShouldBeDeletedWhenExpirationDateIsRemovedDuringUpdate() {
     JsonObject requestNotice = new NoticeConfigurationBuilder()
       .withTemplateId(templateId)
       .withRequestExpirationEvent()
@@ -291,7 +290,7 @@ public class RequestScheduledNoticesTests extends APITests {
 
     useDefaultRollingPoliciesAndOnlyAllowPageRequests(noticePolicyBuilder);
 
-    final var requestExpiration = java.time.LocalDate.now(getClockManager().getClock()).plusMonths(3);
+    final var requestExpiration = java.time.LocalDate.now(ClockUtil.getClock()).plusMonths(3);
 
     RequestBuilder requestBuilder = new RequestBuilder().page()
       .forItem(item)
@@ -329,7 +328,7 @@ public class RequestScheduledNoticesTests extends APITests {
   }
 
   @Test
-  public void holdShelfExpirationNoticeShouldBeScheduledOnCheckIn() {
+  void holdShelfExpirationNoticeShouldBeScheduledOnCheckIn() {
     JsonObject requestNotice = new NoticeConfigurationBuilder()
       .withTemplateId(templateId)
       .withHoldShelfExpirationEvent()
@@ -343,7 +342,7 @@ public class RequestScheduledNoticesTests extends APITests {
 
     useDefaultRollingPoliciesAndOnlyAllowPageRequests(noticePolicyBuilder);
 
-    final var requestExpiration = java.time.LocalDate.now(getClockManager().getClock()).plusMonths(3);
+    final var requestExpiration = java.time.LocalDate.now(ClockUtil.getClock()).plusMonths(3);
 
     RequestBuilder requestBuilder = new RequestBuilder().page()
       .forItem(item)
@@ -386,7 +385,7 @@ public class RequestScheduledNoticesTests extends APITests {
   }
 
   @Test
-  public void requestExpirationAndHoldShelfExpirationNoticesAreCreatedWhenPickupReminderIsFirstInPolicy() {
+  void requestExpirationAndHoldShelfExpirationNoticesAreCreatedWhenPickupReminderIsFirstInPolicy() {
     JsonObject pickupReminder = new NoticeConfigurationBuilder()
       .withTemplateId(templateId)
       .withAvailableEvent()
@@ -413,7 +412,7 @@ public class RequestScheduledNoticesTests extends APITests {
 
     useDefaultRollingPoliciesAndOnlyAllowPageRequests(noticePolicyBuilder);
 
-    final var requestExpiration = java.time.LocalDate.now(getClockManager().getClock()).plusMonths(3);
+    final var requestExpiration = java.time.LocalDate.now(ClockUtil.getClock()).plusMonths(3);
 
     RequestBuilder requestBuilder = new RequestBuilder().page()
       .forItem(item)
@@ -445,11 +444,5 @@ public class RequestScheduledNoticesTests extends APITests {
       .collect(Collectors.toList());
 
     assertThat(triggeringEvents, containsInAnyOrder("Request expiration", "Hold expiration"));
-  }
-
-  private ZonedDateTime toZonedStartOfDay(java.time.LocalDate date) {
-    final var startOfDay = date.atStartOfDay();
-
-    return ZonedDateTime.of(startOfDay, ZoneId.systemDefault().normalized());
   }
 }

@@ -10,7 +10,7 @@ import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
 import org.folio.circulation.support.results.Result;
 
-abstract class DefaultLoansFinder implements LoanAnonymizationFinderService {
+abstract class DefaultLoansFinder {
   private final AccountRepository accountRepository;
 
   DefaultLoansFinder(AccountRepository accountRepository) {

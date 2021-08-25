@@ -1,10 +1,11 @@
 package org.folio.circulation.rules;
 
+import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.results.Result.combined;
-import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
-import static org.slf4j.LoggerFactory.getLogger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
@@ -13,15 +14,13 @@ import org.folio.circulation.domain.Location;
 import org.folio.circulation.rules.cache.CirculationRulesCache;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FetchSingleRecord;
-import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.results.Result;
-import org.slf4j.Logger;
 
 import io.vertx.core.json.JsonArray;
 import lombok.val;
 
 public class CirculationRulesProcessor {
-  private static final Logger log = getLogger(CirculationRulesProcessor.class);
+  private static final Logger log = LogManager.getLogger(CirculationRulesProcessor.class);
 
   private final String tenantId;
   private final CollectionResourceClient circulationRulesStorage;
@@ -122,7 +121,7 @@ public class CirculationRulesProcessor {
     return FetchSingleRecord.<Location>forRecord("location")
       .using(locationStorageClient)
       .mapTo(Location::from)
-      .whenNotFound(failed(new ServerErrorFailure("Can`t find location")))
+      .whenNotFound(failedValidation("Cannot find location", "location_id", params.getLocationId()))
       .fetch(params.getLocationId())
       .thenApply(r -> r.map(params::withLocation));
   }

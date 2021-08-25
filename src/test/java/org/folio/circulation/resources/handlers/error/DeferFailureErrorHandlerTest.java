@@ -5,11 +5,11 @@ import static org.folio.circulation.resources.handlers.error.CirculationErrorTyp
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_INACTIVE;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.succeeded;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Collection;
 import java.util.List;
@@ -19,9 +19,9 @@ import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class DeferFailureErrorHandlerTest {
+class DeferFailureErrorHandlerTest {
   private static final HttpFailure SERVER_ERROR = new ServerErrorFailure("server error");
   private static final HttpFailure VALIDATION_ERROR = new ValidationErrorFailure(
     List.of(new ValidationError("validation failed", "key", "value")));
@@ -32,7 +32,7 @@ public class DeferFailureErrorHandlerTest {
   private final DeferFailureErrorHandler handler = new DeferFailureErrorHandler();
 
   @Test
-  public void handleAnyErrorAddsErrorToMapAndReturnsPassedValue() {
+  void handleAnyErrorAddsErrorToMapAndReturnsPassedValue() {
     Result<String> output = handler.handleAnyError(SERVER_ERROR, INVALID_ITEM_ID, SUCCEEDED_RESULT);
 
     assertSame(SUCCEEDED_RESULT, output);
@@ -42,7 +42,7 @@ public class DeferFailureErrorHandlerTest {
   }
 
   @Test
-  public void handleAnyErrorIgnoresNullError() {
+  void handleAnyErrorIgnoresNullError() {
     Result<String> output = handler.handleAnyError(null, INVALID_ITEM_ID, SUCCEEDED_RESULT);
 
     assertSame(SUCCEEDED_RESULT, output);
@@ -50,7 +50,7 @@ public class DeferFailureErrorHandlerTest {
   }
 
   @Test
-  public void handleAnyErrorHandlesNullErrorTypeCorrectly() {
+  void handleAnyErrorHandlesNullErrorTypeCorrectly() {
     Result<String> output = handler.handleAnyError(SERVER_ERROR, null, SUCCEEDED_RESULT);
 
     assertSame(SUCCEEDED_RESULT, output);
@@ -59,7 +59,7 @@ public class DeferFailureErrorHandlerTest {
   }
 
   @Test
-  public void handleAnyErrorHandlesNullReturnValueCorrectly() {
+  void handleAnyErrorHandlesNullReturnValueCorrectly() {
     Result<String> output = handler.handleAnyError(SERVER_ERROR, INVALID_ITEM_ID, null);
 
     assertTrue(handler.getErrors().containsKey(SERVER_ERROR));
@@ -67,7 +67,7 @@ public class DeferFailureErrorHandlerTest {
   }
 
   @Test
-  public void handledAnyResultIgnoresErrorWhenInputResultIsSucceeded() {
+  void handledAnyResultIgnoresErrorWhenInputResultIsSucceeded() {
     Result<String> input = succeeded("input result");
     Result<String> output = handler.handleAnyResult(input, INVALID_ITEM_ID, SUCCEEDED_RESULT);
 
@@ -77,7 +77,7 @@ public class DeferFailureErrorHandlerTest {
   }
 
   @Test
-  public void handleAnyResultHandlesFailedResultCorrectly() {
+  void handleAnyResultHandlesFailedResultCorrectly() {
     Result<String> output = handler.handleAnyResult(
       SERVER_ERROR_RESULT, INVALID_ITEM_ID, SUCCEEDED_RESULT);
 
@@ -87,7 +87,7 @@ public class DeferFailureErrorHandlerTest {
   }
 
   @Test
-  public void handleAnyResultIgnoresNullErrorWithinInputResult() {
+  void handleAnyResultIgnoresNullErrorWithinInputResult() {
     Result<String> output = handler.handleAnyResult(failed(null), INVALID_ITEM_ID, SUCCEEDED_RESULT);
 
     assertSame(SUCCEEDED_RESULT, output);
@@ -95,7 +95,7 @@ public class DeferFailureErrorHandlerTest {
   }
 
   @Test
-  public void handleAnyResultHandlesNullReturnValueCorrectly() {
+  void handleAnyResultHandlesNullReturnValueCorrectly() {
     Result<String> output = handler.handleAnyResult(SERVER_ERROR_RESULT, INVALID_ITEM_ID, null);
 
     assertNull(output);
@@ -103,7 +103,7 @@ public class DeferFailureErrorHandlerTest {
   }
 
   @Test
-  public void handleValidationError() {
+  void handleValidationError() {
     Result<String> output = handler.handleValidationError(
       VALIDATION_ERROR, INVALID_ITEM_ID, SUCCEEDED_RESULT);
 
@@ -113,7 +113,7 @@ public class DeferFailureErrorHandlerTest {
   }
 
   @Test
-  public void handleValidationErrorIgnoresNonValidationError() {
+  void handleValidationErrorIgnoresNonValidationError() {
     Result<String> output = handler.handleValidationError(
       SERVER_ERROR, INVALID_ITEM_ID, SUCCEEDED_RESULT);
 
@@ -123,7 +123,7 @@ public class DeferFailureErrorHandlerTest {
   }
 
   @Test
-  public void handleValidationErrorIgnoresNullError() {
+  void handleValidationErrorIgnoresNullError() {
     Result<String> output = handler.handleValidationError(null, INVALID_ITEM_ID, SUCCEEDED_RESULT);
 
     assertTrue(output.failed());
@@ -132,7 +132,7 @@ public class DeferFailureErrorHandlerTest {
   }
 
   @Test
-  public void handledValidationResult() {
+  void handledValidationResult() {
     Result<String> output = handler.handleValidationResult(
       VALIDATION_ERROR_RESULT, INVALID_ITEM_ID, SUCCEEDED_RESULT);
 
@@ -142,7 +142,7 @@ public class DeferFailureErrorHandlerTest {
   }
 
   @Test
-  public void handledValidationResultIgnoresNonValidationError() {
+  void handledValidationResultIgnoresNonValidationError() {
     Result<String> output = handler.handleValidationResult(
       SERVER_ERROR_RESULT, INVALID_ITEM_ID, SUCCEEDED_RESULT);
 
@@ -152,7 +152,7 @@ public class DeferFailureErrorHandlerTest {
   }
 
   @Test
-  public void handlerAccumulatesErrors() {
+  void handlerAccumulatesErrors() {
     handler.handleAnyResult(SERVER_ERROR_RESULT, INVALID_ITEM_ID, SUCCEEDED_RESULT);
     handler.handleValidationResult(VALIDATION_ERROR_RESULT, INVALID_ITEM_ID, SUCCEEDED_RESULT);
 
@@ -161,7 +161,7 @@ public class DeferFailureErrorHandlerTest {
   }
 
   @Test
-  public void failWithValidationErrorsReturnsValidationErrorsOnly() {
+  void failWithValidationErrorsReturnsValidationErrorsOnly() {
     ValidationError firstValidationError = new ValidationError("error1", "key1", "value1");
     ValidationErrorFailure firstValidationFailure = new ValidationErrorFailure(
       List.of(firstValidationError));
@@ -187,7 +187,7 @@ public class DeferFailureErrorHandlerTest {
   }
 
   @Test
-  public void failWithValidationErrorsReturnsPassedValueWhenHasNoValidationErrors() {
+  void failWithValidationErrorsReturnsPassedValueWhenHasNoValidationErrors() {
     handler.handleAnyError(SERVER_ERROR, ITEM_DOES_NOT_EXIST, SUCCEEDED_RESULT);
     assertEquals(1, handler.getErrors().size());
     assertTrue(handler.getErrors().containsKey(SERVER_ERROR));
@@ -200,7 +200,7 @@ public class DeferFailureErrorHandlerTest {
   }
 
   @Test
-  public void failWithValidationErrorsReturnsPassedValueWhenHasNoErrors() {
+  void failWithValidationErrorsReturnsPassedValueWhenHasNoErrors() {
     assertTrue(handler.getErrors().isEmpty());
 
     String otherwise = "should return this string";
@@ -211,7 +211,7 @@ public class DeferFailureErrorHandlerTest {
   }
 
   @Test
-  public void hasAnyReturnsTrueWhenContainsErrorOfPassedType() {
+  void hasAnyReturnsTrueWhenContainsErrorOfPassedType() {
     handler.handleAnyResult(SERVER_ERROR_RESULT, INVALID_ITEM_ID, SUCCEEDED_RESULT);
     assertEquals(1, handler.getErrors().size());
     assertTrue(handler.getErrors().containsValue(INVALID_ITEM_ID));
@@ -220,7 +220,7 @@ public class DeferFailureErrorHandlerTest {
   }
 
   @Test
-  public void hasAnyReturnsFalseWhenContainsNoErrorsOfPassedType() {
+  void hasAnyReturnsFalseWhenContainsNoErrorsOfPassedType() {
     handler.handleAnyResult(SERVER_ERROR_RESULT, INVALID_ITEM_ID, SUCCEEDED_RESULT);
     assertEquals(1, handler.getErrors().size());
     assertTrue(handler.getErrors().containsValue(INVALID_ITEM_ID));
@@ -229,13 +229,13 @@ public class DeferFailureErrorHandlerTest {
   }
 
   @Test
-  public void hasAnyReturnsFalseWhenContainsNoErrors() {
+  void hasAnyReturnsFalseWhenContainsNoErrors() {
     assertTrue(handler.getErrors().isEmpty());
     assertFalse(handler.hasAny(INVALID_ITEM_ID, USER_IS_INACTIVE));
   }
 
   @Test
-  public void hasNoneReturnsFalseWhenContainsErrorOfPassedType() {
+  void hasNoneReturnsFalseWhenContainsErrorOfPassedType() {
     handler.handleAnyResult(SERVER_ERROR_RESULT, INVALID_ITEM_ID, SUCCEEDED_RESULT);
     assertEquals(1, handler.getErrors().size());
     assertTrue(handler.getErrors().containsValue(INVALID_ITEM_ID));
@@ -244,7 +244,7 @@ public class DeferFailureErrorHandlerTest {
   }
 
   @Test
-  public void hasNoneReturnsTrueWhenContainsNoErrorsOfPassedType() {
+  void hasNoneReturnsTrueWhenContainsNoErrorsOfPassedType() {
     handler.handleAnyResult(SERVER_ERROR_RESULT, INVALID_ITEM_ID, SUCCEEDED_RESULT);
     assertEquals(1, handler.getErrors().size());
     assertTrue(handler.getErrors().containsValue(INVALID_ITEM_ID));
@@ -253,7 +253,7 @@ public class DeferFailureErrorHandlerTest {
   }
 
   @Test
-  public void hasNoneReturnsTrueWhenContainsNoErrors() {
+  void hasNoneReturnsTrueWhenContainsNoErrors() {
     assertTrue(handler.getErrors().isEmpty());
     assertTrue(handler.hasNone(INVALID_ITEM_ID));
   }

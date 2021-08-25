@@ -21,11 +21,11 @@ import org.folio.circulation.support.CqlSortClause;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.joda.time.DateTime;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class CqlQueryTests {
+class CqlQueryTests {
   @Test
-  public void queryIsUrlEncoded() {
+  void queryIsUrlEncoded() {
     final Result<CqlQuery> query = exactMatch("barcode", "  12345  ")
       .map(q -> q.sortBy(ascending("barcode")));
 
@@ -36,14 +36,14 @@ public class CqlQueryTests {
   }
 
   @Test
-  public void canExactlyMatchSingleValue() {
+  void canExactlyMatchSingleValue() {
     final Result<CqlQuery> query = exactMatch("barcode", "12345");
 
     assertThat(query.value().asText(), is("barcode==\"12345\""));
   }
 
   @Test
-  public void canExactlyMatchAnyOfMultipleValues() {
+  void canExactlyMatchAnyOfMultipleValues() {
     final Result<CqlQuery> query = exactMatchAny("barcode",
       asList("12345", "67890"));
 
@@ -51,7 +51,7 @@ public class CqlQueryTests {
   }
 
   @Test
-  public void cannotExactlyMatchNoValues() {
+  void cannotExactlyMatchNoValues() {
     final Result<CqlQuery> queryResult = exactMatchAny("barcode",
       new ArrayList<>());
 
@@ -60,7 +60,7 @@ public class CqlQueryTests {
   }
 
   @Test
-  public void cannotExactlyMatchNullValues() {
+  void cannotExactlyMatchNullValues() {
     final Result<CqlQuery> queryResult = exactMatchAny("barcode",
       asList(null, null));
 
@@ -69,7 +69,7 @@ public class CqlQueryTests {
   }
 
   @Test
-  public void canApplyAndOperatorToTwoQueries() {
+  void canApplyAndOperatorToTwoQueries() {
     final Result<CqlQuery> query = exactMatch("barcode", "12345");
 
     final Result<CqlQuery> secondQuery = exactMatch("status", "Open");
@@ -82,7 +82,7 @@ public class CqlQueryTests {
   }
 
   @Test
-  public void canSortQuery() {
+  void canSortQuery() {
     final Result<CqlQuery> query = exactMatch("barcode", "12345")
       .map(q -> q.sortBy(ascending("position")));
 
@@ -91,7 +91,7 @@ public class CqlQueryTests {
   }
 
   @Test
-  public void canApplyLessThenOperator() {
+  void canApplyLessThenOperator() {
     DateTime dateTime = now(UTC);
     Result<CqlQuery> query = lessThan("nextRunTime", dateTime);
 
@@ -99,7 +99,7 @@ public class CqlQueryTests {
   }
 
   @Test
-  public void canApplyGreaterThenOperator() {
+  void canApplyGreaterThenOperator() {
     DateTime dateTime = now(UTC);
 
     Result<CqlQuery> query = greaterThan("lastTime", dateTime);
@@ -108,7 +108,7 @@ public class CqlQueryTests {
   }
 
   @Test
-  public void canApplyNotEqualOperator() {
+  void canApplyNotEqualOperator() {
     DateTime dateTime = now(UTC);
     Result<CqlQuery> query = notEqual("lastTime", dateTime);
 
@@ -116,7 +116,7 @@ public class CqlQueryTests {
   }
 
   @Test
-  public void canSortByMultipleIndexes() {
+  void canSortByMultipleIndexes() {
     Result<CqlQuery> query = exactMatch("barcode", "12345")
       .map(cqlQuery -> cqlQuery.sortBy(CqlSortBy.sortBy(
         CqlSortClause.ascending("position"),
@@ -127,28 +127,28 @@ public class CqlQueryTests {
   }
 
   @Test
-  public void shouldNotBeEqualToAnotherObject() {
+  void shouldNotBeEqualToAnotherObject() {
     final CqlQuery query = exactMatch("barcode", "12345").value();
 
     assertThat(query.equals(5), is(false));
   }
 
   @Test
-  public void shouldNotBeEqualToNull() {
+  void shouldNotBeEqualToNull() {
     final CqlQuery query = exactMatch("barcode", "12345").value();
 
     assertThat(query.equals(null), is(false));
   }
 
   @Test
-  public void shouldBeEqualToItself() {
+  void shouldBeEqualToItself() {
     final CqlQuery query = exactMatch("barcode", "12345").value();
 
     assertThat(query.equals(query), is(true));
   }
 
   @Test
-  public void shouldBeEqualToQueryWithSameDefinition() {
+  void shouldBeEqualToQueryWithSameDefinition() {
     final CqlQuery firstQuery = exactMatch("barcode", "12345").value();
     final CqlQuery secondQuery = exactMatch("barcode", "12345").value();
 

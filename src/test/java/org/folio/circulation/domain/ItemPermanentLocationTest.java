@@ -6,16 +6,16 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.util.UUID;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.builders.HoldingBuilder;
 import api.support.builders.ItemBuilder;
 import lombok.val;
 
-public class ItemPermanentLocationTest {
+class ItemPermanentLocationTest {
 
   @Test
-  public void itemLocationTakesPriorityOverHoldings() {
+  void itemLocationTakesPriorityOverHoldings() {
     val itemLocation = UUID.randomUUID();
     val holdingsLocation = UUID.randomUUID();
 
@@ -28,7 +28,7 @@ public class ItemPermanentLocationTest {
   }
 
   @Test
-  public void holdingsLocationIsReturnedByDefault() {
+  void holdingsLocationIsReturnedByDefault() {
     val holdingsLocation = UUID.randomUUID();
 
     val itemJson = new ItemBuilder().withPermanentLocation((UUID) null).create();
@@ -40,7 +40,7 @@ public class ItemPermanentLocationTest {
   }
 
   @Test
-  public void nullIsReturnedWhenNoHoldingsJsonPresent() {
+  void nullIsReturnedWhenNoHoldingsJsonPresent() {
     val itemJson = new ItemBuilder().withPermanentLocation((UUID) null).create();
 
     val item = Item.from(itemJson).withHoldingsRecord(null);

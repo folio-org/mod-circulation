@@ -1,7 +1,6 @@
 package org.folio.circulation;
 
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.logging.Logger;
 import org.folio.circulation.support.VertxAssistant;
 import org.folio.circulation.support.logging.Logging;
 
@@ -11,7 +10,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static io.vertx.core.logging.LoggerFactory.getLogger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
 public class Launcher {
@@ -23,7 +23,7 @@ public class Launcher {
     Logging.initialiseFormat();
 
     this.vertxAssistant = vertxAssistant;
-    this.log = getLogger(MethodHandles.lookup().lookupClass());
+    this.log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   }
 
   public static void main(String[] args) throws

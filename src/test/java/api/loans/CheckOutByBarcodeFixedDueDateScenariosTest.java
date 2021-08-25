@@ -10,7 +10,7 @@ import api.support.http.IndividualResource;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
 import org.joda.time.DateTimeZone;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
 
@@ -27,10 +27,10 @@ import static org.hamcrest.MatcherAssert.assertThat;
  * Test cases for scenarios when due date calculated by CLDDM
  * extends beyond the DueDate for the configured Fixed due date schedule
  */
-public class CheckOutByBarcodeFixedDueDateScenariosTest extends APITests {
+class CheckOutByBarcodeFixedDueDateScenariosTest extends APITests {
 
   @Test
-  public void shouldUseMoveToThePreviousOpenDayStrategyForLongTermLoanPolicyWhenDueDateExtendsBeyondFixedDueDate() {
+  void shouldUseMoveToThePreviousOpenDayStrategyForLongTermLoanPolicyWhenDueDateExtendsBeyondFixedDueDate() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource jessica = usersFixture.jessica();
@@ -70,7 +70,7 @@ public class CheckOutByBarcodeFixedDueDateScenariosTest extends APITests {
   }
 
   @Test
-  public void shouldUseMoveToThePreviousOpenDayStrategyForFixedLoanPolicyWhenDueDateExtendsBeyondFixedDueDate() {
+  void shouldUseMoveToThePreviousOpenDayStrategyForFixedLoanPolicyWhenDueDateExtendsBeyondFixedDueDate() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource jessica = usersFixture.jessica();
@@ -111,7 +111,7 @@ public class CheckOutByBarcodeFixedDueDateScenariosTest extends APITests {
 
 
   @Test
-  public void shouldUseSelectedClosedLibraryStrategyWhenDueDateDoesNotExtendBeyondFixedDueDate() {
+  void shouldUseSelectedClosedLibraryStrategyWhenDueDateDoesNotExtendBeyondFixedDueDate() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource jessica = usersFixture.jessica();

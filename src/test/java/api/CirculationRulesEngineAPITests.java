@@ -1,7 +1,11 @@
 package api;
 
+import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
+import static api.support.matchers.ValidationErrorMatchers.hasMessage;
+import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.await;
+import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.StringContains.containsString;
@@ -18,8 +22,8 @@ import org.folio.circulation.rules.PatronGroup;
 import org.folio.circulation.rules.Policy;
 import org.folio.circulation.rules.cache.CirculationRulesCache;
 import org.folio.circulation.support.http.client.Response;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.LoanPolicyBuilder;
@@ -30,7 +34,7 @@ import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
-public class CirculationRulesEngineAPITests extends APITests {
+class CirculationRulesEngineAPITests extends APITests {
   public CirculationRulesEngineAPITests() {
     super(false, false);
   }
@@ -113,7 +117,7 @@ public class CirculationRulesEngineAPITests extends APITests {
     "b " + c1 + ": l " + lp4 + " r " + rp2 + " n " + np2 + " o " + op2 + " i " + lip2
   );
 
-  @Before
+  @BeforeEach
   public void setUp() {
     CirculationRulesCache.getInstance().dropCache();
     setPoliciesIdsToTheFixture();
@@ -161,7 +165,7 @@ public class CirculationRulesEngineAPITests extends APITests {
   }
 
   @Test
-  public void applyLoanWithoutParameters() {
+  void applyLoanWithoutParameters() {
     final Response response = circulationRulesFixture
       .attemptToApplyRulesWithNoParameters("/loan-policy");
 
@@ -169,7 +173,7 @@ public class CirculationRulesEngineAPITests extends APITests {
   }
 
   @Test
-  public void applyRequestWithoutParameters() {
+  void applyRequestWithoutParameters() {
     final Response response = circulationRulesFixture
       .attemptToApplyRulesWithNoParameters("/request-policy");
 
@@ -177,7 +181,7 @@ public class CirculationRulesEngineAPITests extends APITests {
   }
 
   @Test
-  public void applyNoticeWithoutParameters() {
+  void applyNoticeWithoutParameters() {
     final Response response = circulationRulesFixture
       .attemptToApplyRulesWithNoParameters("/notice-policy");
 
@@ -185,7 +189,7 @@ public class CirculationRulesEngineAPITests extends APITests {
   }
 
   @Test
-  public void applyOneLoanParameterMissing() {
+  void applyOneLoanParameterMissing() {
     applyRulesWithMissingParameters("loan", null, t1.id, lp1.id, s1.id, "item_type_id");
     applyRulesWithMissingParameters("loan", m1.id, null, lp1.id, s1.id, "loan_type_id");
     applyRulesWithMissingParameters("loan", m1.id, t1.id, null, s1.id, "patron_type_id");
@@ -193,7 +197,7 @@ public class CirculationRulesEngineAPITests extends APITests {
   }
 
   @Test
-  public void applyOneRequestParameterMissing() {
+  void applyOneRequestParameterMissing() {
     applyRulesWithMissingParameters("request", null, t1.id, lp1.id, s1.id, "item_type_id");
     applyRulesWithMissingParameters("request", m1.id, null, lp1.id, s1.id, "loan_type_id");
     applyRulesWithMissingParameters("request", m1.id, t1.id, null, s1.id, "patron_type_id");
@@ -201,7 +205,7 @@ public class CirculationRulesEngineAPITests extends APITests {
   }
 
   @Test
-  public void applyOneNoticeParameterMissing() {
+  void applyOneNoticeParameterMissing() {
     applyRulesWithMissingParameters("notice", null, t1.id, lp1.id, s1.id, "item_type_id");
     applyRulesWithMissingParameters("notice", m1.id, null, lp1.id, s1.id, "loan_type_id");
     applyRulesWithMissingParameters("notice", m1.id, t1.id, null, s1.id, "patron_type_id");
@@ -209,7 +213,7 @@ public class CirculationRulesEngineAPITests extends APITests {
   }
 
   @Test
-  public void applyInvalidUuid() {
+  void applyInvalidUuid() {
     applyInvalidUuid("");
     applyInvalidUuid("0");
     applyInvalidUuid("f");
@@ -247,25 +251,25 @@ public class CirculationRulesEngineAPITests extends APITests {
   }
 
   @Test
-  public void loanFallback() {
+  void loanFallback() {
     setRules(rulesFallback);
     assertThat(applyRulesForLoanPolicy(m1, t1, g1, s1), is(lp6));
   }
 
   @Test
-  public void requestFallback() {
+  void requestFallback() {
     setRules(rulesFallback);
     assertThat(applyRequestPolicy(m1, t1, g1, s1), is(rp1));
   }
 
   @Test
-  public void noticeFallback() {
+  void noticeFallback() {
     setRules(rulesFallback);
     assertThat(applyNoticePolicy(m1, t1, g1, s1), is(np1));
   }
 
   @Test
-  public void test1() {
+  void test1() {
     setRules(rules1);
     assertThat(applyRulesForLoanPolicy(m2, t2, g2, s2), is(lp4));
     assertThat(applyRulesForLoanPolicy(m2, t2, g1, s2), is(lp3));
@@ -273,7 +277,7 @@ public class CirculationRulesEngineAPITests extends APITests {
   }
 
   @Test
-  public void test2() {
+  void test2() {
     setRules(rules2);
     assertThat(applyRulesForLoanPolicy(m2, t2, g2, s2), is(lp6));
     assertThat(applyRulesForLoanPolicy(m1, t2, g2, s2), is(lp1));
@@ -282,7 +286,7 @@ public class CirculationRulesEngineAPITests extends APITests {
   }
 
   @Test
-  public void shouldApplyRulesWithInstitution() {
+  void shouldApplyRulesWithInstitution() {
     setRules(rulesWithInstitution);
     assertThat(applyRulesForLoanPolicy(m1, t2, g2, s2), is(lp2));
     assertThat(applyRulesForLoanPolicy(m2, t2, g2, s2), is(lp3));
@@ -291,7 +295,7 @@ public class CirculationRulesEngineAPITests extends APITests {
   }
 
   @Test
-  public void shouldApplyRulesWithLibrary() {
+  void shouldApplyRulesWithLibrary() {
     setRules(rulesWithLibrary);
     assertThat(applyRulesForLoanPolicy(m1, t2, g2, s2), is(lp2));
     assertThat(applyRulesForLoanPolicy(m2, t2, g2, s2), is(lp3));
@@ -300,7 +304,7 @@ public class CirculationRulesEngineAPITests extends APITests {
   }
 
   @Test
-  public void shouldApplyRulesWithCampus() {
+  void shouldApplyRulesWithCampus() {
     setRules(rulesWithCampus);
     assertThat(applyRulesForLoanPolicy(m1, t2, g2, s2), is(lp2));
     assertThat(applyRulesForLoanPolicy(m2, t2, g2, s2), is(lp3));
@@ -309,7 +313,7 @@ public class CirculationRulesEngineAPITests extends APITests {
   }
 
   @Test
-  public void canDetermineAllLoanPolicyMatches() {
+  void canDetermineAllLoanPolicyMatches() {
     setRules(rules1);
 
     JsonArray matches = circulationRulesFixture.applyAllRulesForLoanPolicy(
@@ -323,7 +327,7 @@ public class CirculationRulesEngineAPITests extends APITests {
   }
 
   @Test
-  public void canDetermineAllRequestPolicyMatches() {
+  void canDetermineAllRequestPolicyMatches() {
     setRules(rules1);
 
     JsonArray matches = circulationRulesFixture.applyAllRulesForRequestPolicy(
@@ -337,7 +341,7 @@ public class CirculationRulesEngineAPITests extends APITests {
   }
 
   @Test
-  public void canDetermineAllPatronNoticePolicyMatches() {
+  void canDetermineAllPatronNoticePolicyMatches() {
     setRules(rules1);
 
     JsonArray matches = circulationRulesFixture.applyAllRulesForNoticePolicy(
@@ -351,7 +355,26 @@ public class CirculationRulesEngineAPITests extends APITests {
   }
 
   @Test
-  public void setRulesInvalidatesCache() {
+  void rulesEvaluationFailsWhenTheProvidedLocationDoesNotExist() {
+    // The underlying rules are irrelevant
+    setRules(rules1);
+
+    final var itemType = new ItemType(UUID.randomUUID().toString());
+    final var loanType = new LoanType(UUID.randomUUID().toString());
+    final var patronGroup = new PatronGroup(UUID.randomUUID().toString());
+    final var locationThatDoesNotExist = new ItemLocation(UUID.randomUUID().toString());
+
+    final var response = circulationRulesFixture
+      .attemptToApplyRulesForRequestPolicy(itemType, loanType,
+        patronGroup, locationThatDoesNotExist);
+
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Cannot find location"),
+      hasParameter("location_id", locationThatDoesNotExist.id))));
+  }
+
+  @Test
+  void setRulesInvalidatesCache() {
     setRules(rulesFallback);
     assertThat(applyRulesForLoanPolicy(m1, t1, g1, s1), is(lp6));
     setRules(rulesFallback2);
@@ -363,7 +386,7 @@ public class CirculationRulesEngineAPITests extends APITests {
   }
 
   @Test
-  public void cachedRulesAreUsedEvenWhenRulesInStorageHaveBeenChanged() {
+  void cachedRulesAreUsedEvenWhenRulesInStorageHaveBeenChanged() {
     setRules(rulesFallback);
     assertThat(applyRulesForLoanPolicy(m1, t1, g1, s1), is(lp6));
 
@@ -374,7 +397,7 @@ public class CirculationRulesEngineAPITests extends APITests {
   }
 
   @Test
-  public void cacheIsInvalidatedAfterFiveSeconds() {
+  void cacheIsInvalidatedAfterFiveSeconds() {
     setRules(rulesFallback);
     assertThat(applyRulesForLoanPolicy(m1, t1, g1, s1), is(lp6));
 
