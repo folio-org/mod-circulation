@@ -71,6 +71,12 @@ public final class FeeFineAccountFixture {
     pay(accountId, lostItemProcessingFeeAccount.getDouble("amount"));
   }
 
+  public void payLostItemProcessingFee(UUID loanId, double amount) {
+    final String accountId = getLostItemProcessingFeeAccount(loanId).getString("id");
+
+    pay(accountId, amount);
+  }
+
   public void pay(String accountId, double amount) {
     final UUID accountUuid = UUID.fromString(accountId);
     final JsonObject account = accountsClient.getById(accountUuid).getJson();

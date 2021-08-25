@@ -201,7 +201,8 @@ public class LostItemFeeRefundService {
     }
 
     final Result<CqlQuery> fetchQuery = exactMatch("loanId", context.getLoan().getId())
-      .combine(exactMatchAny("feeFineType", feeFineTypes), CqlQuery::and);
+      .combine(exactMatchAny("feeFineType", feeFineTypes), CqlQuery::and)
+      .combine(exactMatch("status.name", "Open"), CqlQuery::and);
 
     return accountRepository.findAccountsAndActionsForLoanByQuery(fetchQuery)
       .thenApply(r -> r.map(context::withAccounts));

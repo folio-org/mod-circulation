@@ -22,15 +22,18 @@ import static api.support.fixtures.CalendarExamples.MONDAY_DATE;
 import static api.support.fixtures.CalendarExamples.START_TIME_FIRST_PERIOD;
 import static api.support.fixtures.CalendarExamples.START_TIME_SECOND_PERIOD;
 import static api.support.fixtures.CalendarExamples.WEDNESDAY_DATE;
+import static api.support.http.CqlQuery.queryFromTemplate;
 import static api.support.matchers.EventActionMatchers.ITEM_RENEWED;
 import static api.support.matchers.EventMatchers.isValidLoanDueDateChangedEvent;
 import static api.support.matchers.EventMatchers.isValidRenewedEvent;
 import static api.support.matchers.EventTypeMatchers.LOAN_DUE_DATE_CHANGED;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
+import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
+import static api.support.matchers.TextDateTimeMatcher.withinSecondsBeforeNow;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
@@ -42,6 +45,7 @@ import static api.support.utl.BlockOverridesUtils.getOverridableBlockNames;
 import static api.support.utl.DateTimeUtils.executeWithFixedDateTime;
 import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfPublishedEvents;
 import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfSentNotices;
+import static java.util.Collections.emptyList;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.domain.policy.DueDateManagement.KEEP_THE_CURRENT_DUE_DATE;
 import static org.folio.circulation.domain.policy.DueDateManagement.KEEP_THE_CURRENT_DUE_DATE_TIME;
@@ -52,14 +56,26 @@ import static org.folio.circulation.domain.policy.DueDateManagement.MOVE_TO_THE_
 import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.END_OF_A_DAY;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE_ERROR;
+import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.hamcrest.CoreMatchers.allOf;
+import static org.hamcrest.CoreMatchers.anything;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.joda.time.DateTimeZone.UTC;
+import static org.joda.time.Seconds.seconds;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyObject;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -68,11 +84,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.awaitility.Awaitility;
+import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.Period;
+import org.folio.circulation.resources.context.RenewalContext;
+import org.folio.circulation.resources.renewal.RenewByBarcodeResource;
+import org.folio.circulation.services.LostItemFeeRefundService;
+import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.hamcrest.Matcher;
@@ -84,6 +108,9 @@ import org.joda.time.DateTimeZone;
 import org.joda.time.LocalTime;
 import org.joda.time.Seconds;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Matchers;
+import org.mockito.Mockito;
 
 import api.support.APITests;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
@@ -104,6 +131,7 @@ import api.support.fakes.FakePubSub;
 import api.support.fixtures.ConfigurationExample;
 import api.support.fixtures.ItemExamples;
 import api.support.fixtures.TemplateContextMatchers;
+import api.support.http.CheckOutResource;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import api.support.http.OkapiHeaders;
@@ -119,8 +147,10 @@ public abstract class RenewalAPITests extends APITests {
   private static final String OVERRIDE_PATRON_BLOCK_PERMISSION = "circulation.override-patron-block";
   public static final String OVERRIDE_ITEM_LIMIT_BLOCK_PERMISSION =
     "circulation.override-item-limit-block";
+  private static final String OVERRIDE_RENEWAL_BLOCK_PERMISSION = "circulation.override-renewal-block";
   private static final String RENEWED_THROUGH_OVERRIDE = "renewedThroughOverride";
   private static final String PATRON_WAS_BLOCKED_MESSAGE = "Patron blocked from renewing";
+  private static final String ITEM_IS_DECLARED_LOST = "item is Declared lost";
 
   abstract Response attemptRenewal(IndividualResource user, IndividualResource item);
 
@@ -1907,6 +1937,72 @@ public abstract class RenewalAPITests extends APITests {
         END_TIME_SECOND_PERIOD, UTC)));
   }
 
+  @Test
+  void canOverrideRenewalAfterTwoDeclaredLostAndRefunds() {
+    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource jessica = usersFixture.jessica();
+    final UUID servicePointId = servicePointsFixture.cd6().getId();
+    feeFineOwnerFixture.ownerForServicePoint(servicePointId);
+    useLostItemPolicy(lostItemFeePoliciesFixture.chargeFee().getId());
+
+    IndividualResource loan = checkOutFixture.checkOutByBarcode(item, jessica,
+      new DateTime(2018, 4, 21, 11, 21, 43, UTC));
+    declareLostFixtures.declareItemLost(loan.getJson());
+
+    assertThat(feeFineActionsClient.getAll(), hasSize(2));
+    assertThat(getAccountForLoan(loan.getId(), "Lost item fee", "Open"), allOf(
+      hasJsonPath("amount", 10.0), hasJsonPath("remaining", 10.0)));
+    assertThat(getAccountForLoan(loan.getId(), "Lost item processing fee", "Open"), allOf(
+      hasJsonPath("amount", 5.0), hasJsonPath("remaining", 5.0)));
+
+    feeFineAccountFixture.payLostItemFee(loan.getId(), 3.0);
+    feeFineAccountFixture.payLostItemProcessingFee(loan.getId(), 3.0);
+    assertThat(getAccountForLoan(loan.getId(), "Lost item fee", "Open"),
+      hasJsonPath("remaining", 7.0));
+    assertThat(getAccountForLoan(loan.getId(), "Lost item processing fee", "Open"),
+      hasJsonPath("remaining", 2.0));
+
+    final Response response = attemptRenewal(item, jessica);
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(response.getJson(), hasErrorWith(hasMessage(ITEM_IS_DECLARED_LOST)));
+
+    final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
+      OVERRIDE_RENEWAL_BLOCK_PERMISSION);
+    JsonObject renewedLoan = loansFixture.renewLoan(
+      buildRenewByBarcodeRequestWithRenewalBlockOverride(item, jessica, servicePointId.toString()),
+      okapiHeaders).getJson();
+
+    assertThat(renewedLoan.getString("action"), is(RENEWED_THROUGH_OVERRIDE));
+    assertThat(getAccountForLoan(loan.getId(), "Lost item fee", "Closed"), allOf(
+      hasJsonPath("amount", 10.0), hasJsonPath("remaining", 0.0)));
+    assertThat(getAccountForLoan(loan.getId(), "Lost item processing fee", "Closed"), allOf(
+      hasJsonPath("amount", 5.0), hasJsonPath("remaining", 0.0)));
+
+    declareLostFixtures.declareItemLost(renewedLoan);
+
+    assertThat(getAccountForLoan(loan.getId(), "Lost item fee", "Open"), allOf(
+      hasJsonPath("amount", 10.0), hasJsonPath("remaining", 10.0)));
+    assertThat(getAccountForLoan(loan.getId(), "Lost item processing fee", "Open"), allOf(
+      hasJsonPath("amount", 5.0), hasJsonPath("remaining", 5.0)));
+
+    feeFineAccountFixture.payLostItemFee(loan.getId(), 3.0);
+    feeFineAccountFixture.payLostItemProcessingFee(loan.getId(), 3.0);
+    assertThat(getAccountForLoan(loan.getId(), "Lost item fee", "Open"),
+      hasJsonPath("remaining", 7.0));
+    assertThat(getAccountForLoan(loan.getId(), "Lost item processing fee", "Open"),
+      hasJsonPath("remaining", 2.0));
+
+    JsonObject secondRenewedLoan = loansFixture.renewLoan(
+      buildRenewByBarcodeRequestWithRenewalBlockOverride(item, jessica, servicePointId.toString()),
+      okapiHeaders).getJson();
+
+    assertThat(secondRenewedLoan.getString("action"), is(RENEWED_THROUGH_OVERRIDE));
+    assertThat(getAccountForLoan(loan.getId(), "Lost item fee", "Closed"), allOf(
+      hasJsonPath("amount", 10.0), hasJsonPath("remaining", 0.0)));
+    assertThat(getAccountForLoan(loan.getId(), "Lost item processing fee", "Closed"), allOf(
+      hasJsonPath("amount", 5.0), hasJsonPath("remaining", 0.0)));
+  }
+
   private void checkOutItem(DateTime loanDate, IndividualResource item, DateTime expectedDueDate,
     IndividualResource steve, String servicePointId) {
 
@@ -1969,6 +2065,19 @@ public abstract class RenewalAPITests extends APITests {
           .withComment(TEST_COMMENT).create());
   }
 
+  private RenewByBarcodeRequestBuilder buildRenewByBarcodeRequestWithRenewalBlockOverride(
+    IndividualResource item, IndividualResource jessica, String servicePointId) {
+
+    return new RenewByBarcodeRequestBuilder()
+      .forItem(item)
+      .forUser(jessica)
+      .withServicePointId(servicePointId)
+      .withOverrideBlocks(
+        new RenewBlockOverrides()
+          .withRenewalBlock(new JsonObject())
+          .withComment(TEST_COMMENT).create());
+  }
+
   public static LoanPolicyBuilder buildLoanPolicyWithRollingLoanAndRenew(
     DueDateManagement strategy, int days) {
 
@@ -1976,5 +2085,11 @@ public abstract class RenewalAPITests extends APITests {
       .rolling(Period.days(days))
       .withClosedLibraryDueDateManagement(strategy.getValue())
       .withRenewable(true);
+  }
+
+  private JsonObject getAccountForLoan(UUID loanId, String feeType, String status) {
+    return accountsClient.getMany(queryFromTemplate("loanId==%s and feeFineType==%s and status.name==%s",
+      loanId.toString(), feeType, status))
+      .getFirst();
   }
 }
