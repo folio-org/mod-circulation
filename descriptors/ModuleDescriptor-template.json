@@ -1502,6 +1502,7 @@
         "accounts.item.post",
         "pubsub.publish.post",
         "scheduled-notice-storage.scheduled-notices.item.delete",
+        "scheduled-notice-storage.scheduled-notices.collection.delete",
         "accounts.refund.post",
         "accounts.cancel.post",
         "configuration.entries.collection.get"
