@@ -6,7 +6,7 @@ import org.folio.circulation.support.HttpFailure;
 
 import lombok.SneakyThrows;
 
-public class AsynchronousResultTestHelper {
+class AsynchronousResultTestHelper {
   @SneakyThrows
   public static <T> T getValue(AsynchronousResult<T> asynchronousResult, int timeout, TimeUnit unit) {
     return get(asynchronousResult, timeout, unit).value();

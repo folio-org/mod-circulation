@@ -1,22 +1,22 @@
 package org.folio.circulation.support.http;
 
 import static java.util.Collections.emptyMap;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import io.vertx.core.json.JsonArray;
 
-public class OkapiPermissionsTest {
+class OkapiPermissionsTest {
   private static final String PERMISSIONS_HEADER = "X-Okapi-Permissions";
   private static final String PERMISSION_1 = "users.item.get";
   private static final String PERMISSION_2 = "pubsub.publish.post";
@@ -26,7 +26,7 @@ public class OkapiPermissionsTest {
     Map.of(PERMISSIONS_HEADER, PERMISSIONS_STRING);
 
   @Test
-  public void fromCreatesInstanceWithAllPermissionsFromMap() {
+  void fromCreatesInstanceWithAllPermissionsFromMap() {
     OkapiPermissions permissions = OkapiPermissions.from(HEADERS_MAP);
     Set<String> permissionSet = permissions.getPermissions();
 
@@ -35,7 +35,7 @@ public class OkapiPermissionsTest {
   }
 
   @Test
-  public void fromCreatesInstanceWithAllPermissionsFromMapWhenHeaderIsLowercase() {
+  void fromCreatesInstanceWithAllPermissionsFromMapWhenHeaderIsLowercase() {
     OkapiPermissions permissions = OkapiPermissions.from(
       Map.of(PERMISSIONS_HEADER.toLowerCase(), PERMISSIONS_STRING));
 
@@ -46,21 +46,21 @@ public class OkapiPermissionsTest {
   }
 
   @Test
-  public void fromCreatesEmptyInstanceWhenPermissionsArrayIsEmpty() {
+  void fromCreatesEmptyInstanceWhenPermissionsArrayIsEmpty() {
     OkapiPermissions permissions = OkapiPermissions.from(Map.of(PERMISSIONS_HEADER, "[]"));
 
     assertTrue(permissions.isEmpty());
   }
 
   @Test
-  public void fromCreatesEmptyInstanceWhenPermissionsHeaderIsMissing() {
+  void fromCreatesEmptyInstanceWhenPermissionsHeaderIsMissing() {
     OkapiPermissions permissions = OkapiPermissions.from(emptyMap());
 
     assertTrue(permissions.isEmpty());
   }
-  
+
   @Test
-  public void ofCreatesNewInstanceWithAllPassedPermissions() {
+  void ofCreatesNewInstanceWithAllPassedPermissions() {
     OkapiPermissions permissions = OkapiPermissions.of(PERMISSION_1, PERMISSION_2);
 
     assertThat(permissions.getPermissions().size(), is(2));
@@ -68,21 +68,21 @@ public class OkapiPermissionsTest {
   }
 
   @Test
-  public void ofCreatesEmptyInstanceWhenNoArgumentsArePassed() {
+  void ofCreatesEmptyInstanceWhenNoArgumentsArePassed() {
     OkapiPermissions permissions = OkapiPermissions.of();
 
     assertTrue(permissions.isEmpty());
   }
 
   @Test
-  public void emptyCreatesEmptyInstance() {
+  void emptyCreatesEmptyInstance() {
     OkapiPermissions permissions = OkapiPermissions.empty();
 
     assertTrue(permissions.isEmpty());
   }
 
   @Test
-  public void getAllNotContainedInReturnsEmptyInstanceWhenPermissionSetsAreEqual() {
+  void getAllNotContainedInReturnsEmptyInstanceWhenPermissionSetsAreEqual() {
     OkapiPermissions permissions1 = OkapiPermissions.of(PERMISSION_1, PERMISSION_2);
     OkapiPermissions permissions2 = OkapiPermissions.of(PERMISSION_1, PERMISSION_2);
 
@@ -91,7 +91,7 @@ public class OkapiPermissionsTest {
   }
 
   @Test
-  public void getAllNotContainedInReturnsEmptyInstanceWhenPermissionSetsAreEmpty() {
+  void getAllNotContainedInReturnsEmptyInstanceWhenPermissionSetsAreEmpty() {
     OkapiPermissions permissions1 = OkapiPermissions.empty();
     OkapiPermissions permissions2 = OkapiPermissions.empty();
 
@@ -100,7 +100,7 @@ public class OkapiPermissionsTest {
   }
 
   @Test
-  public void getAllNotContainedInReturnsEmptyInstanceWhenSourceIsEmpty() {
+  void getAllNotContainedInReturnsEmptyInstanceWhenSourceIsEmpty() {
     OkapiPermissions permissions1 = OkapiPermissions.empty();
     OkapiPermissions permissions2 = OkapiPermissions.of(PERMISSION_1, PERMISSION_2);
 
@@ -109,7 +109,7 @@ public class OkapiPermissionsTest {
   }
 
   @Test
-  public void getAllNotContainedInReturnsNewInstanceWithAllPermissionsFromSourceWhenArgumentIsEmpty() {
+  void getAllNotContainedInReturnsNewInstanceWithAllPermissionsFromSourceWhenArgumentIsEmpty() {
     OkapiPermissions permissions1 = OkapiPermissions.of(PERMISSION_1, PERMISSION_2);
     OkapiPermissions permissions2 = OkapiPermissions.empty();
     OkapiPermissions result = permissions1.getAllNotContainedIn(permissions2);
@@ -120,7 +120,7 @@ public class OkapiPermissionsTest {
   }
 
   @Test
-  public void getAllNotContainedInReturnsNewInstanceWithAllPermissionsFromSourceWhenArgumentIsNull() {
+  void getAllNotContainedInReturnsNewInstanceWithAllPermissionsFromSourceWhenArgumentIsNull() {
     OkapiPermissions permissions1 = OkapiPermissions.of(PERMISSION_1, PERMISSION_2);
     OkapiPermissions result = permissions1.getAllNotContainedIn(null);
 

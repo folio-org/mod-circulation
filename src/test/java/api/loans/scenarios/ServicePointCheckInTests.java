@@ -21,7 +21,7 @@ import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Seconds;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.CheckInByBarcodeResponse;
@@ -33,9 +33,9 @@ import api.support.matchers.JsonObjectMatcher;
 import api.support.matchers.TextDateTimeMatcher;
 import io.vertx.core.json.JsonObject;
 
-public class ServicePointCheckInTests extends APITests {
+class ServicePointCheckInTests extends APITests {
   @Test
-  public void isPlacedAwaitingPickupWhenCheckedInAtPickupServicePoint() {
+  void isPlacedAwaitingPickupWhenCheckedInAtPickupServicePoint() {
     final IndividualResource checkInServicePoint = servicePointsFixture.cd1();
 
     final IndividualResource james = usersFixture.james();
@@ -122,7 +122,7 @@ public class ServicePointCheckInTests extends APITests {
   }
 
   @Test
-  public void isPlacedInTransitWhenCheckedInAtAlternatePickupServicePoint() {
+  void isPlacedInTransitWhenCheckedInAtAlternatePickupServicePoint() {
     final IndividualResource checkInServicePoint = servicePointsFixture.cd1();
     final IndividualResource requestServicePoint = servicePointsFixture.cd2();
     final IndividualResource primaryServicePoint = servicePointsFixture.cd3();

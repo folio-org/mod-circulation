@@ -9,14 +9,14 @@ import java.util.UUID;
 
 import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import io.vertx.core.json.JsonObject;
 
-public class LoanAPILocationTests extends APITests {
+class LoanAPILocationTests extends APITests {
   @Test
-  public void locationIsIncludedForSingleLoan() {
+  void locationIsIncludedForSingleLoan() {
 
     final IndividualResource thirdFloor = locationsFixture.thirdFloor();
     final IndividualResource secondFloorEconomics = locationsFixture.secondFloorEconomics();
@@ -57,7 +57,7 @@ public class LoanAPILocationTests extends APITests {
   }
 
   @Test
-  public void locationIncludedForMultipleLoans() {
+  void locationIncludedForMultipleLoans() {
 
     final IndividualResource thirdFloor = locationsFixture.thirdFloor();
     final IndividualResource secondFloorEconomics = locationsFixture.secondFloorEconomics();

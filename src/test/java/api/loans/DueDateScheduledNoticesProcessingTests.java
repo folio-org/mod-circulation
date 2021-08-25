@@ -31,8 +31,8 @@ import java.util.stream.Stream;
 import org.folio.circulation.domain.policy.Period;
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
@@ -50,7 +50,7 @@ import api.support.http.ItemResource;
 import api.support.http.UserResource;
 import io.vertx.core.json.JsonObject;
 
-public class DueDateScheduledNoticesProcessingTests extends APITests {
+class DueDateScheduledNoticesProcessingTests extends APITests {
   private static final String BEFORE_TIMING = "Before";
   private static final String UPON_AT_TIMING = "Upon At";
   private static final String AFTER_TIMING = "After";
@@ -77,7 +77,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
   private UUID loanId;
   private DateTime dueDate;
 
-  @Before
+  @BeforeEach
   public void beforeEach() {
     ItemBuilder itemBuilder = basedUponSmallAngryPlanet(
       materialTypesFixture.book().getId(), loanTypesFixture.canCirculate().getId());
@@ -99,7 +99,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void recurringBeforeNoticeShouldBeSentAndRescheduled() {
+  void recurringBeforeNoticeShouldBeSentAndRescheduled() {
     generateLoanAndScheduledNotices(beforeNotice(true));
 
     DateTime beforeDueDateTime = dueDate.minus(BEFORE_PERIOD.timePeriod()).plusSeconds(1);
@@ -121,7 +121,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void beforeNoticeShouldBeSendAndDeletedWhenItsNextRunTimeIsAfterDueDate() {
+  void beforeNoticeShouldBeSendAndDeletedWhenItsNextRunTimeIsAfterDueDate() {
     generateLoanAndScheduledNotices(beforeNotice(true));
 
     DateTime justBeforeDueDateTime = dueDate.minusSeconds(1);
@@ -136,7 +136,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void uponAtNoticeShouldBeSentWhenProcessingJustAfterDueDate() {
+  void uponAtNoticeShouldBeSentWhenProcessingJustAfterDueDate() {
     generateLoanAndScheduledNotices(uponAtNotice());
 
     DateTime justAfterDueDateTime = dueDate.plusSeconds(1);
@@ -151,7 +151,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void afterRecurringNoticeShouldBeSentSeveralTimesBeforeLoanIsClosed() {
+  void afterRecurringNoticeShouldBeSentSeveralTimesBeforeLoanIsClosed() {
     generateLoanAndScheduledNotices(afterNotice(true));
 
     DateTime justAfterDueDateTime = dueDate.plusSeconds(1);
@@ -203,7 +203,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void processingTakesNoticesInThePastLimitedAndOrdered() {
+  void processingTakesNoticesInThePastLimitedAndOrdered() {
     generateLoanAndScheduledNotices();
 
     DateTime systemTime = DateTime.now(UTC);
@@ -242,7 +242,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void testNumberOfProcessedNoticesWithSchedulerNoticesLimitConfiguration() {
+  void testNumberOfProcessedNoticesWithSchedulerNoticesLimitConfiguration() {
     generateLoanAndScheduledNotices();
 
     int noticesLimitConfig = 200;
@@ -260,7 +260,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void testNumberOfProcessedNotificationsWithIncorrectConfiguration() {
+  void testNumberOfProcessedNotificationsWithIncorrectConfiguration() {
     generateLoanAndScheduledNotices();
 
     int numberOfNotices = 259;
@@ -277,7 +277,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void testDefaultNumberOfProcessedNotices() {
+  void testDefaultNumberOfProcessedNotices() {
     generateLoanAndScheduledNotices();
 
     createNotices(SCHEDULED_NOTICES_PROCESSING_LIMIT);
@@ -289,7 +289,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void testNoticeIsDeletedIfItHasNoLoanId() {
+  void testNoticeIsDeletedIfItHasNoLoanId() {
     generateLoanAndScheduledNotices();
 
     JsonObject brokenNotice = createNoticesOverTime(dueDate.minusMinutes(1)::minusHours, 1).get(0);
@@ -306,7 +306,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void testNoticeIsDeletedIfReferencedLoanDoesNotExist() {
+  void testNoticeIsDeletedIfReferencedLoanDoesNotExist() {
     generateLoanAndScheduledNotices();
 
     JsonObject brokenNotice = createNoticesOverTime(dueDate.minusMinutes(1)::minusHours, 1).get(0);
@@ -323,7 +323,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void testNoticeIsDeletedIfReferencedItemDoesNotExist() {
+  void testNoticeIsDeletedIfReferencedItemDoesNotExist() {
     generateLoanAndScheduledNotices();
 
     JsonObject brokenNotice = createNoticesOverTime(dueDate.minusMinutes(1)::minusHours, 1).get(0);
@@ -342,7 +342,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void testNoticeIsDeletedIfReferencedUserDoesNotExist() {
+  void testNoticeIsDeletedIfReferencedUserDoesNotExist() {
     generateLoanAndScheduledNotices();
 
     JsonObject brokenNotice = createNoticesOverTime(dueDate.minusMinutes(1)::minusHours, 1).get(0);
@@ -360,7 +360,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void testNoticeIsDeletedIfReferencedTemplateDoesNotExist() {
+  void testNoticeIsDeletedIfReferencedTemplateDoesNotExist() {
     generateLoanAndScheduledNotices(uponAtNotice());
 
     templateFixture.delete(UPON_AT_TEMPLATE_ID);
@@ -374,7 +374,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void testNoticeIsNotSentOrDeletedWhenPatronNoticeRequestFails() {
+  void testNoticeIsNotSentOrDeletedWhenPatronNoticeRequestFails() {
     generateLoanAndScheduledNotices(uponAtNotice());
 
     FakeModNotify.setFailPatronNoticesWithBadRequest(true);
@@ -389,7 +389,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void testNoticesForNonExistentLoansDoNotBlockTheQueue() {
+  void testNoticesForNonExistentLoansDoNotBlockTheQueue() {
     generateLoanAndScheduledNotices();
 
     int expectedNumberOfUnprocessedNotices = 0;
@@ -419,7 +419,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void scheduledOverdueNoticesShouldBeDeletedAfterOverdueFineIsCharged() {
+  void scheduledOverdueNoticesShouldBeDeletedAfterOverdueFineIsCharged() {
     UUID uponAtTemplateId = UUID.randomUUID();
 
     UUID afterTemplateId = UUID.randomUUID();
@@ -500,7 +500,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void allDueDateNoticesAreDiscardedWhenLoanIsClosed() {
+  void allDueDateNoticesAreDiscardedWhenLoanIsClosed() {
     generateLoanAndScheduledNotices(
       beforeNotice(false),
       beforeNotice(true),
@@ -529,7 +529,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void beforeNoticesAreDiscardedWhenDueDateHasAlreadyPassed() {
+  void beforeNoticesAreDiscardedWhenDueDateHasAlreadyPassed() {
     generateLoanAndScheduledNotices(
       beforeNotice(false),
       beforeNotice(true)
@@ -546,19 +546,19 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void recurringAfterNoticeIsDiscardedWhenItemIsDeclaredLost() {
+  void recurringAfterNoticeIsDiscardedWhenItemIsDeclaredLost() {
     recurringAfterNoticeIsDiscardedWhenItemStatusIsWrong(
       () -> declareLostFixtures.declareItemLost(loanId));
   }
 
   @Test
-  public void recurringAfterNoticeIsDiscardedWhenItemIsClaimedReturned() {
+  void recurringAfterNoticeIsDiscardedWhenItemIsClaimedReturned() {
     recurringAfterNoticeIsDiscardedWhenItemStatusIsWrong(
       () -> claimItemReturnedFixture.claimItemReturned(loanId));
   }
 
   @Test
-  public void recurringAfterNoticeIsDiscardedWhenLoanIsAgedToLost() {
+  void recurringAfterNoticeIsDiscardedWhenLoanIsAgedToLost() {
     recurringAfterNoticeIsDiscardedWhenItemStatusIsWrong(ageToLostFixture::ageToLost);
   }
 

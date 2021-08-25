@@ -9,11 +9,11 @@ import static org.folio.circulation.support.results.ResultExamples.somethingWent
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class ResultFailWhenTests {
+class ResultFailWhenTests {
   @Test
-  public void shouldPassThroughResultWhenConditionIsFalse() {
+  void shouldPassThroughResultWhenConditionIsFalse() {
     final Result<Integer> result = succeeded(10)
       .failWhen(value -> succeeded(false),
         value -> exampleFailure("Specified failure"));
@@ -23,7 +23,7 @@ public class ResultFailWhenTests {
   }
 
   @Test
-  public void shouldApplyFailureWhenConditionIsTrue() {
+  void shouldApplyFailureWhenConditionIsTrue() {
     final Result<Integer> result = succeeded(10)
       .failWhen(value -> succeeded(true),
         value -> exampleFailure("Specified failure"));
@@ -32,7 +32,7 @@ public class ResultFailWhenTests {
   }
 
   @Test
-  public void shouldFailWhenAlreadyFailed() {
+  void shouldFailWhenAlreadyFailed() {
     final Result<Integer> result = alreadyFailed()
       .failWhen(value -> succeeded(false),
         value -> exampleFailure("Specified failure"));
@@ -41,7 +41,7 @@ public class ResultFailWhenTests {
   }
 
   @Test
-  public void shouldFailWhenConditionFailed() {
+  void shouldFailWhenConditionFailed() {
     final Result<Integer> result = succeeded(10)
       .failWhen(value -> conditionFailed(),
         value -> exampleFailure("Specified failure"));
@@ -50,7 +50,7 @@ public class ResultFailWhenTests {
   }
 
   @Test
-  public void shouldFailWhenCreatingFailureFails() {
+  void shouldFailWhenCreatingFailureFails() {
     final Result<Integer> result = succeeded(10)
       .failWhen(value -> succeeded(true),
         value -> { throw somethingWentWrong(); });

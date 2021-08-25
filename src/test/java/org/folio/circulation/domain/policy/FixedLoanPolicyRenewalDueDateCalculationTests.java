@@ -5,8 +5,8 @@ import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -29,7 +29,7 @@ import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.builders.FixedDueDateSchedule;
 import api.support.builders.FixedDueDateSchedulesBuilder;
@@ -39,7 +39,7 @@ import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.RequestBuilder;
 import io.vertx.core.json.JsonObject;
 
-public class FixedLoanPolicyRenewalDueDateCalculationTests {
+class FixedLoanPolicyRenewalDueDateCalculationTests {
 
   private static final String EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES =
     "renewal date falls outside of date ranges in fixed loan policy";
@@ -51,7 +51,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
   private static final String LOAN_AT_MAXIMUM_RENEWAL_NUMBER = "loan at maximum renewal number";
 
   @Test
-  public void shouldFailWhenLoanDateIsBeforeOnlyScheduleAvailable() {
+  void shouldFailWhenLoanDateIsBeforeOnlyScheduleAvailable() {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
       .withName("Example Fixed Schedule Loan Policy")
@@ -72,7 +72,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
   }
 
   @Test
-  public void multipleRenewalFailuresWhenDateFallsOutsideDateRangesAndItemHasOpenRecallRequest() {
+  void multipleRenewalFailuresWhenDateFallsOutsideDateRangesAndItemHasOpenRecallRequest() {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
       .withName("Example Fixed Schedule Loan Policy")
@@ -97,7 +97,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
   }
 
   @Test
-  public void shouldFailWhenLoanDateIsAfterOnlyScheduleAvailable() {
+  void shouldFailWhenLoanDateIsAfterOnlyScheduleAvailable() {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
       .withName("Example Fixed Schedule Loan Policy")
@@ -119,7 +119,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
   }
 
   @Test
-  public void shouldUseOnlyScheduleAvailableWhenLoanDateFits() {
+  void shouldUseOnlyScheduleAvailableWhenLoanDateFits() {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
       .create())
@@ -143,7 +143,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
   }
 
   @Test
-  public void shouldUseFirstScheduleAvailableWhenLoanDateFits() {
+  void shouldUseFirstScheduleAvailableWhenLoanDateFits() {
     final FixedDueDateSchedule expectedSchedule = FixedDueDateSchedule.wholeMonth(2018, 2);
 
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
@@ -171,7 +171,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
   }
 
   @Test
-  public void shouldUseMiddleScheduleAvailableWhenLoanDateFits() {
+  void shouldUseMiddleScheduleAvailableWhenLoanDateFits() {
     final FixedDueDateSchedule expectedSchedule = FixedDueDateSchedule.wholeMonth(2018, 2);
 
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
@@ -194,7 +194,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
   }
 
   @Test
-  public void shouldUseLastScheduleAvailableWhenLoanDateFits() {
+  void shouldUseLastScheduleAvailableWhenLoanDateFits() {
     final FixedDueDateSchedule expectedSchedule = FixedDueDateSchedule.wholeMonth(2018, 3);
 
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
@@ -217,7 +217,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
   }
 
   @Test
-  public void shouldUseAlternateScheduleWhenAvailable() {
+  void shouldUseAlternateScheduleWhenAvailable() {
     final FixedDueDateSchedule expectedSchedule = FixedDueDateSchedule.wholeYear(2018);
 
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
@@ -243,7 +243,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
   }
 
   @Test
-  public void shouldApplyAlternateScheduleWhenQueuedRequestIsHoldAndFixed() {
+  void shouldApplyAlternateScheduleWhenQueuedRequestIsHoldAndFixed() {
     final Period alternateCheckoutLoanPeriod = Period.from(2, "Weeks");
 
     final DateTime systemTime = new DateTime(2019, 6, 14, 11, 23, 43, DateTimeZone.UTC);
@@ -302,7 +302,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
   }
 
   @Test
-  public void shouldFailWhenLoanDateIsBeforeAllSchedules() {
+  void shouldFailWhenLoanDateIsBeforeAllSchedules() {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
       .withName("Example Fixed Schedule Loan Policy")
@@ -326,7 +326,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
   }
 
   @Test
-  public void shouldFailWhenRenewalWouldNotChangeDueDate() {
+  void shouldFailWhenRenewalWouldNotChangeDueDate() {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
       .withName("Example Fixed Schedule Loan Policy")
@@ -351,7 +351,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
   }
 
   @Test
-  public void shouldFailWhenRenewalWouldMeanEarlierDueDate() {
+  void shouldFailWhenRenewalWouldMeanEarlierDueDate() {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
       .withName("Example Fixed Schedule Loan Policy")
@@ -376,7 +376,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
   }
 
   @Test
-  public void shouldFailWhenRenewalWouldMeanEarlierDueDateAndReachedRenewalLimit() {
+  void shouldFailWhenRenewalWouldMeanEarlierDueDateAndReachedRenewalLimit() {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
       .withName("Example Fixed Schedule Loan Policy")
@@ -410,7 +410,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
   }
 
   @Test
-  public void multipleRenewalFailuresWhenLoanHasReachedMaximumNumberOfRenewalsAndOpenRecallRequest() {
+  void multipleRenewalFailuresWhenLoanHasReachedMaximumNumberOfRenewalsAndOpenRecallRequest() {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
       .withName("Example Fixed Schedule Loan Policy")
@@ -445,7 +445,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
   }
 
   @Test
-  public void shouldFailWhenLoanDateIsAfterAllSchedules() {
+  void shouldFailWhenLoanDateIsAfterAllSchedules() {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
       .withName("Example Fixed Schedule Loan Policy")
@@ -467,7 +467,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
   }
 
   @Test
-  public void shouldFailWhenLoanDateIsInBetweenSchedules() {
+  void shouldFailWhenLoanDateIsInBetweenSchedules() {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
       .withName("Example Fixed Schedule Loan Policy")
@@ -488,7 +488,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
   }
 
   @Test
-  public void shouldFailWhenNoSchedulesDefined() {
+  void shouldFailWhenNoSchedulesDefined() {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
       .withName("Example Fixed Schedule Loan Policy")
@@ -507,7 +507,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
   }
 
   @Test
-  public void shouldFailWhenSchedulesCollectionIsNull() {
+  void shouldFailWhenSchedulesCollectionIsNull() {
     DateTime renewalDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
 
     final FixedScheduleRenewalDueDateStrategy calculator =
@@ -524,7 +524,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
   }
 
   @Test
-  public void shouldFailWhenNoSchedules() {
+  void shouldFailWhenNoSchedules() {
     DateTime renewalDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
 
     final FixedScheduleRenewalDueDateStrategy calculator =

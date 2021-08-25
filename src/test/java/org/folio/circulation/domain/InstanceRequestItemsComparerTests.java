@@ -1,7 +1,7 @@
 package org.folio.circulation.domain;
 
 import static org.folio.circulation.domain.InstanceRequestItemsComparer.sortRequestQueues;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -9,15 +9,16 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.joda.time.DateTime;
-import org.junit.Test;
+import org.junit.jupiter.api.Test
+;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
-public class InstanceRequestItemsComparerTests {
+class InstanceRequestItemsComparerTests {
 
   @Test
-  public void canSortRequestQueuesWhenFirstQueueIsLessThanSecondQueue() {
+  void canSortRequestQueuesWhenFirstQueueIsLessThanSecondQueue() {
     Map<Item, Integer> itemQueueSizeMap = new HashMap<>();
 
     Item item1 = createItem(null);
@@ -33,7 +34,7 @@ public class InstanceRequestItemsComparerTests {
   }
 
   @Test
-  public void canSortRequestQueuesWhenSecondQueueIsLessThanFirstQueue() {
+  void canSortRequestQueuesWhenSecondQueueIsLessThanFirstQueue() {
     Map<Item, Integer> itemQueueSizeMap = new HashMap<>();
 
     Item item1 = createItem(null);
@@ -50,7 +51,7 @@ public class InstanceRequestItemsComparerTests {
   }
 
   @Test
-  public void canSortRequestQueuesWhenQueuesAreEqual() {
+  void canSortRequestQueuesWhenQueuesAreEqual() {
     Map<Item, Integer> itemQueueSizeMap = new LinkedHashMap<>();
 
     Item item1 = createItem(null);
@@ -68,7 +69,7 @@ public class InstanceRequestItemsComparerTests {
   }
 
   @Test
-  public void canSortRequestQueuesWhenQueuesAreEqualWithDueDates() {
+  void canSortRequestQueuesWhenQueuesAreEqualWithDueDates() {
     Map<Item, Integer> itemQueueSizeMap = new LinkedHashMap<>();
 
     Item item1 = createItem(null);
@@ -85,7 +86,7 @@ public class InstanceRequestItemsComparerTests {
   }
 
   @Test
-  public void canSortRequestQueuesWhenItem1DueDateIsEarlierThanItem2DueDate() {
+  void canSortRequestQueuesWhenItem1DueDateIsEarlierThanItem2DueDate() {
     Item item1 = createItem(null);
     Item item2 = createItem(null);
 
@@ -106,7 +107,7 @@ public class InstanceRequestItemsComparerTests {
   }
 
   @Test
-  public void canSortRequestQueuesWhenItem2DueDateIsEarlierThanItem1DueDate() {
+  void canSortRequestQueuesWhenItem2DueDateIsEarlierThanItem1DueDate() {
     Item item1 = createItem(null);
     Item item2 = createItem(null);
 
@@ -127,7 +128,7 @@ public class InstanceRequestItemsComparerTests {
   }
 
   @Test
-  public void canSortRequestQueuesWhenEitherItemDueDateIsNull() {
+  void canSortRequestQueuesWhenEitherItemDueDateIsNull() {
     Item item1 = createItem(null);
     Item item2 = createItem(null);
 
@@ -155,7 +156,7 @@ public class InstanceRequestItemsComparerTests {
   }
 
   @Test
-  public void canSortRequestQueuesWhenBothItemsDueDateIsNull() {
+  void canSortRequestQueuesWhenBothItemsDueDateIsNull() {
     Item item1 = createItem(null);
     Item item2 = createItem(null);
 
@@ -175,7 +176,7 @@ public class InstanceRequestItemsComparerTests {
   }
 
   @Test
-  public void canGetItem1WhenSortRequestQueuesUsingServicePointId() {
+  void canGetItem1WhenSortRequestQueuesUsingServicePointId() {
     UUID destinationServicePointId = UUID.randomUUID();
 
     Item item1 = createItem(destinationServicePointId);
@@ -198,7 +199,7 @@ public class InstanceRequestItemsComparerTests {
   }
 
   @Test
-  public void canGetItem2WhenSortRequestQueuesUsingServicePointId() {
+  void canGetItem2WhenSortRequestQueuesUsingServicePointId() {
     UUID destinationServicePointId = UUID.randomUUID();
 
     Item item1 = createItem(null);
@@ -221,7 +222,7 @@ public class InstanceRequestItemsComparerTests {
   }
 
   @Test
-  public void canGetItem1WhenSortRequestQueuesUsingServicePointIdAndBothItemsAreNotServedByDestinationServicePointId() {
+  void canGetItem1WhenSortRequestQueuesUsingServicePointIdAndBothItemsAreNotServedByDestinationServicePointId() {
     Item item1 = createItem(UUID.randomUUID());
     Item item2 = createItem(UUID.randomUUID());
 

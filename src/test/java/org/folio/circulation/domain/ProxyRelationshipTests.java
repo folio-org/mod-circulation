@@ -1,25 +1,23 @@
 package org.folio.circulation.domain;
 
-import api.support.builders.ProxyRelationshipBuilder;
-import junitparams.JUnitParamsRunner;
-import junitparams.Parameters;
-import org.joda.time.DateTime;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-
-import java.util.UUID;
-
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-@RunWith(JUnitParamsRunner.class)
-public class ProxyRelationshipTests {
-  @Test
-  @Parameters({
+import java.util.UUID;
+
+import org.joda.time.DateTime;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+
+import api.support.builders.ProxyRelationshipBuilder;
+
+class ProxyRelationshipTests {
+  @ParameterizedTest
+  @ValueSource(strings = {
     "false",
     "true"
   })
-  public void shouldBeActiveWhenActiveAndDoesNotExpire(boolean useMetaObject) {
+  void shouldBeActiveWhenActiveAndDoesNotExpire(boolean useMetaObject) {
     final ProxyRelationship relationship = new ProxyRelationship(
       new ProxyRelationshipBuilder()
         .proxy(UUID.randomUUID())
@@ -32,12 +30,12 @@ public class ProxyRelationshipTests {
     assertThat(relationship.isActive(), is(true));
   }
 
-  @Test
-  @Parameters({
+  @ParameterizedTest
+  @ValueSource(strings = {
     "false",
     "true"
   })
-  public void shouldBeActiveWhenActiveAndNotExpired(boolean useMetaObject) {
+  void shouldBeActiveWhenActiveAndNotExpired(boolean useMetaObject) {
     final ProxyRelationship relationship = new ProxyRelationship(
       new ProxyRelationshipBuilder()
         .proxy(UUID.randomUUID())
@@ -50,12 +48,12 @@ public class ProxyRelationshipTests {
     assertThat(relationship.isActive(), is(true));
   }
 
-  @Test
-  @Parameters({
+  @ParameterizedTest
+  @ValueSource(strings = {
     "false",
     "true"
   })
-  public void shouldBeInactiveWhenActiveAndExpired(boolean useMetaObject) {
+  void shouldBeInactiveWhenActiveAndExpired(boolean useMetaObject) {
     final ProxyRelationship relationship = new ProxyRelationship(
       new ProxyRelationshipBuilder()
         .proxy(UUID.randomUUID())
@@ -68,12 +66,12 @@ public class ProxyRelationshipTests {
     assertThat(relationship.isActive(), is(false));
   }
 
-  @Test
-  @Parameters({
+  @ParameterizedTest
+  @ValueSource(strings = {
     "false",
     "true"
   })
-  public void shouldBeInactiveWhenInactiveAndDoesNotExpire(boolean useMetaObject) {
+  void shouldBeInactiveWhenInactiveAndDoesNotExpire(boolean useMetaObject) {
     final ProxyRelationship relationship = new ProxyRelationship(
       new ProxyRelationshipBuilder()
         .proxy(UUID.randomUUID())
@@ -87,12 +85,12 @@ public class ProxyRelationshipTests {
   }
 
 
-  @Test
-  @Parameters({
+  @ParameterizedTest
+  @ValueSource(strings = {
     "false",
     "true"
   })
-  public void shouldBeInactiveWhenInactiveAndNotExpired(boolean useMetaObject) {
+  void shouldBeInactiveWhenInactiveAndNotExpired(boolean useMetaObject) {
     final ProxyRelationship relationship = new ProxyRelationship(
       new ProxyRelationshipBuilder()
         .proxy(UUID.randomUUID())
@@ -106,12 +104,12 @@ public class ProxyRelationshipTests {
   }
 
 
-  @Test
-  @Parameters({
+  @ParameterizedTest
+  @ValueSource(strings = {
     "false",
     "true"
   })
-  public void shouldBeInactiveWhenInactiveAndExpired(boolean useMetaObject) {
+  void shouldBeInactiveWhenInactiveAndExpired(boolean useMetaObject) {
     final ProxyRelationship relationship = new ProxyRelationship(
       new ProxyRelationshipBuilder()
         .proxy(UUID.randomUUID())

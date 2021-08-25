@@ -9,13 +9,13 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 
 import org.joda.time.DateTime;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.fixtures.AgeToLostFixture;
 import io.vertx.core.json.JsonObject;
 
-public class CheckInAgedToLostItemTest extends RefundAgedToLostFeesTestBase {
+class CheckInAgedToLostItemTest extends RefundAgedToLostFeesTestBase {
   public CheckInAgedToLostItemTest() {
     super("Cancelled item returned");
   }
@@ -36,7 +36,7 @@ public class CheckInAgedToLostItemTest extends RefundAgedToLostFeesTestBase {
   }
 
   @Test
-  public void shouldRefundFeesForLostAndPaidItemsThatWasAgedToLost() {
+  void shouldRefundFeesForLostAndPaidItemsThatWasAgedToLost() {
     final double processingFee = 12.99;
     final double itemFee = 12.99;
 

@@ -1,14 +1,14 @@
 package org.folio.circulation.domain.policy;
 
 import io.vertx.core.json.JsonObject;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class FixedDueDateSchedulesTests {
+class FixedDueDateSchedulesTests {
   @Test
-  public void shouldHaveNoSchedulesWhenPropertyMissingInJSON() {
+  void shouldHaveNoSchedulesWhenPropertyMissingInJSON() {
     final FixedDueDateSchedules schedules = FixedDueDateSchedules.from(new JsonObject());
 
     assertThat(schedules.isEmpty(), is(true));

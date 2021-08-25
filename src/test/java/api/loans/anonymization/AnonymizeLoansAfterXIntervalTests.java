@@ -17,7 +17,7 @@ import java.util.UUID;
 
 import org.folio.circulation.domain.representations.anonymization.LoanAnonymizationAPIResponse;
 import org.joda.time.DateTime;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.LoanHistoryConfigurationBuilder;
@@ -26,7 +26,7 @@ import api.support.fakes.PublishedEvents;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 
-public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
+class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
 
   private DateTime lastAnonymizationDateTime = null;
 
@@ -42,7 +42,7 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
    *     Then do not anonymize the loan
   */
   @Test
-  public void testClosedLoansWithFeesAndFinesNotAnonymizedAfterIntervalNotPassed() {
+  void testClosedLoansWithFeesAndFinesNotAnonymizedAfterIntervalNotPassed() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
       .loanCloseAnonymizeAfterXInterval(1, "minute")
@@ -75,7 +75,7 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
    *     Then do not anonymize the loan
    */
   @Test
-  public void testOpenLoansWithFeesAndFinesNotAnonymizedAfterIntervalNotPassed() {
+  void testOpenLoansWithFeesAndFinesNotAnonymizedAfterIntervalNotPassed() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
       .loanCloseAnonymizeAfterXInterval(1, "minute")
@@ -113,7 +113,7 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
    *     Then anonymize the loan
    */
   @Test
-  public void testClosedLoansWithClosedFeesAndFinesAnonymizedAfterIntervalPassed() {
+  void testClosedLoansWithClosedFeesAndFinesAnonymizedAfterIntervalPassed() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
       .loanCloseAnonymizeAfterXInterval(1, "minute")
@@ -149,7 +149,7 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
    *     Then do not anonymize the loan
    */
   @Test
-  public void testOpenLoansWithFeesAndFinesNotAnonymizedAfterFeeFineCloseIntervalNotPassed() {
+  void testOpenLoansWithFeesAndFinesNotAnonymizedAfterFeeFineCloseIntervalNotPassed() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
       .loanCloseAnonymizeAfterXInterval(1, "minute")
@@ -183,7 +183,7 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
    *     Then do not anonymize the loan
    */
   @Test
-  public void testOpenLoansWithFeesAndFinesNotAnonymizedAfterFeeFineCloseIntervalPassed() {
+  void testOpenLoansWithFeesAndFinesNotAnonymizedAfterFeeFineCloseIntervalPassed() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
       .loanCloseAnonymizeAfterXInterval(1, "minute")
@@ -218,7 +218,7 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
    *     Then anonymize the loan
    */
   @Test
-  public void testClosedLoansWithClosedFeesAndFinesAnonymizedAfterFeeFineCloseIntervalPassed() {
+  void testClosedLoansWithClosedFeesAndFinesAnonymizedAfterFeeFineCloseIntervalPassed() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
       .loanCloseAnonymizeAfterXInterval(1, "minute")
@@ -258,7 +258,7 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
    *     Then do not anonymize the loan
    */
   @Test
-  public void testNeverAnonymizeClosedLoansWithAssociatedFeeFines() {
+  void testNeverAnonymizeClosedLoansWithAssociatedFeeFines() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
       .loanCloseAnonymizeAfterXInterval(1, "minute")
@@ -292,7 +292,7 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
    *     Then do not anonymize the loan
    */
   @Test
-  public void testNeverAnonymizeClosedLoansWithAssociatedFeeFinesAfterAfterIntervalPassed() {
+  void testNeverAnonymizeClosedLoansWithAssociatedFeeFinesAfterAfterIntervalPassed() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
       .loanCloseAnonymizeAfterXInterval(1, "minute")
@@ -328,7 +328,7 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
    *     Then do not anonymize the loan
    */
   @Test
-  public void testNeverAnonymizeClosedLoansWithAssociatedFeeFinesAfterAfterIntervalNotPassed() {
+  void testNeverAnonymizeClosedLoansWithAssociatedFeeFinesAfterAfterIntervalNotPassed() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
       .loanCloseAnonymizeAfterXInterval(1, "minute")
@@ -351,7 +351,7 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
   }
 
   @Test
-  public void testClosedLoansAnonymizedAfterIntervalPassed() {
+  void testClosedLoansAnonymizedAfterIntervalPassed() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder().loanCloseAnonymizeAfterXInterval(1,
         "minute");
@@ -379,7 +379,7 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
   }
 
   @Test
-  public void doNotAnonymizeLoansTwice() {
+  void doNotAnonymizeLoansTwice() {
     createAnonymizeAfterIntervalConfiguration(1, "minute");
 
     final ItemResource nod = itemsFixture.basedUponNod();
@@ -413,7 +413,7 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
   }
 
   @Test
-  public void ignoresAlreadyAnonymizedLoans() {
+  void ignoresAlreadyAnonymizedLoans() {
     createAnonymizeAfterIntervalConfiguration(1, "minute");
 
     final ItemResource nod = itemsFixture.basedUponNod();
@@ -448,7 +448,7 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
   }
 
   @Test
-  public void testClosedLoansNotAnonymizedAfterIntervalNotPassed() {
+  void testClosedLoansNotAnonymizedAfterIntervalNotPassed() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder().loanCloseAnonymizeAfterXInterval(1,
         "minute");
@@ -468,7 +468,7 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
   }
 
   @Test
-  public void testClosedLoanWithClosedFeesAndFinesNotAnonymizedIntervalNotPassed() {
+  void testClosedLoanWithClosedFeesAndFinesNotAnonymizedIntervalNotPassed() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder().loanCloseAnonymizeAfterXInterval(1,
         "minute");
@@ -490,7 +490,7 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
   }
 
   @Test
-  public void testClosedLoanWithOpenFeesAndFinesNotAnonymizedIntervalPassed() {
+  void testClosedLoanWithOpenFeesAndFinesNotAnonymizedIntervalPassed() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder().loanCloseAnonymizeAfterXInterval(1,
         "minute");

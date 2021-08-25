@@ -17,7 +17,6 @@ import org.folio.circulation.domain.representations.logs.LogEventType;
 
 import api.support.fakes.FakeModNotify;
 import api.support.fakes.FakePubSub;
-import api.support.http.CqlQuery;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
 

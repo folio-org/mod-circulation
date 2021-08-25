@@ -15,12 +15,13 @@ import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.RequestStatus;
-import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.server.ValidationError;
+import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import api.support.builders.FixedDueDateSchedule;
 import api.support.builders.FixedDueDateSchedulesBuilder;
@@ -29,20 +30,17 @@ import api.support.builders.LoanBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.RequestBuilder;
 import io.vertx.core.json.JsonObject;
-import junitparams.JUnitParamsRunner;
-import junitparams.Parameters;
 
-@RunWith(JUnitParamsRunner.class)
-public class RollingLoanPolicyCheckOutDueDateCalculationTests {
+class RollingLoanPolicyCheckOutDueDateCalculationTests {
 
-  @Test
-  @Parameters({
+  @ParameterizedTest
+  @ValueSource(strings = {
     "1",
     "8",
     "12",
     "15"
   })
-  public void shouldApplyMonthlyRollingPolicy(int duration) {
+  void shouldApplyMonthlyRollingPolicy(int duration) {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .rolling(Period.months(duration))
       .create());
@@ -57,15 +55,15 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
     assertThat(calculationResult.value(), is(loanDate.plusMonths(duration)));
   }
 
-  @Test
-  @Parameters({
+  @ParameterizedTest
+  @ValueSource(strings = {
     "1",
     "2",
     "3",
     "4",
     "5"
   })
-  public void shouldApplyWeeklyRollingPolicy(int duration) {
+  void shouldApplyWeeklyRollingPolicy(int duration) {
 
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .rolling(Period.weeks(duration))
@@ -81,8 +79,8 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
     assertThat(calculationResult.value(), is(loanDate.plusWeeks(duration)));
   }
 
-  @Test
-  @Parameters({
+  @ParameterizedTest
+  @ValueSource(strings = {
     "1",
     "7",
     "14",
@@ -90,7 +88,7 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
     "30",
     "100"
   })
-  public void shouldApplyDailyRollingPolicy(int duration) {
+  void shouldApplyDailyRollingPolicy(int duration) {
 
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .rolling(Period.days(duration))
@@ -106,8 +104,8 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
     assertThat(calculationResult.value(), is(loanDate.plusDays(duration)));
   }
 
-  @Test
-  @Parameters({
+  @ParameterizedTest
+  @ValueSource(strings = {
     "2",
     "5",
     "30",
@@ -115,7 +113,7 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
     "60",
     "24"
   })
-  public void shouldApplyHourlyRollingPolicy(int duration) {
+  void shouldApplyHourlyRollingPolicy(int duration) {
 
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .rolling(Period.hours(duration))
@@ -131,15 +129,15 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
     assertThat(calculationResult.value(), is(loanDate.plusHours(duration)));
   }
 
-  @Test
-  @Parameters({
+  @ParameterizedTest
+  @ValueSource(strings = {
     "1",
     "5",
     "30",
     "60",
     "200"
   })
-  public void shouldApplyMinuteIntervalRollingPolicy(int duration) {
+  void shouldApplyMinuteIntervalRollingPolicy(int duration) {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .rolling(Period.minutes(duration))
       .create());
@@ -155,7 +153,7 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
   }
 
   @Test
-  public void shouldApplyAlternateScheduleWhenQueuedRequestIsHoldAndRolling() {
+  void shouldApplyAlternateScheduleWhenQueuedRequestIsHoldAndRolling() {
     final Period alternateCheckoutLoanPeriod = Period.from(2, "Weeks");
 
     final DateTime systemTime = new DateTime(2019, 6, 14, 11, 23, 43, DateTimeZone.UTC);
@@ -215,7 +213,7 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
   }
 
   @Test
-  public void shouldFailForUnrecognisedInterval() {
+  void shouldFailForUnrecognisedInterval() {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .rolling(Period.from(5, "Unknown"))
       .withName("Invalid Loan Policy")
@@ -232,7 +230,7 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
   }
 
   @Test
-  public void shouldFailWhenNoPeriodProvided() {
+  void shouldFailWhenNoPeriodProvided() {
     final JsonObject representation = new LoanPolicyBuilder()
       .rolling(Period.from(5, "Unknown"))
       .withName("Invalid Loan Policy")
@@ -253,7 +251,7 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
   }
 
   @Test
-  public void shouldFailWhenNoPeriodDurationProvided() {
+  void shouldFailWhenNoPeriodDurationProvided() {
     final JsonObject representation = new LoanPolicyBuilder()
       .rolling(Period.weeks(5))
       .withName("Invalid Loan Policy")
@@ -274,7 +272,7 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
   }
 
   @Test
-  public void shouldFailWhenNoPeriodIntervalProvided() {
+  void shouldFailWhenNoPeriodIntervalProvided() {
     final JsonObject representation = new LoanPolicyBuilder()
       .rolling(Period.weeks(5))
       .withName("Invalid Loan Policy")
@@ -294,12 +292,12 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
       "the loan period in the loan policy is not recognised"));
   }
 
-  @Test
-  @Parameters({
+  @ParameterizedTest
+  @ValueSource(strings = {
     "0",
     "-1",
   })
-  public void shouldFailWhenDurationIsInvalid(int duration) {
+  void shouldFailWhenDurationIsInvalid(int duration) {
     final JsonObject representation = new LoanPolicyBuilder()
       .rolling(Period.minutes(duration))
       .withName("Invalid Loan Policy")
@@ -319,7 +317,7 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
   }
 
   @Test
-  public void shouldTruncateDueDateWhenWithinDueDateLimitSchedule() {
+  void shouldTruncateDueDateWhenWithinDueDateLimitSchedule() {
     //TODO: Slight hack to use the same builder, the schedule is fed in later
     //TODO: Introduce builder for individual schedules
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
@@ -341,7 +339,7 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
   }
 
   @Test
-  public void shouldNotTruncateDueDateWhenWithinDueDateLimitScheduleButInitialDateIsSooner() {
+  void shouldNotTruncateDueDateWhenWithinDueDateLimitScheduleButInitialDateIsSooner() {
     //TODO: Slight hack to use the same builder, the schedule is fed in later
     //TODO: Introduce builder for individual schedules
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
@@ -362,7 +360,7 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
   }
 
   @Test
-  public void shouldFailWhenNotWithinOneOfProvidedDueDateLimitSchedules() {
+  void shouldFailWhenNotWithinOneOfProvidedDueDateLimitSchedules() {
     //TODO: Slight hack to use the same builder, the schedule is fed in later
     //TODO: Introduce builder for individual schedules
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
@@ -386,7 +384,7 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
   }
 
   @Test
-  public void shouldFailWhenNoDueDateLimitSchedules() {
+  void shouldFailWhenNoDueDateLimitSchedules() {
     //TODO: Slight hack to use the same builder, the schedule is fed in later
     //TODO: Introduce builder for individual schedules
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()

@@ -2,7 +2,7 @@ package org.folio.circulation;
 
 import io.vertx.core.json.JsonObject;
 import api.support.fakes.FakeCQLToJSONInterpreter;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -16,43 +16,43 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class FakeCQLToJSONInterpreterSortingTests {
 
   @Test
-  public void canSortBySingleStringPropertyImpliedOrder() {
+  void canSortBySingleStringPropertyImpliedOrder() {
     canSort("rank", stringRankedRecords(),
       "rank", "2", "3", "4", "7", "9");
   }
 
   @Test
-  public void canSortBySingleStringPropertyAscending() {
+  void canSortBySingleStringPropertyAscending() {
     canSort("rank/sort.ascending", stringRankedRecords(),
       "rank", "2", "3", "4", "7", "9");
   }
 
   @Test
-  public void canSortBySingleStringPropertyDescending() {
+  void canSortBySingleStringPropertyDescending() {
     canSort("rank/sort.descending", stringRankedRecords(),
       "rank", "9", "7", "4", "3", "2");
   }
 
   @Test
-  public void canSortBySingleIntegerPropertyImpliedOrder() {
+  void canSortBySingleIntegerPropertyImpliedOrder() {
     canSort("rank", integerRankedRecords(),
       "rank", 2, 3, 4, 7, 9);
   }
 
   @Test
-  public void canSortBySingleIntegerPropertyAscending() {
+  void canSortBySingleIntegerPropertyAscending() {
     canSort("rank/sort.ascending", integerRankedRecords(),
       "rank", 2, 3, 4, 7, 9);
   }
 
   @Test
-  public void canSortBySingleIntegerPropertyDescending() {
+  void canSortBySingleIntegerPropertyDescending() {
     canSort("rank/sort.descending", integerRankedRecords(),
       "rank", 9, 7, 4, 3, 2);
   }
 
   @Test
-  public void canSortBySingleDatePropertyAscending() {
+  void canSortBySingleDatePropertyAscending() {
     canSort("date/sort.ascending", datedRecords(), "date",
       "2017-11-24T12:31:27.000+0000",
       "2018-01-12T12:31:27.000+0000",
@@ -62,7 +62,7 @@ public class FakeCQLToJSONInterpreterSortingTests {
   }
 
   @Test
-  public void canSortByMultipleProperties() {
+  void canSortByMultipleProperties() {
     canSort("firstRank/sort.ascending secondRank/sort.descending",
       multiplePropertiesRecords(), "secondRank",
       "k", "a", "t", "c", "d");

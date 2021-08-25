@@ -18,8 +18,8 @@ import java.util.UUID;
 
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.ClaimItemReturnedRequestBuilder;
@@ -27,13 +27,13 @@ import api.support.builders.DeclareClaimedReturnedItemAsMissingRequestBuilder;
 import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 
-public class DeclareClaimedReturnedItemAsMissingApiTests extends APITests {
+class DeclareClaimedReturnedItemAsMissingApiTests extends APITests {
   private static final String TESTING_COMMENT = "testing";
 
   private ItemResource item;
   private String loanId;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     item = itemsFixture.basedUponSmallAngryPlanet();
     loanId = checkOutFixture.checkOutByBarcode(item, usersFixture.charlotte())
@@ -41,7 +41,7 @@ public class DeclareClaimedReturnedItemAsMissingApiTests extends APITests {
   }
 
   @Test
-  public void canDeclareItemMissingWhenClaimedReturned() {
+  void canDeclareItemMissingWhenClaimedReturned() {
     claimItemReturnedFixture.claimItemReturned(new ClaimItemReturnedRequestBuilder()
       .forLoan(loanId)
       .withItemClaimedReturnedDate(DateTime.now()));
@@ -60,7 +60,7 @@ public class DeclareClaimedReturnedItemAsMissingApiTests extends APITests {
   }
 
   @Test
-  public void cannotDeclareItemMissingWhenIsNotClaimedReturned() {
+  void cannotDeclareItemMissingWhenIsNotClaimedReturned() {
     final Response response = claimItemReturnedFixture
       .attemptDeclareClaimedReturnedItemAsMissing(new DeclareClaimedReturnedItemAsMissingRequestBuilder()
         .forLoan(loanId)
@@ -73,7 +73,7 @@ public class DeclareClaimedReturnedItemAsMissingApiTests extends APITests {
   }
 
   @Test
-  public void cannotDeclareItemMissingWhenLoanIsClosed() {
+  void cannotDeclareItemMissingWhenLoanIsClosed() {
     checkInFixture.checkInByBarcode(item);
 
     final Response response = claimItemReturnedFixture
@@ -89,7 +89,7 @@ public class DeclareClaimedReturnedItemAsMissingApiTests extends APITests {
   }
 
   @Test
-  public void cannotDeclareItemMissingWhenCommentIsNotProvided() {
+  void cannotDeclareItemMissingWhenCommentIsNotProvided() {
     final Response response = claimItemReturnedFixture
       .attemptDeclareClaimedReturnedItemAsMissing(
         new DeclareClaimedReturnedItemAsMissingRequestBuilder()
@@ -102,7 +102,7 @@ public class DeclareClaimedReturnedItemAsMissingApiTests extends APITests {
   }
 
   @Test
-  public void cannotDeclareItemMissingWhenLoanIsNotFound() {
+  void cannotDeclareItemMissingWhenLoanIsNotFound() {
     final String notExistentLoanId = UUID.randomUUID().toString();
 
     final Response response = claimItemReturnedFixture
