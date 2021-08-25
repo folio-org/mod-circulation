@@ -36,7 +36,7 @@ import org.mockito.Mock;
 import io.vertx.core.json.JsonObject;
 import lombok.SneakyThrows;
 
-public class LoanAnonymizationServiceTests {
+class LoanAnonymizationServiceTests {
   @Mock
   AnonymizeStorageLoansRepository anonymizeStorageLoansRepository;
   @Mock

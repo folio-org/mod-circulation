@@ -23,7 +23,7 @@ public final class ResultMatchers {
       }
 
       @Override
-      protected boolean matchesSafely(Result result, Description description) {
+      protected boolean matchesSafely(Result<?> result, Description description) {
         final Matcher<Boolean> successMatcher = is(true);
 
         description.appendText("is a " + result.toString());

@@ -8,7 +8,7 @@ import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.hamcrest.Matcher;
 
-public class RenewByIdTests extends RenewalAPITests {
+class RenewByIdTests extends RenewalAPITests {
   @Override
   Response attemptRenewal(IndividualResource user, IndividualResource item) {
     return loansFixture.attemptRenewalById(user, item);

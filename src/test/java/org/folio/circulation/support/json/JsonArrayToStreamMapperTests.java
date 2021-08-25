@@ -7,21 +7,21 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.emptyArray;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import io.vertx.core.json.JsonArray;
 import lombok.val;
 
-public class JsonArrayToStreamMapperTests {
+class JsonArrayToStreamMapperTests {
   @Test
-  public void shouldMapNullToEmptyStream() {
+  void shouldMapNullToEmptyStream() {
     val mapper = new JsonArrayToStreamMapper<>(identity());
 
     assertThat(mapper.toStream(null).toArray(), emptyArray());
   }
 
   @Test
-  public void shouldSkipNullElements() {
+  void shouldSkipNullElements() {
     val mapper = new JsonArrayToStreamMapper<>(identity());
 
     val array = new JsonArray(toList(of("Foo", "Bar", null, "Ipsum")));

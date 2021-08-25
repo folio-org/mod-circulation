@@ -319,12 +319,6 @@ public abstract class RenewalResource extends Resource {
       : new BlockValidator<>(USER_IS_BLOCKED_AUTOMATICALLY, validationFunction);
   }
 
-  private Validator<RenewalContext> createInactivePatronValidator() {
-    final var inactiveUserRenewalValidator = new InactiveUserRenewalValidator();
-
-    return new BlockValidator<>(USER_IS_INACTIVE, inactiveUserRenewalValidator::refuseWhenPatronIsInactive);
-}
-
   private Validator<RenewalContext> createManualPatronBlocksValidator(JsonObject request,
     OkapiPermissions permissions, Clients clients) {
 

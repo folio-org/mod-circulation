@@ -7,16 +7,16 @@ import static org.hamcrest.Matchers.not;
 import java.util.UUID;
 
 import api.support.http.IndividualResource;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.RequestBuilder;
 import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 
-public class RequestsAPILoanHistoryTests extends APITests {
+class RequestsAPILoanHistoryTests extends APITests {
   @Test
-  public void creatingRecallRequestChangesTheOpenLoanForTheSameItem() {
+  void creatingRecallRequestChangesTheOpenLoanForTheSameItem() {
 
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -44,7 +44,7 @@ public class RequestsAPILoanHistoryTests extends APITests {
   }
 
   @Test
-  public void creatingHoldRequestDoesNotChangeClosedLoanForTheSameItem() {
+  void creatingHoldRequestDoesNotChangeClosedLoanForTheSameItem() {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -72,7 +72,7 @@ public class RequestsAPILoanHistoryTests extends APITests {
   }
 
   @Test
-  public void creatingRecallRequestDoesNotChangeClosedLoanForTheSameItem() {
+  void creatingRecallRequestDoesNotChangeClosedLoanForTheSameItem() {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -100,7 +100,7 @@ public class RequestsAPILoanHistoryTests extends APITests {
   }
 
   @Test
-  public void creatingHoldRequestDoesNotChangeOpenLoanForDifferentItem() {
+  void creatingHoldRequestDoesNotChangeOpenLoanForDifferentItem() {
 
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final ItemResource nod = itemsFixture.basedUponNod();
@@ -128,7 +128,7 @@ public class RequestsAPILoanHistoryTests extends APITests {
   }
 
   @Test
-  public void creatingRecallRequestDoesNotChangeOpenLoanForDifferentItem() {
+  void creatingRecallRequestDoesNotChangeOpenLoanForDifferentItem() {
 
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final ItemResource nod = itemsFixture.basedUponNod();
@@ -156,7 +156,7 @@ public class RequestsAPILoanHistoryTests extends APITests {
   }
 
   @Test
-  public void creatingHoldRequestStillSucceedsWhenThereIsNoLoan() {
+  void creatingHoldRequestStillSucceedsWhenThereIsNoLoan() {
 
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -173,7 +173,7 @@ public class RequestsAPILoanHistoryTests extends APITests {
   }
 
   @Test
-  public void creatingRecallRequestStillSucceedsWhenThereIsNoLoan() {
+  void creatingRecallRequestStillSucceedsWhenThereIsNoLoan() {
 
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();

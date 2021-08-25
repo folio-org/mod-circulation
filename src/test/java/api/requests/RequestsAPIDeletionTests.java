@@ -8,7 +8,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
 import org.folio.circulation.domain.MultipleRecords;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.RequestBuilder;
@@ -16,9 +16,9 @@ import api.support.http.ItemResource;
 import api.support.http.UserResource;
 import io.vertx.core.json.JsonObject;
 
-public class RequestsAPIDeletionTests extends APITests {
+class RequestsAPIDeletionTests extends APITests {
   @Test
-  public void canDeleteRequestInQueue() {
+  void canDeleteRequestInQueue() {
     final var nod = itemsFixture.basedUponNod();
 
     checkOutFixture.checkOutByBarcode(nod);
@@ -44,7 +44,7 @@ public class RequestsAPIDeletionTests extends APITests {
   }
 
   @Test
-  public void canDeleteAllRequests() {
+  void canDeleteAllRequests() {
     final var nod = itemsFixture.basedUponNod();
     final var smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final var temeraire = itemsFixture.basedUponTemeraire();

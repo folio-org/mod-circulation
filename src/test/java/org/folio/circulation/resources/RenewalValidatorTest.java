@@ -10,14 +10,14 @@ import static org.joda.time.DateTimeZone.UTC;
 
 import org.folio.circulation.domain.Loan;
 import org.joda.time.DateTime;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
-public class RenewalValidatorTest {
+class RenewalValidatorTest {
   @Test
-  public void shouldDisallowRenewalWhenDueDateIsEarlierOrSame() {
+  void shouldDisallowRenewalWhenDueDateIsEarlierOrSame() {
     val dueDate = now(UTC);
     val proposedDueDate = dueDate.minusWeeks(2);
     val loan = createLoan(dueDate);
@@ -29,7 +29,7 @@ public class RenewalValidatorTest {
   }
 
   @Test
-  public void shouldAllowRenewalWhenDueDateAfterCurrentDueDate() {
+  void shouldAllowRenewalWhenDueDateAfterCurrentDueDate() {
     val dueDate = now(UTC);
     val proposedDueDate = dueDate.plusWeeks(1);
     val loan = createLoan(dueDate);

@@ -5,17 +5,17 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.util.UUID;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.HoldingBuilder;
 import api.support.builders.InstanceBuilder;
 import api.support.builders.ItemBuilder;
 
-public class EffectiveLocationTests extends APITests {
+class EffectiveLocationTests extends APITests {
 
   @Test
-  public void noLocations() {
+  void noLocations() {
     final Item item = Item.from(new ItemBuilder()
       .withNoPermanentLocation()
       .withNoTemporaryLocation()
@@ -31,7 +31,7 @@ public class EffectiveLocationTests extends APITests {
   }
 
   @Test
-  public void noItem() {
+  void noItem() {
     final UUID secondFloorEconomicsLocationId = UUID.randomUUID();
 
     final Item item = Item.from(null)

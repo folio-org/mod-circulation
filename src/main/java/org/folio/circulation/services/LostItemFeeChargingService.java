@@ -14,6 +14,8 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.StoreLoanAndItem;
 import org.folio.circulation.domain.Account;
 import org.folio.circulation.domain.AccountCancelReason;
@@ -21,7 +23,6 @@ import org.folio.circulation.domain.FeeFine;
 import org.folio.circulation.domain.FeeFineOwner;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Location;
-import org.folio.circulation.domain.notice.schedule.FeeFineScheduledNoticeService;
 import org.folio.circulation.domain.policy.lostitem.LostItemPolicy;
 import org.folio.circulation.domain.policy.lostitem.itemfee.AutomaticallyChargeableFee;
 import org.folio.circulation.domain.representations.DeclareItemLostRequest;
@@ -30,13 +31,9 @@ import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineOwnerRep
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineRepository;
 import org.folio.circulation.infrastructure.storage.inventory.LocationRepository;
 import org.folio.circulation.infrastructure.storage.loans.LostItemPolicyRepository;
-import org.folio.circulation.infrastructure.storage.users.UserRepository;
-import org.folio.circulation.services.feefine.FeeFineService;
 import org.folio.circulation.services.support.CreateAccountCommand;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class LostItemFeeChargingService {
   private static final Logger log = LogManager.getLogger(LostItemFeeChargingService.class);
@@ -48,11 +45,8 @@ public class LostItemFeeChargingService {
   private final StoreLoanAndItem storeLoanAndItem;
   private final LocationRepository locationRepository;
   private final EventPublisher eventPublisher;
-  private final FeeFineScheduledNoticeService feeFineScheduledNoticeService;
   private final LostItemFeeRefundService refundService;
   private final AccountRepository accountRepository;
-  private final FeeFineService feeFineService;
-  private final UserRepository userRepository;
   private String userId;
   private String servicePointId;
 
@@ -64,11 +58,8 @@ public class LostItemFeeChargingService {
     this.storeLoanAndItem = new StoreLoanAndItem(clients);
     this.locationRepository = LocationRepository.using(clients);
     this.eventPublisher = new EventPublisher(clients.pubSubPublishingService());
-    this.feeFineScheduledNoticeService = FeeFineScheduledNoticeService.using(clients);
     this.refundService = new LostItemFeeRefundService(clients);
     this.accountRepository = new AccountRepository(clients);
-    this.feeFineService = new FeeFineService(clients);
-    this.userRepository = new UserRepository(clients);
   }
 
   public CompletableFuture<Result<Loan>> chargeLostItemFees(

@@ -8,11 +8,11 @@ import static org.folio.circulation.support.results.ResultExamples.somethingWent
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class ResultFailureMappingTests {
+class ResultFailureMappingTests {
   @Test
-  public void shouldSucceedWhenAlreadySuccessful() {
+  void shouldSucceedWhenAlreadySuccessful() {
     final Result<Integer> mappedResult = succeeded(10)
       .mapFailure(failure -> actionFailed());
 
@@ -21,7 +21,7 @@ public class ResultFailureMappingTests {
   }
 
   @Test
-  public void shouldBeMappedWhenAlreadyFailed() {
+  void shouldBeMappedWhenAlreadyFailed() {
     final Result<Integer> result = alreadyFailed()
       .mapFailure(failure -> actionFailed());
 
@@ -29,7 +29,7 @@ public class ResultFailureMappingTests {
   }
 
   @Test
-  public void shouldFailWhenExceptionThrownDuringMapping() {
+  void shouldFailWhenExceptionThrownDuringMapping() {
     final Result<Integer> result = alreadyFailed()
       .mapFailure(failure -> { throw somethingWentWrong(); });
 
@@ -37,7 +37,7 @@ public class ResultFailureMappingTests {
   }
 
   @Test
-  public void shouldIgnoreExceptionDuringMappingWhenAlreadySuccessful() {
+  void shouldIgnoreExceptionDuringMappingWhenAlreadySuccessful() {
     final Result<Integer> result = succeeded(10)
       .mapFailure(failure -> { throw somethingWentWrong(); });
 

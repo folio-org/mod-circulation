@@ -11,7 +11,7 @@ import api.support.builders.Builder;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
 
-class RecordCreator {
+public class RecordCreator {
   private final ResourceClient client;
   private final Function<JsonObject, String> identityMapKey;
   private final Map<String, IndividualResource> identityMap = new HashMap<>();

@@ -27,7 +27,7 @@ import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeDiagnosingMatcher;
 import org.hamcrest.core.Is;
-import org.hamcrest.core.IsCollectionContaining;
+import org.hamcrest.core.IsIterableContaining;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -43,7 +43,7 @@ public class ValidationErrorMatchers {
 
       @Override
       protected boolean matchesSafely(JsonObject representation, Description description) {
-        final Matcher<Iterable<? super ValidationError>> iterableMatcher = IsCollectionContaining.hasItem(matcher);
+        final Matcher<Iterable<? super ValidationError>> iterableMatcher = IsIterableContaining.hasItem(matcher);
         final List<ValidationError> errors = errorsFromJson(representation);
 
         iterableMatcher.describeMismatch(errors, description);
@@ -65,7 +65,7 @@ public class ValidationErrorMatchers {
       protected boolean matchesSafely(HttpFailure failure, Description description) {
         if (failure instanceof ValidationErrorFailure) {
           final Matcher<Iterable<? super ValidationError>> iterableMatcher
-            = IsCollectionContaining.hasItem(matcher);
+            = IsIterableContaining.hasItem(matcher);
 
           final Collection<ValidationError> errors = ((ValidationErrorFailure) failure).getErrors();
 

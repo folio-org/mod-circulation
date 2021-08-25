@@ -61,10 +61,10 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
       null,
       null,
       null,
-      false, 
-      null, 
-      null, 
-      null, 
+      false,
+      null,
+      null,
+      null,
       null
     );
   }

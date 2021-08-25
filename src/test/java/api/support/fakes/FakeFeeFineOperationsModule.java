@@ -12,8 +12,8 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.folio.circulation.infrastructure.serialization.JsonSchemaValidator;
-import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.results.Result;
+import org.folio.circulation.support.utils.ClockUtil;
 
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
@@ -116,7 +116,7 @@ public class FakeFeeFineOperationsModule {
     final String feeFineActionId = UUID.randomUUID().toString();
 
     final JsonObject feeFineAction = new JsonObject()
-      .put("dateAction", ClockManager.getClockManager().getDateTime().toString())
+      .put("dateAction", ClockUtil.getDateTime().toString())
       .put("typeAction", actionType)
       .put("notify", false)
       .put("amountAction", actionAmount)

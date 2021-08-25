@@ -8,9 +8,9 @@ import static org.joda.time.DateTimeConstants.MINUTES_PER_DAY;
 import static org.joda.time.DateTimeConstants.MINUTES_PER_HOUR;
 import static org.joda.time.DateTimeConstants.MINUTES_PER_WEEK;
 import static org.joda.time.DateTimeZone.UTC;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -27,25 +27,23 @@ import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
 import org.joda.time.LocalDateTime;
 import org.joda.time.LocalTime;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import api.support.builders.LoanBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.OverdueFinePolicyBuilder;
 import io.vertx.core.json.JsonObject;
-import junitparams.JUnitParamsRunner;
-import junitparams.Parameters;
 
-@RunWith(JUnitParamsRunner.class)
-public class OverduePeriodCalculatorServiceTest {
+class OverduePeriodCalculatorServiceTest {
   private static final OverduePeriodCalculatorService calculator =
     new OverduePeriodCalculatorService(null, null);
   private static final DateTimeZone NEW_YORK = DateTimeZone.forID("America/New_York");
   private static final DateTimeZone LONDON = DateTimeZone.forID("Europe/London");
 
   @Test
-  public void preconditionsCheckLoanHasNoDueDate() {
+  void preconditionsCheckLoanHasNoDueDate() {
     DateTime systemTime = DateTime.now(UTC);
     Loan loan = new LoanBuilder().asDomainObject();
 
@@ -53,7 +51,7 @@ public class OverduePeriodCalculatorServiceTest {
   }
 
   @Test
-  public void preconditionsCheckLoanDueDateIsInFuture() {
+  void preconditionsCheckLoanDueDateIsInFuture() {
     DateTime systemTime = DateTime.now(UTC);
     Loan loan = new LoanBuilder()
       .withDueDate(systemTime.plusDays(1))
@@ -63,7 +61,7 @@ public class OverduePeriodCalculatorServiceTest {
   }
 
   @Test
-  public void preconditionsCheckCountClosedIsNull() {
+  void preconditionsCheckCountClosedIsNull() {
     DateTime systemTime = DateTime.now(UTC);
     Loan loan = new LoanBuilder()
       .withDueDate(systemTime.minusDays(1))
@@ -73,7 +71,7 @@ public class OverduePeriodCalculatorServiceTest {
   }
 
   @Test
-  public void allPreconditionsAreMet() {
+  void allPreconditionsAreMet() {
     DateTime systemTime = DateTime.now(UTC);
     Loan loan = new LoanBuilder()
       .withDueDate(systemTime.minusDays(1))
@@ -83,7 +81,7 @@ public class OverduePeriodCalculatorServiceTest {
   }
 
   @Test
-  public void countOverdueMinutesWithClosedDays() throws ExecutionException, InterruptedException {
+  void countOverdueMinutesWithClosedDays() throws ExecutionException, InterruptedException {
     int expectedResult = MINUTES_PER_WEEK + MINUTES_PER_DAY + MINUTES_PER_HOUR + 1;
     DateTime systemTime = DateTime.now(UTC);
 
@@ -96,9 +94,9 @@ public class OverduePeriodCalculatorServiceTest {
     assertEquals(expectedResult, actualResult);
   }
 
-  @Test
-  @Parameters
-  public void getOpeningDayDurationTest(List<OpeningDay> openingDays, int expectedResult) {
+  @ParameterizedTest
+  @MethodSource("getOpeningDayDurationTestParameters")
+  void getOpeningDayDurationTest(List<OpeningDay> openingDays, int expectedResult) {
 
     LocalDateTime dueDate = new LocalDateTime("2020-04-08T14:00:00.000");
     LocalDateTime returnDate = new LocalDateTime("2020-04-10T15:00:00.000");
@@ -108,7 +106,7 @@ public class OverduePeriodCalculatorServiceTest {
     assertEquals(expectedResult, actualResult);
   }
 
-  private Object[] parametersForGetOpeningDayDurationTest() {
+  private static Object[] getOpeningDayDurationTestParameters() {
     List<OpeningDay> zeroDays = Collections.emptyList();
 
     List<OpeningDay> regular = Arrays.asList(
@@ -166,9 +164,9 @@ public class OverduePeriodCalculatorServiceTest {
     };
   }
 
-  @Test
-  @Parameters
-  public void gracePeriodAdjustmentTest(
+  @ParameterizedTest
+  @MethodSource("gracePeriodAdjustmentTestParameters")
+  void gracePeriodAdjustmentTest(
     int overdueMinutes,
     String gracePeriodInterval,
     int gracePeriodDuration,
@@ -186,7 +184,7 @@ public class OverduePeriodCalculatorServiceTest {
     assertEquals(expectedResult, actualResult);
   }
 
-  private Object[] parametersForGracePeriodAdjustmentTest() {
+  private static Object[] gracePeriodAdjustmentTestParameters() {
     Stream<Object> parametersStream = Arrays.stream(new GracePeriodParams[] {
       new GracePeriodParams(10, "Minutes", 5, 12),
       new GracePeriodParams(255, "Hours", 4, 5),
@@ -220,7 +218,7 @@ public class OverduePeriodCalculatorServiceTest {
       Stream.of(new Object[][] {{11, "Unknown interval", 9, false, false, 11}})).toArray();
   }
 
-  private LoanPolicy createLoanPolicy(Integer gracePeriodDuration, String gracePeriodInterval) {
+  private static LoanPolicy createLoanPolicy(Integer gracePeriodDuration, String gracePeriodInterval) {
     LoanPolicyBuilder builder = new LoanPolicyBuilder();
     if (ObjectUtils.allNotNull(gracePeriodDuration, gracePeriodInterval)) {
       Period gracePeriod = Period.from(gracePeriodDuration, gracePeriodInterval);
@@ -229,7 +227,7 @@ public class OverduePeriodCalculatorServiceTest {
     return LoanPolicy.from(builder.create());
   }
 
-  private OverdueFinePolicy createOverdueFinePolicy(Boolean gracePeriodRecall, Boolean countClosed) {
+  private static OverdueFinePolicy createOverdueFinePolicy(Boolean gracePeriodRecall, Boolean countClosed) {
     JsonObject overdueFineObject = new JsonObject();
     overdueFineObject.put("quantity", 1);
     overdueFineObject.put("intervalId", "minute");
@@ -250,7 +248,7 @@ public class OverduePeriodCalculatorServiceTest {
     return OverdueFinePolicy.from(json);
   }
 
-  private OpeningDay createOpeningDay(
+  private static OpeningDay createOpeningDay(
     boolean allDay, LocalDate date, DateTimeZone dateTimeZone) {
 
     return OpeningDay.createOpeningDay(
@@ -272,22 +270,6 @@ public class OverduePeriodCalculatorServiceTest {
       this.interval = interval;
       this.gracePeriodLessThanOverdue = gracePeriodLessThanOverdue;
       this.gracePeriodGreaterThanOverdue = gracePeriodGreaterThanOverdue;
-    }
-
-    public int getOverdueMinutes() {
-      return overdueMinutes;
-    }
-
-    public String getInterval() {
-      return interval;
-    }
-
-    public int getGracePeriodLessThanOverdue() {
-      return gracePeriodLessThanOverdue;
-    }
-
-    public int getGracePeriodGreaterThanOverdue() {
-      return gracePeriodGreaterThanOverdue;
     }
   }
 }

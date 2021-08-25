@@ -46,7 +46,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNot.not;
 import static org.joda.time.DateTimeZone.UTC;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -69,7 +69,7 @@ import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
 import org.joda.time.Seconds;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.CheckInByBarcodeResponse;
@@ -90,13 +90,12 @@ import api.support.http.CqlQuery;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import api.support.http.UserResource;
-import api.support.utl.PatronNoticeTestHelper;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
-public class CheckInByBarcodeTests extends APITests {
+class CheckInByBarcodeTests extends APITests {
   @Test
-  public void canCloseAnOpenLoanByCheckingInTheItem() {
+  void canCloseAnOpenLoanByCheckingInTheItem() {
     final IndividualResource james = usersFixture.james();
 
     final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
@@ -237,7 +236,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
 }
 
   @Test
-  public void canCreateStaffSlipContextOnCheckInByBarcode() {
+  void canCreateStaffSlipContextOnCheckInByBarcode() {
     ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
 
     DateTime requestDate = new DateTime(2019, 7, 22, 10, 22, 54, UTC);
@@ -292,7 +291,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
   }
 
   @Test
-  public void cannotCheckInItemThatCannotBeFoundByBarcode() {
+  void cannotCheckInItemThatCannotBeFoundByBarcode() {
     final Response response = checkInFixture.attemptCheckInByBarcode(
       new CheckInByBarcodeRequestBuilder()
         .withItemBarcode("543593485458")
@@ -306,7 +305,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
   }
 
   @Test
-  public void cannotCheckInWithoutAServicePoint() {
+  void cannotCheckInWithoutAServicePoint() {
     DateTime loanDate = new DateTime(2018, 3, 1, 13, 25, 46, UTC);
 
     final IndividualResource james = usersFixture.james();
@@ -327,7 +326,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
   }
 
   @Test
-  public void cannotCheckInWithoutAnItem() {
+  void cannotCheckInWithoutAnItem() {
     DateTime loanDate = new DateTime(2018, 3, 1, 13, 25, 46, UTC);
 
     final IndividualResource james = usersFixture.james();
@@ -348,7 +347,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
   }
 
   @Test
-  public void cannotCheckInWithoutACheckInDate() {
+  void cannotCheckInWithoutACheckInDate() {
     DateTime loanDate = new DateTime(2018, 3, 1, 13, 25, 46, UTC);
 
     final IndividualResource james = usersFixture.james();
@@ -369,7 +368,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
   }
 
   @Test
-  public void canCheckInAnItemWithoutAnOpenLoan() {
+  void canCheckInAnItemWithoutAnOpenLoan() {
     final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
 
     final IndividualResource homeLocation = locationsFixture.basedUponExampleLocation(
@@ -414,7 +413,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
   }
 
   @Test
-  public void canCheckInAnItemTwice() {
+  void canCheckInAnItemTwice() {
     DateTime loanDate = new DateTime(2018, 3, 1, 13, 25, 46, UTC);
 
     final IndividualResource james = usersFixture.james();
@@ -469,7 +468,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
   }
 
   @Test
-  public void intellectualItemCannotBeCheckedIn() {
+  void intellectualItemCannotBeCheckedIn() {
     final var checkInServicePointId = servicePointsFixture.cd1().getId();
 
     final var homeLocation = locationsFixture.basedUponExampleLocation(
@@ -497,7 +496,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
   }
 
   @Test
-  public void patronNoticeOnCheckInIsNotSentWhenCheckInLoanNoticeIsDefinedAndLoanExists() {
+  void patronNoticeOnCheckInIsNotSentWhenCheckInLoanNoticeIsDefinedAndLoanExists() {
     UUID checkInTemplateId = UUID.randomUUID();
     JsonObject checkOutNoticeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(checkInTemplateId)
@@ -545,7 +544,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
   }
 
   @Test
-  public void shouldNotSendPatronNoticeWhenCheckInNoticeIsDefinedAndCheckInDoesNotCloseLoan() {
+  void shouldNotSendPatronNoticeWhenCheckInNoticeIsDefinedAndCheckInDoesNotCloseLoan() {
     UUID checkInTemplateId = UUID.randomUUID();
     JsonObject checkOutNoticeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(checkInTemplateId)
@@ -581,7 +580,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
   }
 
   @Test
-  public void patronNoticeOnCheckInAfterCheckOutAndRequestToItem() {
+  void patronNoticeOnCheckInAfterCheckOutAndRequestToItem() {
     ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
 
     checkOutFixture.checkOutByBarcode(item, usersFixture.jessica());
@@ -620,7 +619,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
   }
 
   @Test
-  public void patronNoticeOnCheckInAfterRequestToItem() {
+  void patronNoticeOnCheckInAfterRequestToItem() {
     ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
     DateTime requestDate = new DateTime(2019, 5, 5, 10, 22, 54, UTC);
     UUID servicePointId = servicePointsFixture.cd1().getId();
@@ -657,7 +656,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
   }
 
   @Test
-  public void patronNoticeIsSentOnceWhenItemAndRequestStatusIsChangedToAwaitingPickup() {
+  void patronNoticeIsSentOnceWhenItemAndRequestStatusIsChangedToAwaitingPickup() {
     JsonObject availableNoticeConfig = new NoticeConfigurationBuilder()
       .withTemplateId(UUID.randomUUID())
       .withAvailableEvent()
@@ -698,7 +697,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
   }
 
   @Test
-  public void requestAwaitingPickupNoticeIsNotSentWhenUserWasNotFound() {
+  void requestAwaitingPickupNoticeIsNotSentWhenUserWasNotFound() {
     JsonObject availableNoticeConfig = new NoticeConfigurationBuilder()
       .withTemplateId(UUID.randomUUID())
       .withAvailableEvent()
@@ -733,7 +732,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
   }
 
   @Test
-  public void requestAwaitingPickupNoticeIsNotSentWhenPatronNoticeRequestsFails() {
+  void requestAwaitingPickupNoticeIsNotSentWhenPatronNoticeRequestsFails() {
     JsonObject availableNoticeConfig = new NoticeConfigurationBuilder()
       .withTemplateId(UUID.randomUUID())
       .withAvailableEvent()
@@ -768,17 +767,17 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
   }
 
   @Test
-  public void patronNoticeIsSentForRequestAwaitingPickupWhenPreviousRequestWasCancelled() {
+  void patronNoticeIsSentForRequestAwaitingPickupWhenPreviousRequestWasCancelled() {
     patronNoticeIsSentForRequestAwaitingPickupWhenPreviousRequestWasClosed(CLOSED_CANCELLED);
   }
 
   @Test
-  public void patronNoticeIsSentForRequestAwaitingPickupWhenPreviousRequestHasExpired() {
+  void patronNoticeIsSentForRequestAwaitingPickupWhenPreviousRequestHasExpired() {
     patronNoticeIsSentForRequestAwaitingPickupWhenPreviousRequestWasClosed(CLOSED_UNFILLED);
   }
 
   @Test
-  public void patronNoticeIsSentForRequestAwaitingPickupWhenPreviousRequestPickupExpired() {
+  void patronNoticeIsSentForRequestAwaitingPickupWhenPreviousRequestPickupExpired() {
     patronNoticeIsSentForRequestAwaitingPickupWhenPreviousRequestWasClosed(CLOSED_PICKUP_EXPIRED);
   }
 
@@ -914,7 +913,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
   }
 
   @Test
-  public void overdueFineShouldBeChargedWhenItemIsOverdue() {
+  void overdueFineShouldBeChargedWhenItemIsOverdue() {
     useFallbackPolicies(loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId(),
@@ -988,7 +987,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
   }
 
   @Test
-  public void overdueFineIsChargedForCorrectOwnerWhenMultipleOwnersExist() {
+  void overdueFineIsChargedForCorrectOwnerWhenMultipleOwnersExist() {
     useFallbackPolicies(loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId(),
@@ -1055,7 +1054,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
   }
 
   @Test
-  public void overdueFineIsNotCreatedWhenThereIsNoOwnerForServicePoint() {
+  void overdueFineIsNotCreatedWhenThereIsNoOwnerForServicePoint() {
     useFallbackPolicies(loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId(),
@@ -1105,7 +1104,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
   }
 
   @Test
-  public void overdueRecallFineShouldBeChargedWhenItemIsOverdueAfterRecall() {
+  void overdueRecallFineShouldBeChargedWhenItemIsOverdueAfterRecall() {
     useFallbackPolicies(loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId(),
@@ -1177,7 +1176,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
   }
 
   @Test
-  public void noOverdueFineShouldBeChargedForOverdueFinePolicyWithNoOverdueFine() {
+  void noOverdueFineShouldBeChargedForOverdueFinePolicyWithNoOverdueFine() {
     useFallbackPolicies(loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId(),
@@ -1220,9 +1219,9 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     waitAtLeast(1, SECONDS)
       .until(feeFineActionsClient::getAll, empty());
   }
-   
+
   @Test
-  public void shouldNotCreateOverdueFineWithResolutionFoundByLibrary() {
+  void shouldNotCreateOverdueFineWithResolutionFoundByLibrary() {
     useFallbackPolicies(loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId(),
@@ -1268,7 +1267,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
   }
 
   @Test
-  public void overdueFineCalculatedCorrectlyWhenHourlyFeeFinePolicyIsApplied() {
+  void overdueFineCalculatedCorrectlyWhenHourlyFeeFinePolicyIsApplied() {
     useFallbackPolicies(loanPoliciesFixture.create(new LoanPolicyBuilder()
         .withId(UUID.randomUUID())
         .withName("Three days policy")
@@ -1339,7 +1338,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
   }
 
   @Test
-  public void canCheckInLostAndPaidItem() {
+  void canCheckInLostAndPaidItem() {
     final ItemResource item = itemsFixture.basedUponNod();
     var checkOutResource = checkOutFixture.checkOutByBarcode(item, usersFixture.steve()).getJson();
     declareLostFixtures.declareItemLost(checkOutResource);
@@ -1358,7 +1357,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
   }
 
   @Test
-  public void canCheckInAgedToLostItem() {
+  void canCheckInAgedToLostItem() {
     val ageToLostResult = ageToLostFixture.createAgedToLostLoan();
 
     checkInFixture.checkInByBarcode(ageToLostResult.getItem());
@@ -1377,7 +1376,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
   }
 
   @Test
-  public void itemCheckedInEventIsPublished() {
+  void itemCheckedInEventIsPublished() {
     final IndividualResource james = usersFixture.james();
     final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
     final IndividualResource homeLocation = locationsFixture.basedUponExampleLocation(
@@ -1413,7 +1412,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
   }
 
   @Test
-  public void availableNoticeIsSentUponCheckInWhenRequesterBarcodeWasChanged() {
+  void availableNoticeIsSentUponCheckInWhenRequesterBarcodeWasChanged() {
     UUID templateId = UUID.randomUUID();
 
     JsonObject availableNoticeConfig = new NoticeConfigurationBuilder()
@@ -1495,11 +1494,6 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     return LocalDate.of(dateTime.getYear(), dateTime.getMonthOfYear(), dateTime.getDayOfMonth());
   }
 
-  private void clearPatronNoticesAndPubsubEvents() {
-    FakeModNotify.clearSentPatronNotices();
-    FakePubSub.clearPublishedEvents();
-  }
-
   private void assertThatItemStatusIs(UUID itemId, ItemStatus status) {
     assertThat(
       Item.from(itemsFixture.getById(itemId).getJson()).getStatus(),
@@ -1510,14 +1504,6 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     assertThat(
       Request.from(requestsFixture.getById(requestId).getJson()).getStatus(),
       is(status));
-  }
-
-  private void verifyThatNoPatronNoticesWereSent() {
-    waitAtMost(1, SECONDS)
-      .until(FakeModNotify::getSentPatronNotices, empty());
-
-    waitAtMost(1, SECONDS)
-      .until(() -> FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), empty());
   }
 
   private void updateRequestPosition(IndividualResource request, int position) {
