@@ -8,13 +8,13 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.folio.circulation.support.results.Result;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import lombok.val;
 
-public class GeneralNoteTypeValidatorTests {
+class GeneralNoteTypeValidatorTests {
   @Test
-  public void allowSingleNoteType() {
+  void allowSingleNoteType() {
     val validator = new GeneralNoteTypeValidator();
 
     final NoteType noteType = generateNoteType();
@@ -28,7 +28,7 @@ public class GeneralNoteTypeValidatorTests {
   }
 
   @Test
-  public void failWhenNoNoteType() {
+  void failWhenNoNoteType() {
     val validator = new GeneralNoteTypeValidator();
 
     val result = validator.refuseIfNoteTypeNotFound(Result.of(Optional::empty));

@@ -6,14 +6,14 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import java.util.UUID;
 
 import api.support.http.IndividualResource;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.RequestBuilder;
 
-public class RequestsForDifferentItemsTests extends APITests {
+class RequestsForDifferentItemsTests extends APITests {
   @Test
-  public void requestsCreatedForDifferentItemsAreInDifferentQueues() {
+  void requestsCreatedForDifferentItemsAreInDifferentQueues() {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource nod = itemsFixture.basedUponNod();

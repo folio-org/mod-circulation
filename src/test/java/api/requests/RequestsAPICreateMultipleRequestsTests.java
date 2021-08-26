@@ -8,15 +8,15 @@ import java.util.UUID;
 import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.core.Is;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.RequestBuilder;
 
-public class RequestsAPICreateMultipleRequestsTests extends APITests {
+class RequestsAPICreateMultipleRequestsTests extends APITests {
 
   @Test
-  public void canCreateMultipleRequestsOfSameTypeForSameItem() {
+  void canCreateMultipleRequestsOfSameTypeForSameItem() {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -47,7 +47,7 @@ public class RequestsAPICreateMultipleRequestsTests extends APITests {
   }
 
   @Test
-  public void canCreateMultipleRequestsOfDifferentTypeForSameItem() {
+  void canCreateMultipleRequestsOfDifferentTypeForSameItem() {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -78,7 +78,7 @@ public class RequestsAPICreateMultipleRequestsTests extends APITests {
   }
 
   @Test
-  public void cannotCreateMultipleRequestsWithPageRequestForSameItemWhenItIsCheckedOut() {
+  void cannotCreateMultipleRequestsWithPageRequestForSameItemWhenItIsCheckedOut() {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -112,7 +112,7 @@ public class RequestsAPICreateMultipleRequestsTests extends APITests {
   }
 
   @Test
-  public void canCreateMultipleRequestsAtSpecificLocation() {
+  void canCreateMultipleRequestsAtSpecificLocation() {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();

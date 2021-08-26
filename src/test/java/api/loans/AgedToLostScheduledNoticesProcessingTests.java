@@ -46,8 +46,8 @@ import org.folio.circulation.domain.Account;
 import org.folio.circulation.domain.policy.Period;
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.ClaimItemReturnedRequestBuilder;
@@ -62,7 +62,7 @@ import api.support.http.OkapiHeaders;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
-public class AgedToLostScheduledNoticesProcessingTests extends APITests {
+class AgedToLostScheduledNoticesProcessingTests extends APITests {
   private static final UUID UPON_AT_TEMPLATE_ID = UUID.randomUUID();
   private static final UUID AFTER_ONE_TIME_TEMPLATE_ID = UUID.randomUUID();
   private static final UUID AFTER_RECURRING_TEMPLATE_ID = UUID.randomUUID();
@@ -84,7 +84,7 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
   public static final double LOST_ITEM_FEE_PAYMENT_AMOUNT = LOST_ITEM_FEE_AMOUNT / 2;
   public static final double PROCESSING_FEE_PAYMENT_AMOUNT = PROCESSING_FEE_AMOUNT / 2;
 
-  @Before
+  @BeforeEach
   public void beforeEach() {
     templateFixture.createDummyNoticeTemplate(UPON_AT_TEMPLATE_ID);
     templateFixture.createDummyNoticeTemplate(AFTER_ONE_TIME_TEMPLATE_ID);
@@ -96,7 +96,7 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void agedToLostLoanNoticesAreCreatedAndProcessed() {
+  void agedToLostLoanNoticesAreCreatedAndProcessed() {
     val agedToLostLoan = ageToLostFixture.createAgedToLostLoan(
       new NoticePolicyBuilder()
         .active()
@@ -179,7 +179,7 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void shouldStopSendingAgedToLostNoticesOnceLostItemFeeWasCharged() {
+  void shouldStopSendingAgedToLostNoticesOnceLostItemFeeWasCharged() {
     val agedToLostLoan = ageToLostFixture.createAgedToLostLoan(
       new NoticePolicyBuilder()
         .active()
@@ -227,7 +227,7 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void shouldStopSendingAgedToLostNoticesOnceItemIsDeclaredLost() {
+  void shouldStopSendingAgedToLostNoticesOnceItemIsDeclaredLost() {
     AgeToLostResult agedToLostLoan = createRecurringAgedToLostNotice();
 
     declareLostFixtures.declareItemLost(agedToLostLoan.getLoan().getJson());
@@ -243,7 +243,7 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void shouldStopSendingAgedToLostNoticesOnceItemIsClaimedReturned() {
+  void shouldStopSendingAgedToLostNoticesOnceItemIsClaimedReturned() {
     AgeToLostResult agedToLostLoan = createRecurringAgedToLostNotice();
 
     claimItemReturnedFixture.claimItemReturned(new ClaimItemReturnedRequestBuilder()
@@ -261,7 +261,7 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void shouldStopSendingAgedToLostNoticesOnceItemIsRenewedThroughOverride() {
+  void shouldStopSendingAgedToLostNoticesOnceItemIsRenewedThroughOverride() {
     AgeToLostResult agedToLostLoan = createRecurringAgedToLostNotice();
 
     final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(OVERRIDE_RENEWAL_PERMISSION);
@@ -298,7 +298,7 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void patronNoticesForForAgedToLostFineAdjustmentsAreCreatedAndProcessed() {
+  void patronNoticesForForAgedToLostFineAdjustmentsAreCreatedAndProcessed() {
     LostItemFeePolicyBuilder lostItemFeePolicyBuilder = lostItemFeePoliciesFixture
       .ageToLostAfterOneMinutePolicy()
       .withSetCost(LOST_ITEM_FEE_AMOUNT)
@@ -411,7 +411,7 @@ public class AgedToLostScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void patronNoticeForAdjustmentOfFullyPaidLostItemFeeIsCreatedAndProcessed() {
+  void patronNoticeForAdjustmentOfFullyPaidLostItemFeeIsCreatedAndProcessed() {
     LostItemFeePolicyBuilder lostItemFeePolicyBuilder = lostItemFeePoliciesFixture
       .ageToLostAfterOneMinutePolicy()
       .withSetCost(LOST_ITEM_FEE_AMOUNT)

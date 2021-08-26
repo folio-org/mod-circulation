@@ -13,7 +13,6 @@ import static java.time.Clock.offset;
 import static java.time.Duration.ofDays;
 import static org.folio.circulation.domain.policy.DueDateManagement.KEEP_THE_CURRENT_DUE_DATE;
 import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.END_OF_A_DAY;
-import static org.folio.circulation.support.ClockManager.getClockManager;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
@@ -32,18 +31,19 @@ import java.util.UUID;
 
 import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.Period;
-import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
 import org.joda.time.LocalTime;
 import org.joda.time.Seconds;
 import org.joda.time.format.ISODateTimeFormat;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import api.support.APITests;
 import api.support.MultipleJsonRecords;
@@ -53,10 +53,6 @@ import api.support.builders.RequestBuilder;
 import api.support.builders.ServicePointBuilder;
 import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
-import junitparams.JUnitParamsRunner;
-import junitparams.Parameters;
-import junitparams.converters.Nullable;
-import junitparams.naming.TestCaseName;
 
 /**
  * Notes:<br>
@@ -65,33 +61,32 @@ import junitparams.naming.TestCaseName;
  *
  * @see <a href="https://issues.folio.org/browse/CIRC-203">CIRC-203</a>
  */
-@RunWith(JUnitParamsRunner.class)
-public class LoanDueDatesAfterRecallTests extends APITests {
+class LoanDueDatesAfterRecallTests extends APITests {
   private static Clock clock;
 
   public LoanDueDatesAfterRecallTests() {
     super(true, true);
   }
 
-  @BeforeClass
+  @BeforeAll
   public static void setUpBeforeClass() {
     clock = Clock.fixed(Instant.now(), ZoneOffset.UTC);
   }
 
-  @Before
+  @BeforeEach
   public void setUp() {
     // reset the clock before each test (just in case)
-    ClockManager.getClockManager().setClock(clock);
+    ClockUtil.setClock(clock);
   }
 
-  @After
+  @AfterEach
   public void after() {
     // reset the clock before each test (just in case)
-    ClockManager.getClockManager().setClock(Clock.systemUTC());
+    ClockUtil.setClock(Clock.systemUTC());
   }
 
   @Test
-  public void recallRequestWithNoPolicyValuesChangesDueDateToSystemDate() {
+  void recallRequestWithNoPolicyValuesChangesDueDateToSystemDate() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requestServicePoint = servicePointsFixture.cd1();
     final IndividualResource steve = usersFixture.steve();
@@ -110,13 +105,13 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     assertThat("due date should not be the original due date",
         storedLoan.getString("dueDate"), not(originalDueDate));
 
-    final String expectedDueDate = ClockManager.getClockManager().getDateTime().toString(ISODateTimeFormat.dateTime());
+    final String expectedDueDate = ClockUtil.getDateTime().toString(ISODateTimeFormat.dateTime());
     assertThat("due date should be the current system date",
         storedLoan.getString("dueDate"), is(expectedDueDate));
   }
 
   @Test
-  public void recallRequestWithMGDAndRDValuesChangesDueDateToRD() {
+  void recallRequestWithMGDAndRDValuesChangesDueDateToRD() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requestServicePoint = servicePointsFixture.cd1();
     final IndividualResource steve = usersFixture.steve();
@@ -146,13 +141,13 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     assertThat("due date should not be the original date",
         storedLoan.getString("dueDate"), not(originalDueDate));
 
-    final String expectedDueDate = ClockManager.getClockManager().getDateTime().plusMonths(2).toString(ISODateTimeFormat.dateTime());
+    final String expectedDueDate = ClockUtil.getDateTime().plusMonths(2).toString(ISODateTimeFormat.dateTime());
     assertThat("due date should be in 2 months",
         storedLoan.getString("dueDate"), is(expectedDueDate));
   }
 
   @Test
-  public void recallRequestWithMGDAndRDValuesChangesDueDateToMGD() {
+  void recallRequestWithMGDAndRDValuesChangesDueDateToMGD() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requestServicePoint = servicePointsFixture.cd1();
     final IndividualResource steve = usersFixture.steve();
@@ -191,7 +186,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
   }
 
   @Test
-  public void recallRequestWithRDAndNoMGDValuesChangesDueDateToRD() {
+  void recallRequestWithRDAndNoMGDValuesChangesDueDateToRD() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requestServicePoint = servicePointsFixture.cd1();
     final IndividualResource steve = usersFixture.steve();
@@ -223,13 +218,13 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     assertThat("due date should not be the original due date",
         storedLoan.getString("dueDate"), not(originalDueDate));
 
-    final String expectedDueDate = ClockManager.getClockManager().getDateTime().plusWeeks(1).toString(ISODateTimeFormat.dateTime());
+    final String expectedDueDate = ClockUtil.getDateTime().plusWeeks(1).toString(ISODateTimeFormat.dateTime());
     assertThat("due date should be in 1 week (recall return interval)",
         storedLoan.getString("dueDate"), is(expectedDueDate));
   }
 
   @Test
-  public void recallRequestWithMGDAndNoRDValuesChangesDueDateToMGD() {
+  void recallRequestWithMGDAndNoRDValuesChangesDueDateToMGD() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requestServicePoint = servicePointsFixture.cd1();
     final IndividualResource steve = usersFixture.steve();
@@ -267,7 +262,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
   }
 
   @Test
-  public void recallRequestWithMGDAndRDValuesChangesDueDateToMGDWithCLDDM() {
+  void recallRequestWithMGDAndRDValuesChangesDueDateToMGDWithCLDDM() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final UUID checkOutServicePointId = UUID.fromString(CASE_FRI_SAT_MON_SERVICE_POINT_ID);
     final IndividualResource steve = usersFixture.steve();
@@ -319,22 +314,21 @@ public class LoanDueDatesAfterRecallTests extends APITests {
         storedLoan.getString("dueDate"), is(expectedDueDate));
   }
 
-  @Test
-  @Parameters({
+  @ParameterizedTest(name = "{index}: {0} {1} {2} {3} {4}")
+  @CsvSource(value = {
     // MGD duration|MGD interval|RD duration|RD interval|expected string
-    "null|null|1|Months|the \"minimumGuaranteedLoanPeriod\" in the loan policy is not recognized",
-    "1|Months|null|null|the \"recallReturnInterval\" in the loan policy is not recognized",
-    "1|Years|1|Months|the interval \"Years\" in \"minimumGuaranteedLoanPeriod\" is not recognized",
-    "1|Months|1|Years|the interval \"Years\" in \"recallReturnInterval\" is not recognized",
-    "-100|Months|1|Months|the duration \"-100\" in \"minimumGuaranteedLoanPeriod\" is invalid",
-    "1|Months|-100|Months|the duration \"-100\" in \"recallReturnInterval\" is invalid"
-  })
-  @TestCaseName("{method}: {params}")
+    "null,null,1,Months,the \"minimumGuaranteedLoanPeriod\" in the loan policy is not recognized",
+    "1,Months,null,null,the \"recallReturnInterval\" in the loan policy is not recognized",
+    "1,Years,1,Months,the interval \"Years\" in \"minimumGuaranteedLoanPeriod\" is not recognized",
+    "1,Months,1,Years,the interval \"Years\" in \"recallReturnInterval\" is not recognized",
+    "-100,Months,1,Months,the duration \"-100\" in \"minimumGuaranteedLoanPeriod\" is invalid",
+    "1,Months,-100,Months,the duration \"-100\" in \"recallReturnInterval\" is invalid"
+  }, nullValues={"null"})
   public void loanPolicyWithInvalidMGDOrRDPeriodValuesReturnsErrorOnRecallCreation(
-      @Nullable Integer mgdDuration,
-      @Nullable String mgdInterval,
-      @Nullable Integer rdDuration,
-      @Nullable String rdInterval,
+      Integer mgdDuration,
+      String mgdInterval,
+      Integer rdDuration,
+      String rdInterval,
       String expectedMessage) {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requestServicePoint = servicePointsFixture.cd1();
@@ -369,7 +363,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
   }
 
   @Test
-  public void initialLoanDueDateOnCreateWithPrexistingRequests() {
+  void initialLoanDueDateOnCreateWithPrexistingRequests() {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requestServicePoint = servicePointsFixture.cd1();
@@ -405,8 +399,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
 
     final JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
 
-    final String expectedDueDate = ClockManager
-      .getClockManager()
+    final String expectedDueDate = ClockUtil
       .getDateTime()
       .plusMonths(2)
       .withTime(LocalTime.MIDNIGHT.minusSeconds(1))
@@ -417,15 +410,13 @@ public class LoanDueDatesAfterRecallTests extends APITests {
   }
 
   @Test
-  public void changedDueDateAfterRecallingAnItemShouldRespectTenantTimezone() {
+  void changedDueDateAfterRecallingAnItemShouldRespectTenantTimezone() {
     final String stockholmTimeZone = "Europe/Stockholm";
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requestServicePoint = servicePointsFixture.cd1();
     final IndividualResource steve = usersFixture.steve();
     final IndividualResource jessica = usersFixture.jessica();
-
-    final var clockManager = getClockManager();
 
     configClient.create(timezoneConfigurationFor(stockholmTimeZone));
 
@@ -440,21 +431,19 @@ public class LoanDueDatesAfterRecallTests extends APITests {
 
     setFallbackPolicies(canCirculateRollingPolicy);
 
-    clockManager.setClock(fixed(Instant.parse("2020-01-24T08:34:21Z"), ZoneId.of("UTC")));
-
-    final var loanDate = clockManager.getDateTime();
+    ClockUtil.setClock(fixed(Instant.parse("2020-01-24T08:34:21Z"), ZoneId.of("UTC")));
 
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(smallAngryPlanet, steve);
 
     //3 days later
-    clockManager.setClock(offset(clockManager.getClock(), ofDays(3)));
+    ClockUtil.setClock(offset(ClockUtil.getClock(), ofDays(3)));
 
     requestsFixture.place(
       new RequestBuilder()
         .recall()
         .forItem(smallAngryPlanet)
         .by(jessica)
-        .withRequestDate(clockManager.getDateTime())
+        .withRequestDate(ClockUtil.getDateTime())
         .withPickupServicePoint(requestServicePoint));
 
     final var storedLoan = loansFixture.getLoanById(loan.getId()).getJson();
@@ -465,7 +454,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
   }
 
   @Test
-  public void pagedItemRecalledThenLoanedAndNextRecallDoesNotChangeDueDate() {
+  void pagedItemRecalledThenLoanedAndNextRecallDoesNotChangeDueDate() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requestServicePoint = servicePointsFixture.cd1();
     final IndividualResource jessica = usersFixture.jessica();
@@ -490,10 +479,10 @@ public class LoanDueDatesAfterRecallTests extends APITests {
         now(UTC), requestServicePoint.getId(), "Recall");
 
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(
-      smallAngryPlanet, jessica, ClockManager.getClockManager().getDateTime());
+      smallAngryPlanet, jessica, ClockUtil.getDateTime());
 
     // Recalled is applied when loaned, so the due date should be 2 weeks, not 3 weeks
-    final String expectedDueDate = ClockManager.getClockManager().getDateTime().plusWeeks(2).toString(ISODateTimeFormat.dateTime());
+    final String expectedDueDate = ClockUtil.getDateTime().plusWeeks(2).toString(ISODateTimeFormat.dateTime());
 
     JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
 
@@ -501,7 +490,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     assertThat("due date after recall should be 2 weeks",
         recalledDueDate, is(expectedDueDate));
 
-    ClockManager.getClockManager().setClock(Clock.offset(clock, Duration.ofDays(1)));
+    ClockUtil.setClock(Clock.offset(clock, Duration.ofDays(1)));
 
     requestsFixture.placeHoldShelfRequest(smallAngryPlanet, charlotte,
         now(UTC), requestServicePoint.getId(), "Recall");
@@ -512,7 +501,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
   }
 
   @Test
-  public void pagedItemRecalledThenLoanedBecomesOverdueAndNextRecallDoesNotChangeDueDate() {
+  void pagedItemRecalledThenLoanedBecomesOverdueAndNextRecallDoesNotChangeDueDate() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requestServicePoint = servicePointsFixture.cd1();
     final IndividualResource jessica = usersFixture.jessica();
@@ -537,10 +526,10 @@ public class LoanDueDatesAfterRecallTests extends APITests {
         now(UTC), requestServicePoint.getId(), "Recall");
 
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(
-      smallAngryPlanet, jessica, ClockManager.getClockManager().getDateTime());
+      smallAngryPlanet, jessica, ClockUtil.getDateTime());
 
     // Recalled is applied when loaned, so the due date should be 2 weeks, not 3 weeks
-    final String expectedDueDate = ClockManager.getClockManager().getDateTime().plusWeeks(2).toString(ISODateTimeFormat.dateTime());
+    final String expectedDueDate = ClockUtil.getDateTime().plusWeeks(2).toString(ISODateTimeFormat.dateTime());
 
     JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
 
@@ -549,7 +538,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
         recalledDueDate, is(expectedDueDate));
 
     // Move the fixed clock so that the loan is now overdue
-    ClockManager.getClockManager().setClock(Clock.offset(clock, Duration.ofDays(15)));
+    ClockUtil.setClock(Clock.offset(clock, Duration.ofDays(15)));
 
     requestsFixture.placeHoldShelfRequest(smallAngryPlanet, charlotte,
         now(UTC), requestServicePoint.getId(), "Recall");
@@ -560,7 +549,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
   }
 
   @Test
-  public void secondRecallRequestWithMGDTruncationInPlaceDoesNotChangeDueDate() {
+  void secondRecallRequestWithMGDTruncationInPlaceDoesNotChangeDueDate() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requestServicePoint = servicePointsFixture.cd1();
     final IndividualResource steve = usersFixture.steve();
@@ -579,7 +568,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     setFallbackPolicies(canCirculateRollingPolicy);
 
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(
-      smallAngryPlanet, steve, ClockManager.getClockManager().getDateTime());
+      smallAngryPlanet, steve, ClockUtil.getDateTime());
 
     final String originalDueDate = loan.getJson().getString("dueDate");
 
@@ -592,11 +581,11 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     assertThat("due date after recall should not be the original date",
         recalledDueDate, not(originalDueDate));
 
-    final String expectedDueDate = ClockManager.getClockManager().getDateTime().plusWeeks(2).toString(ISODateTimeFormat.dateTime());
+    final String expectedDueDate = ClockUtil.getDateTime().plusWeeks(2).toString(ISODateTimeFormat.dateTime());
     assertThat("due date after recall should be in 2 weeks",
         storedLoan.getString("dueDate"), is(expectedDueDate));
 
-    ClockManager.getClockManager().setClock(Clock.offset(clock, Duration.ofDays(7)));
+    ClockUtil.setClock(Clock.offset(clock, Duration.ofDays(7)));
 
     requestsFixture.placeHoldShelfRequest(smallAngryPlanet, charlotte,
         now(UTC), requestServicePoint.getId(), "Recall");
@@ -607,7 +596,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
   }
 
   @Test
-  public void secondRecallRequestWithMGDTruncationInPlaceAndLoanOverdueDoesNotChangeDueDate() {
+  void secondRecallRequestWithMGDTruncationInPlaceAndLoanOverdueDoesNotChangeDueDate() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requestServicePoint = servicePointsFixture.cd1();
     final IndividualResource steve = usersFixture.steve();
@@ -626,7 +615,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     setFallbackPolicies(canCirculateRollingPolicy);
 
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(
-      smallAngryPlanet, steve, ClockManager.getClockManager().getDateTime());
+      smallAngryPlanet, steve, ClockUtil.getDateTime());
 
     final String originalDueDate = loan.getJson().getString("dueDate");
 
@@ -639,12 +628,12 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     assertThat("due date after recall should not be the original date",
         recalledDueDate, not(originalDueDate));
 
-    final String expectedDueDate = ClockManager.getClockManager().getDateTime().plusWeeks(2).toString(ISODateTimeFormat.dateTime());
+    final String expectedDueDate = ClockUtil.getDateTime().plusWeeks(2).toString(ISODateTimeFormat.dateTime());
     assertThat("due date after recall should be in 2 weeks",
         storedLoan.getString("dueDate"), is(expectedDueDate));
 
     // Move the fixed clock so that the loan is now overdue
-    ClockManager.getClockManager().setClock(Clock.offset(clock, Duration.ofDays(15)));
+    ClockUtil.setClock(Clock.offset(clock, Duration.ofDays(15)));
 
     requestsFixture.placeHoldShelfRequest(smallAngryPlanet, charlotte,
         now(UTC), requestServicePoint.getId(), "Recall");
@@ -655,7 +644,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
   }
 
   @Test
-  public void secondRecallRequestWithRDTruncationInPlaceDoesNotChangeDueDate() {
+  void secondRecallRequestWithRDTruncationInPlaceDoesNotChangeDueDate() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requestServicePoint = servicePointsFixture.cd1();
     final IndividualResource steve = usersFixture.steve();
@@ -686,11 +675,11 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     assertThat("due date after recall should not be  the original date",
         recalledDueDate, not(originalDueDate));
 
-    final String expectedDueDate = ClockManager.getClockManager().getDateTime().plusMonths(2).toString(ISODateTimeFormat.dateTime());
+    final String expectedDueDate = ClockUtil.getDateTime().plusMonths(2).toString(ISODateTimeFormat.dateTime());
     assertThat("due date after recall should be in 2 months",
         storedLoan.getString("dueDate"), is(expectedDueDate));
 
-    ClockManager.getClockManager().setClock(Clock.offset(clock, Duration.ofDays(7)));
+    ClockUtil.setClock(Clock.offset(clock, Duration.ofDays(7)));
 
     requestsFixture.placeHoldShelfRequest(smallAngryPlanet, charlotte,
         now(UTC), requestServicePoint.getId(), "Recall");
@@ -701,7 +690,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
   }
 
   @Test
-  public void secondRecallRequestWithRDTruncationInPlaceAndLoanOverdueDoesNotChangeDueDate() {
+  void secondRecallRequestWithRDTruncationInPlaceAndLoanOverdueDoesNotChangeDueDate() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requestServicePoint = servicePointsFixture.cd1();
     final IndividualResource steve = usersFixture.steve();
@@ -733,12 +722,12 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     assertThat("due date after recall should not be the original date",
         recalledDueDate, not(originalDueDate));
 
-    final String expectedDueDate = ClockManager.getClockManager().getDateTime().plusMonths(2).toString(ISODateTimeFormat.dateTime());
+    final String expectedDueDate = ClockUtil.getDateTime().plusMonths(2).toString(ISODateTimeFormat.dateTime());
     assertThat("due date after recall should be in 2 months",
         storedLoan.getString("dueDate"), is(expectedDueDate));
 
     // Move the fixed clock so that the loan is now overdue
-    ClockManager.getClockManager().setClock(Clock.offset(clock, Duration.ofDays(70)));
+    ClockUtil.setClock(Clock.offset(clock, Duration.ofDays(70)));
 
     requestsFixture.placeHoldShelfRequest(smallAngryPlanet, charlotte,
         now(UTC), requestServicePoint.getId(), "Recall");
@@ -749,7 +738,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
   }
 
   @Test
-  public void itemRecalledThenCancelledAndNextRecallDoesNotChangeDueDate() {
+  void itemRecalledThenCancelledAndNextRecallDoesNotChangeDueDate() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requestServicePoint = servicePointsFixture.cd1();
     final IndividualResource jessica = usersFixture.jessica();
@@ -768,7 +757,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     setFallbackPolicies(canCirculateRollingPolicy);
 
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(
-      smallAngryPlanet, jessica, ClockManager.getClockManager().getDateTime());
+      smallAngryPlanet, jessica, ClockUtil.getDateTime());
 
     final String originalDueDate = loan.getJson().getString("dueDate");
 
@@ -784,7 +773,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
 
     requestsFixture.cancelRequest(request);
 
-    ClockManager.getClockManager().setClock(Clock.offset(clock, Duration.ofDays(7)));
+    ClockUtil.setClock(Clock.offset(clock, Duration.ofDays(7)));
 
     final IndividualResource renewal = loansFixture.renewLoan(smallAngryPlanet, jessica);
 
@@ -803,7 +792,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
   }
 
   @Test
-  public void shouldNotExtendLoanDueDateIfOverdueLoanIsRecalled() {
+  void shouldNotExtendLoanDueDateIfOverdueLoanIsRecalled() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
     final Period loanPeriod = Period.weeks(3);
@@ -845,7 +834,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
   }
 
   @Test
-  public void shouldExtendLoanDueDateByAlternatePeriodWhenOverdueLoanIsRecalledAndPolicyAllowsExtension() {
+  void shouldExtendLoanDueDateByAlternatePeriodWhenOverdueLoanIsRecalledAndPolicyAllowsExtension() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
     final Period alternateLoanPeriod = Period.weeks(3);
@@ -925,7 +914,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
   }
 
   @Test
-  public void loanDueDateTruncatedOnCheckoutWhenRecallAnywhereInQueue() {
+  void loanDueDateTruncatedOnCheckoutWhenRecallAnywhereInQueue() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requestServicePoint = servicePointsFixture.cd1();
     final IndividualResource jessica = usersFixture.jessica();

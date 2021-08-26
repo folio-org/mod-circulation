@@ -1,22 +1,22 @@
 package org.folio.circulation.domain.representations;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.UUID;
 
 import org.folio.circulation.support.results.Result;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import io.vertx.core.json.JsonObject;
 
-public class RequestByInstanceIdRequestTests {
+class RequestByInstanceIdRequestTests {
 
   private static final String REQUEST_DATE = "requestDate";
   private static final String REQUESTER_ID = "requesterId";
   private static final String INSTANCE_ID = "instanceId";
 
   @Test
-  public void failedValidationWhenRequestMissingRequesterId() {
+  void failedValidationWhenRequestMissingRequesterId() {
     JsonObject instanceRequest = new JsonObject();
     instanceRequest.put(INSTANCE_ID, getRandomUUIDString());
     instanceRequest.put(REQUEST_DATE, "2019-07-04");
@@ -26,7 +26,7 @@ public class RequestByInstanceIdRequestTests {
   }
 
   @Test
-  public void failedValidationWhenRequestMissingRequestDate() {
+  void failedValidationWhenRequestMissingRequestDate() {
     JsonObject instanceRequest = new JsonObject();
     instanceRequest.put(INSTANCE_ID, getRandomUUIDString());
     instanceRequest.put(REQUESTER_ID, getRandomUUIDString());
@@ -36,7 +36,7 @@ public class RequestByInstanceIdRequestTests {
   }
 
   @Test
-  public void failedValidationWhenRequestMissingInstanceId() {
+  void failedValidationWhenRequestMissingInstanceId() {
     JsonObject instanceRequest = new JsonObject();
     instanceRequest.put(REQUEST_DATE, "2041-11-11");
     instanceRequest.put(REQUESTER_ID, getRandomUUIDString());
@@ -46,7 +46,7 @@ public class RequestByInstanceIdRequestTests {
   }
 
   @Test
-  public void passedValidationWhenRequestHasAllNecessaryFields() {
+  void passedValidationWhenRequestHasAllNecessaryFields() {
     JsonObject instanceRequest = new JsonObject();
     instanceRequest.put(REQUEST_DATE, "2041-11-11");
     instanceRequest.put(REQUESTER_ID, getRandomUUIDString());

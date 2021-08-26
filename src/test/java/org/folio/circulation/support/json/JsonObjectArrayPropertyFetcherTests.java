@@ -14,15 +14,15 @@ import static org.hamcrest.collection.IsEmptyCollection.empty;
 import java.util.List;
 
 import org.hamcrest.Matcher;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
-public class JsonObjectArrayPropertyFetcherTests {
+class JsonObjectArrayPropertyFetcherTests {
   @Test
-  public void StreamShouldContainSameContentsAsArray() {
+  void StreamShouldContainSameContentsAsArray() {
     val json = objectWithJsonArrayOf(createObjectWithName("Foo"),
       createObjectWithName("Bar"), createObjectWithName("Lorem"), createObjectWithName("Ipsum"));
 
@@ -31,14 +31,14 @@ public class JsonObjectArrayPropertyFetcherTests {
   }
 
   @Test
-  public void shouldMapEmptyArrayToEmptyStream() {
+  void shouldMapEmptyArrayToEmptyStream() {
     val json = objectWithJsonArrayOf();
 
     assertThat(toList(toStream(json, "array")), is(empty()));
   }
 
   @Test
-  public void shouldSkipNonObjectElements() {
+  void shouldSkipNonObjectElements() {
     val array = new JsonArray(toList(of(createObjectWithName("Foo"), "Bar",
       createObjectWithName("Lorem"), createObjectWithName("Ipsum"))));
 
@@ -49,7 +49,7 @@ public class JsonObjectArrayPropertyFetcherTests {
   }
 
   @Test
-  public void ListShouldContainMappedContents() {
+  void ListShouldContainMappedContents() {
     val json = objectWithJsonArrayOf(createObjectWithName("Foo"),
       createObjectWithName("Bar"), createObjectWithName("Lorem"), createObjectWithName("Ipsum"));
 

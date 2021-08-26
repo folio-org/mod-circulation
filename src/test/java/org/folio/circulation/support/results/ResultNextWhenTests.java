@@ -9,11 +9,11 @@ import static org.folio.circulation.support.results.ResultExamples.somethingWent
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class ResultNextWhenTests {
+class ResultNextWhenTests {
   @Test
-  public void shouldApplyWhenTrueActionWhenConditionIsTrue() {
+  void shouldApplyWhenTrueActionWhenConditionIsTrue() {
     final Result<Integer> result = succeeded(10)
       .nextWhen(value -> succeeded(true),
         value -> succeeded(value + 10),
@@ -24,7 +24,7 @@ public class ResultNextWhenTests {
   }
 
   @Test
-  public void shouldApplyWhenFalseActionWhenConditionIsFalse() {
+  void shouldApplyWhenFalseActionWhenConditionIsFalse() {
     final Result<Integer> result = succeeded(10)
       .nextWhen(value -> succeeded(false),
         value -> throwOnExecution(),
@@ -35,7 +35,7 @@ public class ResultNextWhenTests {
   }
 
   @Test
-  public void shouldFailWhenAlreadyFailed() {
+  void shouldFailWhenAlreadyFailed() {
     final Result<Integer> result = alreadyFailed()
       .nextWhen(value -> succeeded(true),
         value -> throwOnExecution(),
@@ -45,7 +45,7 @@ public class ResultNextWhenTests {
   }
 
   @Test
-  public void shouldFailWhenConditionFailed() {
+  void shouldFailWhenConditionFailed() {
     final Result<Integer> result = succeeded(10)
       .nextWhen(value -> conditionFailed(),
         value -> succeeded(value + 10),
@@ -55,7 +55,7 @@ public class ResultNextWhenTests {
   }
 
   @Test
-  public void shouldFailWhenTrueActionFailed() {
+  void shouldFailWhenTrueActionFailed() {
     final Result<Integer> result = succeeded(10)
       .nextWhen(value -> succeeded(true),
         value -> {throw somethingWentWrong(); },
@@ -65,7 +65,7 @@ public class ResultNextWhenTests {
   }
 
   @Test
-  public void shouldFailWhenFalseActionFailed() {
+  void shouldFailWhenFalseActionFailed() {
     final Result<Integer> result = succeeded(10)
       .nextWhen(value -> succeeded(false),
         value -> throwOnExecution(),

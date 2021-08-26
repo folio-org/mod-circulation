@@ -10,7 +10,7 @@ import java.util.UUID;
 
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.override.BlockOverrides;
-import org.folio.circulation.support.ClockManager;
+import org.folio.circulation.support.utils.ClockUtil;
 
 import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
@@ -49,7 +49,7 @@ public class CheckOutByBarcodeRequest {
   private static String defaultLoanDate(String loanDate) {
     return isNotBlank(loanDate)
       ? loanDate
-      : ClockManager.getClockManager().getDateTime().toString(dateTime());
+      : ClockUtil.getDateTime().toString(dateTime());
   }
 
   public Loan toLoan() {

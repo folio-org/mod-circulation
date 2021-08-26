@@ -9,19 +9,19 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getUUIDProp
 import static org.hamcrest.MatcherAssert.assertThat;
 
 import api.support.http.IndividualResource;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.ItemBuilder;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
-public class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends APITests {
+class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends APITests {
   private IndividualResource loan;
   private IndividualResource item;
 
-  @Before
+  @BeforeEach
   public void createLoanAndAgeToLost() {
     feeFineOwnerFixture.cd1Owner();
     feeFineTypeFixture.lostItemFee();
@@ -38,7 +38,7 @@ public class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends APITes
   }
 
   @Test
-  public void shouldCloseLoanWhenAllFeesClosed() {
+  void shouldCloseLoanWhenAllFeesClosed() {
     feeFineAccountFixture.payLostItemFee(loan.getId());
     feeFineAccountFixture.payLostItemProcessingFee(loan.getId());
 
@@ -49,7 +49,7 @@ public class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends APITes
   }
 
   @Test
-  public void shouldIgnoreFeesThatAreNotDueToLosingItem() {
+  void shouldIgnoreFeesThatAreNotDueToLosingItem() {
     feeFineAccountFixture.payLostItemFee(loan.getId());
     feeFineAccountFixture.payLostItemProcessingFee(loan.getId());
 
@@ -65,7 +65,7 @@ public class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends APITes
   }
 
   @Test
-  public void shouldNotCloseLoanWhenProcessingFeeIsNotClosed() {
+  void shouldNotCloseLoanWhenProcessingFeeIsNotClosed() {
     feeFineAccountFixture.payLostItemFee(loan.getId());
 
     eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loan.getId());
@@ -75,7 +75,7 @@ public class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends APITes
   }
 
   @Test
-  public void shouldNotCloseLoanIfSetCostFeeIsNotClosed() {
+  void shouldNotCloseLoanIfSetCostFeeIsNotClosed() {
     feeFineAccountFixture.payLostItemProcessingFee(loan.getId());
 
     eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loan.getId());
@@ -85,7 +85,7 @@ public class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends APITes
   }
 
   @Test
-  public void shouldNotCloseLoanIfActualCostFeeShouldBeCharged() {
+  void shouldNotCloseLoanIfActualCostFeeShouldBeCharged() {
     item = itemsFixture.basedUponNod(ItemBuilder::withRandomBarcode);
     loan = checkOutFixture.checkOutByBarcode(item, usersFixture.steve());
 
@@ -104,7 +104,7 @@ public class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends APITes
   }
 
   @Test
-  public void shouldNotCloseCheckedOutLoan() {
+  void shouldNotCloseCheckedOutLoan() {
     item = itemsFixture.basedUponNod();
     loan = checkOutFixture.checkOutByBarcode(item, usersFixture.jessica());
 

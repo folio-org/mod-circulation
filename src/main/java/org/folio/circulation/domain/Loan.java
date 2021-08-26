@@ -37,7 +37,6 @@ import static org.folio.circulation.domain.representations.LoanProperties.STATUS
 import static org.folio.circulation.domain.representations.LoanProperties.SYSTEM_RETURN_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.UPDATED_BY_USER_ID;
 import static org.folio.circulation.domain.representations.LoanProperties.USER_ID;
-import static org.folio.circulation.support.ClockManager.getClockManager;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getBooleanProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
@@ -57,6 +56,7 @@ import static org.joda.time.DateTimeZone.UTC;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -65,6 +65,7 @@ import org.folio.circulation.domain.policy.OverdueFinePolicy;
 import org.folio.circulation.domain.policy.lostitem.LostItemPolicy;
 import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.support.results.Result;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
@@ -470,15 +471,20 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public boolean isRenewed() {
-    if (getAction() != null) {
-      return LoanAction.from(getAction()) == RENEWED
-        || LoanAction.from(getAction()) == RENEWED_THROUGH_OVERRIDE;
+    String action = getAction();
+    if (action != null) {
+      LoanAction loanAction = LoanAction.from(action);
+      return loanAction == RENEWED || loanAction == RENEWED_THROUGH_OVERRIDE;
     }
     return false;
   }
 
   public boolean hasItemWithStatus(ItemStatus itemStatus) {
-    return Objects.nonNull(item) && item.isInStatus(itemStatus);
+    return hasItemWithAnyStatus(itemStatus);
+  }
+
+  public boolean hasItemWithAnyStatus(ItemStatus... itemStatuses) {
+    return item != null && Stream.of(itemStatuses).anyMatch(item::isInStatus);
   }
 
   private void incrementRenewalCount() {
@@ -541,7 +547,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public boolean isOverdue() {
-    return isOverdue(getClockManager().getDateTime());
+    return isOverdue(ClockUtil.getDateTime());
   }
 
   public boolean isOverdue(DateTime systemTime) {

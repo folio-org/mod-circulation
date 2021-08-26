@@ -5,7 +5,7 @@ import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -26,15 +26,15 @@ import org.folio.circulation.resources.context.ReorderRequestContext;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.ForwardOnFailure;
-import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.client.Response;
-import org.junit.Before;
-import org.junit.Test;
+import org.folio.circulation.support.results.Result;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import api.support.builders.RequestBuilder;
 import io.vertx.core.json.JsonObject;
 
-public class UpdateRequestQueueTest {
+class UpdateRequestQueueTest {
 
   private final Response serverErrorBatchResponse =
     new Response(500, "Server Error", "text/plain");
@@ -43,7 +43,7 @@ public class UpdateRequestQueueTest {
   private RequestQueueRepository requestQueueRepository;
   private RequestRepository requestRepository;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     Clients clients = createServerErrorMockBatchRequestClient();
 
@@ -55,7 +55,7 @@ public class UpdateRequestQueueTest {
   }
 
   @Test
-  public void reorderShouldFailWhenBatchUpdateFails() throws Exception {
+  void reorderShouldFailWhenBatchUpdateFails() throws Exception {
     ReorderRequestContext reorderContext = createReorderContext();
 
     CompletableFuture<Result<ReorderRequestContext>> completableFutureResult =
@@ -65,7 +65,7 @@ public class UpdateRequestQueueTest {
   }
 
   @Test
-  public void removalShouldFailWhenBatchUpdateFails() throws Exception {
+  void removalShouldFailWhenBatchUpdateFails() throws Exception {
     UUID itemId = UUID.randomUUID();
     RequestQueue requestQueue = createRequestQueue(itemId, 4);
     Request requestToRemove = requestQueue.getRequests().iterator().next();
@@ -80,7 +80,7 @@ public class UpdateRequestQueueTest {
   }
 
   @Test
-  public void moveToShouldFailWhenBatchUpdateFails() throws Exception {
+  void moveToShouldFailWhenBatchUpdateFails() throws Exception {
     RequestAndRelatedRecords moveToRequestContext = createMoveRequestContext();
 
     CompletableFuture<Result<RequestAndRelatedRecords>> completableFutureResult =
@@ -90,7 +90,7 @@ public class UpdateRequestQueueTest {
   }
 
   @Test
-  public void moveFromShouldFailWhenBatchUpdateFails() throws Exception {
+  void moveFromShouldFailWhenBatchUpdateFails() throws Exception {
     RequestAndRelatedRecords moveFromRequestContext = createMoveRequestContext();
 
     CompletableFuture<Result<RequestAndRelatedRecords>> completableFutureResult =
@@ -100,7 +100,7 @@ public class UpdateRequestQueueTest {
   }
 
   @Test
-  public void cancellationShouldFailWhenBatchUpdateFails() throws Exception {
+  void cancellationShouldFailWhenBatchUpdateFails() throws Exception {
     RequestAndRelatedRecords cancellationContext = createCancellationContext();
 
     CompletableFuture<Result<RequestAndRelatedRecords>> completableFutureResult =
@@ -110,7 +110,7 @@ public class UpdateRequestQueueTest {
   }
 
   @Test
-  public void createShouldFailWhenBatchUpdateFails() throws Exception {
+  void createShouldFailWhenBatchUpdateFails() throws Exception {
     RequestAndRelatedRecords createRequestContext = createRequestContext();
 
     CompletableFuture<Result<RequestAndRelatedRecords>> completableFutureResult =
@@ -120,7 +120,7 @@ public class UpdateRequestQueueTest {
   }
 
   @Test
-  public void checkOutShouldFailWhenBatchUpdateFails() throws Exception {
+  void checkOutShouldFailWhenBatchUpdateFails() throws Exception {
     LoanAndRelatedRecords checkOutContext = new LoanAndRelatedRecords(null)
       .withRequestQueue(createRequestQueue(UUID.randomUUID(), 3));
 
@@ -137,7 +137,7 @@ public class UpdateRequestQueueTest {
   }
 
   @Test
-  public void shouldDoNothingOnMovedFromWhenSourceItemIdDoNotMatchWithRequestItemId()
+  void shouldDoNothingOnMovedFromWhenSourceItemIdDoNotMatchWithRequestItemId()
     throws Exception {
 
     String newOriginalItemId = UUID.randomUUID().toString();
@@ -157,7 +157,7 @@ public class UpdateRequestQueueTest {
   }
 
   @Test
-  public void shouldDoNothingOnMovedToWhenSourceItemIdDoNotMatchWithRequestItemId()
+  void shouldDoNothingOnMovedToWhenSourceItemIdDoNotMatchWithRequestItemId()
     throws Exception {
 
     String newOriginalItemId = UUID.randomUUID().toString();

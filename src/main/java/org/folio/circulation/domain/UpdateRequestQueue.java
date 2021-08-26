@@ -18,8 +18,8 @@ import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.resources.context.ReorderRequestContext;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.results.Result;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.folio.circulation.support.utils.DateTimeUtil;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -293,7 +293,7 @@ public class UpdateRequestQueue {
   private ZonedDateTime calculateHoldShelfExpirationDate(
     TimePeriod holdShelfExpiryPeriod, DateTimeZone tenantTimeZone) {
 
-    ZonedDateTime now = Instant.now(ClockManager.getClockManager().getClock())
+    ZonedDateTime now = Instant.now(ClockUtil.getClock())
       .atZone(tenantTimeZone.toTimeZone().toZoneId());
 
     ZonedDateTime holdShelfExpirationDate = holdShelfExpiryPeriod.getInterval()

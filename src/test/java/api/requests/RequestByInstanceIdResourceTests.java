@@ -3,7 +3,7 @@ package api.requests;
 import static java.util.Collections.emptySet;
 import static org.folio.circulation.resources.RequestByInstanceIdResource.rankItemsByMatchingServicePoint;
 import static org.folio.circulation.resources.RequestByInstanceIdResourceTests.getJsonInstanceRequest;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -16,17 +16,17 @@ import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.representations.RequestByInstanceIdRequest;
 import org.folio.circulation.support.results.Result;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.LocationBuilder;
 import api.support.fixtures.ItemExamples;
 import io.vertx.core.json.JsonObject;
 
-public class RequestByInstanceIdResourceTests extends APITests {
+class RequestByInstanceIdResourceTests extends APITests {
 
   @Test
-  public void canGetOrderedAvailableItemsList() {
+  void canGetOrderedAvailableItemsList() {
 
     UUID primaryServicePointId = servicePointsFixture.cd2().getId();
     UUID secondaryServicePointId = UUID.randomUUID();
@@ -100,7 +100,7 @@ public class RequestByInstanceIdResourceTests extends APITests {
   }
 
   @Test
-  public void canGetOrderedAvailableItemsListWithoutMatchingLocations() {
+  void canGetOrderedAvailableItemsListWithoutMatchingLocations() {
 
     UUID bookMaterialTypeId = UUID.randomUUID();
 

@@ -1,7 +1,6 @@
 package org.folio.circulation.domain.override;
 
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
-import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 
 import org.joda.time.DateTime;
 

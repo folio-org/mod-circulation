@@ -14,7 +14,7 @@ import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
@@ -26,7 +26,7 @@ import api.support.http.UserResource;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
-public class HoldShelfClearanceReportTests extends APITests {
+class HoldShelfClearanceReportTests extends APITests {
 
   private static final String TOTAL_RECORDS = "totalRecords";
   private static final String REQUESTS_KEY = "requests";
@@ -41,7 +41,7 @@ public class HoldShelfClearanceReportTests extends APITests {
   private static final String CALL_NUMBER_KEY = "callNumber";
 
   @Test
-  public void reportIsEmptyWhenThereAreNoRequests() {
+  void reportIsEmptyWhenThereAreNoRequests() {
 
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     Response response = ResourceClient.forRequestReport().getById(pickupServicePointId);
@@ -53,7 +53,7 @@ public class HoldShelfClearanceReportTests extends APITests {
   }
 
   @Test
-  public void openUnfulfilledRequestNotIncludedInReport() {
+  void openUnfulfilledRequestNotIncludedInReport() {
 
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -74,7 +74,7 @@ public class HoldShelfClearanceReportTests extends APITests {
   }
 
   @Test
-  public void requestsAwaitingPickupAreNotIncludedInReport() {
+  void requestsAwaitingPickupAreNotIncludedInReport() {
 
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final ItemResource temeraire = itemsFixture.basedUponTemeraire();
@@ -106,7 +106,7 @@ public class HoldShelfClearanceReportTests extends APITests {
   }
 
   @Test
-  public void multipleClosedPickupExpiredRequest() {
+  void multipleClosedPickupExpiredRequest() {
     val smallAngryPlanet = itemsFixture
       .basedUponSmallAngryPlanet(itemsFixture.addCallNumberStringComponents());
 
@@ -162,7 +162,7 @@ public class HoldShelfClearanceReportTests extends APITests {
   }
 
   @Test
-  public void testClosedCancelledExpiredRequest() {
+  void testClosedCancelledExpiredRequest() {
     val smallAngryPlanet = itemsFixture
       .basedUponSmallAngryPlanet(itemsFixture.addCallNumberStringComponents());
     val temeraire = itemsFixture.basedUponTemeraire();
@@ -199,7 +199,7 @@ public class HoldShelfClearanceReportTests extends APITests {
   }
 
   @Test
-  public void testClosedPickupExpiredRequest() {
+  void testClosedPickupExpiredRequest() {
     val smallAngryPlanet = itemsFixture
       .basedUponSmallAngryPlanet(itemsFixture.addCallNumberStringComponents());
     val temeraire = itemsFixture.basedUponTemeraire();
@@ -236,7 +236,7 @@ public class HoldShelfClearanceReportTests extends APITests {
   }
 
   @Test
-  public void checkThatResponseGetsRequestWithEarlierClosedDate() {
+  void checkThatResponseGetsRequestWithEarlierClosedDate() {
     val smallAngryPlanet = itemsFixture
       .basedUponSmallAngryPlanet(itemsFixture.addCallNumberStringComponents());
     val rebecca = usersFixture.rebecca();
@@ -279,7 +279,7 @@ public class HoldShelfClearanceReportTests extends APITests {
   }
 
   @Test
-  public void checkWhenPickupRequestClosedDateIsEmptyForExpiredRequest() {
+  void checkWhenPickupRequestClosedDateIsEmptyForExpiredRequest() {
     val smallAngryPlanet = itemsFixture
       .basedUponSmallAngryPlanet(itemsFixture.addCallNumberStringComponents());
     val rebecca = usersFixture.rebecca();
@@ -322,7 +322,7 @@ public class HoldShelfClearanceReportTests extends APITests {
   }
 
   @Test
-  public void itemIsCheckedOutAndRequestHasBeenChanged() {
+  void itemIsCheckedOutAndRequestHasBeenChanged() {
 
     final ItemResource temeraire = itemsFixture.basedUponTemeraire();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -345,7 +345,7 @@ public class HoldShelfClearanceReportTests extends APITests {
   }
 
   @Test
-  public void checkWhenPickupRequestsExpiredInDifferentServicePoints() {
+  void checkWhenPickupRequestsExpiredInDifferentServicePoints() {
     val smallAngryPlanet = itemsFixture
       .basedUponSmallAngryPlanet(itemsFixture.addCallNumberStringComponents());
 
@@ -426,7 +426,7 @@ public class HoldShelfClearanceReportTests extends APITests {
   }
 
   @Test
-  public void checkWhenPickupRequestsCancelledInDifferentServicePoints() {
+  void checkWhenPickupRequestsCancelledInDifferentServicePoints() {
     val smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     val nod = itemsFixture.basedUponNod();
 

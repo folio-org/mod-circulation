@@ -16,14 +16,14 @@ import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 
-public class SingleOpenDeliveryRequestTests extends APITests {
+class SingleOpenDeliveryRequestTests extends APITests {
 
   @Test
-  public void statusChangesToAwaitingDeliveryWhenItemCheckedIn() {
+  void statusChangesToAwaitingDeliveryWhenItemCheckedIn() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
@@ -42,7 +42,7 @@ public class SingleOpenDeliveryRequestTests extends APITests {
   }
 
   @Test
-  public void requestStatusChangesToFilledWhenItemCheckedOutToRequester() {
+  void requestStatusChangesToFilledWhenItemCheckedOutToRequester() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
@@ -62,7 +62,7 @@ public class SingleOpenDeliveryRequestTests extends APITests {
   }
 
   @Test
-  public void itemCannotBeCheckedOutToAnotherPatron() {
+  void itemCannotBeCheckedOutToAnotherPatron() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
@@ -86,7 +86,7 @@ public class SingleOpenDeliveryRequestTests extends APITests {
   }
 
   @Test
-  public void itemCanBeCheckedInForSecondTime() {
+  void itemCanBeCheckedInForSecondTime() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
@@ -109,7 +109,7 @@ public class SingleOpenDeliveryRequestTests extends APITests {
   }
 
   @Test
-  public void itemBecomesAvailableWhenRequestIsCancelled() {
+  void itemBecomesAvailableWhenRequestIsCancelled() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
     IndividualResource jessica = usersFixture.jessica();

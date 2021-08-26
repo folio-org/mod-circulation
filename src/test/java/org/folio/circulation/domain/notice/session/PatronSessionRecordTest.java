@@ -9,14 +9,14 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.util.UUID;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import io.vertx.core.json.JsonObject;
 
-public class PatronSessionRecordTest {
+class PatronSessionRecordTest {
 
   @Test
-  public void shouldMapJsonRepresentationToPatronSessionRecord() {
+  void shouldMapJsonRepresentationToPatronSessionRecord() {
     String id = UUID.randomUUID().toString();
     String patronId = UUID.randomUUID().toString();
     String loanId = UUID.randomUUID().toString();

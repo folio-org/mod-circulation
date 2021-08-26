@@ -43,6 +43,7 @@ public class HoldingBuilder extends JsonBuilder implements Builder {
     final JsonObject holdings = new JsonObject();
 
     put(holdings, "instanceId", instanceId);
+    put(holdings, "_version", 5);
     put(holdings, "permanentLocationId", permanentLocationId);
     put(holdings, "temporaryLocationId", temporaryLocationId);
     put(holdings, "callNumber", callNumber);
