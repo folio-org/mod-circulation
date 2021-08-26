@@ -177,6 +177,7 @@ class CheckOutByBarcodeTests extends APITests {
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
     assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
+    assertThat(smallAngryPlanet.copyJson().containsKey("_version"), is(true));
 
     assertThat("has item information",
       loan.containsKey("item"), is(true));
