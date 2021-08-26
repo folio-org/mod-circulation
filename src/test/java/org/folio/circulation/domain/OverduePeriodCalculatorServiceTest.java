@@ -22,6 +22,7 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.OverdueFinePolicy;
 import org.folio.circulation.domain.policy.Period;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
@@ -44,7 +45,7 @@ class OverduePeriodCalculatorServiceTest {
 
   @Test
   void preconditionsCheckLoanHasNoDueDate() {
-    DateTime systemTime = DateTime.now(UTC);
+    DateTime systemTime = ClockUtil.getDateTime();
     Loan loan = new LoanBuilder().asDomainObject();
 
     assertFalse(calculator.preconditionsAreMet(loan, systemTime, true));
@@ -52,7 +53,7 @@ class OverduePeriodCalculatorServiceTest {
 
   @Test
   void preconditionsCheckLoanDueDateIsInFuture() {
-    DateTime systemTime = DateTime.now(UTC);
+    DateTime systemTime = ClockUtil.getDateTime();
     Loan loan = new LoanBuilder()
       .withDueDate(systemTime.plusDays(1))
       .asDomainObject();
@@ -62,7 +63,7 @@ class OverduePeriodCalculatorServiceTest {
 
   @Test
   void preconditionsCheckCountClosedIsNull() {
-    DateTime systemTime = DateTime.now(UTC);
+    DateTime systemTime = ClockUtil.getDateTime();
     Loan loan = new LoanBuilder()
       .withDueDate(systemTime.minusDays(1))
       .asDomainObject();
@@ -72,7 +73,7 @@ class OverduePeriodCalculatorServiceTest {
 
   @Test
   void allPreconditionsAreMet() {
-    DateTime systemTime = DateTime.now(UTC);
+    DateTime systemTime = ClockUtil.getDateTime();
     Loan loan = new LoanBuilder()
       .withDueDate(systemTime.minusDays(1))
       .asDomainObject();
@@ -83,7 +84,7 @@ class OverduePeriodCalculatorServiceTest {
   @Test
   void countOverdueMinutesWithClosedDays() throws ExecutionException, InterruptedException {
     int expectedResult = MINUTES_PER_WEEK + MINUTES_PER_DAY + MINUTES_PER_HOUR + 1;
-    DateTime systemTime = DateTime.now(UTC);
+    DateTime systemTime = ClockUtil.getDateTime();
 
     Loan loan = new LoanBuilder()
       .withDueDate(systemTime.minusMinutes(expectedResult))
@@ -124,7 +125,7 @@ class OverduePeriodCalculatorServiceTest {
       createOpeningDay(true, new LocalDate("2020-04-09"), LONDON),
       createOpeningDay(false, new LocalDate("2020-04-10"), LONDON));
 
-    LocalTime now = LocalTime.now(UTC);
+    LocalTime now = ClockUtil.getLocalTime();
 
     List<OpeningDay> invalid = Arrays.asList(
       OpeningDay.createOpeningDay(

@@ -10,16 +10,15 @@ import static org.folio.circulation.support.http.client.CqlQuery.lessThan;
 import static org.folio.circulation.support.http.client.CqlQuery.notEqual;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
-import static org.joda.time.DateTime.now;
-import static org.joda.time.DateTimeZone.UTC;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.util.ArrayList;
 
 import org.folio.circulation.support.CqlSortBy;
 import org.folio.circulation.support.CqlSortClause;
-import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.ServerErrorFailure;
+import org.folio.circulation.support.results.Result;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
 import org.junit.jupiter.api.Test;
 
@@ -92,7 +91,7 @@ class CqlQueryTests {
 
   @Test
   void canApplyLessThenOperator() {
-    DateTime dateTime = now(UTC);
+    DateTime dateTime = ClockUtil.getDateTime();
     Result<CqlQuery> query = lessThan("nextRunTime", dateTime);
 
     assertThat(query.value().asText(), is(format("nextRunTime<\"%s\"", dateTime)));
@@ -100,7 +99,7 @@ class CqlQueryTests {
 
   @Test
   void canApplyGreaterThenOperator() {
-    DateTime dateTime = now(UTC);
+    DateTime dateTime = ClockUtil.getDateTime();
 
     Result<CqlQuery> query = greaterThan("lastTime", dateTime);
 
@@ -109,7 +108,7 @@ class CqlQueryTests {
 
   @Test
   void canApplyNotEqualOperator() {
-    DateTime dateTime = now(UTC);
+    DateTime dateTime = ClockUtil.getDateTime();
     Result<CqlQuery> query = notEqual("lastTime", dateTime);
 
     assertThat(query.value().asText(), is(format("lastTime<>\"%s\"", dateTime)));

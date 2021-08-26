@@ -66,6 +66,7 @@ import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
 import org.joda.time.Seconds;
@@ -113,7 +114,7 @@ class CheckInByBarcodeTests extends APITests {
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(nod, james,
       new DateTime(2018, 3, 1, 13, 25, 46, UTC));
 
-    DateTime expectedSystemReturnDate = DateTime.now(UTC);
+    DateTime expectedSystemReturnDate = ClockUtil.getDateTime();
 
     final CheckInByBarcodeResponse checkInResponse = checkInFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
@@ -295,7 +296,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     final Response response = checkInFixture.attemptCheckInByBarcode(
       new CheckInByBarcodeRequestBuilder()
         .withItemBarcode("543593485458")
-        .on(DateTime.now())
+        .on(ClockUtil.getDateTime())
         .at(UUID.randomUUID()));
 
     assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
@@ -316,7 +317,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     final Response response = checkInFixture.attemptCheckInByBarcode(
       new CheckInByBarcodeRequestBuilder()
         .forItem(nod)
-        .on(DateTime.now())
+        .on(ClockUtil.getDateTime())
         .atNoServicePoint());
 
     assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
@@ -337,7 +338,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     final Response response = checkInFixture.attemptCheckInByBarcode(
       new CheckInByBarcodeRequestBuilder()
         .noItem()
-        .on(DateTime.now())
+        .on(ClockUtil.getDateTime())
         .at(UUID.randomUUID()));
 
     assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));

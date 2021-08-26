@@ -20,6 +20,7 @@ import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Location;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.hamcrest.Matcher;
 import org.junit.jupiter.api.Test;
 
@@ -519,7 +520,7 @@ class Text2DroolsTest {
   @Test
   void run100() {
     Drools drools = new Drools(Text2Drools.convert(test1));
-    long start = System.currentTimeMillis();
+    long start = ClockUtil.getInstant().getMillis();
     int n = 0;
     while (n < 100) {
       for (String [] s : loanTestCases) {
@@ -528,7 +529,7 @@ class Text2DroolsTest {
         n++;
       }
     }
-    long millis = System.currentTimeMillis() - start;
+    long millis = ClockUtil.getInstant().getMillis() - start;
     float perSecond = 1000f * n / millis;
     log.debug("{} loan policy calculations per second", perSecond);
     assertThat("loan policy calculations per second", perSecond, is(greaterThan(100f)));

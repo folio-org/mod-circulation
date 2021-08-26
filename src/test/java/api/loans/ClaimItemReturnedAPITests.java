@@ -25,6 +25,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.awaitility.Awaitility;
 import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -51,7 +52,7 @@ class ClaimItemReturnedAPITests extends APITests {
   @Test
   void canClaimItemReturnedWithComment() {
     final String comment = "testing";
-    final DateTime dateTime = DateTime.now();
+    final DateTime dateTime = ClockUtil.getDateTime();
 
     final Response response = claimItemReturnedFixture
       .claimItemReturned(new ClaimItemReturnedRequestBuilder()
@@ -64,7 +65,7 @@ class ClaimItemReturnedAPITests extends APITests {
 
   @Test
   void canClaimItemReturnedWithoutComment() {
-    final DateTime dateTime = DateTime.now();
+    final DateTime dateTime = ClockUtil.getDateTime();
 
     final Response response = claimItemReturnedFixture
       .claimItemReturned(new ClaimItemReturnedRequestBuilder()
@@ -76,7 +77,7 @@ class ClaimItemReturnedAPITests extends APITests {
 
   @Test
   void cannotClaimItemReturnedWhenLoanIsClosed() {
-    final DateTime dateTime = DateTime.now();
+    final DateTime dateTime = ClockUtil.getDateTime();
 
     checkInFixture.checkInByBarcode(item);
 
@@ -117,7 +118,7 @@ class ClaimItemReturnedAPITests extends APITests {
 
   @Test
   void itemClaimedReturnedEventIsPublished() {
-    final DateTime dateTime = DateTime.now();
+    final DateTime dateTime = ClockUtil.getDateTime();
 
     final Response response = claimItemReturnedFixture
       .claimItemReturned(new ClaimItemReturnedRequestBuilder()

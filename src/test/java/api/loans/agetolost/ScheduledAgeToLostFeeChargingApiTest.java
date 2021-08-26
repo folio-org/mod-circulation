@@ -15,8 +15,8 @@ import static api.support.matchers.LoanAccountMatcher.hasLostItemFees;
 import static api.support.matchers.LoanAccountMatcher.hasLostItemProcessingFee;
 import static api.support.matchers.LoanAccountMatcher.hasNoLostItemFee;
 import static api.support.matchers.LoanAccountMatcher.hasNoLostItemProcessingFee;
-import static api.support.matchers.LoanHistoryMatcher.hasLoanHistoryInOrder;
 import static api.support.matchers.LoanAccountMatcher.hasNoOverdueFine;
+import static api.support.matchers.LoanHistoryMatcher.hasLoanHistoryInOrder;
 import static api.support.matchers.LoanMatchers.isClosed;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
@@ -27,9 +27,6 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.iterableWithSize;
 
-import static org.joda.time.DateTime.now;
-import static org.joda.time.DateTimeZone.UTC;
-
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +34,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.policy.Period;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
 import org.junit.jupiter.api.BeforeEach;
@@ -347,7 +345,7 @@ class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     // the creation function ages the loan eight weeks into the future.
     // it must be checked in after that timeframe to properly examine the
     // overdue charges
-    final DateTime checkInDate = now(UTC).plusWeeks(9);
+    final DateTime checkInDate = ClockUtil.getDateTime().plusWeeks(9);
     mockClockManagerToReturnFixedDateTime(checkInDate);
     checkInFixture.checkInByBarcode(result.getItem(), checkInDate);
     assertThat(loansFixture.getLoanById(loanId), hasNoOverdueFine());

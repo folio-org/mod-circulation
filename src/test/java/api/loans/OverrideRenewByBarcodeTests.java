@@ -31,7 +31,6 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
-import static org.joda.time.DateTime.now;
 import static org.joda.time.DateTimeConstants.APRIL;
 import static org.joda.time.DateTimeZone.UTC;
 import static org.joda.time.Seconds.seconds;
@@ -44,6 +43,7 @@ import java.util.UUID;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.ValidationError;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
@@ -218,7 +218,7 @@ class OverrideRenewByBarcodeTests extends APITests {
 
     loansFixture.attemptRenewal(422, smallAngryPlanet, jessica);
 
-    DateTime newDueDate = DateTime.now().plusWeeks(2);
+    DateTime newDueDate = ClockUtil.getDateTime().plusWeeks(2);
 
     final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(OVERRIDE_RENEWAL_PERMISSION);
     JsonObject renewedLoan =
@@ -302,7 +302,7 @@ class OverrideRenewByBarcodeTests extends APITests {
     loansFixture.attemptRenewal(422, smallAngryPlanet, jessica);
 
     final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(OVERRIDE_RENEWAL_PERMISSION);
-    DateTime newDueDate = DateTime.now().plusWeeks(1);
+    DateTime newDueDate = ClockUtil.getDateTime().plusWeeks(1);
     final JsonObject renewedLoan = loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica,
         OVERRIDE_COMMENT, newDueDate.toString(), okapiHeaders).getJson();
 
@@ -328,7 +328,7 @@ class OverrideRenewByBarcodeTests extends APITests {
 
   @Test
   void canOverrideRenewalWhenDateFallsOutsideOfTheDateRangesInTheRollingLoanPolicy() {
-    final DateTime renewalDate = DateTime.now();
+    final DateTime renewalDate = ClockUtil.getDateTime();
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
@@ -393,7 +393,7 @@ class OverrideRenewByBarcodeTests extends APITests {
 
     use(limitedRenewalsPolicy);
 
-    DateTime loanDate = DateTime.now(UTC);
+    DateTime loanDate = ClockUtil.getDateTime();
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDate).getJson();
 
     loansFixture.renewLoan(smallAngryPlanet, jessica);
@@ -430,7 +430,7 @@ class OverrideRenewByBarcodeTests extends APITests {
       // Have to charge a fine otherwise the loan is closed when item is declared lost
       .lostItemPolicy(lostItemFeePoliciesFixture.chargeFee()));
 
-    final DateTime loanDate = DateTime.now(UTC).minusWeeks(1);
+    final DateTime loanDate = ClockUtil.getDateTime().minusWeeks(1);
 
     final JsonObject loanJson = checkOutFixture.checkOutByBarcode(smallAngryPlanet,
       usersFixture.jessica(), loanDate).getJson();
@@ -474,7 +474,7 @@ class OverrideRenewByBarcodeTests extends APITests {
 
   @Test
   void canOverrideRenewalWhenItemIsAgedToLost() {
-    final DateTime approximateRenewalDate = DateTime.now(UTC).plusWeeks(3);
+    final DateTime approximateRenewalDate = ClockUtil.getDateTime().plusWeeks(3);
     val result = ageToLostFixture.createAgedToLostLoan();
 
     final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(OVERRIDE_RENEWAL_PERMISSION);
@@ -537,7 +537,7 @@ class OverrideRenewByBarcodeTests extends APITests {
 
     loansFixture.attemptRenewal(422, smallAngryPlanet, jessica);
 
-    DateTime newDueDate = DateTime.now().plusWeeks(2);
+    DateTime newDueDate = ClockUtil.getDateTime().plusWeeks(2);
 
     final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(OVERRIDE_RENEWAL_PERMISSION);
     JsonObject loanAfterOverride = loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica,
@@ -570,7 +570,7 @@ class OverrideRenewByBarcodeTests extends APITests {
 
     loansFixture.attemptRenewal(422, smallAngryPlanet, jessica);
 
-    DateTime newDueDate = DateTime.now().plusWeeks(2);
+    DateTime newDueDate = ClockUtil.getDateTime().plusWeeks(2);
 
     final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(OVERRIDE_RENEWAL_PERMISSION);
     JsonObject loanAfterOverride = loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica,
@@ -627,7 +627,7 @@ class OverrideRenewByBarcodeTests extends APITests {
     assertThat(renewalResponse, hasErrorWith(allOf(
       hasMessage(ITEM_IS_NOT_LOANABLE_MESSAGE))));
 
-    DateTime newDueDate = DateTime.now().plusWeeks(2);
+    DateTime newDueDate = ClockUtil.getDateTime().plusWeeks(2);
 
     final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(OVERRIDE_RENEWAL_PERMISSION);
     JsonObject renewedLoan = loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica,
@@ -648,7 +648,7 @@ class OverrideRenewByBarcodeTests extends APITests {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
-    checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica, DateTime.now());
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica, ClockUtil.getDateTime());
 
     LoanPolicyBuilder loanablePolicy = new LoanPolicyBuilder()
       .withName("Loanable Policy")
@@ -658,7 +658,7 @@ class OverrideRenewByBarcodeTests extends APITests {
       .renewFromSystemDate();
     createLoanPolicyAndSetAsFallback(loanablePolicy);
 
-    DateTime newDueDate = DateTime.now().plusDays(3);
+    DateTime newDueDate = ClockUtil.getDateTime().plusDays(3);
 
     Response response = loansFixture.attemptOverride(smallAngryPlanet, jessica,
         OVERRIDE_COMMENT, newDueDate.toString());
@@ -742,7 +742,7 @@ class OverrideRenewByBarcodeTests extends APITests {
     IndividualResource item = result.getItem();
     IndividualResource user = result.getUser();
 
-    final DateTime renewalDate = now(UTC).plusWeeks(9);
+    final DateTime renewalDate = ClockUtil.getDateTime().plusWeeks(9);
     mockClockManagerToReturnFixedDateTime(renewalDate);
 
     final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(OVERRIDE_RENEWAL_PERMISSION);
@@ -769,7 +769,7 @@ class OverrideRenewByBarcodeTests extends APITests {
     IndividualResource loan = checkOutFixture.checkOutByBarcode(item, user);
 
     // advance system time by five weeks to accrue fines before declared lost
-    final DateTime declareLostDate = now(UTC).plusWeeks(5);
+    final DateTime declareLostDate = ClockUtil.getDateTime().plusWeeks(5);
     mockClockManagerToReturnFixedDateTime(declareLostDate);
 
     final DeclareItemLostRequestBuilder builder = new DeclareItemLostRequestBuilder()
@@ -779,7 +779,7 @@ class OverrideRenewByBarcodeTests extends APITests {
       .withServicePointId(servicePointId);
     declareLostFixtures.declareItemLost(builder);
 
-    final DateTime renewalDate = now(UTC).plusWeeks(6);
+    final DateTime renewalDate = ClockUtil.getDateTime().plusWeeks(6);
     mockClockManagerToReturnFixedDateTime(renewalDate);
 
     final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(OVERRIDE_RENEWAL_PERMISSION);
@@ -791,7 +791,7 @@ class OverrideRenewByBarcodeTests extends APITests {
 
   @Test
   void canOverrideRenewalWhenItemIsAgedToLostAndPatronIsBlockedAutomatically() {
-    final DateTime approximateRenewalDate = DateTime.now(UTC).plusWeeks(3);
+    final DateTime approximateRenewalDate = ClockUtil.getDateTime().plusWeeks(3);
     val result = ageToLostFixture.createAgedToLostLoan();
 
     automatedPatronBlocksFixture.blockAction(result.getUser().getId().toString(),
@@ -842,7 +842,7 @@ class OverrideRenewByBarcodeTests extends APITests {
 
   @Test
   void canOverrideRenewalWhenItemIsAgedToLostAndPatronIsBlockedManually() {
-    final DateTime approximateRenewalDate = DateTime.now(UTC).plusWeeks(3);
+    final DateTime approximateRenewalDate = ClockUtil.getDateTime().plusWeeks(3);
     val result = ageToLostFixture.createAgedToLostLoan();
 
     userManualBlocksFixture.createRenewalsManualPatronBlockForUser(result.getUser().getId());

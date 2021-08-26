@@ -12,8 +12,7 @@ import java.util.UUID;
 
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.support.http.client.Response;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
@@ -397,7 +396,7 @@ class HoldShelfClearanceReportTests extends APITests {
     // #7 check-in item in SP2
     checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(smallAngryPlanet)
-      .on(DateTime.now(DateTimeZone.UTC))
+      .on(ClockUtil.getDateTime())
       .at(secondServicePointId));
 
     // #8 Check that hold shelf expiration report doesn't contain data when the item has the status `Awaiting pickup`,
@@ -477,7 +476,7 @@ class HoldShelfClearanceReportTests extends APITests {
     // #7 check-in item in SP2
     checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(smallAngryPlanet)
-      .on(DateTime.now(DateTimeZone.UTC))
+      .on(ClockUtil.getDateTime())
       .at(secondServicePointId));
 
     // #8 get hold shelf expiration report in SP1 >>> empty
@@ -530,7 +529,7 @@ class HoldShelfClearanceReportTests extends APITests {
     // #7 check-in item in SP2
     checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(nod)
-      .on(DateTime.now(DateTimeZone.UTC))
+      .on(ClockUtil.getDateTime())
       .at(secondServicePointId));
 
     // #8 get hold shelf expiration report in SP1 >>> empty

@@ -17,15 +17,16 @@ import java.net.URL;
 import java.util.UUID;
 
 import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
 
 import api.support.MultipleJsonRecords;
 import api.support.RestAssuredClient;
 import api.support.builders.LoanBuilder;
-import api.support.builders.RenewalDueDateRequiredBlockOverrideBuilder;
 import api.support.builders.RenewBlockOverrides;
 import api.support.builders.RenewByBarcodeRequestBuilder;
 import api.support.builders.RenewByIdRequestBuilder;
+import api.support.builders.RenewalDueDateRequiredBlockOverrideBuilder;
 import api.support.http.CqlQuery;
 import api.support.http.IndividualResource;
 import api.support.http.Limit;
@@ -41,7 +42,7 @@ public class LoansFixture {
   }
 
   public IndividualResource createLoan(IndividualResource item, IndividualResource to) {
-    DateTime loanDate = DateTime.now();
+    DateTime loanDate = ClockUtil.getDateTime();
 
     return createLoan(new LoanBuilder()
       .open()

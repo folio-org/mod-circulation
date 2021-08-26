@@ -16,9 +16,8 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTime
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
-import static org.joda.time.DateTime.now;
-import static org.joda.time.DateTimeZone.UTC;
 
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -90,7 +89,7 @@ public abstract class RefundAgedToLostFeesTestBase extends SpringApiTest {
 
     feeFineAccountFixture.payLostItemProcessingFee(result.getLoanId());
 
-    performActionThatRequiresRefund(result, now(UTC).plusMonths(8));
+    performActionThatRequiresRefund(result, ClockUtil.getDateTime().plusMonths(8));
 
     final IndividualResource loan = result.getLoan();
     assertThat(loan, hasLostItemProcessingFee(isRefundedFully(processingFee)));
@@ -110,7 +109,7 @@ public abstract class RefundAgedToLostFeesTestBase extends SpringApiTest {
 
     val result = ageToLostFixture.createAgedToLostLoan(policy);
 
-    performActionThatRequiresRefund(result, now(UTC).plusMonths(8));
+    performActionThatRequiresRefund(result, ClockUtil.getDateTime().plusMonths(8));
 
     final IndividualResource loan = result.getLoan();
     assertThat(loan, hasOverdueFine());
@@ -186,6 +185,6 @@ public abstract class RefundAgedToLostFeesTestBase extends SpringApiTest {
   }
 
   private void performActionThatRequiresRefund(AgeToLostFixture.AgeToLostResult result) {
-    performActionThatRequiresRefund(result, now(UTC));
+    performActionThatRequiresRefund(result, ClockUtil.getDateTime());
   }
 }

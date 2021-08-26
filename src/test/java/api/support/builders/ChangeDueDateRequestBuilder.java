@@ -4,8 +4,8 @@ import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
 import java.util.UUID;
 
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 
 import io.vertx.core.json.JsonObject;
 
@@ -14,7 +14,7 @@ public class ChangeDueDateRequestBuilder implements Builder {
   private final String loanId;
 
   public ChangeDueDateRequestBuilder() {
-    this(null, DateTime.now(DateTimeZone.UTC));
+    this(null, ClockUtil.getDateTime());
   }
 
   private ChangeDueDateRequestBuilder(String loanId, DateTime dueDate) {

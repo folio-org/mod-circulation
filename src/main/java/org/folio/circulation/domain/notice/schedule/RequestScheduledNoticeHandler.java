@@ -17,8 +17,8 @@ import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.rules.CirculationRuleMatch;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 
 import io.vertx.core.json.JsonObject;
 
@@ -125,7 +125,7 @@ public class RequestScheduledNoticeHandler extends ScheduledNoticeHandler {
   }
 
   private static ScheduledNotice updateNoticeNextRunTime(ScheduledNotice notice) {
-    final DateTime systemTime = DateTime.now(DateTimeZone.UTC);
+    final DateTime systemTime = ClockUtil.getDateTime();
     ScheduledNoticeConfig noticeConfig = notice.getConfiguration();
 
     DateTime recurringNoticeNextRunTime = notice.getNextRunTime()

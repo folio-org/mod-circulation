@@ -2,6 +2,7 @@ package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
 
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
@@ -51,7 +52,7 @@ public class ProxyRelationship {
 
   public boolean isActive() {
       boolean expired = expirationDate != null
-        && expirationDate.isBefore(DateTime.now());
+        && expirationDate.isBefore(ClockUtil.getDateTime());
 
       return active && !expired;
   }

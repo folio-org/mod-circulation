@@ -1,5 +1,6 @@
 package api.loans.agetolost;
 
+import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
 import static api.support.fakes.FakePubSub.getPublishedEvents;
 import static api.support.fakes.PublishedEvents.byEventType;
 import static api.support.http.CqlQuery.queryFromTemplate;
@@ -10,7 +11,6 @@ import static api.support.matchers.ItemMatchers.isCheckedOut;
 import static api.support.matchers.ItemMatchers.isClaimedReturned;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
-import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimePropertyByPath;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -19,8 +19,6 @@ import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.iterableWithSize;
 import static org.hamcrest.Matchers.not;
-import static org.joda.time.DateTime.now;
-import static org.joda.time.DateTimeZone.UTC;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -28,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import api.support.PubsubPublisherTestUtils;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,6 +34,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import api.support.MultipleJsonRecords;
+import api.support.PubsubPublisherTestUtils;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.ItemBuilder;
 import api.support.http.IndividualResource;
@@ -130,7 +129,7 @@ class ScheduledAgeToLostApiTest extends SpringApiTest {
         .forItem(overdueItem)
         .at(servicePointsFixture.cd1())
         .to(usersFixture.james())
-        .on(now(UTC)));
+        .on(ClockUtil.getDateTime()));
 
     scheduledAgeToLostClient.triggerJob();
 
@@ -146,7 +145,7 @@ class ScheduledAgeToLostApiTest extends SpringApiTest {
     checkOutItem();
     scheduledAgeToLostClient.triggerJob();
 
-    mockClockManagerToReturnFixedDateTime(DateTime.now(UTC).plusMinutes(30));
+    mockClockManagerToReturnFixedDateTime(ClockUtil.getDateTime().plusMinutes(30));
     scheduledAgeToLostClient.triggerJob();
     mockClockManagerToReturnDefaultDateTime();
 
@@ -163,7 +162,7 @@ class ScheduledAgeToLostApiTest extends SpringApiTest {
   }
 
   private DateTime getLoanOverdueDate() {
-    return now(UTC).minusWeeks(3);
+    return ClockUtil.getDateTime().minusWeeks(3);
   }
 
   private void checkOutItem() {

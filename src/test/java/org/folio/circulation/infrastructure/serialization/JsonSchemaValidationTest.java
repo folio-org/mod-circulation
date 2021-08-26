@@ -16,7 +16,7 @@ import java.util.UUID;
 
 import org.folio.circulation.support.BadRequestFailure;
 import org.folio.circulation.support.results.Result;
-import org.joda.time.DateTime;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.junit.jupiter.api.Test;
 
 import api.support.builders.CheckInByBarcodeRequestBuilder;
@@ -31,7 +31,7 @@ class JsonSchemaValidationTest {
 
     final JsonObject checkInRequest = new CheckInByBarcodeRequestBuilder()
       .withItemBarcode("246650492")
-      .on(DateTime.now())
+      .on(ClockUtil.getDateTime())
       .at(UUID.randomUUID())
       .create();
 
@@ -48,7 +48,7 @@ class JsonSchemaValidationTest {
       .withItemId(UUID.randomUUID())
       .withRequesterId(UUID.randomUUID())
       .fulfilToHoldShelf(UUID.randomUUID())
-      .withRequestDate(DateTime.now())
+      .withRequestDate(ClockUtil.getDateTime())
       .create();
 
     assertThat(validator.validate(request.encode()), succeeded());
@@ -62,7 +62,7 @@ class JsonSchemaValidationTest {
 
     write(storageLoanRequest, "itemId", UUID.randomUUID());
     write(storageLoanRequest, "userId", UUID.randomUUID());
-    write(storageLoanRequest, "loanDate", DateTime.now());
+    write(storageLoanRequest, "loanDate", ClockUtil.getDateTime());
     write(storageLoanRequest, "action", "checkedout");
 
     assertThat(validator.validate(storageLoanRequest.encode()), succeeded());
@@ -91,7 +91,7 @@ class JsonSchemaValidationTest {
 
     final JsonObject checkInRequest = new CheckInByBarcodeRequestBuilder()
       .withItemBarcode("246650492")
-      .on(DateTime.now())
+      .on(ClockUtil.getDateTime())
       .atNoServicePoint()
       .create();
 
@@ -111,7 +111,7 @@ class JsonSchemaValidationTest {
 
     final JsonObject checkInRequest = new CheckInByBarcodeRequestBuilder()
       .withItemBarcode("246650492")
-      .on(DateTime.now())
+      .on(ClockUtil.getDateTime())
       .at(UUID.randomUUID())
       .create();
 
@@ -133,7 +133,7 @@ class JsonSchemaValidationTest {
 
     final JsonObject checkInRequest = new CheckInByBarcodeRequestBuilder()
       .withItemBarcode("246650492")
-      .on(DateTime.now())
+      .on(ClockUtil.getDateTime())
       .atNoServicePoint()
       .create();
 

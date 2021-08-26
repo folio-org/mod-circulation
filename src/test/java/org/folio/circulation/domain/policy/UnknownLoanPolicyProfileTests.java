@@ -14,6 +14,7 @@ import org.folio.circulation.resources.handlers.error.OverridingErrorHandler;
 import org.folio.circulation.resources.renewal.RenewByBarcodeResource;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.results.Result;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.jupiter.api.Test;
@@ -59,7 +60,7 @@ class UnknownLoanPolicyProfileTests {
       .withLoanPolicy(loanPolicy);
 
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
-    renew(loan, DateTime.now(), new RequestQueue(Collections.emptyList()), errorHandler);
+    renew(loan, ClockUtil.getDateTime(), new RequestQueue(Collections.emptyList()), errorHandler);
 
     assertTrue(errorHandler.getErrors().keySet().stream()
       .map(ValidationErrorFailure.class::cast)

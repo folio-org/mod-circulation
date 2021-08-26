@@ -26,9 +26,8 @@ import org.folio.circulation.domain.notice.NoticeEventType;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.utils.ClockUtil;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.joda.time.format.ISODateTimeFormat;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -55,7 +54,10 @@ class MoveRequestPolicyTests extends APITests {
 
   @BeforeAll
   public static void setUpBeforeClass() {
-    clock = Clock.fixed(Instant.now(), ZoneOffset.UTC);
+    final Instant now = Instant.ofEpochMilli(ClockUtil.getInstant()
+      .getMillis());
+    clock = Clock.fixed(now, ZoneOffset.UTC);
+
     FakePubSub.clearPublishedEvents();
   }
 
@@ -83,6 +85,12 @@ class MoveRequestPolicyTests extends APITests {
       noticePoliciesFixture.create(noticePolicy).getId(),
       overdueFinePoliciesFixture.facultyStandard().getId(),
       lostItemFeePoliciesFixture.facultyStandard().getId());
+  }
+
+  @AfterEach
+  public void afterEach() {
+    // The clock must be reset after each test.
+    ClockUtil.setDefaultClock();
   }
 
   @Test
@@ -122,10 +130,10 @@ class MoveRequestPolicyTests extends APITests {
     checkOutFixture.checkOutByBarcode(interestingTimes, charlotte);
 
     IndividualResource requestByCharlotte = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, charlotte, DateTime.now(DateTimeZone.UTC).minusHours(2), RequestType.RECALL.getValue());
+      smallAngryPlanet, charlotte, ClockUtil.getDateTime().minusHours(2), RequestType.RECALL.getValue());
 
     IndividualResource requestByJames = requestsFixture.placeHoldShelfRequest(
-      interestingTimes, james, DateTime.now(DateTimeZone.UTC).minusHours(1), RequestType.RECALL.getValue());
+      interestingTimes, james, ClockUtil.getDateTime().minusHours(1), RequestType.RECALL.getValue());
 
     // move james' recall request as a hold shelf request from smallAngryPlanet to interestingTimes
     Response response = requestsFixture.attemptMove(new MoveRequestBuilder(
@@ -167,7 +175,7 @@ class MoveRequestPolicyTests extends APITests {
 
     // steve checks out smallAngryPlanet
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(
-      smallAngryPlanet, steve, DateTime.now(DateTimeZone.UTC));
+      smallAngryPlanet, steve, ClockUtil.getDateTime());
 
     final String originalDueDate = loan.getJson().getString("dueDate");
 
@@ -176,7 +184,7 @@ class MoveRequestPolicyTests extends APITests {
 
     // jessica places recall request on interestingTimes
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
-      interestingTimes, jessica, DateTime.now(DateTimeZone.UTC), RequestType.RECALL.getValue());
+      interestingTimes, jessica, ClockUtil.getDateTime(), RequestType.RECALL.getValue());
 
     // notice for the recall is expected
     verifyNumberOfSentNotices(1);
@@ -219,13 +227,13 @@ class MoveRequestPolicyTests extends APITests {
 
     // steve checks out smallAngryPlanet
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(
-      smallAngryPlanet, steve, DateTime.now(DateTimeZone.UTC));
+      smallAngryPlanet, steve, ClockUtil.getDateTime());
 
     final String originalDueDate = loan.getJson().getString("dueDate");
 
     // charlotte places recall request on smallAngryPlanet
     requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, charlotte, DateTime.now(DateTimeZone.UTC).minusHours(1), RequestType.RECALL.getValue());
+      smallAngryPlanet, charlotte, ClockUtil.getDateTime().minusHours(1), RequestType.RECALL.getValue());
 
     JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
 
@@ -241,7 +249,7 @@ class MoveRequestPolicyTests extends APITests {
 
     // jessica places recall request on interestingTimes
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
-      interestingTimes, jessica, DateTime.now(DateTimeZone.UTC), RequestType.RECALL.getValue());
+      interestingTimes, jessica, ClockUtil.getDateTime(), RequestType.RECALL.getValue());
 
     // There should be 2 notices for each recall
     waitAtMost(1, SECONDS)
@@ -305,7 +313,7 @@ class MoveRequestPolicyTests extends APITests {
       lostItemFeePoliciesFixture.facultyStandard().getId());
 
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(
-      smallAngryPlanet, steve, DateTime.now(DateTimeZone.UTC));
+      smallAngryPlanet, steve, ClockUtil.getDateTime());
 
     final String originalDueDate = loan.getJson().getString("dueDate");
 
@@ -314,7 +322,7 @@ class MoveRequestPolicyTests extends APITests {
 
     // jessica places recall request on interestingTimes
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
-      interestingTimes, jessica, DateTime.now(DateTimeZone.UTC), RequestType.RECALL.getValue());
+      interestingTimes, jessica, ClockUtil.getDateTime(), RequestType.RECALL.getValue());
 
     // One notice for the recall is expected
     verifyNumberOfSentNotices(1);
@@ -376,13 +384,13 @@ class MoveRequestPolicyTests extends APITests {
       lostItemFeePoliciesFixture.facultyStandard().getId());
 
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(
-      smallAngryPlanet, steve, DateTime.now(DateTimeZone.UTC));
+      smallAngryPlanet, steve, ClockUtil.getDateTime());
 
     final String originalDueDate = loan.getJson().getString("dueDate");
 
     // charlotte places recall request on smallAngryPlanet
     requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, charlotte, DateTime.now(DateTimeZone.UTC).minusHours(1), RequestType.RECALL.getValue());
+      smallAngryPlanet, charlotte, ClockUtil.getDateTime().minusHours(1), RequestType.RECALL.getValue());
 
     JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
 
@@ -398,7 +406,7 @@ class MoveRequestPolicyTests extends APITests {
 
     // jessica places recall request on interestingTimes
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
-      interestingTimes, jessica, DateTime.now(DateTimeZone.UTC), RequestType.RECALL.getValue());
+      interestingTimes, jessica, ClockUtil.getDateTime(), RequestType.RECALL.getValue());
 
     // There should be 2 notices for each recall
     waitAtMost(1, SECONDS)
