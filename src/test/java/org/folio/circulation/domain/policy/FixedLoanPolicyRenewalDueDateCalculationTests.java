@@ -28,7 +28,8 @@ import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
+import static org.joda.time.DateTimeZone.UTC;
+import org.joda.time.LocalDate;
 import org.junit.jupiter.api.Test;
 
 import api.support.builders.FixedDueDateSchedule;
@@ -62,7 +63,7 @@ class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     Loan loan = existingLoan(loanPolicy);
 
-    DateTime renewalDate = new DateTime(2017, 12, 30, 14, 32, 21, DateTimeZone.UTC);
+    DateTime renewalDate = new DateTime(2017, 12, 30, 14, 32, 21, UTC);
 
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
     renew(loan, renewalDate, new RequestQueue(Collections.emptyList()), errorHandler);
@@ -83,7 +84,7 @@ class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     Loan loan = existingLoan(loanPolicy);
 
-    DateTime renewalDate = new DateTime(2018, 12, 15, 14, 32, 21, DateTimeZone.UTC);
+    DateTime renewalDate = new DateTime(2018, 12, 15, 14, 32, 21, UTC);
 
     String requestId = UUID.randomUUID().toString();
     RequestQueue requestQueue = creteRequestQueue(requestId, RequestType.RECALL);
@@ -108,7 +109,7 @@ class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     Loan loan = existingLoan(loanPolicy);
 
-    DateTime renewalDate = new DateTime(2019, 1, 1, 8, 10, 45, DateTimeZone.UTC);
+    DateTime renewalDate = new DateTime(2019, 1, 1, 8, 10, 45, UTC);
 
     RequestQueue requestQueue =  new RequestQueue(Collections.emptyList());
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
@@ -129,7 +130,7 @@ class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     Loan loan = existingLoan(loanPolicy);
 
-    DateTime renewalDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
+    DateTime renewalDate = new DateTime(2018, 3, 14, 11, 14, 54, UTC);
 
     String requestId = UUID.randomUUID().toString();
     RequestQueue requestQueue = creteRequestQueue(requestId, RequestType.PAGE);
@@ -137,9 +138,12 @@ class FixedLoanPolicyRenewalDueDateCalculationTests {
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
     Result<Loan> result = renew(loan, renewalDate, requestQueue, errorHandler);
 
-    assertThat(result.value().getDueDate(), is(
-      new DateTime(2018, 12, 31, 23, 59, 59,
-      DateTimeZone.UTC)));
+    final DateTime expectedDate = new LocalDate(2018, 12, 31)
+      .toDateTimeAtStartOfDay(UTC)
+      .plusDays(1)
+      .minusSeconds(1);
+
+    assertThat(result.value().getDueDate(), is(expectedDate));
   }
 
   @Test
@@ -157,12 +161,12 @@ class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     Loan loan = new LoanBuilder()
       .open()
-      .withLoanDate(new DateTime(2018, 1, 20, 13, 45, 21, DateTimeZone.UTC))
-      .withDueDate(new DateTime(2018, 1, 31, 23, 59, 59, DateTimeZone.UTC))
+      .withLoanDate(new DateTime(2018, 1, 20, 13, 45, 21, UTC))
+      .withDueDate(new DateTime(2018, 1, 31, 23, 59, 59, UTC))
       .asDomainObject()
       .withLoanPolicy(loanPolicy);
 
-    DateTime renewalDate = new DateTime(2018, 2, 8, 11, 14, 54, DateTimeZone.UTC);
+    DateTime renewalDate = new DateTime(2018, 2, 8, 11, 14, 54, UTC);
 
     Result<Loan> result = renew(loan, renewalDate,
       new RequestQueue(Collections.emptyList()), new OverridingErrorHandler(null));
@@ -185,7 +189,7 @@ class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     Loan loan = existingLoan(loanPolicy);
 
-    DateTime renewalDate = new DateTime(2018, 2, 27, 16, 23, 43, DateTimeZone.UTC);
+    DateTime renewalDate = new DateTime(2018, 2, 27, 16, 23, 43, UTC);
 
     Result<Loan> result = renew(loan, renewalDate, new RequestQueue(Collections.emptyList()),
       new OverridingErrorHandler(null));
@@ -208,9 +212,9 @@ class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     Loan loan = existingLoan(loanPolicy);
 
-    DateTime renewalDate = new DateTime(2018, 3, 12, 7, 15, 23, DateTimeZone.UTC);
+    DateTime renewalDate = new DateTime(2018, 3, 12, 7, 15, 23, UTC);
 
-   Result<Loan> result = renew(loan, renewalDate,
+    Result<Loan> result = renew(loan, renewalDate,
       new RequestQueue(Collections.emptyList()), new OverridingErrorHandler(null));
 
     assertThat(result.value().getDueDate(), is(expectedSchedule.due));
@@ -234,7 +238,7 @@ class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     Loan loan = existingLoan(loanPolicy);
 
-    DateTime renewalDate = new DateTime(2018, 2, 5, 14, 22, 32, DateTimeZone.UTC);
+    DateTime renewalDate = new DateTime(2018, 2, 5, 14, 22, 32, UTC);
 
     Result<Loan> result = renew(loan, renewalDate, new RequestQueue(Collections.emptyList()),
       new OverridingErrorHandler(null));
@@ -246,7 +250,7 @@ class FixedLoanPolicyRenewalDueDateCalculationTests {
   void shouldApplyAlternateScheduleWhenQueuedRequestIsHoldAndFixed() {
     final Period alternateCheckoutLoanPeriod = Period.from(2, "Weeks");
 
-    final DateTime systemTime = new DateTime(2019, 6, 14, 11, 23, 43, DateTimeZone.UTC);
+    final DateTime systemTime = new DateTime(2019, 6, 14, 11, 23, 43, UTC);
 
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
@@ -315,7 +319,7 @@ class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     Loan loan = existingLoan(loanPolicy);
 
-    DateTime renewalDate = new DateTime(2017, 12, 30, 14, 32, 21, DateTimeZone.UTC);
+    DateTime renewalDate = new DateTime(2017, 12, 30, 14, 32, 21, UTC);
 
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
 
@@ -337,12 +341,12 @@ class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     Loan loan = new LoanBuilder()
       .open()
-      .withLoanDate(new DateTime(2018, 1, 20, 13, 45, 21, DateTimeZone.UTC))
-      .withDueDate(new DateTime(2018, 1, 31, 23, 59, 59, DateTimeZone.UTC))
+      .withLoanDate(new DateTime(2018, 1, 20, 13, 45, 21, UTC))
+      .withDueDate(new DateTime(2018, 1, 31, 23, 59, 59, UTC))
       .asDomainObject()
       .withLoanPolicy(loanPolicy);
 
-    DateTime renewalDate = new DateTime(2018, 1, 3, 8, 12, 32, DateTimeZone.UTC);
+    DateTime renewalDate = new DateTime(2018, 1, 3, 8, 12, 32, UTC);
 
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
     renew(loan, renewalDate, new RequestQueue(Collections.emptyList()), errorHandler);
@@ -362,12 +366,12 @@ class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     Loan loan = new LoanBuilder()
       .open()
-      .withLoanDate(new DateTime(2018, 1, 20, 13, 45, 21, DateTimeZone.UTC))
-      .withDueDate(new DateTime(2018, 2, 28, 23, 59, 59, DateTimeZone.UTC))
+      .withLoanDate(new DateTime(2018, 1, 20, 13, 45, 21, UTC))
+      .withDueDate(new DateTime(2018, 2, 28, 23, 59, 59, UTC))
       .asDomainObject()
       .withLoanPolicy(loanPolicy);
 
-    DateTime renewalDate = new DateTime(2018, 1, 3, 8, 12, 32, DateTimeZone.UTC);
+    DateTime renewalDate = new DateTime(2018, 1, 3, 8, 12, 32, UTC);
 
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
     renew(loan, renewalDate, new RequestQueue(Collections.emptyList()), errorHandler);
@@ -389,18 +393,18 @@ class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     Loan loan = new LoanBuilder()
       .open()
-      .withLoanDate(new DateTime(2018, 1, 20, 13, 45, 21, DateTimeZone.UTC))
-      .withDueDate(new DateTime(2018, 1, 31, 23, 59, 59, DateTimeZone.UTC))
+      .withLoanDate(new DateTime(2018, 1, 20, 13, 45, 21, UTC))
+      .withDueDate(new DateTime(2018, 1, 31, 23, 59, 59, UTC))
       .asDomainObject()
       .withLoanPolicy(loanPolicy);
 
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
 
     loan = renew(loan,
-      new DateTime(2018, 2, 1, 11, 23, 43, DateTimeZone.UTC),
+      new DateTime(2018, 2, 1, 11, 23, 43, UTC),
       new RequestQueue(Collections.emptyList()), errorHandler).value();
 
-    DateTime renewalDate = new DateTime(2018, 3, 5, 8, 12, 32, DateTimeZone.UTC);
+    DateTime renewalDate = new DateTime(2018, 3, 5, 8, 12, 32, UTC);
 
     renew(loan, renewalDate, new RequestQueue(Collections.emptyList()), errorHandler);
 
@@ -423,16 +427,16 @@ class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     Loan loan = new LoanBuilder()
       .open()
-      .withLoanDate(new DateTime(2018, 1, 20, 13, 45, 21, DateTimeZone.UTC))
-      .withDueDate(new DateTime(2018, 1, 31, 23, 59, 59, DateTimeZone.UTC))
+      .withLoanDate(new DateTime(2018, 1, 20, 13, 45, 21, UTC))
+      .withDueDate(new DateTime(2018, 1, 31, 23, 59, 59, UTC))
       .asDomainObject()
       .withLoanPolicy(loanPolicy);
 
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
-    loan = renew(loan, new DateTime(2018, 2, 1, 11, 23, 43, DateTimeZone.UTC),
+    loan = renew(loan, new DateTime(2018, 2, 1, 11, 23, 43, UTC),
       new RequestQueue(Collections.emptyList()), errorHandler).value();
 
-    DateTime renewalDate = new DateTime(2018, 3, 5, 8, 12, 32, DateTimeZone.UTC);
+    DateTime renewalDate = new DateTime(2018, 3, 5, 8, 12, 32, UTC);
 
     String requestId = UUID.randomUUID().toString();
     RequestQueue requestQueue = creteRequestQueue(requestId, RequestType.RECALL);
@@ -458,7 +462,7 @@ class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     Loan loan = existingLoan(loanPolicy);
 
-    DateTime renewalDate = new DateTime(2018, 4, 1, 6, 34, 21, DateTimeZone.UTC);
+    DateTime renewalDate = new DateTime(2018, 4, 1, 6, 34, 21, UTC);
 
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
     renew(loan, renewalDate, new RequestQueue(Collections.emptyList()), errorHandler);
@@ -479,7 +483,7 @@ class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     Loan loan = existingLoan(loanPolicy);
 
-    DateTime renewalDate = new DateTime(2018, 2, 18, 6, 34, 21, DateTimeZone.UTC);
+    DateTime renewalDate = new DateTime(2018, 2, 18, 6, 34, 21, UTC);
 
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
     renew(loan, renewalDate, new RequestQueue(Collections.emptyList()), errorHandler);
@@ -498,7 +502,7 @@ class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     Loan loan = existingLoan(loanPolicy);
 
-    DateTime renewalDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
+    DateTime renewalDate = new DateTime(2018, 3, 14, 11, 14, 54, UTC);
 
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
     renew(loan, renewalDate, new RequestQueue(Collections.emptyList()), errorHandler);
@@ -508,7 +512,7 @@ class FixedLoanPolicyRenewalDueDateCalculationTests {
 
   @Test
   void shouldFailWhenSchedulesCollectionIsNull() {
-    DateTime renewalDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
+    DateTime renewalDate = new DateTime(2018, 3, 14, 11, 14, 54, UTC);
 
     final FixedScheduleRenewalDueDateStrategy calculator =
       new FixedScheduleRenewalDueDateStrategy(UUID.randomUUID().toString(),
@@ -525,7 +529,7 @@ class FixedLoanPolicyRenewalDueDateCalculationTests {
 
   @Test
   void shouldFailWhenNoSchedules() {
-    DateTime renewalDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
+    DateTime renewalDate = new DateTime(2018, 3, 14, 11, 14, 54, UTC);
 
     final FixedScheduleRenewalDueDateStrategy calculator =
       new FixedScheduleRenewalDueDateStrategy(UUID.randomUUID().toString(),
@@ -550,8 +554,8 @@ class FixedLoanPolicyRenewalDueDateCalculationTests {
   private Loan existingLoan() {
     return new LoanBuilder()
       .open()
-      .withLoanDate(new DateTime(2018, 1, 20, 13, 45, 21, DateTimeZone.UTC))
-      .withDueDate(new DateTime(2018, 1, 31, 23, 59, 59, DateTimeZone.UTC))
+      .withLoanDate(new DateTime(2018, 1, 20, 13, 45, 21, UTC))
+      .withDueDate(new DateTime(2018, 1, 31, 23, 59, 59, UTC))
       .withCheckoutServicePointId(checkoutServicePointId)
       .asDomainObject();
   }

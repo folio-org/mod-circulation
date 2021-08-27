@@ -1,5 +1,6 @@
 package org.folio.circulation.support.utils;
 
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -24,19 +25,6 @@ import org.joda.time.DateTimeZone;
 public class DateTimeUtil {
   private DateTimeUtil() {
     throw new UnsupportedOperationException("Do not instantiate");
-  }
-
-  /**
-   * Convert from DateTime to ZonedDateTime.
-   *
-   * TODO: This should be removed once migrated from JodaTime to JavaTime.
-   *
-   * @param dateTime
-   * @return
-   */
-  public static ZonedDateTime toZonedDateTime(DateTime dateTime) {
-    return java.time.Instant.ofEpochMilli(dateTime.getMillis())
-      .atZone(ZoneId.of(dateTime.getZone().getID()));
   }
 
   /**
@@ -100,7 +88,7 @@ public class DateTimeUtil {
   }
 
   /**
-   * Get the first second of the day.
+   * Get the first second of the year.
    * <p>
    * This operates in the time zone specified by dateTime.
    * <p>
@@ -109,13 +97,27 @@ public class DateTimeUtil {
    * @param dateTime The dateTime to convert.
    * @return The converted dateTime.
    */
-  public static ZonedDateTime atStartOfTheDay(ZonedDateTime dateTime) {
-    return dateTime.withHour(0).withMinute(0).withSecond(0)
-      .truncatedTo(ChronoUnit.SECONDS);
+  public static ZonedDateTime atStartOfYear(ZonedDateTime dateTime) {
+    return atStartOfYear(dateTime, dateTime.getZone());
   }
 
   /**
-   * Get the last second of the day.
+   * Get the first second of the year for the given time zone.
+   * <p>
+   * This will truncate to seconds.
+   *
+   * @param dateTime The dateTime to convert.
+   * @param zone The time zone to use.
+   * @return The converted dateTime.
+   */
+  public static ZonedDateTime atStartOfYear(ZonedDateTime dateTime, ZoneId zone) {
+    return atStartOfDay(dateTime
+      .withZoneSameInstant(zone)
+      .withDayOfYear(1));
+  }
+
+  /**
+   * Get the last second of the year.
    * <p>
    * This operates in the time zone specified by dateTime.
    * <p>
@@ -124,89 +126,513 @@ public class DateTimeUtil {
    * @param dateTime The dateTime to convert.
    * @return The converted dateTime.
    */
-  public static ZonedDateTime atEndOfTheDay(ZonedDateTime dateTime) {
-    return dateTime.withHour(23).withMinute(59).withSecond(59)
-      .truncatedTo(ChronoUnit.SECONDS);
+  public static ZonedDateTime atEndOfYear(ZonedDateTime dateTime) {
+    return atEndOfYear(dateTime, dateTime.getZone());
   }
 
   /**
-   * Get the first second of the day.
+   * Get the last second of the year for the given time zone.
    * <p>
-   * This operates in the time zone specified by dateTime.
+   * This will truncate to seconds.
+   *
+   * @param dateTime The dateTime to convert.
+   * @param zone The time zone to use.
+   * @return The converted dateTime.
+   */
+  public static ZonedDateTime atEndOfYear(ZonedDateTime dateTime, ZoneId zone) {
+    return atEndOfDay(dateTime
+      .withZoneSameInstant(zone)
+      .withDayOfYear(1)
+      .plusYears(1)
+      .minusDays(1));
+  }
+
+  /**
+   * Get the first second of the year for the given time zone.
    * <p>
    * This will truncate to seconds.
    *
    * @param LocalDate The localDate to convert.
+   * @param zone The time zone to use.
    * @return The converted localDate.
    */
-  public static ZonedDateTime atStartOfTheDay(java.time.LocalDate localDate) {
-    return localDate.atStartOfDay(ClockUtil.getZoneId())
-      .truncatedTo(ChronoUnit.SECONDS);
+  public static ZonedDateTime atStartOfYear(LocalDate localDate, ZoneId zone) {
+    return atStartOfDay(localDate.withDayOfYear(1), zone);
   }
 
   /**
-   * Get the last second of the day.
+   * Get the last second of the year for the given time zone.
    * <p>
    * This operates in the time zone specified by dateTime.
    * <p>
    * This will truncate to seconds.
    *
    * @param dateTime The localDate to convert.
+   * @param zone The time zone to use.
    * @return The converted localDate.
    */
-  public static ZonedDateTime atEndOfTheDay(java.time.LocalDate localDate) {
-    return ZonedDateTime.of(localDate.atTime(23, 59, 59, 0)
-      .truncatedTo(ChronoUnit.SECONDS), ClockUtil.getZoneId());
+  public static ZonedDateTime atEndOfYear(LocalDate localDate, ZoneId zone) {
+    return atEndOfDay(localDate
+      .withDayOfYear(localDate
+        .lengthOfYear()),
+      zone);
   }
 
   /**
-   * Get the first second of the day.
+   * Get the first second of the year.
    *
    * TODO: Remove this after migrating from JodaTime to JavaTime.
    *
    * @param dateTime The dateTime to convert.
    * @return The converted dateTime.
    */
-  public static DateTime atStartOfTheDay(DateTime dateTime) {
-    return dateTime.withTimeAtStartOfDay();
+  public static DateTime atStartOfYear(DateTime dateTime) {
+    return atStartOfYear(dateTime, dateTime.getZone());
   }
 
   /**
-   * Get the last second of the day.
+   * Get the first second of the year.
+   *
+   * TODO: Remove this after migrating from JodaTime to JavaTime.
+   *
+   * @param dateTime The dateTime to convert.
+   * @param zone The time zone to use.
+   * @return The converted dateTime.
+   */
+  public static DateTime atStartOfYear(DateTime dateTime, DateTimeZone zone) {
+    final DateTime zonedDateTime = dateTime.withZone(zone);
+
+    return atStartOfDay(zonedDateTime
+      .withDayOfYear(dateTime
+        .dayOfYear()
+        .getMinimumValue()));
+  }
+
+  /**
+   * Get the last second of the year.
    *
    * TODO: Remove this after migrating from JodaTime to JavaTime.
    *
    * @param dateTime The dateTime to convert.
    * @return The converted dateTime.
    */
-  public static DateTime atEndOfTheDay(DateTime dateTime) {
-    return dateTime.withTime(23, 59, 59, 0);
+  public static DateTime atEndOfYear(DateTime dateTime) {
+    return atEndOfYear(dateTime, dateTime.getZone());
   }
 
   /**
-   * Get the first second of the day.
+   * Get the last second of the year.
+   *
+   * TODO: Remove this after migrating from JodaTime to JavaTime.
+   *
+   * @param dateTime The dateTime to convert.
+   * @param zone The time zone to use.
+   * @return The converted dateTime.
+   */
+  public static DateTime atEndOfYear(DateTime dateTime, DateTimeZone zone) {
+    final DateTime zonedDateTime = dateTime.withZone(zone);
+
+    return atEndOfDay(zonedDateTime
+      .withDayOfYear(zonedDateTime
+        .dayOfYear()
+        .getMaximumValue()));
+  }
+
+  /**
+   * Get the first second of the year.
    *
    * TODO: Remove this after migrating from JodaTime to JavaTime.
    *
    * @param LocalDate The localDate to convert.
+   * @param zone The time zone to use.
    * @return The converted localDate.
    */
-  public static DateTime atStartOfTheDay(org.joda.time.LocalDate localDate) {
-    return localDate.toDateTimeAtStartOfDay();
+  public static DateTime atStartOfYear(org.joda.time.LocalDate localDate, DateTimeZone zone) {
+    return atStartOfDay(localDate, zone)
+      .withDayOfYear(localDate
+        .dayOfYear()
+        .getMinimumValue());
   }
 
   /**
-   * Get the last second of the day.
+   * Get the last second of the year.
    *
    * TODO: Remove this after migrating from JodaTime to JavaTime.
    *
    * @param dateTime The localDate to convert.
+   * @param zone The time zone to use.
    * @return The converted localDate.
    */
-  public static DateTime atEndOfTheDay(org.joda.time.LocalDate localDate) {
-    return localDate.toDateTime(org.joda.time.LocalTime.now()
-      .withHourOfDay(23).withMinuteOfHour(59).withSecondOfMinute(59)
-      .withMillisOfSecond(0), DateTimeZone.UTC);
+  public static DateTime atEndOfYear(org.joda.time.LocalDate localDate, DateTimeZone zone) {
+    return atEndOfDay(localDate, zone)
+      .withDayOfYear(localDate
+        .dayOfYear()
+        .getMaximumValue());
+  }
+
+  /**
+   * Get the first second of the month.
+   * <p>
+   * This operates in the time zone specified by dateTime.
+   * <p>
+   * This will truncate to seconds.
+   *
+   * @param dateTime The dateTime to convert.
+   * @return The converted dateTime.
+   */
+  public static ZonedDateTime atStartOfMonth(ZonedDateTime dateTime) {
+    return atStartOfMonth(dateTime, dateTime.getZone());
+  }
+
+  /**
+   * Get the first second of the month for the given time zone.
+   * <p>
+   * This will truncate to seconds.
+   *
+   * @param dateTime The dateTime to convert.
+   * @param zone The time zone to use.
+   * @return The converted dateTime.
+   */
+  public static ZonedDateTime atStartOfMonth(ZonedDateTime dateTime, ZoneId zone) {
+    return atStartOfDay(dateTime
+      .withZoneSameInstant(zone)
+      .withDayOfMonth(1));
+  }
+
+  /**
+   * Get the last second of the month.
+   * <p>
+   * This operates in the time zone specified by dateTime.
+   * <p>
+   * This will truncate to seconds.
+   *
+   * @param dateTime The dateTime to convert.
+   * @return The converted dateTime.
+   */
+  public static ZonedDateTime atEndOfMonth(ZonedDateTime dateTime) {
+    return atEndOfMonth(dateTime, dateTime.getZone());
+  }
+
+  /**
+   * Get the last second of the month for the given time zone.
+   * <p>
+   * This will truncate to seconds.
+   *
+   * @param dateTime The dateTime to convert.
+   * @param zone The time zone to use.
+   * @return The converted dateTime.
+   */
+  public static ZonedDateTime atEndOfMonth(ZonedDateTime dateTime, ZoneId zone) {
+    return atEndOfDay(dateTime
+      .withZoneSameInstant(zone)
+      .withDayOfMonth(1)
+      .plusMonths(1)
+      .minusDays(1));
+  }
+
+  /**
+   * Get the first second of the month for the given time zone.
+   * <p>
+   * This will truncate to seconds.
+   *
+   * @param LocalDate The localDate to convert.
+   * @param zone The time zone to use.
+   * @return The converted localDate.
+   */
+  public static ZonedDateTime atStartOfMonth(LocalDate localDate, ZoneId zone) {
+    return atStartOfDay(localDate.withDayOfMonth(1), zone);
+  }
+
+  /**
+   * Get the last second of the month for the given time zone.
+   * <p>
+   * This will truncate to seconds.
+   *
+   * @param dateTime The localDate to convert.
+   * @param zone The time zone to use.
+   * @return The converted localDate.
+   */
+  public static ZonedDateTime atEndOfMonth(LocalDate localDate, ZoneId zone) {
+    return atEndOfDay(localDate
+      .withDayOfMonth(localDate
+        .lengthOfMonth()),
+      zone);
+  }
+
+  /**
+   * Get the first second of the month.
+   *
+   * TODO: Remove this after migrating from JodaTime to JavaTime.
+   *
+   * @param dateTime The dateTime to convert.
+   * @return The converted dateTime.
+   */
+  public static DateTime atStartOfMonth(DateTime dateTime) {
+    return atStartOfMonth(dateTime, dateTime.getZone());
+  }
+
+  /**
+   * Get the first second of the month.
+   *
+   * TODO: Remove this after migrating from JodaTime to JavaTime.
+   *
+   * @param dateTime The dateTime to convert.
+   * @param zone The time zone to use.
+   * @return The converted dateTime.
+   */
+  public static DateTime atStartOfMonth(DateTime dateTime, DateTimeZone zone) {
+    final DateTime zonedDateTme = dateTime.withZone(zone);
+
+    return atStartOfDay(zonedDateTme
+      .withDayOfMonth(zonedDateTme
+        .dayOfMonth()
+        .getMinimumValue()));
+  }
+
+  /**
+   * Get the last second of the month.
+   *
+   * TODO: Remove this after migrating from JodaTime to JavaTime.
+   *
+   * @param dateTime The dateTime to convert.
+   * @return The converted dateTime.
+   */
+  public static DateTime atEndOfMonth(DateTime dateTime) {
+    return atEndOfMonth(dateTime, dateTime.getZone());
+  }
+
+  /**
+   * Get the last second of the month.
+   *
+   * TODO: Remove this after migrating from JodaTime to JavaTime.
+   *
+   * @param dateTime The dateTime to convert.
+   * @param zone The time zone to use.
+   * @return The converted dateTime.
+   */
+  public static DateTime atEndOfMonth(DateTime dateTime, DateTimeZone zone) {
+    final DateTime zonedDateTme = dateTime.withZone(zone);
+
+    return atEndOfDay(zonedDateTme
+      .withDayOfMonth(zonedDateTme
+        .dayOfMonth()
+        .getMaximumValue()));
+  }
+
+  /**
+   * Get the first second of the month.
+   *
+   * TODO: Remove this after migrating from JodaTime to JavaTime.
+   *
+   * @param LocalDate The localDate to convert.
+   * @param zone The time zone to use.
+   * @return The converted localDate.
+   */
+  public static DateTime atStartOfMonth(org.joda.time.LocalDate localDate, DateTimeZone zone) {
+    return atStartOfDay(localDate, zone)
+      .withDayOfMonth(localDate
+        .dayOfMonth()
+        .getMinimumValue());
+  }
+
+  /**
+   * Get the last second of the month.
+   *
+   * TODO: Remove this after migrating from JodaTime to JavaTime.
+   *
+   * @param dateTime The localDate to convert.
+   * @param zone The time zone to use.
+   * @return The converted localDate.
+   */
+  public static DateTime atEndOfMonth(org.joda.time.LocalDate localDate, DateTimeZone zone) {
+    return atEndOfDay(localDate, zone)
+      .withDayOfMonth(localDate
+        .dayOfMonth()
+        .getMaximumValue());
+  }
+
+  /**
+   * Get the first second of the day.
+   * <p>
+   * This operates in the time zone specified by dateTime.
+   * <p>
+   * This will truncate to seconds.
+   *
+   * @param dateTime The dateTime to convert.
+   * @return The converted dateTime.
+   */
+  public static ZonedDateTime atStartOfDay(ZonedDateTime dateTime) {
+    return atStartOfDay(dateTime, dateTime.getZone());
+  }
+
+  /**
+   * Get the first second of the day for the given time zone.
+   * <p>
+   * This will truncate to seconds.
+   *
+   * @param dateTime The dateTime to convert.
+   * @param zone The time zone to use.
+   * @return The converted dateTime.
+   */
+  public static ZonedDateTime atStartOfDay(ZonedDateTime dateTime, ZoneId zone) {
+    return dateTime
+      .withZoneSameInstant(zone)
+      .withHour(0)
+      .withMinute(0)
+      .withSecond(0)
+      .truncatedTo(ChronoUnit.SECONDS);
+  }
+
+  /**
+   * Get the last second of the day.
+   * <p>
+   * This operates in the time zone specified by dateTime.
+   * <p>
+   * This will truncate to seconds.
+   *
+   * @param dateTime The dateTime to convert.
+   * @return The converted dateTime.
+   */
+  public static ZonedDateTime atEndOfDay(ZonedDateTime dateTime) {
+    return atEndOfDay(dateTime, dateTime.getZone());
+  }
+
+  /**
+   * Get the last second of the day for the given time zone.
+   * <p>
+   * This will truncate to seconds.
+   *
+   * @param dateTime The dateTime to convert.
+   * @param zone The time zone to use.
+   * @return The converted dateTime.
+   */
+  public static ZonedDateTime atEndOfDay(ZonedDateTime dateTime, ZoneId zone) {
+    return atStartOfDay(dateTime, zone)
+      .plusDays(1)
+      .minusSeconds(1)
+      .truncatedTo(ChronoUnit.SECONDS);
+  }
+
+  /**
+   * Get the first second of the day for the given time zone.
+   * <p>
+   * This will truncate to seconds.
+   *
+   * @param LocalDate The localDate to convert.
+   * @param zone The time zone to use.
+   * @return The converted localDate.
+   */
+  public static ZonedDateTime atStartOfDay(LocalDate localDate, ZoneId zone) {
+    return localDate
+      .atStartOfDay(zone)
+      .truncatedTo(ChronoUnit.SECONDS);
+  }
+
+  /**
+   * Get the last second of the day for the given time zone.
+   * <p>
+   * This will truncate to seconds.
+   *
+   * @param dateTime The localDate to convert.
+   * @param zone The time zone to use.
+   * @return The converted localDate.
+   */
+  public static ZonedDateTime atEndOfDay(LocalDate localDate, ZoneId zone) {
+    return atStartOfDay(localDate, zone)
+      .plusDays(1)
+      .minusSeconds(1)
+      .truncatedTo(ChronoUnit.SECONDS);
+  }
+
+  /**
+   * Get the first second of the day.
+   * <p>
+   * This operates in the time zone specified by dateTime.
+   *
+   * TODO: Remove this after migrating from JodaTime to JavaTime.
+   *
+   * @param dateTime The dateTime to convert.
+   * @return The converted dateTime.
+   */
+  public static DateTime atStartOfDay(DateTime dateTime) {
+    return atStartOfDay(dateTime, dateTime.getZone());
+  }
+
+  /**
+   * Get the first second of the day for the given time zone.
+   *
+   * TODO: Remove this after migrating from JodaTime to JavaTime.
+   *
+   * @param dateTime The dateTime to convert.
+   * @param zone The time zone to use.
+   * @return The converted dateTime.
+   */
+  public static DateTime atStartOfDay(DateTime dateTime, DateTimeZone zone) {
+    return dateTime
+      .withZone(zone)
+      .withTimeAtStartOfDay()
+      .withMillisOfSecond(0);
+  }
+
+  /**
+   * Get the last second of the day.
+   * <p>
+   * This operates in the time zone specified by dateTime.
+   *
+   * TODO: Remove this after migrating from JodaTime to JavaTime.
+   *
+   * @param dateTime The dateTime to convert.
+   * @return The converted dateTime.
+   */
+  public static DateTime atEndOfDay(DateTime dateTime) {
+    return atEndOfDay(dateTime, dateTime.getZone());
+  }
+
+  /**
+   * Get the last second of the day for the given time zone.
+   *
+   * TODO: Remove this after migrating from JodaTime to JavaTime.
+   *
+   * @param dateTime The dateTime to convert.
+   * @param zone The time zone to use.
+   * @return The converted dateTime.
+   */
+  public static DateTime atEndOfDay(DateTime dateTime, DateTimeZone zone) {
+    return atStartOfDay(dateTime, zone)
+      .plusDays(1)
+      .minusSeconds(1)
+      .withMillisOfSecond(0);
+  }
+
+  /**
+   * Get the first second of the day for the given time zone.
+   *
+   * TODO: Remove this after migrating from JodaTime to JavaTime.
+   *
+   * @param LocalDate The localDate to convert.
+   * @param zone The time zone to use.
+   * @return The converted localDate.
+   */
+  public static DateTime atStartOfDay(org.joda.time.LocalDate localDate, DateTimeZone zone) {
+    return localDate
+      .toDateTimeAtStartOfDay(zone)
+      .withMillisOfSecond(0);
+  }
+
+  /**
+   * Get the last second of the day for the given time zone.
+   *
+   * TODO: Remove this after migrating from JodaTime to JavaTime.
+   *
+   * @param dateTime The localDate to convert.
+   * @param zone The time zone to use.
+   * @return The converted localDate.
+   */
+  public static DateTime atEndOfDay(org.joda.time.LocalDate localDate, DateTimeZone zone) {
+    return atStartOfDay(localDate, zone)
+      .plusDays(1)
+      .minusSeconds(1)
+      .withMillisOfSecond(0);
   }
 
   /**
@@ -238,6 +664,19 @@ public class DateTimeUtil {
   }
 
   /**
+   * Convert from DateTime to ZonedDateTime.
+   *
+   * TODO: Remove this after migrating from JodaTime to JavaTime.
+   *
+   * @param dateTime The JodaTime DateTime to convert from.
+   * @return The converted dateTime.
+   */
+  public static ZonedDateTime toZonedDateTime(DateTime dateTime) {
+    return java.time.Instant.ofEpochMilli(dateTime.getMillis())
+      .atZone(ZoneId.of(dateTime.getZone().getID()));
+  }
+
+  /**
    * Convert the JodaTime DateTime to JavaTime OffsetDateTime.
    *
    * TODO: Remove this after migrating from JodaTime to JavaTime.
@@ -248,61 +687,8 @@ public class DateTimeUtil {
   public static OffsetDateTime toOffsetDateTime(DateTime dateTime) {
     final var instant = java.time.Instant.ofEpochMilli(dateTime.getMillis());
 
-    return OffsetDateTime.ofInstant(instant, ZoneId.of(dateTime.getZone().getID()));
-  }
-
-  /**
-   * Convert the Local Date Time to a dateTime.
-   *
-   * TODO: This is temporarily designed to work with JodaTime. Replace this as
-   * appropriate when migrating from JodaTime to JavaTime.
-   *
-   * @param date The date to convert.
-   * @param time The time to convert.
-   * @return The converted dateTime.
-   */
-  public static DateTime toDateTime(org.joda.time.LocalDate date, org.joda.time.LocalTime time) {
-    return date.toDateTime(time, ClockUtil.getDateTimeZone());
-  }
-
-  /**
-   * Convert the Local Date Time to a dateTime set to UTC.
-   *
-   * TODO: This is temporarily designed to work with JodaTime. Replace this as
-   * appropriate when migrating from JodaTime to JavaTime.
-   *
-   * @param date The date to convert.
-   * @param time The time to convert.
-   * @return The converted dateTime.
-   */
-  public static DateTime toUtcDateTime(org.joda.time.LocalDate date, org.joda.time.LocalTime time) {
-    return date.toDateTime(time, DateTimeZone.UTC);
-  }
-
-  /**
-   * Get the start of the day in the time zone of the current Clock.
-   *
-   * TODO: This is temporarily designed to work with JodaTime. Replace this as
-   * appropriate when migrating from JodaTime to JavaTime.
-   *
-   * @param localDate The local date to convert from.
-   * @return The converted dateTime.
-   */
-  public static DateTime toStartOfDayDateTime(org.joda.time.LocalDate date) {
-    return date.toDateTimeAtStartOfDay();
-  }
-
-  /**
-   * Get the start of the day in the UTC.
-   *
-   * TODO: This is temporarily designed to work with JodaTime. Replace this as
-   * appropriate when migrating from JodaTime to JavaTime.
-   *
-   * @param localDate The local date to convert from.
-   * @return The converted dateTime.
-   */
-  public static DateTime toUtcStartOfDayDateTime(org.joda.time.LocalDate date) {
-    return date.toDateTimeAtStartOfDay(DateTimeZone.UTC);
+    return OffsetDateTime.ofInstant(instant,
+      ZoneId.of(dateTime.getZone().getID()));
   }
 
 }

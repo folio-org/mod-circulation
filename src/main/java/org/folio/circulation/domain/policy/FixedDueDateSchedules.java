@@ -4,6 +4,7 @@ import static org.folio.circulation.support.StreamToListMapper.toList;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher.toStream;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.utils.DateTimeUtil.atEndOfDay;
 
 import java.util.List;
 import java.util.Optional;
@@ -12,7 +13,6 @@ import java.util.function.Supplier;
 
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
-import org.folio.circulation.support.utils.DateTimeUtil;
 import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
@@ -49,7 +49,7 @@ public class FixedDueDateSchedules {
   private Predicate<? super JsonObject> isWithin(DateTime date) {
     return schedule -> {
       DateTime from = DateTime.parse(schedule.getString("from"));
-      DateTime to = DateTimeUtil.atEndOfTheDay(DateTime.parse(schedule.getString("to")));
+      DateTime to = atEndOfDay(DateTime.parse(schedule.getString("to")));
 
       return date.isAfter(from) && date.isBefore(to);
     };

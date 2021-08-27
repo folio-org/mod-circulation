@@ -34,8 +34,6 @@ public class EndOfCurrentHoursStrategy extends ShortTermLoansBaseStrategy {
     return succeeded(currentTimeInterval.getNext().getEndTime());
   }
 
-  public static final LocalTime END_OF_A_DAY = LocalTime.MIDNIGHT.minusSeconds(1);
-
   private boolean hasLibraryRolloverWorkingDay(LibraryTimetable libraryTimetable,
                                                LibraryInterval requestedInterval) {
 
