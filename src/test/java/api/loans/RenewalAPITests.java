@@ -1936,10 +1936,6 @@ public abstract class RenewalAPITests extends APITests {
 
     feeFineAccountFixture.payLostItemFee(loan.getId(), 3.0);
     feeFineAccountFixture.payLostItemProcessingFee(loan.getId(), 3.0);
-    assertThat(getAccountForLoan(loan.getId(), "Lost item fee", "Open"),
-      hasJsonPath("remaining", 7.0));
-    assertThat(getAccountForLoan(loan.getId(), "Lost item processing fee", "Open"),
-      hasJsonPath("remaining", 2.0));
 
     final Response response = attemptRenewal(item, jessica);
     assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
@@ -1966,11 +1962,6 @@ public abstract class RenewalAPITests extends APITests {
 
     feeFineAccountFixture.payLostItemFee(loan.getId(), 3.0);
     feeFineAccountFixture.payLostItemProcessingFee(loan.getId(), 3.0);
-
-    assertThat(getAccountForLoan(loan.getId(), "Lost item fee", "Open"),
-      hasJsonPath("remaining", 7.0));
-    assertThat(getAccountForLoan(loan.getId(), "Lost item processing fee", "Open"),
-      hasJsonPath("remaining", 2.0));
 
     JsonObject secondRenewedLoan = loansFixture.renewLoan(
       buildRenewByBarcodeRequestWithRenewalBlockOverride(item, jessica, servicePointId.toString()),
