@@ -5,14 +5,14 @@ import static api.support.http.InterfaceUrls.checkInByBarcodeUrl;
 
 import java.util.UUID;
 
-import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 
 import api.support.CheckInByBarcodeResponse;
 import api.support.RestAssuredClient;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
+import api.support.http.IndividualResource;
 import api.support.http.OkapiHeaders;
 import io.vertx.core.json.JsonObject;
 
@@ -45,7 +45,7 @@ public class CheckInFixture {
   public CheckInByBarcodeResponse checkInByBarcode(IndividualResource item) {
     return checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(item)
-      .on(DateTime.now(DateTimeZone.UTC))
+      .on(ClockUtil.getDateTime())
       .at(defaultServicePoint()));
   }
 
@@ -68,7 +68,7 @@ public class CheckInFixture {
   public CheckInByBarcodeResponse checkInByBarcode(IndividualResource item,
     UUID servicePointId) {
 
-    return checkInByBarcode(item, DateTime.now(DateTimeZone.UTC), servicePointId);
+    return checkInByBarcode(item, ClockUtil.getDateTime(), servicePointId);
   }
 
   public void checkInByBarcode(IndividualResource item, DateTime checkInDate,

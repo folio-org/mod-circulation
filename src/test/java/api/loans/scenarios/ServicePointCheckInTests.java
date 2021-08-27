@@ -17,9 +17,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.joda.time.Seconds;
 import org.junit.jupiter.api.Test;
 
@@ -54,7 +54,7 @@ class ServicePointCheckInTests extends APITests {
         .withRequestDate(new DateTime(2019, 7, 5, 10, 0))
         .withRequestExpiration(LocalDate.of(2019, 7, 11)));
 
-    final DateTime beforeCheckIn = DateTime.now(DateTimeZone.UTC);
+    final DateTime beforeCheckIn = ClockUtil.getDateTime();
 
     final CheckInByBarcodeResponse checkInResponse = checkInFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
@@ -141,9 +141,9 @@ class ServicePointCheckInTests extends APITests {
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(nod, james);
 
     final IndividualResource request = requestsFixture.placeHoldShelfRequest(nod, jessica,
-        DateTime.now(DateTimeZone.UTC), requestServicePoint.getId());
+      ClockUtil.getDateTime(), requestServicePoint.getId());
 
-    final DateTime beforeCheckIn = DateTime.now(DateTimeZone.UTC);
+    final DateTime beforeCheckIn = ClockUtil.getDateTime();
 
     final CheckInByBarcodeResponse checkInResponse = checkInFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()

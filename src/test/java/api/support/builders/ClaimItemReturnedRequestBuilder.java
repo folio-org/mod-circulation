@@ -4,8 +4,8 @@ import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
 import java.util.UUID;
 
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 
 import io.vertx.core.json.JsonObject;
 
@@ -15,7 +15,7 @@ public class ClaimItemReturnedRequestBuilder implements Builder {
   private final String loanId;
 
   public ClaimItemReturnedRequestBuilder() {
-    this(null, DateTime.now(DateTimeZone.UTC), null);
+    this(null, ClockUtil.getDateTime(), null);
   }
 
   private ClaimItemReturnedRequestBuilder(

@@ -37,7 +37,7 @@ import org.folio.circulation.infrastructure.storage.loans.OverdueFinePolicyRepos
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.context.RenewalContext;
-import org.folio.circulation.support.ClockManager;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.jupiter.api.BeforeEach;
@@ -454,7 +454,7 @@ class OverdueFineCalculatorServiceTest {
       Double maxOverdueRecallFine, Integer periodCalculatorResult, Double correctOverdueFine)
       throws ExecutionException, InterruptedException {
 
-    DateTime dueDateInFuture = DateTime.now(DateTimeZone.UTC).plusDays(1);
+    DateTime dueDateInFuture = ClockUtil.getDateTime().plusDays(1);
     Loan loan = createLoan(overdueFine, overdueFineInterval, overdueRecallFine,
       overdueRecallFineInterval, maxOverdueFine, maxOverdueRecallFine,
       dueDateChangedByRecall).changeDueDate(dueDateInFuture);
@@ -677,7 +677,7 @@ class OverdueFineCalculatorServiceTest {
       ),
       new FeeAmount(correctOverdueFine), new FeeAmount(correctOverdueFine), "Open", "Outstanding",
       Collections.emptyList(),
-      ClockManager.getClockManager().getDateTime()
+      ClockUtil.getDateTime()
     );
   }
 

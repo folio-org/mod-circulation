@@ -2,12 +2,11 @@ package org.folio.circulation.domain.policy;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.joda.time.DateTime.now;
-import static org.joda.time.DateTimeZone.UTC;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import org.folio.circulation.support.utils.ClockUtil;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -57,7 +56,7 @@ class PeriodTest {
   })
   void hasPassedSinceDateTillNowWhenNowAfterTheDate(String interval, int duration) {
     val period = Period.from(duration, interval);
-    val startDate = now(UTC).minus(period.timePeriod()).minusSeconds(1);
+    val startDate = ClockUtil.getDateTime().minus(period.timePeriod()).minusSeconds(1);
 
     assertTrue(period.hasPassedSinceDateTillNow(startDate));
     assertFalse(period.hasNotPassedSinceDateTillNow(startDate));
@@ -73,7 +72,7 @@ class PeriodTest {
   })
   void hasPassedSinceDateTillNowWhenNowIsTheDate(String interval, int duration) {
     val period = Period.from(duration, interval);
-    val startDate = now(UTC).minus(period.timePeriod());
+    val startDate = ClockUtil.getDateTime().minus(period.timePeriod());
 
     assertTrue(period.hasPassedSinceDateTillNow(startDate));
     assertFalse(period.hasNotPassedSinceDateTillNow(startDate));
@@ -89,7 +88,7 @@ class PeriodTest {
   })
   void hasPassedSinceDateTillNowIsFalse(String interval, int duration) {
     val period = Period.from(duration, interval);
-    val startDate = now(UTC);
+    val startDate = ClockUtil.getDateTime();
 
     assertFalse(period.hasPassedSinceDateTillNow(startDate));
     assertTrue(period.hasNotPassedSinceDateTillNow(startDate));
@@ -105,7 +104,7 @@ class PeriodTest {
   })
   void hasNotPassedSinceDateTillNow(String interval, int duration) {
     val period = Period.from(duration, interval);
-    val startDate = now(UTC).plus(period.timePeriod());
+    val startDate = ClockUtil.getDateTime().plus(period.timePeriod());
 
     assertTrue(period.hasNotPassedSinceDateTillNow(startDate));
     assertFalse(period.hasPassedSinceDateTillNow(startDate));
@@ -121,7 +120,7 @@ class PeriodTest {
   })
   void hasNotPassedSinceDateTillNowIsFalseWhenPassed(String interval, int duration) {
     val period = Period.from(duration, interval);
-    val startDate = now(UTC).minus(period.timePeriod()).minusSeconds(1);
+    val startDate = ClockUtil.getDateTime().minus(period.timePeriod()).minusSeconds(1);
 
     assertFalse(period.hasNotPassedSinceDateTillNow(startDate));
     assertTrue(period.hasPassedSinceDateTillNow(startDate));
@@ -137,7 +136,7 @@ class PeriodTest {
   })
   void isEqualToDateTillNow(String interval, int duration) {
     val period = Period.from(duration, interval);
-    val startDate = now(UTC).minus(period.timePeriod());
+    val startDate = ClockUtil.getDateTime().minus(period.timePeriod());
 
     assertTrue(period.isEqualToDateTillNow(startDate)
       // Sometimes there is difference in mss

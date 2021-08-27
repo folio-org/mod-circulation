@@ -41,7 +41,6 @@ import static api.support.matchers.ValidationErrorMatchers.isBlockRelatedError;
 import static api.support.utl.BlockOverridesUtils.buildOkapiHeadersWithPermissions;
 import static api.support.utl.BlockOverridesUtils.getMissingPermissions;
 import static api.support.utl.BlockOverridesUtils.getOverridableBlockNames;
-import static api.support.utl.DateTimeUtils.executeWithFixedDateTime;
 import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfPublishedEvents;
 import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfSentNotices;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
@@ -77,11 +76,11 @@ import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.ValidationError;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.hamcrest.Matcher;
 import org.hamcrest.core.Is;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
-import org.joda.time.DateTimeUtils;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalTime;
 import org.joda.time.Seconds;
@@ -148,7 +147,7 @@ public abstract class RenewalAPITests extends APITests {
 
     //TODO: Renewal based upon system date,
     // needs to be approximated, at least until we introduce a calendar and clock
-    DateTime approximateRenewalDate = DateTime.now(DateTimeZone.UTC);
+    DateTime approximateRenewalDate = ClockUtil.getDateTime();
 
     final JsonObject renewedLoan = renew(smallAngryPlanet, jessica).getJson();
 
@@ -414,7 +413,7 @@ public abstract class RenewalAPITests extends APITests {
   @Test
   void canCheckOutUsingFixedDueDateLoanPolicy() {
     //TODO: Need to be able to inject system date here
-    final DateTime renewalDate = DateTime.now(DateTimeZone.UTC);
+    final DateTime renewalDate = ClockUtil.getDateTime();
     //e.g. Clock.freeze(renewalDate)
 
     FixedDueDateSchedulesBuilder fixedDueDateSchedules = new FixedDueDateSchedulesBuilder()
@@ -524,7 +523,7 @@ public abstract class RenewalAPITests extends APITests {
 
     //TODO: Renewal based upon system date,
     // needs to be approximated, at least until we introduce a calendar and clock
-    DateTime approximateRenewalDate = DateTime.now(DateTimeZone.UTC);
+    DateTime approximateRenewalDate = ClockUtil.getDateTime();
 
     final IndividualResource response = renew(smallAngryPlanet, jessica);
 
@@ -728,7 +727,7 @@ public abstract class RenewalAPITests extends APITests {
     use(limitedRenewalsPolicy);
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica,
-      DateTime.now(DateTimeZone.UTC).minusDays(1)).getJson();
+      ClockUtil.getDateTime().minusDays(1)).getJson();
 
     renew(smallAngryPlanet, jessica);
 
@@ -796,7 +795,7 @@ public abstract class RenewalAPITests extends APITests {
     use(limitedRenewalsPolicy);
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica,
-      DateTime.now(DateTimeZone.UTC));
+      ClockUtil.getDateTime());
 
     final Response response = attemptRenewal(smallAngryPlanet, jessica);
 
@@ -872,7 +871,7 @@ public abstract class RenewalAPITests extends APITests {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
     final String comment = "testing";
-    final DateTime dateTime = DateTime.now();
+    final DateTime dateTime = ClockUtil.getDateTime();
 
     final JsonObject loanJson = checkOutFixture.checkOutByBarcode(smallAngryPlanet,
       usersFixture.jessica())
@@ -1119,9 +1118,9 @@ public abstract class RenewalAPITests extends APITests {
 
     use(renewPolicy);
 
-    DateTimeUtils.setCurrentMillisFixed(loanDate.plusHours(1).getMillis());
+    mockClockManagerToReturnFixedDateTime(loanDate.plusHours(1));
     JsonObject renewedLoan = renew(smallAngryPlanet, jessica).getJson();
-    DateTimeUtils.setCurrentMillisSystem();
+    mockClockManagerToReturnDefaultDateTime();
 
     DateTime expectedDate =
       WEDNESDAY_DATE
@@ -1213,7 +1212,7 @@ public abstract class RenewalAPITests extends APITests {
       .addSchedule(wholeMonth(2019, DateTimeConstants.MARCH))
       .addSchedule(todayOnly());
 
-    DateTime expectedDueDate = DateTime.now(DateTimeZone.UTC)
+    DateTime expectedDueDate = ClockUtil.getDateTime()
       .withTimeAtStartOfDay()
       .withHourOfDay(23)
       .withMinuteOfHour(59)
@@ -1236,7 +1235,7 @@ public abstract class RenewalAPITests extends APITests {
 
   @Test
   void cannotRenewWhenCurrentDueDateDoesNotFallWithinLimitingDueDateSchedule() {
-    DateTime futureDateTime = DateTime.now(DateTimeZone.UTC).plusMonths(1);
+    DateTime futureDateTime = ClockUtil.getDateTime().plusMonths(1);
 
     FixedDueDateSchedulesBuilder fixedDueDateSchedules = new FixedDueDateSchedulesBuilder()
       .withName("Fixed Due Date Schedule in the Future")
@@ -1299,7 +1298,7 @@ public abstract class RenewalAPITests extends APITests {
       .addSchedule(wholeMonth(2019, DateTimeConstants.MARCH))
       .addSchedule(todayOnly());
 
-    DateTime expectedDueDate = DateTime.now(DateTimeZone.UTC)
+    DateTime expectedDueDate = ClockUtil.getDateTime()
       .withTimeAtStartOfDay()
       .withHourOfDay(23)
       .withMinuteOfHour(59)
@@ -1806,8 +1805,9 @@ public abstract class RenewalAPITests extends APITests {
     checkOutItem(loanDate, item, MONDAY_DATE.toDateTime(END_OF_A_DAY, UTC), steve,
       CASE_MON_WED_FRI_OPEN_TUE_THU_CLOSED);
 
-    JsonObject renewedLoan = executeWithFixedDateTime(() -> loansFixture.renewLoan(item, steve).getJson(),
-      loanDate.plusDays(1));
+    mockClockManagerToReturnFixedDateTime(loanDate.plusDays(1));
+    JsonObject renewedLoan = loansFixture.renewLoan(item, steve).getJson();
+    mockClockManagerToReturnDefaultDateTime();
     DateTime expectedDate = MONDAY_DATE.toDateTime(END_OF_A_DAY, DateTimeZone.UTC);
 
     assertThat("due date should be " + expectedDate, renewedLoan.getString("dueDate"),
@@ -1826,8 +1826,9 @@ public abstract class RenewalAPITests extends APITests {
     checkOutItem(loanDate, item, MONDAY_DATE.toDateTime(END_OF_A_DAY, UTC), steve,
       CASE_MON_WED_FRI_OPEN_TUE_THU_CLOSED);
 
-    JsonObject renewedLoan = executeWithFixedDateTime(() -> loansFixture.renewLoan(item, steve).getJson(),
-      loanDate.plusDays(1));
+    mockClockManagerToReturnFixedDateTime(loanDate.plusDays(1));
+    JsonObject renewedLoan = loansFixture.renewLoan(item, steve).getJson();
+    mockClockManagerToReturnDefaultDateTime();
     DateTime expectedDate = MONDAY_DATE.toDateTime(END_OF_A_DAY, DateTimeZone.UTC);
 
     assertThat("due date should be " + expectedDate, renewedLoan.getString("dueDate"),
@@ -1845,8 +1846,9 @@ public abstract class RenewalAPITests extends APITests {
 
     checkOutItem(loanDate, item, patronExpirationDate, steve, CASE_MON_WED_FRI_OPEN_TUE_THU_CLOSED);
 
-    JsonObject renewedLoan = executeWithFixedDateTime(() -> loansFixture.renewLoan(item, steve).getJson(),
-      loanDate.plusDays(1));
+    mockClockManagerToReturnFixedDateTime(loanDate.plusDays(1));
+    JsonObject renewedLoan = loansFixture.renewLoan(item, steve).getJson();
+    mockClockManagerToReturnDefaultDateTime();
 
     assertThat("due date should be " + patronExpirationDate, renewedLoan.getString("dueDate"),
       isEquivalentTo(patronExpirationDate));
@@ -1862,8 +1864,9 @@ public abstract class RenewalAPITests extends APITests {
 
     checkOutItem(loanDate, item, patronExpirationDate, steve, CASE_MON_WED_FRI_OPEN_TUE_THU_CLOSED);
 
-    JsonObject renewedLoan = executeWithFixedDateTime(() -> loansFixture.renewLoan(item, steve).getJson(),
-      loanDate.plusHours(10));
+    mockClockManagerToReturnFixedDateTime(loanDate.plusHours(10));
+    JsonObject renewedLoan = loansFixture.renewLoan(item, steve).getJson();
+    mockClockManagerToReturnDefaultDateTime();
 
     assertThat("due date should be " + patronExpirationDate, renewedLoan.getString("dueDate"),
       isEquivalentTo(patronExpirationDate));
@@ -1882,8 +1885,9 @@ public abstract class RenewalAPITests extends APITests {
     checkOutItem(loanDate, item, FIRST_DAY_OPEN.toDateTime(END_TIME_SECOND_PERIOD, UTC), steve,
       CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_OPEN);
 
-    JsonObject renewedLoan = executeWithFixedDateTime(() -> loansFixture.renewLoan(item, steve).getJson(),
-      loanDate.plusHours(11));
+    mockClockManagerToReturnFixedDateTime(loanDate.plusHours(11));
+    JsonObject renewedLoan = loansFixture.renewLoan(item, steve).getJson();
+    mockClockManagerToReturnDefaultDateTime();
 
     assertThat("due date should be " + FIRST_DAY_OPEN.toDateTime(END_TIME_SECOND_PERIOD, UTC),
       renewedLoan.getString("dueDate"), isEquivalentTo(FIRST_DAY_OPEN.toDateTime(
@@ -1903,8 +1907,9 @@ public abstract class RenewalAPITests extends APITests {
     checkOutItem(loanDate, item, FIRST_DAY_OPEN.toDateTime(END_TIME_SECOND_PERIOD, UTC), steve,
       CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_OPEN);
 
-    JsonObject renewedLoan = executeWithFixedDateTime(() -> loansFixture.renewLoan(item, steve).getJson(),
-      loanDate.plusHours(11));
+    mockClockManagerToReturnFixedDateTime(loanDate.plusHours(11));
+    JsonObject renewedLoan = loansFixture.renewLoan(item, steve).getJson();
+    mockClockManagerToReturnDefaultDateTime();
 
     assertThat("due date should be " + FIRST_DAY_OPEN.toDateTime(END_TIME_SECOND_PERIOD, UTC),
       renewedLoan.getString("dueDate"), isEquivalentTo(FIRST_DAY_OPEN.toDateTime(
@@ -1981,12 +1986,14 @@ public abstract class RenewalAPITests extends APITests {
   private void checkOutItem(DateTime loanDate, IndividualResource item, DateTime expectedDueDate,
     IndividualResource steve, String servicePointId) {
 
-    JsonObject response = executeWithFixedDateTime(() -> checkOutFixture.checkOutByBarcode(
+    mockClockManagerToReturnFixedDateTime(loanDate);
+    JsonObject response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(item)
         .to(steve)
         .on(loanDate)
-        .at(servicePointId)).getJson(), loanDate);
+        .at(servicePointId)).getJson();
+    mockClockManagerToReturnDefaultDateTime();
 
     assertThat(DateTime.parse(response.getString("dueDate")).toDateTime(), is(expectedDueDate));
   }

@@ -19,11 +19,11 @@ import org.folio.circulation.domain.notice.schedule.TriggeringEvent;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.CqlSortBy;
 import org.folio.circulation.support.CqlSortClause;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.results.Result;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
@@ -57,7 +57,7 @@ public class DueDateNotRealTimeScheduledNoticeProcessingResource extends Schedul
   }
 
   private DateTime startOfTodayInTimeZone(DateTimeZone zone) {
-    return ClockManager.getClockManager().getDateTime()
+    return ClockUtil.getDateTime()
       .withZone(zone)
       .withTimeAtStartOfDay();
   }
@@ -94,7 +94,7 @@ public class DueDateNotRealTimeScheduledNoticeProcessingResource extends Schedul
       .map(Map.Entry::getValue)
       .collect(Collectors.toList());
 
-    return new GroupedLoanScheduledNoticeHandler(clients, DateTime.now(DateTimeZone.UTC))
+    return new GroupedLoanScheduledNoticeHandler(clients, ClockUtil.getDateTime())
       .handleNotices(noticeGroups)
       .thenApply(mapResult(v -> notices));
   }

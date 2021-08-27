@@ -16,8 +16,7 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CqlSortBy;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.results.Result;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
+import org.folio.circulation.support.utils.ClockUtil;
 
 import io.vertx.core.http.HttpClient;
 
@@ -33,7 +32,7 @@ public class LoanScheduledNoticeProcessingResource extends ScheduledNoticeProces
     ScheduledNoticesRepository scheduledNoticesRepository, PageLimit pageLimit) {
 
     return scheduledNoticesRepository.findNotices(
-      DateTime.now(DateTimeZone.UTC), true,
+      ClockUtil.getDateTime(), true,
       List.of(DUE_DATE, AGED_TO_LOST),
       CqlSortBy.ascending("nextRunTime"), pageLimit);
   }
@@ -42,7 +41,7 @@ public class LoanScheduledNoticeProcessingResource extends ScheduledNoticeProces
   protected CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> handleNotices(
     Clients clients, MultipleRecords<ScheduledNotice> noticesResult) {
 
-    return new LoanScheduledNoticeHandler(clients, DateTime.now(DateTimeZone.UTC))
+    return new LoanScheduledNoticeHandler(clients, ClockUtil.getDateTime())
       .handleNotices(noticesResult.getRecords())
       .thenApply(mapResult(v -> noticesResult));
   }

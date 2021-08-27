@@ -5,19 +5,18 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.lang.invoke.MethodHandles;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.RequestStatus;
-import api.support.http.IndividualResource;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.junit.jupiter.api.Test;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import api.requests.RequestsAPICreationTests;
 import api.support.APITests;
 import api.support.builders.RequestBuilder;
+import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
 
 class RequestsServicePointsTests extends APITests {
@@ -40,7 +39,7 @@ class RequestsServicePointsTests extends APITests {
     assertThat(requestItem.getString("status"), is(ItemStatus.PAGED.getValue()));
     assertThat(firstRequest.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
 
-    checkInFixture.checkInByBarcode(smallAngryPlanet, DateTime.now(DateTimeZone.UTC), servicePoint.getId());
+    checkInFixture.checkInByBarcode(smallAngryPlanet, ClockUtil.getDateTime(), servicePoint.getId());
 
     MultipleRecords<JsonObject> requests = requestsFixture.getQueueFor(smallAngryPlanet);
     JsonObject pagedRequestRecord = requests.getRecords().iterator().next();
@@ -60,7 +59,7 @@ class RequestsServicePointsTests extends APITests {
       usersFixture, requestsFixture, checkInFixture);
 
     //now, check in at intended service point.
-    checkInFixture.checkInByBarcode(inTransitItem, DateTime.now(DateTimeZone.UTC), requestPickupServicePoint.getId());
+    checkInFixture.checkInByBarcode(inTransitItem, ClockUtil.getDateTime(), requestPickupServicePoint.getId());
     MultipleRecords<JsonObject> requests = requestsFixture.getQueueFor(inTransitItem);
     JsonObject pagedRequestRecord = requests.getRecords().iterator().next();
 
@@ -88,7 +87,7 @@ class RequestsServicePointsTests extends APITests {
     log.info("requestServicePoint" + requestPickupServicePoint.getId());
     log.info("pickupServicePoint" + pickupServicePoint.getId());
 
-    checkInFixture.checkInByBarcode(smallAngryPlanet, DateTime.now(DateTimeZone.UTC), pickupServicePoint.getId());
+    checkInFixture.checkInByBarcode(smallAngryPlanet, ClockUtil.getDateTime(), pickupServicePoint.getId());
 
     MultipleRecords<JsonObject> requests = requestsFixture.getQueueFor(smallAngryPlanet);
     JsonObject pagedRequestRecord = requests.getRecords().iterator().next();

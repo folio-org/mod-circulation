@@ -21,6 +21,7 @@ import java.util.UUID;
 
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.support.json.JsonPropertyFetcher;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -460,7 +461,7 @@ class ItemsInTransitReportTests extends APITests {
 
       checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
         .forItem(item)
-        .on(DateTime.now())
+        .on(ClockUtil.getDateTime())
         .at(firstServicePointId));
     }
 

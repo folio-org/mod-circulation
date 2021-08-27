@@ -38,7 +38,6 @@ import static org.folio.circulation.domain.representations.ItemProperties.CALL_N
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE_ERROR;
 import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_CREATED_THROUGH_OVERRIDE;
-import static org.folio.circulation.support.ClockManager.getClockManager;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.hasItems;
@@ -71,6 +70,7 @@ import org.folio.circulation.domain.override.PatronBlockOverride;
 import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -1820,7 +1820,7 @@ public class RequestsAPICreationTests extends APITests {
       .page()
       .forItem(smallAngryPlanet)
       .by(steve)
-      .withRequestDate(DateTime.now())
+      .withRequestDate(ClockUtil.getDateTime())
       .fulfilToHoldShelf()
       .withPickupServicePointId(servicePointsFixture.cd1().getId()));
 
@@ -1833,7 +1833,7 @@ public class RequestsAPICreationTests extends APITests {
     final IndividualResource requester = usersFixture.rebecca();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     final DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
-    final DateTime now = getClockManager().getDateTime();
+    final DateTime now = ClockUtil.getDateTime();
     final DateTime expirationDate = now.plusDays(4);
     final UserManualBlockBuilder userManualBlockBuilder = getManualBlockBuilder()
         .withRequests(true)
@@ -1890,7 +1890,7 @@ public class RequestsAPICreationTests extends APITests {
     final IndividualResource requester = usersFixture.rebecca();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     final DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
-    final DateTime now = getClockManager().getDateTime();
+    final DateTime now = ClockUtil.getDateTime();
     final DateTime expirationDate = now.plusDays(4);
     final UserManualBlockBuilder userManualBlockBuilder = getManualBlockBuilder()
       .withExpirationDate(expirationDate)
@@ -1912,7 +1912,7 @@ public class RequestsAPICreationTests extends APITests {
     final IndividualResource requester = usersFixture.rebecca();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     final DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
-    final DateTime now = getClockManager().getDateTime();
+    final DateTime now = ClockUtil.getDateTime();
     final DateTime expirationDate = now.minusDays(1);
     final UserManualBlockBuilder userManualBlockBuilder = getManualBlockBuilder()
       .withRequests(true)
@@ -1934,7 +1934,7 @@ public class RequestsAPICreationTests extends APITests {
     final IndividualResource requester = usersFixture.rebecca();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     final DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
-    final DateTime now = getClockManager().getDateTime();
+    final DateTime now = ClockUtil.getDateTime();
     final DateTime expirationDate = now.plusDays(7);
     final UserManualBlockBuilder borrowingUserManualBlockBuilder = getManualBlockBuilder()
       .withBorrowing(true)
@@ -1962,7 +1962,7 @@ public class RequestsAPICreationTests extends APITests {
     final IndividualResource requester = usersFixture.rebecca();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     final DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
-    final DateTime now = getClockManager().getDateTime();
+    final DateTime now = ClockUtil.getDateTime();
     final DateTime expirationDate = now.plusDays(4);
     final UserManualBlockBuilder requestUserManualBlockBuilder1 = getManualBlockBuilder()
         .withRequests(true)
@@ -2405,7 +2405,7 @@ public class RequestsAPICreationTests extends APITests {
       .withPickupServicePointId(requestPickupServicePoint.getId())
       .by(usersFixture.james()));
 
-    checkInFixture.checkInByBarcode(smallAngryPlanet, DateTime.now(DateTimeZone.UTC), requestPickupServicePoint.getId());
+    checkInFixture.checkInByBarcode(smallAngryPlanet, ClockUtil.getDateTime(), requestPickupServicePoint.getId());
 
     Response pagedRequestRecord = itemsClient.getById(smallAngryPlanet.getId());
     assertThat(pagedRequestRecord.getJson().getJsonObject("status").getString("name"), is(ItemStatus.AWAITING_PICKUP.getValue()));
@@ -2432,7 +2432,7 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(firstRequest.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
 
     //check it it at the "wrong" or unintended pickup location
-    checkInFixture.checkInByBarcode(smallAngryPlanet, DateTime.now(DateTimeZone.UTC), pickupServicePoint.getId());
+    checkInFixture.checkInByBarcode(smallAngryPlanet, ClockUtil.getDateTime(), pickupServicePoint.getId());
 
     MultipleRecords<JsonObject> requests = requestsFixture.getQueueFor(smallAngryPlanet);
     JsonObject pagedRequestRecord = requests.getRecords().iterator().next();

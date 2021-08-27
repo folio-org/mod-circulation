@@ -9,8 +9,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 
 import org.folio.circulation.domain.policy.Period;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
@@ -31,7 +30,7 @@ class RecallItemsTests extends APITests {
       .rolling(Period.weeks(3)).notRenewable().renewFromSystemDate());
 
     val overrideRenewComment = "Override renew";
-    val newDueDate = DateTime.now(DateTimeZone.UTC).plusMonths(3).toString();
+    val newDueDate = ClockUtil.getDateTime().plusMonths(3).toString();
 
     val item = itemsFixture.basedUponNod();
     val user = usersFixture.james();

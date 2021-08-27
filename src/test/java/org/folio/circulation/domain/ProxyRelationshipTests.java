@@ -5,7 +5,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.util.UUID;
 
-import org.joda.time.DateTime;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -41,7 +41,7 @@ class ProxyRelationshipTests {
         .proxy(UUID.randomUUID())
         .sponsor(UUID.randomUUID())
         .active()
-        .expires(DateTime.now().plusWeeks(3))
+        .expires(ClockUtil.getDateTime().plusWeeks(3))
         .useMetaObject(useMetaObject)
         .create());
 
@@ -59,7 +59,7 @@ class ProxyRelationshipTests {
         .proxy(UUID.randomUUID())
         .sponsor(UUID.randomUUID())
         .active()
-        .expires(DateTime.now().minusMonths(2))
+        .expires(ClockUtil.getDateTime().minusMonths(2))
         .useMetaObject(useMetaObject)
         .create());
 
@@ -96,7 +96,7 @@ class ProxyRelationshipTests {
         .proxy(UUID.randomUUID())
         .sponsor(UUID.randomUUID())
         .inactive()
-        .expires(DateTime.now().plusWeeks(3))
+        .expires(ClockUtil.getDateTime().plusWeeks(3))
         .useMetaObject(useMetaObject)
         .create());
 
@@ -115,7 +115,7 @@ class ProxyRelationshipTests {
         .proxy(UUID.randomUUID())
         .sponsor(UUID.randomUUID())
         .inactive()
-        .expires(DateTime.now().minusMonths(2))
+        .expires(ClockUtil.getDateTime().minusMonths(2))
         .useMetaObject(useMetaObject)
         .create());
 

@@ -29,6 +29,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.folio.circulation.domain.policy.Period;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
 import org.junit.jupiter.api.BeforeEach;
@@ -206,7 +207,7 @@ class DueDateScheduledNoticesProcessingTests extends APITests {
   void processingTakesNoticesInThePastLimitedAndOrdered() {
     generateLoanAndScheduledNotices();
 
-    DateTime systemTime = DateTime.now(UTC);
+    DateTime systemTime = ClockUtil.getDateTime();
     int expectedNumberOfUnprocessedNoticesInThePast = 10;
     int numberOfNoticesInThePast =
       SCHEDULED_NOTICES_PROCESSING_LIMIT + expectedNumberOfUnprocessedNoticesInThePast;
@@ -592,7 +593,7 @@ class DueDateScheduledNoticesProcessingTests extends APITests {
   }
 
   private void createNotices(int numberOfNotices) {
-    DateTime systemTime = DateTime.now(UTC);
+    DateTime systemTime = ClockUtil.getDateTime();
     List<JsonObject> notices = createNoticesOverTime(systemTime::minusHours, numberOfNotices);
     for (JsonObject notice : notices) {
       scheduledNoticesClient.create(notice);
