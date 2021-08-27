@@ -33,7 +33,6 @@ import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
-import static api.support.matchers.TextDateTimeMatcher.withinSecondsBeforeNow;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
@@ -45,7 +44,6 @@ import static api.support.utl.BlockOverridesUtils.getOverridableBlockNames;
 import static api.support.utl.DateTimeUtils.executeWithFixedDateTime;
 import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfPublishedEvents;
 import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfSentNotices;
-import static java.util.Collections.emptyList;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.domain.policy.DueDateManagement.KEEP_THE_CURRENT_DUE_DATE;
 import static org.folio.circulation.domain.policy.DueDateManagement.KEEP_THE_CURRENT_DUE_DATE_TIME;
@@ -56,26 +54,14 @@ import static org.folio.circulation.domain.policy.DueDateManagement.MOVE_TO_THE_
 import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.END_OF_A_DAY;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE_ERROR;
-import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.hamcrest.CoreMatchers.allOf;
-import static org.hamcrest.CoreMatchers.anything;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.notNullValue;
 import static org.joda.time.DateTimeZone.UTC;
-import static org.joda.time.Seconds.seconds;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyObject;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -84,19 +70,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.awaitility.Awaitility;
-import org.folio.circulation.domain.Loan;
-import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.Period;
-import org.folio.circulation.resources.context.RenewalContext;
-import org.folio.circulation.resources.renewal.RenewByBarcodeResource;
-import org.folio.circulation.services.LostItemFeeRefundService;
-import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.hamcrest.Matcher;
@@ -108,9 +86,6 @@ import org.joda.time.DateTimeZone;
 import org.joda.time.LocalTime;
 import org.joda.time.Seconds;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Matchers;
-import org.mockito.Mockito;
 
 import api.support.APITests;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
@@ -131,7 +106,6 @@ import api.support.fakes.FakePubSub;
 import api.support.fixtures.ConfigurationExample;
 import api.support.fixtures.ItemExamples;
 import api.support.fixtures.TemplateContextMatchers;
-import api.support.http.CheckOutResource;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import api.support.http.OkapiHeaders;
@@ -1987,6 +1961,7 @@ public abstract class RenewalAPITests extends APITests {
 
     feeFineAccountFixture.payLostItemFee(loan.getId(), 3.0);
     feeFineAccountFixture.payLostItemProcessingFee(loan.getId(), 3.0);
+
     assertThat(getAccountForLoan(loan.getId(), "Lost item fee", "Open"),
       hasJsonPath("remaining", 7.0));
     assertThat(getAccountForLoan(loan.getId(), "Lost item processing fee", "Open"),
@@ -2088,8 +2063,8 @@ public abstract class RenewalAPITests extends APITests {
   }
 
   private JsonObject getAccountForLoan(UUID loanId, String feeType, String status) {
-    return accountsClient.getMany(queryFromTemplate("loanId==%s and feeFineType==%s and status.name==%s",
-      loanId.toString(), feeType, status))
+    return accountsClient.getMany(queryFromTemplate(
+      "loanId==%s and feeFineType==%s and status.name==%s", loanId.toString(), feeType, status))
       .getFirst();
   }
 }
