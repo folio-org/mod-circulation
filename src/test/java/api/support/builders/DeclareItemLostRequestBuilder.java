@@ -4,9 +4,10 @@ import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
 import java.util.UUID;
 
-import io.vertx.core.json.JsonObject;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
+
+import io.vertx.core.json.JsonObject;
 
 public class DeclareItemLostRequestBuilder extends JsonBuilder implements Builder {
   private final String loanId;
@@ -15,7 +16,7 @@ public class DeclareItemLostRequestBuilder extends JsonBuilder implements Builde
   private final String servicePointId;
 
   public DeclareItemLostRequestBuilder() {
-    this(null, DateTime.now(DateTimeZone.UTC), null, null);
+    this(null, ClockUtil.getDateTime(), null, null);
   }
 
   public String getLoanId() {
@@ -75,6 +76,6 @@ public class DeclareItemLostRequestBuilder extends JsonBuilder implements Builde
       .forLoanId(loanId)
       .withServicePointId(UUID.randomUUID())
       .withComment("Declaring item lost")
-      .on(DateTime.now(DateTimeZone.UTC));
+      .on(ClockUtil.getDateTime());
   }
 }

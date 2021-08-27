@@ -46,6 +46,7 @@ import org.folio.circulation.domain.OpeningHour;
 import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
@@ -872,7 +873,7 @@ class CheckOutCalculateDueDateTests extends APITests {
   private DateTime currentYearDateTime(int month, int day, int hour, int minute,
     int second, DateTimeZone zone) {
 
-    return DateTime.now(zone)
+    return ClockUtil.getDateTime().withZone(zone)
       .withMonthOfYear(month)
       .withDayOfMonth(day)
       .withHourOfDay(hour)

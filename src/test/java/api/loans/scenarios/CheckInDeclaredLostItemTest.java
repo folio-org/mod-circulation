@@ -12,11 +12,10 @@ import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.joda.time.DateTime.now;
 
 import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.junit.jupiter.api.Test;
 
 import api.support.builders.CheckInByBarcodeRequestBuilder;
@@ -49,7 +48,8 @@ class CheckInDeclaredLostItemTest extends RefundDeclaredLostFeesTestBase {
     useChargeableRefundableLostItemFee(firstFee, 0.0);
 
     final IndividualResource firstLoan = declareItemLost();
-    mockClockManagerToReturnFixedDateTime(now(DateTimeZone.UTC).plusMinutes(2));
+    mockClockManagerToReturnFixedDateTime(ClockUtil.getDateTime()
+      .plusMinutes(2));
     // Item fee won't be cancelled, because refund period is exceeded
     checkInFixture.checkInByBarcode(item);
     assertThat(itemsClient.getById(item.getId()).getJson(), isAvailable());

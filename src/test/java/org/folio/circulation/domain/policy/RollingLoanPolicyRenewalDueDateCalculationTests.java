@@ -19,6 +19,7 @@ import org.folio.circulation.resources.handlers.error.OverridingErrorHandler;
 import org.folio.circulation.resources.renewal.RenewByBarcodeResource;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.results.Result;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.jupiter.api.Test;
@@ -191,7 +192,7 @@ class RollingLoanPolicyRenewalDueDateCalculationTests {
     Loan loan = loanFor(loanDate, loanDate, loanPolicy);
 
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
-    renew(loan, DateTime.now(), new RequestQueue(Collections.emptyList()), errorHandler);
+    renew(loan, ClockUtil.getDateTime(), new RequestQueue(Collections.emptyList()), errorHandler);
 
     assertTrue(matchErrorReason(errorHandler,
       "the interval \"Unknown\" in the loan policy is not recognised"));
@@ -213,7 +214,7 @@ class RollingLoanPolicyRenewalDueDateCalculationTests {
     Loan loan = loanFor(loanDate, loanDate, loanPolicy);
 
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
-    renew(loan, DateTime.now(), new RequestQueue(Collections.emptyList()), errorHandler);
+    renew(loan, ClockUtil.getDateTime(), new RequestQueue(Collections.emptyList()), errorHandler);
 
     assertTrue(matchErrorReason(errorHandler, LOAN_PERIOD_IN_THE_LOAN_POLICY_IS_NOT_RECOGNISED));
   }
@@ -234,7 +235,7 @@ class RollingLoanPolicyRenewalDueDateCalculationTests {
     Loan loan = loanFor(loanDate, loanDate, loanPolicy);
 
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
-    renew(loan, DateTime.now(), new RequestQueue(Collections.emptyList()), errorHandler);
+    renew(loan, ClockUtil.getDateTime(), new RequestQueue(Collections.emptyList()), errorHandler);
 
     assertTrue(matchErrorReason(errorHandler, LOAN_PERIOD_IN_THE_LOAN_POLICY_IS_NOT_RECOGNISED));
   }
@@ -255,7 +256,7 @@ class RollingLoanPolicyRenewalDueDateCalculationTests {
     Loan loan = loanFor(loanDate, loanDate, loanPolicy);
 
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
-    renew(loan, DateTime.now(), new RequestQueue(Collections.emptyList()), errorHandler);
+    renew(loan, ClockUtil.getDateTime(), new RequestQueue(Collections.emptyList()), errorHandler);
 
     assertTrue(matchErrorReason(errorHandler, LOAN_PERIOD_IN_THE_LOAN_POLICY_IS_NOT_RECOGNISED));
   }
@@ -278,7 +279,7 @@ class RollingLoanPolicyRenewalDueDateCalculationTests {
     Loan loan = loanFor(loanDate, loanDate, loanPolicy);
 
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
-    renew(loan, DateTime.now(), new RequestQueue(Collections.emptyList()), errorHandler);
+    renew(loan, ClockUtil.getDateTime(), new RequestQueue(Collections.emptyList()), errorHandler);
 
     assertTrue(matchErrorReason(errorHandler,
       String.format("the duration \"%s\" in the loan policy is invalid", duration)));
@@ -303,7 +304,7 @@ class RollingLoanPolicyRenewalDueDateCalculationTests {
     Loan loan = loanFor(loanDate, loanDate.plusDays(15), loanPolicy);
 
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
-    Result<Loan> result = renew(loan, DateTime.now(), new RequestQueue(Collections.emptyList()),
+    Result<Loan> result = renew(loan, ClockUtil.getDateTime(), new RequestQueue(Collections.emptyList()),
       errorHandler);
 
     assertThat(result.value().getDueDate(),
@@ -327,7 +328,7 @@ class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     Loan loan = loanFor(loanDate, loanDate.plusDays(6), loanPolicy);
 
-    Result<Loan> result = renew(loan, DateTime.now(),
+    Result<Loan> result = renew(loan, ClockUtil.getDateTime(),
       new RequestQueue(Collections.emptyList()), new OverridingErrorHandler(null));
 
     assertThat(result.value().getDueDate(),
@@ -354,7 +355,7 @@ class RollingLoanPolicyRenewalDueDateCalculationTests {
     Loan loan = loanFor(loanDate, loanDate, loanPolicy);
 
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
-    renew(loan, DateTime.now(), new RequestQueue(Collections.emptyList()), errorHandler);
+    renew(loan, ClockUtil.getDateTime(), new RequestQueue(Collections.emptyList()), errorHandler);
 
     assertEquals(1, errorHandler.getErrors().size());
     assertTrue(matchErrorReason(errorHandler, EXPECTED_REASON_DATE_FALLS_OTSIDE_DATE_RANGES));
@@ -378,7 +379,7 @@ class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     RequestQueue requestQueue = new RequestQueue(Collections.emptyList());
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
-    renew(loan, DateTime.now(), requestQueue, errorHandler);
+    renew(loan, ClockUtil.getDateTime(), requestQueue, errorHandler);
 
     assertTrue(matchErrorReason(errorHandler, EXPECTED_REASON_DATE_FALLS_OTSIDE_DATE_RANGES));
   }
@@ -400,7 +401,7 @@ class RollingLoanPolicyRenewalDueDateCalculationTests {
     String requestId = UUID.randomUUID().toString();
     RequestQueue requestQueue = creteRequestQueue(requestId, RequestType.RECALL);
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
-    renew(loan, DateTime.now(), requestQueue, errorHandler);
+    renew(loan, ClockUtil.getDateTime(), requestQueue, errorHandler);
 
     assertEquals(2, errorHandler.getErrors().size());
     assertTrue(matchErrorReason(errorHandler, EXPECTED_REASON_DATE_FALLS_OTSIDE_DATE_RANGES));

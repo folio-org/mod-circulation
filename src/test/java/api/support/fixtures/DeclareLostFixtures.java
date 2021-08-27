@@ -6,8 +6,7 @@ import static api.support.http.InterfaceUrls.declareLoanItemLostURL;
 import java.util.UUID;
 
 import org.folio.circulation.support.http.client.Response;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
+import org.folio.circulation.support.utils.ClockUtil;
 
 import api.support.RestAssuredClient;
 import api.support.builders.DeclareItemLostRequestBuilder;
@@ -44,7 +43,7 @@ public class DeclareLostFixtures {
   public Response declareItemLost(UUID loanId) {
     final DeclareItemLostRequestBuilder builder = new DeclareItemLostRequestBuilder()
       .forLoanId(loanId)
-      .on(DateTime.now(DateTimeZone.UTC))
+      .on(ClockUtil.getDateTime())
       //creating "real" servicepoint data here would require a lot of setup code to
       //initialize a ResourceClient, the intialize a service point creator, and
       //so on.  As this is a convenience function that's only used when the loan

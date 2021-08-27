@@ -7,10 +7,11 @@ import java.util.UUID;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Policies;
 import org.folio.circulation.domain.policy.LoanPolicy;
-import api.support.http.IndividualResource;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
 import org.joda.time.Period;
 
+import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
 
 public class LoanBuilder extends JsonBuilder implements Builder {
@@ -93,7 +94,7 @@ public class LoanBuilder extends JsonBuilder implements Builder {
   public LoanBuilder withRandomPastLoanDate() {
     Random random = new Random();
 
-    return withLoanDate(DateTime.now().minusDays(random.nextInt(10)));
+    return withLoanDate(ClockUtil.getDateTime().minusDays(random.nextInt(10)));
   }
 
   public LoanBuilder withLoanDate(DateTime loanDate) {

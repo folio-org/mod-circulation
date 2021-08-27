@@ -7,7 +7,7 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 
-import org.folio.circulation.support.ClockManager;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
@@ -47,8 +47,10 @@ public class TextDateTimeMatcher {
 
       @Override
       protected boolean matchesSafely(String textRepresentation) {
+
         //response representation might vary from request representation
-        final var actual = OffsetDateTime.parse(textRepresentation);
+        final var actual = OffsetDateTime.parse(textRepresentation)
+          .truncatedTo(MILLIS);
 
         //The zoned date time could have a higher precision than milliseconds
         //This makes comparison to an ISO formatted date time using milliseconds
@@ -100,6 +102,6 @@ public class TextDateTimeMatcher {
   }
 
   public static Matcher<String> withinSecondsBeforeNow(Seconds seconds) {
-    return withinSecondsBefore(seconds, ClockManager.getClockManager().getDateTime());
+    return withinSecondsBefore(seconds, ClockUtil.getDateTime());
   }
 }

@@ -31,7 +31,6 @@ import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.iterableWithSize;
-import static org.joda.time.DateTime.now;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -44,6 +43,7 @@ import java.util.stream.Stream;
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.Account;
 import org.folio.circulation.domain.policy.Period;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
 import org.junit.jupiter.api.BeforeEach;
@@ -248,7 +248,7 @@ class AgedToLostScheduledNoticesProcessingTests extends APITests {
 
     claimItemReturnedFixture.claimItemReturned(new ClaimItemReturnedRequestBuilder()
       .forLoan(agedToLostLoan.getLoanId().toString())
-      .withItemClaimedReturnedDate(now()));
+      .withItemClaimedReturnedDate(ClockUtil.getDateTime()));
     final DateTime firstRunTime = getAgedToLostDate(agedToLostLoan).plus(
       TIMING_PERIOD.timePeriod());
     scheduledNoticeProcessingClient.runLoanNoticesProcessing(

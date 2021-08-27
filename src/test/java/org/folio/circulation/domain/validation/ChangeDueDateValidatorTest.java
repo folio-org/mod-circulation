@@ -14,6 +14,7 @@ import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.results.Result;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -52,7 +53,7 @@ class ChangeDueDateValidatorTest {
     "Aged to lost"
   })
   void canChangeLoanWhenDueDateIsNotChanged(String itemStatus) {
-    val existingLoan = createLoan(itemStatus, DateTime.now());
+    val existingLoan = createLoan(itemStatus, ClockUtil.getDateTime());
 
     changeDueDateValidator = new ChangeDueDateValidator();
 
@@ -67,8 +68,8 @@ class ChangeDueDateValidatorTest {
   }
 
   private Result<LoanAndRelatedRecords> loanAndRelatedRecords(String itemStatus) {
-    val loan = createLoan(itemStatus, DateTime.now());
-    val existingLoan = createLoan(itemStatus, DateTime.now().minusDays(1));
+    val loan = createLoan(itemStatus, ClockUtil.getDateTime());
+    val existingLoan = createLoan(itemStatus, ClockUtil.getDateTime().minusDays(1));
     return succeeded(new LoanAndRelatedRecords(loan, existingLoan));
   }
 

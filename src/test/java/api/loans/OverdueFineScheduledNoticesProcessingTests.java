@@ -33,8 +33,8 @@ import org.folio.circulation.domain.notice.NoticeEventType;
 import org.folio.circulation.domain.notice.NoticeTiming;
 import org.folio.circulation.domain.notice.schedule.TriggeringEvent;
 import org.folio.circulation.domain.policy.Period;
-import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.json.JsonPropertyWriter;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -362,7 +362,7 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
       .withFeeFineType(OVERDUE_FINE)
       .withAutomatic(true));
 
-    final DateTime checkOutDate = ClockManager.getClockManager().getDateTime().minusYears(1);
+    final DateTime checkOutDate = ClockUtil.getDateTime().minusYears(1);
     final DateTime checkInDate = checkOutDate.plusMonths(1);
 
     IndividualResource checkOutResponse = checkOutFixture.checkOutByBarcode(item, user, checkOutDate);

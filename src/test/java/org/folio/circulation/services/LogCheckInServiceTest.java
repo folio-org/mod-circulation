@@ -17,7 +17,7 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.results.Result;
-import org.joda.time.DateTime;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -63,7 +63,7 @@ class LogCheckInServiceTest {
     JsonObject requestRepresentation = new JsonObject()
       .put("servicePointId", UUID.randomUUID().toString())
       .put("itemBarcode", "barcode")
-      .put("checkInDate", DateTime.now().toString());
+      .put("checkInDate", ClockUtil.getDateTime().toString());
 
     JsonObject itemRepresentation = new JsonObject()
       .put("id", UUID.randomUUID().toString())

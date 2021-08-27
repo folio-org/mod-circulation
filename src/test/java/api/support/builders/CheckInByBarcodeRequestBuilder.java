@@ -2,10 +2,10 @@ package api.support.builders;
 
 import java.util.UUID;
 
-import api.support.http.IndividualResource;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 
+import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
 
 public class CheckInByBarcodeRequestBuilder extends JsonBuilder implements Builder {
@@ -15,7 +15,7 @@ public class CheckInByBarcodeRequestBuilder extends JsonBuilder implements Build
   private final String claimedReturnedResolution;
 
   public CheckInByBarcodeRequestBuilder() {
-    this(null, DateTime.now(DateTimeZone.UTC), null, null);
+    this(null, ClockUtil.getDateTime(), null, null);
   }
 
   private CheckInByBarcodeRequestBuilder(

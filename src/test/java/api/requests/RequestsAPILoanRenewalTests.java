@@ -9,18 +9,17 @@ import static api.support.utl.BlockOverridesUtils.buildOkapiHeadersWithPermissio
 import static org.folio.circulation.resources.RenewalValidator.CAN_NOT_RENEW_ITEM_ERROR;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.nullValue;
-import static org.hamcrest.Matchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 import static org.joda.time.DateTimeConstants.APRIL;
 
 import java.time.LocalDate;
 import java.util.UUID;
 
 import org.folio.circulation.domain.policy.Period;
-import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.joda.time.Seconds;
 import org.junit.jupiter.api.Test;
 
@@ -29,6 +28,7 @@ import api.support.builders.FixedDueDateSchedule;
 import api.support.builders.FixedDueDateSchedulesBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.RequestBuilder;
+import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import api.support.http.OkapiHeaders;
 import io.vertx.core.json.JsonObject;
@@ -62,7 +62,7 @@ class RequestsAPILoanRenewalTests extends APITests {
 
   @Test
   void allowRenewalLoanByBarcodeWhenProfileIsRollingFirstRequestInQueueIsHoldAndRenewingIsAllowedInLoanPolicy() {
-    final DateTime expectedDueDate = DateTime.now(DateTimeZone.UTC)
+    final DateTime expectedDueDate = ClockUtil.getDateTime()
       .plusWeeks(DEFAULT_HOLD_RENEWAL_PERIOD);
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
@@ -110,7 +110,7 @@ class RequestsAPILoanRenewalTests extends APITests {
   @Test
   void allowRenewalWithHoldsWhenProfileIsRollingUseLoanPeriod() {
     final int renewalPeriod = 90;
-    final DateTime expectedDueDate = DateTime.now(DateTimeZone.UTC).plusWeeks(renewalPeriod);
+    final DateTime expectedDueDate = ClockUtil.getDateTime().plusWeeks(renewalPeriod);
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
 
@@ -145,7 +145,7 @@ class RequestsAPILoanRenewalTests extends APITests {
   @Test
   void allowRenewalWithHoldsWhenProfileIsRollingUseRenewalPeriod() {
     final int renewalPeriod = 60;
-    final DateTime expectedDueDate = DateTime.now(DateTimeZone.UTC).plusWeeks(renewalPeriod);
+    final DateTime expectedDueDate = ClockUtil.getDateTime().plusWeeks(renewalPeriod);
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
 
@@ -223,7 +223,7 @@ class RequestsAPILoanRenewalTests extends APITests {
 
   @Test
   void allowRenewalLoanByIdWhenProfileIsRollingFirstRequestInQueueIsHoldAndRenewingIsAllowedInLoanPolicy() {
-    final DateTime expectedDueDate = DateTime.now(DateTimeZone.UTC)
+    final DateTime expectedDueDate = ClockUtil.getDateTime()
       .plusWeeks(DEFAULT_HOLD_RENEWAL_PERIOD);
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
@@ -295,8 +295,8 @@ class RequestsAPILoanRenewalTests extends APITests {
 
   @Test
   void allowRenewalWithHoldsWhenProfileIsFixedUseRenewalSchedule() {
-    final DateTime from = DateTime.now(DateTimeZone.UTC).minusMonths(3);
-    final DateTime to = DateTime.now(DateTimeZone.UTC).plusMonths(3);
+    final DateTime from = ClockUtil.getDateTime().minusMonths(3);
+    final DateTime to = ClockUtil.getDateTime().plusMonths(3);
     final DateTime dueDate = to.plusDays(15);
 
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
@@ -338,8 +338,8 @@ class RequestsAPILoanRenewalTests extends APITests {
 
   @Test
   void allowRenewalWithHoldsWhenProfileIsFixedUseLoanSchedule() {
-    final DateTime from = DateTime.now(DateTimeZone.UTC).minusMonths(3);
-    final DateTime to = DateTime.now(DateTimeZone.UTC).plusMonths(3);
+    final DateTime from = ClockUtil.getDateTime().minusMonths(3);
+    final DateTime to = ClockUtil.getDateTime().plusMonths(3);
     final DateTime dueDate = to.plusDays(15);
 
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
@@ -507,8 +507,8 @@ class RequestsAPILoanRenewalTests extends APITests {
 
   @Test
   void validationErrorWhenRenewalPeriodForHoldsSpecifiedForFixedPolicy() {
-    final DateTime from = DateTime.now(DateTimeZone.UTC).minusMonths(3);
-    final DateTime to = DateTime.now(DateTimeZone.UTC).plusMonths(3);
+    final DateTime from = ClockUtil.getDateTime().minusMonths(3);
+    final DateTime to = ClockUtil.getDateTime().plusMonths(3);
     final DateTime dueDate = to.plusDays(15);
 
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
@@ -551,8 +551,8 @@ class RequestsAPILoanRenewalTests extends APITests {
 
   @Test
   void validationErrorWhenRenewalPeriodSpecifiedForFixedPolicy() {
-    final DateTime from = DateTime.now(DateTimeZone.UTC).minusMonths(3);
-    final DateTime to = DateTime.now(DateTimeZone.UTC).plusMonths(3);
+    final DateTime from = ClockUtil.getDateTime().minusMonths(3);
+    final DateTime to = ClockUtil.getDateTime().plusMonths(3);
     final DateTime dueDate = to.plusDays(15);
 
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
@@ -604,7 +604,9 @@ class RequestsAPILoanRenewalTests extends APITests {
   }
 
   private void loanPolicyWithFixedProfileAndRenewingIsForbiddenWhenHoldIsPending() {
-    LocalDate now = LocalDate.now();
+    final org.joda.time.LocalDate jodaDate = ClockUtil.getLocalDate();
+    LocalDate now = LocalDate.of(jodaDate.getYear(), jodaDate.getMonthOfYear(),
+      jodaDate.getDayOfMonth());
     FixedDueDateSchedulesBuilder fixedDueDateSchedules = new FixedDueDateSchedulesBuilder()
       .withName("1 month - Fixed Due Date Schedule")
       .addSchedule(wholeMonth(now.getYear(), now.getMonthValue()));

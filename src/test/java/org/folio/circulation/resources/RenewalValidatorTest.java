@@ -5,10 +5,9 @@ import static api.support.matchers.ResultMatchers.succeeded;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static org.folio.circulation.resources.RenewalValidator.errorWhenEarlierOrSameDueDate;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.joda.time.DateTime.now;
-import static org.joda.time.DateTimeZone.UTC;
 
 import org.folio.circulation.domain.Loan;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
 import org.junit.jupiter.api.Test;
 
@@ -18,7 +17,7 @@ import lombok.val;
 class RenewalValidatorTest {
   @Test
   void shouldDisallowRenewalWhenDueDateIsEarlierOrSame() {
-    val dueDate = now(UTC);
+    val dueDate = ClockUtil.getDateTime();
     val proposedDueDate = dueDate.minusWeeks(2);
     val loan = createLoan(dueDate);
 
@@ -30,7 +29,7 @@ class RenewalValidatorTest {
 
   @Test
   void shouldAllowRenewalWhenDueDateAfterCurrentDueDate() {
-    val dueDate = now(UTC);
+    val dueDate = ClockUtil.getDateTime();
     val proposedDueDate = dueDate.plusWeeks(1);
     val loan = createLoan(dueDate);
 

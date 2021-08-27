@@ -1,6 +1,5 @@
 package org.folio.circulation.domain;
 
-
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -8,7 +7,7 @@ import java.util.Collections;
 import java.util.UUID;
 
 import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
-import org.joda.time.DateTime;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.junit.jupiter.api.Test;
 
 import api.support.builders.CheckInByBarcodeRequestBuilder;
@@ -124,7 +123,7 @@ class LoanCheckInServiceTest {
   private CheckInByBarcodeRequest getCheckInRequest(UUID checkInServicePoint) {
     JsonObject representation = new CheckInByBarcodeRequestBuilder()
       .withItemBarcode("barcode")
-      .on(DateTime.now())
+      .on(ClockUtil.getDateTime())
       .at(checkInServicePoint)
       .create();
 

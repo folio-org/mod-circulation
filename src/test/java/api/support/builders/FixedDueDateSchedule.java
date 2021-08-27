@@ -1,5 +1,6 @@
 package api.support.builders;
 
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
@@ -49,11 +50,11 @@ public class FixedDueDateSchedule {
   }
 
   public static FixedDueDateSchedule todayOnly() {
-    return forDay(DateTime.now(DateTimeZone.UTC));
+    return forDay(ClockUtil.getDateTime());
   }
 
   public static FixedDueDateSchedule yesterdayOnly() {
-    return forDay(DateTime.now(DateTimeZone.UTC).minusDays(1));
+    return forDay(ClockUtil.getDateTime().minusDays(1));
   }
 
   public static FixedDueDateSchedule forDay(DateTime day) {

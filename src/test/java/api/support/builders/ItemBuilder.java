@@ -94,6 +94,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
     JsonObject itemRequest = new JsonObject();
 
     put(itemRequest, "id", id);
+    put(itemRequest, "_version", 4);
     put(itemRequest, "barcode", barcode);
     put(itemRequest, "holdingsRecordId", holdingId);
     put(itemRequest, "materialTypeId", materialTypeId);
