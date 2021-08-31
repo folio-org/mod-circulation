@@ -109,6 +109,6 @@ class KeepCurrentStrategyTest {
     final DateTime requested = new DateTime(year, month, utcDay, utcHour, 0, 0, UTC);
     final DateTime dateEnd = strategy.calculateDueDate(requested, null).value();
 
-    assertEquals(newYorkDateEnd, dateEnd);
+    assertEquals(newYorkDateEnd.withZone(UTC), dateEnd);
   }
 }
