@@ -97,7 +97,7 @@ class KeepCurrentStrategyTest {
     "16, 17, 3",
     "16, 17, 4"
   })
-  void shouldNeverChangeLocalDayWhenConvertingToTimeZone(int newYorkDay, int utcDay, int utcHour) {
+  void shouldAlwaysStayTheSameZonedDay(int newYorkDay, int utcDay, int utcHour) {
     final int year = 2020;
     final int month = 11;
     final DateTimeZone newYorkZone = DateTimeZone.forID("America/New_York");

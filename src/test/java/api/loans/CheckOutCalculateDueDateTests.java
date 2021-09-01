@@ -714,8 +714,7 @@ class CheckOutCalculateDueDateTests extends APITests {
           LocalDate localDate = nextOpeningDay.getDate();
 
           if (nextOpeningDay.getAllDay()) {
-            return atStartOfDay(localDate, UTC)
-              .withTime(MIDNIGHT);
+            return atStartOfDay(localDate, UTC);
           } else {
             OpeningHour openingHour = nextOpeningDay.getOpeningHour().get(0);
 

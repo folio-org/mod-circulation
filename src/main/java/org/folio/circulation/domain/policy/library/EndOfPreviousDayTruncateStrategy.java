@@ -27,7 +27,6 @@ public class EndOfPreviousDayTruncateStrategy extends EndOfPreviousDayStrategy {
       return failed(failureForAbsentTimetable());
     }
 
-    return succeeded(atEndOfDay(openingDays.getPreviousDay().getDate(),
-      zone));
+    return succeeded(atEndOfDay(openingDays.getPreviousDay().getDate(), zone));
   }
 }
