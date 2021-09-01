@@ -26,6 +26,7 @@ import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
+import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTimeOptional;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -52,9 +53,6 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.utils.ClockUtil;
-import org.joda.time.DateTime;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
 
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
@@ -70,7 +68,6 @@ public class EventPublisher {
   public static final String DUE_DATE_CHANGED_BY_RECALL_FIELD = "dueDateChangedByRecall";
   public static final String FAILED_TO_PUBLISH_LOG_TEMPLATE =
     "Failed to publish {} event: loan is null";
-  public static final DateTimeFormatter FMT = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss");
 
   private final PubSubPublishingService pubSubPublishingService;
 
@@ -245,7 +242,7 @@ public class EventPublisher {
 
   public CompletableFuture<Result<Loan>> publishAgedToLostEvents(Loan loan) {
     return publishLogRecord(LoanLogContext.from(loan)
-      .withDescription(String.format("Due date: %s", loan.getAgedToLostDateTime())).asJson(), LOAN)
+      .withDescription(String.format("Due date: %s", formatDateTimeOptional(loan.getAgedToLostDateTime()))).asJson(), LOAN)
       .thenCompose(r -> r.after(v -> publishStatusChangeEvent(ITEM_AGED_TO_LOST, loan)));
   }
 
@@ -275,13 +272,13 @@ public class EventPublisher {
   public CompletableFuture<Result<Void>> publishRecallRequestedEvent(Loan loan) {
     return publishLogRecord(LoanLogContext.from(loan)
       .withAction(LogContextActionResolver.resolveAction(RECALLREQUESTED.getValue()))
-      .withDescription(String.format("New due date: %s (from %s)", formatDateTime(loan.getDueDate()), formatDateTime(loan.getPreviousDueDate()))).asJson(), LOAN);
+      .withDescription(String.format("New due date: %s (from %s)", formatDateTimeOptional(loan.getDueDate()), formatDateTimeOptional(loan.getPreviousDueDate()))).asJson(), LOAN);
   }
 
   public CompletableFuture<Result<Void>> publishDueDateLogEvent(Loan loan) {
     return publishLogRecord(LoanLogContext.from(loan)
       .withAction(LogContextActionResolver.resolveAction(DUE_DATE_CHANGED.getValue()))
-      .withDescription(String.format("New due date: %s (from %s)", formatDateTime(loan.getDueDate()), formatDateTime(loan.getPreviousDueDate()))).asJson(), LOAN);
+      .withDescription(String.format("New due date: %s (from %s)", formatDateTimeOptional(loan.getDueDate()), formatDateTimeOptional(loan.getPreviousDueDate()))).asJson(), LOAN);
   }
 
   public CompletableFuture<Result<Void>> publishRenewedEvent(Loan loan) {
@@ -346,7 +343,4 @@ public class EventPublisher {
     return requestAndRelatedRecords;
   }
 
-  private String formatDateTime(DateTime dateTime) {
-    return dateTime.toString(FMT);
-  }
 }

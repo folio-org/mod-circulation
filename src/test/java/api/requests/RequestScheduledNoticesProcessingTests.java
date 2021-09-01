@@ -14,7 +14,7 @@ import static org.folio.circulation.domain.representations.logs.LogEventType.NOT
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE_ERROR;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.utils.ClockUtil.getDateTime;
-import static org.folio.circulation.support.utils.ClockUtil.getLocalDate;
+import static org.folio.circulation.support.utils.ClockUtil.getJodaLocalDate;
 import static org.folio.circulation.support.utils.DateTimeUtil.atStartOfDay;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
@@ -90,7 +90,7 @@ class RequestScheduledNoticesProcessingTests extends APITests {
       .create();
     setupNoticePolicyWithRequestNotice(noticeConfiguration);
 
-    final org.joda.time.LocalDate localDate = getLocalDate()
+    final org.joda.time.LocalDate localDate = getJodaLocalDate()
       .minusDays(1);
     final var requestExpiration = LocalDate.of(localDate.getYear(),
       localDate.getMonthOfYear(), localDate.getDayOfMonth());
@@ -132,7 +132,7 @@ class RequestScheduledNoticesProcessingTests extends APITests {
       .create();
     setupNoticePolicyWithRequestNotice(noticeConfiguration);
 
-    final org.joda.time.LocalDate localDate = getLocalDate()
+    final org.joda.time.LocalDate localDate = getJodaLocalDate()
       .minusDays(1);
     final var requestExpiration = LocalDate.of(localDate.getYear(),
       localDate.getMonthOfYear(), localDate.getDayOfMonth());
@@ -188,7 +188,7 @@ class RequestScheduledNoticesProcessingTests extends APITests {
       request.getJson().put("status", "Closed - Pickup expired"));
 
     scheduledNoticeProcessingClient.runRequestNoticesProcessing(
-      atStartOfDay(getLocalDate().plusDays(31), UTC));
+      atStartOfDay(getJodaLocalDate().plusDays(31), UTC));
 
     verifyNumberOfScheduledNotices(0);
     verifyNumberOfSentNotices(1);
@@ -222,7 +222,7 @@ class RequestScheduledNoticesProcessingTests extends APITests {
     verifyNumberOfScheduledNotices(1);
 
     scheduledNoticeProcessingClient.runRequestNoticesProcessing(
-      atStartOfDay(getLocalDate().plusDays(31), UTC));
+      atStartOfDay(getJodaLocalDate().plusDays(31), UTC));
 
     verifyNumberOfScheduledNotices(1);
     verifyNumberOfSentNotices(0);
@@ -264,7 +264,7 @@ class RequestScheduledNoticesProcessingTests extends APITests {
         equalTo("Closed - Filled"));
 
     scheduledNoticeProcessingClient.runRequestNoticesProcessing(
-      atStartOfDay(getLocalDate().plusDays(100), UTC));
+      atStartOfDay(getJodaLocalDate().plusDays(100), UTC));
 
     verifyNumberOfScheduledNotices(0);
     verifyNumberOfSentNotices(0);
@@ -282,7 +282,7 @@ class RequestScheduledNoticesProcessingTests extends APITests {
       .create();
     setupNoticePolicyWithRequestNotice(noticeConfiguration);
 
-    final org.joda.time.LocalDate localDate = getLocalDate()
+    final org.joda.time.LocalDate localDate = getJodaLocalDate()
       .plusDays(4);
     final var requestExpiration = LocalDate.of(localDate.getYear(),
       localDate.getMonthOfYear(), localDate.getDayOfMonth());
@@ -318,7 +318,7 @@ class RequestScheduledNoticesProcessingTests extends APITests {
       .create();
     setupNoticePolicyWithRequestNotice(noticeConfiguration);
 
-    final org.joda.time.LocalDate localDate = getLocalDate()
+    final org.joda.time.LocalDate localDate = getJodaLocalDate()
       .plusDays(2);
     final var requestExpiration = LocalDate.of(localDate.getYear(),
       localDate.getMonthOfYear(), localDate.getDayOfMonth());
@@ -361,7 +361,7 @@ class RequestScheduledNoticesProcessingTests extends APITests {
       .create();
     setupNoticePolicyWithRequestNotice(noticeConfiguration);
 
-    final org.joda.time.LocalDate localDate = getLocalDate()
+    final org.joda.time.LocalDate localDate = getJodaLocalDate()
       .plusMonths(3);
     final var requestExpiration = LocalDate.of(localDate.getYear(),
       localDate.getMonthOfYear(), localDate.getDayOfMonth());
@@ -383,7 +383,7 @@ class RequestScheduledNoticesProcessingTests extends APITests {
    verifyNumberOfScheduledNotices(1);
 
     scheduledNoticeProcessingClient.runRequestNoticesProcessing(
-    atStartOfDay(getLocalDate().plusDays(28), UTC));
+    atStartOfDay(getJodaLocalDate().plusDays(28), UTC));
 
     verifyNumberOfSentNotices(1);
     assertThat(FakeModNotify.getFirstSentPatronNotice(),
@@ -460,7 +460,7 @@ class RequestScheduledNoticesProcessingTests extends APITests {
       .withStatus(CLOSED_PICKUP_EXPIRED));
 
     scheduledNoticeProcessingClient.runRequestNoticesProcessing(
-      atStartOfDay(getLocalDate().plusDays(35), UTC));
+      atStartOfDay(getJodaLocalDate().plusDays(35), UTC));
 
     verifyNumberOfScheduledNotices(0);
     verifyNumberOfSentNotices(1);
@@ -548,7 +548,7 @@ class RequestScheduledNoticesProcessingTests extends APITests {
         .create()
     );
 
-    final org.joda.time.LocalDate localDate = getLocalDate();
+    final org.joda.time.LocalDate localDate = getJodaLocalDate();
     final var requestExpiration = LocalDate.of(localDate.getYear(),
       localDate.getMonthOfYear(), localDate.getDayOfMonth());
 

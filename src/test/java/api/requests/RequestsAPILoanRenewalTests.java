@@ -604,7 +604,7 @@ class RequestsAPILoanRenewalTests extends APITests {
   }
 
   private void loanPolicyWithFixedProfileAndRenewingIsForbiddenWhenHoldIsPending() {
-    final org.joda.time.LocalDate jodaDate = ClockUtil.getLocalDate();
+    final org.joda.time.LocalDate jodaDate = ClockUtil.getJodaLocalDate();
     LocalDate now = LocalDate.of(jodaDate.getYear(), jodaDate.getMonthOfYear(),
       jodaDate.getDayOfMonth());
     FixedDueDateSchedulesBuilder fixedDueDateSchedules = new FixedDueDateSchedulesBuilder()

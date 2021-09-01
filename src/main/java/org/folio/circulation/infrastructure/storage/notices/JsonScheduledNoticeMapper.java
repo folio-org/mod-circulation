@@ -7,6 +7,7 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTime
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getObjectProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.results.Result.succeeded;
+import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;
 
 import org.folio.circulation.domain.notice.NoticeFormat;
 import org.folio.circulation.domain.notice.NoticeTiming;
@@ -16,8 +17,8 @@ import org.folio.circulation.domain.notice.schedule.ScheduledNoticeConfig;
 import org.folio.circulation.domain.notice.schedule.ScheduledNoticeConfigBuilder;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.HttpFailure;
-import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.ServerErrorFailure;
+import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTimeZone;
 
 import io.vertx.core.json.JsonObject;
@@ -86,7 +87,7 @@ public class JsonScheduledNoticeMapper {
       .put(FEE_FINE_ACTION_ID, notice.getFeeFineActionId())
       .put(RECIPIENT_USER_ID, notice.getRecipientUserId())
       .put(TRIGGERING_EVENT, notice.getTriggeringEvent().getRepresentation())
-      .put(NEXT_RUN_TIME, notice.getNextRunTime().withZone(DateTimeZone.UTC).toString())
+      .put(NEXT_RUN_TIME, formatDateTime(notice.getNextRunTime().withZone(DateTimeZone.UTC)))
       .put(NOTICE_CONFIG, mapConfigToJson(notice.getConfiguration()));
   }
 

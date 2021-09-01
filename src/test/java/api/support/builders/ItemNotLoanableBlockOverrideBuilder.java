@@ -1,5 +1,7 @@
 package api.support.builders;
 
+import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTimeOptional;
+
 import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
@@ -17,7 +19,7 @@ public class ItemNotLoanableBlockOverrideBuilder extends JsonBuilder implements 
   public JsonObject create() {
     JsonObject blockOverrides = new JsonObject();
 
-    put(blockOverrides, "dueDate", dueDate);
+    put(blockOverrides, "dueDate", formatDateTimeOptional(dueDate));
 
     return blockOverrides;
   }

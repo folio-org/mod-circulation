@@ -12,6 +12,8 @@ import static java.time.Clock.fixed;
 import static java.time.Clock.offset;
 import static java.time.Duration.ofDays;
 import static org.folio.circulation.domain.policy.DueDateManagement.KEEP_THE_CURRENT_DUE_DATE;
+import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;
+import static org.folio.circulation.support.utils.DateFormatUtil.parseJodaDateTime;
 import static org.folio.circulation.support.utils.DateTimeUtil.atEndOfDay;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.is;
@@ -36,7 +38,6 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
 import org.joda.time.LocalTime;
 import org.joda.time.Seconds;
-import org.joda.time.format.ISODateTimeFormat;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -69,7 +70,7 @@ class LoanDueDatesAfterRecallTests extends APITests {
 
   @BeforeAll
   public static void setUpBeforeClass() {
-    final Instant now = Instant.ofEpochMilli(ClockUtil.getInstant()
+    final Instant now = Instant.ofEpochMilli(ClockUtil.getJodaInstant()
       .getMillis());
     clock = Clock.fixed(now, ZoneOffset.UTC);
   }
@@ -106,7 +107,7 @@ class LoanDueDatesAfterRecallTests extends APITests {
     assertThat("due date should not be the original due date",
         storedLoan.getString("dueDate"), not(originalDueDate));
 
-    final String expectedDueDate = ClockUtil.getDateTime().toString(ISODateTimeFormat.dateTime());
+    final String expectedDueDate = formatDateTime(ClockUtil.getDateTime());
     assertThat("due date should be the current system date",
         storedLoan.getString("dueDate"), is(expectedDueDate));
   }
@@ -142,7 +143,7 @@ class LoanDueDatesAfterRecallTests extends APITests {
     assertThat("due date should not be the original date",
         storedLoan.getString("dueDate"), not(originalDueDate));
 
-    final String expectedDueDate = ClockUtil.getDateTime().plusMonths(2).toString(ISODateTimeFormat.dateTime());
+    final String expectedDueDate = formatDateTime(ClockUtil.getDateTime().plusMonths(2));
     assertThat("due date should be in 2 months",
         storedLoan.getString("dueDate"), is(expectedDueDate));
   }
@@ -181,7 +182,7 @@ class LoanDueDatesAfterRecallTests extends APITests {
     assertThat("due date should not be the original due date",
         storedLoan.getString("dueDate"), not(originalDueDate));
 
-    final String expectedDueDate = loanDate.plusWeeks(2).toString(ISODateTimeFormat.dateTime());
+    final String expectedDueDate = formatDateTime(loanDate.plusWeeks(2));
     assertThat("due date should be in 2 weeks (minumum guaranteed loan period)",
         storedLoan.getString("dueDate"), is(expectedDueDate));
   }
@@ -219,7 +220,7 @@ class LoanDueDatesAfterRecallTests extends APITests {
     assertThat("due date should not be the original due date",
         storedLoan.getString("dueDate"), not(originalDueDate));
 
-    final String expectedDueDate = ClockUtil.getDateTime().plusWeeks(1).toString(ISODateTimeFormat.dateTime());
+    final String expectedDueDate = formatDateTime(ClockUtil.getDateTime().plusWeeks(1));
     assertThat("due date should be in 1 week (recall return interval)",
         storedLoan.getString("dueDate"), is(expectedDueDate));
   }
@@ -257,7 +258,7 @@ class LoanDueDatesAfterRecallTests extends APITests {
     assertThat("due date sholud not be the original due date",
         storedLoan.getString("dueDate"), not(originalDueDate));
 
-    final String expectedDueDate = loanDate.plusWeeks(2).toString(ISODateTimeFormat.dateTime());
+    final String expectedDueDate = formatDateTime(loanDate.plusWeeks(2));
     assertThat("due date should be in 2 weeks (minimum guaranteed loan period)",
         storedLoan.getString("dueDate"), is(expectedDueDate));
   }
@@ -307,9 +308,8 @@ class LoanDueDatesAfterRecallTests extends APITests {
     assertThat("due date should not be the original due date",
         storedLoan.getString("dueDate"), not(originalDueDate));
 
-    final String expectedDueDate =
-      atEndOfDay(CASE_FRI_SAT_MON_SERVICE_POINT_NEXT_DAY, UTC)
-        .toString(ISODateTimeFormat.dateTime());
+    final String expectedDueDate = formatDateTime(
+      atEndOfDay(CASE_FRI_SAT_MON_SERVICE_POINT_NEXT_DAY, UTC));
 
     assertThat("due date should be moved to Monday",
         storedLoan.getString("dueDate"), is(expectedDueDate));
@@ -400,11 +400,10 @@ class LoanDueDatesAfterRecallTests extends APITests {
 
     final JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
 
-    final String expectedDueDate = ClockUtil
+    final String expectedDueDate = formatDateTime(ClockUtil
       .getDateTime()
       .plusMonths(2)
-      .withTime(LocalTime.MIDNIGHT.minusSeconds(1))
-      .toString(ISODateTimeFormat.dateTime());
+      .withTime(LocalTime.MIDNIGHT.minusSeconds(1)));
 
     assertThat("due date should be in 2 months (recall return interval)",
         storedLoan.getString("dueDate"), is(expectedDueDate));
@@ -451,7 +450,7 @@ class LoanDueDatesAfterRecallTests extends APITests {
 
     assertThat("due date should be end of the day, 5 days from loan date",
       storedLoan.getString("dueDate"), isEquivalentTo(
-        DateTime.parse("2020-01-29T23:59:59+01:00")));
+        parseJodaDateTime("2020-01-29T23:59:59+01:00")));
   }
 
   @Test
@@ -483,7 +482,7 @@ class LoanDueDatesAfterRecallTests extends APITests {
       smallAngryPlanet, jessica, ClockUtil.getDateTime());
 
     // Recalled is applied when loaned, so the due date should be 2 weeks, not 3 weeks
-    final String expectedDueDate = ClockUtil.getDateTime().plusWeeks(2).toString(ISODateTimeFormat.dateTime());
+    final String expectedDueDate = formatDateTime(ClockUtil.getDateTime().plusWeeks(2));
 
     JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
 
@@ -530,7 +529,7 @@ class LoanDueDatesAfterRecallTests extends APITests {
       smallAngryPlanet, jessica, ClockUtil.getDateTime());
 
     // Recalled is applied when loaned, so the due date should be 2 weeks, not 3 weeks
-    final String expectedDueDate = ClockUtil.getDateTime().plusWeeks(2).toString(ISODateTimeFormat.dateTime());
+    final String expectedDueDate = formatDateTime(ClockUtil.getDateTime().plusWeeks(2));
 
     JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
 
@@ -582,7 +581,7 @@ class LoanDueDatesAfterRecallTests extends APITests {
     assertThat("due date after recall should not be the original date",
         recalledDueDate, not(originalDueDate));
 
-    final String expectedDueDate = ClockUtil.getDateTime().plusWeeks(2).toString(ISODateTimeFormat.dateTime());
+    final String expectedDueDate = formatDateTime(ClockUtil.getDateTime().plusWeeks(2));
     assertThat("due date after recall should be in 2 weeks",
         storedLoan.getString("dueDate"), is(expectedDueDate));
 
@@ -629,7 +628,7 @@ class LoanDueDatesAfterRecallTests extends APITests {
     assertThat("due date after recall should not be the original date",
         recalledDueDate, not(originalDueDate));
 
-    final String expectedDueDate = ClockUtil.getDateTime().plusWeeks(2).toString(ISODateTimeFormat.dateTime());
+    final String expectedDueDate = formatDateTime(ClockUtil.getDateTime().plusWeeks(2));
     assertThat("due date after recall should be in 2 weeks",
         storedLoan.getString("dueDate"), is(expectedDueDate));
 
@@ -676,7 +675,7 @@ class LoanDueDatesAfterRecallTests extends APITests {
     assertThat("due date after recall should not be  the original date",
         recalledDueDate, not(originalDueDate));
 
-    final String expectedDueDate = ClockUtil.getDateTime().plusMonths(2).toString(ISODateTimeFormat.dateTime());
+    final String expectedDueDate = formatDateTime(ClockUtil.getDateTime().plusMonths(2));
     assertThat("due date after recall should be in 2 months",
         storedLoan.getString("dueDate"), is(expectedDueDate));
 
@@ -723,7 +722,7 @@ class LoanDueDatesAfterRecallTests extends APITests {
     assertThat("due date after recall should not be the original date",
         recalledDueDate, not(originalDueDate));
 
-    final String expectedDueDate = ClockUtil.getDateTime().plusMonths(2).toString(ISODateTimeFormat.dateTime());
+    final String expectedDueDate = formatDateTime(ClockUtil.getDateTime().plusMonths(2));
     assertThat("due date after recall should be in 2 months",
         storedLoan.getString("dueDate"), is(expectedDueDate));
 

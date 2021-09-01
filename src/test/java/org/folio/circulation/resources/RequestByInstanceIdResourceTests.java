@@ -1,5 +1,6 @@
 package org.folio.circulation.resources;
 
+import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -22,7 +23,6 @@ import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.joda.time.format.ISODateTimeFormat;
 import org.junit.jupiter.api.Test;
 
 import api.support.fixtures.ItemExamples;
@@ -97,11 +97,11 @@ public class RequestByInstanceIdResourceTests {
 
     JsonObject instanceRequest = new JsonObject();
     instanceRequest.put("instanceId", UUID.randomUUID().toString());
-    instanceRequest.put("requestDate", requestDate.toString(ISODateTimeFormat.dateTime()));
+    instanceRequest.put("requestDate", formatDateTime(requestDate));
     instanceRequest.put("requesterId", UUID.randomUUID().toString());
     instanceRequest.put("pickupServicePointId", pickupServicePointId == null ? UUID.randomUUID().toString() : pickupServicePointId.toString());
     instanceRequest.put("fulfilmentPreference", "Hold Shelf");
-    instanceRequest.put("requestExpirationDate",requestExpirationDate.toString(ISODateTimeFormat.dateTime()));
+    instanceRequest.put("requestExpirationDate", formatDateTime(requestExpirationDate));
 
     return instanceRequest;
   }

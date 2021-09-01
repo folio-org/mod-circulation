@@ -7,8 +7,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import java.util.UUID;
 
 import org.folio.circulation.domain.Loan;
-import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.server.ValidationError;
+import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.jupiter.api.Test;
@@ -67,24 +67,23 @@ class FixedLoanPolicyCheckOutDueDateCalculationTests {
   @Test
   void shouldUseOnlyScheduleAvailableWhenLoanDateTimeAfterMidnightAndTimeZoneIsNotUTC() {
     DateTimeZone timeZone = DateTimeZone.forOffsetHours(4);
+    final DateTime fromDate = new DateTime(2020, 11, 1, 0, 0, 0, timeZone);
+    final DateTime toDate = new DateTime(2020, 11, 2, 0, 0, 0, timeZone);
+    final DateTime loanDate = new DateTime(2020, 11, 2, 12, 30, 30, timeZone);
+
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
       .create())
       .withDueDateSchedules(new FixedDueDateSchedulesBuilder()
-        .addSchedule(new FixedDueDateSchedule(new DateTime(2020, 11, 1, 0, 0, 0, timeZone),
-          new DateTime(2020, 11, 2, 0, 0, 0, timeZone),
-          new DateTime(2020, 11, 2, 0, 0, 0, timeZone)))
+        .addSchedule(new FixedDueDateSchedule(fromDate, toDate, toDate))
         .create());
-
-    DateTime loanDate = new DateTime(2020, 11, 2, 12, 30, 30, timeZone);
 
     Loan loan = loanFor(loanDate);
 
     final Result<DateTime> calculationResult = loanPolicy
       .calculateInitialDueDate(loan, null);
 
-    assertThat(calculationResult.value(), is(new DateTime(2020, 11, 2, 0, 0, 0,
-      timeZone)));
+    assertThat(calculationResult.value(), is(toDate));
   }
 
   @Test

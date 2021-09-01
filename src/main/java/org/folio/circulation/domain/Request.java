@@ -302,7 +302,6 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   void changeHoldShelfExpirationDate(DateTime holdShelfExpirationDate) {
     write(requestRepresentation, HOLD_SHELF_EXPIRATION_DATE,
       holdShelfExpirationDate);
-
   }
 
   void removeHoldShelfExpirationDate() {

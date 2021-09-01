@@ -51,6 +51,7 @@ import static org.folio.circulation.domain.policy.DueDateManagement.MOVE_TO_THE_
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE_ERROR;
 import static org.folio.circulation.support.utils.ClockUtil.getDateTime;
+import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;
 import static org.folio.circulation.support.utils.DateTimeUtil.atEndOfDay;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.containsString;
@@ -987,7 +988,7 @@ public abstract class RenewalAPITests extends APITests {
 
     DateTime expectedDate =
       atEndOfDay(CASE_FRI_SAT_MON_SERVICE_POINT_PREV_DAY, UTC);
-    assertThat("due date should be " + expectedDate,
+    assertThat("due date should be " + formatDateTime(expectedDate),
       renewedLoan.getString("dueDate"), isEquivalentTo(expectedDate));
   }
 
@@ -1029,7 +1030,7 @@ public abstract class RenewalAPITests extends APITests {
 
     DateTime expectedDate =
       atEndOfDay(CASE_FRI_SAT_MON_SERVICE_POINT_NEXT_DAY, UTC);
-    assertThat("due date should be " + expectedDate,
+    assertThat("due date should be " + formatDateTime(expectedDate),
       renewedLoan.getString("dueDate"), isEquivalentTo(expectedDate));
   }
 
@@ -1070,7 +1071,7 @@ public abstract class RenewalAPITests extends APITests {
     DateTime expectedDate =
       CASE_FRI_SAT_MON_SERVICE_POINT_NEXT_DAY
         .toDateTime(START_TIME_FIRST_PERIOD, UTC);
-    assertThat("due date should be " + expectedDate,
+    assertThat("due date should be " + formatDateTime(expectedDate),
       renewedLoan.getString("dueDate"), isEquivalentTo(expectedDate));
   }
 
@@ -1115,7 +1116,7 @@ public abstract class RenewalAPITests extends APITests {
     DateTime expectedDate =
       WEDNESDAY_DATE
         .toDateTime(END_TIME_SECOND_PERIOD, UTC);
-    assertThat("due date should be " + expectedDate,
+    assertThat("due date should be " + formatDateTime(expectedDate),
       renewedLoan.getString("dueDate"), isEquivalentTo(expectedDate));
   }
 
@@ -1165,7 +1166,7 @@ public abstract class RenewalAPITests extends APITests {
 
     assertThat(response.getBody(), containsString(expectedTimeZone));
 
-    assertThat("due date should be " + expectedDate,
+    assertThat("due date should be " + formatDateTime(expectedDate),
       renewedLoan.getString("dueDate"), isEquivalentTo(expectedDate));
   }
 
@@ -1792,7 +1793,7 @@ public abstract class RenewalAPITests extends APITests {
     JsonObject renewedLoan = loansFixture.renewLoan(item, steve).getJson();
     mockClockManagerToReturnDefaultDateTime();
 
-    assertThat("due date should be " + expectedDate, renewedLoan.getString("dueDate"),
+    assertThat("due date should be " + formatDateTime(expectedDate), renewedLoan.getString("dueDate"),
       isEquivalentTo(expectedDate));
   }
 
@@ -1813,7 +1814,7 @@ public abstract class RenewalAPITests extends APITests {
     JsonObject renewedLoan = loansFixture.renewLoan(item, steve).getJson();
     mockClockManagerToReturnDefaultDateTime();
 
-    assertThat("due date should be " + expectedDate, renewedLoan.getString("dueDate"),
+    assertThat("due date should be " + formatDateTime(expectedDate), renewedLoan.getString("dueDate"),
       isEquivalentTo(expectedDate));
   }
 
@@ -1832,7 +1833,7 @@ public abstract class RenewalAPITests extends APITests {
     JsonObject renewedLoan = loansFixture.renewLoan(item, steve).getJson();
     mockClockManagerToReturnDefaultDateTime();
 
-    assertThat("due date should be " + patronExpirationDate, renewedLoan.getString("dueDate"),
+    assertThat("due date should be " + formatDateTime(patronExpirationDate), renewedLoan.getString("dueDate"),
       isEquivalentTo(patronExpirationDate));
   }
 
@@ -1850,7 +1851,7 @@ public abstract class RenewalAPITests extends APITests {
     JsonObject renewedLoan = loansFixture.renewLoan(item, steve).getJson();
     mockClockManagerToReturnDefaultDateTime();
 
-    assertThat("due date should be " + patronExpirationDate, renewedLoan.getString("dueDate"),
+    assertThat("due date should be " + formatDateTime(patronExpirationDate), renewedLoan.getString("dueDate"),
       isEquivalentTo(patronExpirationDate));
   }
 
@@ -1871,7 +1872,8 @@ public abstract class RenewalAPITests extends APITests {
     JsonObject renewedLoan = loansFixture.renewLoan(item, steve).getJson();
     mockClockManagerToReturnDefaultDateTime();
 
-    assertThat("due date should be " + FIRST_DAY_OPEN.toDateTime(END_TIME_SECOND_PERIOD, UTC),
+    assertThat("due date should be " + formatDateTime(
+      FIRST_DAY_OPEN.toDateTime(END_TIME_SECOND_PERIOD, UTC)),
       renewedLoan.getString("dueDate"), isEquivalentTo(FIRST_DAY_OPEN.toDateTime(
         END_TIME_SECOND_PERIOD, UTC)));
   }
@@ -1893,7 +1895,8 @@ public abstract class RenewalAPITests extends APITests {
     JsonObject renewedLoan = loansFixture.renewLoan(item, steve).getJson();
     mockClockManagerToReturnDefaultDateTime();
 
-    assertThat("due date should be " + FIRST_DAY_OPEN.toDateTime(END_TIME_SECOND_PERIOD, UTC),
+    assertThat("due date should be " + formatDateTime(
+      FIRST_DAY_OPEN.toDateTime(END_TIME_SECOND_PERIOD, UTC)),
       renewedLoan.getString("dueDate"), isEquivalentTo(FIRST_DAY_OPEN.toDateTime(
         END_TIME_SECOND_PERIOD, UTC)));
   }
@@ -1910,7 +1913,7 @@ public abstract class RenewalAPITests extends APITests {
         .at(servicePointId)).getJson();
     mockClockManagerToReturnDefaultDateTime();
 
-    assertThat(DateTime.parse(response.getString("dueDate")).toDateTime(), is(expectedDueDate));
+    assertThat(response.getString("dueDate"), is(formatDateTime(expectedDueDate)));
   }
 
   private void checkRenewalAttempt(DateTime expectedDueDate, UUID dueDateLimitedPolicyId) {

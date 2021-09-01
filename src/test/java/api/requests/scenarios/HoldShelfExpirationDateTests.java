@@ -44,7 +44,7 @@ class HoldShelfExpirationDateTests extends APITests {
 
   @BeforeAll
   public static void setUpBeforeClass() {
-    final Instant now = Instant.ofEpochMilli(ClockUtil.getInstant()
+    final Instant now = Instant.ofEpochMilli(ClockUtil.getJodaInstant()
       .getMillis());
     clock = Clock.fixed(now, ZoneOffset.UTC);
   }
@@ -174,7 +174,7 @@ class HoldShelfExpirationDateTests extends APITests {
 
     final JsonObject storedRequest = requestsClient.getById(request.getId()).getJson();
 
-    final Instant now = Instant.ofEpochMilli(ClockUtil.getInstant().getMillis());
+    final Instant now = Instant.ofEpochMilli(ClockUtil.getJodaInstant().getMillis());
 
     ZonedDateTime expectedExpirationDate = atEndOfDay(
       interval.addTo(now.atZone(tenantTimeZone), amount))
@@ -213,7 +213,7 @@ class HoldShelfExpirationDateTests extends APITests {
         .at(checkInServicePoint.getId()));
 
     final JsonObject storedRequest = requestsClient.getById(request.getId()).getJson();
-    final Instant now = Instant.ofEpochMilli(ClockUtil.getInstant().getMillis());
+    final Instant now = Instant.ofEpochMilli(ClockUtil.getJodaInstant().getMillis());
 
     ZonedDateTime expectedExpirationDate = interval
       .addTo(now.atZone(tenantTimeZone), amount)

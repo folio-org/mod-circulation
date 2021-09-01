@@ -125,7 +125,7 @@ class OverduePeriodCalculatorServiceTest {
       createOpeningDay(true, new LocalDate("2020-04-09"), LONDON),
       createOpeningDay(false, new LocalDate("2020-04-10"), LONDON));
 
-    LocalTime now = ClockUtil.getLocalTime();
+    LocalTime now = ClockUtil.getJodaLocalTime();
 
     List<OpeningDay> invalid = Arrays.asList(
       OpeningDay.createOpeningDay(
