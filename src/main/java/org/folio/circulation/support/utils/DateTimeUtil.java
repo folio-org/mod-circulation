@@ -2,7 +2,6 @@ package org.folio.circulation.support.utils;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
@@ -126,36 +125,11 @@ public class DateTimeUtil {
    * TODO: Remove this after migrating from JodaTime to JavaTime.
    */
   public static org.joda.time.LocalDate normalizeDate(org.joda.time.LocalDate date) {
-    return date;
-  }
-
-  /**
-   * Given a time, normalize it.
-   * <p>
-   * For compatibility with JodaTime, when value is null, then a now() call
-   * via ClockUtil is used.
-   *
-   * @param time The time to normalize.
-   * @return The provided date or if time is null then ClockUtil.getLocalTime().
-   */
-  public static LocalTime normalizeTime(LocalTime time) {
-    if (time == null) {
-      return ClockUtil.getLocalTime();
+    if (date == null) {
+      return ClockUtil.getJodaLocalDate();
     }
 
-    return time;
-  }
-
-  /**
-   * A stub-like function for normalizing the LocalTime.
-   *
-   * The normalization is for making JavaTime backward compatible with
-   * JodaTime behavior. Therefore, this does nothing.
-   *
-   * TODO: Remove this after migrating from JodaTime to JavaTime.
-   */
-  public static org.joda.time.LocalTime normalizeTime(org.joda.time.LocalTime time) {
-    return time;
+    return date;
   }
 
   /**
@@ -184,7 +158,7 @@ public class DateTimeUtil {
    * @param zone The time zone to normalize.
    * @return The provided time zone or if zone is null a default time zone.
    */
-  public static ZoneId normalizeZone(ZoneOffset zone) {
+  public static ZoneOffset normalizeZone(ZoneOffset zone) {
     if (zone == null) {
       return ClockUtil.getZoneOffset();
     }
@@ -763,10 +737,10 @@ public class DateTimeUtil {
    * @return The dateTime that is most recent or NULL if no valid dateTimes
    * provided.
    */
-  public static DateTime mostRecentDate(DateTime... dates) {
+  public static ZonedDateTime mostRecentDate(ZonedDateTime... dates) {
     return Stream.of(dates)
       .filter(Objects::nonNull)
-      .max(DateTime::compareTo)
+      .max(ZonedDateTime::compareTo)
       .orElse(null);
   }
 
@@ -777,10 +751,10 @@ public class DateTimeUtil {
    * @return The dateTime that is most recent or NULL if no valid dateTimes
    * provided.
    */
-  public static ZonedDateTime mostRecentDate(ZonedDateTime... dates) {
+  public static DateTime mostRecentDate(DateTime... dates) {
     return Stream.of(dates)
       .filter(Objects::nonNull)
-      .max(ZonedDateTime::compareTo)
+      .max(DateTime::compareTo)
       .orElse(null);
   }
 
