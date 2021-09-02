@@ -1,9 +1,9 @@
 package org.folio.circulation.domain.policy.library;
 
-import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.END_OF_A_DAY;
 import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.failureForAbsentTimetable;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.succeeded;
+import static org.folio.circulation.support.utils.DateTimeUtil.atEndOfDay;
 
 import java.util.Objects;
 
@@ -27,6 +27,6 @@ public class EndOfPreviousDayTruncateStrategy extends EndOfPreviousDayStrategy {
       return failed(failureForAbsentTimetable());
     }
 
-    return succeeded(openingDays.getPreviousDay().getDate().toDateTime(END_OF_A_DAY, zone));
+    return succeeded(atEndOfDay(openingDays.getPreviousDay().getDate(), zone));
   }
 }

@@ -11,11 +11,8 @@ import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.joda.time.LocalTime;
 
 public final class ClosedLibraryStrategyUtils {
-
-  public static final LocalTime END_OF_A_DAY = LocalTime.MIDNIGHT.minusSeconds(1);
 
   private ClosedLibraryStrategyUtils() {
   }

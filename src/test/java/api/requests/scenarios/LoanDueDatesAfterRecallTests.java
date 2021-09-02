@@ -12,7 +12,7 @@ import static java.time.Clock.fixed;
 import static java.time.Clock.offset;
 import static java.time.Duration.ofDays;
 import static org.folio.circulation.domain.policy.DueDateManagement.KEEP_THE_CURRENT_DUE_DATE;
-import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.END_OF_A_DAY;
+import static org.folio.circulation.support.utils.DateTimeUtil.atEndOfDay;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
@@ -308,8 +308,8 @@ class LoanDueDatesAfterRecallTests extends APITests {
         storedLoan.getString("dueDate"), not(originalDueDate));
 
     final String expectedDueDate =
-        CASE_FRI_SAT_MON_SERVICE_POINT_NEXT_DAY
-          .toDateTime(END_OF_A_DAY, UTC).toString(ISODateTimeFormat.dateTime());
+      atEndOfDay(CASE_FRI_SAT_MON_SERVICE_POINT_NEXT_DAY, UTC)
+        .toString(ISODateTimeFormat.dateTime());
 
     assertThat("due date should be moved to Monday",
         storedLoan.getString("dueDate"), is(expectedDueDate));

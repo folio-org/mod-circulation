@@ -2,7 +2,9 @@ package api.requests;
 
 import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
+import static java.time.ZoneOffset.UTC;
 import static org.folio.circulation.domain.representations.RequestProperties.HOLD_SHELF_EXPIRATION_DATE;
+import static org.folio.circulation.support.utils.DateTimeUtil.atEndOfDay;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
@@ -18,7 +20,6 @@ import java.util.stream.Collectors;
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.utils.ClockUtil;
-import org.folio.circulation.support.utils.DateTimeUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -94,7 +95,7 @@ class RequestScheduledNoticesTests extends APITests {
     assertThat(scheduledNotice.getString("requestId"), is(request.getId().toString()));
     assertThat(scheduledNotice.getString("triggeringEvent"), is("Request expiration"));
     assertThat(scheduledNotice.getString("nextRunTime"),
-      isEquivalentTo(DateTimeUtil.atEndOfTheDay(requestExpiration)));
+      isEquivalentTo(atEndOfDay(requestExpiration, UTC)));
     assertThat(noticeConfig.getString("timing"), is("Upon At"));
     assertThat(noticeConfig.getString("templateId"), is(templateId.toString()));
     assertThat(noticeConfig.getString("format"), is("Email"));
@@ -197,7 +198,7 @@ class RequestScheduledNoticesTests extends APITests {
     assertThat(scheduledNotice.getString("requestId"), is(request.getId().toString()));
     assertThat(scheduledNotice.getString("triggeringEvent"), is("Request expiration"));
     assertThat(scheduledNotice.getString("nextRunTime"), isEquivalentTo(
-      DateTimeUtil.atEndOfTheDay(requestExpiration).minusDays(3)));
+      atEndOfDay(requestExpiration, UTC).minusDays(3)));
     assertThat(noticeConfig.getString("timing"), is("Before"));
     assertThat(noticeConfig.getString("templateId"), is(templateId.toString()));
     assertThat(noticeConfig.getString("format"), is("Email"));
@@ -243,7 +244,7 @@ class RequestScheduledNoticesTests extends APITests {
     assertThat(scheduledNotice.getString("requestId"), is(request.getId().toString()));
     assertThat(scheduledNotice.getString("triggeringEvent"), is("Request expiration"));
     assertThat(scheduledNotice.getString("nextRunTime"),
-      isEquivalentTo(DateTimeUtil.atEndOfTheDay(requestExpiration)));
+      isEquivalentTo(atEndOfDay(requestExpiration, UTC)));
     assertThat(noticeConfig.getString("timing"), is("Upon At"));
     assertThat(noticeConfig.getString("templateId"), is(templateId.toString()));
     assertThat(noticeConfig.getString("format"), is("Email"));
@@ -265,7 +266,7 @@ class RequestScheduledNoticesTests extends APITests {
     assertThat(scheduledNotice.getString("requestId"), is(request.getId().toString()));
     assertThat(scheduledNotice.getString("triggeringEvent"), is("Request expiration"));
     assertThat(scheduledNotice.getString("nextRunTime"),
-      isEquivalentTo(DateTimeUtil.atEndOfTheDay(requestExpiration).plusDays(1)));
+      isEquivalentTo(atEndOfDay(requestExpiration, UTC).plusDays(1)));
     assertThat(noticeConfig.getString("timing"), is("Upon At"));
     assertThat(noticeConfig.getString("templateId"), is(templateId.toString()));
     assertThat(noticeConfig.getString("format"), is("Email"));
@@ -312,7 +313,7 @@ class RequestScheduledNoticesTests extends APITests {
     assertThat(scheduledNotice.getString("requestId"), is(request.getId().toString()));
     assertThat(scheduledNotice.getString("triggeringEvent"), is("Request expiration"));
     assertThat(scheduledNotice.getString("nextRunTime"), isEquivalentTo(
-      DateTimeUtil.atEndOfTheDay(requestExpiration).minusDays(3)));
+      atEndOfDay(requestExpiration, UTC).minusDays(3)));
     assertThat(noticeConfig.getString("timing"), is("Before"));
     assertThat(noticeConfig.getString("templateId"), is(templateId.toString()));
     assertThat(noticeConfig.getString("format"), is("Email"));

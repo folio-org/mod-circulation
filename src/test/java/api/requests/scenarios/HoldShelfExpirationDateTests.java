@@ -11,7 +11,7 @@ import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static org.folio.HttpStatus.HTTP_OK;
-import static org.folio.circulation.support.utils.DateTimeUtil.atEndOfTheDay;
+import static org.folio.circulation.support.utils.DateTimeUtil.atEndOfDay;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.emptyOrNullString;
@@ -139,7 +139,7 @@ class HoldShelfExpirationDateTests extends APITests {
     assertThat("request status snapshot in storage is " + OPEN_AWAITING_PICKUP,
       storedRequest.getString("status"), is(OPEN_AWAITING_PICKUP));
 
-    ZonedDateTime expectedExpirationDate = atEndOfTheDay(interval.addTo(ClockUtil.getZonedDateTime(), amount));
+    ZonedDateTime expectedExpirationDate = atEndOfDay(interval.addTo(ClockUtil.getZonedDateTime(), amount));
 
     assertThat("request hold shelf expiration date is " + amount + " " + interval.toString() + " in the future",
       storedRequest.getString("holdShelfExpirationDate"),
@@ -176,7 +176,7 @@ class HoldShelfExpirationDateTests extends APITests {
 
     final Instant now = Instant.ofEpochMilli(ClockUtil.getInstant().getMillis());
 
-    ZonedDateTime expectedExpirationDate = atEndOfTheDay(
+    ZonedDateTime expectedExpirationDate = atEndOfDay(
       interval.addTo(now.atZone(tenantTimeZone), amount))
       .toInstant()
       .atZone(ZoneOffset.UTC);
@@ -253,7 +253,7 @@ class HoldShelfExpirationDateTests extends APITests {
     assertThat("request status snapshot in storage is " + OPEN_AWAITING_PICKUP,
         storedRequest.getString("status"), is(OPEN_AWAITING_PICKUP));
 
-    final ZonedDateTime expectedExpirationDate = atEndOfTheDay(
+    final ZonedDateTime expectedExpirationDate = atEndOfDay(
       ChronoUnit.DAYS.addTo(ClockUtil.getZonedDateTime(), 30));
 
     assertThat("request hold shelf expiration date is 30 days in the future",
@@ -313,7 +313,7 @@ class HoldShelfExpirationDateTests extends APITests {
     assertThat("request status snapshot in storage is " + OPEN_AWAITING_PICKUP,
       storedRequest.getString("status"), is(OPEN_AWAITING_PICKUP));
 
-    final ZonedDateTime expectedExpirationDate = atEndOfTheDay(
+    final ZonedDateTime expectedExpirationDate = atEndOfDay(
       ChronoUnit.DAYS.addTo(ClockUtil.getZonedDateTime(), 30));
 
     assertThat("request hold shelf expiration date is 30 days in the future",
@@ -361,7 +361,7 @@ class HoldShelfExpirationDateTests extends APITests {
     assertThat("request status snapshot in storage is " + OPEN_AWAITING_PICKUP,
       storedRequest.getString("status"), is(OPEN_AWAITING_PICKUP));
 
-    final ZonedDateTime expectedExpirationDate = atEndOfTheDay(
+    final ZonedDateTime expectedExpirationDate = atEndOfDay(
       ChronoUnit.DAYS.addTo(ClockUtil.getZonedDateTime(), 30));
 
     assertThat("request hold shelf expiration date is 30 days in the future",

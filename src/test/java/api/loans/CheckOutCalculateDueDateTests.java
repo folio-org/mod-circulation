@@ -29,9 +29,9 @@ import static org.folio.circulation.domain.policy.DueDateManagement.MOVE_TO_BEGI
 import static org.folio.circulation.domain.policy.DueDateManagement.MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY;
 import static org.folio.circulation.domain.policy.DueDateManagement.MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY;
 import static org.folio.circulation.domain.policy.LoanPolicyPeriod.HOURS;
-import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.END_OF_A_DAY;
-import static org.folio.circulation.support.utils.DateTimeUtil.toStartOfDayDateTime;
-import static org.folio.circulation.support.utils.DateTimeUtil.toUtcDateTime;
+import static org.folio.circulation.support.utils.ClockUtil.getDateTime;
+import static org.folio.circulation.support.utils.DateTimeUtil.atEndOfDay;
+import static org.folio.circulation.support.utils.DateTimeUtil.atStartOfDay;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.joda.time.DateTimeZone.UTC;
@@ -46,7 +46,6 @@ import org.folio.circulation.domain.OpeningHour;
 import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
@@ -172,7 +171,7 @@ class CheckOutCalculateDueDateTests extends APITests {
         .at(checkoutServicePointId));
 
     assertThat(response.getDueDate(),
-      isEquivalentTo(WEDNESDAY_DATE.toDateTime(END_OF_A_DAY, UTC)));
+      isEquivalentTo(atEndOfDay(WEDNESDAY_DATE, UTC)));
   }
 
   /**
@@ -201,7 +200,7 @@ class CheckOutCalculateDueDateTests extends APITests {
         .at(checkoutServicePointId));
 
     assertThat(response.getDueDate(),
-      isEquivalentTo(WEDNESDAY_DATE.toDateTime(END_OF_A_DAY, UTC)));
+      isEquivalentTo(atEndOfDay(WEDNESDAY_DATE, UTC)));
   }
 
   /**
@@ -230,7 +229,8 @@ class CheckOutCalculateDueDateTests extends APITests {
         .to(steve)
         .at(checkoutServicePointId));
 
-    assertThat(response.getDueDate(), isEquivalentTo(FRIDAY_DATE.toDateTime(END_OF_A_DAY, UTC)));
+    assertThat(response.getDueDate(),isEquivalentTo(
+      atEndOfDay(FRIDAY_DATE, UTC)));
   }
 
   /**
@@ -258,7 +258,8 @@ class CheckOutCalculateDueDateTests extends APITests {
         .to(steve)
         .at(checkoutServicePointId));
 
-    assertThat(response.getDueDate(), isEquivalentTo(FRIDAY_DATE.toDateTime(END_OF_A_DAY, UTC)));
+    assertThat(response.getDueDate(), isEquivalentTo(
+      atEndOfDay(FRIDAY_DATE, UTC)));
   }
 
   /**
@@ -689,7 +690,9 @@ class CheckOutCalculateDueDateTests extends APITests {
     }
 
     LocalTime localTime = Objects.isNull(newOffsetTime) ? offsetTime.withMinuteOfHour(0) : newOffsetTime;
-    return toUtcDateTime(currentDate, isInPeriod ? localTime : offsetTime);
+
+    return atStartOfDay(currentDate, UTC)
+      .withTime(isInPeriod ? localTime : offsetTime);
   }
 
   private DateTime getStartDateTimeOpeningDayRollover(List<OpeningDayPeriod> openingDays, String interval, int duration) {
@@ -711,11 +714,12 @@ class CheckOutCalculateDueDateTests extends APITests {
           LocalDate localDate = nextOpeningDay.getDate();
 
           if (nextOpeningDay.getAllDay()) {
-            return toUtcDateTime(localDate, MIDNIGHT);
+            return atStartOfDay(localDate, UTC);
           } else {
             OpeningHour openingHour = nextOpeningDay.getOpeningHour().get(0);
-            LocalTime startTime = openingHour.getStartTime();
-            return toUtcDateTime(localDate, startTime);
+
+            return atStartOfDay(localDate, UTC)
+              .withTime(openingHour.getStartTime());
           }
         }
       }
@@ -725,7 +729,7 @@ class CheckOutCalculateDueDateTests extends APITests {
 
       if (currentOpeningDay.getOpen()) {
         if (currentOpeningDay.getAllDay()) {
-          DateTime currentEndDateTime = currentDate.toDateTime(END_OF_A_DAY);
+          DateTime currentEndDateTime = atEndOfDay(currentDate, UTC);
           DateTime offsetDateTime = currentDate.toDateTime(TEST_TIME_MORNING)
               .plusMinutes(duration);
 
@@ -736,27 +740,32 @@ class CheckOutCalculateDueDateTests extends APITests {
             LocalDate nextDate = nextOpeningDay.getDate();
 
             if (nextOpeningDay.getAllDay()) {
-              return toUtcDateTime(nextDate, MIDNIGHT);
+              return atStartOfDay(nextDate, UTC)
+                .withTime(MIDNIGHT);
             } else {
               OpeningHour openingHour = nextOpeningDay.getOpeningHour().get(0);
-              LocalTime startTime = openingHour.getStartTime();
-              return toUtcDateTime(nextDate, startTime);
+
+              return atStartOfDay(nextDate, UTC)
+                .withTime(openingHour.getStartTime());
             }
           }
         } else {
           LocalTime offsetTime = TEST_TIME_MORNING.plusMinutes(duration);
           if (isInPeriodOpeningDay(currentOpeningDay.getOpeningHour(), offsetTime)) {
-            return toUtcDateTime(currentDate, offsetTime);
+            return atStartOfDay(currentDate, UTC)
+              .withTime(offsetTime);
           } else {
             OpeningDay nextOpeningDay = nextDayPeriod.getOpeningDay();
             LocalDate nextDate = nextOpeningDay.getDate();
 
             if (nextOpeningDay.getAllDay()) {
-              return toUtcDateTime(nextDate, MIDNIGHT);
+              return atStartOfDay(nextDate, UTC)
+                .withTime(MIDNIGHT);
             } else {
               OpeningHour openingHour = nextOpeningDay.getOpeningHour().get(0);
-              LocalTime startTime = openingHour.getStartTime();
-              return toUtcDateTime(nextDate, startTime);
+
+              return atStartOfDay(nextDate, UTC)
+                .withTime(openingHour.getStartTime());
             }
           }
         }
@@ -765,11 +774,13 @@ class CheckOutCalculateDueDateTests extends APITests {
         LocalDate nextDate = nextOpeningDay.getDate();
 
         if (nextOpeningDay.getAllDay()) {
-          return toUtcDateTime(nextDate, MIDNIGHT);
+          return atStartOfDay(nextDate, UTC)
+            .withTime(MIDNIGHT);
         }
         OpeningHour openingHour = nextOpeningDay.getOpeningHour().get(0);
-        LocalTime startTime = openingHour.getStartTime();
-        return toUtcDateTime(nextDate, startTime);
+
+        return atStartOfDay(nextDate, UTC)
+          .withTime(openingHour.getStartTime());
       }
     }
   }
@@ -800,8 +811,7 @@ class CheckOutCalculateDueDateTests extends APITests {
   }
 
   private DateTime getEndDateTimeOpeningDay(OpeningDay openingDay) {
-    LocalDate date = openingDay.getDate();
-    return date.toDateTime(END_OF_A_DAY, UTC);
+    return atEndOfDay(openingDay.getDate(), UTC);
   }
 
   private DateTime getStartDateTimeOpeningDay(OpeningDay openingDay) {
@@ -809,16 +819,17 @@ class CheckOutCalculateDueDateTests extends APITests {
     LocalDate date = openingDay.getDate();
 
     if (allDay) {
-      return toStartOfDayDateTime(date);
+      return atStartOfDay(date, UTC);
     } else {
       List<OpeningHour> openingHours = openingDay.getOpeningHour();
-
       if (openingHours.isEmpty()) {
-        return toStartOfDayDateTime(date);
+        return atStartOfDay(date, UTC);
       }
+
       OpeningHour openingHour = openingHours.get(0);
-      LocalTime localTime = openingHour.getStartTime();
-      return toUtcDateTime(date, localTime);
+
+      return atStartOfDay(date, UTC)
+        .withTime(openingHour.getStartTime());
     }
   }
 
@@ -873,7 +884,8 @@ class CheckOutCalculateDueDateTests extends APITests {
   private DateTime currentYearDateTime(int month, int day, int hour, int minute,
     int second, DateTimeZone zone) {
 
-    return ClockUtil.getDateTime().withZone(zone)
+    return getDateTime()
+      .withZone(zone)
       .withMonthOfYear(month)
       .withDayOfMonth(day)
       .withHourOfDay(hour)
