@@ -10,6 +10,7 @@ import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_SERVICE_POI
 import static api.support.fixtures.CalendarExamples.END_TIME_FIRST_PERIOD;
 import static api.support.fixtures.CalendarExamples.ROLLOVER_SCENARIO_NEXT_DAY_CLOSED_SERVICE_POINT_ID;
 import static api.support.fixtures.CalendarExamples.ROLLOVER_SCENARIO_SERVICE_POINT_ID;
+import static org.folio.circulation.support.utils.DateFormatUtil.parseJodaDateTime;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -200,7 +201,7 @@ class CheckOutCalculateDueDateShortTermTests extends APITests {
     loanHasOverdueFinePolicyProperties(loan,  overdueFinePolicy);
     loanHasLostItemPolicyProperties(loan,  lostItemFeePolicy);
 
-    DateTime actualDueDate = getThresholdDateTime(DateTime.parse(loan.getString("dueDate")));
+    DateTime actualDueDate = getThresholdDateTime(parseJodaDateTime(loan.getString("dueDate")));
     DateTime thresholdDateTime = getThresholdDateTime(expectedDueDate);
 
     assertThat("due date should be " + thresholdDateTime + ", actual due date is " + actualDueDate,
@@ -215,7 +216,6 @@ class CheckOutCalculateDueDateShortTermTests extends APITests {
   }
 
   private IndividualResource createLoanPolicy(JsonObject loanPolicyEntry) {
-
     return loanPoliciesFixture.create(loanPolicyEntry);
   }
 
