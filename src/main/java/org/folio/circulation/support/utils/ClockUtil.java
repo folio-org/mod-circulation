@@ -115,7 +115,7 @@ public class ClockUtil {
    * Get the current system time according to the clock manager.
    *
    * @return
-   *   A LocalDate as if now() is called.
+   *   A LocalTime as if now() is called.
    *   Time is truncated to milliseconds.
    */
   public static LocalTime getLocalTime() {
@@ -155,7 +155,7 @@ public class ClockUtil {
    * TODO: Remove this once JodaTime is fully converted to JavaTime.
    *
    * @return
-   *   A LocalDate as if now() is called.
+   *   A LocalTime as if now() is called.
    *   Time is truncated to milliseconds.
    */
   public static org.joda.time.LocalTime getJodaLocalTime() {

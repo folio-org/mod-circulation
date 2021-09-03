@@ -2,6 +2,7 @@ package org.folio.circulation.support.utils;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
@@ -99,9 +100,9 @@ public class DateTimeUtil {
 
   /**
    * Given a dateTime, normalize it.
-   *
-   * The normalization is for making JavaTime backward compatible with
-   * JodaTime behavior. Therefore, this does nothing.
+   * <p>
+   * For compatibility with JodaTime, when value is null, then a now() call
+   * via ClockUtil is used.
    *
    * TODO: Remove this after migrating from JodaTime to JavaTime.
    *
@@ -117,10 +118,29 @@ public class DateTimeUtil {
   }
 
   /**
-   * A stub-like function for normalizing the LocalDate.
+   * Given a dateTime, normalize it.
+   * <p>
+   * For compatibility with JodaTime, when value is null, then a now() call
+   * via ClockUtil is used.
    *
-   * The normalization is for making JavaTime backward compatible with
-   * JodaTime behavior. Therefore, this does nothing.
+   * TODO: Remove this after migrating from JodaTime to JavaTime.
+   *
+   * @param dateTime The dateTime to normalize.
+   * @return The provided dateTime or if dateTime is null then ClockUtil.getZonedDateTime().
+   */
+  public static org.joda.time.LocalDateTime normalizeDateTime(org.joda.time.LocalDateTime dateTime) {
+    if (dateTime == null) {
+      return ClockUtil.getDateTime().toLocalDateTime();
+    }
+
+    return dateTime;
+  }
+
+  /**
+   * A stub-like function for normalizing the LocalDate.
+   * <p>
+   * For compatibility with JodaTime, when value is null, then a now() call
+   * via ClockUtil is used.
    *
    * TODO: Remove this after migrating from JodaTime to JavaTime.
    */
@@ -130,6 +150,40 @@ public class DateTimeUtil {
     }
 
     return date;
+  }
+
+  /**
+   * Given a time, normalize it.
+   * <p>
+   * For compatibility with JodaTime, when value is null, then a now() call
+   * via ClockUtil is used.
+   *
+   * @param time The time to normalize.
+   * @return The provided date or if time is null then ClockUtil.getLocalTime().
+   */
+  public static LocalTime normalizeTime(LocalTime time) {
+    if (time == null) {
+      return ClockUtil.getLocalTime();
+    }
+
+    return time;
+  }
+
+  /**
+   * Given a time, normalize it.
+   * <p>
+   * For compatibility with JodaTime, when value is null, then a now() call
+   * via ClockUtil is used.
+   *
+   * @param time The time to normalize.
+   * @return The provided date or if time is null then ClockUtil.getLocalTime().
+   */
+  public static org.joda.time.LocalTime normalizeTime(org.joda.time.LocalTime time) {
+    if (time == null) {
+      return ClockUtil.getJodaLocalTime();
+    }
+
+    return time;
   }
 
   /**
@@ -172,7 +226,7 @@ public class DateTimeUtil {
    * The normalization is for making JavaTime backward compatible with
    * JodaTime behavior. Therefore, this does nothing.
    *
-   * TODO: This should be replaced once migrated from JodaTime to JavaTime.
+   * TODO: Remove this after migrating from JodaTime to JavaTime.
    */
   public static DateTimeZone normalizeZone(DateTimeZone zone) {
     if (zone == null) {

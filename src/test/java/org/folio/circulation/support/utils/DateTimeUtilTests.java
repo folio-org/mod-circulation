@@ -6,6 +6,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
@@ -20,7 +21,10 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
 class DateTimeUtilTests {
-  private static final String FORMATTED_DATE_TIME_NOW = "2020-10-20T10:10:10.000Z";
+  private static final String FORMATTED_DATE_TIME_NOW = "2020-10-20T10:20:10.000Z";
+  private static final String FORMATTED_LOCAL_DATE_TIME_NOW = "2020-10-20T10:20:10";
+  private static final String FORMATTED_DATE_NOW = "2020-10-20";
+  private static final String FORMATTED_TIME_NOW = "10:20:10.000";
 
   @AfterEach
   public void afterEach() {
@@ -57,7 +61,7 @@ class DateTimeUtilTests {
   @ParameterizedTest
   @CsvSource(value = {
     "0, 2010-10-10T10:10:10, 2010-10-10T10:10:10",
-    "1, null, 2020-10-20T10:10:10"
+    "1, null, " + FORMATTED_LOCAL_DATE_TIME_NOW
   }, nullValues = {"null"})
   void shouldGetNormalizedLocalDateTime(int id, LocalDateTime from, LocalDateTime expected) {
     setFixedClock();
@@ -70,12 +74,25 @@ class DateTimeUtilTests {
   @ParameterizedTest
   @CsvSource(value = {
     "0, 2010-10-10, 2010-10-10",
-    "1, null, 2020-10-20"
+    "1, null, " + FORMATTED_DATE_NOW
   }, nullValues = {"null"})
   void shouldGetNormalizedLocalDate(int id, LocalDate from, LocalDate expected) {
     setFixedClock();
 
     final LocalDate result = DateTimeUtil.normalizeDate(from);
+
+    assertEquals(expected.toString(), result.toString(), "For test " + id);
+  }
+
+  @ParameterizedTest
+  @CsvSource(value = {
+    "0, 10:10:10, 10:10:10",
+    "1, null, " + FORMATTED_TIME_NOW
+  }, nullValues = {"null"})
+  void shouldGetNormalizedLocalTime(int id, LocalTime from, LocalTime expected) {
+    setFixedClock();
+
+    final LocalTime result = DateTimeUtil.normalizeTime(from);
 
     assertEquals(expected.toString(), result.toString(), "For test " + id);
   }
@@ -96,12 +113,38 @@ class DateTimeUtilTests {
   @ParameterizedTest
   @CsvSource(value = {
     "0, 2010-10-10, 2010-10-10",
-    "1, null, 2020-10-20"
+    "1, null, " + FORMATTED_DATE_NOW
+  }, nullValues = {"null"})
+  void shouldGetNormalizedJodaLocalDate(int id, org.joda.time.LocalDate from, org.joda.time.LocalDate expected) {
+    setFixedClock();
+
+    final org.joda.time.LocalDate result = DateTimeUtil.normalizeDate(from);
+
+    assertEquals(expected.toString(), result.toString(), "For test " + id);
+  }
+
+  @ParameterizedTest
+  @CsvSource(value = {
+    "0, 2010-10-10, 2010-10-10",
+    "1, null, " + FORMATTED_DATE_NOW
   }, nullValues = {"null"})
   void shouldGetNormalizedJodaDate(int id, org.joda.time.LocalDate from, org.joda.time.LocalDate expected) {
     setFixedClock();
 
     final org.joda.time.LocalDate result = DateTimeUtil.normalizeDate(from);
+
+    assertEquals(expected.toString(), result.toString(), "For test " + id);
+  }
+
+  @ParameterizedTest
+  @CsvSource(value = {
+    "0, 10:10:10, 10:10:10",
+    "1, null, " + FORMATTED_TIME_NOW
+  }, nullValues = {"null"})
+  void shouldGetNormalizedLocalTime(int id, org.joda.time.LocalTime from, org.joda.time.LocalTime expected) {
+    setFixedClock();
+
+    final org.joda.time.LocalTime result = DateTimeUtil.normalizeTime(from);
 
     assertEquals(expected.toString(), result.toString(), "For test " + id);
   }
