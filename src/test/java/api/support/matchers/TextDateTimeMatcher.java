@@ -2,6 +2,8 @@ package api.support.matchers;
 
 import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTimeOptional;
 import static org.folio.circulation.support.utils.DateFormatUtil.parseDateTimeOptional;
+import static org.folio.circulation.support.utils.DateTimeUtil.isBeforeMillis;
+import static org.folio.circulation.support.utils.DateTimeUtil.isSameMillis;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
@@ -27,7 +29,7 @@ public class TextDateTimeMatcher {
         //response representation might vary from request representation
         DateTime actual = DateTime.parse(textRepresentation);
 
-        return expected.isEqual(actual);
+        return isSameMillis(expected, actual);
       }
     };
   }
@@ -48,13 +50,7 @@ public class TextDateTimeMatcher {
       protected boolean matchesSafely(String textRepresentation) {
 
         //response representation might vary from request representation
-        final Instant actual = parseDateTimeOptional(textRepresentation).toInstant();
-
-        //The zoned date time could have a higher precision than milliseconds
-        //This makes comparison to an ISO formatted date time using milliseconds
-        //excessively precise and brittle
-        //Discovered when using JDK 13.0.1 instead of JDK 1.8.0_202-b08
-        return expected.toEpochMilli() == actual.toEpochMilli();
+        return isSameMillis(expected, parseDateTimeOptional(textRepresentation).toInstant());
       }
     };
   }
@@ -73,7 +69,7 @@ public class TextDateTimeMatcher {
         //response representation might vary from request representation
         DateTime actual = DateTime.parse(textRepresentation);
 
-        return !actual.isBefore(after) &&
+        return !isBeforeMillis(actual, after) &&
           Seconds.secondsBetween(after, actual).isLessThan(seconds);
       }
     };
@@ -92,7 +88,7 @@ public class TextDateTimeMatcher {
       protected boolean matchesSafely(String textRepresentation) {
         DateTime actual = DateTime.parse(textRepresentation);
 
-        return actual.isBefore(before) &&
+        return isBeforeMillis(actual, before) &&
           Seconds.secondsBetween(actual, before).isLessThan(seconds);
       }
     };

@@ -9,6 +9,7 @@ import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfScheduledNoti
 import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfSentNotices;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE_ERROR;
+import static org.folio.circulation.support.utils.DateTimeUtil.isSameMillis;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -150,7 +151,9 @@ class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests {
     assertTrue(scheduledNoticesClient.getAll().stream()
       .map(entries -> entries.getString("nextRunTime"))
       .map(DateTime::parse)
-      .allMatch(newNextRunTime::isEqual),
+      .allMatch(d -> {
+        return isSameMillis(newNextRunTime, d);
+      }),
       "all scheduled notices are rescheduled");
 
     verifyNumberOfSentNotices(1);

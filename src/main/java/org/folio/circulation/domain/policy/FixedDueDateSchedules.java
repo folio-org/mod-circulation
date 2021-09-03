@@ -6,6 +6,7 @@ import static org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher.
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.utils.DateFormatUtil.parseJodaDateTime;
 import static org.folio.circulation.support.utils.DateTimeUtil.atEndOfDay;
+import static org.folio.circulation.support.utils.DateTimeUtil.isBeforeMillis;
 
 import java.util.List;
 import java.util.Optional;
@@ -14,6 +15,7 @@ import java.util.function.Supplier;
 
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
+import org.folio.circulation.support.utils.DateTimeUtil;
 import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
@@ -52,7 +54,7 @@ public class FixedDueDateSchedules {
       DateTime from = parseJodaDateTime(schedule.getString("from"));
       DateTime to = atEndOfDay(parseJodaDateTime(schedule.getString("to")));
 
-      return date.isAfter(from) && date.isBefore(to);
+      return DateTimeUtil.isWithinMillis(date, from, to);
     };
   }
 
@@ -76,7 +78,7 @@ public class FixedDueDateSchedules {
   }
 
   private DateTime earliest(DateTime rollingDueDate, DateTime limit) {
-    return limit.isBefore(rollingDueDate)
+    return isBeforeMillis(limit, rollingDueDate)
       ? limit
       : rollingDueDate;
   }

@@ -32,6 +32,10 @@ import static org.folio.circulation.domain.policy.LoanPolicyPeriod.HOURS;
 import static org.folio.circulation.support.utils.ClockUtil.getDateTime;
 import static org.folio.circulation.support.utils.DateTimeUtil.atEndOfDay;
 import static org.folio.circulation.support.utils.DateTimeUtil.atStartOfDay;
+import static org.folio.circulation.support.utils.DateTimeUtil.isAfterMillis;
+import static org.folio.circulation.support.utils.DateTimeUtil.isBeforeMillis;
+import static org.folio.circulation.support.utils.DateTimeUtil.isSameMillis;
+import static org.folio.circulation.support.utils.DateTimeUtil.isWithinMillis;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.joda.time.DateTimeZone.UTC;
@@ -680,7 +684,7 @@ class CheckOutCalculateDueDateTests extends APITests {
     for (int i = 0; i < openingHoursList.size() - 1; i++) {
       LocalTime startTimeFirst = openingHoursList.get(i).getStartTime();
       LocalTime startTimeSecond = openingHoursList.get(i + 1).getStartTime();
-      if (offsetTime.isAfter(startTimeFirst) && offsetTime.isBefore(startTimeSecond)) {
+      if (isWithinMillis(offsetTime, startTimeFirst, startTimeSecond)) {
         isInPeriod = true;
         newOffsetTime = startTimeSecond;
         break;
@@ -798,7 +802,7 @@ class CheckOutCalculateDueDateTests extends APITests {
    * Determine whether the `time` is within a period `startTime` and `endTime`
    */
   private static boolean isTimeInCertainPeriod(LocalTime time, LocalTime startTime, LocalTime endTime) {
-    return !time.isBefore(startTime) && !time.isAfter(endTime);
+    return !isBeforeMillis(time, startTime) && !isAfterMillis(time, endTime);
   }
 
   /**
@@ -841,7 +845,7 @@ class CheckOutCalculateDueDateTests extends APITests {
    * @return true if offsetDateTime is contains offsetDateTime in the time period
    */
   private boolean isInCurrentDateTime(DateTime currentDateTime, DateTime offsetDateTime) {
-    return offsetDateTime.isBefore(currentDateTime) || offsetDateTime.isEqual(currentDateTime);
+    return isBeforeMillis(offsetDateTime, currentDateTime) || isSameMillis(offsetDateTime, currentDateTime);
   }
 
   private JsonObject createLoanPolicy(String name, boolean loanable,
