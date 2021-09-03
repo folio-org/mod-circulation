@@ -27,7 +27,24 @@ import org.joda.time.DateTimeZone;
 import org.joda.time.format.ISODateTimeFormat;
 
 /**
- * A utility for common date time formatting.
+ * A utility for common date time formatting and parsing.
+ * <p>
+ * Most parsing and formatting methods will normalize the dates and times passed.
+ * The normalization will replace null values with effective now() results.
+ * This preserves behavior of JodaTime.
+ * There are Optional methods that instead return null when passed a null date and time.
+ * <p>
+ * The JavaTime formatter sometimes appends [America/New_York] in addition to
+ * the -500 offset. This is non-conforming with the FOLIO standard.
+ * To avoid this, custom formatters are used to guarantee the format is within
+ * FOLIO standards.
+ * <p>
+ * The toString() methods in the JavaTime date and time classes will use the
+ * non-FOLIO standard formatting. Use these methods rather than a toString() to
+ * generate a date and time string.
+ * <p>
+ * JavaTime does not directly support parsing a set of formats.
+ * The parsers provided will loop over multiple formats, handling the details.
  */
 public class DateFormatUtil {
   private DateFormatUtil() {
