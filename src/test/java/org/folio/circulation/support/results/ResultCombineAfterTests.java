@@ -12,11 +12,11 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.util.concurrent.ExecutionException;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class ResultCombineAfterTests {
+class ResultCombineAfterTests {
   @Test
-  public void shouldSucceedWhenNextStepIsSuccessful()
+  void shouldSucceedWhenNextStepIsSuccessful()
     throws ExecutionException,
     InterruptedException {
 
@@ -30,7 +30,7 @@ public class ResultCombineAfterTests {
   }
 
   @Test
-  public void shouldFailWhenAlreadyFailed()
+  void shouldFailWhenAlreadyFailed()
     throws ExecutionException,
     InterruptedException {
 
@@ -43,7 +43,7 @@ public class ResultCombineAfterTests {
   }
 
   @Test
-  public void shouldFailWhenNextStepFails()
+  void shouldFailWhenNextStepFails()
     throws ExecutionException,
     InterruptedException {
 
@@ -57,7 +57,7 @@ public class ResultCombineAfterTests {
 
 
   @Test
-  public void shouldFailWhenExceptionThrownDuringNextStep()
+  void shouldFailWhenExceptionThrownDuringNextStep()
     throws ExecutionException,
     InterruptedException {
 
@@ -70,7 +70,7 @@ public class ResultCombineAfterTests {
   }
 
   @Test
-  public void shouldFailWhenExceptionThrownDuringCombination()
+  void shouldFailWhenExceptionThrownDuringCombination()
     throws ExecutionException,
     InterruptedException {
 
@@ -83,7 +83,7 @@ public class ResultCombineAfterTests {
   }
 
   @Test
-  public void canCombineAfterUnrelatedResultIsSupplied()
+  void canCombineAfterUnrelatedResultIsSupplied()
     throws ExecutionException,
     InterruptedException {
 

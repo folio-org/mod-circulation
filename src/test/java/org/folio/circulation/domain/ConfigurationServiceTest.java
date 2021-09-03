@@ -1,19 +1,20 @@
 package org.folio.circulation.domain;
 
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.Collections;
+import java.util.List;
+
+import org.joda.time.DateTimeZone;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import api.support.builders.ConfigRecordBuilder;
 import api.support.builders.ConfigurationBuilder;
 import io.vertx.core.json.JsonObject;
-import java.util.List;
-import org.joda.time.DateTimeZone;
-import org.junit.BeforeClass;
-import org.junit.Test;
 
-public class ConfigurationServiceTest {
+class ConfigurationServiceTest {
 
   private static final String US_LOCALE = "en-US";
   private static final String VALUE = "value";
@@ -22,13 +23,13 @@ public class ConfigurationServiceTest {
   private static ConfigurationService service;
 
 
-  @BeforeClass
+  @BeforeAll
   public static void before() {
     service = new ConfigurationService();
   }
 
   @Test
-  public void testUtcTimeZone() {
+  void testUtcTimeZone() {
     String timeZoneValue = getTimezoneValue("UTC");
     JsonObject jsonObject = getJsonObject(timeZoneValue);
 
@@ -36,7 +37,7 @@ public class ConfigurationServiceTest {
   }
 
   @Test
-  public void testEuropeTimeZone() {
+  void testEuropeTimeZone() {
     String zone = "Europe/Kiev";
     String timeZoneValue = getTimezoneValue(zone);
     JsonObject jsonObject = getJsonObject(timeZoneValue);
@@ -45,7 +46,7 @@ public class ConfigurationServiceTest {
   }
 
   @Test
-  public void testEmptyTimeZoneValue() {
+  void testEmptyTimeZoneValue() {
     String timeZoneValue = getTimezoneValue("");
     JsonObject jsonObject = getJsonObject(timeZoneValue);
 
@@ -53,43 +54,43 @@ public class ConfigurationServiceTest {
   }
 
   @Test
-  public void testEmptyJsonValue() {
+  void testEmptyJsonValue() {
     JsonObject jsonObject = getJsonObject("");
 
     assertEquals(DateTimeZone.UTC, service.findDateTimeZone(jsonObject));
   }
 
   @Test
-  public void testEmptyJson() {
+  void testEmptyJson() {
     JsonObject jsonObject = new JsonObject();
 
     assertEquals(DateTimeZone.UTC, service.findDateTimeZone(jsonObject));
   }
 
   @Test
-  public void shouldUseConfiguredCheckoutTimeoutDurationWhenAnInteger() {
+  void shouldUseConfiguredCheckoutTimeoutDurationWhenAnInteger() {
     JsonObject jsonConfig = new JsonObject()
       .put(VALUE, getJsonConfigWithCheckoutTimeoutDurationAsInteger());
     List<Configuration> records = Collections.singletonList(new Configuration(jsonConfig));
 
     Integer actualSessionTimeout = service.findSessionTimeout(records);
 
-    assertEquals(actualSessionTimeout, new Integer(1));
+    assertEquals(actualSessionTimeout, Integer.valueOf(1));
   }
 
   @Test
-  public void shouldUseConfiguredCheckoutTimeoutDurationWhenIsAnIntegerString() {
+  void shouldUseConfiguredCheckoutTimeoutDurationWhenIsAnIntegerString() {
     JsonObject jsonConfig = new JsonObject()
       .put(VALUE, getJsonConfigWithCheckoutTimeoutDurationAsString("1"));
     List<Configuration> records = Collections.singletonList(new Configuration(jsonConfig));
 
     Integer actualSessionTimeout = service.findSessionTimeout(records);
 
-    assertEquals(actualSessionTimeout, new Integer(1));
+    assertEquals(actualSessionTimeout, Integer.valueOf(1));
   }
 
   @Test
-  public void shouldUseDefaultCheckoutTimeoutDurationWhenConfiguredValueIsNotAnInteger() {
+  void shouldUseDefaultCheckoutTimeoutDurationWhenConfiguredValueIsNotAnInteger() {
     JsonObject jsonConfig = new JsonObject()
       .put(VALUE, getJsonConfigWithCheckoutTimeoutDurationAsString("test"));
     List<Configuration> records = Collections.singletonList(new Configuration(jsonConfig));

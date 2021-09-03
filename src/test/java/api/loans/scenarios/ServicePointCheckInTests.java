@@ -17,11 +17,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.joda.time.Seconds;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.CheckInByBarcodeResponse;
@@ -33,9 +33,9 @@ import api.support.matchers.JsonObjectMatcher;
 import api.support.matchers.TextDateTimeMatcher;
 import io.vertx.core.json.JsonObject;
 
-public class ServicePointCheckInTests extends APITests {
+class ServicePointCheckInTests extends APITests {
   @Test
-  public void isPlacedAwaitingPickupWhenCheckedInAtPickupServicePoint() {
+  void isPlacedAwaitingPickupWhenCheckedInAtPickupServicePoint() {
     final IndividualResource checkInServicePoint = servicePointsFixture.cd1();
 
     final IndividualResource james = usersFixture.james();
@@ -54,7 +54,7 @@ public class ServicePointCheckInTests extends APITests {
         .withRequestDate(new DateTime(2019, 7, 5, 10, 0))
         .withRequestExpiration(LocalDate.of(2019, 7, 11)));
 
-    final DateTime beforeCheckIn = DateTime.now(DateTimeZone.UTC);
+    final DateTime beforeCheckIn = ClockUtil.getDateTime();
 
     final CheckInByBarcodeResponse checkInResponse = checkInFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
@@ -122,7 +122,7 @@ public class ServicePointCheckInTests extends APITests {
   }
 
   @Test
-  public void isPlacedInTransitWhenCheckedInAtAlternatePickupServicePoint() {
+  void isPlacedInTransitWhenCheckedInAtAlternatePickupServicePoint() {
     final IndividualResource checkInServicePoint = servicePointsFixture.cd1();
     final IndividualResource requestServicePoint = servicePointsFixture.cd2();
     final IndividualResource primaryServicePoint = servicePointsFixture.cd3();
@@ -141,9 +141,9 @@ public class ServicePointCheckInTests extends APITests {
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(nod, james);
 
     final IndividualResource request = requestsFixture.placeHoldShelfRequest(nod, jessica,
-        DateTime.now(DateTimeZone.UTC), requestServicePoint.getId());
+      ClockUtil.getDateTime(), requestServicePoint.getId());
 
-    final DateTime beforeCheckIn = DateTime.now(DateTimeZone.UTC);
+    final DateTime beforeCheckIn = ClockUtil.getDateTime();
 
     final CheckInByBarcodeResponse checkInResponse = checkInFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()

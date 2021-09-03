@@ -11,45 +11,44 @@ import static org.joda.time.DateTimeZone.UTC;
 
 import java.util.UUID;
 
-import org.folio.circulation.support.ClockManager;
-import org.folio.circulation.support.json.JsonPropertyFetcher;
-import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.json.JsonPropertyFetcher;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITestContext;
 import api.support.APITests;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
+import api.support.http.IndividualResource;
 import api.support.http.OkapiHeaders;
 import io.vertx.core.json.JsonObject;
 
-public class ItemLastCheckInTests extends APITests {
+class ItemLastCheckInTests extends APITests {
 
   private static final DateTime fixedCheckInDateTime = new DateTime(2019, 4, 3, 2, 10, UTC);
 
-  @Override
-  public void beforeEach() throws InterruptedException {
-
-    super.beforeEach();
+  @BeforeEach
+  public void beforeEach() {
     mockClockManagerToReturnFixedDateTime(fixedCheckInDateTime);
   }
 
-  @Override
+  @AfterEach
   public void afterEach() {
-    super.afterEach();
     mockClockManagerToReturnDefaultDateTime();
   }
 
   @Test
-  public void checkedInItemWithLoanShouldHaveLastCheckedInFields() {
+  void checkedInItemWithLoanShouldHaveLastCheckedInFields() {
 
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource user = usersFixture.jessica();
     UUID servicePointId = servicePointsFixture.cd1().getId();
 
     checkOutFixture.checkOutByBarcode(item, user);
-    checkInFixture.checkInByBarcode(item, DateTime.now(UTC), servicePointId);
+    checkInFixture.checkInByBarcode(item, ClockUtil.getDateTime(), servicePointId);
     JsonObject lastCheckIn = itemsClient.get(item.getId()).getJson()
       .getJsonObject("lastCheckIn");
 
@@ -64,7 +63,7 @@ public class ItemLastCheckInTests extends APITests {
   }
 
   @Test
-  public void cannotCheckInWhenNoLoggedInUser() {
+  void cannotCheckInWhenNoLoggedInUser() {
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     UUID servicePointId = servicePointsFixture.cd1().getId();
 
@@ -88,7 +87,7 @@ public class ItemLastCheckInTests extends APITests {
   }
 
   @Test
-  public void shouldNotFailCheckInWithInvalidLoggedInUserId() {
+  void shouldNotFailCheckInWithInvalidLoggedInUserId() {
 
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     UUID servicePointId = servicePointsFixture.cd1().getId();
@@ -113,7 +112,7 @@ public class ItemLastCheckInTests extends APITests {
   }
 
   @Test
-  public void shouldBeAbleToCheckinItemWithoutLoan() {
+  void shouldBeAbleToCheckinItemWithoutLoan() {
 
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     UUID servicePointId = servicePointsFixture.cd1().getId();
@@ -132,11 +131,11 @@ public class ItemLastCheckInTests extends APITests {
   }
 
   @Test
-  public void shouldBeAbleCheckinItemWithoutLoanMultipleTimes() {
+  void shouldBeAbleCheckinItemWithoutLoanMultipleTimes() {
 
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     UUID servicePointId = servicePointsFixture.cd1().getId();
-    DateTime firstCheckInDateTime = DateTime.now(UTC);
+    DateTime firstCheckInDateTime = ClockUtil.getDateTime();
 
     checkInFixture.checkInByBarcode(item, firstCheckInDateTime, servicePointId);
     JsonObject lastCheckIn = itemsClient.get(item.getId()).getJson()
@@ -149,7 +148,7 @@ public class ItemLastCheckInTests extends APITests {
     assertThat(lastCheckIn.getString("servicePointId"), is(servicePointId.toString()));
     assertThat(lastCheckIn.getString("staffMemberId"), is(APITestContext.getUserId()));
 
-    DateTime secondCheckInDateTime = ClockManager.getClockManager().getDateTime();
+    DateTime secondCheckInDateTime = ClockUtil.getDateTime();
     UUID servicePointId2 = servicePointsFixture.cd2().getId();
 
     final String randomUserId = UUID.randomUUID().toString();
@@ -173,11 +172,11 @@ public class ItemLastCheckInTests extends APITests {
   }
 
   @Test
-  public void shouldDisplaySystemDateIfCheckinWasBackdated() {
+  void shouldDisplaySystemDateIfCheckinWasBackdated() {
 
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     UUID servicePointId = servicePointsFixture.cd1().getId();
-    DateTime checkInDateTimeInPast = ClockManager.getClockManager().getDateTime()
+    DateTime checkInDateTimeInPast = ClockUtil.getDateTime()
       .minusHours(1);
 
     checkInFixture.checkInByBarcode(item, checkInDateTimeInPast, servicePointId);

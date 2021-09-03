@@ -2,7 +2,7 @@ package org.folio.circulation.domain.policy;
 
 import static api.support.matchers.FailureMatcher.hasValidationFailure;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Collections;
 
@@ -14,17 +14,18 @@ import org.folio.circulation.resources.handlers.error.OverridingErrorHandler;
 import org.folio.circulation.resources.renewal.RenewByBarcodeResource;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.results.Result;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.builders.LoanBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import io.vertx.core.json.JsonObject;
 
-public class UnknownLoanPolicyProfileTests {
+class UnknownLoanPolicyProfileTests {
   @Test
-  public void shouldFailCheckOutCalculationForNonRollingProfile() {
+  void shouldFailCheckOutCalculationForNonRollingProfile() {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .withName("Invalid Loan Policy")
       .withLoansProfile("Unknown profile")
@@ -44,7 +45,7 @@ public class UnknownLoanPolicyProfileTests {
   }
 
   @Test
-  public void shouldFailRenewalCalculationForNonRollingProfile() {
+  void shouldFailRenewalCalculationForNonRollingProfile() {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .withName("Invalid Loan Policy")
       .withLoansProfile("Unknown profile")
@@ -59,7 +60,7 @@ public class UnknownLoanPolicyProfileTests {
       .withLoanPolicy(loanPolicy);
 
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
-    renew(loan, DateTime.now(), new RequestQueue(Collections.emptyList()), errorHandler);
+    renew(loan, ClockUtil.getDateTime(), new RequestQueue(Collections.emptyList()), errorHandler);
 
     assertTrue(errorHandler.getErrors().keySet().stream()
       .map(ValidationErrorFailure.class::cast)

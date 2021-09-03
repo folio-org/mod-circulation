@@ -6,15 +6,14 @@ import static org.hamcrest.Matchers.not;
 
 import java.util.UUID;
 
-import api.support.http.IndividualResource;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.junit.Test;
+import org.folio.circulation.support.utils.ClockUtil;
+import org.junit.jupiter.api.Test;
 
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.LoanHistoryConfigurationBuilder;
+import api.support.http.IndividualResource;
 
-public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
+class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
 
   /**
    * Scenario 1
@@ -28,7 +27,7 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
    *     Then do not anonymize the loan
   */
   @Test
-  public void testClosedLoansWithFeesAndFinesNotAnonymized() {
+  void testClosedLoansWithFeesAndFinesNotAnonymized() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
       .loanCloseAnonymizeNever()
@@ -61,7 +60,7 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
    *     Then anonymize the loan
    */
   @Test
-  public void testClosedLoansWithFeesAndFinesAnonymizedWhenFeesFinesClose() {
+  void testClosedLoansWithFeesAndFinesAnonymizedWhenFeesFinesClose() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
         .loanCloseAnonymizeNever()
@@ -73,7 +72,7 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
         .at(servicePoint.getId()));
     UUID loanID = loanResource.getId();
 
-    createClosedAccountWithFeeFines(loanResource, DateTime.now().minusMinutes(1));
+    createClosedAccountWithFeeFines(loanResource, ClockUtil.getDateTime().minusMinutes(1));
     checkInFixture.checkInByBarcode(item1);
 
     anonymizeLoansInTenant();
@@ -94,7 +93,7 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
    *     Then do not anonymize the loan
    */
   @Test
-  public void testClosedLoansWithFeesAndFinesNeverAnonymized() {
+  void testClosedLoansWithFeesAndFinesNeverAnonymized() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
         .loanCloseAnonymizeNever()
@@ -127,7 +126,7 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
    *     Then do not anonymize the loan
    */
   @Test
-  public void testClosedLoanWithFeesAndFinesNeverAnonymizedWhenFeesFinesClose() {
+  void testClosedLoanWithFeesAndFinesNeverAnonymizedWhenFeesFinesClose() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
         .loanCloseAnonymizeNever()
@@ -139,7 +138,7 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
         .at(servicePoint.getId()));
     UUID loanID = loanResource.getId();
 
-    createClosedAccountWithFeeFines(loanResource, DateTime.now().minusMinutes(1));
+    createClosedAccountWithFeeFines(loanResource, ClockUtil.getDateTime().minusMinutes(1));
     checkInFixture.checkInByBarcode(item1);
 
     anonymizeLoansInTenant();
@@ -160,7 +159,7 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
    *     Then do not anonymize the loan
    */
   @Test
-  public void testOpenLoanWithFeesAndFinesNeverAnonymizedWhenFeesFinesClose() {
+  void testOpenLoanWithFeesAndFinesNeverAnonymizedWhenFeesFinesClose() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
         .loanCloseAnonymizeNever()
@@ -193,7 +192,7 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
    *     Then do not anonymize the loan
  */
   @Test
-  public void testClosedLoanWithClosedFeesAndFinesNeverAnonymizedWhenFeesFinesClose() {
+  void testClosedLoanWithClosedFeesAndFinesNeverAnonymizedWhenFeesFinesClose() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
         .loanCloseAnonymizeNever()
@@ -205,7 +204,7 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
         .at(servicePoint.getId()));
     UUID loanID = loanResource.getId();
 
-    createClosedAccountWithFeeFines(loanResource, DateTime.now().minusMinutes(1));
+    createClosedAccountWithFeeFines(loanResource, ClockUtil.getDateTime().minusMinutes(1));
     checkInFixture.checkInByBarcode(item1);
 
     anonymizeLoansInTenant();
@@ -226,7 +225,7 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
    *     Then do not anonymize the loan
    */
   @Test
-  public void testClosedLoanWithFeesAndFinesNeverAnonymizedWhenXIntervalNotPassed() {
+  void testClosedLoanWithFeesAndFinesNeverAnonymizedWhenXIntervalNotPassed() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig =
         new LoanHistoryConfigurationBuilder()
@@ -261,7 +260,7 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
    *     Then anonymize the loan
    */
   @Test
-  public void testClosedLoanWithFeesAndFinesNeverAnonymizedWhenXIntervalPassed() {
+  void testClosedLoanWithFeesAndFinesNeverAnonymizedWhenXIntervalPassed() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig =
         new LoanHistoryConfigurationBuilder()
@@ -274,11 +273,11 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
         .at(servicePoint.getId()));
     UUID loanID = loanResource.getId();
 
-    createClosedAccountWithFeeFines(loanResource, DateTime.now().minusMinutes(1));
+    createClosedAccountWithFeeFines(loanResource, ClockUtil.getDateTime().minusMinutes(1));
     checkInFixture.checkInByBarcode(item1);
 
     mockClockManagerToReturnFixedDateTime(
-      DateTime.now(DateTimeZone.UTC).plus(20 * ONE_MINUTE_AND_ONE));
+      ClockUtil.getDateTime().plus(20 * ONE_MINUTE_AND_ONE));
 
     anonymizeLoansInTenant();
 
@@ -287,7 +286,7 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
   }
 
   @Test
-  public void testClosedLoansWithoutFeesAndFinesNeverAnonymized() {
+  void testClosedLoansWithoutFeesAndFinesNeverAnonymized() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig =
         new LoanHistoryConfigurationBuilder()
@@ -310,7 +309,7 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
 
 
   @Test
-  public void testClosedLoansWithoutFeesAndFinesNeverAnonymized2() {
+  void testClosedLoansWithoutFeesAndFinesNeverAnonymized2() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig =
         new LoanHistoryConfigurationBuilder()
@@ -332,7 +331,7 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
   }
 
   @Test
-  public void testClosedLoansWithoutFeesAndFinesNeverAnonymized3() {
+  void testClosedLoansWithoutFeesAndFinesNeverAnonymized3() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig =
         new LoanHistoryConfigurationBuilder()

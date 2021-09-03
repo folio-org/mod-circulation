@@ -4,12 +4,12 @@ import static api.support.matchers.ItemMatchers.isCheckedOut;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 import org.joda.time.DateTime;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import api.support.fixtures.OverrideRenewalFixture;
 
-public class OverrideRenewDeclaredLostItemTest extends RefundDeclaredLostFeesTestBase {
+class OverrideRenewDeclaredLostItemTest extends RefundDeclaredLostFeesTestBase {
   @Autowired
   private OverrideRenewalFixture overrideRenewalFixture;
 
@@ -25,7 +25,7 @@ public class OverrideRenewDeclaredLostItemTest extends RefundDeclaredLostFeesTes
   }
 
   @Test
-  public void lostFeeCancellationDoesNotTriggerMarkingItemAsLostAndPaid() {
+  void lostFeeCancellationDoesNotTriggerMarkingItemAsLostAndPaid() {
     useChargeableRefundableLostItemFee(15.00, 0.0);
 
     declareItemLost();

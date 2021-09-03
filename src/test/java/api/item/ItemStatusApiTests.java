@@ -3,28 +3,29 @@ package api.item;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.joda.time.Seconds.seconds;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.joda.time.Seconds.seconds;
 
-import api.support.http.IndividualResource;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
+import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
 
-public class ItemStatusApiTests extends APITests {
+class ItemStatusApiTests extends APITests {
 
   private static final String ITEM_STATUS = "status";
   private static final String ITEM_STATUS_DATE = "date";
 
   @Test
-  public void itemStatusDateShouldExistsAfterCheckout() {
+  void itemStatusDateShouldExistsAfterCheckout() {
 
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource user = usersFixture.jessica();
-    final DateTime beforeCheckOutDatetime = DateTime.now(DateTimeZone.UTC);
+    final DateTime beforeCheckOutDatetime = ClockUtil.getDateTime();
 
     checkOutFixture.checkOutByBarcode(item, user, new DateTime(DateTimeZone.UTC));
 

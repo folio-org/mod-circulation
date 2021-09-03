@@ -26,9 +26,11 @@ import static org.folio.circulation.resources.handlers.error.CirculationErrorTyp
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ITEM_DOES_NOT_EXIST;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.RENEWAL_DUE_DATE_REQUIRED_IS_BLOCKED;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.RENEWAL_IS_BLOCKED;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.RENEWAL_IS_NOT_POSSIBLE;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.RENEWAL_VALIDATION_ERROR;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_BLOCKED_AUTOMATICALLY;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_BLOCKED_MANUALLY;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_INACTIVE;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getObjectProperty;
@@ -58,6 +60,7 @@ import org.folio.circulation.domain.override.BlockOverrides;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.library.ClosedLibraryStrategyService;
 import org.folio.circulation.domain.validation.AutomatedPatronBlocksValidator;
+import org.folio.circulation.domain.validation.InactiveUserRenewalValidator;
 import org.folio.circulation.domain.validation.UserManualBlocksValidator;
 import org.folio.circulation.domain.validation.Validator;
 import org.folio.circulation.domain.validation.overriding.BlockValidator;
@@ -86,8 +89,8 @@ import org.folio.circulation.support.http.server.JsonHttpResponse;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.Result;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
@@ -99,10 +102,11 @@ public abstract class RenewalResource extends Resource {
   private static final String COMMENT = "comment";
   private static final String DUE_DATE = "dueDate";
   private static final String OVERRIDE_BLOCKS = "overrideBlocks";
-  private static final String RENEWAL_OVERRIDE_BLOCK = "renewalBlock";
   private static final String RENEWAL_DUE_DATE_REQUIRED_OVERRIDE_BLOCK = "renewalDueDateRequiredBlock";
   private static final EnumSet<ItemStatus> ITEM_STATUSES_DISALLOWED_FOR_RENEW = EnumSet.of(
-    DECLARED_LOST, CLAIMED_RETURNED, AGED_TO_LOST);
+    AGED_TO_LOST, DECLARED_LOST);
+  private static final EnumSet<ItemStatus> ITEM_STATUSES_NOT_POSSIBLE_TO_RENEW = EnumSet.of(
+    CLAIMED_RETURNED);
   private boolean isRenewalBlockOverrideRequested;
 
   RenewalResource(String rootPath, HttpClient client) {
@@ -160,6 +164,7 @@ public abstract class RenewalResource extends Resource {
 
     findLoan(bodyAsJson, loanRepository, itemRepository, userRepository, errorHandler)
       .thenApply(r -> r.map(loan -> RenewalContext.create(loan, bodyAsJson, webContext.getUserId())))
+      .thenComposeAsync(r-> refuseWhenPatronIsInactive(r, errorHandler, USER_IS_INACTIVE))
       .thenComposeAsync(r -> refuseWhenRenewalActionIsBlockedForPatron(
         manualPatronBlocksValidator, r, errorHandler, USER_IS_BLOCKED_MANUALLY))
       .thenComposeAsync(r -> refuseWhenRenewalActionIsBlockedForPatron(
@@ -210,6 +215,25 @@ public abstract class RenewalResource extends Resource {
 
   private String servicePointId(RenewalContext renewalContext) {
     return renewalContext.getRenewalRequest().getString("servicePointId");
+  }
+
+  private CompletableFuture<Result<RenewalContext>> refuseWhenPatronIsInactive(
+    Result<RenewalContext> result, CirculationErrorHandler errorHandler,
+    CirculationErrorType errorType) {
+
+    if (errorHandler.hasAny(ITEM_DOES_NOT_EXIST, FAILED_TO_FIND_SINGLE_OPEN_LOAN,
+      FAILED_TO_FETCH_USER)) {
+
+      return completedFuture(result);
+    }
+
+    final var inactiveUserRenewalValidator = new InactiveUserRenewalValidator();
+
+    final var validator = new BlockValidator<>(USER_IS_INACTIVE,
+      inactiveUserRenewalValidator::refuseWhenPatronIsInactive);
+
+    return result.after(renewalContext -> validator.validate(renewalContext)
+      .thenApply(r -> errorHandler.handleValidationResult(r, errorType, result)));
   }
 
   private CompletableFuture<Result<RenewalContext>> refuseWhenRenewalActionIsBlockedForPatron(
@@ -264,7 +288,7 @@ public abstract class RenewalResource extends Resource {
         .thenApply(r -> errorHandler.handleValidationResult(r, RENEWAL_VALIDATION_ERROR,
           renewalContext));
     }
-    DateTime systemTime = DateTime.now(DateTimeZone.UTC);
+    DateTime systemTime = ClockUtil.getDateTime();
     final ClosedLibraryStrategyService strategyService = ClosedLibraryStrategyService.using(
       clients, systemTime, true);
 
@@ -339,7 +363,7 @@ public abstract class RenewalResource extends Resource {
         .map(r -> r.getRequestType() == RequestType.RECALL)
         .orElse(false);
 
-    return completedFuture(overrideRenewal(loan, DateTime.now(DateTimeZone.UTC),
+    return completedFuture(overrideRenewal(loan, ClockUtil.getDateTime(),
       overrideDueDate, comment, hasRecallRequest))
       .thenApply(mapResult(context::withLoan));
   }
@@ -446,6 +470,9 @@ public abstract class RenewalResource extends Resource {
       .next(ctx -> validateIfRenewIsAllowed(context, true)
         .mapFailure(failure -> errorHandler.handleValidationError(failure,
           RENEWAL_DUE_DATE_REQUIRED_IS_BLOCKED, context)))
+      .next(this::validateIfRenewIsPossible)
+        .mapFailure(failure -> errorHandler.handleValidationError(failure,
+          RENEWAL_IS_NOT_POSSIBLE, context))
       .next(ctx -> renew(ctx, renewDate)
         .mapFailure(failure -> errorHandler.handleValidationError(failure,
           RENEWAL_DUE_DATE_REQUIRED_IS_BLOCKED, context)));
@@ -459,9 +486,8 @@ public abstract class RenewalResource extends Resource {
     try {
       final var errors = isDueDateRequired
         ? validateIfRenewIsAllowedAndDueDateRequired(loan, requestQueue)
-        : validateIfRenewIsAllowedWithoutDueDate(loan, requestQueue);
+        : validateIfRenewIsAllowedAndDueDateNotRequired(loan, requestQueue);
       final var loanPolicy = loan.getLoanPolicy();
-
       if (loanPolicy.isNotLoanable() || loanPolicy.isNotRenewable()) {
         return failedValidation(errors);
       }
@@ -474,6 +500,16 @@ public abstract class RenewalResource extends Resource {
     } catch (Exception e) {
       return failedDueToServerError(e);
     }
+  }
+
+  private Result<RenewalContext> validateIfRenewIsPossible(RenewalContext context) {
+    Loan loan = context.getLoan();
+    if (ITEM_STATUSES_NOT_POSSIBLE_TO_RENEW.contains(loan.getItemStatus())) {
+      final List<ValidationError> errors = new ArrayList<>();
+      errors.add(itemByIdValidationError("item is " + loan.getItemStatusName(), loan.getItemId()));
+      return failedValidation(errors);
+    }
+    return succeeded(context);
   }
 
   private Result<RenewalContext> renew(RenewalContext context, DateTime renewDate) {
@@ -529,7 +565,7 @@ public abstract class RenewalResource extends Resource {
       .calculateDueDate(loan);
   }
 
-  private List<ValidationError> validateIfRenewIsAllowedWithoutDueDate(Loan loan,
+  private List<ValidationError> validateIfRenewIsAllowedAndDueDateNotRequired(Loan loan,
     RequestQueue requestQueue) {
 
     final List<ValidationError> errors = new ArrayList<>();

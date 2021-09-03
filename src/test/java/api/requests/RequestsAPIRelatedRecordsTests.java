@@ -2,27 +2,26 @@ package api.requests;
 
 import static api.support.JsonCollectionAssistant.getRecordById;
 import static api.support.matchers.UUIDMatcher.is;
-import static org.hamcrest.core.Is.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
 
 import java.util.List;
 import java.util.UUID;
 
-import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.RequestBuilder;
+import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 
-public class RequestsAPIRelatedRecordsTests extends APITests {
-  private static final String ONE_COPY_NUMBER = "1";
+class RequestsAPIRelatedRecordsTests extends APITests {
   private static final String TWO_COPY_NUMBER = "2";
 
   @Test
-  public void holdingIdAndInstanceIdIncludedWhenHoldingAndInstanceAreAvailable() {
+  void holdingIdAndInstanceIdIncludedWhenHoldingAndInstanceAreAvailable() {
 
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -72,7 +71,7 @@ public class RequestsAPIRelatedRecordsTests extends APITests {
   }
 
   @Test
-  public void checkRelatedRecordsForMultipleRequests() {
+  void checkRelatedRecordsForMultipleRequests() {
 
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
       itemBuilder -> itemBuilder.withCopyNumber(TWO_COPY_NUMBER)

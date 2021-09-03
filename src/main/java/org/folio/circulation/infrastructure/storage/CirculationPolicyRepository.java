@@ -11,6 +11,7 @@ import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.User;
+import org.folio.circulation.domain.notice.PatronNoticeEvent;
 import org.folio.circulation.rules.AppliedRuleConditions;
 import org.folio.circulation.rules.RulesExecutionParameters;
 import org.folio.circulation.rules.CirculationRuleMatch;
@@ -69,6 +70,18 @@ public abstract class CirculationPolicyRepository<T> {
       response -> failedDueToServerError(getPolicyNotFoundErrorMessage(policyId)))
       .fetch(policyId)
       .thenApply(result -> result.next(json -> mapToPolicy(json, conditionsEntity)));
+  }
+
+  public CompletableFuture<Result<CirculationRuleMatch>> lookupPolicyId(Loan loan) {
+    return lookupPolicyId(loan.getItem(), loan.getUser());
+  }
+
+  public CompletableFuture<Result<CirculationRuleMatch>> lookupPolicyId(Request request) {
+    return lookupPolicyId(request.getItem(), request.getRequester());
+  }
+
+  public CompletableFuture<Result<CirculationRuleMatch>> lookupPolicyId(PatronNoticeEvent noticeEvent) {
+    return lookupPolicyId(noticeEvent.getItem(), noticeEvent.getUser());
   }
 
   public CompletableFuture<Result<CirculationRuleMatch>> lookupPolicyId(Item item, User user) {

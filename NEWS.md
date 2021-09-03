@@ -1,3 +1,7 @@
+## 22.1.0 IN-PROGRESS
+
+* Increases the number of loans to be checked for scheduled anonymization to 50 000 (CIRC-1178)
+
 ## 22.0.0 2021-06-14
 
 * Due date will be truncated by patron expiration (CIRC-886, CIRC-1159)

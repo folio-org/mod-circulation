@@ -1,22 +1,21 @@
 package api.loans.scenarios;
 
-import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.awaitility.Awaitility.waitAtMost;
+import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfPublishedEvents;
+import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfSentNotices;
 import static org.folio.HttpStatus.HTTP_NO_CONTENT;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
+import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE_ERROR;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.Is.is;
 
 import java.util.Arrays;
@@ -29,7 +28,7 @@ import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
 import org.joda.time.Period;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.ClaimItemReturnedRequestBuilder;
@@ -38,16 +37,16 @@ import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
-import api.support.fakes.FakePubSub;
+import api.support.fakes.FakeModNotify;
 import api.support.fixtures.ItemExamples;
 import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 
-public class ChangeDueDateByReplacingLoanTests extends APITests {
+class ChangeDueDateByReplacingLoanTests extends APITests {
   @Test
-  public void canManuallyChangeTheDueDateOfLoan() {
+  void canManuallyChangeTheDueDateOfLoan() {
     final ItemResource item = itemsFixture.basedUponNod();
 
     IndividualResource loan = checkOutFixture.checkOutByBarcode(item);
@@ -101,7 +100,7 @@ public class ChangeDueDateByReplacingLoanTests extends APITests {
   }
 
   @Test
-  public void canManuallyReapplyTheDueDateOfClaimedReturnedLoan() {
+  void canManuallyReapplyTheDueDateOfClaimedReturnedLoan() {
     final ItemResource item = itemsFixture.basedUponNod();
 
     IndividualResource loan = checkOutFixture.checkOutByBarcode(item);
@@ -125,7 +124,7 @@ public class ChangeDueDateByReplacingLoanTests extends APITests {
   }
 
   @Test
-  public void canChangeDueDateOfLoanWithOpenRequest() {
+  void canChangeDueDateOfLoanWithOpenRequest() {
     final ItemResource item = itemsFixture.basedUponNod();
 
     IndividualResource loan = checkOutFixture.checkOutByBarcode(item);
@@ -186,7 +185,7 @@ public class ChangeDueDateByReplacingLoanTests extends APITests {
 
 
   @Test
-  public void manualDueDateChangeNoticeIsSentWhenPolicyDefinesManualDueDateChangeNoticeConfiguration() {
+  void manualDueDateChangeNoticeIsSentWhenPolicyDefinesManualDueDateChangeNoticeConfiguration() {
     UUID manualDueDateChangeTemplateId = UUID.randomUUID();
     JsonObject manualDueDateChangeNoticeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(manualDueDateChangeTemplateId)
@@ -242,8 +241,9 @@ public class ChangeDueDateByReplacingLoanTests extends APITests {
 
     IndividualResource loanAfterUpdate = loansClient.get(loan);
 
-    final var sentNotices = waitAtMost(1, SECONDS)
-      .until(patronNoticesClient::getAll, hasSize(1));
+    verifyNumberOfSentNotices(1);
+    verifyNumberOfPublishedEvents(NOTICE, 1);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
 
     Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
 
@@ -252,14 +252,12 @@ public class ChangeDueDateByReplacingLoanTests extends APITests {
     noticeContextMatchers.putAll(TemplateContextMatchers.getLoanContextMatchers(loanAfterUpdate));
     noticeContextMatchers.putAll(TemplateContextMatchers.getLoanPolicyContextMatchers(renewalLimit, renewalLimit));
 
-    assertThat(sentNotices,
+    assertThat(FakeModNotify.getSentPatronNotices(),
       hasItems(hasEmailNoticeProperties(steve.getId(), manualDueDateChangeTemplateId, noticeContextMatchers)));
-
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
   }
 
   @Test
-  public void shouldRejectDueDateChangeWhenItemIsInDisallowedStatus() {
+  void shouldRejectDueDateChangeWhenItemIsInDisallowedStatus() {
     useLostItemPolicy(lostItemFeePoliciesFixture.chargeFee().getId());
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();

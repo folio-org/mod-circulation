@@ -2,8 +2,11 @@ package org.folio.circulation.domain.notice;
 
 import static java.lang.Math.max;
 import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toList;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 import org.apache.commons.lang3.ObjectUtils;
@@ -19,9 +22,9 @@ import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.policy.LoanPolicy;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
+import org.folio.circulation.support.utils.ClockUtil;
 
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class TemplateContextUtil {
@@ -31,6 +34,7 @@ public class TemplateContextUtil {
   private static final String REQUEST = "request";
   private static final String REQUESTER = "requester";
   private static final String LOAN = "loan";
+  private static final String LOANS = "loans";
   private static final String FEE_CHARGE = "feeCharge";
   private static final String FEE_ACTION = "feeAction";
 
@@ -43,6 +47,16 @@ public class TemplateContextUtil {
     return new JsonObject()
       .put(ITEM, createItemContext(loan.getItem()))
       .put(LOAN, createLoanContext(loan));
+  }
+
+  public static JsonObject createMultiLoanNoticeContext(User user, Collection<Loan> loans) {
+    List<JsonObject> loanContexts = loans.stream()
+      .map(TemplateContextUtil::createLoanNoticeContextWithoutUser)
+      .collect(toList());
+
+    return new JsonObject()
+      .put(USER, createUserContext(user))
+      .put(LOANS, new JsonArray(loanContexts));
   }
 
   public static JsonObject createLoanNoticeContext(Loan loan) {
@@ -64,13 +78,6 @@ public class TemplateContextUtil {
     return requestNoticeContext;
   }
 
-  public static JsonObject createAvailableNoticeContext(Item item, User user, Request request) {
-    return new JsonObject()
-      .put(USER, createUserContext(user))
-      .put(ITEM, createItemContext(item))
-      .put(REQUEST, createRequestContext(request));
-  }
-
   public static JsonObject createCheckInContext(CheckInContext context) {
     Item item = context.getItem();
     Request firstRequest = context.getHighestPriorityFulfillableRequest();
@@ -78,7 +85,7 @@ public class TemplateContextUtil {
     JsonObject itemContext = staffSlipContext.getJsonObject(ITEM);
 
     if (ObjectUtils.allNotNull(item, itemContext)) {
-      write(itemContext, "lastCheckedInDateTime", DateTime.now(DateTimeZone.UTC));
+      write(itemContext, "lastCheckedInDateTime", ClockUtil.getDateTime());
       if (item.getInTransitDestinationServicePoint() != null) {
         itemContext.put("fromServicePoint", context.getCheckInServicePoint().getName());
         itemContext.put("toServicePoint", item.getInTransitDestinationServicePoint().getName());

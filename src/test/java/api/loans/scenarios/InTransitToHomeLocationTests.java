@@ -11,22 +11,21 @@ import static org.hamcrest.core.IsNull.nullValue;
 import java.util.HashMap;
 import java.util.Map;
 
-import api.support.http.IndividualResource;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.hamcrest.Matcher;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.CheckInByBarcodeResponse;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
+import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import api.support.matchers.JsonObjectMatcher;
 import io.vertx.core.json.JsonObject;
 
-public class InTransitToHomeLocationTests extends APITests {
+class InTransitToHomeLocationTests extends APITests {
   @Test
-  public void isPlacedInTransitWhenCheckedInToReturnItemAtServicePointNotServingHomeLocation() {
+  void isPlacedInTransitWhenCheckedInToReturnItemAtServicePointNotServingHomeLocation() {
 
     final IndividualResource primaryServicePoint = servicePointsFixture.cd1();
 
@@ -120,7 +119,7 @@ public class InTransitToHomeLocationTests extends APITests {
   }
 
   @Test
-  public void isAvailableWhenCheckedInToReceiveAtPrimaryServicePointForHomeLocation() {
+  void isAvailableWhenCheckedInToReceiveAtPrimaryServicePointForHomeLocation() {
 
     final IndividualResource primaryServicePoint = servicePointsFixture.cd1();
 
@@ -195,7 +194,7 @@ public class InTransitToHomeLocationTests extends APITests {
   }
 
   @Test
-  public void isAvailableWhenCheckedInToReceiveAtNonPrimaryServicePointForHomeLocation() {
+  void isAvailableWhenCheckedInToReceiveAtNonPrimaryServicePointForHomeLocation() {
 
     final IndividualResource primaryServicePoint = servicePointsFixture.cd1();
     final IndividualResource otherServingServicePoint = servicePointsFixture.cd2();
@@ -272,7 +271,7 @@ public class InTransitToHomeLocationTests extends APITests {
   }
 
   @Test
-  public void isAvailableWhenCheckedInToReturnItemAtPrimaryServicePointForHomeLocation() {
+  void isAvailableWhenCheckedInToReturnItemAtPrimaryServicePointForHomeLocation() {
 
     final IndividualResource primaryServicePoint = servicePointsFixture.cd1();
 
@@ -344,7 +343,7 @@ public class InTransitToHomeLocationTests extends APITests {
   }
 
   @Test
-  public void isAvailableWhenCheckedInToReturnItemAtOtherServingServicePointForHomeLocation() {
+  void isAvailableWhenCheckedInToReturnItemAtOtherServingServicePointForHomeLocation() {
 
     final IndividualResource primaryServicePoint = servicePointsFixture.cd1();
     final IndividualResource otherServingServicePoint = servicePointsFixture.cd2();
@@ -418,7 +417,7 @@ public class InTransitToHomeLocationTests extends APITests {
   }
 
   @Test
-  public void remainsInTransitWhenCheckedInToReceiveAtServicePointNotForHomeLocation() {
+  void remainsInTransitWhenCheckedInToReceiveAtServicePointNotForHomeLocation() {
 
     final IndividualResource primaryServicePoint = servicePointsFixture.cd1();
 
@@ -508,7 +507,7 @@ public class InTransitToHomeLocationTests extends APITests {
   }
 
   @Test
-  public void isNotPlacedInTransitWhenItemHasOpenFulfillableRequest() {
+  void isNotPlacedInTransitWhenItemHasOpenFulfillableRequest() {
 
     final IndividualResource primaryServicePoint = servicePointsFixture.cd1();
 
@@ -528,7 +527,7 @@ public class InTransitToHomeLocationTests extends APITests {
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(nod, james);
 
     requestsFixture.placeHoldShelfRequest(
-      nod, jessica, DateTime.now(DateTimeZone.UTC), otherServicePoint.getId());
+      nod, jessica, ClockUtil.getDateTime(), otherServicePoint.getId());
 
     final CheckInByBarcodeResponse checkInResponse = checkInFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()

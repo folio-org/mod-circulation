@@ -3,13 +3,14 @@ package api.support.fixtures;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 
 import org.folio.circulation.domain.policy.Period;
-import api.support.http.IndividualResource;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
 import api.support.builders.FixedDueDateSchedule;
 import api.support.builders.FixedDueDateSchedulesBuilder;
 import api.support.builders.LoanPolicyBuilder;
+import api.support.http.IndividualResource;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
 
@@ -38,7 +39,7 @@ public class LoanPoliciesFixture {
   }
 
   public IndividualResource createExampleFixedDueDateSchedule() {
-    int currentYear = DateTime.now(DateTimeZone.UTC).getYear();
+    int currentYear = ClockUtil.getDateTime().getYear();
     return createExampleFixedDueDateSchedule(currentYear,
       new DateTime(currentYear, 12, 31, 23, 59, 59, DateTimeZone.UTC));
   }
@@ -68,20 +69,30 @@ public class LoanPoliciesFixture {
     return fixedDueDateScheduleRecordCreator.createIfAbsent(builder);
   }
 
+  public IndividualResource canCirculateRolling(Period gracePeriod) {
+    final LoanPolicyBuilder policyBuilder = canCirculateRollingBuilder()
+      .withGracePeriod(gracePeriod)
+      .withName("Can Circulate Rolling with grace period");
+
+    return loanPolicyRecordCreator.createIfAbsent(policyBuilder);
+  }
+
   public IndividualResource canCirculateRolling() {
+    return loanPolicyRecordCreator.createIfAbsent(canCirculateRollingBuilder());
+  }
+
+  private static LoanPolicyBuilder canCirculateRollingBuilder() {
     JsonObject holds = new JsonObject();
     holds.put("alternateRenewalLoanPeriod", Period.weeks(3).asJson());
     holds.put("renewItemsWithRequest", true);
 
-    final LoanPolicyBuilder canCirculateRollingPolicy = new LoanPolicyBuilder()
+    return new LoanPolicyBuilder()
       .withName("Can Circulate Rolling")
       .withDescription("Can circulate item")
       .withHolds(holds)
       .rolling(Period.weeks(3))
       .unlimitedRenewals()
       .renewFromSystemDate();
-
-    return loanPolicyRecordCreator.createIfAbsent(canCirculateRollingPolicy);
   }
 
   public IndividualResource canCirculateFixed() {

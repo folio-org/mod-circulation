@@ -28,7 +28,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.joda.time.DateTimeZone.UTC;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.net.HttpURLConnection;
 import java.util.Set;
@@ -44,7 +44,7 @@ import org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher;
 import org.joda.time.DateTime;
 import org.joda.time.Period;
 import org.joda.time.format.ISODateTimeFormat;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.MultipleJsonRecords;
@@ -59,15 +59,11 @@ import api.support.http.UserResource;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
 
-@RunWith(MockitoJUnitRunner.class)
-public class LoanAPITests extends APITests {
+class LoanAPITests extends APITests {
 
   @Test
-  public void canCreateALoan() {
+  void canCreateALoan() {
     UUID id = UUID.randomUUID();
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
@@ -200,7 +196,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void canGetLoanWithoutOpenFeesFines() {
+  void canGetLoanWithoutOpenFeesFines() {
     UUID id = UUID.randomUUID();
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
@@ -232,7 +228,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void canGetMultipleFeesFinesForSingleLoan() {
+  void canGetMultipleFeesFinesForSingleLoan() {
     UUID id = UUID.randomUUID();
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
@@ -273,7 +269,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void canGetMultipleFeesFinesForMultipleLoans() {
+  void canGetMultipleFeesFinesForMultipleLoans() {
     configClient.create(ConfigurationExample.utcTimezoneConfiguration());
     IndividualResource item1 = itemsFixture.basedUponSmallAngryPlanet();
     final ItemResource item2 = itemsFixture.basedUponNod();
@@ -321,7 +317,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void canCreateALoanAtASpecificLocation() {
+  void canCreateALoanAtASpecificLocation() {
     UUID id = UUID.randomUUID();
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
@@ -455,7 +451,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void cannotCreateALoanForUnknownItem() {
+  void cannotCreateALoanForUnknownItem() {
     UUID id = UUID.randomUUID();
 
     UUID userId = usersFixture.charlotte().getId();
@@ -480,7 +476,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void cannotCreateALoanWithUnknownCheckInServicePointId() {
+  void cannotCreateALoanWithUnknownCheckInServicePointId() {
     UUID id = UUID.randomUUID();
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
@@ -507,7 +503,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void cannotCreateALoanWithUnknownCheckOutServicePointId() {
+  void cannotCreateALoanWithUnknownCheckOutServicePointId() {
     UUID id = UUID.randomUUID();
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
@@ -534,7 +530,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void cannotCreateClosedLoanWithoutUserId() {
+  void cannotCreateClosedLoanWithoutUserId() {
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
     final Response response = loansFixture.attemptToCreateLoan(new LoanBuilder()
@@ -549,7 +545,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void canCreateClosedLoanInSpecificLocationWithoutUserId() {
+  void canCreateClosedLoanInSpecificLocationWithoutUserId() {
     UUID loanId = UUID.randomUUID();
 
     UUID checkinServicePointId = servicePointsFixture.cd1().getId();
@@ -575,7 +571,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void cannotCreateOpenLoanForUnknownRequestingUser() {
+  void cannotCreateOpenLoanForUnknownRequestingUser() {
     UUID loanId = UUID.randomUUID();
 
     final UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
@@ -599,7 +595,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void cannotCreateOpenLoanWithoutUserId() {
+  void cannotCreateOpenLoanWithoutUserId() {
     UUID loanId = UUID.randomUUID();
 
     final UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
@@ -625,7 +621,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void cannotCreateOpenLoanAtSpecificLocationWithoutUserId() {
+  void cannotCreateOpenLoanAtSpecificLocationWithoutUserId() {
     UUID loanId = UUID.randomUUID();
 
     final UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
@@ -654,7 +650,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void canCreateALoanWithSystemReturnDate() {
+  void canCreateALoanWithSystemReturnDate() {
     UUID id = UUID.randomUUID();
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
     UUID userId = usersFixture.charlotte().getId();
@@ -680,7 +676,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void cannotCheckOutAnItemTwice() {
+  void cannotCheckOutAnItemTwice() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
     IndividualResource jessica = usersFixture.jessica();
@@ -695,7 +691,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void cannotCheckOutMissingItem() {
+  void cannotCheckOutMissingItem() {
     final IndividualResource missingItem = setupMissingItem(itemsFixture);
     final IndividualResource steve = usersFixture.steve();
 
@@ -707,7 +703,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void cannotCheckOutDeclaredLostItem() {
+  void cannotCheckOutDeclaredLostItem() {
     final IndividualResource declaredLostItem = itemsFixture.setupDeclaredLostItem();
     final IndividualResource steve = usersFixture.steve();
 
@@ -719,7 +715,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void cannotCreateLoanThatIsNotOpenOrClosed() {
+  void cannotCreateLoanThatIsNotOpenOrClosed() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource jessica = usersFixture.jessica();
 
@@ -734,7 +730,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void canCreateALoanWithoutStatus() {
+  void canCreateALoanWithoutStatus() {
     UUID id = UUID.randomUUID();
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
@@ -806,7 +802,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void creatingAReturnedLoanDoesNotChangeItemStatus() {
+  void creatingAReturnedLoanDoesNotChangeItemStatus() {
 
     UUID id = UUID.randomUUID();
 
@@ -880,7 +876,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void canGetALoanById() {
+  void canGetALoanById() {
     UUID id = UUID.randomUUID();
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet(
@@ -999,7 +995,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void canGetLoanPolicyPropertiesForMultipleLoans() {
+  void canGetLoanPolicyPropertiesForMultipleLoans() {
 
     configClient.create(ConfigurationExample.utcTimezoneConfiguration());
     IndividualResource item1 = itemsFixture.basedUponSmallAngryPlanet();
@@ -1028,7 +1024,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void loanFoundByIdDoesNotProvideItemInformationForUnknownItem() {
+  void loanFoundByIdDoesNotProvideItemInformationForUnknownItem() {
     final ItemResource item = itemsFixture.basedUponNod();
 
     final UUID loanId = loansFixture.createLoan(item, usersFixture.rebecca())
@@ -1048,7 +1044,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void barcodeIsNotIncludedWhenItemDoesNotHaveOne() {
+  void barcodeIsNotIncludedWhenItemDoesNotHaveOne() {
     UUID id = UUID.randomUUID();
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet(
@@ -1076,14 +1072,14 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void loanNotFoundForUnknownId() {
+  void loanNotFoundForUnknownId() {
     Response getResponse = loansClient.getById(UUID.randomUUID());
 
     assertThat(getResponse.getStatusCode(), is(HTTP_NOT_FOUND));
   }
 
   @Test
-  public void canRenewALoanByExtendingTheDueDate() {
+  void canRenewALoanByExtendingTheDueDate() {
     final ItemResource item = itemsFixture.basedUponNod();
 
     IndividualResource loan = loansFixture.createLoan(item,
@@ -1142,7 +1138,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void canUpdateAClosedLoanWithoutAUserId() {
+  void canUpdateAClosedLoanWithoutAUserId() {
     UUID itemId = itemsFixture.basedUponNod().getId();
 
     final IndividualResource jessica = usersFixture.jessica();
@@ -1171,7 +1167,7 @@ public class LoanAPITests extends APITests {
     hasNoBorrowerProperties(updatedLoan);
   }
   @Test
-  public void multipleClosedLoansHaveNoBorrowerInformation() {
+  void multipleClosedLoansHaveNoBorrowerInformation() {
     UUID smallAngryPlanetId = itemsFixture.basedUponSmallAngryPlanet().getId();
     UUID nodId = itemsFixture.basedUponNod().getId();
 
@@ -1224,7 +1220,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void cannotUpdateAnOpenLoanWithoutAUserId() {
+  void cannotUpdateAnOpenLoanWithoutAUserId() {
     UUID itemId = itemsFixture.basedUponNod().getId();
 
     final IndividualResource jessica = usersFixture.jessica();
@@ -1247,7 +1243,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void updatingACurrentLoanDoesNotChangeItemStatus() {
+  void updatingACurrentLoanDoesNotChangeItemStatus() {
     final ItemResource item = itemsFixture.basedUponNod();
 
     final IndividualResource checkOutResponse = loansFixture.createLoan(item,
@@ -1274,7 +1270,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void loanInCollectionDoesNotProvideItemInformationForUnknownItem() {
+  void loanInCollectionDoesNotProvideItemInformationForUnknownItem() {
     final ItemResource item = itemsFixture.basedUponNod();
 
     loansFixture.createLoan(item, usersFixture.jessica());
@@ -1288,7 +1284,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void canPageLoans() {
+  void canPageLoans() {
     val user = usersFixture.steve();
 
     checkOutFixture.checkOutByBarcode(itemsFixture.basedUponSmallAngryPlanet(), user);
@@ -1315,7 +1311,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void canSearchByUserId() {
+  void canSearchByUserId() {
     val firstUser = usersFixture.steve();
     UUID firstUserId = firstUser.getId();
     val  secondUser = usersFixture.jessica();
@@ -1371,7 +1367,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void canFindNoResultsFromSearch() {
+  void canFindNoResultsFromSearch() {
     MultipleJsonRecords loans = loansFixture.getLoans(
       queryFromTemplate("userId=%s", UUID.randomUUID()));
 
@@ -1380,7 +1376,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void canFilterByLoanStatus() {
+  void canFilterByLoanStatus() {
     val user = usersFixture.charlotte();
     UUID userId = user.getId();
 
@@ -1447,7 +1443,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void canGetMultipleLoansWithoutUserId() {
+  void canGetMultipleLoansWithoutUserId() {
     UUID smallAngryPlanetId = itemsFixture.basedUponSmallAngryPlanet().getId();
     UUID nodId = itemsFixture.basedUponNod().getId();
 
@@ -1484,7 +1480,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void canGetMultipleLoansForDifferentBorrowers() {
+  void canGetMultipleLoansForDifferentBorrowers() {
     UUID smallAngryPlanetId = itemsFixture.basedUponSmallAngryPlanet().getId();
     UUID nodId = itemsFixture.basedUponNod().getId();
 
@@ -1534,7 +1530,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void canDeleteALoan() {
+  void canDeleteALoan() {
     final ItemResource item = itemsFixture.basedUponNod();
 
     final UUID loanId = loansFixture.createLoan(item, usersFixture.rebecca()).getId();
@@ -1547,7 +1543,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void canCreateALoanWithServicePoints() {
+  void canCreateALoanWithServicePoints() {
     UUID loanId = UUID.randomUUID();
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
     UUID userId = usersFixture.charlotte().getId();
@@ -1581,7 +1577,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void canCreateMultipleLoansWithServicePoints() {
+  void canCreateMultipleLoansWithServicePoints() {
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, UTC);
 
@@ -1638,13 +1634,13 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void canGetPagedLoansWithMoreItemsThanDefaultPageLimit() {
+  void canGetPagedLoansWithMoreItemsThanDefaultPageLimit() {
     createLoans(50);
     queryLoans(50);
   }
 
   @Test
-  public void canGetPagedLoansWhenIdQueryWouldExceedQueryStringLengthLimit() {
+  void canGetPagedLoansWhenIdQueryWouldExceedQueryStringLengthLimit() {
     createLoans(100);
     queryLoans(100);
   }
@@ -1710,7 +1706,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void canGetAnonymizedLoan() {
+  void canGetAnonymizedLoan() {
     ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource jessica = usersFixture.jessica();
 
@@ -1730,7 +1726,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void canGetMultipleAnonymizedLoans() {
+  void canGetMultipleAnonymizedLoans() {
     ItemResource firstItem = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource jessica = usersFixture.jessica();
     IndividualResource firstLoan = checkOutFixture.checkOutByBarcode(firstItem,
@@ -1765,7 +1761,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void dueDateChangedEventIsPublishedOnCreate() {
+  void dueDateChangedEventIsPublishedOnCreate() {
     UUID id = UUID.randomUUID();
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
@@ -1802,7 +1798,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void dueDateChangedEventIsPublishedOnReplace() {
+  void dueDateChangedEventIsPublishedOnReplace() {
     final ItemResource item = itemsFixture.basedUponNod();
 
     final IndividualResource checkOutResponse = loansFixture.createLoan(item,

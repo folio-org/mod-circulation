@@ -2,8 +2,8 @@ package org.folio.circulation.domain.validation;
 
 import static api.support.fixtures.UserExamples.basedUponStevenJones;
 import static org.folio.circulation.domain.validation.InactiveUserValidator.forUser;
-import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
+import static org.folio.circulation.support.results.Result.succeeded;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -11,15 +11,15 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.User;
-import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.ServerErrorFailure;
-import org.junit.Test;
+import org.folio.circulation.support.results.Result;
+import org.junit.jupiter.api.Test;
 
 import io.vertx.core.json.JsonObject;
 
-public class InactiveUserValidatorTests {
+class InactiveUserValidatorTests {
   @Test
-  public void allowActiveUser() {
+  void allowActiveUser() {
     final User steve = new User(basedUponStevenJones().create());
 
     final InactiveUserValidator validator = forUser(steve.getBarcode());
@@ -31,7 +31,7 @@ public class InactiveUserValidatorTests {
   }
 
   @Test
-  public void refuseInactiveUser() {
+  void refuseInactiveUser() {
     final User steve = new User(basedUponStevenJones()
       .inactive()
       .create());
@@ -45,7 +45,7 @@ public class InactiveUserValidatorTests {
   }
 
   @Test
-  public void refuseWhenUserIsNeitherActiveNorInactive() {
+  void refuseWhenUserIsNeitherActiveNorInactive() {
     final User steve = new User(basedUponStevenJones()
       .neitherActiveOrInactive()
       .create());
@@ -59,7 +59,7 @@ public class InactiveUserValidatorTests {
   }
 
   @Test
-  public void allowNullUser() {
+  void allowNullUser() {
     final InactiveUserValidator validator = forUser("");
 
     final Result<LoanAndRelatedRecords> result =
@@ -69,8 +69,8 @@ public class InactiveUserValidatorTests {
   }
 
   @Test
-  public void failsWhenExceptionIsThrown() {
-    final User steve = new User(basedUponStevenJones()
+  void failsWhenExceptionIsThrown() {
+    new User(basedUponStevenJones()
       .neitherActiveOrInactive()
       .create());
 

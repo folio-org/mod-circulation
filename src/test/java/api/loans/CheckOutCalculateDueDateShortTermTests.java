@@ -19,18 +19,17 @@ import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.Period;
-import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeUtils;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalTime;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.fixtures.ConfigurationExample;
+import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
 
 /**
@@ -43,7 +42,7 @@ import io.vertx.core.json.JsonObject;
  * If SPID-1 is determined to be CLOSED for system-calculated due date and timestamp
  * Then the due date timestamp should be changed to the endTime of the current service point for SPID-1 (i.e., truncating the loan length)
  */
-public class CheckOutCalculateDueDateShortTermTests extends APITests {
+class CheckOutCalculateDueDateShortTermTests extends APITests {
 
   private static final String LOAN_POLICY_NAME = "Move to the end of the current service point hours";
   private static final String INTERVAL_HOURS = "Hours";
@@ -54,7 +53,7 @@ public class CheckOutCalculateDueDateShortTermTests extends APITests {
     DueDateManagement.MOVE_TO_END_OF_CURRENT_SERVICE_POINT_HOURS.getValue();
 
   @Test
-  public void testRespectSelectedTimezoneForDueDateCalculations() throws Exception {
+  void testRespectSelectedTimezoneForDueDateCalculations() throws Exception {
     String expectedTimeZone = "America/New_York";
     int duration = 24;
 
@@ -70,7 +69,7 @@ public class CheckOutCalculateDueDateShortTermTests extends APITests {
   }
 
   @Test
-  public void testRespectUtcTimezoneForDueDateCalculations() throws Exception {
+  void testRespectUtcTimezoneForDueDateCalculations() throws Exception {
     int duration = 24;
 
     Response response = configClient.create(ConfigurationExample.utcTimezoneConfiguration())
@@ -85,7 +84,7 @@ public class CheckOutCalculateDueDateShortTermTests extends APITests {
   }
 
   @Test
-  public void testMoveToTheEndOfCurrentServicePointHoursRolloverScenario() throws Exception {
+  void testMoveToTheEndOfCurrentServicePointHoursRolloverScenario() throws Exception {
     int duration = 18;
 
     Response response = configClient.create(ConfigurationExample.utcTimezoneConfiguration())
@@ -101,7 +100,7 @@ public class CheckOutCalculateDueDateShortTermTests extends APITests {
   }
 
   @Test
-  public void testMoveToTheEndOfCurrentServicePointHoursNextDayIsClosed() throws Exception {
+  void testMoveToTheEndOfCurrentServicePointHoursNextDayIsClosed() throws Exception {
     int duration = 1;
 
     Response response = configClient.create(ConfigurationExample.utcTimezoneConfiguration())
@@ -123,7 +122,7 @@ public class CheckOutCalculateDueDateShortTermTests extends APITests {
    * Test period: FRI=open, SAT=close, MON=open
    */
   @Test
-  public void testHoursLoanPeriodIfCurrentDayIsClosedAndNextAllDayOpen() throws Exception {
+  void testHoursLoanPeriodIfCurrentDayIsClosedAndNextAllDayOpen() throws Exception {
     int duration = 24;
 
     DateTime loanDate = CASE_FRI_SAT_MON_DAY_ALL_PREV_DATE.toDateTime(TEST_TIME_MORNING, DateTimeZone.UTC);
@@ -140,7 +139,7 @@ public class CheckOutCalculateDueDateShortTermTests extends APITests {
    * Test period: FRI=open, SAT=close, MON=open
    */
   @Test
-  public void testHoursLoanPeriodIfCurrentDayIsClosedAndNextDayHasPeriod() throws Exception {
+  void testHoursLoanPeriodIfCurrentDayIsClosedAndNextDayHasPeriod() throws Exception {
     DateTime loanDate = CASE_FRI_SAT_MON_SERVICE_POINT_PREV_DAY.toDateTime(TEST_TIME_MORNING, DateTimeZone.UTC);
     DateTime expectedDueDate = CASE_FRI_SAT_MON_SERVICE_POINT_PREV_DAY.toDateTime(END_TIME_FIRST_PERIOD, DateTimeZone.UTC);
 
@@ -153,7 +152,7 @@ public class CheckOutCalculateDueDateShortTermTests extends APITests {
    * Next and prev day: period
    */
   @Test
-  public void testMinutesLoanPeriodIfCurrentDayIsClosedAndNextDayHasPeriod() throws Exception {
+  void testMinutesLoanPeriodIfCurrentDayIsClosedAndNextDayHasPeriod() throws Exception {
     DateTime loanDate = CASE_CURRENT_IS_OPEN_PREV_DAY
       .toDateTime(END_TIME_FIRST_PERIOD, DateTimeZone.UTC)
       .minusHours(1);
@@ -186,14 +185,14 @@ public class CheckOutCalculateDueDateShortTermTests extends APITests {
     useFallbackPolicies(loanPolicy.getId(), requestPolicyId, noticePolicyId,
       overdueFinePolicy.getId(), lostItemFeePolicy.getId());
 
-    DateTimeUtils.setCurrentMillisFixed(loanDate.getMillis());
+    mockClockManagerToReturnFixedDateTime(loanDate);
     final IndividualResource response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
         .on(loanDate)
         .at(checkoutServicePointId));
-    DateTimeUtils.setCurrentMillisSystem();
+    mockClockManagerToReturnDefaultDateTime();
 
     final JsonObject loan = response.getJson();
 

@@ -5,11 +5,10 @@ import static java.net.HttpURLConnection.HTTP_OK;
 import static java.util.stream.Collectors.joining;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedStringProperty;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
-import static org.joda.time.DateTimeZone.UTC;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -29,9 +28,10 @@ import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.Address;
@@ -45,7 +45,7 @@ import api.support.matchers.UUIDMatcher;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
-public class PickSlipsTests extends APITests {
+class PickSlipsTests extends APITests {
   private static final String TOTAL_RECORDS = "totalRecords";
   private static final String PICK_SLIPS_KEY = "pickSlips";
   private static final String ITEM_KEY = "item";
@@ -53,7 +53,7 @@ public class PickSlipsTests extends APITests {
   private static final String REQUESTER_KEY = "requester";
 
   @Test
-  public void responseContainsNoPickSlipsForNonExistentServicePointId() {
+  void responseContainsNoPickSlipsForNonExistentServicePointId() {
     UUID servicePointId = servicePointsFixture.cd1().getId();
     ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
 
@@ -70,7 +70,7 @@ public class PickSlipsTests extends APITests {
   }
 
   @Test
-  public void responseContainsNoPickSlipsForWrongServicePointId() {
+  void responseContainsNoPickSlipsForWrongServicePointId() {
     UUID servicePointId = servicePointsFixture.cd1().getId();
     ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
 
@@ -90,7 +90,7 @@ public class PickSlipsTests extends APITests {
   }
 
   @Test
-  public void responseContainsNoPickSlipsWhenThereAreNoPagedItems() {
+  void responseContainsNoPickSlipsWhenThereAreNoPagedItems() {
     UUID servicePointId = servicePointsFixture.cd1().getId();
     Response response = ResourceClient.forPickSlips().getById(servicePointId);
 
@@ -99,7 +99,7 @@ public class PickSlipsTests extends APITests {
   }
 
   @Test
-  public void responseContainsNoPickSlipsWhenItemHasOpenPageRequestWithWrongStatus() {
+  void responseContainsNoPickSlipsWhenItemHasOpenPageRequestWithWrongStatus() {
     UUID servicePointId = servicePointsFixture.cd1().getId();
     ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
 
@@ -117,7 +117,7 @@ public class PickSlipsTests extends APITests {
   }
 
   @Test
-  public void responseContainsPickSlipWithAllAvailableTokens() {
+  void responseContainsPickSlipWithAllAvailableTokens() {
     IndividualResource servicePoint = servicePointsFixture.cd1();
     UUID servicePointId = servicePoint.getId();
     IndividualResource locationResource = locationsFixture.thirdFloor();
@@ -143,7 +143,7 @@ public class PickSlipsTests extends APITests {
         .withMaterialType(materialTypeResource.getId())
         .withPermanentLoanType(loanTypeResource.getId()));
 
-    DateTime now = DateTime.now(UTC);
+    DateTime now = ClockUtil.getDateTime();
     checkOutFixture.checkOutByBarcode(itemResource, requesterResource);
     checkInFixture.checkInByBarcode(itemResource, now, servicePointId);
     JsonObject lastCheckIn = itemsClient.get(itemResource.getId())
@@ -238,7 +238,7 @@ public class PickSlipsTests extends APITests {
   }
 
   @Test
-  public void responseContainsPickSlipsForRequestsOfTypePageOnly() {
+  void responseContainsPickSlipsForRequestsOfTypePageOnly() {
     UUID servicePointId = servicePointsFixture.cd1().getId();
     val item = itemsFixture.basedUponSmallAngryPlanet();
     val james = usersFixture.james();
@@ -268,7 +268,7 @@ public class PickSlipsTests extends APITests {
   }
 
   @Test
-  public void responseIncludesItemsFromDifferentLocationsForSameServicePoint() {
+  void responseIncludesItemsFromDifferentLocationsForSameServicePoint() {
     UUID circDesk1 = servicePointsFixture.cd1().getId();
 
     // Circ desk 1: Second floor
@@ -318,7 +318,7 @@ public class PickSlipsTests extends APITests {
   }
 
   @Test
-  public void responseDoesNotIncludePickSlipsFromDifferentServicePoint() {
+  void responseDoesNotIncludePickSlipsFromDifferentServicePoint() {
     UUID circDesk1 = servicePointsFixture.cd1().getId();
     UUID circDesk4 = servicePointsFixture.cd4().getId();
 
@@ -376,7 +376,7 @@ public class PickSlipsTests extends APITests {
   }
 
   @Test
-  public void responseContainsPickSlipsWhenServicePointHasManyLocations() {
+  void responseContainsPickSlipsWhenServicePointHasManyLocations() {
     final UUID servicePointId = servicePointsFixture.cd1().getId();
     final int numberOfLocations = 100;
 

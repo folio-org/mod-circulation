@@ -10,6 +10,7 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty
 
 import java.util.Objects;
 
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
@@ -34,7 +35,7 @@ public class User {
     return new User(representation, newPatronGroup);
   }
 
-  public boolean canDetermineStatus() {
+  public boolean cannotDetermineStatus() {
     return !representation.containsKey("active");
   }
 
@@ -55,7 +56,7 @@ public class User {
       return false;
     }
     else {
-      return expirationDate.isBefore(DateTime.now());
+      return expirationDate.isBefore(ClockUtil.getDateTime());
     }
   }
 

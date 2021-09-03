@@ -6,7 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import api.support.fixtures.AgeToLostFixture;
 import api.support.fixtures.OverrideRenewalFixture;
 
-public class OverrideRenewAgedToLostItemTest extends RefundAgedToLostFeesTestBase {
+class OverrideRenewAgedToLostItemTest extends RefundAgedToLostFeesTestBase {
   @Autowired
   private OverrideRenewalFixture overrideRenewalFixture;
 

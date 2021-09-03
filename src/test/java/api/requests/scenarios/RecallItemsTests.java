@@ -9,29 +9,28 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 
 import org.folio.circulation.domain.policy.Period;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.junit.Test;
+import org.folio.circulation.support.utils.ClockUtil;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.http.OkapiHeaders;
 import lombok.val;
 
-public class RecallItemsTests extends APITests {
+class RecallItemsTests extends APITests {
   public RecallItemsTests() {
     super(true,true);
   }
 
   @Test
-  public void loanActionCommentIsRemovedOnRecall() {
+  void loanActionCommentIsRemovedOnRecall() {
     // using non renewable loan policy just to be able to specify action comment
     // on override renew
     use(new LoanPolicyBuilder().withName("loanActionCommentIsRemovedOnRecall")
       .rolling(Period.weeks(3)).notRenewable().renewFromSystemDate());
 
     val overrideRenewComment = "Override renew";
-    val newDueDate = DateTime.now(DateTimeZone.UTC).plusMonths(3).toString();
+    val newDueDate = ClockUtil.getDateTime().plusMonths(3).toString();
 
     val item = itemsFixture.basedUponNod();
     val user = usersFixture.james();

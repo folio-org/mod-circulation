@@ -7,7 +7,7 @@ import org.hamcrest.TypeSafeDiagnosingMatcher;
 /**
  * Match a CirculationrulesRulesException that has the same line and column and contains the message as substring.
  */
-public class CirculationRulesExceptionMatcher extends TypeSafeDiagnosingMatcher<CirculationRulesException> {
+class CirculationRulesExceptionMatcher extends TypeSafeDiagnosingMatcher<CirculationRulesException> {
 
   private CirculationRulesException expected;
 

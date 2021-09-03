@@ -17,17 +17,14 @@ import static org.folio.circulation.domain.policy.DueDateManagement.KEEP_THE_CUR
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_TYPE;
 import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_MOVED;
-import static org.folio.circulation.support.ClockManager.getClockManager;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.time.Clock;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.List;
@@ -41,11 +38,11 @@ import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.policy.Period;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.junit.After;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.LoanPolicyBuilder;
@@ -62,15 +59,16 @@ import lombok.val;
  * @see <a href="https://issues.folio.org/browse/CIRC-333">CIRC-333</a>
  * @see <a href="https://issues.folio.org/browse/CIRC-395">CIRC-395</a>
  */
-public class MoveRequestTests extends APITests {
+class MoveRequestTests extends APITests {
 
-  @After
-  public void after() {
-    getClockManager().setClock(Clock.systemUTC());
+  @AfterEach
+  public void afterEach() {
+    // The clock must be reset after each test.
+    ClockUtil.setDefaultClock();
   }
 
   @Test
-  public void canMoveRequestFromOneItemCopyToAnother() {
+  void canMoveRequestFromOneItemCopyToAnother() {
 
     final IndividualResource secondFloorEconomics = locationsFixture.secondFloorEconomics();
     final IndividualResource mezzanineDisplayCase = locationsFixture.mezzanineDisplayCase();
@@ -101,7 +99,7 @@ public class MoveRequestTests extends APITests {
     assertThat(itemCopyA.getJson().getJsonObject("status").getString("name"), is(ItemStatus.AVAILABLE.getValue()));
     assertThat(itemCopyB.getJson().getJsonObject("status").getString("name"), is(ItemStatus.AVAILABLE.getValue()));
 
-    IndividualResource itemCopyALoan = checkOutFixture.checkOutByBarcode(itemCopyA, james, DateTime.now(DateTimeZone.UTC));
+    IndividualResource itemCopyALoan = checkOutFixture.checkOutByBarcode(itemCopyA, james, ClockUtil.getDateTime());
     assertThat(itemCopyALoan.getJson().getString("userId"), is(james.getId().toString()));
 
     assertThat(itemCopyALoan.getJson().getString("itemId"), is(itemCopyA.getId().toString()));
@@ -109,13 +107,13 @@ public class MoveRequestTests extends APITests {
     assertThat(itemsClient.get(itemCopyA).getJson().getJsonObject("status").getString("name"), is(ItemStatus.CHECKED_OUT.getValue()));
 
     IndividualResource pageRequestForItemCopyB = requestsFixture.placeHoldShelfRequest(
-      itemCopyB, jessica, DateTime.now(DateTimeZone.UTC).minusHours(3), RequestType.PAGE.getValue());
+      itemCopyB, jessica, ClockUtil.getDateTime().minusHours(3), RequestType.PAGE.getValue());
 
     IndividualResource recallRequestForItemCopyB = requestsFixture.placeHoldShelfRequest(
-      itemCopyB, steve, DateTime.now(DateTimeZone.UTC).minusHours(2), RequestType.RECALL.getValue());
+      itemCopyB, steve, ClockUtil.getDateTime().minusHours(2), RequestType.RECALL.getValue());
 
     IndividualResource holdRequestForItemCopyA = requestsFixture.placeHoldShelfRequest(
-      itemCopyA, charlotte, DateTime.now(DateTimeZone.UTC).minusHours(1), RequestType.HOLD.getValue());
+      itemCopyA, charlotte, ClockUtil.getDateTime().minusHours(1), RequestType.HOLD.getValue());
 
     assertThat(requestsFixture.getQueueFor(itemCopyA).getTotalRecords(), is(1));
     assertThat(requestsFixture.getQueueFor(itemCopyB).getTotalRecords(), is(2));
@@ -170,7 +168,7 @@ public class MoveRequestTests extends APITests {
   }
 
   @Test
-  public void canMoveAShelfHoldRequestToAnAvailableItem() {
+  void canMoveAShelfHoldRequestToAnAvailableItem() {
     IndividualResource smallAngryPlanet = itemsFixture
       .basedUponSmallAngryPlanet(itemsFixture.addCallNumberStringComponents("sap"));
     IndividualResource interestingTimes = itemsFixture
@@ -187,7 +185,7 @@ public class MoveRequestTests extends APITests {
       .hold()
       .fulfilToHoldShelf()
       .withItemId(smallAngryPlanet.getId())
-      .withRequestDate(DateTime.now(DateTimeZone.UTC))
+      .withRequestDate(ClockUtil.getDateTime())
       .withRequesterId(jessica.getId())
       .withPatronComments("Patron comments for smallAngryPlanet")
       .withPickupServicePointId(servicePointsFixture.cd1().getId()));
@@ -225,7 +223,7 @@ public class MoveRequestTests extends APITests {
   }
 
   @Test
-  public void canMoveARecallRequest() {
+  void canMoveARecallRequest() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource interestingTimes = itemsFixture.basedUponInterestingTimes();
@@ -244,20 +242,20 @@ public class MoveRequestTests extends APITests {
 
     // make requests for smallAngryPlanet
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, jessica, DateTime.now(DateTimeZone.UTC).minusHours(5));
+      smallAngryPlanet, jessica, ClockUtil.getDateTime().minusHours(5));
 
     IndividualResource requestBySteve = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, steve, DateTime.now(DateTimeZone.UTC).minusHours(1), RequestType.RECALL.getValue());
+      smallAngryPlanet, steve, ClockUtil.getDateTime().minusHours(1), RequestType.RECALL.getValue());
 
     IndividualResource requestByCharlotte = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, charlotte, DateTime.now(DateTimeZone.UTC).minusHours(3));
+      smallAngryPlanet, charlotte, ClockUtil.getDateTime().minusHours(3));
 
     IndividualResource requestByRebecca = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, rebecca, DateTime.now(DateTimeZone.UTC).minusHours(2), RequestType.RECALL.getValue());
+      smallAngryPlanet, rebecca, ClockUtil.getDateTime().minusHours(2), RequestType.RECALL.getValue());
 
     // make requests for interestingTimes
     IndividualResource requestByJames = requestsFixture.placeHoldShelfRequest(
-      interestingTimes, james, DateTime.now(DateTimeZone.UTC).minusHours(4), RequestType.RECALL.getValue());
+      interestingTimes, james, ClockUtil.getDateTime().minusHours(4), RequestType.RECALL.getValue());
 
     // move steve's recall request from smallAngryPlanet to interestingTimes
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
@@ -304,7 +302,7 @@ public class MoveRequestTests extends APITests {
   }
 
   @Test
-  public void canMoveTwoRequests() {
+  void canMoveTwoRequests() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource interestingTimes = itemsFixture.basedUponInterestingTimes();
@@ -322,10 +320,10 @@ public class MoveRequestTests extends APITests {
 
     // make requests for smallAngryPlanet
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, jessica, DateTime.now(DateTimeZone.UTC).minusHours(2), RequestType.RECALL.getValue());
+      smallAngryPlanet, jessica, ClockUtil.getDateTime().minusHours(2), RequestType.RECALL.getValue());
 
     IndividualResource requestBySteve = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, steve, DateTime.now(DateTimeZone.UTC).minusHours(1), RequestType.RECALL.getValue());
+      smallAngryPlanet, steve, ClockUtil.getDateTime().minusHours(1), RequestType.RECALL.getValue());
 
     // check positioning on smallAngryPlanet before moves
     requestByJessica = requestsClient.get(requestByJessica);
@@ -387,7 +385,7 @@ public class MoveRequestTests extends APITests {
   }
 
   @Test
-  public void canMoveAHoldShelfRequestLeavingEmptyQueueAndItemStatusChange() {
+  void canMoveAHoldShelfRequestLeavingEmptyQueueAndItemStatusChange() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource interestingTimes = itemsFixture.basedUponInterestingTimes();
@@ -403,7 +401,7 @@ public class MoveRequestTests extends APITests {
       .page()
       .fulfilToHoldShelf()
       .withItemId(smallAngryPlanet.getId())
-      .withRequestDate(DateTime.now(DateTimeZone.UTC).minusHours(4))
+      .withRequestDate(ClockUtil.getDateTime().minusHours(4))
       .withRequesterId(jessica.getId())
       .withPickupServicePointId(servicePointsFixture.cd1().getId()));
 
@@ -422,7 +420,7 @@ public class MoveRequestTests extends APITests {
   }
 
   @Test
-  public void canMoveAHoldShelfRequestToAnEmptyQueue() {
+  void canMoveAHoldShelfRequestToAnEmptyQueue() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource interestingTimes = itemsFixture.basedUponInterestingTimes();
@@ -439,7 +437,7 @@ public class MoveRequestTests extends APITests {
 
     // make requests for smallAngryPlanet
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, jessica, DateTime.now(DateTimeZone.UTC));
+      smallAngryPlanet, jessica, ClockUtil.getDateTime());
 
     // move jessica's hold shelf request from smallAngryPlanet to interestingTimes
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
@@ -464,7 +462,7 @@ public class MoveRequestTests extends APITests {
   }
 
   @Test
-  public void canMoveAHoldShelfRequestReorderingDestinationRequestQueue() {
+  void canMoveAHoldShelfRequestReorderingDestinationRequestQueue() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource interestingTimes = itemsFixture.basedUponInterestingTimes();
@@ -483,20 +481,20 @@ public class MoveRequestTests extends APITests {
 
     // make requests for smallAngryPlanet
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, jessica, DateTime.now(DateTimeZone.UTC).minusHours(4));
+      smallAngryPlanet, jessica, ClockUtil.getDateTime().minusHours(4));
 
     IndividualResource requestBySteve = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, steve, DateTime.now(DateTimeZone.UTC).minusHours(5));
+      smallAngryPlanet, steve, ClockUtil.getDateTime().minusHours(5));
 
     IndividualResource requestByCharlotte = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, charlotte, DateTime.now(DateTimeZone.UTC).minusHours(3));
+      smallAngryPlanet, charlotte, ClockUtil.getDateTime().minusHours(3));
 
     // make requests for interestingTimes
     IndividualResource requestByRebecca = requestsFixture.placeHoldShelfRequest(
-      interestingTimes, rebecca, DateTime.now(DateTimeZone.UTC).minusHours(5));
+      interestingTimes, rebecca, ClockUtil.getDateTime().minusHours(5));
 
     IndividualResource requestByJames = requestsFixture.placeHoldShelfRequest(
-      interestingTimes, james, DateTime.now(DateTimeZone.UTC).minusHours(1));
+      interestingTimes, james, ClockUtil.getDateTime().minusHours(1));
 
     // move jessica's hold shelf request from smallAngryPlanet to interestingTimes
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
@@ -543,7 +541,7 @@ public class MoveRequestTests extends APITests {
   }
 
   @Test
-  public void canMoveAHoldShelfRequestPreventDisplacingOpenRequest() {
+  void canMoveAHoldShelfRequestPreventDisplacingOpenRequest() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource interestingTimes = itemsFixture.basedUponInterestingTimes();
@@ -562,20 +560,20 @@ public class MoveRequestTests extends APITests {
 
     // make requests for smallAngryPlanet
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, jessica, DateTime.now(DateTimeZone.UTC).minusHours(4));
+      smallAngryPlanet, jessica, ClockUtil.getDateTime().minusHours(4));
 
     IndividualResource requestBySteve = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, steve, DateTime.now(DateTimeZone.UTC).minusHours(5));
+      smallAngryPlanet, steve, ClockUtil.getDateTime().minusHours(5));
 
     IndividualResource requestByCharlotte = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, charlotte, DateTime.now(DateTimeZone.UTC).minusHours(3));
+      smallAngryPlanet, charlotte, ClockUtil.getDateTime().minusHours(3));
 
     IndividualResource requestByRebecca = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, rebecca, DateTime.now(DateTimeZone.UTC).minusHours(2));
+      smallAngryPlanet, rebecca, ClockUtil.getDateTime().minusHours(2));
 
     // make requests for interestingTimes
     IndividualResource requestByJames = requestsFixture.placeHoldShelfRequest(
-      interestingTimes, james, DateTime.now(DateTimeZone.UTC).minusHours(1));
+      interestingTimes, james, ClockUtil.getDateTime().minusHours(1));
 
     checkInFixture.checkInByBarcode(interestingTimes);
 
@@ -625,7 +623,7 @@ public class MoveRequestTests extends APITests {
   }
 
   @Test
-  public void canMoveARecallRequestAsHoldRequest() {
+  void canMoveARecallRequestAsHoldRequest() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource interestingTimes = itemsFixture.basedUponInterestingTimes();
@@ -644,20 +642,20 @@ public class MoveRequestTests extends APITests {
 
     // make requests for smallAngryPlanet
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, jessica, DateTime.now(DateTimeZone.UTC).minusHours(5));
+      smallAngryPlanet, jessica, ClockUtil.getDateTime().minusHours(5));
 
     IndividualResource requestBySteve = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, steve, DateTime.now(DateTimeZone.UTC).minusHours(4), RequestType.RECALL.getValue());
+      smallAngryPlanet, steve, ClockUtil.getDateTime().minusHours(4), RequestType.RECALL.getValue());
 
     IndividualResource requestByCharlotte = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, charlotte, DateTime.now(DateTimeZone.UTC).minusHours(3));
+      smallAngryPlanet, charlotte, ClockUtil.getDateTime().minusHours(3));
 
     IndividualResource requestByRebecca = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, rebecca, DateTime.now(DateTimeZone.UTC).minusHours(1), RequestType.RECALL.getValue());
+      smallAngryPlanet, rebecca, ClockUtil.getDateTime().minusHours(1), RequestType.RECALL.getValue());
 
     // make requests for interestingTimes
     IndividualResource requestByJames = requestsFixture.placeHoldShelfRequest(
-      interestingTimes, james, DateTime.now(DateTimeZone.UTC).minusHours(2), RequestType.RECALL.getValue());
+      interestingTimes, james, ClockUtil.getDateTime().minusHours(2), RequestType.RECALL.getValue());
 
     // move rebecca's recall request from smallAngryPlanet to interestingTimes
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
@@ -710,7 +708,7 @@ public class MoveRequestTests extends APITests {
 
   //This scenerio utilizes two items of the same instance, but the logic in question applies as well for two separate instances.
   @Test
-  public void cannotDisplacePagedRequest() {
+  void cannotDisplacePagedRequest() {
     val secondFloorEconomics = locationsFixture.secondFloorEconomics();
     val mezzanineDisplayCase = locationsFixture.mezzanineDisplayCase();
 
@@ -737,11 +735,11 @@ public class MoveRequestTests extends APITests {
     val jessica = usersFixture.jessica();
 
     // James Checks out Item Copy A
-    checkOutFixture.checkOutByBarcode(itemCopyA, james, DateTime.now(DateTimeZone.UTC));
+    checkOutFixture.checkOutByBarcode(itemCopyA, james, ClockUtil.getDateTime());
 
     // Steve requests Item Copy A
     IndividualResource stevesRequest = requestsFixture.placeHoldShelfRequest(
-      itemCopyA, steve, DateTime.now(DateTimeZone.UTC).minusHours(2), RequestType.RECALL.getValue());
+      itemCopyA, steve, ClockUtil.getDateTime().minusHours(2), RequestType.RECALL.getValue());
 
     assertThat(stevesRequest.getJson().getInteger("position"), is(1));
     assertThat(stevesRequest.getJson().getJsonObject("item").getString("barcode"), is(itemCopyA.getBarcode()));
@@ -750,7 +748,7 @@ public class MoveRequestTests extends APITests {
 
     // Jessica requests Item Copy B
     IndividualResource jessicasRequest = requestsFixture.placeHoldShelfRequest(
-      itemCopyB, jessica, DateTime.now(DateTimeZone.UTC).minusHours(1), RequestType.PAGE.getValue());
+      itemCopyB, jessica, ClockUtil.getDateTime().minusHours(1), RequestType.PAGE.getValue());
 
     // Confirm Jessica's request is first on Item Copy B and is a paged request
     assertThat(jessicasRequest.getJson().getInteger("position"), is(1));
@@ -784,7 +782,7 @@ public class MoveRequestTests extends APITests {
   }
 
   @Test
-  public void checkoutItemStatusDoesNotChangeOnPagedRequest() {
+  void checkoutItemStatusDoesNotChangeOnPagedRequest() {
     val secondFloorEconomics = locationsFixture.secondFloorEconomics();
     val mezzanineDisplayCase = locationsFixture.mezzanineDisplayCase();
 
@@ -813,19 +811,19 @@ public class MoveRequestTests extends APITests {
     IndividualResource steve = usersFixture.steve(); //walker
     IndividualResource jessica = usersFixture.jessica(); //McKenzie
 
-    checkOutFixture.checkOutByBarcode(itemCopyA, james, DateTime.now(DateTimeZone.UTC));
+    checkOutFixture.checkOutByBarcode(itemCopyA, james, ClockUtil.getDateTime());
 
     assertThat(itemsClient.get(itemCopyA).getJson().getJsonObject("status").getString("name"), is(ItemStatus.CHECKED_OUT.getValue()));
 
     // Steve requests Item Copy B
     IndividualResource stevesRequest = requestsFixture.placeHoldShelfRequest(
-      itemCopyB, steve, DateTime.now(DateTimeZone.UTC).minusHours(2), RequestType.PAGE.getValue());
+      itemCopyB, steve, ClockUtil.getDateTime().minusHours(2), RequestType.PAGE.getValue());
 
     assertThat(itemsClient.get(itemCopyB).getJson().getJsonObject("status").getString("name"), is(ItemStatus.PAGED.getValue()));
 
     // Jessica requests Item Copy A
     IndividualResource jessicasRequest = requestsFixture.placeHoldShelfRequest(
-      itemCopyA, jessica, DateTime.now(DateTimeZone.UTC).minusHours(2), RequestType.RECALL.getValue());
+      itemCopyA, jessica, ClockUtil.getDateTime().minusHours(2), RequestType.RECALL.getValue());
 
     requestsFixture.move(new MoveRequestBuilder(stevesRequest.getId(),
       itemCopyA.getId(), RequestType.RECALL.getValue()));
@@ -858,13 +856,14 @@ public class MoveRequestTests extends APITests {
    *
    */
   @Test
-  public void canUpdateSourceAndDestinationLoanDueDateOnMoveRecallRequest() {
+  void canUpdateSourceAndDestinationLoanDueDateOnMoveRecallRequest() {
     // Recall placed 2 hours from now
-    final Instant expectedJamesLoanDueDate = LocalDateTime
-      .now().plusHours(2).toInstant(ZoneOffset.UTC);
+    final Instant expectedJamesLoanDueDate = Instant.ofEpochMilli(ClockUtil
+      .getDateTime().plusHours(2).toInstant().getMillis());
+
     // Move placed 4 hours from now
-    final Instant expectedJessicaLoanDueDate = LocalDateTime
-      .now().plusHours(4).toInstant(ZoneOffset.UTC);
+    final Instant expectedJessicaLoanDueDate = Instant.ofEpochMilli(ClockUtil
+      .getDateTime().plusHours(4).toInstant().getMillis());
 
     val smallAngryPlanetItem = itemsFixture.basedUponSmallAngryPlanet();
     val interestingTimesItem = itemsFixture.basedUponInterestingTimes();
@@ -915,7 +914,7 @@ public class MoveRequestTests extends APITests {
   }
 
   @Test
-  public void changedDueDateAfterRecallingAnItemShouldRespectTenantTimezone() {
+  void changedDueDateAfterRecallingAnItemShouldRespectTenantTimezone() {
     final String stockholmTimeZone = "Europe/Stockholm";
 
     val sourceItem = itemsFixture.basedUponSmallAngryPlanet("65654345643");
@@ -924,8 +923,6 @@ public class MoveRequestTests extends APITests {
     val requestServicePoint = servicePointsFixture.cd1();
     val steve = usersFixture.steve();
     val jessica = usersFixture.jessica();
-
-    final var clockManager = getClockManager();
 
     configClient.create(timezoneConfigurationFor(stockholmTimeZone));
 
@@ -946,21 +943,21 @@ public class MoveRequestTests extends APITests {
       overdueFinePoliciesFixture.facultyStandard().getId(),
       lostItemFeePoliciesFixture.facultyStandard().getId());
 
-    clockManager.setClock(fixed(Instant.parse("2021-02-15T11:24:45Z"), ZoneId.of("UTC")));
+    ClockUtil.setClock(fixed(Instant.parse("2021-02-15T11:24:45Z"), ZoneId.of("UTC")));
 
     checkOutFixture.checkOutByBarcode(sourceItem, steve);
 
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(destinationItem, steve);
 
     //3 days later
-    clockManager.setClock(offset(clockManager.getClock(), ofDays(3)));
+    ClockUtil.setClock(offset(ClockUtil.getClock(), ofDays(3)));
 
     final IndividualResource recallRequest = requestsFixture.place(
       new RequestBuilder()
         .recall()
         .forItem(sourceItem)
         .by(jessica)
-        .withRequestDate(clockManager.getDateTime())
+        .withRequestDate(ClockUtil.getDateTime())
         .withPickupServicePoint(requestServicePoint));
 
     requestsFixture.move(new MoveRequestBuilder(recallRequest.getId(),
@@ -974,7 +971,7 @@ public class MoveRequestTests extends APITests {
   }
 
   @Test
-  public void dueDateChangedEventIsPublished() {
+  void dueDateChangedEventIsPublished() {
     val secondFloorEconomics = locationsFixture.secondFloorEconomics();
     val mezzanineDisplayCase = locationsFixture.mezzanineDisplayCase();
 
@@ -1002,18 +999,18 @@ public class MoveRequestTests extends APITests {
     val charlotte = usersFixture.charlotte();
 
     IndividualResource itemCopyALoan = checkOutFixture.checkOutByBarcode(itemCopyA, james,
-      DateTime.now(DateTimeZone.UTC));
+      ClockUtil.getDateTime());
 
     requestsFixture.placeHoldShelfRequest(
-      itemCopyB, jessica, DateTime.now(DateTimeZone.UTC).minusHours(3),
+      itemCopyB, jessica, ClockUtil.getDateTime().minusHours(3),
       RequestType.PAGE.getValue());
 
     IndividualResource recallRequestForItemCopyB = requestsFixture.placeHoldShelfRequest(
-      itemCopyB, steve, DateTime.now(DateTimeZone.UTC).minusHours(2),
+      itemCopyB, steve, ClockUtil.getDateTime().minusHours(2),
       RequestType.RECALL.getValue());
 
     requestsFixture.placeHoldShelfRequest(
-      itemCopyA, charlotte, DateTime.now(DateTimeZone.UTC).minusHours(1),
+      itemCopyA, charlotte, ClockUtil.getDateTime().minusHours(1),
       RequestType.HOLD.getValue());
 
     requestsFixture.move(new MoveRequestBuilder(
@@ -1042,12 +1039,8 @@ public class MoveRequestTests extends APITests {
     assertThat(events.get(LOAN_DUE_DATE_CHANGED.name()).get(1), isValidLoanDueDateChangedEvent(itemCopyALoan.getJson()));
   }
 
-  private void freezeTime(DateTime dateTime) {
-    freezeTime(Instant.ofEpochMilli(dateTime.getMillis()));
-  }
-
   private void freezeTime(Instant dateTime) {
-    getClockManager().setClock(
+    ClockUtil.setClock(
       fixed(dateTime, ZoneOffset.UTC));
   }
 

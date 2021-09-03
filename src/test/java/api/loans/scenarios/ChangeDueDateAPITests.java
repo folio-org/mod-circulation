@@ -2,7 +2,6 @@ package api.loans.scenarios;
 
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
 import static api.support.fakes.PublishedEvents.byEventType;
-import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.fixtures.TemplateContextMatchers.getItemContextMatchers;
 import static api.support.fixtures.TemplateContextMatchers.getLoanContextMatchers;
 import static api.support.fixtures.TemplateContextMatchers.getLoanPolicyContextMatchers;
@@ -16,13 +15,15 @@ import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasNullParameter;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
+import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfPublishedEvents;
+import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfSentNotices;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
-import static org.awaitility.Awaitility.waitAtMost;
 import static org.folio.HttpStatus.HTTP_NOT_FOUND;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
+import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE_ERROR;
 import static org.folio.circulation.services.EventPublisher.FMT;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.containsString;
@@ -42,8 +43,8 @@ import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
 import org.joda.time.Period;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.ChangeDueDateRequestBuilder;
@@ -54,18 +55,19 @@ import api.support.builders.LostItemFeePolicyBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
+import api.support.fakes.FakeModNotify;
 import api.support.fakes.FakePubSub;
 import api.support.fixtures.ItemExamples;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 
-public class ChangeDueDateAPITests extends APITests {
+class ChangeDueDateAPITests extends APITests {
   private ItemResource item;
   private IndividualResource loan;
   private DateTime dueDate;
 
-  @Before
+  @BeforeEach
   public void setUpItemAndLoan() {
     chargeFeesForLostItemToKeepLoanOpen();
 
@@ -75,7 +77,7 @@ public class ChangeDueDateAPITests extends APITests {
   }
 
   @Test
-  public void canChangeTheDueDate() {
+  void canChangeTheDueDate() {
     final DateTime newDueDate = dueDate.plus(Period.days(14));
 
     changeDueDateFixture.changeDueDate(new ChangeDueDateRequestBuilder()
@@ -100,7 +102,7 @@ public class ChangeDueDateAPITests extends APITests {
   }
 
   @Test
-  public void cannotChangeDueDateWhenDueDateIsNotProvided() {
+  void cannotChangeDueDateWhenDueDateIsNotProvided() {
     final Response response = changeDueDateFixture
       .attemptChangeDueDate(new ChangeDueDateRequestBuilder()
         .forLoan(loan.getId())
@@ -114,7 +116,7 @@ public class ChangeDueDateAPITests extends APITests {
   }
 
   @Test
-  public void cannotChangeDueDateWhenLoanIsNotFound() {
+  void cannotChangeDueDateWhenLoanIsNotFound() {
     final String nonExistentLoanId = UUID.randomUUID().toString();
     final DateTime newDueDate = dueDate.plus(Period.days(14));
 
@@ -127,7 +129,7 @@ public class ChangeDueDateAPITests extends APITests {
   }
 
   @Test
-  public void cannotChangeDueDateWhenLoanIsClosed() {
+  void cannotChangeDueDateWhenLoanIsClosed() {
     final DateTime newDueDate = dueDate.plus(Period.days(14));
 
     checkInFixture.checkInByBarcode(item);
@@ -145,7 +147,7 @@ public class ChangeDueDateAPITests extends APITests {
   }
 
   @Test
-  public void shouldRejectDueDateChangeWhenItemIsInDisallowedStatus() {
+  void shouldRejectDueDateChangeWhenItemIsInDisallowedStatus() {
     final DateTime newDueDate = dueDate.plus(Period.days(14));
 
     claimItemReturnedFixture.claimItemReturned(new ClaimItemReturnedRequestBuilder()
@@ -166,7 +168,7 @@ public class ChangeDueDateAPITests extends APITests {
   }
 
   @Test
-  public void canChangeDueDateWithOpenRequest() {
+  void canChangeDueDateWithOpenRequest() {
     final DateTime newDueDate = dueDate.plus(Period.days(14));
 
     requestsFixture.place(new RequestBuilder()
@@ -188,7 +190,7 @@ public class ChangeDueDateAPITests extends APITests {
   }
 
   @Test
-  public void changeDueDateNoticeIsSentWhenPolicyIsDefined() {
+  void changeDueDateNoticeIsSentWhenPolicyIsDefined() {
     UUID templateId = UUID.randomUUID();
 
     JsonObject changeNoticeConfiguration = new NoticeConfigurationBuilder()
@@ -240,8 +242,9 @@ public class ChangeDueDateAPITests extends APITests {
 
     IndividualResource loanAfterUpdate = loansClient.get(loan);
 
-    final var sentNotices = waitAtMost(1, SECONDS)
-      .until(patronNoticesClient::getAll, hasSize(1));
+    verifyNumberOfSentNotices(1);
+    verifyNumberOfPublishedEvents(NOTICE, 1);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
 
     Map<String, Matcher<String>> matchers = new HashMap<>();
 
@@ -250,14 +253,70 @@ public class ChangeDueDateAPITests extends APITests {
     matchers.putAll(getLoanContextMatchers(loanAfterUpdate));
     matchers.putAll(getLoanPolicyContextMatchers(renewalLimit, renewalLimit));
 
-    assertThat(sentNotices, hasItems(
+    assertThat(FakeModNotify.getSentPatronNotices(), hasItems(
       hasEmailNoticeProperties(steve.getId(), templateId, matchers)));
-
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
   }
 
   @Test
-  public void dueDateChangedEventIsPublished() {
+  void changeDueDateNoticeIsNotSentWhenPatronNoticeRequestFails() {
+    UUID templateId = UUID.randomUUID();
+
+    JsonObject changeNoticeConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(templateId)
+      .withManualDueDateChangeEvent()
+      .create();
+
+    JsonObject checkInNoticeConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(UUID.randomUUID())
+      .withCheckInEvent()
+      .create();
+
+    IndividualResource noticePolicy = noticePoliciesFixture.create(
+      new NoticePolicyBuilder()
+        .withName("Policy with manual due date change notice")
+        .withLoanNotices(Arrays.asList(
+          changeNoticeConfiguration, checkInNoticeConfiguration)));
+
+    int renewalLimit = 3;
+    IndividualResource policyWithLimitedRenewals = loanPoliciesFixture.create(
+      new LoanPolicyBuilder()
+        .withName("Limited renewals loan policy")
+        .rolling(org.folio.circulation.domain.policy.Period.months(1))
+        .limitedRenewals(renewalLimit));
+
+    useFallbackPolicies(
+      policyWithLimitedRenewals.getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePolicy.getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
+
+    ItemBuilder itemBuilder = ItemExamples.basedUponSmallAngryPlanet(
+      materialTypesFixture.book().getId(), loanTypesFixture.canCirculate().getId(),
+      EMPTY, "ItemPrefix", "ItemSuffix", "");
+
+    ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
+      itemBuilder, itemsFixture.thirdFloorHoldings());
+
+    IndividualResource steve = usersFixture.steve();
+
+    IndividualResource loan = checkOutFixture.checkOutByBarcode(smallAngryPlanet, steve);
+
+    DateTime newDueDate = dueDate.plus(weeks(2));
+
+    FakeModNotify.setFailPatronNoticesWithBadRequest(true);
+
+    changeDueDateFixture.changeDueDate(new ChangeDueDateRequestBuilder()
+      .forLoan(loan.getId())
+      .withDueDate(newDueDate));
+
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
+  }
+
+  @Test
+  void dueDateChangedEventIsPublished() {
     final DateTime newDueDate = dueDate.plus(Period.days(14));
     changeDueDateFixture.changeDueDate(new ChangeDueDateRequestBuilder()
       .forLoan(loan.getId())

@@ -23,6 +23,9 @@ import static api.support.matchers.TextDateTimeMatcher.withinSecondsBeforeNow;
 import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
+import static api.support.utl.PatronNoticeTestHelper.clearSentPatronNoticesAndPubsubEvents;
+import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfPublishedEvents;
+import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfSentNotices;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.waitAtMost;
@@ -33,6 +36,7 @@ import static org.folio.circulation.domain.RequestStatus.CLOSED_PICKUP_EXPIRED;
 import static org.folio.circulation.domain.RequestStatus.CLOSED_UNFILLED;
 import static org.folio.circulation.domain.representations.logs.LogEventType.CHECK_IN;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
+import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE_ERROR;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -42,7 +46,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNot.not;
 import static org.joda.time.DateTimeZone.UTC;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -62,10 +66,11 @@ import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
 import org.joda.time.Seconds;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.CheckInByBarcodeResponse;
@@ -79,6 +84,7 @@ import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.OverdueFinePolicyBuilder;
 import api.support.builders.RequestBuilder;
+import api.support.fakes.FakeModNotify;
 import api.support.fakes.FakePubSub;
 import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.CqlQuery;
@@ -88,9 +94,9 @@ import api.support.http.UserResource;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
-public class CheckInByBarcodeTests extends APITests {
+class CheckInByBarcodeTests extends APITests {
   @Test
-  public void canCloseAnOpenLoanByCheckingInTheItem() {
+  void canCloseAnOpenLoanByCheckingInTheItem() {
     final IndividualResource james = usersFixture.james();
 
     final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
@@ -108,7 +114,7 @@ public class CheckInByBarcodeTests extends APITests {
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(nod, james,
       new DateTime(2018, 3, 1, 13, 25, 46, UTC));
 
-    DateTime expectedSystemReturnDate = DateTime.now(UTC);
+    DateTime expectedSystemReturnDate = ClockUtil.getDateTime();
 
     final CheckInByBarcodeResponse checkInResponse = checkInFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
@@ -231,7 +237,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
 }
 
   @Test
-  public void canCreateStaffSlipContextOnCheckInByBarcode() {
+  void canCreateStaffSlipContextOnCheckInByBarcode() {
     ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
 
     DateTime requestDate = new DateTime(2019, 7, 22, 10, 22, 54, UTC);
@@ -286,11 +292,11 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
   }
 
   @Test
-  public void cannotCheckInItemThatCannotBeFoundByBarcode() {
+  void cannotCheckInItemThatCannotBeFoundByBarcode() {
     final Response response = checkInFixture.attemptCheckInByBarcode(
       new CheckInByBarcodeRequestBuilder()
         .withItemBarcode("543593485458")
-        .on(DateTime.now())
+        .on(ClockUtil.getDateTime())
         .at(UUID.randomUUID()));
 
     assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
@@ -300,7 +306,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
   }
 
   @Test
-  public void cannotCheckInWithoutAServicePoint() {
+  void cannotCheckInWithoutAServicePoint() {
     DateTime loanDate = new DateTime(2018, 3, 1, 13, 25, 46, UTC);
 
     final IndividualResource james = usersFixture.james();
@@ -311,7 +317,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     final Response response = checkInFixture.attemptCheckInByBarcode(
       new CheckInByBarcodeRequestBuilder()
         .forItem(nod)
-        .on(DateTime.now())
+        .on(ClockUtil.getDateTime())
         .atNoServicePoint());
 
     assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
@@ -321,7 +327,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
   }
 
   @Test
-  public void cannotCheckInWithoutAnItem() {
+  void cannotCheckInWithoutAnItem() {
     DateTime loanDate = new DateTime(2018, 3, 1, 13, 25, 46, UTC);
 
     final IndividualResource james = usersFixture.james();
@@ -332,7 +338,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     final Response response = checkInFixture.attemptCheckInByBarcode(
       new CheckInByBarcodeRequestBuilder()
         .noItem()
-        .on(DateTime.now())
+        .on(ClockUtil.getDateTime())
         .at(UUID.randomUUID()));
 
     assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
@@ -342,7 +348,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
   }
 
   @Test
-  public void cannotCheckInWithoutACheckInDate() {
+  void cannotCheckInWithoutACheckInDate() {
     DateTime loanDate = new DateTime(2018, 3, 1, 13, 25, 46, UTC);
 
     final IndividualResource james = usersFixture.james();
@@ -363,7 +369,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
   }
 
   @Test
-  public void canCheckInAnItemWithoutAnOpenLoan() {
+  void canCheckInAnItemWithoutAnOpenLoan() {
     final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
 
     final IndividualResource homeLocation = locationsFixture.basedUponExampleLocation(
@@ -408,7 +414,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
   }
 
   @Test
-  public void canCheckInAnItemTwice() {
+  void canCheckInAnItemTwice() {
     DateTime loanDate = new DateTime(2018, 3, 1, 13, 25, 46, UTC);
 
     final IndividualResource james = usersFixture.james();
@@ -463,7 +469,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
   }
 
   @Test
-  public void intellectualItemCannotBeCheckedIn() {
+  void intellectualItemCannotBeCheckedIn() {
     final var checkInServicePointId = servicePointsFixture.cd1().getId();
 
     final var homeLocation = locationsFixture.basedUponExampleLocation(
@@ -491,7 +497,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
   }
 
   @Test
-  public void patronNoticeOnCheckInIsNotSentWhenCheckInLoanNoticeIsDefinedAndLoanExists() {
+  void patronNoticeOnCheckInIsNotSentWhenCheckInLoanNoticeIsDefinedAndLoanExists() {
     UUID checkInTemplateId = UUID.randomUUID();
     JsonObject checkOutNoticeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(checkInTemplateId)
@@ -533,15 +539,13 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     assertThat("Closed loan should be present",
       loanRepresentation, notNullValue());
 
-    waitAtLeast(1, SECONDS)
-      .until(patronNoticesClient::getAll, empty());
-
-    waitAtLeast(1, SECONDS)
-      .until(() -> FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), empty());
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 
   @Test
-  public void shouldNotSendPatronNoticeWhenCheckInNoticeIsDefinedAndCheckInDoesNotCloseLoan() {
+  void shouldNotSendPatronNoticeWhenCheckInNoticeIsDefinedAndCheckInDoesNotCloseLoan() {
     UUID checkInTemplateId = UUID.randomUUID();
     JsonObject checkOutNoticeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(checkInTemplateId)
@@ -571,15 +575,13 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     assertThat("Response should not include a loan",
       checkInResponse.getJson().containsKey("loan"), is(false));
 
-    waitAtLeast(1, SECONDS)
-      .until(patronNoticesClient::getAll, empty());
-
-    waitAtLeast(1, SECONDS)
-      .until(() -> FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), empty());
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 
   @Test
-  public void patronNoticeOnCheckInAfterCheckOutAndRequestToItem() {
+  void patronNoticeOnCheckInAfterCheckOutAndRequestToItem() {
     ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
 
     checkOutFixture.checkOutByBarcode(item, usersFixture.jessica());
@@ -618,7 +620,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
   }
 
   @Test
-  public void patronNoticeOnCheckInAfterRequestToItem() {
+  void patronNoticeOnCheckInAfterRequestToItem() {
     ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
     DateTime requestDate = new DateTime(2019, 5, 5, 10, 22, 54, UTC);
     UUID servicePointId = servicePointsFixture.cd1().getId();
@@ -655,7 +657,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
   }
 
   @Test
-  public void patronNoticeIsSentOnceWhenItemAndRequestStatusIsChangedToAwaitingPickup() {
+  void patronNoticeIsSentOnceWhenItemAndRequestStatusIsChangedToAwaitingPickup() {
     JsonObject availableNoticeConfig = new NoticeConfigurationBuilder()
       .withTemplateId(UUID.randomUUID())
       .withAvailableEvent()
@@ -681,36 +683,102 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
 
     checkInFixture.checkInByBarcode(requestedItem, checkInDate, pickupServicePointId);
 
-    waitAtMost(1, SECONDS)
-      .until(patronNoticesClient::getAll, hasSize(1));
+    verifyNumberOfSentNotices(1);
+    verifyNumberOfPublishedEvents(NOTICE, 1);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
 
-    waitAtMost(1, SECONDS)
-      .until(() -> FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
-
-    clearPatronNoticesAndPubsubEvents();
+    clearSentPatronNoticesAndPubsubEvents();
 
     //Check-in again and verify no notice are sent
     checkInFixture.checkInByBarcode(requestedItem, checkInDate, pickupServicePointId);
 
-    waitAtMost(1, SECONDS)
-      .until(patronNoticesClient::getAll, empty());
-
-    waitAtMost(1, SECONDS)
-      .until(() -> FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), empty());
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 
   @Test
-  public void patronNoticeIsSentForRequestAwaitingPickupWhenPreviousRequestWasCancelled() {
+  void requestAwaitingPickupNoticeIsNotSentWhenUserWasNotFound() {
+    JsonObject availableNoticeConfig = new NoticeConfigurationBuilder()
+      .withTemplateId(UUID.randomUUID())
+      .withAvailableEvent()
+      .create();
+    NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
+      .withName("Policy with available notice")
+      .withLoanNotices(Collections.singletonList(availableNoticeConfig));
+
+    use(noticePolicy);
+
+    ItemResource requestedItem = itemsFixture.basedUponNod();
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+
+    DateTime requestDate = new DateTime(2019, 10, 9, 10, 0);
+    UserResource steve = usersFixture.steve();
+    requestsFixture.place(new RequestBuilder()
+      .page()
+      .forItem(requestedItem)
+      .by(steve)
+      .withPickupServicePointId(pickupServicePointId)
+      .withRequestDate(requestDate));
+
+    DateTime checkInDate = new DateTime(2019, 10, 10, 12, 30);
+
+    usersClient.delete(steve);
+
+    checkInFixture.checkInByBarcode(requestedItem, checkInDate, pickupServicePointId);
+
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
+  }
+
+  @Test
+  void requestAwaitingPickupNoticeIsNotSentWhenPatronNoticeRequestsFails() {
+    JsonObject availableNoticeConfig = new NoticeConfigurationBuilder()
+      .withTemplateId(UUID.randomUUID())
+      .withAvailableEvent()
+      .create();
+    NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
+      .withName("Policy with available notice")
+      .withLoanNotices(Collections.singletonList(availableNoticeConfig));
+
+    use(noticePolicy);
+
+    ItemResource requestedItem = itemsFixture.basedUponNod();
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+
+    DateTime requestDate = new DateTime(2019, 10, 9, 10, 0);
+    UserResource steve = usersFixture.steve();
+    requestsFixture.place(new RequestBuilder()
+      .page()
+      .forItem(requestedItem)
+      .by(steve)
+      .withPickupServicePointId(pickupServicePointId)
+      .withRequestDate(requestDate));
+
+    DateTime checkInDate = new DateTime(2019, 10, 10, 12, 30);
+
+    FakeModNotify.setFailPatronNoticesWithBadRequest(true);
+
+    checkInFixture.checkInByBarcode(requestedItem, checkInDate, pickupServicePointId);
+
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
+  }
+
+  @Test
+  void patronNoticeIsSentForRequestAwaitingPickupWhenPreviousRequestWasCancelled() {
     patronNoticeIsSentForRequestAwaitingPickupWhenPreviousRequestWasClosed(CLOSED_CANCELLED);
   }
 
   @Test
-  public void patronNoticeIsSentForRequestAwaitingPickupWhenPreviousRequestHasExpired() {
+  void patronNoticeIsSentForRequestAwaitingPickupWhenPreviousRequestHasExpired() {
     patronNoticeIsSentForRequestAwaitingPickupWhenPreviousRequestWasClosed(CLOSED_UNFILLED);
   }
 
   @Test
-  public void patronNoticeIsSentForRequestAwaitingPickupWhenPreviousRequestPickupExpired() {
+  void patronNoticeIsSentForRequestAwaitingPickupWhenPreviousRequestPickupExpired() {
     patronNoticeIsSentForRequestAwaitingPickupWhenPreviousRequestWasClosed(CLOSED_PICKUP_EXPIRED);
   }
 
@@ -776,20 +844,21 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
 
     // verify that Request Awaiting Pickup notice was sent for first request
 
-    waitAtMost(1, SECONDS)
-      .until(patronNoticesClient::getAll, hasSize(1));
+    verifyNumberOfSentNotices(1);
+    verifyNumberOfPublishedEvents(NOTICE, 1);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
 
     checkPatronNoticeEvent(firstRequest, firstRequester, item, requestAwaitingPickupTemplateId);
 
-    waitAtMost(1, SECONDS)
-      .until(() -> FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
-
-    clearPatronNoticesAndPubsubEvents();
+    clearSentPatronNoticesAndPubsubEvents();
 
     // Check-in again and verify that same notice is not sent repeatedly
 
     checkInFixture.checkInByBarcode(item, firstCheckInDate, pickupServicePointId);
-    verifyThatNoPatronNoticesWereSent();
+
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
 
     // close first request
 
@@ -827,24 +896,25 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
 
     // verify that Request Awaiting Pickup notice was sent to second requester
 
-    waitAtMost(1, SECONDS)
-      .until(patronNoticesClient::getAll, hasSize(1));
+    verifyNumberOfSentNotices(1);
+    verifyNumberOfPublishedEvents(NOTICE, 1);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
 
     checkPatronNoticeEvent(secondRequest, secondRequester, item, requestAwaitingPickupTemplateId);
 
-    waitAtMost(1, SECONDS)
-      .until(() -> FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
-
-    clearPatronNoticesAndPubsubEvents();
+    clearSentPatronNoticesAndPubsubEvents();
 
     // Check-in again and verify that same notice is not sent repeatedly
 
     checkInFixture.checkInByBarcode(item, secondCheckInDate, pickupServicePointId);
-    verifyThatNoPatronNoticesWereSent();
+
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 
   @Test
-  public void overdueFineShouldBeChargedWhenItemIsOverdue() {
+  void overdueFineShouldBeChargedWhenItemIsOverdue() {
     useFallbackPolicies(loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId(),
@@ -918,7 +988,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
   }
 
   @Test
-  public void overdueFineIsChargedForCorrectOwnerWhenMultipleOwnersExist() {
+  void overdueFineIsChargedForCorrectOwnerWhenMultipleOwnersExist() {
     useFallbackPolicies(loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId(),
@@ -985,7 +1055,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
   }
 
   @Test
-  public void overdueFineIsNotCreatedWhenThereIsNoOwnerForServicePoint() {
+  void overdueFineIsNotCreatedWhenThereIsNoOwnerForServicePoint() {
     useFallbackPolicies(loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId(),
@@ -1035,7 +1105,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
   }
 
   @Test
-  public void overdueRecallFineShouldBeChargedWhenItemIsOverdueAfterRecall() {
+  void overdueRecallFineShouldBeChargedWhenItemIsOverdueAfterRecall() {
     useFallbackPolicies(loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId(),
@@ -1107,7 +1177,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
   }
 
   @Test
-  public void noOverdueFineShouldBeChargedForOverdueFinePolicyWithNoOverdueFine() {
+  void noOverdueFineShouldBeChargedForOverdueFinePolicyWithNoOverdueFine() {
     useFallbackPolicies(loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId(),
@@ -1150,9 +1220,9 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     waitAtLeast(1, SECONDS)
       .until(feeFineActionsClient::getAll, empty());
   }
-   
+
   @Test
-  public void shouldNotCreateOverdueFineWithResolutionFoundByLibrary() {
+  void shouldNotCreateOverdueFineWithResolutionFoundByLibrary() {
     useFallbackPolicies(loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId(),
@@ -1198,7 +1268,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
   }
 
   @Test
-  public void overdueFineCalculatedCorrectlyWhenHourlyFeeFinePolicyIsApplied() {
+  void overdueFineCalculatedCorrectlyWhenHourlyFeeFinePolicyIsApplied() {
     useFallbackPolicies(loanPoliciesFixture.create(new LoanPolicyBuilder()
         .withId(UUID.randomUUID())
         .withName("Three days policy")
@@ -1269,7 +1339,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
   }
 
   @Test
-  public void canCheckInLostAndPaidItem() {
+  void canCheckInLostAndPaidItem() {
     final ItemResource item = itemsFixture.basedUponNod();
     var checkOutResource = checkOutFixture.checkOutByBarcode(item, usersFixture.steve()).getJson();
     declareLostFixtures.declareItemLost(checkOutResource);
@@ -1279,7 +1349,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     assertThat(itemsClient.getById(item.getId()).getJson(), isAvailable());
 
     waitAtMost(1, SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(6));
+      .until(FakePubSub::getPublishedEvents, hasSize(5));
 
     Response response = loansClient.getById(UUID.fromString(checkOutResource.getString("id")));
     JsonObject loan = response.getJson();
@@ -1288,7 +1358,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
   }
 
   @Test
-  public void canCheckInAgedToLostItem() {
+  void canCheckInAgedToLostItem() {
     val ageToLostResult = ageToLostFixture.createAgedToLostLoan();
 
     checkInFixture.checkInByBarcode(ageToLostResult.getItem());
@@ -1307,7 +1377,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
   }
 
   @Test
-  public void itemCheckedInEventIsPublished() {
+  void itemCheckedInEventIsPublished() {
     final IndividualResource james = usersFixture.james();
     final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
     final IndividualResource homeLocation = locationsFixture.basedUponExampleLocation(
@@ -1343,7 +1413,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
   }
 
   @Test
-  public void availableNoticeIsSentUponCheckInWhenRequesterBarcodeWasChanged() {
+  void availableNoticeIsSentUponCheckInWhenRequesterBarcodeWasChanged() {
     UUID templateId = UUID.randomUUID();
 
     JsonObject availableNoticeConfig = new NoticeConfigurationBuilder()
@@ -1376,35 +1446,28 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
 
     checkInFixture.checkInByBarcode(requestedItem, checkInDate, pickupServicePointId);
 
-    JsonObject patronNotice = waitAtMost(1, SECONDS)
-      .until(patronNoticesClient::getAll, hasSize(1))
-      .get(0);
+    verifyNumberOfSentNotices(1);
+    verifyNumberOfPublishedEvents(NOTICE, 1);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
 
-    assertThat(patronNotice, hasEmailNoticeProperties(requester.getId(), templateId,
+    assertThat(FakeModNotify.getFirstSentPatronNotice(), hasEmailNoticeProperties(requester.getId(), templateId,
       getUserContextMatchers(updatedRequesterJson)));
-
-    waitAtMost(1, SECONDS)
-      .until(() -> FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
   }
 
   private void checkPatronNoticeEvent(IndividualResource request, IndividualResource requester,
     ItemResource item, UUID expectedTemplateId) {
 
-    waitAtMost(1, SECONDS)
-      .until(patronNoticesClient::getAll, hasSize(1));
-
-    List<JsonObject> sentNotices = patronNoticesClient.getAll();
+    verifyNumberOfSentNotices(1);
 
     Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
     noticeContextMatchers.putAll(getUserContextMatchers(requester));
     noticeContextMatchers.putAll(TemplateContextMatchers.getItemContextMatchers(item, true));
     noticeContextMatchers.putAll(TemplateContextMatchers.getRequestContextMatchers(request));
 
-    assertThat(sentNotices, hasItems(
+    assertThat(FakeModNotify.getSentPatronNotices(), hasItems(
       hasEmailNoticeProperties(requester.getId(), expectedTemplateId, noticeContextMatchers)));
 
-    waitAtMost(1, SECONDS)
-      .until(() -> FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
+    verifyNumberOfPublishedEvents(NOTICE, 1);
   }
 
   private void verifyCheckInOperationRecorded(UUID itemId, UUID servicePoint) {
@@ -1432,11 +1495,6 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     return LocalDate.of(dateTime.getYear(), dateTime.getMonthOfYear(), dateTime.getDayOfMonth());
   }
 
-  private void clearPatronNoticesAndPubsubEvents() {
-    patronNoticesClient.deleteAll();
-    FakePubSub.clearPublishedEvents();
-  }
-
   private void assertThatItemStatusIs(UUID itemId, ItemStatus status) {
     assertThat(
       Item.from(itemsFixture.getById(itemId).getJson()).getStatus(),
@@ -1447,14 +1505,6 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     assertThat(
       Request.from(requestsFixture.getById(requestId).getJson()).getStatus(),
       is(status));
-  }
-
-  private void verifyThatNoPatronNoticesWereSent() {
-    waitAtMost(1, SECONDS)
-      .until(patronNoticesClient::getAll, empty());
-
-    waitAtMost(1, SECONDS)
-      .until(() -> FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), empty());
   }
 
   private void updateRequestPosition(IndividualResource request, int position) {

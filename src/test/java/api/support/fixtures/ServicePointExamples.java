@@ -5,7 +5,7 @@ import static java.lang.Boolean.TRUE;
 
 import api.support.builders.ServicePointBuilder;
 
-class ServicePointExamples {
+public class ServicePointExamples {
   static ServicePointBuilder basedUponCircDesk1() {
     return new ServicePointBuilder("Circ Desk 1", "cd1",
         "Circulation Desk -- Hallway").withPickupLocation(TRUE)

@@ -2,8 +2,8 @@ package org.folio.circulation.domain.policy;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -19,21 +19,20 @@ import org.folio.circulation.resources.handlers.error.OverridingErrorHandler;
 import org.folio.circulation.resources.renewal.RenewByBarcodeResource;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.results.Result;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import api.support.builders.FixedDueDateSchedule;
 import api.support.builders.FixedDueDateSchedulesBuilder;
 import api.support.builders.LoanBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import io.vertx.core.json.JsonObject;
-import junitparams.JUnitParamsRunner;
-import junitparams.Parameters;
 
-@RunWith(JUnitParamsRunner.class)
-public class RollingLoanPolicyRenewalDueDateCalculationTests {
+class RollingLoanPolicyRenewalDueDateCalculationTests {
 
   private static final String EXPECTED_REASON_DATE_FALLS_OTSIDE_DATE_RANGES =
     "renewal date falls outside of date ranges in the loan policy";
@@ -45,14 +44,14 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
   private static final String RENEWAL_WOULD_NOT_CHANGE_THE_DUE_DATE =
     "renewal would not change the due date";
 
-  @Test
-  @Parameters({
+  @ParameterizedTest
+  @ValueSource(strings = {
     "1",
     "8",
     "12",
     "15"
   })
-  public void shouldApplyMonthlyRollingPolicy(int duration) {
+  void shouldApplyMonthlyRollingPolicy(int duration) {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .rolling(Period.months(duration))
       .renewFromSystemDate()
@@ -71,15 +70,15 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
     assertThat(result.value().getDueDate(), is(systemDate.plusMonths(duration)));
   }
 
-  @Test
-  @Parameters({
+  @ParameterizedTest
+  @ValueSource(strings = {
     "1",
     "2",
     "3",
     "4",
     "5"
   })
-  public void shouldApplyWeeklyRollingPolicy(int duration) {
+  void shouldApplyWeeklyRollingPolicy(int duration) {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .rolling(Period.weeks(duration))
       .renewFromSystemDate()
@@ -98,8 +97,8 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
     assertThat(result.value().getDueDate(), is(systemDate.plusWeeks(duration)));
   }
 
-  @Test
-  @Parameters({
+  @ParameterizedTest
+  @ValueSource(strings = {
     "1",
     "7",
     "14",
@@ -107,7 +106,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
     "30",
     "100"
   })
-  public void shouldApplyDailyRollingPolicy(int duration) {
+  void shouldApplyDailyRollingPolicy(int duration) {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .rolling(Period.days(duration))
       .renewFromSystemDate()
@@ -126,8 +125,8 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
     assertThat(result.value().getDueDate(), is(systemDate.plusDays(duration)));
   }
 
-  @Test
-  @Parameters({
+  @ParameterizedTest
+  @ValueSource(strings = {
     "2",
     "5",
     "30",
@@ -135,7 +134,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
     "60",
     "24"
   })
-  public void shouldApplyHourlyRollingPolicy(int duration) {
+  void shouldApplyHourlyRollingPolicy(int duration) {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .rolling(Period.hours(duration))
       .renewFromSystemDate()
@@ -154,15 +153,15 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
     assertThat(result.value().getDueDate(), is(systemDate.plusHours(duration)));
   }
 
-  @Test
-  @Parameters({
+  @ParameterizedTest
+  @ValueSource(strings = {
     "1",
     "5",
     "30",
     "60",
     "200"
   })
-  public void shouldApplyMinuteIntervalRollingPolicy(int duration) {
+  void shouldApplyMinuteIntervalRollingPolicy(int duration) {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .rolling(Period.minutes(duration))
       .renewFromSystemDate()
@@ -182,7 +181,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
   }
 
   @Test
-  public void shouldFailForUnrecognisedInterval() {
+  void shouldFailForUnrecognisedInterval() {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .rolling(Period.from(5, "Unknown"))
       .withName("Invalid Loan Policy")
@@ -193,14 +192,14 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
     Loan loan = loanFor(loanDate, loanDate, loanPolicy);
 
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
-    renew(loan, DateTime.now(), new RequestQueue(Collections.emptyList()), errorHandler);
+    renew(loan, ClockUtil.getDateTime(), new RequestQueue(Collections.emptyList()), errorHandler);
 
     assertTrue(matchErrorReason(errorHandler,
       "the interval \"Unknown\" in the loan policy is not recognised"));
   }
 
   @Test
-  public void shouldFailWhenNoPeriodProvided() {
+  void shouldFailWhenNoPeriodProvided() {
     final JsonObject representation = new LoanPolicyBuilder()
       .rolling(Period.from(5, "Unknown"))
       .withName("Invalid Loan Policy")
@@ -215,13 +214,13 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
     Loan loan = loanFor(loanDate, loanDate, loanPolicy);
 
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
-    renew(loan, DateTime.now(), new RequestQueue(Collections.emptyList()), errorHandler);
+    renew(loan, ClockUtil.getDateTime(), new RequestQueue(Collections.emptyList()), errorHandler);
 
     assertTrue(matchErrorReason(errorHandler, LOAN_PERIOD_IN_THE_LOAN_POLICY_IS_NOT_RECOGNISED));
   }
 
   @Test
-  public void shouldFailWhenNoPeriodDurationProvided() {
+  void shouldFailWhenNoPeriodDurationProvided() {
     final JsonObject representation = new LoanPolicyBuilder()
       .rolling(Period.from(5, "Weeks"))
       .withName("Invalid Loan Policy")
@@ -236,13 +235,13 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
     Loan loan = loanFor(loanDate, loanDate, loanPolicy);
 
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
-    renew(loan, DateTime.now(), new RequestQueue(Collections.emptyList()), errorHandler);
+    renew(loan, ClockUtil.getDateTime(), new RequestQueue(Collections.emptyList()), errorHandler);
 
     assertTrue(matchErrorReason(errorHandler, LOAN_PERIOD_IN_THE_LOAN_POLICY_IS_NOT_RECOGNISED));
   }
 
   @Test
-  public void shouldFailWhenNoPeriodIntervalProvided() {
+  void shouldFailWhenNoPeriodIntervalProvided() {
     final JsonObject representation = new LoanPolicyBuilder()
       .rolling(Period.from(5, "Weeks"))
       .withName("Invalid Loan Policy")
@@ -257,17 +256,17 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
     Loan loan = loanFor(loanDate, loanDate, loanPolicy);
 
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
-    renew(loan, DateTime.now(), new RequestQueue(Collections.emptyList()), errorHandler);
+    renew(loan, ClockUtil.getDateTime(), new RequestQueue(Collections.emptyList()), errorHandler);
 
     assertTrue(matchErrorReason(errorHandler, LOAN_PERIOD_IN_THE_LOAN_POLICY_IS_NOT_RECOGNISED));
   }
 
-  @Test
-  @Parameters({
+  @ParameterizedTest
+  @ValueSource(strings = {
     "0",
     "-1",
   })
-  public void shouldFailWhenDurationIsInvalid(int duration) {
+  void shouldFailWhenDurationIsInvalid(int duration) {
     final JsonObject representation = new LoanPolicyBuilder()
       .rolling(Period.minutes(duration))
       .withName("Invalid Loan Policy")
@@ -280,14 +279,14 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
     Loan loan = loanFor(loanDate, loanDate, loanPolicy);
 
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
-    renew(loan, DateTime.now(), new RequestQueue(Collections.emptyList()), errorHandler);
+    renew(loan, ClockUtil.getDateTime(), new RequestQueue(Collections.emptyList()), errorHandler);
 
     assertTrue(matchErrorReason(errorHandler,
       String.format("the duration \"%s\" in the loan policy is invalid", duration)));
   }
 
   @Test
-  public void shouldTruncateDueDateWhenWithinDueDateLimitSchedule() {
+  void shouldTruncateDueDateWhenWithinDueDateLimitSchedule() {
     //TODO: Slight hack to use the same builder, the schedule is fed in later
     //TODO: Introduce builder for individual schedules
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
@@ -305,7 +304,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
     Loan loan = loanFor(loanDate, loanDate.plusDays(15), loanPolicy);
 
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
-    Result<Loan> result = renew(loan, DateTime.now(), new RequestQueue(Collections.emptyList()),
+    Result<Loan> result = renew(loan, ClockUtil.getDateTime(), new RequestQueue(Collections.emptyList()),
       errorHandler);
 
     assertThat(result.value().getDueDate(),
@@ -313,7 +312,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
   }
 
   @Test
-  public void shouldNotTruncateDueDateWhenWithinDueDateLimitScheduleButInitialDateIsSooner() {
+  void shouldNotTruncateDueDateWhenWithinDueDateLimitScheduleButInitialDateIsSooner() {
     //TODO: Slight hack to use the same builder, the schedule is fed in later
     //TODO: Introduce builder for individual schedules
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
@@ -329,7 +328,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     Loan loan = loanFor(loanDate, loanDate.plusDays(6), loanPolicy);
 
-    Result<Loan> result = renew(loan, DateTime.now(),
+    Result<Loan> result = renew(loan, ClockUtil.getDateTime(),
       new RequestQueue(Collections.emptyList()), new OverridingErrorHandler(null));
 
     assertThat(result.value().getDueDate(),
@@ -337,7 +336,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
   }
 
   @Test
-  public void shouldFailWhenNotWithinOneOfProvidedDueDateLimitSchedules() {
+  void shouldFailWhenNotWithinOneOfProvidedDueDateLimitSchedules() {
     //TODO: Slight hack to use the same builder, the schedule is fed in later
     //TODO: Introduce builder for individual schedules
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
@@ -356,14 +355,14 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
     Loan loan = loanFor(loanDate, loanDate, loanPolicy);
 
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
-    renew(loan, DateTime.now(), new RequestQueue(Collections.emptyList()), errorHandler);
+    renew(loan, ClockUtil.getDateTime(), new RequestQueue(Collections.emptyList()), errorHandler);
 
     assertEquals(1, errorHandler.getErrors().size());
     assertTrue(matchErrorReason(errorHandler, EXPECTED_REASON_DATE_FALLS_OTSIDE_DATE_RANGES));
   }
 
   @Test
-  public void shouldFailWhenNoDueDateLimitSchedules() {
+  void shouldFailWhenNoDueDateLimitSchedules() {
     //TODO: Slight hack to use the same builder, the schedule is fed in later
     //TODO: Introduce builder for individual schedules
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
@@ -380,13 +379,13 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     RequestQueue requestQueue = new RequestQueue(Collections.emptyList());
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
-    renew(loan, DateTime.now(), requestQueue, errorHandler);
+    renew(loan, ClockUtil.getDateTime(), requestQueue, errorHandler);
 
     assertTrue(matchErrorReason(errorHandler, EXPECTED_REASON_DATE_FALLS_OTSIDE_DATE_RANGES));
   }
 
   @Test
-  public void multipleRenewalFailuresWhenDateFallsOutsideDateRangesAndItemHasOpenRecallRequest() {
+  void multipleRenewalFailuresWhenDateFallsOutsideDateRangesAndItemHasOpenRecallRequest() {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .rolling(Period.months(1))
       .withName("One Month")
@@ -402,7 +401,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
     String requestId = UUID.randomUUID().toString();
     RequestQueue requestQueue = creteRequestQueue(requestId, RequestType.RECALL);
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
-    renew(loan, DateTime.now(), requestQueue, errorHandler);
+    renew(loan, ClockUtil.getDateTime(), requestQueue, errorHandler);
 
     assertEquals(2, errorHandler.getErrors().size());
     assertTrue(matchErrorReason(errorHandler, EXPECTED_REASON_DATE_FALLS_OTSIDE_DATE_RANGES));
@@ -410,7 +409,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
   }
 
   @Test
-  public void shouldFailWhenRenewalWouldNotChangeDueDate() {
+  void shouldFailWhenRenewalWouldNotChangeDueDate() {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .rolling(Period.weeks(2))
       .withName("Example Rolling Loan Policy")
@@ -436,7 +435,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
   }
 
   @Test
-  public void shouldFailWhenRenewalWouldMeanEarlierDueDate() {
+  void shouldFailWhenRenewalWouldMeanEarlierDueDate() {
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .rolling(Period.weeks(2))
       .withName("Example Rolling Loan Policy")
@@ -459,10 +458,6 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
     renew(loan, renewalDate, new RequestQueue(Collections.emptyList()), errorHandler);
 
     assertTrue(matchErrorReason(errorHandler, RENEWAL_WOULD_NOT_CHANGE_THE_DUE_DATE));
-  }
-
-  private Loan loanFor(DateTime loanDate, LoanPolicy loanPolicy) {
-    return loanFor(loanDate, loanDate.plusWeeks(2), loanPolicy);
   }
 
   private Loan loanFor(DateTime loanDate, DateTime dueDate, LoanPolicy loanPolicy) {

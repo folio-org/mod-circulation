@@ -15,26 +15,26 @@ import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.ServerErrorFailure;
-import org.joda.time.DateTime;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.folio.circulation.support.results.Result;
+import org.folio.circulation.support.utils.ClockUtil;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import io.vertx.core.json.JsonObject;
 
-@RunWith(MockitoJUnitRunner.class)
-public class LogCheckInServiceTest {
+@ExtendWith(MockitoExtension.class)
+class LogCheckInServiceTest {
   @Mock
   private Clients clients;
   @Mock
   private CollectionResourceClient checkInStorageClient;
   private LogCheckInService logCheckInService;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     when(clients.checkInStorageClient())
       .thenReturn(checkInStorageClient);
@@ -42,7 +42,7 @@ public class LogCheckInServiceTest {
   }
 
   @Test
-  public void logCheckInOperationPropagatesException() {
+  void logCheckInOperationPropagatesException() {
     final CheckInContext context = checkInProcessRecords();
 
     final ServerErrorFailure postError = new ServerErrorFailure("ServerError");
@@ -63,7 +63,7 @@ public class LogCheckInServiceTest {
     JsonObject requestRepresentation = new JsonObject()
       .put("servicePointId", UUID.randomUUID().toString())
       .put("itemBarcode", "barcode")
-      .put("checkInDate", DateTime.now().toString());
+      .put("checkInDate", ClockUtil.getDateTime().toString());
 
     JsonObject itemRepresentation = new JsonObject()
       .put("id", UUID.randomUUID().toString())

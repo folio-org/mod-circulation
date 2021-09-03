@@ -1,23 +1,25 @@
 package org.folio.circulation.domain;
 
 import static org.folio.circulation.domain.InstanceRequestItemsComparer.sortRequestQueues;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
-import org.junit.Test;
+import org.junit.jupiter.api.Test
+;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
-public class InstanceRequestItemsComparerTests {
+class InstanceRequestItemsComparerTests {
 
   @Test
-  public void canSortRequestQueuesWhenFirstQueueIsLessThanSecondQueue() {
+  void canSortRequestQueuesWhenFirstQueueIsLessThanSecondQueue() {
     Map<Item, Integer> itemQueueSizeMap = new HashMap<>();
 
     Item item1 = createItem(null);
@@ -33,7 +35,7 @@ public class InstanceRequestItemsComparerTests {
   }
 
   @Test
-  public void canSortRequestQueuesWhenSecondQueueIsLessThanFirstQueue() {
+  void canSortRequestQueuesWhenSecondQueueIsLessThanFirstQueue() {
     Map<Item, Integer> itemQueueSizeMap = new HashMap<>();
 
     Item item1 = createItem(null);
@@ -50,7 +52,7 @@ public class InstanceRequestItemsComparerTests {
   }
 
   @Test
-  public void canSortRequestQueuesWhenQueuesAreEqual() {
+  void canSortRequestQueuesWhenQueuesAreEqual() {
     Map<Item, Integer> itemQueueSizeMap = new LinkedHashMap<>();
 
     Item item1 = createItem(null);
@@ -68,7 +70,7 @@ public class InstanceRequestItemsComparerTests {
   }
 
   @Test
-  public void canSortRequestQueuesWhenQueuesAreEqualWithDueDates() {
+  void canSortRequestQueuesWhenQueuesAreEqualWithDueDates() {
     Map<Item, Integer> itemQueueSizeMap = new LinkedHashMap<>();
 
     Item item1 = createItem(null);
@@ -85,7 +87,7 @@ public class InstanceRequestItemsComparerTests {
   }
 
   @Test
-  public void canSortRequestQueuesWhenItem1DueDateIsEarlierThanItem2DueDate() {
+  void canSortRequestQueuesWhenItem1DueDateIsEarlierThanItem2DueDate() {
     Item item1 = createItem(null);
     Item item2 = createItem(null);
 
@@ -94,8 +96,8 @@ public class InstanceRequestItemsComparerTests {
     itemQueueSizeMap.put(item2, 2);
 
     Map<Item, DateTime> itemDueDateMap = new LinkedHashMap<>();
-    DateTime item1DueDate = DateTime.now();
-    DateTime item2DueDate = DateTime.now().plusDays(3);
+    DateTime item1DueDate = ClockUtil.getDateTime();
+    DateTime item2DueDate = ClockUtil.getDateTime().plusDays(3);
     itemDueDateMap.put(item1, item1DueDate);
     itemDueDateMap.put(item2, item2DueDate);
 
@@ -106,7 +108,7 @@ public class InstanceRequestItemsComparerTests {
   }
 
   @Test
-  public void canSortRequestQueuesWhenItem2DueDateIsEarlierThanItem1DueDate() {
+  void canSortRequestQueuesWhenItem2DueDateIsEarlierThanItem1DueDate() {
     Item item1 = createItem(null);
     Item item2 = createItem(null);
 
@@ -115,8 +117,8 @@ public class InstanceRequestItemsComparerTests {
     itemQueueSizeMap.put(item2, 2);
 
     Map<Item, DateTime> itemDueDateMap = new LinkedHashMap<>();
-    DateTime item1DueDate = DateTime.now();
-    DateTime item2DueDate = DateTime.now().minusDays(3);
+    DateTime item1DueDate = ClockUtil.getDateTime();
+    DateTime item2DueDate = ClockUtil.getDateTime().minusDays(3);
     itemDueDateMap.put(item1, item1DueDate);
     itemDueDateMap.put(item2, item2DueDate);
 
@@ -127,7 +129,7 @@ public class InstanceRequestItemsComparerTests {
   }
 
   @Test
-  public void canSortRequestQueuesWhenEitherItemDueDateIsNull() {
+  void canSortRequestQueuesWhenEitherItemDueDateIsNull() {
     Item item1 = createItem(null);
     Item item2 = createItem(null);
 
@@ -136,7 +138,7 @@ public class InstanceRequestItemsComparerTests {
     itemQueueSizeMap.put(item2, 2);
 
     Map<Item, DateTime> itemDueDateMap = new LinkedHashMap<>();
-    itemDueDateMap.put(item1, DateTime.now());
+    itemDueDateMap.put(item1, ClockUtil.getDateTime());
     itemDueDateMap.put(item2, null);
 
     Map<Item, Integer> itemIntegerMap = sortRequestQueues(itemQueueSizeMap, itemDueDateMap, null);
@@ -146,7 +148,7 @@ public class InstanceRequestItemsComparerTests {
 
     itemDueDateMap.clear();
     itemDueDateMap.put(item1, null);
-    itemDueDateMap.put(item2, DateTime.now());
+    itemDueDateMap.put(item2, ClockUtil.getDateTime());
 
     itemIntegerMap = sortRequestQueues(itemQueueSizeMap, itemDueDateMap, null);
 
@@ -155,7 +157,7 @@ public class InstanceRequestItemsComparerTests {
   }
 
   @Test
-  public void canSortRequestQueuesWhenBothItemsDueDateIsNull() {
+  void canSortRequestQueuesWhenBothItemsDueDateIsNull() {
     Item item1 = createItem(null);
     Item item2 = createItem(null);
 
@@ -175,7 +177,7 @@ public class InstanceRequestItemsComparerTests {
   }
 
   @Test
-  public void canGetItem1WhenSortRequestQueuesUsingServicePointId() {
+  void canGetItem1WhenSortRequestQueuesUsingServicePointId() {
     UUID destinationServicePointId = UUID.randomUUID();
 
     Item item1 = createItem(destinationServicePointId);
@@ -186,7 +188,7 @@ public class InstanceRequestItemsComparerTests {
     itemQueueSizeMap.put(item2, 2);
 
     Map<Item, DateTime> itemDueDateMap = new LinkedHashMap<>();
-    DateTime commonDueDate = DateTime.now();
+    DateTime commonDueDate = ClockUtil.getDateTime();
     itemDueDateMap.put(item2, commonDueDate);  //specifically add item2 first and expect that item2 will be first item in the result map.
     itemDueDateMap.put(item1, commonDueDate);
 
@@ -198,7 +200,7 @@ public class InstanceRequestItemsComparerTests {
   }
 
   @Test
-  public void canGetItem2WhenSortRequestQueuesUsingServicePointId() {
+  void canGetItem2WhenSortRequestQueuesUsingServicePointId() {
     UUID destinationServicePointId = UUID.randomUUID();
 
     Item item1 = createItem(null);
@@ -209,7 +211,7 @@ public class InstanceRequestItemsComparerTests {
     itemQueueSizeMap.put(item2, 2);
 
     Map<Item, DateTime> itemDueDateMap = new LinkedHashMap<>();
-    DateTime commonDueDate = DateTime.now();
+    DateTime commonDueDate = ClockUtil.getDateTime();
     itemDueDateMap.put(item2, commonDueDate);  //specifically add item2 first and expect that item2 will be first item in the result map.
     itemDueDateMap.put(item1, commonDueDate);
 
@@ -221,7 +223,7 @@ public class InstanceRequestItemsComparerTests {
   }
 
   @Test
-  public void canGetItem1WhenSortRequestQueuesUsingServicePointIdAndBothItemsAreNotServedByDestinationServicePointId() {
+  void canGetItem1WhenSortRequestQueuesUsingServicePointIdAndBothItemsAreNotServedByDestinationServicePointId() {
     Item item1 = createItem(UUID.randomUUID());
     Item item2 = createItem(UUID.randomUUID());
 
@@ -230,7 +232,7 @@ public class InstanceRequestItemsComparerTests {
     itemQueueSizeMap.put(item2, 2);
 
     Map<Item, DateTime> itemDueDateMap = new LinkedHashMap<>();
-    DateTime commonDueDate = DateTime.now();
+    DateTime commonDueDate = ClockUtil.getDateTime();
     itemDueDateMap.put(item2, commonDueDate);  //specifically add item2 first and expect that item2 will be first item in the result map.
     itemDueDateMap.put(item1, commonDueDate);
 

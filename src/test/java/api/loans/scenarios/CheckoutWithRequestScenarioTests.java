@@ -14,7 +14,7 @@ import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
@@ -23,10 +23,10 @@ import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.http.ItemResource;
 
-public class CheckoutWithRequestScenarioTests extends APITests {
+class CheckoutWithRequestScenarioTests extends APITests {
 
   @Test
-  public void canCheckoutPagedItem() {
+  void canCheckoutPagedItem() {
 
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource charlotte = usersFixture.charlotte();
@@ -47,7 +47,7 @@ public class CheckoutWithRequestScenarioTests extends APITests {
   }
 
   @Test
-  public void checkingOutWithHoldRequestAppliesAlternatePeriod() {
+  void checkingOutWithHoldRequestAppliesAlternatePeriod() {
 
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource charlotte = usersFixture.charlotte();
@@ -101,7 +101,7 @@ public class CheckoutWithRequestScenarioTests extends APITests {
   }
 
   @Test
-  public void checkingOutWithHoldRequestAppliesAlternatePeriodAndScheduledForFixedPolicy() {
+  void checkingOutWithHoldRequestAppliesAlternatePeriodAndScheduledForFixedPolicy() {
 
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource charlotte = usersFixture.charlotte();

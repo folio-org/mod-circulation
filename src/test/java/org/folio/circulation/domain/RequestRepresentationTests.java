@@ -9,25 +9,22 @@ import java.util.UUID;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
 
 import api.support.builders.Address;
 import api.support.builders.RequestBuilder;
 import api.support.builders.ServicePointBuilder;
 import api.support.builders.UserBuilder;
 import io.vertx.core.json.JsonObject;
-import junitparams.JUnitParamsRunner;
 
-@RunWith(JUnitParamsRunner.class)
-public class RequestRepresentationTests {
+class RequestRepresentationTests {
   private static final UUID REQUEST_ID = UUID.randomUUID();
   private static final UUID ITEM_ID = UUID.randomUUID();
   private static final UUID ADDRESS_ID = UUID.randomUUID();
   private static final UUID SERVICE_POINT_ID = UUID.randomUUID();
 
   @Test
-  public void testExtendedRepresentation() {
+  void testExtendedRepresentation() {
     RequestRepresentation requestRepresentation = new RequestRepresentation();
     Request request = createMockRequest();
     JsonObject extendedRepresentation = requestRepresentation.extendedRepresentation(request);
@@ -40,7 +37,7 @@ public class RequestRepresentationTests {
   }
 
   @Test
-  public void testStoredRequest() {
+  void testStoredRequest() {
     Request request = createMockRequest();
 
     JsonObject extendedRepresentation

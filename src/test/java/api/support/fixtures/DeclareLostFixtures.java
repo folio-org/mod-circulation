@@ -6,8 +6,7 @@ import static api.support.http.InterfaceUrls.declareLoanItemLostURL;
 import java.util.UUID;
 
 import org.folio.circulation.support.http.client.Response;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
+import org.folio.circulation.support.utils.ClockUtil;
 
 import api.support.RestAssuredClient;
 import api.support.builders.DeclareItemLostRequestBuilder;
@@ -22,7 +21,7 @@ public class DeclareLostFixtures {
 
   public Response declareItemLost(DeclareItemLostRequestBuilder builder) {
 
-    JsonObject request = builder.create();    
+    JsonObject request = builder.create();
     return restAssuredClient.post(request, declareLoanItemLostURL(builder.getLoanId()),
       204, "declare-item-lost-request");
   }
@@ -38,12 +37,16 @@ public class DeclareLostFixtures {
   public Response declareItemLost(JsonObject loanJson) {
     final UUID loanId = UUID.fromString(loanJson.getString("id"));
 
+    return declareItemLost(loanId);
+  }
+
+  public Response declareItemLost(UUID loanId) {
     final DeclareItemLostRequestBuilder builder = new DeclareItemLostRequestBuilder()
       .forLoanId(loanId)
-      .on(DateTime.now(DateTimeZone.UTC))
-      //creating "real" servicepoint data here would require a lot of setup code to 
-      //initialize a ResourceClient, the intialize a service point creator, and 
-      //so on.  As this is a convenience function that's only used when the loan 
+      .on(ClockUtil.getDateTime())
+      //creating "real" servicepoint data here would require a lot of setup code to
+      //initialize a ResourceClient, the intialize a service point creator, and
+      //so on.  As this is a convenience function that's only used when the loan
       //settings are not integral to the test, it is easier to supply dummy data.
       .withServicePointId(UUID.randomUUID())
       .withComment("testing");

@@ -15,6 +15,7 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.results.Result;
+import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -34,16 +35,10 @@ public class PatronExpiredSessionRepository {
   }
 
   public CompletableFuture<Result<List<ExpiredSession>>> findPatronExpiredSessions(
-    PatronActionType actionType, String sessionInactivityTime) {
+    PatronActionType actionType, DateTime sessionInactivityTime) {
 
-    return lookupExpiredSession(actionType.getRepresentation(), sessionInactivityTime)
-      .thenApply(result -> result.next(Result::succeeded));
-  }
-
-  private CompletableFuture<Result<List<ExpiredSession>>> lookupExpiredSession(
-    String actionType, String inactivityTimeLimit) {
-
-    String path = String.format(PATH_PARAM_WITH_QUERY, actionType, inactivityTimeLimit, EXPIRED_SESSIONS_LIMIT);
+    String path = String.format(PATH_PARAM_WITH_QUERY, actionType.getRepresentation(),
+      sessionInactivityTime.toString(), EXPIRED_SESSIONS_LIMIT);
 
     return FetchSingleRecord.<List<ExpiredSession>>forRecord(PATRON_ACTION_SESSIONS)
       .using(patronExpiredSessionsStorageClient)

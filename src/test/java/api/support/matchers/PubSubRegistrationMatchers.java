@@ -18,7 +18,8 @@ public class PubSubRegistrationMatchers {
       hasJsonPath("eventDescriptors[3].eventType", is("ITEM_AGED_TO_LOST")),
       hasJsonPath("eventDescriptors[4].eventType", is("ITEM_CLAIMED_RETURNED")),
       hasJsonPath("eventDescriptors[5].eventType", is("LOAN_DUE_DATE_CHANGED")),
-      hasJsonPath("eventDescriptors[6].eventType", is("LOG_RECORD"))
+      hasJsonPath("eventDescriptors[6].eventType", is("LOAN_CLOSED")),
+      hasJsonPath("eventDescriptors[7].eventType", is("LOG_RECORD"))
     );
   }
 

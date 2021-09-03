@@ -14,6 +14,7 @@ public class EventTypeMatchers {
   public static final String ITEM_AGED_TO_LOST = "ITEM_AGED_TO_LOST";
   public static final String ITEM_CLAIMED_RETURNED = "ITEM_CLAIMED_RETURNED";
   public static final String LOAN_DUE_DATE_CHANGED = "LOAN_DUE_DATE_CHANGED";
+  public static final String LOAN_CLOSED = "LOAN_CLOSED";
   public static final String LOG_RECORD = "LOG_RECORD";
 
   public static Matcher<JsonObject> isItemCheckedOutEventType() {
@@ -38,6 +39,10 @@ public class EventTypeMatchers {
 
   public static Matcher<JsonObject> isLoanDueDateChangedEventType() {
     return isEventOfType(LOAN_DUE_DATE_CHANGED);
+  }
+
+  public static Matcher<JsonObject> isLoanClosedEventType() {
+    return isEventOfType(LOAN_CLOSED);
   }
 
   public static Matcher<JsonObject> isLogRecordEventType() {

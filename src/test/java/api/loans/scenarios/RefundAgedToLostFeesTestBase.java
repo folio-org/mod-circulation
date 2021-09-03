@@ -16,12 +16,11 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTime
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
-import static org.joda.time.DateTime.now;
-import static org.joda.time.DateTimeZone.UTC;
 
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import api.support.fixtures.AgeToLostFixture;
 import api.support.http.IndividualResource;
@@ -40,7 +39,7 @@ public abstract class RefundAgedToLostFeesTestBase extends SpringApiTest {
     this.cancellationReason = cancellationReason;
   }
 
-  @Before
+  @BeforeEach
   public void createOwnerAndFeeTypes() {
     feeFineOwnerFixture.cd1Owner();
     feeFineTypeFixture.lostItemProcessingFee();
@@ -52,7 +51,7 @@ public abstract class RefundAgedToLostFeesTestBase extends SpringApiTest {
     DateTime actionDate);
 
   @Test
-  public void shouldRefundPartiallyPaidAmountAndCancelRemaining() {
+  void shouldRefundPartiallyPaidAmountAndCancelRemaining() {
     final double setCostFee = 10.55;
     final double processingFee = 12.99;
 
@@ -77,7 +76,7 @@ public abstract class RefundAgedToLostFeesTestBase extends SpringApiTest {
   }
 
   @Test
-  public void shouldChargeOverdueFine() {
+  void shouldChargeOverdueFine() {
     final double processingFee = 12.99;
 
     val policy = lostItemFeePoliciesFixture.ageToLostAfterOneMinutePolicy()
@@ -90,7 +89,7 @@ public abstract class RefundAgedToLostFeesTestBase extends SpringApiTest {
 
     feeFineAccountFixture.payLostItemProcessingFee(result.getLoanId());
 
-    performActionThatRequiresRefund(result, now(UTC).plusMonths(8));
+    performActionThatRequiresRefund(result, ClockUtil.getDateTime().plusMonths(8));
 
     final IndividualResource loan = result.getLoan();
     assertThat(loan, hasLostItemProcessingFee(isRefundedFully(processingFee)));
@@ -101,7 +100,7 @@ public abstract class RefundAgedToLostFeesTestBase extends SpringApiTest {
   }
 
   @Test
-  public void shouldChargeOverdueFineIfNoFeesChargedYet() {
+  void shouldChargeOverdueFineIfNoFeesChargedYet() {
     val policy = lostItemFeePoliciesFixture.ageToLostAfterOneMinutePolicy()
       .withName("shouldChargeOverdueFine")
       .chargeProcessingFeeWhenAgedToLost(12.99)
@@ -110,7 +109,7 @@ public abstract class RefundAgedToLostFeesTestBase extends SpringApiTest {
 
     val result = ageToLostFixture.createAgedToLostLoan(policy);
 
-    performActionThatRequiresRefund(result, now(UTC).plusMonths(8));
+    performActionThatRequiresRefund(result, ClockUtil.getDateTime().plusMonths(8));
 
     final IndividualResource loan = result.getLoan();
     assertThat(loan, hasOverdueFine());
@@ -121,7 +120,7 @@ public abstract class RefundAgedToLostFeesTestBase extends SpringApiTest {
   }
 
   @Test
-  public void shouldNotRefundFeesWhenReturnedAfterRefundPeriod() {
+  void shouldNotRefundFeesWhenReturnedAfterRefundPeriod() {
     final double setCostFee = 10.55;
     final double processingFee = 12.99;
     final int feeRefundPeriodMinutes = 1;
@@ -152,7 +151,7 @@ public abstract class RefundAgedToLostFeesTestBase extends SpringApiTest {
   }
 
   @Test
-  public void subsequentRunOfChargeFeeProcessNotAssignsFeesWhenItemAlreadyReturned() {
+  void subsequentRunOfChargeFeeProcessNotAssignsFeesWhenItemAlreadyReturned() {
     final double processingFee = 12.99;
 
     val policy = lostItemFeePoliciesFixture.ageToLostAfterOneMinutePolicy()
@@ -186,6 +185,6 @@ public abstract class RefundAgedToLostFeesTestBase extends SpringApiTest {
   }
 
   private void performActionThatRequiresRefund(AgeToLostFixture.AgeToLostResult result) {
-    performActionThatRequiresRefund(result, now(UTC));
+    performActionThatRequiresRefund(result, ClockUtil.getDateTime());
   }
 }

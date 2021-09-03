@@ -9,31 +9,31 @@ import static api.support.utl.BlockOverridesUtils.buildOkapiHeadersWithPermissio
 import static org.folio.circulation.resources.RenewalValidator.CAN_NOT_RENEW_ITEM_ERROR;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.nullValue;
-import static org.hamcrest.Matchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 import static org.joda.time.DateTimeConstants.APRIL;
 
 import java.time.LocalDate;
 import java.util.UUID;
 
 import org.folio.circulation.domain.policy.Period;
-import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.joda.time.Seconds;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.FixedDueDateSchedule;
 import api.support.builders.FixedDueDateSchedulesBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.RequestBuilder;
+import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import api.support.http.OkapiHeaders;
 import io.vertx.core.json.JsonObject;
 
-public class RequestsAPILoanRenewalTests extends APITests {
+class RequestsAPILoanRenewalTests extends APITests {
 
   private static final String ITEMS_CANNOT_BE_RENEWED_MSG = "items cannot be renewed when there is an active recall request";
   private static final String EXPECTED_REASON_LOAN_IS_NOT_RENEWABLE = "loan is not renewable";
@@ -41,7 +41,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
   private static final int DEFAULT_HOLD_RENEWAL_PERIOD = 4;
 
   @Test
-  public void forbidRenewalLoanByBarcodeWhenFirstRequestInQueueIsRecall() {
+  void forbidRenewalLoanByBarcodeWhenFirstRequestInQueueIsRecall() {
 
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
@@ -61,8 +61,8 @@ public class RequestsAPILoanRenewalTests extends APITests {
   }
 
   @Test
-  public void allowRenewalLoanByBarcodeWhenProfileIsRollingFirstRequestInQueueIsHoldAndRenewingIsAllowedInLoanPolicy() {
-    final DateTime expectedDueDate = DateTime.now(DateTimeZone.UTC)
+  void allowRenewalLoanByBarcodeWhenProfileIsRollingFirstRequestInQueueIsHoldAndRenewingIsAllowedInLoanPolicy() {
+    final DateTime expectedDueDate = ClockUtil.getDateTime()
       .plusWeeks(DEFAULT_HOLD_RENEWAL_PERIOD);
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
@@ -88,7 +88,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
   }
 
   @Test
-  public void forbidRenewalLoanByBarcodeWhenProfileIsRollingFirstRequestInQueueIsHoldAndRenewingIsDisallowedInLoanPolicy() {
+  void forbidRenewalLoanByBarcodeWhenProfileIsRollingFirstRequestInQueueIsHoldAndRenewingIsDisallowedInLoanPolicy() {
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
 
@@ -108,9 +108,9 @@ public class RequestsAPILoanRenewalTests extends APITests {
   }
 
   @Test
-  public void allowRenewalWithHoldsWhenProfileIsRollingUseLoanPeriod() {
+  void allowRenewalWithHoldsWhenProfileIsRollingUseLoanPeriod() {
     final int renewalPeriod = 90;
-    final DateTime expectedDueDate = DateTime.now(DateTimeZone.UTC).plusWeeks(renewalPeriod);
+    final DateTime expectedDueDate = ClockUtil.getDateTime().plusWeeks(renewalPeriod);
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
 
@@ -143,9 +143,9 @@ public class RequestsAPILoanRenewalTests extends APITests {
   }
 
   @Test
-  public void allowRenewalWithHoldsWhenProfileIsRollingUseRenewalPeriod() {
+  void allowRenewalWithHoldsWhenProfileIsRollingUseRenewalPeriod() {
     final int renewalPeriod = 60;
-    final DateTime expectedDueDate = DateTime.now(DateTimeZone.UTC).plusWeeks(renewalPeriod);
+    final DateTime expectedDueDate = ClockUtil.getDateTime().plusWeeks(renewalPeriod);
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
 
@@ -180,7 +180,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
 
 
   @Test
-  public void forbidRenewalLoanByBarcodeWhenLoanProfileIsFixedFirstRequestInQueueIsHoldAndRenewingIsDisallowedInLoanPolicy() {
+  void forbidRenewalLoanByBarcodeWhenLoanProfileIsFixedFirstRequestInQueueIsHoldAndRenewingIsDisallowedInLoanPolicy() {
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
 
@@ -202,7 +202,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
   }
 
   @Test
-  public void forbidRenewalLoanByIdWhenFirstRequestInQueueIsRecall() {
+  void forbidRenewalLoanByIdWhenFirstRequestInQueueIsRecall() {
 
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
@@ -222,8 +222,8 @@ public class RequestsAPILoanRenewalTests extends APITests {
   }
 
   @Test
-  public void allowRenewalLoanByIdWhenProfileIsRollingFirstRequestInQueueIsHoldAndRenewingIsAllowedInLoanPolicy() {
-    final DateTime expectedDueDate = DateTime.now(DateTimeZone.UTC)
+  void allowRenewalLoanByIdWhenProfileIsRollingFirstRequestInQueueIsHoldAndRenewingIsAllowedInLoanPolicy() {
+    final DateTime expectedDueDate = ClockUtil.getDateTime()
       .plusWeeks(DEFAULT_HOLD_RENEWAL_PERIOD);
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
@@ -250,7 +250,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
   }
 
   @Test
-  public void forbidRenewalLoanByIdWhenLoanProfileIsRollingFirstRequestInQueueIsHoldAndRenewingIsDisallowedInLoanPolicy() {
+  void forbidRenewalLoanByIdWhenLoanProfileIsRollingFirstRequestInQueueIsHoldAndRenewingIsDisallowedInLoanPolicy() {
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
 
@@ -272,7 +272,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
   }
 
   @Test
-  public void forbidRenewalLoanByIdWhenLoanProfileIsFixedFirstRequestInQueueIsHoldAndRenewingIsDisallowedInLoanPolicy() {
+  void forbidRenewalLoanByIdWhenLoanProfileIsFixedFirstRequestInQueueIsHoldAndRenewingIsDisallowedInLoanPolicy() {
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
 
@@ -294,9 +294,9 @@ public class RequestsAPILoanRenewalTests extends APITests {
   }
 
   @Test
-  public void allowRenewalWithHoldsWhenProfileIsFixedUseRenewalSchedule() {
-    final DateTime from = DateTime.now(DateTimeZone.UTC).minusMonths(3);
-    final DateTime to = DateTime.now(DateTimeZone.UTC).plusMonths(3);
+  void allowRenewalWithHoldsWhenProfileIsFixedUseRenewalSchedule() {
+    final DateTime from = ClockUtil.getDateTime().minusMonths(3);
+    final DateTime to = ClockUtil.getDateTime().plusMonths(3);
     final DateTime dueDate = to.plusDays(15);
 
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
@@ -337,9 +337,9 @@ public class RequestsAPILoanRenewalTests extends APITests {
    }
 
   @Test
-  public void allowRenewalWithHoldsWhenProfileIsFixedUseLoanSchedule() {
-    final DateTime from = DateTime.now(DateTimeZone.UTC).minusMonths(3);
-    final DateTime to = DateTime.now(DateTimeZone.UTC).plusMonths(3);
+  void allowRenewalWithHoldsWhenProfileIsFixedUseLoanSchedule() {
+    final DateTime from = ClockUtil.getDateTime().minusMonths(3);
+    final DateTime to = ClockUtil.getDateTime().plusMonths(3);
     final DateTime dueDate = to.plusDays(15);
 
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
@@ -379,7 +379,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
   }
 
   @Test
-  public void allowRenewalOverrideWhenFirstRequestIsRecall() {
+  void allowRenewalOverrideWhenFirstRequestIsRecall() {
 
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
@@ -412,7 +412,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
   }
 
   @Test
-  public void forbidRenewalOverrideWhenFirstRequestIsNotRecall() {
+  void forbidRenewalOverrideWhenFirstRequestIsNotRecall() {
 
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
@@ -445,12 +445,12 @@ public class RequestsAPILoanRenewalTests extends APITests {
         "reached number of renewals limit," +
         "renewal date falls outside of the date ranges in the loan policy, " +
         "items cannot be renewed when there is an active recall request, " +
-        "item is Declared lost, item is Claimed returned, item is Aged to lost, " +
+        "item is Declared lost, item is Aged to lost, " +
         "renewal would not change the due date"))));
   }
 
   @Test
-  public void multipleRenewalFailuresWhenItemHasOpenRecallRequestAndLoanIsNotRenewable() {
+  void multipleRenewalFailuresWhenItemHasOpenRecallRequestAndLoanIsNotRenewable() {
 
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
@@ -478,7 +478,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
   }
 
   @Test
-  public void multipleRenewalFailuresWhenItemHasOpenRecallRequestAndLoanIsNotLoanable() {
+  void multipleRenewalFailuresWhenItemHasOpenRecallRequestAndLoanIsNotLoanable() {
 
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
@@ -506,9 +506,9 @@ public class RequestsAPILoanRenewalTests extends APITests {
   }
 
   @Test
-  public void validationErrorWhenRenewalPeriodForHoldsSpecifiedForFixedPolicy() {
-    final DateTime from = DateTime.now(DateTimeZone.UTC).minusMonths(3);
-    final DateTime to = DateTime.now(DateTimeZone.UTC).plusMonths(3);
+  void validationErrorWhenRenewalPeriodForHoldsSpecifiedForFixedPolicy() {
+    final DateTime from = ClockUtil.getDateTime().minusMonths(3);
+    final DateTime to = ClockUtil.getDateTime().plusMonths(3);
     final DateTime dueDate = to.plusDays(15);
 
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
@@ -550,9 +550,9 @@ public class RequestsAPILoanRenewalTests extends APITests {
   }
 
   @Test
-  public void validationErrorWhenRenewalPeriodSpecifiedForFixedPolicy() {
-    final DateTime from = DateTime.now(DateTimeZone.UTC).minusMonths(3);
-    final DateTime to = DateTime.now(DateTimeZone.UTC).plusMonths(3);
+  void validationErrorWhenRenewalPeriodSpecifiedForFixedPolicy() {
+    final DateTime from = ClockUtil.getDateTime().minusMonths(3);
+    final DateTime to = ClockUtil.getDateTime().plusMonths(3);
     final DateTime dueDate = to.plusDays(15);
 
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
@@ -604,7 +604,9 @@ public class RequestsAPILoanRenewalTests extends APITests {
   }
 
   private void loanPolicyWithFixedProfileAndRenewingIsForbiddenWhenHoldIsPending() {
-    LocalDate now = LocalDate.now();
+    final org.joda.time.LocalDate jodaDate = ClockUtil.getLocalDate();
+    LocalDate now = LocalDate.of(jodaDate.getYear(), jodaDate.getMonthOfYear(),
+      jodaDate.getDayOfMonth());
     FixedDueDateSchedulesBuilder fixedDueDateSchedules = new FixedDueDateSchedulesBuilder()
       .withName("1 month - Fixed Due Date Schedule")
       .addSchedule(wholeMonth(now.getYear(), now.getMonthValue()));

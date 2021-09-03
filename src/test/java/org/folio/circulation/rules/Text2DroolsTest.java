@@ -10,25 +10,25 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.UUID;
 
-import org.folio.circulation.domain.Location;
-import org.hamcrest.Matcher;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.circulation.domain.Location;
+import org.folio.circulation.support.utils.ClockUtil;
+import org.hamcrest.Matcher;
+import org.junit.jupiter.api.Test;
 
 import api.support.builders.LocationBuilder;
 import io.vertx.core.MultiMap;
 import io.vertx.core.json.JsonArray;
 
-public class Text2DroolsTest {
+class Text2DroolsTest {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   private static final String HEADER = "priority: last-line\nfallback-policy: l no-loan r no-hold n basic-notice o overdue i lost-item\n";
@@ -39,11 +39,8 @@ public class Text2DroolsTest {
   private static final String FIRST_CAMPUS_ID = "692dbd8c-9804-4281-9fd1-8ce601d7c6a3";
   private static final String SECOND_CAMPUS_ID = "04163907-8f63-41f3-888d-f2d2888a4dd0";
 
-  @Rule
-  public ExpectedException exceptionRule = ExpectedException.none();
-
   @Test
-  public void headerFallbackPolicy() {
+  void headerFallbackPolicy() {
     String droolsText = Text2Drools.convert(HEADER);
     Drools drools = new Drools(droolsText);
 
@@ -121,7 +118,7 @@ public class Text2DroolsTest {
   }
 
   @Test
-  public void test1static() {
+  void test1static() {
     String drools = Text2Drools.convert(test1);
 
     for (String [] s : loanTestCases) {
@@ -132,7 +129,7 @@ public class Text2DroolsTest {
   }
 
   @Test
-  public void test1() {
+  void test1() {
     Drools drools = new Drools(Text2Drools.convert(test1));
 
     for (String [] s : loanTestCases) {
@@ -142,12 +139,12 @@ public class Text2DroolsTest {
   }
 
   @Test
-  public void testRequestPolicyList() {
+  void testRequestPolicyList() {
     testRequestPolicies(test1, requestTestCases);
   }
 
   @Test
-  public void testRequestPolicy() {
+  void testRequestPolicy() {
     String drools = Text2Drools.convert(test1);
 
     for (String[] s : requestTestCases) {
@@ -157,22 +154,22 @@ public class Text2DroolsTest {
   }
 
   @Test
-  public void testOverdueFinePolicyList() {
+  void testOverdueFinePolicyList() {
     testOverdueFinePolicies(test1, overdueTestCases);
   }
 
   @Test
-  public void testLostItemFeePolicyList() {
+  void testLostItemFeePolicyList() {
     testLostItemFeePolicies(test1, lostItemTestCases);
   }
 
   @Test
-  public void test1list() {
+  void test1list() {
     testLoanPolicies(test1, loanTestCases);
   }
 
   @Test
-  public void firstLineMisplacedFallbackPolicy() {
+  void firstLineMisplacedFallbackPolicy() {
     expectException(String.join("\n",
         "priority: first-line",
         "fallback-policy: l no-loan r no-hold n basic-notice o overdue i lost-item",
@@ -181,7 +178,7 @@ public class Text2DroolsTest {
   }
 
   @Test
-  public void firstLine() {
+  void firstLine() {
     String circulationRules = String.join("\n",
         "priority: first-line",
         "g visitor",
@@ -200,49 +197,49 @@ public class Text2DroolsTest {
   }
 
   @Test
-  public void tab() {
+  void tab() {
     expectException(
       HEADER + "  \t m book: l policy-a r no-hold n basic-notice o overdue i lost-item",
       matches("Tab", 3, 4));
   }
 
   @Test
-  public void missingPriority() {
+  void missingPriority() {
     expectException(
       "fallback-policy: l no-loan r no-hold n basic-notice o overdue i lost-item",
       matches("priority", 1, 1));
   }
 
   @Test
-  public void reject6CriteriumTypes() {
+  void reject6CriteriumTypes() {
     expectException(
       "priority: t g m a b c\nfallback-policy: l no-loan r no-hold n basic-notice o overdue i lost-item",
       matches("7 letters expected, found only 6", 1, 11));
   }
 
   @Test
-  public void reject8CriteriumTypes() {
+  void reject8CriteriumTypes() {
     expectException(
       "priority: t g m a b c s s\nfallback-policy: l no-loan r no-hold n basic-notice o overdue i lost-item",
       matches("Only 7 letters expected, found 8", 1, 11));
   }
 
   @Test
-  public void duplicateCriteriumType() {
+  void duplicateCriteriumType() {
     expectException(
       "priority: t g m a b s s\nfallback-policy: l no-loan r no-hold n basic-notice r no-hold n basic-notice o overdue i lost-item",
       matches("Duplicate letter s", 1, 23));
   }
 
   @Test
-  public void duplicatePriorityType() {
+  void duplicatePriorityType() {
     expectException(
       "priority: number-of-criteria, number-of-criteria, last-line\nfallback-policy: l no-loan r no-hold n basic-notice o overdue i lost-item",
       matches("Duplicate priority", 1, 31));
   }
 
   @Test
-  public void twoPriorities() {
+  void twoPriorities() {
     Drools drools = new Drools(Text2Drools.convert(String.join("\n",
         "priority: number-of-criteria, first-line",
         "fallback-policy: l no-loan r no-hold n basic-notice o overdue i lost-item",
@@ -260,7 +257,7 @@ public class Text2DroolsTest {
   }
 
   @Test
-  public void threePriorities() {
+  void threePriorities() {
     Drools drools = new Drools(Text2Drools.convert(String.join("\n",
         "priority: criterium(t, s, c, b, a, m, g), number-of-criteria, first-line",
         "fallback-policy: l no-loan r no-hold n basic-notice o overdue i lost-item",
@@ -278,42 +275,42 @@ public class Text2DroolsTest {
   }
 
   @Test
-  public void missingFallbackPolicies() {
+  void missingFallbackPolicies() {
     expectException(
       "priority: last-line\nm book: l policy-a r no-hold n basic-notice o overdue i lost-item",
       matches("fallback", 2, 1));
   }
 
   @Test
-  public void missingFallbackPolicyFirstLine() {
+  void missingFallbackPolicyFirstLine() {
     expectException(
       "priority: first-line\nm book: l policy-a r no-hold n basic-notice o overdue i lost-item",
       matches("fallback", 2, 66));
   }
 
   @Test
-  public void indentedFallbackPolicies() {
+  void indentedFallbackPolicies() {
     expectException(
       HEADER + "m book\n  fallback-policy: l policy-b r no-hold n basic-notice o overdue i lost-item",
       matches("mismatched input 'fallback-policy'", 4, 3));
   }
 
   @Test
-  public void exclamationBeforePriority() {
+  void exclamationBeforePriority() {
     expectException(
       "! fallback-policy: l policy-a r no-hold n basic-notice o overdue i lost-item",
       matches("mismatched input '!'", 1, 1));
   }
 
   @Test
-  public void emptyNameList() {
+  void emptyNameList() {
     expectException(
       HEADER + "m: l policy-a r no-hold n basic-notice o overdue i lost-item",
       matches("Name missing", 3, 2));
   }
 
   @Test
-  public void noSpaceAroundColon() {
+  void noSpaceAroundColon() {
     Drools drools = new Drools(Text2Drools.convert(String.join("\n",
         "priority:last-line",
         "fallback-policy:l no-loan r no-hold n basic-notice o overdue i lost-item",
@@ -334,7 +331,7 @@ public class Text2DroolsTest {
   }
 
  @Test
-  public void multiSpaceAroundColon() {
+  void multiSpaceAroundColon() {
     Drools drools = new Drools(Text2Drools.convert(String.join("\n",
         "priority   :   last-line",
         "fallback-policy   :   l no-loan r no-hold n basic-notice o overdue i lost-item",
@@ -355,7 +352,7 @@ public class Text2DroolsTest {
   }
 
   @Test
-  public void negation() {
+  void negation() {
     Drools drools = new Drools(Text2Drools.convert(HEADER + "m !dvd !music: l policy-a r no-hold n basic-notice o overdue i lost-item"));
     assertThat(drools.loanPolicy(params("dvd",       "regular", "student", "shelf"),
       createLocation(SECOND_INSTITUTION_ID, SECOND_LIBRARY_ID, SECOND_CAMPUS_ID)).getPolicyId(), is("no-loan"));
@@ -366,7 +363,7 @@ public class Text2DroolsTest {
   }
 
   @Test
-  public void negationSingle() {
+  void negationSingle() {
     Drools drools = new Drools(Text2Drools.convert(HEADER + "m !dvd: l policy-a r no-hold n basic-notice o overdue i lost-item"));
     assertThat(drools.loanPolicy(params("dvd",       "regular", "student", "shelf"),
       createLocation(SECOND_INSTITUTION_ID, SECOND_LIBRARY_ID, SECOND_CAMPUS_ID)).getPolicyId(), is("no-loan"));
@@ -375,7 +372,7 @@ public class Text2DroolsTest {
   }
 
   @Test
-  public void shelvingLocation() {
+  void shelvingLocation() {
     Drools drools = new Drools(Text2Drools.convert(String.join("\n",
         "priority: last-line",
         "fallback-policy: l no-loan r no-hold n basic-notice o overdue i lost-item",
@@ -398,7 +395,7 @@ public class Text2DroolsTest {
   }
 
   @Test
-  public void shelvingLocationDefaultPriority() {
+  void shelvingLocationDefaultPriority() {
     Drools drools = new Drools(Text2Drools.convert(String.join("\n",
         "priority: t, s, c, b, a, m, g",
         "fallback-policy: l no-loan r no-hold n basic-notice o overdue i lost-item",
@@ -430,7 +427,7 @@ public class Text2DroolsTest {
   }
 
   @Test
-  public void overdueFinePolicy() {
+  void overdueFinePolicy() {
     Drools drools = new Drools(Text2Drools.convert(String.join("\n",
       "priority: last-line",
       "fallback-policy: l no-loan r no-hold n basic-notice o fallback i lost-item",
@@ -455,7 +452,7 @@ public class Text2DroolsTest {
   }
 
   @Test
-  public void lostItemFeePolicy() {
+  void lostItemFeePolicy() {
     Drools drools = new Drools(Text2Drools.convert(String.join("\n",
       "priority: last-line",
       "fallback-policy: l no-loan r no-hold n basic-notice o fallback i lost-item",
@@ -480,50 +477,50 @@ public class Text2DroolsTest {
   }
 
   @Test
-  public void missingLoanPolicy() {
+  void missingLoanPolicy() {
     expectException(HEADER + "m book:",
       matches("Policy missing after ':'", 3, 8));
   }
 
   @Test
-  public void duplicateLoanPolicy() {
+  void duplicateLoanPolicy() {
     expectException(HEADER + "m book: l policy-a l policy-b r no-hold n basic-notice o overdue i lost-item",
       matches("Only one policy of type l allowed", 3, 6));
   }
 
   @Test
-  public void duplicateOverdueFinePolicy() {
+  void duplicateOverdueFinePolicy() {
     expectException(HEADER + "m book: l policy-a r no-hold n basic-notice o overdue o overdue-1 i lost-item",
       matches("Only one policy of type o allowed", 3, 6));
   }
 
   @Test
-  public void duplicateLostItemFeePolicy() {
+  void duplicateLostItemFeePolicy() {
     expectException(HEADER + "m book: l policy-a r no-hold n basic-notice o overdue i lost-item i lost-item-1",
       matches("Only one policy of type i allowed", 3, 6));
   }
 
   @Test
-  public void comment() {
+  void comment() {
     String drools = Text2Drools.convert(HEADER + "# m book: l loan-anyhow r no-hold n basic-notice o overdue i lost-item");
     assertThat(drools, not(containsString("loan-anyhow")));
   }
 
   @Test
-  public void commentWithoutSpace() {
+  void commentWithoutSpace() {
     String drools = Text2Drools.convert(HEADER + "#m book: l loan-anyhow r no-hold n basic-notice o overdue i lost-item");
     assertThat(drools, not(containsString("loan-anyhow")));
   }
 
   @Test
-  public void invalidToken() {
+  void invalidToken() {
     expectException("foo", matches("extraneous input 'foo'", 1, 1));
   }
 
   @Test
-  public void run100() {
+  void run100() {
     Drools drools = new Drools(Text2Drools.convert(test1));
-    long start = System.currentTimeMillis();
+    long start = ClockUtil.getInstant().getMillis();
     int n = 0;
     while (n < 100) {
       for (String [] s : loanTestCases) {
@@ -532,56 +529,59 @@ public class Text2DroolsTest {
         n++;
       }
     }
-    long millis = System.currentTimeMillis() - start;
+    long millis = ClockUtil.getInstant().getMillis() - start;
     float perSecond = 1000f * n / millis;
     log.debug("{} loan policy calculations per second", perSecond);
     assertThat("loan policy calculations per second", perSecond, is(greaterThan(100f)));
   }
 
-  @Test(expected=IllegalArgumentException.class)
-  public void unknownCriteriumType() throws ReflectiveOperationException {
+  @Test
+  void unknownCriteriumType() throws ReflectiveOperationException {
     Method criteriumTypeClassnameMethod =
         Text2Drools.class.getDeclaredMethod("criteriumTypeClassname", String.class);
-    criteriumTypeClassnameMethod.setAccessible(true);
 
-    //noinspection JavaReflectionInvocation
-    criteriumTypeClassnameMethod.invoke("q");
+    assertThrows(IllegalArgumentException.class, () -> {
+      criteriumTypeClassnameMethod.setAccessible(true);
+
+      //noinspection JavaReflectionInvocation
+      criteriumTypeClassnameMethod.invoke("q");
+    });
   }
 
   @Test
-  public void missingFallbackPolicy() {
+  void missingFallbackPolicy() {
     expectException(
       "priority: last-line\nfallback-policy: l no-loan r no-hold o overdue i lost-item\n",
       matches("fallback", 2, 0));
   }
 
   @Test
-  public void duplicateFallbackPolicy() {
+  void duplicateFallbackPolicy() {
     expectException(
       "priority: last-line\nfallback-policy: l no-loan r no-hold n basic-notice r no-hold o overdue i lost-item",
       matches("Only one fallback policy of type r is allowed", 2, 0));
   }
 
   @Test
-  public void missingRequestPolicy() {
+  void missingRequestPolicy() {
     expectException(HEADER + "m book: l no-loan n basic-notice o overdue i lost-item",
       matches("Must contain one of each policy type, missing type r", 3, 6));
   }
 
   @Test
-  public void missingOverduePolicy() {
+  void missingOverduePolicy() {
     expectException(HEADER + "m book: l no-loan r basic-request n basic-notice i lost-item",
     matches("Must contain one of each policy type, missing type o", 3, 6));
   }
 
   @Test
-  public void missingLostItemPolicy() {
+  void missingLostItemPolicy() {
     expectException(HEADER + "m book: l no-loan r basic-request n basic-notice o overdue",
       matches("Must contain one of each policy type, missing type i", 3, 6));
   }
 
   @Test
-  public void alternatePolicyOrder() {
+  void alternatePolicyOrder() {
     Drools drools = new Drools(Text2Drools.convert(String.join("\n",
       "priority: first-line",
       "m book: r allow-hold n general-notice o overdue l two-week i lost-item",
@@ -677,9 +677,8 @@ public class Text2DroolsTest {
   }
 
   private void expectException(String rulesText, Matcher<CirculationRulesException> matches) {
-    exceptionRule.expect(CirculationRulesException.class);
-    exceptionRule.expect(matches);
-
-    Text2Drools.convert(rulesText);
+    assertThrows(CirculationRulesException.class, () -> {
+      Text2Drools.convert(rulesText);
+    });
   }
 }

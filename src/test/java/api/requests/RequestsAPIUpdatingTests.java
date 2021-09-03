@@ -11,15 +11,17 @@ import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
+import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfPublishedEvents;
+import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfSentNotices;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.function.Function.identity;
-import static org.awaitility.Awaitility.waitAtMost;
 import static org.folio.HttpStatus.HTTP_NO_CONTENT;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.domain.EventType.LOAN_DUE_DATE_CHANGED;
 import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_NAME;
 import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_PUBLIC_DESCRIPTION;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
+import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE_ERROR;
 import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_CREATED;
 import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_UPDATED;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
@@ -45,11 +47,12 @@ import java.util.UUID;
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.Address;
@@ -57,6 +60,7 @@ import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.builders.UserBuilder;
+import api.support.fakes.FakeModNotify;
 import api.support.fakes.FakePubSub;
 import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.IndividualResource;
@@ -65,11 +69,11 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
-public class RequestsAPIUpdatingTests extends APITests {
+class RequestsAPIUpdatingTests extends APITests {
   private static final String REQUEST_CANCELLATION = "Request cancellation";
 
   @Test
-  public void canReplaceAnExistingRequest() {
+  void canReplaceAnExistingRequest() {
     final ItemResource temeraire = itemsFixture.basedUponTemeraire();
 
     checkOutFixture.checkOutByBarcode(temeraire);
@@ -155,7 +159,7 @@ public class RequestsAPIUpdatingTests extends APITests {
 
   //TODO: Check does not have pickup service point any more
   @Test
-  public void canReplaceAnExistingRequestWithDeliveryAddress() {
+  void canReplaceAnExistingRequestWithDeliveryAddress() {
     final ItemResource temeraire = itemsFixture.basedUponTemeraire();
 
     checkOutFixture.checkOutByBarcode(temeraire);
@@ -215,7 +219,7 @@ public class RequestsAPIUpdatingTests extends APITests {
   }
 
   @Test
-  public void replacingAnExistingRequestRemovesItemInformationWhenItemDoesNotExist() {
+  void replacingAnExistingRequestRemovesItemInformationWhenItemDoesNotExist() {
     final ItemResource nod = itemsFixture.basedUponNod();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
@@ -248,7 +252,7 @@ public class RequestsAPIUpdatingTests extends APITests {
   }
 
   @Test
-  public void replacingAnExistingRequestRemovesRequesterInformationWhenUserDoesNotExist() {
+  void replacingAnExistingRequestRemovesRequesterInformationWhenUserDoesNotExist() {
     final ItemResource nod = itemsFixture.basedUponNod();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
@@ -278,7 +282,7 @@ public class RequestsAPIUpdatingTests extends APITests {
   }
 
   @Test
-  public void replacingAnExistingRequestRemovesRequesterBarcodeWhenNonePresent() {
+  void replacingAnExistingRequestRemovesRequesterBarcodeWhenNonePresent() {
     final ItemResource nod = itemsFixture.basedUponNod();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
@@ -324,7 +328,7 @@ public class RequestsAPIUpdatingTests extends APITests {
   }
 
   @Test
-  public void replacingAnExistingRequestIncludesRequesterMiddleNameWhenPresent() {
+  void replacingAnExistingRequestIncludesRequesterMiddleNameWhenPresent() {
     final ItemResource nod = itemsFixture.basedUponNod();
 
     checkOutFixture.checkOutByBarcode(nod);
@@ -372,7 +376,7 @@ public class RequestsAPIUpdatingTests extends APITests {
   }
 
   @Test
-  public void replacingAnExistingRequestRemovesItemBarcodeWhenNonePresent() {
+  void replacingAnExistingRequestRemovesItemBarcodeWhenNonePresent() {
     final ItemResource temeraire = itemsFixture.basedUponTemeraire();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
@@ -411,7 +415,7 @@ public class RequestsAPIUpdatingTests extends APITests {
   }
 
   @Test
-  public void cannotReplaceAnExistingRequestWithServicePointThatIsNotForPickup() {
+  void cannotReplaceAnExistingRequestWithServicePointThatIsNotForPickup() {
     final ItemResource temeraire = itemsFixture.basedUponTemeraire();
 
     checkOutFixture.checkOutByBarcode(temeraire);
@@ -436,7 +440,7 @@ public class RequestsAPIUpdatingTests extends APITests {
   }
 
   @Test
-  public void cannotReplaceAnExistingRequestWithUnknownPickupLocation() {
+  void cannotReplaceAnExistingRequestWithUnknownPickupLocation() {
     final ItemResource temeraire = itemsFixture.basedUponTemeraire();
 
     checkOutFixture.checkOutByBarcode(temeraire);
@@ -465,7 +469,7 @@ public class RequestsAPIUpdatingTests extends APITests {
   }
 
   @Test
-  public void cancellationReasonPublicDescriptionIsUsedAsReasonForCancellationToken() {
+  void cancellationReasonPublicDescriptionIsUsedAsReasonForCancellationToken() {
     UUID requestCancellationTemplateId = UUID.randomUUID();
     JsonObject requestCancellationConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(requestCancellationTemplateId)
@@ -504,8 +508,9 @@ public class RequestsAPIUpdatingTests extends APITests {
       .create();
     requestsClient.replace(createdRequest.getId(), updatedRequest);
 
-    final var sentNotices = waitAtMost(1, SECONDS)
-      .until(patronNoticesClient::getAll, hasSize(1));
+    verifyNumberOfSentNotices(1);
+    verifyNumberOfPublishedEvents(NOTICE, 1);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
 
     Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
 
@@ -516,14 +521,12 @@ public class RequestsAPIUpdatingTests extends APITests {
     noticeContextMatchers.put("request.reasonForCancellation",
       is(itemNotAvailable.getJson().getString(CANCELLATION_REASON_PUBLIC_DESCRIPTION)));
 
-    assertThat(sentNotices, hasItems(
+    assertThat(FakeModNotify.getSentPatronNotices(), hasItems(
       hasEmailNoticeProperties(requester.getId(), requestCancellationTemplateId, noticeContextMatchers)));
-
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
   }
 
   @Test
-  public void cancellationReasonNameIsUsedAsReasonForCancellationTokenWhenPublicDescriptionIsNotPresent() {
+  void cancellationReasonNameIsUsedAsReasonForCancellationTokenWhenPublicDescriptionIsNotPresent() {
     UUID requestCancellationTemplateId = UUID.randomUUID();
     JsonObject requestCancellationConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(requestCancellationTemplateId)
@@ -563,9 +566,9 @@ public class RequestsAPIUpdatingTests extends APITests {
 
     requestsClient.replace(createdRequest.getId(), updatedRequest);
 
-    final var sentNotices = Awaitility.await()
-      .atMost(1, SECONDS)
-      .until(patronNoticesClient::getAll, hasSize(1));
+    verifyNumberOfSentNotices(1);
+    verifyNumberOfPublishedEvents(NOTICE, 1);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
 
     Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
 
@@ -576,14 +579,12 @@ public class RequestsAPIUpdatingTests extends APITests {
     noticeContextMatchers.put("request.reasonForCancellation",
       is(courseReserves.getJson().getString(CANCELLATION_REASON_NAME)));
 
-    assertThat(sentNotices, hasItems(
+    assertThat(FakeModNotify.getSentPatronNotices(), hasItems(
       hasEmailNoticeProperties(requester.getId(), requestCancellationTemplateId, noticeContextMatchers)));
-
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE.value())), hasSize(1));
   }
 
   @Test
-  public void replacedRequestShouldOnlyIncludeStoredPropertiesInStorage() {
+  void replacedRequestShouldOnlyIncludeStoredPropertiesInStorage() {
     final ItemResource temeraire = itemsFixture.basedUponTemeraire();
 
     checkOutFixture.checkOutByBarcode(temeraire);
@@ -648,7 +649,7 @@ public class RequestsAPIUpdatingTests extends APITests {
   }
 
   @Test
-  public void canReplaceRequestWithAnInactiveUser() {
+  void canReplaceRequestWithAnInactiveUser() {
     final ItemResource temeraire = itemsFixture.basedUponTemeraire();
 
     checkOutFixture.checkOutByBarcode(temeraire);
@@ -683,7 +684,7 @@ public class RequestsAPIUpdatingTests extends APITests {
   }
 
   @Test
-  public void instanceIdentifiersAreUpdatedWhenRequestIsUpdated() {
+  void instanceIdentifiersAreUpdatedWhenRequestIsUpdated() {
     final UUID instanceId = UUID.randomUUID();
     final UUID isbnIdentifierId = identifierTypesFixture.isbn().getId();
     final String isbnValue = "9780866989732";
@@ -722,7 +723,7 @@ public class RequestsAPIUpdatingTests extends APITests {
   }
 
   @Test
-  public void eventsShouldBePublished() {
+  void eventsShouldBePublished() {
     final ItemResource temeraire = itemsFixture.basedUponTemeraire();
 
     IndividualResource loan = checkOutFixture.checkOutByBarcode(temeraire);
@@ -784,13 +785,13 @@ public class RequestsAPIUpdatingTests extends APITests {
   }
 
   @Test
-  public void cannotUpdatePatronComments() {
+  void cannotUpdatePatronComments() {
     final ItemResource temeraire = itemsFixture.basedUponTemeraire();
     final IndividualResource steve = usersFixture.steve();
 
     final IndividualResource createdRequest = requestsClient.create(new RequestBuilder()
       .page()
-      .withRequestDate(DateTime.now(UTC))
+      .withRequestDate(ClockUtil.getDateTime())
       .forItem(temeraire)
       .by(steve)
       .fulfilToHoldShelf()

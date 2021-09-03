@@ -1,21 +1,20 @@
 package org.folio.circulation.domain;
 
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
-import static org.joda.time.DateTime.now;
-import static org.joda.time.DateTimeZone.UTC;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.junit.Test;
+import org.folio.circulation.support.utils.ClockUtil;
+import org.junit.jupiter.api.Test;
 
 import api.support.builders.LoanBuilder;
 
-public class LoanLostDateTest {
+class LoanLostDateTest {
   @Test
-  public void declaredLostDateReturnedWhenSet() {
-    final var declaredLostDate = now(UTC);
+  void declaredLostDateReturnedWhenSet() {
+    final var declaredLostDate = ClockUtil.getDateTime();
     final var loan = new LoanBuilder().asDomainObject()
       .declareItemLost("Lost", declaredLostDate);
 
@@ -23,8 +22,8 @@ public class LoanLostDateTest {
   }
 
   @Test
-  public void agedToLostDateReturnedWhenSet() {
-    final var agedToLostDate = now(UTC);
+  void agedToLostDateReturnedWhenSet() {
+    final var agedToLostDate = ClockUtil.getDateTime();
     final var loan = new LoanBuilder().asDomainObject()
       .ageOverdueItemToLost(agedToLostDate);
 
@@ -32,9 +31,9 @@ public class LoanLostDateTest {
   }
 
   @Test
-  public void declaredLostDateReturnedWhenIsAfterAgedToLostDate() {
-    final var agedToLostDate = now(UTC).minusDays(2);
-    final var declaredLostDate = now(UTC);
+  void declaredLostDateReturnedWhenIsAfterAgedToLostDate() {
+    final var agedToLostDate = ClockUtil.getDateTime().minusDays(2);
+    final var declaredLostDate = ClockUtil.getDateTime();
 
     final var loan = new LoanBuilder().asDomainObject()
       .ageOverdueItemToLost(agedToLostDate)
@@ -49,9 +48,9 @@ public class LoanLostDateTest {
   }
 
   @Test
-  public void agedToLostDateReturnedWhenIsAfterDeclaredLostDate() {
-    final var declaredLostDate = now(UTC).minusDays(3);
-    final var agedToLostDate = now(UTC);
+  void agedToLostDateReturnedWhenIsAfterDeclaredLostDate() {
+    final var declaredLostDate = ClockUtil.getDateTime().minusDays(3);
+    final var agedToLostDate = ClockUtil.getDateTime();
 
     final var loan = new LoanBuilder().asDomainObject()
       .ageOverdueItemToLost(agedToLostDate)
@@ -66,8 +65,8 @@ public class LoanLostDateTest {
   }
 
   @Test
-  public void lostDateIsNotNullWhenBothLostDatesAreEqual() {
-    final var lostDate = now(UTC);
+  void lostDateIsNotNullWhenBothLostDatesAreEqual() {
+    final var lostDate = ClockUtil.getDateTime();
 
     final var loan = new LoanBuilder().asDomainObject()
       .ageOverdueItemToLost(lostDate)
@@ -77,7 +76,7 @@ public class LoanLostDateTest {
   }
 
   @Test
-  public void lostDateIsNullWhenLoanWasNeverLost() {
+  void lostDateIsNullWhenLoanWasNeverLost() {
     final var loan = new LoanBuilder().asDomainObject();
 
     assertNull(loan.getLostDate());

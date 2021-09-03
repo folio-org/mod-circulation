@@ -16,22 +16,22 @@ import java.util.UUID;
 
 import org.folio.circulation.support.BadRequestFailure;
 import org.folio.circulation.support.results.Result;
-import org.joda.time.DateTime;
-import org.junit.Test;
+import org.folio.circulation.support.utils.ClockUtil;
+import org.junit.jupiter.api.Test;
 
 import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.RequestBuilder;
 import io.vertx.core.json.JsonObject;
 
-public class JsonSchemaValidationTest {
+class JsonSchemaValidationTest {
   @Test
-  public void validationSucceedWithCompleteExample() throws IOException {
+  void validationSucceedWithCompleteExample() throws IOException {
     final JsonSchemaValidator validator = JsonSchemaValidator
       .fromResource("/check-in-by-barcode-request.json");
 
     final JsonObject checkInRequest = new CheckInByBarcodeRequestBuilder()
       .withItemBarcode("246650492")
-      .on(DateTime.now())
+      .on(ClockUtil.getDateTime())
       .at(UUID.randomUUID())
       .create();
 
@@ -39,7 +39,7 @@ public class JsonSchemaValidationTest {
   }
 
   @Test
-  public void canValidateSchemaWithReferences() throws IOException {
+  void canValidateSchemaWithReferences() throws IOException {
     final JsonSchemaValidator validator = JsonSchemaValidator
       .fromResource("/request.json");
 
@@ -48,28 +48,28 @@ public class JsonSchemaValidationTest {
       .withItemId(UUID.randomUUID())
       .withRequesterId(UUID.randomUUID())
       .fulfilToHoldShelf(UUID.randomUUID())
-      .withRequestDate(DateTime.now())
+      .withRequestDate(ClockUtil.getDateTime())
       .create();
 
     assertThat(validator.validate(request.encode()), succeeded());
   }
 
   @Test
-  public void canValidateStorageSchema() throws IOException {
+  void canValidateStorageSchema() throws IOException {
     final JsonSchemaValidator validator = validatorForStorageLoanSchema();
 
     final JsonObject storageLoanRequest = new JsonObject();
 
     write(storageLoanRequest, "itemId", UUID.randomUUID());
     write(storageLoanRequest, "userId", UUID.randomUUID());
-    write(storageLoanRequest, "loanDate", DateTime.now());
+    write(storageLoanRequest, "loanDate", ClockUtil.getDateTime());
     write(storageLoanRequest, "action", "checkedout");
 
     assertThat(validator.validate(storageLoanRequest.encode()), succeeded());
   }
 
   @Test
-  public void validationFailsWhenUnexpectedPropertyIncludedInStorageSchema() throws IOException {
+  void validationFailsWhenUnexpectedPropertyIncludedInStorageSchema() throws IOException {
     final JsonSchemaValidator validator = validatorForStorageLoanSchema();
 
     final JsonObject storageLoanRequest = new JsonObject()
@@ -85,13 +85,13 @@ public class JsonSchemaValidationTest {
   }
 
   @Test
-  public void validationFailsWhenRequiredPropertyMissing() throws IOException {
+  void validationFailsWhenRequiredPropertyMissing() throws IOException {
     final JsonSchemaValidator validator = JsonSchemaValidator
       .fromResource("/check-in-by-barcode-request.json");
 
     final JsonObject checkInRequest = new CheckInByBarcodeRequestBuilder()
       .withItemBarcode("246650492")
-      .on(DateTime.now())
+      .on(ClockUtil.getDateTime())
       .atNoServicePoint()
       .create();
 
@@ -105,13 +105,13 @@ public class JsonSchemaValidationTest {
   }
 
   @Test
-  public void validationFailsWhenAnUnexpectedPropertyIsPresent() throws IOException {
+  void validationFailsWhenAnUnexpectedPropertyIsPresent() throws IOException {
     final JsonSchemaValidator validator = JsonSchemaValidator
       .fromResource("/check-in-by-barcode-request.json");
 
     final JsonObject checkInRequest = new CheckInByBarcodeRequestBuilder()
       .withItemBarcode("246650492")
-      .on(DateTime.now())
+      .on(ClockUtil.getDateTime())
       .at(UUID.randomUUID())
       .create();
 
@@ -127,13 +127,13 @@ public class JsonSchemaValidationTest {
   }
 
   @Test
-  public void validationFailsForMultipleReasons() throws IOException {
+  void validationFailsForMultipleReasons() throws IOException {
     final JsonSchemaValidator validator = JsonSchemaValidator
       .fromResource("/check-in-by-barcode-request.json");
 
     final JsonObject checkInRequest = new CheckInByBarcodeRequestBuilder()
       .withItemBarcode("246650492")
-      .on(DateTime.now())
+      .on(ClockUtil.getDateTime())
       .atNoServicePoint()
       .create();
 
@@ -153,7 +153,7 @@ public class JsonSchemaValidationTest {
   }
 
   @Test
-  public void validationFailsForInvalidJson() throws IOException {
+  void validationFailsForInvalidJson() throws IOException {
     final JsonSchemaValidator validator = JsonSchemaValidator
       .fromResource("/check-in-by-barcode-request.json");
 

@@ -2,15 +2,14 @@ package api.support.fixtures;
 
 import static api.support.APITestContext.circulationModuleUrl;
 import static api.support.APITestContext.getOkapiHeadersFromContext;
-import static org.folio.circulation.support.ClockManager.getClockManager;
 
 import java.net.URL;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
 
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeUtils;
 
 import api.support.http.TimedTaskClient;
 
@@ -22,7 +21,7 @@ public class ScheduledNoticeProcessingClient {
   }
 
   public void runLoanNoticesProcessing(DateTime mockSystemTime) {
-    runWithFrozenTime(this::runLoanNoticesProcessing, mockSystemTime);
+    runWithFrozenClock(this::runLoanNoticesProcessing, mockSystemTime);
   }
 
   public void runLoanNoticesProcessing() {
@@ -34,7 +33,7 @@ public class ScheduledNoticeProcessingClient {
   }
 
   public void runDueDateNotRealTimeNoticesProcessing(DateTime mockSystemTime) {
-    runWithFrozenTime(this::runDueDateNotRealTimeNoticesProcessing, mockSystemTime);
+    runWithFrozenClock(this::runDueDateNotRealTimeNoticesProcessing, mockSystemTime);
   }
 
   public void runDueDateNotRealTimeNoticesProcessing() {
@@ -46,7 +45,7 @@ public class ScheduledNoticeProcessingClient {
   }
 
   public void runRequestNoticesProcessing(DateTime mockSystemTime) {
-    runWithFrozenTime(this::runRequestNoticesProcessing, mockSystemTime);
+    runWithFrozenClock(this::runRequestNoticesProcessing, mockSystemTime);
   }
 
   public void runRequestNoticesProcessing() {
@@ -69,24 +68,17 @@ public class ScheduledNoticeProcessingClient {
       "fee-fine-scheduled-notices-processing-request");
   }
 
-  private void runWithFrozenTime(Runnable runnable, DateTime mockSystemTime) {
-    try {
-      DateTimeUtils.setCurrentMillisFixed(mockSystemTime.getMillis());
-      runnable.run();
-    } finally {
-      DateTimeUtils.setCurrentMillisSystem();
-    }
-  }
+  private void runWithFrozenClock(Runnable runnable, DateTime mockSystemTime) {
+    // Save the current clock because it may not be the default clock.
+    final Clock original = ClockUtil.getClock();
 
-    private void runWithFrozenClock(Runnable runnable, DateTime mockSystemTime) {
     try {
-      getClockManager().setClock(
-        Clock.fixed(
-          Instant.ofEpochMilli(mockSystemTime.getMillis()),
-          ZoneOffset.UTC));
+      ClockUtil.setClock(Clock.fixed(Instant.ofEpochMilli(
+        mockSystemTime.getMillis()), ZoneOffset.UTC));
+
       runnable.run();
     } finally {
-      getClockManager().setDefaultClock();
+      ClockUtil.setClock(original);
     }
   }
 

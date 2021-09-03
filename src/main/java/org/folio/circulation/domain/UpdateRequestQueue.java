@@ -6,25 +6,24 @@ import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.lang.invoke.MethodHandles;
-import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
-import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
-import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
-import org.folio.circulation.infrastructure.storage.ServicePointRepository;
-import org.folio.circulation.resources.context.ReorderRequestContext;
-import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.ClockManager;
-import org.folio.circulation.support.results.Result;
-import org.folio.circulation.support.utils.DateTimeUtil;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
+import org.folio.circulation.infrastructure.storage.ServicePointRepository;
+import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
+import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
+import org.folio.circulation.resources.context.ReorderRequestContext;
+import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.results.Result;
+import org.folio.circulation.support.utils.ClockUtil;
+import static org.folio.circulation.support.utils.DateTimeUtil.atEndOfDay;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 
 public class UpdateRequestQueue {
   private final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
@@ -293,14 +292,14 @@ public class UpdateRequestQueue {
   private ZonedDateTime calculateHoldShelfExpirationDate(
     TimePeriod holdShelfExpiryPeriod, DateTimeZone tenantTimeZone) {
 
-    ZonedDateTime now = Instant.now(ClockManager.getClockManager().getClock())
-      .atZone(tenantTimeZone.toTimeZone().toZoneId());
+    ZonedDateTime now = ClockUtil.getZonedDateTime()
+      .withZoneSameInstant(tenantTimeZone.toTimeZone().toZoneId());
 
     ZonedDateTime holdShelfExpirationDate = holdShelfExpiryPeriod.getInterval()
       .addTo(now, holdShelfExpiryPeriod.getDuration());
 
     if (holdShelfExpiryPeriod.isLongTermPeriod()) {
-      holdShelfExpirationDate = DateTimeUtil.atEndOfTheDay(holdShelfExpirationDate);
+      holdShelfExpirationDate = atEndOfDay(holdShelfExpirationDate);
     }
 
     return holdShelfExpirationDate;

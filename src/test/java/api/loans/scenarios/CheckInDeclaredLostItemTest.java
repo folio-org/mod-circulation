@@ -12,18 +12,17 @@ import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.joda.time.DateTime.now;
 
 import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
 
-public class CheckInDeclaredLostItemTest extends RefundDeclaredLostFeesTestBase {
+class CheckInDeclaredLostItemTest extends RefundDeclaredLostFeesTestBase {
   public CheckInDeclaredLostItemTest() {
     super("Cancelled item returned");
   }
@@ -42,14 +41,15 @@ public class CheckInDeclaredLostItemTest extends RefundDeclaredLostFeesTestBase 
   }
 
   @Test
-  public void shouldRefundOnlyLastLoanForLostAndPaidItem() {
+  void shouldRefundOnlyLastLoanForLostAndPaidItem() {
     final double firstFee = 20.00;
     final double secondFee = 30.00;
 
     useChargeableRefundableLostItemFee(firstFee, 0.0);
 
     final IndividualResource firstLoan = declareItemLost();
-    mockClockManagerToReturnFixedDateTime(now(DateTimeZone.UTC).plusMinutes(2));
+    mockClockManagerToReturnFixedDateTime(ClockUtil.getDateTime()
+      .plusMinutes(2));
     // Item fee won't be cancelled, because refund period is exceeded
     checkInFixture.checkInByBarcode(item);
     assertThat(itemsClient.getById(item.getId()).getJson(), isAvailable());
@@ -66,7 +66,7 @@ public class CheckInDeclaredLostItemTest extends RefundDeclaredLostFeesTestBase 
   }
 
   @Test
-  public void shouldFailIfNoLoanForLostAndPaidItem() {
+  void shouldFailIfNoLoanForLostAndPaidItem() {
     final double setCost = 20.00;
 
     declareItemLost(setCost);
@@ -86,7 +86,7 @@ public class CheckInDeclaredLostItemTest extends RefundDeclaredLostFeesTestBase 
   }
 
   @Test
-  public void shouldFailIfLastLoanIsNotDeclaredLostForLostAndPaidItem() {
+  void shouldFailIfLastLoanIsNotDeclaredLostForLostAndPaidItem() {
     loan = checkOutFixture.checkOutByBarcode(item, usersFixture.jessica());
 
     checkInFixture.checkInByBarcode(item);
@@ -106,7 +106,7 @@ public class CheckInDeclaredLostItemTest extends RefundDeclaredLostFeesTestBase 
   }
 
   @Test
-  public void shouldRefundPaidAmountForLostAndPaidItem() {
+  void shouldRefundPaidAmountForLostAndPaidItem() {
     final double setCostFee = 10.00;
 
     declareItemLost(setCostFee);
@@ -123,7 +123,7 @@ public class CheckInDeclaredLostItemTest extends RefundDeclaredLostFeesTestBase 
   }
 
   @Test
-  public void lostFeeCancellationDoesNotTriggerMarkingItemAsLostAndPaid() {
+  void lostFeeCancellationDoesNotTriggerMarkingItemAsLostAndPaid() {
     useChargeableRefundableLostItemFee(15.00, 0.0);
 
     declareItemLost();

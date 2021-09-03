@@ -40,7 +40,6 @@ import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static api.support.utl.BlockOverridesUtils.getMissingPermissions;
-import static api.support.utl.DateTimeUtils.executeWithFixedDateTime;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.domain.EventType.ITEM_CHECKED_OUT;
 import static org.folio.circulation.domain.policy.DueDateManagement.KEEP_THE_CURRENT_DUE_DATE;
@@ -53,6 +52,8 @@ import static org.folio.circulation.domain.policy.Period.months;
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 import static org.folio.circulation.domain.representations.logs.LogEventType.CHECK_OUT;
 import static org.folio.circulation.domain.representations.logs.LogEventType.CHECK_OUT_THROUGH_OVERRIDE;
+import static org.folio.circulation.support.utils.ClockUtil.getDateTime;
+import static org.folio.circulation.support.utils.DateTimeUtil.atEndOfDay;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.hasItem;
@@ -61,14 +62,14 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.nullValue;
 import static org.joda.time.DateTimeZone.UTC;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
 
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.policy.DueDateManagement;
@@ -76,11 +77,10 @@ import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.domain.representations.logs.LogEventType;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeUtils;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalTime;
 import org.joda.time.Seconds;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.CheckOutBlockOverrides;
@@ -103,7 +103,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
-public class CheckOutByBarcodeTests extends APITests {
+class CheckOutByBarcodeTests extends APITests {
   private static final DateTime TEST_LOAN_DATE =
     new DateTime(2019, 4, 10, 11, 35, 48, DateTimeZone.UTC);
   private static final DateTime TEST_DUE_DATE =
@@ -121,7 +121,7 @@ public class CheckOutByBarcodeTests extends APITests {
   private static final String PATRON_WAS_BLOCKED_MESSAGE = "Patron blocked from borrowing";
 
   @Test
-  public void canCheckOutUsingItemAndUserBarcode() {
+  void canCheckOutUsingItemAndUserBarcode() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
       item -> item
         .withEnumeration("v.70:no.1-6")
@@ -178,6 +178,7 @@ public class CheckOutByBarcodeTests extends APITests {
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
     assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
+    assertThat(smallAngryPlanet.copyJson().containsKey("_version"), is(true));
 
     assertThat("has item information",
       loan.containsKey("item"), is(true));
@@ -254,7 +255,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canCheckOutUsingFixedDueDateLoanPolicy() {
+  void canCheckOutUsingFixedDueDateLoanPolicy() {
 
     IndividualResource loanPolicy = loanPoliciesFixture.canCirculateFixed();
     IndividualResource overdueFinePolicy = overdueFinePoliciesFixture.facultyStandard();
@@ -269,7 +270,9 @@ public class CheckOutByBarcodeTests extends APITests {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
 
-    final DateTime loanDate = DateTime.now(UTC)
+    final DateTime loanDate = atEndOfDay(getDateTime());
+
+    getDateTime()
       .withMonthOfYear(3)
       .withDayOfMonth(18)
       .withHourOfDay(11)
@@ -300,7 +303,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canCheckOutUsingDueDateLimitedRollingLoanPolicy() {
+  void canCheckOutUsingDueDateLimitedRollingLoanPolicy() {
     FixedDueDateSchedulesBuilder dueDateLimitSchedule = new FixedDueDateSchedulesBuilder()
       .withName("March Only Due Date Limit")
       .addSchedule(FixedDueDateSchedule.wholeMonth(2018, 3));
@@ -355,7 +358,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canGetLoanCreatedWhilstCheckingOut() {
+  void canGetLoanCreatedWhilstCheckingOut() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
 
@@ -369,11 +372,11 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canCheckOutWithoutLoanDate() {
+  void canCheckOutWithoutLoanDate() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
 
-    final DateTime requestDate = DateTime.now();
+    final DateTime requestDate = getDateTime();
 
     final IndividualResource response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -389,7 +392,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotCheckOutWhenLoaneeCannotBeFound() {
+  void cannotCheckOutWhenLoaneeCannotBeFound() {
     val smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     val steve = usersFixture.steve();
 
@@ -403,7 +406,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotCheckOutWhenLoaneeIsInactive() {
+  void cannotCheckOutWhenLoaneeIsInactive() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve(UserBuilder::inactive);
 
@@ -416,7 +419,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotCheckOutByProxyWhenProxyingUserIsInactive() {
+  void cannotCheckOutByProxyWhenProxyingUserIsInactive() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
     final IndividualResource james = usersFixture.james();
@@ -437,7 +440,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotCheckOutByProxyWhenNoRelationship() {
+  void cannotCheckOutByProxyWhenNoRelationship() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
@@ -456,7 +459,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotCheckOutByProxyToThemself() {
+  void cannotCheckOutByProxyToThemself() {
     val smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     val james = usersFixture.james();
 
@@ -473,7 +476,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotCheckOutWhenItemCannotBeFound() {
+  void cannotCheckOutWhenItemCannotBeFound() {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
@@ -489,7 +492,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotCheckOutWhenItemIsAlreadyCheckedOut() {
+  void cannotCheckOutWhenItemIsAlreadyCheckedOut() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
     final IndividualResource steve = usersFixture.steve();
@@ -505,7 +508,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canCheckOutMissingItem() {
+  void canCheckOutMissingItem() {
     final IndividualResource missingItem = setupMissingItem(itemsFixture);
     final IndividualResource steve = usersFixture.steve();
 
@@ -523,7 +526,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotCheckOutWhenOpenLoanAlreadyExists() {
+  void cannotCheckOutWhenOpenLoanAlreadyExists() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
     final IndividualResource steve = usersFixture.steve();
@@ -542,7 +545,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void shouldRejectCheckOutOfItemInDisallowedStatus() {
+  void shouldRejectCheckOutOfItemInDisallowedStatus() {
     final String barcode = String.valueOf(new Random().nextLong());
     final ItemResource claimedReturnedItem = itemsFixture
       .basedUponSmallAngryPlanet((ItemBuilder itemBuilder) -> itemBuilder
@@ -561,7 +564,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canCheckOutViaProxy() {
+  void canCheckOutViaProxy() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
     IndividualResource jessica = usersFixture.jessica();
@@ -585,7 +588,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotCheckOutWhenLoanPolicyDoesNotExist() {
+  void cannotCheckOutWhenLoanPolicyDoesNotExist() {
     final UUID nonExistentloanPolicyId = UUID.randomUUID();
     IndividualResource record = loanPoliciesFixture.create(new LoanPolicyBuilder()
       .withId(nonExistentloanPolicyId)
@@ -615,7 +618,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotCheckOutWhenServicePointOfCheckoutNotPresent() {
+  void cannotCheckOutWhenServicePointOfCheckoutNotPresent() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
 
@@ -635,7 +638,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canCheckOutUsingItemBarcodeThatContainsSpaces() {
+  void canCheckOutUsingItemBarcodeThatContainsSpaces() {
     final IndividualResource steve = usersFixture.steve();
     IndividualResource smallAngryPlanet
       = itemsFixture.basedUponSmallAngryPlanet(item -> item
@@ -666,7 +669,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canCheckOutUsingUserBarcodeThatContainsSpaces() {
+  void canCheckOutUsingUserBarcodeThatContainsSpaces() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
       item -> item
         .withEnumeration("v.70:no.1-6")
@@ -710,7 +713,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canCheckOutUsingProxyUserBarcodeThatContainsSpaces() {
+  void canCheckOutUsingProxyUserBarcodeThatContainsSpaces() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
       item -> item
         .withEnumeration("v.70:no.1-6")
@@ -762,7 +765,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canCheckOutOnOrderItem() {
+  void canCheckOutOnOrderItem() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
       item -> item
         .onOrder()
@@ -806,7 +809,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canCheckOutOnOrderItemWithRequest() {
+  void canCheckOutOnOrderItemWithRequest() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
       item -> item
         .onOrder()
@@ -855,7 +858,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canCheckOutInProcessItem() {
+  void canCheckOutInProcessItem() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
       item -> item
@@ -900,7 +903,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canCheckOutInProcessItemWithRequest() {
+  void canCheckOutInProcessItemWithRequest() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
       item -> item
         .inProcess()
@@ -949,7 +952,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotCheckOutWhenItemIsNotLoanable() {
+  void cannotCheckOutWhenItemIsNotLoanable() {
     IndividualResource notLoanablePolicy = loanPoliciesFixture.create(
       new LoanPolicyBuilder()
         .withName("Not Loanable Policy")
@@ -973,7 +976,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void checkOutFailsWhenCirculationRulesReferenceInvalidLoanPolicyId() {
+  void checkOutFailsWhenCirculationRulesReferenceInvalidLoanPolicyId() {
     UUID invalidLoanPolicyId = UUID.randomUUID();
     IndividualResource record = loanPoliciesFixture.create(new LoanPolicyBuilder()
       .withId(invalidLoanPolicyId)
@@ -1002,7 +1005,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void checkOutDoesNotFailWhenCirculationRulesReferenceInvalidNoticePolicyId() {
+  void checkOutDoesNotFailWhenCirculationRulesReferenceInvalidNoticePolicyId() {
     UUID invalidNoticePolicyId = UUID.randomUUID();
     IndividualResource record = noticePoliciesFixture.create(new NoticePolicyBuilder()
       .withId(invalidNoticePolicyId)
@@ -1028,7 +1031,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canCheckOutWhenItemLimitIsIgnoredForRulesWithoutMaterialTypeOrLoanType() {
+  void canCheckOutWhenItemLimitIsIgnoredForRulesWithoutMaterialTypeOrLoanType() {
 
     useFallbackPolicies(
       prepareLoanPolicyWithItemLimit(1).getId(),
@@ -1046,7 +1049,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canCheckOutVideoMaterialWhenItemLimitIsReachedForBookMaterialType() {
+  void canCheckOutVideoMaterialWhenItemLimitIsReachedForBookMaterialType() {
 
     final UUID book = materialTypesFixture.book().getId();
 
@@ -1073,7 +1076,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canCheckOutWhenItemLimitIsReachedForReadingRoomLoanType() {
+  void canCheckOutWhenItemLimitIsReachedForReadingRoomLoanType() {
 
     final UUID readingRoom = loanTypesFixture.readingRoom().getId();
 
@@ -1100,7 +1103,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canCheckOutWhenItemLimitIsReachedForBookMaterialTypeAndReadingRoomLoanType() {
+  void canCheckOutWhenItemLimitIsReachedForBookMaterialTypeAndReadingRoomLoanType() {
 
     final UUID readingRoom = loanTypesFixture.readingRoom().getId();
     final UUID book = materialTypesFixture.book().getId();
@@ -1128,7 +1131,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canCheckOutWhenItemLimitIsReachedForBookMaterialTypeAndReadingRoomLoanTypeAndPatronGroup() {
+  void canCheckOutWhenItemLimitIsReachedForBookMaterialTypeAndReadingRoomLoanTypeAndPatronGroup() {
 
     final UUID readingRoom = loanTypesFixture.readingRoom().getId();
     final UUID book = materialTypesFixture.book().getId();
@@ -1159,7 +1162,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canCheckOutWhenItemLimitIsReachedForBookMaterialTypeAndCanCirculateLoanTypeInMultipleLinesRules() {
+  void canCheckOutWhenItemLimitIsReachedForBookMaterialTypeAndCanCirculateLoanTypeInMultipleLinesRules() {
 
     final String loanPolicyWithItemLimitId = prepareLoanPolicyWithItemLimit(1).getId().toString();
     final String anyRequestPolicy = requestPoliciesFixture.allowAllRequestPolicy().getId().toString();
@@ -1199,7 +1202,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotCheckOutWhenItemLimitIsReachedForBookMaterialTypeAndLoanTypeIsNotPresent() {
+  void cannotCheckOutWhenItemLimitIsReachedForBookMaterialTypeAndLoanTypeIsNotPresent() {
 
     final UUID readingRoom = loanTypesFixture.readingRoom().getId();
     final UUID canCirculate = loanTypesFixture.canCirculate().getId();
@@ -1223,7 +1226,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotCheckOutWhenItemLimitIsReachedForBookMaterialTypeWithFixedDueDateSchedule() {
+  void cannotCheckOutWhenItemLimitIsReachedForBookMaterialTypeWithFixedDueDateSchedule() {
 
     final UUID book = materialTypesFixture.book().getId();
 
@@ -1252,7 +1255,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canCheckOutWhenItemLimitWasReachedForBookMaterialAndItemIsClaimedReturned() {
+  void canCheckOutWhenItemLimitWasReachedForBookMaterialAndItemIsClaimedReturned() {
     final UUID book = materialTypesFixture.book().getId();
 
     circulationRulesFixture.updateCirculationRules(createRules( "m " + book));
@@ -1283,7 +1286,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canCheckOutWithdrawnItem() {
+  void canCheckOutWithdrawnItem() {
     final IndividualResource withdrawnItem = itemsFixture
       .basedUponSmallAngryPlanet(ItemBuilder::withdrawn);
 
@@ -1302,7 +1305,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canCheckOutLostAndPaidItem() {
+  void canCheckOutLostAndPaidItem() {
     final IndividualResource withdrawnItem = itemsFixture
       .basedUponSmallAngryPlanet(ItemBuilder::lostAndPaid);
 
@@ -1320,7 +1323,10 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void itemCheckedOutEventIsPublished() {
+  void itemCheckedOutEventIsPublished() {
+    IndividualResource loanPolicy = loanPoliciesFixture.canCirculateRolling();
+    use(defaultRollingPolicies().loanPolicy(loanPolicy));
+
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
 
@@ -1328,7 +1334,7 @@ public class CheckOutByBarcodeTests extends APITests {
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
-        .on(DateTime.now(UTC))
+        .on(getDateTime())
         .at(UUID.randomUUID()));
 
     final JsonObject loan = response.getJson();
@@ -1339,7 +1345,7 @@ public class CheckOutByBarcodeTests extends APITests {
 
     final var checkedOutEvent = publishedEvents.findFirst(byEventType(ITEM_CHECKED_OUT.name()));
 
-    assertThat(checkedOutEvent, isValidItemCheckedOutEvent(loan));
+    assertThat(checkedOutEvent, isValidItemCheckedOutEvent(loan, loanPolicy));
 
     final var checkOutLogEvent = publishedEvents.findFirst(byLogEventType(CHECK_OUT.value()));
 
@@ -1348,7 +1354,53 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void checkOutRefusedWhenAutomatedBlockExistsForPatron() {
+  void itemCheckedOutEventIsPublishedWithGracePeriod() {
+    Period gracePeriod = Period.weeks(3);
+    IndividualResource loanPolicy = loanPoliciesFixture.canCirculateRolling(gracePeriod);
+    assertThat(getGracePeriod(loanPolicy), is(gracePeriod.asJson()));
+    itemCheckedOutEventIsPublishedWithGracePeriodDefinedInLoanPolicy(loanPolicy);
+  }
+
+  @Test
+  void itemCheckedOutEventIsPublishedWithoutGracePeriod() {
+    IndividualResource loanPolicy = loanPoliciesFixture.canCirculateRolling();
+    assertThat(getGracePeriod(loanPolicy), is(nullValue()));
+    itemCheckedOutEventIsPublishedWithGracePeriodDefinedInLoanPolicy(loanPolicy);
+  }
+
+  private void itemCheckedOutEventIsPublishedWithGracePeriodDefinedInLoanPolicy(
+    IndividualResource loanPolicy) {
+
+    use(defaultRollingPolicies().loanPolicy(loanPolicy));
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource steve = usersFixture.steve();
+
+    final IndividualResource response = checkOutFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(smallAngryPlanet)
+        .to(steve)
+        .on(getDateTime())
+        .at(UUID.randomUUID()));
+
+    final JsonObject loan = response.getJson();
+
+    final var publishedEvents = Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(FakePubSub::getPublishedEvents, hasSize(2));
+
+    final var checkedOutEvent = publishedEvents.findFirst(byEventType(ITEM_CHECKED_OUT));
+
+    assertThat(checkedOutEvent, isValidItemCheckedOutEvent(loan, loanPolicy));
+
+    final var checkOutLogEvent = publishedEvents.findFirst(byLogEventType(CHECK_OUT));
+
+    assertThat(checkOutLogEvent, isValidCheckOutLogEvent(loan, LogEventType.CHECK_OUT));
+    assertThatPublishedLoanLogRecordEventsAreValid(loan);
+  }
+
+  @Test
+  void checkOutRefusedWhenAutomatedBlockExistsForPatron() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
     automatedPatronBlocksFixture.blockAction(steve.getId().toString(), true, false, false);
@@ -1363,7 +1415,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void checkOutFailsWhenEventPublishingFailsWithBadRequestError() {
+  void checkOutFailsWhenEventPublishingFailsWithBadRequestError() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
 
@@ -1373,7 +1425,7 @@ public class CheckOutByBarcodeTests extends APITests {
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
-        .on(DateTime.now(UTC))
+        .on(getDateTime())
         .at(UUID.randomUUID()));
 
     assertThat(response.getBody(), containsString(
@@ -1381,11 +1433,11 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void failedCheckOutWithMultipleValidationErrors() {
+  void failedCheckOutWithMultipleValidationErrors() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final UserResource steve = usersFixture.steve();
 
-    IndividualResource loanPolicy = loanPoliciesFixture.create(new LoanPolicyBuilder()
+    loanPoliciesFixture.create(new LoanPolicyBuilder()
       .withId(UUID.randomUUID())
       .withName("Example loan policy")
       .withLoanable(true)
@@ -1395,7 +1447,7 @@ public class CheckOutByBarcodeTests extends APITests {
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
-        .on(DateTime.now(UTC))
+        .on(getDateTime())
         .at(UUID.randomUUID()));
 
     usersFixture.remove(steve);
@@ -1417,7 +1469,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotOverrideItemNotLoanableBlockWhenOverrideBlocksIsNotPresent() {
+  void cannotOverrideItemNotLoanableBlockWhenOverrideBlocksIsNotPresent() {
     final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
       OVERRIDE_ITEM_NOT_LOANABLE_BLOCK_PERMISSION);
 
@@ -1434,7 +1486,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotOverrideItemNotLoanableBlockWhenDueDateIsBeforeLoanDate() {
+  void cannotOverrideItemNotLoanableBlockWhenDueDateIsBeforeLoanDate() {
     final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
       OVERRIDE_ITEM_NOT_LOANABLE_BLOCK_PERMISSION);
 
@@ -1461,7 +1513,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotOverrideItemNotLoanableBlockWhenDueDateIsTheSameAsLoanDate() {
+  void cannotOverrideItemNotLoanableBlockWhenDueDateIsTheSameAsLoanDate() {
     final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
       OVERRIDE_ITEM_NOT_LOANABLE_BLOCK_PERMISSION);
 
@@ -1486,7 +1538,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotOverrideBlockWhenCommentIsNotPresent() {
+  void cannotOverrideBlockWhenCommentIsNotPresent() {
     final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
       OVERRIDE_ITEM_NOT_LOANABLE_BLOCK_PERMISSION);
 
@@ -1510,7 +1562,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotOverrideItemNotLoanableBlockWhenDueDateIsNotPresent() {
+  void cannotOverrideItemNotLoanableBlockWhenDueDateIsNotPresent() {
     final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
       OVERRIDE_ITEM_NOT_LOANABLE_BLOCK_PERMISSION);
 
@@ -1533,7 +1585,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotOverrideItemNotLoanableBlockWhenUserDoesNotHavePermissions() {
+  void cannotOverrideItemNotLoanableBlockWhenUserDoesNotHavePermissions() {
     setNotLoanablePolicy();
     Response response = checkOutFixture.attemptCheckOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -1555,7 +1607,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotOverrideItemNotLoanableBlockWhenUserDoesNotHaveRequiredPermissions() {
+  void cannotOverrideItemNotLoanableBlockWhenUserDoesNotHaveRequiredPermissions() {
     final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
       OVERRIDE_PATRON_BLOCK_PERMISSION);
 
@@ -1581,7 +1633,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotOverrideItemNotLoanableBlockAndPatronBlockWhenUserDoesNotHavePermissions() {
+  void cannotOverrideItemNotLoanableBlockAndPatronBlockWhenUserDoesNotHavePermissions() {
     setNotLoanablePolicy();
     Response response = checkOutFixture.attemptCheckOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -1604,7 +1656,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotOverrideItemLimitBlockWhenUserDoesNotHavePermissions() {
+  void cannotOverrideItemLimitBlockWhenUserDoesNotHavePermissions() {
     Response response = checkOutFixture.attemptCheckOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(itemsFixture.basedUponNod())
@@ -1621,7 +1673,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotOverridePatronBlockWhenUserDoesNotHavePermissions() {
+  void cannotOverridePatronBlockWhenUserDoesNotHavePermissions() {
     Response response = checkOutFixture.attemptCheckOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(itemsFixture.basedUponNod())
@@ -1638,7 +1690,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotOverridePatronBlockWhenUserDoesNotHaveRequiredPermissions() {
+  void cannotOverridePatronBlockWhenUserDoesNotHaveRequiredPermissions() {
     final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
       OVERRIDE_ITEM_LIMIT_BLOCK_PERMISSION);
 
@@ -1659,7 +1711,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canOverrideCheckoutWhenItemLimitWasReachedForBookMaterialType() {
+  void canOverrideCheckoutWhenItemLimitWasReachedForBookMaterialType() {
     circulationRulesFixture.updateCirculationRules(createRules(
       "m " + materialTypesFixture.book().getId()));
     IndividualResource firstBookTypeItem = itemsFixture.basedUponNod();
@@ -1694,7 +1746,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canOverrideCheckOutWhenItemNotLoanableBlockIsPresent() {
+  void canOverrideCheckOutWhenItemNotLoanableBlockIsPresent() {
     final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
       OVERRIDE_ITEM_NOT_LOANABLE_BLOCK_PERMISSION);
 
@@ -1743,7 +1795,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canOverrideCheckOutWhenItemIsLoanableAndOverrideIsRequested() {
+  void canOverrideCheckOutWhenItemIsLoanableAndOverrideIsRequested() {
     final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
       OVERRIDE_ITEM_NOT_LOANABLE_BLOCK_PERMISSION);
 
@@ -1770,7 +1822,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canCreateRecallRequestAfterOverriddenCheckout() {
+  void canCreateRecallRequestAfterOverriddenCheckout() {
     final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
       OVERRIDE_ITEM_NOT_LOANABLE_BLOCK_PERMISSION);
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
@@ -1804,7 +1856,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canOverrideCheckOutWhenAutomatedBlockIsPresent() {
+  void canOverrideCheckOutWhenAutomatedBlockIsPresent() {
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
     automatedPatronBlocksFixture.blockAction(steve.getId().toString(), true, false, false);
@@ -1838,7 +1890,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotCheckOutWhenItemIsAlreadyCheckedOutAndNoPatronBlockOverridePermissions() {
+  void cannotCheckOutWhenItemIsAlreadyCheckedOutAndNoPatronBlockOverridePermissions() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica);
@@ -1865,10 +1917,10 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canOverrideManualPatronBlockWhenBlockIsPresent() {
+  void canOverrideManualPatronBlockWhenBlockIsPresent() {
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
-    userManualBlocksFixture.createManualPatronBlockForUser(steve.getId());
+    userManualBlocksFixture.createBorrowingManualPatronBlockForUser(steve.getId());
 
     final Response response = checkOutFixture.attemptCheckOutByBarcode(item, steve);
 
@@ -1897,10 +1949,10 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canOverrideManualAndAutomationPatronBlocksWhenBlocksArePresent() {
+  void canOverrideManualAndAutomationPatronBlocksWhenBlocksArePresent() {
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
-    userManualBlocksFixture.createManualPatronBlockForUser(steve.getId());
+    userManualBlocksFixture.createBorrowingManualPatronBlockForUser(steve.getId());
     automatedPatronBlocksFixture.blockAction(steve.getId().toString(), true, false, false);
 
     final Response response = checkOutFixture.attemptCheckOutByBarcode(item, steve);
@@ -1934,7 +1986,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void dueDateShouldBeTruncatedToTheEndOfPreviousOpenDayBeforePatronExpiration() {
+  void dueDateShouldBeTruncatedToTheEndOfPreviousOpenDayBeforePatronExpiration() {
     DateTime loanDate = SECOND_DAY_CLOSED.toDateTime(LocalTime.MIDNIGHT.plusHours(10));
     use(buildLoanPolicyWithFixedLoan(MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY, loanDate.plusDays(1)));
 
@@ -1942,19 +1994,21 @@ public class CheckOutByBarcodeTests extends APITests {
     DateTime patronExpirationDate = loanDate.plusHours(2);
     IndividualResource steve = usersFixture.steve(user -> user.expires(patronExpirationDate));
 
-    JsonObject response = executeWithFixedDateTime(() -> checkOutFixture.checkOutByBarcode(
+    mockClockManagerToReturnFixedDateTime(loanDate);
+    JsonObject response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(item)
         .to(steve)
         .on(loanDate)
-        .at(CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_CLOSED)).getJson(), loanDate);
+        .at(CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_CLOSED)).getJson();
+    mockClockManagerToReturnDefaultDateTime();
 
     assertThat(DateTime.parse(response.getString("dueDate")).toDateTime(),
       is(FIRST_DAY_OPEN.toDateTime(LocalTime.MIDNIGHT.minusSeconds(1), UTC)));
   }
 
   @Test
-  public void dueDateShouldBeTruncatedToTheEndOfPreviousOpenDayIfTheNextOpenDayStrategy() {
+  void dueDateShouldBeTruncatedToTheEndOfPreviousOpenDayIfTheNextOpenDayStrategy() {
     DateTime loanDate = SECOND_DAY_CLOSED.toDateTime(LocalTime.MIDNIGHT.plusHours(10), UTC);
     use(buildLoanPolicyWithFixedLoan(MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY, loanDate.plusDays(1)));
 
@@ -1962,19 +2016,21 @@ public class CheckOutByBarcodeTests extends APITests {
     DateTime patronExpirationDate = loanDate.plusHours(1);
     IndividualResource steve = usersFixture.steve(user -> user.expires(patronExpirationDate));
 
-    JsonObject response = executeWithFixedDateTime(() -> checkOutFixture.checkOutByBarcode(
+    mockClockManagerToReturnFixedDateTime(loanDate);
+    JsonObject response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(item)
         .to(steve)
         .on(loanDate)
-        .at(CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_OPEN)).getJson(), loanDate);
+        .at(CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_OPEN)).getJson();
+    mockClockManagerToReturnDefaultDateTime();
 
     assertThat(DateTime.parse(response.getString("dueDate")).toDateTime(),
       is(FIRST_DAY_OPEN.toDateTime(LocalTime.MIDNIGHT.minusSeconds(1), UTC)));
   }
 
   @Test
-  public void dueDateShouldBeTruncatedToThePatronsExpirationDateTimeIfKeepCurrentDueDateStrategy() {
+  void dueDateShouldBeTruncatedToThePatronsExpirationDateTimeIfKeepCurrentDueDateStrategy() {
     DateTime loanDate = FIRST_DAY_OPEN.toDateTime(LocalTime.MIDNIGHT.plusHours(10), UTC);
     use(buildLoanPolicyWithFixedLoan(KEEP_THE_CURRENT_DUE_DATE, loanDate.plusDays(1)));
 
@@ -1982,31 +2038,35 @@ public class CheckOutByBarcodeTests extends APITests {
     DateTime patronExpirationDate = loanDate.plusHours(1);
     IndividualResource steve = usersFixture.steve(user -> user.expires(patronExpirationDate));
 
-    JsonObject response = executeWithFixedDateTime(() -> checkOutFixture.checkOutByBarcode(
+    mockClockManagerToReturnFixedDateTime(loanDate);
+    JsonObject response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(item)
         .to(steve)
         .on(loanDate)
-        .at(CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_OPEN)).getJson(), loanDate);
+        .at(CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_OPEN)).getJson();
+    mockClockManagerToReturnDefaultDateTime();
 
     assertThat(DateTime.parse(response.getString("dueDate")).toDateTime(),
       is(patronExpirationDate));
   }
 
   @Test
-  public void dueDateShouldBeTruncatedToPatronsExpirationDateTimeIfKeepCurrentDueDateTimeStrategy() {
+  void dueDateShouldBeTruncatedToPatronsExpirationDateTimeIfKeepCurrentDueDateTimeStrategy() {
     DateTime loanDate = FIRST_DAY_OPEN.toDateTime(LocalTime.MIDNIGHT.plusHours(10), UTC);
     use(buildLoanPolicyWithRollingLoan(KEEP_THE_CURRENT_DUE_DATE_TIME, 1));
     IndividualResource item = itemsFixture.basedUponNod();
     DateTime patronExpirationDate = loanDate.plusHours(1);
     IndividualResource steve = usersFixture.steve(user -> user.expires(patronExpirationDate));
 
-    JsonObject response = executeWithFixedDateTime(() -> checkOutFixture.checkOutByBarcode(
+    mockClockManagerToReturnFixedDateTime(loanDate);
+    JsonObject response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(item)
         .to(steve)
         .on(loanDate)
-        .at(CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_OPEN)).getJson(), loanDate);
+        .at(CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_OPEN)).getJson();
+    mockClockManagerToReturnDefaultDateTime();
 
     assertThat(DateTime.parse(response.getString("dueDate")).toDateTime(), is(patronExpirationDate));
   }
@@ -2021,12 +2081,14 @@ public class CheckOutByBarcodeTests extends APITests {
     DateTime patronExpirationDate = loanDate.plusHours(12);
     IndividualResource steve = usersFixture.steve(user -> user.expires(patronExpirationDate));
 
-    JsonObject response = executeWithFixedDateTime(() -> checkOutFixture.checkOutByBarcode(
+    mockClockManagerToReturnFixedDateTime(loanDate);
+    JsonObject response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(item)
         .to(steve)
         .on(loanDate)
-        .at(CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_OPEN)).getJson(), loanDate);
+        .at(CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_OPEN)).getJson();
+    mockClockManagerToReturnDefaultDateTime();
 
     assertThat(DateTime.parse(response.getString("dueDate")).toDateTime(),
       is(FIRST_DAY_OPEN.toDateTime(END_TIME_SECOND_PERIOD, UTC)));
@@ -2042,12 +2104,14 @@ public class CheckOutByBarcodeTests extends APITests {
     DateTime patronExpirationDate = loanDate.plusHours(12);
     IndividualResource steve = usersFixture.steve(user -> user.expires(patronExpirationDate));
 
-    JsonObject response = executeWithFixedDateTime(() -> checkOutFixture.checkOutByBarcode(
+    mockClockManagerToReturnFixedDateTime(loanDate);
+    JsonObject response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(item)
         .to(steve)
         .on(loanDate)
-        .at(CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_OPEN)).getJson(), loanDate);
+        .at(CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_OPEN)).getJson();
+    mockClockManagerToReturnDefaultDateTime();
 
     assertThat(DateTime.parse(response.getString("dueDate")).toDateTime(),
       is(FIRST_DAY_OPEN.toDateTime(END_TIME_SECOND_PERIOD, UTC)));
@@ -2063,12 +2127,14 @@ public class CheckOutByBarcodeTests extends APITests {
     DateTime patronExpirationDate = loanDate.plusDays(1);
     IndividualResource steve = usersFixture.steve(user -> user.expires(patronExpirationDate));
 
-    JsonObject response = executeWithFixedDateTime(() -> checkOutFixture.checkOutByBarcode(
+    mockClockManagerToReturnFixedDateTime(loanDate);
+    JsonObject response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(item)
         .to(steve)
         .on(loanDate)
-        .at(CASE_MON_WED_FRI_OPEN_TUE_THU_CLOSED)).getJson(), loanDate);
+        .at(CASE_MON_WED_FRI_OPEN_TUE_THU_CLOSED)).getJson();
+    mockClockManagerToReturnDefaultDateTime();
 
     assertThat(DateTime.parse(response.getString("dueDate")).toDateTime(),
       is(MONDAY_DATE.toDateTime(LocalTime.MIDNIGHT.minusSeconds(1), UTC)));
@@ -2084,12 +2150,14 @@ public class CheckOutByBarcodeTests extends APITests {
     DateTime patronExpirationDate = loanDate.plusDays(1);
     IndividualResource steve = usersFixture.steve(user -> user.expires(patronExpirationDate));
 
-    JsonObject response = executeWithFixedDateTime(() -> checkOutFixture.checkOutByBarcode(
+    mockClockManagerToReturnFixedDateTime(loanDate);
+    JsonObject response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(item)
         .to(steve)
         .on(loanDate)
-        .at(CASE_MON_WED_FRI_OPEN_TUE_THU_CLOSED)).getJson(), loanDate);
+        .at(CASE_MON_WED_FRI_OPEN_TUE_THU_CLOSED)).getJson();
+    mockClockManagerToReturnDefaultDateTime();
 
     assertThat(DateTime.parse(response.getString("dueDate")).toDateTime(),
       is(MONDAY_DATE.toDateTime(LocalTime.MIDNIGHT.minusSeconds(1), UTC)));
@@ -2185,5 +2253,11 @@ public class CheckOutByBarcodeTests extends APITests {
       noticePoliciesFixture.inactiveNotice().getId(),
       overdueFinePoliciesFixture.facultyStandard().getId(),
       lostItemFeePoliciesFixture.facultyStandard().getId());
+  }
+
+  private static JsonObject getGracePeriod(IndividualResource loanPolicy) {
+    return loanPolicy.getJson()
+      .getJsonObject("loansPolicy")
+      .getJsonObject("gracePeriod");
   }
 }

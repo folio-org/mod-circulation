@@ -13,11 +13,11 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.util.concurrent.ExecutionException;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class ResultFailAfterTests {
+class ResultFailAfterTests {
   @Test
-  public void shouldPassThroughResultWhenConditionIsFalse()
+  void shouldPassThroughResultWhenConditionIsFalse()
     throws ExecutionException,
     InterruptedException {
 
@@ -31,7 +31,7 @@ public class ResultFailAfterTests {
   }
 
   @Test
-  public void shouldApplyFailureWhenConditionIsTrue()
+  void shouldApplyFailureWhenConditionIsTrue()
     throws ExecutionException,
     InterruptedException {
 
@@ -44,7 +44,7 @@ public class ResultFailAfterTests {
   }
 
   @Test
-  public void shouldFailWhenAlreadyFailed()
+  void shouldFailWhenAlreadyFailed()
     throws ExecutionException,
     InterruptedException {
 
@@ -57,7 +57,7 @@ public class ResultFailAfterTests {
   }
 
   @Test
-  public void shouldFailWhenConditionFailed()
+  void shouldFailWhenConditionFailed()
     throws ExecutionException,
     InterruptedException {
 
@@ -70,7 +70,7 @@ public class ResultFailAfterTests {
   }
 
   @Test
-  public void shouldFailWhenConditionFailsAsynchronously()
+  void shouldFailWhenConditionFailsAsynchronously()
     throws ExecutionException,
     InterruptedException {
 
@@ -83,7 +83,7 @@ public class ResultFailAfterTests {
   }
 
   @Test
-  public void shouldFailWhenCreatingFailureFails()
+  void shouldFailWhenCreatingFailureFails()
     throws ExecutionException,
     InterruptedException {
 

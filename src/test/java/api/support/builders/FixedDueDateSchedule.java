@@ -1,7 +1,16 @@
 package api.support.builders;
 
+import static org.folio.circulation.support.utils.ClockUtil.getDateTime;
+import static org.folio.circulation.support.utils.DateTimeUtil.atEndOfDay;
+import static org.folio.circulation.support.utils.DateTimeUtil.atEndOfMonth;
+import static org.folio.circulation.support.utils.DateTimeUtil.atEndOfYear;
+import static org.folio.circulation.support.utils.DateTimeUtil.atStartOfDay;
+import static org.folio.circulation.support.utils.DateTimeUtil.atStartOfMonth;
+import static org.folio.circulation.support.utils.DateTimeUtil.atStartOfYear;
+import static org.joda.time.DateTimeZone.UTC;
+
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
+import org.joda.time.LocalDate;
 
 public class FixedDueDateSchedule {
   final DateTime from;
@@ -19,51 +28,34 @@ public class FixedDueDateSchedule {
   }
 
   public static FixedDueDateSchedule wholeYear(int year) {
-    return dueAtEnd(
-      new DateTime(year, 1, 1, 0, 0, 0, DateTimeZone.UTC),
-      new DateTime(year, 12, 31, 23, 59, 59, DateTimeZone.UTC));
+    final LocalDate date = new LocalDate(year, 1, 1);
+
+    return dueAtEnd(atStartOfYear(date, UTC), atEndOfYear(date, UTC));
   }
 
   public static FixedDueDateSchedule wholeMonth(int year, int month) {
-    final DateTime firstOfMonth = new DateTime(year, month, 1, 0, 0, 0, DateTimeZone.UTC);
+    final LocalDate date = new LocalDate(year, month, 1);
 
-    final DateTime lastOfMonth = firstOfMonth
-      .withDayOfMonth(firstOfMonth.dayOfMonth().getMaximumValue())
-      .withHourOfDay(23)
-      .withMinuteOfHour(59)
-      .withSecondOfMinute(59);
-
-    return dueAtEnd(firstOfMonth, lastOfMonth);
+    return dueAtEnd(atStartOfMonth(date, UTC), atEndOfMonth(date, UTC));
   }
 
   public static FixedDueDateSchedule wholeMonth(int year, int month, DateTime dueDate) {
-    final DateTime firstOfMonth = new DateTime(year, month, 1, 0, 0, 0, DateTimeZone.UTC);
+    final LocalDate date = new LocalDate(year, month, 1);
 
-    final DateTime lastOfMonth = firstOfMonth
-      .withDayOfMonth(firstOfMonth.dayOfMonth().getMaximumValue())
-      .withHourOfDay(23)
-      .withMinuteOfHour(59)
-      .withSecondOfMinute(59);
-
-    return new FixedDueDateSchedule(firstOfMonth, lastOfMonth, dueDate);
+    return new FixedDueDateSchedule(atStartOfMonth(date, UTC),
+      atEndOfMonth(date, UTC), dueDate);
   }
 
   public static FixedDueDateSchedule todayOnly() {
-    return forDay(DateTime.now(DateTimeZone.UTC));
+    return forDay(getDateTime());
   }
 
   public static FixedDueDateSchedule yesterdayOnly() {
-    return forDay(DateTime.now(DateTimeZone.UTC).minusDays(1));
+    return forDay(getDateTime().minusDays(1));
   }
 
   public static FixedDueDateSchedule forDay(DateTime day) {
-    final DateTime beginningOfDay = day.withTimeAtStartOfDay();
-
-    final DateTime endOfDay = beginningOfDay
-      .withHourOfDay(23)
-      .withMinuteOfHour(59)
-      .withSecondOfMinute(59);
-
-    return new FixedDueDateSchedule(beginningOfDay, endOfDay, endOfDay);
+    return new FixedDueDateSchedule(atStartOfDay(day, UTC),
+      atEndOfDay(day, UTC), atEndOfDay(day, UTC));
   }
 }
