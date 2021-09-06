@@ -6,6 +6,7 @@ import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_SERVICE_POI
 import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_SERVICE_POINT_NEXT_DAY;
 import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_SERVICE_POINT_PREV_DAY;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
+import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTimeOptional;
 import static org.folio.circulation.support.utils.DateTimeUtil.atEndOfDay;
 import static org.folio.circulation.support.utils.DateTimeUtil.atStartOfDay;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -67,7 +68,7 @@ class CheckOutByBarcodeFixedDueDateScenariosTest extends APITests {
     DateTime expectedDate =
       atEndOfDay(CASE_FRI_SAT_MON_SERVICE_POINT_PREV_DAY, UTC);
 
-    assertThat("due date should be " + expectedDate,
+    assertThat("due date should be " + formatDateTimeOptional(expectedDate),
       loan.getJson().getString("dueDate"), isEquivalentTo(expectedDate));
   }
 
@@ -107,7 +108,7 @@ class CheckOutByBarcodeFixedDueDateScenariosTest extends APITests {
     DateTime expectedDate =
       atEndOfDay(CASE_FRI_SAT_MON_SERVICE_POINT_PREV_DAY, UTC);
 
-    assertThat("due date should be " + expectedDate,
+    assertThat("due date should be " + formatDateTimeOptional(expectedDate),
       loan.getJson().getString("dueDate"), isEquivalentTo(expectedDate));
   }
 
@@ -147,7 +148,7 @@ class CheckOutByBarcodeFixedDueDateScenariosTest extends APITests {
     DateTime expectedDate =
       atEndOfDay(CASE_FRI_SAT_MON_SERVICE_POINT_NEXT_DAY, UTC);
 
-    assertThat("due date should be " + expectedDate,
+    assertThat("due date should be " + formatDateTimeOptional(expectedDate),
       loan.getJson().getString("dueDate"), isEquivalentTo(expectedDate));
   }
 }

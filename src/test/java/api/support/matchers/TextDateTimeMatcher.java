@@ -1,10 +1,9 @@
 package api.support.matchers;
 
-import static java.time.ZoneOffset.UTC;
-import static java.time.temporal.ChronoUnit.MILLIS;
+import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTimeOptional;
+import static org.folio.circulation.support.utils.DateFormatUtil.parseDateTimeOptional;
 
 import java.time.Instant;
-import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 
 import org.folio.circulation.support.utils.ClockUtil;
@@ -20,7 +19,7 @@ public class TextDateTimeMatcher {
       @Override
       public void describeTo(Description description) {
         description.appendText(String.format(
-          "a date time matching: %s", expected.toString()));
+          "a date time matching: %s", formatDateTimeOptional(expected)));
       }
 
       @Override
@@ -49,15 +48,13 @@ public class TextDateTimeMatcher {
       protected boolean matchesSafely(String textRepresentation) {
 
         //response representation might vary from request representation
-        final var actual = OffsetDateTime.parse(textRepresentation)
-          .truncatedTo(MILLIS);
+        final Instant actual = parseDateTimeOptional(textRepresentation).toInstant();
 
         //The zoned date time could have a higher precision than milliseconds
         //This makes comparison to an ISO formatted date time using milliseconds
         //excessively precise and brittle
         //Discovered when using JDK 13.0.1 instead of JDK 1.8.0_202-b08
-        return expected.truncatedTo(MILLIS).equals(actual.toInstant())
-          && actual.getOffset().equals(UTC);
+        return expected.toEpochMilli() == actual.toEpochMilli();
       }
     };
   }

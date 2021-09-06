@@ -24,7 +24,7 @@ import static org.folio.HttpStatus.HTTP_NOT_FOUND;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE_ERROR;
-import static org.folio.circulation.services.EventPublisher.FMT;
+import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.hasItems;
@@ -94,8 +94,8 @@ class ChangeDueDateAPITests extends APITests {
       .getJsonObject("payload").getString("description");
 
     assertThat(description, notNullValue());
-    assertThat(description, containsString(dueDate.toString(FMT)));
-    assertThat(description, containsString(newDueDate.toString(FMT)));
+    assertThat(description, containsString(formatDateTime(dueDate)));
+    assertThat(description, containsString(formatDateTime(newDueDate)));
 
     assertThat("due date is not updated",
       updatedLoan.getString("dueDate"), isEquivalentTo(newDueDate));

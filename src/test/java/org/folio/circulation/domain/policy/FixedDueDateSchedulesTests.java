@@ -1,10 +1,11 @@
 package org.folio.circulation.domain.policy;
 
-import io.vertx.core.json.JsonObject;
-import org.junit.jupiter.api.Test;
-
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+
+import org.junit.jupiter.api.Test;
+
+import io.vertx.core.json.JsonObject;
 
 class FixedDueDateSchedulesTests {
   @Test

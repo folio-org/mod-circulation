@@ -24,6 +24,7 @@ import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE_ERROR;
+import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.hasItems;
@@ -223,7 +224,7 @@ class OverrideRenewByBarcodeTests extends APITests {
     final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(OVERRIDE_RENEWAL_PERMISSION);
     JsonObject renewedLoan =
       loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica,
-        OVERRIDE_COMMENT, newDueDate.toString(), okapiHeaders).getJson();
+        OVERRIDE_COMMENT, formatDateTime(newDueDate), okapiHeaders).getJson();
 
     verifyRenewedLoan(smallAngryPlanet, jessica, renewedLoan);
 
@@ -304,7 +305,7 @@ class OverrideRenewByBarcodeTests extends APITests {
     final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(OVERRIDE_RENEWAL_PERMISSION);
     DateTime newDueDate = ClockUtil.getDateTime().plusWeeks(1);
     final JsonObject renewedLoan = loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica,
-        OVERRIDE_COMMENT, newDueDate.toString(), okapiHeaders).getJson();
+        OVERRIDE_COMMENT, formatDateTime(newDueDate), okapiHeaders).getJson();
 
     assertThat(renewedLoan.getString("id"), is(loanId.toString()));
 
@@ -366,7 +367,7 @@ class OverrideRenewByBarcodeTests extends APITests {
 
     final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(OVERRIDE_RENEWAL_PERMISSION);
     final JsonObject renewedLoan = loansFixture.overrideRenewalByBarcode(
-      smallAngryPlanet, jessica, OVERRIDE_COMMENT, newDueDate.toString(), okapiHeaders)
+      smallAngryPlanet, jessica, OVERRIDE_COMMENT, formatDateTime(newDueDate), okapiHeaders)
       .getJson();
 
     assertThat(renewedLoan.getString("id"), is(loanId.toString()));
@@ -541,7 +542,7 @@ class OverrideRenewByBarcodeTests extends APITests {
 
     final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(OVERRIDE_RENEWAL_PERMISSION);
     JsonObject loanAfterOverride = loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica,
-      OVERRIDE_COMMENT, newDueDate.toString(), okapiHeaders).getJson();
+      OVERRIDE_COMMENT, formatDateTime(newDueDate), okapiHeaders).getJson();
     assertLoanHasActionComment(loanAfterOverride, OVERRIDE_COMMENT);
 
     LoanPolicyBuilder renewablePolicy = new LoanPolicyBuilder()
@@ -574,7 +575,7 @@ class OverrideRenewByBarcodeTests extends APITests {
 
     final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(OVERRIDE_RENEWAL_PERMISSION);
     JsonObject loanAfterOverride = loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica,
-      OVERRIDE_COMMENT, newDueDate.toString(), okapiHeaders).getJson();
+      OVERRIDE_COMMENT, formatDateTime(newDueDate), okapiHeaders).getJson();
     assertLoanHasActionComment(loanAfterOverride, OVERRIDE_COMMENT);
 
     JsonObject loanAfterCheckIn = checkInFixture.checkInByBarcode(smallAngryPlanet).getLoan();
@@ -631,7 +632,7 @@ class OverrideRenewByBarcodeTests extends APITests {
 
     final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(OVERRIDE_RENEWAL_PERMISSION);
     JsonObject renewedLoan = loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica,
-      OVERRIDE_COMMENT, newDueDate.toString(), okapiHeaders).getJson();
+      OVERRIDE_COMMENT, formatDateTime(newDueDate), okapiHeaders).getJson();
 
     assertThat("action should be renewed",
       renewedLoan.getString("action"), is(RENEWED_THROUGH_OVERRIDE));
@@ -661,7 +662,7 @@ class OverrideRenewByBarcodeTests extends APITests {
     DateTime newDueDate = ClockUtil.getDateTime().plusDays(3);
 
     Response response = loansFixture.attemptOverride(smallAngryPlanet, jessica,
-        OVERRIDE_COMMENT, newDueDate.toString());
+        OVERRIDE_COMMENT, formatDateTime(newDueDate));
 
     assertThat(response.getJson(), hasErrorWith(hasRenewalWouldNotChangeDueDateMessage()));
   }
@@ -712,7 +713,7 @@ class OverrideRenewByBarcodeTests extends APITests {
     final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(OVERRIDE_RENEWAL_PERMISSION);
     IndividualResource loanAfterRenewal =
       loansFixture.overrideRenewalByBarcode(smallAngryPlanet, steve,
-        OVERRIDE_COMMENT, loanDate.plusDays(4).toString(), okapiHeaders);
+        OVERRIDE_COMMENT, formatDateTime(loanDate.plusDays(4)), okapiHeaders);
 
     verifyNumberOfSentNotices(1);
     verifyNumberOfPublishedEvents(NOTICE, 1);

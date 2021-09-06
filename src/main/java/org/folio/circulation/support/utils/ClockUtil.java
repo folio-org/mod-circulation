@@ -3,6 +3,10 @@ package org.folio.circulation.support.utils;
 import static java.time.ZoneOffset.UTC;
 
 import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
@@ -11,9 +15,6 @@ import java.time.temporal.ChronoUnit;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.joda.time.LocalDate;
-import org.joda.time.LocalDateTime;
-import org.joda.time.LocalTime;
 
 /**
  * A clock manager for safely getting and setting the time.
@@ -86,95 +87,134 @@ public class ClockUtil {
    *   Time is truncated to milliseconds.
    */
   public static DateTime getDateTime() {
-    return jodaInstant().toDateTime(DateTimeZone.UTC);
+    return getJodaInstant().toDateTime(DateTimeZone.UTC);
   }
 
   /**
    * Get the current system time according to the clock manager.
-   *
-   * TODO: This is temporarily designed to work with JodaTime. Replace this as
-   * appropriate when migrating from JodaTime to JavaTime.
    *
    * @return
    *   A LocalDateTime as if now() is called.
    *   Time is truncated to milliseconds.
    */
   public static LocalDateTime getLocalDateTime() {
-    final DateTime now = jodaInstant().toDateTime(getDateTimeZone());
+    return LocalDateTime.now(clock).truncatedTo(ChronoUnit.MILLIS);
+  }
+
+  /**
+   * Get the current system time according to the clock manager.
+   *
+   * @return
+   *   A LocalDate as if now() is called.
+   */
+  public static LocalDate getLocalDate() {
+    return LocalDate.now(clock);
+  }
+
+  /**
+   * Get the current system time according to the clock manager.
+   *
+   * @return
+   *   A LocalTime as if now() is called.
+   *   Time is truncated to milliseconds.
+   */
+  public static LocalTime getLocalTime() {
+    return LocalTime.now(clock).truncatedTo(ChronoUnit.MILLIS);
+  }
+
+  /**
+   * Get the current system time according to the clock manager.
+   *
+   * TODO: Remove this once JodaTime is fully converted to JavaTime.
+   *
+   * @return
+   *   A LocalDateTime as if now() is called.
+   *   Time is truncated to milliseconds.
+   */
+  public static org.joda.time.LocalDateTime getJodaLocalDateTime() {
+    final DateTime now = getJodaInstant().toDateTime(getDateTimeZone());
     return now.toLocalDateTime();
   }
 
   /**
    * Get the current system time according to the clock manager.
    *
-   * TODO: This is temporarily designed to work with JodaTime. Replace this as
-   * appropriate when migrating from JodaTime to JavaTime.
+   * TODO: Remove this once JodaTime is fully converted to JavaTime.
    *
    * @return
    *   A LocalDate as if now() is called.
    */
-  public static LocalDate getLocalDate() {
-    final DateTime now = jodaInstant().toDateTime(getDateTimeZone());
+  public static org.joda.time.LocalDate getJodaLocalDate() {
+    final DateTime now = getJodaInstant().toDateTime(getDateTimeZone());
     return now.toLocalDate();
   }
 
   /**
    * Get the current system time according to the clock manager.
    *
-   * TODO: This is temporarily designed to work with JodaTime. Replace this as
-   * appropriate when migrating from JodaTime to JavaTime.
+   * TODO: Remove this once JodaTime is fully converted to JavaTime.
    *
    * @return
-   *   A LocalDate as if now() is called.
+   *   A LocalTime as if now() is called.
    *   Time is truncated to milliseconds.
    */
-  public static LocalTime getLocalTime() {
-    final DateTime now = jodaInstant().toDateTime(getDateTimeZone());
+  public static org.joda.time.LocalTime getJodaLocalTime() {
+    final DateTime now = getJodaInstant().toDateTime(getDateTimeZone());
     return now.toLocalTime();
   }
 
   /**
    * Get the current system time according to the clock manager.
    *
-   * TODO: This is temporarily designed to work with JodaTime. Replace this as
-   * appropriate when migrating from JodaTime to JavaTime.
+   * @return
+   *   An Instant as if now() is called.
+   *   Time is truncated to milliseconds.
+   */
+  public static Instant getInstant() {
+    return clock.instant();
+  }
+
+  /**
+   * Get the current system time according to the clock manager.
+   *
+   * TODO: Remove this once JodaTime is fully converted to JavaTime.
    *
    * @return
    *   An Instant as if now() is called.
    *   Time is truncated to milliseconds.
    */
-  public static org.joda.time.Instant getInstant() {
-    return jodaInstant();
+  public static org.joda.time.Instant getJodaInstant() {
+    java.time.Instant now = clock.instant();
+    return org.joda.time.Instant.ofEpochMilli(now.toEpochMilli());
   }
 
   /**
-   * Get the timezone of the system clock according to the clock manager.
+   * Get the time zone of the system clock according to the clock manager.
    *
-   * TODO: This is temporarily designed to work with JodaTime. Replace this as
-   * appropriate when migrating from JodaTime to JavaTime.
+   * TODO: Remove this once JodaTime is fully converted to JavaTime.
    *
    * @return
-   *   The current timezone as a ZoneId.
+   *   The current time zone as a ZoneId.
    */
   public static DateTimeZone getDateTimeZone() {
     return jodaTimezone();
   }
 
   /**
-   * Get the timezone of the system clock according to the clock manager.
+   * Get the time zone of the system clock according to the clock manager.
    *
    * @return
-   *   The current timezone as a ZoneId.
+   *   The current time zone as a ZoneId.
    */
   public static ZoneId getZoneId() {
     return clock.getZone();
   }
 
   /**
-   * Get the timezone of the system clock according to the clock manager.
+   * Get the time zone of the system clock according to the clock manager.
    *
    * @return
-   *   The current timezone as a ZoneOffset.
+   *   The current time zone as a ZoneOffset.
    */
   public static ZoneOffset getZoneOffset() {
     return ZoneOffset.of(clock.getZone().getRules().getOffset(clock.instant())
@@ -182,13 +222,13 @@ public class ClockUtil {
   }
 
   /**
-   * Get the Timezone from the clock.
+   * Get the time zone from the clock.
    *
-   * This will be converted from JavaTimes timezone to JodaTimes timezone.
+   * This will be converted from JavaTimes time zone to JodaTimes time zone.
    *
    * TODO: Remove this once JodaTime is fully converted to JavaTime.
    */
-  private static DateTimeZone jodaTimezone() {
+  public static DateTimeZone jodaTimezone() {
     String zoneId = clock.getZone().getId();
 
     // JavaTime uses "Z" for UTC but JodaTime uses "UTC".
@@ -197,17 +237,5 @@ public class ClockUtil {
     }
 
     return DateTimeZone.forID(zoneId);
-  }
-
-  /**
-   * Get the current time from the clock as an Instant.
-   *
-   * This will be converted from JavaTimes Instant to JodaTimes Instant.
-   *
-   * TODO: Remove this once JodaTime is fully converted to JavaTime.
-   */
-  private static org.joda.time.Instant jodaInstant() {
-    java.time.Instant now = clock.instant();
-    return org.joda.time.Instant.ofEpochMilli(now.toEpochMilli());
   }
 }

@@ -1,6 +1,7 @@
 package org.folio.circulation.domain;
 
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
+import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;
 
 import org.apache.commons.lang3.ObjectUtils;
 import org.joda.time.DateTime;
@@ -101,7 +102,7 @@ public class CheckInRecord {
 
   public JsonObject toJson() {
     JsonObject json = new JsonObject()
-      .put(OCCURRED_DATE_TIME, occurredDateTime.toString())
+      .put(OCCURRED_DATE_TIME, formatDateTime(occurredDateTime))
       .put(ITEM_ID, itemId)
       .put(SERVICE_POINT_ID, servicePointId)
       .put(PERFORMED_BY_USER_ID, performedByUserId);

@@ -9,8 +9,9 @@ import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import java.util.Optional;
 import java.util.UUID;
 
-import io.vertx.core.json.JsonObject;
 import org.joda.time.DateTime;
+
+import io.vertx.core.json.JsonObject;
 
 public class LastCheckIn {
 

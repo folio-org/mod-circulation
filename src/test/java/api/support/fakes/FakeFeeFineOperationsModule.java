@@ -6,6 +6,7 @@ import static api.support.fakes.StorageSchema.validatorForFeeFineOperationSchema
 import static org.folio.circulation.support.http.server.JsonHttpResponse.created;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.json.JsonPropertyWriter.writeByPath;
+import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;
 import static org.folio.rest.util.OkapiConnectionParams.OKAPI_TENANT_HEADER;
 
 import java.util.Map;
@@ -116,7 +117,7 @@ public class FakeFeeFineOperationsModule {
     final String feeFineActionId = UUID.randomUUID().toString();
 
     final JsonObject feeFineAction = new JsonObject()
-      .put("dateAction", ClockUtil.getDateTime().toString())
+      .put("dateAction", formatDateTime(ClockUtil.getDateTime()))
       .put("typeAction", actionType)
       .put("notify", false)
       .put("amountAction", actionAmount)

@@ -2,460 +2,679 @@ package org.folio.circulation.support.utils;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.OffsetDateTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.CsvSource;
 
-class DateTimeUtilsTests {
+class DateTimeUtilTests {
+  private static final String FORMATTED_DATE_TIME_NOW = "2020-10-20T10:20:10.000Z";
+  private static final String FORMATTED_LOCAL_DATE_TIME_NOW = "2020-10-20T10:20:10";
+  private static final String FORMATTED_DATE_NOW = "2020-10-20";
+  private static final String FORMATTED_TIME_NOW = "10:20:10.000";
+
+  @AfterEach
+  public void afterEach() {
+    // The clock must be reset after each test.
+    ClockUtil.setDefaultClock();
+  }
 
   @ParameterizedTest
-  @MethodSource("shouldGetCorrectStartOfYearForZonedDateTimeParameters")
-  void shouldGetCorrectStartOfYearForZonedDateTime(int id, ZonedDateTime from, ZonedDateTime expected, ZoneId zone) {
-    final ZonedDateTime result = zone == null
-      ? DateTimeUtil.atStartOfYear(from)
-      : DateTimeUtil.atStartOfYear(from, zone);
+  @CsvSource(value = {
+    "0, 2010-10-10T10:10:10.000Z, 2010-10-10T10:10:10.000Z",
+    "1, null, " + FORMATTED_DATE_TIME_NOW
+  }, nullValues = {"null"})
+  void shouldGetNormalizedZonedDateTime(int id, ZonedDateTime from, ZonedDateTime expected) {
+    setFixedClock();
+
+    final ZonedDateTime result = DateTimeUtil.normalizeDateTime(from);
+
+    assertEquals(expected.toString(), result.toString(), "For test " + id);
+  }
+
+  @ParameterizedTest
+  @CsvSource(value = {
+    "0, 2010-10-10T10:10:10.000Z, 2010-10-10T10:10:10.000Z",
+    "1, null, " + FORMATTED_DATE_TIME_NOW
+  }, nullValues = {"null"})
+  void shouldGetNormalizedOffsetDateTime(int id, OffsetDateTime from, OffsetDateTime expected) {
+    setFixedClock();
+
+    final OffsetDateTime result = DateTimeUtil.normalizeDateTime(from);
+
+    assertEquals(expected.toString(), result.toString(), "For test " + id);
+  }
+
+  @ParameterizedTest
+  @CsvSource(value = {
+    "0, 2010-10-10T10:10:10, 2010-10-10T10:10:10",
+    "1, null, " + FORMATTED_LOCAL_DATE_TIME_NOW
+  }, nullValues = {"null"})
+  void shouldGetNormalizedLocalDateTime(int id, LocalDateTime from, LocalDateTime expected) {
+    setFixedClock();
+
+    final LocalDateTime result = DateTimeUtil.normalizeDateTime(from);
+
+    assertEquals(expected.toString(), result.toString(), "For test " + id);
+  }
+
+  @ParameterizedTest
+  @CsvSource(value = {
+    "0, 2010-10-10, 2010-10-10",
+    "1, null, " + FORMATTED_DATE_NOW
+  }, nullValues = {"null"})
+  void shouldGetNormalizedLocalDate(int id, LocalDate from, LocalDate expected) {
+    setFixedClock();
+
+    final LocalDate result = DateTimeUtil.normalizeDate(from);
+
+    assertEquals(expected.toString(), result.toString(), "For test " + id);
+  }
+
+  @ParameterizedTest
+  @CsvSource(value = {
+    "0, 10:10:10, 10:10:10",
+    "1, null, " + FORMATTED_TIME_NOW
+  }, nullValues = {"null"})
+  void shouldGetNormalizedLocalTime(int id, LocalTime from, LocalTime expected) {
+    setFixedClock();
+
+    final LocalTime result = DateTimeUtil.normalizeTime(from);
+
+    assertEquals(expected.toString(), result.toString(), "For test " + id);
+  }
+
+  @ParameterizedTest
+  @CsvSource(value = {
+    "0, 2010-10-10T10:10:10.000Z, 2010-10-10T10:10:10.000Z",
+    "1, null, " + FORMATTED_DATE_TIME_NOW
+  }, nullValues = {"null"})
+  void shouldGetNormalizedJodaDateTime(int id, DateTime from, DateTime expected) {
+    setFixedClock();
+
+    final DateTime result = DateTimeUtil.normalizeDateTime(from);
+
+    assertEquals(expected.toString(), result.toString(), "For test " + id);
+  }
+
+  @ParameterizedTest
+  @CsvSource(value = {
+    "0, 2010-10-10, 2010-10-10",
+    "1, null, " + FORMATTED_DATE_NOW
+  }, nullValues = {"null"})
+  void shouldGetNormalizedJodaLocalDate(int id, org.joda.time.LocalDate from, org.joda.time.LocalDate expected) {
+    setFixedClock();
+
+    final org.joda.time.LocalDate result = DateTimeUtil.normalizeDate(from);
+
+    assertEquals(expected.toString(), result.toString(), "For test " + id);
+  }
+
+  @ParameterizedTest
+  @CsvSource(value = {
+    "0, 2010-10-10, 2010-10-10",
+    "1, null, " + FORMATTED_DATE_NOW
+  }, nullValues = {"null"})
+  void shouldGetNormalizedJodaDate(int id, org.joda.time.LocalDate from, org.joda.time.LocalDate expected) {
+    setFixedClock();
+
+    final org.joda.time.LocalDate result = DateTimeUtil.normalizeDate(from);
+
+    assertEquals(expected.toString(), result.toString(), "For test " + id);
+  }
+
+  @ParameterizedTest
+  @CsvSource(value = {
+    "0, 10:10:10, 10:10:10",
+    "1, null, " + FORMATTED_TIME_NOW
+  }, nullValues = {"null"})
+  void shouldGetNormalizedLocalTime(int id, org.joda.time.LocalTime from, org.joda.time.LocalTime expected) {
+    setFixedClock();
+
+    final org.joda.time.LocalTime result = DateTimeUtil.normalizeTime(from);
+
+    assertEquals(expected.toString(), result.toString(), "For test " + id);
+  }
+
+  @ParameterizedTest
+  @CsvSource(value = {
+    "0, America/New_York, America/New_York",
+    "1, Europe/Warsaw, Europe/Warsaw",
+    "2, null, Z"
+  }, nullValues = {"null"})
+  void shouldGetNormalizedZoneId(int id, ZoneId from, ZoneId expected) {
+    setFixedClock();
+
+    final ZoneId result = DateTimeUtil.normalizeZone(from);
+
+    assertEquals(expected, result, "For test " + id);
+  }
+
+  @ParameterizedTest
+  @CsvSource(value = {
+    "0, America/New_York, America/New_York",
+    "1, Europe/Warsaw, Europe/Warsaw",
+    "2, null, Z"
+  }, nullValues = {"null"})
+  void shouldGetNormalizedZoneOffset(int id, ZoneId from, ZoneId expected) {
+    setFixedClock();
+
+    final ZoneOffset fromOffset = from == null
+      ? null
+      : from.getRules().getOffset(Instant.EPOCH);
+
+    final ZoneOffset expectedOffset = expected.getRules().getOffset(Instant.EPOCH);
+    final ZoneOffset result = DateTimeUtil.normalizeZone(fromOffset);
+
+    assertEquals(expectedOffset, result, "For test " + id);
+  }
+
+  @ParameterizedTest
+  @CsvSource(value = {
+    "0, America/New_York, America/New_York",
+    "1, Europe/Warsaw, Europe/Warsaw",
+    "2, null, UTC"
+  }, nullValues = {"null"})
+  void shouldGetNormalizedJodaZone(int id, DateTimeZone from, DateTimeZone expected) {
+    setFixedClock();
+
+    final DateTimeZone result = DateTimeUtil.normalizeZone(from);
+
+    assertEquals(expected, result, "For test " + id);
+  }
+
+  @ParameterizedTest
+  @CsvSource(value = {
+    "0, 2018-03-01T02:28:19-05:00, 2018-01-01T00:00:00-05:00",
+    "1, 2018-01-01T00:14:03-05:00, 2018-01-01T00:00:00-05:00",
+    "2, 2018-12-31T23:40:50+01:00, 2018-01-01T00:00:00+01:00"
+  })
+  void shouldGetCorrectStartOfYearForZonedDateTime(int id, ZonedDateTime from, ZonedDateTime expected) {
+    final ZonedDateTime result = DateTimeUtil.atStartOfYear(from);
 
     assertEquals(expected.format(DateTimeFormatter.ISO_DATE), result.format(DateTimeFormatter.ISO_DATE), "For test " + id);
   }
 
-  private static Object[] shouldGetCorrectStartOfYearForZonedDateTimeParameters() {
-    return new Object[] {
-      new Object[] { 0, ZonedDateTime.parse("2018-03-01T02:28:19-05:00"), ZonedDateTime.parse("2018-01-01T00:00:00-05:00"), null },
-      new Object[] { 1, ZonedDateTime.parse("2018-02-28T21:28:19+00:00"), ZonedDateTime.parse("2018-01-01T00:00:00-05:00"), ZoneId.of("America/New_York") },
-      new Object[] { 2, ZonedDateTime.parse("2018-01-01T00:14:03-05:00"), ZonedDateTime.parse("2018-01-01T00:00:00-05:00"), null },
-      new Object[] { 3, ZonedDateTime.parse("2018-01-01T00:14:03+00:00"), ZonedDateTime.parse("2017-01-01T00:00:00-05:00"), ZoneId.of("America/New_York") },
-      new Object[] { 4, ZonedDateTime.parse("2018-12-31T23:40:50+01:00"), ZonedDateTime.parse("2018-01-01T00:00:00+01:00"), null },
-      new Object[] { 5, ZonedDateTime.parse("2018-12-31T23:40:50+00:00"), ZonedDateTime.parse("2019-01-01T00:00:00+01:00"), ZoneId.of("Europe/Warsaw") }
-    };
-  }
-
   @ParameterizedTest
-  @MethodSource("shouldGetCorrectEndOfYearForZonedDateTimeParameters")
-  void shouldGetCorrectEndOfYearForZonedDateTime(int id, ZonedDateTime from, ZonedDateTime expected, ZoneId zone) {
-    final ZonedDateTime result = zone == null
-      ? DateTimeUtil.atEndOfYear(from)
-      : DateTimeUtil.atEndOfYear(from, zone);
+  @CsvSource(value = {
+    "0, 2018-02-28T21:28:19+00:00, 2018-01-01T00:00:00-05:00, America/New_York",
+    "1, 2018-01-01T00:14:03+00:00, 2017-01-01T00:00:00-05:00, America/New_York",
+    "2, 2018-12-31T23:40:50+00:00, 2019-01-01T00:00:00+01:00, Europe/Warsaw"
+  })
+  void shouldGetCorrectStartOfYearForZonedDateTimeWithZone(int id, ZonedDateTime from, ZonedDateTime expected, ZoneId zone) {
+    final ZonedDateTime result = DateTimeUtil.atStartOfYear(from, zone);
 
     assertEquals(expected.format(DateTimeFormatter.ISO_DATE), result.format(DateTimeFormatter.ISO_DATE), "For test " + id);
   }
 
-  private static Object[] shouldGetCorrectEndOfYearForZonedDateTimeParameters() {
-    return new Object[] {
-      new Object[] { 0, ZonedDateTime.parse("2018-03-01T02:28:19-05:00"), ZonedDateTime.parse("2018-12-31T23:59:59-05:00"), null },
-      new Object[] { 1, ZonedDateTime.parse("2018-02-28T21:28:19+00:00"), ZonedDateTime.parse("2018-12-31T23:59:59-05:00"), ZoneId.of("America/New_York") },
-      new Object[] { 2, ZonedDateTime.parse("2018-01-01T00:14:03-05:00"), ZonedDateTime.parse("2018-12-31T23:59:59-05:00"), null },
-      new Object[] { 3, ZonedDateTime.parse("2018-01-01T00:14:03+00:00"), ZonedDateTime.parse("2017-12-31T23:59:59-05:00"), ZoneId.of("America/New_York") },
-      new Object[] { 4, ZonedDateTime.parse("2018-12-31T23:40:50+01:00"), ZonedDateTime.parse("2018-12-31T23:59:59+01:00"), null },
-      new Object[] { 5, ZonedDateTime.parse("2018-12-31T23:40:50+00:00"), ZonedDateTime.parse("2019-12-31T23:59:59+01:00"), ZoneId.of("Europe/Warsaw") }
-    };
+  @ParameterizedTest
+  @CsvSource(value = {
+    "0, 2018-03-01T02:28:19-05:00, 2018-12-31T23:59:59-05:00",
+    "1, 2018-01-01T00:14:03-05:00, 2018-12-31T23:59:59-05:00",
+    "2, 2018-12-31T23:40:50+01:00, 2018-12-31T23:59:59+01:00"
+  })
+  void shouldGetCorrectEndOfYearForZonedDateTime(int id, ZonedDateTime from, ZonedDateTime expected) {
+    final ZonedDateTime result = DateTimeUtil.atEndOfYear(from);
+
+    assertEquals(expected.format(DateTimeFormatter.ISO_DATE), result.format(DateTimeFormatter.ISO_DATE), "For test " + id);
   }
 
   @ParameterizedTest
-  @MethodSource("shouldGetCorrectStartOfYearForLocalDateParameters")
+  @CsvSource(value = {
+    "0, 2018-02-28T21:28:19+00:00, 2018-12-31T23:59:59-05:00, America/New_York",
+    "1, 2018-01-01T00:14:03+00:00, 2017-12-31T23:59:59-05:00, America/New_York",
+    "2, 2018-12-31T23:40:50+00:00, 2019-12-31T23:59:59+01:00, Europe/Warsaw"
+  })
+  void shouldGetCorrectEndOfYearForZonedDateTimeWithZone(int id, ZonedDateTime from, ZonedDateTime expected, ZoneId zone) {
+    final ZonedDateTime result = DateTimeUtil.atEndOfYear(from, zone);
+
+    assertEquals(expected.format(DateTimeFormatter.ISO_DATE), result.format(DateTimeFormatter.ISO_DATE), "For test " + id);
+  }
+
+  @ParameterizedTest
+  @CsvSource(value = {
+    "0, 2018-02-28, 2018-01-01T00:00:00-05:00, America/New_York",
+    "1, 2018-01-01, 2018-01-01T00:00:00-05:00, America/New_York",
+    "2, 2018-12-31, 2018-01-01T00:00:00+01:00, Europe/Warsaw"
+  })
   void shouldGetCorrectStartOfYearForLocalDate(int id, LocalDate from, ZonedDateTime expected, ZoneId zone) {
     final ZonedDateTime result = DateTimeUtil.atStartOfYear(from, zone);
 
     assertEquals(expected.format(DateTimeFormatter.ISO_DATE), result.format(DateTimeFormatter.ISO_DATE), "For test " + id);
   }
 
-  private static Object[] shouldGetCorrectStartOfYearForLocalDateParameters() {
-    return new Object[] {
-      new Object[] { 0, LocalDate.parse("2018-02-28"), ZonedDateTime.parse("2018-01-01T00:00:00-05:00"), ZoneId.of("America/New_York") },
-      new Object[] { 1, LocalDate.parse("2018-01-01"), ZonedDateTime.parse("2018-01-01T00:00:00-05:00"), ZoneId.of("America/New_York") },
-      new Object[] { 2, LocalDate.parse("2018-12-31"), ZonedDateTime.parse("2018-01-01T00:00:00+01:00"), ZoneId.of("Europe/Warsaw") }
-    };
-  }
-
   @ParameterizedTest
-  @MethodSource("shouldGetCorrectEndOfYearForLocalDateParameters")
+  @CsvSource(value = {
+    "0, 2018-02-28, 2018-12-31T23:59:59-05:00, America/New_York",
+    "1, 2018-01-01, 2018-12-31T23:59:59-05:00, America/New_York",
+    "2, 2018-12-31, 2018-12-31T23:59:59+01:00, Europe/Warsaw",
+  })
   void shouldGetCorrectEndOfYearForLocalDate(int id, LocalDate from, ZonedDateTime expected, ZoneId zone) {
     final ZonedDateTime result = DateTimeUtil.atEndOfYear(from, zone);
 
     assertEquals(expected.format(DateTimeFormatter.ISO_DATE), result.format(DateTimeFormatter.ISO_DATE), "For test " + id);
   }
 
-  private static Object[] shouldGetCorrectEndOfYearForLocalDateParameters() {
-    return new Object[] {
-      new Object[] { 0, LocalDate.parse("2018-02-28"), ZonedDateTime.parse("2018-12-31T23:59:59-05:00"), ZoneId.of("America/New_York") },
-      new Object[] { 1, LocalDate.parse("2018-01-01"), ZonedDateTime.parse("2018-12-31T23:59:59-05:00"), ZoneId.of("America/New_York") },
-      new Object[] { 2, LocalDate.parse("2018-12-31"), ZonedDateTime.parse("2018-12-31T23:59:59+01:00"), ZoneId.of("Europe/Warsaw") }
-    };
-  }
-
   @ParameterizedTest
-  @MethodSource("shouldGetCorrectStartOfYearForDateTimeParameters")
-  void shouldGetCorrectStartOfYearForDateTime(int id, DateTime from, DateTime expected, DateTimeZone zone) {
-    final DateTime result = zone == null
-      ? DateTimeUtil.atStartOfYear(from)
-      : DateTimeUtil.atStartOfYear(from, zone);
+  @CsvSource(value = {
+    "0, 2018-03-01T02:28:19-05:00, 2018-01-01T00:00:00-05:00",
+    "1, 2018-01-01T00:14:03-05:00, 2018-01-01T00:00:00-05:00",
+    "2, 2018-12-31T23:40:50+01:00, 2018-01-01T00:00:00+01:00"
+  })
+  void shouldGetCorrectStartOfYearForJodaDateTime(int id, DateTime from, DateTime expected) {
+    final DateTime result = DateTimeUtil.atStartOfYear(from);
 
     assertEquals(expected.toString(), result.toString(), "For test " + id);
   }
 
-  private static Object[] shouldGetCorrectStartOfYearForDateTimeParameters() {
-    return new Object[] {
-      new Object[] { 0, DateTime.parse("2018-03-01T02:28:19-05:00"), DateTime.parse("2018-01-01T00:00:00-05:00"), null },
-      new Object[] { 1, DateTime.parse("2018-02-28T21:28:19+00:00"), DateTime.parse("2018-01-01T00:00:00-05:00"), DateTimeZone.forID("America/New_York") },
-      new Object[] { 2, DateTime.parse("2018-01-01T00:14:03-05:00"), DateTime.parse("2018-01-01T00:00:00-05:00"), null },
-      new Object[] { 3, DateTime.parse("2018-01-01T00:14:03+00:00"), DateTime.parse("2017-01-01T00:00:00-05:00"), DateTimeZone.forID("America/New_York") },
-      new Object[] { 4, DateTime.parse("2018-12-31T23:40:50+01:00"), DateTime.parse("2018-01-01T00:00:00+01:00"), null },
-      new Object[] { 5, DateTime.parse("2018-12-31T23:40:50+00:00"), DateTime.parse("2019-01-01T00:00:00+01:00"), DateTimeZone.forID("Europe/Warsaw") }
-    };
-  }
-
   @ParameterizedTest
-  @MethodSource("shouldGetCorrectEndOfYearForDateTimeParameters")
-  void shouldGetCorrectEndOfYearForDateTime(int id, DateTime from, DateTime expected, DateTimeZone zone) {
-    final DateTime result = zone == null
-      ? DateTimeUtil.atEndOfYear(from)
-      : DateTimeUtil.atEndOfYear(from, zone);
+  @CsvSource(value = {
+    "0, 2018-02-28T21:28:19+00:00, 2018-01-01T00:00:00-05:00, America/New_York",
+    "1, 2018-01-01T00:14:03+00:00, 2017-01-01T00:00:00-05:00, America/New_York",
+    "2, 2018-12-31T23:40:50+00:00, 2019-01-01T00:00:00+01:00, Europe/Warsaw"
+  })
+  void shouldGetCorrectStartOfYearForJodaDateTimeWithZone(int id, DateTime from, DateTime expected, DateTimeZone zone) {
+    final DateTime result = DateTimeUtil.atStartOfYear(from, zone);
 
     assertEquals(expected.toString(), result.toString(), "For test " + id);
   }
 
-  private static Object[] shouldGetCorrectEndOfYearForDateTimeParameters() {
-    return new Object[] {
-      new Object[] { 0, DateTime.parse("2018-03-01T02:28:19-05:00"), DateTime.parse("2018-12-31T23:59:59-05:00"), null },
-      new Object[] { 1, DateTime.parse("2018-02-28T21:28:19+00:00"), DateTime.parse("2018-12-31T23:59:59-05:00"), DateTimeZone.forID("America/New_York") },
-      new Object[] { 2, DateTime.parse("2018-01-01T00:14:03-05:00"), DateTime.parse("2018-12-31T23:59:59-05:00"), null },
-      new Object[] { 3, DateTime.parse("2018-01-01T00:14:03+00:00"), DateTime.parse("2017-12-31T23:59:59-05:00"), DateTimeZone.forID("America/New_York") },
-      new Object[] { 4, DateTime.parse("2018-12-31T23:40:50+01:00"), DateTime.parse("2018-12-31T23:59:59+01:00"), null },
-      new Object[] { 5, DateTime.parse("2018-12-31T23:40:50+00:00"), DateTime.parse("2019-12-31T23:59:59+01:00"), DateTimeZone.forID("Europe/Warsaw") }
-    };
+  @ParameterizedTest
+  @CsvSource(value = {
+    "0, 2018-03-01T02:28:19-05:00, 2018-12-31T23:59:59-05:00",
+    "1, 2018-01-01T00:14:03-05:00, 2018-12-31T23:59:59-05:00",
+    "2, 2018-12-31T23:40:50+01:00, 2018-12-31T23:59:59+01:00"
+  })
+  void shouldGetCorrectEndOfYearForJodaDateTime(int id, DateTime from, DateTime expected) {
+    final DateTime result = DateTimeUtil.atEndOfYear(from);
+
+    assertEquals(expected.toString(), result.toString(), "For test " + id);
   }
 
   @ParameterizedTest
-  @MethodSource("shouldGetCorrectStartOfYearForJodaLocalDateParameters")
+  @CsvSource(value = {
+    "0, 2018-02-28T21:28:19+00:00, 2018-12-31T23:59:59-05:00, America/New_York",
+    "1, 2018-01-01T00:14:03+00:00, 2017-12-31T23:59:59-05:00, America/New_York",
+    "2, 2018-12-31T23:40:50+00:00, 2019-12-31T23:59:59+01:00, Europe/Warsaw"
+  })
+  void shouldGetCorrectEndOfYearForJodaDateTimeWithZone(int id, DateTime from, DateTime expected, DateTimeZone zone) {
+    final DateTime result = DateTimeUtil.atEndOfYear(from, zone);
+
+    assertEquals(expected.toString(), result.toString(), "For test " + id);
+  }
+
+  @ParameterizedTest
+  @CsvSource(value = {
+    "0, 2018-02-28, 2018-01-01T00:00:00-05:00, America/New_York",
+    "1, 2018-01-01, 2018-01-01T00:00:00-05:00, America/New_York",
+    "2, 2018-12-31, 2018-01-01T00:00:00+01:00, Europe/Warsaw"
+  })
   void shouldGetCorrectStartOfYearForJodaLocalDate(int id, org.joda.time.LocalDate from, DateTime expected, DateTimeZone zone) {
     final DateTime result = DateTimeUtil.atStartOfYear(from, zone);
 
     assertEquals(expected.toString(), result.toString(), "For test " + id);
   }
 
-  private static Object[] shouldGetCorrectStartOfYearForJodaLocalDateParameters() {
-    return new Object[] {
-      new Object[] { 0, org.joda.time.LocalDate.parse("2018-02-28"), DateTime.parse("2018-01-01T00:00:00-05:00"), DateTimeZone.forID("America/New_York") },
-      new Object[] { 1, org.joda.time.LocalDate.parse("2018-01-01"), DateTime.parse("2018-01-01T00:00:00-05:00"), DateTimeZone.forID("America/New_York") },
-      new Object[] { 2, org.joda.time.LocalDate.parse("2018-12-31"), DateTime.parse("2018-01-01T00:00:00+01:00"), DateTimeZone.forID("Europe/Warsaw") }
-    };
-  }
-
   @ParameterizedTest
-  @MethodSource("shouldGetCorrectEndOfYearForJodaLocalDateParameters")
+  @CsvSource(value = {
+    "0, 2018-02-28, 2018-12-31T23:59:59-05:00, America/New_York",
+    "1, 2018-01-01, 2018-12-31T23:59:59-05:00, America/New_York",
+    "2, 2018-12-31, 2018-12-31T23:59:59+01:00, Europe/Warsaw"
+  })
   void shouldGetCorrectEndOfYearForJodaLocalDate(int id, org.joda.time.LocalDate from, DateTime expected, DateTimeZone zone) {
     final DateTime result = DateTimeUtil.atEndOfYear(from, zone);
 
     assertEquals(expected.toString(), result.toString(), "For test " + id);
   }
 
-  private static Object[] shouldGetCorrectEndOfYearForJodaLocalDateParameters() {
-    return new Object[] {
-      new Object[] { 0, org.joda.time.LocalDate.parse("2018-02-28"), DateTime.parse("2018-12-31T23:59:59-05:00"), DateTimeZone.forID("America/New_York") },
-      new Object[] { 1, org.joda.time.LocalDate.parse("2018-01-01"), DateTime.parse("2018-12-31T23:59:59-05:00"), DateTimeZone.forID("America/New_York") },
-      new Object[] { 2, org.joda.time.LocalDate.parse("2018-12-31"), DateTime.parse("2018-12-31T23:59:59+01:00"), DateTimeZone.forID("Europe/Warsaw") }
-    };
-  }
-
   @ParameterizedTest
-  @MethodSource("shouldGetCorrectStartOfMonthForZonedDateTimeParameters")
-  void shouldGetCorrectStartOfMonthForZonedDateTime(int id, ZonedDateTime from, ZonedDateTime expected, ZoneId zone) {
-    final ZonedDateTime result = zone == null
-      ? DateTimeUtil.atStartOfMonth(from)
-      : DateTimeUtil.atStartOfMonth(from, zone);
+  @CsvSource(value = {
+    "0, 2018-03-01T02:28:19-05:00, 2018-03-01T00:00:00-05:00",
+    "1, 2018-01-01T00:14:03-05:00, 2018-01-01T00:00:00-05:00",
+    "2, 2018-12-31T23:40:50+01:00, 2018-12-01T00:00:00+01:00"
+  })
+  void shouldGetCorrectStartOfMonthForZonedDateTime(int id, ZonedDateTime from, ZonedDateTime expected) {
+    final ZonedDateTime result = DateTimeUtil.atStartOfMonth(from);
 
     assertEquals(expected.format(DateTimeFormatter.ISO_DATE), result.format(DateTimeFormatter.ISO_DATE), "For test " + id);
   }
 
-  private static Object[] shouldGetCorrectStartOfMonthForZonedDateTimeParameters() {
-    return new Object[] {
-      new Object[] { 0, ZonedDateTime.parse("2018-03-01T02:28:19-05:00"), ZonedDateTime.parse("2018-03-01T00:00:00-05:00"), null },
-      new Object[] { 1, ZonedDateTime.parse("2018-02-28T21:28:19+00:00"), ZonedDateTime.parse("2018-02-01T00:00:00-05:00"), ZoneId.of("America/New_York") },
-      new Object[] { 2, ZonedDateTime.parse("2018-01-01T00:14:03-05:00"), ZonedDateTime.parse("2018-01-01T00:00:00-05:00"), null },
-      new Object[] { 3, ZonedDateTime.parse("2018-01-01T00:14:03+00:00"), ZonedDateTime.parse("2017-12-01T00:00:00-05:00"), ZoneId.of("America/New_York") },
-      new Object[] { 4, ZonedDateTime.parse("2018-12-31T23:40:50+01:00"), ZonedDateTime.parse("2018-12-01T00:00:00+01:00"), null },
-      new Object[] { 5, ZonedDateTime.parse("2018-12-31T23:40:50+00:00"), ZonedDateTime.parse("2019-01-01T00:00:00+01:00"), ZoneId.of("Europe/Warsaw") }
-    };
-  }
-
   @ParameterizedTest
-  @MethodSource("shouldGetCorrectEndOfMonthForZonedDateTimeParameters")
-  void shouldGetCorrectEndOfMonthForZonedDateTime(int id, ZonedDateTime from, ZonedDateTime expected, ZoneId zone) {
-    final ZonedDateTime result = zone == null
-      ? DateTimeUtil.atEndOfMonth(from)
-      : DateTimeUtil.atEndOfMonth(from, zone);
+  @CsvSource(value = {
+    "0, 2018-02-28T21:28:19+00:00, 2018-02-01T00:00:00-05:00, America/New_York",
+    "1, 2018-01-01T00:14:03+00:00, 2017-12-01T00:00:00-05:00, America/New_York",
+    "2, 2018-12-31T23:40:50+00:00, 2019-01-01T00:00:00+01:00, Europe/Warsaw"
+  })
+  void shouldGetCorrectStartOfMonthForZonedDateTimeWithZone(int id, ZonedDateTime from, ZonedDateTime expected, ZoneId zone) {
+    final ZonedDateTime result = DateTimeUtil.atStartOfMonth(from, zone);
 
     assertEquals(expected.format(DateTimeFormatter.ISO_DATE), result.format(DateTimeFormatter.ISO_DATE), "For test " + id);
   }
 
-  private static Object[] shouldGetCorrectEndOfMonthForZonedDateTimeParameters() {
-    return new Object[] {
-      new Object[] { 0, ZonedDateTime.parse("2018-03-01T02:28:19-05:00"), ZonedDateTime.parse("2018-03-31T23:59:59-05:00"), null },
-      new Object[] { 1, ZonedDateTime.parse("2018-02-28T21:28:19+00:00"), ZonedDateTime.parse("2018-02-28T23:59:59-05:00"), ZoneId.of("America/New_York") },
-      new Object[] { 2, ZonedDateTime.parse("2018-01-01T00:14:03-05:00"), ZonedDateTime.parse("2018-01-31T23:59:59-05:00"), null },
-      new Object[] { 3, ZonedDateTime.parse("2018-01-01T00:14:03+00:00"), ZonedDateTime.parse("2017-12-31T23:59:59-05:00"), ZoneId.of("America/New_York") },
-      new Object[] { 4, ZonedDateTime.parse("2018-12-31T23:40:50+01:00"), ZonedDateTime.parse("2018-12-31T23:59:59+01:00"), null },
-      new Object[] { 5, ZonedDateTime.parse("2018-12-31T23:40:50+00:00"), ZonedDateTime.parse("2019-01-31T23:59:59+01:00"), ZoneId.of("Europe/Warsaw") }
-    };
+  @ParameterizedTest
+  @CsvSource(value = {
+    "0, 2018-03-01T02:28:19-05:00, 2018-03-31T23:59:59-05:00",
+    "1, 2018-01-01T00:14:03-05:00, 2018-01-31T23:59:59-05:00",
+    "2, 2018-12-31T23:40:50+01:00, 2018-12-31T23:59:59+01:00"
+  })
+  void shouldGetCorrectEndOfMonthForZonedDateTime(int id, ZonedDateTime from, ZonedDateTime expected) {
+    final ZonedDateTime result = DateTimeUtil.atEndOfMonth(from);
+
+    assertEquals(expected.format(DateTimeFormatter.ISO_DATE), result.format(DateTimeFormatter.ISO_DATE), "For test " + id);
   }
 
   @ParameterizedTest
-  @MethodSource("shouldGetCorrectStartOfMonthForLocalDateParameters")
+  @CsvSource(value = {
+    "0, 2018-02-28T21:28:19+00:00, 2018-02-28T23:59:59-05:00, America/New_York",
+    "1, 2018-01-01T00:14:03+00:00, 2017-12-31T23:59:59-05:00, America/New_York",
+    "2, 2018-12-31T23:40:50+00:00, 2019-01-31T23:59:59+01:00, Europe/Warsaw"
+  })
+  void shouldGetCorrectEndOfMonthForZonedDateTimeWithZone(int id, ZonedDateTime from, ZonedDateTime expected, ZoneId zone) {
+    final ZonedDateTime result = DateTimeUtil.atEndOfMonth(from, zone);
+
+    assertEquals(expected.format(DateTimeFormatter.ISO_DATE), result.format(DateTimeFormatter.ISO_DATE), "For test " + id);
+  }
+
+  @ParameterizedTest
+  @CsvSource(value = {
+    "0, 2018-02-28, 2018-02-01T00:00:00-05:00, America/New_York",
+    "1, 2018-01-01, 2018-01-01T00:00:00-05:00, America/New_York",
+    "2, 2018-12-31, 2018-12-01T00:00:00+01:00, Europe/Warsaw"
+  })
   void shouldGetCorrectStartOfMonthForLocalDate(int id, LocalDate from, ZonedDateTime expected, ZoneId zone) {
     final ZonedDateTime result = DateTimeUtil.atStartOfMonth(from, zone);
 
     assertEquals(expected.format(DateTimeFormatter.ISO_DATE), result.format(DateTimeFormatter.ISO_DATE), "For test " + id);
   }
 
-  private static Object[] shouldGetCorrectStartOfMonthForLocalDateParameters() {
-    return new Object[] {
-      new Object[] { 0, LocalDate.parse("2018-02-28"), ZonedDateTime.parse("2018-02-01T00:00:00-05:00"), ZoneId.of("America/New_York") },
-      new Object[] { 1, LocalDate.parse("2018-01-01"), ZonedDateTime.parse("2018-01-01T00:00:00-05:00"), ZoneId.of("America/New_York") },
-      new Object[] { 2, LocalDate.parse("2018-12-31"), ZonedDateTime.parse("2018-12-01T00:00:00+01:00"), ZoneId.of("Europe/Warsaw") }
-    };
-  }
-
   @ParameterizedTest
-  @MethodSource("shouldGetCorrectEndOfMonthForLocalDateParameters")
+  @CsvSource(value = {
+    "0, 2018-02-28, 2018-02-28T23:59:59-05:00, America/New_York",
+    "1, 2018-01-01, 2018-01-31T23:59:59-05:00, America/New_York",
+    "2, 2018-12-31, 2018-12-31T23:59:59+01:00, Europe/Warsaw"
+  })
   void shouldGetCorrectEndOfMonthForLocalDate(int id, LocalDate from, ZonedDateTime expected, ZoneId zone) {
     final ZonedDateTime result = DateTimeUtil.atEndOfMonth(from, zone);
 
     assertEquals(expected.format(DateTimeFormatter.ISO_DATE), result.format(DateTimeFormatter.ISO_DATE), "For test " + id);
   }
 
-  private static Object[] shouldGetCorrectEndOfMonthForLocalDateParameters() {
-    return new Object[] {
-      new Object[] { 0, LocalDate.parse("2018-02-28"), ZonedDateTime.parse("2018-02-28T23:59:59-05:00"), ZoneId.of("America/New_York") },
-      new Object[] { 1, LocalDate.parse("2018-01-01"), ZonedDateTime.parse("2018-01-31T23:59:59-05:00"), ZoneId.of("America/New_York") },
-      new Object[] { 2, LocalDate.parse("2018-12-31"), ZonedDateTime.parse("2018-12-31T23:59:59+01:00"), ZoneId.of("Europe/Warsaw") }
-    };
-  }
-
   @ParameterizedTest
-  @MethodSource("shouldGetCorrectStartOfMonthForDateTimeParameters")
-  void shouldGetCorrectStartOfMonthForDateTime(int id, DateTime from, DateTime expected, DateTimeZone zone) {
-    final DateTime result = zone == null
-      ? DateTimeUtil.atStartOfMonth(from)
-      : DateTimeUtil.atStartOfMonth(from, zone);
+  @CsvSource(value = {
+    "0, 2018-03-01T02:28:19-05:00, 2018-03-01T00:00:00-05:00",
+    "1, 2018-01-01T00:14:03-05:00, 2018-01-01T00:00:00-05:00",
+    "2, 2018-12-31T23:40:50+01:00, 2018-12-01T00:00:00+01:00"
+  })
+  void shouldGetCorrectStartOfMonthForJodaDateTime(int id, DateTime from, DateTime expected) {
+    final DateTime result = DateTimeUtil.atStartOfMonth(from);
 
     assertEquals(expected.toString(), result.toString(), "For test " + id);
   }
 
-  private static Object[] shouldGetCorrectStartOfMonthForDateTimeParameters() {
-    return new Object[] {
-      new Object[] { 0, DateTime.parse("2018-03-01T02:28:19-05:00"), DateTime.parse("2018-03-01T00:00:00-05:00"), null },
-      new Object[] { 1, DateTime.parse("2018-02-28T21:28:19+00:00"), DateTime.parse("2018-02-01T00:00:00-05:00"), DateTimeZone.forID("America/New_York") },
-      new Object[] { 2, DateTime.parse("2018-01-01T00:14:03-05:00"), DateTime.parse("2018-01-01T00:00:00-05:00"), null },
-      new Object[] { 3, DateTime.parse("2018-01-01T00:14:03+00:00"), DateTime.parse("2017-12-01T00:00:00-05:00"), DateTimeZone.forID("America/New_York") },
-      new Object[] { 4, DateTime.parse("2018-12-31T23:40:50+01:00"), DateTime.parse("2018-12-01T00:00:00+01:00"), null },
-      new Object[] { 5, DateTime.parse("2018-12-31T23:40:50+00:00"), DateTime.parse("2019-01-01T00:00:00+01:00"), DateTimeZone.forID("Europe/Warsaw") }
-    };
-  }
-
   @ParameterizedTest
-  @MethodSource("shouldGetCorrectEndOfMonthForDateTimeParameters")
-  void shouldGetCorrectEndOfMonthForDateTime(int id, DateTime from, DateTime expected, DateTimeZone zone) {
-    final DateTime result = zone == null
-      ? DateTimeUtil.atEndOfMonth(from)
-      : DateTimeUtil.atEndOfMonth(from, zone);
+  @CsvSource(value = {
+    "0, 2018-02-28T21:28:19+00:00, 2018-02-01T00:00:00-05:00, America/New_York",
+    "1, 2018-01-01T00:14:03+00:00, 2017-12-01T00:00:00-05:00, America/New_York",
+    "2, 2018-12-31T23:40:50+00:00, 2019-01-01T00:00:00+01:00, Europe/Warsaw"
+  })
+  void shouldGetCorrectStartOfMonthForJodaDateTimeWithZone(int id, DateTime from, DateTime expected, DateTimeZone zone) {
+    final DateTime result = DateTimeUtil.atStartOfMonth(from, zone);
 
     assertEquals(expected.toString(), result.toString(), "For test " + id);
   }
 
-  private static Object[] shouldGetCorrectEndOfMonthForDateTimeParameters() {
-    return new Object[] {
-      new Object[] { 0, DateTime.parse("2018-03-01T02:28:19-05:00"), DateTime.parse("2018-03-31T23:59:59-05:00"), null },
-      new Object[] { 1, DateTime.parse("2018-02-28T21:28:19+00:00"), DateTime.parse("2018-02-28T23:59:59-05:00"), DateTimeZone.forID("America/New_York") },
-      new Object[] { 2, DateTime.parse("2018-01-01T00:14:03-05:00"), DateTime.parse("2018-01-31T23:59:59-05:00"), null },
-      new Object[] { 3, DateTime.parse("2018-01-01T00:14:03+00:00"), DateTime.parse("2017-12-31T23:59:59-05:00"), DateTimeZone.forID("America/New_York") },
-      new Object[] { 4, DateTime.parse("2018-12-31T23:40:50+01:00"), DateTime.parse("2018-12-31T23:59:59+01:00"), null },
-      new Object[] { 5, DateTime.parse("2018-12-31T23:40:50+00:00"), DateTime.parse("2019-01-31T23:59:59+01:00"), DateTimeZone.forID("Europe/Warsaw") }
-    };
+  @ParameterizedTest
+  @CsvSource(value = {
+    "0, 2018-03-01T02:28:19-05:00, 2018-03-31T23:59:59-05:00",
+    "1, 2018-01-01T00:14:03-05:00, 2018-01-31T23:59:59-05:00",
+    "2, 2018-12-31T23:40:50+01:00, 2018-12-31T23:59:59+01:00"
+  })
+  void shouldGetCorrectEndOfMonthForJodaDateTime(int id, DateTime from, DateTime expected) {
+    final DateTime result = DateTimeUtil.atEndOfMonth(from);
+
+    assertEquals(expected.toString(), result.toString(), "For test " + id);
   }
 
   @ParameterizedTest
-  @MethodSource("shouldGetCorrectStartOfMonthForJodaLocalDateParameters")
+  @CsvSource(value = {
+    "0, 2018-02-28T21:28:19+00:00, 2018-02-28T23:59:59-05:00, America/New_York",
+    "1, 2018-01-01T00:14:03+00:00, 2017-12-31T23:59:59-05:00, America/New_York",
+    "2, 2018-12-31T23:40:50+00:00, 2019-01-31T23:59:59+01:00, Europe/Warsaw"
+  })
+  void shouldGetCorrectEndOfMonthForJodaDateTimeWithZone(int id, DateTime from, DateTime expected, DateTimeZone zone) {
+    final DateTime result = DateTimeUtil.atEndOfMonth(from, zone);
+
+    assertEquals(expected.toString(), result.toString(), "For test " + id);
+  }
+
+  @ParameterizedTest
+  @CsvSource(value = {
+    "0, 2018-02-28, 2018-02-01T00:00:00-05:00, America/New_York",
+    "1, 2018-01-01, 2018-01-01T00:00:00-05:00, America/New_York",
+    "2, 2018-12-31, 2018-12-01T00:00:00+01:00, Europe/Warsaw"
+  })
   void shouldGetCorrectStartOfMonthForJodaLocalDate(int id, org.joda.time.LocalDate from, DateTime expected, DateTimeZone zone) {
     final DateTime result = DateTimeUtil.atStartOfMonth(from, zone);
 
     assertEquals(expected.toString(), result.toString(), "For test " + id);
   }
 
-  private static Object[] shouldGetCorrectStartOfMonthForJodaLocalDateParameters() {
-    return new Object[] {
-      new Object[] { 0, org.joda.time.LocalDate.parse("2018-02-28"), DateTime.parse("2018-02-01T00:00:00-05:00"), DateTimeZone.forID("America/New_York") },
-      new Object[] { 1, org.joda.time.LocalDate.parse("2018-01-01"), DateTime.parse("2018-01-01T00:00:00-05:00"), DateTimeZone.forID("America/New_York") },
-      new Object[] { 2, org.joda.time.LocalDate.parse("2018-12-31"), DateTime.parse("2018-12-01T00:00:00+01:00"), DateTimeZone.forID("Europe/Warsaw") }
-    };
-  }
-
   @ParameterizedTest
-  @MethodSource("shouldGetCorrectEndOfMonthForJodaLocalDateParameters")
+  @CsvSource(value = {
+    "0, 2018-02-28, 2018-02-28T23:59:59-05:00, America/New_York",
+    "1, 2018-01-01, 2018-01-31T23:59:59-05:00, America/New_York",
+    "2, 2018-12-31, 2018-12-31T23:59:59+01:00, Europe/Warsaw"
+  })
   void shouldGetCorrectEndOfMonthForJodaLocalDate(int id, org.joda.time.LocalDate from, DateTime expected, DateTimeZone zone) {
     final DateTime result = DateTimeUtil.atEndOfMonth(from, zone);
 
     assertEquals(expected.toString(), result.toString(), "For test " + id);
   }
 
-  private static Object[] shouldGetCorrectEndOfMonthForJodaLocalDateParameters() {
-    return new Object[] {
-      new Object[] { 0, org.joda.time.LocalDate.parse("2018-02-28"), DateTime.parse("2018-02-28T23:59:59-05:00"), DateTimeZone.forID("America/New_York") },
-      new Object[] { 1, org.joda.time.LocalDate.parse("2018-01-01"), DateTime.parse("2018-01-31T23:59:59-05:00"), DateTimeZone.forID("America/New_York") },
-      new Object[] { 2, org.joda.time.LocalDate.parse("2018-12-31"), DateTime.parse("2018-12-31T23:59:59+01:00"), DateTimeZone.forID("Europe/Warsaw") }
-    };
-  }
-
   @ParameterizedTest
-  @MethodSource("shouldGetCorrectStartOfDayForZonedDateTimeParameters")
-  void shouldGetCorrectStartOfDayForZonedDateTime(int id, ZonedDateTime from, ZonedDateTime expected, ZoneId zone) {
-    final ZonedDateTime result = zone == null
-      ? DateTimeUtil.atStartOfDay(from)
-      : DateTimeUtil.atStartOfDay(from, zone);
+  @CsvSource(value = {
+    "0, 2018-03-01T02:28:19-05:00, 2018-03-01T00:00:00-05:00",
+    "1, 2018-01-01T00:14:03-05:00, 2018-01-01T00:00:00-05:00",
+    "2, 2018-12-31T23:40:50+01:00, 2018-12-31T00:00:00+01:00"
+  })
+  void shouldGetCorrectStartOfDayForZonedDateTime(int id, ZonedDateTime from, ZonedDateTime expected) {
+    final ZonedDateTime result = DateTimeUtil.atStartOfDay(from);
 
     assertEquals(expected.format(DateTimeFormatter.ISO_DATE), result.format(DateTimeFormatter.ISO_DATE), "For test " + id);
   }
 
-  private static Object[] shouldGetCorrectStartOfDayForZonedDateTimeParameters() {
-    return new Object[] {
-      new Object[] { 0, ZonedDateTime.parse("2018-03-01T02:28:19-05:00"), ZonedDateTime.parse("2018-03-01T00:00:00-05:00"), null },
-      new Object[] { 1, ZonedDateTime.parse("2018-02-28T21:28:19+00:00"), ZonedDateTime.parse("2018-02-28T00:00:00-05:00"), ZoneId.of("America/New_York") },
-      new Object[] { 2, ZonedDateTime.parse("2018-01-01T00:14:03-05:00"), ZonedDateTime.parse("2018-01-01T00:00:00-05:00"), null },
-      new Object[] { 3, ZonedDateTime.parse("2018-01-01T00:14:03+00:00"), ZonedDateTime.parse("2017-12-31T00:00:00-05:00"), ZoneId.of("America/New_York") },
-      new Object[] { 4, ZonedDateTime.parse("2018-12-31T23:40:50+01:00"), ZonedDateTime.parse("2018-12-31T00:00:00+01:00"), null },
-      new Object[] { 5, ZonedDateTime.parse("2018-12-31T23:40:50+00:00"), ZonedDateTime.parse("2019-01-01T00:00:00+01:00"), ZoneId.of("Europe/Warsaw") }
-    };
-  }
-
   @ParameterizedTest
-  @MethodSource("shouldGetCorrectEndOfDayForZonedDateTimeParameters")
-  void shouldGetCorrectEndOfDayForZonedDateTime(int id, ZonedDateTime from, ZonedDateTime expected, ZoneId zone) {
-    final ZonedDateTime result = zone == null
-      ? DateTimeUtil.atEndOfDay(from)
-      : DateTimeUtil.atEndOfDay(from, zone);
+  @CsvSource(value = {
+    "0, 2018-02-28T21:28:19+00:00, 2018-02-28T00:00:00-05:00, America/New_York",
+    "1, 2018-01-01T00:14:03+00:00, 2017-12-31T00:00:00-05:00, America/New_York",
+    "2, 2018-12-31T23:40:50+00:00, 2019-01-01T00:00:00+01:00, Europe/Warsaw"
+  })
+  void shouldGetCorrectStartOfDayForZonedDateTimeWithZone(int id, ZonedDateTime from, ZonedDateTime expected, ZoneId zone) {
+    final ZonedDateTime result = DateTimeUtil.atStartOfDay(from, zone);
 
     assertEquals(expected.format(DateTimeFormatter.ISO_DATE), result.format(DateTimeFormatter.ISO_DATE), "For test " + id);
   }
 
-  private static Object[] shouldGetCorrectEndOfDayForZonedDateTimeParameters() {
-    return new Object[] {
-      new Object[] { 0, ZonedDateTime.parse("2018-03-01T02:28:19-05:00"), ZonedDateTime.parse("2018-03-01T23:59:59-05:00"), null },
-      new Object[] { 1, ZonedDateTime.parse("2018-02-28T21:28:19+00:00"), ZonedDateTime.parse("2018-02-28T23:59:59-05:00"), ZoneId.of("America/New_York") },
-      new Object[] { 2, ZonedDateTime.parse("2018-01-01T00:14:03-05:00"), ZonedDateTime.parse("2018-01-01T23:59:59-05:00"), null },
-      new Object[] { 3, ZonedDateTime.parse("2018-01-01T00:14:03+00:00"), ZonedDateTime.parse("2017-12-31T23:59:59-05:00"), ZoneId.of("America/New_York") },
-      new Object[] { 4, ZonedDateTime.parse("2018-12-31T23:40:50+01:00"), ZonedDateTime.parse("2018-12-31T23:59:59+01:00"), null },
-      new Object[] { 5, ZonedDateTime.parse("2018-12-31T23:40:50+00:00"), ZonedDateTime.parse("2019-01-01T23:59:59+01:00"), ZoneId.of("Europe/Warsaw") }
-    };
+  @ParameterizedTest
+  @CsvSource(value = {
+    "0, 2018-03-01T02:28:19-05:00, 2018-03-01T23:59:59-05:00",
+    "1, 2018-01-01T00:14:03-05:00, 2018-01-01T23:59:59-05:00",
+    "2, 2018-12-31T23:40:50+01:00, 2018-12-31T23:59:59+01:00"
+  })
+  void shouldGetCorrectEndOfDayForZonedDateTime(int id, ZonedDateTime from, ZonedDateTime expected) {
+    final ZonedDateTime result = DateTimeUtil.atEndOfDay(from);
+
+    assertEquals(expected.format(DateTimeFormatter.ISO_DATE), result.format(DateTimeFormatter.ISO_DATE), "For test " + id);
   }
 
   @ParameterizedTest
-  @MethodSource("shouldGetCorrectStartOfDayForLocalDateParameters")
+  @CsvSource(value = {
+    "0, 2018-02-28T21:28:19+00:00, 2018-02-28T23:59:59-05:00, America/New_York",
+    "1, 2018-01-01T00:14:03+00:00, 2017-12-31T23:59:59-05:00, America/New_York",
+    "2, 2018-12-31T23:40:50+00:00, 2019-01-01T23:59:59+01:00, Europe/Warsaw"
+  })
+  void shouldGetCorrectEndOfDayForZonedDateTimeWithZone(int id, ZonedDateTime from, ZonedDateTime expected, ZoneId zone) {
+    final ZonedDateTime result = DateTimeUtil.atEndOfDay(from, zone);
+
+    assertEquals(expected.format(DateTimeFormatter.ISO_DATE), result.format(DateTimeFormatter.ISO_DATE), "For test " + id);
+  }
+
+  @ParameterizedTest
+  @CsvSource(value = {
+    "0, 2018-02-28, 2018-02-28T00:00:00-05:00, America/New_York",
+    "1, 2018-01-01, 2018-01-01T00:00:00-05:00, America/New_York",
+    "2, 2018-12-31, 2018-12-31T00:00:00+01:00, Europe/Warsaw"
+  })
   void shouldGetCorrectStartOfDayForLocalDate(int id, LocalDate from, ZonedDateTime expected, ZoneId zone) {
     final ZonedDateTime result = DateTimeUtil.atStartOfDay(from, zone);
 
     assertEquals(expected.format(DateTimeFormatter.ISO_DATE), result.format(DateTimeFormatter.ISO_DATE), "For test " + id);
   }
 
-  private static Object[] shouldGetCorrectStartOfDayForLocalDateParameters() {
-    return new Object[] {
-      new Object[] { 0, LocalDate.parse("2018-02-28"), ZonedDateTime.parse("2018-02-28T00:00:00-05:00"), ZoneId.of("America/New_York") },
-      new Object[] { 1, LocalDate.parse("2018-01-01"), ZonedDateTime.parse("2018-01-01T00:00:00-05:00"), ZoneId.of("America/New_York") },
-      new Object[] { 2, LocalDate.parse("2018-12-31"), ZonedDateTime.parse("2018-12-31T00:00:00+01:00"), ZoneId.of("Europe/Warsaw") }
-    };
-  }
-
   @ParameterizedTest
-  @MethodSource("shouldGetCorrectEndOfDayForLocalDateParameters")
+  @CsvSource(value = {
+    "0, 2018-02-28, 2018-02-28T23:59:59-05:00, America/New_York",
+    "1, 2018-01-01, 2018-01-01T23:59:59-05:00, America/New_York",
+    "2, 2018-12-31, 2018-12-31T23:59:59+01:00, Europe/Warsaw"
+  })
   void shouldGetCorrectEndOfDayForLocalDate(int id, LocalDate from, ZonedDateTime expected, ZoneId zone) {
     final ZonedDateTime result = DateTimeUtil.atEndOfDay(from, zone);
 
     assertEquals(expected.format(DateTimeFormatter.ISO_DATE), result.format(DateTimeFormatter.ISO_DATE), "For test " + id);
   }
 
-  private static Object[] shouldGetCorrectEndOfDayForLocalDateParameters() {
-    return new Object[] {
-      new Object[] { 0, LocalDate.parse("2018-02-28"), ZonedDateTime.parse("2018-02-28T23:59:59-05:00"), ZoneId.of("America/New_York") },
-      new Object[] { 1, LocalDate.parse("2018-01-01"), ZonedDateTime.parse("2018-01-01T23:59:59-05:00"), ZoneId.of("America/New_York") },
-      new Object[] { 2, LocalDate.parse("2018-12-31"), ZonedDateTime.parse("2018-12-31T23:59:59+01:00"), ZoneId.of("Europe/Warsaw") }
-    };
-  }
-
   @ParameterizedTest
-  @MethodSource("shouldGetCorrectStartOfDayForDateTimeParameters")
-  void shouldGetCorrectStartOfDayForDateTime(int id, DateTime from, DateTime expected, DateTimeZone zone) {
-    final DateTime result = zone == null
-      ? DateTimeUtil.atStartOfDay(from)
-      : DateTimeUtil.atStartOfDay(from, zone);
+  @CsvSource(value = {
+    "0, 2018-03-01T02:28:19-05:00, 2018-03-01T00:00:00-05:00",
+    "1, 2018-01-01T00:14:03-05:00, 2018-01-01T00:00:00-05:00",
+    "2, 2018-12-31T23:40:50+01:00, 2018-12-31T00:00:00+01:00"
+  })
+  void shouldGetCorrectStartOfDayForJodaDateTime(int id, DateTime from, DateTime expected) {
+    final DateTime result = DateTimeUtil.atStartOfDay(from);
 
     assertEquals(expected.toString(), result.toString(), "For test " + id);
   }
 
-  private static Object[] shouldGetCorrectStartOfDayForDateTimeParameters() {
-    return new Object[] {
-      new Object[] { 0, DateTime.parse("2018-03-01T02:28:19-05:00"), DateTime.parse("2018-03-01T00:00:00-05:00"), null },
-      new Object[] { 1, DateTime.parse("2018-02-28T21:28:19+00:00"), DateTime.parse("2018-02-28T00:00:00-05:00"), DateTimeZone.forID("America/New_York") },
-      new Object[] { 2, DateTime.parse("2018-01-01T00:14:03-05:00"), DateTime.parse("2018-01-01T00:00:00-05:00"), null },
-      new Object[] { 3, DateTime.parse("2018-01-01T00:14:03+00:00"), DateTime.parse("2017-12-31T00:00:00-05:00"), DateTimeZone.forID("America/New_York") },
-      new Object[] { 4, DateTime.parse("2018-12-31T23:40:50+01:00"), DateTime.parse("2018-12-31T00:00:00+01:00"), null },
-      new Object[] { 5, DateTime.parse("2018-12-31T23:40:50+00:00"), DateTime.parse("2019-01-01T00:00:00+01:00"), DateTimeZone.forID("Europe/Warsaw") }
-    };
-  }
-
   @ParameterizedTest
-  @MethodSource("shouldGetCorrectEndOfDayForDateTimeParameters")
-  void shouldGetCorrectEndOfDayForDateTime(int id, DateTime from, DateTime expected, DateTimeZone zone) {
-    final DateTime result = zone == null
-      ? DateTimeUtil.atEndOfDay(from)
-      : DateTimeUtil.atEndOfDay(from, zone);
+  @CsvSource(value = {
+    "0, 2018-02-28T21:28:19+00:00, 2018-02-28T00:00:00-05:00, America/New_York",
+    "1, 2018-01-01T00:14:03+00:00, 2017-12-31T00:00:00-05:00, America/New_York",
+    "2, 2018-12-31T23:40:50+00:00, 2019-01-01T00:00:00+01:00, Europe/Warsaw"
+  })
+  void shouldGetCorrectStartOfDayForJodaDateTimeWithZone(int id, DateTime from, DateTime expected, DateTimeZone zone) {
+    final DateTime result = DateTimeUtil.atStartOfDay(from, zone);
 
     assertEquals(expected.toString(), result.toString(), "For test " + id);
   }
 
-  private static Object[] shouldGetCorrectEndOfDayForDateTimeParameters() {
-    return new Object[] {
-      new Object[] { 0, DateTime.parse("2018-03-01T02:28:19-05:00"), DateTime.parse("2018-03-01T23:59:59-05:00"), null },
-      new Object[] { 1, DateTime.parse("2018-02-28T21:28:19+00:00"), DateTime.parse("2018-02-28T23:59:59-05:00"), DateTimeZone.forID("America/New_York") },
-      new Object[] { 2, DateTime.parse("2018-01-01T00:14:03-05:00"), DateTime.parse("2018-01-01T23:59:59-05:00"), null },
-      new Object[] { 3, DateTime.parse("2018-01-01T00:14:03+00:00"), DateTime.parse("2017-12-31T23:59:59-05:00"), DateTimeZone.forID("America/New_York") },
-      new Object[] { 4, DateTime.parse("2018-12-31T23:40:50+01:00"), DateTime.parse("2018-12-31T23:59:59+01:00"), null },
-      new Object[] { 5, DateTime.parse("2018-12-31T23:40:50+00:00"), DateTime.parse("2019-01-01T23:59:59+01:00"), DateTimeZone.forID("Europe/Warsaw") }
-    };
+  @ParameterizedTest
+  @CsvSource(value = {
+    "0, 2018-03-01T02:28:19-05:00, 2018-03-01T23:59:59-05:00",
+    "1, 2018-01-01T00:14:03-05:00, 2018-01-01T23:59:59-05:00",
+    "2, 2018-12-31T23:40:50+01:00, 2018-12-31T23:59:59+01:00"
+  })
+  void shouldGetCorrectEndOfDayForJodaDateTime(int id, DateTime from, DateTime expected) {
+    final DateTime result = DateTimeUtil.atEndOfDay(from);
+
+    assertEquals(expected.toString(), result.toString(), "For test " + id);
   }
 
   @ParameterizedTest
-  @MethodSource("shouldGetCorrectStartOfDayForJodaLocalDateParameters")
+  @CsvSource(value = {
+    "0, 2018-02-28T21:28:19+00:00, 2018-02-28T23:59:59-05:00, America/New_York",
+    "1, 2018-01-01T00:14:03+00:00, 2017-12-31T23:59:59-05:00, America/New_York",
+    "2, 2018-12-31T23:40:50+00:00, 2019-01-01T23:59:59+01:00, Europe/Warsaw"
+  })
+  void shouldGetCorrectEndOfDayForJodaDateTimeWithZone(int id, DateTime from, DateTime expected, DateTimeZone zone) {
+    final DateTime result = DateTimeUtil.atEndOfDay(from, zone);
+
+    assertEquals(expected.toString(), result.toString(), "For test " + id);
+  }
+
+  @ParameterizedTest
+  @CsvSource(value = {
+    "0, 2018-02-28, 2018-02-28T00:00:00-05:00, America/New_York",
+    "1, 2018-01-01, 2018-01-01T00:00:00-05:00, America/New_York",
+    "2, 2018-12-31, 2018-12-31T00:00:00+01:00, Europe/Warsaw"
+  })
   void shouldGetCorrectStartOfDayForJodaLocalDate(int id, org.joda.time.LocalDate from, DateTime expected, DateTimeZone zone) {
     final DateTime result = DateTimeUtil.atStartOfDay(from, zone);
 
     assertEquals(expected.toString(), result.toString(), "For test " + id);
   }
 
-  private static Object[] shouldGetCorrectStartOfDayForJodaLocalDateParameters() {
-    return new Object[] {
-      new Object[] { 0, org.joda.time.LocalDate.parse("2018-02-28"), DateTime.parse("2018-02-28T00:00:00-05:00"), DateTimeZone.forID("America/New_York") },
-      new Object[] { 1, org.joda.time.LocalDate.parse("2018-01-01"), DateTime.parse("2018-01-01T00:00:00-05:00"), DateTimeZone.forID("America/New_York") },
-      new Object[] { 2, org.joda.time.LocalDate.parse("2018-12-31"), DateTime.parse("2018-12-31T00:00:00+01:00"), DateTimeZone.forID("Europe/Warsaw") }
-    };
-  }
-
   @ParameterizedTest
-  @MethodSource("shouldGetCorrectEndOfDayForJodaLocalDateParameters")
+  @CsvSource(value = {
+    "0, 2018-02-28, 2018-02-28T23:59:59-05:00, America/New_York",
+    "1, 2018-01-01, 2018-01-01T23:59:59-05:00, America/New_York",
+    "2, 2018-12-31, 2018-12-31T23:59:59+01:00, Europe/Warsaw"
+  })
   void shouldGetCorrectEndOfDayForJodaLocalDate(int id, org.joda.time.LocalDate from, DateTime expected, DateTimeZone zone) {
     final DateTime result = DateTimeUtil.atEndOfDay(from, zone);
 
     assertEquals(expected.toString(), result.toString(), "For test " + id);
   }
 
-  private static Object[] shouldGetCorrectEndOfDayForJodaLocalDateParameters() {
-    return new Object[] {
-      new Object[] { 0, org.joda.time.LocalDate.parse("2018-02-28"), DateTime.parse("2018-02-28T23:59:59-05:00"), DateTimeZone.forID("America/New_York") },
-      new Object[] { 1, org.joda.time.LocalDate.parse("2018-01-01"), DateTime.parse("2018-01-01T23:59:59-05:00"), DateTimeZone.forID("America/New_York") },
-      new Object[] { 2, org.joda.time.LocalDate.parse("2018-12-31"), DateTime.parse("2018-12-31T23:59:59+01:00"), DateTimeZone.forID("Europe/Warsaw") }
-    };
+  @Test
+  void shouldGetMostRecentZonedDateTime() {
+    setFixedClock();
+
+    final ZonedDateTime datePast = ClockUtil.getZonedDateTime().minusDays(2);
+    final ZonedDateTime datePresent = ClockUtil.getZonedDateTime();
+    final ZonedDateTime dateFuture = ClockUtil.getZonedDateTime().plusDays(2);
+
+    final ZonedDateTime result = DateTimeUtil.mostRecentDate(datePresent, dateFuture, datePast);
+
+    assertEquals(dateFuture, result);
   }
 
+  @Test
+  void shouldGetMostRecentJodaDateTime() {
+    setFixedClock();
+
+    final DateTime datePast = ClockUtil.getDateTime().minusDays(2);
+    final DateTime datePresent = ClockUtil.getDateTime();
+    final DateTime dateFuture = ClockUtil.getDateTime().plusDays(2);
+
+    final DateTime result = DateTimeUtil.mostRecentDate(datePresent, dateFuture, datePast);
+
+    assertEquals(dateFuture, result);
+  }
+
+  @Test
+  void shouldGetToZonedDateTime() {
+    setFixedClock();
+
+    final DateTime jodaDate = ClockUtil.getDateTime();
+    final ZonedDateTime result = DateTimeUtil.toZonedDateTime(jodaDate);
+
+    assertEquals(ClockUtil.getDateTime().toInstant().getMillis(), result.toInstant().toEpochMilli());
+  }
+
+  @Test
+  void shouldGetToOffsetDateTime() {
+    setFixedClock();
+
+    final DateTime jodaDate = ClockUtil.getDateTime();
+    final OffsetDateTime result = DateTimeUtil.toOffsetDateTime(jodaDate);
+
+    assertEquals(ClockUtil.getDateTime().toInstant().getMillis(), result.toInstant().toEpochMilli());
+  }
+
+  private void setFixedClock() {
+    ClockUtil.setClock(Clock.fixed(Instant.parse(FORMATTED_DATE_TIME_NOW), ZoneOffset.UTC));
+  }
 }
