@@ -150,7 +150,7 @@ public class Account {
   public Optional<DateTime> getClosedDate() {
     return feeFineActions.stream()
       .filter(ffa -> ffa.getBalance().equals(NumberUtils.DOUBLE_ZERO))
-      .max((i, j) -> compareToMillis(i.getDateAction(), j.getDateAction()))
+      .max(this::compareByDateAction)
       .map(FeeFineAction::getDateAction);
   }
 
@@ -182,4 +182,9 @@ public class Account {
   public boolean hasPaidOrTransferredAmount() {
     return getPaidAndTransferredAmount().hasAmount();
   }
+
+  private int compareByDateAction(FeeFineAction left, FeeFineAction right) {
+    return compareToMillis(left.getDateAction(), right.getDateAction());
+  }
+
 }
