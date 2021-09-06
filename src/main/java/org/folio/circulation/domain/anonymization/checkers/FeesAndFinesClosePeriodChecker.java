@@ -1,12 +1,11 @@
 package org.folio.circulation.domain.anonymization.checkers;
 
-import static org.folio.circulation.support.utils.DateTimeUtil.compareToMillis;
-
 import java.util.Optional;
 
 import org.folio.circulation.domain.Account;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.policy.Period;
+import org.folio.circulation.support.utils.DateTimeUtil;
 import org.joda.time.DateTime;
 
 public class FeesAndFinesClosePeriodChecker extends TimePeriodChecker {
@@ -29,7 +28,7 @@ public class FeesAndFinesClosePeriodChecker extends TimePeriodChecker {
       .map(Account::getClosedDate)
       .filter(Optional::isPresent)
       .map(Optional::get)
-      .max(DateTimeUtil::compareToMillis); 
+      .max(DateTimeUtil::compareToMillis);
   }
 
   @Override
