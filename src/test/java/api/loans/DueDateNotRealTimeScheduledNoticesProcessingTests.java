@@ -151,9 +151,7 @@ class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests {
     assertTrue(scheduledNoticesClient.getAll().stream()
       .map(entries -> entries.getString("nextRunTime"))
       .map(DateTime::parse)
-      .allMatch(d -> {
-        return isSameMillis(newNextRunTime, d);
-      }),
+      .allMatch(d -> isSameMillis(newNextRunTime, d)),
       "all scheduled notices are rescheduled");
 
     verifyNumberOfSentNotices(1);
