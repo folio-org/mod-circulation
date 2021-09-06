@@ -29,7 +29,7 @@ public class FeesAndFinesClosePeriodChecker extends TimePeriodChecker {
       .map(Account::getClosedDate)
       .filter(Optional::isPresent)
       .map(Optional::get)
-      .max((i, j) -> compareToMillis(i, j));
+      .max(DateTimeUtil::compareToMillis); 
   }
 
   @Override
