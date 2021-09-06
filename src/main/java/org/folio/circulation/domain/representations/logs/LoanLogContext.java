@@ -1,7 +1,19 @@
 package org.folio.circulation.domain.representations.logs;
 
 import static java.util.Optional.ofNullable;
-import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.*;
+import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.ACTION;
+import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.ACTION_COMMENT;
+import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.DATE;
+import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.DESCRIPTION;
+import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.HOLDINGS_RECORD_ID;
+import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.INSTANCE_ID;
+import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.ITEM_BARCODE;
+import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.ITEM_ID;
+import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.LOAN_ID;
+import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.SERVICE_POINT_ID;
+import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.UPDATED_BY_USER_ID;
+import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.USER_BARCODE;
+import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.USER_ID;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
 import org.folio.circulation.domain.Item;

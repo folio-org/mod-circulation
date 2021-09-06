@@ -87,7 +87,7 @@ public class TemplateContextUtil {
     JsonObject itemContext = staffSlipContext.getJsonObject(ITEM);
 
     if (ObjectUtils.allNotNull(item, itemContext)) {
-      write(itemContext, "lastCheckedInDateTime", ClockUtil.getDateTime().withZone(DateTimeZone.UTC));
+      write(itemContext, "lastCheckedInDateTime", ClockUtil.getDateTime());
       if (item.getInTransitDestinationServicePoint() != null) {
         itemContext.put("fromServicePoint", context.getCheckInServicePoint().getName());
         itemContext.put("toServicePoint", item.getInTransitDestinationServicePoint().getName());
