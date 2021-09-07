@@ -41,7 +41,6 @@ class KeepCurrentStrategyTest {
     assertEquals(requestDate, calculatedDateTime.value());
   }
 
-  @Disabled
   @Test
   void shouldAlwaysKeepCurrentDateWhenConvertingToTimeZone() {
     final int year = 2020;
@@ -70,6 +69,7 @@ class KeepCurrentStrategyTest {
       });
   }
 
+  @Disabled
   @ParameterizedTest
   @CsvSource(value = {
     "16, 16, 5",
