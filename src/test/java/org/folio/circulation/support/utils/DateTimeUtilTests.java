@@ -44,7 +44,7 @@ class DateTimeUtilTests {
     "1, null, " + FORMATTED_DATE_TIME_NOW
   }, nullValues = {"null"})
   void shouldGetNormalizedZonedDateTime(int id, ZonedDateTime from, ZonedDateTime expected) {
-    final ZonedDateTime result = DateTimeUtil.normalizeDateTime(from);
+    final ZonedDateTime result = DateTimeUtil.defaultToNow(from);
 
     assertEquals(expected.toString(), result.toString(), "For test " + id);
   }
@@ -55,7 +55,7 @@ class DateTimeUtilTests {
     "1, null, " + FORMATTED_DATE_TIME_NOW
   }, nullValues = {"null"})
   void shouldGetNormalizedOffsetDateTime(int id, OffsetDateTime from, OffsetDateTime expected) {
-    final OffsetDateTime result = DateTimeUtil.normalizeDateTime(from);
+    final OffsetDateTime result = DateTimeUtil.defaultToNow(from);
 
     assertEquals(expected.toString(), result.toString(), "For test " + id);
   }
@@ -66,7 +66,7 @@ class DateTimeUtilTests {
     "1, null, " + FORMATTED_LOCAL_DATE_TIME_NOW
   }, nullValues = {"null"})
   void shouldGetNormalizedLocalDateTime(int id, LocalDateTime from, LocalDateTime expected) {
-    final LocalDateTime result = DateTimeUtil.normalizeDateTime(from);
+    final LocalDateTime result = DateTimeUtil.defaultToNow(from);
 
     assertEquals(expected.toString(), result.toString(), "For test " + id);
   }
@@ -77,7 +77,7 @@ class DateTimeUtilTests {
     "1, null, " + FORMATTED_DATE_NOW
   }, nullValues = {"null"})
   void shouldGetNormalizedLocalDate(int id, LocalDate from, LocalDate expected) {
-    final LocalDate result = DateTimeUtil.normalizeDate(from);
+    final LocalDate result = DateTimeUtil.defaultToNow(from);
 
     assertEquals(expected.toString(), result.toString(), "For test " + id);
   }
@@ -88,7 +88,7 @@ class DateTimeUtilTests {
     "1, null, " + FORMATTED_TIME_NOW
   }, nullValues = {"null"})
   void shouldGetNormalizedLocalTime(int id, LocalTime from, LocalTime expected) {
-    final LocalTime result = DateTimeUtil.normalizeTime(from);
+    final LocalTime result = DateTimeUtil.defaultToNow(from);
 
     assertEquals(expected.toString(), result.toString(), "For test " + id);
   }
@@ -104,7 +104,7 @@ class DateTimeUtilTests {
       : from.toInstant();
     final Instant expectedInstant = expected.toInstant();
 
-    final Instant result = DateTimeUtil.normalizeDateTime(fromInstant);
+    final Instant result = DateTimeUtil.defaultToNow(fromInstant);
 
     assertEquals(expectedInstant.toString(), result.toString(), "For test " + id);
   }
@@ -115,7 +115,7 @@ class DateTimeUtilTests {
     "1, null, " + FORMATTED_DATE_TIME_NOW
   }, nullValues = {"null"})
   void shouldGetNormalizedJodaDateTime(int id, DateTime from, DateTime expected) {
-    final DateTime result = DateTimeUtil.normalizeDateTime(from);
+    final DateTime result = DateTimeUtil.defaultToNow(from);
 
     assertEquals(expected.toString(), result.toString(), "For test " + id);
   }
@@ -126,7 +126,7 @@ class DateTimeUtilTests {
     "1, null, " + FORMATTED_LOCAL_DATE_TIME_NOW
   }, nullValues = {"null"})
   void shouldGetNormalizedJodaLocalDateTime(int id, org.joda.time.LocalDateTime from, org.joda.time.LocalDateTime expected) {
-    final org.joda.time.LocalDateTime result = DateTimeUtil.normalizeDateTime(from);
+    final org.joda.time.LocalDateTime result = DateTimeUtil.defaultToNow(from);
 
     assertEquals(expected.toString(), result.toString(), "For test " + id);
   }
@@ -137,7 +137,7 @@ class DateTimeUtilTests {
     "1, null, " + FORMATTED_DATE_NOW
   }, nullValues = {"null"})
   void shouldGetNormalizedJodaLocalDate(int id, org.joda.time.LocalDate from, org.joda.time.LocalDate expected) {
-    final org.joda.time.LocalDate result = DateTimeUtil.normalizeDate(from);
+    final org.joda.time.LocalDate result = DateTimeUtil.defaultToNow(from);
 
     assertEquals(expected.toString(), result.toString(), "For test " + id);
   }
@@ -148,7 +148,7 @@ class DateTimeUtilTests {
     "1, null, " + FORMATTED_DATE_NOW
   }, nullValues = {"null"})
   void shouldGetNormalizedJodaDate(int id, org.joda.time.LocalDate from, org.joda.time.LocalDate expected) {
-    final org.joda.time.LocalDate result = DateTimeUtil.normalizeDate(from);
+    final org.joda.time.LocalDate result = DateTimeUtil.defaultToNow(from);
 
     assertEquals(expected.toString(), result.toString(), "For test " + id);
   }
@@ -164,7 +164,7 @@ class DateTimeUtilTests {
       : from.toInstant();
     final org.joda.time.Instant expectedInstant = expected.toInstant();
 
-    final org.joda.time.Instant result = DateTimeUtil.normalizeDateTime(fromInstant);
+    final org.joda.time.Instant result = DateTimeUtil.defaultToNow(fromInstant);
 
     assertEquals(expectedInstant.toString(), result.toString(), "For test " + id);
   }
@@ -175,7 +175,7 @@ class DateTimeUtilTests {
     "1, null, " + FORMATTED_TIME_NOW
   }, nullValues = {"null"})
   void shouldGetNormalizedJodaLocalTime(int id, org.joda.time.LocalTime from, org.joda.time.LocalTime expected) {
-    final org.joda.time.LocalTime result = DateTimeUtil.normalizeTime(from);
+    final org.joda.time.LocalTime result = DateTimeUtil.defaultToNow(from);
 
     assertEquals(expected.toString(), result.toString(), "For test " + id);
   }
@@ -187,7 +187,7 @@ class DateTimeUtilTests {
     "2, null, Z"
   }, nullValues = {"null"})
   void shouldGetNormalizedZoneId(int id, ZoneId from, ZoneId expected) {
-    final ZoneId result = DateTimeUtil.normalizeZone(from);
+    final ZoneId result = DateTimeUtil.defaultToClockZone(from);
 
     assertEquals(expected, result, "For test " + id);
   }
@@ -204,7 +204,7 @@ class DateTimeUtilTests {
       : from.getRules().getOffset(Instant.EPOCH);
 
     final ZoneOffset expectedOffset = expected.getRules().getOffset(Instant.EPOCH);
-    final ZoneOffset result = DateTimeUtil.normalizeZone(fromOffset);
+    final ZoneOffset result = DateTimeUtil.defaultToClockZone(fromOffset);
 
     assertEquals(expectedOffset, result, "For test " + id);
   }
@@ -216,7 +216,7 @@ class DateTimeUtilTests {
     "2, null, UTC"
   }, nullValues = {"null"})
   void shouldGetNormalizedJodaZone(int id, DateTimeZone from, DateTimeZone expected) {
-    final DateTimeZone result = DateTimeUtil.normalizeZone(from);
+    final DateTimeZone result = DateTimeUtil.defaultToClockZone(from);
 
     assertEquals(expected, result, "For test " + id);
   }

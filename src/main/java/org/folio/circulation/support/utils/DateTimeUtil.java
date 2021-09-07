@@ -55,7 +55,7 @@ public class DateTimeUtil {
    * @param dateTime The dateTime to normalize.
    * @return The provided dateTime or if dateTime is null then ClockUtil.getZonedDateTime().
    */
-  public static ZonedDateTime normalizeDateTime(ZonedDateTime dateTime) {
+  public static ZonedDateTime defaultToNow(ZonedDateTime dateTime) {
     if (dateTime == null) {
       return ClockUtil.getZonedDateTime();
     }
@@ -72,7 +72,7 @@ public class DateTimeUtil {
    * @param dateTime The dateTime to normalize.
    * @return The provided dateTime or if dateTime is null then ClockUtil.getZonedDateTime().
    */
-  public static OffsetDateTime normalizeDateTime(OffsetDateTime dateTime) {
+  public static OffsetDateTime defaultToNow(OffsetDateTime dateTime) {
     if (dateTime == null) {
       return ClockUtil.getOffsetDateTime();
     }
@@ -89,7 +89,7 @@ public class DateTimeUtil {
    * @param dateTime The dateTime to normalize.
    * @return The provided dateTime or if dateTime is null then ClockUtil.getZonedDateTime().
    */
-  public static LocalDateTime normalizeDateTime(LocalDateTime dateTime) {
+  public static LocalDateTime defaultToNow(LocalDateTime dateTime) {
     if (dateTime == null) {
       return ClockUtil.getLocalDateTime();
     }
@@ -106,7 +106,7 @@ public class DateTimeUtil {
    * @param date The date to normalize.
    * @return The provided date or if date is null then ClockUtil.getZonedDate().
    */
-  public static LocalDate normalizeDate(LocalDate date) {
+  public static LocalDate defaultToNow(LocalDate date) {
     if (date == null) {
       return ClockUtil.getLocalDate();
     }
@@ -125,7 +125,7 @@ public class DateTimeUtil {
    * @param dateTime The dateTime to normalize.
    * @return The provided dateTime or if dateTime is null then ClockUtil.getZonedDateTime().
    */
-  public static DateTime normalizeDateTime(DateTime dateTime) {
+  public static DateTime defaultToNow(DateTime dateTime) {
     if (dateTime == null) {
       return ClockUtil.getDateTime();
     }
@@ -142,7 +142,7 @@ public class DateTimeUtil {
    * @param dateTime The dateTime to normalize.
    * @return The provided dateTime or if dateTime is null then ClockUtil.getZonedDateTime().
    */
-  public static Instant normalizeDateTime(Instant dateTime) {
+  public static Instant defaultToNow(Instant dateTime) {
     if (dateTime == null) {
       return ClockUtil.getZonedDateTime().toInstant();
     }
@@ -161,7 +161,7 @@ public class DateTimeUtil {
    * @param dateTime The dateTime to normalize.
    * @return The provided dateTime or if dateTime is null then ClockUtil.getZonedDateTime().
    */
-  public static org.joda.time.LocalDateTime normalizeDateTime(org.joda.time.LocalDateTime dateTime) {
+  public static org.joda.time.LocalDateTime defaultToNow(org.joda.time.LocalDateTime dateTime) {
     if (dateTime == null) {
       return ClockUtil.getDateTime().toLocalDateTime();
     }
@@ -177,7 +177,7 @@ public class DateTimeUtil {
    *
    * TODO: Remove this after migrating from JodaTime to JavaTime.
    */
-  public static org.joda.time.LocalDate normalizeDate(org.joda.time.LocalDate date) {
+  public static org.joda.time.LocalDate defaultToNow(org.joda.time.LocalDate date) {
     if (date == null) {
       return ClockUtil.getJodaLocalDate();
     }
@@ -194,7 +194,7 @@ public class DateTimeUtil {
    * @param time The time to normalize.
    * @return The provided date or if time is null then ClockUtil.getLocalTime().
    */
-  public static LocalTime normalizeTime(LocalTime time) {
+  public static LocalTime defaultToNow(LocalTime time) {
     if (time == null) {
       return ClockUtil.getLocalTime();
     }
@@ -211,7 +211,7 @@ public class DateTimeUtil {
    * @param time The time to normalize.
    * @return The provided date or if time is null then ClockUtil.getLocalTime().
    */
-  public static org.joda.time.LocalTime normalizeTime(org.joda.time.LocalTime time) {
+  public static org.joda.time.LocalTime defaultToNow(org.joda.time.LocalTime time) {
     if (time == null) {
       return ClockUtil.getJodaLocalTime();
     }
@@ -228,7 +228,7 @@ public class DateTimeUtil {
    * @param dateTime The dateTime to normalize.
    * @return The provided dateTime or if dateTime is null then ClockUtil.getZonedDateTime().
    */
-  public static org.joda.time.Instant normalizeDateTime(org.joda.time.Instant dateTime) {
+  public static org.joda.time.Instant defaultToNow(org.joda.time.Instant dateTime) {
     if (dateTime == null) {
       return org.joda.time.Instant
         .ofEpochMilli(ClockUtil.getZonedDateTime().toInstant().toEpochMilli());
@@ -246,7 +246,7 @@ public class DateTimeUtil {
    * @param zone The time zone to normalize.
    * @return The provided time zone or if zone is null a default time zone.
    */
-  public static ZoneId normalizeZone(ZoneId zone) {
+  public static ZoneId defaultToClockZone(ZoneId zone) {
     if (zone == null) {
       return ClockUtil.getZoneId();
     }
@@ -263,7 +263,7 @@ public class DateTimeUtil {
    * @param zone The time zone to normalize.
    * @return The provided time zone or if zone is null a default time zone.
    */
-  public static ZoneOffset normalizeZone(ZoneOffset zone) {
+  public static ZoneOffset defaultToClockZone(ZoneOffset zone) {
     if (zone == null) {
       return ClockUtil.getZoneOffset();
     }
@@ -279,7 +279,7 @@ public class DateTimeUtil {
    *
    * TODO: Remove this after migrating from JodaTime to JavaTime.
    */
-  public static DateTimeZone normalizeZone(DateTimeZone zone) {
+  public static DateTimeZone defaultToClockZone(DateTimeZone zone) {
     if (zone == null) {
       return ClockUtil.jodaTimezone();
     }
@@ -902,8 +902,8 @@ public class DateTimeUtil {
    * @return true if left is before right and false otherwise.
    */
   public static boolean isBeforeMillis(ZonedDateTime left, ZonedDateTime right) {
-    return normalizeDateTime(left).toInstant().toEpochMilli() <
-      normalizeDateTime(right).toInstant().toEpochMilli();
+    return defaultToNow(left).toInstant().toEpochMilli() <
+      defaultToNow(right).toInstant().toEpochMilli();
   }
 
   /**
@@ -917,8 +917,8 @@ public class DateTimeUtil {
    * @return true if left is before right and false otherwise.
    */
   public static boolean isBeforeMillis(LocalDateTime left, LocalDateTime right) {
-    return normalizeDateTime(left).toInstant(UTC).toEpochMilli() <
-      normalizeDateTime(right).toInstant(UTC).toEpochMilli();
+    return defaultToNow(left).toInstant(UTC).toEpochMilli() <
+      defaultToNow(right).toInstant(UTC).toEpochMilli();
   }
 
   /**
@@ -934,8 +934,8 @@ public class DateTimeUtil {
    * @return true if left is before right and false otherwise.
    */
   public static boolean isBeforeMillis(DateTime left, DateTime right) {
-    return normalizeDateTime(left).toInstant().getMillis() <
-      normalizeDateTime(right).toInstant().getMillis();
+    return defaultToNow(left).toInstant().getMillis() <
+      defaultToNow(right).toInstant().getMillis();
   }
 
   /**
@@ -951,8 +951,8 @@ public class DateTimeUtil {
    * @return true if left is before right and false otherwise.
    */
   public static boolean isBeforeMillis(org.joda.time.LocalDateTime left, org.joda.time.LocalDateTime right) {
-    return normalizeDateTime(left).toDateTime(DateTimeZone.UTC).getMillis() <
-      normalizeDateTime(right).toDateTime(DateTimeZone.UTC).getMillis();
+    return defaultToNow(left).toDateTime(DateTimeZone.UTC).getMillis() <
+      defaultToNow(right).toDateTime(DateTimeZone.UTC).getMillis();
   }
 
   /**
@@ -966,8 +966,8 @@ public class DateTimeUtil {
    * @return true if left is before right and false otherwise.
    */
   public static boolean isBeforeMillis(LocalTime left, LocalTime right) {
-    return normalizeTime(left).truncatedTo(MILLIS)
-      .isBefore(normalizeTime(right).truncatedTo(MILLIS));
+    return defaultToNow(left).truncatedTo(MILLIS)
+      .isBefore(defaultToNow(right).truncatedTo(MILLIS));
   }
 
   /**
@@ -983,7 +983,7 @@ public class DateTimeUtil {
    * @return true if left is before right and false otherwise.
    */
   public static boolean isBeforeMillis(org.joda.time.LocalTime left, org.joda.time.LocalTime right) {
-    return normalizeTime(left).isBefore(normalizeTime(right));
+    return defaultToNow(left).isBefore(defaultToNow(right));
   }
 
   /**
@@ -997,8 +997,8 @@ public class DateTimeUtil {
    * @return true if left is before right and false otherwise.
    */
   public static boolean isAfterMillis(ZonedDateTime left, ZonedDateTime right) {
-    return normalizeDateTime(left).toInstant().toEpochMilli() >
-      normalizeDateTime(right).toInstant().toEpochMilli();
+    return defaultToNow(left).toInstant().toEpochMilli() >
+      defaultToNow(right).toInstant().toEpochMilli();
   }
 
   /**
@@ -1012,8 +1012,8 @@ public class DateTimeUtil {
    * @return true if left is before right and false otherwise.
    */
   public static boolean isAfterMillis(LocalDateTime left, LocalDateTime right) {
-    return normalizeDateTime(left).toInstant(UTC).toEpochMilli() >
-      normalizeDateTime(right).toInstant(UTC).toEpochMilli();
+    return defaultToNow(left).toInstant(UTC).toEpochMilli() >
+      defaultToNow(right).toInstant(UTC).toEpochMilli();
   }
 
   /**
@@ -1029,8 +1029,8 @@ public class DateTimeUtil {
    * @return true if left is before right and false otherwise.
    */
   public static boolean isAfterMillis(DateTime left, DateTime right) {
-    return normalizeDateTime(left).toInstant().getMillis() >
-      normalizeDateTime(right).toInstant().getMillis();
+    return defaultToNow(left).toInstant().getMillis() >
+      defaultToNow(right).toInstant().getMillis();
   }
 
   /**
@@ -1046,8 +1046,8 @@ public class DateTimeUtil {
    * @return true if left is before right and false otherwise.
    */
   public static boolean isAfterMillis(org.joda.time.LocalDateTime left, org.joda.time.LocalDateTime right) {
-    return normalizeDateTime(left).toDateTime(DateTimeZone.UTC).getMillis() >
-      normalizeDateTime(right).toDateTime(DateTimeZone.UTC).getMillis();
+    return defaultToNow(left).toDateTime(DateTimeZone.UTC).getMillis() >
+      defaultToNow(right).toDateTime(DateTimeZone.UTC).getMillis();
   }
 
   /**
@@ -1061,8 +1061,8 @@ public class DateTimeUtil {
    * @return true if left is before right and false otherwise.
    */
   public static boolean isAfterMillis(LocalTime left, LocalTime right) {
-    return normalizeTime(left).truncatedTo(MILLIS)
-      .isAfter(normalizeTime(right).truncatedTo(MILLIS));
+    return defaultToNow(left).truncatedTo(MILLIS)
+      .isAfter(defaultToNow(right).truncatedTo(MILLIS));
   }
   /**
    * Check if the the left time is after the right time in milliseconds.
@@ -1077,7 +1077,7 @@ public class DateTimeUtil {
    * @return true if left is before right and false otherwise.
    */
   public static boolean isAfterMillis(org.joda.time.LocalTime left, org.joda.time.LocalTime right) {
-    return normalizeTime(left).isAfter(normalizeTime(right));
+    return defaultToNow(left).isAfter(defaultToNow(right));
   }
 
   /**
@@ -1091,8 +1091,8 @@ public class DateTimeUtil {
    * @return true if left is before right and false otherwise.
    */
   public static boolean isSameMillis(ZonedDateTime left, ZonedDateTime right) {
-    return normalizeDateTime(left).toInstant().toEpochMilli() ==
-      normalizeDateTime(right).toInstant().toEpochMilli();
+    return defaultToNow(left).toInstant().toEpochMilli() ==
+      defaultToNow(right).toInstant().toEpochMilli();
   }
 
   /**
@@ -1106,8 +1106,8 @@ public class DateTimeUtil {
    * @return true if left is before right and false otherwise.
    */
   public static boolean isSameMillis(LocalDateTime left, LocalDateTime right) {
-    return normalizeDateTime(left).toInstant(UTC).toEpochMilli() ==
-      normalizeDateTime(right).toInstant(UTC).toEpochMilli();
+    return defaultToNow(left).toInstant(UTC).toEpochMilli() ==
+      defaultToNow(right).toInstant(UTC).toEpochMilli();
   }
 
   /**
@@ -1121,8 +1121,8 @@ public class DateTimeUtil {
    * @return true if left is before right and false otherwise.
    */
   public static boolean isSameMillis(LocalTime left, LocalTime right) {
-    return normalizeTime(left).truncatedTo(MILLIS).toNanoOfDay() ==
-      normalizeTime(right).truncatedTo(MILLIS).toNanoOfDay();
+    return defaultToNow(left).truncatedTo(MILLIS).toNanoOfDay() ==
+      defaultToNow(right).truncatedTo(MILLIS).toNanoOfDay();
   }
 
   /**
@@ -1138,8 +1138,8 @@ public class DateTimeUtil {
    * @return true if left is before right and false otherwise.
    */
   public static boolean isSameMillis(DateTime left, DateTime right) {
-    return normalizeDateTime(left).toInstant().getMillis() ==
-      normalizeDateTime(right).toInstant().getMillis();
+    return defaultToNow(left).toInstant().getMillis() ==
+      defaultToNow(right).toInstant().getMillis();
   }
 
   /**
@@ -1153,7 +1153,7 @@ public class DateTimeUtil {
    * @return true if left is before right and false otherwise.
    */
   public static boolean isSameMillis(Instant left, Instant right) {
-    return normalizeDateTime(left).toEpochMilli() == normalizeDateTime(right).toEpochMilli();
+    return defaultToNow(left).toEpochMilli() == defaultToNow(right).toEpochMilli();
   }
 
   /**
@@ -1169,7 +1169,7 @@ public class DateTimeUtil {
    * @return true if left is before right and false otherwise.
    */
   public static boolean isSameMillis(org.joda.time.Instant left, org.joda.time.Instant right) {
-    return normalizeDateTime(left).getMillis() == normalizeDateTime(right).getMillis();
+    return defaultToNow(left).getMillis() == defaultToNow(right).getMillis();
   }
 
   /**
@@ -1283,13 +1283,13 @@ public class DateTimeUtil {
    * @return true if left is before right and false otherwise.
    */
   public static int compareToMillis(ZonedDateTime left, ZonedDateTime right) {
-    if (normalizeDateTime(left).toInstant().toEpochMilli()
-      == normalizeDateTime(right).toInstant().toEpochMilli()) {
+    if (defaultToNow(left).toInstant().toEpochMilli()
+      == defaultToNow(right).toInstant().toEpochMilli()) {
       return 0;
     }
 
-    if (normalizeDateTime(left).toInstant().toEpochMilli()
-      < normalizeDateTime(right).toInstant().toEpochMilli()) {
+    if (defaultToNow(left).toInstant().toEpochMilli()
+      < defaultToNow(right).toInstant().toEpochMilli()) {
       return -1;
     }
 
@@ -1304,8 +1304,8 @@ public class DateTimeUtil {
    * @return true if left is before right and false otherwise.
    */
   public static int compareToMillis(LocalTime left, LocalTime right) {
-    return normalizeTime(left).truncatedTo(MILLIS)
-      .compareTo(normalizeTime(right).truncatedTo(MILLIS));
+    return defaultToNow(left).truncatedTo(MILLIS)
+      .compareTo(defaultToNow(right).truncatedTo(MILLIS));
   }
 
   /**
@@ -1323,13 +1323,13 @@ public class DateTimeUtil {
    * @return true if left is before right and false otherwise.
    */
   public static int compareToMillis(DateTime left, DateTime right) {
-    if (normalizeDateTime(left).toInstant().getMillis()
-      == normalizeDateTime(right).toInstant().getMillis()) {
+    if (defaultToNow(left).toInstant().getMillis()
+      == defaultToNow(right).toInstant().getMillis()) {
       return 0;
     }
 
-    if (normalizeDateTime(left).toInstant().getMillis()
-      < normalizeDateTime(right).toInstant().getMillis()) {
+    if (defaultToNow(left).toInstant().getMillis()
+      < defaultToNow(right).toInstant().getMillis()) {
       return -1;
     }
 
@@ -1346,7 +1346,7 @@ public class DateTimeUtil {
    * @return true if left is before right and false otherwise.
    */
   public static int compareToMillis(org.joda.time.LocalTime left, org.joda.time.LocalTime right) {
-    return normalizeTime(left).compareTo(normalizeTime(right));
+    return defaultToNow(left).compareTo(defaultToNow(right));
   }
 
   /**
@@ -1361,9 +1361,9 @@ public class DateTimeUtil {
    * exclusive end.
    */
   public static long millisBetween(ZonedDateTime begin, ZonedDateTime end) {
-    if (isBeforeMillis(normalizeDateTime(begin), normalizeDateTime(end))) {
-      return normalizeDateTime(end).toInstant().toEpochMilli()
-        - normalizeDateTime(begin).toInstant().toEpochMilli();
+    if (isBeforeMillis(defaultToNow(begin), defaultToNow(end))) {
+      return defaultToNow(end).toInstant().toEpochMilli()
+        - defaultToNow(begin).toInstant().toEpochMilli();
     }
 
     return 0L;
@@ -1383,8 +1383,8 @@ public class DateTimeUtil {
    * exclusive end.
    */
   public static long millisBetween(LocalDateTime begin, LocalDateTime end) {
-    final ZonedDateTime zonedBegin = ZonedDateTime.of(normalizeDateTime(begin), UTC);
-    final ZonedDateTime zonedEnd = ZonedDateTime.of(normalizeDateTime(end), UTC);
+    final ZonedDateTime zonedBegin = ZonedDateTime.of(defaultToNow(begin), UTC);
+    final ZonedDateTime zonedEnd = ZonedDateTime.of(defaultToNow(end), UTC);
 
     return millisBetween(zonedBegin, zonedEnd);
   }

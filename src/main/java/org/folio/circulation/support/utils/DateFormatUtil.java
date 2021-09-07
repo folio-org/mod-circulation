@@ -6,9 +6,8 @@ import static java.time.temporal.ChronoField.MILLI_OF_SECOND;
 import static java.time.temporal.ChronoField.MINUTE_OF_HOUR;
 import static java.time.temporal.ChronoField.NANO_OF_SECOND;
 import static java.time.temporal.ChronoField.SECOND_OF_MINUTE;
-import static org.folio.circulation.support.utils.DateTimeUtil.normalizeDate;
-import static org.folio.circulation.support.utils.DateTimeUtil.normalizeDateTime;
-import static org.folio.circulation.support.utils.DateTimeUtil.normalizeZone;
+import static org.folio.circulation.support.utils.DateTimeUtil.defaultToClockZone;
+import static org.folio.circulation.support.utils.DateTimeUtil.defaultToNow;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -190,7 +189,7 @@ public class DateFormatUtil {
    * @return The converted dateTime string.
    */
   public static String formatDate(ZonedDateTime dateTime) {
-    return normalizeDateTime(dateTime).format(ISO_LOCAL_DATE);
+    return defaultToNow(dateTime).format(ISO_LOCAL_DATE);
   }
 
   /**
@@ -204,7 +203,7 @@ public class DateFormatUtil {
    * @return The converted dateTime string.
    */
   public static String formatDate(OffsetDateTime dateTime) {
-    return normalizeDateTime(dateTime).format(ISO_LOCAL_DATE);
+    return defaultToNow(dateTime).format(ISO_LOCAL_DATE);
   }
 
   /**
@@ -218,7 +217,7 @@ public class DateFormatUtil {
    * @return The converted date string.
    */
   public static String formatDate(LocalDate date) {
-    return normalizeDate(date).format(ISO_LOCAL_DATE);
+    return defaultToNow(date).format(ISO_LOCAL_DATE);
   }
 
   /**
@@ -234,7 +233,7 @@ public class DateFormatUtil {
    * @return The converted dateTime string.
    */
   public static String formatDate(org.joda.time.LocalDate date) {
-    return normalizeDate(date).toString(ISODateTimeFormat.date());
+    return defaultToNow(date).toString(ISODateTimeFormat.date());
   }
 
   /**
@@ -307,7 +306,7 @@ public class DateFormatUtil {
    * @return The converted dateTime string.
    */
   public static String formatDateTime(ZonedDateTime dateTime) {
-    return normalizeDateTime(dateTime).format(DATE_TIME);
+    return defaultToNow(dateTime).format(DATE_TIME);
   }
 
   /**
@@ -321,7 +320,7 @@ public class DateFormatUtil {
    * @return The converted dateTime string.
    */
   public static String formatDateTime(OffsetDateTime dateTime) {
-    return normalizeDateTime(dateTime).format(DATE_TIME);
+    return defaultToNow(dateTime).format(DATE_TIME);
   }
 
   /**
@@ -337,7 +336,7 @@ public class DateFormatUtil {
    * @return The converted date string.
    */
   public static String formatDateTime(LocalDate date) {
-    return ZonedDateTime.of(normalizeDate(date), LocalTime.MIDNIGHT, ClockUtil.getZoneId())
+    return ZonedDateTime.of(defaultToNow(date), LocalTime.MIDNIGHT, ClockUtil.getZoneId())
       .format(DATE_TIME);
   }
 
@@ -354,7 +353,7 @@ public class DateFormatUtil {
    * @return The converted dateTime string.
    */
   public static String formatDateTime(DateTime dateTime) {
-    return normalizeDateTime(dateTime).toString(ISODateTimeFormat.dateTime());
+    return defaultToNow(dateTime).toString(ISODateTimeFormat.dateTime());
   }
 
   /**
@@ -384,7 +383,7 @@ public class DateFormatUtil {
    */
   public static ZonedDateTime parseDateTime(String value, ZoneId zone) {
     if (value == null) {
-      final ZonedDateTime dateTime = normalizeDateTime((ZonedDateTime) null);
+      final ZonedDateTime dateTime = defaultToNow((ZonedDateTime) null);
 
       if (zone == null) {
         return dateTime;
@@ -452,7 +451,7 @@ public class DateFormatUtil {
    */
   public static DateTime parseJodaDateTime(String value, DateTimeZone zone) {
     if (value == null) {
-      final DateTime dateTime = normalizeDateTime((DateTime) null);
+      final DateTime dateTime = defaultToNow((DateTime) null);
 
       if (zone == null) {
         return dateTime;
@@ -497,7 +496,7 @@ public class DateFormatUtil {
    */
   public static LocalDate parseDate(String value, ZoneId zone) {
     if (value == null) {
-      return normalizeDate((LocalDate) null);
+      return defaultToNow((LocalDate) null);
     }
 
     List<DateTimeFormatter> formatters = getDateTimeFormatters();
@@ -505,7 +504,7 @@ public class DateFormatUtil {
     for (int i = 0; i < formatters.size(); i++) {
       try {
         DateTimeFormatter formatter = formatters.get(i)
-          .withZone(normalizeZone(zone));
+          .withZone(defaultToClockZone(zone));
         return LocalDate.parse(value, formatter);
       } catch (DateTimeParseException e1) {
         if (i == formatters.size() - 1) {
@@ -539,7 +538,7 @@ public class DateFormatUtil {
    * @return A date parsed from the value.
    */
   public static org.joda.time.LocalDate parseJodaDate(String value, DateTimeZone zone) {
-    final ZoneId jodaZone = ZoneId.of(normalizeZone(zone).getID());
+    final ZoneId jodaZone = ZoneId.of(defaultToClockZone(zone).getID());
     final LocalDate date = parseDateTimeString(value, jodaZone).toLocalDate();
 
     return new org.joda.time.LocalDate(date.getYear(), date.getMonthValue(), date.getDayOfMonth());
@@ -558,7 +557,7 @@ public class DateFormatUtil {
     for (int i = 0; i < formatters.size(); i++) {
       try {
         DateTimeFormatter formatter = formatters.get(i)
-          .withZone(normalizeZone(zone));
+          .withZone(defaultToClockZone(zone));
         return ZonedDateTime.parse(value, formatter)
           .truncatedTo(ChronoUnit.MILLIS);
       } catch (DateTimeParseException e1) {
