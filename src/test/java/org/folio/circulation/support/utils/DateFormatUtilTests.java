@@ -14,6 +14,7 @@ import java.time.ZonedDateTime;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -24,6 +25,11 @@ class DateFormatUtilTests {
   private static final String FORMATTED_DATE_TIME = "2010-10-10T10:10:10.000Z";
   private static final String FORMATTED_DATE_TIME_FROM_DATE = "2010-10-10T00:00:00.000Z";
   private static final String FORMATTED_DATE_TIME_NOW = "2020-10-20T10:10:10.000Z";
+
+  @BeforeEach
+  public void beforeEach() {
+    ClockUtil.setClock(Clock.fixed(Instant.parse(FORMATTED_DATE_TIME_NOW), ZoneOffset.UTC));
+  }
 
   @AfterEach
   public void afterEach() {
@@ -128,12 +134,10 @@ class DateFormatUtilTests {
   @CsvSource(value = {
     "0, null, null, " + FORMATTED_DATE_TIME_NOW,
     "1, Z, null, " + FORMATTED_DATE_TIME_NOW,
-    "2, null, " + FORMATTED_DATE_TIME + ", " + FORMATTED_DATE_TIME,
-    "3, Z, " + FORMATTED_DATE_TIME + ", " + FORMATTED_DATE_TIME
+    "2, null, 2010-10-10T10:10:10.000Z, 2010-10-10T10:10:10.000Z",
+    "3, Z, 2010-10-10T10:10:10.000Z, 2010-10-10T10:10:10.000Z"
   }, nullValues = {"null"})
   void shouldParseZonedDateTimeWithZone(int id, ZoneId zone, String value, String match) {
-    ClockUtil.setClock(Clock.fixed(Instant.parse(FORMATTED_DATE_TIME_NOW), ZoneOffset.UTC));
-
     final ZonedDateTime date = ZonedDateTime.parse(match);
     final ZonedDateTime result = DateFormatUtil.parseDateTime(value, zone);
 
@@ -144,12 +148,10 @@ class DateFormatUtilTests {
   @CsvSource(value = {
     "0, null, null, null",
     "1, UTC, null, null",
-    "2, null, " + FORMATTED_DATE_TIME + ", " + FORMATTED_DATE_TIME,
-    "3, UTC, " + FORMATTED_DATE_TIME + ", " + FORMATTED_DATE_TIME
+    "2, null, 2010-10-10T10:10:10.000Z, 2010-10-10T10:10:10.000Z",
+    "3, UTC, 2010-10-10T10:10:10.000Z, 2010-10-10T10:10:10.000Z"
   }, nullValues = {"null"})
-  void shouldParseJodaDateTimeOptional(int id, ZoneId zone, String value, String match) {
-    ClockUtil.setClock(Clock.fixed(Instant.parse(FORMATTED_DATE_TIME_NOW), ZoneOffset.UTC));
-
+  void shouldParseZonedDateTimeOptional(int id, ZoneId zone, String value, String match) {
     final ZonedDateTime date = match == null
       ? null
       : ZonedDateTime.parse(match);
@@ -162,12 +164,10 @@ class DateFormatUtilTests {
   @CsvSource(value = {
     "0, null, null, null",
     "1, Z, null, null",
-    "2, null, " + FORMATTED_DATE_TIME + ", " + FORMATTED_DATE_TIME,
-    "3, Z, " + FORMATTED_DATE_TIME + ", " + FORMATTED_DATE_TIME
+    "2, null, 2010-10-10T10:10:10.000Z, 2010-10-10T10:10:10.000Z",
+    "3, Z, 2010-10-10T10:10:10.000Z, 2010-10-10T10:10:10.000Z"
   }, nullValues = {"null"})
   void shouldParseZonedDateTimeOptionalWithZone(int id, ZoneId zone, String value, String match) {
-    ClockUtil.setClock(Clock.fixed(Instant.parse(FORMATTED_DATE_TIME_NOW), ZoneOffset.UTC));
-
     final ZonedDateTime date = match == null
       ? null
       : ZonedDateTime.parse(match);
@@ -188,12 +188,10 @@ class DateFormatUtilTests {
   @CsvSource(value = {
     "0, null, null, " + FORMATTED_DATE_TIME_NOW,
     "1, UTC, null, " + FORMATTED_DATE_TIME_NOW,
-    "2, null, " + FORMATTED_DATE_TIME + ", " + FORMATTED_DATE_TIME,
-    "3, UTC, " + FORMATTED_DATE_TIME + ", " + FORMATTED_DATE_TIME
+    "2, null, 2010-10-10T10:10:10.000Z, 2010-10-10T10:10:10.000Z",
+    "3, UTC, 2010-10-10T10:10:10.000Z, 2010-10-10T10:10:10.000Z"
   }, nullValues = {"null"})
   void shouldParseJodaDateTimeWithZone(int id, DateTimeZone zone, String value, String match) {
-    ClockUtil.setClock(Clock.fixed(Instant.parse(FORMATTED_DATE_TIME_NOW), ZoneOffset.UTC));
-
     final DateTime date = DateTime.parse(match);
     final DateTime result = DateFormatUtil.parseJodaDateTime(value, zone);
 
@@ -211,13 +209,11 @@ class DateFormatUtilTests {
   @ParameterizedTest
   @CsvSource(value = {
     "0, null, null, " + FORMATTED_DATE_NOW,
-    "1, UTC, null, " + FORMATTED_DATE_NOW,
-    "2, null, " + FORMATTED_DATE + ", " + FORMATTED_DATE,
-    "3, UTC, " + FORMATTED_DATE + ", " + FORMATTED_DATE
+    "1, Z, null, " + FORMATTED_DATE_NOW,
+    "2, null, 2010-10-10, 2010-10-10",
+    "3, Z, 2010-10-10, 2010-10-10"
   }, nullValues = {"null"})
   void shouldParseZonedDateWithZone(int id, ZoneId zone, String value, String match) {
-    ClockUtil.setClock(Clock.fixed(Instant.parse(FORMATTED_DATE_TIME_NOW), ZoneOffset.UTC));
-
     final LocalDate date = LocalDate.parse(match);
     final LocalDate result = DateFormatUtil.parseDate(value, zone);
 
@@ -236,12 +232,10 @@ class DateFormatUtilTests {
   @CsvSource(value = {
     "0, null, null, " + FORMATTED_DATE_NOW,
     "1, UTC, null, " + FORMATTED_DATE_NOW,
-    "2, null, " + FORMATTED_DATE + ", " + FORMATTED_DATE,
-    "3, UTC, " + FORMATTED_DATE + ", " + FORMATTED_DATE
+    "2, null, 2010-10-10, 2010-10-10",
+    "3, UTC, 2010-10-10, 2010-10-10"
   }, nullValues = {"null"})
   void shouldParseJodaDateWithZone(int id, DateTimeZone zone) {
-    ClockUtil.setClock(Clock.fixed(Instant.parse(FORMATTED_DATE_TIME_NOW), ZoneOffset.UTC));
-
     final org.joda.time.LocalDate date = org.joda.time.LocalDate.parse(FORMATTED_DATE);
     final org.joda.time.LocalDate result = DateFormatUtil.parseJodaDate(FORMATTED_DATE, zone);
 

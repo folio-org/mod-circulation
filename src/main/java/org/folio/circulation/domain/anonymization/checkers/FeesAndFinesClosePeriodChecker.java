@@ -5,6 +5,7 @@ import java.util.Optional;
 import org.folio.circulation.domain.Account;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.policy.Period;
+import org.folio.circulation.support.utils.DateTimeUtil;
 import org.joda.time.DateTime;
 
 public class FeesAndFinesClosePeriodChecker extends TimePeriodChecker {
@@ -27,7 +28,7 @@ public class FeesAndFinesClosePeriodChecker extends TimePeriodChecker {
       .map(Account::getClosedDate)
       .filter(Optional::isPresent)
       .map(Optional::get)
-      .max(DateTime::compareTo);
+      .max(DateTimeUtil::compareToMillis);
   }
 
   @Override

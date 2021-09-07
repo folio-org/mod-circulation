@@ -50,11 +50,12 @@ import static org.folio.circulation.support.json.JsonPropertyWriter.writeByPath;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.utils.CommonUtils.executeIfNotNull;
+import static org.folio.circulation.support.utils.DateTimeUtil.isBeforeMillis;
+import static org.folio.circulation.support.utils.DateTimeUtil.isSameMillis;
 import static org.folio.circulation.support.utils.DateTimeUtil.mostRecentDate;
 import static org.joda.time.DateTimeZone.UTC;
 
 import java.util.Collection;
-import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Stream;
 
@@ -518,7 +519,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public boolean hasDueDateChanged() {
-    return !Objects.equals(originalDueDate, getDueDate());
+    return !isSameMillis(originalDueDate, getDueDate());
   }
 
   public DateTime getSystemReturnDate() {
@@ -554,7 +555,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     DateTime dueDate = getDueDate();
 
     return ObjectUtils.allNotNull(dueDate, systemTime)
-      && dueDate.isBefore(systemTime);
+      && isBeforeMillis(dueDate, systemTime);
   }
 
   public Loan claimItemReturned(String comment, DateTime claimedReturnedDate) {

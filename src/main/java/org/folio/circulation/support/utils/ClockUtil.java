@@ -18,6 +18,13 @@ import org.joda.time.DateTimeZone;
 
 /**
  * A clock manager for safely getting and setting the time.
+ * <p>
+ * Provides management of the clock that is then exposed and used as the
+ * default clock for all methods within this utility.
+ * <p>
+ * Use these methods rather than using the now() methods for any given date and
+ * time related class.
+ * Failure to do so may result in the inability to properly perform tests.
  */
 public class ClockUtil {
   private static Clock clock = Clock.systemUTC();
@@ -78,7 +85,7 @@ public class ClockUtil {
 
   /**
    * Get the current system time according to the clock manager.
-   *
+   * <p>
    * TODO: This is temporarily designed to work with JodaTime. Replace this as
    * appropriate when migrating from JodaTime to JavaTime.
    *
@@ -124,7 +131,7 @@ public class ClockUtil {
 
   /**
    * Get the current system time according to the clock manager.
-   *
+   * <p>
    * TODO: Remove this once JodaTime is fully converted to JavaTime.
    *
    * @return
@@ -138,7 +145,7 @@ public class ClockUtil {
 
   /**
    * Get the current system time according to the clock manager.
-   *
+   * <p>
    * TODO: Remove this once JodaTime is fully converted to JavaTime.
    *
    * @return
@@ -151,7 +158,7 @@ public class ClockUtil {
 
   /**
    * Get the current system time according to the clock manager.
-   *
+   * <p>
    * TODO: Remove this once JodaTime is fully converted to JavaTime.
    *
    * @return
@@ -176,7 +183,7 @@ public class ClockUtil {
 
   /**
    * Get the current system time according to the clock manager.
-   *
+   * <p>
    * TODO: Remove this once JodaTime is fully converted to JavaTime.
    *
    * @return
@@ -190,7 +197,7 @@ public class ClockUtil {
 
   /**
    * Get the time zone of the system clock according to the clock manager.
-   *
+   * <p>
    * TODO: Remove this once JodaTime is fully converted to JavaTime.
    *
    * @return
@@ -223,9 +230,9 @@ public class ClockUtil {
 
   /**
    * Get the time zone from the clock.
-   *
+   * <p>
    * This will be converted from JavaTimes time zone to JodaTimes time zone.
-   *
+   * <p>
    * TODO: Remove this once JodaTime is fully converted to JavaTime.
    */
   public static DateTimeZone jodaTimezone() {

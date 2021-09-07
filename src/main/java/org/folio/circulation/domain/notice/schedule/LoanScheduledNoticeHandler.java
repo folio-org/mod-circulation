@@ -13,6 +13,8 @@ import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
+import static org.folio.circulation.support.utils.DateTimeUtil.isAfterMillis;
+import static org.folio.circulation.support.utils.DateTimeUtil.isBeforeMillis;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -94,7 +96,7 @@ public class LoanScheduledNoticeHandler extends ScheduledNoticeHandler {
     DateTime recurringNoticeNextRunTime = notice.getNextRunTime()
       .plus(noticeConfig.getRecurringPeriod().timePeriod());
 
-    if (recurringNoticeNextRunTime.isBefore(systemTime)) {
+    if (isBeforeMillis(recurringNoticeNextRunTime, systemTime)) {
       recurringNoticeNextRunTime =
         systemTime.plus(noticeConfig.getRecurringPeriod().timePeriod());
     }
@@ -147,7 +149,7 @@ public class LoanScheduledNoticeHandler extends ScheduledNoticeHandler {
     if (loan.isClosed()) {
       logMessages.add("Loan is closed");
     }
-    if (noticeConfig.hasBeforeTiming() && dueDate.isBefore(systemTime)) {
+    if (noticeConfig.hasBeforeTiming() && isBeforeMillis(dueDate, systemTime)) {
       logMessages.add("Loan is overdue");
     }
     if (isRecurringAfterNotice(notice) &&
@@ -207,7 +209,7 @@ public class LoanScheduledNoticeHandler extends ScheduledNoticeHandler {
 
     return noticeConfig.isRecurring() &&
       noticeConfig.getTiming() == BEFORE &&
-      notice.getNextRunTime().isAfter(loan.getDueDate());
+      isAfterMillis(notice.getNextRunTime(), loan.getDueDate());
   }
 
   @Override
