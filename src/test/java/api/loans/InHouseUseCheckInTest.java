@@ -12,7 +12,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.UUID;
 
-import org.joda.time.Seconds;
 import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
@@ -93,8 +92,7 @@ class InHouseUseCheckInTest extends APITests {
       builder -> builder.withPrimaryServicePoint(checkInServicePointId));
 
     final IndividualResource nod = itemsFixture.basedUponNod(
-      item -> item
-        .withTemporaryLocation(homeLocation.getId()));
+      item -> item.withTemporaryLocation(homeLocation.getId()));
 
     requestsFixture.place(new RequestBuilder()
       .page()
@@ -142,8 +140,7 @@ class InHouseUseCheckInTest extends APITests {
 
     final JsonObject lastOperation = recordedOperations.getFirst();
 
-    assertThat(lastOperation.getString("occurredDateTime"),
-      withinSecondsBeforeNow(Seconds.seconds(2)));
+    assertThat(lastOperation.getString("occurredDateTime"), withinSecondsBeforeNow(2));
     assertThat(lastOperation.getString("itemId"), is(itemId.toString()));
     assertThat(lastOperation.getString("servicePointId"), is(servicePoint.toString()));
     assertThat(lastOperation.getString("performedByUserId"), is(getUserId()));

@@ -1,9 +1,12 @@
 package org.folio.circulation.domain.policy;
 
 import static api.support.matchers.FailureMatcher.hasValidationFailure;
+import static java.time.ZoneOffset.UTC;
 import static java.util.Collections.emptyList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.time.ZonedDateTime;
 
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.RequestQueue;
@@ -14,8 +17,6 @@ import org.folio.circulation.resources.renewal.RenewByBarcodeResource;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.utils.ClockUtil;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.junit.jupiter.api.Test;
 
 import api.support.builders.LoanBuilder;
@@ -34,14 +35,14 @@ class InvalidLoanPolicyTests {
 
     LoanPolicy loanPolicy = LoanPolicy.from(representation);
 
-    DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
+    ZonedDateTime loanDate = ZonedDateTime.of(2018, 3, 14, 11, 14, 54, 0, UTC);
 
     Loan loan = new LoanBuilder()
       .open()
       .withLoanDate(loanDate)
       .asDomainObject();
 
-    final Result<DateTime> result = loanPolicy.calculateInitialDueDate(loan, null);
+    final Result<ZonedDateTime> result = loanPolicy.calculateInitialDueDate(loan, null);
 
     //TODO: This is fairly ugly, replace with a better message
     assertThat(result, hasValidationFailure(
@@ -60,7 +61,7 @@ class InvalidLoanPolicyTests {
     RenewByBarcodeResource renewByBarcodeResource = new RenewByBarcodeResource(null);
     LoanPolicy loanPolicy = LoanPolicy.from(representation);
 
-    DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
+    ZonedDateTime loanDate = ZonedDateTime.of(2018, 3, 14, 11, 14, 54, 0, UTC);
 
     Loan loan = new LoanBuilder()
       .open()
@@ -71,7 +72,7 @@ class InvalidLoanPolicyTests {
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
     RenewalContext renewalContext = RenewalContext.create(loan, new JsonObject(), "no-user")
       .withRequestQueue(new RequestQueue(emptyList()));
-    renewByBarcodeResource.regularRenew(renewalContext, errorHandler, ClockUtil.getDateTime());
+    renewByBarcodeResource.regularRenew(renewalContext, errorHandler, ClockUtil.getZonedDateTime());
 
     //TODO: This is fairly ugly, replace with a better message
     assertTrue(errorHandler.getErrors().keySet().stream()

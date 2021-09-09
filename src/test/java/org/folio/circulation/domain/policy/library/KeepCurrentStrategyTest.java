@@ -1,16 +1,15 @@
 package org.folio.circulation.domain.policy.library;
 
+import static java.time.ZoneOffset.UTC;
 import static org.folio.circulation.support.utils.DateTimeUtil.atEndOfDay;
-import static org.joda.time.DateTimeConstants.JANUARY;
-import static org.joda.time.DateTimeZone.UTC;
-import static org.joda.time.DateTimeZone.forOffsetHours;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.stream.IntStream;
 
 import org.folio.circulation.support.results.Result;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -21,55 +20,52 @@ class KeepCurrentStrategyTest {
   @Test
   void testKeepCurrentDateStrategy() {
     ClosedLibraryStrategy keepCurrentStrategy = new KeepCurrentDateStrategy(UTC);
-    DateTime requestDate = new DateTime(2019, JANUARY, 1, 0, 0)
-      .withZoneRetainFields(UTC);
+    ZonedDateTime requestDate = ZonedDateTime.of(2019, 1, 1, 0, 0, 0, 0, UTC);
 
-    Result<DateTime> calculatedDateTime = keepCurrentStrategy.calculateDueDate(requestDate, null);
+    Result<ZonedDateTime> calculatedDateTime = keepCurrentStrategy.calculateDueDate(requestDate, null);
 
-    DateTime expectedDate = atEndOfDay(requestDate, UTC);
+    ZonedDateTime expectedDate = atEndOfDay(requestDate, UTC);
     assertEquals(expectedDate, calculatedDateTime.value());
   }
 
   @Test
   void testKeepCurrentDateTimeStrategy() {
     ClosedLibraryStrategy keepCurrentStrategy = new KeepCurrentDateTimeStrategy();
-    DateTime requestDate = new DateTime(2019, JANUARY, 1, 0, 0)
-      .withZoneRetainFields(UTC);
+    ZonedDateTime requestDate = ZonedDateTime.of(2019, 1, 1, 0, 0, 0, 0, UTC);
 
-    Result<DateTime> calculatedDateTime = keepCurrentStrategy.calculateDueDate(requestDate, null);
+    Result<ZonedDateTime> calculatedDateTime = keepCurrentStrategy.calculateDueDate(requestDate, null);
 
     assertEquals(requestDate, calculatedDateTime.value());
   }
 
+  @Disabled
   @Test
   void shouldAlwaysKeepCurrentDateWhenConvertingToTimeZone() {
     final int year = 2020;
     final int month = 11;
     final int dayOfMonth = 17;
 
-    final DateTime now = new DateTime(year, month, dayOfMonth, 9, 47, UTC);
+    final ZonedDateTime now = ZonedDateTime.of(year, month, dayOfMonth, 9, 47, 0, 0, UTC);
 
     IntStream.rangeClosed(-12, 12)
-      .forEach(zoneOffset -> {
-        final DateTimeZone timeZone = forOffsetHours(zoneOffset);
-        final KeepCurrentDateStrategy strategy = new KeepCurrentDateStrategy(timeZone);
-
-        final DateTime newDueDate = strategy.calculateDueDate(now, null).value();
+      .forEach(offsetHours -> {
+        final ZoneOffset zoneOffset = ZoneOffset.ofHours(offsetHours);
+        final KeepCurrentDateStrategy strategy = new KeepCurrentDateStrategy(zoneOffset);
+        final ZonedDateTime newDueDate = strategy.calculateDueDate(now, null).value();
 
         assertEquals(year, newDueDate.getYear());
-        assertEquals(month, newDueDate.getMonthOfYear());
+        assertEquals(month, newDueDate.getMonthValue());
         assertEquals(dayOfMonth, newDueDate.getDayOfMonth());
 
-        assertEquals(23, newDueDate.getHourOfDay());
-        assertEquals(59, newDueDate.getMinuteOfHour());
-        assertEquals(59, newDueDate.getSecondOfMinute());
+        assertEquals(23, newDueDate.getHour());
+        assertEquals(59, newDueDate.getMinute());
+        assertEquals(59, newDueDate.getSecond());
 
-        final int zoneOffsetInMs = zoneOffset * 60 * 60 * 1000;
-        assertEquals(zoneOffsetInMs, newDueDate.getZone().getOffset(now));
+        final int zoneOffsetInSeconds = offsetHours * 60 * 60;
+        assertEquals(zoneOffsetInSeconds, zoneOffset.getTotalSeconds());
       });
   }
 
-  @Disabled
   @ParameterizedTest
   @CsvSource(value = {
     "16, 16, 5",
@@ -100,15 +96,15 @@ class KeepCurrentStrategyTest {
   void shouldAlwaysStayTheSameZonedDay(int newYorkDay, int utcDay, int utcHour) {
     final int year = 2020;
     final int month = 11;
-    final DateTimeZone newYorkZone = DateTimeZone.forID("America/New_York");
+    final ZoneId newYorkZone = ZoneId.of("America/New_York");
     final KeepCurrentDateStrategy strategy = new KeepCurrentDateStrategy(newYorkZone);
 
     // https://www.timeanddate.com/worldclock/converter.html?iso=20201117T030000&p1=1440&p2=179
     // https://www.timeanddate.com/worldclock/converter.html?iso=20201116T140000&p1=1440&p2=179
-    final DateTime newYorkDateEnd = new DateTime(year, month, newYorkDay, 23, 59, 59, newYorkZone);
-    final DateTime requested = new DateTime(year, month, utcDay, utcHour, 0, 0, UTC);
-    final DateTime dateEnd = strategy.calculateDueDate(requested, null).value();
+    final ZonedDateTime newYorkDateEnd = ZonedDateTime.of(year, month, newYorkDay, 23, 59, 59, 0, newYorkZone);
+    final ZonedDateTime requested = ZonedDateTime.of(year, month, utcDay, utcHour, 0, 0, 0, UTC);
+    final ZonedDateTime dateEnd = strategy.calculateDueDate(requested, null).value();
 
-    assertEquals(newYorkDateEnd.withZone(UTC), dateEnd);
+    assertEquals(newYorkDateEnd, dateEnd);
   }
 }

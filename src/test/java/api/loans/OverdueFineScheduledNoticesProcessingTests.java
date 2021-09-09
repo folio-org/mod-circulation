@@ -17,6 +17,7 @@ import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -36,7 +37,6 @@ import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.json.JsonPropertyWriter;
 import org.folio.circulation.support.utils.ClockUtil;
 import org.hamcrest.Matcher;
-import org.joda.time.DateTime;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -59,7 +59,7 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
 
   private Account account;
   private FeeFineAction action;
-  private DateTime actionDateTime;
+  private ZonedDateTime actionDateTime;
   private UUID loanId;
   private UUID itemId;
   private UUID userId;
@@ -93,7 +93,7 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
   void oneTimeAfterNoticeIsSentAndDeleted(TriggeringEvent triggeringEvent) {
     generateOverdueFine(triggeringEvent, createNoticeConfig(triggeringEvent, AFTER, false));
 
-    DateTime expectedNextRunTime = actionDateTime.plus(AFTER_PERIOD.timePeriod());
+    ZonedDateTime expectedNextRunTime = AFTER_PERIOD.plusDate(actionDateTime);
 
     verifyNumberOfScheduledNotices(1);
     assertThatScheduledNoticeExists(triggeringEvent, AFTER, false, expectedNextRunTime);
@@ -112,14 +112,14 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
   void recurringAfterNoticeIsSentAndRescheduled(TriggeringEvent triggeringEvent) {
     generateOverdueFine(triggeringEvent, createNoticeConfig(triggeringEvent, AFTER, true));
 
-    DateTime expectedFirstRunTime = actionDateTime.plus(AFTER_PERIOD.timePeriod());
+    ZonedDateTime expectedFirstRunTime = AFTER_PERIOD.plusDate(actionDateTime);
 
     verifyNumberOfScheduledNotices(1);
     assertThatScheduledNoticeExists(triggeringEvent, AFTER, true, expectedFirstRunTime);
 
     scheduledNoticeProcessingClient.runFeeFineNoticesProcessing(rightAfter(expectedFirstRunTime));
 
-    DateTime expectedSecondRunTime = expectedFirstRunTime.plus(RECURRING_PERIOD.timePeriod());
+    ZonedDateTime expectedSecondRunTime = RECURRING_PERIOD.plusDate(expectedFirstRunTime);
 
     assertThatNoticesWereSent(TEMPLATE_IDS.get(AFTER));
     verifyNumberOfScheduledNotices(1);
@@ -134,17 +134,16 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
   void recurringNoticeIsRescheduledCorrectlyWhenNextCalculatedRunTimeIsBeforeNow(TriggeringEvent triggeringEvent) {
     generateOverdueFine(triggeringEvent, createNoticeConfig(triggeringEvent, AFTER, true));
 
-    DateTime expectedFirstRunTime = actionDateTime.plus(AFTER_PERIOD.timePeriod());
+    ZonedDateTime expectedFirstRunTime = AFTER_PERIOD.plusDate(actionDateTime);
 
     verifyNumberOfScheduledNotices(1);
     assertThatScheduledNoticeExists(triggeringEvent, AFTER, true, expectedFirstRunTime);
 
-    DateTime fakeNow = rightAfter(
-      expectedFirstRunTime.plus(RECURRING_PERIOD.timePeriod()));
+    ZonedDateTime fakeNow = rightAfter(RECURRING_PERIOD.plusDate(expectedFirstRunTime));
 
     scheduledNoticeProcessingClient.runFeeFineNoticesProcessing(fakeNow);
 
-    DateTime expectedNextRunTime = fakeNow.plus(RECURRING_PERIOD.timePeriod());
+    ZonedDateTime expectedNextRunTime = RECURRING_PERIOD.plusDate(fakeNow);
 
     assertThatNoticesWereSent(TEMPLATE_IDS.get(AFTER));
     verifyNumberOfScheduledNotices(1);
@@ -163,7 +162,7 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
       createNoticeConfig(triggeringEvent, AFTER, true)
     );
 
-    DateTime firstAfterRunTime = actionDateTime.plus(AFTER_PERIOD.timePeriod());
+    ZonedDateTime firstAfterRunTime = AFTER_PERIOD.plusDate(actionDateTime);
 
     verifyNumberOfScheduledNotices(3);
     assertThatScheduledNoticeExists(triggeringEvent, UPON_AT, false, actionDateTime);  // send and delete
@@ -172,7 +171,7 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
 
     scheduledNoticeProcessingClient.runFeeFineNoticesProcessing(rightAfter(firstAfterRunTime));
 
-    DateTime expectedRecurrenceRunTime = firstAfterRunTime.plus(RECURRING_PERIOD.timePeriod());
+    ZonedDateTime expectedRecurrenceRunTime = RECURRING_PERIOD.plusDate(firstAfterRunTime);
 
     assertThatNoticesWereSent(TEMPLATE_IDS.get(UPON_AT), TEMPLATE_IDS.get(AFTER), TEMPLATE_IDS.get(AFTER));
     verifyNumberOfScheduledNotices(1);
@@ -362,8 +361,8 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
       .withFeeFineType(OVERDUE_FINE)
       .withAutomatic(true));
 
-    final DateTime checkOutDate = ClockUtil.getDateTime().minusYears(1);
-    final DateTime checkInDate = checkOutDate.plusMonths(1);
+    final ZonedDateTime checkOutDate = ClockUtil.getZonedDateTime().minusYears(1);
+    final ZonedDateTime checkInDate = checkOutDate.plusMonths(1);
 
     IndividualResource checkOutResponse = checkOutFixture.checkOutByBarcode(item, user, checkOutDate);
     loanId = UUID.fromString(checkOutResponse.getJson().getString("id"));
@@ -416,7 +415,7 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
     return builder.create();
   }
 
-  private void assertThatScheduledNoticeExists(TriggeringEvent triggeringEvent, NoticeTiming timing, Boolean recurring, DateTime nextRunTime) {
+  private void assertThatScheduledNoticeExists(TriggeringEvent triggeringEvent, NoticeTiming timing, Boolean recurring, ZonedDateTime nextRunTime) {
     Period expectedRecurringPeriod = recurring ? RECURRING_PERIOD : null;
 
     assertThat(scheduledNoticesClient.getAll(), hasItems(
@@ -439,7 +438,7 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
         hasNoticeProperties(userId, templateId, "email", "text/html", matcher))));
   }
 
-  private static DateTime rightAfter(DateTime dateTime) {
+  private static ZonedDateTime rightAfter(ZonedDateTime dateTime) {
     return dateTime.plusMinutes(1);
   }
 

@@ -40,6 +40,7 @@ import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static api.support.utl.BlockOverridesUtils.getMissingPermissions;
+import static java.time.ZoneOffset.UTC;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.domain.EventType.ITEM_CHECKED_OUT;
 import static org.folio.circulation.domain.policy.DueDateManagement.KEEP_THE_CURRENT_DUE_DATE;
@@ -52,10 +53,11 @@ import static org.folio.circulation.domain.policy.Period.months;
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 import static org.folio.circulation.domain.representations.logs.LogEventType.CHECK_OUT;
 import static org.folio.circulation.domain.representations.logs.LogEventType.CHECK_OUT_THROUGH_OVERRIDE;
-import static org.folio.circulation.support.utils.ClockUtil.getDateTime;
+import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;
-import static org.folio.circulation.support.utils.DateFormatUtil.parseJodaDateTime;
+import static org.folio.circulation.support.utils.DateFormatUtil.parseDateTime;
 import static org.folio.circulation.support.utils.DateTimeUtil.atEndOfDay;
+import static org.folio.circulation.support.utils.DateTimeUtil.atStartOfDay;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.hasItem;
@@ -65,9 +67,11 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.nullValue;
-import static org.joda.time.DateTimeZone.UTC;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.time.LocalTime;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
@@ -78,10 +82,6 @@ import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.domain.representations.logs.LogEventType;
 import org.folio.circulation.support.http.client.Response;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.LocalTime;
-import org.joda.time.Seconds;
 import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
@@ -106,10 +106,10 @@ import io.vertx.core.json.JsonObject;
 import lombok.val;
 
 class CheckOutByBarcodeTests extends APITests {
-  private static final DateTime TEST_LOAN_DATE =
-    new DateTime(2019, 4, 10, 11, 35, 48, DateTimeZone.UTC);
-  private static final DateTime TEST_DUE_DATE =
-    new DateTime(2019, 4, 20, 11, 30, 0, DateTimeZone.UTC);
+  private static final ZonedDateTime TEST_LOAN_DATE =
+    ZonedDateTime.of(2019, 4, 10, 11, 35, 48, 0, UTC);
+  private static final ZonedDateTime TEST_DUE_DATE =
+    ZonedDateTime.of(2019, 4, 20, 11, 30, 0, 0, UTC);
   public static final String OVERRIDE_ITEM_NOT_LOANABLE_BLOCK_PERMISSION =
     "circulation.override-item-not-loanable-block";
   public static final String OVERRIDE_PATRON_BLOCK_PERMISSION =
@@ -132,7 +132,7 @@ class CheckOutByBarcodeTests extends APITests {
 
     final IndividualResource steve = usersFixture.steve();
 
-    final DateTime loanDate = new DateTime(2018, 3, 18, 11, 43, 54, UTC);
+    final ZonedDateTime loanDate = ZonedDateTime.of(2018, 3, 18, 11, 43, 54, 0, UTC);
 
     final UUID checkoutServicePointId = UUID.randomUUID();
 
@@ -272,15 +272,15 @@ class CheckOutByBarcodeTests extends APITests {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
 
-    final DateTime loanDate = atEndOfDay(getDateTime());
+    final ZonedDateTime loanDate = atEndOfDay(getZonedDateTime());
 
-    getDateTime()
-      .withMonthOfYear(3)
+    getZonedDateTime()
+      .withMonth(3)
       .withDayOfMonth(18)
-      .withHourOfDay(11)
-      .withMinuteOfHour(43)
-      .withSecondOfMinute(54)
-      .withMillisOfSecond(0);
+      .withHour(11)
+      .withMinute(43)
+      .withSecond(54)
+      .truncatedTo(ChronoUnit.SECONDS);
 
     final IndividualResource response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -301,7 +301,7 @@ class CheckOutByBarcodeTests extends APITests {
     loanHasLostItemPolicyProperties(loan,  lostItemFeePolicy);
 
     assertThat("due date should be based upon fixed due date schedule",
-      loan.getString("dueDate"), isEquivalentTo(END_OF_CURRENT_YEAR_DUE_DATE));
+      parseDateTime(loan.getString("dueDate")), is(END_OF_CURRENT_YEAR_DUE_DATE));
   }
 
   @Test
@@ -334,7 +334,7 @@ class CheckOutByBarcodeTests extends APITests {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
 
-    final DateTime loanDate = new DateTime(2018, 3, 18, 11, 43, 54, UTC);
+    final ZonedDateTime loanDate = ZonedDateTime.of(2018, 3, 18, 11, 43, 54, 0, UTC);
 
     final IndividualResource response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -356,7 +356,7 @@ class CheckOutByBarcodeTests extends APITests {
 
     assertThat("due date should be limited by schedule",
       loan.getString("dueDate"),
-      isEquivalentTo(new DateTime(2018, 3, 31, 23, 59, 59, UTC)));
+      isEquivalentTo(ZonedDateTime.of(2018, 3, 31, 23, 59, 59, 0, UTC)));
   }
 
   @Test
@@ -378,7 +378,7 @@ class CheckOutByBarcodeTests extends APITests {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
 
-    final DateTime requestDate = getDateTime();
+    final ZonedDateTime requestDate = getZonedDateTime();
 
     final IndividualResource response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -388,9 +388,8 @@ class CheckOutByBarcodeTests extends APITests {
 
     final JsonObject loan = response.getJson();
 
-    assertThat("loan date should be as supplied",
-      loan.getString("loanDate"),
-      withinSecondsAfter(Seconds.seconds(10), requestDate));
+    assertThat("loan date should be as supplied", loan.getString("loanDate"),
+      withinSecondsAfter(10, requestDate));
   }
 
   @Test
@@ -605,7 +604,7 @@ class CheckOutByBarcodeTests extends APITests {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
 
-    final DateTime loanDate = new DateTime(2018, 3, 18, 11, 43, 54, UTC);
+    final ZonedDateTime loanDate = ZonedDateTime.of(2018, 3, 18, 11, 43, 54, 0, UTC);
 
     final Response response = checkOutFixture.attemptCheckOutByBarcode(500,
       new CheckOutByBarcodeRequestBuilder()
@@ -624,7 +623,7 @@ class CheckOutByBarcodeTests extends APITests {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
 
-    final DateTime loanDate = new DateTime(2018, 3, 18, 11, 43, 54, UTC);
+    final ZonedDateTime loanDate = ZonedDateTime.of(2018, 3, 18, 11, 43, 54, 0, UTC);
 
     final Response response = checkOutFixture.attemptCheckOutByBarcode(422,
       new CheckOutByBarcodeRequestBuilder()
@@ -989,7 +988,7 @@ class CheckOutByBarcodeTests extends APITests {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
 
-    final DateTime loanDate = new DateTime(2018, 3, 18, 11, 43, 54, UTC);
+    final ZonedDateTime loanDate = ZonedDateTime.of(2018, 3, 18, 11, 43, 54, 0, UTC);
 
     final Response response = checkOutFixture.attemptCheckOutByBarcode(500,
       new CheckOutByBarcodeRequestBuilder()
@@ -1018,7 +1017,7 @@ class CheckOutByBarcodeTests extends APITests {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
 
-    final DateTime loanDate = new DateTime(2018, 3, 18, 11, 43, 54, UTC);
+    final ZonedDateTime loanDate = ZonedDateTime.of(2018, 3, 18, 11, 43, 54, 0, UTC);
 
     checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -1336,7 +1335,7 @@ class CheckOutByBarcodeTests extends APITests {
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
-        .on(getDateTime())
+        .on(getZonedDateTime())
         .at(UUID.randomUUID()));
 
     final JsonObject loan = response.getJson();
@@ -1382,7 +1381,7 @@ class CheckOutByBarcodeTests extends APITests {
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
-        .on(getDateTime())
+        .on(getZonedDateTime())
         .at(UUID.randomUUID()));
 
     final JsonObject loan = response.getJson();
@@ -1427,7 +1426,7 @@ class CheckOutByBarcodeTests extends APITests {
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
-        .on(getDateTime())
+        .on(getZonedDateTime())
         .at(UUID.randomUUID()));
 
     assertThat(response.getBody(), containsString(
@@ -1449,7 +1448,7 @@ class CheckOutByBarcodeTests extends APITests {
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
-        .on(getDateTime())
+        .on(getZonedDateTime())
         .at(UUID.randomUUID()));
 
     usersFixture.remove(steve);
@@ -1492,7 +1491,7 @@ class CheckOutByBarcodeTests extends APITests {
     final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
       OVERRIDE_ITEM_NOT_LOANABLE_BLOCK_PERMISSION);
 
-    DateTime invalidDueDate = TEST_LOAN_DATE.minusDays(2);
+    ZonedDateTime invalidDueDate = TEST_LOAN_DATE.minusDays(2);
 
     setNotLoanablePolicy();
     Response response = checkOutFixture.attemptCheckOutByBarcode(
@@ -1989,11 +1988,11 @@ class CheckOutByBarcodeTests extends APITests {
 
   @Test
   void dueDateShouldBeTruncatedToTheEndOfPreviousOpenDayBeforePatronExpiration() {
-    DateTime loanDate = SECOND_DAY_CLOSED.toDateTime(LocalTime.MIDNIGHT.plusHours(10));
+    ZonedDateTime loanDate = atStartOfDay(SECOND_DAY_CLOSED, UTC).plusHours(10);
     use(buildLoanPolicyWithFixedLoan(MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY, loanDate.plusDays(1)));
 
     IndividualResource item = itemsFixture.basedUponNod();
-    DateTime patronExpirationDate = loanDate.plusHours(2);
+    ZonedDateTime patronExpirationDate = loanDate.plusHours(2);
     IndividualResource steve = usersFixture.steve(user -> user.expires(patronExpirationDate));
 
     mockClockManagerToReturnFixedDateTime(loanDate);
@@ -2005,17 +2004,17 @@ class CheckOutByBarcodeTests extends APITests {
         .at(CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_CLOSED)).getJson();
     mockClockManagerToReturnDefaultDateTime();
 
-    assertThat(DateTime.parse(response.getString("dueDate")).toDateTime(),
-      is(FIRST_DAY_OPEN.toDateTime(LocalTime.MIDNIGHT.minusSeconds(1), UTC)));
+    assertThat(parseDateTime(response.getString("dueDate")),
+      is(ZonedDateTime.of(FIRST_DAY_OPEN, LocalTime.MIDNIGHT.minusSeconds(1), UTC)));
   }
 
   @Test
   void dueDateShouldBeTruncatedToTheEndOfPreviousOpenDayIfTheNextOpenDayStrategy() {
-    DateTime loanDate = SECOND_DAY_CLOSED.toDateTime(LocalTime.MIDNIGHT.plusHours(10), UTC);
+    ZonedDateTime loanDate = atStartOfDay(SECOND_DAY_CLOSED, UTC).plusHours(10);
     use(buildLoanPolicyWithFixedLoan(MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY, loanDate.plusDays(1)));
 
     IndividualResource item = itemsFixture.basedUponNod();
-    DateTime patronExpirationDate = loanDate.plusHours(1);
+    ZonedDateTime patronExpirationDate = loanDate.plusHours(1);
     IndividualResource steve = usersFixture.steve(user -> user.expires(patronExpirationDate));
 
     mockClockManagerToReturnFixedDateTime(loanDate);
@@ -2027,17 +2026,17 @@ class CheckOutByBarcodeTests extends APITests {
         .at(CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_OPEN)).getJson();
     mockClockManagerToReturnDefaultDateTime();
 
-    assertThat(DateTime.parse(response.getString("dueDate")).toDateTime(),
-      is(FIRST_DAY_OPEN.toDateTime(LocalTime.MIDNIGHT.minusSeconds(1), UTC)));
+    assertThat(parseDateTime(response.getString("dueDate")),
+      is(ZonedDateTime.of(FIRST_DAY_OPEN, LocalTime.MIDNIGHT.minusSeconds(1), UTC)));
   }
 
   @Test
   void dueDateShouldBeTruncatedToThePatronsExpirationDateTimeIfKeepCurrentDueDateStrategy() {
-    DateTime loanDate = FIRST_DAY_OPEN.toDateTime(LocalTime.MIDNIGHT.plusHours(10), UTC);
+    ZonedDateTime loanDate = atStartOfDay(FIRST_DAY_OPEN, UTC).plusHours(10);
     use(buildLoanPolicyWithFixedLoan(KEEP_THE_CURRENT_DUE_DATE, loanDate.plusDays(1)));
 
     IndividualResource item = itemsFixture.basedUponNod();
-    DateTime patronExpirationDate = loanDate.plusHours(1);
+    ZonedDateTime patronExpirationDate = loanDate.plusHours(1);
     IndividualResource steve = usersFixture.steve(user -> user.expires(patronExpirationDate));
 
     mockClockManagerToReturnFixedDateTime(loanDate);
@@ -2049,16 +2048,15 @@ class CheckOutByBarcodeTests extends APITests {
         .at(CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_OPEN)).getJson();
     mockClockManagerToReturnDefaultDateTime();
 
-    assertThat(DateTime.parse(response.getString("dueDate")).toDateTime(),
-      is(patronExpirationDate));
+    assertThat(parseDateTime(response.getString("dueDate")), is(patronExpirationDate));
   }
 
   @Test
   void dueDateShouldBeTruncatedToPatronsExpirationDateTimeIfKeepCurrentDueDateTimeStrategy() {
-    DateTime loanDate = FIRST_DAY_OPEN.toDateTime(LocalTime.MIDNIGHT.plusHours(10), UTC);
+    ZonedDateTime loanDate = atStartOfDay(FIRST_DAY_OPEN, UTC).plusHours(10);
     use(buildLoanPolicyWithRollingLoan(KEEP_THE_CURRENT_DUE_DATE_TIME, 1));
     IndividualResource item = itemsFixture.basedUponNod();
-    DateTime patronExpirationDate = loanDate.plusHours(1);
+    ZonedDateTime patronExpirationDate = loanDate.plusHours(1);
     IndividualResource steve = usersFixture.steve(user -> user.expires(patronExpirationDate));
 
     mockClockManagerToReturnFixedDateTime(loanDate);
@@ -2070,17 +2068,17 @@ class CheckOutByBarcodeTests extends APITests {
         .at(CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_OPEN)).getJson();
     mockClockManagerToReturnDefaultDateTime();
 
-    assertThat(DateTime.parse(response.getString("dueDate")).toDateTime(), is(patronExpirationDate));
+    assertThat(parseDateTime(response.getString("dueDate")), is(patronExpirationDate));
   }
 
   @Test
   public void
   dueDateShouldBeTruncatedToTheEndOfPreviousServicePointHoursIfMoveToTheEndOfCurrentHoursStrategy() {
-    DateTime loanDate = FIRST_DAY_OPEN.toDateTime(LocalTime.MIDNIGHT.plusHours(16), UTC);
+    ZonedDateTime loanDate = atStartOfDay(FIRST_DAY_OPEN, UTC).plusHours(16);
     use(buildLoanPolicyWithRollingLoan(MOVE_TO_END_OF_CURRENT_SERVICE_POINT_HOURS, 1));
 
     IndividualResource item = itemsFixture.basedUponNod();
-    DateTime patronExpirationDate = loanDate.plusHours(12);
+    ZonedDateTime patronExpirationDate = loanDate.plusHours(12);
     IndividualResource steve = usersFixture.steve(user -> user.expires(patronExpirationDate));
 
     mockClockManagerToReturnFixedDateTime(loanDate);
@@ -2092,18 +2090,18 @@ class CheckOutByBarcodeTests extends APITests {
         .at(CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_OPEN)).getJson();
     mockClockManagerToReturnDefaultDateTime();
 
-    assertThat(DateTime.parse(response.getString("dueDate")).toDateTime(),
-      is(FIRST_DAY_OPEN.toDateTime(END_TIME_SECOND_PERIOD, UTC)));
+    assertThat(parseDateTime(response.getString("dueDate")),
+      is(ZonedDateTime.of(FIRST_DAY_OPEN, END_TIME_SECOND_PERIOD, UTC)));
   }
 
   @Test
   public void
   dueDateShouldBeTruncatedToTheEndOfPreviousServicePointHoursIfMoveToTheBeginningOfNextStrategy() {
-    DateTime loanDate = FIRST_DAY_OPEN.toDateTime(LocalTime.MIDNIGHT.plusHours(16), UTC);
+    ZonedDateTime loanDate = atStartOfDay(FIRST_DAY_OPEN, UTC).plusHours(16);
     use(buildLoanPolicyWithRollingLoan(MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS, 1));
 
     IndividualResource item = itemsFixture.basedUponNod();
-    DateTime patronExpirationDate = loanDate.plusHours(12);
+    ZonedDateTime patronExpirationDate = loanDate.plusHours(12);
     IndividualResource steve = usersFixture.steve(user -> user.expires(patronExpirationDate));
 
     mockClockManagerToReturnFixedDateTime(loanDate);
@@ -2115,18 +2113,18 @@ class CheckOutByBarcodeTests extends APITests {
         .at(CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_OPEN)).getJson();
     mockClockManagerToReturnDefaultDateTime();
 
-    assertThat(DateTime.parse(response.getString("dueDate")).toDateTime(),
-      is(FIRST_DAY_OPEN.toDateTime(END_TIME_SECOND_PERIOD, UTC)));
+    assertThat(parseDateTime(response.getString("dueDate")),
+      is(ZonedDateTime.of(FIRST_DAY_OPEN, END_TIME_SECOND_PERIOD, UTC)));
   }
 
   @Test
   public void
   shouldBeTruncatedToTheEndOfPrevOpenDayForMoveToTheEndOfPrevOpenDayStrategyWithTwoOpeningPeriods() {
-    DateTime loanDate = MONDAY_DATE.toDateTime(LocalTime.MIDNIGHT.plusHours(16), UTC);
+    ZonedDateTime loanDate = atStartOfDay(MONDAY_DATE, UTC).plusHours(16);
     use(buildLoanPolicyWithRollingLoan(MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY, 3));
 
     IndividualResource item = itemsFixture.basedUponNod();
-    DateTime patronExpirationDate = loanDate.plusDays(1);
+    ZonedDateTime patronExpirationDate = loanDate.plusDays(1);
     IndividualResource steve = usersFixture.steve(user -> user.expires(patronExpirationDate));
 
     mockClockManagerToReturnFixedDateTime(loanDate);
@@ -2138,18 +2136,18 @@ class CheckOutByBarcodeTests extends APITests {
         .at(CASE_MON_WED_FRI_OPEN_TUE_THU_CLOSED)).getJson();
     mockClockManagerToReturnDefaultDateTime();
 
-    assertThat(DateTime.parse(response.getString("dueDate")).toDateTime(),
-      is(MONDAY_DATE.toDateTime(LocalTime.MIDNIGHT.minusSeconds(1), UTC)));
+    assertThat(parseDateTime(response.getString("dueDate")),
+      is(ZonedDateTime.of(MONDAY_DATE, LocalTime.MIDNIGHT.minusSeconds(1), UTC)));
   }
 
   @Test
   public void
   shouldBeTruncatedToTheEndOfPrevOpenDayForMoveToTheEndOfNextOpenDayStrategyWithTwoOpeningPeriods() {
-    DateTime loanDate = MONDAY_DATE.toDateTime(LocalTime.MIDNIGHT.plusHours(16), UTC);
+    ZonedDateTime loanDate = atStartOfDay(MONDAY_DATE, UTC).plusHours(16);
     use(buildLoanPolicyWithRollingLoan(MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY, 3));
 
     IndividualResource item = itemsFixture.basedUponNod();
-    DateTime patronExpirationDate = loanDate.plusDays(1);
+    ZonedDateTime patronExpirationDate = loanDate.plusDays(1);
     IndividualResource steve = usersFixture.steve(user -> user.expires(patronExpirationDate));
 
     mockClockManagerToReturnFixedDateTime(loanDate);
@@ -2160,12 +2158,12 @@ class CheckOutByBarcodeTests extends APITests {
         .on(loanDate)
         .at(CASE_MON_WED_FRI_OPEN_TUE_THU_CLOSED)).getJson();
     mockClockManagerToReturnDefaultDateTime();
-    assertThat(parseJodaDateTime(response.getString("dueDate")),
-      is(MONDAY_DATE.toDateTime(LocalTime.MIDNIGHT.minusSeconds(1), UTC)));
+    assertThat(parseDateTime(response.getString("dueDate")),
+      is(ZonedDateTime.of(MONDAY_DATE, LocalTime.MIDNIGHT.minusSeconds(1), UTC)));
   }
 
   private LoanPolicyBuilder buildLoanPolicyWithFixedLoan(DueDateManagement strategy,
-    DateTime dueDate) {
+    ZonedDateTime dueDate) {
 
     return new LoanPolicyBuilder()
       .fixed(loanPoliciesFixture.createExampleFixedDueDateSchedule(2020, dueDate).getId())
@@ -2173,7 +2171,7 @@ class CheckOutByBarcodeTests extends APITests {
       .withClosedLibraryDueDateManagement(strategy.getValue());
   }
 
-  private LoanPolicyBuilder buildLoanPolicyWithRollingLoan(DueDateManagement strategy, int days) {
+  private LoanPolicyBuilder buildLoanPolicyWithRollingLoan(DueDateManagement strategy, long days) {
     return new LoanPolicyBuilder()
       .rolling(Period.days(days))
       .withClosedLibraryDueDateManagement(strategy.getValue());

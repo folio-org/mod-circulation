@@ -1,16 +1,16 @@
 package org.folio.circulation.domain.policy.library;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
-import org.joda.time.DateTime;
 
 class LibraryTimetable {
   private final LibraryInterval head;
   private final LibraryInterval tail;
 
-  private static LibraryInterval findInterval(DateTime dateTime, LibraryInterval head) {
+  private static LibraryInterval findInterval(ZonedDateTime dateTime, LibraryInterval head) {
     for (LibraryInterval node = head; node != null; node = node.getNext()) {
       if (node.getInterval().contains(dateTime)) {
         return node;
@@ -50,7 +50,7 @@ class LibraryTimetable {
     this.tail = headAndTail.getValue();
   }
 
-  LibraryInterval findInterval(DateTime dateTime) {
+  LibraryInterval findInterval(ZonedDateTime dateTime) {
     return findInterval(dateTime, head);
   }
 

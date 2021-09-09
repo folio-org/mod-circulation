@@ -15,9 +15,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.Objects;
 import java.util.stream.Stream;
 
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-
 /**
  * A utility for centralizing common date time operations.
  * <p>
@@ -120,25 +117,6 @@ public class DateTimeUtil {
    * For compatibility with JodaTime, when value is null, then a now() call
    * via ClockUtil is used.
    *
-   * TODO: Remove this after migrating from JodaTime to JavaTime.
-   *
-   * @param dateTime The dateTime to normalize.
-   * @return The provided dateTime or if dateTime is null then ClockUtil.getZonedDateTime().
-   */
-  public static DateTime defaultToNow(DateTime dateTime) {
-    if (dateTime == null) {
-      return ClockUtil.getDateTime();
-    }
-
-    return dateTime;
-  }
-
-  /**
-   * Given a dateTime, normalize it.
-   * <p>
-   * For compatibility with JodaTime, when value is null, then a now() call
-   * via ClockUtil is used.
-   *
    * @param dateTime The dateTime to normalize.
    * @return The provided dateTime or if dateTime is null then ClockUtil.getZonedDateTime().
    */
@@ -148,41 +126,6 @@ public class DateTimeUtil {
     }
 
     return dateTime;
-  }
-
-  /**
-   * Given a dateTime, normalize it.
-   * <p>
-   * For compatibility with JodaTime, when value is null, then a now() call
-   * via ClockUtil is used.
-   *
-   * TODO: Remove this after migrating from JodaTime to JavaTime.
-   *
-   * @param dateTime The dateTime to normalize.
-   * @return The provided dateTime or if dateTime is null then ClockUtil.getZonedDateTime().
-   */
-  public static org.joda.time.LocalDateTime defaultToNow(org.joda.time.LocalDateTime dateTime) {
-    if (dateTime == null) {
-      return ClockUtil.getDateTime().toLocalDateTime();
-    }
-
-    return dateTime;
-  }
-
-  /**
-   * A stub-like function for normalizing the LocalDate.
-   * <p>
-   * For compatibility with JodaTime, when value is null, then a now() call
-   * via ClockUtil is used.
-   *
-   * TODO: Remove this after migrating from JodaTime to JavaTime.
-   */
-  public static org.joda.time.LocalDate defaultToNow(org.joda.time.LocalDate date) {
-    if (date == null) {
-      return ClockUtil.getJodaLocalDate();
-    }
-
-    return date;
   }
 
   /**
@@ -200,41 +143,6 @@ public class DateTimeUtil {
     }
 
     return time;
-  }
-
-  /**
-   * Given a time, normalize it.
-   * <p>
-   * For compatibility with JodaTime, when value is null, then a now() call
-   * via ClockUtil is used.
-   *
-   * @param time The time to normalize.
-   * @return The provided date or if time is null then ClockUtil.getLocalTime().
-   */
-  public static org.joda.time.LocalTime defaultToNow(org.joda.time.LocalTime time) {
-    if (time == null) {
-      return ClockUtil.getJodaLocalTime();
-    }
-
-    return time;
-  }
-
-  /**
-   * Given a dateTime, normalize it.
-   * <p>
-   * For compatibility with JodaTime, when value is null, then a now() call
-   * via ClockUtil is used.
-   *
-   * @param dateTime The dateTime to normalize.
-   * @return The provided dateTime or if dateTime is null then ClockUtil.getZonedDateTime().
-   */
-  public static org.joda.time.Instant defaultToNow(org.joda.time.Instant dateTime) {
-    if (dateTime == null) {
-      return org.joda.time.Instant
-        .ofEpochMilli(ClockUtil.getZonedDateTime().toInstant().toEpochMilli());
-    }
-
-    return dateTime;
   }
 
   /**
@@ -266,22 +174,6 @@ public class DateTimeUtil {
   public static ZoneOffset defaultToClockZone(ZoneOffset zone) {
     if (zone == null) {
       return ClockUtil.getZoneOffset();
-    }
-
-    return zone;
-  }
-
-  /**
-   * A stub-like function for normalizing the DateTimeZone.
-   * <p>
-   * The normalization is for making JavaTime backward compatible with
-   * JodaTime behavior. Therefore, this does nothing.
-   *
-   * TODO: Remove this after migrating from JodaTime to JavaTime.
-   */
-  public static DateTimeZone defaultToClockZone(DateTimeZone zone) {
-    if (zone == null) {
-      return ClockUtil.jodaTimezone();
     }
 
     return zone;
@@ -379,98 +271,6 @@ public class DateTimeUtil {
   }
 
   /**
-   * Get the first second of the year.
-   * <p>
-   * TODO: Remove this after migrating from JodaTime to JavaTime.
-   *
-   * @param dateTime The dateTime to convert.
-   * @return The converted dateTime.
-   */
-  public static DateTime atStartOfYear(DateTime dateTime) {
-    return atStartOfYear(dateTime, dateTime.getZone());
-  }
-
-  /**
-   * Get the first second of the year.
-   * <p>
-   * TODO: Remove this after migrating from JodaTime to JavaTime.
-   *
-   * @param dateTime The dateTime to convert.
-   * @param zone The time zone to use.
-   * @return The converted dateTime.
-   */
-  public static DateTime atStartOfYear(DateTime dateTime, DateTimeZone zone) {
-    final DateTime zonedDateTime = dateTime.withZone(zone);
-
-    return atStartOfDay(zonedDateTime
-      .withDayOfYear(dateTime
-        .dayOfYear()
-        .getMinimumValue()));
-  }
-
-  /**
-   * Get the last second of the year.
-   * <p>
-   * TODO: Remove this after migrating from JodaTime to JavaTime.
-   *
-   * @param dateTime The dateTime to convert.
-   * @return The converted dateTime.
-   */
-  public static DateTime atEndOfYear(DateTime dateTime) {
-    return atEndOfYear(dateTime, dateTime.getZone());
-  }
-
-  /**
-   * Get the last second of the year.
-   * <p>
-   * TODO: Remove this after migrating from JodaTime to JavaTime.
-   *
-   * @param dateTime The dateTime to convert.
-   * @param zone The time zone to use.
-   * @return The converted dateTime.
-   */
-  public static DateTime atEndOfYear(DateTime dateTime, DateTimeZone zone) {
-    final DateTime zonedDateTime = dateTime.withZone(zone);
-
-    return atEndOfDay(zonedDateTime
-      .withDayOfYear(zonedDateTime
-        .dayOfYear()
-        .getMaximumValue()));
-  }
-
-  /**
-   * Get the first second of the year.
-   * <p>
-   * TODO: Remove this after migrating from JodaTime to JavaTime.
-   *
-   * @param LocalDate The localDate to convert.
-   * @param zone The time zone to use.
-   * @return The converted localDate.
-   */
-  public static DateTime atStartOfYear(org.joda.time.LocalDate localDate, DateTimeZone zone) {
-    return atStartOfDay(localDate, zone)
-      .withDayOfYear(localDate
-        .dayOfYear()
-        .getMinimumValue());
-  }
-
-  /**
-   * Get the last second of the year.
-   * <p>
-   * TODO: Remove this after migrating from JodaTime to JavaTime.
-   *
-   * @param dateTime The localDate to convert.
-   * @param zone The time zone to use.
-   * @return The converted localDate.
-   */
-  public static DateTime atEndOfYear(org.joda.time.LocalDate localDate, DateTimeZone zone) {
-    return atEndOfDay(localDate, zone)
-      .withDayOfYear(localDate
-        .dayOfYear()
-        .getMaximumValue());
-  }
-
-  /**
    * Get the first second of the month.
    * <p>
    * This operates in the time zone specified by dateTime.
@@ -560,98 +360,6 @@ public class DateTimeUtil {
   }
 
   /**
-   * Get the first second of the month.
-   * <p>
-   * TODO: Remove this after migrating from JodaTime to JavaTime.
-   *
-   * @param dateTime The dateTime to convert.
-   * @return The converted dateTime.
-   */
-  public static DateTime atStartOfMonth(DateTime dateTime) {
-    return atStartOfMonth(dateTime, dateTime.getZone());
-  }
-
-  /**
-   * Get the first second of the month.
-   * <p>
-   * TODO: Remove this after migrating from JodaTime to JavaTime.
-   *
-   * @param dateTime The dateTime to convert.
-   * @param zone The time zone to use.
-   * @return The converted dateTime.
-   */
-  public static DateTime atStartOfMonth(DateTime dateTime, DateTimeZone zone) {
-    final DateTime zonedDateTme = dateTime.withZone(zone);
-
-    return atStartOfDay(zonedDateTme
-      .withDayOfMonth(zonedDateTme
-        .dayOfMonth()
-        .getMinimumValue()));
-  }
-
-  /**
-   * Get the last second of the month.
-   * <p>
-   * TODO: Remove this after migrating from JodaTime to JavaTime.
-   *
-   * @param dateTime The dateTime to convert.
-   * @return The converted dateTime.
-   */
-  public static DateTime atEndOfMonth(DateTime dateTime) {
-    return atEndOfMonth(dateTime, dateTime.getZone());
-  }
-
-  /**
-   * Get the last second of the month.
-   * <p>
-   * TODO: Remove this after migrating from JodaTime to JavaTime.
-   *
-   * @param dateTime The dateTime to convert.
-   * @param zone The time zone to use.
-   * @return The converted dateTime.
-   */
-  public static DateTime atEndOfMonth(DateTime dateTime, DateTimeZone zone) {
-    final DateTime zonedDateTme = dateTime.withZone(zone);
-
-    return atEndOfDay(zonedDateTme
-      .withDayOfMonth(zonedDateTme
-        .dayOfMonth()
-        .getMaximumValue()));
-  }
-
-  /**
-   * Get the first second of the month.
-   * <p>
-   * TODO: Remove this after migrating from JodaTime to JavaTime.
-   *
-   * @param LocalDate The localDate to convert.
-   * @param zone The time zone to use.
-   * @return The converted localDate.
-   */
-  public static DateTime atStartOfMonth(org.joda.time.LocalDate localDate, DateTimeZone zone) {
-    return atStartOfDay(localDate, zone)
-      .withDayOfMonth(localDate
-        .dayOfMonth()
-        .getMinimumValue());
-  }
-
-  /**
-   * Get the last second of the month.
-   *
-   * TODO: Remove this after migrating from JodaTime to JavaTime.
-   *
-   * @param dateTime The localDate to convert.
-   * @param zone The time zone to use.
-   * @return The converted localDate.
-   */
-  public static DateTime atEndOfMonth(org.joda.time.LocalDate localDate, DateTimeZone zone) {
-    return atEndOfDay(localDate, zone)
-      .withDayOfMonth(localDate
-        .dayOfMonth()
-        .getMaximumValue());
-  }
-
-  /**
    * Get the first second of the day.
    * <p>
    * This operates in the time zone specified by dateTime.
@@ -677,10 +385,7 @@ public class DateTimeUtil {
   public static ZonedDateTime atStartOfDay(ZonedDateTime dateTime, ZoneId zone) {
     return dateTime
       .withZoneSameInstant(zone)
-      .withHour(0)
-      .withMinute(0)
-      .withSecond(0)
-      .truncatedTo(ChronoUnit.SECONDS);
+      .truncatedTo(ChronoUnit.DAYS);
   }
 
   /**
@@ -745,97 +450,6 @@ public class DateTimeUtil {
   }
 
   /**
-   * Get the first second of the day.
-   * <p>
-   * This operates in the time zone specified by dateTime.
-   *
-   * TODO: Remove this after migrating from JodaTime to JavaTime.
-   *
-   * @param dateTime The dateTime to convert.
-   * @return The converted dateTime.
-   */
-  public static DateTime atStartOfDay(DateTime dateTime) {
-    return atStartOfDay(dateTime, dateTime.getZone());
-  }
-
-  /**
-   * Get the first second of the day for the given time zone.
-   * <p>
-   * TODO: Remove this after migrating from JodaTime to JavaTime.
-   *
-   * @param dateTime The dateTime to convert.
-   * @param zone The time zone to use.
-   * @return The converted dateTime.
-   */
-  public static DateTime atStartOfDay(DateTime dateTime, DateTimeZone zone) {
-    return dateTime
-      .withZone(zone)
-      .withTimeAtStartOfDay()
-      .withMillisOfSecond(0);
-  }
-
-  /**
-   * Get the last second of the day.
-   * <p>
-   * This operates in the time zone specified by dateTime.
-   * <p>
-   * TODO: Remove this after migrating from JodaTime to JavaTime.
-   *
-   * @param dateTime The dateTime to convert.
-   * @return The converted dateTime.
-   */
-  public static DateTime atEndOfDay(DateTime dateTime) {
-    return atEndOfDay(dateTime, dateTime.getZone());
-  }
-
-  /**
-   * Get the last second of the day for the given time zone.
-   * <p>
-   * TODO: Remove this after migrating from JodaTime to JavaTime.
-   *
-   * @param dateTime The dateTime to convert.
-   * @param zone The time zone to use.
-   * @return The converted dateTime.
-   */
-  public static DateTime atEndOfDay(DateTime dateTime, DateTimeZone zone) {
-    return atStartOfDay(dateTime, zone)
-      .plusDays(1)
-      .minusSeconds(1)
-      .withMillisOfSecond(0);
-  }
-
-  /**
-   * Get the first second of the day for the given time zone.
-   * <p>
-   * TODO: Remove this after migrating from JodaTime to JavaTime.
-   *
-   * @param LocalDate The localDate to convert.
-   * @param zone The time zone to use.
-   * @return The converted localDate.
-   */
-  public static DateTime atStartOfDay(org.joda.time.LocalDate localDate, DateTimeZone zone) {
-    return localDate
-      .toDateTimeAtStartOfDay(zone)
-      .withMillisOfSecond(0);
-  }
-
-  /**
-   * Get the last second of the day for the given time zone.
-   * <p>
-   * TODO: Remove this after migrating from JodaTime to JavaTime.
-   *
-   * @param dateTime The localDate to convert.
-   * @param zone The time zone to use.
-   * @return The converted localDate.
-   */
-  public static DateTime atEndOfDay(org.joda.time.LocalDate localDate, DateTimeZone zone) {
-    return atStartOfDay(localDate, zone)
-      .plusDays(1)
-      .minusSeconds(1)
-      .withMillisOfSecond(0);
-  }
-
-  /**
    * Finds the most recent dateTime from a series of dateTimes.
    *
    * @param dates A series of dateTimes.
@@ -847,48 +461,6 @@ public class DateTimeUtil {
       .filter(Objects::nonNull)
       .max(ZonedDateTime::compareTo)
       .orElse(null);
-  }
-
-  /**
-   * Finds the most recent dateTime from a series of dateTimes.
-   *
-   * @param dates A series of dateTimes.
-   * @return The dateTime that is most recent or NULL if no valid dateTimes
-   * provided.
-   */
-  public static DateTime mostRecentDate(DateTime... dates) {
-    return Stream.of(dates)
-      .filter(Objects::nonNull)
-      .max(DateTime::compareTo)
-      .orElse(null);
-  }
-
-  /**
-   * Convert from DateTime to ZonedDateTime.
-   * <p>
-   * TODO: Remove this after migrating from JodaTime to JavaTime.
-   *
-   * @param dateTime The JodaTime DateTime to convert from.
-   * @return The converted dateTime.
-   */
-  public static ZonedDateTime toZonedDateTime(DateTime dateTime) {
-    return java.time.Instant.ofEpochMilli(dateTime.getMillis())
-      .atZone(ZoneId.of(dateTime.getZone().getID()));
-  }
-
-  /**
-   * Convert the JodaTime DateTime to JavaTime OffsetDateTime.
-   * <p>
-   * TODO: Remove this after migrating from JodaTime to JavaTime.
-   *
-   * @param dateTime The JodaTime DateTime to convert from.
-   * @return The converted dateTime.
-   */
-  public static OffsetDateTime toOffsetDateTime(DateTime dateTime) {
-    final var instant = java.time.Instant.ofEpochMilli(dateTime.getMillis());
-
-    return OffsetDateTime.ofInstant(instant,
-      ZoneId.of(dateTime.getZone().getID()));
   }
 
   /**
@@ -922,40 +494,6 @@ public class DateTimeUtil {
   }
 
   /**
-   * Check if the the left date is before the right date in milliseconds.
-   * <p>
-   * The isBefore()/isAfter() methods tend to work with nanoseconds and cannot
-   * be used safely for millisecond comparisons.
-   * <p>
-   * TODO: Remove this after migrating from JodaTime to JavaTime.
-   *
-   * @param left the date to compare on the left.
-   * @param right the date to compare on the right.
-   * @return true if left is before right and false otherwise.
-   */
-  public static boolean isBeforeMillis(DateTime left, DateTime right) {
-    return defaultToNow(left).toInstant().getMillis() <
-      defaultToNow(right).toInstant().getMillis();
-  }
-
-  /**
-   * Check if the the left date is before the right date in milliseconds.
-   * <p>
-   * The isBefore()/isAfter() methods tend to work with nanoseconds and cannot
-   * be used safely for millisecond comparisons.
-   * <p>
-   * TODO: Remove this after migrating from JodaTime to JavaTime.
-   *
-   * @param left the date to compare on the left.
-   * @param right the date to compare on the right.
-   * @return true if left is before right and false otherwise.
-   */
-  public static boolean isBeforeMillis(org.joda.time.LocalDateTime left, org.joda.time.LocalDateTime right) {
-    return defaultToNow(left).toDateTime(DateTimeZone.UTC).getMillis() <
-      defaultToNow(right).toDateTime(DateTimeZone.UTC).getMillis();
-  }
-
-  /**
    * Check if the the left time is before the right time in milliseconds.
    * <p>
    * The isBefore()/isAfter() methods tend to work with nanoseconds and cannot
@@ -968,22 +506,6 @@ public class DateTimeUtil {
   public static boolean isBeforeMillis(LocalTime left, LocalTime right) {
     return defaultToNow(left).truncatedTo(MILLIS)
       .isBefore(defaultToNow(right).truncatedTo(MILLIS));
-  }
-
-  /**
-   * Check if the the left time is before the right time in milliseconds.
-   * <p>
-   * The isBefore()/isAfter() methods tend to work with nanoseconds and cannot
-   * be used safely for millisecond comparisons.
-   *
-   * TODO: Remove this after migrating from JodaTime to JavaTime.
-   *
-   * @param left the time to compare on the left.
-   * @param right the time to compare on the right.
-   * @return true if left is before right and false otherwise.
-   */
-  public static boolean isBeforeMillis(org.joda.time.LocalTime left, org.joda.time.LocalTime right) {
-    return defaultToNow(left).isBefore(defaultToNow(right));
   }
 
   /**
@@ -1017,40 +539,6 @@ public class DateTimeUtil {
   }
 
   /**
-   * Check if the the left date is after the right date in milliseconds.
-   * <p>
-   * The isBefore()/isAfter() methods tend to work with nanoseconds and cannot
-   * be used safely for millisecond comparisons.
-   * <p>
-   * TODO: Remove this after migrating from JodaTime to JavaTime.
-   *
-   * @param left the date to compare on the left.
-   * @param right the date to compare on the right.
-   * @return true if left is before right and false otherwise.
-   */
-  public static boolean isAfterMillis(DateTime left, DateTime right) {
-    return defaultToNow(left).toInstant().getMillis() >
-      defaultToNow(right).toInstant().getMillis();
-  }
-
-  /**
-   * Check if the the left date is after the right date in milliseconds.
-   * <p>
-   * The isBefore()/isAfter() methods tend to work with nanoseconds and cannot
-   * be used safely for millisecond comparisons.
-   * <p>
-   * TODO: Remove this after migrating from JodaTime to JavaTime.
-   *
-   * @param left the date to compare on the left.
-   * @param right the date to compare on the right.
-   * @return true if left is before right and false otherwise.
-   */
-  public static boolean isAfterMillis(org.joda.time.LocalDateTime left, org.joda.time.LocalDateTime right) {
-    return defaultToNow(left).toDateTime(DateTimeZone.UTC).getMillis() >
-      defaultToNow(right).toDateTime(DateTimeZone.UTC).getMillis();
-  }
-
-  /**
    * Check if the the left time is after the right time in milliseconds.
    * <p>
    * The isBefore()/isAfter() methods tend to work with nanoseconds and cannot
@@ -1063,21 +551,6 @@ public class DateTimeUtil {
   public static boolean isAfterMillis(LocalTime left, LocalTime right) {
     return defaultToNow(left).truncatedTo(MILLIS)
       .isAfter(defaultToNow(right).truncatedTo(MILLIS));
-  }
-  /**
-   * Check if the the left time is after the right time in milliseconds.
-   * <p>
-   * The isBefore()/isAfter() methods tend to work with nanoseconds and cannot
-   * be used safely for millisecond comparisons.
-   * <p>
-   * TODO: Remove this after migrating from JodaTime to JavaTime.
-   *
-   * @param left the time to compare on the left.
-   * @param right the time to compare on the right.
-   * @return true if left is before right and false otherwise.
-   */
-  public static boolean isAfterMillis(org.joda.time.LocalTime left, org.joda.time.LocalTime right) {
-    return defaultToNow(left).isAfter(defaultToNow(right));
   }
 
   /**
@@ -1126,23 +599,6 @@ public class DateTimeUtil {
   }
 
   /**
-   * Check if the the left date is the same as the right date in milliseconds.
-   * <p>
-   * The equalTo() methods tend to work with nanoseconds and cannot be used
-   * safely for millisecond comparisons.
-   * <p>
-   * TODO: Remove this once JodaTime is fully converted to JavaTime.
-   *
-   * @param left the date to compare on the left.
-   * @param right the date to compare on the right.
-   * @return true if left is before right and false otherwise.
-   */
-  public static boolean isSameMillis(DateTime left, DateTime right) {
-    return defaultToNow(left).toInstant().getMillis() ==
-      defaultToNow(right).toInstant().getMillis();
-  }
-
-  /**
    * Check if the the left instant is the same as the right instant in milliseconds.
    * <p>
    * The equalTo() methods tend to work with nanoseconds and cannot be used
@@ -1154,22 +610,6 @@ public class DateTimeUtil {
    */
   public static boolean isSameMillis(Instant left, Instant right) {
     return defaultToNow(left).toEpochMilli() == defaultToNow(right).toEpochMilli();
-  }
-
-  /**
-   * Check if the the left instant is the same as the right instant in milliseconds.
-   * <p>
-   * The equalTo() methods tend to work with nanoseconds and cannot be used
-   * safely for millisecond comparisons.
-   *
-   * TODO: Remove this once JodaTime is fully converted to JavaTime.
-   *
-   * @param left the date to compare on the left.
-   * @param right the date to compare on the right.
-   * @return true if left is before right and false otherwise.
-   */
-  public static boolean isSameMillis(org.joda.time.Instant left, org.joda.time.Instant right) {
-    return defaultToNow(left).getMillis() == defaultToNow(right).getMillis();
   }
 
   /**
@@ -1203,12 +643,10 @@ public class DateTimeUtil {
   }
 
   /**
-   * Check if the date is within the first and last dates, exclusively.
+   * Check if the time is within the first and last times, exclusively.
    * <p>
    * The isBefore()/isAfter() methods tend to work with nanoseconds and cannot
    * be used safely for millisecond comparisons.
-   * <p>
-   * TODO: Remove this once JodaTime is fully converted to JavaTime.
    *
    * @param time the time to check if is within.
    * @param first the time representing the beginning.
@@ -1216,57 +654,6 @@ public class DateTimeUtil {
    * @return true if time is within and false otherwise.
    */
   public static boolean isWithinMillis(LocalTime time, LocalTime first, LocalTime last) {
-    return isBeforeMillis(time, last) && isAfterMillis(time, first);
-  }
-
-  /**
-   * Check if the date is within the first and last dates, exclusively.
-   * <p>
-   * The isBefore()/isAfter() methods tend to work with nanoseconds and cannot
-   * be used safely for millisecond comparisons.
-   * <p>
-   * TODO: Remove this once JodaTime is fully converted to JavaTime.
-   *
-   * @param date the date to check if is within.
-   * @param first the date representing the beginning.
-   * @param last the date representing the end.
-   * @return true if date is within and false otherwise.
-   */
-  public static boolean isWithinMillis(DateTime date, DateTime first, DateTime last) {
-    return isBeforeMillis(date, last) && isAfterMillis(date, first);
-  }
-
-  /**
-   * Check if the date is within the first and last dates, exclusively.
-   * <p>
-   * The isBefore()/isAfter() methods tend to work with nanoseconds and cannot
-   * be used safely for millisecond comparisons.
-   * <p>
-   * TODO: Remove this once JodaTime is fully converted to JavaTime.
-   *
-   * @param date the date to check if is within.
-   * @param first the date representing the beginning.
-   * @param last the date representing the end.
-   * @return true if date is within and false otherwise.
-   */
-  public static boolean isWithinMillis(org.joda.time.LocalDateTime date, org.joda.time.LocalDateTime first, org.joda.time.LocalDateTime last) {
-    return isBeforeMillis(date, last) && isAfterMillis(date, first);
-  }
-
-  /**
-   * Check if the date is within the first and last dates, exclusively.
-   * <p>
-   * The isBefore()/isAfter() methods tend to work with nanoseconds and cannot
-   * be used safely for millisecond comparisons.
-   * <p>
-   * TODO: Remove this once JodaTime is fully converted to JavaTime.
-   *
-   * @param time the time to check if is within.
-   * @param first the time representing the beginning.
-   * @param last the time representing the end.
-   * @return true if time is within and false otherwise.
-   */
-  public static boolean isWithinMillis(org.joda.time.LocalTime time, org.joda.time.LocalTime first, org.joda.time.LocalTime last) {
     return isBeforeMillis(time, last) && isAfterMillis(time, first);
   }
 
@@ -1306,47 +693,6 @@ public class DateTimeUtil {
   public static int compareToMillis(LocalTime left, LocalTime right) {
     return defaultToNow(left).truncatedTo(MILLIS)
       .compareTo(defaultToNow(right).truncatedTo(MILLIS));
-  }
-
-  /**
-   * Compare the the left date with the right date in milliseconds.
-   * <p>
-   * The compareTo() method states that it compares to millis but this appears
-   * to not be the case. Instead, this takes the approach of directly
-   * converting to epoch millis to guarantee positioning and granularity before
-   * comparing.
-   * <p>
-   * TODO: Remove this once JodaTime is fully converted to JavaTime.
-   *
-   * @param left the date to compare on the left.
-   * @param right the date to compare on the right.
-   * @return true if left is before right and false otherwise.
-   */
-  public static int compareToMillis(DateTime left, DateTime right) {
-    if (defaultToNow(left).toInstant().getMillis()
-      == defaultToNow(right).toInstant().getMillis()) {
-      return 0;
-    }
-
-    if (defaultToNow(left).toInstant().getMillis()
-      < defaultToNow(right).toInstant().getMillis()) {
-      return -1;
-    }
-
-    return 1;
-  }
-
-  /**
-   * Compare the the left time with the right time in milliseconds.
-   * <p>
-   * TODO: Remove this once JodaTime is fully converted to JavaTime.
-   *
-   * @param left the time to compare on the left.
-   * @param right the time to compare on the right.
-   * @return true if left is before right and false otherwise.
-   */
-  public static int compareToMillis(org.joda.time.LocalTime left, org.joda.time.LocalTime right) {
-    return defaultToNow(left).compareTo(defaultToNow(right));
   }
 
   /**

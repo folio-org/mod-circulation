@@ -6,9 +6,11 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.folio.circulation.support.http.server.JsonHttpResponse.created;
 import static org.folio.circulation.support.http.server.NoContentResponse.noContent;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
+import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;
 
 import java.lang.invoke.MethodHandles;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -34,7 +36,6 @@ import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.utils.ClockUtil;
-import org.joda.time.DateTime;
 
 import api.support.APITestContext;
 import io.vertx.core.AbstractVerticle;
@@ -189,7 +190,7 @@ public class FakeStorageModule extends AbstractVerticle {
     String id = body.getString("id", UUID.randomUUID().toString());
     body.put("id", id);
 
-    final DateTime now = ClockUtil.getDateTime();
+    final ZonedDateTime now = getZonedDateTime();
 
     if (includeChangeMetadata) {
       final String fakeUserId = APITestContext.getUserId();
@@ -243,7 +244,7 @@ public class FakeStorageModule extends AbstractVerticle {
     Map<String, JsonObject> resourcesForTenant = getResourcesForTenant(context);
     JsonObject oldBody = resourcesForTenant.get(id);
 
-    final DateTime now = ClockUtil.getDateTime();
+    final ZonedDateTime now = ClockUtil.getZonedDateTime();
 
     final JsonObject body = preProcessBody(oldBody, rawBody);
     if (resourcesForTenant.containsKey(id)) {

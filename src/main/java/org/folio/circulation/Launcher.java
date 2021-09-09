@@ -1,8 +1,6 @@
 package org.folio.circulation;
 
-import io.vertx.core.json.JsonObject;
-import org.folio.circulation.support.VertxAssistant;
-import org.folio.circulation.support.logging.Logging;
+import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
 import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
@@ -12,7 +10,10 @@ import java.util.concurrent.TimeoutException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import static org.folio.circulation.support.json.JsonPropertyWriter.write;
+import org.folio.circulation.support.VertxAssistant;
+import org.folio.circulation.support.logging.Logging;
+
+import io.vertx.core.json.JsonObject;
 
 public class Launcher {
   private final VertxAssistant vertxAssistant;

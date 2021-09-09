@@ -3,11 +3,11 @@ package api.support.fixtures;
 import static api.support.APITestContext.getOkapiHeadersFromContext;
 import static api.support.http.InterfaceUrls.checkInByBarcodeUrl;
 
+import java.time.ZonedDateTime;
 import java.util.UUID;
 
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.utils.ClockUtil;
-import org.joda.time.DateTime;
 
 import api.support.CheckInByBarcodeResponse;
 import api.support.RestAssuredClient;
@@ -45,12 +45,12 @@ public class CheckInFixture {
   public CheckInByBarcodeResponse checkInByBarcode(IndividualResource item) {
     return checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(item)
-      .on(ClockUtil.getDateTime())
+      .on(ClockUtil.getZonedDateTime())
       .at(defaultServicePoint()));
   }
 
   public CheckInByBarcodeResponse checkInByBarcode(IndividualResource item,
-    DateTime checkInDate, UUID servicePointId) {
+    ZonedDateTime checkInDate, UUID servicePointId) {
 
     return checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(item)
@@ -58,7 +58,7 @@ public class CheckInFixture {
       .at(servicePointId));
   }
 
-  public CheckInByBarcodeResponse checkInByBarcode(IndividualResource item, DateTime checkInDate) {
+  public CheckInByBarcodeResponse checkInByBarcode(IndividualResource item, ZonedDateTime checkInDate) {
     return checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(item)
       .on(checkInDate)
@@ -68,10 +68,10 @@ public class CheckInFixture {
   public CheckInByBarcodeResponse checkInByBarcode(IndividualResource item,
     UUID servicePointId) {
 
-    return checkInByBarcode(item, ClockUtil.getDateTime(), servicePointId);
+    return checkInByBarcode(item, ClockUtil.getZonedDateTime(), servicePointId);
   }
 
-  public void checkInByBarcode(IndividualResource item, DateTime checkInDate,
+  public void checkInByBarcode(IndividualResource item, ZonedDateTime checkInDate,
     UUID servicePointId, OkapiHeaders okapiHeaders) {
 
     final JsonObject representation = new CheckInByBarcodeRequestBuilder()

@@ -3,7 +3,7 @@ package org.folio.circulation.domain;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 
-import org.joda.time.DateTime;
+import java.time.ZonedDateTime;
 
 import io.vertx.core.json.JsonObject;
 
@@ -51,7 +51,7 @@ public class FeeFineAction {
       .startsWith(prefix.toLowerCase());
   }
 
-  public DateTime getDateAction() {
+  public ZonedDateTime getDateAction() {
     return getDateTimeProperty(representation, "dateAction");
   }
 

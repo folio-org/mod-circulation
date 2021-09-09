@@ -1,14 +1,15 @@
 package org.folio.circulation.domain;
 
-import io.vertx.core.json.JsonObject;
-import org.joda.time.LocalTime;
+import static org.folio.circulation.support.utils.DateFormatUtil.TIME_MINUTES;
 
+import java.time.LocalTime;
+
+import io.vertx.core.json.JsonObject;
 
 public class OpeningHour {
 
   private static final String START_TIME_KEY = "startTime";
   private static final String END_TIME_KEY = "endTime";
-  private static final String TIME_PATTERN = "HH:mm";
 
   private LocalTime startTime;
   private LocalTime endTime;
@@ -33,7 +34,7 @@ public class OpeningHour {
 
   JsonObject toJson() {
     return new JsonObject()
-      .put(START_TIME_KEY, startTime.toString(TIME_PATTERN))
-      .put(END_TIME_KEY, endTime.toString(TIME_PATTERN));
+      .put(START_TIME_KEY, startTime.format(TIME_MINUTES))
+      .put(END_TIME_KEY, endTime.format(TIME_MINUTES));
   }
 }

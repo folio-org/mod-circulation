@@ -14,8 +14,9 @@ import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.json.JsonPropertyWriter.writeByPath;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
-import static org.joda.time.Seconds.seconds;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.time.ZonedDateTime;
 
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
@@ -26,7 +27,6 @@ import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.utils.ClockUtil;
-import org.joda.time.DateTime;
 import org.junit.jupiter.api.Test;
 
 import api.support.builders.LoanPolicyBuilder;
@@ -40,7 +40,7 @@ class OverrideRenewalTest {
 
   @Test
   void shouldUseOverrideDateWhenLoanIsNotLoanable() {
-    final DateTime overrideDate = ClockUtil.getDateTime().plusMonths(1);
+    final ZonedDateTime overrideDate = ClockUtil.getZonedDateTime().plusMonths(1);
     final JsonObject loanPolicyJson = new LoanPolicyBuilder()
       .withLoanable(false)
       .create();
@@ -53,7 +53,7 @@ class OverrideRenewalTest {
 
   @Test
   void shouldUseOverrideDateWhenLoanIsNotRenewable() {
-    final DateTime overrideDate = ClockUtil.getDateTime().plusMonths(1);
+    final ZonedDateTime overrideDate = ClockUtil.getZonedDateTime().plusMonths(1);
     final JsonObject loanPolicyJson = new LoanPolicyBuilder()
       .notRenewable()
       .create();
@@ -88,7 +88,7 @@ class OverrideRenewalTest {
 
   @Test
   void shouldUseOverrideDateWhenUnableToCalculateCalculatedDueDate() {
-    final DateTime overrideDate = ClockUtil.getDateTime().plusMonths(1);
+    final ZonedDateTime overrideDate = ClockUtil.getZonedDateTime().plusMonths(1);
     final JsonObject loanPolicyJson = rollingPolicy().create();
 
     // Use undefined strategy to break due date calculation
@@ -113,13 +113,13 @@ class OverrideRenewalTest {
 
   @Test
   void shouldUseOverrideDateWhenReachedNumberOfRenewalsAndNewDueDateBeforeCurrent() {
-    final DateTime overrideDueDate = ClockUtil.getDateTime().plusWeeks(2);
+    final ZonedDateTime overrideDueDate = ClockUtil.getZonedDateTime().plusWeeks(2);
     final LoanPolicy loanPolicy = LoanPolicy.from(rollingPolicy()
       .limitedRenewals(1)
       .create());
 
     final Loan loan = Loan.from(new JsonObject().put("renewalCount", 2))
-      .changeDueDate(ClockUtil.getDateTime().plusWeeks(1).plusSeconds(1))
+      .changeDueDate(ClockUtil.getZonedDateTime().plusWeeks(1).plusSeconds(1))
       .withItem(createCheckedOutItem())
       .withLoanPolicy(loanPolicy);
 
@@ -131,7 +131,7 @@ class OverrideRenewalTest {
 
   @Test
   void shouldUseCalculatedDueDateWhenReachedNumberOfRenewalsAndNewDueDateAfterCurrent() {
-    final DateTime estimatedDueDate = ClockUtil.getDateTime().plusWeeks(1);
+    final ZonedDateTime estimatedDueDate = ClockUtil.getZonedDateTime().plusWeeks(1);
     final LoanPolicy loanPolicy = LoanPolicy.from(rollingPolicy()
       .limitedRenewals(1)
       .create());
@@ -152,7 +152,7 @@ class OverrideRenewalTest {
       .limitedRenewals(1).create());
 
     final Loan loan = Loan.from(new JsonObject().put("renewalCount", 2))
-      .changeDueDate(ClockUtil.getDateTime().plusDays(8))
+      .changeDueDate(ClockUtil.getZonedDateTime().plusDays(8))
       .withLoanPolicy(loanPolicy);
 
     final Result<Loan> renewedLoan = renew(loan, null);
@@ -162,7 +162,7 @@ class OverrideRenewalTest {
 
   @Test
   void shouldUseOverrideDateWhenRecallRequestedAndNewDateIsBeforeCurrent() {
-    final DateTime overrideDueDate = ClockUtil.getDateTime().plusDays(9);
+    final ZonedDateTime overrideDueDate = ClockUtil.getZonedDateTime().plusDays(9);
     final Loan loan = createLoanWithDueDateAfterCalculated();
 
     final Result<Loan> renewedLoan = renewWithRecall(loan, overrideDueDate);
@@ -182,7 +182,7 @@ class OverrideRenewalTest {
 
   @Test
   void shouldUseCalculatedDateWhenRecallRequestedAndNewDateIsAfterCurrent() {
-    final DateTime estimatedDueDate = ClockUtil.getDateTime().plusWeeks(1);
+    final ZonedDateTime estimatedDueDate = ClockUtil.getZonedDateTime().plusWeeks(1);
     final Loan loan = createLoanWithDefaultPolicy();
 
     final Result<Loan> renewedLoan = renewWithRecall(loan, null);
@@ -193,7 +193,7 @@ class OverrideRenewalTest {
 
   @Test
   void shouldUseOverrideDateWhenItemLostAndNewDateIsBeforeCurrent() {
-    final DateTime overrideDueDate = ClockUtil.getDateTime().plusDays(9);
+    final ZonedDateTime overrideDueDate = ClockUtil.getZonedDateTime().plusDays(9);
 
     final Loan loan = createLoanWithDueDateAfterCalculated()
       .withItem(createDeclaredLostItem());
@@ -216,7 +216,7 @@ class OverrideRenewalTest {
 
   @Test
   void shouldUseCalculatedDateWhenItemLostAndNewDateIsAfterCurrent() {
-    final DateTime estimatedDueDate = ClockUtil.getDateTime().plusWeeks(1);
+    final ZonedDateTime estimatedDueDate = ClockUtil.getZonedDateTime().plusWeeks(1);
     final Loan loan = createLoanWithDefaultPolicy()
       .withItem(createDeclaredLostItem());
 
@@ -228,7 +228,7 @@ class OverrideRenewalTest {
 
   @Test
   void canOverrideLoanWhenCurrentDueDateIsAfterCalculated() {
-    final DateTime overrideDate = ClockUtil.getDateTime().plusDays(9);
+    final ZonedDateTime overrideDate = ClockUtil.getZonedDateTime().plusDays(9);
     final Loan loan = createLoanWithDueDateAfterCalculated();
 
     final Result<Loan> renewedLoan = renew(loan, overrideDate);
@@ -250,7 +250,7 @@ class OverrideRenewalTest {
   void cannotOverrideWhenCurrentDueDateIsBeforeCalculated() {
     final Loan loan = createLoanWithDefaultPolicy();
 
-    final Result<Loan> renewedLoan = renew(loan, ClockUtil.getDateTime().plusDays(9));
+    final Result<Loan> renewedLoan = renew(loan, ClockUtil.getZonedDateTime().plusDays(9));
 
     assertThat(renewedLoan, hasValidationError(
       hasMessageContaining("Override renewal does not match any of expected cases")));
@@ -258,7 +258,7 @@ class OverrideRenewalTest {
 
   @Test
   void cannotOverrideWhenOverrideDateBeforeCurrentDueDate() {
-    final DateTime overrideDate = ClockUtil.getDateTime().plusWeeks(1).plusSeconds(1);
+    final ZonedDateTime overrideDate = ClockUtil.getZonedDateTime().plusWeeks(1).plusSeconds(1);
     final Loan loan = createLoanWithDueDateAfterCalculated();
 
     final Result<Loan> renewedLoan = renew(loan, overrideDate);
@@ -268,8 +268,8 @@ class OverrideRenewalTest {
 
   @Test
   void nonLoanableAgedToLostItemShouldBeProperlyRenewed() {
-    final DateTime newDueDate = ClockUtil.getDateTime().plusWeeks(1);
-    final DateTime ageToLostDate = ClockUtil.getDateTime();
+    final ZonedDateTime newDueDate = ClockUtil.getZonedDateTime().plusWeeks(1);
+    final ZonedDateTime ageToLostDate = ClockUtil.getZonedDateTime();
 
     final LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .withLoanable(false)
@@ -301,7 +301,7 @@ class OverrideRenewalTest {
       .renewWith(weeks(1));
   }
 
-  private Result<Loan> renew(LoanPolicy loanPolicy, DateTime overrideDueDate) {
+  private Result<Loan> renew(LoanPolicy loanPolicy, ZonedDateTime overrideDueDate) {
     final Loan loan = Loan.from(new JsonObject())
       .withItem(createCheckedOutItem())
       .withLoanPolicy(loanPolicy);
@@ -309,7 +309,7 @@ class OverrideRenewalTest {
     return renew(loan, overrideDueDate);
   }
 
-  private Result<Loan> renew(Loan loan, DateTime overrideDueDate) {
+  private Result<Loan> renew(Loan loan, ZonedDateTime overrideDueDate) {
     final JsonObject overrideRequest = createOverrideRequest(overrideDueDate);
 
     final RenewalContext renewalContext = RenewalContext.create(loan, overrideRequest, "no-user")
@@ -324,7 +324,7 @@ class OverrideRenewalTest {
       .map(RenewalContext::getLoan);
   }
 
-  private Result<Loan> renewWithRecall(Loan loan, DateTime overrideDueDate) {
+  private Result<Loan> renewWithRecall(Loan loan, ZonedDateTime overrideDueDate) {
     final JsonObject overrideRequest = createOverrideRequest(overrideDueDate);
 
     final RenewalContext renewalContext = RenewalContext.create(loan, overrideRequest, "no-user")
@@ -337,7 +337,7 @@ class OverrideRenewalTest {
     return Request.from(new JsonObject().put("requestType", "Recall"));
   }
 
-  private JsonObject createOverrideRequest(DateTime dueDate) {
+  private JsonObject createOverrideRequest(ZonedDateTime dueDate) {
     final JsonObject json = new JsonObject();
     final JsonObject overrideBlocks = new JsonObject();
     final JsonObject renewalBlock = new JsonObject();
@@ -367,7 +367,7 @@ class OverrideRenewalTest {
 
   private Loan createLoanWithDueDateAfterCalculated() {
     return createLoanWithDefaultPolicy()
-      .changeDueDate(ClockUtil.getDateTime().plusDays(8));
+      .changeDueDate(ClockUtil.getZonedDateTime().plusDays(8));
   }
 
   private Loan createLoanWithDefaultPolicy() {
@@ -376,13 +376,13 @@ class OverrideRenewalTest {
       .withLoanPolicy(LoanPolicy.from(rollingPolicy().create()));
   }
 
-  private void assertDueDate(DateTime expected, Result<Loan> actual) {
+  private void assertDueDate(ZonedDateTime expected, Result<Loan> actual) {
     assertThat(actual, succeeded());
-    assertEquals(expected.getMillis(), actual.value().getDueDate().getMillis());
+    assertEquals(expected, actual.value().getDueDate());
   }
 
-  private void assertDueDateWithinOneSecondAfter(DateTime after, Result<Loan> actual) {
+  private void assertDueDateWithinOneSecondAfter(ZonedDateTime after, Result<Loan> actual) {
     assertThat(actual, succeeded());
-    assertThat(actual.value().getDueDate().toString(), withinSecondsAfter(seconds(1), after));
+    assertThat(actual.value().getDueDate().toString(), withinSecondsAfter(1, after));
   }
 }

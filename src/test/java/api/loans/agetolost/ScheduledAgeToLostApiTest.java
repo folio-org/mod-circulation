@@ -20,6 +20,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.iterableWithSize;
 import static org.hamcrest.Matchers.not;
 
+import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -28,7 +29,6 @@ import java.util.stream.Collectors;
 
 import org.folio.circulation.support.utils.ClockUtil;
 import org.hamcrest.Matcher;
-import org.joda.time.DateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -129,7 +129,7 @@ class ScheduledAgeToLostApiTest extends SpringApiTest {
         .forItem(overdueItem)
         .at(servicePointsFixture.cd1())
         .to(usersFixture.james())
-        .on(ClockUtil.getDateTime()));
+        .on(ClockUtil.getZonedDateTime()));
 
     scheduledAgeToLostClient.triggerJob();
 
@@ -145,7 +145,7 @@ class ScheduledAgeToLostApiTest extends SpringApiTest {
     checkOutItem();
     scheduledAgeToLostClient.triggerJob();
 
-    mockClockManagerToReturnFixedDateTime(ClockUtil.getDateTime().plusMinutes(30));
+    mockClockManagerToReturnFixedDateTime(ClockUtil.getZonedDateTime().plusMinutes(30));
     scheduledAgeToLostClient.triggerJob();
     mockClockManagerToReturnDefaultDateTime();
 
@@ -161,8 +161,8 @@ class ScheduledAgeToLostApiTest extends SpringApiTest {
     agedToLostActions.forEach(PubsubPublisherTestUtils::assertThatPublishedLoanLogRecordEventsAreValid);
   }
 
-  private DateTime getLoanOverdueDate() {
-    return ClockUtil.getDateTime().minusWeeks(3);
+  private ZonedDateTime getLoanOverdueDate() {
+    return ClockUtil.getZonedDateTime().minusWeeks(3);
   }
 
   private void checkOutItem() {
@@ -212,7 +212,7 @@ class ScheduledAgeToLostApiTest extends SpringApiTest {
 
   private Matcher<JsonObject> hasPatronBillingDate(IndividualResource loan) {
     final IndividualResource loanFromStorage = loansStorageClient.get(loan);
-    final DateTime agedToLostDate = getDateTimePropertyByPath(loanFromStorage.getJson(),
+    final ZonedDateTime agedToLostDate = getDateTimePropertyByPath(loanFromStorage.getJson(),
       "agedToLostDelayedBilling", "agedToLostDate");
 
     val expectedBillingDate = agedToLostDate != null

@@ -1,6 +1,8 @@
 package org.folio.circulation.domain;
 
-import org.joda.time.DateTimeZone;
+
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 
 import io.vertx.core.json.JsonObject;
 
@@ -10,11 +12,11 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
   private final Loan loan;
   private final Loan existingLoan;
   private final RequestQueue requestQueue;
-  private final DateTimeZone timeZone;
+  private final ZoneId timeZone;
   private final JsonObject logContextProperties;
   private final String loggedInUserId;
 
-  private LoanAndRelatedRecords(Loan loan, Loan existingLoan, RequestQueue requestQueue, DateTimeZone timeZone, JsonObject logContextProperties, String loggedInUserId) {
+  private LoanAndRelatedRecords(Loan loan, Loan existingLoan, RequestQueue requestQueue, ZoneId timeZone, JsonObject logContextProperties, String loggedInUserId) {
     this.loan = loan;
     this.existingLoan = existingLoan;
     this.requestQueue = requestQueue;
@@ -24,18 +26,18 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
   }
 
   public LoanAndRelatedRecords(Loan loan) {
-    this(loan, DateTimeZone.UTC);
+    this(loan, ZoneOffset.UTC);
   }
 
   public LoanAndRelatedRecords(Loan loan, Loan existingLoan) {
-    this(loan, existingLoan, DateTimeZone.UTC);
+    this(loan, existingLoan, ZoneOffset.UTC);
   }
 
-  public LoanAndRelatedRecords(Loan loan, Loan existingLoan, DateTimeZone timeZone) {
+  public LoanAndRelatedRecords(Loan loan, Loan existingLoan, ZoneId timeZone) {
     this(loan, existingLoan, null, timeZone, new JsonObject(), null);
   }
 
-  public LoanAndRelatedRecords(Loan loan, DateTimeZone timeZone) {
+  public LoanAndRelatedRecords(Loan loan, ZoneId timeZone) {
     this(loan, null, null, timeZone, new JsonObject(), null);
   }
 
@@ -69,7 +71,7 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
     return withLoan(loan.changeItemEffectiveLocationIdAtCheckOut(getItem().getLocationId()));
   }
 
-  public LoanAndRelatedRecords withTimeZone(DateTimeZone newTimeZone) {
+  public LoanAndRelatedRecords withTimeZone(ZoneId newTimeZone) {
     return new LoanAndRelatedRecords(loan, existingLoan, requestQueue, newTimeZone, logContextProperties, loggedInUserId);
   }
 
@@ -97,7 +99,7 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
     return loan.getProxy();
   }
 
-  public DateTimeZone getTimeZone() {
+  public ZoneId getTimeZone() {
     return timeZone;
   }
 

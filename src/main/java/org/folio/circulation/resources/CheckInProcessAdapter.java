@@ -7,7 +7,6 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.commons.lang3.StringUtils;
-
 import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;

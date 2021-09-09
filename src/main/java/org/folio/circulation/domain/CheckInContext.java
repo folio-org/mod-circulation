@@ -1,11 +1,11 @@
 package org.folio.circulation.domain;
 
+import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
 import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
 import org.folio.circulation.support.utils.ClockUtil;
-import org.joda.time.DateTime;
 
 import lombok.AllArgsConstructor;
 
@@ -28,13 +28,13 @@ public class CheckInContext {
   private final ServicePoint checkInServicePoint;
   private final Request highestPriorityFulfillableRequest;
   private final String loggedInUserId;
-  private final DateTime checkInProcessedDateTime;
+  private final ZonedDateTime checkInProcessedDateTime;
   private final boolean inHouseUse;
   private final ItemStatus itemStatusBeforeCheckIn;
 
   public CheckInContext(CheckInByBarcodeRequest checkInRequest) {
     this(checkInRequest, null, null, null, null, null, null,
-      ClockUtil.getDateTime(), false, null);
+      ClockUtil.getZonedDateTime(), false, null);
   }
 
   public CheckInContext withItem(Item item) {
@@ -202,7 +202,7 @@ public class CheckInContext {
     return loggedInUserId;
   }
 
-  public DateTime getCheckInProcessedDateTime() {
+  public ZonedDateTime getCheckInProcessedDateTime() {
     return checkInProcessedDateTime;
   }
 

@@ -4,11 +4,12 @@ import static api.support.matchers.ResultMatchers.hasValidationError;
 import static api.support.matchers.ResultMatchers.succeeded;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static org.folio.circulation.resources.RenewalValidator.errorWhenEarlierOrSameDueDate;
+import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.hamcrest.MatcherAssert.assertThat;
 
+import java.time.ZonedDateTime;
+
 import org.folio.circulation.domain.Loan;
-import org.folio.circulation.support.utils.ClockUtil;
-import org.joda.time.DateTime;
 import org.junit.jupiter.api.Test;
 
 import io.vertx.core.json.JsonObject;
@@ -17,7 +18,7 @@ import lombok.val;
 class RenewalValidatorTest {
   @Test
   void shouldDisallowRenewalWhenDueDateIsEarlierOrSame() {
-    val dueDate = ClockUtil.getDateTime();
+    val dueDate = getZonedDateTime();
     val proposedDueDate = dueDate.minusWeeks(2);
     val loan = createLoan(dueDate);
 
@@ -29,7 +30,7 @@ class RenewalValidatorTest {
 
   @Test
   void shouldAllowRenewalWhenDueDateAfterCurrentDueDate() {
-    val dueDate = ClockUtil.getDateTime();
+    val dueDate = getZonedDateTime();
     val proposedDueDate = dueDate.plusWeeks(1);
     val loan = createLoan(dueDate);
 
@@ -38,7 +39,7 @@ class RenewalValidatorTest {
     assertThat(validationResult, succeeded());
   }
 
-  private Loan createLoan(DateTime dueDate) {
+  private Loan createLoan(ZonedDateTime dueDate) {
     return Loan.from(new JsonObject())
       .changeDueDate(dueDate);
   }

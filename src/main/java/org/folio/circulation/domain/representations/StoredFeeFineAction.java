@@ -26,7 +26,7 @@ public class StoredFeeFineAction extends JsonObject {
     write(this, "amountAction", builder.amount.toDouble());
     write(this, "notify", false);
     write(this, "typeAction", builder.action);
-    write(this, "dateAction", ClockUtil.getDateTime());
+    write(this, "dateAction", ClockUtil.getZonedDateTime());
   }
 
   public static StoredFeeFineActionBuilder builder() {

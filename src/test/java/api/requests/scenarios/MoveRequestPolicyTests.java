@@ -2,12 +2,17 @@ package api.requests.scenarios;
 
 import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfPublishedEvents;
 import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfSentNotices;
+import static java.time.ZoneOffset.UTC;
 import static java.util.Collections.singletonList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.waitAtMost;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_TYPE;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE_ERROR;
+import static org.folio.circulation.support.utils.ClockUtil.getInstant;
+import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
+import static org.folio.circulation.support.utils.ClockUtil.setClock;
+import static org.folio.circulation.support.utils.ClockUtil.setDefaultClock;
 import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
@@ -15,8 +20,6 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 
 import java.time.Clock;
-import java.time.Instant;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.UUID;
 
@@ -26,7 +29,6 @@ import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.notice.NoticeEventType;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.utils.ClockUtil;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -48,23 +50,16 @@ import io.vertx.core.json.JsonObject;
  *  RD = Recall due date<br>
  */
 class MoveRequestPolicyTests extends APITests {
-  private static Clock clock;
-
   private NoticePolicyBuilder noticePolicy;
 
   @BeforeAll
   public static void setUpBeforeClass() {
-    final Instant now = Instant.ofEpochMilli(ClockUtil.getJodaInstant()
-      .getMillis());
-    clock = Clock.fixed(now, ZoneOffset.UTC);
-
     FakePubSub.clearPublishedEvents();
   }
 
   @BeforeEach
   public void setUp() {
-    // reset the clock before each test (just in case)
-    ClockUtil.setClock(clock);
+    setClock(Clock.fixed(getInstant(), UTC));
   }
 
   @BeforeEach
@@ -90,7 +85,7 @@ class MoveRequestPolicyTests extends APITests {
   @AfterEach
   public void afterEach() {
     // The clock must be reset after each test.
-    ClockUtil.setDefaultClock();
+    setDefaultClock();
   }
 
   @Test
@@ -130,10 +125,10 @@ class MoveRequestPolicyTests extends APITests {
     checkOutFixture.checkOutByBarcode(interestingTimes, charlotte);
 
     IndividualResource requestByCharlotte = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, charlotte, ClockUtil.getDateTime().minusHours(2), RequestType.RECALL.getValue());
+      smallAngryPlanet, charlotte, getZonedDateTime().minusHours(2), RequestType.RECALL.getValue());
 
     IndividualResource requestByJames = requestsFixture.placeHoldShelfRequest(
-      interestingTimes, james, ClockUtil.getDateTime().minusHours(1), RequestType.RECALL.getValue());
+      interestingTimes, james, getZonedDateTime().minusHours(1), RequestType.RECALL.getValue());
 
     // move james' recall request as a hold shelf request from smallAngryPlanet to interestingTimes
     Response response = requestsFixture.attemptMove(new MoveRequestBuilder(
@@ -175,7 +170,7 @@ class MoveRequestPolicyTests extends APITests {
 
     // steve checks out smallAngryPlanet
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(
-      smallAngryPlanet, steve, ClockUtil.getDateTime());
+      smallAngryPlanet, steve, getZonedDateTime());
 
     final String originalDueDate = loan.getJson().getString("dueDate");
 
@@ -184,7 +179,7 @@ class MoveRequestPolicyTests extends APITests {
 
     // jessica places recall request on interestingTimes
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
-      interestingTimes, jessica, ClockUtil.getDateTime(), RequestType.RECALL.getValue());
+      interestingTimes, jessica, getZonedDateTime(), RequestType.RECALL.getValue());
 
     // notice for the recall is expected
     verifyNumberOfSentNotices(1);
@@ -208,7 +203,7 @@ class MoveRequestPolicyTests extends APITests {
     assertThat("due date is the original date",
       storedLoan.getString("dueDate"), not(originalDueDate));
 
-    final String expectedDueDate = formatDateTime(ClockUtil.getDateTime());
+    final String expectedDueDate = formatDateTime(getZonedDateTime());
     assertThat("due date is not the current date",
       storedLoan.getString("dueDate"), is(expectedDueDate));
 
@@ -227,20 +222,20 @@ class MoveRequestPolicyTests extends APITests {
 
     // steve checks out smallAngryPlanet
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(
-      smallAngryPlanet, steve, ClockUtil.getDateTime());
+      smallAngryPlanet, steve, getZonedDateTime());
 
     final String originalDueDate = loan.getJson().getString("dueDate");
 
     // charlotte places recall request on smallAngryPlanet
     requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, charlotte, ClockUtil.getDateTime().minusHours(1), RequestType.RECALL.getValue());
+      smallAngryPlanet, charlotte, getZonedDateTime().minusHours(1), RequestType.RECALL.getValue());
 
     JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
 
     assertThat("due date is the original date",
       storedLoan.getString("dueDate"), not(originalDueDate));
 
-    final String expectedDueDate = formatDateTime(ClockUtil.getDateTime());
+    final String expectedDueDate = formatDateTime(getZonedDateTime());
     assertThat("due date is not the current date",
       storedLoan.getString("dueDate"), is(expectedDueDate));
 
@@ -249,7 +244,7 @@ class MoveRequestPolicyTests extends APITests {
 
     // jessica places recall request on interestingTimes
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
-      interestingTimes, jessica, ClockUtil.getDateTime(), RequestType.RECALL.getValue());
+      interestingTimes, jessica, getZonedDateTime(), RequestType.RECALL.getValue());
 
     // There should be 2 notices for each recall
     waitAtMost(1, SECONDS)
@@ -313,7 +308,7 @@ class MoveRequestPolicyTests extends APITests {
       lostItemFeePoliciesFixture.facultyStandard().getId());
 
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(
-      smallAngryPlanet, steve, ClockUtil.getDateTime());
+      smallAngryPlanet, steve, getZonedDateTime());
 
     final String originalDueDate = loan.getJson().getString("dueDate");
 
@@ -322,7 +317,7 @@ class MoveRequestPolicyTests extends APITests {
 
     // jessica places recall request on interestingTimes
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
-      interestingTimes, jessica, ClockUtil.getDateTime(), RequestType.RECALL.getValue());
+      interestingTimes, jessica, getZonedDateTime(), RequestType.RECALL.getValue());
 
     // One notice for the recall is expected
     verifyNumberOfSentNotices(1);
@@ -346,7 +341,7 @@ class MoveRequestPolicyTests extends APITests {
     assertThat("due date is the original date",
       storedLoan.getString("dueDate"), not(originalDueDate));
 
-    final String expectedDueDate = formatDateTime(ClockUtil.getDateTime().plusMonths(2));
+    final String expectedDueDate = formatDateTime(getZonedDateTime().plusMonths(2));
     assertThat("due date is not the recall due date (2 months)",
       storedLoan.getString("dueDate"), is(expectedDueDate));
 
@@ -384,20 +379,20 @@ class MoveRequestPolicyTests extends APITests {
       lostItemFeePoliciesFixture.facultyStandard().getId());
 
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(
-      smallAngryPlanet, steve, ClockUtil.getDateTime());
+      smallAngryPlanet, steve, getZonedDateTime());
 
     final String originalDueDate = loan.getJson().getString("dueDate");
 
     // charlotte places recall request on smallAngryPlanet
     requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, charlotte, ClockUtil.getDateTime().minusHours(1), RequestType.RECALL.getValue());
+      smallAngryPlanet, charlotte, getZonedDateTime().minusHours(1), RequestType.RECALL.getValue());
 
     JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
 
     assertThat("due date is the original date",
       storedLoan.getString("dueDate"), not(originalDueDate));
 
-    final String expectedDueDate = formatDateTime(ClockUtil.getDateTime().plusMonths(2));
+    final String expectedDueDate = formatDateTime(getZonedDateTime().plusMonths(2));
     assertThat("due date is not the recall due date (2 months)",
       storedLoan.getString("dueDate"), is(expectedDueDate));
 
@@ -406,7 +401,7 @@ class MoveRequestPolicyTests extends APITests {
 
     // jessica places recall request on interestingTimes
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
-      interestingTimes, jessica, ClockUtil.getDateTime(), RequestType.RECALL.getValue());
+      interestingTimes, jessica, getZonedDateTime(), RequestType.RECALL.getValue());
 
     // There should be 2 notices for each recall
     waitAtMost(1, SECONDS)

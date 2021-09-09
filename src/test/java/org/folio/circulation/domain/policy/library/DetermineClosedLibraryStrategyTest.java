@@ -1,14 +1,14 @@
 package org.folio.circulation.domain.policy.library;
 
+import static java.time.ZoneOffset.UTC;
+
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.Period;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeConstants;
-import org.joda.time.DateTimeZone;
 import org.junit.Assert;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -29,9 +29,9 @@ class DetermineClosedLibraryStrategyTest {
       .rolling(Period.days(5)).create();
 
     LoanPolicy loanPolicy = LoanPolicy.from(representation);
-    DateTime startDate = new DateTime(2019, DateTimeConstants.JANUARY, 1, 0, 0);
+    ZonedDateTime startDate = ZonedDateTime.of(2019, 1, 1, 0, 0, 0, 0, UTC);
     closedLibraryStrategy = ClosedLibraryStrategyUtils
-      .determineClosedLibraryStrategy(loanPolicy, startDate, DateTimeZone.UTC);
+      .determineClosedLibraryStrategy(loanPolicy, startDate, UTC);
 
     Assert.assertEquals(expectedClass, closedLibraryStrategy.getClass());
   }

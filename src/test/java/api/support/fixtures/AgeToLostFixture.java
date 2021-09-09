@@ -6,18 +6,16 @@ import static api.support.http.InterfaceUrls.scheduledAgeToLostUrl;
 import static api.support.http.ResourceClient.forLoansStorage;
 import static api.support.matchers.ItemMatchers.isAgedToLost;
 import static java.time.Clock.fixed;
-import static java.time.Instant.ofEpochMilli;
+import static java.time.ZoneOffset.UTC;
+import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
+import static org.folio.circulation.support.utils.ClockUtil.setClock;
+import static org.folio.circulation.support.utils.ClockUtil.setDefaultClock;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.joda.time.DateTime.now;
 
-import java.time.Clock;
-import java.time.ZoneOffset;
 import java.util.UUID;
 import java.util.function.UnaryOperator;
 
 import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.utils.ClockUtil;
-import org.joda.time.DateTime;
 
 import api.support.builders.HoldingBuilder;
 import api.support.builders.ItemBuilder;
@@ -91,8 +89,8 @@ public final class AgeToLostFixture {
     return ageToLostResult;
   }
 
-  public AgeToLostResult createLoanAgeToLostAndChargeFeesWithOverdues(IndividualResource lostPolicy, IndividualResource overduePolicy) {   
-      return createLoanAgeToLostAndChargeFees(UnaryOperator.identity(), 
+  public AgeToLostResult createLoanAgeToLostAndChargeFeesWithOverdues(IndividualResource lostPolicy, IndividualResource overduePolicy) {
+      return createLoanAgeToLostAndChargeFees(UnaryOperator.identity(),
         PoliciesToActivate.builder()
           .lostItemPolicy(lostPolicy)
           .overduePolicy(overduePolicy)
@@ -149,7 +147,7 @@ public final class AgeToLostFixture {
 
     timedTaskClient.start(scheduledAgeToLostUrl(), 204, "scheduled-age-to-lost");
 
-    ClockUtil.setDefaultClock();
+    setDefaultClock();
   }
 
   public void chargeFees() {
@@ -158,7 +156,7 @@ public final class AgeToLostFixture {
     timedTaskClient.start(scheduledAgeToLostFeeChargingUrl(), 204,
       "scheduled-age-to-lost-fee-charging");
 
-    ClockUtil.setDefaultClock();
+    setDefaultClock();
   }
 
   public void ageToLostAndChargeFees() {
@@ -174,7 +172,7 @@ public final class AgeToLostFixture {
     final Response response = timedTaskClient.attemptRun(scheduledAgeToLostFeeChargingUrl(),
       "scheduled-age-to-lost-fee-charging");
 
-    ClockUtil.setDefaultClock();
+    setDefaultClock();
 
     return response;
   }
@@ -188,10 +186,7 @@ public final class AgeToLostFixture {
   }
 
   private void moveTimeForward(int weeks) {
-    final DateTime newDateTime = ClockUtil.getDateTime().plusWeeks(weeks);
-    final Clock fixedClocks = fixed(ofEpochMilli(newDateTime.getMillis()), ZoneOffset.UTC);
-
-    ClockUtil.setClock(fixedClocks);
+    setClock(fixed(getZonedDateTime().plusWeeks(weeks).toInstant(), UTC));
   }
 
   @Getter

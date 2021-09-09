@@ -31,7 +31,7 @@ class JsonSchemaValidationTest {
 
     final JsonObject checkInRequest = new CheckInByBarcodeRequestBuilder()
       .withItemBarcode("246650492")
-      .on(ClockUtil.getDateTime())
+      .on(ClockUtil.getZonedDateTime())
       .at(UUID.randomUUID())
       .create();
 
@@ -48,7 +48,7 @@ class JsonSchemaValidationTest {
       .withItemId(UUID.randomUUID())
       .withRequesterId(UUID.randomUUID())
       .fulfilToHoldShelf(UUID.randomUUID())
-      .withRequestDate(ClockUtil.getDateTime())
+      .withRequestDate(ClockUtil.getZonedDateTime())
       .create();
 
     assertThat(validator.validate(request.encode()), succeeded());
@@ -62,7 +62,7 @@ class JsonSchemaValidationTest {
 
     write(storageLoanRequest, "itemId", UUID.randomUUID());
     write(storageLoanRequest, "userId", UUID.randomUUID());
-    write(storageLoanRequest, "loanDate", ClockUtil.getDateTime());
+    write(storageLoanRequest, "loanDate", ClockUtil.getZonedDateTime());
     write(storageLoanRequest, "action", "checkedout");
 
     assertThat(validator.validate(storageLoanRequest.encode()), succeeded());
@@ -91,7 +91,7 @@ class JsonSchemaValidationTest {
 
     final JsonObject checkInRequest = new CheckInByBarcodeRequestBuilder()
       .withItemBarcode("246650492")
-      .on(ClockUtil.getDateTime())
+      .on(ClockUtil.getZonedDateTime())
       .atNoServicePoint()
       .create();
 
@@ -111,7 +111,7 @@ class JsonSchemaValidationTest {
 
     final JsonObject checkInRequest = new CheckInByBarcodeRequestBuilder()
       .withItemBarcode("246650492")
-      .on(ClockUtil.getDateTime())
+      .on(ClockUtil.getZonedDateTime())
       .at(UUID.randomUUID())
       .create();
 
@@ -133,7 +133,7 @@ class JsonSchemaValidationTest {
 
     final JsonObject checkInRequest = new CheckInByBarcodeRequestBuilder()
       .withItemBarcode("246650492")
-      .on(ClockUtil.getDateTime())
+      .on(ClockUtil.getZonedDateTime())
       .atNoServicePoint()
       .create();
 

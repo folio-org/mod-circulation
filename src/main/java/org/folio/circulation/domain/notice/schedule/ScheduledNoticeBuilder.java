@@ -1,6 +1,6 @@
 package org.folio.circulation.domain.notice.schedule;
 
-import org.joda.time.DateTime;
+import java.time.ZonedDateTime;
 
 public class ScheduledNoticeBuilder {
   private String id;
@@ -9,7 +9,7 @@ public class ScheduledNoticeBuilder {
   private String feeFineActionId;
   private String recipientUserId;
   private TriggeringEvent triggeringEvent;
-  private DateTime nextRunTime;
+  private ZonedDateTime nextRunTime;
   private ScheduledNoticeConfig noticeConfig;
 
   public ScheduledNoticeBuilder setId(String id) {
@@ -37,7 +37,7 @@ public class ScheduledNoticeBuilder {
     return this;
   }
 
-  public ScheduledNoticeBuilder setNextRunTime(DateTime nextRunTime) {
+  public ScheduledNoticeBuilder setNextRunTime(ZonedDateTime nextRunTime) {
     this.nextRunTime = nextRunTime;
     return this;
   }

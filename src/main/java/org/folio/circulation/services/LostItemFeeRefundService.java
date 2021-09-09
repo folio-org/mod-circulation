@@ -20,6 +20,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.FeeFineAction;
 import org.folio.circulation.domain.Loan;
@@ -38,8 +40,6 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.results.CommonFailures;
 import org.folio.circulation.support.results.Result;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class LostItemFeeRefundService {
   private static final Logger log = LogManager.getLogger(LostItemFeeRefundService.class);

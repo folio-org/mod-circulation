@@ -2,10 +2,10 @@ package org.folio.circulation.storage;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Function.identity;
-import static org.folio.circulation.support.json.JsonKeys.byId;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQuery;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
+import static org.folio.circulation.support.json.JsonKeys.byId;
 
 import java.util.Collection;
 import java.util.Set;
@@ -14,11 +14,11 @@ import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.support.FindWithCqlQuery;
 import org.folio.circulation.support.GetManyRecordsClient;
-import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
-import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.client.CqlQuery;
+import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.json.JsonObject;
 

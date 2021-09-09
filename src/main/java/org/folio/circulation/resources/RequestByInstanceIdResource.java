@@ -13,6 +13,7 @@ import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.lang.invoke.MethodHandles;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -69,7 +70,6 @@ import org.folio.circulation.support.http.server.ServerErrorResponse;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.Result;
-import org.joda.time.DateTime;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
@@ -136,7 +136,7 @@ public class RequestByInstanceIdResource extends Resource {
       .thenApply( r -> r.next(loanItems -> combineWithUnavailableItems(loanItems, requestRelatedRecords)));
   }
 
-  private CompletableFuture<Result<Map<Item, DateTime>>> getLoanItems(
+  private CompletableFuture<Result<Map<Item, ZonedDateTime>>> getLoanItems(
     InstanceRequestRelatedRecords instanceRequestPackage, Clients clients) {
 
     final List<Item> unsortedUnavailableItems = instanceRequestPackage.getUnsortedUnavailableItems();
@@ -157,7 +157,7 @@ public class RequestByInstanceIdResource extends Resource {
 
     return CompletableFuture.allOf(loanFutures.toArray(new CompletableFuture[0]))
       .thenApply(dd -> {
-        Map<Item, DateTime> itemDueDateMap = new HashMap<>();
+        Map<Item, ZonedDateTime> itemDueDateMap = new HashMap<>();
         List<Item> itemsWithoutLoansList = new ArrayList<>();
 
         for (Map.Entry<Item, CompletableFuture<Result<Loan>>> entry : itemLoanFuturesMap.entrySet()) {
@@ -371,7 +371,7 @@ public class RequestByInstanceIdResource extends Resource {
   }
 
   private Result<InstanceRequestRelatedRecords> combineWithUnavailableItems(
-    Map<Item, DateTime> itemDueDateMap,
+    Map<Item, ZonedDateTime> itemDueDateMap,
     InstanceRequestRelatedRecords records){
 
     return of(() -> {

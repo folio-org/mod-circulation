@@ -1,10 +1,10 @@
 package org.folio.circulation.support;
 
-import io.vertx.core.http.HttpServerResponse;
-
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.ForwardResponse;
+
+import io.vertx.core.http.HttpServerResponse;
 
 public class ForwardOnFailure implements HttpFailure {
   private final Response failureResponse;

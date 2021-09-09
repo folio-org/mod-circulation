@@ -8,6 +8,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.rules.CirculationRuleMatch;
 import org.folio.circulation.rules.CirculationRulesProcessor;
 import org.folio.circulation.rules.RulesExecutionParameters;
@@ -16,8 +18,6 @@ import org.folio.circulation.support.http.server.ClientErrorResponse;
 import org.folio.circulation.support.http.server.JsonHttpResponse;
 import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.Result;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpServerRequest;

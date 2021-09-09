@@ -1,16 +1,17 @@
 package org.folio.circulation.domain.policy;
 
 import static api.support.matchers.FailureMatcher.hasValidationFailure;
+import static java.time.ZoneOffset.UTC;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.UUID;
 
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.junit.jupiter.api.Test;
 
 import api.support.builders.FixedDueDateSchedule;
@@ -28,15 +29,14 @@ class FixedLoanPolicyCheckOutDueDateCalculationTests {
         .addSchedule(FixedDueDateSchedule.wholeYear(2018))
         .create());
 
-    DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
+    ZonedDateTime loanDate = ZonedDateTime.of(2018, 3, 14, 11, 14, 54, 0, UTC);
 
     Loan loan = loanFor(loanDate);
 
-    final Result<DateTime> calculationResult = loanPolicy
+    final Result<ZonedDateTime> calculationResult = loanPolicy
       .calculateInitialDueDate(loan, null);
 
-    assertThat(calculationResult.value(), is(new DateTime(2018, 12, 31, 23, 59, 59,
-      DateTimeZone.UTC)));
+    assertThat(calculationResult.value(), is(ZonedDateTime.of(2018, 12, 31, 23, 59, 59, 0, UTC)));
   }
 
   @Test
@@ -45,20 +45,19 @@ class FixedLoanPolicyCheckOutDueDateCalculationTests {
       .fixed(UUID.randomUUID())
       .create())
       .withDueDateSchedules(new FixedDueDateSchedulesBuilder()
-        .addSchedule(new FixedDueDateSchedule(new DateTime(2020, 11, 1, 0, 0, 0, DateTimeZone.UTC),
-          new DateTime(2020, 11, 2, 0, 0, 0, DateTimeZone.UTC),
-          new DateTime(2020, 11, 2, 0, 0, 0, DateTimeZone.UTC)))
+        .addSchedule(new FixedDueDateSchedule(ZonedDateTime.of(2020, 11, 1, 0, 0, 0, 0, UTC),
+          ZonedDateTime.of(2020, 11, 2, 0, 0, 0, 0, UTC),
+          ZonedDateTime.of(2020, 11, 2, 0, 0, 0, 0, UTC)))
         .create());
 
-    DateTime loanDate = new DateTime(2020, 11, 2, 12, 30, 30, DateTimeZone.UTC);
+    ZonedDateTime loanDate = ZonedDateTime.of(2020, 11, 2, 12, 30, 30, 0, UTC);
 
     Loan loan = loanFor(loanDate);
 
-    final Result<DateTime> calculationResult = loanPolicy
+    final Result<ZonedDateTime> calculationResult = loanPolicy
       .calculateInitialDueDate(loan, null);
 
-    final var expectedInitialDueDate = new DateTime(2020, 11, 2, 0, 0, 0,
-      DateTimeZone.UTC);
+    final var expectedInitialDueDate = ZonedDateTime.of(2020, 11, 2, 0, 0, 0, 0, UTC);
 
     assertThat(calculationResult.succeeded(), is(true));
     assertThat(calculationResult.value(), is(expectedInitialDueDate));
@@ -66,10 +65,10 @@ class FixedLoanPolicyCheckOutDueDateCalculationTests {
 
   @Test
   void shouldUseOnlyScheduleAvailableWhenLoanDateTimeAfterMidnightAndTimeZoneIsNotUTC() {
-    DateTimeZone timeZone = DateTimeZone.forOffsetHours(4);
-    final DateTime fromDate = new DateTime(2020, 11, 1, 0, 0, 0, timeZone);
-    final DateTime toDate = new DateTime(2020, 11, 2, 0, 0, 0, timeZone);
-    final DateTime loanDate = new DateTime(2020, 11, 2, 12, 30, 30, timeZone);
+    ZoneOffset zone = ZoneOffset.ofHours(4);
+    final ZonedDateTime fromDate = ZonedDateTime.of(2020, 11, 1, 0, 0, 0, 0, zone);
+    final ZonedDateTime toDate = ZonedDateTime.of(2020, 11, 2, 0, 0, 0, 0, zone);
+    final ZonedDateTime loanDate = ZonedDateTime.of(2020, 11, 2, 12, 30, 30, 0, zone);
 
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
@@ -80,7 +79,7 @@ class FixedLoanPolicyCheckOutDueDateCalculationTests {
 
     Loan loan = loanFor(loanDate);
 
-    final Result<DateTime> calculationResult = loanPolicy
+    final Result<ZonedDateTime> calculationResult = loanPolicy
       .calculateInitialDueDate(loan, null);
 
     assertThat(calculationResult.value(), is(toDate));
@@ -96,11 +95,11 @@ class FixedLoanPolicyCheckOutDueDateCalculationTests {
         .addSchedule(FixedDueDateSchedule.wholeYear(2018))
         .create());
 
-    DateTime loanDate = new DateTime(2017, 12, 30, 14, 32, 21, DateTimeZone.UTC);
+    ZonedDateTime loanDate = ZonedDateTime.of(2017, 12, 30, 14, 32, 21, 0, UTC);
 
     Loan loan = loanFor(loanDate);
 
-    final Result<DateTime> result = loanPolicy.calculateInitialDueDate(loan, null);
+    final Result<ZonedDateTime> result = loanPolicy.calculateInitialDueDate(loan, null);
 
     assertThat(result, hasValidationFailure(
       "loan date falls outside of the date ranges in the loan policy"));
@@ -116,11 +115,11 @@ class FixedLoanPolicyCheckOutDueDateCalculationTests {
         .addSchedule(FixedDueDateSchedule.wholeYear(2018))
         .create());
 
-    DateTime loanDate = new DateTime(2019, 1, 1, 8, 10, 45, DateTimeZone.UTC);
+    ZonedDateTime loanDate = ZonedDateTime.of(2019, 1, 1, 8, 10, 45, 0, UTC);
 
     Loan loan = loanFor(loanDate);
 
-    final Result<DateTime> result = loanPolicy.calculateInitialDueDate(loan, null);
+    final Result<ZonedDateTime> result = loanPolicy.calculateInitialDueDate(loan, null);
 
     assertThat(result, hasValidationFailure(
       "loan date falls outside of the date ranges in the loan policy"));
@@ -139,11 +138,11 @@ class FixedLoanPolicyCheckOutDueDateCalculationTests {
         .addSchedule(FixedDueDateSchedule.wholeMonth(2018, 3))
         .create());
 
-    DateTime loanDate = new DateTime(2018, 1, 8, 11, 14, 54, DateTimeZone.UTC);
+    ZonedDateTime loanDate = ZonedDateTime.of(2018, 1, 8, 11, 14, 54, 0, UTC);
 
     Loan loan = loanFor(loanDate);
 
-    final Result<DateTime> calculationResult = loanPolicy
+    final Result<ZonedDateTime> calculationResult = loanPolicy
       .calculateInitialDueDate(loan, null);
 
     assertThat(calculationResult.value(), is(expectedSchedule.due));
@@ -162,11 +161,11 @@ class FixedLoanPolicyCheckOutDueDateCalculationTests {
         .addSchedule(FixedDueDateSchedule.wholeMonth(2018, 3))
         .create());
 
-    DateTime loanDate = new DateTime(2018, 2, 27, 16, 23, 43, DateTimeZone.UTC);
+    ZonedDateTime loanDate = ZonedDateTime.of(2018, 2, 27, 16, 23, 43, 0, UTC);
 
     Loan loan = loanFor(loanDate);
 
-    final Result<DateTime> calculationResult = loanPolicy
+    final Result<ZonedDateTime> calculationResult = loanPolicy
       .calculateInitialDueDate(loan, null);
 
     assertThat(calculationResult.value(), is(expectedSchedule.due));
@@ -185,11 +184,11 @@ class FixedLoanPolicyCheckOutDueDateCalculationTests {
         .addSchedule(expectedSchedule)
         .create());
 
-    DateTime loanDate = new DateTime(2018, 3, 12, 7, 15, 23, DateTimeZone.UTC);
+    ZonedDateTime loanDate = ZonedDateTime.of(2018, 3, 12, 7, 15, 23, 0, UTC);
 
     Loan loan = loanFor(loanDate);
 
-    final Result<DateTime> calculationResult = loanPolicy
+    final Result<ZonedDateTime> calculationResult = loanPolicy
       .calculateInitialDueDate(loan, null);
 
     assertThat(calculationResult.value(), is(expectedSchedule.due));
@@ -207,11 +206,11 @@ class FixedLoanPolicyCheckOutDueDateCalculationTests {
         .addSchedule(FixedDueDateSchedule.wholeMonth(2018, 3))
         .create());
 
-    DateTime loanDate = new DateTime(2017, 12, 30, 14, 32, 21, DateTimeZone.UTC);
+    ZonedDateTime loanDate = ZonedDateTime.of(2017, 12, 30, 14, 32, 21, 0, UTC);
 
     Loan loan = loanFor(loanDate);
 
-    final Result<DateTime> result = loanPolicy.calculateInitialDueDate(loan, null);
+    final Result<ZonedDateTime> result = loanPolicy.calculateInitialDueDate(loan, null);
 
     assertThat(result, hasValidationFailure(
       "loan date falls outside of the date ranges in the loan policy"));
@@ -229,11 +228,11 @@ class FixedLoanPolicyCheckOutDueDateCalculationTests {
         .addSchedule(FixedDueDateSchedule.wholeMonth(2018, 3))
         .create());
 
-    DateTime loanDate = new DateTime(2018, 4, 1, 6, 34, 21, DateTimeZone.UTC);
+    ZonedDateTime loanDate = ZonedDateTime.of(2018, 4, 1, 6, 34, 21, 0, UTC);
 
     Loan loan = loanFor(loanDate);
 
-    final Result<DateTime> result = loanPolicy.calculateInitialDueDate(loan, null);
+    final Result<ZonedDateTime> result = loanPolicy.calculateInitialDueDate(loan, null);
 
     assertThat(result, hasValidationFailure(
       "loan date falls outside of the date ranges in the loan policy"));
@@ -250,11 +249,11 @@ class FixedLoanPolicyCheckOutDueDateCalculationTests {
         .addSchedule(FixedDueDateSchedule.wholeMonth(2018, 3))
         .create());
 
-    DateTime loanDate = new DateTime(2018, 2, 18, 6, 34, 21, DateTimeZone.UTC);
+    ZonedDateTime loanDate = ZonedDateTime.of(2018, 2, 18, 6, 34, 21, 0, UTC);
 
     Loan loan = loanFor(loanDate);
 
-    final Result<DateTime> result = loanPolicy.calculateInitialDueDate(loan, null);
+    final Result<ZonedDateTime> result = loanPolicy.calculateInitialDueDate(loan, null);
 
     assertThat(result, hasValidationFailure(
       "loan date falls outside of the date ranges in the loan policy"));
@@ -268,11 +267,11 @@ class FixedLoanPolicyCheckOutDueDateCalculationTests {
       .create())
       .withDueDateSchedules(new FixedDueDateSchedulesBuilder().create());
 
-    DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
+    ZonedDateTime loanDate = ZonedDateTime.of(2018, 3, 14, 11, 14, 54, 0, UTC);
 
     Loan loan = loanFor(loanDate);
 
-    final Result<DateTime> result = loanPolicy.calculateInitialDueDate(loan, null);
+    final Result<ZonedDateTime> result = loanPolicy.calculateInitialDueDate(loan, null);
 
     assertThat(result, hasValidationFailure(
       "loan date falls outside of the date ranges in the loan policy"));
@@ -284,11 +283,11 @@ class FixedLoanPolicyCheckOutDueDateCalculationTests {
       new FixedScheduleCheckOutDueDateStrategy(UUID.randomUUID().toString(),
         "Example Fixed Schedule Loan Policy", null, s -> new ValidationError(s, null, null));
 
-    DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
+    ZonedDateTime loanDate = ZonedDateTime.of(2018, 3, 14, 11, 14, 54, 0, UTC);
 
     Loan loan = loanFor(loanDate);
 
-    final Result<DateTime> result = calculator.calculateDueDate(loan);
+    final Result<ZonedDateTime> result = calculator.calculateDueDate(loan);
 
     assertThat(result.failed(), is(true));
     assertThat(result, hasValidationFailure(
@@ -302,17 +301,17 @@ class FixedLoanPolicyCheckOutDueDateCalculationTests {
         "Example Fixed Schedule Loan Policy", new NoFixedDueDateSchedules(),
         s -> new ValidationError(s, null, null));
 
-    DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
+    ZonedDateTime loanDate = ZonedDateTime.of(2018, 3, 14, 11, 14, 54, 0, UTC);
 
     Loan loan = loanFor(loanDate);
 
-    final Result<DateTime> result = calculator.calculateDueDate(loan);
+    final Result<ZonedDateTime> result = calculator.calculateDueDate(loan);
 
     assertThat(result, hasValidationFailure(
       "loan date falls outside of the date ranges in the loan policy"));
   }
 
-  private Loan loanFor(DateTime loanDate) {
+  private Loan loanFor(ZonedDateTime loanDate) {
     return new LoanBuilder()
       .open()
       .withLoanDate(loanDate)

@@ -1,6 +1,7 @@
 package org.folio.circulation.domain.policy;
 
 import java.lang.invoke.MethodHandles;
+import java.time.ZonedDateTime;
 import java.util.function.Function;
 
 import org.apache.logging.log4j.LogManager;
@@ -8,7 +9,6 @@ import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
-import org.joda.time.DateTime;
 
 public abstract class DueDateStrategy {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
@@ -27,7 +27,7 @@ public abstract class DueDateStrategy {
     this.errorForPolicy = errorForPolicy;
   }
 
-  public abstract Result<DateTime> calculateDueDate(Loan loan);
+  public abstract Result<ZonedDateTime> calculateDueDate(Loan loan);
 
   ValidationError errorForPolicy(String reason) {
     return errorForPolicy.apply(reason);

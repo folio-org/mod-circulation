@@ -6,13 +6,13 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedSt
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.utils.DateTimeUtil.compareToMillis;
 
+import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
 
 import org.apache.commons.lang3.math.NumberUtils;
 import org.folio.circulation.support.json.JsonPropertyWriter;
-import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
@@ -27,7 +27,7 @@ public class Account {
   private final String status;
   private final String paymentStatus;
   @Getter private final Collection<FeeFineAction> feeFineActions;
-  private final DateTime creationDate;
+  private final ZonedDateTime creationDate;
 
   public static Account from(JsonObject representation) {
     return new Account(getProperty(representation, "id"),
@@ -147,14 +147,14 @@ public class Account {
     return paymentStatus;
   }
 
-  public Optional<DateTime> getClosedDate() {
+  public Optional<ZonedDateTime> getClosedDate() {
     return feeFineActions.stream()
       .filter(ffa -> ffa.getBalance().equals(NumberUtils.DOUBLE_ZERO))
       .max(this::compareByDateAction)
       .map(FeeFineAction::getDateAction);
   }
 
-  public DateTime getCreationDate() {
+  public ZonedDateTime getCreationDate() {
     return creationDate;
   }
 

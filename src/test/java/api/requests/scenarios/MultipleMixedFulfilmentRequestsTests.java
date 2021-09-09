@@ -10,14 +10,15 @@ import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
+import static java.time.ZoneOffset.UTC;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
+import java.time.ZonedDateTime;
+
 import org.folio.circulation.support.http.client.Response;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
@@ -26,8 +27,8 @@ import api.support.http.UserResource;
 import lombok.val;
 
 class MultipleMixedFulfilmentRequestsTests extends APITests {
-  private static final DateTime DATE_TIME_2017 = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
-  private static final DateTime DATE_TIME_2018 = new DateTime(2018, 1, 10, 15, 34, 21, DateTimeZone.UTC);
+  private static final ZonedDateTime DATE_TIME_2017 = ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC);
+  private static final ZonedDateTime DATE_TIME_2018 = ZonedDateTime.of(2018, 1, 10, 15, 34, 21, 0, UTC);
 
   @Test
   void itemCantBeCheckedOutToAnotherRequesterWhenStatusIsAwaitingDelivery() {

@@ -4,20 +4,20 @@ import static api.support.builders.ItemBuilder.CHECKED_OUT;
 import static api.support.builders.RequestBuilder.CLOSED_FILLED;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
+import static java.time.ZoneOffset.UTC;
 import static org.folio.HttpStatus.HTTP_OK;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
+import java.time.ZonedDateTime;
 import java.util.UUID;
 
-import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.RequestBuilder;
+import api.support.http.IndividualResource;
 
 class SingleClosedRequestTests extends APITests {
   @Test
@@ -35,7 +35,7 @@ class SingleClosedRequestTests extends APITests {
       .hold()
       .withPickupServicePointId(pickupServicePointId)
       .fulfilToHoldShelf()
-      .withRequestDate(new DateTime(2018, 1, 10, 15, 34, 21, DateTimeZone.UTC))
+      .withRequestDate(ZonedDateTime.of(2018, 1, 10, 15, 34, 21, 0, UTC))
       .fulfilled() //TODO: Replace with closed cancelled when introduced
       .withItemId(smallAngryPlanet.getId())
       .withRequesterId(jessica.getId()));
@@ -71,7 +71,7 @@ class SingleClosedRequestTests extends APITests {
       .hold()
       .withPickupServicePointId(pickupServicePointId)
       .fulfilToHoldShelf()
-      .withRequestDate(new DateTime(2018, 1, 10, 15, 34, 21, DateTimeZone.UTC))
+      .withRequestDate(ZonedDateTime.of(2018, 1, 10, 15, 34, 21, 0, UTC))
       .fulfilled() //TODO: Replace with closed cancelled when introduced
       .withItemId(smallAngryPlanet.getId())
       .withRequesterId(jessica.getId()));

@@ -3,16 +3,16 @@ package org.folio.circulation.domain;
 import static api.support.fixtures.OpeningHourExamples.afternoon;
 import static api.support.fixtures.OpeningHourExamples.allDay;
 import static api.support.fixtures.OpeningHourExamples.morning;
+import static java.time.ZoneOffset.UTC;
 import static org.folio.circulation.domain.OpeningDay.fromOpeningPeriodJson;
-import static org.joda.time.DateTimeZone.UTC;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.Collections;
 
-import org.joda.time.DateTimeZone;
-import org.joda.time.LocalDate;
 import org.junit.jupiter.api.Test;
 
 import api.support.OpeningPeriod;
@@ -22,7 +22,7 @@ class OpeningDayTest {
 
   @Test
   void getOpeningDayFromOpeningPeriodJsonTest() {
-    LocalDate date = new LocalDate("2020-04-08");
+    LocalDate date = LocalDate.parse("2020-04-08");
     OpeningDay original = createOpeningDay(false, date, UTC);
     OpeningPeriod period = new OpeningPeriod(date, original);
     OpeningDay fromJson = fromOpeningPeriodJson(period.toJson(), UTC);
@@ -32,7 +32,7 @@ class OpeningDayTest {
 
   @Test
   void getOpeningDayFromOpeningPeriodJsonWithNullDateTest() {
-    LocalDate date = new LocalDate("2020-04-08");
+    LocalDate date = LocalDate.parse("2020-04-08");
     OpeningDay original = createOpeningDay(false, date, UTC);
     OpeningPeriod period = new OpeningPeriod(date, original);
     JsonObject originalJson = original.toJson();
@@ -45,8 +45,7 @@ class OpeningDayTest {
     assertOpeningDaysEqual(original, fromJson);
   }
 
-  private OpeningDay createOpeningDay(boolean allDay, LocalDate date,
-    DateTimeZone dateTimeZone) {
+  private OpeningDay createOpeningDay(boolean allDay, LocalDate date, ZoneId dateTimeZone) {
 
     return OpeningDay.createOpeningDay(
       allDay ? Collections.singletonList(allDay()) : Arrays.asList(morning(), afternoon()),

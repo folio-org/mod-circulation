@@ -3,8 +3,9 @@ package org.folio.circulation.domain;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;
 
+import java.time.ZonedDateTime;
+
 import org.apache.commons.lang3.ObjectUtils;
-import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
 
@@ -15,7 +16,7 @@ public class CheckInRecord {
   private static final String PERFORMED_BY_USER_ID = "performedByUserId";
 
   private final String id;
-  private final DateTime occurredDateTime;
+  private final ZonedDateTime occurredDateTime;
   private final String itemId;
   private final String servicePointId;
   private final String performedByUserId;
@@ -36,7 +37,7 @@ public class CheckInRecord {
 
   public static class Builder {
     private String id;
-    private DateTime occurredDateTime;
+    private ZonedDateTime occurredDateTime;
     private String itemId;
     private String checkInServicePointId;
     private String performedByUserId;
@@ -49,7 +50,7 @@ public class CheckInRecord {
       return this;
     }
 
-    public Builder withOccurredDateTime(DateTime occurredDateTime) {
+    public Builder withOccurredDateTime(ZonedDateTime occurredDateTime) {
       this.occurredDateTime = occurredDateTime;
       return this;
     }

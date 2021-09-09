@@ -4,6 +4,7 @@ import static org.folio.circulation.domain.notice.NoticeEventType.AGED_TO_LOST;
 import static org.folio.circulation.domain.notice.NoticeEventType.DUE_DATE;
 import static org.folio.circulation.support.results.Result.succeeded;
 
+import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.UUID;
 
@@ -18,7 +19,6 @@ import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepo
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
-import org.joda.time.DateTime;
 
 public class LoanScheduledNoticeService {
   public static LoanScheduledNoticeService using(Clients clients) {
@@ -50,7 +50,7 @@ public class LoanScheduledNoticeService {
     return succeeded(null);
   }
 
-  private Result<Void> scheduleLoanNotices(Loan loan, NoticeEventType eventType, DateTime eventTime) {
+  private Result<Void> scheduleLoanNotices(Loan loan, NoticeEventType eventType, ZonedDateTime eventTime) {
     noticePolicyRepository.lookupPolicy(loan)
       .thenAccept(r -> r.next(policy ->
         scheduleLoanNoticesBasedOnPolicy(loan, eventType, eventTime, policy)));
@@ -59,7 +59,7 @@ public class LoanScheduledNoticeService {
   }
 
   private Result<PatronNoticePolicy> scheduleLoanNoticesBasedOnPolicy(Loan loan,
-     NoticeEventType eventType, DateTime eventTime, PatronNoticePolicy noticePolicy) {
+     NoticeEventType eventType, ZonedDateTime eventTime, PatronNoticePolicy noticePolicy) {
 
     noticePolicy.getNoticeConfigurations().stream()
       .filter(config -> config.getNoticeEventType() == eventType)
@@ -70,7 +70,7 @@ public class LoanScheduledNoticeService {
   }
 
   private ScheduledNotice createScheduledNotice(NoticeConfiguration configuration, Loan loan,
-    NoticeEventType eventType, DateTime eventTime) {
+    NoticeEventType eventType, ZonedDateTime eventTime) {
 
     return new ScheduledNoticeBuilder()
       .setId(UUID.randomUUID().toString())
@@ -82,16 +82,16 @@ public class LoanScheduledNoticeService {
       .build();
   }
 
-  private DateTime determineNextRunTime(NoticeConfiguration configuration, DateTime eventTime) {
+  private ZonedDateTime determineNextRunTime(NoticeConfiguration configuration, ZonedDateTime eventTime) {
     final NoticeTiming timing = configuration.getTiming();
 
     switch (timing) {
       case UPON_AT:
         return eventTime;
       case BEFORE:
-        return eventTime.minus(configuration.getTimingPeriod().timePeriod());
+        return configuration.getTimingPeriod().minusDate(eventTime);
       case AFTER:
-        return eventTime.plus(configuration.getTimingPeriod().timePeriod());
+        return configuration.getTimingPeriod().plusDate(eventTime);
       default:
         throw new IllegalArgumentException("Unknown patron notice timing: " + timing);
     }
@@ -120,7 +120,7 @@ public class LoanScheduledNoticeService {
   }
 
   private <T> Result<T> rescheduleLoanNotices(Loan loan, T mapTo, NoticeEventType eventType,
-    DateTime eventTime) {
+    ZonedDateTime eventTime) {
 
     TriggeringEvent triggeringEvent = TriggeringEvent.from(eventType);
 

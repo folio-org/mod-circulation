@@ -396,7 +396,7 @@ class HoldShelfClearanceReportTests extends APITests {
     // #7 check-in item in SP2
     checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(smallAngryPlanet)
-      .on(ClockUtil.getDateTime())
+      .on(ClockUtil.getZonedDateTime())
       .at(secondServicePointId));
 
     // #8 Check that hold shelf expiration report doesn't contain data when the item has the status `Awaiting pickup`,
@@ -476,7 +476,7 @@ class HoldShelfClearanceReportTests extends APITests {
     // #7 check-in item in SP2
     checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(smallAngryPlanet)
-      .on(ClockUtil.getDateTime())
+      .on(ClockUtil.getZonedDateTime())
       .at(secondServicePointId));
 
     // #8 get hold shelf expiration report in SP1 >>> empty
@@ -529,7 +529,7 @@ class HoldShelfClearanceReportTests extends APITests {
     // #7 check-in item in SP2
     checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(nod)
-      .on(ClockUtil.getDateTime())
+      .on(ClockUtil.getZonedDateTime())
       .at(secondServicePointId));
 
     // #8 get hold shelf expiration report in SP1 >>> empty

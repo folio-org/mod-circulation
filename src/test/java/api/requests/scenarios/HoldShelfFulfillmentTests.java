@@ -11,14 +11,15 @@ import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
+import static java.time.ZoneOffset.UTC;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
+import java.time.ZonedDateTime;
+
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.utils.ClockUtil;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
@@ -38,11 +39,11 @@ class HoldShelfFulfillmentTests extends APITests {
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, jessica, ClockUtil.getDateTime(),
+      smallAngryPlanet, jessica, ClockUtil.getZonedDateTime(),
       pickupServicePoint.getId());
 
     checkInFixture.checkInByBarcode(smallAngryPlanet,
-      ClockUtil.getDateTime(), pickupServicePoint.getId());
+      ClockUtil.getZonedDateTime(), pickupServicePoint.getId());
 
     Response request = requestsClient.getById(requestByJessica.getId());
 
@@ -70,11 +71,11 @@ class HoldShelfFulfillmentTests extends APITests {
 
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, jessica,
-      new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC),
+      ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC),
       pickupServicePoint.getId());
 
     checkInFixture.checkInByBarcode(smallAngryPlanet,
-      ClockUtil.getDateTime(), pickupServicePoint.getId());
+      ClockUtil.getZonedDateTime(), pickupServicePoint.getId());
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica);
 
@@ -100,11 +101,11 @@ class HoldShelfFulfillmentTests extends APITests {
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, jessica, ClockUtil.getDateTime(),
+      smallAngryPlanet, jessica, ClockUtil.getZonedDateTime(),
       pickupServicePoint.getId());
 
     checkInFixture.checkInByBarcode(smallAngryPlanet,
-      ClockUtil.getDateTime(), checkInServicePoint.getId());
+      ClockUtil.getZonedDateTime(), checkInServicePoint.getId());
 
     Response request = requestsClient.getById(requestByJessica.getId());
 
@@ -135,11 +136,11 @@ class HoldShelfFulfillmentTests extends APITests {
 
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, jessica,
-      new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC),
+      ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC),
       pickupServicePoint.getId());
 
     checkInFixture.checkInByBarcode(smallAngryPlanet,
-      ClockUtil.getDateTime(), checkInServicePoint.getId());
+      ClockUtil.getZonedDateTime(), checkInServicePoint.getId());
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica);
 
@@ -165,14 +166,14 @@ class HoldShelfFulfillmentTests extends APITests {
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, jessica, ClockUtil.getDateTime(),
+      smallAngryPlanet, jessica, ClockUtil.getZonedDateTime(),
       pickupServicePoint.getId());
 
     checkInFixture.checkInByBarcode(smallAngryPlanet,
-      ClockUtil.getDateTime(), checkInServicePoint.getId());
+      ClockUtil.getZonedDateTime(), checkInServicePoint.getId());
 
     checkInFixture.checkInByBarcode(smallAngryPlanet,
-      ClockUtil.getDateTime(), pickupServicePoint.getId());
+      ClockUtil.getZonedDateTime(), pickupServicePoint.getId());
 
     Response request = requestsClient.getById(requestByJessica.getId());
 
@@ -198,7 +199,7 @@ class HoldShelfFulfillmentTests extends APITests {
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
+      smallAngryPlanet, jessica, ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC));
 
     checkInFixture.checkInByBarcode(smallAngryPlanet);
 
@@ -233,7 +234,7 @@ class HoldShelfFulfillmentTests extends APITests {
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, jessica, ClockUtil.getDateTime(),
+      smallAngryPlanet, jessica, ClockUtil.getZonedDateTime(),
       requestServicePoint.getId());
 
     checkInFixture.checkInByBarcode(

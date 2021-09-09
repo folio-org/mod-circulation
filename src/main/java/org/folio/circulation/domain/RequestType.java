@@ -1,7 +1,8 @@
 package org.folio.circulation.domain;
 
 import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
-import static org.folio.circulation.domain.LoanAction.*;
+import static org.folio.circulation.domain.LoanAction.HOLDREQUESTED;
+import static org.folio.circulation.domain.LoanAction.RECALLREQUESTED;
 
 import java.util.Arrays;
 

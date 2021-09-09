@@ -41,7 +41,7 @@ class ServicePointCheckOutTests extends APITests {
     checkOutFixture.checkOutByBarcode(nod, james);
 
     final IndividualResource request = requestsFixture.placeHoldShelfRequest(nod, jessica,
-      ClockUtil.getDateTime(), requestServicePoint.getId());
+      ClockUtil.getZonedDateTime(), requestServicePoint.getId());
 
     final CheckInByBarcodeResponse checkInResponse = checkInFixture.checkInByBarcode(
         new CheckInByBarcodeRequestBuilder()

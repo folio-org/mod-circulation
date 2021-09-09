@@ -3,13 +3,13 @@ package org.folio.circulation.domain.policy;
 import static java.lang.String.format;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 
+import java.time.ZonedDateTime;
 import java.util.function.Function;
 
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
-import org.joda.time.DateTime;
 
 class RollingRenewalDueDateStrategy extends DueDateStrategy {
   private static final String RENEW_FROM_SYSTEM_DATE = "SYSTEM_DATE";
@@ -30,7 +30,7 @@ class RollingRenewalDueDateStrategy extends DueDateStrategy {
   private static final String RENEW_FROM_UNRECOGNISED_MESSAGE =
     "cannot determine when to renew from";
 
-  private final DateTime systemDate;
+  private final ZonedDateTime systemDate;
   private final String renewFrom;
   private final Period period;
   private final FixedDueDateSchedules dueDateLimitSchedules;
@@ -38,7 +38,7 @@ class RollingRenewalDueDateStrategy extends DueDateStrategy {
   RollingRenewalDueDateStrategy(
     String loanPolicyId,
     String loanPolicyName,
-    DateTime systemDate,
+    ZonedDateTime systemDate,
     String renewFrom,
     Period period,
     FixedDueDateSchedules dueDateLimitSchedules,
@@ -52,7 +52,7 @@ class RollingRenewalDueDateStrategy extends DueDateStrategy {
   }
 
   @Override
-  public Result<DateTime> calculateDueDate(Loan loan) {
+  public Result<ZonedDateTime> calculateDueDate(Loan loan) {
     if(StringUtils.isBlank(renewFrom)) {
       return failedValidation(errorForPolicy(RENEW_FROM_UNRECOGNISED_MESSAGE));
     }
@@ -67,21 +67,21 @@ class RollingRenewalDueDateStrategy extends DueDateStrategy {
     }
   }
 
-  protected Result<DateTime> calculateDueDate(DateTime from) {
+  protected Result<ZonedDateTime> calculateDueDate(ZonedDateTime from) {
     return renewalDueDate(from)
       .next(dueDate -> truncateDueDateBySchedule(from, dueDate));
   }
 
-  Result<DateTime> renewalDueDate(DateTime from) {
+  Result<ZonedDateTime> renewalDueDate(ZonedDateTime from) {
     return period.addTo(from,
       () -> errorForPolicy(RENEWAL_UNRECOGNISED_PERIOD_MESSAGE),
       interval -> errorForPolicy(format(RENEWAL_UNRECOGNISED_INTERVAL_MESSAGE, interval)),
       duration -> errorForPolicy(format(RENEWAL_INVALID_DURATION_MESSAGE, duration)));
   }
 
-  private Result<DateTime> truncateDueDateBySchedule(
-    DateTime from,
-    DateTime dueDate) {
+  private Result<ZonedDateTime> truncateDueDateBySchedule(
+    ZonedDateTime from,
+    ZonedDateTime dueDate) {
 
     return dueDateLimitSchedules.truncateDueDate(dueDate, from,
       () -> errorForPolicy(NO_APPLICABLE_DUE_DATE_LIMIT_SCHEDULE_MESSAGE));

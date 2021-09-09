@@ -93,7 +93,7 @@ public class AnonymizeLoansByUserIdAPITests extends LoanAnonymizationTests {
       .at(servicePoint.getId()));
     UUID loanID = loanResource.getId();
 
-    createClosedAccountWithFeeFines(loanResource, ClockUtil.getDateTime());
+    createClosedAccountWithFeeFines(loanResource, ClockUtil.getZonedDateTime());
 
     checkInFixture.checkInByBarcode(item1);
 

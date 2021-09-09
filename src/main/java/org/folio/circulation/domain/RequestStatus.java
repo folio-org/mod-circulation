@@ -7,10 +7,10 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
-
 import org.folio.circulation.domain.representations.RequestProperties;
+
+import io.vertx.core.json.JsonObject;
 
 public enum RequestStatus {
   NONE(""),

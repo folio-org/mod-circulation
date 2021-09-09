@@ -35,9 +35,9 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
-import static org.joda.time.Seconds.seconds;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.UnaryOperator;
@@ -48,7 +48,6 @@ import org.folio.circulation.domain.EventType;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.utils.ClockUtil;
 import org.hamcrest.Matcher;
-import org.joda.time.DateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -86,7 +85,7 @@ class DeclareLostAPITests extends APITests {
       .checkOutByBarcode(itemsFixture.basedUponNod(), usersFixture.jessica());
 
     String comment = "testing";
-    DateTime dateTime = ClockUtil.getDateTime();
+    ZonedDateTime dateTime = ClockUtil.getZonedDateTime();
 
     final DeclareItemLostRequestBuilder builder = new DeclareItemLostRequestBuilder()
       .forLoanId(checkOut.getId()).on(dateTime)
@@ -112,7 +111,7 @@ class DeclareLostAPITests extends APITests {
     final IndividualResource checkOut = checkOutFixture
       .checkOutByBarcode(itemsFixture.basedUponNod(), usersFixture.jessica());
 
-    DateTime dateTime = ClockUtil.getDateTime();
+    ZonedDateTime dateTime = ClockUtil.getZonedDateTime();
 
     final DeclareItemLostRequestBuilder builder = new DeclareItemLostRequestBuilder()
       .forLoanId(checkOut.getId()).on(dateTime)
@@ -165,7 +164,7 @@ class DeclareLostAPITests extends APITests {
     final DeclareItemLostRequestBuilder builder = new DeclareItemLostRequestBuilder()
       .forLoanId(loanId)
       .withServicePointId(servicePointId)
-      .on(ClockUtil.getDateTime()).withNoComment();
+      .on(ClockUtil.getZonedDateTime()).withNoComment();
 
     Response response = declareLostFixtures.attemptDeclareItemLost(builder);
 
@@ -477,7 +476,7 @@ class DeclareLostAPITests extends APITests {
 
     final DeclareItemLostRequestBuilder builder = new DeclareItemLostRequestBuilder()
       .forLoanId(loanIndividualResource.getId())
-      .on(ClockUtil.getDateTime())
+      .on(ClockUtil.getZonedDateTime())
       .withServicePointId(servicePointId)
       .withNoComment();
     declareLostFixtures.declareItemLost(builder);
@@ -547,7 +546,7 @@ class DeclareLostAPITests extends APITests {
     assertThat(itemFee, hasJsonPath("amount", expectedItemFee));
     assertThat(itemProcessingFee, hasJsonPath("amount", expectedProcessingFee));
 
-    final DateTime declareLostDate = ClockUtil.getDateTime().plusWeeks(1);
+    final ZonedDateTime declareLostDate = ClockUtil.getZonedDateTime().plusWeeks(1);
     mockClockManagerToReturnFixedDateTime(declareLostDate);
 
     final DeclareItemLostRequestBuilder builder = new DeclareItemLostRequestBuilder()
@@ -614,7 +613,7 @@ class DeclareLostAPITests extends APITests {
     Double amountRemaining = transferredAndPaidLoan.getJsonObject("feesAndFines").getDouble("amountRemainingToPay");
     assertEquals(amountRemaining, 10.0, 0.01);
 
-    final DateTime declareLostDate = ClockUtil.getDateTime().plusWeeks(1);
+    final ZonedDateTime declareLostDate = ClockUtil.getZonedDateTime().plusWeeks(1);
     mockClockManagerToReturnFixedDateTime(declareLostDate);
 
     final DeclareItemLostRequestBuilder builder = new DeclareItemLostRequestBuilder()
@@ -666,7 +665,7 @@ class DeclareLostAPITests extends APITests {
 
 	  assertThat(itemFee, hasJsonPath("amount", lostItemProcessingFee));
 
-	  final DateTime declareLostDate = ClockUtil.getDateTime().plusWeeks(1);
+	  final ZonedDateTime declareLostDate = ClockUtil.getZonedDateTime().plusWeeks(1);
 	  mockClockManagerToReturnFixedDateTime(declareLostDate);
 
 	  final DeclareItemLostRequestBuilder builder = new DeclareItemLostRequestBuilder()
@@ -712,7 +711,7 @@ class DeclareLostAPITests extends APITests {
       .checkOutByBarcode(item, usersFixture.jessica());
 
     // advance system time by five weeks to accrue fines before declared lost
-    final DateTime declareLostDate = ClockUtil.getDateTime().plusWeeks(5);
+    final ZonedDateTime declareLostDate = ClockUtil.getZonedDateTime().plusWeeks(5);
     mockClockManagerToReturnFixedDateTime(declareLostDate);
 
     final DeclareItemLostRequestBuilder builder = new DeclareItemLostRequestBuilder()
@@ -722,7 +721,7 @@ class DeclareLostAPITests extends APITests {
       .withNoComment();
     declareLostFixtures.declareItemLost(builder);
 
-    final DateTime checkInDate = ClockUtil.getDateTime().plusWeeks(6);
+    final ZonedDateTime checkInDate = ClockUtil.getZonedDateTime().plusWeeks(6);
     mockClockManagerToReturnFixedDateTime(checkInDate);
     checkInFixture.checkInByBarcode(item, checkInDate);
 
@@ -742,9 +741,9 @@ class DeclareLostAPITests extends APITests {
 
     claimItemReturnedFixture.claimItemReturned(new ClaimItemReturnedRequestBuilder()
       .forLoan(loanId)
-      .withItemClaimedReturnedDate(ClockUtil.getDateTime()));
+      .withItemClaimedReturnedDate(ClockUtil.getZonedDateTime()));
 
-    DateTime dateTime = ClockUtil.getDateTime();
+    ZonedDateTime dateTime = ClockUtil.getZonedDateTime();
 
     JsonObject updatedLoan = loansClient.get(loanId).getJson();
     assertThat(updatedLoan.getJsonObject("item"), hasStatus("Claimed returned"));
@@ -767,7 +766,7 @@ class DeclareLostAPITests extends APITests {
     UUID loanId = checkOutFixture.checkOutByBarcode(item, usersFixture.charlotte())
       .getId();
 
-    DateTime dateTime = ClockUtil.getDateTime();
+    ZonedDateTime dateTime = ClockUtil.getZonedDateTime();
 
     final DeclareItemLostRequestBuilder builder = new DeclareItemLostRequestBuilder()
       .forLoanId(loanId).on(dateTime)
@@ -849,7 +848,7 @@ class DeclareLostAPITests extends APITests {
       hasJsonPath("createdAt", servicePointsFixture.cd2().getJson().getString("name")),
       hasJsonPath("source", "Admin, Admin"),
       hasJsonPath("typeAction", feeType),
-      hasJsonPath("dateAction", withinSecondsBeforeNow(seconds(1)))
+      hasJsonPath("dateAction", withinSecondsBeforeNow(1))
     ));
   }
 

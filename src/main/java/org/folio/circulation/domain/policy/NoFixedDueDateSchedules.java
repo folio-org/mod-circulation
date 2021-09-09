@@ -2,13 +2,13 @@ package org.folio.circulation.domain.policy;
 
 import static org.folio.circulation.support.results.Result.succeeded;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Optional;
 import java.util.function.Supplier;
 
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
-import org.joda.time.DateTime;
 
 public class NoFixedDueDateSchedules extends FixedDueDateSchedules {
   public NoFixedDueDateSchedules() {
@@ -16,14 +16,14 @@ public class NoFixedDueDateSchedules extends FixedDueDateSchedules {
   }
 
   @Override
-  public Optional<DateTime> findDueDateFor(DateTime date) {
+  public Optional<ZonedDateTime> findDueDateFor(ZonedDateTime date) {
     return Optional.empty();
   }
 
   @Override
-  Result<DateTime> truncateDueDate(
-    DateTime dueDate,
-    DateTime loanDate,
+  Result<ZonedDateTime> truncateDueDate(
+    ZonedDateTime dueDate,
+    ZonedDateTime loanDate,
     Supplier<ValidationError> noApplicableScheduleError) {
 
     return succeeded(dueDate);

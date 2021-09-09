@@ -1,9 +1,10 @@
 package org.folio.circulation.resources;
 
+import org.folio.circulation.support.RouteRegistration;
+
 import io.vertx.core.http.HttpClient;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
-import org.folio.circulation.support.RouteRegistration;
 
 abstract class CollectionResource extends Resource {
   private final String rootPath;

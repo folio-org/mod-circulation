@@ -5,24 +5,24 @@ import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
+import static java.time.ZoneOffset.UTC;
 import static org.folio.HttpStatus.HTTP_CREATED;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.joda.time.DateTimeZone.UTC;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDate;
+import java.time.ZonedDateTime;
 import java.util.UUID;
 
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.utils.ClockUtil;
-import org.joda.time.DateTime;
 import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
@@ -73,8 +73,8 @@ class InstanceRequestsAPICreationTests extends APITests {
   void canCreateATitleLevelRequestForOneAvailableCopy() {
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     UUID requesterId = usersFixture.jessica().getId();
-    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, UTC);
-    DateTime requestExpirationDate = requestDate.plusDays(30);
+    ZonedDateTime requestDate = ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC);
+    ZonedDateTime requestExpirationDate = requestDate.plusDays(30);
 
     IndividualResource instance = instancesFixture.basedUponDunkirk();
     IndividualResource holdings = holdingsFixture.defaultWithHoldings(
@@ -103,7 +103,7 @@ class InstanceRequestsAPICreationTests extends APITests {
   void canCreateATitleLevelRequestForOneAvailableCopyWithoutRequestExpirationDate() {
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     UUID requesterId = usersFixture.jessica().getId();
-    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, UTC);
+    ZonedDateTime requestDate = ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC);
 
     IndividualResource instance = instancesFixture.basedUponDunkirk();
     IndividualResource holdings = holdingsFixture.defaultWithHoldings(
@@ -135,8 +135,8 @@ class InstanceRequestsAPICreationTests extends APITests {
   void canCreateATitleLevelRequestForMultipleAvailableItemsWithNoMatchingPickupLocationIds() {
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     UUID requesterId = usersFixture.jessica().getId();
-    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, UTC);
-    DateTime requestExpirationDate = requestDate.plusDays(30);
+    ZonedDateTime requestDate = ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC);
+    ZonedDateTime requestExpirationDate = requestDate.plusDays(30);
 
     IndividualResource instance = instancesFixture.basedUponDunkirk();
     IndividualResource holdings = holdingsFixture.defaultWithHoldings(
@@ -173,8 +173,8 @@ class InstanceRequestsAPICreationTests extends APITests {
   void cannotSuccessfullyPlaceATitleLevelRequestWhenTitleLevelRequestMissingRequiredFields() {
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     UUID requesterId = usersFixture.jessica().getId();
-    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, UTC);
-    DateTime requestExpirationDate = requestDate.plusDays(30);
+    ZonedDateTime requestDate = ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC);
+    ZonedDateTime requestExpirationDate = requestDate.plusDays(30);
 
     IndividualResource instance = instancesFixture.basedUponDunkirk();
     IndividualResource holdings = holdingsFixture.defaultWithHoldings(
@@ -239,8 +239,8 @@ class InstanceRequestsAPICreationTests extends APITests {
 
     IndividualResource instanceRequester = usersFixture.charlotte();
 
-    DateTime instanceRequestDate = new DateTime(2017, 7, 22, 10, 22, 54, UTC);
-    DateTime instanceRequestDateRequestExpirationDate = instanceRequestDate
+    ZonedDateTime instanceRequestDate = ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC);
+    ZonedDateTime instanceRequestDateRequestExpirationDate = instanceRequestDate
       .plusDays(30);
 
     JsonObject requestBody = createInstanceRequestObject(instance.getId(),
@@ -288,8 +288,8 @@ class InstanceRequestsAPICreationTests extends APITests {
 
     IndividualResource instanceRequester = usersFixture.charlotte();
 
-    DateTime instanceRequestDate = new DateTime(2017, 7, 22, 10, 22, 54, UTC);
-    DateTime instanceRequestDateRequestExpirationDate
+    ZonedDateTime instanceRequestDate = ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC);
+    ZonedDateTime instanceRequestDateRequestExpirationDate
       = instanceRequestDate.plusDays(30);
 
     JsonObject requestBody = createInstanceRequestObject(instance.getId(),
@@ -309,8 +309,8 @@ class InstanceRequestsAPICreationTests extends APITests {
   void canSuccessfullyPlaceATitleLevelRequestOnUnavailableCopyWhenBothUnavailableCopiesHaveSameQueueLength() {
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    DateTime instanceRequestDate = new DateTime(2017, 7, 22, 10, 22, 54, UTC);
-    DateTime instanceRequestDateRequestExpirationDate
+    ZonedDateTime instanceRequestDate = ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC);
+    ZonedDateTime instanceRequestDateRequestExpirationDate
       = instanceRequestDate.plusDays(30);
 
     final var requestDate = LocalDate.of(2017, 7, 22);
@@ -332,8 +332,8 @@ class InstanceRequestsAPICreationTests extends APITests {
       itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(),
         locationsResource.getId());
 
-    loansFixture.createLoan(item1, usersFixture.charlotte(), ClockUtil.getDateTime().plusDays(2));
-    loansFixture.createLoan(item2, usersFixture.charlotte(), ClockUtil.getDateTime());
+    loansFixture.createLoan(item1, usersFixture.charlotte(), ClockUtil.getZonedDateTime().plusDays(2));
+    loansFixture.createLoan(item2, usersFixture.charlotte(), ClockUtil.getZonedDateTime());
 
     //Set up request queues. Item1 has requests (1 queued request), Item2 is requests (1 queued), either should be satisfied.
     placeHoldRequest(item1, pickupServicePointId, usersFixture.jessica(),
@@ -383,8 +383,8 @@ class InstanceRequestsAPICreationTests extends APITests {
   void canSuccessfullyPlaceATitleLevelRequestOnOneLoneUnavailableCopy() {
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    DateTime instanceRequestDate = new DateTime(2017, 7, 22, 10, 22, 54, UTC);
-    DateTime instanceRequestDateRequestExpirationDate
+    ZonedDateTime instanceRequestDate = ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC);
+    ZonedDateTime instanceRequestDateRequestExpirationDate
       = instanceRequestDate.plusDays(30);
 
     final var requestDate = LocalDate.of(2017, 7, 22);
@@ -430,8 +430,8 @@ class InstanceRequestsAPICreationTests extends APITests {
     //could be given a successful request on an unavailable item instead, if there is any.
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    DateTime instanceRequestDate = new DateTime(2017, 7, 22, 10, 22, 54, UTC);
-    DateTime instanceRequestDateRequestExpirationDate
+    ZonedDateTime instanceRequestDate = ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC);
+    ZonedDateTime instanceRequestDateRequestExpirationDate
       = instanceRequestDate.plusDays(30);
 
     final var requestDate = LocalDate.of(2017, 7, 22);
@@ -480,8 +480,8 @@ class InstanceRequestsAPICreationTests extends APITests {
   void canPlaceRequestWhenAllCopiesAreCheckedOutButNoRequestQueuesForThem() {
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    DateTime instanceRequestDate = new DateTime(2017, 7, 22, 10, 22, 54, UTC);
-    DateTime instanceRequestDateRequestExpirationDate
+    ZonedDateTime instanceRequestDate = ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC);
+    ZonedDateTime instanceRequestDateRequestExpirationDate
       = instanceRequestDate.plusDays(30);
 
     IndividualResource instance = instancesFixture.basedUponDunkirk();
@@ -498,8 +498,8 @@ class InstanceRequestsAPICreationTests extends APITests {
       itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(),
         locationsResource.getId());
 
-    loansFixture.createLoan(item1, usersFixture.james(),  ClockUtil.getDateTime());
-    loansFixture.createLoan(item2, usersFixture.rebecca(), ClockUtil.getDateTime().plusDays(5));
+    loansFixture.createLoan(item1, usersFixture.james(),  ClockUtil.getZonedDateTime());
+    loansFixture.createLoan(item2, usersFixture.rebecca(), ClockUtil.getZonedDateTime().plusDays(5));
 
     IndividualResource instanceRequester = usersFixture.charlotte();
 
@@ -533,8 +533,8 @@ class InstanceRequestsAPICreationTests extends APITests {
   void canPlaceRequestOnCheckedOutCopyWithNearestDueDate() {
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    DateTime instanceRequestDate = new DateTime(2017, 7, 22, 10, 22, 54, UTC);
-    DateTime instanceRequestDateRequestExpirationDate =
+    ZonedDateTime instanceRequestDate = ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC);
+    ZonedDateTime instanceRequestDateRequestExpirationDate =
       instanceRequestDate.plusDays(30);
 
     IndividualResource instance = instancesFixture.basedUponDunkirk();
@@ -555,9 +555,9 @@ class InstanceRequestsAPICreationTests extends APITests {
       itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(),
         locationsResource.getId());
 
-    loansFixture.createLoan(item1, usersFixture.james(),  ClockUtil.getDateTime().plusDays(5));
-    loansFixture.createLoan(item2, usersFixture.rebecca(), ClockUtil.getDateTime().plusDays(3));
-    loansFixture.createLoan(item3, usersFixture.steve(), ClockUtil.getDateTime().plusDays(10));
+    loansFixture.createLoan(item1, usersFixture.james(),  ClockUtil.getZonedDateTime().plusDays(5));
+    loansFixture.createLoan(item2, usersFixture.rebecca(), ClockUtil.getZonedDateTime().plusDays(3));
+    loansFixture.createLoan(item3, usersFixture.steve(), ClockUtil.getZonedDateTime().plusDays(10));
 
     IndividualResource instanceRequester = usersFixture.charlotte();
 
@@ -591,8 +591,8 @@ class InstanceRequestsAPICreationTests extends APITests {
   void canPlaceRequestOnCheckedOutCopyWithRequestQueuesAndNearestDueDate() {
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    DateTime instanceRequestDate = new DateTime(2017, 7, 22, 10, 22, 54, UTC);
-    DateTime instanceRequestDateRequestExpirationDate =
+    ZonedDateTime instanceRequestDate = ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC);
+    ZonedDateTime instanceRequestDateRequestExpirationDate =
       instanceRequestDate.plusDays(30);
 
     final var requestDate = LocalDate.of(2017, 7, 22);
@@ -612,8 +612,8 @@ class InstanceRequestsAPICreationTests extends APITests {
       itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(),
         locationsResource.getId());
 
-    loansFixture.createLoan(item1, usersFixture.james(),  ClockUtil.getDateTime().plusDays(21));
-    loansFixture.createLoan(item2, usersFixture.rebecca(), ClockUtil.getDateTime().plusDays(5));
+    loansFixture.createLoan(item1, usersFixture.james(),  ClockUtil.getZonedDateTime().plusDays(21));
+    loansFixture.createLoan(item2, usersFixture.rebecca(), ClockUtil.getZonedDateTime().plusDays(5));
 
     //Set up request queues. Item1 has requests (1 queued request), Item2 is requests (1 queued), either should be satisfied
     //but only item2 should a request be placed on because its due date is nearest.
@@ -660,8 +660,8 @@ class InstanceRequestsAPICreationTests extends APITests {
   @Test
   void canCreateATitleLevelRequestForAnUnAvailableItemWithAMatchingPickupLocationId() {
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
-    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, UTC);
-    DateTime requestExpirationDate = requestDate.plusDays(30);
+    ZonedDateTime requestDate = ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC);
+    ZonedDateTime requestExpirationDate = requestDate.plusDays(30);
 
     IndividualResource instanceMultipleCopies = instancesFixture.basedUponDunkirk();
     IndividualResource holdings = holdingsFixture.defaultWithHoldings(
@@ -684,7 +684,7 @@ class InstanceRequestsAPICreationTests extends APITests {
         cd4Location.getId());
 
     //All of these items are checked out, have the same queue length, and due dates
-    DateTime sameCheckoutDate = ClockUtil.getDateTime();
+    ZonedDateTime sameCheckoutDate = ClockUtil.getZonedDateTime();
     loansFixture.createLoan(item1, usersFixture.steve(), sameCheckoutDate );
     loansFixture.createLoan(item2, usersFixture.jessica(), sameCheckoutDate );
     loansFixture.createLoan(item3, usersFixture.james(), sameCheckoutDate );
@@ -709,8 +709,8 @@ class InstanceRequestsAPICreationTests extends APITests {
   @Test
   void canCreateATitleLevelRequestForUnavailableItemHavingDueDateVersusOneWithoutLoan() {
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
-    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, UTC);
-    DateTime requestExpirationDate = requestDate.plusDays(30);
+    ZonedDateTime requestDate = ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC);
+    ZonedDateTime requestExpirationDate = requestDate.plusDays(30);
 
     IndividualResource instanceMultipleCopies = instancesFixture.basedUponDunkirk();
     IndividualResource holdings = holdingsFixture.defaultWithHoldings(
@@ -728,7 +728,7 @@ class InstanceRequestsAPICreationTests extends APITests {
 
     //For simplicity and by default, these items' request queue lengths are 0.
     //One item is "Checked out", the other item is  "In process"
-    loansFixture.createLoan(item2, usersFixture.steve(), ClockUtil.getDateTime());
+    loansFixture.createLoan(item2, usersFixture.steve(), ClockUtil.getZonedDateTime());
 
     JsonObject requestBody = createInstanceRequestObject(
       instanceMultipleCopies.getId(),
@@ -750,8 +750,8 @@ class InstanceRequestsAPICreationTests extends APITests {
   @Test
   void cannotCreateATitleLevelRequestForAPreviouslyRequestedCopy() {
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
-    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, UTC);
-    DateTime requestExpirationDate = requestDate.plusDays(30);
+    ZonedDateTime requestDate = ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC);
+    ZonedDateTime requestExpirationDate = requestDate.plusDays(30);
 
     IndividualResource instanceMultipleCopies = instancesFixture.basedUponDunkirk();
     IndividualResource holdings = holdingsFixture.defaultWithHoldings(
@@ -795,8 +795,8 @@ class InstanceRequestsAPICreationTests extends APITests {
   @Test
   void cannotCreateATitleLevelRequestForAnInstanceWithoutCopies() {
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
-    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, UTC);
-    DateTime requestExpirationDate = requestDate.plusDays(30);
+    ZonedDateTime requestDate = ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC);
+    ZonedDateTime requestExpirationDate = requestDate.plusDays(30);
 
     IndividualResource instanceMultipleCopies = instancesFixture.basedUponDunkirk();
     holdingsFixture.defaultWithHoldings(instanceMultipleCopies.getId());
@@ -819,8 +819,8 @@ class InstanceRequestsAPICreationTests extends APITests {
   @Test
   void cannotCreateATitleLevelRequestForAnInstanceWithoutHoldings() {
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
-    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, UTC);
-    DateTime requestExpirationDate = requestDate.plusDays(30);
+    ZonedDateTime requestDate = ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC);
+    ZonedDateTime requestExpirationDate = requestDate.plusDays(30);
 
     IndividualResource instanceMultipleCopies = instancesFixture.basedUponDunkirk();
 
@@ -862,8 +862,8 @@ class InstanceRequestsAPICreationTests extends APITests {
   }
 
   private JsonObject createInstanceRequestObject(UUID instanceId,
-    UUID requesterId, UUID pickupServicePointId, DateTime requestDate,
-    DateTime requestExpirationDate) {
+    UUID requesterId, UUID pickupServicePointId, ZonedDateTime requestDate,
+    ZonedDateTime requestExpirationDate) {
 
     return new RequestByInstanceIdRequestBuilder()
       .withInstanceId(instanceId)

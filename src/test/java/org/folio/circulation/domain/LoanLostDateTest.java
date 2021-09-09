@@ -15,7 +15,7 @@ import api.support.builders.LoanBuilder;
 class LoanLostDateTest {
   @Test
   void declaredLostDateReturnedWhenSet() {
-    final var declaredLostDate = ClockUtil.getDateTime();
+    final var declaredLostDate = ClockUtil.getZonedDateTime();
     final var loan = new LoanBuilder().asDomainObject()
       .declareItemLost("Lost", declaredLostDate);
 
@@ -24,7 +24,7 @@ class LoanLostDateTest {
 
   @Test
   void agedToLostDateReturnedWhenSet() {
-    final var agedToLostDate = ClockUtil.getDateTime();
+    final var agedToLostDate = ClockUtil.getZonedDateTime();
     final var loan = new LoanBuilder().asDomainObject()
       .ageOverdueItemToLost(agedToLostDate);
 
@@ -33,8 +33,8 @@ class LoanLostDateTest {
 
   @Test
   void declaredLostDateReturnedWhenIsAfterAgedToLostDate() {
-    final var agedToLostDate = ClockUtil.getDateTime().minusDays(2);
-    final var declaredLostDate = ClockUtil.getDateTime();
+    final var agedToLostDate = ClockUtil.getZonedDateTime().minusDays(2);
+    final var declaredLostDate = ClockUtil.getZonedDateTime();
 
     final var loan = new LoanBuilder().asDomainObject()
       .ageOverdueItemToLost(agedToLostDate)
@@ -50,8 +50,8 @@ class LoanLostDateTest {
 
   @Test
   void agedToLostDateReturnedWhenIsAfterDeclaredLostDate() {
-    final var declaredLostDate = ClockUtil.getDateTime().minusDays(3);
-    final var agedToLostDate = ClockUtil.getDateTime();
+    final var declaredLostDate = ClockUtil.getZonedDateTime().minusDays(3);
+    final var agedToLostDate = ClockUtil.getZonedDateTime();
 
     final var loan = new LoanBuilder().asDomainObject()
       .ageOverdueItemToLost(agedToLostDate)
@@ -67,7 +67,7 @@ class LoanLostDateTest {
 
   @Test
   void lostDateIsNotNullWhenBothLostDatesAreEqual() {
-    final var lostDate = ClockUtil.getDateTime();
+    final var lostDate = ClockUtil.getZonedDateTime();
 
     final var loan = new LoanBuilder().asDomainObject()
       .ageOverdueItemToLost(lostDate)

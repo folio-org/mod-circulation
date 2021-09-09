@@ -2,6 +2,7 @@ package api.requests;
 
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static java.net.HttpURLConnection.HTTP_OK;
+import static java.time.ZoneOffset.UTC;
 import static java.util.stream.Collectors.joining;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedStringProperty;
@@ -29,8 +30,6 @@ import org.folio.circulation.domain.User;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher;
 import org.folio.circulation.support.utils.ClockUtil;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
@@ -125,7 +124,7 @@ class PickSlipsTests extends APITests {
     Address address = AddressExamples.mainStreet();
     IndividualResource requesterResource =
       usersFixture.steve(builder -> builder.withAddress(address));
-    DateTime requestDate = new DateTime(2019, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+    ZonedDateTime requestDate = ZonedDateTime.of(2019, 7, 22, 10, 22, 54, 0, UTC);
     final var requestExpiration = LocalDate.of(2019, 7, 30);
     final var holdShelfExpiration = LocalDate.of(2019, 8, 31);
     IndividualResource materialTypeResource = materialTypesFixture.book();
@@ -143,12 +142,12 @@ class PickSlipsTests extends APITests {
         .withMaterialType(materialTypeResource.getId())
         .withPermanentLoanType(loanTypeResource.getId()));
 
-    DateTime now = ClockUtil.getDateTime();
+    ZonedDateTime now = ClockUtil.getZonedDateTime();
     checkOutFixture.checkOutByBarcode(itemResource, requesterResource);
     checkInFixture.checkInByBarcode(itemResource, now, servicePointId);
     JsonObject lastCheckIn = itemsClient.get(itemResource.getId())
       .getJson().getJsonObject("lastCheckIn");
-    DateTime actualCheckinDateTime = getDateTimeProperty(lastCheckIn, "dateTime");
+    ZonedDateTime actualCheckinDateTime = getDateTimeProperty(lastCheckIn, "dateTime");
 
     IndividualResource requestResource = requestsFixture.place(new RequestBuilder()
       .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())

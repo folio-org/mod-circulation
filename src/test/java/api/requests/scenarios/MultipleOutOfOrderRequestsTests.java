@@ -4,11 +4,12 @@ import static api.support.builders.ItemBuilder.AWAITING_PICKUP;
 import static api.support.builders.RequestBuilder.OPEN_AWAITING_PICKUP;
 import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
+import static java.time.ZoneOffset.UTC;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
+import java.time.ZonedDateTime;
+
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
@@ -29,10 +30,10 @@ class MultipleOutOfOrderRequestsTests extends APITests {
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     IndividualResource requestBySteve = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, steve, new DateTime(2018, 1, 10, 15, 34, 21, DateTimeZone.UTC));
+      smallAngryPlanet, steve, ZonedDateTime.of(2018, 1, 10, 15, 34, 21, 0, UTC));
 
     IndividualResource oldestRequestByJessica = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
+      smallAngryPlanet, jessica, ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC));
 
       checkInFixture.checkInByBarcode(smallAngryPlanet);
 

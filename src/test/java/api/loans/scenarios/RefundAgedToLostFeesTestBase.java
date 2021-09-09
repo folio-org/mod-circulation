@@ -17,8 +17,9 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 
+import java.time.ZonedDateTime;
+
 import org.folio.circulation.support.utils.ClockUtil;
-import org.joda.time.DateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -48,7 +49,7 @@ public abstract class RefundAgedToLostFeesTestBase extends SpringApiTest {
   }
 
   protected abstract void performActionThatRequiresRefund(AgeToLostFixture.AgeToLostResult result,
-    DateTime actionDate);
+    ZonedDateTime actionDate);
 
   @Test
   void shouldRefundPartiallyPaidAmountAndCancelRemaining() {
@@ -89,7 +90,7 @@ public abstract class RefundAgedToLostFeesTestBase extends SpringApiTest {
 
     feeFineAccountFixture.payLostItemProcessingFee(result.getLoanId());
 
-    performActionThatRequiresRefund(result, ClockUtil.getDateTime().plusMonths(8));
+    performActionThatRequiresRefund(result, ClockUtil.getZonedDateTime().plusMonths(8));
 
     final IndividualResource loan = result.getLoan();
     assertThat(loan, hasLostItemProcessingFee(isRefundedFully(processingFee)));
@@ -109,7 +110,7 @@ public abstract class RefundAgedToLostFeesTestBase extends SpringApiTest {
 
     val result = ageToLostFixture.createAgedToLostLoan(policy);
 
-    performActionThatRequiresRefund(result, ClockUtil.getDateTime().plusMonths(8));
+    performActionThatRequiresRefund(result, ClockUtil.getZonedDateTime().plusMonths(8));
 
     final IndividualResource loan = result.getLoan();
     assertThat(loan, hasOverdueFine());
@@ -137,7 +138,7 @@ public abstract class RefundAgedToLostFeesTestBase extends SpringApiTest {
     feeFineAccountFixture.transferLostItemFee(result.getLoanId());
     feeFineAccountFixture.payLostItemProcessingFee(result.getLoanId());
 
-    final DateTime feeRefundDisallowedDate = getDateTimePropertyByPath(loan.getJson(),
+    final ZonedDateTime feeRefundDisallowedDate = getDateTimePropertyByPath(loan.getJson(),
       "agedToLostDelayedBilling", "agedToLostDate")
       .plusMinutes(feeRefundPeriodMinutes + 1);
 
@@ -185,6 +186,6 @@ public abstract class RefundAgedToLostFeesTestBase extends SpringApiTest {
   }
 
   private void performActionThatRequiresRefund(AgeToLostFixture.AgeToLostResult result) {
-    performActionThatRequiresRefund(result, ClockUtil.getDateTime());
+    performActionThatRequiresRefund(result, ClockUtil.getZonedDateTime());
   }
 }

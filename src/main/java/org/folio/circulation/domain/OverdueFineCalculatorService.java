@@ -9,6 +9,7 @@ import static org.folio.circulation.domain.representations.CheckInByBarcodeReque
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
+import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -38,7 +39,6 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.results.ResultBinding;
 import org.folio.circulation.support.utils.ClockUtil;
-import org.joda.time.DateTime;
 
 import lombok.AllArgsConstructor;
 import lombok.With;
@@ -113,7 +113,7 @@ public class OverdueFineCalculatorService {
       return false;
     }
 
-    if(context.getCheckInRequest().getClaimedReturnedResolution() != null 
+    if(context.getCheckInRequest().getClaimedReturnedResolution() != null
         && context.getCheckInRequest().getClaimedReturnedResolution().equals(FOUND_BY_LIBRARY)) {
       return false;
     }
@@ -154,9 +154,9 @@ public class OverdueFineCalculatorService {
   }
 
   private CompletableFuture<Result<Integer>> getOverdueMinutes(Loan loan) {
-    DateTime systemTime = loan.getReturnDate();
+    ZonedDateTime systemTime = loan.getReturnDate();
     if (systemTime == null) {
-      systemTime = ClockUtil.getDateTime();
+      systemTime = ClockUtil.getZonedDateTime();
     }
     return overduePeriodCalculatorService.getMinutes(loan, systemTime);
   }

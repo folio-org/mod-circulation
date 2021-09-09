@@ -5,9 +5,10 @@ import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQ
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.results.Result.ofAsync;
-import static org.folio.circulation.support.utils.ClockUtil.getDateTime;
+import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.folio.circulation.support.utils.DateTimeUtil.isAfterMillis;
 
+import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
@@ -24,7 +25,6 @@ import org.folio.circulation.support.FindWithCqlQuery;
 import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
-import org.joda.time.DateTime;
 
 public class UserManualBlocksValidator {
   private final FindWithCqlQuery<UserManualBlock> userManualBlocksFetcher;
@@ -94,7 +94,7 @@ public class UserManualBlocksValidator {
         .anyMatch(isUserBlocked);
   }
 
-  private boolean isBlockedAction(DateTime expirationDate, boolean isBlocked) {
-    return isBlocked && (expirationDate == null || isAfterMillis(expirationDate, getDateTime()));
+  private boolean isBlockedAction(ZonedDateTime expirationDate, boolean isBlocked) {
+    return isBlocked && (expirationDate == null || isAfterMillis(expirationDate, getZonedDateTime()));
   }
 }

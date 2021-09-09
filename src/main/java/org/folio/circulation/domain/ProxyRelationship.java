@@ -5,15 +5,16 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedDa
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.utils.DateTimeUtil.isBeforeMillis;
 
+import java.time.ZonedDateTime;
+
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.utils.ClockUtil;
-import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
 
 public class ProxyRelationship {
 
-  private final DateTime expirationDate;
+  private final ZonedDateTime expirationDate;
   private final boolean active;
 
   public ProxyRelationship(JsonObject representation) {
@@ -35,7 +36,7 @@ public class ProxyRelationship {
     }
   }
 
-  private DateTime getExpirationDate(JsonObject representation) {
+  private ZonedDateTime getExpirationDate(JsonObject representation) {
     final String EXPIRATION_DATE_PROPERTY_NAME = "expirationDate";
 
     if(representation.containsKey(EXPIRATION_DATE_PROPERTY_NAME) ) {
@@ -54,7 +55,7 @@ public class ProxyRelationship {
 
   public boolean isActive() {
       boolean expired = expirationDate != null
-        && isBeforeMillis(expirationDate, ClockUtil.getDateTime());
+        && isBeforeMillis(expirationDate, ClockUtil.getZonedDateTime());
 
       return active && !expired;
   }

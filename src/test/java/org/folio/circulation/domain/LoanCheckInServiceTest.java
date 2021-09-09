@@ -123,7 +123,7 @@ class LoanCheckInServiceTest {
   private CheckInByBarcodeRequest getCheckInRequest(UUID checkInServicePoint) {
     JsonObject representation = new CheckInByBarcodeRequestBuilder()
       .withItemBarcode("barcode")
-      .on(ClockUtil.getDateTime())
+      .on(ClockUtil.getZonedDateTime())
       .at(checkInServicePoint)
       .create();
 

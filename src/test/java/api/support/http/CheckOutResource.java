@@ -1,8 +1,8 @@
 package api.support.http;
 
-import static org.folio.circulation.support.json.JsonPropertyFetcher.getOffsetDateTimeProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 
-import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
 
 import org.folio.circulation.support.http.client.Response;
 
@@ -11,7 +11,7 @@ public class CheckOutResource extends IndividualResource {
     super(response);
   }
 
-  public OffsetDateTime getDueDate() {
-    return getOffsetDateTimeProperty(response.getJson(), "dueDate");
+  public ZonedDateTime getDueDate() {
+    return getDateTimeProperty(response.getJson(), "dueDate");
   }
 }

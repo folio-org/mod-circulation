@@ -3,13 +3,13 @@ package org.folio.circulation.rules;
 import static java.lang.String.format;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.folio.circulation.support.results.Result.of;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.lang.invoke.MethodHandles;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.ServerErrorFailure;

@@ -25,13 +25,13 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTime
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getIntegerProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
+import static org.folio.circulation.support.utils.DateTimeUtil.atEndOfDay;
 
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.LocalTime;
 
 import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
@@ -299,7 +299,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return requestRepresentation.getString("deliveryAddressTypeId");
   }
 
-  void changeHoldShelfExpirationDate(DateTime holdShelfExpirationDate) {
+  void changeHoldShelfExpirationDate(ZonedDateTime holdShelfExpirationDate) {
     write(requestRepresentation, HOLD_SHELF_EXPIRATION_DATE,
       holdShelfExpirationDate);
   }
@@ -308,15 +308,15 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     requestRepresentation.remove(HOLD_SHELF_EXPIRATION_DATE);
   }
 
-  public DateTime getRequestDate() {
+  public ZonedDateTime getRequestDate() {
     return getDateTimeProperty(requestRepresentation, REQUEST_DATE);
   }
 
-  public DateTime getHoldShelfExpirationDate() {
+  public ZonedDateTime getHoldShelfExpirationDate() {
     return getDateTimeProperty(requestRepresentation, HOLD_SHELF_EXPIRATION_DATE);
   }
 
-  public DateTime getRequestExpirationDate() {
+  public ZonedDateTime getRequestExpirationDate() {
     return getDateTimeProperty(requestRepresentation, REQUEST_EXPIRATION_DATE);
   }
 
@@ -344,16 +344,11 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return getProperty(requestRepresentation, "patronComments");
   }
 
-  public Request truncateRequestExpirationDateToTheEndOfTheDay(DateTimeZone zone) {
-    DateTime requestExpirationDate = getRequestExpirationDate();
+  public Request truncateRequestExpirationDateToTheEndOfTheDay(ZoneId zone) {
+    ZonedDateTime requestExpirationDate = getRequestExpirationDate();
     if (requestExpirationDate != null) {
-      // TODO: this introduces behavioral change not yet intended, use this after converting JodaTime to JavaTime.
-      //final DateTime dateTime = atEndOfDay(requestExpirationDate, zone);
-      //write(requestRepresentation, REQUEST_EXPIRATION_DATE, dateTime);
-      DateTime requestDateTime = requestExpirationDate
-        .withZoneRetainFields(zone)
-        .withTime(LocalTime.MIDNIGHT.minusSeconds(1));
-      write(requestRepresentation, REQUEST_EXPIRATION_DATE, requestDateTime);
+      final ZonedDateTime dateTime = atEndOfDay(requestExpirationDate, zone);
+      write(requestRepresentation, REQUEST_EXPIRATION_DATE, dateTime);
     }
     return this;
   }
