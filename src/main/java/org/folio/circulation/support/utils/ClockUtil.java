@@ -5,7 +5,6 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -65,17 +64,6 @@ public class ClockUtil {
    */
   public static ZonedDateTime getZonedDateTime() {
     return ZonedDateTime.now(clock).truncatedTo(ChronoUnit.MILLIS);
-  }
-
-  /**
-   * Get the current system time according to the clock manager.
-   *
-   * @return
-   *   An OffsetDateTime as if now() is called.
-   *   Time is truncated to milliseconds.
-   */
-  public static OffsetDateTime getOffsetDateTime() {
-    return OffsetDateTime.now(clock).truncatedTo(ChronoUnit.MILLIS);
   }
 
   /**

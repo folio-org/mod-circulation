@@ -7,7 +7,6 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -55,23 +54,6 @@ public class DateTimeUtil {
   public static ZonedDateTime defaultToNow(ZonedDateTime dateTime) {
     if (dateTime == null) {
       return ClockUtil.getZonedDateTime();
-    }
-
-    return dateTime;
-  }
-
-  /**
-   * Given an offset dateTime, normalize it.
-   * <p>
-   * For compatibility with JodaTime, when value is null, then a now() call
-   * via ClockUtil is used.
-   *
-   * @param dateTime The dateTime to normalize.
-   * @return The provided dateTime or if dateTime is null then ClockUtil.getZonedDateTime().
-   */
-  public static OffsetDateTime defaultToNow(OffsetDateTime dateTime) {
-    if (dateTime == null) {
-      return ClockUtil.getOffsetDateTime();
     }
 
     return dateTime;
