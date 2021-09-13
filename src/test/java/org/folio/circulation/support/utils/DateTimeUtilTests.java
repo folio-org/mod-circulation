@@ -592,7 +592,7 @@ class DateTimeUtilTests {
     "0, 0, 0, 0",
     "1, 0, 1, 1",
     "2, 1, 0, 0",
-  }, nullValues = {"null"})
+  })
   void shouldGetMillisBetweenMilliseconds(int id, long begin, long end, int expected) {
     ClockUtil.setClock(Clock.fixed(Instant.ofEpochMilli(100000), ZoneOffset.UTC));
 

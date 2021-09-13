@@ -56,7 +56,7 @@ public class Period {
 
   public static Period months(Integer duration) {
     if (duration == null) {
-      from((Long) null, MONTHS);
+      return from((Long) null, MONTHS);
     }
 
     return from(duration.longValue(), MONTHS);

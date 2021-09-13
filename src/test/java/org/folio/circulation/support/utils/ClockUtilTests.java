@@ -45,8 +45,6 @@ class ClockUtilTests {
 
   @Test
   void shouldRestoreDefaultClock() {
-    ClockUtil.setClock(Clock.fixed(INSTANT, UTC));
-
     ClockUtil.setDefaultClock();
 
     assertNotEquals(INSTANT.toEpochMilli(), getZonedDateTime().toInstant().toEpochMilli());

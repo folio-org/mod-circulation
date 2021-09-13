@@ -104,9 +104,8 @@ class IntervalTests {
     "4, 20000, false",
   })
   void shouldDetermineIfDifferenceInDatesAreContainedWithinDuration(int id, long differenceInSeconds, boolean expected) {
-    final long millis = 12345000;
     final ZonedDateTime begin = ClockUtil.getZonedDateTime();
-    final ZonedDateTime end = begin.plusSeconds(millis / 1000);
+    final ZonedDateTime end = begin.plusSeconds(12345);
     final ZonedDateTime dateToCheck = begin.plusSeconds(differenceInSeconds);
 
     final Interval interval = new Interval(begin, end);
@@ -116,9 +115,8 @@ class IntervalTests {
 
   @Test
   void shouldGetStartZonedDateTimeFromInterval() {
-    final long millis = 12345000;
     final ZonedDateTime begin = ClockUtil.getZonedDateTime();
-    final ZonedDateTime end = begin.plusSeconds(millis / 1000);
+    final ZonedDateTime end = begin.plusSeconds(12345);
 
     final Interval interval = new Interval(begin, end);
 
@@ -127,9 +125,8 @@ class IntervalTests {
 
   @Test
   void shouldGetEndZonedDateTimeFromInterval() {
-    final long millis = 12345000;
     final ZonedDateTime begin = ClockUtil.getZonedDateTime();
-    final ZonedDateTime end = begin.plusSeconds(millis / 1000);
+    final ZonedDateTime end = begin.plusSeconds(12345);
 
     final Interval interval = new Interval(begin, end);
 
@@ -138,9 +135,8 @@ class IntervalTests {
 
   @Test
   void shouldGetZoneIdFromInterval() {
-    final long millis = 12345000;
     final ZonedDateTime begin = ClockUtil.getZonedDateTime();
-    final ZonedDateTime end = begin.plusSeconds(millis / 1000);
+    final ZonedDateTime end = begin.plusSeconds(12345);
 
     final Interval interval = new Interval(begin, end);
 
@@ -149,9 +145,8 @@ class IntervalTests {
 
   @Test
   void shouldDetermineIntervalsDoOverlap() {
-    final long millis = 12345000;
     final ZonedDateTime begin = ClockUtil.getZonedDateTime();
-    final ZonedDateTime end = begin.plusSeconds(millis / 1000);
+    final ZonedDateTime end = begin.plusSeconds(12345);
     final ZonedDateTime nextBegin = begin.plusSeconds(1);
     final ZonedDateTime nextEnd = end.plusSeconds(1);
 
@@ -163,9 +158,8 @@ class IntervalTests {
 
   @Test
   void shouldDetermineIntervalsAbutBefore() {
-    final long millis = 12345000;
     final ZonedDateTime begin = ClockUtil.getZonedDateTime();
-    final ZonedDateTime end = begin.plusSeconds(millis / 1000);
+    final ZonedDateTime end = begin.plusSeconds(12345);
     final ZonedDateTime nextBegin = begin.plusSeconds(-1);
     final ZonedDateTime nextEnd = begin;
 
@@ -177,9 +171,8 @@ class IntervalTests {
 
   @Test
   void shouldDetermineIntervalsAbutAfter() {
-    final long millis = 12345000;
     final ZonedDateTime begin = ClockUtil.getZonedDateTime();
-    final ZonedDateTime end = begin.plusSeconds(millis / 1000);
+    final ZonedDateTime end = begin.plusSeconds(12345);
     final ZonedDateTime nextBegin = end;
     final ZonedDateTime nextEnd = end.plusSeconds(1);
 
@@ -218,9 +211,8 @@ class IntervalTests {
     "4, 20000, 20000",
   }, nullValues = {"null"})
   void shouldCorrectlyDetermineGapSizeBetweenIntervals(int id, long differenceInSeconds, Long expected) {
-    final long millis = 12345000;
     final ZonedDateTime begin = ClockUtil.getZonedDateTime();
-    final ZonedDateTime end = begin.plusSeconds(millis / 1000);
+    final ZonedDateTime end = begin.plusSeconds(12345);
     final ZonedDateTime nextBegin = end.plusSeconds(differenceInSeconds);
     final ZonedDateTime nextEnd = nextBegin.plusSeconds(1);
 

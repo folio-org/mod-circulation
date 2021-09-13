@@ -117,19 +117,23 @@ class DateFormatUtilTests {
 
   @ParameterizedTest
   @CsvSource(value = {
-    "0, null, null, null",
-    "1, UTC, null, null",
-    "2, null, 2010-10-10T10:10:10.000Z, 2010-10-10T10:10:10.000Z",
-    "3, UTC, 2010-10-10T10:10:10.000Z, 2010-10-10T10:10:10.000Z"
+    "0, null, 2010-10-10T10:10:10.000Z, 2010-10-10T10:10:10.000Z",
+    "1, UTC, 2010-10-10T10:10:10.000Z, 2010-10-10T10:10:10.000Z"
   }, nullValues = {"null"})
   void shouldParseZonedDateTimeOptional(int id, ZoneId zone, String value, String match) {
-    final ZonedDateTime date = match == null
-      ? null
-      : ZonedDateTime.parse(match);
-
-    assertEquals(date, parseDateTimeOptional(value));
+    assertEquals(ZonedDateTime.parse(match), parseDateTimeOptional(value));
   }
 
+  @ParameterizedTest
+  @CsvSource(value = {
+    "0, null, null",
+    "1, UTC, null"
+  }, nullValues = {"null"})
+  void shouldParseZonedDateTimeOptionalReturningNull(int id, ZoneId zone, String value) {
+    assertNull(parseDateTimeOptional(value));
+  }
+
+  @Test
   void shouldThrowExceptionDuringParseZonedDateTimeOptional() {
     assertThrows(DateTimeParseException.class, () -> {
       parseDateTimeOptional("Invalid Date");
@@ -138,51 +142,62 @@ class DateFormatUtilTests {
 
   @ParameterizedTest
   @CsvSource(value = {
-    "0, null, null, null",
-    "1, Z, null, null",
-    "2, null, 2010-10-10T10:10:10.000Z, 2010-10-10T10:10:10.000Z",
-    "3, Z, 2010-10-10T10:10:10.000Z, 2010-10-10T10:10:10.000Z"
+    "0, null, 2010-10-10T10:10:10.000Z, 2010-10-10T10:10:10.000Z",
+    "1, Z, 2010-10-10T10:10:10.000Z, 2010-10-10T10:10:10.000Z"
   }, nullValues = {"null"})
   void shouldParseZonedDateTimeOptionalWithZone(int id, ZoneId zone, String value, String match) {
-    final ZonedDateTime date = match == null
-      ? null
-      : ZonedDateTime.parse(match);
-
-    assertEquals(date, parseDateTimeOptional(value, zone), "For test " + id);
+    assertEquals(ZonedDateTime.parse(match), parseDateTimeOptional(value, zone), "For test " + id);
   }
 
   @ParameterizedTest
   @CsvSource(value = {
-    "0, null, null, null",
-    "1, UTC, null, null",
-    "2, null, 2010-10-10T10:10:10.000Z, 2010-10-10T10:10:10.000Z",
-    "3, UTC, 2010-10-10T10:10:10.000Z, 2010-10-10T10:10:10.000Z"
+    "0, null, null",
+    "1, Z, null"
   }, nullValues = {"null"})
-  void shouldParseInstantOptional(int id, ZoneId zone, String value, String match) {
-    final Instant date = match == null
-      ? null
-      : ZonedDateTime.parse(match).toInstant();
-
-    assertEquals(date, parseInstantOptional(value));
+  void shouldParseZonedDateTimeOptionalWithZoneReturningNull(int id, ZoneId zone, String value) {
+    assertNull(parseDateTimeOptional(value, zone), "For test " + id);
   }
 
+  @ParameterizedTest
+  @CsvSource(value = {
+    "0, null, 2010-10-10T10:10:10.000Z, 2010-10-10T10:10:10.000Z",
+    "1, UTC, 2010-10-10T10:10:10.000Z, 2010-10-10T10:10:10.000Z"
+  }, nullValues = {"null"})
+  void shouldParseInstantOptional(int id, ZoneId zone, String value, String match) {
+    assertEquals(ZonedDateTime.parse(match).toInstant(), parseInstantOptional(value));
+  }
+
+  @ParameterizedTest
+  @CsvSource(value = {
+    "0, null, null",
+    "1, UTC, null"
+  }, nullValues = {"null"})
+  void shouldParseInstantOptionalReturningNull(int id, ZoneId zone, String value) {
+    assertNull(parseInstantOptional(value));
+  }
+
+  @Test
   void shouldThrowExceptionDuringParseInstantOptional() {
     assertThrows(DateTimeParseException.class, () -> parseInstantOptional("Invalid Date"));
   }
 
   @ParameterizedTest
   @CsvSource(value = {
-    "0, null, null, null",
-    "1, Z, null, null",
-    "2, null, 2010-10-10T10:10:10.000Z, 2010-10-10T10:10:10.000Z",
-    "3, Z, 2010-10-10T10:10:10.000Z, 2010-10-10T10:10:10.000Z"
+    "0, null, 2010-10-10T10:10:10.000Z, 2010-10-10T10:10:10.000Z",
+    "1, Z, 2010-10-10T10:10:10.000Z, 2010-10-10T10:10:10.000Z"
   }, nullValues = {"null"})
   void shouldParseInstantOptionalWithZone(int id, ZoneId zone, String value, String match) {
-    final Instant date = match == null
-      ? null
-      : ZonedDateTime.parse(match).toInstant();
+    assertEquals(ZonedDateTime.parse(match).toInstant(),
+      parseInstantOptional(value, zone), "For test " + id);
+  }
 
-    assertEquals(date, parseInstantOptional(value, zone), "For test " + id);
+  @ParameterizedTest
+  @CsvSource(value = {
+    "0, null, null",
+    "1, Z, null"
+  }, nullValues = {"null"})
+  void shouldParseInstantOptionalWithZoneReturningNull(int id, ZoneId zone, String value) {
+    assertNull(parseInstantOptional(value, zone), "For test " + id);
   }
 
   @Test
@@ -190,6 +205,7 @@ class DateFormatUtilTests {
     assertEquals(LocalDate.parse(FORMATTED_DATE), parseDate(FORMATTED_DATE));
   }
 
+  @Test
   void shouldThrowExceptionDuringParseDate() {
     assertThrows(DateTimeParseException.class, () -> parseDate("Invalid Date"));
   }
@@ -210,6 +226,7 @@ class DateFormatUtilTests {
     assertEquals(LocalTime.parse(FORMATTED_LOCAL_TIME), parseTime(FORMATTED_TIME));
   }
 
+  @Test
   void shouldThrowExceptionDuringParseTime() {
     assertThrows(DateTimeParseException.class, () -> parseTime("Invalid Time"));
   }
