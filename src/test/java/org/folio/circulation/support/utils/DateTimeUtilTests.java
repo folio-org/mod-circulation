@@ -1,5 +1,14 @@
 package org.folio.circulation.support.utils;
 
+import static org.folio.circulation.support.utils.DateTimeUtil.compareToMillis;
+import static org.folio.circulation.support.utils.DateTimeUtil.defaultToClockZone;
+import static org.folio.circulation.support.utils.DateTimeUtil.defaultToNow;
+import static org.folio.circulation.support.utils.DateTimeUtil.isAfterMillis;
+import static org.folio.circulation.support.utils.DateTimeUtil.isBeforeMillis;
+import static org.folio.circulation.support.utils.DateTimeUtil.isSameMillis;
+import static org.folio.circulation.support.utils.DateTimeUtil.isWithinMillis;
+import static org.folio.circulation.support.utils.DateTimeUtil.millisBetween;
+import static org.folio.circulation.support.utils.DateTimeUtil.mostRecentDate;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.time.Clock;
@@ -41,9 +50,7 @@ class DateTimeUtilTests {
     "1, null, " + FORMATTED_DATE_TIME_NOW
   }, nullValues = {"null"})
   void shouldGetNormalizedZonedDateTime(int id, ZonedDateTime from, ZonedDateTime expected) {
-    final ZonedDateTime result = DateTimeUtil.defaultToNow(from);
-
-    assertEquals(expected.toString(), result.toString(), "For test " + id);
+    assertEquals(expected.toString(), defaultToNow(from).toString(), "For test " + id);
   }
 
   @ParameterizedTest
@@ -52,9 +59,7 @@ class DateTimeUtilTests {
     "1, null, " + FORMATTED_LOCAL_DATE_TIME_NOW
   }, nullValues = {"null"})
   void shouldGetNormalizedLocalDateTime(int id, LocalDateTime from, LocalDateTime expected) {
-    final LocalDateTime result = DateTimeUtil.defaultToNow(from);
-
-    assertEquals(expected.toString(), result.toString(), "For test " + id);
+    assertEquals(expected.toString(), defaultToNow(from).toString(), "For test " + id);
   }
 
   @ParameterizedTest
@@ -63,9 +68,7 @@ class DateTimeUtilTests {
     "1, null, " + FORMATTED_DATE_NOW
   }, nullValues = {"null"})
   void shouldGetNormalizedLocalDate(int id, LocalDate from, LocalDate expected) {
-    final LocalDate result = DateTimeUtil.defaultToNow(from);
-
-    assertEquals(expected.toString(), result.toString(), "For test " + id);
+    assertEquals(expected.toString(), defaultToNow(from).toString(), "For test " + id);
   }
 
   @ParameterizedTest
@@ -74,9 +77,7 @@ class DateTimeUtilTests {
     "1, null, " + FORMATTED_TIME_NOW
   }, nullValues = {"null"})
   void shouldGetNormalizedLocalTime(int id, LocalTime from, LocalTime expected) {
-    final LocalTime result = DateTimeUtil.defaultToNow(from);
-
-    assertEquals(expected.toString(), result.toString(), "For test " + id);
+    assertEquals(expected.toString(), defaultToNow(from).toString(), "For test " + id);
   }
 
   @ParameterizedTest
@@ -88,11 +89,9 @@ class DateTimeUtilTests {
     final Instant fromInstant = from == null
       ? null
       : from.toInstant();
-    final Instant expectedInstant = expected.toInstant();
 
-    final Instant result = DateTimeUtil.defaultToNow(fromInstant);
-
-    assertEquals(expectedInstant.toString(), result.toString(), "For test " + id);
+    assertEquals(expected.toInstant().toString(),
+      defaultToNow(fromInstant).toString(), "For test " + id);
   }
 
   @ParameterizedTest
@@ -102,9 +101,7 @@ class DateTimeUtilTests {
     "2, null, Z"
   }, nullValues = {"null"})
   void shouldGetNormalizedZoneId(int id, ZoneId from, ZoneId expected) {
-    final ZoneId result = DateTimeUtil.defaultToClockZone(from);
-
-    assertEquals(expected, result, "For test " + id);
+    assertEquals(expected, defaultToClockZone(from), "For test " + id);
   }
 
   @ParameterizedTest
@@ -119,9 +116,8 @@ class DateTimeUtilTests {
       : from.getRules().getOffset(Instant.EPOCH);
 
     final ZoneOffset expectedOffset = expected.getRules().getOffset(Instant.EPOCH);
-    final ZoneOffset result = DateTimeUtil.defaultToClockZone(fromOffset);
 
-    assertEquals(expectedOffset, result, "For test " + id);
+    assertEquals(expectedOffset, defaultToClockZone(fromOffset), "For test " + id);
   }
 
   @ParameterizedTest
@@ -346,9 +342,7 @@ class DateTimeUtilTests {
     final ZonedDateTime datePresent = ClockUtil.getZonedDateTime();
     final ZonedDateTime dateFuture = ClockUtil.getZonedDateTime().plusDays(2);
 
-    final ZonedDateTime result = DateTimeUtil.mostRecentDate(datePresent, dateFuture, datePast);
-
-    assertEquals(dateFuture, result);
+    assertEquals(dateFuture, mostRecentDate(datePresent, dateFuture, datePast));
   }
 
   @ParameterizedTest
@@ -361,7 +355,7 @@ class DateTimeUtilTests {
     "5, 2010-10-10T10:10:10.001Z, 2010-10-10T10:10:10.000Z, false",
   }, nullValues = {"null"})
   void shouldCompareIsZonedDateTimeBeforeMillis(int id, ZonedDateTime left, ZonedDateTime right, boolean expected) {
-    assertEquals(expected, DateTimeUtil.isBeforeMillis(left, right), "For test " + id);
+    assertEquals(expected, isBeforeMillis(left, right), "For test " + id);
   }
 
   @ParameterizedTest
@@ -374,7 +368,7 @@ class DateTimeUtilTests {
     "5, 2010-10-10T10:10:10.001, 2010-10-10T10:10:10.000, false",
   }, nullValues = {"null"})
   void shouldCompareIsLocalDateTimeBeforeMillis(int id, LocalDateTime left, LocalDateTime right, boolean expected) {
-    assertEquals(expected, DateTimeUtil.isBeforeMillis(left, right), "For test " + id);
+    assertEquals(expected, isBeforeMillis(left, right), "For test " + id);
   }
 
   @ParameterizedTest
@@ -387,7 +381,7 @@ class DateTimeUtilTests {
     "5, 10:10:10.001, 10:10:10.000, false",
   }, nullValues = {"null"})
   void shouldCompareIsLocalTimeBeforeMillis(int id, LocalTime left, LocalTime right, boolean expected) {
-    assertEquals(expected, DateTimeUtil.isBeforeMillis(left, right), "For test " + id);
+    assertEquals(expected, isBeforeMillis(left, right), "For test " + id);
   }
 
   @ParameterizedTest
@@ -400,7 +394,7 @@ class DateTimeUtilTests {
     "5, 2010-10-10T10:10:10.001Z, 2010-10-10T10:10:10.000Z, true",
   }, nullValues = {"null"})
   void shouldCompareIsZonedDateTimeAfterMillis(int id, ZonedDateTime left, ZonedDateTime right, boolean expected) {
-    assertEquals(expected, DateTimeUtil.isAfterMillis(left, right), "For test " + id);
+    assertEquals(expected, isAfterMillis(left, right), "For test " + id);
   }
 
   @ParameterizedTest
@@ -413,7 +407,7 @@ class DateTimeUtilTests {
     "5, 2010-10-10T10:10:10.001, 2010-10-10T10:10:10.000, true",
   }, nullValues = {"null"})
   void shouldCompareIsLocalDateTimeAfterMillis(int id, LocalDateTime left, LocalDateTime right, boolean expected) {
-    assertEquals(expected, DateTimeUtil.isAfterMillis(left, right), "For test " + id);
+    assertEquals(expected, isAfterMillis(left, right), "For test " + id);
   }
 
   @ParameterizedTest
@@ -426,7 +420,7 @@ class DateTimeUtilTests {
     "5, 10:10:10.001, 10:10:10.000, true",
   }, nullValues = {"null"})
   void shouldCompareIsLocalTimeAfterMillis(int id, LocalTime left, LocalTime right, boolean expected) {
-    assertEquals(expected, DateTimeUtil.isAfterMillis(left, right), "For test " + id);
+    assertEquals(expected, isAfterMillis(left, right), "For test " + id);
   }
 
   @ParameterizedTest
@@ -439,7 +433,7 @@ class DateTimeUtilTests {
     "5, 2010-10-10T10:10:10.001Z, 2010-10-10T10:10:10.000Z, false",
   }, nullValues = {"null"})
   void shouldCompareIsZonedDateTimeSameMillis(int id, ZonedDateTime left, ZonedDateTime right, boolean expected) {
-    assertEquals(expected, DateTimeUtil.isSameMillis(left, right), "For test " + id);
+    assertEquals(expected, isSameMillis(left, right), "For test " + id);
   }
 
   @ParameterizedTest
@@ -452,7 +446,7 @@ class DateTimeUtilTests {
     "5, 2010-10-10T10:10:10.001, 2010-10-10T10:10:10.000, false",
   }, nullValues = {"null"})
   void shouldCompareIsLocalDateTimeSameMillis(int id, LocalDateTime left, LocalDateTime right, boolean expected) {
-    assertEquals(expected, DateTimeUtil.isSameMillis(left, right), "For test " + id);
+    assertEquals(expected, isSameMillis(left, right), "For test " + id);
   }
 
   @ParameterizedTest
@@ -465,7 +459,7 @@ class DateTimeUtilTests {
     "5, 10:10:10.001, 10:10:10.000, false",
   }, nullValues = {"null"})
   void shouldCompareIsLocalTimeSameMillis(int id, LocalTime left, LocalTime right, boolean expected) {
-    assertEquals(expected, DateTimeUtil.isSameMillis(left, right), "For test " + id);
+    assertEquals(expected, isSameMillis(left, right), "For test " + id);
   }
 
   @ParameterizedTest
@@ -486,7 +480,7 @@ class DateTimeUtilTests {
       ? null
       : right.toInstant();
 
-    assertEquals(expected, DateTimeUtil.isSameMillis(leftInstant, rightInstant), "For test " + id);
+    assertEquals(expected, isSameMillis(leftInstant, rightInstant), "For test " + id);
   }
 
   @ParameterizedTest
@@ -502,7 +496,7 @@ class DateTimeUtilTests {
     "8, 2010-12-12T12:00:00.000Z, 2010-05-05T10:05:05.000Z, 2010-12-12T10:12:12.000Z, false",
   }, nullValues = {"null"})
   void shouldCompareIsZonedDateTimeWithinMillis(int id, ZonedDateTime date, ZonedDateTime first, ZonedDateTime last, boolean expected) {
-    assertEquals(expected, DateTimeUtil.isWithinMillis(date, first, last), "For test " + id);
+    assertEquals(expected, isWithinMillis(date, first, last), "For test " + id);
   }
 
   @ParameterizedTest
@@ -518,7 +512,7 @@ class DateTimeUtilTests {
     "8, 2010-12-12T12:00:00.000, 2010-05-05T10:05:05.000, 2010-12-12T10:12:12.000, false",
   }, nullValues = {"null"})
   void shouldCompareIsLocalDateTimeWithinMillis(int id, LocalDateTime date, LocalDateTime first, LocalDateTime last, boolean expected) {
-    assertEquals(expected, DateTimeUtil.isWithinMillis(date, first, last), "For test " + id);
+    assertEquals(expected, isWithinMillis(date, first, last), "For test " + id);
   }
 
   @ParameterizedTest
@@ -534,7 +528,7 @@ class DateTimeUtilTests {
     "8, 12:00:00.000, 10:05:05.000, 10:12:12.000, false",
   }, nullValues = {"null"})
   void shouldCompareIsLocalTimeWithinMillis(int id, LocalTime date, LocalTime first, LocalTime last, boolean expected) {
-    assertEquals(expected, DateTimeUtil.isWithinMillis(date, first, last), "For test " + id);
+    assertEquals(expected, isWithinMillis(date, first, last), "For test " + id);
   }
 
   @ParameterizedTest
@@ -547,7 +541,7 @@ class DateTimeUtilTests {
     "5, 2010-10-10T10:10:10.001Z, 2010-10-10T10:10:10.000Z, 1",
   }, nullValues = {"null"})
   void shouldCompareIsZonedDateTimeCompareToMillis(int id, ZonedDateTime left, ZonedDateTime right, int expected) {
-    assertEquals(expected, DateTimeUtil.compareToMillis(left, right), "For test " + id);
+    assertEquals(expected, compareToMillis(left, right), "For test " + id);
   }
 
   @ParameterizedTest
@@ -560,7 +554,7 @@ class DateTimeUtilTests {
     "5, 10:10:10.001, 10:10:10.000, 1",
   }, nullValues = {"null"})
   void shouldCompareIsLocalTimeCompareToMillis(int id, LocalTime left, LocalTime right, int expected) {
-    assertEquals(expected, DateTimeUtil.compareToMillis(left, right), "For test " + id);
+    assertEquals(expected, compareToMillis(left, right), "For test " + id);
   }
 
   @ParameterizedTest
@@ -575,7 +569,7 @@ class DateTimeUtilTests {
   void shouldGetMillisBetweenZonedDateTimes(int id, ZonedDateTime begin, ZonedDateTime end, int expected) {
     ClockUtil.setClock(Clock.fixed(Instant.ofEpochMilli(100000), ZoneOffset.UTC));
 
-    assertEquals(expected, DateTimeUtil.millisBetween(begin, end), "For test " + id);
+    assertEquals(expected, millisBetween(begin, end), "For test " + id);
   }
 
   @ParameterizedTest
@@ -590,7 +584,7 @@ class DateTimeUtilTests {
   void shouldGetMillisBetweenLocalDateTimes(int id, LocalDateTime begin, LocalDateTime end, int expected) {
     ClockUtil.setClock(Clock.fixed(Instant.ofEpochMilli(100000), ZoneOffset.UTC));
 
-    assertEquals(expected, DateTimeUtil.millisBetween(begin, end), "For test " + id);
+    assertEquals(expected, millisBetween(begin, end), "For test " + id);
   }
 
   @ParameterizedTest
@@ -602,7 +596,7 @@ class DateTimeUtilTests {
   void shouldGetMillisBetweenMilliseconds(int id, long begin, long end, int expected) {
     ClockUtil.setClock(Clock.fixed(Instant.ofEpochMilli(100000), ZoneOffset.UTC));
 
-    assertEquals(expected, DateTimeUtil.millisBetween(begin, end), "For test " + id);
+    assertEquals(expected, millisBetween(begin, end), "For test " + id);
   }
 
 }

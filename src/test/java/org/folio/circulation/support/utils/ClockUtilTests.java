@@ -1,6 +1,11 @@
 package org.folio.circulation.support.utils;
 
 import static java.time.ZoneOffset.UTC;
+import static org.folio.circulation.support.utils.ClockUtil.getInstant;
+import static org.folio.circulation.support.utils.ClockUtil.getLocalDate;
+import static org.folio.circulation.support.utils.ClockUtil.getLocalDateTime;
+import static org.folio.circulation.support.utils.ClockUtil.getLocalTime;
+import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
@@ -14,11 +19,18 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
 class ClockUtilTests {
+  private static final Instant INSTANT = Instant.parse("2020-10-20T10:20:10.000Z");
+
+  @BeforeEach
+  public void BeforeEach() {
+    ClockUtil.setClock(Clock.fixed(INSTANT, UTC));
+  }
 
   @AfterEach
   public void afterEach() {
@@ -28,92 +40,53 @@ class ClockUtilTests {
 
   @Test
   void shouldAssignCustomClock() {
-    final Instant expected = Instant.parse("2020-10-20T10:20:10.000Z");
-    ClockUtil.setClock(Clock.fixed(expected, UTC));
-
-    final ZonedDateTime result = ClockUtil.getZonedDateTime();
-
-    assertEquals(expected.toEpochMilli(), result.toInstant().toEpochMilli());
+    assertEquals(INSTANT.toEpochMilli(), getZonedDateTime().toInstant().toEpochMilli());
   }
 
   @Test
   void shouldRestoreDefaultClock() {
-    final Instant expected = Instant.parse("2020-10-20T10:20:10.000Z");
-    ClockUtil.setClock(Clock.fixed(expected, UTC));
+    ClockUtil.setClock(Clock.fixed(INSTANT, UTC));
 
     ClockUtil.setDefaultClock();
 
-    final ZonedDateTime result = ClockUtil.getZonedDateTime();
-
-    assertNotEquals(expected.toEpochMilli(), result.toInstant().toEpochMilli());
+    assertNotEquals(INSTANT.toEpochMilli(), getZonedDateTime().toInstant().toEpochMilli());
   }
 
   @Test
   void shouldGetClock() {
-    final Instant instant = Instant.parse("2020-10-20T10:20:10.000Z");
-    final Clock expected = Clock.fixed(instant, UTC);
+    Clock expected = Clock.fixed(INSTANT, UTC);
     ClockUtil.setClock(expected);
 
-    final Clock result = ClockUtil.getClock();
-
-    assertEquals(expected, result);
+    assertEquals(expected, ClockUtil.getClock());
   }
 
   @Test
   void shouldGetZonedDateTime() {
-    final Instant expected = Instant.parse("2020-10-20T10:20:10.000Z");
-    ClockUtil.setClock(Clock.fixed(expected, UTC));
-
-    final ZonedDateTime result = ClockUtil.getZonedDateTime();
-
-    assertEquals(expected.toEpochMilli(), result.toInstant().toEpochMilli());
+    assertEquals(INSTANT.toEpochMilli(), getZonedDateTime().toInstant().toEpochMilli());
   }
 
   @Test
   void shouldGetLocalDateTime() {
-    final Instant instant = Instant.parse("2020-10-20T10:20:10.000Z");
-    ClockUtil.setClock(Clock.fixed(instant, UTC));
-
-    final LocalDateTime expected = LocalDateTime.ofInstant(instant, UTC);
-
-    final LocalDateTime result = ClockUtil.getLocalDateTime();
-
-    assertEquals(expected.toEpochSecond(UTC), result.toEpochSecond(UTC));
+    assertEquals(LocalDateTime.ofInstant(INSTANT, UTC).toEpochSecond(UTC),
+      getLocalDateTime().toEpochSecond(UTC));
   }
 
   @Test
   void shouldGetLocalDate() {
-    final Instant instant = Instant.parse("2020-10-20T10:20:10.000Z");
-    ClockUtil.setClock(Clock.fixed(instant, UTC));
-
-    final LocalDate expected = LocalDate.ofInstant(instant, UTC);
-
-    final LocalDate result = ClockUtil.getLocalDate();
-
-    assertEquals(expected.toEpochDay(), result.toEpochDay());
+    assertEquals(LocalDate.ofInstant(INSTANT, UTC).toEpochDay(), getLocalDate().toEpochDay());
   }
 
   @Test
   void shouldGetLocalTime() {
-    final Instant instant = Instant.parse("2020-10-20T10:20:10.000Z");
-    ClockUtil.setClock(Clock.fixed(instant, UTC));
+    final LocalDate date = LocalDate.ofInstant(INSTANT, UTC);
 
-    final LocalDate date = LocalDate.ofInstant(instant, UTC);
-    final LocalTime expected = LocalTime.ofInstant(instant, UTC);
-
-    final LocalTime result = ClockUtil.getLocalTime();
-
-    assertEquals(expected.toEpochSecond(date, UTC), result.toEpochSecond(date, UTC));
+    assertEquals(LocalTime.ofInstant(INSTANT, UTC).toEpochSecond(date, UTC),
+      getLocalTime().toEpochSecond(date, UTC));
   }
 
   @Test
   void shouldGetInstant() {
-    final Instant expected = Instant.parse("2020-10-20T10:20:10.000Z");
-    ClockUtil.setClock(Clock.fixed(expected, UTC));
-
-    final Instant result = ClockUtil.getInstant();
-
-    assertEquals(expected.toEpochMilli(), result.toEpochMilli());
+    assertEquals(INSTANT.toEpochMilli(), getInstant().toEpochMilli());
   }
 
   @ParameterizedTest
@@ -125,9 +98,7 @@ class ClockUtilTests {
     final ZoneId expected = ZoneId.of(zone);
     ClockUtil.setClock(Clock.fixed(dateTime.toInstant(), expected));
 
-    final ZoneId result = ClockUtil.getZoneId();
-
-    assertEquals(expected, result, "For test " + id);
+    assertEquals(expected, ClockUtil.getZoneId(), "For test " + id);
   }
 
   @ParameterizedTest
@@ -139,9 +110,7 @@ class ClockUtilTests {
     final ZoneOffset expected = ZoneOffset.ofHours(offset);
     ClockUtil.setClock(Clock.fixed(dateTime.toInstant(), expected));
 
-    final ZoneOffset result = ClockUtil.getZoneOffset();
-
-    assertEquals(expected, result, "For test " + id);
+    assertEquals(expected, ClockUtil.getZoneOffset(), "For test " + id);
   }
 
 }

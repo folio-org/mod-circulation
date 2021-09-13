@@ -1,5 +1,13 @@
 package org.folio.circulation.support.utils;
 
+import static org.folio.circulation.support.utils.DateFormatUtil.formatDate;
+import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;
+import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTimeOptional;
+import static org.folio.circulation.support.utils.DateFormatUtil.parseDate;
+import static org.folio.circulation.support.utils.DateFormatUtil.parseDateTime;
+import static org.folio.circulation.support.utils.DateFormatUtil.parseDateTimeOptional;
+import static org.folio.circulation.support.utils.DateFormatUtil.parseInstantOptional;
+import static org.folio.circulation.support.utils.DateFormatUtil.parseTime;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -42,87 +50,58 @@ class DateFormatUtilTests {
 
   @Test
   void shouldFormatZonedDateTimeAsDate() {
-    final ZonedDateTime date = ZonedDateTime.parse(FORMATTED_DATE_TIME);
-    final String result = DateFormatUtil.formatDate(date);
-
-    assertEquals(FORMATTED_DATE, result);
+    assertEquals(FORMATTED_DATE, formatDate(ZonedDateTime.parse(FORMATTED_DATE_TIME)));
   }
 
   @Test
   void shouldFormatDate() {
-    final LocalDate date = LocalDate.parse(FORMATTED_DATE);
-    final String result = DateFormatUtil.formatDate(date);
-
-    assertEquals(FORMATTED_DATE, result);
+    assertEquals(FORMATTED_DATE, formatDate(LocalDate.parse(FORMATTED_DATE)));
   }
 
   @Test
   void shouldFormatZonedDateTimeOptionalWithNull() {
-    final String result = DateFormatUtil.formatDateTimeOptional((ZonedDateTime) null);
-
-    assertNull(result);
+    assertNull(formatDateTimeOptional((ZonedDateTime) null));
   }
 
   @Test
   void shouldFormatInstantDateTimeOptionalWithNull() {
-    final String result = DateFormatUtil.formatDateTimeOptional((Instant) null);
-
-    assertNull(result);
+    assertNull(formatDateTimeOptional((Instant) null));
   }
 
   @Test
   void shouldFormatZonedDateTimeOptional() {
-    final ZonedDateTime date = ZonedDateTime.parse(FORMATTED_DATE_TIME);
-    final String result = DateFormatUtil.formatDateTimeOptional(date);
-
-    assertEquals(FORMATTED_DATE_TIME, result);
+    assertEquals(FORMATTED_DATE_TIME,
+      formatDateTimeOptional(ZonedDateTime.parse(FORMATTED_DATE_TIME)));
   }
 
   @Test
   void shouldFormatInstantDateTimeOptional() {
-    final Instant date = Instant.parse(FORMATTED_DATE_TIME);
-    final String result = DateFormatUtil.formatDateTimeOptional(date);
-
-    assertEquals(FORMATTED_DATE_TIME, result);
+    assertEquals(FORMATTED_DATE_TIME, formatDateTimeOptional(Instant.parse(FORMATTED_DATE_TIME)));
   }
 
   @Test
   void shouldFormatZonedDateTime() {
-    final ZonedDateTime date = ZonedDateTime.parse(FORMATTED_DATE_TIME);
-    final String result = DateFormatUtil.formatDateTime(date);
-
-    assertEquals(FORMATTED_DATE_TIME, result);
+    assertEquals(FORMATTED_DATE_TIME, formatDateTime(ZonedDateTime.parse(FORMATTED_DATE_TIME)));
   }
 
   @Test
   void shouldFormatInstantDateTime() {
-    final Instant date = Instant.parse(FORMATTED_DATE_TIME);
-    final String result = DateFormatUtil.formatDateTime(date);
-
-    assertEquals(FORMATTED_DATE_TIME, result);
+    assertEquals(FORMATTED_DATE_TIME, formatDateTime(Instant.parse(FORMATTED_DATE_TIME)));
   }
 
   @Test
   void shouldFormatDateAsDateTime() {
-    final LocalDate date = LocalDate.parse(FORMATTED_DATE);
-    final String result = DateFormatUtil.formatDateTime(date);
-
-    assertEquals(FORMATTED_DATE_TIME_FROM_DATE, result);
+    assertEquals(FORMATTED_DATE_TIME_FROM_DATE, formatDateTime(LocalDate.parse(FORMATTED_DATE)));
   }
 
   @Test
   void shouldParseZonedDateTime() {
-    final ZonedDateTime date = ZonedDateTime.parse(FORMATTED_DATE_TIME);
-    final ZonedDateTime result = DateFormatUtil.parseDateTime(FORMATTED_DATE_TIME);
-
-    assertEquals(date, result);
+    assertEquals(ZonedDateTime.parse(FORMATTED_DATE_TIME), parseDateTime(FORMATTED_DATE_TIME));
   }
 
   @Test
   void shouldThrowExceptionDuringParseZonedDateTime() {
-    assertThrows(DateTimeParseException.class, () -> {
-      DateFormatUtil.parseDateTime("Invalid Date");
-    });
+    assertThrows(DateTimeParseException.class, () -> parseDateTime("Invalid Date"));
   }
 
   @ParameterizedTest
@@ -133,10 +112,7 @@ class DateFormatUtilTests {
     "3, Z, 2010-10-10T10:10:10.000Z, 2010-10-10T10:10:10.000Z"
   }, nullValues = {"null"})
   void shouldParseZonedDateTimeWithZone(int id, ZoneId zone, String value, String match) {
-    final ZonedDateTime date = ZonedDateTime.parse(match);
-    final ZonedDateTime result = DateFormatUtil.parseDateTime(value, zone);
-
-    assertEquals(date, result, "For test " + id);
+    assertEquals(ZonedDateTime.parse(match), parseDateTime(value, zone), "For test " + id);
   }
 
   @ParameterizedTest
@@ -150,14 +126,13 @@ class DateFormatUtilTests {
     final ZonedDateTime date = match == null
       ? null
       : ZonedDateTime.parse(match);
-    final ZonedDateTime result = DateFormatUtil.parseDateTimeOptional(value);
 
-    assertEquals(date, result);
+    assertEquals(date, parseDateTimeOptional(value));
   }
 
   void shouldThrowExceptionDuringParseZonedDateTimeOptional() {
     assertThrows(DateTimeParseException.class, () -> {
-      DateFormatUtil.parseDateTimeOptional("Invalid Date");
+      parseDateTimeOptional("Invalid Date");
     });
   }
 
@@ -172,9 +147,8 @@ class DateFormatUtilTests {
     final ZonedDateTime date = match == null
       ? null
       : ZonedDateTime.parse(match);
-    final ZonedDateTime result = DateFormatUtil.parseDateTimeOptional(value, zone);
 
-    assertEquals(date, result, "For test " + id);
+    assertEquals(date, parseDateTimeOptional(value, zone), "For test " + id);
   }
 
   @ParameterizedTest
@@ -188,15 +162,12 @@ class DateFormatUtilTests {
     final Instant date = match == null
       ? null
       : ZonedDateTime.parse(match).toInstant();
-    final Instant result = DateFormatUtil.parseInstantOptional(value);
 
-    assertEquals(date, result);
+    assertEquals(date, parseInstantOptional(value));
   }
 
   void shouldThrowExceptionDuringParseInstantOptional() {
-    assertThrows(DateTimeParseException.class, () -> {
-      DateFormatUtil.parseInstantOptional("Invalid Date");
-    });
+    assertThrows(DateTimeParseException.class, () -> parseInstantOptional("Invalid Date"));
   }
 
   @ParameterizedTest
@@ -210,23 +181,17 @@ class DateFormatUtilTests {
     final Instant date = match == null
       ? null
       : ZonedDateTime.parse(match).toInstant();
-    final Instant result = DateFormatUtil.parseInstantOptional(value, zone);
 
-    assertEquals(date, result, "For test " + id);
+    assertEquals(date, parseInstantOptional(value, zone), "For test " + id);
   }
 
   @Test
   void shouldParseZonedDate() {
-    final LocalDate date = LocalDate.parse(FORMATTED_DATE);
-    final LocalDate result = DateFormatUtil.parseDate(FORMATTED_DATE);
-
-    assertEquals(date, result);
+    assertEquals(LocalDate.parse(FORMATTED_DATE), parseDate(FORMATTED_DATE));
   }
 
   void shouldThrowExceptionDuringParseDate() {
-    assertThrows(DateTimeParseException.class, () -> {
-      DateFormatUtil.parseDate("Invalid Date");
-    });
+    assertThrows(DateTimeParseException.class, () -> parseDate("Invalid Date"));
   }
 
   @ParameterizedTest
@@ -237,24 +202,16 @@ class DateFormatUtilTests {
     "3, Z, 2010-10-10, 2010-10-10"
   }, nullValues = {"null"})
   void shouldParseZonedDateWithZone(int id, ZoneId zone, String value, String match) {
-    final LocalDate date = LocalDate.parse(match);
-    final LocalDate result = DateFormatUtil.parseDate(value, zone);
-
-    assertEquals(date, result, "For test " + id);
+    assertEquals(LocalDate.parse(match), parseDate(value, zone), "For test " + id);
   }
 
   @Test
   void shouldParseZonedTime() {
-    final LocalTime date = LocalTime.parse(FORMATTED_LOCAL_TIME);
-    final LocalTime result = DateFormatUtil.parseTime(FORMATTED_TIME);
-
-    assertEquals(date, result);
+    assertEquals(LocalTime.parse(FORMATTED_LOCAL_TIME), parseTime(FORMATTED_TIME));
   }
 
   void shouldThrowExceptionDuringParseTime() {
-    assertThrows(DateTimeParseException.class, () -> {
-      DateFormatUtil.parseTime("Invalid Time");
-    });
+    assertThrows(DateTimeParseException.class, () -> parseTime("Invalid Time"));
   }
 
   @ParameterizedTest
@@ -265,10 +222,7 @@ class DateFormatUtilTests {
     "3, Z, 10:10:10.000, 10:10:10.000"
   }, nullValues = {"null"})
   void shouldParseZonedTimeWithZone(int id, ZoneId zone, String value, String match) {
-    final LocalTime date = LocalTime.parse(match);
-    final LocalTime result = DateFormatUtil.parseTime(value, zone);
-
-    assertEquals(date, result, "For test " + id);
+    assertEquals(LocalTime.parse(match), parseTime(value, zone), "For test " + id);
   }
 
 }

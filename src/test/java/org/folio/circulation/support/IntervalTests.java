@@ -12,11 +12,18 @@ import java.time.temporal.ChronoUnit;
 
 import org.folio.circulation.support.utils.ClockUtil;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
 class IntervalTests {
+  private static final Instant INSTANT = Instant.parse("2020-10-20T10:20:10.000Z");
+
+  @BeforeEach
+  public void BeforeEach() {
+    ClockUtil.setClock(Clock.fixed(INSTANT, UTC));
+  }
 
   @AfterEach
   public void afterEach() {
@@ -26,10 +33,7 @@ class IntervalTests {
 
   @Test
   void shouldCreateDefaultIntervalWithNoDurationForCurrentTime() {
-    final Instant instant = Instant.parse("2020-10-20T10:20:10.000Z");
-    ClockUtil.setClock(Clock.fixed(instant, UTC));
-
-    final LocalDateTime expected = LocalDateTime.ofInstant(instant, UTC);
+    final LocalDateTime expected = LocalDateTime.ofInstant(INSTANT, UTC);
     final Interval result = new Interval();
 
     assertEquals(UTC, result.getZone());
@@ -39,8 +43,6 @@ class IntervalTests {
 
   @Test
   void shouldCreateIntervalWithDurationBetweenZonedDateTimes() {
-    ClockUtil.setClock(Clock.fixed(Instant.parse("2020-10-20T10:20:10.000Z"), UTC));
-
     final long millis = 12345000;
     final ZonedDateTime begin = ClockUtil.getZonedDateTime();
     final ZonedDateTime end = begin.plusSeconds(millis / 1000);
@@ -54,8 +56,6 @@ class IntervalTests {
 
   @Test
   void shouldCreateIntervalWithDurationBetweenLocalDateTimes() {
-    ClockUtil.setClock(Clock.fixed(Instant.parse("2020-10-20T10:20:10.000Z"), UTC));
-
     final long millis = 12345000;
     final LocalDateTime begin = ClockUtil.getLocalDateTime();
     final LocalDateTime end = begin.plusSeconds(millis / 1000);
@@ -69,34 +69,28 @@ class IntervalTests {
 
   @Test
   void shouldCreateIntervalWithDurationBetweenMillis() {
-    final Instant instant = Instant.parse("2020-10-20T10:20:10.000Z");
-    ClockUtil.setClock(Clock.fixed(instant, UTC));
-
     final long millis = 12345000;
-    final long begin = instant.toEpochMilli();
-    final long end = instant.plusSeconds(millis / 1000).toEpochMilli();
+    final long begin = INSTANT.toEpochMilli();
+    final long end = INSTANT.plusSeconds(millis / 1000).toEpochMilli();
 
     final Interval result = new Interval(begin, end);
 
     assertEquals(UTC, result.getZone());
-    assertEquals(instant.truncatedTo(ChronoUnit.SECONDS).toEpochMilli() / 1000,
+    assertEquals(INSTANT.truncatedTo(ChronoUnit.SECONDS).toEpochMilli() / 1000,
       result.getBegin().toEpochSecond(UTC));
     assertEquals(millis, result.getDuration().toMillis());
   }
 
   @Test
   void shouldCreateIntervalWithDurationBetweenMillisWithZone() {
-    final Instant instant = Instant.parse("2020-10-20T10:20:10.000Z");
-    ClockUtil.setClock(Clock.fixed(instant, UTC));
-
     final long millis = 12345000;
-    final long begin = instant.toEpochMilli();
-    final long end = instant.plusSeconds(millis / 1000).toEpochMilli();
+    final long begin = INSTANT.toEpochMilli();
+    final long end = INSTANT.plusSeconds(millis / 1000).toEpochMilli();
 
     final Interval result = new Interval(begin, end, UTC);
 
     assertEquals(UTC, result.getZone());
-    assertEquals(instant.truncatedTo(ChronoUnit.SECONDS).toEpochMilli() / 1000,
+    assertEquals(INSTANT.truncatedTo(ChronoUnit.SECONDS).toEpochMilli() / 1000,
       result.getBegin().toEpochSecond(UTC));
     assertEquals(millis, result.getDuration().toMillis());
   }
@@ -110,8 +104,6 @@ class IntervalTests {
     "4, 20000, false",
   })
   void shouldDetermineIfDifferenceInDatesAreContainedWithinDuration(int id, long differenceInSeconds, boolean expected) {
-    ClockUtil.setClock(Clock.fixed(Instant.parse("2020-10-20T10:20:10.000Z"), UTC));
-
     final long millis = 12345000;
     final ZonedDateTime begin = ClockUtil.getZonedDateTime();
     final ZonedDateTime end = begin.plusSeconds(millis / 1000);
@@ -124,8 +116,6 @@ class IntervalTests {
 
   @Test
   void shouldGetStartZonedDateTimeFromInterval() {
-    ClockUtil.setClock(Clock.fixed(Instant.parse("2020-10-20T10:20:10.000Z"), UTC));
-
     final long millis = 12345000;
     final ZonedDateTime begin = ClockUtil.getZonedDateTime();
     final ZonedDateTime end = begin.plusSeconds(millis / 1000);
@@ -137,8 +127,6 @@ class IntervalTests {
 
   @Test
   void shouldGetEndZonedDateTimeFromInterval() {
-    ClockUtil.setClock(Clock.fixed(Instant.parse("2020-10-20T10:20:10.000Z"), UTC));
-
     final long millis = 12345000;
     final ZonedDateTime begin = ClockUtil.getZonedDateTime();
     final ZonedDateTime end = begin.plusSeconds(millis / 1000);
@@ -150,8 +138,6 @@ class IntervalTests {
 
   @Test
   void shouldGetZoneIdFromInterval() {
-    ClockUtil.setClock(Clock.fixed(Instant.parse("2020-10-20T10:20:10.000Z"), UTC));
-
     final long millis = 12345000;
     final ZonedDateTime begin = ClockUtil.getZonedDateTime();
     final ZonedDateTime end = begin.plusSeconds(millis / 1000);
@@ -163,8 +149,6 @@ class IntervalTests {
 
   @Test
   void shouldDetermineIntervalsDoOverlap() {
-    ClockUtil.setClock(Clock.fixed(Instant.parse("2020-10-20T10:20:10.000Z"), UTC));
-
     final long millis = 12345000;
     final ZonedDateTime begin = ClockUtil.getZonedDateTime();
     final ZonedDateTime end = begin.plusSeconds(millis / 1000);
@@ -179,8 +163,6 @@ class IntervalTests {
 
   @Test
   void shouldDetermineIntervalsAbutBefore() {
-    ClockUtil.setClock(Clock.fixed(Instant.parse("2020-10-20T10:20:10.000Z"), UTC));
-
     final long millis = 12345000;
     final ZonedDateTime begin = ClockUtil.getZonedDateTime();
     final ZonedDateTime end = begin.plusSeconds(millis / 1000);
@@ -195,8 +177,6 @@ class IntervalTests {
 
   @Test
   void shouldDetermineIntervalsAbutAfter() {
-    ClockUtil.setClock(Clock.fixed(Instant.parse("2020-10-20T10:20:10.000Z"), UTC));
-
     final long millis = 12345000;
     final ZonedDateTime begin = ClockUtil.getZonedDateTime();
     final ZonedDateTime end = begin.plusSeconds(millis / 1000);
@@ -219,8 +199,6 @@ class IntervalTests {
     "5, 2100-10-20T10:20:11.000Z, false",
   }, nullValues = {"null"})
   void shouldDetermineIntervalsAbutFromNull(int id, String dateTimeForClock, boolean expected) {
-    ClockUtil.setClock(Clock.fixed(Instant.parse("2020-10-20T10:20:10.000Z"), UTC));
-
     final ZonedDateTime begin = ClockUtil.getZonedDateTime();
     final ZonedDateTime end = begin.plusSeconds(1);
 
@@ -240,8 +218,6 @@ class IntervalTests {
     "4, 20000, 20000",
   }, nullValues = {"null"})
   void shouldCorrectlyDetermineGapSizeBetweenIntervals(int id, long differenceInSeconds, Long expected) {
-    ClockUtil.setClock(Clock.fixed(Instant.parse("2020-10-20T10:20:10.000Z"), UTC));
-
     final long millis = 12345000;
     final ZonedDateTime begin = ClockUtil.getZonedDateTime();
     final ZonedDateTime end = begin.plusSeconds(millis / 1000);
