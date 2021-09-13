@@ -12,6 +12,7 @@ import java.time.Clock;
 import java.time.Instant;
 
 import org.folio.circulation.support.utils.ClockUtil;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -29,8 +30,14 @@ class PeriodTest {
   private static final int MINUTES_PER_MONTH = MINUTES_PER_DAY * DAYS_PER_MONTH;
 
   @BeforeEach
-  public void BeforeEach() {
+  public void beforeEach() {
     ClockUtil.setClock(Clock.fixed(Instant.parse("2020-10-20T10:20:10.000Z"), UTC));
+  }
+
+  @AfterEach
+  public void afterEach() {
+    // The clock must be reset after each test.
+    ClockUtil.setDefaultClock();
   }
 
   @ParameterizedTest

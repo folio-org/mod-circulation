@@ -28,7 +28,7 @@ class ClockUtilTests {
   private static final Instant INSTANT = Instant.parse("2020-10-20T10:20:10.000Z");
 
   @BeforeEach
-  public void BeforeEach() {
+  public void beforeEach() {
     ClockUtil.setClock(Clock.fixed(INSTANT, UTC));
   }
 
