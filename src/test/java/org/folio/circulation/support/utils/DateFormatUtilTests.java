@@ -2,6 +2,7 @@ package org.folio.circulation.support.utils;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -10,6 +11,7 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeParseException;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -116,6 +118,13 @@ class DateFormatUtilTests {
     assertEquals(date, result);
   }
 
+  @Test
+  void shouldThrowExceptionDuringParseZonedDateTime() {
+    assertThrows(DateTimeParseException.class, () -> {
+      DateFormatUtil.parseDateTime("Invalid Date");
+    });
+  }
+
   @ParameterizedTest
   @CsvSource(value = {
     "0, null, null, " + FORMATTED_DATE_TIME_NOW,
@@ -144,6 +153,12 @@ class DateFormatUtilTests {
     final ZonedDateTime result = DateFormatUtil.parseDateTimeOptional(value);
 
     assertEquals(date, result);
+  }
+
+  void shouldThrowExceptionDuringParseZonedDateTimeOptional() {
+    assertThrows(DateTimeParseException.class, () -> {
+      DateFormatUtil.parseDateTimeOptional("Invalid Date");
+    });
   }
 
   @ParameterizedTest
@@ -178,6 +193,12 @@ class DateFormatUtilTests {
     assertEquals(date, result);
   }
 
+  void shouldThrowExceptionDuringParseInstantOptional() {
+    assertThrows(DateTimeParseException.class, () -> {
+      DateFormatUtil.parseInstantOptional("Invalid Date");
+    });
+  }
+
   @ParameterizedTest
   @CsvSource(value = {
     "0, null, null, null",
@@ -202,6 +223,12 @@ class DateFormatUtilTests {
     assertEquals(date, result);
   }
 
+  void shouldThrowExceptionDuringParseDate() {
+    assertThrows(DateTimeParseException.class, () -> {
+      DateFormatUtil.parseDate("Invalid Date");
+    });
+  }
+
   @ParameterizedTest
   @CsvSource(value = {
     "0, null, null, " + FORMATTED_DATE_NOW,
@@ -222,6 +249,12 @@ class DateFormatUtilTests {
     final LocalTime result = DateFormatUtil.parseTime(FORMATTED_TIME);
 
     assertEquals(date, result);
+  }
+
+  void shouldThrowExceptionDuringParseTime() {
+    assertThrows(DateTimeParseException.class, () -> {
+      DateFormatUtil.parseTime("Invalid Time");
+    });
   }
 
   @ParameterizedTest

@@ -211,6 +211,28 @@ class IntervalTests {
 
   @ParameterizedTest
   @CsvSource(value = {
+    "0, 2020-10-20T10:20:10.000Z, true",
+    "1, 2020-10-20T10:20:10.100Z, false",
+    "2, 2020-10-20T10:20:11.000Z, true",
+    "3, 2020-10-20T10:20:11.100Z, false",
+    "4, 1900-10-20T10:20:11.000Z, false",
+    "5, 2100-10-20T10:20:11.000Z, false",
+  }, nullValues = {"null"})
+  void shouldDetermineIntervalsAbutFromNull(int id, String dateTimeForClock, boolean expected) {
+    ClockUtil.setClock(Clock.fixed(Instant.parse("2020-10-20T10:20:10.000Z"), UTC));
+
+    final ZonedDateTime begin = ClockUtil.getZonedDateTime();
+    final ZonedDateTime end = begin.plusSeconds(1);
+
+    final Interval interval = new Interval(begin, end);
+
+    ClockUtil.setClock(Clock.fixed(Instant.parse(dateTimeForClock), UTC));
+
+    assertEquals(expected, interval.abuts(null), "For test " + id);
+  }
+
+  @ParameterizedTest
+  @CsvSource(value = {
     "0, -20000, 7654",
     "1, -12347, 1",
     "2, 0, null",

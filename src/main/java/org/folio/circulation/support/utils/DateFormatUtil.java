@@ -6,7 +6,6 @@ import static java.time.temporal.ChronoField.MILLI_OF_SECOND;
 import static java.time.temporal.ChronoField.MINUTE_OF_HOUR;
 import static java.time.temporal.ChronoField.NANO_OF_SECOND;
 import static java.time.temporal.ChronoField.SECOND_OF_MINUTE;
-import static org.folio.circulation.support.utils.DateTimeUtil.defaultToClockZone;
 import static org.folio.circulation.support.utils.DateTimeUtil.defaultToNow;
 
 import java.time.Instant;
@@ -428,7 +427,7 @@ public class DateFormatUtil {
         DateTimeFormatter formatter = formatters.get(i);
 
         if (zone != null) {
-          formatter = formatter.withZone(defaultToClockZone(zone));
+          formatter = formatter.withZone(zone);
         }
 
         return LocalDate.parse(value, formatter);
@@ -479,7 +478,7 @@ public class DateFormatUtil {
         DateTimeFormatter formatter = formatters.get(i);
 
         if (zone != null) {
-          formatter = formatter.withZone(defaultToClockZone(zone));
+          formatter = formatter.withZone(zone);
         }
 
         return LocalTime.parse(value, formatter);
@@ -508,7 +507,7 @@ public class DateFormatUtil {
         DateTimeFormatter formatter = formatters.get(i);
 
         if (zone != null) {
-          formatter = formatter.withZone(defaultToClockZone(zone));
+          formatter = formatter.withZone(zone);
         }
 
         return ZonedDateTime.parse(value, formatter).truncatedTo(ChronoUnit.MILLIS);
