@@ -10,7 +10,6 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 import java.util.function.BiFunction;
-
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 

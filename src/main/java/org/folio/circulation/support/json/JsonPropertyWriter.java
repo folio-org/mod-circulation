@@ -2,6 +2,7 @@ package org.folio.circulation.support.json;
 
 import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 import org.apache.commons.lang3.StringUtils;
@@ -20,6 +21,16 @@ public class JsonPropertyWriter {
     String value) {
 
     if(StringUtils.isNotBlank(value)) {
+      to.put(propertyName, value);
+    }
+  }
+
+  public static void write(
+    JsonObject to,
+    String propertyName,
+    BigDecimal value) {
+
+    if(value != null) {
       to.put(propertyName, value);
     }
   }

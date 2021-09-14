@@ -6,11 +6,11 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedSt
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.utils.DateTimeUtil.compareToMillis;
 
+import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
 
-import org.apache.commons.lang3.math.NumberUtils;
 import org.folio.circulation.support.json.JsonPropertyWriter;
 import org.joda.time.DateTime;
 
@@ -149,7 +149,7 @@ public class Account {
 
   public Optional<DateTime> getClosedDate() {
     return feeFineActions.stream()
-      .filter(ffa -> ffa.getBalance().equals(NumberUtils.DOUBLE_ZERO))
+      .filter(ffa -> ffa.getBalance().equals(BigDecimal.ZERO))
       .max(this::compareByDateAction)
       .map(FeeFineAction::getDateAction);
   }
