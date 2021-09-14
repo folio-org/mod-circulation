@@ -249,6 +249,29 @@ public class Period {
     return duration != null && interval != null;
   }
 
+  /**
+   * Add this period to the given date time.
+   * <p>
+   * This is not an ideal implementation and is provided in a temporary manner
+   * until a better design can be planned and implemented.
+   * <p>
+   * This has a consequence of changing the code structure in an undesirable way.
+   * <p>
+   * Take the original JodaTime structure of:
+   *   A.plus(B).plus(C).
+   * <p>
+   * This function would require something more like:
+   *   C.plus(B.plus(A)).
+   * <p>
+   * The A, B, C order is reversed and now B plus A is passed as an argument to
+   * C plus rather than as a chain. This is non-confirming to the FOLIO practices
+   * and needs to be changed. Such a change, however, requires a more significant
+   * work that is outside the time and availability of the PR this method is
+   * introduced in.
+   *
+   * @param date The date time to use when adding the period from this class.
+   * @return A new copy of date with the Period from this class added.
+   */
   public ZonedDateTime plusDate(ZonedDateTime date) {
     switch (interval) {
       case MONTHS:
@@ -265,6 +288,29 @@ public class Period {
     }
   }
 
+  /**
+   * Subtract this period from the given date time.
+   * <p>
+   * This is not an ideal implementation and is provided in a temporary manner
+   * until a better design can be planned and implemented.
+   * <p>
+   * This has a consequence of changing the code structure in an undesirable way.
+   * <p>
+   * Take the original JodaTime structure of:
+   *   A.minus(B).minus(C).
+   * <p>
+   * This function would require something more like:
+   *   C.minus(B.minus(A)).
+   * <p>
+   * The A, B, C order is reversed and now B plus A is passed as an argument to
+   * C plus rather than as a chain. This is non-confirming to the FOLIO practices
+   * and needs to be changed. Such a change, however, requires a more significant
+   * work that is outside the time and availability of the PR this method is
+   * introduced in.
+   *
+   * @param date The date time to use when subtracting the period from this class.
+   * @return A new copy of date with the Period from this class subtracted.
+   */
   public ZonedDateTime minusDate(ZonedDateTime date) {
     switch (interval) {
       case MONTHS:
