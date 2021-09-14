@@ -1397,6 +1397,7 @@
         "circulation-storage.loan-policies.item.get",
         "circulation-storage.loan-policies.collection.get",
         "circulation-storage.circulation-rules.get",
+        "circulation-storage.patron-notice-policies.item.get",
         "circulation-storage.request-batch.item.post",
         "circulation-storage.request-policies.item.get",
         "circulation-storage.requests.collection.get",
