@@ -29,7 +29,7 @@ class AnonymizeLoansTests {
     private final AnonymizationCheckersService checker = checker();
 
     @Test
-    public void anonymizeClosedLoanWithNoFees() {
+    void anonymizeClosedLoanWithNoFees() {
       final var segregatedLoans = checker.segregateLoans(List.of(closedLoan(
         when(2021, 5, 1, 15, 11, 27))));
 
@@ -39,7 +39,7 @@ class AnonymizeLoansTests {
     }
 
     @Test
-    public void anonymizeClosedLoanWithClosedFees() {
+    void anonymizeClosedLoanWithClosedFees() {
       final var segregatedLoans = checker.segregateLoans(List.of(closedLoanWithClosedFee(
         when(2021, 5, 11, 11, 54, 32))));
 
@@ -49,7 +49,7 @@ class AnonymizeLoansTests {
     }
 
     @Test
-    public void doNotAnonymizeOpenLoanWithNoFees() {
+    void doNotAnonymizeOpenLoanWithNoFees() {
       final var segregatedLoans = checker.segregateLoans(List.of(openLoan()));
 
       assertThat(segregatedLoans.size(), is(1));
@@ -57,7 +57,7 @@ class AnonymizeLoansTests {
     }
 
     @Test
-    public void doNotAnonymizeClosedLoanWithOpenFees() {
+    void doNotAnonymizeClosedLoanWithOpenFees() {
       final var segregatedLoans = checker.segregateLoans(List.of(closedLoanWithOpenFee()));
 
       assertThat(segregatedLoans.size(), is(1));
@@ -65,7 +65,7 @@ class AnonymizeLoansTests {
     }
 
     @Test
-    public void doNotAnonymizeOpenLoanWithOpenFees() {
+    void doNotAnonymizeOpenLoanWithOpenFees() {
       final var segregatedLoans = checker.segregateLoans(List.of(openLoanWithOpenFee()));
 
       assertThat(segregatedLoans.size(), is(1));
@@ -86,7 +86,7 @@ class AnonymizeLoansTests {
     private final AnonymizationCheckersService checker = checker();
 
     @Test
-    public void anonymizeClosedLoanWithClosedFees() {
+    void anonymizeClosedLoanWithClosedFees() {
       final var segregatedLoans = checker.segregateLoans(List.of(closedLoanWithClosedFee(
         when(2021, 5, 11, 11, 54, 32))));
 
@@ -95,7 +95,7 @@ class AnonymizeLoansTests {
     }
 
     @Test
-    public void doNotAnonymizeClosedLoanWithOpenFees() {
+    void doNotAnonymizeClosedLoanWithOpenFees() {
       final var segregatedLoans = checker.segregateLoans(List.of(closedLoanWithOpenFee()));
 
       assertThat(segregatedLoans.size(), is(1));
@@ -103,7 +103,7 @@ class AnonymizeLoansTests {
     }
 
     @Test
-    public void doNotAnonymizeOpenLoanWithOpenFees() {
+    void doNotAnonymizeOpenLoanWithOpenFees() {
       final var segregatedLoans = checker.segregateLoans(List.of(openLoanWithOpenFee()));
 
       assertThat(segregatedLoans.size(), is(1));
@@ -124,7 +124,7 @@ class AnonymizeLoansTests {
     private final AnonymizationCheckersService checker = checker();
 
     @Test
-    public void doNotAnonymizeLoanClosedWithNoFees() {
+    void doNotAnonymizeLoanClosedWithNoFees() {
       final var segregatedLoans = checker.segregateLoans(List.of(closedLoan(
         when(2021, 5, 1, 15, 11, 27))));
 
@@ -133,7 +133,7 @@ class AnonymizeLoansTests {
     }
 
     @Test
-    public void doNotAnonymizeOpenLoanWithNoFees() {
+    void doNotAnonymizeOpenLoanWithNoFees() {
       final var segregatedLoans = checker.segregateLoans(List.of(openLoan()));
 
       assertThat(segregatedLoans.size(), is(1));
@@ -141,7 +141,7 @@ class AnonymizeLoansTests {
     }
 
     @Test
-    public void doNotAnonymizeClosedLoanWithClosedFees() {
+    void doNotAnonymizeClosedLoanWithClosedFees() {
       final var segregatedLoans = checker.segregateLoans(
         List.of(closedLoanWithClosedFee(when(2021, 5, 11, 11, 54, 32))));
 
@@ -151,7 +151,7 @@ class AnonymizeLoansTests {
     }
 
     @Test
-    public void doNotAnonymizeClosedLoanWithOpenFees() {
+    void doNotAnonymizeClosedLoanWithOpenFees() {
       final var segregatedLoans = checker.segregateLoans(
         List.of(closedLoanWithOpenFee()));
 
@@ -161,7 +161,7 @@ class AnonymizeLoansTests {
     }
 
     @Test
-    public void doNotAnonymizeOpenLoanWithOpenFees() {
+    void doNotAnonymizeOpenLoanWithOpenFees() {
       final var segregatedLoans = checker.segregateLoans(
         List.of(openLoanWithOpenFee()));
 
@@ -184,7 +184,7 @@ class AnonymizeLoansTests {
     private final AnonymizationCheckersService checker = checker();
 
     @Test
-    public void anonymizeLoanClosedWithNoFees() {
+    void anonymizeLoanClosedWithNoFees() {
       final var segregatedLoans = checker.segregateLoans(List.of(closedLoan(
         when(2021, 5, 1, 15, 11, 27))));
 
@@ -193,7 +193,7 @@ class AnonymizeLoansTests {
     }
 
     @Test
-    public void doNotAnonymizeOpenLoanWithNoFees() {
+    void doNotAnonymizeOpenLoanWithNoFees() {
       final var segregatedLoans = checker.segregateLoans(List.of(openLoan()));
 
       assertThat(segregatedLoans.size(), is(1));
@@ -201,7 +201,7 @@ class AnonymizeLoansTests {
     }
 
     @Test
-    public void doNotAnonymizeClosedLoanWithClosedFees() {
+    void doNotAnonymizeClosedLoanWithClosedFees() {
       final var segregatedLoans = checker.segregateLoans(
         List.of(closedLoanWithClosedFee(when(2021, 5, 11, 11, 54, 32))));
 
@@ -211,7 +211,7 @@ class AnonymizeLoansTests {
     }
 
     @Test
-    public void doNotAnonymizeClosedLoanWithOpenFees() {
+    void doNotAnonymizeClosedLoanWithOpenFees() {
       final var segregatedLoans = checker.segregateLoans(
         List.of(closedLoanWithOpenFee()));
 
@@ -221,7 +221,7 @@ class AnonymizeLoansTests {
     }
 
     @Test
-    public void doNotAnonymizeOpenLoanWithOpenFees() {
+    void doNotAnonymizeOpenLoanWithOpenFees() {
       final var segregatedLoans = checker.segregateLoans(
         List.of(openLoanWithOpenFee()));
 
@@ -241,7 +241,7 @@ class AnonymizeLoansTests {
     private final AnonymizationCheckersService checker = checker();
 
     @Test
-    public void anonymizeLoanClosedMoreThanOneWeekAgo() {
+    void anonymizeLoanClosedMoreThanOneWeekAgo() {
       final var segregatedLoans = checker.segregateLoans(List.of(closedLoan(
         when(2021, 5, 3, 10, 23, 55))));
 
@@ -250,7 +250,7 @@ class AnonymizeLoansTests {
     }
 
     @Test
-    public void doNotAnonymizeLoanClosedLessThanOneWeekAgo() {
+    void doNotAnonymizeLoanClosedLessThanOneWeekAgo() {
       final var segregatedLoans = checker.segregateLoans(List.of(closedLoan(
         when(2021, 5, 9, 7, 1, 45))));
 
@@ -259,7 +259,7 @@ class AnonymizeLoansTests {
     }
 
     @Test
-    public void doNotAnonymizeClosedLoanWithNoReturnDate() {
+    void doNotAnonymizeClosedLoanWithNoReturnDate() {
       final var segregatedLoans = checker.segregateLoans(List.of(closedLoan(null)));
 
       assertThat(segregatedLoans.size(), is(1));
@@ -267,7 +267,7 @@ class AnonymizeLoansTests {
     }
 
     @Test
-    public void doNotAnonymizeOpenLoanWithNoFees() {
+    void doNotAnonymizeOpenLoanWithNoFees() {
       final var segregatedLoans = checker.segregateLoans(List.of(openLoan()));
 
       assertThat(segregatedLoans.size(), is(1));
@@ -275,7 +275,7 @@ class AnonymizeLoansTests {
     }
 
     @Test
-    public void anonymizeClosedLoanWithFeeClosedEarlierThanLastWeek() {
+    void anonymizeClosedLoanWithFeeClosedEarlierThanLastWeek() {
       final var segregatedLoans = checker.segregateLoans(
         List.of(closedLoanWithClosedFee(when(2021, 5, 1, 15, 11, 27))));
 
@@ -284,7 +284,7 @@ class AnonymizeLoansTests {
     }
 
     @Test
-    public void doNotAnonymizeClosedLoanWithFeesClosedWithinTheLastWeek() {
+    void doNotAnonymizeClosedLoanWithFeesClosedWithinTheLastWeek() {
       final var segregatedLoans = checker.segregateLoans(
         List.of(closedLoanWithClosedFee(when(2021, 5, 11, 11, 54, 32))));
 
@@ -294,7 +294,7 @@ class AnonymizeLoansTests {
     }
 
     @Test
-    public void doNotAnonymizeClosedLoanWithClosedFeeWithoutAClosedDate() {
+    void doNotAnonymizeClosedLoanWithClosedFeeWithoutAClosedDate() {
       final var segregatedLoans = checker.segregateLoans(
         List.of(closedLoanWithClosedFee(null)));
 
@@ -305,7 +305,7 @@ class AnonymizeLoansTests {
 
 
     @Test
-    public void doNotAnonymizeClosedLoanWithOpenFees() {
+    void doNotAnonymizeClosedLoanWithOpenFees() {
       final var segregatedLoans = checker.segregateLoans(
         List.of(closedLoanWithOpenFee()));
 
@@ -315,7 +315,7 @@ class AnonymizeLoansTests {
     }
 
     @Test
-    public void doNotAnonymizeOpenLoanWithOpenFees() {
+    void doNotAnonymizeOpenLoanWithOpenFees() {
       final var segregatedLoans = checker.segregateLoans(
         List.of(openLoanWithOpenFee()));
 
