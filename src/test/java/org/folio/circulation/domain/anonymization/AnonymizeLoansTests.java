@@ -8,6 +8,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import org.folio.circulation.domain.Account;
@@ -35,7 +37,7 @@ class AnonymizeLoansTests {
 
       assertThat(segregatedLoans.size(), is(1));
       // Partition for loans that should be annonymized
-      assertThat(segregatedLoans.get("_").size(), is(1));
+      assertThat(anonymizedLoans(segregatedLoans).size(), is(1));
     }
 
     @Test
@@ -45,7 +47,7 @@ class AnonymizeLoansTests {
 
       assertThat(segregatedLoans.size(), is(1));
       // Partition for loans that should be annonymized
-      assertThat(segregatedLoans.get("_").size(), is(1));
+      assertThat(anonymizedLoans(segregatedLoans).size(), is(1));
     }
 
     @Test
@@ -53,7 +55,7 @@ class AnonymizeLoansTests {
       final var segregatedLoans = checker.segregateLoans(List.of(openLoan()));
 
       assertThat(segregatedLoans.size(), is(1));
-      assertThat(segregatedLoans.get("anonymizeImmediately").size(), is(1));
+      assertThat(loansNotAnonymizedImmediately(segregatedLoans).size(), is(1));
     }
 
     @Test
@@ -61,7 +63,7 @@ class AnonymizeLoansTests {
       final var segregatedLoans = checker.segregateLoans(List.of(closedLoanWithOpenFee()));
 
       assertThat(segregatedLoans.size(), is(1));
-      assertThat(segregatedLoans.get("anonymizeImmediately").size(), is(1));
+      assertThat(loansNotAnonymizedImmediately(segregatedLoans).size(), is(1));
     }
 
     @Test
@@ -69,7 +71,11 @@ class AnonymizeLoansTests {
       final var segregatedLoans = checker.segregateLoans(List.of(openLoanWithOpenFee()));
 
       assertThat(segregatedLoans.size(), is(1));
-      assertThat(segregatedLoans.get("anonymizeImmediately").size(), is(1));
+      assertThat(loansNotAnonymizedImmediately(segregatedLoans).size(), is(1));
+    }
+
+    private Set<String> loansNotAnonymizedImmediately(Map<String, Set<String>> segregatedLoans) {
+      return segregatedLoans.get("anonymizeImmediately");
     }
 
     private AnonymizationCheckersService checker() {
@@ -91,7 +97,7 @@ class AnonymizeLoansTests {
         when(2021, 5, 11, 11, 54, 32))));
 
       assertThat(segregatedLoans.size(), is(1));
-      assertThat(segregatedLoans.get("_").size(), is(1));
+      assertThat(anonymizedLoans(segregatedLoans).size(), is(1));
     }
 
     @Test
@@ -99,7 +105,7 @@ class AnonymizeLoansTests {
       final var segregatedLoans = checker.segregateLoans(List.of(closedLoanWithOpenFee()));
 
       assertThat(segregatedLoans.size(), is(1));
-      assertThat(segregatedLoans.get("feesAndFinesOpen").size(), is(1));
+      assertThat(loansWithFeesOrFinesNotAnonymized(segregatedLoans).size(), is(1));
     }
 
     @Test
@@ -107,7 +113,11 @@ class AnonymizeLoansTests {
       final var segregatedLoans = checker.segregateLoans(List.of(openLoanWithOpenFee()));
 
       assertThat(segregatedLoans.size(), is(1));
-      assertThat(segregatedLoans.get("feesAndFinesOpen").size(), is(1));
+      assertThat(loansWithFeesOrFinesNotAnonymized(segregatedLoans).size(), is(1));
+    }
+
+    private Set<String> loansWithFeesOrFinesNotAnonymized(Map<String, Set<String>> segregatedLoans) {
+      return segregatedLoans.get("feesAndFinesOpen");
     }
 
     private AnonymizationCheckersService checker() {
@@ -129,7 +139,7 @@ class AnonymizeLoansTests {
         when(2021, 5, 1, 15, 11, 27))));
 
       assertThat(segregatedLoans.size(), is(1));
-      assertThat(segregatedLoans.get("neverAnonymizeLoans").size(), is(1));
+      assertThat(neverAnonymizeLoans(segregatedLoans).size(), is(1));
     }
 
     @Test
@@ -137,7 +147,7 @@ class AnonymizeLoansTests {
       final var segregatedLoans = checker.segregateLoans(List.of(openLoan()));
 
       assertThat(segregatedLoans.size(), is(1));
-      assertThat(segregatedLoans.get("neverAnonymizeLoans").size(), is(1));
+      assertThat(neverAnonymizeLoans(segregatedLoans).size(), is(1));
     }
 
     @Test
@@ -146,8 +156,7 @@ class AnonymizeLoansTests {
         List.of(closedLoanWithClosedFee(when(2021, 5, 11, 11, 54, 32))));
 
       assertThat(segregatedLoans.size(), is(1));
-      assertThat(segregatedLoans.get("neverAnonymizeLoansWithFeesAndFines").size(),
-        is(1));
+      assertThat(loansWithFeesOrFinesNotAnonymized(segregatedLoans).size(), is(1));
     }
 
     @Test
@@ -156,8 +165,7 @@ class AnonymizeLoansTests {
         List.of(closedLoanWithOpenFee()));
 
       assertThat(segregatedLoans.size(), is(1));
-      assertThat(segregatedLoans.get("neverAnonymizeLoansWithFeesAndFines").size(),
-        is(1));
+      assertThat(loansWithFeesOrFinesNotAnonymized(segregatedLoans).size(), is(1));
     }
 
     @Test
@@ -166,8 +174,15 @@ class AnonymizeLoansTests {
         List.of(openLoanWithOpenFee()));
 
       assertThat(segregatedLoans.size(), is(1));
-      assertThat(segregatedLoans.get("neverAnonymizeLoansWithFeesAndFines").size(),
-        is(1));
+      assertThat(loansWithFeesOrFinesNotAnonymized(segregatedLoans).size(), is(1));
+    }
+
+    private Set<String> loansWithFeesOrFinesNotAnonymized(Map<String, Set<String>> segregatedLoans) {
+      return segregatedLoans.get("neverAnonymizeLoansWithFeesAndFines");
+    }
+
+    private Set<String> neverAnonymizeLoans(Map<String, Set<String>> segregatedLoans) {
+      return segregatedLoans.get("neverAnonymizeLoans");
     }
 
     private AnonymizationCheckersService checker() {
@@ -189,7 +204,7 @@ class AnonymizeLoansTests {
         when(2021, 5, 1, 15, 11, 27))));
 
       assertThat(segregatedLoans.size(), is(1));
-      assertThat(segregatedLoans.get("_").size(), is(1));
+      assertThat(anonymizedLoans(segregatedLoans).size(), is(1));
     }
 
     @Test
@@ -197,7 +212,7 @@ class AnonymizeLoansTests {
       final var segregatedLoans = checker.segregateLoans(List.of(openLoan()));
 
       assertThat(segregatedLoans.size(), is(1));
-      assertThat(segregatedLoans.get("_").size(), is(1));
+      assertThat(anonymizedLoans(segregatedLoans).size(), is(1));
     }
 
     @Test
@@ -206,7 +221,7 @@ class AnonymizeLoansTests {
         List.of(closedLoanWithClosedFee(when(2021, 5, 11, 11, 54, 32))));
 
       assertThat(segregatedLoans.size(), is(1));
-      assertThat(segregatedLoans.get("haveAssociatedFeesAndFines").size(),
+      assertThat(loansWithFeesOrFinesNotAnonymized(segregatedLoans).size(),
         is(1));
     }
 
@@ -216,7 +231,7 @@ class AnonymizeLoansTests {
         List.of(closedLoanWithOpenFee()));
 
       assertThat(segregatedLoans.size(), is(1));
-      assertThat(segregatedLoans.get("haveAssociatedFeesAndFines").size(),
+      assertThat(loansWithFeesOrFinesNotAnonymized(segregatedLoans).size(),
         is(1));
     }
 
@@ -226,8 +241,11 @@ class AnonymizeLoansTests {
         List.of(openLoanWithOpenFee()));
 
       assertThat(segregatedLoans.size(), is(1));
-      assertThat(segregatedLoans.get("haveAssociatedFeesAndFines").size(),
-        is(1));
+      assertThat(loansWithFeesOrFinesNotAnonymized(segregatedLoans).size(), is(1));
+    }
+
+    private Set<String> loansWithFeesOrFinesNotAnonymized(Map<String, Set<String>> segregatedLoans) {
+      return segregatedLoans.get("haveAssociatedFeesAndFines");
     }
 
     private AnonymizationCheckersService checker() {
@@ -246,7 +264,7 @@ class AnonymizeLoansTests {
         when(2021, 5, 3, 10, 23, 55))));
 
       assertThat(segregatedLoans.size(), is(1));
-      assertThat(segregatedLoans.get("_").size(), is(1));
+      assertThat(anonymizedLoans(segregatedLoans).size(), is(1));
     }
 
     @Test
@@ -255,7 +273,7 @@ class AnonymizeLoansTests {
         when(2021, 5, 9, 7, 1, 45))));
 
       assertThat(segregatedLoans.size(), is(1));
-      assertThat(segregatedLoans.get("loanClosedPeriodNotPassed").size(), is(1));
+      assertThat(loansClosedToSoonToAnonymize(segregatedLoans).size(), is(1));
     }
 
     @Test
@@ -263,7 +281,7 @@ class AnonymizeLoansTests {
       final var segregatedLoans = checker.segregateLoans(List.of(closedLoan(null)));
 
       assertThat(segregatedLoans.size(), is(1));
-      assertThat(segregatedLoans.get("loanClosedPeriodNotPassed").size(), is(1));
+      assertThat(loansClosedToSoonToAnonymize(segregatedLoans).size(), is(1));
     }
 
     @Test
@@ -271,7 +289,7 @@ class AnonymizeLoansTests {
       final var segregatedLoans = checker.segregateLoans(List.of(openLoan()));
 
       assertThat(segregatedLoans.size(), is(1));
-      assertThat(segregatedLoans.get("loanClosedPeriodNotPassed").size(), is(1));
+      assertThat(loansClosedToSoonToAnonymize(segregatedLoans).size(), is(1));
     }
 
     @Test
@@ -280,7 +298,7 @@ class AnonymizeLoansTests {
         List.of(closedLoanWithClosedFee(when(2021, 5, 1, 15, 11, 27))));
 
       assertThat(segregatedLoans.size(), is(1));
-      assertThat(segregatedLoans.get("_").size(), is(1));
+      assertThat(anonymizedLoans(segregatedLoans).size(), is(1));
     }
 
     @Test
@@ -289,8 +307,7 @@ class AnonymizeLoansTests {
         List.of(closedLoanWithClosedFee(when(2021, 5, 11, 11, 54, 32))));
 
       assertThat(segregatedLoans.size(), is(1));
-      assertThat(segregatedLoans.get("intervalAfterFeesAndFinesCloseNotPassed").size(),
-        is(1));
+      assertThat(loansWithFeesOrFinesNotAnonymized(segregatedLoans).size(), is(1));
     }
 
     @Test
@@ -299,10 +316,8 @@ class AnonymizeLoansTests {
         List.of(closedLoanWithClosedFee(null)));
 
       assertThat(segregatedLoans.size(), is(1));
-      assertThat(segregatedLoans.get("intervalAfterFeesAndFinesCloseNotPassed").size(),
-        is(1));
+      assertThat(loansWithFeesOrFinesNotAnonymized(segregatedLoans).size(), is(1));
     }
-
 
     @Test
     void doNotAnonymizeClosedLoanWithOpenFees() {
@@ -310,8 +325,7 @@ class AnonymizeLoansTests {
         List.of(closedLoanWithOpenFee()));
 
       assertThat(segregatedLoans.size(), is(1));
-      assertThat(segregatedLoans.get("intervalAfterFeesAndFinesCloseNotPassed").size(),
-        is(1));
+      assertThat(loansWithFeesOrFinesNotAnonymized(segregatedLoans).size(), is(1));
     }
 
     @Test
@@ -320,8 +334,15 @@ class AnonymizeLoansTests {
         List.of(openLoanWithOpenFee()));
 
       assertThat(segregatedLoans.size(), is(1));
-      assertThat(segregatedLoans.get("intervalAfterFeesAndFinesCloseNotPassed").size(),
-        is(1));
+      assertThat(loansWithFeesOrFinesNotAnonymized(segregatedLoans).size(), is(1));
+    }
+
+    private Set<String> loansWithFeesOrFinesNotAnonymized(Map<String, Set<String>> segregatedLoans) {
+      return segregatedLoans.get("intervalAfterFeesAndFinesCloseNotPassed");
+    }
+
+    private Set<String> loansClosedToSoonToAnonymize(Map<String, Set<String>> segregatedLoans) {
+      return segregatedLoans.get("loanClosedPeriodNotPassed");
     }
 
     private AnonymizationCheckersService checker() {
@@ -332,6 +353,10 @@ class AnonymizeLoansTests {
           true, Period.weeks(1),  Period.weeks(1)),
         () -> ZonedDateTime.of(2021, 5, 15, 8, 15, 43, 0, ZoneId.of("UTC")));
     }
+  }
+
+  private Set<String> anonymizedLoans(Map<String, Set<String>> segregatedLoans) {
+    return segregatedLoans.get("_");
   }
 
   private ZonedDateTime when(int year, int month, int day, int hour, int minute, int second) {
