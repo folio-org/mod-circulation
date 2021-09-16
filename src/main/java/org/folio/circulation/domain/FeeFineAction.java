@@ -4,6 +4,7 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTime
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 
 import java.time.ZonedDateTime;
+import java.math.BigDecimal;
 
 import io.vertx.core.json.JsonObject;
 
@@ -18,8 +19,8 @@ public class FeeFineAction {
     return getProperty(representation, "accountId");
   }
 
-  public Double getBalance() {
-    return representation.getDouble("balance");
+  public FeeAmount getBalance() {
+    return FeeAmount.from(representation,"balance");
   }
 
   public FeeAmount getAmount() {
