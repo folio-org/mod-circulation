@@ -36,7 +36,7 @@ public final class FeeAmount {
     return amount.compareTo(BigDecimal.ZERO) > 0;
   }
 
-  public boolean hasZeroAmount(){
+  public boolean hasZeroAmount() {
     return amount.compareTo(BigDecimal.ZERO) == 0;
   }
 
