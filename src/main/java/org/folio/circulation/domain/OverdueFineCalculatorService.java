@@ -238,7 +238,7 @@ public class OverdueFineCalculatorService {
   private CompletableFuture<Result<FeeFineAction>> createFeeFineRecord(Loan loan, BigDecimal fineAmount,
     String loggedInUserId) {
 
-    if (fineAmount.compareTo(BigDecimal.ZERO) < 0) {
+    if (fineAmount.compareTo(BigDecimal.ZERO) <= 0) {
       return completedFuture(succeeded(null));
     }
 
