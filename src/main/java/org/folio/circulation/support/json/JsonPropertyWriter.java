@@ -28,16 +28,6 @@ public class JsonPropertyWriter {
   public static void write(
     JsonObject to,
     String propertyName,
-    BigDecimal value) {
-
-    if(value != null) {
-      to.put(propertyName, value);
-    }
-  }
-
-  public static void write(
-    JsonObject to,
-    String propertyName,
     Double value) {
       to.put(propertyName, value);
     }

@@ -20,8 +20,8 @@ public class FeeFineAction {
     return getProperty(representation, "accountId");
   }
 
-  public BigDecimal getBalance() {
-    return new BigDecimal(representation.getString("balance"));
+  public FeeAmount getBalance() {
+    return FeeAmount.from(representation,"balance");
   }
 
   public FeeAmount getAmount() {
