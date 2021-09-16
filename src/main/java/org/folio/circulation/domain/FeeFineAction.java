@@ -4,7 +4,6 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTime
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 
 import org.joda.time.DateTime;
 
@@ -22,8 +21,7 @@ public class FeeFineAction {
   }
 
   public BigDecimal getBalance() {
-     return new BigDecimal(representation.getString("balance"))
-       .setScale(2, RoundingMode.HALF_EVEN);
+     return new BigDecimal(representation.getString("balance"));
   }
 
   public FeeAmount getAmount() {
