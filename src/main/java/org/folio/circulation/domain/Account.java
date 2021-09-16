@@ -7,6 +7,7 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty
 import static org.folio.circulation.support.utils.DateTimeUtil.compareToMillis;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
@@ -149,7 +150,8 @@ public class Account {
 
   public Optional<DateTime> getClosedDate() {
     return feeFineActions.stream()
-      .filter(ffa -> ffa.getBalance().equals(BigDecimal.ZERO))
+      .filter(ffa -> ffa.getBalance()
+        .equals(BigDecimal.ZERO.setScale(2, RoundingMode.HALF_EVEN)))
       .max(this::compareByDateAction)
       .map(FeeFineAction::getDateAction);
   }
