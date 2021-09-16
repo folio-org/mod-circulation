@@ -150,7 +150,7 @@ public class Account {
 
   public Optional<DateTime> getClosedDate() {
     return feeFineActions.stream()
-      .filter(ffa -> ffa.getBalance().compareTo(BigDecimal.ZERO) == 0)
+      .filter(ffa -> ffa.getBalance().hasZeroAmount())
       .max(this::compareByDateAction)
       .map(FeeFineAction::getDateAction);
   }

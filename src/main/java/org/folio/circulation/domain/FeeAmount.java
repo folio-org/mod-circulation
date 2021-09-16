@@ -7,7 +7,7 @@ import java.math.RoundingMode;
 
 import io.vertx.core.json.JsonObject;
 
-public final class FeeAmount implements Comparable<BigDecimal> {
+public final class FeeAmount {
   private static final FeeAmount ZERO = new FeeAmount(BigDecimal.ZERO);
 
   private final BigDecimal amount;
@@ -36,6 +36,10 @@ public final class FeeAmount implements Comparable<BigDecimal> {
     return amount.compareTo(BigDecimal.ZERO) > 0;
   }
 
+  public boolean hasZeroAmount(){
+    return amount.compareTo(BigDecimal.ZERO) == 0;
+  }
+
   private BigDecimal scaledAmount() {
     return amount.setScale(2, RoundingMode.HALF_UP);
   }
@@ -54,10 +58,5 @@ public final class FeeAmount implements Comparable<BigDecimal> {
 
   public static FeeAmount from(JsonObject json, String propertyName) {
     return new FeeAmount(getBigDecimalProperty(json, propertyName));
-  }
-
-  @Override
-  public int compareTo(BigDecimal o) {
-    return amount.compareTo(o);
   }
 }
