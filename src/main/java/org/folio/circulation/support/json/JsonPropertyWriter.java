@@ -2,6 +2,7 @@ package org.folio.circulation.support.json;
 
 import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 import org.apache.commons.lang3.StringUtils;
