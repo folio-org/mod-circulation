@@ -21,7 +21,7 @@ public class FeeFineAction {
   }
 
   public BigDecimal getBalance() {
-     return new BigDecimal(representation.getString("balance"));
+    return new BigDecimal(representation.getString("balance"));
   }
 
   public FeeAmount getAmount() {
