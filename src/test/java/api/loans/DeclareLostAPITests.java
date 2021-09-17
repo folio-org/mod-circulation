@@ -33,6 +33,9 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.arrayContaining;
+import static org.hamcrest.Matchers.arrayWithSize;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.joda.time.Seconds.seconds;
@@ -194,17 +197,22 @@ class DeclareLostAPITests extends APITests {
 
     assertThat(loan.getJson(), isOpen());
 
+    String contributorName = itemsFixture.basedUponSmallAngryPlanet().getInstance().getJson()
+      .getJsonArray("contributors")
+      .getJsonObject(0)
+      .getString("name");
+
     verifyFeeHasBeenCharged(loan.getId(), "Lost item fee", allOf(
       hasJsonPath("ownerId", expectedOwnerId),
       hasJsonPath("feeFineType", "Lost item fee"),
-      hasJsonPath("amount", expectedItemFee)
-    ));
+      hasJsonPath("amount", expectedItemFee),
+      hasJsonPath("contributors[0].name", contributorName)));
 
     verifyFeeHasBeenCharged(loan.getId(), "Lost item processing fee", allOf(
       hasJsonPath("ownerId", expectedOwnerId),
       hasJsonPath("feeFineType", "Lost item processing fee"),
-      hasJsonPath("amount", expectedProcessingFee)
-    ));
+      hasJsonPath("amount", expectedProcessingFee),
+      hasJsonPath("contributors[0].name", contributorName)));
   }
 
   @Test
