@@ -296,7 +296,7 @@ public class TemplateContextUtil {
     write(context, "actionDate", actionDateString);
     write(context, "actionDateTime", actionDateString);
     write(context, "amount", feeFineAction.getAmount().toDouble());
-    write(context, "remainingAmount", feeFineAction.getBalance());
+    write(context, "remainingAmount", feeFineAction.getBalance().toDouble());
 
     return context;
   }
