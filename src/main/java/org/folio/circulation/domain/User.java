@@ -7,6 +7,7 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTime
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getObjectProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.utils.DateTimeUtil.isBeforeMillis;
 
 import java.util.Objects;
 
@@ -56,7 +57,7 @@ public class User {
       return false;
     }
     else {
-      return expirationDate.isBefore(ClockUtil.getDateTime());
+      return isBeforeMillis(expirationDate, ClockUtil.getDateTime());
     }
   }
 

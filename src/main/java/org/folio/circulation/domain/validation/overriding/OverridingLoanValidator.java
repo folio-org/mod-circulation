@@ -4,6 +4,7 @@ import static org.folio.circulation.domain.LoanAction.CHECKED_OUT_THROUGH_OVERRI
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.succeeded;
+import static org.folio.circulation.support.utils.DateTimeUtil.isAfterMillis;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -81,7 +82,7 @@ public class OverridingLoanValidator extends OverridingBlockValidator<LoanAndRel
     DateTime loanDate = loanAndRelatedRecords.getLoan().getLoanDate();
     DateTime requestedDueDate = itemNotLoanableBlockOverride.getDueDate();
 
-    if (itemNotLoanableBlockOverride.isRequested() && !requestedDueDate.isAfter(loanDate)) {
+    if (itemNotLoanableBlockOverride.isRequested() && !isAfterMillis(requestedDueDate, loanDate)) {
       return failed(singleValidationError(new ValidationError(DUE_DATE_NOT_AFTER_LOAN_DATE,
         DUE_DATE_PARAM_NAME, itemNotLoanableBlockOverride.getDueDateRaw())));
     }

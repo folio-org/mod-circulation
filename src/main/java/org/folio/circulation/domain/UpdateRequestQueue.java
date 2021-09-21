@@ -21,7 +21,7 @@ import org.folio.circulation.resources.context.ReorderRequestContext;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.utils.ClockUtil;
-import org.folio.circulation.support.utils.DateTimeUtil;
+import static org.folio.circulation.support.utils.DateTimeUtil.atEndOfDay;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
@@ -299,7 +299,7 @@ public class UpdateRequestQueue {
       .addTo(now, holdShelfExpiryPeriod.getDuration());
 
     if (holdShelfExpiryPeriod.isLongTermPeriod()) {
-      holdShelfExpirationDate = DateTimeUtil.atEndOfTheDay(holdShelfExpirationDate);
+      holdShelfExpirationDate = atEndOfDay(holdShelfExpirationDate);
     }
 
     return holdShelfExpirationDate;

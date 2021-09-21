@@ -1,11 +1,14 @@
 package api.support;
 
-import io.vertx.core.json.JsonObject;
+import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;
+import static org.folio.circulation.support.utils.DateFormatUtil.parseJodaDateTime;
+import static org.folio.circulation.support.utils.DateTimeUtil.atStartOfDay;
+
 import org.folio.circulation.domain.OpeningDay;
-import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
-import org.joda.time.LocalTime;
+
+import io.vertx.core.json.JsonObject;
 
 public class OpeningPeriod {
   private static final String OPENING_DAY_KEY = "openingDay";
@@ -20,14 +23,14 @@ public class OpeningPeriod {
   }
 
   public static OpeningPeriod from(JsonObject jsonObject) {
-    return new OpeningPeriod(DateTime.parse(jsonObject.getString(DATE_KEY)).toLocalDate(),
+    return new OpeningPeriod(parseJodaDateTime(jsonObject.getString(DATE_KEY)).toLocalDate(),
       OpeningDay.fromJsonByDefaultKey(jsonObject));
   }
 
   public JsonObject toJson() {
     return new JsonObject()
       .put(OPENING_DAY_KEY, openingDay.toJson())
-      .put(DATE_KEY, date.toDateTime(LocalTime.MIDNIGHT, DateTimeZone.UTC).toString());
+      .put(DATE_KEY, formatDateTime(atStartOfDay(date, DateTimeZone.UTC)));
   }
 
   public OpeningDay getOpeningDay() {

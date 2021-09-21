@@ -3,6 +3,7 @@ package org.folio.circulation.domain.policy.library;
 import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.failureForAbsentTimetable;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.succeeded;
+import static org.folio.circulation.support.utils.DateTimeUtil.compareToMillis;
 
 import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
@@ -34,8 +35,6 @@ public class EndOfCurrentHoursStrategy extends ShortTermLoansBaseStrategy {
     return succeeded(currentTimeInterval.getNext().getEndTime());
   }
 
-  public static final LocalTime END_OF_A_DAY = LocalTime.MIDNIGHT.minusSeconds(1);
-
   private boolean hasLibraryRolloverWorkingDay(LibraryTimetable libraryTimetable,
                                                LibraryInterval requestedInterval) {
 
@@ -56,6 +55,6 @@ public class EndOfCurrentHoursStrategy extends ShortTermLoansBaseStrategy {
   }
 
   private boolean isDateEqualToBoundaryValueOfDay(LocalTime requestedInterval, LocalTime boundaryValueOfDay) {
-    return requestedInterval.compareTo(boundaryValueOfDay) == 0;
+    return compareToMillis(requestedInterval, boundaryValueOfDay) == 0;
   }
 }

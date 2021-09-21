@@ -217,6 +217,7 @@ public class LostItemFeeRefundService {
 
     Account mostRecentLostItemFeeAccount = accounts.stream()
       .filter(account -> LOST_ITEM_FEE_TYPE.equals(account.getFeeFineType()))
+      .filter(account -> account.getCreationDate() != null)
       .max(Comparator.comparing(Account::getCreationDate))
       .orElse(null);
 
@@ -230,6 +231,7 @@ public class LostItemFeeRefundService {
       DateTime creationDate = mostRecentLostItemFeeAccount.getCreationDate();
       Account mostRecentLostItemFeeProcessingAccount = accounts.stream()
         .filter(account -> LOST_ITEM_PROCESSING_FEE_TYPE.equals(account.getFeeFineType()))
+        .filter(account -> account.getCreationDate() != null)
         .max(Comparator.comparing(Account::getCreationDate))
         .orElse(null);
 

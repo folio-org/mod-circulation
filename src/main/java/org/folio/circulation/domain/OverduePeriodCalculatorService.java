@@ -4,6 +4,9 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.apache.commons.lang3.ObjectUtils.allNotNull;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
+import static org.folio.circulation.support.utils.DateTimeUtil.isAfterMillis;
+import static org.folio.circulation.support.utils.DateTimeUtil.isBeforeMillis;
+import static org.folio.circulation.support.utils.DateTimeUtil.isWithinMillis;
 import static org.joda.time.DateTimeConstants.MINUTES_PER_HOUR;
 import static org.joda.time.DateTimeZone.UTC;
 import static org.joda.time.Minutes.minutesBetween;
@@ -12,8 +15,8 @@ import java.util.Collection;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
-import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
 import org.folio.circulation.infrastructure.storage.CalendarRepository;
+import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
 import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDateTime;
@@ -102,17 +105,16 @@ public class OverduePeriodCalculatorService {
       LocalDateTime endTime = datePart.withTime(openingHour.getEndTime())
         .withZone(UTC).toLocalDateTime();
 
-      if (dueDate.isAfter(startTime) && dueDate.isBefore(endTime)) {
+      if (isWithinMillis(dueDate, startTime, endTime)) {
         startTime = dueDate;
       }
 
-      if (returnDate.isAfter(startTime) && returnDate.isBefore(endTime)) {
+      if (isWithinMillis(returnDate, startTime, endTime)) {
         endTime = returnDate;
       }
 
-      if (endTime.isAfter(startTime) && endTime.isAfter(dueDate)
-        && startTime.isBefore(returnDate)) {
-
+      if (isAfterMillis(endTime, startTime) && isAfterMillis(endTime, dueDate)
+        && isBeforeMillis(startTime, returnDate)) {
         return calculateDiffInMinutes(startTime, endTime);
       }
     }

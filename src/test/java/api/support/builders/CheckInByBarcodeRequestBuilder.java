@@ -1,5 +1,7 @@
 package api.support.builders;
 
+import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTimeOptional;
+
 import java.util.UUID;
 
 import org.folio.circulation.support.utils.ClockUtil;
@@ -35,7 +37,7 @@ public class CheckInByBarcodeRequestBuilder extends JsonBuilder implements Build
     final JsonObject request = new JsonObject();
 
     put(request, "itemBarcode", this.itemBarcode);
-    put(request, "checkInDate", this.checkInDate);
+    put(request, "checkInDate", formatDateTimeOptional(this.checkInDate));
     put(request, "servicePointId", this.servicePointId);
     put(request, "claimedReturnedResolution", this.claimedReturnedResolution);
 

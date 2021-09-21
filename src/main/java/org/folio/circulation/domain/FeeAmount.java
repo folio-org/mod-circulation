@@ -36,6 +36,10 @@ public final class FeeAmount {
     return amount.compareTo(BigDecimal.ZERO) > 0;
   }
 
+  public boolean hasZeroAmount() {
+    return amount.compareTo(BigDecimal.ZERO) == 0;
+  }
+
   private BigDecimal scaledAmount() {
     return amount.setScale(2, RoundingMode.HALF_UP);
   }

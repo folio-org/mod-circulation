@@ -4,6 +4,7 @@ import static java.lang.Math.max;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
+import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;
 
 import java.util.Collection;
 import java.util.List;
@@ -23,6 +24,7 @@ import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.support.utils.ClockUtil;
+import org.joda.time.DateTimeZone;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -288,13 +290,13 @@ public class TemplateContextUtil {
 
   private static JsonObject createFeeActionContext(FeeFineAction feeFineAction) {
     final JsonObject context = new JsonObject();
-    String actionDateString = feeFineAction.getDateAction().toString();
+    String actionDateString = formatDateTime(feeFineAction.getDateAction());
 
     write(context, "type", feeFineAction.getActionType());
     write(context, "actionDate", actionDateString);
     write(context, "actionDateTime", actionDateString);
     write(context, "amount", feeFineAction.getAmount().toDouble());
-    write(context, "remainingAmount", feeFineAction.getBalance());
+    write(context, "remainingAmount", feeFineAction.getBalance().toDouble());
 
     return context;
   }

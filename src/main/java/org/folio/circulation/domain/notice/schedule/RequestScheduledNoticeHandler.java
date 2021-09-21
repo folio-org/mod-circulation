@@ -6,6 +6,8 @@ import static org.folio.circulation.domain.notice.TemplateContextUtil.createRequ
 import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.HOLD_EXPIRATION;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
+import static org.folio.circulation.support.utils.DateTimeUtil.isAfterMillis;
+import static org.folio.circulation.support.utils.DateTimeUtil.isBeforeMillis;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -131,7 +133,7 @@ public class RequestScheduledNoticeHandler extends ScheduledNoticeHandler {
     DateTime recurringNoticeNextRunTime = notice.getNextRunTime()
       .plus(noticeConfig.getRecurringPeriod().timePeriod());
 
-    if (recurringNoticeNextRunTime.isBefore(systemTime)) {
+    if (isBeforeMillis(recurringNoticeNextRunTime, systemTime)) {
       recurringNoticeNextRunTime =
         systemTime.plus(noticeConfig.getRecurringPeriod().timePeriod());
     }
@@ -152,8 +154,8 @@ public class RequestScheduledNoticeHandler extends ScheduledNoticeHandler {
     DateTime requestExpirationDate = request.getRequestExpirationDate();
     DateTime holdShelfExpirationDate = request.getHoldShelfExpirationDate();
 
-    return requestExpirationDate != null && nextRunTime.isAfter(requestExpirationDate) ||
-      holdShelfExpirationDate != null && nextRunTime.isAfter(holdShelfExpirationDate);
+    return requestExpirationDate != null && isAfterMillis(nextRunTime, requestExpirationDate) ||
+      holdShelfExpirationDate != null && isAfterMillis(nextRunTime, holdShelfExpirationDate);
   }
 
 }

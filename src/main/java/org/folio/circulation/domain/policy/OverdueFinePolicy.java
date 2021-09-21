@@ -1,7 +1,7 @@
 package org.folio.circulation.domain.policy;
 
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getBigDecimalProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getBooleanProperty;
-import static org.folio.circulation.support.json.JsonPropertyFetcher.getDoubleProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getObjectProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
@@ -31,13 +31,13 @@ public class OverdueFinePolicy extends Policy {
       getProperty(json, "id"),
       getProperty(json, "name"),
       new OverdueFinePolicyFineInfo(
-        getDoubleProperty(getObjectProperty(json, "overdueFine"), "quantity", null),
+        getBigDecimalProperty(getObjectProperty(json, "overdueFine"), "quantity"),
         intervalId == null ? null : OverdueFineInterval.fromValue(intervalId),
-        getDoubleProperty(getObjectProperty(json, "overdueRecallFine"), "quantity", null),
+        getBigDecimalProperty(getObjectProperty(json, "overdueRecallFine"), "quantity"),
         recallIntervalId == null ? null : OverdueFineInterval.fromValue(recallIntervalId)
       ),
-      new OverdueFinePolicyLimitInfo(getDoubleProperty(json, "maxOverdueFine", null),
-        getDoubleProperty(json, "maxOverdueRecallFine", null)),
+      new OverdueFinePolicyLimitInfo(getBigDecimalProperty(json, "maxOverdueFine"),
+        getBigDecimalProperty(json, "maxOverdueRecallFine")),
       new Flags(
         getBooleanProperty(json, "gracePeriodRecall"),
         getBooleanProperty(json, "countClosed"),

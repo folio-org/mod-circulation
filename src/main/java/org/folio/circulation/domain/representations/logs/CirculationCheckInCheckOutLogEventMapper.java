@@ -2,13 +2,14 @@ package org.folio.circulation.domain.representations.logs;
 
 import static java.util.Optional.ofNullable;
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.*;
-import static org.folio.circulation.domain.representations.logs.LogEventType.CHECK_OUT_THROUGH_OVERRIDE;
 import static org.folio.circulation.domain.representations.logs.LogEventType.CHECK_IN;
 import static org.folio.circulation.domain.representations.logs.LogEventType.CHECK_OUT;
+import static org.folio.circulation.domain.representations.logs.LogEventType.CHECK_OUT_THROUGH_OVERRIDE;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAction;
@@ -16,8 +17,8 @@ import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.UpdatedRequestPair;
 import org.folio.circulation.domain.User;
 
-import java.util.List;
-import java.util.stream.Collectors;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 
 public class CirculationCheckInCheckOutLogEventMapper {
 

@@ -2,6 +2,8 @@ package org.folio.circulation.resources;
 
 import static java.lang.Math.max;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
+import static org.folio.circulation.support.utils.ClockUtil.getDateTime;
+import static org.folio.circulation.support.utils.DateTimeUtil.atStartOfDay;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -23,7 +25,6 @@ import org.folio.circulation.support.CqlSortBy;
 import org.folio.circulation.support.CqlSortClause;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.results.Result;
-import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
@@ -57,9 +58,7 @@ public class DueDateNotRealTimeScheduledNoticeProcessingResource extends Schedul
   }
 
   private DateTime startOfTodayInTimeZone(DateTimeZone zone) {
-    return ClockUtil.getDateTime()
-      .withZone(zone)
-      .withTimeAtStartOfDay();
+    return atStartOfDay(getDateTime().withZone(zone));
   }
 
   private CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> findNotices(
@@ -94,7 +93,7 @@ public class DueDateNotRealTimeScheduledNoticeProcessingResource extends Schedul
       .map(Map.Entry::getValue)
       .collect(Collectors.toList());
 
-    return new GroupedLoanScheduledNoticeHandler(clients, ClockUtil.getDateTime())
+    return new GroupedLoanScheduledNoticeHandler(clients, getDateTime())
       .handleNotices(noticeGroups)
       .thenApply(mapResult(v -> notices));
   }

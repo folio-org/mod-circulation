@@ -1,5 +1,7 @@
 package api.support.builders;
 
+import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTimeOptional;
+
 import java.util.Objects;
 import java.util.Random;
 import java.util.UUID;
@@ -74,14 +76,14 @@ public class LoanBuilder extends JsonBuilder implements Builder {
 
     put(loanRequest, "proxyUserId", proxyUserId);
     put(loanRequest, "action", action);
-    put(loanRequest, "dueDate", dueDate);
+    put(loanRequest, "dueDate", formatDateTimeOptional(dueDate));
     put(loanRequest, "checkoutServicePointId", checkoutServicePointId);
     put(loanRequest, "checkinServicePointId", checkinServicePointId);
     put(loanRequest, "dueDateChangedByRecall", dueDateChangedByRecall);
 
     if (Objects.equals(status, CLOSED_LOAN_STATUS)) {
-      put(loanRequest, "returnDate", returnDate);
-      put(loanRequest, "systemReturnDate", systemReturnDate);
+      put(loanRequest, "returnDate", formatDateTimeOptional(returnDate));
+      put(loanRequest, "systemReturnDate", formatDateTimeOptional(systemReturnDate));
     }
 
     return loanRequest;

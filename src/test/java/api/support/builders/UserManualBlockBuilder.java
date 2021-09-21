@@ -1,11 +1,13 @@
 package api.support.builders;
 
+import static org.folio.circulation.support.json.JsonPropertyWriter.write;
+import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTimeOptional;
+
 import java.util.UUID;
 
-import io.vertx.core.json.JsonObject;
 import org.joda.time.DateTime;
 
-import static org.folio.circulation.support.json.JsonPropertyWriter.write;
+import io.vertx.core.json.JsonObject;
 
 public class UserManualBlockBuilder extends JsonBuilder implements Builder {
 
@@ -58,7 +60,7 @@ public class UserManualBlockBuilder extends JsonBuilder implements Builder {
     write(jsonObject, "desc",  desc);
     write(jsonObject, "staffInformation", staffInformation);
     write(jsonObject, "patronMessage", patronMessage);
-    write(jsonObject, "expirationDate", expirationDate);
+    write(jsonObject, "expirationDate", formatDateTimeOptional(expirationDate));
     write(jsonObject, "borrowing", borrowing);
     write(jsonObject, "renewals", renewals);
     write(jsonObject, "requests", requests);

@@ -79,6 +79,9 @@ class OverdueFineCalculatorServiceTest {
     new User(new UserBuilder().withUsername("admin").create());
   private static final String LOGGED_IN_USER_ID = LOGGED_IN_USER.getId();
   private static final String CHECK_IN_SERVICE_POINT_NAME = "test service point";
+  private static final List<JsonObject> CONTRIBUTORS = List.of(
+    new JsonObject().put("name", "Contributor 1"),
+    new JsonObject().put("name", "Contributor 2"));
 
   private static final Map<String, Integer> MINUTES_IN_INTERVAL = new HashMap<>();
   static {
@@ -215,6 +218,12 @@ class OverdueFineCalculatorServiceTest {
     assertEquals(ITEM_ID.toString(), account.getValue().getString("itemId"));
     assertEquals(DUE_DATE, getDateTimeProperty(account.getValue(), "dueDate"));
     assertEquals(RETURNED_DATE, getDateTimeProperty(account.getValue(), "returnedDate"));
+
+    assertEquals(CONTRIBUTORS.size(), account.getValue().getJsonArray("contributors").size());
+    assertEquals(CONTRIBUTORS.get(0).getString("name"),
+      account.getValue().getJsonArray("contributors").getJsonObject(0).getString("name"));
+    assertEquals(CONTRIBUTORS.get(1).getString("name"),
+      account.getValue().getJsonArray("contributors").getJsonObject(1).getString("name"));
 
     ArgumentCaptor<StoredFeeFineAction> feeFineAction =
       ArgumentCaptor.forClass(StoredFeeFineAction.class);
@@ -607,7 +616,8 @@ class OverdueFineCalculatorServiceTest {
           .withName(LOCATION_NAME)
           .withPrimaryServicePoint(SERVICE_POINT_ID)
           .create()))
-      .withInstance(new InstanceBuilder(TITLE, UUID.randomUUID()).create())
+      .withInstance(new InstanceBuilder(TITLE, UUID.randomUUID()).create()
+        .put("contributors", CONTRIBUTORS))
       .withMaterialType(materialType);
   }
 

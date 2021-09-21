@@ -16,6 +16,9 @@ import static api.support.fixtures.CalendarExamples.getFirstFakeOpeningDayByServ
 import static api.support.fixtures.CalendarExamples.getLastFakeOpeningDayByServId;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
+import static org.folio.circulation.support.utils.DateTimeUtil.isAfterMillis;
+import static org.folio.circulation.support.utils.DateTimeUtil.isBeforeMillis;
+import static org.folio.circulation.support.utils.DateTimeUtil.isSameMillis;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.joda.time.DateTimeConstants.HOURS_PER_DAY;
@@ -25,10 +28,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.domain.OpeningDay;
-import api.support.OpeningDayPeriod;
 import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.Period;
-import api.support.http.IndividualResource;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Hours;
@@ -37,8 +38,10 @@ import org.joda.time.LocalTime;
 import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
+import api.support.OpeningDayPeriod;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.LoanPolicyBuilder;
+import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
 
 /**
@@ -254,7 +257,7 @@ class CheckOutCalculateOffsetTimeTests extends APITests {
     LocalTime timeNow = new LocalTime(13, 0);
 
     // The value of `duration` is calculated taking into account the exit for the period.
-    if (timeNow.isBefore(endTimeOfPeriod)) {
+    if (isBeforeMillis(timeNow, endTimeOfPeriod)) {
       duration = Hours.hoursBetween(timeNow, endTimeOfPeriod).getHours() + 1;
     } else {
       duration = HOURS_PER_DAY - Hours.hoursBetween(endTimeOfPeriod, timeNow).getHours() + 1;
@@ -288,7 +291,7 @@ class CheckOutCalculateOffsetTimeTests extends APITests {
     LocalTime timeNow = new LocalTime(13, 0);
 
     // The value of `duration` is calculated taking into account the exit for the period.
-    if (timeNow.isBefore(endTimeOfPeriod)) {
+    if (isBeforeMillis(timeNow, endTimeOfPeriod)) {
       duration = Hours.hoursBetween(timeNow, endTimeOfPeriod).getHours() + 1;
     } else {
       duration = HOURS_PER_DAY - Hours.hoursBetween(endTimeOfPeriod, timeNow).getHours() + 1;
@@ -321,7 +324,7 @@ class CheckOutCalculateOffsetTimeTests extends APITests {
     LocalTime timeNow = new LocalTime(11, 0);
 
     // The value is calculated taking into account the transition to the next period
-    if (timeNow.isAfter(starTmeOfPeriod)) {
+    if (isAfterMillis(timeNow, starTmeOfPeriod)) {
       duration = HOURS_PER_DAY - Hours.hoursBetween(starTmeOfPeriod, timeNow).getHours() - 1;
     } else {
       duration = Hours.hoursBetween(timeNow, starTmeOfPeriod).getHours() - 1;
@@ -450,7 +453,7 @@ class CheckOutCalculateOffsetTimeTests extends APITests {
     DateTime thresholdDateTime = getThresholdDateTime(expectedDueDate);
 
     assertThat("due date should be " + thresholdDateTime + ", actual due date is "
-      + actualDueDate, actualDueDate.isEqual(thresholdDateTime));
+      + actualDueDate, isSameMillis(actualDueDate, thresholdDateTime));
   }
 
   /**

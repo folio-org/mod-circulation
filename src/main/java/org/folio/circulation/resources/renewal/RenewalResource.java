@@ -38,6 +38,7 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
+import static org.folio.circulation.support.utils.DateTimeUtil.isAfterMillis;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -449,7 +450,7 @@ public abstract class RenewalResource extends Resource {
   }
 
   private boolean newDueDateAfterCurrentDueDate(Loan loan, Result<DateTime> proposedDueDateResult) {
-    return proposedDueDateResult.map(proposedDueDate -> proposedDueDate.isAfter(loan.getDueDate()))
+    return proposedDueDateResult.map(proposedDueDate -> isAfterMillis(proposedDueDate, loan.getDueDate()))
       .orElse(false);
   }
 

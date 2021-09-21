@@ -1,18 +1,20 @@
 package org.folio.circulation.domain.policy;
 
-public class OverdueFineCalculationParameters {
-  private final Double finePerInterval;
-  private final OverdueFineInterval interval;
-  private final Double maxFine;
+import java.math.BigDecimal;
 
-  public OverdueFineCalculationParameters(Double finePerInterval, OverdueFineInterval interval,
-    Double maxFine) {
+public class OverdueFineCalculationParameters {
+  private final BigDecimal finePerInterval;
+  private final OverdueFineInterval interval;
+  private final BigDecimal maxFine;
+
+  public OverdueFineCalculationParameters(BigDecimal finePerInterval, OverdueFineInterval interval,
+    BigDecimal maxFine) {
     this.finePerInterval = finePerInterval;
     this.interval = interval;
     this.maxFine = maxFine;
   }
 
-  public Double getFinePerInterval() {
+  public BigDecimal getFinePerInterval() {
     return finePerInterval;
   }
 
@@ -20,7 +22,7 @@ public class OverdueFineCalculationParameters {
     return interval;
   }
 
-  public Double getMaxFine() {
+  public BigDecimal getMaxFine() {
     return maxFine;
   }
 }

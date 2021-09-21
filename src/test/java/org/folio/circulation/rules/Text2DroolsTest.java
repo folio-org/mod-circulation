@@ -520,7 +520,7 @@ class Text2DroolsTest {
   @Test
   void run100() {
     Drools drools = new Drools(Text2Drools.convert(test1));
-    long start = ClockUtil.getInstant().getMillis();
+    long start = ClockUtil.getJodaInstant().getMillis();
     int n = 0;
     while (n < 100) {
       for (String [] s : loanTestCases) {
@@ -529,7 +529,7 @@ class Text2DroolsTest {
         n++;
       }
     }
-    long millis = ClockUtil.getInstant().getMillis() - start;
+    long millis = ClockUtil.getJodaInstant().getMillis() - start;
     float perSecond = 1000f * n / millis;
     log.debug("{} loan policy calculations per second", perSecond);
     assertThat("loan policy calculations per second", perSecond, is(greaterThan(100f)));

@@ -1,13 +1,15 @@
 package api.support.builders;
 
+import static org.folio.circulation.support.utils.DateFormatUtil.formatDate;
+import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;
+
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Function;
 
 import org.joda.time.DateTime;
-import org.joda.time.format.ISODateTimeFormat;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -43,15 +45,27 @@ public class JsonBuilder {
     }
   }
 
+  protected void put(JsonObject representation, String property, ZonedDateTime value) {
+    if(value != null) {
+      representation.put(property, formatDateTime(value));
+    }
+  }
+
   protected void put(JsonObject representation, String property, DateTime value) {
     if(value != null) {
-      representation.put(property, value.toString(ISODateTimeFormat.dateTime()));
+      representation.put(property, formatDateTime(value));
     }
   }
 
   protected void put(JsonObject representation, String propertyName, LocalDate value) {
     if(value != null) {
-      representation.put(propertyName, formatDateOnly(value));
+      representation.put(propertyName, formatDate(value));
+    }
+  }
+
+  protected void put(JsonObject representation, String propertyName, org.joda.time.LocalDate value) {
+    if(value != null) {
+      representation.put(propertyName, formatDate(value));
     }
   }
 
@@ -90,9 +104,5 @@ public class JsonBuilder {
     if(value != null) {
       representation.put(property, toJsonMapper.apply(value));
     }
-  }
-
-  private String formatDateOnly(LocalDate date) {
-    return date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
   }
 }

@@ -1,19 +1,21 @@
 package org.folio.circulation.domain.policy;
 
-public class OverdueFinePolicyLimitInfo {
-  private final Double maxOverdueFine;
-  private final Double maxOverdueRecallFine;
+import java.math.BigDecimal;
 
-  public OverdueFinePolicyLimitInfo(Double maxOverdueFine, Double maxOverdueRecallFine) {
+public class OverdueFinePolicyLimitInfo {
+  private final BigDecimal maxOverdueFine;
+  private final BigDecimal maxOverdueRecallFine;
+
+  public OverdueFinePolicyLimitInfo(BigDecimal maxOverdueFine, BigDecimal maxOverdueRecallFine) {
     this.maxOverdueFine = maxOverdueFine;
     this.maxOverdueRecallFine = maxOverdueRecallFine;
   }
 
-  public Double getMaxOverdueFine() {
+  public BigDecimal getMaxOverdueFine() {
     return maxOverdueFine;
   }
 
-  public Double getMaxOverdueRecallFine() {
+  public BigDecimal getMaxOverdueRecallFine() {
     return maxOverdueRecallFine;
   }
 }

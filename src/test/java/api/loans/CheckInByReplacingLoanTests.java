@@ -1,24 +1,25 @@
 package api.loans;
 
+
 import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
+import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;
 import static org.hamcrest.CoreMatchers.allOf;
-import static org.hamcrest.core.Is.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
 
 import java.util.UUID;
 
-import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.joda.time.format.ISODateTimeFormat;
 import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.LoanBuilder;
+import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
 
 class CheckInByReplacingLoanTests extends APITests {
@@ -42,8 +43,8 @@ class CheckInByReplacingLoanTests extends APITests {
       .put("status", new JsonObject().put("name", "Closed"))
       .put("action", "checkedin")
       .put("checkinServicePointId", checkinServicePointId.toString())
-      .put("returnDate", new DateTime(2017, 3, 5, 14, 23, 41, DateTimeZone.UTC)
-        .toString(ISODateTimeFormat.dateTime()));
+      .put("returnDate", formatDateTime(
+        new DateTime(2017, 3, 5, 14, 23, 41, DateTimeZone.UTC)));
 
     loansFixture.replaceLoan(loan.getId(), returnedLoan);
 
@@ -103,8 +104,8 @@ class CheckInByReplacingLoanTests extends APITests {
     returnedLoan
       .put("status", new JsonObject().put("name", "Closed"))
       .put("action", "checkedin")
-      .put("returnDate", new DateTime(2017, 3, 5, 14, 23, 41,
-        DateTimeZone.UTC).toString(ISODateTimeFormat.dateTime()));
+      .put("returnDate", formatDateTime(
+        new DateTime(2017, 3, 5, 14, 23, 41, DateTimeZone.UTC)));
 
     Response putResponse = loansFixture.attemptToReplaceLoan(loan.getId(),
         returnedLoan);
@@ -132,8 +133,8 @@ class CheckInByReplacingLoanTests extends APITests {
       .put("status", new JsonObject().put("name", "Closed"))
       .put("action", "checkedin")
       .put("checkinServicePointId", unknownServicePointId.toString())
-      .put("returnDate", new DateTime(2017, 3, 5, 14, 23, 41,
-        DateTimeZone.UTC).toString(ISODateTimeFormat.dateTime()));
+      .put("returnDate", formatDateTime(
+        new DateTime(2017, 3, 5, 14, 23, 41, DateTimeZone.UTC)));
 
     Response putResponse = loansFixture.attemptToReplaceLoan(loan.getId(),
       returnedLoan);
