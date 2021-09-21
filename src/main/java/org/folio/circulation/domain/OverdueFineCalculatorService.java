@@ -9,6 +9,7 @@ import static org.folio.circulation.domain.representations.CheckInByBarcodeReque
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
+import java.math.BigDecimal;
 import java.time.ZonedDateTime;
 
 import java.util.Optional;
