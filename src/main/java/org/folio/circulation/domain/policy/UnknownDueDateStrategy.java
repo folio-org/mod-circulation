@@ -6,8 +6,8 @@ import static org.folio.circulation.support.ValidationErrorFailure.failedValidat
 import java.util.function.Function;
 
 import org.folio.circulation.domain.Loan;
-import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.server.ValidationError;
+import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
 
 class UnknownDueDateStrategy extends DueDateStrategy {

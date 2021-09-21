@@ -1,6 +1,7 @@
 package api.support.builders;
 
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
+import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTimeOptional;
 
 import java.util.UUID;
 
@@ -42,7 +43,7 @@ public class FeefineActionsBuilder extends JsonBuilder implements Builder {
     JsonObject object = new JsonObject();
 
     write(object, "id", id);
-    write(object, "dateAction", dateAction);
+    write(object, "dateAction", formatDateTimeOptional(dateAction));
     write(object, "balance", balance);
     write(object, "amountAction", actionAmount);
     write(object, "paymentMethod", paymentMethod);

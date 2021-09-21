@@ -5,6 +5,8 @@ import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQ
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.results.Result.ofAsync;
+import static org.folio.circulation.support.utils.ClockUtil.getDateTime;
+import static org.folio.circulation.support.utils.DateTimeUtil.isAfterMillis;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -22,7 +24,6 @@ import org.folio.circulation.support.FindWithCqlQuery;
 import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
-import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
 
 public class UserManualBlocksValidator {
@@ -94,7 +95,6 @@ public class UserManualBlocksValidator {
   }
 
   private boolean isBlockedAction(DateTime expirationDate, boolean isBlocked) {
-    final DateTime now = ClockUtil.getDateTime();
-    return isBlocked && (expirationDate == null || expirationDate.isAfter(now));
+    return isBlocked && (expirationDate == null || isAfterMillis(expirationDate, getDateTime()));
   }
 }

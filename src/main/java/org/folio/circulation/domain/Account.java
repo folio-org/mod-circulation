@@ -4,13 +4,14 @@ import static org.folio.circulation.domain.FeeAmount.noFeeAmount;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.utils.DateTimeUtil.compareToMillis;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Optional;
 
-import org.apache.commons.lang3.math.NumberUtils;
 import org.folio.circulation.support.json.JsonPropertyWriter;
 import org.joda.time.DateTime;
 
@@ -149,8 +150,8 @@ public class Account {
 
   public Optional<DateTime> getClosedDate() {
     return feeFineActions.stream()
-      .filter(ffa -> ffa.getBalance().equals(NumberUtils.DOUBLE_ZERO))
-      .max(Comparator.comparing(FeeFineAction::getDateAction))
+      .filter(ffa -> ffa.getBalance().hasZeroAmount())
+      .max(this::compareByDateAction)
       .map(FeeFineAction::getDateAction);
   }
 
@@ -182,4 +183,9 @@ public class Account {
   public boolean hasPaidOrTransferredAmount() {
     return getPaidAndTransferredAmount().hasAmount();
   }
+
+  private int compareByDateAction(FeeFineAction left, FeeFineAction right) {
+    return compareToMillis(left.getDateAction(), right.getDateAction());
+  }
+
 }

@@ -9,6 +9,7 @@ import static org.folio.circulation.domain.representations.ItemProperties.HOLDIN
 import static org.folio.circulation.domain.representations.ItemProperties.PERMANENT_LOCATION_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.TEMPORARY_LOCATION_ID;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
+import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;
 
 import java.util.Arrays;
 import java.util.List;
@@ -30,8 +31,6 @@ public final class StorageRecordPreProcessors {
     new ImmutableTriple<>("callNumberPrefix", "itemLevelCallNumberPrefix", "prefix"),
     new ImmutableTriple<>("callNumberSuffix", "itemLevelCallNumberSuffix", "suffix")
   );
-  // RMB uses ISO-8601 compatible date time format by default.
-  private static final String RMB_DATETIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSS+0000";
 
   private StorageRecordPreProcessors() {
     throw new UnsupportedOperationException("Do not instantiate");
@@ -60,7 +59,7 @@ public final class StorageRecordPreProcessors {
         if (!Objects.equals(oldItemStatus.getString("name"),
           newItemStatus.getString("name"))) {
           write(newItemStatus, "date",
-            ClockUtil.getDateTime().toString(RMB_DATETIME_PATTERN)
+            formatDateTime(ClockUtil.getDateTime())
           );
         }
       }

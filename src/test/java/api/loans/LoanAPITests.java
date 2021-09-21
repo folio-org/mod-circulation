@@ -19,6 +19,7 @@ import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 import static org.folio.circulation.domain.representations.LoanProperties.BORROWER;
 import static org.folio.circulation.support.StreamToListMapper.toList;
+import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -43,7 +44,6 @@ import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher;
 import org.joda.time.DateTime;
 import org.joda.time.Period;
-import org.joda.time.format.ISODateTimeFormat;
 import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
@@ -1092,7 +1092,7 @@ class LoanAPITests extends APITests {
 
     loanToRenew
       .put("action", "renewed")
-      .put("dueDate", newDueDate.toString(ISODateTimeFormat.dateTime()))
+      .put("dueDate", formatDateTime(newDueDate))
       .put("renewalCount", 1);
 
     loansFixture.replaceLoan(loan.getId(), loanToRenew);
