@@ -15,11 +15,17 @@ import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
+import static org.joda.time.Seconds.secondsBetween;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.folio.circulation.domain.Account;
 import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.FeeFineAction;
 import org.folio.circulation.domain.Loan;
@@ -38,8 +44,7 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.results.CommonFailures;
 import org.folio.circulation.support.results.Result;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.joda.time.DateTime;
 
 public class LostItemFeeRefundService {
   private static final Logger log = LogManager.getLogger(LostItemFeeRefundService.class);
@@ -200,12 +205,41 @@ public class LostItemFeeRefundService {
       feeFineTypes.add(LOST_ITEM_PROCESSING_FEE_TYPE);
     }
 
-    final Result<CqlQuery> fetchQuery = exactMatch("loanId", context.getLoan().getId())
-      .combine(exactMatchAny("feeFineType", feeFineTypes), CqlQuery::and)
-      .combine(exactMatch("status.name", "Open"), CqlQuery::and);
+    final Result<CqlQuery> fetchLostItemFeeQuery = exactMatch("loanId", context.getLoan().getId())
+      .combine(exactMatchAny("feeFineType", feeFineTypes), CqlQuery::and);
 
-    return accountRepository.findAccountsAndActionsForLoanByQuery(fetchQuery)
-      .thenApply(r -> r.map(context::withAccounts));
+      return accountRepository.findAccountsAndActionsForLoanByQuery(fetchLostItemFeeQuery)
+        .thenApply(r -> r.map(this::filterAccountsForRefund))
+        .thenApply(r -> r.map(context::withAccounts));
+  }
+
+  private List<Account> filterAccountsForRefund(Collection<Account> accounts) {
+    List<Account> accountsForRefund = new ArrayList<>();
+
+    Account mostRecentLostItemFeeAccount = accounts.stream()
+      .filter(account -> LOST_ITEM_FEE_TYPE.equals(account.getFeeFineType()))
+      .max(Comparator.comparing(Account::getCreationDate))
+      .orElse(null);
+
+    if (mostRecentLostItemFeeAccount != null
+      && mostRecentLostItemFeeAccount.getPaymentStatus() != null
+      && !mostRecentLostItemFeeAccount.getPaymentStatus().contains("Cancelled")) {
+
+      accountsForRefund.add(mostRecentLostItemFeeAccount);
+      DateTime creationDate = mostRecentLostItemFeeAccount.getCreationDate();
+      Account mostRecentLostItemFeeProcessingAccount = accounts.stream()
+        .filter(account -> LOST_ITEM_PROCESSING_FEE_TYPE.equals(account.getFeeFineType()))
+        .max(Comparator.comparing(Account::getCreationDate))
+        .orElse(null);
+
+      if (mostRecentLostItemFeeProcessingAccount != null && Math.abs(secondsBetween(creationDate,
+        mostRecentLostItemFeeProcessingAccount.getCreationDate()).getSeconds()) <= 1) {
+
+        accountsForRefund.add(mostRecentLostItemFeeProcessingAccount);
+      }
+    }
+
+    return accountsForRefund;
   }
 
   private CompletableFuture<Result<LostItemFeeRefundContext>> fetchLostItemPolicy(
