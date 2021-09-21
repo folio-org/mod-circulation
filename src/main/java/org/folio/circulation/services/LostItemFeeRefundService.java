@@ -213,8 +213,7 @@ public class LostItemFeeRefundService {
         .thenApply(r -> r.map(context::withAccounts));
   }
 
-  private List<Account> filterAccountsForRefund(Collection<Account> accounts) {
-    List<Account> accountsForRefund = new ArrayList<>();
+  private Collection<Account> filterAccountsForRefund(Collection<Account> accounts) {
 
     Account mostRecentLostItemFeeAccount = accounts.stream()
       .filter(account -> LOST_ITEM_FEE_TYPE.equals(account.getFeeFineType()))
@@ -223,9 +222,11 @@ public class LostItemFeeRefundService {
 
     if (mostRecentLostItemFeeAccount != null
       && mostRecentLostItemFeeAccount.getPaymentStatus() != null
+      && mostRecentLostItemFeeAccount.getCreationDate() != null
       && !mostRecentLostItemFeeAccount.getPaymentStatus().contains("Cancelled")) {
 
-      accountsForRefund.add(mostRecentLostItemFeeAccount);
+      Collection<Account> filteredAccounts = new ArrayList<>();
+      filteredAccounts.add(mostRecentLostItemFeeAccount);
       DateTime creationDate = mostRecentLostItemFeeAccount.getCreationDate();
       Account mostRecentLostItemFeeProcessingAccount = accounts.stream()
         .filter(account -> LOST_ITEM_PROCESSING_FEE_TYPE.equals(account.getFeeFineType()))
@@ -235,11 +236,12 @@ public class LostItemFeeRefundService {
       if (mostRecentLostItemFeeProcessingAccount != null && Math.abs(secondsBetween(creationDate,
         mostRecentLostItemFeeProcessingAccount.getCreationDate()).getSeconds()) <= 1) {
 
-        accountsForRefund.add(mostRecentLostItemFeeProcessingAccount);
+        filteredAccounts.add(mostRecentLostItemFeeProcessingAccount);
       }
+      return filteredAccounts;
     }
 
-    return accountsForRefund;
+    return accounts;
   }
 
   private CompletableFuture<Result<LostItemFeeRefundContext>> fetchLostItemPolicy(
