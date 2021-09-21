@@ -5,6 +5,7 @@ import static api.support.matchers.JsonObjectMatcher.hasNoJsonPath;
 import static api.support.matchers.LoanHistoryMatcher.hasLoanHistoryRecord;
 import static api.support.utl.BlockOverridesUtils.OVERRIDE_RENEWAL_PERMISSION;
 import static api.support.utl.BlockOverridesUtils.buildOkapiHeadersWithPermissions;
+import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 
@@ -30,7 +31,7 @@ class RecallItemsTests extends APITests {
       .rolling(Period.weeks(3)).notRenewable().renewFromSystemDate());
 
     val overrideRenewComment = "Override renew";
-    val newDueDate = ClockUtil.getDateTime().plusMonths(3).toString();
+    val newDueDate = formatDateTime(ClockUtil.getDateTime().plusMonths(3));
 
     val item = itemsFixture.basedUponNod();
     val user = usersFixture.james();

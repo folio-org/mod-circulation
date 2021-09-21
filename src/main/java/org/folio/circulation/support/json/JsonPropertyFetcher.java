@@ -1,6 +1,8 @@
 package org.folio.circulation.support.json;
 
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static org.folio.circulation.support.utils.DateFormatUtil.parseJodaDate;
+import static org.folio.circulation.support.utils.DateFormatUtil.parseDate;
 import static org.joda.time.DateTime.parse;
 
 import java.math.BigDecimal;
@@ -10,7 +12,7 @@ import java.util.UUID;
 import java.util.function.BiFunction;
 
 import org.joda.time.DateTime;
-import org.joda.time.format.DateTimeFormat;
+import org.joda.time.DateTimeZone;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -96,7 +98,7 @@ public class JsonPropertyFetcher {
 
   public static LocalDate getLocalDateProperty(JsonObject representation, String propertyName) {
     if (representation != null && representation.containsKey(propertyName)) {
-      return LocalDate.parse(representation.getString(propertyName));
+      return parseDate(representation.getString(propertyName));
     } else {
       return null;
     }
@@ -106,8 +108,7 @@ public class JsonPropertyFetcher {
     String propertyName) {
 
     if (representation != null && representation.containsKey(propertyName)) {
-      return org.joda.time.LocalDate.parse(representation.getString(propertyName),
-        DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ").withZoneUTC());
+      return parseJodaDate(representation.getString(propertyName), DateTimeZone.UTC);
     } else {
       return null;
     }

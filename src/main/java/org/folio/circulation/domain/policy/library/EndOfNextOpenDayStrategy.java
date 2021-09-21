@@ -1,7 +1,7 @@
 package org.folio.circulation.domain.policy.library;
 
-import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.END_OF_A_DAY;
 import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.failureForAbsentTimetable;
+import static org.folio.circulation.support.utils.DateTimeUtil.atEndOfDay;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.succeeded;
 
@@ -25,13 +25,13 @@ public class EndOfNextOpenDayStrategy implements ClosedLibraryStrategy {
   public Result<DateTime> calculateDueDate(DateTime requestedDate, AdjacentOpeningDays openingDays) {
     Objects.requireNonNull(openingDays);
     if (openingDays.getRequestedDay().getOpen()) {
-      return succeeded(
-        requestedDate.withZone(zone).withTime(END_OF_A_DAY));
+      return succeeded(atEndOfDay(requestedDate, zone));
     }
     OpeningDay nextDay = openingDays.getNextDay();
     if (!nextDay.getOpen()) {
       return failed(failureForAbsentTimetable());
     }
-    return succeeded(nextDay.getDate().toDateTime(END_OF_A_DAY, zone));
+
+    return succeeded(atEndOfDay(nextDay.getDate(), zone));
   }
 }

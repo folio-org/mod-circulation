@@ -52,6 +52,10 @@ import static org.folio.circulation.domain.policy.Period.months;
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 import static org.folio.circulation.domain.representations.logs.LogEventType.CHECK_OUT;
 import static org.folio.circulation.domain.representations.logs.LogEventType.CHECK_OUT_THROUGH_OVERRIDE;
+import static org.folio.circulation.support.utils.ClockUtil.getDateTime;
+import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;
+import static org.folio.circulation.support.utils.DateFormatUtil.parseJodaDateTime;
+import static org.folio.circulation.support.utils.DateTimeUtil.atEndOfDay;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.hasItem;
@@ -74,7 +78,6 @@ import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.domain.representations.logs.LogEventType;
 import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.utils.ClockUtil;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalTime;
@@ -269,7 +272,9 @@ class CheckOutByBarcodeTests extends APITests {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
 
-    final DateTime loanDate = ClockUtil.getDateTime()
+    final DateTime loanDate = atEndOfDay(getDateTime());
+
+    getDateTime()
       .withMonthOfYear(3)
       .withDayOfMonth(18)
       .withHourOfDay(11)
@@ -373,7 +378,7 @@ class CheckOutByBarcodeTests extends APITests {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
 
-    final DateTime requestDate = ClockUtil.getDateTime();
+    final DateTime requestDate = getDateTime();
 
     final IndividualResource response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -1331,7 +1336,7 @@ class CheckOutByBarcodeTests extends APITests {
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
-        .on(ClockUtil.getDateTime())
+        .on(getDateTime())
         .at(UUID.randomUUID()));
 
     final JsonObject loan = response.getJson();
@@ -1377,7 +1382,7 @@ class CheckOutByBarcodeTests extends APITests {
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
-        .on(ClockUtil.getDateTime())
+        .on(getDateTime())
         .at(UUID.randomUUID()));
 
     final JsonObject loan = response.getJson();
@@ -1422,7 +1427,7 @@ class CheckOutByBarcodeTests extends APITests {
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
-        .on(ClockUtil.getDateTime())
+        .on(getDateTime())
         .at(UUID.randomUUID()));
 
     assertThat(response.getBody(), containsString(
@@ -1444,7 +1449,7 @@ class CheckOutByBarcodeTests extends APITests {
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
-        .on(ClockUtil.getDateTime())
+        .on(getDateTime())
         .at(UUID.randomUUID()));
 
     usersFixture.remove(steve);
@@ -1506,7 +1511,7 @@ class CheckOutByBarcodeTests extends APITests {
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Due date should be later than loan date"),
-      hasParameter("dueDate", invalidDueDate.toString()))));
+      hasParameter("dueDate", formatDateTime(invalidDueDate)))));
   }
 
   @Test
@@ -1531,7 +1536,7 @@ class CheckOutByBarcodeTests extends APITests {
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Due date should be later than loan date"),
-      hasParameter("dueDate", TEST_LOAN_DATE.toString()))));
+      hasParameter("dueDate", formatDateTime(TEST_LOAN_DATE)))));
   }
 
   @Test
@@ -2155,8 +2160,7 @@ class CheckOutByBarcodeTests extends APITests {
         .on(loanDate)
         .at(CASE_MON_WED_FRI_OPEN_TUE_THU_CLOSED)).getJson();
     mockClockManagerToReturnDefaultDateTime();
-
-    assertThat(DateTime.parse(response.getString("dueDate")).toDateTime(),
+    assertThat(parseJodaDateTime(response.getString("dueDate")),
       is(MONDAY_DATE.toDateTime(LocalTime.MIDNIGHT.minusSeconds(1), UTC)));
   }
 

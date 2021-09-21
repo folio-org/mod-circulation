@@ -9,6 +9,7 @@ import static org.folio.circulation.domain.representations.CheckInByBarcodeReque
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -161,8 +162,8 @@ public class OverdueFineCalculatorService {
     return overduePeriodCalculatorService.getMinutes(loan, systemTime);
   }
 
-  private CompletableFuture<Result<Double>> calculateOverdueFine(Loan loan, Integer overdueMinutes) {
-    double overdueFine = 0.0;
+  private CompletableFuture<Result<BigDecimal>> calculateOverdueFine(Loan loan, Integer overdueMinutes) {
+    BigDecimal overdueFine = BigDecimal.ZERO;
 
     OverdueFinePolicy overdueFinePolicy = loan.getOverdueFinePolicy();
     if (overdueMinutes > 0 && overdueFinePolicy != null) {
@@ -170,18 +171,18 @@ public class OverdueFineCalculatorService {
         overdueFinePolicy.getCalculationParameters(loan.wasDueDateChangedByRecall());
 
       if (calculationParameters != null) {
-        Double finePerInterval = calculationParameters.getFinePerInterval();
+        BigDecimal finePerInterval = calculationParameters.getFinePerInterval();
         OverdueFineInterval interval = calculationParameters.getInterval();
-        Double maxFine = calculationParameters.getMaxFine();
+        BigDecimal maxFine = calculationParameters.getMaxFine();
 
         if (maxFine != null && interval != null && finePerInterval != null) {
           double numberOfIntervals = Math.ceil(overdueMinutes.doubleValue() /
             interval.getMinutes().doubleValue());
 
-          overdueFine = finePerInterval * numberOfIntervals;
+          overdueFine = finePerInterval.multiply(BigDecimal.valueOf(numberOfIntervals));
 
-          if (maxFine > 0) {
-            overdueFine = Math.min(overdueFine, maxFine);
+          if (maxFine.compareTo(BigDecimal.ZERO) > 0) {
+            overdueFine = overdueFine.min(maxFine);
           }
         }
       }
@@ -234,10 +235,10 @@ public class OverdueFineCalculatorService {
       .thenApply(mapResult(params::withLoan));
   }
 
-  private CompletableFuture<Result<FeeFineAction>> createFeeFineRecord(Loan loan, Double fineAmount,
+  private CompletableFuture<Result<FeeFineAction>> createFeeFineRecord(Loan loan, BigDecimal fineAmount,
     String loggedInUserId) {
 
-    if (fineAmount <= 0) {
+    if (fineAmount.compareTo(BigDecimal.ZERO) <= 0) {
       return completedFuture(succeeded(null));
     }
 
@@ -254,7 +255,7 @@ public class OverdueFineCalculatorService {
           .thenApply(rs -> r)));
   }
 
-  private CompletableFuture<Result<FeeFineAction>> createAccount(Double fineAmount,
+  private CompletableFuture<Result<FeeFineAction>> createAccount(BigDecimal fineAmount,
     CalculationParameters params) {
 
     if (params.isIncomplete()) {

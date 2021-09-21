@@ -5,17 +5,19 @@ import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyU
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
+import static org.folio.circulation.support.utils.DateTimeUtil.compareToMillis;
+import static org.folio.circulation.support.utils.DateTimeUtil.isBeforeMillis;
 
 import java.util.Comparator;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.AdjacentOpeningDays;
-import org.folio.circulation.domain.User;
-import org.folio.circulation.infrastructure.storage.CalendarRepository;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
+import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.policy.LoanPolicy;
+import org.folio.circulation.infrastructure.storage.CalendarRepository;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
@@ -86,7 +88,7 @@ public class ClosedLibraryStrategyService {
 
     User user = loan.getUser();
     if (user != null && user.getExpirationDate() != null &&
-      user.getExpirationDate().isBefore(dueDate)) {
+      isBeforeMillis(user.getExpirationDate(), dueDate)) {
 
       return calendarRepository.lookupOpeningDays(user.getExpirationDate().toLocalDate(),
         loan.getCheckoutServicePointId())

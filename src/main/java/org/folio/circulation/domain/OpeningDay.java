@@ -5,6 +5,7 @@ import static org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher.
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getBooleanProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getJodaLocalDateProperty;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
+import static org.folio.circulation.support.utils.DateTimeUtil.atStartOfDay;
 import static org.joda.time.DateTimeZone.UTC;
 import static org.joda.time.LocalTime.MIDNIGHT;
 
@@ -107,7 +108,7 @@ public class OpeningDay {
   public JsonObject toJson() {
     final var json = new JsonObject();
 
-    write(json, DATE_KEY, date.toDateTime(MIDNIGHT, UTC));
+    write(json, DATE_KEY, atStartOfDay(date, UTC));
     write(json, ALL_DAY_KEY, allDay);
     write(json, OPEN_KEY, open);
     write(json, OPENING_HOUR_KEY, openingHourToJsonArray());

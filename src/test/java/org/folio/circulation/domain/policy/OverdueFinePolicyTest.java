@@ -4,6 +4,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -179,15 +180,15 @@ class OverdueFinePolicyTest {
 
     OverdueFineCalculationParameters calculationParameters =
       overdueFinePolicy.getCalculationParameters(false);
-    assertThat(calculationParameters.getFinePerInterval(), is(5.0));
+    assertThat(calculationParameters.getFinePerInterval(), is(BigDecimal.valueOf(5.0)));
     assertThat(calculationParameters.getInterval(), is(OverdueFineInterval.MINUTE));
-    assertThat(calculationParameters.getMaxFine(), is(10.0));
+    assertThat(calculationParameters.getMaxFine(), is(BigDecimal.valueOf(10.0)));
 
     OverdueFineCalculationParameters recallCalculationParameters =
       overdueFinePolicy.getCalculationParameters(true);
-    assertThat(recallCalculationParameters.getFinePerInterval(), is(6.0));
+    assertThat(recallCalculationParameters.getFinePerInterval(), is(BigDecimal.valueOf(6.0)));
     assertThat(recallCalculationParameters.getInterval(), is(OverdueFineInterval.HOUR));
-    assertThat(recallCalculationParameters.getMaxFine(), is(12.0));
+    assertThat(recallCalculationParameters.getMaxFine(), is(BigDecimal.valueOf(12.0)));
   }
 
   @Test
@@ -315,7 +316,8 @@ class OverdueFinePolicyTest {
 
   private void checkOverdueFineQuantity() {
     assertThat(overdueFinePolicy.getFineInfo().getOverdueFine(),
-      is(overdueFinePolicyJsonObject.getJsonObject("overdueFine").getDouble("quantity")));
+      is(new BigDecimal(overdueFinePolicyJsonObject.getJsonObject("overdueFine")
+        .getString("quantity"))));
   }
 
   private void checkOverdueRecallFineInterval() {
@@ -326,17 +328,18 @@ class OverdueFinePolicyTest {
 
   private void checkOverdueRecallFineQuantity() {
     assertThat(overdueFinePolicy.getFineInfo().getOverdueRecallFine(),
-      is(overdueFinePolicyJsonObject.getJsonObject("overdueRecallFine").getDouble("quantity")));
+      is(new BigDecimal(overdueFinePolicyJsonObject.getJsonObject("overdueRecallFine")
+        .getString("quantity"))));
   }
 
   private void checkMaxOverdueFine() {
     assertThat(overdueFinePolicy.getLimitInfo().getMaxOverdueFine(),
-      is(overdueFinePolicyJsonObject.getDouble("maxOverdueFine")));
+      is(new BigDecimal(overdueFinePolicyJsonObject.getString("maxOverdueFine"))));
   }
 
   private void checkMaxOverdueRecallFine() {
     assertThat(overdueFinePolicy.getLimitInfo().getMaxOverdueRecallFine(),
-      is(overdueFinePolicyJsonObject.getDouble("maxOverdueRecallFine")));
+      is(new BigDecimal(overdueFinePolicyJsonObject.getString("maxOverdueRecallFine"))));
   }
 
   private void checkIgnoreGracePeriodForRecalls() {

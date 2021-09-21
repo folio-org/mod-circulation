@@ -4,6 +4,7 @@ import static java.util.Collections.singletonList;
 import static org.folio.circulation.domain.notice.TemplateContextUtil.createFeeFineNoticeContext;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
+import static org.folio.circulation.support.utils.DateTimeUtil.isBeforeMillis;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -108,7 +109,7 @@ public class FeeFineScheduledNoticeHandler extends ScheduledNoticeHandler {
     DateTime nextRunTime = notice.getNextRunTime().plus(recurringPeriod);
     DateTime now = ClockUtil.getDateTime();
 
-    if (nextRunTime.isBefore(now)) {
+    if (isBeforeMillis(nextRunTime, now)) {
       nextRunTime = now.plus(recurringPeriod);
     }
 

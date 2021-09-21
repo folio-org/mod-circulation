@@ -1,9 +1,12 @@
 package api.support.builders;
 
-import io.vertx.core.json.JsonObject;
-import org.joda.time.DateTime;
+import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTimeOptional;
 
 import java.util.UUID;
+
+import org.joda.time.DateTime;
+
+import io.vertx.core.json.JsonObject;
 
 public class ProxyRelationshipBuilder implements Builder {
 
@@ -130,7 +133,7 @@ public class ProxyRelationshipBuilder implements Builder {
       this.proxyUserId,
       this.requestForSponsor,
       this.createdDate,
-      expirationDate.toString(),
+      formatDateTimeOptional(expirationDate),
       this.status,
       this.accrueTo,
       this.notificationsTo,

@@ -302,7 +302,6 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   void changeHoldShelfExpirationDate(DateTime holdShelfExpirationDate) {
     write(requestRepresentation, HOLD_SHELF_EXPIRATION_DATE,
       holdShelfExpirationDate);
-
   }
 
   void removeHoldShelfExpirationDate() {
@@ -348,6 +347,9 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   public Request truncateRequestExpirationDateToTheEndOfTheDay(DateTimeZone zone) {
     DateTime requestExpirationDate = getRequestExpirationDate();
     if (requestExpirationDate != null) {
+      // TODO: this introduces behavioral change not yet intended, use this after converting JodaTime to JavaTime.
+      //final DateTime dateTime = atEndOfDay(requestExpirationDate, zone);
+      //write(requestRepresentation, REQUEST_EXPIRATION_DATE, dateTime);
       DateTime requestDateTime = requestExpirationDate
         .withZoneRetainFields(zone)
         .withTime(LocalTime.MIDNIGHT.minusSeconds(1));
