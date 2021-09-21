@@ -215,35 +215,38 @@ public class LostItemFeeRefundService {
 
   private Collection<Account> filterAccountsForRefund(Collection<Account> accounts) {
 
-    Account mostRecentLostItemFeeAccount = accounts.stream()
-      .filter(account -> LOST_ITEM_FEE_TYPE.equals(account.getFeeFineType()))
-      .filter(account -> account.getCreationDate() != null)
-      .max(Comparator.comparing(Account::getCreationDate))
-      .orElse(null);
+    Account latestLostItemFeeAccount = getMostRecentAccount(accounts, LOST_ITEM_FEE_TYPE);
 
-    if (mostRecentLostItemFeeAccount != null
-      && mostRecentLostItemFeeAccount.getPaymentStatus() != null
-      && mostRecentLostItemFeeAccount.getCreationDate() != null
-      && !mostRecentLostItemFeeAccount.getPaymentStatus().contains("Cancelled")) {
+    if (latestLostItemFeeAccount != null
+      && latestLostItemFeeAccount.getPaymentStatus() != null
+      && latestLostItemFeeAccount.getCreationDate() != null
+      && !latestLostItemFeeAccount.getPaymentStatus().contains("Cancelled")) {
 
       Collection<Account> filteredAccounts = new ArrayList<>();
-      filteredAccounts.add(mostRecentLostItemFeeAccount);
-      DateTime creationDate = mostRecentLostItemFeeAccount.getCreationDate();
-      Account mostRecentLostItemFeeProcessingAccount = accounts.stream()
-        .filter(account -> LOST_ITEM_PROCESSING_FEE_TYPE.equals(account.getFeeFineType()))
-        .filter(account -> account.getCreationDate() != null)
-        .max(Comparator.comparing(Account::getCreationDate))
-        .orElse(null);
+      filteredAccounts.add(latestLostItemFeeAccount);
+      DateTime creationDate = latestLostItemFeeAccount.getCreationDate();
+      Account latestLostItemFeeProcessingAccount = getMostRecentAccount(accounts,
+        LOST_ITEM_PROCESSING_FEE_TYPE);
 
-      if (mostRecentLostItemFeeProcessingAccount != null && Math.abs(secondsBetween(creationDate,
-        mostRecentLostItemFeeProcessingAccount.getCreationDate()).getSeconds()) <= 1) {
+      if (latestLostItemFeeProcessingAccount != null
+        && !latestLostItemFeeAccount.getPaymentStatus().contains("Cancelled")
+        && Math.abs(secondsBetween(
+          creationDate, latestLostItemFeeProcessingAccount.getCreationDate()).getSeconds()) <= 1) {
 
-        filteredAccounts.add(mostRecentLostItemFeeProcessingAccount);
+        filteredAccounts.add(latestLostItemFeeProcessingAccount);
       }
       return filteredAccounts;
     }
 
     return accounts;
+  }
+
+  private Account getMostRecentAccount(Collection<Account> accounts, String lostItemFeeType) {
+    return accounts.stream()
+      .filter(account -> lostItemFeeType.equals(account.getFeeFineType()))
+      .filter(account -> account.getCreationDate() != null)
+      .max(Comparator.comparing(Account::getCreationDate))
+      .orElse(null);
   }
 
   private CompletableFuture<Result<LostItemFeeRefundContext>> fetchLostItemPolicy(
