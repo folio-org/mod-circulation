@@ -136,10 +136,19 @@ class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
 
     assertThat(result.getLoan().getJson(), isLostItemHasBeenBilled());
 
-    assertThat(result.getLoan(), hasLostItemFee(isOpen(expectedItemFee)));
+    String contributorName = itemsFixture.basedUponSmallAngryPlanet().getInstance().getJson()
+      .getJsonArray("contributors")
+      .getJsonObject(0)
+      .getString("name");
+
+    assertThat(result.getLoan(), hasLostItemFee(allOf(
+      isOpen(expectedItemFee),
+      hasJsonPath("contributors[0].name", contributorName))));
     assertThat(result.getLoan(), hasLostItemFeeCreatedBySystemAction());
 
-    assertThat(result.getLoan(), hasLostItemProcessingFee(isOpen(expectedProcessingFee)));
+    assertThat(result.getLoan(), hasLostItemProcessingFee(allOf(
+      isOpen(expectedProcessingFee),
+      hasJsonPath("contributors[0].name", contributorName))));
     assertThat(result.getLoan(), hasLostItemProcessingFeeCreatedBySystemAction());
     assertThat(scheduledNoticesClient.getAll(), hasSize(2));
     assertThatPublishedLoanLogRecordEventsAreValid(loansClient.getById(result.getLoan().getId()).getJson());
