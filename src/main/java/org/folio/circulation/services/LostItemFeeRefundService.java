@@ -48,6 +48,7 @@ import org.joda.time.DateTime;
 
 public class LostItemFeeRefundService {
   private static final Logger log = LogManager.getLogger(LostItemFeeRefundService.class);
+  private static final String CANCELLED_PAYMENT_STATUS = "Cancelled";
 
   private final LostItemPolicyRepository lostItemPolicyRepository;
   private final FeeFineFacade feeFineFacade;
@@ -214,22 +215,20 @@ public class LostItemFeeRefundService {
   }
 
   private Collection<Account> filterAccountsForRefund(Collection<Account> accounts) {
-
-    Account latestLostItemFeeAccount = getMostRecentAccount(accounts, LOST_ITEM_FEE_TYPE);
-
+    Account latestLostItemFeeAccount = getLatestAccount(accounts, LOST_ITEM_FEE_TYPE);
     if (latestLostItemFeeAccount != null
       && latestLostItemFeeAccount.getPaymentStatus() != null
       && latestLostItemFeeAccount.getCreationDate() != null
-      && !latestLostItemFeeAccount.getPaymentStatus().contains("Cancelled")) {
+      && !latestLostItemFeeAccount.getPaymentStatus().contains(CANCELLED_PAYMENT_STATUS)) {
 
       Collection<Account> filteredAccounts = new ArrayList<>();
       filteredAccounts.add(latestLostItemFeeAccount);
       DateTime creationDate = latestLostItemFeeAccount.getCreationDate();
-      Account latestLostItemFeeProcessingAccount = getMostRecentAccount(accounts,
+      Account latestLostItemFeeProcessingAccount = getLatestAccount(accounts,
         LOST_ITEM_PROCESSING_FEE_TYPE);
 
       if (latestLostItemFeeProcessingAccount != null
-        && !latestLostItemFeeAccount.getPaymentStatus().contains("Cancelled")
+        && !latestLostItemFeeAccount.getPaymentStatus().contains(CANCELLED_PAYMENT_STATUS)
         && Math.abs(secondsBetween(
           creationDate, latestLostItemFeeProcessingAccount.getCreationDate()).getSeconds()) <= 1) {
 
@@ -241,7 +240,7 @@ public class LostItemFeeRefundService {
     return accounts;
   }
 
-  private Account getMostRecentAccount(Collection<Account> accounts, String lostItemFeeType) {
+  private Account getLatestAccount(Collection<Account> accounts, String lostItemFeeType) {
     return accounts.stream()
       .filter(account -> lostItemFeeType.equals(account.getFeeFineType()))
       .filter(account -> account.getCreationDate() != null)

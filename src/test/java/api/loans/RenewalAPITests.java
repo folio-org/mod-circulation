@@ -1926,10 +1926,6 @@ public abstract class RenewalAPITests extends APITests {
     feeFineAccountFixture.payLostItemFee(loan.getId(), 3.0);
     feeFineAccountFixture.payLostItemProcessingFee(loan.getId(), 3.0);
 
-    final Response response = attemptRenewal(item, jessica);
-    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
-    assertThat(response.getJson(), hasErrorWith(hasMessage(ITEM_IS_DECLARED_LOST)));
-
     final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
       OVERRIDE_RENEWAL_BLOCK_PERMISSION);
     JsonObject renewedLoan = loansFixture.renewLoan(
