@@ -15,6 +15,7 @@ import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
+import static org.joda.time.Minutes.minutesBetween;
 import static org.joda.time.Seconds.secondsBetween;
 
 import java.util.ArrayList;
@@ -206,16 +207,17 @@ public class LostItemFeeRefundService {
       feeFineTypes.add(LOST_ITEM_PROCESSING_FEE_TYPE);
     }
 
-    final Result<CqlQuery> fetchLostItemFeeQuery = exactMatch("loanId", context.getLoan().getId())
+    final Result<CqlQuery> fetchQuery = exactMatch("loanId", context.getLoan().getId())
       .combine(exactMatchAny("feeFineType", feeFineTypes), CqlQuery::and);
 
-      return accountRepository.findAccountsAndActionsForLoanByQuery(fetchLostItemFeeQuery)
+      return accountRepository.findAccountsAndActionsForLoanByQuery(fetchQuery)
         .thenApply(r -> r.map(this::filterAccountsForRefund))
         .thenApply(r -> r.map(context::withAccounts));
   }
 
   private Collection<Account> filterAccountsForRefund(Collection<Account> accounts) {
     Account latestLostItemFeeAccount = getLatestAccount(accounts, LOST_ITEM_FEE_TYPE);
+
     if (latestLostItemFeeAccount != null
       && latestLostItemFeeAccount.getPaymentStatus() != null
       && latestLostItemFeeAccount.getCreationDate() != null
@@ -229,8 +231,7 @@ public class LostItemFeeRefundService {
 
       if (latestLostItemFeeProcessingAccount != null
         && !latestLostItemFeeAccount.getPaymentStatus().contains(CANCELLED_PAYMENT_STATUS)
-        && Math.abs(secondsBetween(
-          creationDate, latestLostItemFeeProcessingAccount.getCreationDate()).getSeconds()) <= 1) {
+        && isDifferenceOneMinuteOrLess(creationDate, latestLostItemFeeAccount)) {
 
         filteredAccounts.add(latestLostItemFeeProcessingAccount);
       }
@@ -238,6 +239,10 @@ public class LostItemFeeRefundService {
     }
 
     return accounts;
+  }
+
+  private boolean isDifferenceOneMinuteOrLess(DateTime creationDate, Account account) {
+    return Math.abs(minutesBetween(creationDate, account.getCreationDate()).getMinutes()) <= 1;
   }
 
   private Account getLatestAccount(Collection<Account> accounts, String lostItemFeeType) {
