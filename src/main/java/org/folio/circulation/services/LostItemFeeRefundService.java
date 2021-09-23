@@ -49,7 +49,7 @@ import org.joda.time.DateTime;
 
 public class LostItemFeeRefundService {
   private static final Logger log = LogManager.getLogger(LostItemFeeRefundService.class);
-  private static final String CANCELLED_PAYMENT_STATUS = "Cancelled";
+  private static final String CANCELLED_PAYMENT_STATUS_PREFIX = "Cancelled";
 
   private final LostItemPolicyRepository lostItemPolicyRepository;
   private final FeeFineFacade feeFineFacade;
@@ -218,20 +218,16 @@ public class LostItemFeeRefundService {
   private Collection<Account> filterAccountsForRefund(Collection<Account> accounts) {
     Account latestLostItemFeeAccount = getLatestAccount(accounts, LOST_ITEM_FEE_TYPE);
 
-    if (latestLostItemFeeAccount != null
-      && latestLostItemFeeAccount.getPaymentStatus() != null
-      && latestLostItemFeeAccount.getCreationDate() != null
-      && !latestLostItemFeeAccount.getPaymentStatus().contains(CANCELLED_PAYMENT_STATUS)) {
-
-      Collection<Account> filteredAccounts = new ArrayList<>();
+    if (isAccountValidForRefund(latestLostItemFeeAccount)) {
+      List<Account> filteredAccounts = new ArrayList<>();
       filteredAccounts.add(latestLostItemFeeAccount);
       DateTime creationDate = latestLostItemFeeAccount.getCreationDate();
       Account latestLostItemFeeProcessingAccount = getLatestAccount(accounts,
         LOST_ITEM_PROCESSING_FEE_TYPE);
 
-      if (latestLostItemFeeProcessingAccount != null
-        && !latestLostItemFeeAccount.getPaymentStatus().contains(CANCELLED_PAYMENT_STATUS)
-        && isDifferenceOneMinuteOrLess(creationDate, latestLostItemFeeAccount)) {
+      if (isAccountValidForRefund(latestLostItemFeeProcessingAccount)
+        && isDifferenceOneMinuteOrLess(creationDate,
+          latestLostItemFeeProcessingAccount.getCreationDate())) {
 
         filteredAccounts.add(latestLostItemFeeProcessingAccount);
       }
@@ -241,13 +237,20 @@ public class LostItemFeeRefundService {
     return accounts;
   }
 
-  private boolean isDifferenceOneMinuteOrLess(DateTime creationDate, Account account) {
-    return Math.abs(minutesBetween(creationDate, account.getCreationDate()).getMinutes()) <= 1;
+  private boolean isAccountValidForRefund(Account latestLostItemFeeAccount) {
+    return latestLostItemFeeAccount != null
+      && latestLostItemFeeAccount.getPaymentStatus() != null
+      && !latestLostItemFeeAccount.getPaymentStatus().startsWith(CANCELLED_PAYMENT_STATUS_PREFIX)
+      && latestLostItemFeeAccount.getCreationDate() != null;
   }
 
-  private Account getLatestAccount(Collection<Account> accounts, String lostItemFeeType) {
+  private boolean isDifferenceOneMinuteOrLess(DateTime feeFineDate, DateTime feeFineProcessingDate) {
+    return Math.abs(secondsBetween(feeFineDate, feeFineProcessingDate).getSeconds()) <= 60;
+  }
+
+  private Account getLatestAccount(Collection<Account> accounts, String feeFineType) {
     return accounts.stream()
-      .filter(account -> lostItemFeeType.equals(account.getFeeFineType()))
+      .filter(account -> feeFineType.equals(account.getFeeFineType()))
       .filter(account -> account.getCreationDate() != null)
       .max(Comparator.comparing(Account::getCreationDate))
       .orElse(null);
