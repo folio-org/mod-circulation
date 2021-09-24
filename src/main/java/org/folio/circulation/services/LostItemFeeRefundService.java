@@ -20,8 +20,10 @@ import static org.joda.time.Seconds.secondsBetween;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.logging.log4j.LogManager;
@@ -50,6 +52,7 @@ import org.joda.time.DateTime;
 public class LostItemFeeRefundService {
   private static final Logger log = LogManager.getLogger(LostItemFeeRefundService.class);
   private static final String CANCELLED_PAYMENT_STATUS_PREFIX = "Cancelled";
+  public static final int MAX_TIME_INTERVAL_FOR_ASSOCIATED_ACCOUNTS = 60;
 
   private final LostItemPolicyRepository lostItemPolicyRepository;
   private final FeeFineFacade feeFineFacade;
@@ -211,49 +214,54 @@ public class LostItemFeeRefundService {
       .combine(exactMatchAny("feeFineType", feeFineTypes), CqlQuery::and);
 
       return accountRepository.findAccountsAndActionsForLoanByQuery(fetchQuery)
-        .thenApply(r -> r.map(this::filterAccountsForRefund))
+        .thenApply(r -> r.map(accounts -> filterAccountsForRefund(accounts, feeFineTypes)))
         .thenApply(r -> r.map(context::withAccounts));
   }
 
-  private Collection<Account> filterAccountsForRefund(Collection<Account> accounts) {
-    Account latestLostItemFeeAccount = getLatestAccount(accounts, LOST_ITEM_FEE_TYPE);
+  private Collection<Account> filterAccountsForRefund(Collection<Account> accounts,
+    List<String> feeFineTypes) {
 
-    if (isAccountValidForRefund(latestLostItemFeeAccount)) {
-      List<Account> filteredAccounts = new ArrayList<>();
-      filteredAccounts.add(latestLostItemFeeAccount);
-      DateTime creationDate = latestLostItemFeeAccount.getCreationDate();
-      Account latestLostItemFeeProcessingAccount = getLatestAccount(accounts,
-        LOST_ITEM_PROCESSING_FEE_TYPE);
+    return getLatestAccount(accounts, feeFineTypes)
+      .filter(this::isAccountValidForRefund)
+      .map(account -> findRefundableAccounts(account, accounts))
+      .orElse(Collections.emptyList());
+  }
 
-      if (isAccountValidForRefund(latestLostItemFeeProcessingAccount)
-        && isDifferenceOneMinuteOrLess(creationDate,
-          latestLostItemFeeProcessingAccount.getCreationDate())) {
+  private List<Account> findRefundableAccounts(Account latestAccount, Collection<Account> accounts) {
+    List<Account> filteredList = new ArrayList<>();
+    filteredList.add(latestAccount);
+    DateTime creationDate = latestAccount.getCreationDate();
+    List<String> feeFineTypeForSearch = LOST_ITEM_FEE_TYPE.equals(latestAccount.getFeeFineType())
+      ? Collections.singletonList(LOST_ITEM_PROCESSING_FEE_TYPE)
+      : Collections.singletonList(LOST_ITEM_FEE_TYPE);
 
-        filteredAccounts.add(latestLostItemFeeProcessingAccount);
-      }
-      return filteredAccounts;
-    }
+    getLatestAccount(accounts, feeFineTypeForSearch)
+      .filter(this::isAccountValidForRefund)
+      .filter(latestProcessingAccount -> isDifferenceOneMinuteOrLess(creationDate,
+        latestProcessingAccount.getCreationDate()))
+      .map(filteredList::add);
 
-    return accounts;
+    return filteredList;
   }
 
   private boolean isAccountValidForRefund(Account latestLostItemFeeAccount) {
-    return latestLostItemFeeAccount != null
-      && latestLostItemFeeAccount.getPaymentStatus() != null
+    return latestLostItemFeeAccount.getPaymentStatus() != null
       && !latestLostItemFeeAccount.getPaymentStatus().startsWith(CANCELLED_PAYMENT_STATUS_PREFIX)
       && latestLostItemFeeAccount.getCreationDate() != null;
   }
 
-  private boolean isDifferenceOneMinuteOrLess(DateTime feeFineDate, DateTime feeFineProcessingDate) {
-    return Math.abs(secondsBetween(feeFineDate, feeFineProcessingDate).getSeconds()) <= 60;
+  private boolean isDifferenceOneMinuteOrLess(DateTime latestFeeFineDate, DateTime associatedFeeFineDate) {
+    return secondsBetween(latestFeeFineDate, associatedFeeFineDate)
+      .getSeconds() <= MAX_TIME_INTERVAL_FOR_ASSOCIATED_ACCOUNTS;
   }
 
-  private Account getLatestAccount(Collection<Account> accounts, String feeFineType) {
+  private Optional<Account> getLatestAccount(Collection<Account> accounts,
+    List<String> feeFineTypes) {
+
     return accounts.stream()
-      .filter(account -> feeFineType.equals(account.getFeeFineType()))
+      .filter(account -> feeFineTypes.contains(account.getFeeFineType()))
       .filter(account -> account.getCreationDate() != null)
-      .max(Comparator.comparing(Account::getCreationDate))
-      .orElse(null);
+      .max(Comparator.comparing(Account::getCreationDate));
   }
 
   private CompletableFuture<Result<LostItemFeeRefundContext>> fetchLostItemPolicy(
