@@ -109,7 +109,7 @@ public class LostItemFeeChargingService {
     .thenApply(this::refuseWhenFeeFineOwnerIsNotFound)
     .thenComposeAsync(this::fetchFeeFineTypes)
     .thenApply(this::buildAccountsAndActions)
-    .thenCompose(r -> r.after(feeFineFacade::createAccounts))
+    .thenCompose(r -> r.after(feeFineFacade::createFeesFines))
     .thenApply(r -> r.map(notUsed -> loan));
   }
 

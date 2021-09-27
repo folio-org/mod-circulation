@@ -81,7 +81,7 @@ class FeeFineFacadeTest {
     when(accountClient.post(any()))
       .thenAnswer(postRespondWithRequestAndFail(expectedError));
 
-    final Result<List<FeeFineAction>> result = feeFineFacade.createAccounts(Arrays.asList(
+    final Result<List<FeeFineAction>> result = feeFineFacade.createFeesFines(Arrays.asList(
       createCommandBuilder().build(),
       createCommandBuilder().build()))
       .getNow(null);
