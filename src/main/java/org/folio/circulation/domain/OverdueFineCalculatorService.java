@@ -244,7 +244,7 @@ public class OverdueFineCalculatorService {
       .withCurrentServicePointId(params.loan.getCheckInServicePointId())
       .build();
 
-    return feeFineFacade.createFeeFine(createAccountCommand);
+    return feeFineFacade.createAccount(createAccountCommand);
   }
 
   private boolean itemWasLost(ItemStatus itemStatus) {

@@ -52,16 +52,16 @@ public class FeeFineFacade {
     this.feeFineService = new FeeFineService(clients);
   }
 
-  public CompletableFuture<Result<List<FeeFineAction>>> createFeesFines(
+  public CompletableFuture<Result<List<FeeFineAction>>> createAccounts(
     Collection<CreateAccountCommand> accountAndActions) {
 
-    return allOf(accountAndActions, this::createFeeFine)
+    return allOf(accountAndActions, this::createAccount)
       .exceptionally(CommonFailures::failedDueToServerError);
   }
 
-  public CompletableFuture<Result<FeeFineAction>> createFeeFine(CreateAccountCommand command) {
+  public CompletableFuture<Result<FeeFineAction>> createAccount(CreateAccountCommand command) {
     return accountRepository.create(new StoredAccount(command))
-      .thenCompose(r -> r.after(createdAccount -> createFeeFineChargeAction(createdAccount, command)))
+      .thenCompose(r -> r.after(account -> createFeeFineChargeAction(account, command)))
       .exceptionally(CommonFailures::failedDueToServerError);
   }
 

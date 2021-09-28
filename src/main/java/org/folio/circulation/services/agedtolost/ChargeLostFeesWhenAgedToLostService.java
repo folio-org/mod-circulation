@@ -130,7 +130,7 @@ public class ChargeLostFeesWhenAgedToLostService {
 
     Loan loan = loanToChargeFees.getLoan();
     return createAccountsForLoan(loanToChargeFees)
-      .after(feeFineFacade::createFeesFines)
+      .after(feeFineFacade::createAccounts)
       .thenCompose(r -> r.after(actions ->
         feeFineScheduledNoticeService.scheduleNoticesForAgedLostFeeFineCharged(loan, actions)))
       .thenCompose(r -> r.after(notUsed -> updateLoanBillingInfo(loanToChargeFees)));
