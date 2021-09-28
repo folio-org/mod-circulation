@@ -3,8 +3,8 @@ package org.folio.circulation.domain;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static lombok.AccessLevel.PRIVATE;
 import static org.apache.commons.lang3.BooleanUtils.isFalse;
-import static org.folio.circulation.domain.OverdueFineCalculatorService.Scenario.CHECKIN;
-import static org.folio.circulation.domain.OverdueFineCalculatorService.Scenario.RENEWAL;
+import static org.folio.circulation.domain.OverdueFineService.Scenario.CHECKIN;
+import static org.folio.circulation.domain.OverdueFineService.Scenario.RENEWAL;
 import static org.folio.circulation.domain.representations.CheckInByBarcodeRequest.ClaimedReturnedResolution.FOUND_BY_LIBRARY;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
@@ -39,16 +39,16 @@ import lombok.AllArgsConstructor;
 import lombok.With;
 
 @AllArgsConstructor
-public class OverdueFineCalculatorService {
+public class OverdueFineService {
   private final Repos repos;
   private final OverduePeriodCalculatorService overduePeriodCalculatorService;
   private final FeeFineFacade feeFineFacade;
 
-  public static OverdueFineCalculatorService using(Clients clients) {
-    return new OverdueFineCalculatorService(clients);
+  public static OverdueFineService using(Clients clients) {
+    return new OverdueFineService(clients);
   }
 
-  private OverdueFineCalculatorService(Clients clients) {
+  private OverdueFineService(Clients clients) {
     this(
       new Repos(new OverdueFinePolicyRepository(clients),
         new ItemRepository(clients, true, false, false),
