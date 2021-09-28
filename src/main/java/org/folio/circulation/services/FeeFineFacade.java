@@ -32,6 +32,9 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.CommonFailures;
 import org.folio.circulation.support.results.Result;
 
+import lombok.AllArgsConstructor;
+
+@AllArgsConstructor
 public class FeeFineFacade {
   private static final Logger log = LogManager.getLogger(FeeFineFacade.class);
 
@@ -50,37 +53,26 @@ public class FeeFineFacade {
   }
 
   public CompletableFuture<Result<List<FeeFineAction>>> createAccounts(
-    Collection<CreateAccountCommand> accountAndActions) {
+    Collection<CreateAccountCommand> commands) {
 
-    return allOf(accountAndActions, this::createAccount)
+    return allOf(commands, this::createAccount)
       .exceptionally(CommonFailures::failedDueToServerError);
   }
 
-  private CompletableFuture<Result<FeeFineAction>> createAccount(CreateAccountCommand creation) {
-    final StoredAccount account = new StoredAccount(
-      creation.getLoan(),
-      creation.getItem(),
-      creation.getFeeFineOwner(),
-      creation.getFeeFine(),
-      creation.getAmount());
-
-    return accountRepository.create(account)
-      .thenCompose(r -> r.after(createdAccount -> createAccountCreatedAction(createdAccount, creation)));
+  public CompletableFuture<Result<FeeFineAction>> createAccount(CreateAccountCommand command) {
+    return ofAsync(() -> new StoredAccount(command))
+      .thenCompose(r -> r.after(accountRepository::create))
+      .thenCompose(r -> r.after(account -> createFeeFineChargeAction(account, command)))
+      .exceptionally(CommonFailures::failedDueToServerError);
   }
 
-  private CompletableFuture<Result<FeeFineAction>> createAccountCreatedAction(
-    Account createdAccount, CreateAccountCommand creation) {
+  private CompletableFuture<Result<FeeFineAction>> createFeeFineChargeAction(Account account,
+    CreateAccountCommand command) {
 
-    final StoredFeeFineActionBuilder builder = StoredFeeFineAction.builder();
-    return populateCreatedBy(builder, creation)
-      .thenCompose(r -> r.after(updatedBuilder -> populateCreatedAt(updatedBuilder, creation)))
-      .thenApply(r -> r.map(updatedBuilder -> updatedBuilder
-        .withBalance(createdAccount.getRemaining())
-        .withAmount(createdAccount.getAmount())
-        .withUserId(createdAccount.getUserId())
-        .withAction(createdAccount.getFeeFineType())
-        .withAccountId(createdAccount.getId())
-        .build()))
+    return ofAsync(() -> StoredFeeFineAction.builder(account))
+      .thenCompose(r -> r.after(builder -> populateCreatedBy(builder, command)))
+      .thenCompose(r -> r.after(builder -> populateCreatedAt(builder, command)))
+      .thenApply(r -> r.map(StoredFeeFineActionBuilder::build))
       .thenCompose(r -> r.after(feeFineActionRepository::create));
   }
 

@@ -20,15 +20,15 @@ public final class FeeAmount {
     this(BigDecimal.valueOf(amount));
   }
 
-  public final FeeAmount subtract(FeeAmount toSubtract) {
+  public FeeAmount subtract(FeeAmount toSubtract) {
     return new FeeAmount(amount.subtract(toSubtract.amount));
   }
 
-  public final FeeAmount add(FeeAmount toAdd) {
+  public FeeAmount add(FeeAmount toAdd) {
     return new FeeAmount(amount.add(toAdd.amount));
   }
 
-  public final double toDouble() {
+  public double toDouble() {
     return scaledAmount().doubleValue();
   }
 

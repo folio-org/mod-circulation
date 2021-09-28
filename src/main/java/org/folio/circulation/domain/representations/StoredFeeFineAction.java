@@ -33,6 +33,10 @@ public class StoredFeeFineAction extends JsonObject {
     return new StoredFeeFineActionBuilder();
   }
 
+  public static StoredFeeFineActionBuilder builder(Account account) {
+    return new StoredFeeFineActionBuilder().useAccount(account);
+  }
+
   public static class StoredFeeFineActionBuilder {
     private String id = UUID.randomUUID().toString();
     private String userId;
@@ -47,6 +51,7 @@ public class StoredFeeFineAction extends JsonObject {
       return withUserId(account.getUserId())
         .withBalance(account.getRemaining())
         .withAmount(account.getAmount())
+        .withAction(account.getFeeFineType())
         .withAccountId(account.getId());
     }
 
