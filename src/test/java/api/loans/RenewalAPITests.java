@@ -1959,6 +1959,50 @@ public abstract class RenewalAPITests extends APITests {
       hasJsonPath("amount", 5.0), hasJsonPath("remaining", 0.0)));
   }
 
+  @Test
+  void canOverrideRenewalAfterTwoDeclaredLostAndRefundsWithOlyLostItemProcessingFee() {
+    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource jessica = usersFixture.jessica();
+    final UUID servicePointId = servicePointsFixture.cd6().getId();
+    feeFineOwnerFixture.ownerForServicePoint(servicePointId);
+    useLostItemPolicy(lostItemFeePoliciesFixture.chargeFeeWithZeroLostItemFee().getId());
+
+    IndividualResource loan = checkOutFixture.checkOutByBarcode(item, jessica,
+      new DateTime(2018, 4, 21, 11, 21, 43, UTC));
+    declareLostFixtures.declareItemLost(loan.getJson());
+
+    assertThat(feeFineActionsClient.getAll(), hasSize(1));
+    assertThat(getAccountForLoan(loan.getId(), "Lost item processing fee", "Open"), allOf(
+      hasJsonPath("amount", 5.0), hasJsonPath("remaining", 5.0)));
+
+    feeFineAccountFixture.payLostItemProcessingFee(loan.getId(), 3.0);
+
+    final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
+      OVERRIDE_RENEWAL_BLOCK_PERMISSION);
+    JsonObject renewedLoan = loansFixture.renewLoan(
+      buildRenewByBarcodeRequestWithRenewalBlockOverride(item, jessica, servicePointId.toString()),
+      okapiHeaders).getJson();
+
+    assertThat(renewedLoan.getString("action"), is(RENEWED_THROUGH_OVERRIDE));
+    assertThat(getAccountForLoan(loan.getId(), "Lost item processing fee", "Closed"), allOf(
+      hasJsonPath("amount", 5.0), hasJsonPath("remaining", 0.0)));
+
+    declareLostFixtures.declareItemLost(renewedLoan);
+
+    assertThat(getAccountForLoan(loan.getId(), "Lost item processing fee", "Open"), allOf(
+      hasJsonPath("amount", 5.0), hasJsonPath("remaining", 5.0)));
+
+    feeFineAccountFixture.payLostItemProcessingFee(loan.getId(), 3.0);
+
+    JsonObject secondRenewedLoan = loansFixture.renewLoan(
+      buildRenewByBarcodeRequestWithRenewalBlockOverride(item, jessica, servicePointId.toString()),
+      okapiHeaders).getJson();
+
+    assertThat(secondRenewedLoan.getString("action"), is(RENEWED_THROUGH_OVERRIDE));
+    assertThat(getAccountForLoan(loan.getId(), "Lost item processing fee", "Closed"), allOf(
+      hasJsonPath("amount", 5.0), hasJsonPath("remaining", 0.0)));
+  }
+
   private void checkOutItem(DateTime loanDate, IndividualResource item, DateTime expectedDueDate,
     IndividualResource steve, String servicePointId) {
 
