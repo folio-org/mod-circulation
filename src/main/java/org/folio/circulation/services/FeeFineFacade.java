@@ -53,14 +53,15 @@ public class FeeFineFacade {
   }
 
   public CompletableFuture<Result<List<FeeFineAction>>> createAccounts(
-    Collection<CreateAccountCommand> accountAndActions) {
+    Collection<CreateAccountCommand> commands) {
 
-    return allOf(accountAndActions, this::createAccount)
+    return allOf(commands, this::createAccount)
       .exceptionally(CommonFailures::failedDueToServerError);
   }
 
   public CompletableFuture<Result<FeeFineAction>> createAccount(CreateAccountCommand command) {
-    return accountRepository.create(new StoredAccount(command))
+    return ofAsync(() -> new StoredAccount(command))
+      .thenCompose(r -> r.after(accountRepository::create))
       .thenCompose(r -> r.after(account -> createFeeFineChargeAction(account, command)))
       .exceptionally(CommonFailures::failedDueToServerError);
   }
