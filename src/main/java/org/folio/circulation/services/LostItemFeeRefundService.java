@@ -15,7 +15,6 @@ import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
-import static org.joda.time.Minutes.minutesBetween;
 import static org.joda.time.Seconds.secondsBetween;
 
 import java.util.ArrayList;
