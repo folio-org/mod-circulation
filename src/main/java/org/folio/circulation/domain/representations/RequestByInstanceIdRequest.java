@@ -55,7 +55,10 @@ public class RequestByInstanceIdRequest {
     final DateTime requestExpirationDate = getDateTimeProperty(json, REQUEST_EXPIRATION_DATE);
     final UUID pickupServicePointId = getUUIDProperty(json, PICKUP_SERVICE_POINT_ID);
 
-    final String fulfilmentPreference = getProperty(json, FULFILMENT_PREFERENCE);
+    String fulfilmentPreference = getProperty(json, FULFILMENT_PREFERENCE);
+    if (fulfilmentPreference == null){
+      fulfilmentPreference = "Hold Shelf";
+    }
 
     return succeeded(new RequestByInstanceIdRequest(requestDate, requesterId, instanceId,
         requestExpirationDate, pickupServicePointId, getProperty(json, "patronComments"), fulfilmentPreference));
