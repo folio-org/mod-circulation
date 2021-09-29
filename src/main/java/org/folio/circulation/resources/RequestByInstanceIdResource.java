@@ -343,7 +343,7 @@ public class RequestByInstanceIdResource extends Resource {
             write(requestBody, "requestExpirationDate",
               requestByInstanceIdRequest.getRequestExpirationDate());
           }
-          write(requestBody, "fulfilmentPreference", requestByInstanceIdRequest.getPatronComments());
+          write(requestBody, "fulfilmentPreference", requestByInstanceIdRequest.getfulfilmentPreference());
           write(requestBody, "patronComments", requestByInstanceIdRequest.getPatronComments());
           requests.add(requestBody);
         }
