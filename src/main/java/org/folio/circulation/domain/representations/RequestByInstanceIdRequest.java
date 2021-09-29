@@ -23,6 +23,7 @@ public class RequestByInstanceIdRequest {
   private static final String INSTANCE_ID = "instanceId";
   private static final String REQUEST_EXPIRATION_DATE = "requestExpirationDate";
   private static final String PICKUP_SERVICE_POINT_ID = "pickupServicePointId";
+  private static final String FULFILMENT_PREFERENCE = "fulfilmentPreference";
 
   private final DateTime requestDate;
   private final UUID requesterId;
@@ -30,6 +31,7 @@ public class RequestByInstanceIdRequest {
   private final DateTime requestExpirationDate;
   private final UUID pickupServicePointId;
   private final String patronComments;
+  private final String fulfilmentPreference;
 
   public static Result<RequestByInstanceIdRequest> from(JsonObject json) {
     final DateTime requestDate = getDateTimeProperty(json, REQUEST_DATE);
@@ -53,7 +55,9 @@ public class RequestByInstanceIdRequest {
     final DateTime requestExpirationDate = getDateTimeProperty(json, REQUEST_EXPIRATION_DATE);
     final UUID pickupServicePointId = getUUIDProperty(json, PICKUP_SERVICE_POINT_ID);
 
+    final String fulfilmentPreference = getProperty(json, FULFILMENT_PREFERENCE);
+
     return succeeded(new RequestByInstanceIdRequest(requestDate, requesterId, instanceId,
-        requestExpirationDate, pickupServicePointId, getProperty(json, "patronComments")));
+        requestExpirationDate, pickupServicePointId, getProperty(json, "patronComments"), fulfilmentPreference));
   }
 }

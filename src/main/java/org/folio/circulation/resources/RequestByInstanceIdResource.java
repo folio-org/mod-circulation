@@ -326,8 +326,6 @@ public class RequestByInstanceIdResource extends Resource {
     RequestType[] types = RequestType.values();
     LinkedList<JsonObject> requests = new LinkedList<>();
 
-    final String defaultFulfilmentPreference = "Hold Shelf";
-
     for (Item item: combinedItems) {
       for (RequestType reqType : types) {
         if (reqType != RequestType.NONE) {
@@ -340,12 +338,12 @@ public class RequestByInstanceIdResource extends Resource {
           write(requestBody, REQUESTER_ID, requestByInstanceIdRequest.getRequesterId().toString());
           write(requestBody, "pickupServicePointId",
             requestByInstanceIdRequest.getPickupServicePointId().toString());
-          write(requestBody, "fulfilmentPreference", defaultFulfilmentPreference);
           write(requestBody, "requestType", reqType.getValue());
           if (requestByInstanceIdRequest.getRequestExpirationDate() != null) {
             write(requestBody, "requestExpirationDate",
               requestByInstanceIdRequest.getRequestExpirationDate());
           }
+          write(requestBody, "fulfilmentPreference", requestByInstanceIdRequest.getPatronComments());
           write(requestBody, "patronComments", requestByInstanceIdRequest.getPatronComments());
           requests.add(requestBody);
         }

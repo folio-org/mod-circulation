@@ -32,6 +32,10 @@
     "patronComments": {
       "description": "Comments made by the patron",
       "type": "string"
+    },
+    "fulfilmentPreference": {
+      "description": "Hold Shelf or Delivery",
+      "type": "string"
     }
   },
   "additionalProperties": false,
