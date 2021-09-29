@@ -34,8 +34,9 @@
       "type": "string"
     },
     "fulfilmentPreference": {
-      "description": "Hold Shelf or Delivery",
-      "type": "string"
+      "description": "How should the request be fulfilled (whether the item should be kept on the hold shelf for collection or delivered to the requester)",
+      "type": "string",
+      "enum": ["Hold Shelf", "Delivery"]
     }
   },
   "additionalProperties": false,
