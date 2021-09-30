@@ -36,7 +36,7 @@ class AnonymizeLoansTests {
         when(2021, 5, 1, 15, 11, 27))));
 
       assertThat(segregatedLoans.size(), is(1));
-      // Partition for loans that should be annonymized
+      // Partition for loans that should be anonymized
       assertThat(anonymizedLoans(segregatedLoans).size(), is(1));
     }
 
