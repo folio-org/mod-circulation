@@ -9,6 +9,13 @@
 * Overdue fine will not be charged for exceptional closed periods (CIRC-1184)
 * Errors related to scheduled patron notice processing will be logged to circulation log (CIRC-1180)
 * Adds tests for renewal due date truncation (CIRC-888)
+* Does not allow patrons that are `expired` or `inactive` to renew items (CIRC-1187)
+* Increases the number of loans to be checked for scheduled anonymization to 50 000 (CIRC-1178)
+* Upgrades to vert.x 4.x (CIRC-1053)
+* Requires `item-storage 8.7 or 9.0`
+* Requires `holdings-storage 1.3, 2.0, 3.0, 4.0 or 5.0`
+* Requires `instance-storage 4.0, 5.0, 6.0, 7.0 or 8.0`
+* Requires `feesfines 16.3 or 17.0`
 
 ## 22.0.0 2021-06-14
 
