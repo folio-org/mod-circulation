@@ -1,6 +1,12 @@
 ## 22.1.0 IN-PROGRESS
 
 * Increases the number of loans to be checked for scheduled anonymization to 50 000 (CIRC-1178)
+* LOAN_CLOSED event will be published when loan is closed as a result of being declared lost (CIRC-1197)
+* Errors related to immediate patron notices will be logged to circulation log (CIRC-1183)
+* Manual patron block for requests will not block renewals and borrowing (CIRC-1185)
+* Overdue fine will not be charged for exceptional closed periods (CIRC-1184)
+* Errors related to scheduled patron notice processing will be logged to circulation log (CIRC-1180)
+* Adds tests for renewal due date truncation (CIRC-888)
 
 ## 22.0.0 2021-06-14
 
