@@ -5,7 +5,7 @@ import static org.folio.circulation.domain.ItemStatus.AGED_TO_LOST;
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
 import static org.folio.circulation.domain.ItemStatus.CLAIMED_RETURNED;
 import static org.folio.circulation.domain.ItemStatus.DECLARED_LOST;
-import static org.folio.circulation.domain.OverdueFineCalculatorService.using;
+import static org.folio.circulation.domain.OverdueFineService.using;
 import static org.folio.circulation.domain.RequestType.HOLD;
 import static org.folio.circulation.domain.RequestType.RECALL;
 import static org.folio.circulation.domain.override.OverridableBlockType.PATRON_BLOCK;
@@ -52,7 +52,7 @@ import org.folio.circulation.StoreLoanAndItem;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanRepresentation;
-import org.folio.circulation.domain.OverdueFineCalculatorService;
+import org.folio.circulation.domain.OverdueFineService;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.RequestType;
@@ -210,7 +210,7 @@ public abstract class RenewalResource extends Resource {
   private CompletableFuture<Result<RenewalContext>> processFeesFinesForRegularRenew(
     RenewalContext renewalContext, Clients clients) {
 
-    final OverdueFineCalculatorService overdueFineService = using(clients);
+    final OverdueFineService overdueFineService = using(clients);
     return overdueFineService.createOverdueFineIfNecessary(renewalContext);
   }
 

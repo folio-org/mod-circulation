@@ -12,10 +12,21 @@ import org.folio.circulation.domain.FeeFine;
 import org.folio.circulation.domain.FeeFineOwner;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
+import org.folio.circulation.services.support.CreateAccountCommand;
 
 import io.vertx.core.json.JsonObject;
 
 public class StoredAccount extends JsonObject {
+
+  public StoredAccount(CreateAccountCommand command) {
+    this(
+      command.getLoan(),
+      command.getItem(),
+      command.getFeeFineOwner(),
+      command.getFeeFine(),
+      command.getAmount());
+  }
+
   public StoredAccount(Loan loan, Item item, FeeFineOwner feeFineOwner,
     FeeFine feeFine, FeeAmount amount) {
     super();

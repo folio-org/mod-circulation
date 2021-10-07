@@ -11,7 +11,7 @@ import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanCheckInService;
-import org.folio.circulation.domain.OverdueFineCalculatorService;
+import org.folio.circulation.domain.OverdueFineService;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.ServicePoint;
@@ -45,7 +45,7 @@ class CheckInProcessAdapter {
   private final UserRepository userRepository;
   private final AddressTypeRepository addressTypeRepository;
   private final LogCheckInService logCheckInService;
-  private final OverdueFineCalculatorService overdueFineCalculatorService;
+  private final OverdueFineService overdueFineService;
   private final FeeFineScheduledNoticeService feeFineScheduledNoticeService;
   private final LostItemFeeRefundService lostItemFeeRefundService;
   protected final EventPublisher eventPublisher;
@@ -61,7 +61,7 @@ class CheckInProcessAdapter {
     UserRepository userRepository,
     AddressTypeRepository addressTypeRepository,
     LogCheckInService logCheckInService,
-    OverdueFineCalculatorService overdueFineCalculatorService,
+    OverdueFineService overdueFineService,
     FeeFineScheduledNoticeService feeFineScheduledNoticeService,
     LostItemFeeRefundService lostItemFeeRefundService,
     EventPublisher eventPublisher) {
@@ -77,7 +77,7 @@ class CheckInProcessAdapter {
     this.userRepository = userRepository;
     this.addressTypeRepository = addressTypeRepository;
     this.logCheckInService = logCheckInService;
-    this.overdueFineCalculatorService = overdueFineCalculatorService;
+    this.overdueFineService = overdueFineService;
     this.feeFineScheduledNoticeService = feeFineScheduledNoticeService;
     this.lostItemFeeRefundService = lostItemFeeRefundService;
     this.eventPublisher = eventPublisher;
@@ -106,7 +106,7 @@ class CheckInProcessAdapter {
       userRepository,
       new AddressTypeRepository(clients),
       new LogCheckInService(clients),
-      OverdueFineCalculatorService.using(clients),
+      OverdueFineService.using(clients),
       FeeFineScheduledNoticeService.using(clients),
       new LostItemFeeRefundService(clients),
       new EventPublisher(clients.pubSubPublishingService()));
@@ -219,7 +219,7 @@ class CheckInProcessAdapter {
   CompletableFuture<Result<CheckInContext>> createOverdueFineIfNecessary(
     CheckInContext records, WebContext context) {
 
-    return overdueFineCalculatorService.createOverdueFineIfNecessary(records, context.getUserId())
+    return overdueFineService.createOverdueFineIfNecessary(records, context.getUserId())
       .thenApply(r -> r.next(action -> feeFineScheduledNoticeService.scheduleOverdueFineNotices(records, action)));
   }
 

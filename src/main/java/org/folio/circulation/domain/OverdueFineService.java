@@ -3,9 +3,10 @@ package org.folio.circulation.domain;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static lombok.AccessLevel.PRIVATE;
 import static org.apache.commons.lang3.BooleanUtils.isFalse;
-import static org.folio.circulation.domain.OverdueFineCalculatorService.Scenario.CHECKIN;
-import static org.folio.circulation.domain.OverdueFineCalculatorService.Scenario.RENEWAL;
+import static org.folio.circulation.domain.OverdueFineService.Scenario.CHECKIN;
+import static org.folio.circulation.domain.OverdueFineService.Scenario.RENEWAL;
 import static org.folio.circulation.domain.representations.CheckInByBarcodeRequest.ClaimedReturnedResolution.FOUND_BY_LIBRARY;
+import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
@@ -18,56 +19,46 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 
 import org.apache.commons.lang3.ObjectUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.policy.OverdueFineCalculationParameters;
 import org.folio.circulation.domain.policy.OverdueFineInterval;
 import org.folio.circulation.domain.policy.OverdueFinePolicy;
-import org.folio.circulation.domain.representations.StoredAccount;
-import org.folio.circulation.domain.representations.StoredFeeFineAction;
 import org.folio.circulation.infrastructure.storage.CalendarRepository;
-import org.folio.circulation.infrastructure.storage.ServicePointRepository;
-import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
-import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineActionRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineOwnerRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
-import org.folio.circulation.infrastructure.storage.loans.LostItemPolicyRepository;
 import org.folio.circulation.infrastructure.storage.loans.OverdueFinePolicyRepository;
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
-import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.context.RenewalContext;
+import org.folio.circulation.services.FeeFineFacade;
+import org.folio.circulation.services.support.CreateAccountCommand;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
-import org.folio.circulation.support.results.ResultBinding;
 import org.folio.circulation.support.utils.ClockUtil;
 
 import lombok.AllArgsConstructor;
 import lombok.With;
 
 @AllArgsConstructor
-public class OverdueFineCalculatorService {
+public class OverdueFineService {
   private final Repos repos;
   private final OverduePeriodCalculatorService overduePeriodCalculatorService;
+  private final FeeFineFacade feeFineFacade;
 
-  public static OverdueFineCalculatorService using(Clients clients) {
-    return new OverdueFineCalculatorService(clients);
+  public static OverdueFineService using(Clients clients) {
+    return new OverdueFineService(clients);
   }
 
-  private OverdueFineCalculatorService(Clients clients) {
+  private OverdueFineService(Clients clients) {
     this(
       new Repos(new OverdueFinePolicyRepository(clients),
-        new AccountRepository(clients),
         new ItemRepository(clients, true, false, false),
         new FeeFineOwnerRepository(clients),
         new FeeFineRepository(clients),
-        new UserRepository(clients),
-        new FeeFineActionRepository(clients),
-        new LostItemPolicyRepository(clients),
-        ScheduledNoticesRepository.using(clients),
-        new ServicePointRepository(clients)),
+        ScheduledNoticesRepository.using(clients)),
       new OverduePeriodCalculatorService(new CalendarRepository(clients),
-        new LoanPolicyRepository(clients))
+        new LoanPolicyRepository(clients)),
+      new FeeFineFacade(clients)
     );
   }
 
@@ -152,7 +143,7 @@ public class OverdueFineCalculatorService {
   private CompletableFuture<Result<FeeFineAction>> createOverdueFine(Loan loan, String loggedInUserId) {
     return getOverdueMinutes(loan)
       .thenCompose(r -> r.after(minutes -> calculateOverdueFine(loan, minutes)))
-      .thenCompose(r -> r.after(fine -> createFeeFineRecord(loan, fine, loggedInUserId)));
+      .thenCompose(r -> r.after(fineAmount -> createFeeFineRecord(loan, fineAmount, loggedInUserId)));
   }
 
   private CompletableFuture<Result<Integer>> getOverdueMinutes(Loan loan) {
@@ -222,69 +213,39 @@ public class OverdueFineCalculatorService {
       .thenApply(mapResult(params::withFeeFine));
   }
 
-  private CompletableFuture<Result<CalculationParameters>> lookupLoggedInUser(
-    CalculationParameters params, String loggedInUserId) {
-
-    return repos.userRepository.getUser(loggedInUserId)
-      .thenApply(ResultBinding.mapResult(params::withLoggedInUser));
-  }
-
-  private CompletableFuture<Result<CalculationParameters>> lookupLoanServicePoints(
-    CalculationParameters params) {
-
-    return repos.servicePointRepository.findServicePointsForLoan(succeeded(params.loan))
-      .thenApply(mapResult(params::withLoan));
-  }
-
-  private CompletableFuture<Result<FeeFineAction>> createFeeFineRecord(Loan loan, BigDecimal fineAmount,
-    String loggedInUserId) {
+  private CompletableFuture<Result<FeeFineAction>> createFeeFineRecord(Loan loan,
+    BigDecimal fineAmount, String loggedInUserId) {
 
     if (fineAmount.compareTo(BigDecimal.ZERO) <= 0) {
       return completedFuture(succeeded(null));
     }
 
-    return completedFuture(succeeded(
-      new CalculationParameters(loan)))
+    return ofAsync(() -> new CalculationParameters(loan, fineAmount, loggedInUserId))
       .thenCompose(r -> r.after(this::lookupFeeFine))
       .thenCompose(r -> r.after(this::lookupItemRelatedRecords))
       .thenCompose(r -> r.after(this::lookupFeeFineOwner))
-      .thenCompose(r -> r.after(params -> this.lookupLoggedInUser(params, loggedInUserId)))
-      .thenCompose(r -> r.after(this::lookupLoanServicePoints))
-      .thenCompose(r -> r.after(params -> createAccount(fineAmount, params)))
+      .thenCompose(r -> r.after(this::createAccount))
       .thenCompose(r -> r.after(feeFineAction -> repos.scheduledNoticesRepository
           .deleteOverdueNotices(loan.getId())
           .thenApply(rs -> r)));
   }
 
-  private CompletableFuture<Result<FeeFineAction>> createAccount(BigDecimal fineAmount,
-    CalculationParameters params) {
-
+  private CompletableFuture<Result<FeeFineAction>> createAccount(CalculationParameters params) {
     if (params.isIncomplete()) {
       return completedFuture(succeeded(null));
     }
 
-    StoredAccount accountRepresentation =
-      new StoredAccount(params.loan, params.item, params.feeFineOwner,
-        params.feeFine, new FeeAmount(fineAmount));
+    var createAccountCommand = CreateAccountCommand.builder()
+      .withLoan(params.loan)
+      .withItem(params.item)
+      .withFeeFineOwner(params.feeFineOwner)
+      .withFeeFine(params.feeFine)
+      .withAmount(new FeeAmount(params.fineAmount))
+      .withStaffUserId(params.loggedInUserId)
+      .withCurrentServicePointId(params.loan.getCheckInServicePointId())
+      .build();
 
-    return repos.accountRepository.create(accountRepresentation)
-      .thenCompose(rac -> rac.after(account -> createFeeFineAction(account, params)));
-  }
-
-  private CompletableFuture<Result<FeeFineAction>> createFeeFineAction(
-    Account account, CalculationParameters params) {
-
-    String checkInServicePoint = Optional.ofNullable(params.loan)
-      .map(Loan::getCheckinServicePoint)
-      .map(ServicePoint::getName)
-      .orElse(StringUtils.EMPTY);
-
-    return repos.feeFineActionRepository.create(StoredFeeFineAction.builder()
-      .useAccount(account)
-      .withAction(account.getFeeFineType())
-      .withCreatedAt(checkInServicePoint)
-      .withCreatedBy(params.loggedInUser)
-      .build());
+    return feeFineFacade.createAccount(createAccountCommand);
   }
 
   private boolean itemWasLost(ItemStatus itemStatus) {
@@ -294,14 +255,15 @@ public class OverdueFineCalculatorService {
   @With
   @AllArgsConstructor(access = PRIVATE)
   private static class CalculationParameters {
-    final Loan loan;
-    final Item item;
-    final FeeFineOwner feeFineOwner;
-    final FeeFine feeFine;
-    final User loggedInUser;
+    private final Loan loan;
+    private final Item item;
+    private final FeeFineOwner feeFineOwner;
+    private final FeeFine feeFine;
+    private final BigDecimal fineAmount;
+    private final String loggedInUserId;
 
-    CalculationParameters(Loan loan) {
-      this(loan, null, null, null, null);
+    CalculationParameters(Loan loan, BigDecimal fineAmount, String loggedInUserId) {
+      this(loan, null, null, null, fineAmount, loggedInUserId);
     }
 
     boolean isComplete() {
@@ -331,14 +293,9 @@ public class OverdueFineCalculatorService {
   @AllArgsConstructor
   public static class Repos {
     private final OverdueFinePolicyRepository overdueFinePolicyRepository;
-    private final AccountRepository accountRepository;
     private final ItemRepository itemRepository;
     private final FeeFineOwnerRepository feeFineOwnerRepository;
     private final FeeFineRepository feeFineRepository;
-    private final UserRepository userRepository;
-    private final FeeFineActionRepository feeFineActionRepository;
-    private final LostItemPolicyRepository lostItemPolicyRepository;
     private final ScheduledNoticesRepository scheduledNoticesRepository;
-    private final ServicePointRepository servicePointRepository;
   }
 }

@@ -738,4 +738,14 @@ public class DateTimeUtil {
     return 0L;
   }
 
+  /**
+   * Get the difference difference between two Zoned Date Times in seconds.
+   *
+   * @return
+   *   The current time zone as a ZoneOffset.
+   */
+  public static long getSecondsBetween(ZonedDateTime beginingDateTime, ZonedDateTime endDateTime) {
+    return ChronoUnit.SECONDS.between(beginingDateTime, endDateTime);
+  }
+
 }

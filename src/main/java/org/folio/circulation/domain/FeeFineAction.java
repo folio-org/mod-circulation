@@ -4,7 +4,6 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTime
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 
 import java.time.ZonedDateTime;
-import java.math.BigDecimal;
 
 import io.vertx.core.json.JsonObject;
 
