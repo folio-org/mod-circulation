@@ -1,5 +1,7 @@
 ## 22.1.0 IN-PROGRESS
 
+* Screen is hanging on a loading screen when trying to view loan details on the Circulation log page (CIRC-1188)
+* Circ log filter for renewed doesn't work (CIRC-1165)
 * Increases the number of loans to be checked for scheduled anonymization to 50 000 (CIRC-1178)
 * LOAN_CLOSED event will be published when loan is closed as a result of being declared lost (CIRC-1197)
 * Errors related to immediate patron notices will be logged to circulation log (CIRC-1183)
