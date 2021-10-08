@@ -13,7 +13,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 import java.util.Collection;
 import java.util.List;
@@ -46,8 +46,8 @@ class LoanAnonymizationServiceTests {
   LoansForTenantFinder loansForTenantFinder;
 
   @BeforeEach
-  public void init() {
-    initMocks(this);
+  public void beforeEach() {
+    openMocks(this);
   }
 
   @SneakyThrows
