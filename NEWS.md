@@ -1,4 +1,4 @@
-## 22.1.0 IN-PROGRESS
+## 22.1.0 2021-10-08
 
 * Screen is hanging on a loading screen when trying to view loan details on the Circulation log page (CIRC-1188)
 * Circ log filter for renewed doesn't work (CIRC-1165)
