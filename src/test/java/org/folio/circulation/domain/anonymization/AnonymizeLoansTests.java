@@ -27,7 +27,7 @@ import io.vertx.core.json.JsonObject;
 
 class AnonymizeLoansTests {
   @Nested
-  class WhenAnonymizingAllLoansImmediately {
+  class WhenAnonymizingAllLoansImmediatelyTests {
     private final AnonymizationCheckersService checker = checker();
 
     @Test
@@ -88,7 +88,7 @@ class AnonymizeLoansTests {
   }
 
   @Nested
-  class WhenAnonymizingLoansWithFeesImmediately {
+  class WhenAnonymizingLoansWithFeesImmediatelyTests {
     private final AnonymizationCheckersService checker = checker();
 
     @Test
@@ -130,7 +130,7 @@ class AnonymizeLoansTests {
   }
 
   @Nested
-  class WhenNeverAnonymizingLoans {
+  class WhenNeverAnonymizingLoansTests {
     private final AnonymizationCheckersService checker = checker();
 
     @Test
@@ -195,7 +195,7 @@ class AnonymizeLoansTests {
   }
 
   @Nested
-  class WhenManuallyAnonymizingLoans {
+  class WhenManuallyAnonymizingLoansTests {
     private final AnonymizationCheckersService checker = checker();
 
     @Test
@@ -221,8 +221,7 @@ class AnonymizeLoansTests {
         List.of(closedLoanWithClosedFee(when(2021, 5, 11, 11, 54, 32))));
 
       assertThat(segregatedLoans.size(), is(1));
-      assertThat(loansWithFeesOrFinesNotAnonymized(segregatedLoans).size(),
-        is(1));
+      assertThat(loansWithFeesOrFinesNotAnonymized(segregatedLoans).size(), is(1));
     }
 
     @Test
@@ -255,7 +254,7 @@ class AnonymizeLoansTests {
   }
 
   @Nested
-  class WhenAnonymizingLoansClosedEarlier {
+  class WhenAnonymizingLoansClosedEarlierTests {
     private final AnonymizationCheckersService checker = checker();
 
     @Test
