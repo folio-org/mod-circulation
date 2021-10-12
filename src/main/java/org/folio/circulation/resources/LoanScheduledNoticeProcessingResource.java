@@ -32,7 +32,7 @@ public class LoanScheduledNoticeProcessingResource extends ScheduledNoticeProces
     ScheduledNoticesRepository scheduledNoticesRepository, PageLimit pageLimit) {
 
     return scheduledNoticesRepository.findNotices(
-      ClockUtil.getDateTime(), true,
+      ClockUtil.getZonedDateTime(), true,
       List.of(DUE_DATE, AGED_TO_LOST),
       CqlSortBy.ascending("nextRunTime"), pageLimit);
   }
@@ -41,7 +41,7 @@ public class LoanScheduledNoticeProcessingResource extends ScheduledNoticeProces
   protected CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> handleNotices(
     Clients clients, MultipleRecords<ScheduledNotice> noticesResult) {
 
-    return new LoanScheduledNoticeHandler(clients, ClockUtil.getDateTime())
+    return new LoanScheduledNoticeHandler(clients, ClockUtil.getZonedDateTime())
       .handleNotices(noticesResult.getRecords())
       .thenApply(mapResult(v -> noticesResult));
   }

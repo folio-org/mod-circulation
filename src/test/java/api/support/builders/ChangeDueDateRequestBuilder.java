@@ -2,28 +2,27 @@ package api.support.builders;
 
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
+import java.time.ZonedDateTime;
 import java.util.UUID;
 
 import org.folio.circulation.support.utils.ClockUtil;
-import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
 
 public class ChangeDueDateRequestBuilder implements Builder {
-  private final DateTime dueDate;
+  private final ZonedDateTime dueDate;
   private final String loanId;
 
   public ChangeDueDateRequestBuilder() {
-    this(null, ClockUtil.getDateTime());
+    this(null, ClockUtil.getZonedDateTime());
   }
 
-  private ChangeDueDateRequestBuilder(String loanId, DateTime dueDate) {
-
+  private ChangeDueDateRequestBuilder(String loanId, ZonedDateTime dueDate) {
     this.dueDate = dueDate;
     this.loanId = loanId;
   }
 
-  public ChangeDueDateRequestBuilder withDueDate(DateTime dateTime) {
+  public ChangeDueDateRequestBuilder withDueDate(ZonedDateTime dateTime) {
     return new ChangeDueDateRequestBuilder(loanId, dateTime);
   }
 
@@ -39,7 +38,7 @@ public class ChangeDueDateRequestBuilder implements Builder {
     return loanId;
   }
 
-  public DateTime getDueDate() {
+  public ZonedDateTime getDueDate() {
     return dueDate;
   }
 

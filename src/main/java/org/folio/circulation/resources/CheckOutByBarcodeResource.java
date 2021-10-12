@@ -10,6 +10,7 @@ import static org.folio.circulation.support.http.server.JsonHttpResponse.created
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
+import java.time.ZonedDateTime;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Loan;
@@ -44,7 +45,6 @@ import org.folio.circulation.support.http.OkapiPermissions;
 import org.folio.circulation.support.http.server.HttpResponse;
 import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.Result;
-import org.joda.time.DateTime;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
@@ -212,7 +212,7 @@ public class CheckOutByBarcodeResource extends Resource {
   private CompletableFuture<Result<LoanAndRelatedRecords>> checkOut(
     LoanAndRelatedRecords relatedRecords, JsonObject request, Clients clients) {
 
-    DateTime loanDate = relatedRecords.getLoan().getLoanDate();
+    ZonedDateTime loanDate = relatedRecords.getLoan().getLoanDate();
     final ClosedLibraryStrategyService strategyService =
       ClosedLibraryStrategyService.using(clients, loanDate, false);
 

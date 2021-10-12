@@ -1,7 +1,6 @@
 package org.folio.circulation.domain;
 
-import org.joda.time.DateTime;
-
+import java.time.ZonedDateTime;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -13,7 +12,7 @@ public class InstanceRequestItemsComparer {
   private InstanceRequestItemsComparer() {}
 
   public static Map<Item, Integer> sortRequestQueues(Map<Item, Integer> itemsQueueLengthUnsortedMap,
-                                                     Map<Item, DateTime> itemDueDateMap,
+                                                     Map<Item, ZonedDateTime> itemDueDateMap,
                                                      UUID destinationServicePointId) {
     return itemsQueueLengthUnsortedMap
       .entrySet()
@@ -23,7 +22,7 @@ public class InstanceRequestItemsComparer {
         (oldValue, newValue) -> oldValue, (LinkedHashMap::new)));
   }
 
-  private static Comparator<Map.Entry<Item, Integer>> compareQueueLengths(Map<Item, DateTime> itemDueDateMap,
+  private static Comparator<Map.Entry<Item, Integer>> compareQueueLengths(Map<Item, ZonedDateTime> itemDueDateMap,
                                                                           UUID destinationServicePointId) {
     // Sort the map
     return (q1Size, q2Size) -> {
@@ -46,9 +45,9 @@ public class InstanceRequestItemsComparer {
     return queueSize1 - queueSize2;
   }
 
-  private static int compareDueDate(Item item1, Item item2, Map<Item, DateTime> itemDueDateMap) {
-    DateTime q1ItemDueDate = itemDueDateMap.get(item1);
-    DateTime q2ItemDueDate = itemDueDateMap.get(item2);
+  private static int compareDueDate(Item item1, Item item2, Map<Item, ZonedDateTime> itemDueDateMap) {
+    ZonedDateTime q1ItemDueDate = itemDueDateMap.get(item1);
+    ZonedDateTime q2ItemDueDate = itemDueDateMap.get(item2);
 
     if (q1ItemDueDate == null && q2ItemDueDate == null) {
       return 0;

@@ -13,12 +13,13 @@ import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE_ERROR;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
-import static org.folio.circulation.support.utils.DateFormatUtil.parseJodaDateTime;
+import static org.folio.circulation.support.utils.DateFormatUtil.parseDateTime;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -27,8 +28,6 @@ import java.util.UUID;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.Matcher;
-import org.joda.time.DateTime;
-import org.joda.time.Period;
 import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
@@ -56,8 +55,8 @@ class ChangeDueDateByReplacingLoanTests extends APITests {
 
     JsonObject loanToChange = fetchedLoan.getJson().copy();
 
-    DateTime dueDate = parseJodaDateTime(loanToChange.getString("dueDate"));
-    DateTime newDueDate = dueDate.plus(Period.days(14));
+    ZonedDateTime dueDate = parseDateTime(loanToChange.getString("dueDate"));
+    ZonedDateTime newDueDate = dueDate.plusDays(14);
 
     write(loanToChange, "action", "dueDateChange");
     write(loanToChange, "dueDate", newDueDate);
@@ -116,7 +115,7 @@ class ChangeDueDateByReplacingLoanTests extends APITests {
 
     JsonObject loanToChange = fetchedLoan.getJson().copy();
 
-    final DateTime dueDate = parseJodaDateTime(loanToChange.getString("dueDate"));
+    final ZonedDateTime dueDate = parseDateTime(loanToChange.getString("dueDate"));
 
     write(loanToChange, "action", "dueDateChange");
     write(loanToChange, "dueDate", dueDate);
@@ -140,8 +139,8 @@ class ChangeDueDateByReplacingLoanTests extends APITests {
 
     JsonObject loanToChange = fetchedLoan.getJson().copy();
 
-    DateTime dueDate = parseJodaDateTime(loanToChange.getString("dueDate"));
-    DateTime newDueDate = dueDate.plus(Period.days(14));
+    ZonedDateTime dueDate = parseDateTime(loanToChange.getString("dueDate"));
+    ZonedDateTime newDueDate = dueDate.plusDays(14);
 
     write(loanToChange, "action", "dueDateChange");
     write(loanToChange, "dueDate", newDueDate);
@@ -233,8 +232,8 @@ class ChangeDueDateByReplacingLoanTests extends APITests {
     IndividualResource loan = checkOutFixture.checkOutByBarcode(smallAngryPlanet, steve);
     JsonObject loanToChange = loan.getJson().copy();
 
-    DateTime dueDate = parseJodaDateTime(loanToChange.getString("dueDate"));
-    DateTime newDueDate = dueDate.plus(Period.weeks(2));
+    ZonedDateTime dueDate = parseDateTime(loanToChange.getString("dueDate"));
+    ZonedDateTime newDueDate = dueDate.plusWeeks(2);
 
     write(loanToChange, "dueDate", newDueDate);
 
@@ -269,8 +268,8 @@ class ChangeDueDateByReplacingLoanTests extends APITests {
 
     Response fetchedLoan = loansClient.getById(loan.getId());
     JsonObject loanToChange = fetchedLoan.getJson().copy();
-    DateTime dueDate = parseJodaDateTime(loanToChange.getString("dueDate"));
-    DateTime newDueDate = dueDate.plus(Period.days(14));
+    ZonedDateTime dueDate = parseDateTime(loanToChange.getString("dueDate"));
+    ZonedDateTime newDueDate = dueDate.plusDays(14);
     write(loanToChange, "action", "dueDateChange");
     write(loanToChange, "dueDate", newDueDate);
 

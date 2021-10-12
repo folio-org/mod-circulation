@@ -21,12 +21,14 @@ import static api.support.matchers.LoanMatchers.isClosed;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static java.lang.Boolean.TRUE;
+import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.iterableWithSize;
 
+import java.time.ZonedDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,9 +36,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.policy.Period;
-import org.folio.circulation.support.utils.ClockUtil;
 import org.hamcrest.Matcher;
-import org.joda.time.DateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -354,7 +354,7 @@ class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     // the creation function ages the loan eight weeks into the future.
     // it must be checked in after that timeframe to properly examine the
     // overdue charges
-    final DateTime checkInDate = ClockUtil.getDateTime().plusWeeks(9);
+    final ZonedDateTime checkInDate = getZonedDateTime().plusWeeks(9);
     mockClockManagerToReturnFixedDateTime(checkInDate);
     checkInFixture.checkInByBarcode(result.getItem(), checkInDate);
     assertThat(loansFixture.getLoanById(loanId), hasNoOverdueFine());

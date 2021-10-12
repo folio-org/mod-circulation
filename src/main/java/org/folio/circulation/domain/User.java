@@ -9,10 +9,10 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getObjectPr
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.utils.DateTimeUtil.isBeforeMillis;
 
+import java.time.ZonedDateTime;
 import java.util.Objects;
 
 import org.folio.circulation.support.utils.ClockUtil;
-import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
 import lombok.val;
@@ -57,11 +57,11 @@ public class User {
       return false;
     }
     else {
-      return isBeforeMillis(expirationDate, ClockUtil.getDateTime());
+      return isBeforeMillis(expirationDate, ClockUtil.getZonedDateTime());
     }
   }
 
-  public DateTime getExpirationDate() {
+  public ZonedDateTime getExpirationDate() {
     return getDateTimeProperty(representation, "expirationDate", null);
   }
 

@@ -1,12 +1,13 @@
 package org.folio.circulation.domain;
 
+import static org.folio.circulation.support.utils.DateFormatUtil.parseDateTime;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-import org.joda.time.DateTime;
+import java.time.ZonedDateTime;
+
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
-
 
 class TimePeriodTest {
 
@@ -22,8 +23,8 @@ class TimePeriodTest {
     String intervalId, long expectedAmount) {
 
     final TimePeriod timePeriod = new TimePeriod(1, intervalId);
-    final DateTime dateFrom = DateTime.parse(dateFromString);
-    final DateTime dateTo = DateTime.parse(dateToString);
+    final ZonedDateTime dateFrom = parseDateTime(dateFromString);
+    final ZonedDateTime dateTo = parseDateTime(dateToString);
 
     assertThat(timePeriod.between(dateFrom, dateTo), is(expectedAmount));
   }
@@ -40,8 +41,8 @@ class TimePeriodTest {
     String intervalId, long expectedAmount) {
 
     final TimePeriod timePeriod = new TimePeriod(1, intervalId);
-    final DateTime dateFrom = DateTime.parse(dateFromString);
-    final DateTime dateTo = DateTime.parse(dateToString);
+    final ZonedDateTime dateFrom = parseDateTime(dateFromString);
+    final ZonedDateTime dateTo = parseDateTime(dateToString);
 
     assertThat(timePeriod.between(dateFrom, dateTo), is(expectedAmount));
   }
@@ -58,8 +59,8 @@ class TimePeriodTest {
     String dateFromString, String dateToString, String intervalId, long expectedAmount) {
 
     final TimePeriod timePeriod = new TimePeriod(1, intervalId);
-    final DateTime dateFrom = DateTime.parse(dateFromString);
-    final DateTime dateTo = DateTime.parse(dateToString);
+    final ZonedDateTime dateFrom = parseDateTime(dateFromString);
+    final ZonedDateTime dateTo = parseDateTime(dateToString);
 
     assertThat(timePeriod.between(dateFrom, dateTo), is(expectedAmount));
   }

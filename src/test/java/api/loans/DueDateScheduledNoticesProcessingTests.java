@@ -6,6 +6,7 @@ import static api.support.matchers.ScheduledNoticeMatchers.hasScheduledLoanNotic
 import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfPublishedEvents;
 import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfScheduledNotices;
 import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfSentNotices;
+import static java.time.ZoneOffset.UTC;
 import static java.util.Comparator.comparing;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE_ERROR;
@@ -14,8 +15,8 @@ import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
-import static org.joda.time.DateTimeZone.UTC;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -31,8 +32,8 @@ import java.util.stream.Stream;
 
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.utils.ClockUtil;
+import org.folio.circulation.support.utils.DateFormatUtil;
 import org.hamcrest.Matcher;
-import org.joda.time.DateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -71,13 +72,13 @@ class DueDateScheduledNoticesProcessingTests extends APITests {
   private static final UUID AFTER_TEMPLATE_ID = UUID.randomUUID();
   private static final UUID AFTER_RECURRING_TEMPLATE_ID = UUID.randomUUID();
 
-  private static final DateTime LOAN_DATE = new DateTime(2018, 3, 18, 11, 43, 54, UTC);
+  private static final ZonedDateTime LOAN_DATE = ZonedDateTime.of(2018, 3, 18, 11, 43, 54, 0, UTC);
 
   private ItemResource item;
   private UserResource borrower;
   private IndividualResource loan;
   private UUID loanId;
-  private DateTime dueDate;
+  private ZonedDateTime dueDate;
 
   @BeforeEach
   public void beforeEach() {
@@ -104,13 +105,12 @@ class DueDateScheduledNoticesProcessingTests extends APITests {
   void recurringBeforeNoticeShouldBeSentAndRescheduled() {
     generateLoanAndScheduledNotices(beforeNotice(true));
 
-    DateTime beforeDueDateTime = dueDate.minus(BEFORE_PERIOD.timePeriod()).plusSeconds(1);
+    ZonedDateTime beforeDueDateTime = BEFORE_PERIOD.minusDate(dueDate).plusSeconds(1);
     scheduledNoticeProcessingClient.runLoanNoticesProcessing(beforeDueDateTime);
     checkSentNotices(BEFORE_RECURRING_TEMPLATE_ID);
 
-    DateTime expectedNextRunTime = dueDate
-      .minus(BEFORE_PERIOD.timePeriod())
-      .plus(BEFORE_RECURRING_PERIOD.timePeriod());
+    ZonedDateTime expectedNextRunTime = BEFORE_RECURRING_PERIOD
+      .plusDate(BEFORE_PERIOD.minusDate(dueDate));
 
     verifyScheduledNotices(
       scheduledNoticeMatcher(loanId, BEFORE_RECURRING_TEMPLATE_ID, BEFORE_TIMING,
@@ -126,7 +126,7 @@ class DueDateScheduledNoticesProcessingTests extends APITests {
   void beforeNoticeShouldBeSendAndDeletedWhenItsNextRunTimeIsAfterDueDate() {
     generateLoanAndScheduledNotices(beforeNotice(true));
 
-    DateTime justBeforeDueDateTime = dueDate.minusSeconds(1);
+    ZonedDateTime justBeforeDueDateTime = dueDate.minusSeconds(1);
     scheduledNoticeProcessingClient.runLoanNoticesProcessing(justBeforeDueDateTime);
 
     checkSentNotices(BEFORE_RECURRING_TEMPLATE_ID);
@@ -141,7 +141,7 @@ class DueDateScheduledNoticesProcessingTests extends APITests {
   void uponAtNoticeShouldBeSentWhenProcessingJustAfterDueDate() {
     generateLoanAndScheduledNotices(uponAtNotice());
 
-    DateTime justAfterDueDateTime = dueDate.plusSeconds(1);
+    ZonedDateTime justAfterDueDateTime = dueDate.plusSeconds(1);
     scheduledNoticeProcessingClient.runLoanNoticesProcessing(justAfterDueDateTime);
 
     checkSentNotices(UPON_AT_TEMPLATE_ID);
@@ -156,17 +156,17 @@ class DueDateScheduledNoticesProcessingTests extends APITests {
   void afterRecurringNoticeShouldBeSentSeveralTimesBeforeLoanIsClosed() {
     generateLoanAndScheduledNotices(afterNotice(true));
 
-    DateTime justAfterDueDateTime = dueDate.plusSeconds(1);
+    ZonedDateTime justAfterDueDateTime = dueDate.plusSeconds(1);
     scheduledNoticeProcessingClient.runLoanNoticesProcessing(justAfterDueDateTime);
     //Clear all sent notices before actual test
     FakeModNotify.clearSentPatronNotices();
 
-    DateTime afterNoticeRunTime = dueDate.plus(AFTER_PERIOD.timePeriod()).plusSeconds(1);
+    ZonedDateTime afterNoticeRunTime = AFTER_PERIOD.plusDate(dueDate).plusSeconds(1);
+
     scheduledNoticeProcessingClient.runLoanNoticesProcessing(afterNoticeRunTime);
 
-    DateTime expectedNextRunTime = dueDate
-      .plus(AFTER_PERIOD.timePeriod())
-      .plus(AFTER_RECURRING_PERIOD.timePeriod());
+    ZonedDateTime expectedNextRunTime = AFTER_RECURRING_PERIOD
+      .plusDate(AFTER_PERIOD.plusDate(dueDate));
 
     verifyScheduledNotices(
       scheduledNoticeMatcher(loanId, AFTER_RECURRING_TEMPLATE_ID, AFTER_TIMING,
@@ -181,8 +181,7 @@ class DueDateScheduledNoticesProcessingTests extends APITests {
     verifyNumberOfPublishedEvents(NOTICE, 2);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
 
-    DateTime secondRecurringRunTime =
-      expectedNextRunTime.plus(AFTER_RECURRING_PERIOD.timePeriod());
+    ZonedDateTime secondRecurringRunTime = AFTER_RECURRING_PERIOD.plusDate(expectedNextRunTime);
 
     verifyScheduledNotices(
       scheduledNoticeMatcher(loanId, AFTER_RECURRING_TEMPLATE_ID, AFTER_TIMING,
@@ -208,7 +207,7 @@ class DueDateScheduledNoticesProcessingTests extends APITests {
   void processingTakesNoticesInThePastLimitedAndOrdered() {
     generateLoanAndScheduledNotices();
 
-    DateTime systemTime = ClockUtil.getDateTime();
+    ZonedDateTime systemTime = ClockUtil.getZonedDateTime();
     int expectedNumberOfUnprocessedNoticesInThePast = 10;
     int numberOfNoticesInThePast =
       SCHEDULED_NOTICES_PROCESSING_LIMIT + expectedNumberOfUnprocessedNoticesInThePast;
@@ -461,7 +460,7 @@ class DueDateScheduledNoticesProcessingTests extends APITests {
       item -> item.withPrimaryServicePoint(checkInServicePointId));
     final IndividualResource nod = itemsFixture.basedUponNod(item ->
       item.withPermanentLocation(homeLocation.getId()));
-    DateTime loanDate = new DateTime(2020, 1, 1, 12, 0, 0, UTC);
+    ZonedDateTime loanDate = ZonedDateTime.of(2020, 1, 1, 12, 0, 0, 0, UTC);
 
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -470,7 +469,7 @@ class DueDateScheduledNoticesProcessingTests extends APITests {
         .on(loanDate)
         .at(UUID.randomUUID()));
 
-    DateTime dueDate = getDateTimeProperty(loan.getJson(), "dueDate");
+    ZonedDateTime dueDate = getDateTimeProperty(loan.getJson(), "dueDate");
 
     verifyNumberOfScheduledNotices(2);
 
@@ -482,7 +481,7 @@ class DueDateScheduledNoticesProcessingTests extends APITests {
           UPON_AT_TIMING, uponAtTemplateId,
           null, false),
         hasScheduledLoanNotice(
-          loan.getId(), dueDate.plus(afterPeriod.timePeriod()),
+          loan.getId(), afterPeriod.plusDate(dueDate),
           AFTER_TIMING, afterTemplateId,
           afterRecurringPeriod, true)));
 
@@ -490,7 +489,7 @@ class DueDateScheduledNoticesProcessingTests extends APITests {
       UUID.fromString(homeLocation.getJson().getString("primaryServicePoint"))).getId();
     feeFineTypeFixture.overdueFine(ownerId);
 
-    DateTime checkInDate = new DateTime(2020, 1, 25, 12, 0, 0, UTC);
+    ZonedDateTime checkInDate = ZonedDateTime.of(2020, 1, 25, 12, 0, 0, 0, UTC);
 
     checkInFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
@@ -517,9 +516,8 @@ class DueDateScheduledNoticesProcessingTests extends APITests {
 
     verifyNumberOfScheduledNotices(5);
 
-    var processingTime = dueDate
-      .plus(AFTER_PERIOD.timePeriod())
-      .plus(AFTER_RECURRING_PERIOD.timePeriod())
+    var processingTime = AFTER_RECURRING_PERIOD
+      .plusDate(AFTER_PERIOD.plusDate(dueDate))
       .plusSeconds(1);
 
     scheduledNoticeProcessingClient.runLoanNoticesProcessing(processingTime);
@@ -578,9 +576,8 @@ class DueDateScheduledNoticesProcessingTests extends APITests {
 
     verifyNumberOfScheduledNotices(2);
 
-    var processingTime = dueDate
-      .plus(AFTER_PERIOD.timePeriod())
-      .plus(AFTER_RECURRING_PERIOD.timePeriod())
+    var processingTime = AFTER_RECURRING_PERIOD
+      .plusDate(AFTER_PERIOD.plusDate(dueDate))
       .plusSeconds(1);
 
     scheduledNoticeProcessingClient.runLoanNoticesProcessing(processingTime);
@@ -594,7 +591,7 @@ class DueDateScheduledNoticesProcessingTests extends APITests {
   }
 
   private void createNotices(int numberOfNotices) {
-    DateTime systemTime = ClockUtil.getDateTime();
+    ZonedDateTime systemTime = ClockUtil.getZonedDateTime();
     List<JsonObject> notices = createNoticesOverTime(systemTime::minusHours, numberOfNotices);
     for (JsonObject notice : notices) {
       scheduledNoticesClient.create(notice);
@@ -622,7 +619,7 @@ class DueDateScheduledNoticesProcessingTests extends APITests {
 
     loanId = loan.getId();
 
-    dueDate = new DateTime(loan.getJson().getString("dueDate"));
+    dueDate = DateFormatUtil.parseDateTime(loan.getJson().getString("dueDate"));
 
     verifyNumberOfScheduledNotices(patronNoticeConfigurations.length);
   }
@@ -677,7 +674,7 @@ class DueDateScheduledNoticesProcessingTests extends APITests {
   }
 
   private List<JsonObject> createNoticesOverTime(
-    Function<Integer, DateTime> timeOffset, int numberOfNotices) {
+    Function<Integer, ZonedDateTime> timeOffset, int numberOfNotices) {
 
     return IntStream.iterate(0, i -> i + 1)
       .boxed()
@@ -687,7 +684,7 @@ class DueDateScheduledNoticesProcessingTests extends APITests {
       .collect(Collectors.toList());
   }
 
-  private JsonObject createFakeScheduledNotice(DateTime nextRunTime) {
+  private JsonObject createFakeScheduledNotice(ZonedDateTime nextRunTime) {
     UUID templateId = UUID.randomUUID();
     templateFixture.createDummyNoticeTemplate(templateId);
 
@@ -695,7 +692,7 @@ class DueDateScheduledNoticesProcessingTests extends APITests {
       .put("id", UUID.randomUUID().toString())
       .put("loanId", loan.getId().toString())
       .put("recipientUserId", borrower.getId().toString())
-      .put(NEXT_RUN_TIME, formatDateTime(nextRunTime.withZone(UTC)))
+      .put(NEXT_RUN_TIME, formatDateTime(nextRunTime.withZoneSameInstant(UTC)))
       .put("triggeringEvent", "Due date")
       .put("noticeConfig",
         new JsonObject()
@@ -707,7 +704,7 @@ class DueDateScheduledNoticesProcessingTests extends APITests {
   }
 
   private static Matcher<JsonObject> scheduledNoticeMatcher(UUID loanId, UUID templateId,
-    String timing, Period recurringPeriod, DateTime nextRunTime) {
+    String timing, Period recurringPeriod, ZonedDateTime nextRunTime) {
 
     return hasScheduledLoanNotice(loanId, nextRunTime, timing, templateId, recurringPeriod, true);
   }

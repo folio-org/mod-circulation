@@ -6,8 +6,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
 import org.folio.circulation.domain.Item;
-import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
+import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.results.Result;
 
 public class ItemByIdInStorageFinder {

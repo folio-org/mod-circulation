@@ -77,7 +77,7 @@ class RequestScheduledNoticesTests extends APITests {
     IndividualResource request = requestsFixture.place(new RequestBuilder().page()
       .forItem(item)
       .withRequesterId(requester.getId())
-      .withRequestDate(ClockUtil.getDateTime())
+      .withRequestDate(ClockUtil.getZonedDateTime())
       .withStatus(OPEN_NOT_YET_FILLED)
       .withPickupServicePoint(pickupServicePoint)
       .withRequestExpiration(requestExpiration));
@@ -120,7 +120,7 @@ class RequestScheduledNoticesTests extends APITests {
     requestsFixture.place(new RequestBuilder().page()
       .forItem(item)
       .withRequesterId(requester.getId())
-      .withRequestDate(ClockUtil.getDateTime())
+      .withRequestDate(ClockUtil.getZonedDateTime())
       .withStatus(OPEN_NOT_YET_FILLED)
       .withPickupServicePoint(pickupServicePoint));
 
@@ -149,7 +149,7 @@ class RequestScheduledNoticesTests extends APITests {
     requestsFixture.place(new RequestBuilder().page()
       .forItem(item)
       .withRequesterId(requester.getId())
-      .withRequestDate(ClockUtil.getDateTime())
+      .withRequestDate(ClockUtil.getZonedDateTime())
       .withStatus(OPEN_NOT_YET_FILLED)
       .withPickupServicePoint(pickupServicePoint)
       .withNoRequestExpiration());
@@ -180,7 +180,7 @@ class RequestScheduledNoticesTests extends APITests {
     IndividualResource request = requestsFixture.place(new RequestBuilder().page()
       .forItem(item)
       .withRequesterId(requester.getId())
-      .withRequestDate(ClockUtil.getDateTime())
+      .withRequestDate(ClockUtil.getZonedDateTime())
       .withStatus(OPEN_NOT_YET_FILLED)
       .withPickupServicePoint(pickupServicePoint)
       .withRequestExpiration(requestExpiration));
@@ -225,7 +225,7 @@ class RequestScheduledNoticesTests extends APITests {
     RequestBuilder requestBuilder = new RequestBuilder().page()
       .forItem(item)
       .withRequesterId(requester.getId())
-      .withRequestDate(ClockUtil.getDateTime())
+      .withRequestDate(ClockUtil.getZonedDateTime())
       .withStatus(OPEN_NOT_YET_FILLED)
       .withPickupServicePoint(pickupServicePoint)
       .withRequestExpiration(requestExpiration);
@@ -294,7 +294,7 @@ class RequestScheduledNoticesTests extends APITests {
     RequestBuilder requestBuilder = new RequestBuilder().page()
       .forItem(item)
       .withRequesterId(requester.getId())
-      .withRequestDate(ClockUtil.getDateTime())
+      .withRequestDate(ClockUtil.getZonedDateTime())
       .withStatus(OPEN_NOT_YET_FILLED)
       .withPickupServicePoint(pickupServicePoint)
       .withRequestExpiration(requestExpiration);
@@ -346,7 +346,7 @@ class RequestScheduledNoticesTests extends APITests {
     RequestBuilder requestBuilder = new RequestBuilder().page()
       .forItem(item)
       .withRequesterId(requester.getId())
-      .withRequestDate(ClockUtil.getDateTime())
+      .withRequestDate(ClockUtil.getZonedDateTime())
       .withStatus(OPEN_NOT_YET_FILLED)
       .withPickupServicePoint(pickupServicePoint)
       .withRequestExpiration(requestExpiration);
@@ -416,7 +416,7 @@ class RequestScheduledNoticesTests extends APITests {
     RequestBuilder requestBuilder = new RequestBuilder().page()
       .forItem(item)
       .withRequesterId(requester.getId())
-      .withRequestDate(ClockUtil.getDateTime())
+      .withRequestDate(ClockUtil.getZonedDateTime())
       .withStatus(OPEN_NOT_YET_FILLED)
       .withPickupServicePoint(pickupServicePoint)
       .withRequestExpiration(requestExpiration);

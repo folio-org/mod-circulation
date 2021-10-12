@@ -1,33 +1,33 @@
 package org.folio.circulation.services;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.domain.representations.StoredFeeFineAction.StoredFeeFineActionBuilder;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Account;
 import org.folio.circulation.domain.FeeFineAction;
 import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.representations.StoredAccount;
 import org.folio.circulation.domain.representations.StoredFeeFineAction;
+import org.folio.circulation.domain.representations.StoredFeeFineAction.StoredFeeFineActionBuilder;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineActionRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.services.feefine.AccountActionResponse;
 import org.folio.circulation.services.feefine.CancelAccountCommand;
-import org.folio.circulation.services.feefine.RefundAccountCommand;
 import org.folio.circulation.services.feefine.FeeFineService;
-import org.folio.circulation.services.support.RefundAndCancelAccountCommand;
+import org.folio.circulation.services.feefine.RefundAccountCommand;
 import org.folio.circulation.services.support.CreateAccountCommand;
+import org.folio.circulation.services.support.RefundAndCancelAccountCommand;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.CommonFailures;
 import org.folio.circulation.support.results.Result;

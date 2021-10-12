@@ -16,6 +16,7 @@ import static org.folio.circulation.support.results.ResultBinding.mapResult;
 import static org.folio.circulation.support.utils.DateTimeUtil.isAfterMillis;
 import static org.folio.circulation.support.utils.DateTimeUtil.isBeforeMillis;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -30,15 +31,14 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.RecordNotFoundFailure;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.results.Result;
-import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
 
 public class LoanScheduledNoticeHandler extends ScheduledNoticeHandler {
   private final LoanPolicyRepository loanPolicyRepository;
-  private final DateTime systemTime;
+  private final ZonedDateTime systemTime;
 
-  public LoanScheduledNoticeHandler(Clients clients, DateTime systemTime) {
+  public LoanScheduledNoticeHandler(Clients clients, ZonedDateTime systemTime) {
     super(clients);
     this.systemTime = systemTime;
     this.loanPolicyRepository = new LoanPolicyRepository(clients);
@@ -93,12 +93,11 @@ public class LoanScheduledNoticeHandler extends ScheduledNoticeHandler {
       return deleteNoticeAsIrrelevant(notice);
     }
 
-    DateTime recurringNoticeNextRunTime = notice.getNextRunTime()
-      .plus(noticeConfig.getRecurringPeriod().timePeriod());
+    ZonedDateTime recurringNoticeNextRunTime = noticeConfig
+      .getRecurringPeriod().plusDate(notice.getNextRunTime());
 
     if (isBeforeMillis(recurringNoticeNextRunTime, systemTime)) {
-      recurringNoticeNextRunTime =
-        systemTime.plus(noticeConfig.getRecurringPeriod().timePeriod());
+      recurringNoticeNextRunTime = noticeConfig.getRecurringPeriod().plusDate(systemTime);
     }
 
     ScheduledNotice nextRecurringNotice = notice.withNextRunTime(recurringNoticeNextRunTime);
@@ -138,7 +137,7 @@ public class LoanScheduledNoticeHandler extends ScheduledNoticeHandler {
 
   private boolean dueDateNoticeIsNotRelevant(ScheduledNoticeContext context) {
     Loan loan = context.getLoan();
-    DateTime dueDate = loan.getDueDate();
+    ZonedDateTime dueDate = loan.getDueDate();
     String loanId = loan.getId();
 
     ScheduledNotice notice = context.getNotice();

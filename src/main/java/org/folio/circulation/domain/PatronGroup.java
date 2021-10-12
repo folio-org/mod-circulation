@@ -1,8 +1,8 @@
 package org.folio.circulation.domain;
 
-import io.vertx.core.json.JsonObject;
-
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
+
+import io.vertx.core.json.JsonObject;
 
 public class PatronGroup {
   private final JsonObject representation;

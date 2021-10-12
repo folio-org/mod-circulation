@@ -3,6 +3,7 @@ package org.folio.circulation.domain.notice.schedule;
 import static org.folio.circulation.domain.notice.NoticeTiming.UPON_AT;
 import static org.folio.circulation.support.results.Result.succeeded;
 
+import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -16,7 +17,6 @@ import org.folio.circulation.infrastructure.storage.notices.PatronNoticePolicyRe
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
-import org.joda.time.DateTime;
 
 public class RequestScheduledNoticeService {
   public static RequestScheduledNoticeService using(Clients clients) {
@@ -103,14 +103,14 @@ public class RequestScheduledNoticeService {
       .map(nextRunTime -> createScheduledNotice(request, nextRunTime, cfg, TriggeringEvent.HOLD_EXPIRATION));
   }
 
-  private DateTime determineNextRunTime(DateTime expirationDate, NoticeConfiguration cfg) {
-    return cfg.getTiming() == UPON_AT ?
-      expirationDate :
-      expirationDate.minus(cfg.getTimingPeriod().timePeriod());
+  private ZonedDateTime determineNextRunTime(ZonedDateTime expirationDate, NoticeConfiguration cfg) {
+    return cfg.getTiming() == UPON_AT
+      ? expirationDate
+      : cfg.getTimingPeriod().minusDate(expirationDate);
   }
 
   private ScheduledNotice createScheduledNotice(Request request,
-                                                DateTime nextRunTime,
+                                                ZonedDateTime nextRunTime,
                                                 NoticeConfiguration cfg,
                                                 TriggeringEvent triggeringEvent) {
     return new ScheduledNoticeBuilder()

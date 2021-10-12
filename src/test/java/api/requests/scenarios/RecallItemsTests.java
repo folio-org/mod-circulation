@@ -31,7 +31,7 @@ class RecallItemsTests extends APITests {
       .rolling(Period.weeks(3)).notRenewable().renewFromSystemDate());
 
     val overrideRenewComment = "Override renew";
-    val newDueDate = formatDateTime(ClockUtil.getDateTime().plusMonths(3));
+    val newDueDate = formatDateTime(ClockUtil.getZonedDateTime().plusMonths(3));
 
     val item = itemsFixture.basedUponNod();
     val user = usersFixture.james();

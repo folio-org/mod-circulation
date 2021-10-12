@@ -43,7 +43,7 @@ public class DeclareLostFixtures {
   public Response declareItemLost(UUID loanId) {
     final DeclareItemLostRequestBuilder builder = new DeclareItemLostRequestBuilder()
       .forLoanId(loanId)
-      .on(ClockUtil.getDateTime())
+      .on(ClockUtil.getZonedDateTime())
       //creating "real" servicepoint data here would require a lot of setup code to
       //initialize a ResourceClient, the intialize a service point creator, and
       //so on.  As this is a convenience function that's only used when the loan

@@ -13,13 +13,13 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getObjectPr
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 
 import java.math.BigDecimal;
+import java.time.ZonedDateTime;
 
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.domain.policy.Policy;
 import org.folio.circulation.domain.policy.lostitem.itemfee.ActualCostFee;
 import org.folio.circulation.domain.policy.lostitem.itemfee.AutomaticallyChargeableFee;
 import org.folio.circulation.domain.policy.lostitem.itemfee.ChargeableFee;
-import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
 
@@ -133,7 +133,7 @@ public class LostItemPolicy extends Policy {
     return actualCostFee;
   }
 
-  public boolean shouldRefundFees(DateTime lostDateTime) {
+  public boolean shouldRefundFees(ZonedDateTime lostDateTime) {
     return feeRefundInterval.hasZeroDuration()
       || feeRefundInterval.hasNotPassedSinceDateTillNow(lostDateTime)
       || feeRefundInterval.isEqualToDateTillNow(lostDateTime);
@@ -152,7 +152,7 @@ public class LostItemPolicy extends Policy {
     return getActualCostFee().isChargeable();
   }
 
-  public boolean canAgeLoanToLost(boolean isRecalled, DateTime loanDueDate) {
+  public boolean canAgeLoanToLost(boolean isRecalled, ZonedDateTime loanDueDate) {
     if (actualCostFee.isChargeable() && !ageToLostProcessingFee.isChargeable()) {
       // actual cost is not supported now
       return false;
@@ -168,14 +168,14 @@ public class LostItemPolicy extends Policy {
     return periodShouldPassSinceOverdue.hasPassedSinceDateTillNow(loanDueDate);
   }
 
-  public DateTime calculateDateTimeWhenPatronBilledForAgedToLost(
-    boolean isRecalled, DateTime ageToLostDate) {
+  public ZonedDateTime calculateDateTimeWhenPatronBilledForAgedToLost(
+    boolean isRecalled, ZonedDateTime ageToLostDate) {
 
     final Period billAfterPeriod = isRecalled
       ? patronBilledAfterRecalledItemAgedToLostInterval
       : patronBilledAfterItemAgedToLostInterval;
 
-    return ageToLostDate.plus(billAfterPeriod.timePeriod());
+    return billAfterPeriod.plusDate(ageToLostDate);
   }
 
   public AutomaticallyChargeableFee getAgeToLostProcessingFee() {

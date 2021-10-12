@@ -1,18 +1,18 @@
 package org.folio.circulation.domain.representations;
 
+import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.results.Result.succeeded;
-import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
+
+import java.time.ZonedDateTime;
 
 import org.apache.commons.lang3.StringUtils;
+import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-
-import org.folio.circulation.support.results.Result;
-import org.joda.time.DateTime;
 
 @Getter
 @AllArgsConstructor
@@ -21,7 +21,7 @@ public class DeclareItemLostRequest {
   private static final String SERVICE_POINT_ID = "servicePointId";
 
   private final String loanId;
-  private final DateTime declaredLostDateTime;
+  private final ZonedDateTime declaredLostDateTime;
   private final String comment;
   private final String servicePointId;
 
@@ -35,7 +35,7 @@ public class DeclareItemLostRequest {
       return failedValidation("A service point is required for item to be declared lost", SERVICE_POINT_ID, servicePointId);
     }
 
-    final DateTime dateTime;
+    final ZonedDateTime dateTime;
     try {
       dateTime = getDateTimeProperty(json, DECLARED_LOST_DATETIME);
     } catch (Exception e) {

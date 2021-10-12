@@ -13,6 +13,7 @@ import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfPublishedEvents;
 import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfSentNotices;
+import static java.time.ZoneOffset.UTC;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.function.Function.identity;
 import static org.folio.HttpStatus.HTTP_NO_CONTENT;
@@ -34,10 +35,10 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.core.Is.is;
-import static org.joda.time.DateTimeZone.UTC;
 
 import java.net.HttpURLConnection;
 import java.time.LocalDate;
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -50,8 +51,6 @@ import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.utils.ClockUtil;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matcher;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
@@ -80,7 +79,7 @@ class RequestsAPIUpdatingTests extends APITests {
 
     final IndividualResource steve = usersFixture.steve();
 
-    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, UTC);
+    ZonedDateTime requestDate = ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC);
 
     final IndividualResource exampleServicePoint = servicePointsFixture.cd1();
 
@@ -176,7 +175,7 @@ class RequestsAPIUpdatingTests extends APITests {
           "Fake postal code",
           "Fake country code")));
 
-    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, UTC);
+    ZonedDateTime requestDate = ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC);
 
     final IndividualResource exampleServicePoint = servicePointsFixture.cd1();
 
@@ -487,7 +486,7 @@ class RequestsAPIUpdatingTests extends APITests {
 
     final ItemResource temeraire = itemsFixture.basedUponTemeraire();
     final IndividualResource requester = usersFixture.steve();
-    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+    ZonedDateTime requestDate = ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC);
     final IndividualResource exampleServicePoint = servicePointsFixture.cd1();
     IndividualResource createdRequest = requestsClient.create(
       new RequestBuilder()
@@ -544,7 +543,7 @@ class RequestsAPIUpdatingTests extends APITests {
 
     final ItemResource temeraire = itemsFixture.basedUponTemeraire();
     final IndividualResource requester = usersFixture.steve();
-    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+    ZonedDateTime requestDate = ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC);
     final IndividualResource exampleServicePoint = servicePointsFixture.cd1();
     IndividualResource createdRequest = requestsClient.create(
       new RequestBuilder()
@@ -594,7 +593,7 @@ class RequestsAPIUpdatingTests extends APITests {
 
     proxyRelationshipsFixture.currentProxyFor(steve, charlotte);
 
-    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, UTC);
+    ZonedDateTime requestDate = ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC);
 
     final IndividualResource exampleServicePoint = servicePointsFixture.cd1();
 
@@ -656,7 +655,7 @@ class RequestsAPIUpdatingTests extends APITests {
 
     final IndividualResource steve = usersFixture.steve();
 
-    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, UTC);
+    ZonedDateTime requestDate = ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC);
 
     final IndividualResource exampleServicePoint = servicePointsFixture.cd1();
 
@@ -730,7 +729,7 @@ class RequestsAPIUpdatingTests extends APITests {
 
     final IndividualResource steve = usersFixture.steve();
 
-    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, UTC);
+    ZonedDateTime requestDate = ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC);
 
     final IndividualResource exampleServicePoint = servicePointsFixture.cd1();
 
@@ -791,7 +790,7 @@ class RequestsAPIUpdatingTests extends APITests {
 
     final IndividualResource createdRequest = requestsClient.create(new RequestBuilder()
       .page()
-      .withRequestDate(ClockUtil.getDateTime())
+      .withRequestDate(ClockUtil.getZonedDateTime())
       .forItem(temeraire)
       .by(steve)
       .fulfilToHoldShelf()

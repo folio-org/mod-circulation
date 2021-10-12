@@ -1,9 +1,9 @@
 package api.support.fixtures;
 
-import java.util.UUID;
+import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 
-import org.folio.circulation.support.utils.ClockUtil;
-import org.joda.time.DateTime;
+import java.time.ZonedDateTime;
+import java.util.UUID;
 
 import api.support.builders.ProxyRelationshipBuilder;
 import api.support.http.IndividualResource;
@@ -35,27 +35,27 @@ public class ProxyRelationshipsFixture {
       .sponsor(sponsor.getId())
       .proxy(proxy.getId())
       .inactive()
-      .expires(ClockUtil.getDateTime().plusYears(1)));
+      .expires(getZonedDateTime().plusYears(1)));
   }
 
   public void currentProxyFor(
     IndividualResource sponsor,
     IndividualResource proxy) {
 
-    proxyFor(sponsor.getId(), proxy.getId(), ClockUtil.getDateTime().plusYears(1));
+    proxyFor(sponsor.getId(), proxy.getId(), getZonedDateTime().plusYears(1));
   }
 
   public void expiredProxyFor(
     IndividualResource sponsor,
     IndividualResource proxy) {
 
-    proxyFor(sponsor.getId(), proxy.getId(), ClockUtil.getDateTime().minusYears(1));
+    proxyFor(sponsor.getId(), proxy.getId(), getZonedDateTime().minusYears(1));
   }
 
   private void proxyFor(
     UUID sponsorUserId,
     UUID proxyUserId,
-    DateTime expirationDate) {
+    ZonedDateTime expirationDate) {
 
     proxyRelationshipsClient.create(new ProxyRelationshipBuilder()
       .sponsor(sponsorUserId)

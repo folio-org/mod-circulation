@@ -15,8 +15,8 @@ import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
-import static org.joda.time.Seconds.secondsBetween;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -46,7 +46,8 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.results.CommonFailures;
 import org.folio.circulation.support.results.Result;
-import org.joda.time.DateTime;
+import org.folio.circulation.support.utils.ClockUtil;
+import org.folio.circulation.support.utils.DateTimeUtil;
 
 public class LostItemFeeRefundService {
   private static final Logger log = LogManager.getLogger(LostItemFeeRefundService.class);
@@ -229,7 +230,7 @@ public class LostItemFeeRefundService {
   private List<Account> findRefundableAccounts(Account latestAccount, Collection<Account> accounts) {
     List<Account> filteredList = new ArrayList<>();
     filteredList.add(latestAccount);
-    DateTime creationDate = latestAccount.getCreationDate();
+    ZonedDateTime creationDate = latestAccount.getCreationDate();
     List<String> feeFineTypeForSearch = List.of(
       LOST_ITEM_FEE_TYPE.equals(latestAccount.getFeeFineType())
         ? LOST_ITEM_PROCESSING_FEE_TYPE
@@ -250,9 +251,8 @@ public class LostItemFeeRefundService {
       && latestLostItemFeeAccount.getCreationDate() != null;
   }
 
-  private boolean isDifferenceOneMinuteOrLess(DateTime latestFeeFineDate, DateTime associatedFeeFineDate) {
-    return secondsBetween(latestFeeFineDate, associatedFeeFineDate)
-      .getSeconds() <= MAX_TIME_DIFFERENCE_FOR_ASSOCIATED_ACCOUNTS;
+  private boolean isDifferenceOneMinuteOrLess(ZonedDateTime latestFeeFineDate, ZonedDateTime associatedFeeFineDate) {
+    return DateTimeUtil.getSecondsBetween(latestFeeFineDate, associatedFeeFineDate) <= MAX_TIME_DIFFERENCE_FOR_ASSOCIATED_ACCOUNTS;
   }
 
   private Optional<Account> getLatestAccount(Collection<Account> accounts,

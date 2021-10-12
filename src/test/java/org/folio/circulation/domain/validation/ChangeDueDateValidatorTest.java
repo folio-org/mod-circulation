@@ -2,10 +2,12 @@ package org.folio.circulation.domain.validation;
 
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.succeeded;
+import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.time.ZonedDateTime;
 import java.util.UUID;
 
 import org.folio.circulation.domain.Item;
@@ -14,8 +16,6 @@ import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.results.Result;
-import org.folio.circulation.support.utils.ClockUtil;
-import org.joda.time.DateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -53,7 +53,7 @@ class ChangeDueDateValidatorTest {
     "Aged to lost"
   })
   void canChangeLoanWhenDueDateIsNotChanged(String itemStatus) {
-    val existingLoan = createLoan(itemStatus, ClockUtil.getDateTime());
+    val existingLoan = createLoan(itemStatus, getZonedDateTime());
 
     changeDueDateValidator = new ChangeDueDateValidator();
 
@@ -68,8 +68,8 @@ class ChangeDueDateValidatorTest {
   }
 
   private Result<LoanAndRelatedRecords> loanAndRelatedRecords(String itemStatus) {
-    val loan = createLoan(itemStatus, ClockUtil.getDateTime());
-    val existingLoan = createLoan(itemStatus, ClockUtil.getDateTime().minusDays(1));
+    val loan = createLoan(itemStatus, getZonedDateTime());
+    val existingLoan = createLoan(itemStatus, getZonedDateTime().minusDays(1));
     return succeeded(new LoanAndRelatedRecords(loan, existingLoan));
   }
 
@@ -77,7 +77,7 @@ class ChangeDueDateValidatorTest {
     return succeeded(new LoanAndRelatedRecords(loan));
   }
 
-  private Loan createLoan(String itemStatus, DateTime dueDate) {
+  private Loan createLoan(String itemStatus, ZonedDateTime dueDate) {
     final JsonObject loanRepresentation = new JsonObject()
       .put("id", UUID.randomUUID().toString())
       .put("dueDate", dueDate.toString());

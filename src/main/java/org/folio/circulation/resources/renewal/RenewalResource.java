@@ -40,6 +40,7 @@ import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 import static org.folio.circulation.support.utils.DateTimeUtil.isAfterMillis;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -91,7 +92,6 @@ import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.utils.ClockUtil;
-import org.joda.time.DateTime;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
@@ -289,7 +289,7 @@ public abstract class RenewalResource extends Resource {
         .thenApply(r -> errorHandler.handleValidationResult(r, RENEWAL_VALIDATION_ERROR,
           renewalContext));
     }
-    DateTime systemTime = ClockUtil.getDateTime();
+    ZonedDateTime systemTime = ClockUtil.getZonedDateTime();
     final ClosedLibraryStrategyService strategyService = ClosedLibraryStrategyService.using(
       clients, systemTime, true);
 
@@ -355,7 +355,7 @@ public abstract class RenewalResource extends Resource {
       return completedFuture(failedValidation("Override renewal request must have a comment",
         COMMENT, null));
     }
-    final DateTime overrideDueDate = getDateTimeProperty(overrideBlocks.getJsonObject(
+    final ZonedDateTime overrideDueDate = getDateTimeProperty(overrideBlocks.getJsonObject(
       RENEWAL_DUE_DATE_REQUIRED_OVERRIDE_BLOCK), DUE_DATE);
 
     Loan loan = context.getLoan();
@@ -364,13 +364,13 @@ public abstract class RenewalResource extends Resource {
         .map(r -> r.getRequestType() == RequestType.RECALL)
         .orElse(false);
 
-    return completedFuture(overrideRenewal(loan, ClockUtil.getDateTime(),
+    return completedFuture(overrideRenewal(loan, ClockUtil.getZonedDateTime(),
       overrideDueDate, comment, hasRecallRequest))
       .thenApply(mapResult(context::withLoan));
   }
 
-  private Result<Loan> overrideRenewal(Loan loan, DateTime systemDate,
-    DateTime overrideDueDate, String comment, boolean hasRecallRequest) {
+  private Result<Loan> overrideRenewal(Loan loan, ZonedDateTime systemDate,
+    ZonedDateTime overrideDueDate, String comment, boolean hasRecallRequest) {
 
     try {
       final LoanPolicy loanPolicy = loan.getLoanPolicy();
@@ -383,7 +383,7 @@ public abstract class RenewalResource extends Resource {
         return overrideRenewalForDueDate(loan, overrideDueDate, comment);
       }
 
-      final Result<DateTime> newDueDateResult = calculateNewDueDate(overrideDueDate, loan, systemDate);
+      final Result<ZonedDateTime> newDueDateResult = calculateNewDueDate(overrideDueDate, loan, systemDate);
 
       if (loanPolicy.hasReachedRenewalLimit(loan)) {
         return processRenewal(newDueDateResult, loan, comment);
@@ -408,20 +408,20 @@ public abstract class RenewalResource extends Resource {
     }
   }
 
-  private Result<Loan> overrideRenewalForDueDate(Loan loan, DateTime overrideDueDate, String comment) {
+  private Result<Loan> overrideRenewalForDueDate(Loan loan, ZonedDateTime overrideDueDate, String comment) {
     if (overrideDueDate == null) {
       return failedValidation(errorForDueDate());
     }
     return succeeded(overrideRenewLoan(overrideDueDate, loan, comment));
   }
 
-  private Result<Loan> processRenewal(Result<DateTime> calculatedDueDate, Loan loan, String comment) {
+  private Result<Loan> processRenewal(Result<ZonedDateTime> calculatedDueDate, Loan loan, String comment) {
     return calculatedDueDate
       .next(dueDate -> errorWhenEarlierOrSameDueDate(loan, dueDate))
       .map(dueDate -> overrideRenewLoan(dueDate, loan, comment));
   }
 
-  private Loan overrideRenewLoan(DateTime dueDate, Loan loan, String comment) {
+  private Loan overrideRenewLoan(ZonedDateTime dueDate, Loan loan, String comment) {
     if (loan.isAgedToLost()) {
       loan.removeAgedToLostBillingInfo();
     }
@@ -430,8 +430,8 @@ public abstract class RenewalResource extends Resource {
       .changeItemStatusForItemAndLoan(CHECKED_OUT);
   }
 
-  private Result<DateTime> calculateNewDueDate(DateTime overrideDueDate, Loan loan, DateTime systemDate) {
-    final Result<DateTime> proposedDateTimeResult = calculateProposedDueDate(loan, systemDate);
+  private Result<ZonedDateTime> calculateNewDueDate(ZonedDateTime overrideDueDate, Loan loan, ZonedDateTime systemDate) {
+    final Result<ZonedDateTime> proposedDateTimeResult = calculateProposedDueDate(loan, systemDate);
 
     if (newDueDateAfterCurrentDueDate(loan, proposedDateTimeResult)) {
       return proposedDateTimeResult;
@@ -444,26 +444,26 @@ public abstract class RenewalResource extends Resource {
     return succeeded(overrideDueDate);
   }
 
-  private Result<DateTime> calculateProposedDueDate(Loan loan, DateTime systemDate) {
+  private Result<ZonedDateTime> calculateProposedDueDate(Loan loan, ZonedDateTime systemDate) {
     return loan.getLoanPolicy()
       .determineStrategy(null, true, false, systemDate).calculateDueDate(loan);
   }
 
-  private boolean newDueDateAfterCurrentDueDate(Loan loan, Result<DateTime> proposedDueDateResult) {
+  private boolean newDueDateAfterCurrentDueDate(Loan loan, Result<ZonedDateTime> proposedDueDateResult) {
     return proposedDueDateResult.map(proposedDueDate -> isAfterMillis(proposedDueDate, loan.getDueDate()))
       .orElse(false);
   }
 
-  private boolean unableToCalculateProposedDueDate(Loan loan, DateTime systemDate) {
+  private boolean unableToCalculateProposedDueDate(Loan loan, ZonedDateTime systemDate) {
     return calculateProposedDueDate(loan, systemDate).failed();
   }
 
-  private boolean proposedDueDateIsSameOrEarlier(Loan loan, DateTime systemDate) {
+  private boolean proposedDueDateIsSameOrEarlier(Loan loan, ZonedDateTime systemDate) {
     return !newDueDateAfterCurrentDueDate(loan, calculateProposedDueDate(loan, systemDate));
   }
 
   public Result<RenewalContext> regularRenew(RenewalContext context,
-    CirculationErrorHandler errorHandler, DateTime renewDate) {
+    CirculationErrorHandler errorHandler, ZonedDateTime renewDate) {
 
     return validateIfRenewIsAllowed(context, false)
       .mapFailure(failure -> errorHandler.handleValidationError(failure,
@@ -513,12 +513,12 @@ public abstract class RenewalResource extends Resource {
     return succeeded(context);
   }
 
-  private Result<RenewalContext> renew(RenewalContext context, DateTime renewDate) {
+  private Result<RenewalContext> renew(RenewalContext context, ZonedDateTime renewDate) {
     final var loan = context.getLoan();
     final var requestQueue = context.getRequestQueue();
     final var loanPolicy = loan.getLoanPolicy();
 
-    final Result<DateTime> proposedDueDateResult = calculateNewDueDate(loan, requestQueue,
+    final Result<ZonedDateTime> proposedDueDateResult = calculateNewDueDate(loan, requestQueue,
       renewDate);
     final List<ValidationError> errors = new ArrayList<>();
     addErrorsIfDueDateResultFailed(loan, errors, proposedDueDateResult);
@@ -543,7 +543,7 @@ public abstract class RenewalResource extends Resource {
   }
 
   private void addErrorsIfDueDateResultFailed(Loan loan, List<ValidationError> errors,
-    Result<DateTime> proposedDueDateResult) {
+    Result<ZonedDateTime> proposedDueDateResult) {
 
     if (proposedDueDateResult.failed()) {
       if (proposedDueDateResult.cause() instanceof ValidationErrorFailure) {
@@ -556,8 +556,8 @@ public abstract class RenewalResource extends Resource {
     }
   }
 
-  private Result<DateTime> calculateNewDueDate(Loan loan, RequestQueue requestQueue,
-    DateTime systemDate) {
+  private Result<ZonedDateTime> calculateNewDueDate(Loan loan, RequestQueue requestQueue,
+    ZonedDateTime systemDate) {
 
     final var loanPolicy = loan.getLoanPolicy();
     final var isRenewalWithHoldRequest = isHold(getFirstRequestInQueue(requestQueue));

@@ -12,18 +12,18 @@ import static java.net.HttpURLConnection.HTTP_OK;
 import static java.util.function.Function.identity;
 
 import java.net.URL;
+import java.time.ZonedDateTime;
 import java.util.UUID;
 
 import org.folio.circulation.domain.MultipleRecords;
-import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
-import org.joda.time.DateTime;
 
 import api.support.MultipleJsonRecords;
 import api.support.RestAssuredClient;
 import api.support.builders.MoveRequestBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.http.CqlQuery;
+import api.support.http.IndividualResource;
 import api.support.http.Limit;
 import api.support.http.Offset;
 import api.support.http.ResourceClient;
@@ -56,7 +56,7 @@ public class RequestsFixture {
   }
 
   public IndividualResource placeHoldShelfRequest(IndividualResource item,
-      IndividualResource by, DateTime on) {
+      IndividualResource by, ZonedDateTime on) {
 
     return place(new RequestBuilder()
       .hold()
@@ -68,7 +68,7 @@ public class RequestsFixture {
   }
 
   public IndividualResource placeDeliveryRequest(IndividualResource item,
-      IndividualResource by, DateTime on) {
+      IndividualResource by, ZonedDateTime on) {
 
     return place(new RequestBuilder()
       .hold()
@@ -79,7 +79,7 @@ public class RequestsFixture {
   }
 
   public IndividualResource placeHoldShelfRequest(IndividualResource item,
-      IndividualResource by, DateTime on, UUID pickupServicePointId) {
+      IndividualResource by, ZonedDateTime on, UUID pickupServicePointId) {
 
     return place(new RequestBuilder()
         .hold()
@@ -91,7 +91,7 @@ public class RequestsFixture {
   }
 
   public IndividualResource placeHoldShelfRequest(IndividualResource item,
-      IndividualResource by, DateTime on, UUID pickupServicePointId, String type) {
+      IndividualResource by, ZonedDateTime on, UUID pickupServicePointId, String type) {
 
     return place(new RequestBuilder()
         .hold()
@@ -104,7 +104,7 @@ public class RequestsFixture {
   }
 
   public IndividualResource placeHoldShelfRequest(IndividualResource item,
-      IndividualResource by, DateTime on, String type) {
+      IndividualResource by, ZonedDateTime on, String type) {
 
     return place(new RequestBuilder()
       .withRequestType(type)
@@ -115,7 +115,7 @@ public class RequestsFixture {
   }
 
   public Response attemptPlaceHoldShelfRequest(IndividualResource item,
-      IndividualResource by, DateTime on, UUID pickupServicePointId, String type) {
+      IndividualResource by, ZonedDateTime on, UUID pickupServicePointId, String type) {
 
     return attemptPlace(new RequestBuilder()
         .hold()

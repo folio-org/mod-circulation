@@ -4,6 +4,7 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.folio.circulation.domain.ItemStatus.AGED_TO_LOST;
 import static org.folio.circulation.domain.policy.Period.days;
+import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -22,7 +23,6 @@ import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
 import org.folio.circulation.resources.handlers.error.OverridingErrorHandler;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.results.Result;
-import org.folio.circulation.support.utils.ClockUtil;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -57,8 +57,8 @@ class RegularRenewalTest {
   @Test
   void canRenewLoan() {
     final var rollingPeriod = days(10);
-    final var currentDueDate = ClockUtil.getDateTime();
-    final var expectedDueDate = currentDueDate.plus(rollingPeriod.timePeriod());
+    final var currentDueDate = getZonedDateTime();
+    final var expectedDueDate = rollingPeriod.plusDate(currentDueDate);
 
     final var loanPolicy = new LoanPolicyBuilder().rolling(rollingPeriod)
       .renewFromCurrentDueDate().asDomainObject();
@@ -70,8 +70,7 @@ class RegularRenewalTest {
     final var resultCompletableFuture = renew(loan, new OverridingErrorHandler(null));
 
     assertThat(resultCompletableFuture.succeeded(), is(true));
-    assertThat(resultCompletableFuture.value().getDueDate().getMillis(),
-      is(expectedDueDate.getMillis()));
+    assertThat(resultCompletableFuture.value().getDueDate(), is(expectedDueDate));
   }
 
   @Test
@@ -222,7 +221,7 @@ class RegularRenewalTest {
       .asDomainObject();
 
     final var loan = new LoanBuilder().asDomainObject()
-      .changeDueDate(ClockUtil.getDateTime().plusMinutes(rollingPeriod.toMinutes() * 2))
+      .changeDueDate(getZonedDateTime().plusMinutes(rollingPeriod.toMinutes() * 2))
       .withLoanPolicy(loanPolicy);
 
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
@@ -260,7 +259,7 @@ class RegularRenewalTest {
       .withRequestQueue(new RequestQueue(singletonList(topRequest)));
 
     return new RenewByBarcodeResource(null)
-      .regularRenew(renewalContext, errorHandler, ClockUtil.getDateTime())
+      .regularRenew(renewalContext, errorHandler, getZonedDateTime())
       .map(RenewalContext::getLoan);
   }
 
@@ -269,7 +268,7 @@ class RegularRenewalTest {
       .withRequestQueue(new RequestQueue(emptyList()));
 
     return new RenewByBarcodeResource(null)
-      .regularRenew(renewalContext, errorHandler, ClockUtil.getDateTime())
+      .regularRenew(renewalContext, errorHandler, getZonedDateTime())
       .map(RenewalContext::getLoan);
   }
 

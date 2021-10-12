@@ -26,6 +26,7 @@ import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
+import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTimeOptional;
 
 import java.util.concurrent.CompletableFuture;
@@ -52,7 +53,6 @@ import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.results.Result;
-import org.folio.circulation.support.utils.ClockUtil;
 
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
@@ -308,7 +308,7 @@ public class EventPublisher {
   public CompletableFuture<Result<Void>> publishNoticeLogEvent(NoticeLogContext noticeLogContext,
     LogEventType eventType) {
 
-    return publishLogRecord(noticeLogContext.withDate(ClockUtil.getDateTime()).asJson(), eventType);
+    return publishLogRecord(noticeLogContext.withDate(getZonedDateTime()).asJson(), eventType);
   }
 
   public CompletableFuture<Result<Void>> publishNoticeErrorLogEvent(

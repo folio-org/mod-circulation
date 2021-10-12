@@ -4,23 +4,23 @@ import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyU
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.succeeded;
 
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Objects;
 
 import org.folio.circulation.AdjacentOpeningDays;
 import org.folio.circulation.support.results.Result;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 
 public abstract class ShortTermLoansBaseStrategy implements ClosedLibraryStrategy {
 
-  protected final DateTimeZone zone;
+  protected final ZoneId zone;
 
-  protected ShortTermLoansBaseStrategy(DateTimeZone zone) {
+  protected ShortTermLoansBaseStrategy(ZoneId zone) {
     this.zone = zone;
   }
 
   @Override
-  public Result<DateTime> calculateDueDate(DateTime requestedDate, AdjacentOpeningDays openingDays) {
+  public Result<ZonedDateTime> calculateDueDate(ZonedDateTime requestedDate, AdjacentOpeningDays openingDays) {
     Objects.requireNonNull(openingDays);
     LibraryTimetable libraryTimetable =
       LibraryTimetableConverter.convertToLibraryTimetable(openingDays, zone);
@@ -35,6 +35,6 @@ public abstract class ShortTermLoansBaseStrategy implements ClosedLibraryStrateg
     return calculateIfClosed(libraryTimetable, requestedInterval);
   }
 
-  protected abstract Result<DateTime> calculateIfClosed(
+  protected abstract Result<ZonedDateTime> calculateIfClosed(
     LibraryTimetable libraryTimetable, LibraryInterval requestedInterval);
 }

@@ -10,6 +10,7 @@ import static org.folio.circulation.support.results.MappingFunctions.when;
 import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.results.Result.succeeded;
 
+import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -19,7 +20,6 @@ import org.folio.circulation.domain.representations.ItemSummaryRepresentation;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.results.Result;
-import org.joda.time.DateTime;
 
 public class UpdateItem {
   private final CollectionResourceClient itemsStorageClient;
@@ -29,14 +29,14 @@ public class UpdateItem {
   }
 
   public CompletableFuture<Result<Item>> onCheckIn(Item item, RequestQueue requestQueue,
-      UUID checkInServicePointId, String loggedInUserId, DateTime dateTime) {
+      UUID checkInServicePointId, String loggedInUserId, ZonedDateTime dateTime) {
     return changeItemOnCheckIn(item, requestQueue, checkInServicePointId)
       .next(addLastCheckInProperties(checkInServicePointId, loggedInUserId, dateTime))
       .after(this::storeItem);
   }
 
   private Function<Item, Result<Item>> addLastCheckInProperties(
-      UUID checkInServicePointId, String loggedInUserId, DateTime dateTime) {
+      UUID checkInServicePointId, String loggedInUserId, ZonedDateTime dateTime) {
     return item -> succeeded(item.withLastCheckIn(
       new LastCheckIn(dateTime, checkInServicePointId, loggedInUserId)));
   }

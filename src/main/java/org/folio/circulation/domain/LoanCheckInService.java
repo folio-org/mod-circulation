@@ -6,14 +6,15 @@ import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.results.Result.succeeded;
 
+import java.time.ZonedDateTime;
+
 import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
-import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.ServerErrorFailure;
-import org.joda.time.DateTime;
+import org.folio.circulation.support.results.Result;
 
 public class LoanCheckInService {
 
-  public Result<Loan> checkIn(Loan loan, DateTime systemDateTime,
+  public Result<Loan> checkIn(Loan loan, ZonedDateTime systemDateTime,
     CheckInByBarcodeRequest request) {
 
     if (loan == null) {

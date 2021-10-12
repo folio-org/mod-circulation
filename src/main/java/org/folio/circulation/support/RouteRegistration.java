@@ -1,12 +1,13 @@
 package org.folio.circulation.support;
 
+import org.apache.commons.lang3.StringUtils;
+import org.folio.circulation.support.http.server.ServerErrorResponse;
+
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
-import org.apache.commons.lang3.StringUtils;
-import org.folio.circulation.support.http.server.ServerErrorResponse;
 
 public class RouteRegistration {
   private final String rootPath;

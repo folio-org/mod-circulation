@@ -6,20 +6,20 @@ import static api.support.APITestContext.undeployVerticles;
 import static api.support.fakes.LoanHistoryProcessor.setLoanHistoryEnabled;
 import static api.support.http.ResourceClient.forLoanHistoryStorage;
 import static api.support.http.ResourceClient.forTenantStorage;
+import static java.time.ZoneOffset.UTC;
 import static org.folio.circulation.domain.representations.LoanProperties.PATRON_GROUP_AT_CHECKOUT;
+import static org.folio.circulation.support.utils.ClockUtil.setClock;
+import static org.folio.circulation.support.utils.ClockUtil.setDefaultClock;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 
 import java.time.Clock;
-import java.time.Instant;
-import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-import org.folio.circulation.support.utils.ClockUtil;
-import org.joda.time.DateTime;
 import org.junit.Assert;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -380,12 +380,11 @@ public abstract class APITests {
       resource), resource.getValue(property), is(nullValue()));
   }
 
-  protected void mockClockManagerToReturnFixedDateTime(DateTime dateTime) {
-    ClockUtil.setClock(Clock.fixed(Instant.ofEpochMilli(dateTime.getMillis()),
-      ZoneOffset.UTC));
+  protected void mockClockManagerToReturnFixedDateTime(ZonedDateTime dateTime) {
+    setClock(Clock.fixed(dateTime.toInstant(), UTC));
   }
 
   protected void mockClockManagerToReturnDefaultDateTime() {
-    ClockUtil.setDefaultClock();
+    setDefaultClock();
   }
 }

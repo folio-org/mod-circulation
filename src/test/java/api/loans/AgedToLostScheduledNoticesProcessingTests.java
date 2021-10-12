@@ -32,6 +32,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.iterableWithSize;
 
+import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -45,7 +46,6 @@ import org.folio.circulation.domain.Account;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.utils.ClockUtil;
 import org.hamcrest.Matcher;
-import org.joda.time.DateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -120,8 +120,8 @@ class AgedToLostScheduledNoticesProcessingTests extends APITests {
             .create()
           )));
 
-    final DateTime runTimeOfUponAtNotice = getAgedToLostDate(agedToLostLoan);
-    final DateTime runTimeOfAfterNotices = runTimeOfUponAtNotice.plus(TIMING_PERIOD.timePeriod());
+    final ZonedDateTime runTimeOfUponAtNotice = getAgedToLostDate(agedToLostLoan);
+    final ZonedDateTime runTimeOfAfterNotices = TIMING_PERIOD.plusDate(runTimeOfUponAtNotice);
 
     final UUID loanId = agedToLostLoan.getLoanId();
 
@@ -156,7 +156,7 @@ class AgedToLostScheduledNoticesProcessingTests extends APITests {
     assertThat(scheduledNoticesClient.getAll(), allOf(
       iterableWithSize(1),
       hasItem(
-        hasScheduledLoanNotice(loanId, runTimeOfAfterNotices.plus(RECURRENCE_PERIOD.timePeriod()),
+        hasScheduledLoanNotice(loanId, RECURRENCE_PERIOD.plusDate(runTimeOfAfterNotices),
           AFTER.getRepresentation(), AFTER_RECURRING_TEMPLATE_ID, RECURRENCE_PERIOD, true)
       )));
 
@@ -170,7 +170,7 @@ class AgedToLostScheduledNoticesProcessingTests extends APITests {
 
     // third run, loan is now closed so recurring notice should be deleted without sending
     scheduledNoticeProcessingClient.runLoanNoticesProcessing(
-      runTimeOfAfterNotices.plus(RECURRENCE_PERIOD.timePeriod()).plusMinutes(1));
+      RECURRENCE_PERIOD.plusDate(runTimeOfAfterNotices).plusMinutes(1));
 
     verifyNumberOfSentNotices(3);
     verifyNumberOfScheduledNotices(0);
@@ -193,8 +193,7 @@ class AgedToLostScheduledNoticesProcessingTests extends APITests {
             .create()
         )));
 
-    final DateTime firstRunTime = getAgedToLostDate(agedToLostLoan).plus(TIMING_PERIOD.timePeriod());
-
+    final ZonedDateTime firstRunTime = TIMING_PERIOD.plusDate(getAgedToLostDate(agedToLostLoan));
     final UUID loanId = agedToLostLoan.getLoanId();
 
     assertThat(scheduledNoticesClient.getAll(), allOf(
@@ -210,7 +209,7 @@ class AgedToLostScheduledNoticesProcessingTests extends APITests {
     assertThat(scheduledNoticesClient.getAll(), allOf(
       iterableWithSize(1),
       hasItems(
-        hasScheduledLoanNotice(loanId, firstRunTime.plus(RECURRENCE_PERIOD.timePeriod()),
+        hasScheduledLoanNotice(loanId, RECURRENCE_PERIOD.plusDate(firstRunTime),
           AFTER.getRepresentation(), AFTER_RECURRING_TEMPLATE_ID, RECURRENCE_PERIOD, true)
       )));
 
@@ -218,7 +217,7 @@ class AgedToLostScheduledNoticesProcessingTests extends APITests {
 
     // second run, notice should be deleted without sending
     scheduledNoticeProcessingClient.runLoanNoticesProcessing(
-      firstRunTime.plus(RECURRENCE_PERIOD.timePeriod()).plusMinutes(1));
+      RECURRENCE_PERIOD.plusDate(firstRunTime).plusMinutes(1));
 
     verifyNumberOfSentNotices(1);
     verifyNumberOfScheduledNotices(0);
@@ -231,10 +230,10 @@ class AgedToLostScheduledNoticesProcessingTests extends APITests {
     AgeToLostResult agedToLostLoan = createRecurringAgedToLostNotice();
 
     declareLostFixtures.declareItemLost(agedToLostLoan.getLoan().getJson());
-    final DateTime firstRunTime = getAgedToLostDate(agedToLostLoan).plus(
-      TIMING_PERIOD.timePeriod());
+    final ZonedDateTime firstRunTime = TIMING_PERIOD.plusDate(getAgedToLostDate(agedToLostLoan));
+
     scheduledNoticeProcessingClient.runLoanNoticesProcessing(
-      firstRunTime.plus(RECURRENCE_PERIOD.timePeriod()).plusMinutes(1));
+      RECURRENCE_PERIOD.plusDate(firstRunTime).plusMinutes(1));
 
     verifyNumberOfSentNotices(0);
     verifyNumberOfScheduledNotices(0);
@@ -248,11 +247,11 @@ class AgedToLostScheduledNoticesProcessingTests extends APITests {
 
     claimItemReturnedFixture.claimItemReturned(new ClaimItemReturnedRequestBuilder()
       .forLoan(agedToLostLoan.getLoanId().toString())
-      .withItemClaimedReturnedDate(ClockUtil.getDateTime()));
-    final DateTime firstRunTime = getAgedToLostDate(agedToLostLoan).plus(
-      TIMING_PERIOD.timePeriod());
+      .withItemClaimedReturnedDate(ClockUtil.getZonedDateTime()));
+
+    final ZonedDateTime firstRunTime = TIMING_PERIOD.plusDate(getAgedToLostDate(agedToLostLoan));
     scheduledNoticeProcessingClient.runLoanNoticesProcessing(
-      firstRunTime.plus(RECURRENCE_PERIOD.timePeriod()).plusMinutes(1));
+      RECURRENCE_PERIOD.plusDate(firstRunTime).plusMinutes(1));
 
     verifyNumberOfSentNotices(0);
     verifyNumberOfScheduledNotices(0);
@@ -267,10 +266,10 @@ class AgedToLostScheduledNoticesProcessingTests extends APITests {
     final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(OVERRIDE_RENEWAL_PERMISSION);
     loansFixture.overrideRenewalByBarcode(agedToLostLoan.getItem(), agedToLostLoan.getUser(),
       "Test overriding", agedToLostLoan.getLoan().getJson().getString("dueDate"), okapiHeaders);
-    final DateTime firstRunTime = getAgedToLostDate(agedToLostLoan).plus(
-      TIMING_PERIOD.timePeriod());
+    final ZonedDateTime firstRunTime = TIMING_PERIOD.plusDate(getAgedToLostDate(agedToLostLoan));
+
     scheduledNoticeProcessingClient.runLoanNoticesProcessing(
-      firstRunTime.plus(RECURRENCE_PERIOD.timePeriod()).plusMinutes(1));
+      RECURRENCE_PERIOD.plusDate(firstRunTime).plusMinutes(1));
 
     verifyNumberOfSentNotices(0);
     verifyNumberOfScheduledNotices(0);
@@ -365,10 +364,10 @@ class AgedToLostScheduledNoticesProcessingTests extends APITests {
     final UUID cancelLostItemFeeActionId = getId(cancelLostItemFeeAction);
     final UUID cancelProcessingFeeActionId = getId(cancelProcessingFeeAction);
 
-    final DateTime refundLostItemFeeActionDate = getActionDate(refundLostItemFeeAction);
-    final DateTime refundProcessingFeeActionDate = getActionDate(refundProcessingFeeAction);
-    final DateTime cancelLostItemFeeActionDate = getActionDate(cancelLostItemFeeAction);
-    final DateTime cancelProcessingFeeActionDate = getActionDate(cancelProcessingFeeAction);
+    final ZonedDateTime refundLostItemFeeActionDate = getActionDate(refundLostItemFeeAction);
+    final ZonedDateTime refundProcessingFeeActionDate = getActionDate(refundProcessingFeeAction);
+    final ZonedDateTime cancelLostItemFeeActionDate = getActionDate(cancelLostItemFeeAction);
+    final ZonedDateTime cancelProcessingFeeActionDate = getActionDate(cancelProcessingFeeAction);
 
     verifyNumberOfSentNotices(0);
     assertThat(scheduledNoticesClient.getAll(), allOf(
@@ -388,12 +387,12 @@ class AgedToLostScheduledNoticesProcessingTests extends APITests {
           UPON_AT, null, true)
       )));
 
-    DateTime maxActionDate = Stream.of(
+    ZonedDateTime maxActionDate = Stream.of(
       cancelLostItemFeeActionDate,
       cancelProcessingFeeActionDate,
       refundLostItemFeeActionDate,
       refundProcessingFeeActionDate)
-      .max(DateTime::compareTo)
+      .max(ZonedDateTime::compareTo)
       .orElseThrow();
 
     scheduledNoticeProcessingClient.runFeeFineNoticesProcessing(maxActionDate.plusSeconds(1));
@@ -482,8 +481,8 @@ class AgedToLostScheduledNoticesProcessingTests extends APITests {
     final UUID refundLostItemFeeActionId = getId(lostItemFeeRefundAction);
     final UUID refundProcessingFeeActionId = getId(processingFeeRefundAction);
 
-    final DateTime refundLostItemFeeActionDate = getActionDate(lostItemFeeRefundAction);
-    final DateTime refundProcessingFeeActionDate = getActionDate(processingFeeRefundAction);
+    final ZonedDateTime refundLostItemFeeActionDate = getActionDate(lostItemFeeRefundAction);
+    final ZonedDateTime refundProcessingFeeActionDate = getActionDate(processingFeeRefundAction);
 
     verifyNumberOfSentNotices(0);
     assertThat(scheduledNoticesClient.getAll(), allOf(
@@ -497,8 +496,8 @@ class AgedToLostScheduledNoticesProcessingTests extends APITests {
           UPON_AT, null, true)
       )));
 
-    DateTime maxActionDate = Stream.of(refundLostItemFeeActionDate, refundProcessingFeeActionDate)
-      .max(DateTime::compareTo)
+    ZonedDateTime maxActionDate = Stream.of(refundLostItemFeeActionDate, refundProcessingFeeActionDate)
+      .max(ZonedDateTime::compareTo)
       .orElseThrow();
 
     scheduledNoticeProcessingClient.runFeeFineNoticesProcessing(maxActionDate.plusSeconds(1));
@@ -520,16 +519,16 @@ class AgedToLostScheduledNoticesProcessingTests extends APITests {
       .getFirst();
   }
 
-  private static DateTime getActionDate(JsonObject feeFineAction) {
-    return DateTime.parse(feeFineAction.getString("dateAction"));
+  private static ZonedDateTime getActionDate(JsonObject feeFineAction) {
+    return ZonedDateTime.parse(feeFineAction.getString("dateAction"));
   }
 
   private static UUID getId(JsonObject jsonObject) {
     return UUID.fromString(jsonObject.getString("id"));
   }
 
-  private static DateTime getAgedToLostDate(AgeToLostResult ageToLostResult) {
-    return DateTime.parse(
+  private static ZonedDateTime getAgedToLostDate(AgeToLostResult ageToLostResult) {
+    return ZonedDateTime.parse(
       ageToLostResult.getLoan()
         .getJson()
         .getJsonObject("agedToLostDelayedBilling")

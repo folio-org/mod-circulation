@@ -4,6 +4,7 @@ import static org.folio.circulation.domain.notice.session.PatronActionSessionPro
 import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.PATRON_ACTION_SESSIONS;
 import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.PATRON_ID;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -15,7 +16,6 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.results.Result;
-import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -35,7 +35,7 @@ public class PatronExpiredSessionRepository {
   }
 
   public CompletableFuture<Result<List<ExpiredSession>>> findPatronExpiredSessions(
-    PatronActionType actionType, DateTime sessionInactivityTime) {
+    PatronActionType actionType, ZonedDateTime sessionInactivityTime) {
 
     String path = String.format(PATH_PARAM_WITH_QUERY, actionType.getRepresentation(),
       sessionInactivityTime.toString(), EXPIRED_SESSIONS_LIMIT);

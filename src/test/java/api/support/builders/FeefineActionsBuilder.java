@@ -3,17 +3,17 @@ package api.support.builders;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTimeOptional;
 
+import java.time.ZonedDateTime;
 import java.util.UUID;
 
 import org.folio.circulation.support.utils.ClockUtil;
-import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
 
 public class FeefineActionsBuilder extends JsonBuilder implements Builder {
 
   private String id;
-  private DateTime dateAction = ClockUtil.getDateTime();
+  private ZonedDateTime dateAction = ClockUtil.getZonedDateTime();
   private Double balance;
   private Double actionAmount;
   private String paymentMethod;
@@ -24,7 +24,7 @@ public class FeefineActionsBuilder extends JsonBuilder implements Builder {
   public FeefineActionsBuilder() {
   }
 
-  public FeefineActionsBuilder(DateTime dateAction, Double balance,
+  public FeefineActionsBuilder(ZonedDateTime dateAction, Double balance,
     UUID accountId, Double actionAmount, String paymentMethod, String actionType,
     String createdAt) {
 
@@ -55,7 +55,7 @@ public class FeefineActionsBuilder extends JsonBuilder implements Builder {
     return object;
   }
 
-  public FeefineActionsBuilder withDate(DateTime dateAction) {
+  public FeefineActionsBuilder withDate(ZonedDateTime dateAction) {
     return new FeefineActionsBuilder(dateAction, balance, accountId, actionAmount,
       paymentMethod, actionType, createdAt);
   }

@@ -7,10 +7,10 @@ import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.utils.DateTimeUtil.isAfterMillis;
 import static org.folio.circulation.support.utils.DateTimeUtil.isBeforeMillis;
 import static org.folio.circulation.support.utils.DateTimeUtil.isWithinMillis;
-import static org.joda.time.DateTimeConstants.MINUTES_PER_HOUR;
-import static org.joda.time.DateTimeZone.UTC;
-import static org.joda.time.Minutes.minutesBetween;
 
+import java.time.LocalDate;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -18,9 +18,6 @@ import java.util.concurrent.CompletableFuture;
 import org.folio.circulation.infrastructure.storage.CalendarRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
 import org.folio.circulation.support.results.Result;
-import org.joda.time.DateTime;
-import org.joda.time.LocalDateTime;
-import org.joda.time.Period;
 
 public class OverduePeriodCalculatorService {
   private static final int ZERO_MINUTES = 0;
@@ -35,7 +32,7 @@ public class OverduePeriodCalculatorService {
     this.loanPolicyRepository = loanPolicyRepository;
   }
 
-  public CompletableFuture<Result<Integer>> getMinutes(Loan loan, DateTime systemTime) {
+  public CompletableFuture<Result<Integer>> getMinutes(Loan loan, ZonedDateTime systemTime) {
     final Boolean shouldCountClosedPeriods = loan.getOverdueFinePolicy().getCountPeriodsWhenServicePointIsClosed();
 
     if (preconditionsAreMet(loan, systemTime, shouldCountClosedPeriods)) {
@@ -49,32 +46,32 @@ public class OverduePeriodCalculatorService {
     return completedFuture(succeeded(ZERO_MINUTES));
   }
 
-  boolean preconditionsAreMet(Loan loan, DateTime systemTime, Boolean shouldCountClosedPeriods) {
+  boolean preconditionsAreMet(Loan loan, ZonedDateTime systemTime, Boolean shouldCountClosedPeriods) {
     return shouldCountClosedPeriods != null && loan.isOverdue(systemTime);
   }
 
-  CompletableFuture<Result<Integer>> getOverdueMinutes(Loan loan, DateTime systemTime, boolean shouldCountClosedPeriods) {
+  CompletableFuture<Result<Integer>> getOverdueMinutes(Loan loan, ZonedDateTime systemTime, boolean shouldCountClosedPeriods) {
     return shouldCountClosedPeriods || getItemLocationPrimaryServicePoint(loan) == null
       ? minutesOverdueIncludingClosedPeriods(loan, systemTime)
       : minutesOverdueExcludingClosedPeriods(loan, systemTime);
   }
 
-  private CompletableFuture<Result<Integer>> minutesOverdueIncludingClosedPeriods(Loan loan, DateTime systemTime) {
-    int overdueMinutes = minutesBetween(loan.getDueDate(), systemTime).getMinutes();
+  private CompletableFuture<Result<Integer>> minutesOverdueIncludingClosedPeriods(Loan loan, ZonedDateTime systemTime) {
+    int overdueMinutes = calculateDiffInMinutes(loan.getDueDate(), systemTime);
     return completedFuture(succeeded(overdueMinutes));
   }
 
-  private CompletableFuture<Result<Integer>> minutesOverdueExcludingClosedPeriods(Loan loan, DateTime returnDate) {
-    DateTime dueDate = loan.getDueDate();
+  private CompletableFuture<Result<Integer>> minutesOverdueExcludingClosedPeriods(Loan loan, ZonedDateTime returnDate) {
+    ZonedDateTime dueDate = loan.getDueDate();
     String itemLocationPrimaryServicePoint = getItemLocationPrimaryServicePoint(loan).toString();
     return calendarRepository
       .fetchOpeningDaysBetweenDates(itemLocationPrimaryServicePoint, dueDate, returnDate, false)
       .thenApply(r -> r.next(openingDays -> getOpeningDaysDurationMinutes(
-        openingDays, dueDate.toLocalDateTime(), returnDate.toLocalDateTime())));
+        openingDays, dueDate, returnDate)));
   }
 
   Result<Integer> getOpeningDaysDurationMinutes(
-    Collection<OpeningDay> openingDays, LocalDateTime dueDate, LocalDateTime returnDate) {
+    Collection<OpeningDay> openingDays, ZonedDateTime dueDate, ZonedDateTime returnDate) {
 
     return succeeded(
       openingDays.stream()
@@ -84,9 +81,9 @@ public class OverduePeriodCalculatorService {
   }
 
   private int getOpeningDayDurationMinutes(
-    OpeningDay openingDay, LocalDateTime dueDate, LocalDateTime systemTime) {
+    OpeningDay openingDay, ZonedDateTime dueDate, ZonedDateTime systemTime) {
 
-    DateTime datePart = openingDay.getDayWithTimeZone();
+    ZonedDateTime datePart = openingDay.getDayWithTimeZone();
 
     return openingDay.getOpeningHour()
       .stream()
@@ -96,14 +93,12 @@ public class OverduePeriodCalculatorService {
   }
 
   private int getOpeningHourDurationMinutes(OpeningHour openingHour,
-    DateTime datePart, LocalDateTime dueDate, LocalDateTime returnDate) {
+    ZonedDateTime datePart, ZonedDateTime dueDate, ZonedDateTime returnDate) {
 
     if (allNotNull(datePart, dueDate, openingHour.getStartTime(), openingHour.getEndTime())) {
-
-      LocalDateTime startTime =  datePart.withTime(openingHour.getStartTime())
-        .withZone(UTC).toLocalDateTime();
-      LocalDateTime endTime = datePart.withTime(openingHour.getEndTime())
-        .withZone(UTC).toLocalDateTime();
+      final LocalDate date = datePart.toLocalDate();
+      ZonedDateTime startTime = ZonedDateTime.of(date, openingHour.getStartTime(), datePart.getZone());
+      ZonedDateTime endTime = ZonedDateTime.of(date, openingHour.getEndTime(), datePart.getZone());
 
       if (isWithinMillis(dueDate, startTime, endTime)) {
         startTime = dueDate;
@@ -122,9 +117,11 @@ public class OverduePeriodCalculatorService {
     return ZERO_MINUTES;
   }
 
-  private int calculateDiffInMinutes(LocalDateTime start, LocalDateTime end) {
-    Period period = new Period(start, end);
-    return period.getHours() * MINUTES_PER_HOUR + period.getMinutes();
+  private int calculateDiffInMinutes(ZonedDateTime start, ZonedDateTime end) {
+    long startSeconds = start.truncatedTo(ChronoUnit.MINUTES).toEpochSecond();
+    long endSeconds = end.truncatedTo(ChronoUnit.MINUTES).toEpochSecond();
+
+    return (int) ((endSeconds - startSeconds) / 60);
   }
 
   Result<Integer> adjustOverdueWithGracePeriod(Loan loan, int overdueMinutes) {
@@ -155,7 +152,7 @@ public class OverduePeriodCalculatorService {
     return ignoreGracePeriodForRecalls;
   }
 
-  private int getGracePeriodMinutes(Loan loan) {
+  private long getGracePeriodMinutes(Loan loan) {
     return loan.getLoanPolicy().getGracePeriod().toMinutes();
   }
 

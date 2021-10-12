@@ -2,12 +2,12 @@ package org.folio.circulation.support.json;
 
 import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;
 
-import java.math.BigDecimal;
+
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.UUID;
 
 import org.apache.commons.lang3.StringUtils;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -72,9 +72,9 @@ public class JsonPropertyWriter {
     }
   }
 
-  public static void write(JsonObject to, String propertyName, DateTime value) {
+  public static void write(JsonObject to, String propertyName, ZonedDateTime value) {
     if (value != null) {
-      write(to, propertyName, formatDateTime(value.withZone(DateTimeZone.UTC)));
+      write(to, propertyName, formatDateTime(value.withZoneSameInstant(ZoneOffset.UTC)));
     }
   }
 
@@ -109,7 +109,7 @@ public class JsonPropertyWriter {
     writeByPath(to, JsonPropertyWriter::write, value, paths);
   }
 
-  public static void writeByPath(JsonObject to, DateTime value, String... paths) {
+  public static void writeByPath(JsonObject to, ZonedDateTime value, String... paths) {
     writeByPath(to, JsonPropertyWriter::write, value, paths);
   }
 
