@@ -1507,7 +1507,8 @@
         "scheduled-notice-storage.scheduled-notices.item.post",
         "accounts.refund.post",
         "accounts.cancel.post",
-        "configuration.entries.collection.get"
+        "configuration.entries.collection.get",
+        "calendar.opening-hours.collection.get"
       ],
       "visible": false
     },
