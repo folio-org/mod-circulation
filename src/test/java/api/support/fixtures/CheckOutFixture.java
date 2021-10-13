@@ -3,10 +3,10 @@ package api.support.fixtures;
 import static api.support.APITestContext.getOkapiHeadersFromContext;
 import static api.support.http.InterfaceUrls.checkOutByBarcodeUrl;
 
+import java.time.ZonedDateTime;
 import java.util.UUID;
 
 import org.folio.circulation.support.http.client.Response;
-import org.joda.time.DateTime;
 
 import api.support.RestAssuredClient;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
@@ -38,7 +38,7 @@ public class CheckOutFixture {
   }
 
   public CheckOutResource checkOutByBarcode(IndividualResource item,
-    IndividualResource to, DateTime loanDate) {
+    IndividualResource to, ZonedDateTime loanDate) {
 
     return checkOutByBarcode(new CheckOutByBarcodeRequestBuilder()
       .forItem(item)

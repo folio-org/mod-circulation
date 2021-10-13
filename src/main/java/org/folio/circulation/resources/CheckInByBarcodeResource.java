@@ -14,10 +14,10 @@ import org.folio.circulation.domain.validation.CheckInValidators;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.ValidationErrorFailure;
-import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.RouteRegistration;
+import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.WebContext;
+import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.ext.web.Router;

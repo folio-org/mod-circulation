@@ -2,27 +2,27 @@ package api.support.builders;
 
 import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTimeOptional;
 
+import java.time.ZonedDateTime;
 import java.util.UUID;
 
 import org.folio.circulation.support.utils.ClockUtil;
-import org.joda.time.DateTime;
 
 import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
 
 public class CheckInByBarcodeRequestBuilder extends JsonBuilder implements Builder {
   private final String itemBarcode;
-  private final DateTime checkInDate;
+  private final ZonedDateTime checkInDate;
   private final String servicePointId;
   private final String claimedReturnedResolution;
 
   public CheckInByBarcodeRequestBuilder() {
-    this(null, ClockUtil.getDateTime(), null, null);
+    this(null, ClockUtil.getZonedDateTime(), null, null);
   }
 
   private CheckInByBarcodeRequestBuilder(
     String itemBarcode,
-    DateTime checkInDate,
+    ZonedDateTime checkInDate,
     String servicePointId,
     String claimedReturnedResolution) {
 
@@ -68,7 +68,7 @@ public class CheckInByBarcodeRequestBuilder extends JsonBuilder implements Build
       this.claimedReturnedResolution);
   }
 
-  public CheckInByBarcodeRequestBuilder on(DateTime checkInDate) {
+  public CheckInByBarcodeRequestBuilder on(ZonedDateTime checkInDate) {
     return new CheckInByBarcodeRequestBuilder(
       this.itemBarcode,
       checkInDate,

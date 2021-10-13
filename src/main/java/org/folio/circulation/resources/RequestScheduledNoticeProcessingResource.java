@@ -31,7 +31,7 @@ public class RequestScheduledNoticeProcessingResource extends ScheduledNoticePro
     ScheduledNoticesRepository scheduledNoticesRepository, PageLimit pageLimit) {
 
     return scheduledNoticesRepository.findNotices(
-      ClockUtil.getDateTime(), true,
+      ClockUtil.getZonedDateTime(), true,
       Arrays.asList(TriggeringEvent.HOLD_EXPIRATION, TriggeringEvent.REQUEST_EXPIRATION),
       CqlSortBy.ascending("nextRunTime"), pageLimit);
   }

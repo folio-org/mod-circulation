@@ -3,25 +3,28 @@ package org.folio.circulation.domain.policy.library;
 import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.failureForAbsentTimetable;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.succeeded;
-import static org.folio.circulation.support.utils.DateTimeUtil.compareToMillis;
+import static org.folio.circulation.support.utils.DateTimeUtil.atEndOfDay;
+import static org.folio.circulation.support.utils.DateTimeUtil.atStartOfDay;
+
+import java.time.Duration;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 
 import org.folio.circulation.support.results.Result;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.Days;
-import org.joda.time.LocalTime;
 
 public class EndOfCurrentHoursStrategy extends ShortTermLoansBaseStrategy {
 
-  private final DateTime currentTime;
+  private final ZonedDateTime currentTime;
 
-  public EndOfCurrentHoursStrategy(DateTime currentTime, DateTimeZone zone) {
+  public EndOfCurrentHoursStrategy(ZonedDateTime currentTime, ZoneId zone) {
     super(zone);
     this.currentTime = currentTime;
   }
 
   @Override
-  protected Result<DateTime> calculateIfClosed(LibraryTimetable libraryTimetable, LibraryInterval requestedInterval) {
+  protected Result<ZonedDateTime> calculateIfClosed(LibraryTimetable libraryTimetable, LibraryInterval requestedInterval) {
     LibraryInterval currentTimeInterval = libraryTimetable.findInterval(currentTime);
     if (currentTimeInterval == null) {
       return failed(failureForAbsentTimetable());
@@ -35,26 +38,34 @@ public class EndOfCurrentHoursStrategy extends ShortTermLoansBaseStrategy {
     return succeeded(currentTimeInterval.getNext().getEndTime());
   }
 
-  private boolean hasLibraryRolloverWorkingDay(LibraryTimetable libraryTimetable,
-                                               LibraryInterval requestedInterval) {
-
+  private boolean hasLibraryRolloverWorkingDay(LibraryTimetable libraryTimetable, LibraryInterval requestedInterval) {
     if (isNotSequenceOfWorkingDays(libraryTimetable, requestedInterval)) {
       return false;
     }
 
-    LocalTime endLocalTime = libraryTimetable.getHead().getEndTime().toLocalTime();
-    LocalTime startLocalTime = requestedInterval.getPrevious().getStartTime().toLocalTime();
+    ZonedDateTime endLocalTime = libraryTimetable.getHead().getEndTime();
+    ZonedDateTime startLocalTime = requestedInterval.getPrevious().getStartTime();
 
-    return isDateEqualToBoundaryValueOfDay(endLocalTime, LocalTime.MIDNIGHT.minusMinutes(1))
-      && isDateEqualToBoundaryValueOfDay(startLocalTime, LocalTime.MIDNIGHT);
+    return isDateEqualToBoundaryValueOfDay(endLocalTime, atEndOfDay(endLocalTime))
+      && isDateEqualToBoundaryValueOfDay(startLocalTime, atStartOfDay(startLocalTime));
   }
 
   private boolean isNotSequenceOfWorkingDays(LibraryTimetable libraryTimetable, LibraryInterval requestedInterval) {
-    return Days.daysBetween(libraryTimetable.getHead().getEndTime(),
-      requestedInterval.getPrevious().getStartTime()) != Days.ZERO;
+    // Two consecutive days are 1-day apart (~24 hours are between their respective start hours).
+    // Non-consecutive days are therefore greater than 1 day apart.
+    return daysBetween(libraryTimetable.getHead().getEndTime(),
+      requestedInterval.getPrevious().getStartTime()) > 1;
   }
 
-  private boolean isDateEqualToBoundaryValueOfDay(LocalTime requestedInterval, LocalTime boundaryValueOfDay) {
-    return compareToMillis(requestedInterval, boundaryValueOfDay) == 0;
+  private boolean isDateEqualToBoundaryValueOfDay(ZonedDateTime requestedInterval, ZonedDateTime boundaryValueOfDay) {
+    final LocalTime request = requestedInterval.truncatedTo(ChronoUnit.MINUTES).toLocalTime();
+    final LocalTime boundary = boundaryValueOfDay.truncatedTo(ChronoUnit.MINUTES).toLocalTime();
+
+    return request.compareTo(boundary) == 0;
   }
+
+  private long daysBetween(ZonedDateTime begin, ZonedDateTime end) {
+    return Math.abs(Duration.between(atStartOfDay(begin), atStartOfDay(end)).toDays());
+  }
+
 }

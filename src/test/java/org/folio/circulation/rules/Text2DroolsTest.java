@@ -5,6 +5,7 @@ import static org.folio.circulation.resources.AbstractCirculationRulesEngineReso
 import static org.folio.circulation.resources.AbstractCirculationRulesEngineResource.LOCATION_ID_NAME;
 import static org.folio.circulation.resources.AbstractCirculationRulesEngineResource.PATRON_TYPE_ID_NAME;
 import static org.folio.circulation.rules.CirculationRulesExceptionMatcher.matches;
+import static org.folio.circulation.support.utils.ClockUtil.getInstant;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.greaterThan;
@@ -20,7 +21,6 @@ import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Location;
-import org.folio.circulation.support.utils.ClockUtil;
 import org.hamcrest.Matcher;
 import org.junit.jupiter.api.Test;
 
@@ -520,7 +520,7 @@ class Text2DroolsTest {
   @Test
   void run100() {
     Drools drools = new Drools(Text2Drools.convert(test1));
-    long start = ClockUtil.getJodaInstant().getMillis();
+    long start = getInstant().toEpochMilli();
     int n = 0;
     while (n < 100) {
       for (String [] s : loanTestCases) {
@@ -529,7 +529,7 @@ class Text2DroolsTest {
         n++;
       }
     }
-    long millis = ClockUtil.getJodaInstant().getMillis() - start;
+    long millis = getInstant().toEpochMilli() - start;
     float perSecond = 1000f * n / millis;
     log.debug("{} loan policy calculations per second", perSecond);
     assertThat("loan policy calculations per second", perSecond, is(greaterThan(100f)));

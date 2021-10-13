@@ -1,6 +1,7 @@
 package api.support.builders;
 
 import static api.support.utl.DateTimeUtils.getLocalDatePropertyForDateWithTime;
+import static java.time.ZoneOffset.UTC;
 import static java.util.stream.Collectors.toList;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getIntegerProperty;
@@ -11,13 +12,12 @@ import static org.folio.circulation.support.json.JsonStringArrayPropertyFetcher.
 import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTimeOptional;
 
 import java.time.LocalDate;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.override.BlockOverrides;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 
 import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
@@ -39,7 +39,7 @@ public class RequestBuilder extends JsonBuilder implements Builder {
 
   private final UUID id;
   private final String requestType;
-  private final DateTime requestDate;
+  private final ZonedDateTime requestDate;
   private final UUID itemId;
   private final UUID requesterId;
   private final String fulfilmentPreference;
@@ -53,7 +53,7 @@ public class RequestBuilder extends JsonBuilder implements Builder {
   private final UUID cancellationReasonId;
   private final UUID cancelledByUserId;
   private final String cancellationAdditionalInformation;
-  private final DateTime cancelledDate;
+  private final ZonedDateTime cancelledDate;
   private final Integer position;
   private final UUID pickupServicePointId;
   private final Tags tags;
@@ -63,7 +63,7 @@ public class RequestBuilder extends JsonBuilder implements Builder {
   public RequestBuilder() {
     this(UUID.randomUUID(),
       "Hold",
-      new DateTime(2017, 7, 15, 9, 35, 27, DateTimeZone.UTC),
+      ZonedDateTime.of(2017, 7, 15, 9, 35, 27, 0, UTC),
       UUID.randomUUID(),
       UUID.randomUUID(),
       "Hold Shelf",

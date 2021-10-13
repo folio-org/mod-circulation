@@ -1,11 +1,12 @@
 package org.folio.circulation.domain;
 
-import api.support.builders.UserBuilder;
-import org.joda.time.DateTime;
-import org.junit.jupiter.api.Test;
-
+import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+
+import org.junit.jupiter.api.Test;
+
+import api.support.builders.UserBuilder;
 
 class ActiveUserTests {
   @Test
@@ -32,7 +33,7 @@ class ActiveUserTests {
   void userIsInactiveWhenExpiredInThePast() {
     final User activeUser = new User(new UserBuilder()
       .active()
-      .expires(new DateTime().minusDays(10))
+      .expires(getZonedDateTime().minusDays(10))
       .create());
 
     assertThat(activeUser.isActive(), is(false));
@@ -43,7 +44,7 @@ class ActiveUserTests {
   void userIsActiveWhenExpiresInTheFuture() {
     final User activeUser = new User(new UserBuilder()
       .active()
-      .expires(new DateTime().plusDays(30))
+      .expires(getZonedDateTime().plusDays(30))
       .create());
 
     assertThat(activeUser.isActive(), is(true));

@@ -2,9 +2,8 @@ package api.support.builders;
 
 import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTimeOptional;
 
+import java.time.ZonedDateTime;
 import java.util.UUID;
-
-import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
 
@@ -126,7 +125,7 @@ public class ProxyRelationshipBuilder implements Builder {
     );
   }
 
-  public ProxyRelationshipBuilder expires(DateTime expirationDate) {
+  public ProxyRelationshipBuilder expires(ZonedDateTime expirationDate) {
     return new ProxyRelationshipBuilder(
       this.id,
       this.userId,

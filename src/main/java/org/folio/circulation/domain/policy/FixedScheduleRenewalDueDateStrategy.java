@@ -3,25 +3,25 @@ package org.folio.circulation.domain.policy;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
+import java.time.ZonedDateTime;
 import java.util.function.Function;
 
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
-import org.joda.time.DateTime;
 
 class FixedScheduleRenewalDueDateStrategy extends DueDateStrategy {
   private static final String NO_APPLICABLE_DUE_DATE_SCHEDULE_MESSAGE =
     "renewal date falls outside of date ranges in fixed loan policy";
 
   private final FixedDueDateSchedules fixedDueDateSchedules;
-  private final DateTime systemDate;
+  private final ZonedDateTime systemDate;
 
   FixedScheduleRenewalDueDateStrategy(
     String loanPolicyId,
     String loanPolicyName,
     FixedDueDateSchedules fixedDueDateSchedules,
-    DateTime systemDate,
+    ZonedDateTime systemDate,
     Function<String, ValidationError> errorForPolicy) {
 
     super(loanPolicyId, loanPolicyName, errorForPolicy);
@@ -37,7 +37,7 @@ class FixedScheduleRenewalDueDateStrategy extends DueDateStrategy {
   }
 
   @Override
-  public Result<DateTime> calculateDueDate(Loan loan) {
+  public Result<ZonedDateTime> calculateDueDate(Loan loan) {
     logApplying("Fixed schedule renewal due date calculation");
 
     try {

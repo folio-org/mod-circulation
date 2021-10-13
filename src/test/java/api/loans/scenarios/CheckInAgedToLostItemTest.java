@@ -8,7 +8,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 
-import org.joda.time.DateTime;
+import java.time.ZonedDateTime;
+
 import org.junit.jupiter.api.Test;
 
 import api.support.builders.CheckInByBarcodeRequestBuilder;
@@ -22,7 +23,7 @@ class CheckInAgedToLostItemTest extends RefundAgedToLostFeesTestBase {
 
   @Override
   protected void performActionThatRequiresRefund(AgeToLostFixture.AgeToLostResult result,
-    DateTime actionDate) {
+    ZonedDateTime actionDate) {
 
     mockClockManagerToReturnFixedDateTime(actionDate);
 

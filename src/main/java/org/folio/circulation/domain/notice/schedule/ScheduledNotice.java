@@ -1,6 +1,6 @@
 package org.folio.circulation.domain.notice.schedule;
 
-import org.joda.time.DateTime;
+import java.time.ZonedDateTime;
 
 public class ScheduledNotice {
   private final String id;
@@ -9,12 +9,12 @@ public class ScheduledNotice {
   private final String recipientUserId;
   private final String feeFineActionId;
   private final TriggeringEvent triggeringEvent;
-  private final DateTime nextRunTime;
+  private final ZonedDateTime nextRunTime;
   private final ScheduledNoticeConfig configuration;
 
   @SuppressWarnings({"squid:S00107"}) //too many parameters
   public ScheduledNotice(String id, String loanId, String requestId, String recipientUserId,
-    String feeFineActionId, TriggeringEvent triggeringEvent, DateTime nextRunTime,
+    String feeFineActionId, TriggeringEvent triggeringEvent, ZonedDateTime nextRunTime,
     ScheduledNoticeConfig configuration) {
 
     this.id = id;
@@ -51,7 +51,7 @@ public class ScheduledNotice {
     return triggeringEvent;
   }
 
-  public DateTime getNextRunTime() {
+  public ZonedDateTime getNextRunTime() {
     return nextRunTime;
   }
 
@@ -59,7 +59,7 @@ public class ScheduledNotice {
     return configuration;
   }
 
-  public ScheduledNotice withNextRunTime(DateTime nextRunTime) {
+  public ScheduledNotice withNextRunTime(ZonedDateTime nextRunTime) {
     return new ScheduledNotice(id, loanId, requestId, recipientUserId, feeFineActionId,
       triggeringEvent, nextRunTime, configuration);
   }

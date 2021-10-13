@@ -1,18 +1,14 @@
 package org.folio.circulation.support.json;
 
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
-import static org.folio.circulation.support.utils.DateFormatUtil.parseJodaDate;
 import static org.folio.circulation.support.utils.DateFormatUtil.parseDate;
-import static org.joda.time.DateTime.parse;
+import static org.folio.circulation.support.utils.DateFormatUtil.parseDateTime;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
 import java.util.UUID;
 import java.util.function.BiFunction;
-
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -44,7 +40,7 @@ public class JsonPropertyFetcher {
       : null;
   }
 
-  public static DateTime getNestedDateTimeProperty(JsonObject representation,
+  public static ZonedDateTime getNestedDateTimeProperty(JsonObject representation,
     String objectName, String propertyName) {
 
     if (representation.containsKey(objectName)) {
@@ -72,25 +68,15 @@ public class JsonPropertyFetcher {
     }
   }
 
-  public static OffsetDateTime getOffsetDateTimeProperty(JsonObject representation,
-    String propertyName) {
-
-    if (representation != null && isNotBlank(representation.getString(propertyName))) {
-      return OffsetDateTime.parse(representation.getString(propertyName));
-    } else {
-      return null;
-    }
-  }
-
-  public static DateTime getDateTimeProperty(JsonObject representation, String propertyName) {
+  public static ZonedDateTime getDateTimeProperty(JsonObject representation, String propertyName) {
     return getDateTimeProperty(representation, propertyName, null);
   }
 
-  public static DateTime getDateTimeProperty(JsonObject representation, String propertyName,
-    DateTime defaultValue) {
+  public static ZonedDateTime getDateTimeProperty(JsonObject representation, String propertyName,
+    ZonedDateTime defaultValue) {
 
     if (representation != null && isNotBlank(representation.getString(propertyName))) {
-      return parse(representation.getString(propertyName));
+      return parseDateTime(representation.getString(propertyName));
     } else {
       return defaultValue;
     }
@@ -99,16 +85,6 @@ public class JsonPropertyFetcher {
   public static LocalDate getLocalDateProperty(JsonObject representation, String propertyName) {
     if (representation != null && representation.containsKey(propertyName)) {
       return parseDate(representation.getString(propertyName));
-    } else {
-      return null;
-    }
-  }
-
-  public static org.joda.time.LocalDate getJodaLocalDateProperty(JsonObject representation,
-    String propertyName) {
-
-    if (representation != null && representation.containsKey(propertyName)) {
-      return parseJodaDate(representation.getString(propertyName), DateTimeZone.UTC);
     } else {
       return null;
     }
@@ -146,7 +122,6 @@ public class JsonPropertyFetcher {
     }
   }
 
-
   public static boolean getBooleanProperty(JsonObject representation, String propertyName) {
     if (representation != null) {
       return representation.getBoolean(propertyName, false);
@@ -163,6 +138,16 @@ public class JsonPropertyFetcher {
     } else {
       return defaultValue;
     }
+  }
+
+  public static Long getLongProperty(JsonObject representation, String propertyName,
+    Long defaultValue) {
+
+    if (representation == null) {
+      return defaultValue;
+    }
+
+    return representation.getLong(propertyName, defaultValue);
   }
 
   public static Double getDoubleProperty(JsonObject representation, String propertyName,
@@ -198,7 +183,7 @@ public class JsonPropertyFetcher {
     }
   }
 
-  public static DateTime getDateTimePropertyByPath(JsonObject from, String... paths) {
+  public static ZonedDateTime getDateTimePropertyByPath(JsonObject from, String... paths) {
     return getByPath(from, JsonPropertyFetcher::getDateTimeProperty, paths);
   }
 

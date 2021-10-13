@@ -15,18 +15,19 @@ import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static org.folio.circulation.domain.representations.LoanProperties.ACTION;
 import static org.folio.circulation.domain.representations.LoanProperties.ACTION_COMMENT;
 import static org.folio.circulation.domain.representations.LoanProperties.CLAIMED_RETURNED_DATE;
+import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 
+import java.time.ZonedDateTime;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import org.awaitility.Awaitility;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.utils.ClockUtil;
-import org.joda.time.DateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -52,7 +53,7 @@ class ClaimItemReturnedAPITests extends APITests {
   @Test
   void canClaimItemReturnedWithComment() {
     final String comment = "testing";
-    final DateTime dateTime = ClockUtil.getDateTime();
+    final ZonedDateTime dateTime = getZonedDateTime();
 
     final Response response = claimItemReturnedFixture
       .claimItemReturned(new ClaimItemReturnedRequestBuilder()
@@ -65,7 +66,7 @@ class ClaimItemReturnedAPITests extends APITests {
 
   @Test
   void canClaimItemReturnedWithoutComment() {
-    final DateTime dateTime = ClockUtil.getDateTime();
+    final ZonedDateTime dateTime = getZonedDateTime();
 
     final Response response = claimItemReturnedFixture
       .claimItemReturned(new ClaimItemReturnedRequestBuilder()
@@ -77,7 +78,7 @@ class ClaimItemReturnedAPITests extends APITests {
 
   @Test
   void cannotClaimItemReturnedWhenLoanIsClosed() {
-    final DateTime dateTime = ClockUtil.getDateTime();
+    final ZonedDateTime dateTime = getZonedDateTime();
 
     checkInFixture.checkInByBarcode(item);
 
@@ -118,7 +119,7 @@ class ClaimItemReturnedAPITests extends APITests {
 
   @Test
   void itemClaimedReturnedEventIsPublished() {
-    final DateTime dateTime = ClockUtil.getDateTime();
+    final ZonedDateTime dateTime = ClockUtil.getZonedDateTime();
 
     final Response response = claimItemReturnedFixture
       .claimItemReturned(new ClaimItemReturnedRequestBuilder()
@@ -139,7 +140,7 @@ class ClaimItemReturnedAPITests extends APITests {
     assertThatPublishedLoanLogRecordEventsAreValid(loansClient.getById(loan.getId()).getJson());
   }
 
-  private void assertLoanAndItem(Response response, String comment, DateTime dateTime) {
+  private void assertLoanAndItem(Response response, String comment, ZonedDateTime dateTime) {
     JsonObject actualLoan = loansClient.getById(UUID.fromString(loanId)).getJson();
     JsonObject actualItem = actualLoan.getJsonObject("item");
 

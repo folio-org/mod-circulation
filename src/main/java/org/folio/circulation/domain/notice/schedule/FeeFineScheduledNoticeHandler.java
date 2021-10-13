@@ -4,19 +4,19 @@ import static java.util.Collections.singletonList;
 import static org.folio.circulation.domain.notice.TemplateContextUtil.createFeeFineNoticeContext;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
+import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.folio.circulation.support.utils.DateTimeUtil.isBeforeMillis;
 
+import java.time.ZonedDateTime;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.domain.representations.logs.NoticeLogContext;
 import org.folio.circulation.domain.representations.logs.NoticeLogContextItem;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineActionRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
-import org.folio.circulation.support.utils.ClockUtil;
-import org.joda.time.DateTime;
-import org.joda.time.Period;
 
 import io.vertx.core.json.JsonObject;
 
@@ -105,12 +105,12 @@ public class FeeFineScheduledNoticeHandler extends ScheduledNoticeHandler {
   }
 
   private static ScheduledNotice getNextRecurringNotice(ScheduledNotice notice) {
-    Period recurringPeriod = notice.getConfiguration().getRecurringPeriod().timePeriod();
-    DateTime nextRunTime = notice.getNextRunTime().plus(recurringPeriod);
-    DateTime now = ClockUtil.getDateTime();
+    Period recurringPeriod = notice.getConfiguration().getRecurringPeriod();
+    ZonedDateTime nextRunTime = recurringPeriod.plusDate(notice.getNextRunTime());
+    ZonedDateTime now = getZonedDateTime();
 
     if (isBeforeMillis(nextRunTime, now)) {
-      nextRunTime = now.plus(recurringPeriod);
+      nextRunTime = recurringPeriod.plusDate(now);
     }
 
     return notice.withNextRunTime(nextRunTime);

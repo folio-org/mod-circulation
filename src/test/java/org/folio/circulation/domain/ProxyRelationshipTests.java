@@ -41,7 +41,7 @@ class ProxyRelationshipTests {
         .proxy(UUID.randomUUID())
         .sponsor(UUID.randomUUID())
         .active()
-        .expires(ClockUtil.getDateTime().plusWeeks(3))
+        .expires(ClockUtil.getZonedDateTime().plusWeeks(3))
         .useMetaObject(useMetaObject)
         .create());
 
@@ -59,7 +59,7 @@ class ProxyRelationshipTests {
         .proxy(UUID.randomUUID())
         .sponsor(UUID.randomUUID())
         .active()
-        .expires(ClockUtil.getDateTime().minusMonths(2))
+        .expires(ClockUtil.getZonedDateTime().minusMonths(2))
         .useMetaObject(useMetaObject)
         .create());
 
@@ -96,7 +96,7 @@ class ProxyRelationshipTests {
         .proxy(UUID.randomUUID())
         .sponsor(UUID.randomUUID())
         .inactive()
-        .expires(ClockUtil.getDateTime().plusWeeks(3))
+        .expires(ClockUtil.getZonedDateTime().plusWeeks(3))
         .useMetaObject(useMetaObject)
         .create());
 
@@ -115,7 +115,7 @@ class ProxyRelationshipTests {
         .proxy(UUID.randomUUID())
         .sponsor(UUID.randomUUID())
         .inactive()
-        .expires(ClockUtil.getDateTime().minusMonths(2))
+        .expires(ClockUtil.getZonedDateTime().minusMonths(2))
         .useMetaObject(useMetaObject)
         .create());
 

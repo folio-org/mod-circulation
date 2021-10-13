@@ -5,16 +5,16 @@ import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
+import static java.time.ZoneOffset.UTC;
 import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
+import java.time.ZonedDateTime;
 import java.util.UUID;
 
 import org.folio.circulation.support.http.client.Response;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
@@ -26,7 +26,7 @@ class CheckInByReplacingLoanTests extends APITests {
   @Test
   void canCompleteALoanByReturningTheItem() {
 
-    DateTime loanDate = new DateTime(2017, 3, 1, 13, 25, 46, DateTimeZone.UTC);
+    ZonedDateTime loanDate = ZonedDateTime.of(2017, 3, 1, 13, 25, 46, 0, UTC);
 
     final IndividualResource james = usersFixture.james();
 
@@ -43,8 +43,7 @@ class CheckInByReplacingLoanTests extends APITests {
       .put("status", new JsonObject().put("name", "Closed"))
       .put("action", "checkedin")
       .put("checkinServicePointId", checkinServicePointId.toString())
-      .put("returnDate", formatDateTime(
-        new DateTime(2017, 3, 5, 14, 23, 41, DateTimeZone.UTC)));
+      .put("returnDate", formatDateTime(ZonedDateTime.of(2017, 3, 5, 14, 23, 41, 0, UTC)));
 
     loansFixture.replaceLoan(loan.getId(), returnedLoan);
 
@@ -91,7 +90,7 @@ class CheckInByReplacingLoanTests extends APITests {
   @Test
   void cannotCloseALoanWithoutAServicePoint() {
 
-    DateTime loanDate = new DateTime(2017, 3, 1, 13, 25, 46, DateTimeZone.UTC);
+    ZonedDateTime loanDate = ZonedDateTime.of(2017, 3, 1, 13, 25, 46, 0, UTC);
 
     final IndividualResource james = usersFixture.james();
 
@@ -104,8 +103,7 @@ class CheckInByReplacingLoanTests extends APITests {
     returnedLoan
       .put("status", new JsonObject().put("name", "Closed"))
       .put("action", "checkedin")
-      .put("returnDate", formatDateTime(
-        new DateTime(2017, 3, 5, 14, 23, 41, DateTimeZone.UTC)));
+      .put("returnDate", formatDateTime(ZonedDateTime.of(2017, 3, 5, 14, 23, 41, 0, UTC)));
 
     Response putResponse = loansFixture.attemptToReplaceLoan(loan.getId(),
         returnedLoan);
@@ -117,7 +115,7 @@ class CheckInByReplacingLoanTests extends APITests {
   @Test
   void cannotUpdateALoanWithAnUnknownServicePoint() {
 
-    DateTime loanDate = new DateTime(2017, 3, 1, 13, 25, 46, DateTimeZone.UTC);
+    ZonedDateTime loanDate = ZonedDateTime.of(2017, 3, 1, 13, 25, 46, 0, UTC);
 
     final IndividualResource james = usersFixture.james();
 
@@ -134,7 +132,7 @@ class CheckInByReplacingLoanTests extends APITests {
       .put("action", "checkedin")
       .put("checkinServicePointId", unknownServicePointId.toString())
       .put("returnDate", formatDateTime(
-        new DateTime(2017, 3, 5, 14, 23, 41, DateTimeZone.UTC)));
+        ZonedDateTime.of(2017, 3, 5, 14, 23, 41, 0, UTC)));
 
     Response putResponse = loansFixture.attemptToReplaceLoan(loan.getId(),
       returnedLoan);

@@ -1,9 +1,9 @@
 package api.support;
 
-import org.joda.time.DateTimeZone;
+import java.time.ZoneId;
 
 public class ExampleTimeZones {
   private ExampleTimeZones() { }
 
-  public static final DateTimeZone NEW_YORK = DateTimeZone.forID("America/New_York");
+  public static final ZoneId NEW_YORK = ZoneId.of("America/New_York");
 }

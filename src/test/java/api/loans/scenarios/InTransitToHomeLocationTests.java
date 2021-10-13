@@ -527,7 +527,7 @@ class InTransitToHomeLocationTests extends APITests {
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(nod, james);
 
     requestsFixture.placeHoldShelfRequest(
-      nod, jessica, ClockUtil.getDateTime(), otherServicePoint.getId());
+      nod, jessica, ClockUtil.getZonedDateTime(), otherServicePoint.getId());
 
     final CheckInByBarcodeResponse checkInResponse = checkInFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()

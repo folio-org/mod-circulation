@@ -1,19 +1,19 @@
 package org.folio.circulation.infrastructure.storage;
 
-import static org.joda.time.DateTimeZone.UTC;
+import static java.time.ZoneOffset.UTC;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.ZonedDateTime;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.results.Result;
-import org.joda.time.DateTime;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
@@ -29,8 +29,8 @@ class CalendarRepositoryTest {
       .thenReturn(CompletableFuture.completedFuture(Result.succeeded(null)));
 
     String servicePointId = UUID.randomUUID().toString();
-    DateTime startDate = new DateTime(2020, 10, 12, 18, 0, 0, UTC);
-    DateTime endDate = new DateTime(2020, 10, 22, 15, 30, 0, UTC);
+    ZonedDateTime startDate = ZonedDateTime.of(2020, 10, 12, 18, 0, 0, 0, UTC);
+    ZonedDateTime endDate = ZonedDateTime.of(2020, 10, 22, 15, 30, 0, 0, UTC);
 
     CalendarRepository calendarRepository = new CalendarRepository(clients);
     calendarRepository.fetchOpeningDaysBetweenDates(servicePointId, startDate, endDate, false);

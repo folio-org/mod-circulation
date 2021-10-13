@@ -1,10 +1,13 @@
 package org.folio.circulation.domain.policy;
 
+import static java.time.ZoneOffset.UTC;
+import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.UUID;
@@ -19,9 +22,6 @@ import org.folio.circulation.resources.handlers.error.OverridingErrorHandler;
 import org.folio.circulation.resources.renewal.RenewByBarcodeResource;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.results.Result;
-import org.folio.circulation.support.utils.ClockUtil;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -58,11 +58,11 @@ class RollingLoanPolicyRenewalDueDateCalculationTests {
       .unlimitedRenewals()
       .create());
 
-    DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
+    ZonedDateTime loanDate = ZonedDateTime.of(2018, 3, 14, 11, 14, 54, 0, UTC);
 
     Loan loan = loanFor(loanDate, loanDate.plusMonths(duration), loanPolicy);
 
-    DateTime systemDate = new DateTime(2018, 6, 1, 21, 32, 11, DateTimeZone.UTC);
+    ZonedDateTime systemDate = ZonedDateTime.of(2018, 6, 1, 21, 32, 11, 0, UTC);
 
     Result<Loan> result = renew(loan, systemDate,
       new RequestQueue(Collections.emptyList()), new OverridingErrorHandler(null));
@@ -85,11 +85,11 @@ class RollingLoanPolicyRenewalDueDateCalculationTests {
       .unlimitedRenewals()
       .create());
 
-    DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
+    ZonedDateTime loanDate = ZonedDateTime.of(2018, 3, 14, 11, 14, 54, 0, UTC);
 
     Loan loan = loanFor(loanDate, loanDate.plusWeeks(duration), loanPolicy);
 
-    DateTime systemDate = new DateTime(2018, 6, 1, 21, 32, 11, DateTimeZone.UTC);
+    ZonedDateTime systemDate = ZonedDateTime.of(2018, 6, 1, 21, 32, 11, 0, UTC);
 
     Result<Loan> result = renew(loan, systemDate,
       new RequestQueue(Collections.emptyList()), new OverridingErrorHandler(null));
@@ -113,11 +113,11 @@ class RollingLoanPolicyRenewalDueDateCalculationTests {
       .unlimitedRenewals()
       .create());
 
-    DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
+    ZonedDateTime loanDate = ZonedDateTime.of(2018, 3, 14, 11, 14, 54, 0, UTC);
 
     Loan loan = loanFor(loanDate, loanDate.plusDays(duration), loanPolicy);
 
-    DateTime systemDate = new DateTime(2018, 6, 1, 21, 32, 11, DateTimeZone.UTC);
+    ZonedDateTime systemDate = ZonedDateTime.of(2018, 6, 1, 21, 32, 11, 0, UTC);
 
     Result<Loan> result = renew(loan, systemDate,
       new RequestQueue(Collections.emptyList()), new OverridingErrorHandler(null));
@@ -141,11 +141,11 @@ class RollingLoanPolicyRenewalDueDateCalculationTests {
       .unlimitedRenewals()
       .create());
 
-    DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
+    ZonedDateTime loanDate = ZonedDateTime.of(2018, 3, 14, 11, 14, 54, 0, UTC);
 
     Loan loan = loanFor(loanDate, loanDate.plusHours(duration), loanPolicy);
 
-    DateTime systemDate = new DateTime(2018, 6, 1, 21, 32, 11, DateTimeZone.UTC);
+    ZonedDateTime systemDate = ZonedDateTime.of(2018, 6, 1, 21, 32, 11, 0, UTC);
 
     Result<Loan> result = renew(loan, systemDate,
       new RequestQueue(Collections.emptyList()), new OverridingErrorHandler(null));
@@ -168,11 +168,11 @@ class RollingLoanPolicyRenewalDueDateCalculationTests {
       .unlimitedRenewals()
       .create());
 
-    DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
+    ZonedDateTime loanDate = ZonedDateTime.of(2018, 3, 14, 11, 14, 54, 0, UTC);
 
     Loan loan = loanFor(loanDate, loanDate, loanPolicy);
 
-    DateTime systemDate = new DateTime(2018, 6, 1, 21, 32, 11, DateTimeZone.UTC);
+    ZonedDateTime systemDate = ZonedDateTime.of(2018, 6, 1, 21, 32, 11, 0, UTC);
 
     Result<Loan> result = renew(loan, systemDate,
       new RequestQueue(Collections.emptyList()), new OverridingErrorHandler(null));
@@ -187,12 +187,12 @@ class RollingLoanPolicyRenewalDueDateCalculationTests {
       .withName("Invalid Loan Policy")
       .create());
 
-    DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
+    ZonedDateTime loanDate = ZonedDateTime.of(2018, 3, 14, 11, 14, 54, 0, UTC);
 
     Loan loan = loanFor(loanDate, loanDate, loanPolicy);
 
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
-    renew(loan, ClockUtil.getDateTime(), new RequestQueue(Collections.emptyList()), errorHandler);
+    renew(loan, getZonedDateTime(), new RequestQueue(Collections.emptyList()), errorHandler);
 
     assertTrue(matchErrorReason(errorHandler,
       "the interval \"Unknown\" in the loan policy is not recognised"));
@@ -209,12 +209,12 @@ class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     LoanPolicy loanPolicy = LoanPolicy.from(representation);
 
-    DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
+    ZonedDateTime loanDate = ZonedDateTime.of(2018, 3, 14, 11, 14, 54, 0, UTC);
 
     Loan loan = loanFor(loanDate, loanDate, loanPolicy);
 
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
-    renew(loan, ClockUtil.getDateTime(), new RequestQueue(Collections.emptyList()), errorHandler);
+    renew(loan, getZonedDateTime(), new RequestQueue(Collections.emptyList()), errorHandler);
 
     assertTrue(matchErrorReason(errorHandler, LOAN_PERIOD_IN_THE_LOAN_POLICY_IS_NOT_RECOGNISED));
   }
@@ -230,12 +230,12 @@ class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     LoanPolicy loanPolicy = LoanPolicy.from(representation);
 
-    DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
+    ZonedDateTime loanDate = ZonedDateTime.of(2018, 3, 14, 11, 14, 54, 0, UTC);
 
     Loan loan = loanFor(loanDate, loanDate, loanPolicy);
 
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
-    renew(loan, ClockUtil.getDateTime(), new RequestQueue(Collections.emptyList()), errorHandler);
+    renew(loan, getZonedDateTime(), new RequestQueue(Collections.emptyList()), errorHandler);
 
     assertTrue(matchErrorReason(errorHandler, LOAN_PERIOD_IN_THE_LOAN_POLICY_IS_NOT_RECOGNISED));
   }
@@ -251,12 +251,12 @@ class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     LoanPolicy loanPolicy = LoanPolicy.from(representation);
 
-    DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
+    ZonedDateTime loanDate = ZonedDateTime.of(2018, 3, 14, 11, 14, 54, 0, UTC);
 
     Loan loan = loanFor(loanDate, loanDate, loanPolicy);
 
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
-    renew(loan, ClockUtil.getDateTime(), new RequestQueue(Collections.emptyList()), errorHandler);
+    renew(loan, getZonedDateTime(), new RequestQueue(Collections.emptyList()), errorHandler);
 
     assertTrue(matchErrorReason(errorHandler, LOAN_PERIOD_IN_THE_LOAN_POLICY_IS_NOT_RECOGNISED));
   }
@@ -274,12 +274,12 @@ class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     LoanPolicy loanPolicy = LoanPolicy.from(representation);
 
-    DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
+    ZonedDateTime loanDate = ZonedDateTime.of(2018, 3, 14, 11, 14, 54, 0, UTC);
 
     Loan loan = loanFor(loanDate, loanDate, loanPolicy);
 
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
-    renew(loan, ClockUtil.getDateTime(), new RequestQueue(Collections.emptyList()), errorHandler);
+    renew(loan, getZonedDateTime(), new RequestQueue(Collections.emptyList()), errorHandler);
 
     assertTrue(matchErrorReason(errorHandler,
       String.format("the duration \"%s\" in the loan policy is invalid", duration)));
@@ -296,19 +296,19 @@ class RollingLoanPolicyRenewalDueDateCalculationTests {
       .create())
       .withDueDateSchedules(new FixedDueDateSchedulesBuilder()
         .addSchedule(FixedDueDateSchedule.wholeMonth(2018, 3,
-          new DateTime(2018, 4, 10, 23, 59, 59, DateTimeZone.UTC)))
+          ZonedDateTime.of(2018, 4, 10, 23, 59, 59, 0, UTC)))
         .create());
 
-    DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
+    ZonedDateTime loanDate = ZonedDateTime.of(2018, 3, 14, 11, 14, 54, 0, UTC);
 
     Loan loan = loanFor(loanDate, loanDate.plusDays(15), loanPolicy);
 
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
-    Result<Loan> result = renew(loan, ClockUtil.getDateTime(), new RequestQueue(Collections.emptyList()),
+    Result<Loan> result = renew(loan, getZonedDateTime(), new RequestQueue(Collections.emptyList()),
       errorHandler);
 
     assertThat(result.value().getDueDate(),
-      is(new DateTime(2018, 4, 10, 23, 59, 59, DateTimeZone.UTC)));
+      is(ZonedDateTime.of(2018, 4, 10, 23, 59, 59, 0, UTC)));
   }
 
   @Test
@@ -324,15 +324,15 @@ class RollingLoanPolicyRenewalDueDateCalculationTests {
         .addSchedule(FixedDueDateSchedule.wholeMonth(2018, 3))
         .create());
 
-    DateTime loanDate = new DateTime(2018, 3, 11, 16, 21, 43, DateTimeZone.UTC);
+    ZonedDateTime loanDate = ZonedDateTime.of(2018, 3, 11, 16, 21, 43, 0, UTC);
 
     Loan loan = loanFor(loanDate, loanDate.plusDays(6), loanPolicy);
 
-    Result<Loan> result = renew(loan, ClockUtil.getDateTime(),
+    Result<Loan> result = renew(loan, getZonedDateTime(),
       new RequestQueue(Collections.emptyList()), new OverridingErrorHandler(null));
 
     assertThat(result.value().getDueDate(),
-      is(new DateTime(2018, 3, 23, 16, 21, 43, DateTimeZone.UTC)));
+      is(ZonedDateTime.of(2018, 3, 23, 16, 21, 43, 0, UTC)));
   }
 
   @Test
@@ -350,12 +350,12 @@ class RollingLoanPolicyRenewalDueDateCalculationTests {
         .addSchedule(FixedDueDateSchedule.wholeMonth(2018, 5))
         .create());
 
-    DateTime loanDate = new DateTime(2018, 4, 3, 9, 25, 43, DateTimeZone.UTC);
+    ZonedDateTime loanDate = ZonedDateTime.of(2018, 4, 3, 9, 25, 43, 0, UTC);
 
     Loan loan = loanFor(loanDate, loanDate, loanPolicy);
 
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
-    renew(loan, ClockUtil.getDateTime(), new RequestQueue(Collections.emptyList()), errorHandler);
+    renew(loan, getZonedDateTime(), new RequestQueue(Collections.emptyList()), errorHandler);
 
     assertEquals(1, errorHandler.getErrors().size());
     assertTrue(matchErrorReason(errorHandler, EXPECTED_REASON_DATE_FALLS_OTSIDE_DATE_RANGES));
@@ -373,13 +373,13 @@ class RollingLoanPolicyRenewalDueDateCalculationTests {
       .create())
       .withDueDateSchedules(new FixedDueDateSchedulesBuilder().create());
 
-    DateTime loanDate = new DateTime(2018, 4, 3, 9, 25, 43, DateTimeZone.UTC);
+    ZonedDateTime loanDate = ZonedDateTime.of(2018, 4, 3, 9, 25, 43, 0, UTC);
 
     Loan loan = loanFor(loanDate, loanDate, loanPolicy);
 
     RequestQueue requestQueue = new RequestQueue(Collections.emptyList());
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
-    renew(loan, ClockUtil.getDateTime(), requestQueue, errorHandler);
+    renew(loan, getZonedDateTime(), requestQueue, errorHandler);
 
     assertTrue(matchErrorReason(errorHandler, EXPECTED_REASON_DATE_FALLS_OTSIDE_DATE_RANGES));
   }
@@ -394,14 +394,14 @@ class RollingLoanPolicyRenewalDueDateCalculationTests {
       .create())
       .withDueDateSchedules(new FixedDueDateSchedulesBuilder().create());
 
-    DateTime loanDate = new DateTime(2018, 3, 2, 9, 10, 45, DateTimeZone.UTC);
+    ZonedDateTime loanDate = ZonedDateTime.of(2018, 3, 2, 9, 10, 45, 0, UTC);
 
     Loan loan = loanFor(loanDate, loanDate, loanPolicy);
 
     String requestId = UUID.randomUUID().toString();
     RequestQueue requestQueue = creteRequestQueue(requestId, RequestType.RECALL);
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
-    renew(loan, ClockUtil.getDateTime(), requestQueue, errorHandler);
+    renew(loan, getZonedDateTime(), requestQueue, errorHandler);
 
     assertEquals(2, errorHandler.getErrors().size());
     assertTrue(matchErrorReason(errorHandler, EXPECTED_REASON_DATE_FALLS_OTSIDE_DATE_RANGES));
@@ -417,16 +417,16 @@ class RollingLoanPolicyRenewalDueDateCalculationTests {
       .renewWith(Period.days(3))
       .create());
 
-    final DateTime initialDueDate = new DateTime(2018, 1, 17, 13, 45, 21, DateTimeZone.UTC);
+    final ZonedDateTime initialDueDate = ZonedDateTime.of(2018, 1, 17, 13, 45, 21, 0, UTC);
 
     Loan loan = new LoanBuilder()
       .open()
-      .withLoanDate(new DateTime(2018, 1, 20, 13, 45, 21, DateTimeZone.UTC))
+      .withLoanDate(ZonedDateTime.of(2018, 1, 20, 13, 45, 21, 0, UTC))
       .withDueDate(initialDueDate)
       .asDomainObject()
       .withLoanPolicy(loanPolicy);
 
-    DateTime renewalDate = initialDueDate.minusDays(3);
+    ZonedDateTime renewalDate = initialDueDate.minusDays(3);
 
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
     renew(loan, renewalDate, new RequestQueue(Collections.emptyList()), errorHandler);
@@ -443,16 +443,16 @@ class RollingLoanPolicyRenewalDueDateCalculationTests {
       .renewWith(Period.days(3))
       .create());
 
-    final DateTime initialDueDate = new DateTime(2018, 1, 17, 13, 45, 21, DateTimeZone.UTC);
+    final ZonedDateTime initialDueDate = ZonedDateTime.of(2018, 1, 17, 13, 45, 21, 0, UTC);
 
     Loan loan = new LoanBuilder()
       .open()
-      .withLoanDate(new DateTime(2018, 1, 20, 13, 45, 21, DateTimeZone.UTC))
+      .withLoanDate(ZonedDateTime.of(2018, 1, 20, 13, 45, 21, 0, UTC))
       .withDueDate(initialDueDate)
       .asDomainObject()
       .withLoanPolicy(loanPolicy);
 
-    DateTime renewalDate = initialDueDate.minusDays(4);
+    ZonedDateTime renewalDate = initialDueDate.minusDays(4);
 
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
     renew(loan, renewalDate, new RequestQueue(Collections.emptyList()), errorHandler);
@@ -460,7 +460,7 @@ class RollingLoanPolicyRenewalDueDateCalculationTests {
     assertTrue(matchErrorReason(errorHandler, RENEWAL_WOULD_NOT_CHANGE_THE_DUE_DATE));
   }
 
-  private Loan loanFor(DateTime loanDate, DateTime dueDate, LoanPolicy loanPolicy) {
+  private Loan loanFor(ZonedDateTime loanDate, ZonedDateTime dueDate, LoanPolicy loanPolicy) {
     return new LoanBuilder()
       .open()
       .withLoanDate(loanDate)
@@ -479,7 +479,7 @@ class RollingLoanPolicyRenewalDueDateCalculationTests {
     return requestQueue;
   }
 
-  private Result<Loan> renew(Loan loan, DateTime renewalDate,
+  private Result<Loan> renew(Loan loan, ZonedDateTime renewalDate,
     RequestQueue requestQueue, CirculationErrorHandler errorHandler) {
 
     RenewalContext renewalContext = RenewalContext.create(loan, new JsonObject(), "no-user")

@@ -1,10 +1,11 @@
 package org.folio.circulation.resources.context;
 
+import java.time.ZoneId;
+
 import org.folio.circulation.domain.FeeFineAction;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.RequestQueue;
-import org.joda.time.DateTimeZone;
 
 import io.vertx.core.json.JsonObject;
 import lombok.Value;
@@ -16,7 +17,7 @@ import lombok.val;
 public class RenewalContext {
   Loan loan;
   RequestQueue requestQueue;
-  DateTimeZone timeZone;
+  ZoneId timeZone;
   Loan loanBeforeRenewal;
   ItemStatus itemStatusBeforeRenewal;
   String loggedInUserId;

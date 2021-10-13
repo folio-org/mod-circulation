@@ -6,21 +6,20 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getUUIDProperty;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
+import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.UUID;
-
-import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
 
 public class LastCheckIn {
 
-  private final DateTime dateTime;
+  private final ZonedDateTime dateTime;
   private final UUID servicePointId;
   private final String staffMemberId;
   private ServicePoint servicePoint;
 
-  public LastCheckIn(DateTime dateTime, UUID servicePointId, String staffMemberId) {
+  public LastCheckIn(ZonedDateTime dateTime, UUID servicePointId, String staffMemberId) {
     this.dateTime = dateTime;
     this.servicePointId = servicePointId;
     this.staffMemberId = staffMemberId;
@@ -42,7 +41,7 @@ public class LastCheckIn {
     return servicePointId;
   }
 
-  public DateTime getDateTime() {
+  public ZonedDateTime getDateTime() {
     return dateTime;
   }
 

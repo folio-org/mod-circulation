@@ -1,60 +1,60 @@
 package api.support.builders;
 
-import static org.folio.circulation.support.utils.ClockUtil.getDateTime;
+import static java.time.ZoneOffset.UTC;
+import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.folio.circulation.support.utils.DateTimeUtil.atEndOfDay;
 import static org.folio.circulation.support.utils.DateTimeUtil.atEndOfMonth;
 import static org.folio.circulation.support.utils.DateTimeUtil.atEndOfYear;
 import static org.folio.circulation.support.utils.DateTimeUtil.atStartOfDay;
 import static org.folio.circulation.support.utils.DateTimeUtil.atStartOfMonth;
 import static org.folio.circulation.support.utils.DateTimeUtil.atStartOfYear;
-import static org.joda.time.DateTimeZone.UTC;
 
-import org.joda.time.DateTime;
-import org.joda.time.LocalDate;
+import java.time.LocalDate;
+import java.time.ZonedDateTime;
 
 public class FixedDueDateSchedule {
-  final DateTime from;
-  final DateTime to;
-  public final DateTime due;
+  final ZonedDateTime from;
+  final ZonedDateTime to;
+  public final ZonedDateTime due;
 
-  private static FixedDueDateSchedule dueAtEnd(DateTime from, DateTime to) {
+  private static FixedDueDateSchedule dueAtEnd(ZonedDateTime from, ZonedDateTime to) {
     return new FixedDueDateSchedule(from, to, to);
   }
 
-  public FixedDueDateSchedule(DateTime from, DateTime to, DateTime due) {
+  public FixedDueDateSchedule(ZonedDateTime from, ZonedDateTime to, ZonedDateTime due) {
     this.from = from;
     this.to = to;
     this.due = due;
   }
 
   public static FixedDueDateSchedule wholeYear(int year) {
-    final LocalDate date = new LocalDate(year, 1, 1);
+    final LocalDate date = LocalDate.of(year, 1, 1);
 
     return dueAtEnd(atStartOfYear(date, UTC), atEndOfYear(date, UTC));
   }
 
   public static FixedDueDateSchedule wholeMonth(int year, int month) {
-    final LocalDate date = new LocalDate(year, month, 1);
+    final LocalDate date = LocalDate.of(year, month, 1);
 
     return dueAtEnd(atStartOfMonth(date, UTC), atEndOfMonth(date, UTC));
   }
 
-  public static FixedDueDateSchedule wholeMonth(int year, int month, DateTime dueDate) {
-    final LocalDate date = new LocalDate(year, month, 1);
+  public static FixedDueDateSchedule wholeMonth(int year, int month, ZonedDateTime dueDate) {
+    final LocalDate date = LocalDate.of(year, month, 1);
 
     return new FixedDueDateSchedule(atStartOfMonth(date, UTC),
       atEndOfMonth(date, UTC), dueDate);
   }
 
   public static FixedDueDateSchedule todayOnly() {
-    return forDay(getDateTime());
+    return forDay(getZonedDateTime());
   }
 
   public static FixedDueDateSchedule yesterdayOnly() {
-    return forDay(getDateTime().minusDays(1));
+    return forDay(getZonedDateTime().minusDays(1));
   }
 
-  public static FixedDueDateSchedule forDay(DateTime day) {
+  public static FixedDueDateSchedule forDay(ZonedDateTime day) {
     return new FixedDueDateSchedule(atStartOfDay(day, UTC),
       atEndOfDay(day, UTC), atEndOfDay(day, UTC));
   }

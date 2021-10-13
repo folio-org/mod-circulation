@@ -1,12 +1,13 @@
 package org.folio.circulation.domain;
 
+import static java.time.ZoneOffset.UTC;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.time.ZoneId;
 import java.util.Collections;
 import java.util.List;
 
-import org.joda.time.DateTimeZone;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -30,10 +31,11 @@ class ConfigurationServiceTest {
 
   @Test
   void testUtcTimeZone() {
-    String timeZoneValue = getTimezoneValue("UTC");
+    String zone = "UTC";
+    String timeZoneValue = getTimezoneValue(zone);
     JsonObject jsonObject = getJsonObject(timeZoneValue);
 
-    assertEquals(DateTimeZone.UTC, service.findDateTimeZone(jsonObject));
+    assertEquals(ZoneId.of(zone), service.findDateTimeZone(jsonObject));
   }
 
   @Test
@@ -42,7 +44,7 @@ class ConfigurationServiceTest {
     String timeZoneValue = getTimezoneValue(zone);
     JsonObject jsonObject = getJsonObject(timeZoneValue);
 
-    assertEquals(DateTimeZone.forID(zone), service.findDateTimeZone(jsonObject));
+    assertEquals(ZoneId.of(zone), service.findDateTimeZone(jsonObject));
   }
 
   @Test
@@ -50,21 +52,21 @@ class ConfigurationServiceTest {
     String timeZoneValue = getTimezoneValue("");
     JsonObject jsonObject = getJsonObject(timeZoneValue);
 
-    assertEquals(DateTimeZone.UTC, service.findDateTimeZone(jsonObject));
+    assertEquals(UTC, service.findDateTimeZone(jsonObject));
   }
 
   @Test
   void testEmptyJsonValue() {
     JsonObject jsonObject = getJsonObject("");
 
-    assertEquals(DateTimeZone.UTC, service.findDateTimeZone(jsonObject));
+    assertEquals(UTC, service.findDateTimeZone(jsonObject));
   }
 
   @Test
   void testEmptyJson() {
     JsonObject jsonObject = new JsonObject();
 
-    assertEquals(DateTimeZone.UTC, service.findDateTimeZone(jsonObject));
+    assertEquals(UTC, service.findDateTimeZone(jsonObject));
   }
 
   @Test

@@ -1,14 +1,14 @@
 package org.folio.circulation.support.json;
 
 import static java.time.ZoneOffset.ofHours;
-import static org.folio.circulation.support.json.JsonPropertyFetcher.getOffsetDateTimeProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.nullValue;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
 
 import org.junit.jupiter.api.Test;
 
@@ -21,7 +21,7 @@ class DateAndTimeJsonPropertyFetcherTests {
 
     writeOffsetDateTimeProperty(json, "2020-11-18T22:11:34-04:00");
 
-    final var expectedDateTime = OffsetDateTime.of(
+    final var expectedDateTime = ZonedDateTime.of(
       LocalDate.of(2020, 11, 18), LocalTime.of(22, 11, 34), ofHours(-4));
 
     assertThat(getOffsetDateTime(json), is(expectedDateTime));
@@ -52,7 +52,7 @@ class DateAndTimeJsonPropertyFetcherTests {
     json.put("offsetDateTime", value);
   }
 
-  private OffsetDateTime getOffsetDateTime(JsonObject json) {
-    return getOffsetDateTimeProperty(json, "offsetDateTime");
+  private ZonedDateTime getOffsetDateTime(JsonObject json) {
+    return getDateTimeProperty(json, "offsetDateTime");
   }
 }

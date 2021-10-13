@@ -1,17 +1,17 @@
 package org.folio.circulation.domain.representations;
 
+import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getUUIDProperty;
 import static org.folio.circulation.support.results.Result.succeeded;
-import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.UUID;
 
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.results.Result;
-import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
@@ -27,7 +27,7 @@ public class CheckInByBarcodeRequest {
 
   private final String itemBarcode;
   private final UUID servicePointId;
-  private final DateTime checkInDate;
+  private final ZonedDateTime checkInDate;
   private final ClaimedReturnedResolution claimedReturnedResolution;
 
   public static Result<CheckInByBarcodeRequest> from(JsonObject json) {
@@ -45,7 +45,7 @@ public class CheckInByBarcodeRequest {
         SERVICE_POINT_ID, null);
     }
 
-    final DateTime checkInDate = getDateTimeProperty(json, CHECK_IN_DATE);
+    final ZonedDateTime checkInDate = getDateTimeProperty(json, CHECK_IN_DATE);
 
     if(checkInDate == null) {
       return failedValidation("Checkin request must have an check in date",

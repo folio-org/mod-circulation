@@ -39,7 +39,7 @@ class RequestsServicePointsTests extends APITests {
     assertThat(requestItem.getString("status"), is(ItemStatus.PAGED.getValue()));
     assertThat(firstRequest.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
 
-    checkInFixture.checkInByBarcode(smallAngryPlanet, ClockUtil.getDateTime(), servicePoint.getId());
+    checkInFixture.checkInByBarcode(smallAngryPlanet, ClockUtil.getZonedDateTime(), servicePoint.getId());
 
     MultipleRecords<JsonObject> requests = requestsFixture.getQueueFor(smallAngryPlanet);
     JsonObject pagedRequestRecord = requests.getRecords().iterator().next();
@@ -59,7 +59,7 @@ class RequestsServicePointsTests extends APITests {
       usersFixture, requestsFixture, checkInFixture);
 
     //now, check in at intended service point.
-    checkInFixture.checkInByBarcode(inTransitItem, ClockUtil.getDateTime(), requestPickupServicePoint.getId());
+    checkInFixture.checkInByBarcode(inTransitItem, ClockUtil.getZonedDateTime(), requestPickupServicePoint.getId());
     MultipleRecords<JsonObject> requests = requestsFixture.getQueueFor(inTransitItem);
     JsonObject pagedRequestRecord = requests.getRecords().iterator().next();
 
@@ -87,7 +87,7 @@ class RequestsServicePointsTests extends APITests {
     log.info("requestServicePoint" + requestPickupServicePoint.getId());
     log.info("pickupServicePoint" + pickupServicePoint.getId());
 
-    checkInFixture.checkInByBarcode(smallAngryPlanet, ClockUtil.getDateTime(), pickupServicePoint.getId());
+    checkInFixture.checkInByBarcode(smallAngryPlanet, ClockUtil.getZonedDateTime(), pickupServicePoint.getId());
 
     MultipleRecords<JsonObject> requests = requestsFixture.getQueueFor(smallAngryPlanet);
     JsonObject pagedRequestRecord = requests.getRecords().iterator().next();

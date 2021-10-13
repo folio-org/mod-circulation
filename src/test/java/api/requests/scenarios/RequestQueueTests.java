@@ -1,22 +1,22 @@
 package api.requests.scenarios;
 
+import static java.time.ZoneOffset.UTC;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 
 import java.net.HttpURLConnection;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.MultipleRecords;
-import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
+import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
 
 //TODO: Maybe move these tests to scenarios which better describe the situation
@@ -34,16 +34,16 @@ class RequestQueueTests extends APITests {
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
+      smallAngryPlanet, jessica, ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC));
 
     IndividualResource requestBySteve = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, steve, new DateTime(2017, 10, 27, 11, 54, 37, DateTimeZone.UTC));
+      smallAngryPlanet, steve, ZonedDateTime.of(2017, 10, 27, 11, 54, 37, 0, UTC));
 
     IndividualResource requestByCharlotte = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, charlotte, new DateTime(2018, 1, 10, 15, 34, 21, DateTimeZone.UTC));
+      smallAngryPlanet, charlotte, ZonedDateTime.of(2018, 1, 10, 15, 34, 21, 0, UTC));
 
     IndividualResource requestByRebecca = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, rebecca, new DateTime(2018, 2, 4, 7, 4, 53, DateTimeZone.UTC));
+      smallAngryPlanet, rebecca, ZonedDateTime.of(2018, 2, 4, 7, 4, 53, 0, UTC));
 
       checkInFixture.checkInByBarcode(smallAngryPlanet);
 
@@ -95,16 +95,16 @@ class RequestQueueTests extends APITests {
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
+      smallAngryPlanet, jessica, ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC));
 
     IndividualResource requestBySteve = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, steve, new DateTime(2017, 10, 27, 11, 54, 37, DateTimeZone.UTC));
+      smallAngryPlanet, steve, ZonedDateTime.of(2017, 10, 27, 11, 54, 37, 0, UTC));
 
     IndividualResource requestByCharlotte = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, charlotte, new DateTime(2018, 1, 10, 15, 34, 21, DateTimeZone.UTC));
+      smallAngryPlanet, charlotte, ZonedDateTime.of(2018, 1, 10, 15, 34, 21, 0, UTC));
 
     IndividualResource requestByRebecca = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, rebecca, new DateTime(2018, 2, 4, 7, 4, 53, DateTimeZone.UTC));
+      smallAngryPlanet, rebecca, ZonedDateTime.of(2018, 2, 4, 7, 4, 53, 0, UTC));
 
     requestsClient.delete(requestByCharlotte);
 
@@ -144,16 +144,16 @@ class RequestQueueTests extends APITests {
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
+      smallAngryPlanet, jessica, ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC));
 
     IndividualResource requestBySteve = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, steve, new DateTime(2017, 10, 27, 11, 54, 37, DateTimeZone.UTC));
+      smallAngryPlanet, steve, ZonedDateTime.of(2017, 10, 27, 11, 54, 37, 0, UTC));
 
     IndividualResource requestByCharlotte = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, charlotte, new DateTime(2018, 1, 10, 15, 34, 21, DateTimeZone.UTC));
+      smallAngryPlanet, charlotte, ZonedDateTime.of(2018, 1, 10, 15, 34, 21, 0, UTC));
 
     IndividualResource requestByRebecca = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, rebecca, new DateTime(2018, 2, 4, 7, 4, 53, DateTimeZone.UTC));
+      smallAngryPlanet, rebecca, ZonedDateTime.of(2018, 2, 4, 7, 4, 53, 0, UTC));
 
     MultipleRecords<JsonObject> queue = requestsFixture.getQueueFor(smallAngryPlanet);
 

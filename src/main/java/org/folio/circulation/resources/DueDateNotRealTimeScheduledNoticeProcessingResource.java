@@ -2,9 +2,11 @@ package org.folio.circulation.resources;
 
 import static java.lang.Math.max;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
-import static org.folio.circulation.support.utils.ClockUtil.getDateTime;
+import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.folio.circulation.support.utils.DateTimeUtil.atStartOfDay;
 
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -25,8 +27,6 @@ import org.folio.circulation.support.CqlSortBy;
 import org.folio.circulation.support.CqlSortClause;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.results.Result;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 
 import io.vertx.core.http.HttpClient;
 
@@ -57,13 +57,13 @@ public class DueDateNotRealTimeScheduledNoticeProcessingResource extends Schedul
         pageLimit, timeLimit)));
   }
 
-  private DateTime startOfTodayInTimeZone(DateTimeZone zone) {
-    return atStartOfDay(getDateTime().withZone(zone));
+  private ZonedDateTime startOfTodayInTimeZone(ZoneId zone) {
+    return atStartOfDay(getZonedDateTime().withZoneSameInstant(zone));
   }
 
   private CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> findNotices(
     ScheduledNoticesRepository scheduledNoticesRepository, PageLimit pageLimit,
-    DateTime timeLimit) {
+    ZonedDateTime timeLimit) {
 
     return scheduledNoticesRepository.findNotices(timeLimit,
       false, Collections.singletonList(TriggeringEvent.DUE_DATE),
@@ -93,7 +93,7 @@ public class DueDateNotRealTimeScheduledNoticeProcessingResource extends Schedul
       .map(Map.Entry::getValue)
       .collect(Collectors.toList());
 
-    return new GroupedLoanScheduledNoticeHandler(clients, getDateTime())
+    return new GroupedLoanScheduledNoticeHandler(clients, getZonedDateTime())
       .handleNotices(noticeGroups)
       .thenApply(mapResult(v -> notices));
   }

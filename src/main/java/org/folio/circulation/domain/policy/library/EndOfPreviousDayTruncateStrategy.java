@@ -5,22 +5,22 @@ import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.utils.DateTimeUtil.atEndOfDay;
 
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Objects;
 
 import org.folio.circulation.AdjacentOpeningDays;
 import org.folio.circulation.domain.OpeningDay;
 import org.folio.circulation.support.results.Result;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 
 public class EndOfPreviousDayTruncateStrategy extends EndOfPreviousDayStrategy {
 
-  public EndOfPreviousDayTruncateStrategy(DateTimeZone zone) {
+  public EndOfPreviousDayTruncateStrategy(ZoneId zone) {
     super(zone);
   }
 
   @Override
-  public Result<DateTime> calculateDueDate(DateTime requestedDate, AdjacentOpeningDays openingDays) {
+  public Result<ZonedDateTime> calculateDueDate(ZonedDateTime requestedDate, AdjacentOpeningDays openingDays) {
     Objects.requireNonNull(openingDays);
     OpeningDay previousDay = openingDays.getPreviousDay();
     if (!previousDay.getOpen()) {

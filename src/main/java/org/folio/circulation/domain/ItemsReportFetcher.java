@@ -1,8 +1,8 @@
 package org.folio.circulation.domain;
 
-import org.folio.circulation.support.results.Result;
-
 import java.util.List;
+
+import org.folio.circulation.support.results.Result;
 
 public class ItemsReportFetcher {
   private final int currPageNumber;

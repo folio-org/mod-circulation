@@ -25,7 +25,7 @@ public class UpdateLoan {
       LoanRepository loanRepository,
       LoanPolicyRepository loanPolicyRepository) {
     closedLibraryStrategyService = ClosedLibraryStrategyService.using(clients,
-      ClockUtil.getDateTime(), false);
+      ClockUtil.getZonedDateTime(), false);
     this.loanPolicyRepository = loanPolicyRepository;
     this.loanRepository = loanRepository;
     this.scheduledNoticeService = LoanScheduledNoticeService.using(clients);

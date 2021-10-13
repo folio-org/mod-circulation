@@ -41,7 +41,7 @@ public class FeeFineScheduledNoticeProcessingResource extends ScheduledNoticePro
     ScheduledNoticesRepository scheduledNoticesRepository, PageLimit pageLimit) {
 
     return scheduledNoticesRepository.findNotices(
-      ClockUtil.getDateTime(), true, TRIGGERING_EVENTS_TO_PROCESS,
+      ClockUtil.getZonedDateTime(), true, TRIGGERING_EVENTS_TO_PROCESS,
       CqlSortBy.ascending("nextRunTime"), pageLimit);
   }
 

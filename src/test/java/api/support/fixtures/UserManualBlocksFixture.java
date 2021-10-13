@@ -31,21 +31,21 @@ public class UserManualBlocksFixture {
   public void createRequestsManualPatronBlockForUser(UUID requesterId) {
     create(getManualBlockBuilder()
       .withRequests(true)
-      .withExpirationDate(ClockUtil.getDateTime().plusYears(1))
+      .withExpirationDate(ClockUtil.getZonedDateTime().plusYears(1))
       .withUserId(requesterId.toString()));
   }
 
   public void createRenewalsManualPatronBlockForUser(UUID requesterId) {
     create(getManualBlockBuilder()
       .withRenewals(true)
-      .withExpirationDate(ClockUtil.getDateTime().plusYears(1))
+      .withExpirationDate(ClockUtil.getZonedDateTime().plusYears(1))
       .withUserId(requesterId.toString()));
   }
 
   public void createBorrowingManualPatronBlockForUser(UUID requesterId) {
     create(getManualBlockBuilder()
       .withBorrowing(true)
-      .withExpirationDate(ClockUtil.getDateTime().plusYears(1))
+      .withExpirationDate(ClockUtil.getZonedDateTime().plusYears(1))
       .withUserId(requesterId.toString()));
   }
 

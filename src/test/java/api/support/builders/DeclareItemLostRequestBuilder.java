@@ -1,30 +1,29 @@
 package api.support.builders;
 
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
+import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTimeOptional;
 
+import java.time.ZonedDateTime;
 import java.util.UUID;
-
-import org.folio.circulation.support.utils.ClockUtil;
-import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
 
 public class DeclareItemLostRequestBuilder extends JsonBuilder implements Builder {
   private final String loanId;
-  private final DateTime dateTime;
+  private final ZonedDateTime dateTime;
   private final String comment;
   private final String servicePointId;
 
   public DeclareItemLostRequestBuilder() {
-    this(null, ClockUtil.getDateTime(), null, null);
+    this(null, getZonedDateTime(), null, null);
   }
 
   public String getLoanId() {
     return loanId;
   }
 
-  public DateTime getDateTime() {
+  public ZonedDateTime getDateTime() {
     return dateTime;
   }
 
@@ -32,7 +31,7 @@ public class DeclareItemLostRequestBuilder extends JsonBuilder implements Builde
     return comment;
   }
 
-  public DeclareItemLostRequestBuilder(String loanId, DateTime dateTime,
+  public DeclareItemLostRequestBuilder(String loanId, ZonedDateTime dateTime,
     String comment, String servicePointId) {
 
     this.loanId = loanId;
@@ -56,7 +55,7 @@ public class DeclareItemLostRequestBuilder extends JsonBuilder implements Builde
     return new DeclareItemLostRequestBuilder(id.toString(), dateTime, comment, servicePointId);
   }
 
-  public DeclareItemLostRequestBuilder on(DateTime dateTime) {
+  public DeclareItemLostRequestBuilder on(ZonedDateTime dateTime) {
     return new DeclareItemLostRequestBuilder(loanId, dateTime, comment, servicePointId);
   }
 
@@ -77,6 +76,6 @@ public class DeclareItemLostRequestBuilder extends JsonBuilder implements Builde
       .forLoanId(loanId)
       .withServicePointId(UUID.randomUUID())
       .withComment("Declaring item lost")
-      .on(ClockUtil.getDateTime());
+      .on(getZonedDateTime());
   }
 }

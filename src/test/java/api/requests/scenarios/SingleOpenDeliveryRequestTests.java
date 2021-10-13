@@ -7,18 +7,20 @@ import static api.support.builders.RequestBuilder.CLOSED_CANCELLED;
 import static api.support.builders.RequestBuilder.CLOSED_FILLED;
 import static api.support.builders.RequestBuilder.OPEN_AWAITING_DELIVERY;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
+import static java.time.ZoneOffset.UTC;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
-import api.support.http.IndividualResource;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+
 import org.folio.circulation.support.http.client.Response;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
+import api.support.http.IndividualResource;
 
 class SingleOpenDeliveryRequestTests extends APITests {
 
@@ -32,7 +34,7 @@ class SingleOpenDeliveryRequestTests extends APITests {
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     IndividualResource requestByJessica = requestsFixture.placeDeliveryRequest(
-      smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
+      smallAngryPlanet, jessica, ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC));
 
     checkInFixture.checkInByBarcode(smallAngryPlanet);
 
@@ -51,7 +53,7 @@ class SingleOpenDeliveryRequestTests extends APITests {
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     IndividualResource requestByJessica = requestsFixture.placeDeliveryRequest(
-      smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
+      smallAngryPlanet, jessica, ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC));
 
     checkInFixture.checkInByBarcode(smallAngryPlanet);
 
@@ -72,7 +74,7 @@ class SingleOpenDeliveryRequestTests extends APITests {
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     IndividualResource requestByJessica = requestsFixture.placeDeliveryRequest(
-      smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
+      smallAngryPlanet, jessica, ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, ZoneOffset.UTC));
 
     checkInFixture.checkInByBarcode(smallAngryPlanet);
 
@@ -95,7 +97,7 @@ class SingleOpenDeliveryRequestTests extends APITests {
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     IndividualResource requestByJessica = requestsFixture.placeDeliveryRequest(
-      smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
+      smallAngryPlanet, jessica, ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, ZoneOffset.UTC));
 
     checkInFixture.checkInByBarcode(smallAngryPlanet);
 
@@ -117,7 +119,7 @@ class SingleOpenDeliveryRequestTests extends APITests {
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     IndividualResource requestByJessica = requestsFixture.placeDeliveryRequest(
-      smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
+      smallAngryPlanet, jessica, ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, ZoneOffset.UTC));
 
     requestsFixture.cancelRequest(requestByJessica);
 

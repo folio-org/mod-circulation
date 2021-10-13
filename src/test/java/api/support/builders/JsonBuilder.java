@@ -9,8 +9,6 @@ import java.util.List;
 import java.util.UUID;
 import java.util.function.Function;
 
-import org.joda.time.DateTime;
-
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -51,19 +49,7 @@ public class JsonBuilder {
     }
   }
 
-  protected void put(JsonObject representation, String property, DateTime value) {
-    if(value != null) {
-      representation.put(property, formatDateTime(value));
-    }
-  }
-
   protected void put(JsonObject representation, String propertyName, LocalDate value) {
-    if(value != null) {
-      representation.put(propertyName, formatDate(value));
-    }
-  }
-
-  protected void put(JsonObject representation, String propertyName, org.joda.time.LocalDate value) {
     if(value != null) {
       representation.put(propertyName, formatDate(value));
     }

@@ -5,6 +5,7 @@ import static org.folio.circulation.domain.AccountCancelReason.CANCELLED_ITEM_RE
 import static org.folio.circulation.domain.AccountRefundReason.LOST_ITEM_FOUND;
 import static org.folio.circulation.domain.ItemStatus.LOST_AND_PAID;
 
+import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -17,7 +18,6 @@ import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.policy.lostitem.LostItemPolicy;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.services.support.RefundAndCancelAccountCommand;
-import org.joda.time.DateTime;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -54,7 +54,7 @@ public final class LostItemFeeRefundContext {
       LOST_ITEM_FOUND, cancelReason);
   }
 
-  DateTime getItemLostDate() {
+  ZonedDateTime getItemLostDate() {
     return loan.getLostDate();
   }
 

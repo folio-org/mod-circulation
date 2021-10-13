@@ -2,12 +2,12 @@ package org.folio.circulation.domain.policy;
 
 import static java.lang.String.format;
 
+import java.time.ZonedDateTime;
 import java.util.function.Function;
 
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
-import org.joda.time.DateTime;
 
 class RollingCheckOutDueDateStrategy extends DueDateStrategy {
   private static final String NO_APPLICABLE_DUE_DATE_LIMIT_SCHEDULE_MESSAGE =
@@ -38,23 +38,23 @@ class RollingCheckOutDueDateStrategy extends DueDateStrategy {
   }
 
   @Override
-  public Result<DateTime> calculateDueDate(Loan loan) {
-    final DateTime loanDate = loan.getLoanDate();
+  public Result<ZonedDateTime> calculateDueDate(Loan loan) {
+    final ZonedDateTime loanDate = loan.getLoanDate();
 
     return initialDueDate(loanDate)
       .next(dueDate -> truncateDueDateBySchedule(loanDate, dueDate));
   }
 
-  private Result<DateTime> initialDueDate(DateTime loanDate) {
+  private Result<ZonedDateTime> initialDueDate(ZonedDateTime loanDate) {
     return period.addTo(loanDate,
       () -> errorForPolicy(CHECK_OUT_UNRECOGNISED_PERIOD_MESSAGE),
       interval -> errorForPolicy(format(CHECK_OUT_UNRECOGNISED_INTERVAL_MESSAGE, interval)),
       duration -> errorForPolicy(format(CHECKOUT_INVALID_DURATION_MESSAGE, duration)));
   }
 
-  private Result<DateTime> truncateDueDateBySchedule(
-    DateTime loanDate,
-    DateTime dueDate) {
+  private Result<ZonedDateTime> truncateDueDateBySchedule(
+    ZonedDateTime loanDate,
+    ZonedDateTime dueDate) {
 
     return dueDateLimitSchedules.truncateDueDate(dueDate, loanDate,
       () -> errorForPolicy(NO_APPLICABLE_DUE_DATE_LIMIT_SCHEDULE_MESSAGE));

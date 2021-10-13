@@ -111,15 +111,15 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
     return withFeeRefundInterval(null);
   }
 
-  private LostItemFeePolicyBuilder withFeeRefundInterval(int duration, String intervalId) {
+  private LostItemFeePolicyBuilder withFeeRefundInterval(long duration, String intervalId) {
     return withFeeRefundInterval(Period.from(duration, intervalId));
   }
 
-  public LostItemFeePolicyBuilder refundFeesWithinMinutes(int duration) {
+  public LostItemFeePolicyBuilder refundFeesWithinMinutes(long duration) {
     return withFeeRefundInterval(duration, "Minutes");
   }
 
-  public LostItemFeePolicyBuilder refundFeesWithinWeeks(int duration) {
+  public LostItemFeePolicyBuilder refundFeesWithinWeeks(long duration) {
     return withFeeRefundInterval(duration, "Weeks");
   }
 
