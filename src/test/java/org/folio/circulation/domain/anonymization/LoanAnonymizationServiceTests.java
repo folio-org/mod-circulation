@@ -13,7 +13,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 import java.util.Collection;
 import java.util.List;
@@ -28,6 +28,7 @@ import org.folio.circulation.domain.anonymization.service.LoansForTenantFinder;
 import org.folio.circulation.infrastructure.storage.loans.AnonymizeStorageLoansRepository;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.results.Result;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -45,8 +46,8 @@ class LoanAnonymizationServiceTests {
   LoansForTenantFinder loansForTenantFinder;
 
   @BeforeEach
-  public void init() {
-    initMocks(this);
+  public void beforeEach() {
+    openMocks(this);
   }
 
   @SneakyThrows
@@ -135,7 +136,8 @@ class LoanAnonymizationServiceTests {
   }
 
   private LoanAnonymizationService createService(LoanAnonymizationConfiguration config) {
-    final var anonymizationCheckersService = new AnonymizationCheckersService(config);
+    final var anonymizationCheckersService = new AnonymizationCheckersService(config,
+      ClockUtil::getZonedDateTime);
 
     return new DefaultLoanAnonymizationService(anonymizationCheckersService,
       anonymizeStorageLoansRepository, eventPublisher);
