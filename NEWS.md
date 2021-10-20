@@ -1,3 +1,7 @@
+## 22.1.1 IN-PROGRESS
+
+* Includes permission for fetching notice policy when processing notices (CIRC-1100)
+
 ## 22.1.0 2021-10-08
 
 * Screen is hanging on a loading screen when trying to view loan details on the Circulation log page (CIRC-1188)
