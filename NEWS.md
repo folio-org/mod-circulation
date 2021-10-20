@@ -1,6 +1,7 @@
 ## 22.0.5 IN-PROGRESS
 
 * Includes permission for fetching notice policy when checking out (CIRC-1214)
+* Includes permission for fetching notice policy when processing notices (CIRC-1100, CIRC-1321)
 
 ## 22.0.4 2021-08-18
 
