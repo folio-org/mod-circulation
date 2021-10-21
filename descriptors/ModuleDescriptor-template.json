@@ -746,6 +746,7 @@
             "accounts.collection.get",
             "feefineactions.item.get",
             "feefineactions.collection.get",
+            "circulation.rules.notice-policy.get",
             "circulation-storage.loans.item.get",
             "circulation-storage.loans.collection.get",
             "circulation-storage.circulation-rules.get",
