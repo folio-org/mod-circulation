@@ -1,3 +1,7 @@
+## 22.0.5 IN-PROGRESS
+
+* Includes permission for fetching notice policy when checking out (CIRC-1214)
+
 ## 22.0.4 2021-08-18
 
 * Enables sending of scheduled Overdue and Courtesy notices for renewed loans (CIRC-1205)
