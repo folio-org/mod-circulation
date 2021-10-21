@@ -11,6 +11,7 @@ import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
 import java.lang.invoke.MethodHandles;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -24,7 +25,6 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.RecordNotFoundFailure;
 import org.folio.circulation.support.results.Result;
-import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,7 +34,7 @@ public class GroupedLoanScheduledNoticeHandler {
   private final LoanScheduledNoticeHandler loanScheduledNoticeHandler;
   private final ScheduledPatronNoticeService patronNoticeService;
 
-  public GroupedLoanScheduledNoticeHandler(Clients clients, DateTime systemTime) {
+  public GroupedLoanScheduledNoticeHandler(Clients clients, ZonedDateTime systemTime) {
     this.loanScheduledNoticeHandler = new LoanScheduledNoticeHandler(clients, systemTime);
     this.patronNoticeService = new ScheduledPatronNoticeService(clients);
   }

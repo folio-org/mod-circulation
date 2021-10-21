@@ -2,40 +2,38 @@ package api.support.matchers;
 
 import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTimeOptional;
 import static org.folio.circulation.support.utils.DateFormatUtil.parseDateTimeOptional;
+import static org.folio.circulation.support.utils.DateFormatUtil.parseInstantOptional;
+import static org.folio.circulation.support.utils.DateTimeUtil.isAfterMillis;
 import static org.folio.circulation.support.utils.DateTimeUtil.isBeforeMillis;
 import static org.folio.circulation.support.utils.DateTimeUtil.isSameMillis;
+import static org.folio.circulation.support.utils.DateTimeUtil.millisBetween;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 
 import org.folio.circulation.support.utils.ClockUtil;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
-import org.joda.time.DateTime;
-import org.joda.time.Seconds;
 
 public class TextDateTimeMatcher {
-  public static Matcher<String> isEquivalentTo(DateTime expected) {
+
+  public static Matcher<String> isEquivalentTo(ZonedDateTime expected) {
     return new TypeSafeMatcher<>() {
       @Override
       public void describeTo(Description description) {
         description.appendText(String.format(
-          "a date time matching: %s", formatDateTimeOptional(expected)));
+          "an RFC-3339 formatted date and time with a UTC (zero) offset matching: %s", formatDateTimeOptional(expected)));
       }
 
       @Override
       protected boolean matchesSafely(String textRepresentation) {
-        //response representation might vary from request representation
-        DateTime actual = DateTime.parse(textRepresentation);
 
-        return isSameMillis(expected, actual);
+        //response representation might vary from request representation
+        return isSameMillis(expected, parseDateTimeOptional(textRepresentation));
       }
     };
-  }
-
-  public static Matcher<String> isEquivalentTo(ZonedDateTime expected) {
-    return isEquivalentTo(expected.toInstant());
   }
 
   public static Matcher<String> isEquivalentTo(Instant expected) {
@@ -43,58 +41,60 @@ public class TextDateTimeMatcher {
       @Override
       public void describeTo(Description description) {
         description.appendText(String.format(
-          "an RFC-3339 formatted date and time with a UTC (zero) offset matching: %s", expected.toString()));
+          "an RFC-3339 formatted date and time with a UTC (zero) offset matching: %s", formatDateTimeOptional(expected)));
       }
 
       @Override
       protected boolean matchesSafely(String textRepresentation) {
 
         //response representation might vary from request representation
-        return isSameMillis(expected, parseDateTimeOptional(textRepresentation).toInstant());
+        return isSameMillis(expected, parseInstantOptional(textRepresentation));
       }
     };
   }
 
-  public static Matcher<String> withinSecondsAfter(Seconds seconds, DateTime after) {
+  public static Matcher<String> withinSecondsAfter(long seconds, ZonedDateTime after) {
     return new TypeSafeMatcher<>() {
       @Override
       public void describeTo(Description description) {
         description.appendText(String.format(
-          "a date time within %s seconds after %s",
-          seconds.getSeconds(), after.toString()));
+          "a date time within %l seconds after %s",
+          seconds, formatDateTimeOptional(after)));
       }
 
       @Override
       protected boolean matchesSafely(String textRepresentation) {
         //response representation might vary from request representation
-        DateTime actual = DateTime.parse(textRepresentation);
+        final ZonedDateTime actual = ZonedDateTime.parse(textRepresentation)
+          .truncatedTo(ChronoUnit.SECONDS);
 
-        return !isBeforeMillis(actual, after) &&
-          Seconds.secondsBetween(after, actual).isLessThan(seconds);
+        return !isBeforeMillis(actual, after.truncatedTo(ChronoUnit.SECONDS)) &&
+          millisBetween(after.truncatedTo(ChronoUnit.SECONDS), actual) < seconds * 1000;
       }
     };
   }
 
-  public static Matcher<String> withinSecondsBefore(Seconds seconds, DateTime before) {
+  public static Matcher<String> withinSecondsBefore(long seconds, ZonedDateTime before) {
     return new TypeSafeMatcher<>() {
       @Override
       public void describeTo(Description description) {
         description.appendText(String.format(
-          "a date time within %s seconds before %s",
-          seconds.getSeconds(), before.toString()));
+          "a date time within %l seconds before %s",
+          seconds, formatDateTimeOptional(before)));
       }
 
       @Override
       protected boolean matchesSafely(String textRepresentation) {
-        DateTime actual = DateTime.parse(textRepresentation);
+        final ZonedDateTime actual = ZonedDateTime.parse(textRepresentation)
+          .truncatedTo(ChronoUnit.SECONDS);
 
-        return isBeforeMillis(actual, before) &&
-          Seconds.secondsBetween(actual, before).isLessThan(seconds);
+        return !isAfterMillis(actual, before.truncatedTo(ChronoUnit.SECONDS)) &&
+          millisBetween(before.truncatedTo(ChronoUnit.SECONDS), actual) < seconds * 1000;
       }
     };
   }
 
-  public static Matcher<String> withinSecondsBeforeNow(Seconds seconds) {
-    return withinSecondsBefore(seconds, ClockUtil.getDateTime());
+  public static Matcher<String> withinSecondsBeforeNow(long seconds) {
+    return withinSecondsBefore(seconds, ClockUtil.getZonedDateTime());
   }
 }

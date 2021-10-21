@@ -8,6 +8,7 @@ import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -26,7 +27,6 @@ import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.services.LostItemFeeRefundContext;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
-import org.joda.time.DateTime;
 
 public class FeeFineScheduledNoticeService {
 
@@ -114,11 +114,11 @@ public class FeeFineScheduledNoticeService {
       .build();
   }
 
-  private DateTime determineNextRunTime(NoticeConfiguration configuration, FeeFineAction action) {
-    DateTime actionDateTime = action.getDateAction();
+  private ZonedDateTime determineNextRunTime(NoticeConfiguration configuration, FeeFineAction action) {
+    ZonedDateTime actionDateTime = action.getDateAction();
 
     return configuration.getTiming() == NoticeTiming.AFTER
-      ? actionDateTime.plus(configuration.getTimingPeriod().timePeriod())
+      ? configuration.getTimingPeriod().plusDate(actionDateTime)
       : actionDateTime;
   }
 

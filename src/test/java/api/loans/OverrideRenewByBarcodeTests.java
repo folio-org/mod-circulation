@@ -20,6 +20,7 @@ import static api.support.utl.BlockOverridesUtils.buildOkapiHeadersWithPermissio
 import static api.support.utl.BlockOverridesUtils.getMissingPermissions;
 import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfPublishedEvents;
 import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfSentNotices;
+import static java.time.ZoneOffset.UTC;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
@@ -32,10 +33,8 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
-import static org.joda.time.DateTimeConstants.APRIL;
-import static org.joda.time.DateTimeZone.UTC;
-import static org.joda.time.Seconds.seconds;
 
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -46,8 +45,6 @@ import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.utils.ClockUtil;
 import org.hamcrest.Matcher;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeConstants;
 import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
@@ -86,7 +83,7 @@ class OverrideRenewByBarcodeTests extends APITests {
     final UUID unknownLoanPolicyId = UUID.randomUUID();
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica,
-      new DateTime(2018, APRIL, 21, 11, 21, 43));
+      ZonedDateTime.of(2018, 4, 21, 11, 21, 43, 0, UTC));
 
     IndividualResource record = loanPoliciesFixture.create(new LoanPolicyBuilder()
       .withId(unknownLoanPolicyId)
@@ -149,7 +146,7 @@ class OverrideRenewByBarcodeTests extends APITests {
     final IndividualResource jessica = usersFixture.jessica();
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica,
-      new DateTime(2018, APRIL, 21, 11, 21, 43));
+      ZonedDateTime.of(2018, 4, 21, 11, 21, 43, 0, UTC));
 
     final Response response = loansFixture.attemptOverride(smallAngryPlanet,
       james, OVERRIDE_COMMENT, null);
@@ -178,7 +175,7 @@ class OverrideRenewByBarcodeTests extends APITests {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
-    DateTime loanDueDate = new DateTime(2018, APRIL, 21, 11, 21, 43);
+    ZonedDateTime loanDueDate = ZonedDateTime.of(2018, 4, 21, 11, 21, 43, 0, UTC);
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDueDate);
 
@@ -203,7 +200,7 @@ class OverrideRenewByBarcodeTests extends APITests {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
-    DateTime loanDueDate = new DateTime(2018, APRIL, 21, 11, 21, 43);
+    ZonedDateTime loanDueDate = ZonedDateTime.of(2018, 4, 21, 11, 21, 43, 0, UTC);
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDueDate);
 
@@ -219,7 +216,7 @@ class OverrideRenewByBarcodeTests extends APITests {
 
     loansFixture.attemptRenewal(422, smallAngryPlanet, jessica);
 
-    DateTime newDueDate = ClockUtil.getDateTime().plusWeeks(2);
+    ZonedDateTime newDueDate = ClockUtil.getZonedDateTime().plusWeeks(2);
 
     final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(OVERRIDE_RENEWAL_PERMISSION);
     JsonObject renewedLoan =
@@ -244,13 +241,13 @@ class OverrideRenewByBarcodeTests extends APITests {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
-    DateTime loanDueDate = new DateTime(2018, APRIL, 21, 11, 21, 43);
+    ZonedDateTime loanDueDate = ZonedDateTime.of(2018, 4, 21, 11, 21, 43, 0, UTC);
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDueDate);
 
     FixedDueDateSchedulesBuilder fixedDueDateSchedules = new FixedDueDateSchedulesBuilder()
       .withName("Fixed Due Date Schedule")
-      .addSchedule(wholeMonth(2018, DateTimeConstants.FEBRUARY));
+      .addSchedule(wholeMonth(2018, 2));
 
     final UUID fixedDueDateSchedulesId = loanPoliciesFixture.createSchedule(
       fixedDueDateSchedules).getId();
@@ -276,7 +273,7 @@ class OverrideRenewByBarcodeTests extends APITests {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
-    DateTime loanDueDate = new DateTime(2018, APRIL, 21, 11, 21, 43);
+    ZonedDateTime loanDueDate = ZonedDateTime.of(2018, 4, 21, 11, 21, 43, 0, UTC);
 
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(
       smallAngryPlanet, jessica, loanDueDate);
@@ -285,7 +282,7 @@ class OverrideRenewByBarcodeTests extends APITests {
 
     FixedDueDateSchedulesBuilder fixedDueDateSchedules = new FixedDueDateSchedulesBuilder()
       .withName("Fixed Due Date Schedule")
-      .addSchedule(wholeMonth(2018, DateTimeConstants.FEBRUARY));
+      .addSchedule(wholeMonth(2018, 2));
 
     final UUID fixedDueDateSchedulesId = loanPoliciesFixture.createSchedule(
       fixedDueDateSchedules).getId();
@@ -303,7 +300,7 @@ class OverrideRenewByBarcodeTests extends APITests {
     loansFixture.attemptRenewal(422, smallAngryPlanet, jessica);
 
     final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(OVERRIDE_RENEWAL_PERMISSION);
-    DateTime newDueDate = ClockUtil.getDateTime().plusWeeks(1);
+    ZonedDateTime newDueDate = ClockUtil.getZonedDateTime().plusWeeks(1);
     final JsonObject renewedLoan = loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica,
         OVERRIDE_COMMENT, formatDateTime(newDueDate), okapiHeaders).getJson();
 
@@ -329,13 +326,13 @@ class OverrideRenewByBarcodeTests extends APITests {
 
   @Test
   void canOverrideRenewalWhenDateFallsOutsideOfTheDateRangesInTheRollingLoanPolicy() {
-    final DateTime renewalDate = ClockUtil.getDateTime();
+    final ZonedDateTime renewalDate = ClockUtil.getZonedDateTime();
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
-    DateTime loanDueDate =
-      new DateTime(2018, APRIL, 21, 11, 21, 43);
+    ZonedDateTime loanDueDate =
+      ZonedDateTime.of(2018, 4, 21, 11, 21, 43, 0, UTC);
 
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(
       smallAngryPlanet, jessica, loanDueDate);
@@ -344,7 +341,7 @@ class OverrideRenewByBarcodeTests extends APITests {
 
     FixedDueDateSchedulesBuilder fixedDueDateSchedules = new FixedDueDateSchedulesBuilder()
       .withName("Fixed Due Date Schedule")
-      .addSchedule(wholeMonth(2018, DateTimeConstants.FEBRUARY))
+      .addSchedule(wholeMonth(2018, 2))
       .addSchedule(forDay(renewalDate));
 
     final UUID fixedDueDateSchedulesId = loanPoliciesFixture.createSchedule(
@@ -363,7 +360,7 @@ class OverrideRenewByBarcodeTests extends APITests {
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("renewal date falls outside of date ranges in the loan policy"))));
 
-    final DateTime newDueDate = loanDueDate.plusWeeks(3).plusMonths(2);
+    final ZonedDateTime newDueDate = loanDueDate.plusWeeks(3).plusMonths(2);
 
     final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(OVERRIDE_RENEWAL_PERMISSION);
     final JsonObject renewedLoan = loansFixture.overrideRenewalByBarcode(
@@ -394,7 +391,7 @@ class OverrideRenewByBarcodeTests extends APITests {
 
     use(limitedRenewalsPolicy);
 
-    DateTime loanDate = ClockUtil.getDateTime();
+    ZonedDateTime loanDate = ClockUtil.getZonedDateTime();
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDate).getJson();
 
     loansFixture.renewLoan(smallAngryPlanet, jessica);
@@ -412,7 +409,7 @@ class OverrideRenewByBarcodeTests extends APITests {
     assertThat("renewal count should be incremented",
       renewedLoan.getInteger("renewalCount"), is(2));
 
-    DateTime expectedDueDate = loanDate.plusWeeks(3);
+    ZonedDateTime expectedDueDate = loanDate.plusWeeks(3);
     assertThat("due date should be 3 weeks later",
       renewedLoan.getString("dueDate"),
       isEquivalentTo(expectedDueDate));
@@ -431,7 +428,7 @@ class OverrideRenewByBarcodeTests extends APITests {
       // Have to charge a fine otherwise the loan is closed when item is declared lost
       .lostItemPolicy(lostItemFeePoliciesFixture.chargeFee()));
 
-    final DateTime loanDate = ClockUtil.getDateTime().minusWeeks(1);
+    final ZonedDateTime loanDate = ClockUtil.getZonedDateTime().minusWeeks(1);
 
     final JsonObject loanJson = checkOutFixture.checkOutByBarcode(smallAngryPlanet,
       usersFixture.jessica(), loanDate).getJson();
@@ -467,7 +464,7 @@ class OverrideRenewByBarcodeTests extends APITests {
       renewedLoan.getJsonObject("item").getJsonObject("status").getString("name"),
       is(CHECKED_OUT.getValue()));
 
-    DateTime expectedDueDate = loanDate.plusWeeks(2);
+    ZonedDateTime expectedDueDate = loanDate.plusWeeks(2);
     assertThat("due date should be 2 weeks later",
       renewedLoan.getString("dueDate"),
       isEquivalentTo(expectedDueDate));
@@ -475,7 +472,7 @@ class OverrideRenewByBarcodeTests extends APITests {
 
   @Test
   void canOverrideRenewalWhenItemIsAgedToLost() {
-    final DateTime approximateRenewalDate = ClockUtil.getDateTime().plusWeeks(3);
+    final ZonedDateTime approximateRenewalDate = ClockUtil.getZonedDateTime().plusWeeks(3);
     val result = ageToLostFixture.createAgedToLostLoan();
 
     final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(OVERRIDE_RENEWAL_PERMISSION);
@@ -488,7 +485,7 @@ class OverrideRenewByBarcodeTests extends APITests {
     assertThat(renewedLoan, hasJsonPath("item.status.name", "Checked out"));
     assertThat(itemsClient.get(result.getItem()).getJson(), isCheckedOut());
     assertThat(renewedLoan.getString("dueDate"),
-      withinSecondsAfter(seconds(2), approximateRenewalDate));
+      withinSecondsAfter(2L, approximateRenewalDate));
     assertThatPublishedLoanLogRecordEventsAreValid(renewedLoan);
   }
 
@@ -498,7 +495,7 @@ class OverrideRenewByBarcodeTests extends APITests {
     final IndividualResource jessica = usersFixture.jessica();
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica,
-      new DateTime(2018, 4, 21, 11, 21, 43));
+      ZonedDateTime.of(2018, 4, 21, 11, 21, 43, 0, UTC));
 
     LoanPolicyBuilder currentDueDateRollingPolicy = new LoanPolicyBuilder()
       .withName("Current Due Date Rolling Policy")
@@ -526,7 +523,7 @@ class OverrideRenewByBarcodeTests extends APITests {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
-    DateTime loanDueDate = new DateTime(2018, APRIL, 21, 11, 21, 43);
+    ZonedDateTime loanDueDate = ZonedDateTime.of(2018, 4, 21, 11, 21, 43, 0, UTC);
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDueDate);
 
@@ -538,7 +535,7 @@ class OverrideRenewByBarcodeTests extends APITests {
 
     loansFixture.attemptRenewal(422, smallAngryPlanet, jessica);
 
-    DateTime newDueDate = ClockUtil.getDateTime().plusWeeks(2);
+    ZonedDateTime newDueDate = ClockUtil.getZonedDateTime().plusWeeks(2);
 
     final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(OVERRIDE_RENEWAL_PERMISSION);
     JsonObject loanAfterOverride = loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica,
@@ -559,7 +556,7 @@ class OverrideRenewByBarcodeTests extends APITests {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
-    DateTime loanDueDate = new DateTime(2018, APRIL, 21, 11, 21, 43);
+    ZonedDateTime loanDueDate = ZonedDateTime.of(2018, 4, 21, 11, 21, 43, 0, UTC);
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDueDate);
 
@@ -571,7 +568,7 @@ class OverrideRenewByBarcodeTests extends APITests {
 
     loansFixture.attemptRenewal(422, smallAngryPlanet, jessica);
 
-    DateTime newDueDate = ClockUtil.getDateTime().plusWeeks(2);
+    ZonedDateTime newDueDate = ClockUtil.getZonedDateTime().plusWeeks(2);
 
     final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(OVERRIDE_RENEWAL_PERMISSION);
     JsonObject loanAfterOverride = loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica,
@@ -587,7 +584,7 @@ class OverrideRenewByBarcodeTests extends APITests {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
-    DateTime loanDueDate = new DateTime(2018, APRIL, 21, 11, 21, 43);
+    ZonedDateTime loanDueDate = ZonedDateTime.of(2018, 4, 21, 11, 21, 43, 0, UTC);
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDueDate);
 
@@ -614,7 +611,7 @@ class OverrideRenewByBarcodeTests extends APITests {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
-    DateTime loanDueDate = new DateTime(2018, APRIL, 21, 11, 21, 43);
+    ZonedDateTime loanDueDate = ZonedDateTime.of(2018, 4, 21, 11, 21, 43, 0, UTC);
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDueDate);
 
@@ -628,7 +625,7 @@ class OverrideRenewByBarcodeTests extends APITests {
     assertThat(renewalResponse, hasErrorWith(allOf(
       hasMessage(ITEM_IS_NOT_LOANABLE_MESSAGE))));
 
-    DateTime newDueDate = ClockUtil.getDateTime().plusWeeks(2);
+    ZonedDateTime newDueDate = ClockUtil.getZonedDateTime().plusWeeks(2);
 
     final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(OVERRIDE_RENEWAL_PERMISSION);
     JsonObject renewedLoan = loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica,
@@ -649,7 +646,7 @@ class OverrideRenewByBarcodeTests extends APITests {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
-    checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica, ClockUtil.getDateTime());
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica, ClockUtil.getZonedDateTime());
 
     LoanPolicyBuilder loanablePolicy = new LoanPolicyBuilder()
       .withName("Loanable Policy")
@@ -659,7 +656,7 @@ class OverrideRenewByBarcodeTests extends APITests {
       .renewFromSystemDate();
     createLoanPolicyAndSetAsFallback(loanablePolicy);
 
-    DateTime newDueDate = ClockUtil.getDateTime().plusDays(3);
+    ZonedDateTime newDueDate = ClockUtil.getZonedDateTime().plusDays(3);
 
     Response response = loansFixture.attemptOverride(smallAngryPlanet, jessica,
         OVERRIDE_COMMENT, formatDateTime(newDueDate));
@@ -701,7 +698,7 @@ class OverrideRenewByBarcodeTests extends APITests {
     ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(itemBuilder, itemsFixture.thirdFloorHoldings());
     final IndividualResource steve = usersFixture.steve();
 
-    final DateTime loanDate = new DateTime(2018, 3, 18, 11, 43, 54, UTC);
+    final ZonedDateTime loanDate = ZonedDateTime.of(2018, 3, 18, 11, 43, 54, 0, UTC);
 
     checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -743,7 +740,7 @@ class OverrideRenewByBarcodeTests extends APITests {
     IndividualResource item = result.getItem();
     IndividualResource user = result.getUser();
 
-    final DateTime renewalDate = ClockUtil.getDateTime().plusWeeks(9);
+    final ZonedDateTime renewalDate = ClockUtil.getZonedDateTime().plusWeeks(9);
     mockClockManagerToReturnFixedDateTime(renewalDate);
 
     final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(OVERRIDE_RENEWAL_PERMISSION);
@@ -770,7 +767,7 @@ class OverrideRenewByBarcodeTests extends APITests {
     IndividualResource loan = checkOutFixture.checkOutByBarcode(item, user);
 
     // advance system time by five weeks to accrue fines before declared lost
-    final DateTime declareLostDate = ClockUtil.getDateTime().plusWeeks(5);
+    final ZonedDateTime declareLostDate = ClockUtil.getZonedDateTime().plusWeeks(5);
     mockClockManagerToReturnFixedDateTime(declareLostDate);
 
     final DeclareItemLostRequestBuilder builder = new DeclareItemLostRequestBuilder()
@@ -780,7 +777,7 @@ class OverrideRenewByBarcodeTests extends APITests {
       .withServicePointId(servicePointId);
     declareLostFixtures.declareItemLost(builder);
 
-    final DateTime renewalDate = ClockUtil.getDateTime().plusWeeks(6);
+    final ZonedDateTime renewalDate = ClockUtil.getZonedDateTime().plusWeeks(6);
     mockClockManagerToReturnFixedDateTime(renewalDate);
 
     final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(OVERRIDE_RENEWAL_PERMISSION);
@@ -792,7 +789,7 @@ class OverrideRenewByBarcodeTests extends APITests {
 
   @Test
   void canOverrideRenewalWhenItemIsAgedToLostAndPatronIsBlockedAutomatically() {
-    final DateTime approximateRenewalDate = ClockUtil.getDateTime().plusWeeks(3);
+    final ZonedDateTime approximateRenewalDate = ClockUtil.getZonedDateTime().plusWeeks(3);
     val result = ageToLostFixture.createAgedToLostLoan();
 
     automatedPatronBlocksFixture.blockAction(result.getUser().getId().toString(),
@@ -815,7 +812,7 @@ class OverrideRenewByBarcodeTests extends APITests {
     verifyRenewedLoan(result.getItem(), result.getUser(), renewedLoan);
     assertThat(renewedLoan, hasJsonPath("item.status.name", "Checked out"));
     assertThat(itemsClient.get(result.getItem()).getJson(), isCheckedOut());
-    assertThat(renewedLoan.getString("dueDate"), withinSecondsAfter(seconds(2),
+    assertThat(renewedLoan.getString("dueDate"), withinSecondsAfter(2L,
       approximateRenewalDate));
   }
 
@@ -843,7 +840,7 @@ class OverrideRenewByBarcodeTests extends APITests {
 
   @Test
   void canOverrideRenewalWhenItemIsAgedToLostAndPatronIsBlockedManually() {
-    final DateTime approximateRenewalDate = ClockUtil.getDateTime().plusWeeks(3);
+    final ZonedDateTime approximateRenewalDate = ClockUtil.getZonedDateTime().plusWeeks(3);
     val result = ageToLostFixture.createAgedToLostLoan();
 
     userManualBlocksFixture.createRenewalsManualPatronBlockForUser(result.getUser().getId());
@@ -863,7 +860,7 @@ class OverrideRenewByBarcodeTests extends APITests {
     verifyRenewedLoan(result.getItem(), result.getUser(), renewedLoan);
     assertThat(renewedLoan, hasJsonPath("item.status.name", "Checked out"));
     assertThat(itemsClient.get(result.getItem()).getJson(), isCheckedOut());
-    assertThat(renewedLoan.getString("dueDate"), withinSecondsAfter(seconds(2),
+    assertThat(renewedLoan.getString("dueDate"), withinSecondsAfter(2L,
       approximateRenewalDate));
   }
 

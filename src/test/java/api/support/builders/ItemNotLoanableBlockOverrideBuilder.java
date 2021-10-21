@@ -2,7 +2,7 @@ package api.support.builders;
 
 import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTimeOptional;
 
-import org.joda.time.DateTime;
+import java.time.ZonedDateTime;
 
 import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
@@ -13,7 +13,7 @@ import lombok.With;
 @AllArgsConstructor
 @With
 public class ItemNotLoanableBlockOverrideBuilder extends JsonBuilder implements Builder {
-  private final DateTime dueDate;
+  private final ZonedDateTime dueDate;
 
   @Override
   public JsonObject create() {

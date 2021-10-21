@@ -14,12 +14,12 @@ import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath;
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasNoJsonPath;
 import static java.util.Optional.ofNullable;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getBooleanProperty;
+import static org.folio.circulation.support.utils.DateFormatUtil.parseDateTime;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.core.Is.is;
 
 import org.folio.circulation.domain.representations.logs.LogEventType;
 import org.hamcrest.Matcher;
-import org.joda.time.DateTime;
 
 import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
@@ -140,7 +140,7 @@ public class EventMatchers {
       hasJsonPath("eventPayload", allOf(
         hasJsonPath("userId", is(loan.getString("userId"))),
         hasJsonPath("loanId", is(loan.getString("id"))),
-        hasJsonPath("dueDate", isEquivalentTo(DateTime.parse(loan.getString("dueDate")))),
+        hasJsonPath("dueDate", isEquivalentTo(parseDateTime(loan.getString("dueDate")))),
         hasJsonPath("dueDateChangedByRecall",
           is(getBooleanProperty(loan, "dueDateChangedByRecall")))
       ))),

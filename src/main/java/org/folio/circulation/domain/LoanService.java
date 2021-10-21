@@ -18,7 +18,7 @@ public class LoanService {
 
   public LoanService(Clients clients) {
     closedLibraryStrategyService = ClosedLibraryStrategyService.using(clients,
-      ClockUtil.getDateTime(), false);
+      ClockUtil.getZonedDateTime(), false);
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> truncateLoanWhenItemRecalled(

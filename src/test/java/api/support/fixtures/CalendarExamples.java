@@ -2,8 +2,12 @@ package api.support.fixtures;
 
 import static api.support.OpeningDayPeriod.createDayPeriod;
 import static io.vertx.core.MultiMap.caseInsensitiveMultiMap;
+import static java.time.ZoneOffset.UTC;
 import static org.folio.circulation.domain.OpeningDay.createOpeningDay;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -12,9 +16,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.folio.circulation.domain.OpeningHour;
-import org.joda.time.DateTime;
-import org.joda.time.LocalDate;
-import org.joda.time.LocalTime;
 
 import api.support.OpeningDayPeriod;
 import api.support.builders.CalendarBuilder;
@@ -43,35 +44,35 @@ public class CalendarExamples {
   static final String CASE_START_DATE_FRI_AND_END_DATE_NEXT_MONTHS = "88888888-2f09-4bc9-8924-3734882d44a3";
 
   public static final String CASE_CURRENT_IS_OPEN = "7a50ce1e-ce47-4841-a01f-fd771ff3da1b";
-  public static final LocalDate CASE_CURRENT_IS_OPEN_PREV_DAY = new LocalDate(2019, 2, 4);
-  public static final LocalDate CASE_CURRENT_IS_OPEN_CURR_DAY = new LocalDate(2019, 2, 5);
-  public static final LocalDate CASE_CURRENT_IS_OPEN_NEXT_DAY = new LocalDate(2019, 2, 6);
-  public static final LocalDate CASE_CURRENT_IS_OPEN_IN_ONE_DAY = new LocalDate(2019, 2, 7);
+  public static final LocalDate CASE_CURRENT_IS_OPEN_PREV_DAY = LocalDate.of(2019, 2, 4);
+  public static final LocalDate CASE_CURRENT_IS_OPEN_CURR_DAY = LocalDate.of(2019, 2, 5);
+  public static final LocalDate CASE_CURRENT_IS_OPEN_NEXT_DAY = LocalDate.of(2019, 2, 6);
+  public static final LocalDate CASE_CURRENT_IS_OPEN_IN_ONE_DAY = LocalDate.of(2019, 2, 7);
 
-  public static final LocalDate MONDAY_DATE = new LocalDate(2018, 12, 9);
-  public static final LocalDate TUESDAY_DATE = new LocalDate(2018, 12, 10);
-  public static final LocalDate WEDNESDAY_DATE = new LocalDate(2018, 12, 11);
-  public static final LocalDate THURSDAY_DATE = new LocalDate(2018, 12, 12);
-  public static final LocalDate FRIDAY_DATE = new LocalDate(2018, 12, 13);
+  public static final LocalDate MONDAY_DATE = LocalDate.of(2018, 12, 9);
+  public static final LocalDate TUESDAY_DATE = LocalDate.of(2018, 12, 10);
+  public static final LocalDate WEDNESDAY_DATE = LocalDate.of(2018, 12, 11);
+  public static final LocalDate THURSDAY_DATE = LocalDate.of(2018, 12, 12);
+  public static final LocalDate FRIDAY_DATE = LocalDate.of(2018, 12, 13);
 
-  public static final LocalTime START_TIME_FIRST_PERIOD = new LocalTime(8, 0);
-  public static final LocalTime END_TIME_FIRST_PERIOD = new LocalTime(12, 0);
+  public static final LocalTime START_TIME_FIRST_PERIOD = LocalTime.of(8, 0);
+  public static final LocalTime END_TIME_FIRST_PERIOD = LocalTime.of(12, 0);
 
-  public static final LocalTime START_TIME_SECOND_PERIOD = new LocalTime(14, 0);
-  public static final LocalTime END_TIME_SECOND_PERIOD = new LocalTime(19, 0);
+  public static final LocalTime START_TIME_SECOND_PERIOD = LocalTime.of(14, 0);
+  public static final LocalTime END_TIME_SECOND_PERIOD = LocalTime.of(19, 0);
 
-  public static final LocalDate CASE_FRI_SAT_MON_SERVICE_POINT_PREV_DAY = new LocalDate(2019, 2, 1);
-  public static final LocalDate CASE_FRI_SAT_MON_SERVICE_POINT_CURR_DAY = new LocalDate(2019, 2, 2);
-  public static final LocalDate CASE_FRI_SAT_MON_SERVICE_POINT_NEXT_DAY = new LocalDate(2019, 2, 4);
+  public static final LocalDate CASE_FRI_SAT_MON_SERVICE_POINT_PREV_DAY = LocalDate.of(2019, 2, 1);
+  public static final LocalDate CASE_FRI_SAT_MON_SERVICE_POINT_CURR_DAY = LocalDate.of(2019, 2, 2);
+  public static final LocalDate CASE_FRI_SAT_MON_SERVICE_POINT_NEXT_DAY = LocalDate.of(2019, 2, 4);
 
-  public static final LocalDate CASE_FRI_SAT_MON_DAY_ALL_PREV_DATE = new LocalDate(2018, 12, 14);
-  public static final LocalDate CASE_FRI_SAT_MON_DAY_ALL_CURRENT_DATE = new LocalDate(2018, 12, 15);
-  public static final LocalDate CASE_FRI_SAT_MON_DAY_ALL_NEXT_DATE = new LocalDate(2018, 12, 17);
+  public static final LocalDate CASE_FRI_SAT_MON_DAY_ALL_PREV_DATE = LocalDate.of(2018, 12, 14);
+  public static final LocalDate CASE_FRI_SAT_MON_DAY_ALL_CURRENT_DATE = LocalDate.of(2018, 12, 15);
+  public static final LocalDate CASE_FRI_SAT_MON_DAY_ALL_NEXT_DATE = LocalDate.of(2018, 12, 17);
 
-  public static final LocalDate FIRST_DAY_OPEN = new LocalDate(2020, 10, 29);
-  public static final LocalDate SECOND_DAY_CLOSED = new LocalDate(2020, 10, 30);
-  public static final LocalDate THIRD_DAY_CLOSED = new LocalDate(2020, 10, 31);
-  public static final LocalDate THIRD_DAY_OPEN = new LocalDate(2020, 10, 31);
+  public static final LocalDate FIRST_DAY_OPEN = LocalDate.of(2020, 10, 29);
+  public static final LocalDate SECOND_DAY_CLOSED = LocalDate.of(2020, 10, 30);
+  public static final LocalDate THIRD_DAY_CLOSED = LocalDate.of(2020, 10, 31);
+  public static final LocalDate THIRD_DAY_OPEN = LocalDate.of(2020, 10, 31);
 
   private static final String REQUESTED_DATE_PARAM = "requestedDate";
 
@@ -288,20 +289,20 @@ public class CalendarExamples {
         return new CalendarBuilder(fakeOpeningPeriods.get(serviceId));
 
       case CASE_START_DATE_MONTHS_AGO_AND_END_DATE_THU:
-        DateTime endDate = THURSDAY_DATE.toDateTime(LocalTime.MIDNIGHT);
-        DateTime startDate = endDate.minusMonths(1);
+        ZonedDateTime endDate = ZonedDateTime.of(THURSDAY_DATE, LocalTime.MIDNIGHT, UTC);
+        ZonedDateTime startDate = endDate.minusMonths(1);
         return new CalendarBuilder(CASE_START_DATE_MONTHS_AGO_AND_END_DATE_THU,
           startDate, endDate);
 
       case CASE_START_DATE_MONTHS_AGO_AND_END_DATE_WED:
-        DateTime endDateWednesday = WEDNESDAY_DATE.toDateTime(LocalTime.MIDNIGHT);
-        DateTime startDateWednesday = endDateWednesday.minusMonths(1);
+        ZonedDateTime endDateWednesday = ZonedDateTime.of(WEDNESDAY_DATE, LocalTime.MIDNIGHT, UTC);
+        ZonedDateTime startDateWednesday = endDateWednesday.minusMonths(1);
         return new CalendarBuilder(CASE_START_DATE_MONTHS_AGO_AND_END_DATE_THU,
           startDateWednesday, endDateWednesday);
 
       case CASE_START_DATE_FRI_AND_END_DATE_NEXT_MONTHS:
-        DateTime startDateFriday = FRIDAY_DATE.toDateTime(LocalTime.MIDNIGHT);
-        DateTime endDateFriday = startDateFriday.plusMonths(1);
+        ZonedDateTime startDateFriday = ZonedDateTime.of(FRIDAY_DATE, LocalTime.MIDNIGHT, UTC);
+        ZonedDateTime endDateFriday = startDateFriday.plusMonths(1);
         return new CalendarBuilder(CASE_START_DATE_MONTHS_AGO_AND_END_DATE_THU,
           startDateFriday, endDateFriday);
 

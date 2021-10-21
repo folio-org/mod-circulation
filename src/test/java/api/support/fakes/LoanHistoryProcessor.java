@@ -26,7 +26,7 @@ public final class LoanHistoryProcessor {
     final JsonObject historyRecord = new JsonObject()
       .put("id", id)
       .put("operation", operation)
-      .put("createdDate", formatDateTime(ClockUtil.getDateTime()))
+      .put("createdDate", formatDateTime(ClockUtil.getZonedDateTime()))
       .put("loan", newLoan);
 
     getLoanHistoryStorage().put(id, historyRecord);

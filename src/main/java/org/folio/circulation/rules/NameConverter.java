@@ -1,14 +1,14 @@
 package org.folio.circulation.rules;
 
+import java.util.List;
+import java.util.Map;
+
 import org.antlr.v4.runtime.BufferedTokenStream;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.TokenStreamRewriter;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.folio.circulation.rules.CirculationRulesParser.CriteriumContext;
 import org.folio.circulation.rules.CirculationRulesParser.PolicyContext;
-
-import java.util.List;
-import java.util.Map;
 
 /**
  * Make a UUID to name or a name to UUID conversion of the names in each criterium

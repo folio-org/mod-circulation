@@ -5,6 +5,7 @@ import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.is;
 
+import java.time.ZonedDateTime;
 import java.util.UUID;
 
 import org.folio.circulation.domain.notice.NoticeTiming;
@@ -12,7 +13,6 @@ import org.folio.circulation.domain.notice.schedule.TriggeringEvent;
 import org.folio.circulation.domain.policy.Period;
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
-import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
 
@@ -33,7 +33,7 @@ public class ScheduledNoticeMatchers {
   private static final String FORMAT_EMAIL = "Email";
 
   public static Matcher<JsonObject> hasScheduledLoanNotice(
-    UUID expectedLoanId, DateTime expectedNextRunTime, String expectedTiming,
+    UUID expectedLoanId, ZonedDateTime expectedNextRunTime, String expectedTiming,
     UUID expectedTemplateId, Period expectedRecurringPeriod,
     boolean expectedSendInRealTime) {
 
@@ -44,7 +44,7 @@ public class ScheduledNoticeMatchers {
   }
 
   public static Matcher<JsonObject> hasScheduledLoanNotice(
-    UUID expectedLoanId, DateTime expectedNextRunTime, String expectedTiming,
+    UUID expectedLoanId, ZonedDateTime expectedNextRunTime, String expectedTiming,
     UUID expectedTemplateId, Period expectedRecurringPeriod,
     boolean expectedSendInRealTime, String expectedFormat) {
 
@@ -61,7 +61,7 @@ public class ScheduledNoticeMatchers {
 
   public static Matcher<JsonObject> hasScheduledFeeFineNotice(
     UUID actionId, UUID loanId, UUID userId, UUID templateId, TriggeringEvent triggeringEvent,
-    DateTime nextRunTime, NoticeTiming timing, Period recurringPeriod, boolean sendInRealTime) {
+    ZonedDateTime nextRunTime, NoticeTiming timing, Period recurringPeriod, boolean sendInRealTime) {
 
     return JsonObjectMatcher.allOfPaths(
       hasJsonPath(FEE_FINE_ACTION_ID, UUIDMatcher.is(actionId)),

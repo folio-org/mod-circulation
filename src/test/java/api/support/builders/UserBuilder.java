@@ -1,12 +1,11 @@
 package api.support.builders;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.UUID;
 
 import api.support.http.IndividualResource;
-import org.joda.time.DateTime;
-
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -19,7 +18,7 @@ public class UserBuilder extends JsonBuilder implements Builder {
   private final String barcode;
   private final UUID patronGroupId;
   private final Boolean active;
-  private final DateTime expirationDate;
+  private final ZonedDateTime expirationDate;
   private final Collection<Address> addresses;
 
   public UserBuilder() {
@@ -36,7 +35,7 @@ public class UserBuilder extends JsonBuilder implements Builder {
     String barcode,
     UUID patronGroupId,
     Boolean active,
-    DateTime expirationDate,
+    ZonedDateTime expirationDate,
     Collection<Address> addresses) {
 
     this.id = id;
@@ -237,7 +236,7 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.addresses);
   }
 
-  public UserBuilder expires(DateTime newExpirationDate) {
+  public UserBuilder expires(ZonedDateTime newExpirationDate) {
     return new UserBuilder(
       this.id,
       this.username,

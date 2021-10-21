@@ -5,6 +5,8 @@ import static org.folio.rest.tools.utils.NetworkUtils.nextFreePort;
 import java.lang.invoke.MethodHandles;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -19,7 +21,6 @@ import org.folio.circulation.support.VertxAssistant;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.VertxWebClientOkapiHttpClient;
 import org.folio.circulation.support.utils.ClockUtil;
-import org.joda.time.DateTime;
 
 import api.support.fakes.FakeOkapi;
 import api.support.fakes.FakeStorageModule;
@@ -34,13 +35,13 @@ public class APITestContext {
   private static String USER_ID = "79ff2a8b-d9c3-5b39-ad4a-0a84025ab085";
 
   private static final String TOKEN = "eyJhbGciOiJIUzUxMiJ9eyJzdWIiOiJhZG1pbiIsInVzZXJfaWQiOiI3OWZmMmE4Yi1kOWMzLTViMzktYWQ0YS0wYTg0MDI1YWIwODUiLCJ0ZW5hbnQiOiJ0ZXN0X3RlbmFudCJ9BShwfHcNClt5ZXJ8ImQTMQtAM1sQEnhsfWNmXGsYVDpuaDN3RVQ9";
-  public static final DateTime END_OF_CURRENT_YEAR_DUE_DATE = ClockUtil.getDateTime()
-    .withMonthOfYear(12)
+  public static final ZonedDateTime END_OF_CURRENT_YEAR_DUE_DATE = ClockUtil.getZonedDateTime()
+    .withMonth(12)
     .withDayOfMonth(31)
-    .withHourOfDay(23)
-    .withMinuteOfHour(59)
-    .withSecondOfMinute(59)
-    .withMillisOfSecond(0);
+    .withHour(23)
+    .withMinute(59)
+    .withSecond(59)
+    .truncatedTo(ChronoUnit.SECONDS);
 
   private static final String REQUEST_ID = createFakeRequestId();
 

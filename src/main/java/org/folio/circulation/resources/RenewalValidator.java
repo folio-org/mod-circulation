@@ -5,6 +5,7 @@ import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.utils.DateTimeUtil.isBeforeMillis;
 import static org.folio.circulation.support.utils.DateTimeUtil.isSameMillis;
 
+import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -14,7 +15,6 @@ import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
-import org.joda.time.DateTime;
 
 public final class RenewalValidator {
   public static final String RENEWAL_WOULD_NOT_CHANGE_THE_DUE_DATE = "renewal would not change the due date";
@@ -33,14 +33,14 @@ public final class RenewalValidator {
   private RenewalValidator() { }
 
   public static void errorWhenEarlierOrSameDueDate(Loan loan,
-    DateTime proposedDueDate, List<ValidationError> errors) {
+    ZonedDateTime proposedDueDate, List<ValidationError> errors) {
 
     if (isSameOrBefore(loan, proposedDueDate)) {
       errors.add(loanPolicyValidationError(loan.getLoanPolicy(), RENEWAL_WOULD_NOT_CHANGE_THE_DUE_DATE));
     }
   }
 
-  public static Result<DateTime> errorWhenEarlierOrSameDueDate(Loan loan, DateTime proposedDueDate) {
+  public static Result<ZonedDateTime> errorWhenEarlierOrSameDueDate(Loan loan, ZonedDateTime proposedDueDate) {
     if (isSameOrBefore(loan, proposedDueDate)) {
       return failedValidation(loanPolicyValidationError(loan.getLoanPolicy(),
         RENEWAL_WOULD_NOT_CHANGE_THE_DUE_DATE));
@@ -49,7 +49,7 @@ public final class RenewalValidator {
     return succeeded(proposedDueDate);
   }
 
-  private static boolean isSameOrBefore(Loan loan, DateTime proposedDueDate) {
+  private static boolean isSameOrBefore(Loan loan, ZonedDateTime proposedDueDate) {
     return isSameMillis(proposedDueDate, loan.getDueDate())
       || isBeforeMillis(proposedDueDate, loan.getDueDate());
   }

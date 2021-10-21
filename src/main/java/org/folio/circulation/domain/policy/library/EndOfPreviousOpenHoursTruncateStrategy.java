@@ -4,24 +4,24 @@ import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyU
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.succeeded;
 
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Objects;
 
 import org.folio.circulation.AdjacentOpeningDays;
 import org.folio.circulation.support.results.Result;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 
 public class EndOfPreviousOpenHoursTruncateStrategy extends ShortTermLoansBaseStrategy {
 
-  private final DateTime startDateTime;
+  private final ZonedDateTime startDateTime;
 
-  public EndOfPreviousOpenHoursTruncateStrategy(DateTime startDateTime, DateTimeZone zone) {
+  public EndOfPreviousOpenHoursTruncateStrategy(ZonedDateTime startDateTime, ZoneId zone) {
     super(zone);
     this.startDateTime = startDateTime;
   }
 
   @Override
-  public Result<DateTime> calculateDueDate(DateTime requestedDate, AdjacentOpeningDays openingDays) {
+  public Result<ZonedDateTime> calculateDueDate(ZonedDateTime requestedDate, AdjacentOpeningDays openingDays) {
     Objects.requireNonNull(openingDays);
     LibraryTimetable libraryTimetable =
       LibraryTimetableConverter.convertToLibraryTimetable(openingDays, zone);
@@ -35,7 +35,7 @@ public class EndOfPreviousOpenHoursTruncateStrategy extends ShortTermLoansBaseSt
   }
 
   @Override
-  protected Result<DateTime> calculateIfClosed(LibraryTimetable libraryTimetable,
+  protected Result<ZonedDateTime> calculateIfClosed(LibraryTimetable libraryTimetable,
     LibraryInterval requestedInterval) {
 
     LibraryInterval currentTimeInterval = libraryTimetable.findInterval(startDateTime);

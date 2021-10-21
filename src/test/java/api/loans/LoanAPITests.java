@@ -16,6 +16,7 @@ import static api.support.matchers.ValidationErrorMatchers.hasNullParameter;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static java.lang.String.format;
 import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
+import static java.time.ZoneOffset.UTC;
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 import static org.folio.circulation.domain.representations.LoanProperties.BORROWER;
 import static org.folio.circulation.support.StreamToListMapper.toList;
@@ -28,10 +29,11 @@ import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
-import static org.joda.time.DateTimeZone.UTC;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.net.HttpURLConnection;
+import java.time.Period;
+import java.time.ZonedDateTime;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
@@ -42,8 +44,6 @@ import java.util.stream.Stream;
 import org.awaitility.Awaitility;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher;
-import org.joda.time.DateTime;
-import org.joda.time.Period;
 import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
@@ -77,8 +77,8 @@ class LoanAPITests extends APITests {
     val user = usersFixture.charlotte();
     UUID userId = user.getId();
 
-    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, UTC);
-    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, UTC);
+    ZonedDateTime loanDate = ZonedDateTime.of(2017, 2, 27, 10, 23, 43, 0, UTC);
+    ZonedDateTime dueDate = ZonedDateTime.of(2017, 3, 29, 10, 23, 43, 0, UTC);
 
     IndividualResource response = loansFixture.createLoan(new LoanBuilder()
       .withId(id)
@@ -204,8 +204,8 @@ class LoanAPITests extends APITests {
     IndividualResource user = usersFixture.charlotte();
     UUID userId = user.getId();
 
-    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, UTC);
-    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, UTC);
+    ZonedDateTime loanDate = ZonedDateTime.of(2017, 2, 27, 10, 23, 43, 0, UTC);
+    ZonedDateTime dueDate = ZonedDateTime.of(2017, 3, 29, 10, 23, 43, 0, UTC);
 
     IndividualResource response = loansFixture.createLoan(new LoanBuilder()
       .withId(id)
@@ -236,8 +236,8 @@ class LoanAPITests extends APITests {
     IndividualResource user = usersFixture.charlotte();
     UUID userId = user.getId();
 
-    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, UTC);
-    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, UTC);
+    ZonedDateTime loanDate = ZonedDateTime.of(2017, 2, 27, 10, 23, 43, 0, UTC);
+    ZonedDateTime dueDate = ZonedDateTime.of(2017, 3, 29, 10, 23, 43, 0, UTC);
 
     IndividualResource response = loansFixture.createLoan(new LoanBuilder()
       .withId(id)
@@ -278,10 +278,10 @@ class LoanAPITests extends APITests {
     final IndividualResource user2 = usersFixture.steve();
 
     IndividualResource loan1 = checkOutFixture.checkOutByBarcode(
-      item1, user1, new DateTime(2018, 4, 21, 11, 21, 43, UTC));
+      item1, user1, ZonedDateTime.of(2018, 4, 21, 11, 21, 43, 0, UTC));
 
     IndividualResource loan2 = checkOutFixture.checkOutByBarcode(
-      item2, user2, new DateTime(2018, 4, 21, 11, 21, 43, UTC));
+      item2, user2, ZonedDateTime.of(2018, 4, 21, 11, 21, 43, 0, UTC));
 
     accountsClient.create(new AccountBuilder()
       .feeFineStatusOpen()
@@ -330,8 +330,8 @@ class LoanAPITests extends APITests {
 
     UUID userId = usersFixture.charlotte().getId();
 
-    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, UTC);
-    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, UTC);
+    ZonedDateTime loanDate = ZonedDateTime.of(2017, 2, 27, 10, 23, 43, 0, UTC);
+    ZonedDateTime dueDate = ZonedDateTime.of(2017, 3, 29, 10, 23, 43, 0, UTC);
 
     val loanBuilder = new LoanBuilder()
       .withId(id)
@@ -456,8 +456,8 @@ class LoanAPITests extends APITests {
 
     UUID userId = usersFixture.charlotte().getId();
 
-    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, UTC);
-    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, UTC);
+    ZonedDateTime loanDate = ZonedDateTime.of(2017, 2, 27, 10, 23, 43, 0, UTC);
+    ZonedDateTime dueDate = ZonedDateTime.of(2017, 3, 29, 10, 23, 43, 0, UTC);
 
     final UUID unknownItemId = UUID.randomUUID();
 
@@ -483,8 +483,8 @@ class LoanAPITests extends APITests {
 
     UUID userId = usersFixture.charlotte().getId();
 
-    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, UTC);
-    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, UTC);
+    ZonedDateTime loanDate = ZonedDateTime.of(2017, 2, 27, 10, 23, 43, 0, UTC);
+    ZonedDateTime dueDate = ZonedDateTime.of(2017, 3, 29, 10, 23, 43, 0, UTC);
 
     final UUID unknownServicePointId = UUID.randomUUID();
 
@@ -510,8 +510,8 @@ class LoanAPITests extends APITests {
 
     UUID userId = usersFixture.charlotte().getId();
 
-    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, UTC);
-    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, UTC);
+    ZonedDateTime loanDate = ZonedDateTime.of(2017, 2, 27, 10, 23, 43, 0, UTC);
+    ZonedDateTime dueDate = ZonedDateTime.of(2017, 3, 29, 10, 23, 43, 0, UTC);
 
     final UUID unknownServicePointId = UUID.randomUUID();
 
@@ -577,8 +577,8 @@ class LoanAPITests extends APITests {
     final UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
     final UUID unknownUserId = UUID.randomUUID();
 
-    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, UTC);
-    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, UTC);
+    ZonedDateTime loanDate = ZonedDateTime.of(2017, 2, 27, 10, 23, 43, 0, UTC);
+    ZonedDateTime dueDate = ZonedDateTime.of(2017, 3, 29, 10, 23, 43, 0, UTC);
 
     final Response response = loansFixture.attemptToCreateLoan(new LoanBuilder()
         .withId(loanId)
@@ -600,8 +600,8 @@ class LoanAPITests extends APITests {
 
     final UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
-    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, UTC);
-    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, UTC);
+    ZonedDateTime loanDate = ZonedDateTime.of(2017, 2, 27, 10, 23, 43, 0, UTC);
+    ZonedDateTime dueDate = ZonedDateTime.of(2017, 3, 29, 10, 23, 43, 0, UTC);
 
     final Response response = loansFixture.attemptToCreateLoan(new LoanBuilder()
         .withId(loanId)
@@ -626,8 +626,8 @@ class LoanAPITests extends APITests {
 
     final UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
-    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, UTC);
-    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, UTC);
+    ZonedDateTime loanDate = ZonedDateTime.of(2017, 2, 27, 10, 23, 43, 0, UTC);
+    ZonedDateTime dueDate = ZonedDateTime.of(2017, 3, 29, 10, 23, 43, 0, UTC);
 
     val loanBuilder = new LoanBuilder()
       .withId(loanId)
@@ -655,9 +655,9 @@ class LoanAPITests extends APITests {
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
     UUID userId = usersFixture.charlotte().getId();
 
-    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, UTC);
-    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, UTC);
-    DateTime systemReturnDate = new DateTime(2017, 4, 1, 12, 0, 0, UTC);
+    ZonedDateTime loanDate = ZonedDateTime.of(2017, 2, 27, 10, 23, 43, 0, UTC);
+    ZonedDateTime dueDate = ZonedDateTime.of(2017, 3, 29, 10, 23, 43, 0, UTC);
+    ZonedDateTime systemReturnDate = ZonedDateTime.of(2017, 4, 1, 12, 0, 0, 0, UTC);
 
     IndividualResource response = loansFixture.createLoan(
       new LoanBuilder()
@@ -820,8 +820,8 @@ class LoanAPITests extends APITests {
       .withId(id)
       .withUserId(userId)
       .withItemId(itemId)
-      .withLoanDate(new DateTime(2017, 2, 27, 10, 23, 43, UTC))
-      .withReturnDate(new DateTime(2017, 3, 15, 11, 14, 36, UTC))
+      .withLoanDate(ZonedDateTime.of(2017, 2, 27, 10, 23, 43, 0, UTC))
+      .withReturnDate(ZonedDateTime.of(2017, 3, 15, 11, 14, 36, 0, UTC))
       .withStatus("Closed"));
 
     JsonObject loan = response.getJson();
@@ -891,13 +891,13 @@ class LoanAPITests extends APITests {
     val user = usersFixture.charlotte();
     UUID userId = user.getId();
 
-    DateTime dueDate = new DateTime(2016, 11, 15, 8, 26, 53, UTC);
+    ZonedDateTime dueDate = ZonedDateTime.of(2016, 11, 15, 8, 26, 53, 0, UTC);
 
     loansFixture.createLoan(new LoanBuilder()
       .withId(id)
       .withUserId(userId)
       .withItemId(itemId)
-      .withLoanDate(new DateTime(2016, 10, 15, 8, 26, 53, UTC))
+      .withLoanDate(ZonedDateTime.of(2016, 10, 15, 8, 26, 53, 0, UTC))
       .withDueDate(dueDate)
       .withStatus("Open"));
 
@@ -1005,10 +1005,10 @@ class LoanAPITests extends APITests {
     final IndividualResource user2 = usersFixture.steve();
 
     checkOutFixture.checkOutByBarcode(item1, user1,
-      new DateTime(2018, 4, 21, 11, 21, 43, UTC));
+      ZonedDateTime.of(2018, 4, 21, 11, 21, 43, 0, UTC));
 
     checkOutFixture.checkOutByBarcode(item2, user2,
-      new DateTime(2018, 4, 21, 11, 21, 43, UTC));
+      ZonedDateTime.of(2018, 4, 21, 11, 21, 43, 0, UTC));
 
     final IndividualResource loanPolicy = loanPoliciesFixture.canCirculateRolling();
 
@@ -1057,7 +1057,7 @@ class LoanAPITests extends APITests {
       .withId(id)
       .withUserId(userId)
       .withItemId(itemId)
-      .withLoanDate(new DateTime(2016, 10, 15, 8, 26, 53, UTC))
+      .withLoanDate(ZonedDateTime.of(2016, 10, 15, 8, 26, 53, 0, UTC))
       .withStatus("Open"));
 
     Response getResponse = loansClient.getById(id);
@@ -1087,8 +1087,8 @@ class LoanAPITests extends APITests {
 
     JsonObject loanToRenew = loan.copyJson();
 
-    DateTime dueDate = DateTime.parse(loanToRenew.getString("dueDate"));
-    DateTime newDueDate = dueDate.plus(Period.days(14));
+    ZonedDateTime dueDate = ZonedDateTime.parse(loanToRenew.getString("dueDate"));
+    ZonedDateTime newDueDate = dueDate.plus(Period.ofDays(14));
 
     loanToRenew
       .put("action", "renewed")
@@ -1548,8 +1548,8 @@ class LoanAPITests extends APITests {
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
     UUID userId = usersFixture.charlotte().getId();
 
-    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, UTC);
-    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, UTC);
+    ZonedDateTime loanDate = ZonedDateTime.of(2017, 2, 27, 10, 23, 43, 0, UTC);
+    ZonedDateTime dueDate = ZonedDateTime.of(2017, 3, 29, 10, 23, 43, 0, UTC);
 
     UUID checkinServicePointId = servicePointsFixture.cd1().getId();
     UUID checkoutServicePointId = servicePointsFixture.cd2().getId();
@@ -1578,8 +1578,8 @@ class LoanAPITests extends APITests {
 
   @Test
   void canCreateMultipleLoansWithServicePoints() {
-    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, UTC);
-    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, UTC);
+    ZonedDateTime loanDate = ZonedDateTime.of(2017, 2, 27, 10, 23, 43, 0, UTC);
+    ZonedDateTime dueDate = ZonedDateTime.of(2017, 3, 29, 10, 23, 43, 0, UTC);
 
     UUID checkinServicePointId = servicePointsFixture.cd1().getId();
     UUID checkoutServicePointId = servicePointsFixture.cd2().getId();
@@ -1678,8 +1678,8 @@ class LoanAPITests extends APITests {
   }
 
   private void createLoan(UUID userId, UUID itemId) {
-    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, UTC);
-    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, UTC);
+    ZonedDateTime loanDate = ZonedDateTime.of(2017, 2, 27, 10, 23, 43, 0, UTC);
+    ZonedDateTime dueDate = ZonedDateTime.of(2017, 3, 29, 10, 23, 43, 0, UTC);
     UUID checkinServicePointId = servicePointsFixture.cd1().getId();
     UUID checkoutServicePointId = servicePointsFixture.cd2().getId();
     UUID loanId = UUID.randomUUID();
@@ -1711,7 +1711,7 @@ class LoanAPITests extends APITests {
     IndividualResource jessica = usersFixture.jessica();
 
     IndividualResource individualResource = checkOutFixture.checkOutByBarcode(item,
-      jessica, new DateTime(2018, 4, 21, 11, 21, 43, UTC));
+      jessica, ZonedDateTime.of(2018, 4, 21, 11, 21, 43, 0, UTC));
 
     JsonObject savedLoan = loansStorageClient.get(individualResource.getId())
       .getResponse().getJson();
@@ -1730,12 +1730,12 @@ class LoanAPITests extends APITests {
     ItemResource firstItem = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource jessica = usersFixture.jessica();
     IndividualResource firstLoan = checkOutFixture.checkOutByBarcode(firstItem,
-      jessica, new DateTime(2018, 4, 21, 11, 21, 43, UTC));
+      jessica, ZonedDateTime.of(2018, 4, 21, 11, 21, 43, 0, UTC));
 
     ItemResource secondItem = itemsFixture.basedUponNod();
     IndividualResource henry = usersFixture.undergradHenry();
     IndividualResource secondLoan = checkOutFixture.checkOutByBarcode(secondItem,
-      henry, new DateTime(2018, 4, 21, 11, 21, 43, UTC));
+      henry, ZonedDateTime.of(2018, 4, 21, 11, 21, 43, 0, UTC));
 
     JsonObject firstSavedLoan = loansStorageClient.get(firstLoan.getId())
       .getResponse().getJson();
@@ -1775,8 +1775,8 @@ class LoanAPITests extends APITests {
     IndividualResource user = usersFixture.charlotte();
     UUID userId = user.getId();
 
-    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, UTC);
-    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, UTC);
+    ZonedDateTime loanDate = ZonedDateTime.of(2017, 2, 27, 10, 23, 43, 0, UTC);
+    ZonedDateTime dueDate = ZonedDateTime.of(2017, 3, 29, 10, 23, 43, 0, UTC);
 
     IndividualResource response = loansFixture.createLoan(new LoanBuilder()
       .withId(id)

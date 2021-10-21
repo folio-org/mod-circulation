@@ -15,9 +15,9 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
+import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;

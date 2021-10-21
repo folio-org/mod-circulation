@@ -1,5 +1,6 @@
 package org.folio.circulation.domain;
 
+import static java.time.ZoneOffset.UTC;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.resources.context.RenewalContext.create;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
@@ -12,6 +13,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -40,8 +42,6 @@ import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.services.FeeFineFacade;
 import org.folio.circulation.services.feefine.FeeFineService;
 import org.folio.circulation.support.utils.ClockUtil;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -62,8 +62,8 @@ import io.vertx.core.json.JsonObject;
 class OverdueFineServiceTest {
   private static final UUID LOAN_ID = UUID.randomUUID();
   private static final UUID LOAN_USER_ID = UUID.randomUUID();
-  private static final DateTime DUE_DATE = new DateTime(2020, 1, 1, 0, 0, 0, DateTimeZone.UTC);
-  private static final DateTime RETURNED_DATE = new DateTime(2020, 3, 1, 0, 0, 0, DateTimeZone.UTC);
+  private static final ZonedDateTime DUE_DATE = ZonedDateTime.of(2020, 1, 1, 0, 0, 0, 0, UTC);
+  private static final ZonedDateTime RETURNED_DATE = ZonedDateTime.of(2020, 3, 1, 0, 0, 0, 0, UTC);
   private static final UUID ITEM_ID = UUID.randomUUID();
   private static final UUID ITEM_MATERIAL_TYPE_ID = UUID.randomUUID();
   private static final UUID FEE_FINE_OWNER_ID = UUID.randomUUID();
@@ -470,7 +470,7 @@ class OverdueFineServiceTest {
       Double maxOverdueRecallFine, Integer periodCalculatorResult, Double correctOverdueFine)
       throws ExecutionException, InterruptedException {
 
-    DateTime dueDateInFuture = ClockUtil.getDateTime().plusDays(1);
+    ZonedDateTime dueDateInFuture = ClockUtil.getZonedDateTime().plusDays(1);
     Loan loan = createLoan(overdueFine, overdueFineInterval, overdueRecallFine,
       overdueRecallFineInterval, maxOverdueFine, maxOverdueRecallFine,
       dueDateChangedByRecall).changeDueDate(dueDateInFuture);
@@ -695,7 +695,7 @@ class OverdueFineServiceTest {
       ),
       new FeeAmount(correctOverdueFine), new FeeAmount(correctOverdueFine), "Open", "Outstanding",
       Collections.emptyList(),
-      ClockUtil.getDateTime()
+      ClockUtil.getZonedDateTime()
     );
   }
 

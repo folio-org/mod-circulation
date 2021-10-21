@@ -1,7 +1,10 @@
 package api.support.builders;
 
+import static java.time.ZoneOffset.UTC;
 import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTimeOptional;
 
+import java.time.Period;
+import java.time.ZonedDateTime;
 import java.util.Objects;
 import java.util.Random;
 import java.util.UUID;
@@ -10,8 +13,6 @@ import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Policies;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.support.utils.ClockUtil;
-import org.joda.time.DateTime;
-import org.joda.time.Period;
 
 import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
@@ -23,25 +24,25 @@ public class LoanBuilder extends JsonBuilder implements Builder {
   private final UUID id;
   private final UUID itemId;
   private final UUID userId;
-  private final DateTime loanDate;
+  private final ZonedDateTime loanDate;
   private final String status;
-  private DateTime returnDate;
+  private ZonedDateTime returnDate;
   private final String action;
-  private final DateTime dueDate;
+  private final ZonedDateTime dueDate;
   private final UUID proxyUserId;
-  private final DateTime systemReturnDate;
+  private final ZonedDateTime systemReturnDate;
   private final UUID checkoutServicePointId;
   private final UUID checkinServicePointId;
   private final Boolean dueDateChangedByRecall;
   private final Policies policies;
 
   public LoanBuilder() {
-    this(UUID.randomUUID(), UUID.randomUUID(), null, new DateTime(2017, 3, 6, 16, 4, 43), null, "Open",
+    this(UUID.randomUUID(), UUID.randomUUID(), null, ZonedDateTime.of(2017, 3, 6, 16, 4, 43, 0, UTC), null, "Open",
         null, null, "checkedout", null, null, null, null, new Policies(null, null, null));
   }
 
-  private LoanBuilder(UUID id, UUID itemId, UUID userId, DateTime loanDate,
-    DateTime dueDate, String status, DateTime returnDate, DateTime systemReturnDate,
+  private LoanBuilder(UUID id, UUID itemId, UUID userId, ZonedDateTime loanDate,
+    ZonedDateTime dueDate, String status, ZonedDateTime returnDate, ZonedDateTime systemReturnDate,
     String action, UUID proxyUserId, UUID checkoutServicePointId,
     UUID checkinServicePointId, Boolean dueDateChangedByRecall, Policies policies) {
 
@@ -96,10 +97,10 @@ public class LoanBuilder extends JsonBuilder implements Builder {
   public LoanBuilder withRandomPastLoanDate() {
     Random random = new Random();
 
-    return withLoanDate(ClockUtil.getDateTime().minusDays(random.nextInt(10)));
+    return withLoanDate(ClockUtil.getZonedDateTime().minusDays(random.nextInt(10)));
   }
 
-  public LoanBuilder withLoanDate(DateTime loanDate) {
+  public LoanBuilder withLoanDate(ZonedDateTime loanDate) {
     return new LoanBuilder(this.id, this.itemId, this.userId, loanDate, this.dueDate, this.status, this.returnDate,
         this.systemReturnDate, this.action, this.proxyUserId, this.checkoutServicePointId, this.checkinServicePointId,
         this.dueDateChangedByRecall,  this.policies);
@@ -116,7 +117,7 @@ public class LoanBuilder extends JsonBuilder implements Builder {
   }
 
   public LoanBuilder withStatus(String status) {
-    DateTime defaultedReturnDate = this.returnDate != null ? this.returnDate : this.loanDate.plusDays(1).plusHours(4);
+    ZonedDateTime defaultedReturnDate = this.returnDate != null ? this.returnDate : this.loanDate.plusDays(1).plusHours(4);
 
     String action = null;
 
@@ -160,13 +161,13 @@ public class LoanBuilder extends JsonBuilder implements Builder {
         this.dueDateChangedByRecall, this.policies);
   }
 
-  public LoanBuilder withReturnDate(DateTime returnDate) {
+  public LoanBuilder withReturnDate(ZonedDateTime returnDate) {
     return new LoanBuilder(this.id, this.itemId, this.userId, this.loanDate, this.dueDate, this.status, returnDate,
         this.systemReturnDate, this.action, this.proxyUserId, this.checkoutServicePointId, this.checkinServicePointId,
         this.dueDateChangedByRecall, this.policies);
   }
 
-  public LoanBuilder withSystemReturnDate(DateTime systemReturnDate) {
+  public LoanBuilder withSystemReturnDate(ZonedDateTime systemReturnDate) {
     return new LoanBuilder(this.id, this.itemId, this.userId, this.loanDate, this.dueDate, this.status, this.returnDate,
         systemReturnDate, this.action, this.proxyUserId, this.checkoutServicePointId, this.checkinServicePointId,
         this.dueDateChangedByRecall, this.policies);
@@ -178,7 +179,7 @@ public class LoanBuilder extends JsonBuilder implements Builder {
         this.checkinServicePointId, this.dueDateChangedByRecall, this.policies);
   }
 
-  public LoanBuilder withDueDate(DateTime dueDate) {
+  public LoanBuilder withDueDate(ZonedDateTime dueDate) {
     return new LoanBuilder(this.id, this.itemId, this.userId, this.loanDate, dueDate, this.status, this.returnDate,
         this.systemReturnDate, this.action, this.proxyUserId, this.checkoutServicePointId, this.checkinServicePointId,
         this.dueDateChangedByRecall, this.policies);
@@ -219,7 +220,7 @@ public class LoanBuilder extends JsonBuilder implements Builder {
       throw new IllegalStateException("Cannot use period to specify due when no loan date specified");
     }
 
-    DateTime calculatedDueDate = this.loanDate.plus(period);
+    ZonedDateTime calculatedDueDate = this.loanDate.plus(period);
 
     return withDueDate(calculatedDueDate);
   }

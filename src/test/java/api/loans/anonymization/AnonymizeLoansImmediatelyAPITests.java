@@ -2,12 +2,13 @@ package api.loans.anonymization;
 
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedAnonymizeLoanLogRecordEventsAreValid;
 import static api.support.matchers.LoanMatchers.isAnonymized;
+import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.not;
 
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
-import org.folio.circulation.support.utils.ClockUtil;
 import org.junit.jupiter.api.Test;
 
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
@@ -67,7 +68,7 @@ class AnonymizeLoansImmediatelyAPITests extends LoanAnonymizationTests {
       .at(servicePoint.getId()));
     UUID loanID = loanResource.getId();
 
-    createClosedAccountWithFeeFines(loanResource, ClockUtil.getDateTime());
+    createClosedAccountWithFeeFines(loanResource, getZonedDateTime());
 
     checkInFixture.checkInByBarcode(item1);
 
@@ -130,8 +131,7 @@ class AnonymizeLoansImmediatelyAPITests extends LoanAnonymizationTests {
       .at(servicePoint.getId()));
     UUID loanID = loanResource.getId();
 
-    createClosedAccountWithFeeFines(loanResource,
-      ClockUtil.getDateTime());
+    createClosedAccountWithFeeFines(loanResource, getZonedDateTime());
 
     anonymizeLoansInTenant();
 
@@ -160,7 +160,7 @@ class AnonymizeLoansImmediatelyAPITests extends LoanAnonymizationTests {
       .at(servicePoint.getId()));
     UUID loanID = loanResource.getId();
 
-    createClosedAccountWithFeeFines(loanResource, ClockUtil.getDateTime());
+    createClosedAccountWithFeeFines(loanResource, getZonedDateTime());
 
     checkInFixture.checkInByBarcode(item1);
 
@@ -192,12 +192,12 @@ class AnonymizeLoansImmediatelyAPITests extends LoanAnonymizationTests {
       .at(servicePoint.getId()));
     UUID loanID = loanResource.getId();
 
-    createClosedAccountWithFeeFines(loanResource, ClockUtil.getDateTime());
+    createClosedAccountWithFeeFines(loanResource, getZonedDateTime());
 
     checkInFixture.checkInByBarcode(item1);
 
     mockClockManagerToReturnFixedDateTime(
-      ClockUtil.getDateTime().plus(ONE_MINUTE_AND_ONE));
+      getZonedDateTime().plus(ONE_MINUTE_AND_ONE_MILLIS, ChronoUnit.MILLIS));
 
     anonymizeLoansInTenant();
 

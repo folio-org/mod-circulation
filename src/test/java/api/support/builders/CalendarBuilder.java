@@ -1,14 +1,13 @@
 package api.support.builders;
 
-import static org.folio.circulation.support.utils.ClockUtil.getDateTime;
+import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;
 import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTimeOptional;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collector;
-
-import org.joda.time.DateTime;
 
 import api.support.OpeningDayPeriod;
 import io.vertx.core.json.JsonArray;
@@ -17,8 +16,8 @@ import io.vertx.core.json.JsonObject;
 public class CalendarBuilder extends JsonBuilder implements Builder {
 
   private static final String CALENDAR_NAME = "Calendar Name";
-  private static final String START_DATE = formatDateTime(getDateTime().minusMonths(1));
-  private static final String END_DATE = formatDateTime(getDateTime().plusMonths(6));
+  private static final String START_DATE = formatDateTime(getZonedDateTime().minusMonths(1));
+  private static final String END_DATE = formatDateTime(getZonedDateTime().plusMonths(6));
 
   private static final String ID_KEY = "id";
   private static final String SERVICE_POINT_ID_KEY = "servicePointId";
@@ -49,7 +48,7 @@ public class CalendarBuilder extends JsonBuilder implements Builder {
       .put(OPENING_DAYS_KEY, new JsonArray());
   }
 
-  public CalendarBuilder(String servicePointId, DateTime startDate, DateTime endDate) {
+  public CalendarBuilder(String servicePointId, ZonedDateTime startDate, ZonedDateTime endDate) {
     this.representation = new JsonObject()
       .put(ID_KEY, UUID.randomUUID().toString())
       .put(SERVICE_POINT_ID_KEY, servicePointId)

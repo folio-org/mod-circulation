@@ -7,9 +7,9 @@ import java.util.List;
 import org.folio.circulation.domain.notice.session.PatronActionSessionService;
 import org.folio.circulation.domain.representations.EndPatronSessionRequest;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.server.WebContext;
+import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.ext.web.Router;

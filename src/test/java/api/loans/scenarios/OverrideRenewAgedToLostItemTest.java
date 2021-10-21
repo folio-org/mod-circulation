@@ -1,6 +1,7 @@
 package api.loans.scenarios;
 
-import org.joda.time.DateTime;
+import java.time.ZonedDateTime;
+
 import org.springframework.beans.factory.annotation.Autowired;
 
 import api.support.fixtures.AgeToLostFixture;
@@ -16,7 +17,7 @@ class OverrideRenewAgedToLostItemTest extends RefundAgedToLostFeesTestBase {
 
   @Override
   protected void performActionThatRequiresRefund(AgeToLostFixture.AgeToLostResult result,
-     DateTime actionDate) {
+     ZonedDateTime actionDate) {
 
     mockClockManagerToReturnFixedDateTime(actionDate);
 

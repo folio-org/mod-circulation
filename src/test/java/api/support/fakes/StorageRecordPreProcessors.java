@@ -59,7 +59,7 @@ public final class StorageRecordPreProcessors {
         if (!Objects.equals(oldItemStatus.getString("name"),
           newItemStatus.getString("name"))) {
           write(newItemStatus, "date",
-            formatDateTime(ClockUtil.getDateTime())
+            formatDateTime(ClockUtil.getZonedDateTime())
           );
         }
       }

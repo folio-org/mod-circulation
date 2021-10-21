@@ -1,9 +1,11 @@
 package org.folio.circulation.resources;
 
+import static java.time.ZoneOffset.UTC;
 import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -21,8 +23,6 @@ import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.junit.jupiter.api.Test;
 
 import api.support.fixtures.ItemExamples;
@@ -92,8 +92,8 @@ public class RequestByInstanceIdResourceTests {
   }
 
   public static JsonObject getJsonInstanceRequest(UUID pickupServicePointId) {
-    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
-    DateTime requestExpirationDate = requestDate.plusDays(30);
+    ZonedDateTime requestDate = ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC);
+    ZonedDateTime requestExpirationDate = requestDate.plusDays(30);
 
     JsonObject instanceRequest = new JsonObject();
     instanceRequest.put("instanceId", UUID.randomUUID().toString());

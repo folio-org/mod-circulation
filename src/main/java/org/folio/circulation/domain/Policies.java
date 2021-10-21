@@ -1,8 +1,8 @@
 package org.folio.circulation.domain;
 
 import org.folio.circulation.domain.policy.LoanPolicy;
-import org.folio.circulation.domain.policy.lostitem.LostItemPolicy;
 import org.folio.circulation.domain.policy.OverdueFinePolicy;
+import org.folio.circulation.domain.policy.lostitem.LostItemPolicy;
 
 public class Policies {
   private final LoanPolicy loanPolicy;

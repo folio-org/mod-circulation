@@ -1,25 +1,22 @@
 package org.folio.circulation.domain;
 
+import static java.time.ZoneOffset.UTC;
 import static java.util.Objects.requireNonNull;
 import static org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher.mapToList;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getBooleanProperty;
-import static org.folio.circulation.support.json.JsonPropertyFetcher.getJodaLocalDateProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getLocalDateProperty;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.utils.DateTimeUtil.atStartOfDay;
-import static org.joda.time.DateTimeZone.UTC;
-import static org.joda.time.LocalTime.MIDNIGHT;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collector;
 
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.LocalDate;
-
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-
 public class OpeningDay {
   public static OpeningDay createClosedDay() {
     return createOpeningDay(Collections.emptyList(), null, true, false);
@@ -35,7 +32,7 @@ public class OpeningDay {
   private final LocalDate date;
   private final boolean allDay;
   private final boolean open;
-  private final DateTime dayWithTimeZone;
+  private final ZonedDateTime dayWithTimeZone;
 
   public static OpeningDay fromJsonByDefaultKey(JsonObject jsonObject) {
     JsonObject openingDayJson = jsonObject.getJsonObject(OPENING_DAY_KEY);
@@ -43,16 +40,16 @@ public class OpeningDay {
     requireNonNull(openingDayJson, "Json object cannot be null");
 
     return new OpeningDay(fillOpeningDay(openingDayJson),
-      getJodaLocalDateProperty(openingDayJson, DATE_KEY),
+      getLocalDateProperty(openingDayJson, DATE_KEY),
       getBooleanProperty(openingDayJson, ALL_DAY_KEY),
       getBooleanProperty(openingDayJson, OPEN_KEY), null);
   }
 
-  public static OpeningDay fromOpeningPeriodJson(JsonObject openingPeriod, DateTimeZone zone) {
+  public static OpeningDay fromOpeningPeriodJson(JsonObject openingPeriod, ZoneId zone) {
     JsonObject openingDayJson = openingPeriod.getJsonObject(OPENING_DAY_KEY);
 
     return createOpeningDay(fillOpeningDay(openingDayJson),
-      getJodaLocalDateProperty(openingPeriod, DATE_KEY),
+      getLocalDateProperty(openingPeriod, DATE_KEY),
       getBooleanProperty(openingDayJson, ALL_DAY_KEY),
       getBooleanProperty(openingDayJson, OPEN_KEY), zone);
   }
@@ -64,13 +61,13 @@ public class OpeningDay {
   }
 
   public static OpeningDay createOpeningDay(List<OpeningHour> openingHour,
-    LocalDate date, boolean allDay, boolean open, DateTimeZone zone) {
+    LocalDate date, boolean allDay, boolean open, ZoneId zone) {
 
-    return new OpeningDay(openingHour, date, allDay, open, date.toDateTime(MIDNIGHT, zone));
+    return new OpeningDay(openingHour, date, allDay, open, atStartOfDay(date, zone));
   }
 
   public OpeningDay(List<OpeningHour> openingHour, LocalDate date,
-    boolean allDay, boolean open, DateTime dateWithTimeZone) {
+    boolean allDay, boolean open, ZonedDateTime dateWithTimeZone) {
 
     this.openingHour = openingHour;
     this.date = date;
@@ -83,7 +80,7 @@ public class OpeningDay {
     return date;
   }
 
-  public DateTime getDayWithTimeZone() {
+  public ZonedDateTime getDayWithTimeZone() {
     return dayWithTimeZone;
   }
 

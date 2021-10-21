@@ -3,6 +3,7 @@ package org.folio.circulation.infrastructure.storage;
 import static org.folio.circulation.domain.MultipleRecords.from;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 
+import java.time.ZoneId;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
@@ -13,10 +14,9 @@ import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.anonymization.config.LoanAnonymizationConfiguration;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.GetManyRecordsClient;
-import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.PageLimit;
-import org.joda.time.DateTimeZone;
+import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.json.JsonObject;
 
@@ -73,7 +73,7 @@ public class ConfigurationRepository {
     return LoanAnonymizationConfiguration.from(period);
   }
 
-  public CompletableFuture<Result<DateTimeZone>> findTimeZoneConfiguration() {
+  public CompletableFuture<Result<ZoneId>> findTimeZoneConfiguration() {
     Result<CqlQuery> cqlQueryResult = defineModuleNameAndConfigNameFilter(
       "ORG", "localeSettings");
 
@@ -100,7 +100,7 @@ public class ConfigurationRepository {
     return moduleQuery.combine(configNameQuery, CqlQuery::and);
   }
 
-  private Function<MultipleRecords<Configuration>, DateTimeZone> applySearchDateTimeZone() {
+  private Function<MultipleRecords<Configuration>, ZoneId> applySearchDateTimeZone() {
     return configurations -> new ConfigurationService()
       .findDateTimeZone(configurations.getRecords());
   }

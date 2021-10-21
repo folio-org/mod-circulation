@@ -5,6 +5,7 @@ import static org.folio.circulation.support.results.AsynchronousResultBindings.s
 import static org.folio.circulation.support.results.MappingFunctions.toFixedValue;
 import static org.folio.circulation.support.results.Result.ofAsync;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -21,7 +22,6 @@ import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.CommonFailures;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.utils.ClockUtil;
-import org.joda.time.DateTime;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.ext.web.Router;
@@ -65,9 +65,9 @@ public class ExpiredSessionProcessingResource extends Resource {
       .thenAccept(context::writeResultToHttpResponse);
   }
 
-  private CompletableFuture<Result<DateTime>> defineExpiredTime(Integer timeout) {
-    final DateTime now = ClockUtil.getDateTime();
-    Result<DateTime> dateTimeResult = Result.succeeded(now.minusMinutes(timeout));
+  private CompletableFuture<Result<ZonedDateTime>> defineExpiredTime(Integer timeout) {
+    final ZonedDateTime now = ClockUtil.getZonedDateTime();
+    Result<ZonedDateTime> dateTimeResult = Result.succeeded(now.minusMinutes(timeout));
     return CompletableFuture.completedFuture(dateTimeResult);
   }
 

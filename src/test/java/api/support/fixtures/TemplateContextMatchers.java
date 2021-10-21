@@ -3,6 +3,7 @@ package api.support.fixtures;
 import static api.support.matchers.JsonObjectMatcher.toStringMatcher;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath;
+import static java.time.ZoneOffset.UTC;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDoubleProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getIntegerProperty;
@@ -13,6 +14,8 @@ import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 
+import java.time.LocalTime;
+import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -22,8 +25,6 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.folio.circulation.domain.Account;
 import org.folio.circulation.domain.FeeFineAction;
 import org.hamcrest.Matcher;
-import org.joda.time.DateTimeZone;
-import org.joda.time.LocalTime;
 
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
@@ -177,10 +178,9 @@ public class TemplateContextMatchers {
 
     Map<String, Matcher<String>> tokenMatchers = new HashMap<>();
     tokenMatchers.put("request.servicePointPickup", notNullValue(String.class));
-    tokenMatchers.put("request.requestExpirationDate ", isEquivalentTo(
-      getDateTimeProperty(request, "requestExpirationDate")
-        .withZoneRetainFields(DateTimeZone.UTC)
-        .withTime(LocalTime.MIDNIGHT.minusSeconds(1))));
+    tokenMatchers.put("request.requestExpirationDate ", isEquivalentTo(ZonedDateTime
+      .of(getDateTimeProperty(request, "requestExpirationDate").withZoneSameInstant(UTC).toLocalDate(),
+        LocalTime.MIDNIGHT.minusSeconds(1), UTC)));
     tokenMatchers.put("request.holdShelfExpirationDate",
       isEquivalentTo(getDateTimeProperty(request, "holdShelfExpirationDate")));
     return tokenMatchers;

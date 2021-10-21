@@ -1,14 +1,14 @@
 package org.folio.circulation.domain;
 
 import static java.lang.Boolean.TRUE;
+import static java.time.ZoneOffset.UTC;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
 import java.time.LocalDate;
+import java.time.ZonedDateTime;
 import java.util.UUID;
 
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.junit.jupiter.api.Test;
 
 import api.support.builders.Address;
@@ -73,7 +73,7 @@ class RequestRepresentationTests {
 
     final UUID requesterId = UUID.fromString(requester.getId());
 
-    final DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+    final ZonedDateTime requestDate = ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC);
 
     final ServicePointBuilder servicePointBuilder = new ServicePointBuilder("Circ Desk", "cd1", "Circulation Desk")
       .withId(SERVICE_POINT_ID)

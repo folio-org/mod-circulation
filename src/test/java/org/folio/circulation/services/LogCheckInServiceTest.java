@@ -63,7 +63,7 @@ class LogCheckInServiceTest {
     JsonObject requestRepresentation = new JsonObject()
       .put("servicePointId", UUID.randomUUID().toString())
       .put("itemBarcode", "barcode")
-      .put("checkInDate", ClockUtil.getDateTime().toString());
+      .put("checkInDate", ClockUtil.getZonedDateTime().toString());
 
     JsonObject itemRepresentation = new JsonObject()
       .put("id", UUID.randomUUID().toString())

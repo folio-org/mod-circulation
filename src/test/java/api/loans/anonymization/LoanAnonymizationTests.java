@@ -5,13 +5,13 @@ import static api.support.http.InterfaceUrls.circulationAnonymizeLoansInTenantUR
 import static api.support.http.InterfaceUrls.circulationAnonymizeLoansURL;
 
 import java.net.URL;
+import java.time.ZonedDateTime;
 import java.util.UUID;
 
 import api.support.fakes.FakePubSub;
 import org.folio.circulation.domain.representations.anonymization.LoanAnonymizationAPIResponse;
 import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
-import org.joda.time.DateTime;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 
@@ -24,7 +24,7 @@ import api.support.http.ItemResource;
 import api.support.http.TimedTaskClient;
 
 abstract public class LoanAnonymizationTests extends APITests {
-  protected static final int ONE_MINUTE_AND_ONE = 60001;
+  protected static final int ONE_MINUTE_AND_ONE_MILLIS = 60001;
   protected ItemResource item1;
   protected IndividualResource user;
   protected IndividualResource servicePoint;
@@ -74,7 +74,7 @@ abstract public class LoanAnonymizationTests extends APITests {
   }
 
   void createClosedAccountWithFeeFines(IndividualResource loanResource,
-    DateTime closedDate) {
+    ZonedDateTime closedDate) {
 
     IndividualResource account = accountsClient.create(new AccountBuilder()
       .withLoan(loanResource)

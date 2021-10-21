@@ -4,11 +4,10 @@ import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.joda.time.Seconds.seconds;
+
+import java.time.ZonedDateTime;
 
 import org.folio.circulation.support.utils.ClockUtil;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
@@ -25,16 +24,16 @@ class ItemStatusApiTests extends APITests {
 
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource user = usersFixture.jessica();
-    final DateTime beforeCheckOutDatetime = ClockUtil.getDateTime();
+    final ZonedDateTime beforeCheckOutDatetime = ClockUtil.getZonedDateTime();
 
-    checkOutFixture.checkOutByBarcode(item, user, new DateTime(DateTimeZone.UTC));
+    checkOutFixture.checkOutByBarcode(item, user, beforeCheckOutDatetime.plusSeconds(1));
 
     JsonObject checkedOutItem = itemsClient.get(item.getId()).getJson();
 
     assertThat(checkedOutItem.getJsonObject(ITEM_STATUS).getString(ITEM_STATUS_DATE),
       is(notNullValue()));
     assertThat(checkedOutItem.getJsonObject(ITEM_STATUS).getString(ITEM_STATUS_DATE),
-      withinSecondsAfter(seconds(2), beforeCheckOutDatetime)
+      withinSecondsAfter(2, beforeCheckOutDatetime)
     );
   }
 }

@@ -16,9 +16,11 @@ import static org.folio.circulation.support.http.client.CqlQuery.lessThanOrEqual
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
+import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.folio.circulation.support.utils.CollectionUtil.uniqueSetOf;
 import static org.folio.circulation.support.utils.CommonUtils.pair;
 
+import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -52,8 +54,6 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.fetching.PageableFetcher;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.results.Result;
-import org.folio.circulation.support.utils.ClockUtil;
-import org.joda.time.DateTime;
 
 import lombok.val;
 
@@ -232,7 +232,7 @@ public class ChargeLostFeesWhenAgedToLostService {
     final String lostItemHasBeenBilled = AGED_TO_LOST_DELAYED_BILLING + "."
       + LOST_ITEM_HAS_BEEN_BILLED;
 
-    final DateTime currentDate = ClockUtil.getDateTime();
+    final ZonedDateTime currentDate = getZonedDateTime();
 
     final Result<CqlQuery> billingDateQuery = lessThanOrEqualTo(billingDateProperty, currentDate);
     final Result<CqlQuery> agedToLostQuery = exactMatch(ITEM_STATUS, AGED_TO_LOST.getValue());

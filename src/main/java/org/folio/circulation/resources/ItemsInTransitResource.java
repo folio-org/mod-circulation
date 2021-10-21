@@ -5,11 +5,11 @@ import static org.folio.circulation.domain.ItemStatus.IN_TRANSIT;
 import static org.folio.circulation.domain.RequestStatus.openStates;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.CqlSortBy.ascending;
-import static org.folio.circulation.support.results.Result.of;
-import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
+import static org.folio.circulation.support.results.Result.of;
+import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.Comparator;
 import java.util.List;
@@ -36,11 +36,11 @@ import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
 import org.folio.circulation.support.GetManyRecordsClient;
-import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.server.JsonHttpResponse;
 import org.folio.circulation.support.http.server.WebContext;
+import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonArray;

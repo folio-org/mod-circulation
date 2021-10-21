@@ -1,7 +1,8 @@
 package org.folio.circulation.domain.policy.library;
 
-import org.joda.time.DateTime;
-import org.joda.time.Interval;
+import java.time.ZonedDateTime;
+
+import org.folio.circulation.support.Interval;
 
 public class LibraryInterval {
 
@@ -20,11 +21,11 @@ public class LibraryInterval {
     return interval;
   }
 
-  public DateTime getStartTime() {
+  public ZonedDateTime getStartTime() {
     return interval.getStart();
   }
 
-  public DateTime getEndTime() {
+  public ZonedDateTime getEndTime() {
     return interval.getEnd();
   }
 

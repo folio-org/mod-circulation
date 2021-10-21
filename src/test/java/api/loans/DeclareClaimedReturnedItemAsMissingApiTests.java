@@ -44,7 +44,7 @@ class DeclareClaimedReturnedItemAsMissingApiTests extends APITests {
   void canDeclareItemMissingWhenClaimedReturned() {
     claimItemReturnedFixture.claimItemReturned(new ClaimItemReturnedRequestBuilder()
       .forLoan(loanId)
-      .withItemClaimedReturnedDate(ClockUtil.getDateTime()));
+      .withItemClaimedReturnedDate(ClockUtil.getZonedDateTime()));
 
     claimItemReturnedFixture.declareClaimedReturnedItemAsMissing(
       new DeclareClaimedReturnedItemAsMissingRequestBuilder()
