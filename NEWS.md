@@ -1,4 +1,4 @@
-## 22.1.1 IN-PROGRESS
+## 22.1.1 2021-10-25
 
 * Includes permission for fetching notice policy when processing notices (CIRC-1100)
 * Includes permission for fetching opening hours  when checking an item in (CIRC-1300)
