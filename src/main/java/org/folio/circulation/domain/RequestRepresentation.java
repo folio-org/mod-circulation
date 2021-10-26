@@ -93,9 +93,11 @@ public class RequestRepresentation {
 
   private static void addInstanceProperties(JsonObject request, Item item) {
     JsonObject instance = new JsonObject();
-    write(instance, "title", item.getTitle());
-    write(instance, "identifiers", item.getIdentifiers());
-    instance.put("contributorNames", mapContributorsToNamesOnly(item.getContributors()));
+    if (item != null) {
+      write(instance, "title", item.getTitle());
+      write(instance, "identifiers", item.getIdentifiers());
+      write(instance, "contributorNames", mapContributorsToNamesOnly(item.getContributors()));
+    }
     write(request, "instance", instance);
   }
 
