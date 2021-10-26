@@ -55,6 +55,7 @@ class RequestsAPIRetrievalTests extends APITests {
     UUID facultyGroupId = patronGroupsFixture.faculty().getId();
     UUID staffGroupId = patronGroupsFixture.staff().getId();
     UUID isbnIdentifierId = identifierTypesFixture.isbn().getId();
+    UUID instanceId = UUID.randomUUID();
     String isbnValue = "9780866989732";
 
     final ItemResource smallAngryPlanet = itemsFixture
@@ -87,8 +88,10 @@ class RequestsAPIRetrievalTests extends APITests {
     final IndividualResource createdRequest = requestsFixture.place(
       new RequestBuilder()
         .recall()
+        .itemRequestLevel()
         .withRequestDate(requestDate)
         .forItem(smallAngryPlanet)
+        .withInstanceId(instanceId)
         .by(sponsor)
         .proxiedBy(proxy)
         .fulfilToHoldShelf()
@@ -107,8 +110,10 @@ class RequestsAPIRetrievalTests extends APITests {
 
     assertThat(representation.getString("id"), is(createdRequest.getId()));
     assertThat(representation.getString("requestType"), is("Recall"));
+    assertThat(representation.getString("requestLevel"), is("Item"));
     assertThat(representation.getString("requestDate"), isEquivalentTo(requestDate));
     assertThat(representation.getString("itemId"), is(smallAngryPlanet.getId()));
+    assertThat(representation.getString("instanceId"), is(instanceId));
     assertThat(representation.getString("requesterId"), is(sponsor.getId()));
     assertThat(representation.getString("fulfilmentPreference"), is("Hold Shelf"));
     assertThat(representation.getString("requestExpirationDate"), is("2017-07-30T23:59:59.000Z"));
@@ -148,10 +153,6 @@ class RequestsAPIRetrievalTests extends APITests {
       representation.containsKey("item"), is(true));
 
     final JsonObject itemSummary = representation.getJsonObject("item");
-
-    assertThat("title is taken from item",
-      itemSummary.getString("title"), is("The Long Way to a Small, Angry Planet"));
-
     assertThat("barcode is taken from item",
       itemSummary.getString("barcode"), is("036000291452"));
 
@@ -161,6 +162,10 @@ class RequestsAPIRetrievalTests extends APITests {
 
     assertThat(itemSummary.getString("copyNumber"),
       is(ONE_COPY_NUMBER));
+
+    final JsonObject instanceSummary = representation.getJsonObject("instance");
+    assertThat("title is taken from item",
+      instanceSummary.getString("title"), is("The Long Way to a Small, Angry Planet"));
 
     assertThat("has information taken from requesting user",
       representation.containsKey("requester"), is(true));
@@ -210,7 +215,7 @@ class RequestsAPIRetrievalTests extends APITests {
 
     requestHasCallNumberStringProperties(representation, "");
 
-    JsonArray identifiers = itemSummary.getJsonArray("identifiers");
+    JsonArray identifiers = instanceSummary.getJsonArray("identifiers");
     assertThat(identifiers, CoreMatchers.notNullValue());
     assertThat(identifiers.size(), is(1));
     assertThat(identifiers.getJsonObject(0).getString("identifierTypeId"),
@@ -617,7 +622,7 @@ class RequestsAPIRetrievalTests extends APITests {
   }
 
   @Test
-  void canSearchForRequestsByItemTitle() {
+  void canSearchForRequestsByInstanceTitle() {
     UUID requesterId = usersFixture.charlotte().getId();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
@@ -657,7 +662,7 @@ class RequestsAPIRetrievalTests extends APITests {
       .withRequesterId(requesterId));
 
     final MultipleJsonRecords requests = requestsFixture.getRequests(
-      queryFromTemplate("item.title=%s", "Nod"),
+      queryFromTemplate("instance.title=%s", "Nod"),
       noLimit(), noOffset());
 
     assertThat(requests.size(), is(2));

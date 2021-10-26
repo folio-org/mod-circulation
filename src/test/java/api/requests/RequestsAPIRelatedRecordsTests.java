@@ -31,6 +31,7 @@ class RequestsAPIRelatedRecordsTests extends APITests {
     IndividualResource response = requestsClient.create(new RequestBuilder()
       .forItem(smallAngryPlanet)
       .withPickupServicePointId(pickupServicePointId)
+      .withInstanceId(smallAngryPlanet.getInstanceId())
       .by(usersFixture.charlotte()));
 
     JsonObject createdRequest = response.getJson();
@@ -43,10 +44,10 @@ class RequestsAPIRelatedRecordsTests extends APITests {
       is(smallAngryPlanet.getHoldingsRecordId()));
 
     assertThat("has instance ID",
-      createdRequest.getJsonObject("item").containsKey("instanceId"), is(true));
+      createdRequest.containsKey("instanceId"), is(true));
 
     assertThat("has correct instance ID",
-      createdRequest.getJsonObject("item").getString("instanceId"),
+      createdRequest.getString("instanceId"),
       is(smallAngryPlanet.getInstanceId()));
 
     Response fetchedRequestResponse = requestsClient.getById(response.getId());
@@ -63,10 +64,10 @@ class RequestsAPIRelatedRecordsTests extends APITests {
       is(smallAngryPlanet.getHoldingsRecordId()));
 
     assertThat("has instance ID",
-      fetchedRequest.getJsonObject("item").containsKey("instanceId"), is(true));
+      fetchedRequest.containsKey("instanceId"), is(true));
 
     assertThat("has correct instance ID",
-      fetchedRequest.getJsonObject("item").getString("instanceId"),
+      fetchedRequest.getString("instanceId"),
       is(smallAngryPlanet.getInstanceId()));
   }
 
@@ -85,15 +86,19 @@ class RequestsAPIRelatedRecordsTests extends APITests {
 
     final IndividualResource charlotte = usersFixture.charlotte();
 
+    UUID instanceIdForFirstRequest = temeraire.getInstanceId();
     UUID firstRequestId = requestsClient.create(new RequestBuilder()
       .forItem(smallAngryPlanet)
       .withPickupServicePointId(pickupServicePointId)
+      .withInstanceId(instanceIdForFirstRequest)
       .by(charlotte))
       .getId();
 
+    UUID instanceIdForSecondRequest = temeraire.getInstanceId();
     UUID secondRequestId = requestsClient.create(new RequestBuilder()
       .forItem(temeraire)
       .withPickupServicePointId(pickupServicePointId)
+      .withInstanceId(instanceIdForSecondRequest)
       .by(charlotte))
       .getId();
 
@@ -111,11 +116,11 @@ class RequestsAPIRelatedRecordsTests extends APITests {
       is(smallAngryPlanet.getHoldingsRecordId()));
 
     assertThat("has instance ID",
-      firstItem.containsKey("instanceId"), is(true));
+      fetchedRequestsResponse.get(0).containsKey("instanceId"), is(true));
 
     assertThat("has correct instance ID",
-      firstItem.getString("instanceId"),
-      is(smallAngryPlanet.getInstanceId()));
+      fetchedRequestsResponse.get(0).getString("instanceId"),
+      is(instanceIdForFirstRequest));
 
     assertThat(firstItem.containsKey("copyNumber"), is(true));
     assertThat(firstItem.getString("copyNumber"), is(TWO_COPY_NUMBER));
@@ -132,10 +137,10 @@ class RequestsAPIRelatedRecordsTests extends APITests {
       is(temeraire.getHoldingsRecordId()));
 
     assertThat("has instance ID",
-      secondItem.containsKey("instanceId"), is(true));
+      fetchedRequestsResponse.get(1).containsKey("instanceId"), is(true));
 
     assertThat("has correct instance ID",
-      secondItem.getString("instanceId"),
-      is(temeraire.getInstanceId()));
+      fetchedRequestsResponse.get(1).getString("instanceId"),
+      is(instanceIdForSecondRequest));
   }
 }

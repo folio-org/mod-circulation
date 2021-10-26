@@ -177,13 +177,14 @@ public class RequestsAPICreationTests extends APITests {
       representation.containsKey("item"), is(true));
 
     JsonObject requestItem = representation.getJsonObject("item");
-    assertThat("title is taken from item",
-      requestItem.getString("title"),
-      is("The Long Way to a Small, Angry Planet"));
-
     assertThat("barcode is taken from item",
       requestItem.getString("barcode"),
       is("036000291452"));
+
+    JsonObject instance = representation.getJsonObject("instance");
+    assertThat("title is taken from item",
+      instance.getString("title"),
+      is("The Long Way to a Small, Angry Planet"));
 
     assertThat("has information taken from requesting user",
       representation.containsKey("requester"), is(true));
@@ -237,7 +238,7 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(requestItem.getString("chronology"), is("chronology"));
     assertThat(requestItem.getString("volume"), is("vol.1"));
 
-    JsonArray identifiers = requestItem.getJsonArray("identifiers");
+    JsonArray identifiers = instance.getJsonArray("identifiers");
     assertThat(identifiers, notNullValue());
     assertThat(identifiers.size(), is(1));
     assertThat(identifiers.getJsonObject(0).getString("identifierTypeId"),
@@ -293,7 +294,7 @@ public class RequestsAPICreationTests extends APITests {
       representation.containsKey("item"), is(true));
 
     assertThat("title is taken from item",
-      representation.getJsonObject("item").getString("title"),
+      representation.getJsonObject("instance").getString("title"),
       is("The Long Way to a Small, Angry Planet"));
 
     assertThat("barcode is taken from item",
@@ -802,7 +803,7 @@ public class RequestsAPICreationTests extends APITests {
       representation.containsKey("item"), is(true));
 
     assertThat("title is taken from item",
-      representation.getJsonObject("item").getString("title"),
+      representation.getJsonObject("instance").getString("title"),
       is("The Long Way to a Small, Angry Planet"));
 
     assertThat("barcode is not taken from item when none present",
@@ -848,7 +849,7 @@ public class RequestsAPICreationTests extends APITests {
       representation.containsKey("item"), is(true));
 
     assertThat("title is taken from item",
-      representation.getJsonObject("item").getString("title"),
+      representation.getJsonObject("instance").getString("title"),
       is("The Long Way to a Small, Angry Planet"));
 
     assertThat("barcode is taken from item",

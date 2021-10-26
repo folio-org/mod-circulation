@@ -39,8 +39,10 @@ public class RequestBuilder extends JsonBuilder implements Builder {
 
   private final UUID id;
   private final String requestType;
+  private final String requestLevel;
   private final ZonedDateTime requestDate;
   private final UUID itemId;
+  private final UUID instanceId;
   private final UUID requesterId;
   private final String fulfilmentPreference;
   private final UUID deliveryAddressType;
@@ -63,7 +65,9 @@ public class RequestBuilder extends JsonBuilder implements Builder {
   public RequestBuilder() {
     this(UUID.randomUUID(),
       "Hold",
+      "Item",
       ZonedDateTime.of(2017, 7, 15, 9, 35, 27, 0, UTC),
+      UUID.randomUUID(),
       UUID.randomUUID(),
       UUID.randomUUID(),
       "Hold Shelf",
@@ -91,8 +95,10 @@ public class RequestBuilder extends JsonBuilder implements Builder {
     return new RequestBuilder(
       UUID.fromString(representation.getString("id")),
       getProperty(representation, "requestType"),
+      getProperty(representation, "requestLevel"),
       getDateTimeProperty(representation, "requestDate"),
       getUUIDProperty(representation, "itemId"),
+      getUUIDProperty(representation, "instanceId"),
       getUUIDProperty(representation, "requesterId"),
       getProperty(representation, "fulfilmentPreference"),
       getUUIDProperty(representation, "deliveryAddressTypeId"),
@@ -120,8 +126,10 @@ public class RequestBuilder extends JsonBuilder implements Builder {
 
     put(request, "id", this.id);
     put(request, "requestType", this.requestType);
+    put(request, "requestLevel", this.requestLevel);
     put(request, "requestDate", formatDateTimeOptional(this.requestDate));
     put(request, "itemId", this.itemId);
+    put(request, "instanceId", this.instanceId);
     put(request, "requesterId", this.requesterId);
     put(request, "fulfilmentPreference", this.fulfilmentPreference);
     put(request, "position", this.position);
@@ -196,6 +204,14 @@ public class RequestBuilder extends JsonBuilder implements Builder {
 
   public RequestBuilder recall() {
     return withRequestType("Recall");
+  }
+
+  public RequestBuilder itemRequestLevel() {
+    return withRequestLevel("Item");
+  }
+
+  public RequestBuilder instanceRequestLevel() {
+    return withRequestLevel("Instance");
   }
 
   public RequestBuilder withNoItemId() {
