@@ -123,7 +123,7 @@ class RequestsAPIUpdatingTests extends APITests {
       representation.containsKey("item"), is(true));
 
     assertThat("title is taken from item",
-      representation.getJsonObject("item").getString("title"),
+      representation.getJsonObject("instance").getString("title"),
       is("Temeraire"));
 
     assertThat("barcode is taken from item",
@@ -405,7 +405,7 @@ class RequestsAPIUpdatingTests extends APITests {
       representation.containsKey("item"), is(true));
 
     assertThat("title is taken from item",
-      representation.getJsonObject("item").getString("title"),
+      representation.getJsonObject("instance").getString("title"),
       is("Temeraire"));
 
     assertThat("barcode is not taken from item",
@@ -711,7 +711,7 @@ class RequestsAPIUpdatingTests extends APITests {
     requestsClient.replace(request.getId(), request.copyJson());
 
     JsonArray identifiers = requestsClient.getById(request.getId())
-      .getJson().getJsonObject("item").getJsonArray("identifiers");
+      .getJson().getJsonObject("instance").getJsonArray("identifiers");
 
     assertThat(identifiers, CoreMatchers.notNullValue());
     assertThat(identifiers.size(), is(1));
