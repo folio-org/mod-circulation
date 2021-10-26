@@ -851,7 +851,7 @@ class InstanceRequestsAPICreationTests extends APITests {
       representation.getJsonObject("pickupServicePoint").getString("name"));
 
     assertEquals(instanceId.toString(),
-      representation.getJsonObject("item").getString("instanceId"));
+      representation.getString("instanceId"));
 
     assertEquals(expectedRequestType.getValue(),
       representation.getString("requestType"));

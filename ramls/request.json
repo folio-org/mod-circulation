@@ -14,6 +14,11 @@
       "type": "string",
       "enum": ["Hold", "Recall", "Page"]
     },
+    "requestLevel": {
+      "description": "Level of the request - Item or Title",
+      "type": "string",
+      "enum": ["Item", "Instance"]
+    },
     "requestDate": {
       "description": "Date the request was made",
       "type": "string",
@@ -32,6 +37,11 @@
       "description": "ID of the user representing a proxy for the patron",
       "type": "string",
       "$ref": "uuid.json"
+    },
+    "instanceId": {
+      "description": "ID of the instance being requested",
+      "type": "string",
+      "$ref": "raml-util/schemas/uuid.schema"
     },
     "itemId": {
       "description": "ID of the item being requested",
