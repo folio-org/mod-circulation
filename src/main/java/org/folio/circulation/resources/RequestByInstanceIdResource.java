@@ -347,6 +347,7 @@ public class RequestByInstanceIdResource extends Resource {
               requestByInstanceIdRequest.getRequestExpirationDate());
           }
           write(requestBody, "patronComments", requestByInstanceIdRequest.getPatronComments());
+          write(requestBody, "instanceId", requestByInstanceIdRequest.getInstanceId());
           requests.add(requestBody);
         }
       }

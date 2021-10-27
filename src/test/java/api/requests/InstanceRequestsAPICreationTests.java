@@ -368,7 +368,7 @@ class InstanceRequestsAPICreationTests extends APITests {
       representation.getJsonObject("pickupServicePoint").getString("name"));
 
     assertEquals(instance.getId().toString(),
-      representation.getJsonObject("item").getString("instanceId"));
+      representation.getString("instanceId"));
 
     assertEquals(RequestType.HOLD.getValue(),
       representation.getString("requestType"));
@@ -520,7 +520,7 @@ class InstanceRequestsAPICreationTests extends APITests {
     assertEquals("Circ Desk 1",
       representation.getJsonObject("pickupServicePoint").getString("name"));
     assertEquals(instance.getId().toString(),
-      representation.getJsonObject("item").getString("instanceId"));
+      representation.getString("instanceId"));
 
     assertEquals(RequestType.HOLD.getValue(),
       representation.getString("requestType"));
@@ -579,7 +579,7 @@ class InstanceRequestsAPICreationTests extends APITests {
       representation.getJsonObject("pickupServicePoint").getString("name"));
 
     assertEquals(instance.getId().toString(),
-      representation.getJsonObject("item").getString("instanceId"));
+      representation.getString("instanceId"));
 
     assertEquals(RequestType.HOLD.getValue(),
       representation.getString("requestType"));
@@ -649,7 +649,7 @@ class InstanceRequestsAPICreationTests extends APITests {
       representation.getJsonObject("pickupServicePoint").getString("name"));
 
     assertEquals(instance.getId().toString(),
-      representation.getJsonObject("item").getString("instanceId"));
+      representation.getString("instanceId"));
 
     assertEquals(RequestType.HOLD.getValue(),
       representation.getString("requestType"));
