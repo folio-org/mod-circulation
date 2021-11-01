@@ -134,17 +134,17 @@ public class RequestsAPICreationTests extends APITests {
     UUID isbnIdentifierId = identifierTypesFixture.isbn().getId();
     String isbnValue = "9780866989732";
 
-    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet(
+    ItemResource item = itemsFixture.basedUponSmallAngryPlanet(
       identity(),
       instanceBuilder -> instanceBuilder.addIdentifier(isbnIdentifierId, isbnValue),
       itemsFixture.addCallNumberStringComponents());
 
-    UUID instanceId = itemsFixture.basedUponSmallAngryPlanet().getInstanceId();
     checkOutFixture.checkOutByBarcode(item, usersFixture.jessica());
 
     IndividualResource requester = usersFixture.steve();
 
     ZonedDateTime requestDate = ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC);
+    UUID instanceId = item.getInstanceId();
 
     IndividualResource request = requestsFixture.place(new RequestBuilder()
       .withId(id)
