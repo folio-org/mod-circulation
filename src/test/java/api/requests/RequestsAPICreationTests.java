@@ -368,24 +368,6 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  void cannotCreateRequestForUnknownInstance() {
-    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
-    UUID instanceId = UUID.randomUUID();
-    UUID patronId = usersFixture.charlotte().getId();
-    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
-
-    Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
-      .recall()
-      .withItemId(item.getId())
-      .withInstanceId(instanceId)
-      .withPickupServicePointId(pickupServicePointId)
-      .withRequesterId(patronId));
-
-    assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
-    assertThat(postResponse.getJson(), hasErrorWith(hasMessage("Instance does not exist")));
-  }
-
-  @Test
   void cannotCreateRequestWithNoItemReference() {
     UUID patronId = usersFixture.charlotte().getId();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();

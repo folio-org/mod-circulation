@@ -50,7 +50,6 @@ class RequestFromRepresentationService {
   private final ProxyRelationshipValidator proxyRelationshipValidator;
   private final ServicePointPickupLocationValidator pickupLocationValidator;
   private final CirculationErrorHandler errorHandler;
-  private static final List<RequestLevel> ALLOWED_REQUEST_LEVELS = Collections.singletonList(ITEM);
 
   RequestFromRepresentationService(ItemRepository itemRepository,
     RequestQueueRepository requestQueueRepository, UserRepository userRepository,
