@@ -210,8 +210,8 @@ public class RequestBuilder extends JsonBuilder implements Builder {
     return withRequestLevel("Item");
   }
 
-  public RequestBuilder instanceRequestLevel() {
-    return withRequestLevel("Instance");
+  public RequestBuilder titleRequestLevel() {
+    return withRequestLevel("Title");
   }
 
   public RequestBuilder withNoItemId() {
