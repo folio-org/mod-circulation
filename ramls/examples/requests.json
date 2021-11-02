@@ -3,18 +3,22 @@
     {
       "id": "89105c06-dbdb-4aa0-9695-d4d19c733270",
       "requestType": "Recall",
+      "requestLevel": "Item",
       "requestDate": "2017-07-29T22:25:37Z",
       "requesterId": "21932a85-bd00-446b-9565-46e0c1a5490b",
       "itemId": "195efae1-588f-47bd-a181-13a2eb437701",
+      "instanceId": "195efae1-588f-47bd-a181-13a2eb434521",
       "fulfilmentPreference": "Hold Shelf",
       "position": 1
     },
     {
       "id": "f5cec279-0da6-4b44-a3df-f49b0903f325",
       "requestType": "Hold",
+      "requestLevel": "Item",
       "requestDate": "2017-08-05T11:43:23Z",
       "requesterId": "61d939e4-f2ae-4c53-95d2-224a802fa2a6",
       "itemId": "3e5d5433-a271-499c-94f4-5f3e4652e537",
+      "instanceId": "1e7d3354-a271-499c-94f4-5f3e4652a345",
       "fulfilmentPreference": "Delivery",
       "requestExpirationDate": "2017-08-31T22:25:37Z",
       "holdShelfExpirationDate": "2017-09-01T22:25:37Z",

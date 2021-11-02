@@ -164,7 +164,7 @@ class RequestsAPIRetrievalTests extends APITests {
       is(ONE_COPY_NUMBER));
 
     final JsonObject instanceSummary = representation.getJsonObject("instance");
-    assertThat("title is taken from item",
+    assertThat("title is taken from instance",
       instanceSummary.getString("title"), is("The Long Way to a Small, Angry Planet"));
 
     assertThat("has information taken from requesting user",

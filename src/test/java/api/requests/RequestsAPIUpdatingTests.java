@@ -127,7 +127,7 @@ class RequestsAPIUpdatingTests extends APITests {
       representation.containsKey("item"), is(true));
 
     JsonObject instance = representation.getJsonObject("instance");
-    assertThat("title is taken from item", instance.getString("title"), is("Temeraire"));
+    assertThat("title is taken from instance", instance.getString("title"), is("Temeraire"));
 
     JsonArray contributors = instance.getJsonArray("contributorNames");
     assertThat(contributors, notNullValue());
@@ -412,7 +412,7 @@ class RequestsAPIUpdatingTests extends APITests {
     assertThat("has information taken from item",
       representation.containsKey("item"), is(true));
 
-    assertThat("title is taken from item",
+    assertThat("title is taken from instance",
       representation.getJsonObject("instance").getString("title"),
       is("Temeraire"));
 

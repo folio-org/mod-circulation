@@ -2,7 +2,6 @@ package org.folio.circulation.resources;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.apache.commons.lang3.StringUtils.isBlank;
-import static org.folio.circulation.domain.RequestLevel.ITEM;
 import static org.folio.circulation.domain.representations.RequestProperties.ITEM_ID;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_ITEM_ID;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_PICKUP_SERVICE_POINT;
@@ -16,10 +15,10 @@ import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
@@ -141,7 +140,10 @@ class RequestFromRepresentationService {
     if (Arrays.stream(RequestLevel.values()).noneMatch(
       existingLevel -> existingLevel.value().equals(requestLevel))) {
 
-      return failed(new BadRequestFailure(RequestLevel.invalidRequestLevelErrorMessage()));
+      return failed(new BadRequestFailure("requestLevel must be one of the following: " +
+        Arrays.stream(RequestLevel.values())
+          .map(existingLevel -> StringUtils.wrap(existingLevel.value(), '"'))
+          .collect(Collectors.joining(", "))));
     }
 
     return succeeded(representation);
