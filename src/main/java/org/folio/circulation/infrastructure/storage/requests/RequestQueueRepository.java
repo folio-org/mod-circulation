@@ -54,8 +54,8 @@ public class RequestQueueRepository {
     return get(itemRelatedRecord.getItemId());
   }
 
-  public CompletableFuture<Result<RequestQueue>> get(String itemId) {
-    final Result<CqlQuery> itemIdQuery = exactMatch("itemId", itemId);
+  public CompletableFuture<Result<RequestQueue>> get(String instanceId) {
+    final Result<CqlQuery> itemIdQuery = exactMatch("instanceId", instanceId);
     final Result<CqlQuery> statusQuery = exactMatchAny("status", RequestStatus.openStates());
 
     return itemIdQuery.combine(statusQuery, CqlQuery::and)

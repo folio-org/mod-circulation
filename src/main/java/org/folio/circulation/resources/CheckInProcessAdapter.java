@@ -131,7 +131,7 @@ class CheckInProcessAdapter {
   CompletableFuture<Result<RequestQueue>> getRequestQueue(
     CheckInContext context) {
 
-    return requestQueueRepository.get(context.getItem().getItemId());
+    return requestQueueRepository.get(context.getItem().getInstanceId());
   }
 
   CompletableFuture<Result<Item>> updateItem(CheckInContext context) {
