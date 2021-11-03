@@ -57,7 +57,7 @@ public class RequestQueueResource extends Resource {
 
     String itemId = routingContext.request().getParam("itemId");
 
-    requestQueueRepository.get(itemId)
+    requestQueueRepository.getByItemId(itemId)
       .thenApply(r -> r.map(requestQueue -> new MultipleRecords<>(
         requestQueue.getRequests(), requestQueue.size())))
       .thenApply(r -> r.map(requests ->
@@ -82,7 +82,7 @@ public class RequestQueueResource extends Resource {
       requestQueueRepository, requestRepository, new ServicePointRepository(clients),
       new ConfigurationRepository(clients));
 
-    requestQueueRepository.get(reorderContext.getItemId())
+    requestQueueRepository.getByItemId(reorderContext.getItemId())
       .thenApply(r -> r.map(reorderContext::withRequestQueue))
       // Validation block
       .thenApply(RequestQueueValidation::queueFoundForItem)

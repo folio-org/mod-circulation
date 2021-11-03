@@ -9,6 +9,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class RequestQueue {
@@ -29,6 +30,12 @@ public class RequestQueue {
       .comparingInt(request -> Optional.ofNullable(request.getPosition())
         .orElse(0)
       ));
+  }
+
+  public RequestQueue filter(Predicate<Request> predicate) {
+    return new RequestQueue(requests.stream()
+      .filter(predicate)
+      .collect(Collectors.toList()));
   }
 
   ItemStatus checkedInItemStatus() {

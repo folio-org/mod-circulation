@@ -139,7 +139,7 @@ class RequestFromRepresentationService {
   private Result<JsonObject> validateRequestLevel(JsonObject representation) {
     String requestLevel = representation.getString("requestLevel");
     if (Arrays.stream(RequestLevel.values()).noneMatch(
-      existingLevel -> existingLevel.value().equals(requestLevel))) {
+      existingLevel -> existingLevel.getValue().equals(requestLevel))) {
 
       return failed(new BadRequestFailure(RequestLevel.invalidRequestLevelErrorMessage()));
     }

@@ -244,7 +244,7 @@ public class UpdateRequestQueue {
   }
 
   public CompletableFuture<Result<Request>> onDeletion(Request request) {
-    return requestQueueRepository.get(request.getItemId())
+    return requestQueueRepository.getByItemId(request.getItemId())
       .thenApply(r -> r.map(requestQueue -> {
         requestQueue.remove(request);
         return requestQueue;

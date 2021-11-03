@@ -10,17 +10,7 @@ import static org.folio.circulation.domain.RequestStatus.CLOSED_UNFILLED;
 import static org.folio.circulation.domain.RequestStatus.OPEN_AWAITING_PICKUP;
 import static org.folio.circulation.domain.RequestStatus.OPEN_IN_TRANSIT;
 import static org.folio.circulation.domain.RequestStatus.OPEN_NOT_YET_FILLED;
-import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_ADDITIONAL_INFORMATION;
-import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_ID;
-import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_NAME;
-import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_PUBLIC_DESCRIPTION;
-import static org.folio.circulation.domain.representations.RequestProperties.HOLD_SHELF_EXPIRATION_DATE;
-import static org.folio.circulation.domain.representations.RequestProperties.ITEM_ID;
-import static org.folio.circulation.domain.representations.RequestProperties.POSITION;
-import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_DATE;
-import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_EXPIRATION_DATE;
-import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_TYPE;
-import static org.folio.circulation.domain.representations.RequestProperties.STATUS;
+import static org.folio.circulation.domain.representations.RequestProperties.*;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getIntegerProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
@@ -135,6 +125,10 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return StringUtils.equals(getUserId(), user.getId());
   }
 
+  public String getInstanceId() {
+    return requestRepresentation.getString(INSTANCE_ID);
+  }
+
   @Override
   public String getItemId() {
     return requestRepresentation.getString(ITEM_ID);
@@ -194,6 +188,10 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
 
   public String getId() {
     return requestRepresentation.getString("id");
+  }
+
+  public RequestLevel getRequestLevel() {
+    return RequestLevel.from(getProperty(requestRepresentation, REQUEST_LEVEL));
   }
 
   public RequestType getRequestType() {
@@ -361,4 +359,20 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return changedStatus;
   }
 
+  public boolean canBeFulfilledByItem(Item item) {
+    if (getRequestLevel() == RequestLevel.TITLE) {
+      String itemInstanceId = item.getInstanceId();
+      String requestInstanceId = this.getInstanceId();
+
+      return itemInstanceId != null && itemInstanceId.equals(requestInstanceId);
+    }
+    else if (getRequestLevel() == RequestLevel.ITEM) {
+      String itemId = item.getItemId();
+      String requestItemId = this.getItemId();
+
+      return itemId != null && itemId.equals(requestItemId);
+    }
+
+    return false;
+  }
 }

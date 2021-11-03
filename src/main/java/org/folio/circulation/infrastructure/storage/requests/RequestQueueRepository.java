@@ -41,21 +41,29 @@ public class RequestQueueRepository {
   public CompletableFuture<Result<LoanAndRelatedRecords>> get(
     LoanAndRelatedRecords loanAndRelatedRecords) {
 
-    return get(loanAndRelatedRecords.getLoan().getItemId())
+    return getByItemId(loanAndRelatedRecords.getLoan().getItemId())
       .thenApply(result -> result.map(loanAndRelatedRecords::withRequestQueue));
   }
 
   public CompletableFuture<Result<RenewalContext>> get(RenewalContext renewalContext) {
-    return get(renewalContext.getLoan().getItemId())
+    return getByItemId(renewalContext.getLoan().getItemId())
       .thenApply(result -> result.map(renewalContext::withRequestQueue));
   }
 
   public CompletableFuture<Result<RequestQueue>> get(ItemRelatedRecord itemRelatedRecord) {
-    return get(itemRelatedRecord.getItemId());
+    return getByItemId(itemRelatedRecord.getItemId());
   }
 
-  public CompletableFuture<Result<RequestQueue>> get(String instanceId) {
-    final Result<CqlQuery> itemIdQuery = exactMatch("instanceId", instanceId);
+  public CompletableFuture<Result<RequestQueue>> getByInstanceId(String instanceId) {
+    return get("instanceId", instanceId);
+  }
+
+  public CompletableFuture<Result<RequestQueue>> getByItemId(String itemId) {
+    return get("itemId", itemId);
+  }
+
+  private CompletableFuture<Result<RequestQueue>> get(String idFieldName, String id) {
+    final Result<CqlQuery> itemIdQuery = exactMatch(idFieldName, id);
     final Result<CqlQuery> statusQuery = exactMatchAny("status", RequestStatus.openStates());
 
     return itemIdQuery.combine(statusQuery, CqlQuery::and)
