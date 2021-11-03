@@ -92,7 +92,13 @@ import api.support.http.UserResource;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
+import java.lang.invoke.MethodHandles;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 class CheckInByBarcodeTests extends APITests {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   @Test
   void canCloseAnOpenLoanByCheckingInTheItem() {
     final IndividualResource james = usersFixture.james();
@@ -283,6 +289,9 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     assertThat(requestContext.getString("deliveryAddressType"), is(addressTypesFixture.home().getJson().getString("addressType")));
     assertThat(requestContext.getString("requestExpirationDate"), isEquivalentTo(
       ZonedDateTime.of(requestExpiration.atTime(23, 59, 59), ZoneOffset.UTC)));
+    log.info("System default timezone offset: " + ZoneId.systemDefault().normalized().toString());
+    log.info("time from endpoint:" + requestContext.getString("holdShelfExpirationDate"));
+    log.info("time for comparison" + holdShelfExpiration.toString());
     assertThat(requestContext.getString("holdShelfExpirationDate"), isEquivalentTo(toZonedStartOfDay(holdShelfExpiration)));
     assertThat(requestContext.getString("requestID"), is(request.getId()));
     assertThat(requestContext.getString("servicePointPickup"), is(servicePoint.getJson().getString("name")));

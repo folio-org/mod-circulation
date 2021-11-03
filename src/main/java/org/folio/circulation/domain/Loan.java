@@ -227,9 +227,9 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   public boolean isOpen() {
     return getStatus() == LoanStatus.OPEN;
   }
-  //previously
-  public boolean canChangeDueDateForRecall() {
-    return !getBooleanProperty(representation, "dueDateChangedByRecall");
+
+  public boolean wasDueDateChangedByRecall() {
+    return getBooleanProperty(representation, "dueDateChangedByRecall");
   }
 
   private LoanStatus getStatus() {

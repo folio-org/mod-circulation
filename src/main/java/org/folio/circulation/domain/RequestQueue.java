@@ -45,7 +45,7 @@ public class RequestQueue {
     return fulfillableRequests().get(0);
   }
 
-  boolean containsRequestOfType(RequestType type) {
+  public boolean containsRequestOfType(RequestType type) {
     return requests.stream().anyMatch(request -> request.getRequestType() == type);
   }
 

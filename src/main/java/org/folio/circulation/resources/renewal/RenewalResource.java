@@ -40,6 +40,7 @@ import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 import static org.folio.circulation.support.utils.DateTimeUtil.isAfterMillis;
 
+import java.util.stream.Collectors;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -179,6 +180,7 @@ public abstract class RenewalResource extends Resource {
         RenewalContext::withTimeZone))
       .thenComposeAsync(r -> r.after(context -> renew(context, clients, errorHandler)))
       .thenApply(r -> r.next(errorHandler::failWithValidationErrors))
+      .thenApply(r -> unsetDateTruncationFlagIfNoOpenRecallsInQueue(r))
       .thenComposeAsync(r -> r.after(storeLoanAndItem::updateLoanAndItemInStorage))
       .thenComposeAsync(r -> r.after(context -> processFeesFines(context, clients)))
       .thenApplyAsync(r -> r.next(feeFineNoticesService::scheduleOverdueFineNotices))
@@ -188,6 +190,23 @@ public abstract class RenewalResource extends Resource {
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
       .thenApply(r -> r.map(this::toResponse))
       .thenAccept(webContext::writeResultToHttpResponse);
+  }
+  
+  private Result<RenewalContext> unsetDateTruncationFlagIfNoOpenRecallsInQueue(
+    Result<RenewalContext> renewalContext) {
+
+    Loan loan = renewalContext.value().getLoan();
+    RequestQueue queue = renewalContext.value().getRequestQueue();
+
+    if (loan.wasDueDateChangedByRecall() && !hasOpenRecalls(queue)) {
+      loan.unsetDueDateChangedByRecall();
+    }
+    return renewalContext;
+  }
+
+  private Boolean hasOpenRecalls(RequestQueue queue) {
+    return queue.getRequests().stream()
+        .anyMatch(request -> request.getRequestType() == RequestType.RECALL && request.isNotYetFilled());
   }
 
   private CompletableFuture<Result<RenewalContext>> processFeesFines(RenewalContext renewalContext,
