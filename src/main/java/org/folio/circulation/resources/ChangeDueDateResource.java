@@ -97,9 +97,8 @@ public class ChangeDueDateResource extends Resource {
   
   private Result<LoanAndRelatedRecords> unsetDateTruncationFlagIfNoOpenRecallsInQueue(Result<LoanAndRelatedRecords> result) {
 
-    LoanAndRelatedRecords loanData = result.value();
-    RequestQueue queue = loanAndRecords.value().getRequestQueue();
-    Loan loan = loanAndRecords.value().getLoan();
+    RequestQueue queue = result.value().getRequestQueue();
+    Loan loan = result.value().getLoan();
     if (queue == null) {
       log.info("request queue data not present");
     } 
