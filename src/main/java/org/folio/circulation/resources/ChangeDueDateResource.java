@@ -8,16 +8,22 @@ import static org.folio.circulation.support.results.MappingFunctions.toFixedValu
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.succeeded;
 
+import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
+import org.folio.circulation.domain.RequestQueue;
+import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.notice.schedule.LoanScheduledNoticeService;
 import org.folio.circulation.domain.representations.ChangeDueDateRequest;
 import org.folio.circulation.domain.validation.ItemStatusValidator;
 import org.folio.circulation.domain.validation.LoanValidator;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
+import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.RouteRegistration;
@@ -33,6 +39,7 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
 public class ChangeDueDateResource extends Resource {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   public ChangeDueDateResource(HttpClient client) {
     super(client);
   }
@@ -45,7 +52,7 @@ public class ChangeDueDateResource extends Resource {
 
   private void changeDueDate(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
-
+    log.info("This is the right code.");
     createChangeDueDateRequest(routingContext)
       .after(r -> processChangeDueDate(r, routingContext))
       .thenApply(r -> r.map(toFixedValue(NoContentResponse::noContent)))
@@ -57,6 +64,8 @@ public class ChangeDueDateResource extends Resource {
 
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context, client);
+
+    final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
 
     final LoanRepository loanRepository = new LoanRepository(clients);
 
@@ -74,12 +83,34 @@ public class ChangeDueDateResource extends Resource {
       .after(r -> getExistingLoan(loanRepository, r))
       .thenApply(LoanValidator::refuseWhenLoanIsClosed)
       .thenApply(this::toLoanAndRelatedRecords)
+      .thenComposeAsync(r -> r.after(
+        lrr -> requestQueueRepository.get(lrr)))
+      .thenApply(r -> unsetDateTruncationFlagIfNoOpenRecallsInQueue(r))
       .thenApply(itemStatusValidator::refuseWhenItemStatusDoesNotAllowDueDateChange)
       .thenApply(r -> changeDueDate(r, request))
       .thenComposeAsync(r -> r.after(loanRepository::updateLoan))
       .thenComposeAsync(r -> r.after(eventPublisher::publishDueDateChangedEvent))
       .thenApply(r -> r.next(scheduledNoticeService::rescheduleDueDateNotices))
       .thenCompose(r -> r.after(loanNoticeSender::sendManualDueDateChangeNotice));
+  }
+
+  private Result<LoanAndRelatedRecords> unsetDateTruncationFlagIfNoOpenRecallsInQueue(Result<LoanAndRelatedRecords> result) {
+
+    LoanAndRelatedRecords loanData = result.value();
+    RequestQueue queue = loanData.getRequestQueue();
+    Loan loan = loanData.getLoan();
+    if (queue == null) {  
+      log.info("request queue data not present");
+    }
+    if (loan.wasDueDateChangedByRecall() && !hasOpenRecalls(queue)) {
+      loan.unsetDueDateChangedByRecall();
+    }
+    return result;
+  }
+
+  private Boolean hasOpenRecalls(RequestQueue queue) {
+    return queue.getRequests().stream()
+        .anyMatch(request -> request.getRequestType() == RequestType.RECALL && request.isNotYetFilled());
   }
 
   CompletableFuture<Result<Loan>> getExistingLoan(LoanRepository loanRepository, ChangeDueDateRequest changeDueDateRequest) {

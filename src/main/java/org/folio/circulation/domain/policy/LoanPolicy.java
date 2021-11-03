@@ -480,7 +480,7 @@ public class LoanPolicy extends Policy {
   }
 
   private Loan changeDueDate(DateTime dueDate, Loan loan) {
-    if (loan.canChangeDueDateForRecall()) {
+    if (!loan.wasDueDateChangedByRecall()) {
       loan.changeDueDate(dueDate);
       loan.setDueDateChangedByRecall();
     }

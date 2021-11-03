@@ -738,7 +738,7 @@ class LoanDueDatesAfterRecallTests extends APITests {
   }
 
   @Test
-  void itemRecalledThenCancelledAndNextRecallDoesNotChangeDueDate() {
+  void itemRecalledThenCancelledAndNextRecallDoesChangeDueDate() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requestServicePoint = servicePointsFixture.cd1();
     final IndividualResource jessica = usersFixture.jessica();
@@ -787,8 +787,8 @@ class LoanDueDatesAfterRecallTests extends APITests {
     storedLoan = loansStorageClient.getById(loan.getId()).getJson();
 
     final String recalledRenewalDueDate = storedLoan.getString("dueDate");
-    assertThat("due date after recall should not change the renewal due date",
-        recalledRenewalDueDate, is(renewalDueDate));
+    assertThat("due date after recall should change the renewal due date",
+        recalledRenewalDueDate, not(renewalDueDate));
   }
 
   @Test
