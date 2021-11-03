@@ -187,7 +187,7 @@ public class RequestsAPICreationTests extends APITests {
       is("036000291452"));
 
     JsonObject requestInstance = representation.getJsonObject("instance");
-    assertThat("title is taken from item",
+    assertThat("title is taken from instance",
       requestInstance.getString("title"),
       is("The Long Way to a Small, Angry Planet"));
 
@@ -302,7 +302,7 @@ public class RequestsAPICreationTests extends APITests {
     assertThat("has information taken from item",
       representation.containsKey("item"), is(true));
 
-    assertThat("title is taken from item",
+    assertThat("title is taken from instance",
       representation.getJsonObject("instance").getString("title"),
       is("The Long Way to a Small, Angry Planet"));
 
@@ -388,8 +388,8 @@ public class RequestsAPICreationTests extends APITests {
   void cannotCreateRequestWithNonExistentRequestLevel() {
     UUID patronId = usersFixture.charlotte().getId();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
-    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
-    UUID instanceId = itemsFixture.basedUponSmallAngryPlanet().getInstanceId();
+    ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+    UUID instanceId = item.getInstanceId();
 
     Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
       .recall()
@@ -830,7 +830,7 @@ public class RequestsAPICreationTests extends APITests {
     assertThat("has information taken from item",
       representation.containsKey("item"), is(true));
 
-    assertThat("title is taken from item",
+    assertThat("title is taken from instance",
       representation.getJsonObject("instance").getString("title"),
       is("The Long Way to a Small, Angry Planet"));
 
@@ -876,7 +876,7 @@ public class RequestsAPICreationTests extends APITests {
     assertThat("has information taken from item",
       representation.containsKey("item"), is(true));
 
-    assertThat("title is taken from item",
+    assertThat("title is taken from instance",
       representation.getJsonObject("instance").getString("title"),
       is("The Long Way to a Small, Angry Planet"));
 

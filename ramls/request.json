@@ -459,8 +459,10 @@
   "additionalProperties": false,
   "required": [
     "itemId",
+    "instanceId",
     "requesterId",
     "requestType",
+    "requestLevel",
     "requestDate",
     "fulfilmentPreference"
   ]

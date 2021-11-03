@@ -86,19 +86,18 @@ class RequestsAPIRelatedRecordsTests extends APITests {
 
     final IndividualResource charlotte = usersFixture.charlotte();
 
-    UUID instanceIdForFirstRequest = temeraire.getInstanceId();
+    UUID instanceId = temeraire.getInstanceId();
     UUID firstRequestId = requestsClient.create(new RequestBuilder()
       .forItem(smallAngryPlanet)
       .withPickupServicePointId(pickupServicePointId)
-      .withInstanceId(instanceIdForFirstRequest)
+      .withInstanceId(instanceId)
       .by(charlotte))
       .getId();
 
-    UUID instanceIdForSecondRequest = temeraire.getInstanceId();
     UUID secondRequestId = requestsClient.create(new RequestBuilder()
       .forItem(temeraire)
       .withPickupServicePointId(pickupServicePointId)
-      .withInstanceId(instanceIdForSecondRequest)
+      .withInstanceId(instanceId)
       .by(charlotte))
       .getId();
 
@@ -120,7 +119,7 @@ class RequestsAPIRelatedRecordsTests extends APITests {
 
     assertThat("has correct instance ID",
       fetchedRequestsResponse.get(0).getString("instanceId"),
-      is(instanceIdForFirstRequest));
+      is(instanceId));
 
     assertThat(firstItem.containsKey("copyNumber"), is(true));
     assertThat(firstItem.getString("copyNumber"), is(TWO_COPY_NUMBER));
@@ -141,6 +140,6 @@ class RequestsAPIRelatedRecordsTests extends APITests {
 
     assertThat("has correct instance ID",
       fetchedRequestsResponse.get(1).getString("instanceId"),
-      is(instanceIdForSecondRequest));
+      is(instanceId));
   }
 }
