@@ -285,14 +285,11 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     assertThat(userContext.getString("region"), is(address.getRegion()));
     assertThat(userContext.getString("postalCode"), is(address.getPostalCode()));
     assertThat(userContext.getString("countryId"), is(address.getCountryId()));
-
     assertThat(requestContext.getString("deliveryAddressType"), is(addressTypesFixture.home().getJson().getString("addressType")));
     assertThat(requestContext.getString("requestExpirationDate"), isEquivalentTo(
       ZonedDateTime.of(requestExpiration.atTime(23, 59, 59), ZoneOffset.UTC)));
-    log.info("System default timezone offset: " + ZoneId.systemDefault().normalized().toString());
-    log.info("time from endpoint:" + requestContext.getString("holdShelfExpirationDate"));
-    log.info("time for comparison" + holdShelfExpiration.toString());
-    assertThat(requestContext.getString("holdShelfExpirationDate"), isEquivalentTo(toZonedStartOfDay(holdShelfExpiration)));
+    assertThat(requestContext.getString("holdShelfExpirationDate"), isEquivalentTo(
+      ZonedDateTime.of(holdShelfExpiration.atStartOfDay(), ZoneOffset.UTC)));
     assertThat(requestContext.getString("requestID"), is(request.getId()));
     assertThat(requestContext.getString("servicePointPickup"), is(servicePoint.getJson().getString("name")));
     assertThat(requestContext.getString("patronComments"), is("I need the book"));
