@@ -180,7 +180,7 @@ public abstract class RenewalResource extends Resource {
         RenewalContext::withTimeZone))
       .thenComposeAsync(r -> r.after(context -> renew(context, clients, errorHandler)))
       .thenApply(r -> r.next(errorHandler::failWithValidationErrors))
-      .thenApply(r -> unsetDateTruncationFlagIfNoOpenRecallsInQueue(r))
+      .thenApply(this::unsetDateTruncationFlagIfNoOpenRecallsInQueue)
       .thenComposeAsync(r -> r.after(storeLoanAndItem::updateLoanAndItemInStorage))
       .thenComposeAsync(r -> r.after(context -> processFeesFines(context, clients)))
       .thenApplyAsync(r -> r.next(feeFineNoticesService::scheduleOverdueFineNotices))

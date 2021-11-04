@@ -53,7 +53,7 @@ public class ChangeDueDateResource extends Resource {
 
   private void changeDueDate(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
-    log.info("This is the right code.");
+    log.info("Changing due date");
     createChangeDueDateRequest(routingContext)
       .after(r -> processChangeDueDate(r, routingContext))
       .thenApply(r -> r.map(toFixedValue(NoContentResponse::noContent)))
@@ -83,10 +83,9 @@ public class ChangeDueDateResource extends Resource {
     return succeeded(request)
       .after(r -> getExistingLoan(loanRepository, r))
       .thenApply(LoanValidator::refuseWhenLoanIsClosed)
-      .thenApply(this::toLoanAndRelatedRecords)      
-      .thenComposeAsync(r -> r.after(
-        lrr -> requestQueueRepository.get(lrr)))
-      .thenApply(r -> unsetDateTruncationFlagIfNoOpenRecallsInQueue(r))
+      .thenApply(this::toLoanAndRelatedRecords)
+      .thenComposeAsync(r -> r.after(requestQueueRepository::get))
+      .thenApply(r -> r.map(this::unsetDateTruncationFlagIfNoOpenRecallsInQueue))
       .thenApply(itemStatusValidator::refuseWhenItemStatusDoesNotAllowDueDateChange)
       .thenApply(r -> changeDueDate(r, request))
       .thenComposeAsync(r -> r.after(loanRepository::updateLoan))
@@ -95,17 +94,18 @@ public class ChangeDueDateResource extends Resource {
       .thenCompose(r -> r.after(loanNoticeSender::sendManualDueDateChangeNotice));
   }
   
-  private Result<LoanAndRelatedRecords> unsetDateTruncationFlagIfNoOpenRecallsInQueue(Result<LoanAndRelatedRecords> result) {
+  private LoanAndRelatedRecords unsetDateTruncationFlagIfNoOpenRecallsInQueue(
+      LoanAndRelatedRecords loanAndRelatedRecords) {
 
-    RequestQueue queue = result.value().getRequestQueue();
-    Loan loan = result.value().getLoan();
-    if (queue == null) {
-      log.info("request queue data not present");
-    } 
+    RequestQueue queue = loanAndRelatedRecords.getRequestQueue();
+    Loan loan = loanAndRelatedRecords.getLoan();
+        log.info("examining flag.");
     if (loan.wasDueDateChangedByRecall() && !hasOpenRecalls(queue)) {
-      loan.unsetDueDateChangedByRecall();
+      return loanAndRelatedRecords.withLoan(loan.unsetDueDateChangedByRecall());
     }
-    return result;
+    else {
+      return loanAndRelatedRecords;
+    }
   }
 
   private Boolean hasOpenRecalls(RequestQueue queue) {
