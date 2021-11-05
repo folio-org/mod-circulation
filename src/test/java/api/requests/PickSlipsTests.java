@@ -228,7 +228,8 @@ class PickSlipsTests extends APITests {
     assertThat(requestContext.getString("requestExpirationDate"), isEquivalentTo(ZonedDateTime.of(
       requestExpiration.atTime(23, 59, 59), ZoneOffset.UTC)));
     assertThat(requestContext.getString("holdShelfExpirationDate"),
-      isEquivalentTo(toZonedStartOfDay(holdShelfExpiration)));
+      isEquivalentTo(ZonedDateTime.of(
+        holdShelfExpiration.atStartOfDay(), ZoneOffset.UTC)));
     assertThat(requestContext.getString("requestID"),
       UUIDMatcher.is(requestResource.getId()));
     assertThat(requestContext.getString("servicePointPickup"),
