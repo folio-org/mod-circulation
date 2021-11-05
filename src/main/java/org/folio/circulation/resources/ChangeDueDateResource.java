@@ -39,7 +39,6 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
 public class ChangeDueDateResource extends Resource {
-  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   public ChangeDueDateResource(HttpClient client) {
     super(client);
   }
@@ -52,7 +51,6 @@ public class ChangeDueDateResource extends Resource {
 
   private void changeDueDate(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
-    log.info("Changing due date");
     createChangeDueDateRequest(routingContext)
       .after(r -> processChangeDueDate(r, routingContext))
       .thenApply(r -> r.map(toFixedValue(NoContentResponse::noContent)))
@@ -98,7 +96,6 @@ public class ChangeDueDateResource extends Resource {
 
     RequestQueue queue = loanAndRelatedRecords.getRequestQueue();
     Loan loan = loanAndRelatedRecords.getLoan();
-        log.info("examining flag.");
     if (loan.wasDueDateChangedByRecall() && !hasOpenRecalls(queue)) {
       return loanAndRelatedRecords.withLoan(loan.unsetDueDateChangedByRecall());
     }
