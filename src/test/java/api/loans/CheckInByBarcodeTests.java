@@ -92,13 +92,7 @@ import api.support.http.UserResource;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
-import java.lang.invoke.MethodHandles;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 class CheckInByBarcodeTests extends APITests {
-  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   @Test
   void canCloseAnOpenLoanByCheckingInTheItem() {
     final IndividualResource james = usersFixture.james();
