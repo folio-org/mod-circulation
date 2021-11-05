@@ -193,6 +193,9 @@ public abstract class RenewalResource extends Resource {
 
   private Result<RenewalContext> unsetDateTruncationFlagIfNoOpenRecallsInQueue(
     Result<RenewalContext> renewalContext) {
+    if (renewalContext.failed()) {
+      return renewalContext;
+    }
 
     Loan loan = renewalContext.value().getLoan();
     RequestQueue queue = renewalContext.value().getRequestQueue();
