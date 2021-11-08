@@ -96,6 +96,7 @@ public class RequestRepresentation {
     if (item != null && item.isFound()) {
       write(instance, "title", item.getTitle());
       write(instance, "identifiers", item.getIdentifiers());
+      write(instance, "contributorNames", mapContributorsToNamesOnly(item.getContributors()));
     }
     write(request, "instance", instance);
   }

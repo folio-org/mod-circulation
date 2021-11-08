@@ -129,6 +129,11 @@ class RequestsAPIUpdatingTests extends APITests {
     JsonObject instance = representation.getJsonObject("instance");
     assertThat("title is taken from instance", instance.getString("title"), is("Temeraire"));
 
+    JsonArray contributors = instance.getJsonArray("contributorNames");
+    assertThat(contributors, notNullValue());
+    assertThat(contributors.size(), is(1));
+    assertThat(contributors.getJsonObject(0).getString("name"), is("Novik, Naomi"));
+
     assertThat("barcode is taken from item",
       representation.getJsonObject("item").getString("barcode"),
       is("232142443432"));
@@ -727,6 +732,11 @@ class RequestsAPIUpdatingTests extends APITests {
       is(isbnIdentifierId.toString()));
     assertThat(identifiers.getJsonObject(0).getString("value"),
       is(isbnValue));
+
+    JsonArray contributors = instance.getJsonArray("contributorNames");
+    assertThat(contributors, CoreMatchers.notNullValue());
+    assertThat(contributors.size(), is(1));
+    assertThat(contributors.getJsonObject(0).getString("name"), is("Chambers, Becky"));
   }
 
   @Test

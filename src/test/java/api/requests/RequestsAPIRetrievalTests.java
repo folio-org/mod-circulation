@@ -222,6 +222,10 @@ class RequestsAPIRetrievalTests extends APITests {
       is(isbnIdentifierId.toString()));
     assertThat(identifiers.getJsonObject(0).getString("value"),
       is(isbnValue));
+    JsonArray contributors = instanceSummary.getJsonArray("contributorNames");
+    assertThat(contributors, CoreMatchers.notNullValue());
+    assertThat(contributors.size(), is(1));
+    assertThat(contributors.getJsonObject(0).getString("name"), is("Chambers, Becky"));
   }
 
   @Test
