@@ -48,8 +48,6 @@ public class StoredRequestRepresentation {
     JsonObject instance = new JsonObject();
     write(instance, "title", item.getTitle());
     write(instance, "identifiers", item.getIdentifiers());
-    JsonArray contributorNames = mapContributorsToNamesOnly(item.getContributors());
-    instance.put("contributorNames", contributorNames);
     request.put("instance", instance);
   }
 
