@@ -63,12 +63,7 @@ import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import java.lang.invoke.MethodHandles;
-
 class ChangeDueDateAPITests extends APITests {
-  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private ItemResource item;
   private IndividualResource loan;
   private ZonedDateTime dueDate;
@@ -396,7 +391,7 @@ class ChangeDueDateAPITests extends APITests {
     JsonObject dueDateChangedLoan = loansClient.getById(initialLoan.getId()).getJson();
     
     assertThat(dueDateChangedLoan.getBoolean("dueDateChangedByRecall"), equalTo(false));
-    assertThat("due date is not updated",
+    assertThat("due date should be provided new due date",
     dueDateChangedLoan.getString("dueDate"), isEquivalentTo(newDueDate));
   }
 

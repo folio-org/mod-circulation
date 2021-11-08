@@ -79,7 +79,7 @@ public class ChangeDueDateResource extends Resource {
       .thenApply(LoanValidator::refuseWhenLoanIsClosed)
       .thenApply(this::toLoanAndRelatedRecords)
       .thenComposeAsync(r -> r.after(requestQueueRepository::get))
-      .thenApply(r -> r.map(this::unsetDateTruncationFlagIfNoOpenRecallsInQueue))
+      .thenApply(r -> r.map(this::unsetDueDateChangedByRecallIfNoOpenRecallsInQueue))
       .thenApply(itemStatusValidator::refuseWhenItemStatusDoesNotAllowDueDateChange)
       .thenApply(r -> changeDueDate(r, request))
       .thenComposeAsync(r -> r.after(loanRepository::updateLoan))
@@ -88,22 +88,17 @@ public class ChangeDueDateResource extends Resource {
       .thenCompose(r -> r.after(loanNoticeSender::sendManualDueDateChangeNotice));
   }
   
-  private LoanAndRelatedRecords unsetDateTruncationFlagIfNoOpenRecallsInQueue(
+  private LoanAndRelatedRecords unsetDueDateChangedByRecallIfNoOpenRecallsInQueue(
       LoanAndRelatedRecords loanAndRelatedRecords) {
 
     RequestQueue queue = loanAndRelatedRecords.getRequestQueue();
     Loan loan = loanAndRelatedRecords.getLoan();
-    if (loan.wasDueDateChangedByRecall() && !hasOpenRecalls(queue)) {
+    if (loan.wasDueDateChangedByRecall() && !queue.hasOpenRecalls()) {
       return loanAndRelatedRecords.withLoan(loan.unsetDueDateChangedByRecall());
     }
     else {
       return loanAndRelatedRecords;
     }
-  }
-
-  private Boolean hasOpenRecalls(RequestQueue queue) {
-    return queue.getRequests().stream()
-        .anyMatch(request -> request.getRequestType() == RequestType.RECALL && request.isNotYetFilled());
   }
 
   CompletableFuture<Result<Loan>> getExistingLoan(LoanRepository loanRepository, ChangeDueDateRequest changeDueDateRequest) {
