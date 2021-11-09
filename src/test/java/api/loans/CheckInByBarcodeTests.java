@@ -49,7 +49,6 @@ import static org.hamcrest.core.IsNot.not;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.time.LocalDate;
-import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
@@ -1481,12 +1480,6 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
       assertThat(checkInOperation.getString("servicePointId"), is(servicePoint.toString()));
       assertThat(checkInOperation.getString("performedByUserId"), is(getUserId()));
     });
-  }
-
-  private ZonedDateTime toZonedStartOfDay(LocalDate date) {
-    final var startOfDay = date.atStartOfDay();
-
-    return ZonedDateTime.of(startOfDay, ZoneId.systemDefault().normalized());
   }
 
   private LocalDate toLocalDate(ZonedDateTime dateTime) {
