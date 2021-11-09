@@ -1,6 +1,7 @@
 package org.folio.circulation.domain;
 
 import static java.lang.Boolean.TRUE;
+import static java.lang.Boolean.FALSE;
 import static java.time.ZoneOffset.UTC;
 import static java.util.Collections.emptyList;
 import static java.util.Objects.nonNull;
@@ -120,8 +121,14 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return this;
   }
 
-  public Loan changeDueDateChangedByRecall() {
+  public Loan setDueDateChangedByRecall() {
     write(representation, "dueDateChangedByRecall", TRUE);
+
+    return this;
+  }
+
+  public Loan unsetDueDateChangedByRecall() {
+    write(representation, "dueDateChangedByRecall", FALSE);
 
     return this;
   }

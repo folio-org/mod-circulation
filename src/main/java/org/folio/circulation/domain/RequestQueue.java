@@ -49,6 +49,11 @@ public class RequestQueue {
     return requests.stream().anyMatch(request -> request.getRequestType() == type);
   }
 
+  public Boolean hasOpenRecalls() {
+    return requests.stream()
+        .anyMatch(request -> request.getRequestType() == RequestType.RECALL && request.isNotYetFilled());
+  }
+
   public boolean isRequestedByOtherPatron(User requestingUser) {
     if(!hasOutstandingFulfillableRequests()) {
       return false;

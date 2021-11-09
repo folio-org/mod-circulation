@@ -29,9 +29,11 @@ import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 
+import java.time.Period;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -39,6 +41,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.awaitility.Awaitility;
+import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.Matcher;
 import org.junit.jupiter.api.BeforeEach;
@@ -334,6 +337,67 @@ class ChangeDueDateAPITests extends APITests {
 
     assertThat(event, isValidLoanDueDateChangedEvent(updatedLoan));
     assertThatPublishedLoanLogRecordEventsAreValid(updatedLoan);
+  }
+
+  @Test
+  void dueDateChangeShouldClearRenewalFlagWhenSetAndNoOpenRecallsInQueue() {
+
+    IndividualResource loanPolicy = loanPoliciesFixture.create(
+      new LoanPolicyBuilder()
+        .withName("loan policy")
+        .withRecallsMinimumGuaranteedLoanPeriod(org.folio.circulation.domain.policy.Period.weeks(2))
+        .rolling(org.folio.circulation.domain.policy.Period.months(1)));
+
+    useFallbackPolicies(loanPolicy.getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId(),
+      overdueFinePoliciesFixture.facultyStandardDoNotCountClosed().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
+
+    ItemBuilder itemBuilder = ItemExamples.basedUponSmallAngryPlanet(
+      materialTypesFixture.book().getId(), loanTypesFixture.canCirculate().getId(),
+      EMPTY, "ItemPrefix", "ItemSuffix", "");
+  
+    ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
+      itemBuilder, itemsFixture.thirdFloorHoldings());
+  
+    IndividualResource steve = usersFixture.steve();
+  
+    IndividualResource initialLoan = checkOutFixture.checkOutByBarcode(smallAngryPlanet, steve);
+
+    ZonedDateTime initialDueDate = ZonedDateTime.parse(initialLoan.getJson().getString("dueDate"));
+
+    assertThat(initialLoan.getJson().containsKey("dueDateChangedByRecall"), equalTo(false));
+
+    IndividualResource recall = requestsFixture.place(new RequestBuilder()
+      .recall()
+      .forItem(smallAngryPlanet)
+      .by(usersFixture.charlotte())
+      .fulfilToHoldShelf(servicePointsFixture.cd1()));
+
+    Response recalledLoan = loansClient.getById(initialLoan.getId());
+    ZonedDateTime recalledLoanDueDate = ZonedDateTime.parse(recalledLoan.getJson().getString("dueDate"));
+
+    assertThat(recalledLoan.getJson().getBoolean("dueDateChangedByRecall"), equalTo(true));
+    assertThat(calculateDaysBetween(initialDueDate, recalledLoanDueDate), equalTo(16));
+
+    requestsFixture.cancelRequest(recall);
+
+    final ZonedDateTime newDueDate = initialDueDate.plusMonths(1);
+    changeDueDateFixture.changeDueDate(new ChangeDueDateRequestBuilder()
+      .forLoan(recalledLoan.getJson().getString("id"))
+      .withDueDate(newDueDate));
+
+    JsonObject dueDateChangedLoan = loansClient.getById(initialLoan.getId()).getJson();
+    
+    assertThat(dueDateChangedLoan.getBoolean("dueDateChangedByRecall"), equalTo(false));
+    assertThat("due date should be provided new due date",
+    dueDateChangedLoan.getString("dueDate"), isEquivalentTo(newDueDate));
+  }
+
+  private Integer calculateDaysBetween(ZonedDateTime initialDate, ZonedDateTime secondDate) {
+    Period period = Period.between(initialDate.toLocalDate(), secondDate.toLocalDate());
+    return Math.abs(period.getDays());
   }
 
   private void chargeFeesForLostItemToKeepLoanOpen() {
