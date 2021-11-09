@@ -2,7 +2,9 @@ package org.folio.circulation.resources;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.folio.circulation.domain.representations.RequestProperties.INSTANCE_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.ITEM_ID;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_INSTANCE_ID;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_ITEM_ID;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_PICKUP_SERVICE_POINT;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_PROXY_RELATIONSHIP;
@@ -80,6 +82,8 @@ class RequestFromRepresentationService {
       .thenApply(r -> r.next(this::validateRequestLevel))
       .thenApply(r -> r.next(this::refuseWhenNoItemId)
         .mapFailure(err -> errorHandler.handleValidationError(err, INVALID_ITEM_ID, r)))
+      .thenApply(r -> r.next(this::refuseWhenNoInstanceId)
+        .mapFailure(err -> errorHandler.handleValidationError(err, INVALID_INSTANCE_ID, r)))
       .thenApply(r -> r.map(this::removeRelatedRecordInformation))
       .thenApply(r -> r.map(this::removeProcessingParameters))
       .thenApply(r -> r.map(RepresentationValidationContext::getRepresentation))
@@ -184,6 +188,18 @@ class RequestFromRepresentationService {
     }
   }
 
+  private Result<RepresentationValidationContext> refuseWhenNoInstanceId(RepresentationValidationContext context) {
+    JsonObject representation = context.getRepresentation();
+    String instanceId = getProperty(representation, INSTANCE_ID);
+
+    if (isBlank(instanceId)) {
+      return failedValidation("Cannot create a request with no instance ID", "instanceId", instanceId);
+    }
+    else {
+      return of(() -> context);
+    }
+  }
+
   private RepresentationValidationContext removeRelatedRecordInformation(RepresentationValidationContext context) {
     JsonObject representation = context.getRepresentation();
 
@@ -210,7 +226,7 @@ class RequestFromRepresentationService {
   @With
   @Getter
   private static final class RepresentationValidationContext {
-    final private JsonObject representation;
-    final private TlrSettingsConfiguration tlrSettingsConfiguration;
+    private final JsonObject representation;
+    private final TlrSettingsConfiguration tlrSettingsConfiguration;
   }
 }

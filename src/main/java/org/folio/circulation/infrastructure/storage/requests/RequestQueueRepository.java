@@ -6,10 +6,12 @@ import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.http.client.PageLimit.oneThousand;
+import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
+import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.ItemRelatedRecord;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.MultipleRecords;
@@ -23,6 +25,7 @@ import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.circulation.support.results.ResultBinding;
 
 public class RequestQueueRepository {
   private static final Logger LOG = LogManager.getLogger(RequestQueueRepository.class);
@@ -38,11 +41,15 @@ public class RequestQueueRepository {
     return new RequestQueueRepository(RequestRepository.using(clients));
   }
 
-  public CompletableFuture<Result<LoanAndRelatedRecords>> get(
-    LoanAndRelatedRecords loanAndRelatedRecords) {
+  public CompletableFuture<Result<LoanAndRelatedRecords>> get(LoanAndRelatedRecords records) {
+    return getQueue(records)
+      .thenApply(mapResult(records::withRequestQueue));
+  }
 
-    return getByItemId(loanAndRelatedRecords.getLoan().getItemId())
-      .thenApply(result -> result.map(loanAndRelatedRecords::withRequestQueue));
+  private CompletableFuture<Result<RequestQueue>> getQueue(LoanAndRelatedRecords records) {
+    return records.getTlrSettings().isTitleLevelRequestsFeatureEnabled()
+      ? getByInstanceId(records.getItem().getInstanceId())
+      : getByItemId(records.getItem().getItemId());
   }
 
   public CompletableFuture<Result<RenewalContext>> get(RenewalContext renewalContext) {
@@ -52,6 +59,19 @@ public class RequestQueueRepository {
 
   public CompletableFuture<Result<RequestQueue>> get(ItemRelatedRecord itemRelatedRecord) {
     return getByItemId(itemRelatedRecord.getItemId());
+  }
+
+  public CompletableFuture<Result<RequestQueue>> get(CheckInContext context) {
+    boolean tlrEnabled = context.getTlrSettings().isTitleLevelRequestsFeatureEnabled();
+
+    if (!tlrEnabled) {
+      return getByItemId(context.getItem().getItemId());
+    }
+    else {
+      return getByInstanceId(context.getItem().getInstanceId())
+        .thenApply(r -> r.map(queue ->
+          queue.filter(request -> request.canBeFulfilledByItem(context.getItem()))));
+    }
   }
 
   public CompletableFuture<Result<RequestQueue>> getByInstanceId(String instanceId) {

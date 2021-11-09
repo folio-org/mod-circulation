@@ -131,16 +131,7 @@ class CheckInProcessAdapter {
   }
 
   CompletableFuture<Result<RequestQueue>> getRequestQueue(CheckInContext context) {
-    boolean tlrEnabled = context.getTlrSettings().isTitleLevelRequestsFeatureEnabled();
-
-    if (!tlrEnabled) {
-      return requestQueueRepository.getByItemId(context.getItem().getItemId());
-    }
-    else {
-      return requestQueueRepository.getByInstanceId(context.getItem().getInstanceId())
-        .thenApply(r -> r.map(queue ->
-          queue.filter(request -> request.canBeFulfilledByItem(context.getItem()))));
-    }
+    return requestQueueRepository.get(context);
   }
 
   CompletableFuture<Result<Item>> updateItem(CheckInContext context) {
