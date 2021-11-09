@@ -70,7 +70,7 @@ class UpdateRequestQueueTest {
     RequestQueue requestQueue = createRequestQueue(itemId, 4);
     Request requestToRemove = requestQueue.getRequests().iterator().next();
 
-    when(requestQueueRepository.get(itemId.toString()))
+    when(requestQueueRepository.getByItemId(itemId.toString()))
       .thenReturn(completedFuture(succeeded(requestQueue)));
 
     CompletableFuture<Result<Request>> completableFutureResult =

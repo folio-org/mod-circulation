@@ -109,7 +109,7 @@ public class LoanCollectionResource extends CollectionResource {
       .thenApply(alreadyCheckedOutValidator::refuseWhenItemIsAlreadyCheckedOut)
       .thenApply(itemStatusValidator::refuseWhenItemIsMissing)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
-      .thenCombineAsync(requestQueueRepository.get(loan.getItemId()), this::addRequestQueue)
+      .thenCombineAsync(requestQueueRepository.getByItemId(loan.getItemId()), this::addRequestQueue)
       .thenCombineAsync(userRepository.getUserFailOnNotFound(loan.getUserId()), this::addUser)
       .thenApply(requestedByAnotherPatronValidator::refuseWhenRequestedByAnotherPatron)
       .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
@@ -175,7 +175,7 @@ public class LoanCollectionResource extends CollectionResource {
       .thenCompose(changeDueDateValidator::refuseChangeDueDateForItemInDisallowedStatus)
       .thenCombineAsync(userRepository.getUser(loan.getUserId()), this::addUser)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
-      .thenCombineAsync(requestQueueRepository.get(loan.getItemId()), this::addRequestQueue)
+      .thenCombineAsync(requestQueueRepository.getByItemId(loan.getItemId()), this::addRequestQueue)
       .thenComposeAsync(result -> result.after(requestQueueUpdate::onCheckIn))
       .thenComposeAsync(result -> result.after(updateItem::onLoanUpdate))
       // Loan must be updated after item

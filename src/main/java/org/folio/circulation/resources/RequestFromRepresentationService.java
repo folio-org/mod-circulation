@@ -14,10 +14,14 @@ import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
-import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.With;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Request;
@@ -25,6 +29,7 @@ import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.RequestLevel;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.User;
+import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.ServicePointPickupLocationValidator;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
@@ -70,13 +75,14 @@ class RequestFromRepresentationService {
   }
 
   CompletableFuture<Result<RequestAndRelatedRecords>> getRequestFrom(JsonObject representation) {
-    return completedFuture(succeeded(representation))
+    return initRepresentationValidationContext(representation)
       .thenApply(r -> r.next(this::validateStatus))
       .thenApply(r -> r.next(this::validateRequestLevel))
       .thenApply(r -> r.next(this::refuseWhenNoItemId)
         .mapFailure(err -> errorHandler.handleValidationError(err, INVALID_ITEM_ID, r)))
       .thenApply(r -> r.map(this::removeRelatedRecordInformation))
       .thenApply(r -> r.map(this::removeProcessingParameters))
+      .thenApply(r -> r.map(RepresentationValidationContext::getRepresentation))
       .thenApply(r -> r.map(Request::from))
       .thenCompose(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
         Request::truncateRequestExpirationDateToTheEndOfTheDay))
@@ -93,6 +99,14 @@ class RequestFromRepresentationService {
         .thenApply(res -> errorHandler.handleValidationResult(res, INVALID_PROXY_RELATIONSHIP, r)))
       .thenApply(r -> r.next(pickupLocationValidator::refuseInvalidPickupServicePoint)
         .mapFailure(err -> errorHandler.handleValidationError(err, INVALID_PICKUP_SERVICE_POINT, r)));
+  }
+
+  private CompletableFuture<Result<RepresentationValidationContext>> initRepresentationValidationContext(
+    JsonObject representation) {
+
+    return completedFuture(succeeded(new RepresentationValidationContext().withRepresentation(representation)))
+      .thenCompose(r -> r.combineAfter(configurationRepository::lookupTlrSettings,
+        RepresentationValidationContext::withTlrSettingsConfiguration));
   }
 
   private CompletableFuture<Result<Boolean>> shouldFetchItemAndLoan(Request request) {
@@ -123,7 +137,10 @@ class RequestFromRepresentationService {
     return request.withLoan(request.getLoan().withUser(user));
   }
 
-  private Result<JsonObject> validateStatus(JsonObject representation) {
+  private Result<RepresentationValidationContext> validateStatus(
+    RepresentationValidationContext context) {
+
+    JsonObject representation = context.getRepresentation();
     RequestStatus status = RequestStatus.from(representation);
 
     if (!status.isValid()) {
@@ -131,36 +148,45 @@ class RequestFromRepresentationService {
     }
     else {
       status.writeTo(representation);
-      return succeeded(representation);
+      return succeeded(context);
     }
   }
 
-  private Result<JsonObject> validateRequestLevel(JsonObject representation) {
-    String requestLevel = representation.getString("requestLevel");
-    if (Arrays.stream(RequestLevel.values()).noneMatch(
-      existingLevel -> existingLevel.value().equals(requestLevel))) {
+  private Result<RepresentationValidationContext> validateRequestLevel(RepresentationValidationContext context) {
+    JsonObject representation = context.getRepresentation();
 
+    RequestLevel requestLevel = RequestLevel.from(representation.getString("requestLevel"));
+    boolean tlrEnabled = context.getTlrSettingsConfiguration().isTitleLevelRequestsFeatureEnabled();
+
+    List<RequestLevel> allowedStatuses = tlrEnabled
+      ? List.of(RequestLevel.ITEM, RequestLevel.TITLE)
+      : List.of(RequestLevel.ITEM);
+
+    if (!allowedStatuses.contains(requestLevel)) {
       return failed(new BadRequestFailure("requestLevel must be one of the following: " +
-        Arrays.stream(RequestLevel.values())
-          .map(existingLevel -> StringUtils.wrap(existingLevel.value(), '"'))
+        allowedStatuses.stream()
+          .map(existingLevel -> StringUtils.wrap(existingLevel.getValue(), '"'))
           .collect(Collectors.joining(", "))));
     }
 
-    return succeeded(representation);
+    return succeeded(context);
   }
 
-  private Result<JsonObject> refuseWhenNoItemId(JsonObject representation) {
+  private Result<RepresentationValidationContext> refuseWhenNoItemId(RepresentationValidationContext context) {
+    JsonObject representation = context.getRepresentation();
     String itemId = getProperty(representation, ITEM_ID);
 
     if (isBlank(itemId)) {
       return failedValidation("Cannot create a request with no item ID", "itemId", itemId);
     }
     else {
-      return of(() -> representation);
+      return of(() -> context);
     }
   }
 
-  private JsonObject removeRelatedRecordInformation(JsonObject representation) {
+  private RepresentationValidationContext removeRelatedRecordInformation(RepresentationValidationContext context) {
+    JsonObject representation = context.getRepresentation();
+
     representation.remove("item");
     representation.remove("requester");
     representation.remove("proxy");
@@ -168,12 +194,23 @@ class RequestFromRepresentationService {
     representation.remove("pickupServicePoint");
     representation.remove("deliveryAddress");
 
-    return representation;
+    return context;
   }
 
-  private JsonObject removeProcessingParameters(JsonObject representation) {
+  private RepresentationValidationContext removeProcessingParameters(RepresentationValidationContext context) {
+    JsonObject representation = context.getRepresentation();
+
     representation.remove("requestProcessingParameters");
 
-    return representation;
+    return context;
+  }
+
+  @AllArgsConstructor
+  @NoArgsConstructor(force = true)
+  @With
+  @Getter
+  private static final class RepresentationValidationContext {
+    final private JsonObject representation;
+    final private TlrSettingsConfiguration tlrSettingsConfiguration;
   }
 }
