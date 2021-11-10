@@ -1,5 +1,6 @@
 package org.folio.circulation.domain;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_CREATED;
 import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_CREATED_THROUGH_OVERRIDE;
 import static org.folio.circulation.domain.representations.logs.RequestUpdateLogEventMapper.mapToRequestLogEventJson;
@@ -86,6 +87,13 @@ public class CreateRequestService {
   private CompletableFuture<Result<RequestAndRelatedRecords>> checkItem(
     RequestAndRelatedRecords records) {
 
+    boolean tlrFeatureEnabled = records.getRequest().getTlrSettingsConfiguration()
+      .isTitleLevelRequestsFeatureEnabled();
+
+    if (tlrFeatureEnabled) {
+      return completedFuture(succeeded(records));
+    }
+
     return succeeded(records)
       .next(RequestServiceUtility::refuseWhenItemDoesNotExist)
       .mapFailure(err -> errorHandler.handleValidationError(err, ITEM_DOES_NOT_EXIST, records))
@@ -97,6 +105,13 @@ public class CreateRequestService {
 
   private CompletableFuture<Result<RequestAndRelatedRecords>> checkPolicy(
     RequestAndRelatedRecords records) {
+
+    boolean tlrFeatureEnabled = records.getRequest().getTlrSettingsConfiguration()
+      .isTitleLevelRequestsFeatureEnabled();
+
+    if (tlrFeatureEnabled) {
+      return completedFuture(succeeded(records));
+    }
 
     return repositories.getRequestPolicyRepository().lookupRequestPolicy(records)
       .thenApply(r -> r.next(RequestServiceUtility::refuseWhenRequestCannotBeFulfilled)

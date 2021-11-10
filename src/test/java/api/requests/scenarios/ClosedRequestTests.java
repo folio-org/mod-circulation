@@ -38,7 +38,7 @@ class ClosedRequestTests extends APITests {
     ZonedDateTime requestDate = ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC);
 
     final IndividualResource request =
-      requestsFixture.placeHoldShelfRequest(smallAngryPlanet, requester, requestDate);
+      requestsFixture.placeItemLevelHoldShelfRequest(smallAngryPlanet, requester, requestDate);
 
     ZonedDateTime cancelDate = ZonedDateTime.of(2018, 1, 14, 8, 30, 45, 0, UTC);
 
@@ -72,7 +72,7 @@ class ClosedRequestTests extends APITests {
     ZonedDateTime requestDate = ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC);
 
     final IndividualResource request =
-      requestsFixture.placeHoldShelfRequest(smallAngryPlanet,
+      requestsFixture.placeItemLevelHoldShelfRequest(smallAngryPlanet,
         usersFixture.steve(), requestDate);
 
     requestsFixture.cancelRequest(request);
@@ -101,7 +101,7 @@ class ClosedRequestTests extends APITests {
     ZonedDateTime requestDate = ZonedDateTime.of(2018, 6, 22, 10, 22, 54, 0, UTC);
 
     final IndividualResource request =
-      requestsFixture.placeHoldShelfRequest(smallAngryPlanet,
+      requestsFixture.placeItemLevelHoldShelfRequest(smallAngryPlanet,
         steve, requestDate);
 
     checkInFixture.checkInByBarcode(smallAngryPlanet);

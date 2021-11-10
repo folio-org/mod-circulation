@@ -33,16 +33,16 @@ class RequestQueueTests extends APITests {
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
-    IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
+    IndividualResource requestByJessica = requestsFixture.placeItemLevelHoldShelfRequest(
       smallAngryPlanet, jessica, ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC));
 
-    IndividualResource requestBySteve = requestsFixture.placeHoldShelfRequest(
+    IndividualResource requestBySteve = requestsFixture.placeItemLevelHoldShelfRequest(
       smallAngryPlanet, steve, ZonedDateTime.of(2017, 10, 27, 11, 54, 37, 0, UTC));
 
-    IndividualResource requestByCharlotte = requestsFixture.placeHoldShelfRequest(
+    IndividualResource requestByCharlotte = requestsFixture.placeItemLevelHoldShelfRequest(
       smallAngryPlanet, charlotte, ZonedDateTime.of(2018, 1, 10, 15, 34, 21, 0, UTC));
 
-    IndividualResource requestByRebecca = requestsFixture.placeHoldShelfRequest(
+    IndividualResource requestByRebecca = requestsFixture.placeItemLevelHoldShelfRequest(
       smallAngryPlanet, rebecca, ZonedDateTime.of(2018, 2, 4, 7, 4, 53, 0, UTC));
 
       checkInFixture.checkInByBarcode(smallAngryPlanet);
@@ -94,16 +94,16 @@ class RequestQueueTests extends APITests {
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
-    IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
+    IndividualResource requestByJessica = requestsFixture.placeItemLevelHoldShelfRequest(
       smallAngryPlanet, jessica, ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC));
 
-    IndividualResource requestBySteve = requestsFixture.placeHoldShelfRequest(
+    IndividualResource requestBySteve = requestsFixture.placeItemLevelHoldShelfRequest(
       smallAngryPlanet, steve, ZonedDateTime.of(2017, 10, 27, 11, 54, 37, 0, UTC));
 
-    IndividualResource requestByCharlotte = requestsFixture.placeHoldShelfRequest(
+    IndividualResource requestByCharlotte = requestsFixture.placeItemLevelHoldShelfRequest(
       smallAngryPlanet, charlotte, ZonedDateTime.of(2018, 1, 10, 15, 34, 21, 0, UTC));
 
-    IndividualResource requestByRebecca = requestsFixture.placeHoldShelfRequest(
+    IndividualResource requestByRebecca = requestsFixture.placeItemLevelHoldShelfRequest(
       smallAngryPlanet, rebecca, ZonedDateTime.of(2018, 2, 4, 7, 4, 53, 0, UTC));
 
     requestsClient.delete(requestByCharlotte);
@@ -143,16 +143,16 @@ class RequestQueueTests extends APITests {
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
-    IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
+    IndividualResource requestByJessica = requestsFixture.placeItemLevelHoldShelfRequest(
       smallAngryPlanet, jessica, ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC));
 
-    IndividualResource requestBySteve = requestsFixture.placeHoldShelfRequest(
+    IndividualResource requestBySteve = requestsFixture.placeItemLevelHoldShelfRequest(
       smallAngryPlanet, steve, ZonedDateTime.of(2017, 10, 27, 11, 54, 37, 0, UTC));
 
-    IndividualResource requestByCharlotte = requestsFixture.placeHoldShelfRequest(
+    IndividualResource requestByCharlotte = requestsFixture.placeItemLevelHoldShelfRequest(
       smallAngryPlanet, charlotte, ZonedDateTime.of(2018, 1, 10, 15, 34, 21, 0, UTC));
 
-    IndividualResource requestByRebecca = requestsFixture.placeHoldShelfRequest(
+    IndividualResource requestByRebecca = requestsFixture.placeItemLevelHoldShelfRequest(
       smallAngryPlanet, rebecca, ZonedDateTime.of(2018, 2, 4, 7, 4, 53, 0, UTC));
 
     MultipleRecords<JsonObject> queue = requestsFixture.getQueueFor(smallAngryPlanet);

@@ -29,10 +29,10 @@ class MultipleOutOfOrderRequestsTests extends APITests {
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
-    IndividualResource requestBySteve = requestsFixture.placeHoldShelfRequest(
+    IndividualResource requestBySteve = requestsFixture.placeItemLevelHoldShelfRequest(
       smallAngryPlanet, steve, ZonedDateTime.of(2018, 1, 10, 15, 34, 21, 0, UTC));
 
-    IndividualResource oldestRequestByJessica = requestsFixture.placeHoldShelfRequest(
+    IndividualResource oldestRequestByJessica = requestsFixture.placeItemLevelHoldShelfRequest(
       smallAngryPlanet, jessica, ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC));
 
       checkInFixture.checkInByBarcode(smallAngryPlanet);

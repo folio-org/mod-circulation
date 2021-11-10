@@ -125,6 +125,7 @@ public class RequestsAPICreationTests extends APITests {
   @AfterEach
   public void afterEach() {
     mockClockManagerToReturnDefaultDateTime();
+    configurationsFixture.disableTlrFeature();
   }
 
   @Test
@@ -367,6 +368,26 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(postResponse.getJson(), hasErrorWith(hasMessage("Item does not exist")));
   }
 
+//  @Test
+//  void cannotCreateTitleLevelRequestForUnknownInstance() {
+//    configurationsFixture.enableTlrFeature();
+//
+//    UUID patronId = usersFixture.charlotte().getId();
+//    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+//
+//    //Check RECALL -- should give the same response when placing other types of request.
+//    Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
+//      .recall()
+//      .titleRequestLevel()
+//      .withItemId(null)
+//      .withInstanceId(UUID.randomUUID())
+//      .withPickupServicePointId(pickupServicePointId)
+//      .withRequesterId(patronId));
+//
+//    assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+//    assertThat(postResponse.getJson(), hasErrorWith(hasMessage("Instance does not exist")));
+//  }
+
   @Test
   void cannotCreateRequestWithNoItemReference() {
     UUID patronId = usersFixture.charlotte().getId();
@@ -401,6 +422,49 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(postResponse, hasStatus(HTTP_BAD_REQUEST));
     assertThat(postResponse.getBody(), is("requestLevel must be one of the following: \"Item\""));
+  }
+
+  @Test
+  void canCreateTitleLevelRequestWhenTlrEnabled() {
+    UUID patronId = usersFixture.charlotte().getId();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+    UUID instanceId = item.getInstanceId();
+
+    configurationsFixture.enableTlrFeature();
+
+    IndividualResource requestResource = requestsClient.create(new RequestBuilder()
+      .page()
+      .withItemId(item.getId())
+      .titleRequestLevel()
+      .withInstanceId(instanceId)
+      .withPickupServicePointId(pickupServicePointId)
+      .withRequesterId(patronId));
+
+    JsonObject request = requestResource.getJson();
+    assertThat(request.getString("requestLevel"), is("Title"));
+  }
+
+  @Test
+  void cannotCreateRequestWithNonExistentRequestLevelWhenTlrEnabled() {
+    UUID patronId = usersFixture.charlotte().getId();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+    UUID instanceId = item.getInstanceId();
+
+    configurationsFixture.enableTlrFeature();
+
+    Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
+      .recall()
+      .withItemId(item.getId())
+      .withRequestLevel("invalid")
+      .withInstanceId(instanceId)
+      .withPickupServicePointId(pickupServicePointId)
+      .withRequesterId(patronId));
+
+    assertThat(postResponse, hasStatus(HTTP_BAD_REQUEST));
+    assertThat(postResponse.getBody(), is("requestLevel must be one of the following: " +
+      "\"Item\", \"Title\""));
   }
 
   @Test
