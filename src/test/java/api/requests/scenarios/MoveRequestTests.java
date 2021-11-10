@@ -53,6 +53,7 @@ import api.support.builders.MoveRequestBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.fakes.FakePubSub;
 import api.support.http.IndividualResource;
+import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
@@ -172,7 +173,7 @@ class MoveRequestTests extends APITests {
 
   @Test
   void canMoveAShelfHoldRequestToAnAvailableItem() {
-    IndividualResource smallAngryPlanet = itemsFixture
+    ItemResource smallAngryPlanet = itemsFixture
       .basedUponSmallAngryPlanet(itemsFixture.addCallNumberStringComponents("sap"));
     IndividualResource interestingTimes = itemsFixture
       .basedUponInterestingTimes(itemsFixture.addCallNumberStringComponents("it"));
@@ -188,6 +189,7 @@ class MoveRequestTests extends APITests {
       .hold()
       .fulfilToHoldShelf()
       .withItemId(smallAngryPlanet.getId())
+      .withInstanceId(smallAngryPlanet.getInstanceId())
       .withRequestDate(getZonedDateTime())
       .withRequesterId(jessica.getId())
       .withPatronComments("Patron comments for smallAngryPlanet")
@@ -404,6 +406,7 @@ class MoveRequestTests extends APITests {
       .page()
       .fulfilToHoldShelf()
       .withItemId(smallAngryPlanet.getId())
+      .withInstanceId(((ItemResource) smallAngryPlanet).getInstanceId())
       .withRequestDate(getZonedDateTime().minusHours(4))
       .withRequesterId(jessica.getId())
       .withPickupServicePointId(servicePointsFixture.cd1().getId()));
@@ -888,6 +891,7 @@ class MoveRequestTests extends APITests {
       .recall()
       .fulfilToHoldShelf()
       .withItemId(smallAngryPlanetItem.getId())
+      .withInstanceId(smallAngryPlanetItem.getInstanceId())
       .withRequesterId(steveUser.getId())
       .withPickupServicePointId(servicePointsFixture.cd1().getId()));
 

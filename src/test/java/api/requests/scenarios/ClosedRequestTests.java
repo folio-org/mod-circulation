@@ -23,6 +23,7 @@ import org.junit.jupiter.api.Test;
 import api.support.APITests;
 import api.support.builders.RequestBuilder;
 import api.support.http.IndividualResource;
+import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 
 class ClosedRequestTests extends APITests {
@@ -133,6 +134,7 @@ class ClosedRequestTests extends APITests {
       .page()
       .fulfilToHoldShelf()
       .withItemId(smallAngryPlanet.getId())
+      .withInstanceId(((ItemResource) smallAngryPlanet).getInstanceId())
       .withRequestDate(ClockUtil.getZonedDateTime().minusHours(4))
       .withRequesterId(jessica.getId())
       .withPickupServicePointId(servicePointsFixture.cd1().getId()));

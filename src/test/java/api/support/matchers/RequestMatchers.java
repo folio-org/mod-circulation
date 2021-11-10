@@ -31,9 +31,7 @@ public final class RequestMatchers {
   }
 
   public static Matcher<JsonObject> isTitleLevel() {
-    return Matchers.allOf(
-      hasLevel("Title"),
-      hasJsonPath("itemId", IsNull.nullValue()));
+    return hasLevel("Title");
   }
 
   private static Matcher<JsonObject> hasStatus(String status) {
