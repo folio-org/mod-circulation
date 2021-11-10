@@ -822,6 +822,7 @@ class CheckOutByBarcodeTests extends APITests {
 
     requestsFixture.place(new RequestBuilder()
       .withItemId(smallAngryPlanet.getId())
+      .withInstanceId(((ItemResource) smallAngryPlanet).getInstanceId())
       .withRequesterId(jessica.getId())
       .withPickupServicePoint(servicePointsFixture.cd1()));
 
@@ -916,6 +917,7 @@ class CheckOutByBarcodeTests extends APITests {
 
     requestsFixture.place(new RequestBuilder()
       .withItemId(smallAngryPlanet.getId())
+      .withInstanceId(((ItemResource) smallAngryPlanet).getInstanceId())
       .withRequesterId(jessica.getId())
       .withPickupServicePoint(servicePointsFixture.cd1()));
 
