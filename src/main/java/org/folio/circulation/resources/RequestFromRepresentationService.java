@@ -38,6 +38,7 @@ import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.ServicePointPickupLocationValidator;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
+import org.folio.circulation.infrastructure.storage.inventory.InstanceRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
@@ -52,6 +53,7 @@ import io.vertx.core.json.JsonObject;
 class RequestFromRepresentationService {
   private static final PageLimit LOANS_PAGE_LIMIT = limit(10000);
 
+  private final InstanceRepository instanceRepository;
   private final ItemRepository itemRepository;
   private final RequestQueueRepository requestQueueRepository;
   private final UserRepository userRepository;
@@ -62,14 +64,15 @@ class RequestFromRepresentationService {
   private final ServicePointPickupLocationValidator pickupLocationValidator;
   private final CirculationErrorHandler errorHandler;
 
-  RequestFromRepresentationService(ItemRepository itemRepository,
-    RequestQueueRepository requestQueueRepository, UserRepository userRepository,
-    LoanRepository loanRepository, ServicePointRepository servicePointRepository,
-    ConfigurationRepository configurationRepository,
+  RequestFromRepresentationService(InstanceRepository instanceRepository,
+    ItemRepository itemRepository, RequestQueueRepository requestQueueRepository,
+    UserRepository userRepository, LoanRepository loanRepository,
+    ServicePointRepository servicePointRepository, ConfigurationRepository configurationRepository,
     ProxyRelationshipValidator proxyRelationshipValidator,
     ServicePointPickupLocationValidator pickupLocationValidator,
     CirculationErrorHandler errorHandler) {
 
+    this.instanceRepository = instanceRepository;
     this.loanRepository = loanRepository;
     this.itemRepository = itemRepository;
     this.requestQueueRepository = requestQueueRepository;
@@ -95,6 +98,8 @@ class RequestFromRepresentationService {
       .thenCompose(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
         Request::truncateRequestExpirationDateToTheEndOfTheDay))
       .thenComposeAsync(r -> r.after(when(
+        this::shouldFetchInstance, this::fetchInstance, req -> ofAsync(() -> req))))
+      .thenComposeAsync(r -> r.after(when(
         this::shouldFetchItemAndLoan, this::fetchItemAndLoan, req -> ofAsync(() -> req))))
       .thenComposeAsync(r -> r.combineAfter(userRepository::getUser, Request::withRequester))
       .thenComposeAsync(r -> r.combineAfter(userRepository::getProxyUser, Request::withProxy))
@@ -117,8 +122,17 @@ class RequestFromRepresentationService {
         RepresentationValidationContext::withTlrSettingsConfiguration));
   }
 
+  private CompletableFuture<Result<Boolean>> shouldFetchInstance(Request request) {
+    return ofAsync(() -> errorHandler.hasNone(INVALID_INSTANCE_ID));
+  }
+
   private CompletableFuture<Result<Boolean>> shouldFetchItemAndLoan(Request request) {
     return ofAsync(() -> errorHandler.hasNone(INVALID_ITEM_ID));
+  }
+
+  private CompletableFuture<Result<Request>> fetchInstance(Request request) {
+    return succeeded(request)
+       .combineAfter(instanceRepository::fetch, Request::withInstance);
   }
 
   private CompletableFuture<Result<Request>> fetchItemAndLoan(Request request) {

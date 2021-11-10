@@ -32,12 +32,13 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   final private TlrSettingsConfiguration tlrSettingsConfiguration;
   private final JsonObject requestRepresentation;
   private final JsonObject cancellationReasonRepresentation;
+  private final Instance instance;
   private final Item item;
   private final User requester;
   private final User proxy;
   private final AddressType addressType;
 
-  // Only used for ILT request. For TLR there can be multiple loans.
+  // For TLR there can be multiple loans, only using the first one.
   private final Loan loan;
 
   private final ServicePoint pickupServicePoint;
@@ -47,13 +48,15 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   private boolean changedStatus;
 
   public static Request from(JsonObject representation) {
-    return new Request(null, representation, null, null, null, null, null, null, null, false, null, false);
+    return new Request(null, representation, null, null, null, null, null,
+      null, null, null, false, null, false);
   }
 
   public static Request from(TlrSettingsConfiguration tlrSettingsConfiguration,
     JsonObject representation) {
 
-    return new Request(tlrSettingsConfiguration, representation, null, null, null, null, null, null, null, false, null, false);
+    return new Request(tlrSettingsConfiguration, representation, null, null,
+      null, null, null, null, null, null, false, null, false);
   }
 
   public Request withRequestJsonRepresentation(JsonObject representation) {
@@ -61,6 +64,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
       tlrSettingsConfiguration,
       representation,
       cancellationReasonRepresentation,
+      getInstance(),
       getItem(),
       getRequester(),
       getProxy(),
@@ -77,6 +81,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
       tlrSettingsConfiguration,
       requestRepresentation,
       representation,
+      getInstance(),
       getItem(),
       getRequester(),
       getProxy(),
@@ -149,47 +154,51 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return requestRepresentation.getString(ITEM_ID);
   }
 
+  public Request withInstance(Instance newInstance) {
+    return new Request(tlrSettingsConfiguration, requestRepresentation,
+      cancellationReasonRepresentation, newInstance, item, requester, proxy, addressType,
+      loan, pickupServicePoint, changedPosition, previousPosition, changedStatus);
+  }
+
   public Request withItem(Item newItem) {
     // NOTE: this is null in RequestsAPIUpdatingTests.replacingAnExistingRequestRemovesItemInformationWhenItemDoesNotExist test
     if (newItem != null && newItem.getItemId() != null) {
       requestRepresentation.put(ITEM_ID, newItem.getItemId());
     }
-    else {
-      requestRepresentation.put(ITEM_ID, null);
-    }
 
     return new Request(tlrSettingsConfiguration, requestRepresentation,
-      cancellationReasonRepresentation, newItem, requester, proxy, addressType,
+      cancellationReasonRepresentation, instance, newItem, requester, proxy, addressType,
       loan == null ? null : loan.withItem(newItem), pickupServicePoint, changedPosition,
       previousPosition, changedStatus);
   }
 
   public Request withRequester(User newRequester) {
     return new Request(tlrSettingsConfiguration, requestRepresentation,
-      cancellationReasonRepresentation, item, newRequester, proxy, addressType, loan,
+      cancellationReasonRepresentation, instance, item, newRequester, proxy, addressType, loan,
       pickupServicePoint, changedPosition, previousPosition, changedStatus);
   }
 
   public Request withProxy(User newProxy) {
     return new Request(tlrSettingsConfiguration, requestRepresentation,
-      cancellationReasonRepresentation, item, requester, newProxy, addressType, loan,
+      cancellationReasonRepresentation, instance, item, requester, newProxy, addressType, loan,
       pickupServicePoint, changedPosition, previousPosition, changedStatus);
   }
 
   public Request withAddressType(AddressType addressType) {
     return new Request(tlrSettingsConfiguration, requestRepresentation,
-      cancellationReasonRepresentation, item, requester, proxy, addressType, loan,
+      cancellationReasonRepresentation, instance, item, requester, proxy, addressType, loan,
       pickupServicePoint, changedPosition, previousPosition, changedStatus);
   }
 
   public Request withLoan(Loan newLoan) {
     return new Request(tlrSettingsConfiguration, requestRepresentation,
-      cancellationReasonRepresentation, item, requester, proxy, addressType, newLoan,
+      cancellationReasonRepresentation, instance, item, requester, proxy, addressType, newLoan,
       pickupServicePoint, changedPosition, previousPosition, changedStatus);
   }
 
   public Request withPickupServicePoint(ServicePoint newPickupServicePoint) {
-    return new Request(tlrSettingsConfiguration, requestRepresentation, cancellationReasonRepresentation, item, requester, proxy, addressType, loan,
+    return new Request(tlrSettingsConfiguration, requestRepresentation,
+      cancellationReasonRepresentation, instance, item, requester, proxy, addressType, loan,
       newPickupServicePoint, changedPosition, previousPosition, changedStatus);
   }
 
@@ -249,6 +258,10 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
 
   public TlrSettingsConfiguration getTlrSettingsConfiguration() {
     return tlrSettingsConfiguration;
+  }
+
+  public Instance getInstance() {
+    return instance;
   }
 
   public Item getItem() {
