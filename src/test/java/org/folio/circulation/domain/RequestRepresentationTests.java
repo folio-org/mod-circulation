@@ -22,6 +22,7 @@ class RequestRepresentationTests {
   private static final UUID ITEM_ID = UUID.randomUUID();
   private static final UUID ADDRESS_ID = UUID.randomUUID();
   private static final UUID SERVICE_POINT_ID = UUID.randomUUID();
+  private static final UUID INSTANCE_ID = UUID.randomUUID();
 
   @Test
   void testExtendedRepresentation() {
@@ -84,7 +85,9 @@ class RequestRepresentationTests {
     JsonObject requestJsonObject = new RequestBuilder()
       .recall()
       .withId(REQUEST_ID)
+      .withInstanceId(INSTANCE_ID)
       .withRequestDate(requestDate)
+      .itemRequestLevel()
       .withItemId(ITEM_ID)
       .withRequesterId(requesterId)
       .fulfilToHoldShelf()

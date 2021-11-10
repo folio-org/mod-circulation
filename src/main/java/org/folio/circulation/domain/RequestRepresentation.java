@@ -14,7 +14,6 @@ import java.lang.invoke.MethodHandles;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class RequestRepresentation {
@@ -25,7 +24,8 @@ public class RequestRepresentation {
   public JsonObject extendedRepresentation(Request request) {
     final JsonObject requestRepresentation = request.asJson();
 
-    addAdditionalItemProperties(requestRepresentation, request.getItem());
+    addItemProperties(requestRepresentation, request.getItem());
+    addInstanceProperties(requestRepresentation, request.getItem());
     addAdditionalLoanProperties(requestRepresentation, request.getLoan());
     addAdditionalRequesterProperties(requestRepresentation, request.getRequester());
     addAdditionalProxyProperties(requestRepresentation, request.getProxy());
@@ -55,30 +55,20 @@ public class RequestRepresentation {
     request.put("proxy", userSummary(proxy));
   }
 
-  private static void addAdditionalItemProperties(JsonObject request, Item item) {
+  private static void addItemProperties(JsonObject request, Item item) {
     if (item == null || item.isNotFound()) {
       logUnableAddItemToTheRequest(request, item);
       return;
     }
 
-    JsonObject itemSummary = request.containsKey("item")
-      ? request.getJsonObject("item")
-      : new JsonObject();
-
+    JsonObject itemSummary = new JsonObject();
+    write(itemSummary, "barcode", item.getBarcode());
     write(itemSummary, "holdingsRecordId", item.getHoldingsRecordId());
-    write(itemSummary, "instanceId", item.getInstanceId());
-
 
     final Location location = item.getLocation();
 
     if (location != null) {
       write(itemSummary, "location", locationSummary(location));
-    }
-
-    JsonArray contributorNames = mapContributorsToNamesOnly(item.getContributors());
-
-    if (contributorNames != null) {
-      itemSummary.put("contributorNames", contributorNames);
     }
 
     String enumeration = item.getEnumeration();
@@ -95,8 +85,20 @@ public class RequestRepresentation {
     }
 
     write(itemSummary, "callNumber", item.getCallNumber());
-    write(itemSummary, CALL_NUMBER_COMPONENTS, createCallNumberComponents(item.getCallNumberComponents()));
+    write(itemSummary, CALL_NUMBER_COMPONENTS,
+      createCallNumberComponents(item.getCallNumberComponents()));
     write(itemSummary, "copyNumber", item.getCopyNumber());
+    write(request, "item", itemSummary);
+  }
+
+  private static void addInstanceProperties(JsonObject request, Item item) {
+    JsonObject instance = new JsonObject();
+    if (item != null && item.isFound()) {
+      write(instance, "title", item.getTitle());
+      write(instance, "identifiers", item.getIdentifiers());
+      write(instance, "contributorNames", mapContributorsToNamesOnly(item.getContributors()));
+    }
+    write(request, "instance", instance);
   }
 
   private static JsonObject locationSummary(Location location) {
@@ -107,6 +109,7 @@ public class RequestRepresentation {
     write(locationSummary, "code", location.getCode());
     return locationSummary;
   }
+
   private static void logUnableAddItemToTheRequest(JsonObject request, Item item) {
     String reason = isNull(item) ? "null" : "not found";
     String msg = "Unable to add item properties to the request: {}, item is {}";

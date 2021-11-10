@@ -195,7 +195,7 @@ class RequestQueueTests extends APITests {
 
       assertThat(String.format("item summary has an instance ID: %s",
         request.encodePrettily()),
-        item.containsKey("instanceId"), is(true));
+        request.containsKey("instanceId"), is(true));
 
       assertThat(String.format("item summary has a location: %s",
         request.encodePrettily()),

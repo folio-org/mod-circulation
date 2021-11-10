@@ -19,6 +19,11 @@
       "type": "string",
       "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
     },
+    "requestLevel": {
+      "description": "Level of the request - Item or Title",
+      "type": "string",
+      "enum": ["Item", "Title"]
+    },
     "requestExpirationDate": {
       "description": "Date when the request expires",
       "type": "string",
@@ -37,6 +42,7 @@
   "additionalProperties": false,
   "required": [
     "instanceId",
+    "requestLevel",
     "requesterId",
     "requestDate",
     "pickupServicePointId"

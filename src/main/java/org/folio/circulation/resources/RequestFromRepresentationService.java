@@ -14,11 +14,15 @@ import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
+import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
+import org.folio.circulation.domain.RequestLevel;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
@@ -46,7 +50,6 @@ class RequestFromRepresentationService {
   private final ServicePointPickupLocationValidator pickupLocationValidator;
   private final CirculationErrorHandler errorHandler;
 
-
   RequestFromRepresentationService(ItemRepository itemRepository,
     RequestQueueRepository requestQueueRepository, UserRepository userRepository,
     LoanRepository loanRepository, ServicePointRepository servicePointRepository,
@@ -69,6 +72,7 @@ class RequestFromRepresentationService {
   CompletableFuture<Result<RequestAndRelatedRecords>> getRequestFrom(JsonObject representation) {
     return completedFuture(succeeded(representation))
       .thenApply(r -> r.next(this::validateStatus))
+      .thenApply(r -> r.next(this::validateRequestLevel))
       .thenApply(r -> r.next(this::refuseWhenNoItemId)
         .mapFailure(err -> errorHandler.handleValidationError(err, INVALID_ITEM_ID, r)))
       .thenApply(r -> r.map(this::removeRelatedRecordInformation))
@@ -129,6 +133,20 @@ class RequestFromRepresentationService {
       status.writeTo(representation);
       return succeeded(representation);
     }
+  }
+
+  private Result<JsonObject> validateRequestLevel(JsonObject representation) {
+    String requestLevel = representation.getString("requestLevel");
+    if (Arrays.stream(RequestLevel.values()).noneMatch(
+      existingLevel -> existingLevel.value().equals(requestLevel))) {
+
+      return failed(new BadRequestFailure("requestLevel must be one of the following: " +
+        Arrays.stream(RequestLevel.values())
+          .map(existingLevel -> StringUtils.wrap(existingLevel.value(), '"'))
+          .collect(Collectors.joining(", "))));
+    }
+
+    return succeeded(representation);
   }
 
   private Result<JsonObject> refuseWhenNoItemId(JsonObject representation) {
