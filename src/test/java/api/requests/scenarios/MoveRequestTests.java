@@ -53,6 +53,7 @@ import api.support.builders.MoveRequestBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.fakes.FakePubSub;
 import api.support.http.IndividualResource;
+import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
@@ -172,7 +173,7 @@ class MoveRequestTests extends APITests {
 
   @Test
   void canMoveAShelfHoldRequestToAnAvailableItem() {
-    IndividualResource smallAngryPlanet = itemsFixture
+    ItemResource smallAngryPlanet = itemsFixture
       .basedUponSmallAngryPlanet(itemsFixture.addCallNumberStringComponents("sap"));
     IndividualResource interestingTimes = itemsFixture
       .basedUponInterestingTimes(itemsFixture.addCallNumberStringComponents("it"));
@@ -188,6 +189,7 @@ class MoveRequestTests extends APITests {
       .hold()
       .fulfilToHoldShelf()
       .withItemId(smallAngryPlanet.getId())
+      .withInstanceId(smallAngryPlanet.getInstanceId())
       .withRequestDate(getZonedDateTime())
       .withRequesterId(jessica.getId())
       .withPatronComments("Patron comments for smallAngryPlanet")
@@ -244,13 +246,13 @@ class MoveRequestTests extends APITests {
     checkOutFixture.checkOutByBarcode(interestingTimes, charlotte);
 
     // make requests for smallAngryPlanet
-    IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
+    IndividualResource requestByJessica = requestsFixture.placeItemLevelHoldShelfRequest(
       smallAngryPlanet, jessica, getZonedDateTime().minusHours(5));
 
     IndividualResource requestBySteve = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, steve, getZonedDateTime().minusHours(1), RequestType.RECALL.getValue());
 
-    IndividualResource requestByCharlotte = requestsFixture.placeHoldShelfRequest(
+    IndividualResource requestByCharlotte = requestsFixture.placeItemLevelHoldShelfRequest(
       smallAngryPlanet, charlotte, getZonedDateTime().minusHours(3));
 
     IndividualResource requestByRebecca = requestsFixture.placeHoldShelfRequest(
@@ -404,6 +406,7 @@ class MoveRequestTests extends APITests {
       .page()
       .fulfilToHoldShelf()
       .withItemId(smallAngryPlanet.getId())
+      .withInstanceId(((ItemResource) smallAngryPlanet).getInstanceId())
       .withRequestDate(getZonedDateTime().minusHours(4))
       .withRequesterId(jessica.getId())
       .withPickupServicePointId(servicePointsFixture.cd1().getId()));
@@ -439,7 +442,7 @@ class MoveRequestTests extends APITests {
     checkOutFixture.checkOutByBarcode(interestingTimes, charlotte);
 
     // make requests for smallAngryPlanet
-    IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
+    IndividualResource requestByJessica = requestsFixture.placeItemLevelHoldShelfRequest(
       smallAngryPlanet, jessica, getZonedDateTime());
 
     // move jessica's hold shelf request from smallAngryPlanet to interestingTimes
@@ -483,20 +486,20 @@ class MoveRequestTests extends APITests {
     checkOutFixture.checkOutByBarcode(interestingTimes, charlotte);
 
     // make requests for smallAngryPlanet
-    IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
+    IndividualResource requestByJessica = requestsFixture.placeItemLevelHoldShelfRequest(
       smallAngryPlanet, jessica, getZonedDateTime().minusHours(4));
 
-    IndividualResource requestBySteve = requestsFixture.placeHoldShelfRequest(
+    IndividualResource requestBySteve = requestsFixture.placeItemLevelHoldShelfRequest(
       smallAngryPlanet, steve, getZonedDateTime().minusHours(5));
 
-    IndividualResource requestByCharlotte = requestsFixture.placeHoldShelfRequest(
+    IndividualResource requestByCharlotte = requestsFixture.placeItemLevelHoldShelfRequest(
       smallAngryPlanet, charlotte, getZonedDateTime().minusHours(3));
 
     // make requests for interestingTimes
-    IndividualResource requestByRebecca = requestsFixture.placeHoldShelfRequest(
+    IndividualResource requestByRebecca = requestsFixture.placeItemLevelHoldShelfRequest(
       interestingTimes, rebecca, getZonedDateTime().minusHours(5));
 
-    IndividualResource requestByJames = requestsFixture.placeHoldShelfRequest(
+    IndividualResource requestByJames = requestsFixture.placeItemLevelHoldShelfRequest(
       interestingTimes, james, getZonedDateTime().minusHours(1));
 
     // move jessica's hold shelf request from smallAngryPlanet to interestingTimes
@@ -562,20 +565,20 @@ class MoveRequestTests extends APITests {
     checkOutFixture.checkOutByBarcode(interestingTimes, charlotte);
 
     // make requests for smallAngryPlanet
-    IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
+    IndividualResource requestByJessica = requestsFixture.placeItemLevelHoldShelfRequest(
       smallAngryPlanet, jessica, getZonedDateTime().minusHours(4));
 
-    IndividualResource requestBySteve = requestsFixture.placeHoldShelfRequest(
+    IndividualResource requestBySteve = requestsFixture.placeItemLevelHoldShelfRequest(
       smallAngryPlanet, steve, getZonedDateTime().minusHours(5));
 
-    IndividualResource requestByCharlotte = requestsFixture.placeHoldShelfRequest(
+    IndividualResource requestByCharlotte = requestsFixture.placeItemLevelHoldShelfRequest(
       smallAngryPlanet, charlotte, getZonedDateTime().minusHours(3));
 
-    IndividualResource requestByRebecca = requestsFixture.placeHoldShelfRequest(
+    IndividualResource requestByRebecca = requestsFixture.placeItemLevelHoldShelfRequest(
       smallAngryPlanet, rebecca, getZonedDateTime().minusHours(2));
 
     // make requests for interestingTimes
-    IndividualResource requestByJames = requestsFixture.placeHoldShelfRequest(
+    IndividualResource requestByJames = requestsFixture.placeItemLevelHoldShelfRequest(
       interestingTimes, james, getZonedDateTime().minusHours(1));
 
     checkInFixture.checkInByBarcode(interestingTimes);
@@ -644,13 +647,13 @@ class MoveRequestTests extends APITests {
     checkOutFixture.checkOutByBarcode(interestingTimes, charlotte);
 
     // make requests for smallAngryPlanet
-    IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
+    IndividualResource requestByJessica = requestsFixture.placeItemLevelHoldShelfRequest(
       smallAngryPlanet, jessica, getZonedDateTime().minusHours(5));
 
     IndividualResource requestBySteve = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, steve, getZonedDateTime().minusHours(4), RequestType.RECALL.getValue());
 
-    IndividualResource requestByCharlotte = requestsFixture.placeHoldShelfRequest(
+    IndividualResource requestByCharlotte = requestsFixture.placeItemLevelHoldShelfRequest(
       smallAngryPlanet, charlotte, getZonedDateTime().minusHours(3));
 
     IndividualResource requestByRebecca = requestsFixture.placeHoldShelfRequest(
@@ -888,6 +891,7 @@ class MoveRequestTests extends APITests {
       .recall()
       .fulfilToHoldShelf()
       .withItemId(smallAngryPlanetItem.getId())
+      .withInstanceId(smallAngryPlanetItem.getInstanceId())
       .withRequesterId(steveUser.getId())
       .withPickupServicePointId(servicePointsFixture.cd1().getId()));
 

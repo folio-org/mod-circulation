@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import api.support.APITests;
 import api.support.builders.RequestBuilder;
 import api.support.http.IndividualResource;
+import api.support.http.ItemResource;
 
 class SingleClosedRequestTests extends APITests {
   @Test
@@ -38,6 +39,7 @@ class SingleClosedRequestTests extends APITests {
       .withRequestDate(ZonedDateTime.of(2018, 1, 10, 15, 34, 21, 0, UTC))
       .fulfilled() //TODO: Replace with closed cancelled when introduced
       .withItemId(smallAngryPlanet.getId())
+      .withInstanceId(((ItemResource) smallAngryPlanet).getInstanceId())
       .withRequesterId(jessica.getId()));
 
     checkInFixture.checkInByBarcode(smallAngryPlanet);
@@ -74,6 +76,7 @@ class SingleClosedRequestTests extends APITests {
       .withRequestDate(ZonedDateTime.of(2018, 1, 10, 15, 34, 21, 0, UTC))
       .fulfilled() //TODO: Replace with closed cancelled when introduced
       .withItemId(smallAngryPlanet.getId())
+      .withInstanceId(((ItemResource) smallAngryPlanet).getInstanceId())
       .withRequesterId(jessica.getId()));
 
     checkInFixture.checkInByBarcode(smallAngryPlanet);

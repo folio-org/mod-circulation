@@ -125,6 +125,7 @@ public class RequestsAPICreationTests extends APITests {
   @AfterEach
   public void afterEach() {
     mockClockManagerToReturnDefaultDateTime();
+    configurationsFixture.disableTlrFeature();
   }
 
   @Test
@@ -351,7 +352,28 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
+  void cannotCreateTitleLevelRequestForUnknownInstance() {
+    configurationsFixture.enableTlrFeature();
+
+    UUID patronId = usersFixture.charlotte().getId();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+
+    //Check RECALL -- should give the same response when placing other types of request.
+    Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
+      .recall()
+      .titleRequestLevel()
+      .withItemId(null)
+      .withInstanceId(UUID.randomUUID())
+      .withPickupServicePointId(pickupServicePointId)
+      .withRequesterId(patronId));
+
+    assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(postResponse.getJson(), hasErrorWith(hasMessage("Instance does not exist")));
+  }
+
+  @Test
   void cannotCreateRequestForUnknownItem() {
+    IndividualResource instance = instancesFixture.basedUponDunkirk();
     UUID itemId = UUID.randomUUID();
     UUID patronId = usersFixture.charlotte().getId();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -359,6 +381,7 @@ public class RequestsAPICreationTests extends APITests {
     //Check RECALL -- should give the same response when placing other types of request.
     Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
       .recall()
+      .withInstanceId(instance.getId())
       .withItemId(itemId)
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(patronId));
@@ -368,12 +391,13 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  void cannotCreateRequestWithNoItemReference() {
+  void cannotCreateRequestWithNoItemReferenceWhenTlrDisabled() {
     UUID patronId = usersFixture.charlotte().getId();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
       .recall()
+      .withInstanceId(instancesFixture.basedUponDunkirk().getId())
       .withNoItemId()
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(patronId));
@@ -404,14 +428,57 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  void cannotCreateRecallRequestWhenItemIsNotCheckedOut() {
-    UUID itemId = itemsFixture.basedUponSmallAngryPlanet(
-      ItemBuilder::available)
-      .getId();
+  void canCreateTitleLevelRequestWhenTlrEnabled() {
+    UUID patronId = usersFixture.charlotte().getId();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+    UUID instanceId = item.getInstanceId();
+
+    configurationsFixture.enableTlrFeature();
+
+    IndividualResource requestResource = requestsClient.create(new RequestBuilder()
+      .page()
+      .withItemId(item.getId())
+      .titleRequestLevel()
+      .withInstanceId(instanceId)
+      .withPickupServicePointId(pickupServicePointId)
+      .withRequesterId(patronId));
+
+    JsonObject request = requestResource.getJson();
+    assertThat(request.getString("requestLevel"), is("Title"));
+  }
+
+  @Test
+  void cannotCreateRequestWithNonExistentRequestLevelWhenTlrEnabled() {
+    UUID patronId = usersFixture.charlotte().getId();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+    UUID instanceId = item.getInstanceId();
+
+    configurationsFixture.enableTlrFeature();
 
     Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
       .recall()
-      .withItemId(itemId)
+      .withItemId(item.getId())
+      .withRequestLevel("invalid")
+      .withInstanceId(instanceId)
+      .withPickupServicePointId(pickupServicePointId)
+      .withRequesterId(patronId));
+
+    assertThat(postResponse, hasStatus(HTTP_BAD_REQUEST));
+    assertThat(postResponse.getBody(), is("requestLevel must be one of the following: " +
+      "\"Item\", \"Title\""));
+  }
+
+  @Test
+  void cannotCreateRecallRequestWhenItemIsNotCheckedOut() {
+    ItemResource item = itemsFixture.basedUponSmallAngryPlanet(
+      ItemBuilder::available);
+
+    Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
+      .recall()
+      .withInstanceId(item.getInstanceId())
+      .withItemId(item.getId())
       .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .withRequesterId(usersFixture.charlotte().getId()));
 
@@ -423,13 +490,13 @@ public class RequestsAPICreationTests extends APITests {
 
   @Test
   void cannotCreateHoldRequestWhenItemIsNotCheckedOut() {
-    UUID itemId = itemsFixture.basedUponSmallAngryPlanet(
-      ItemBuilder::available)
-      .getId();
+    ItemResource item = itemsFixture.basedUponSmallAngryPlanet(
+      ItemBuilder::available);
 
     Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
       .hold()
-      .withItemId(itemId)
+      .withInstanceId(item.getInstanceId())
+      .withItemId(item.getId())
       .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .withRequesterId(usersFixture.charlotte().getId()));
 
@@ -482,7 +549,9 @@ public class RequestsAPICreationTests extends APITests {
     UUID requesterId = usersFixture.steve().getId();
 
     final IndividualResource request = requestsFixture.place(new RequestBuilder()
-      .recall().fulfilToHoldShelf()
+      .recall()
+      .fulfilToHoldShelf()
+      .withInstanceId(smallAngryPlanet.getInstanceId())
       .withItemId(itemId)
       .withRequesterId(requesterId)
       .withPickupServicePointId(pickupServicePointId)
@@ -840,7 +909,7 @@ public class RequestsAPICreationTests extends APITests {
 
   @Test
   void creatingARequestIgnoresReadOnlyInformationProvidedByClient() {
-    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
     final IndividualResource steve = usersFixture.steve();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -855,6 +924,7 @@ public class RequestsAPICreationTests extends APITests {
       .recall()
       .withRequestDate(requestDate)
       .withItemId(itemId)
+      .withInstanceId(smallAngryPlanet.getInstanceId())
       .withPickupServicePointId(pickupServicePointId)
       .by(steve)
       .create();
@@ -1183,12 +1253,14 @@ public class RequestsAPICreationTests extends APITests {
   @Test
   void canCreateRecallRequestWhenItemIsPaged() {
     final IndividualResource requestPickupServicePoint = servicePointsFixture.cd1();
-    final IndividualResource smallAngryPlannet = setupPagedItem(requestPickupServicePoint, itemsFixture, requestsClient, usersFixture);
-    final IndividualResource pagedItem = itemsClient.get(smallAngryPlannet);
+    final IndividualResource smallAngryPlanet = setupPagedItem(requestPickupServicePoint,
+      itemsFixture, requestsClient, usersFixture);
+    final IndividualResource pagedItem = itemsClient.get(smallAngryPlanet);
 
     final Response recallResponse = requestsClient.attemptCreate(new RequestBuilder()
       .recall()
       .forItem(pagedItem)
+      .withInstanceId(((ItemResource) smallAngryPlanet).getInstanceId())
       .withPickupServicePointId(requestPickupServicePoint.getId())
       .by(usersFixture.jessica()));
 
@@ -2143,9 +2215,10 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  void shouldNotCreateRequestWhenItemRequesterAndPickupServicePointAreNotProvided() {
+  void shouldNotCreateRequestWhenInstanceItemRequesterAndPickupServicePointAreNotProvided() {
     Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
       .recall()
+      .withInstanceId(null)
       .withItemId(null)
       .withRequesterId(null)
       .withPickupServicePointId(null));
@@ -2154,11 +2227,15 @@ public class RequestsAPICreationTests extends APITests {
 
     final JsonObject responseJson = postResponse.getJson();
 
-    assertThat(responseJson, hasErrors(3));
+    assertThat(responseJson, hasErrors(4));
 
     assertThat(responseJson, hasErrorWith(allOf(
-        hasMessage("Cannot create a request with no item ID"),
-        hasNullParameter("itemId"))));
+      hasMessage("Cannot create a request with no instance ID"),
+      hasNullParameter("instanceId"))));
+
+    assertThat(responseJson, hasErrorWith(allOf(
+      hasMessage("Cannot create a request with no item ID"),
+      hasNullParameter("itemId"))));
 
     assertThat(responseJson, hasErrorWith(allOf(
       hasMessage("A valid user and patron group are required. User is null"),
@@ -2169,13 +2246,15 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  void shouldNotCreateRequestWhenItemRequesterAndPickupServicePointCannotBeFound() {
+  void shouldNotCreateRequestWhenInstanceItemRequesterAndPickupServicePointCannotBeFound() {
+    final UUID instanceId = UUID.randomUUID();
     final UUID itemId = UUID.randomUUID();
     final UUID userId = UUID.randomUUID();
     final UUID pickupServicePointId = UUID.randomUUID();
 
     Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
       .recall()
+      .withInstanceId(instanceId)
       .withItemId(itemId)
       .withRequesterId(userId)
       .withPickupServicePointId(pickupServicePointId));
@@ -2184,7 +2263,11 @@ public class RequestsAPICreationTests extends APITests {
 
     final JsonObject responseJson = postResponse.getJson();
 
-    assertThat(responseJson, hasErrors(3));
+    assertThat(responseJson, hasErrors(4));
+
+    assertThat(responseJson, hasErrorWith(allOf(
+      hasMessage("Instance does not exist"),
+      hasUUIDParameter("instanceId", instanceId))));
 
     assertThat(responseJson, hasErrorWith(allOf(
       hasMessage("Item does not exist"),
@@ -2352,9 +2435,12 @@ public class RequestsAPICreationTests extends APITests {
   private Response attemptCreateRequestThroughOverride(UUID requesterId, OkapiHeaders okapiHeaders,
     BlockOverrides blockOverrides) {
 
+    ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+
     RequestBuilder requestBuilder = new RequestBuilder()
       .page()
-      .withItemId(itemsFixture.basedUponSmallAngryPlanet().getId())
+      .withItemId(item.getId())
+      .withInstanceId(item.getInstanceId())
       .withRequesterId(requesterId)
       .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .withBlockOverrides(blockOverrides);

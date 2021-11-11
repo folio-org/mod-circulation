@@ -43,10 +43,10 @@ class MultipleMixedFulfilmentRequestsTests extends APITests {
     IndividualResource deliveryRequestByRebecca = requestsFixture.placeDeliveryRequest(
       smallAngryPlanet, rebecca, DATE_TIME_2017);
 
-    IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
+    IndividualResource requestByJessica = requestsFixture.placeItemLevelHoldShelfRequest(
       smallAngryPlanet, jessica, DATE_TIME_2017);
 
-    IndividualResource requestBySteve = requestsFixture.placeHoldShelfRequest(
+    IndividualResource requestBySteve = requestsFixture.placeItemLevelHoldShelfRequest(
       smallAngryPlanet, steve, DATE_TIME_2018);
 
     checkInFixture.checkInByBarcode(smallAngryPlanet);
@@ -75,13 +75,13 @@ class MultipleMixedFulfilmentRequestsTests extends APITests {
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
-    IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
+    IndividualResource requestByJessica = requestsFixture.placeItemLevelHoldShelfRequest(
       smallAngryPlanet, jessica, DATE_TIME_2017);
 
     IndividualResource deliveryRequestByRebecca = requestsFixture.placeDeliveryRequest(
       smallAngryPlanet, rebecca, DATE_TIME_2017);
 
-    IndividualResource requestBySteve = requestsFixture.placeHoldShelfRequest(
+    IndividualResource requestBySteve = requestsFixture.placeItemLevelHoldShelfRequest(
       smallAngryPlanet, steve, DATE_TIME_2018);
 
     checkInFixture.checkInByBarcode(smallAngryPlanet);
@@ -111,13 +111,13 @@ class MultipleMixedFulfilmentRequestsTests extends APITests {
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
-    IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
+    IndividualResource requestByJessica = requestsFixture.placeItemLevelHoldShelfRequest(
       smallAngryPlanet, jessica, DATE_TIME_2017);
 
     IndividualResource deliveryRequestByRebecca = requestsFixture.placeDeliveryRequest(
       smallAngryPlanet, rebecca, DATE_TIME_2018);
 
-    IndividualResource requestBySteve = requestsFixture.placeHoldShelfRequest(
+    IndividualResource requestBySteve = requestsFixture.placeItemLevelHoldShelfRequest(
       smallAngryPlanet, steve, DATE_TIME_2018);
 
     checkInFixture.checkInByBarcode(smallAngryPlanet);
@@ -146,10 +146,10 @@ class MultipleMixedFulfilmentRequestsTests extends APITests {
     IndividualResource requestByRebecca = requestsFixture.placeDeliveryRequest(
       smallAngryPlanet, rebecca, DATE_TIME_2017);
 
-    IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
+    IndividualResource requestByJessica = requestsFixture.placeItemLevelHoldShelfRequest(
       smallAngryPlanet, jessica, DATE_TIME_2017);
 
-    IndividualResource requestBySteve = requestsFixture.placeHoldShelfRequest(
+    IndividualResource requestBySteve = requestsFixture.placeItemLevelHoldShelfRequest(
       smallAngryPlanet, steve, DATE_TIME_2018);
 
     checkInFixture.checkInByBarcode(smallAngryPlanet);

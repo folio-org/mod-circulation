@@ -349,7 +349,12 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
   public CompletableFuture<Result<MultipleRecords<Loan>>> findOpenLoansByUserIdWithItem(
     PageLimit loansLimit, LoanAndRelatedRecords loanAndRelatedRecords) {
 
-    String userId = loanAndRelatedRecords.getLoan().getUser().getId();
+    return findOpenLoansByUserIdWithItem(loansLimit,
+      loanAndRelatedRecords.getLoan().getUser().getId());
+  }
+
+  public CompletableFuture<Result<MultipleRecords<Loan>>> findOpenLoansByUserIdWithItem(
+    PageLimit loansLimit, String userId) {
 
     final Result<CqlQuery> statusQuery = getStatusCQLQuery("Open");
     final Result<CqlQuery> userIdQuery = exactMatch(USER_ID, userId);

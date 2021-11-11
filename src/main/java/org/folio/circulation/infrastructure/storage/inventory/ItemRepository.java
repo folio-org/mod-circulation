@@ -91,6 +91,10 @@ public class ItemRepository {
   }
 
   public CompletableFuture<Result<Item>> fetchFor(ItemRelatedRecord record) {
+    if (record.getItemId() == null) {
+      return completedFuture(succeeded(Item.from(null)));
+    }
+
     return fetchById(record.getItemId());
   }
 
@@ -390,6 +394,7 @@ public class ItemRepository {
   private <T extends ItemRelatedRecord> List<String> getItemIds(MultipleRecords<T> records) {
     return records.getRecords().stream()
       .map(ItemRelatedRecord::getItemId)
+      .filter(Objects::nonNull)
       .collect(Collectors.toList());
   }
 

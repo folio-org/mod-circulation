@@ -55,7 +55,6 @@ class RequestsAPIRetrievalTests extends APITests {
     UUID facultyGroupId = patronGroupsFixture.faculty().getId();
     UUID staffGroupId = patronGroupsFixture.staff().getId();
     UUID isbnIdentifierId = identifierTypesFixture.isbn().getId();
-    UUID instanceId = UUID.randomUUID();
     String isbnValue = "9780866989732";
 
     final ItemResource smallAngryPlanet = itemsFixture
@@ -91,7 +90,7 @@ class RequestsAPIRetrievalTests extends APITests {
         .itemRequestLevel()
         .withRequestDate(requestDate)
         .forItem(smallAngryPlanet)
-        .withInstanceId(instanceId)
+        .withInstanceId(smallAngryPlanet.getInstanceId())
         .by(sponsor)
         .proxiedBy(proxy)
         .fulfilToHoldShelf()
@@ -113,7 +112,7 @@ class RequestsAPIRetrievalTests extends APITests {
     assertThat(representation.getString("requestLevel"), is("Item"));
     assertThat(representation.getString("requestDate"), isEquivalentTo(requestDate));
     assertThat(representation.getString("itemId"), is(smallAngryPlanet.getId()));
-    assertThat(representation.getString("instanceId"), is(instanceId));
+    assertThat(representation.getString("instanceId"), is(smallAngryPlanet.getInstanceId()));
     assertThat(representation.getString("requesterId"), is(sponsor.getId()));
     assertThat(representation.getString("fulfilmentPreference"), is("Hold Shelf"));
     assertThat(representation.getString("requestExpirationDate"), is("2017-07-30T23:59:59.000Z"));
@@ -560,7 +559,8 @@ class RequestsAPIRetrievalTests extends APITests {
       .withRequesterId(secondRequester));
 
     requestsFixture.place(new RequestBuilder()
-      .withItemId(itemsFixture.basedUponTemeraire(ItemBuilder::checkOut).getId())
+      .forItem(itemsFixture.basedUponTemeraire(ItemBuilder::checkOut))
+//      .withItemId(itemsFixture.basedUponTemeraire(ItemBuilder::checkOut).getId())
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(secondRequester));
 
