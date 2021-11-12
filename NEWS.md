@@ -1,3 +1,7 @@
+## 22.1.2 2021-11-12
+
+* Resets `due date changed by recall flag` when loan is renewed or due date changed (CIRC-1112)
+
 ## 22.1.1 2021-10-25
 
 * Includes permission for fetching notice policy when processing notices (CIRC-1100)
