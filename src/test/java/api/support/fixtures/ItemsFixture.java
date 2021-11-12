@@ -296,7 +296,7 @@ public class ItemsFixture {
   }
 
   public InstanceBuilder instanceBasedUponSmallAngryPlanet() {
-    return InstanceExamples.basedUponUprooted(booksInstanceTypeId(),
+    return InstanceExamples.basedUponSmallAngryPlanet(booksInstanceTypeId(),
       getPersonalContributorNameTypeId());
   }
 

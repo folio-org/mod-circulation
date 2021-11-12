@@ -71,7 +71,7 @@ class HoldShelfFulfillmentTests extends APITests {
 
     assertThat(request.getJson().getString("status"), is(OPEN_AWAITING_PICKUP));
 
-    smallAngryPlanet = itemsClient.get(smallAngryPlanet.getId());
+    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
     assertThat(smallAngryPlanet, hasItemStatus(AWAITING_PICKUP));
 
