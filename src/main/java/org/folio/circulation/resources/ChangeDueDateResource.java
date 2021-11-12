@@ -8,16 +8,22 @@ import static org.folio.circulation.support.results.MappingFunctions.toFixedValu
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.succeeded;
 
+import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
+import org.folio.circulation.domain.RequestQueue;
+import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.notice.schedule.LoanScheduledNoticeService;
 import org.folio.circulation.domain.representations.ChangeDueDateRequest;
 import org.folio.circulation.domain.validation.ItemStatusValidator;
 import org.folio.circulation.domain.validation.LoanValidator;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
+import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.RouteRegistration;
@@ -45,7 +51,6 @@ public class ChangeDueDateResource extends Resource {
 
   private void changeDueDate(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
-
     createChangeDueDateRequest(routingContext)
       .after(r -> processChangeDueDate(r, routingContext))
       .thenApply(r -> r.map(toFixedValue(NoContentResponse::noContent)))
@@ -57,6 +62,8 @@ public class ChangeDueDateResource extends Resource {
 
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context, client);
+
+    final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
 
     final LoanRepository loanRepository = new LoanRepository(clients);
 
@@ -74,12 +81,27 @@ public class ChangeDueDateResource extends Resource {
       .after(r -> getExistingLoan(loanRepository, r))
       .thenApply(LoanValidator::refuseWhenLoanIsClosed)
       .thenApply(this::toLoanAndRelatedRecords)
+      .thenComposeAsync(r -> r.after(requestQueueRepository::get))
+      .thenApply(r -> r.map(this::unsetDueDateChangedByRecallIfNoOpenRecallsInQueue))
       .thenApply(itemStatusValidator::refuseWhenItemStatusDoesNotAllowDueDateChange)
       .thenApply(r -> changeDueDate(r, request))
       .thenComposeAsync(r -> r.after(loanRepository::updateLoan))
       .thenComposeAsync(r -> r.after(eventPublisher::publishDueDateChangedEvent))
       .thenApply(r -> r.next(scheduledNoticeService::rescheduleDueDateNotices))
       .thenCompose(r -> r.after(loanNoticeSender::sendManualDueDateChangeNotice));
+  }
+
+  private LoanAndRelatedRecords unsetDueDateChangedByRecallIfNoOpenRecallsInQueue(
+      LoanAndRelatedRecords loanAndRelatedRecords) {
+
+    RequestQueue queue = loanAndRelatedRecords.getRequestQueue();
+    Loan loan = loanAndRelatedRecords.getLoan();
+    if (loan.wasDueDateChangedByRecall() && !queue.hasOpenRecalls()) {
+      return loanAndRelatedRecords.withLoan(loan.unsetDueDateChangedByRecall());
+    }
+    else {
+      return loanAndRelatedRecords;
+    }
   }
 
   CompletableFuture<Result<Loan>> getExistingLoan(LoanRepository loanRepository, ChangeDueDateRequest changeDueDateRequest) {

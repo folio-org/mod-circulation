@@ -179,6 +179,7 @@ public abstract class RenewalResource extends Resource {
         RenewalContext::withTimeZone))
       .thenComposeAsync(r -> r.after(context -> renew(context, clients, errorHandler)))
       .thenApply(r -> r.next(errorHandler::failWithValidationErrors))
+      .thenApply(r -> r.map(this::unsetDueDateChangedByRecallIfNoOpenRecallsInQueue))
       .thenComposeAsync(r -> r.after(storeLoanAndItem::updateLoanAndItemInStorage))
       .thenComposeAsync(r -> r.after(context -> processFeesFines(context, clients)))
       .thenApplyAsync(r -> r.next(feeFineNoticesService::scheduleOverdueFineNotices))
@@ -188,6 +189,20 @@ public abstract class RenewalResource extends Resource {
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
       .thenApply(r -> r.map(this::toResponse))
       .thenAccept(webContext::writeResultToHttpResponse);
+  }
+
+  private RenewalContext unsetDueDateChangedByRecallIfNoOpenRecallsInQueue(
+    RenewalContext renewalContext) {
+
+    Loan loan = renewalContext.getLoan();
+    RequestQueue queue = renewalContext.getRequestQueue();
+
+    if (loan.wasDueDateChangedByRecall() && !queue.hasOpenRecalls()) {
+      return renewalContext.withLoan(loan.unsetDueDateChangedByRecall());
+    }
+    else {
+      return renewalContext;
+    }
   }
 
   private CompletableFuture<Result<RenewalContext>> processFeesFines(RenewalContext renewalContext,
