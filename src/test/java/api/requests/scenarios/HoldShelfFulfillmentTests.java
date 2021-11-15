@@ -8,6 +8,7 @@ import static api.support.builders.RequestBuilder.OPEN_AWAITING_PICKUP;
 import static api.support.builders.RequestBuilder.OPEN_IN_TRANSIT;
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasUserBarcodeParameter;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
+import static api.support.matchers.RequestMatchers.hasPosition;
 import static api.support.matchers.RequestMatchers.isItemLevel;
 import static api.support.matchers.RequestMatchers.isOpenAwaitingPickup;
 import static api.support.matchers.RequestMatchers.isOpenNotYetFilled;
@@ -80,51 +81,111 @@ class HoldShelfFulfillmentTests extends APITests {
       is(false));
   }
 
-  @Test
-  void itemWithTlrRequestIsReadyForPickUpWhenCheckedInAtPickupServicePoint() {
+  @ParameterizedTest
+  @ValueSource(ints = {1, 2})
+  void tlrRequestIsPositionedCorrectlyInUnifiedQueue(int checkedInItemNumber) {
     configurationsFixture.enableTlrFeature();
 
     final IndividualResource pickupServicePoint = servicePointsFixture.cd1();
 
-    List<IndividualResource> items = createMultipleItemsForTheSameInstance(2);
+    List<IndividualResource> items = createMultipleItemsForTheSameInstance(3);
     IndividualResource smallAngryPlanet1 = items.get(0);
     IndividualResource smallAngryPlanet2 = items.get(1);
     UUID instanceId = ((ItemResource) smallAngryPlanet1).getInstanceId();
 
     IndividualResource james = usersFixture.james();
-    IndividualResource jessica = usersFixture.jessica();
     IndividualResource steve = usersFixture.steve();
+    IndividualResource jessica = usersFixture.jessica();
+    IndividualResource charlotte = usersFixture.charlotte();
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet1, james);
     checkOutFixture.checkOutByBarcode(smallAngryPlanet2, james);
 
+    // ILR request by Steve, should be #1 in the unified queue
     IndividualResource requestBySteve = requestsFixture.placeItemLevelHoldShelfRequest(
-      smallAngryPlanet1, steve, ClockUtil.getZonedDateTime(),
-      pickupServicePoint.getId());
+      smallAngryPlanet1, steve, ClockUtil.getZonedDateTime(), pickupServicePoint.getId());
 
+    // TLR request by Jessica, should be #2 in the unified queue
     IndividualResource requestByJessica = requestsFixture.placeTitleLevelHoldShelfRequest(
-      instanceId, jessica, ClockUtil.getZonedDateTime(),
-      pickupServicePoint.getId());
+      instanceId, jessica, ClockUtil.getZonedDateTime(), pickupServicePoint.getId());
 
-    checkInFixture.checkInByBarcode(smallAngryPlanet2, ClockUtil.getZonedDateTime(),
-      pickupServicePoint.getId());
+    // ILR request by Jessica, should be #3 in the unified queue
+    IndividualResource requestByCharlotte = requestsFixture.placeItemLevelHoldShelfRequest(
+      smallAngryPlanet2, charlotte, ClockUtil.getZonedDateTime(), pickupServicePoint.getId());
 
-    Response updatedRequestByJessica = requestsClient.getById(requestByJessica.getId());
-    assertThat(updatedRequestByJessica.getJson(), isTitleLevel());
-    assertThat(updatedRequestByJessica.getJson(), isOpenAwaitingPickup());
+    assertThat(requestsClient.getById(requestBySteve.getId()).getJson(), hasPosition(1));
+    assertThat(requestsClient.getById(requestByJessica.getId()).getJson(), hasPosition(2));
+    assertThat(requestsClient.getById(requestByCharlotte.getId()).getJson(), hasPosition(3));
 
-    Response updatedRequestBySteve = requestsClient.getById(requestBySteve.getId());
-    assertThat(updatedRequestBySteve.getJson(), isItemLevel());
-    assertThat(updatedRequestBySteve.getJson(), isOpenNotYetFilled());
+    // Depending on which item is checked in, either Steve's (ILR) or Jessica's (TLR) request
+    // should be fulfilled
+    checkInFixture.checkInByBarcode(
+      checkedInItemNumber == 1 ? smallAngryPlanet1 : smallAngryPlanet2,
+      ClockUtil.getZonedDateTime(), pickupServicePoint.getId());
 
-    smallAngryPlanet1 = itemsClient.get(smallAngryPlanet1.getId());
-    assertThat(smallAngryPlanet1, hasItemStatus(CHECKED_OUT));
+    if (checkedInItemNumber == 1) {
+      // Steve's request should be fulfilled. All requests should keep their positions until
+      // re-positioning is triggered by check-out, cancellation etc.
 
-    smallAngryPlanet2 = itemsClient.get(smallAngryPlanet2.getId());
-    assertThat(smallAngryPlanet2, hasItemStatus(AWAITING_PICKUP));
-    assertThat("awaiting pickup item should not have a destination",
-      smallAngryPlanet1.getJson().containsKey("inTransitDestinationServicePointId"),
-      is(false));
+      Response updatedRequestBySteve = requestsClient.getById(requestBySteve.getId());
+      assertThat(updatedRequestBySteve.getJson(), isItemLevel());
+      assertThat(updatedRequestBySteve.getJson(), isOpenAwaitingPickup());
+      assertThat(updatedRequestBySteve.getJson(), hasPosition(1));
+
+      Response updatedRequestByJessica = requestsClient.getById(requestByJessica.getId());
+      assertThat(updatedRequestByJessica.getJson(), isTitleLevel());
+      assertThat(updatedRequestByJessica.getJson(), isOpenNotYetFilled());
+      assertThat(updatedRequestByJessica.getJson(), hasPosition(2));
+
+      Response updatedRequestByCharlotte = requestsClient.getById(requestByCharlotte.getId());
+      assertThat(updatedRequestByCharlotte.getJson(), isItemLevel());
+      assertThat(updatedRequestByCharlotte.getJson(), isOpenNotYetFilled());
+      assertThat(updatedRequestByCharlotte.getJson(), hasPosition(3));
+
+      // Item #1 should be awaiting pickup and shouldn't have a destination service point
+      // because it was checked in at a pickup service point
+      smallAngryPlanet1 = itemsClient.get(smallAngryPlanet1.getId());
+      assertThat(smallAngryPlanet1, hasItemStatus(AWAITING_PICKUP));
+      assertThat("awaiting pickup item should not have a destination",
+        smallAngryPlanet1.getJson().containsKey("inTransitDestinationServicePointId"),
+        is(false));
+
+      // Item #2 should still be checked out
+      smallAngryPlanet2 = itemsClient.get(smallAngryPlanet2.getId());
+      assertThat(smallAngryPlanet2, hasItemStatus(CHECKED_OUT));
+    }
+
+    if (checkedInItemNumber == 2) {
+      // Jessica's request should be fulfilled. All requests should keep their positions until
+      // re-positioning is triggered by check-out, cancellation etc.
+
+      Response updatedRequestBySteve = requestsClient.getById(requestBySteve.getId());
+      assertThat(updatedRequestBySteve.getJson(), isItemLevel());
+      assertThat(updatedRequestBySteve.getJson(), isOpenNotYetFilled());
+      assertThat(updatedRequestBySteve.getJson(), hasPosition(1));
+
+      Response updatedRequestByJessica = requestsClient.getById(requestByJessica.getId());
+      assertThat(updatedRequestByJessica.getJson(), isTitleLevel());
+      assertThat(updatedRequestByJessica.getJson(), isOpenAwaitingPickup());
+      assertThat(updatedRequestByJessica.getJson(), hasPosition(2));
+
+      Response updatedRequestByCharlotte = requestsClient.getById(requestByCharlotte.getId());
+      assertThat(updatedRequestByCharlotte.getJson(), isItemLevel());
+      assertThat(updatedRequestByCharlotte.getJson(), isOpenNotYetFilled());
+      assertThat(updatedRequestByCharlotte.getJson(), hasPosition(3));
+
+      // Item #1 should still be checked out
+      smallAngryPlanet1 = itemsClient.get(smallAngryPlanet1.getId());
+      assertThat(smallAngryPlanet1, hasItemStatus(CHECKED_OUT));
+
+      // Item #2 should be awaiting pickup and shouldn't have a destination service point
+      // because it was checked in at a pickup service point
+      smallAngryPlanet2 = itemsClient.get(smallAngryPlanet2.getId());
+      assertThat(smallAngryPlanet2, hasItemStatus(AWAITING_PICKUP));
+      assertThat("awaiting pickup item should not have a destination",
+        smallAngryPlanet2.getJson().containsKey("inTransitDestinationServicePointId"),
+        is(false));
+    }
   }
 
   @ParameterizedTest

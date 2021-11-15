@@ -2,27 +2,27 @@ package org.folio.circulation.infrastructure.storage.requests;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.CqlSortBy.ascending;
-import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.http.client.PageLimit.oneThousand;
+import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
-import org.folio.circulation.domain.ItemRelatedRecord;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.Request;
+import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.PageLimit;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.folio.circulation.support.results.Result;
 
 public class RequestQueueRepository {
   private static final Logger LOG = LogManager.getLogger(RequestQueueRepository.class);
@@ -50,8 +50,17 @@ public class RequestQueueRepository {
       .thenApply(result -> result.map(renewalContext::withRequestQueue));
   }
 
-  public CompletableFuture<Result<RequestQueue>> get(ItemRelatedRecord itemRelatedRecord) {
-    return getByItemId(itemRelatedRecord.getItemId());
+  public CompletableFuture<Result<RequestQueue>> get(RequestAndRelatedRecords requestAndRelatedRecords) {
+    boolean tlrFeatureEnabled = requestAndRelatedRecords.getRequest().getTlrSettingsConfiguration()
+      .isTitleLevelRequestsFeatureEnabled();
+    Request request = requestAndRelatedRecords.getRequest();
+
+    if (tlrFeatureEnabled) {
+      return getByInstanceId(request.getInstanceId());
+    }
+    else {
+      return getByItemId(request.getItemId());
+    }
   }
 
   public CompletableFuture<Result<RequestQueue>> getByInstanceId(String instanceId) {
