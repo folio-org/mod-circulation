@@ -392,7 +392,7 @@ class MoveRequestTests extends APITests {
   @Test
   void canMoveAHoldShelfRequestLeavingEmptyQueueAndItemStatusChange() {
 
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource interestingTimes = itemsFixture.basedUponInterestingTimes();
 
     IndividualResource jessica = usersFixture.jessica();
@@ -406,13 +406,13 @@ class MoveRequestTests extends APITests {
       .page()
       .fulfilToHoldShelf()
       .withItemId(smallAngryPlanet.getId())
-      .withInstanceId(((ItemResource) smallAngryPlanet).getInstanceId())
+      .withInstanceId(smallAngryPlanet.getInstanceId())
       .withRequestDate(getZonedDateTime().minusHours(4))
       .withRequesterId(jessica.getId())
       .withPickupServicePointId(servicePointsFixture.cd1().getId()));
 
-    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
-    assertThat(smallAngryPlanet, hasItemStatus(PAGED));
+    IndividualResource pagedSmallAngryPlanet = itemsClient.get(smallAngryPlanet);
+    assertThat(pagedSmallAngryPlanet, hasItemStatus(PAGED));
 
     // move jessica's request from smallAngryPlanet to interestingTimes
     requestsFixture.move(new MoveRequestBuilder(
@@ -421,8 +421,8 @@ class MoveRequestTests extends APITests {
       RequestType.HOLD.getValue()
     ));
 
-    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
-    assertThat(smallAngryPlanet, hasItemStatus(AVAILABLE));
+    IndividualResource availableSmallAngryPlanet = itemsClient.get(smallAngryPlanet);
+    assertThat(availableSmallAngryPlanet, hasItemStatus(AVAILABLE));
   }
 
   @Test

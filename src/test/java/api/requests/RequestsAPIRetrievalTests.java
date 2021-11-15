@@ -560,7 +560,6 @@ class RequestsAPIRetrievalTests extends APITests {
 
     requestsFixture.place(new RequestBuilder()
       .forItem(itemsFixture.basedUponTemeraire(ItemBuilder::checkOut))
-//      .withItemId(itemsFixture.basedUponTemeraire(ItemBuilder::checkOut).getId())
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(secondRequester));
 
