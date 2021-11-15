@@ -1,6 +1,7 @@
 package org.folio.circulation.domain;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.RequestLevel.TITLE;
 import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_CREATED;
 import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_CREATED_THROUGH_OVERRIDE;
 import static org.folio.circulation.domain.representations.logs.RequestUpdateLogEventMapper.mapToRequestLogEventJson;
@@ -101,7 +102,7 @@ public class CreateRequestService {
     boolean tlrFeatureEnabled = records.getRequest().getTlrSettingsConfiguration()
       .isTitleLevelRequestsFeatureEnabled();
 
-    if (tlrFeatureEnabled) {
+    if (tlrFeatureEnabled && records.getRequest().getRequestLevel() == TITLE) {
       return completedFuture(succeeded(records));
     }
 
@@ -120,7 +121,7 @@ public class CreateRequestService {
     boolean tlrFeatureEnabled = records.getRequest().getTlrSettingsConfiguration()
       .isTitleLevelRequestsFeatureEnabled();
 
-    if (tlrFeatureEnabled) {
+    if (tlrFeatureEnabled && records.getRequest().getRequestLevel() == TITLE) {
       return completedFuture(succeeded(records));
     }
 

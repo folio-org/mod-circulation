@@ -140,7 +140,6 @@ class RequestFromRepresentationService {
   private CompletableFuture<Result<Request>> fetchItemAndLoan(Request request) {
     return succeeded(request)
       .combineAfter(itemRepository::fetchFor, Request::withItem)
-//      .thenComposeAsync(r -> r.combineAfter(loanRepository::findOpenLoanForRequest, Request::withLoan))
       .thenComposeAsync(r -> r.after(this::fetchLoan))
       .thenComposeAsync(r -> r.combineAfter(this::getUserForExistingLoan, this::addUserToLoan));
   }
@@ -148,12 +147,14 @@ class RequestFromRepresentationService {
   private CompletableFuture<Result<Request>> fetchLoan(Request request) {
     if (request.getTlrSettingsConfiguration().isTitleLevelRequestsFeatureEnabled()) {
       // There can be multiple loans for items of the same title, but we're only saving one of
-      // them because it's only used to determine whether the patron has open loans for any
+      // them because it is enough to determine whether the patron has open loans for any
       // of the title's items
 
-      return loanRepository.findOpenLoansByUserIdWithItem(LOANS_PAGE_LIMIT, request.getUserId())
+      return loanRepository.findOpenLoansByUserIdWithItemAndHoldings(LOANS_PAGE_LIMIT,
+          request.getUserId())
         .thenApply(r -> r.map(loans -> getLoanForItemOfTheSameInstance(request, loans)))
-        .thenApply(r -> r.map(request::withLoan));
+        .thenApply(r -> r.map(request::withLoan))
+        .thenCompose(r -> r.combineAfter(itemRepository::fetchFor, Request::withItem));
     }
     else {
       return loanRepository.findOpenLoanForRequest(request)

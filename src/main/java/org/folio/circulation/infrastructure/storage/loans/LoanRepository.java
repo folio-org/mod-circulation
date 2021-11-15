@@ -356,14 +356,28 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
   public CompletableFuture<Result<MultipleRecords<Loan>>> findOpenLoansByUserIdWithItem(
     PageLimit loansLimit, String userId) {
 
+    return findOpenLoansByUserId(loansLimit, userId)
+      .thenComposeAsync(loans -> itemRepository.fetchItemsFor(loans, Loan::withItem));
+  }
+
+  public CompletableFuture<Result<MultipleRecords<Loan>>> findOpenLoansByUserIdWithItemAndHoldings(
+    PageLimit loansLimit, String userId) {
+
+    // Only fetching HoldingsRecord for each item to avoid fetching instances, locations etc.
+    return findOpenLoansByUserId(loansLimit, userId)
+      .thenComposeAsync(loans -> itemRepository.fetchItemsWithHoldings(loans, Loan::withItem));
+  }
+
+  public CompletableFuture<Result<MultipleRecords<Loan>>> findOpenLoansByUserId(
+    PageLimit loansLimit, String userId) {
+
     final Result<CqlQuery> statusQuery = getStatusCQLQuery("Open");
     final Result<CqlQuery> userIdQuery = exactMatch(USER_ID, userId);
 
     Result<CqlQuery> cqlQueryResult = statusQuery
       .combine(userIdQuery, CqlQuery::and);
 
-    return queryLoanStorage(cqlQueryResult, loansLimit)
-      .thenComposeAsync(loans -> itemRepository.fetchItemsFor(loans, Loan::withItem));
+    return queryLoanStorage(cqlQueryResult, loansLimit);
   }
 
   public CompletableFuture<Result<Loan>> findLastLoanForItem(String itemId) {

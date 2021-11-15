@@ -340,15 +340,27 @@ public class ItemRepository {
     });
   }
 
-  public <T extends ItemRelatedRecord> CompletableFuture<Result<MultipleRecords<T>>> fetchItemsFor(
-    Result<MultipleRecords<T>> result,
-    BiFunction<T, Item, T> includeItemMap) {
+  public <T extends ItemRelatedRecord> CompletableFuture<Result<MultipleRecords<T>>>
+  fetchItemsFor(Result<MultipleRecords<T>> result, BiFunction<T, Item, T> includeItemMap) {
+
+    return fetchItemsFor(result, includeItemMap, this::fetchFor);
+  }
+
+  public <T extends ItemRelatedRecord> CompletableFuture<Result<MultipleRecords<T>>>
+  fetchItemsWithHoldings(Result<MultipleRecords<T>> result, BiFunction<T, Item, T> includeItemMap) {
+
+    return fetchItemsFor(result, includeItemMap, this::fetchForWithHoldingsRecords);
+  }
+
+  public <T extends ItemRelatedRecord> CompletableFuture<Result<MultipleRecords<T>>>
+  fetchItemsFor(Result<MultipleRecords<T>> result, BiFunction<T, Item, T> includeItemMap,
+    Function<Collection<String>, CompletableFuture<Result<Collection<Item>>>> fetcher) {
 
     if (result.failed() || result.value().getRecords().isEmpty()) {
       return CompletableFuture.completedFuture(result);
     }
 
-    return result.combineAfter(r -> fetchFor(getItemIds(r)),
+    return result.combineAfter(r -> fetcher.apply(getItemIds(r)),
       (records, items) -> new MultipleRecords<>(
         matchItemToRecord(records, items, includeItemMap),
         records.getTotalRecords()));
@@ -389,6 +401,13 @@ public class ItemRepository {
       .thenComposeAsync(this::fetchInstances)
       .thenComposeAsync(this::fetchLocations)
       .thenComposeAsync(this::fetchMaterialTypes);
+  }
+
+  private CompletableFuture<Result<Collection<Item>>> fetchForWithHoldingsRecords(
+    Collection<String> itemIds) {
+
+    return fetchItems(itemIds)
+      .thenComposeAsync(this::fetchHoldingRecords);
   }
 
   private <T extends ItemRelatedRecord> List<String> getItemIds(MultipleRecords<T> records) {

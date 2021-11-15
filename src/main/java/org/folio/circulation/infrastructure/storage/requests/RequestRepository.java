@@ -171,7 +171,7 @@ public class RequestRepository {
       .storedRequest(request);
 
     final ResponseInterpreter<Request> interpreter = new ResponseInterpreter<Request>()
-      .flatMapOn(201, mapUsingJson(request::withRequestJsonRepresentation))
+      .flatMapOn(201, mapUsingJson(request::withRequestRepresentation))
       .otherwise(forwardOnFailure());
 
     return requestsStorageClient.post(representation)
@@ -195,7 +195,7 @@ public class RequestRepository {
 
     return FetchSingleRecord.<Request>forRecord("cancellation reason")
       .using(cancellationReasonStorageClient)
-      .mapTo(request::withCancellationReasonJsonRepresentation)
+      .mapTo(request::withCancellationReasonRepresentation)
       .whenNotFound(succeeded(request))
       .fetch(request.getCancellationReasonId());
   }
