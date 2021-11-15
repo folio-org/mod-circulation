@@ -94,10 +94,6 @@ class RequestFromRepresentationService {
 
     return configurationRepository.lookupTlrSettings()
       .thenApply(r -> r.map(tlrSettings -> Request.from(tlrSettings, representation)));
-
-//    return completedFuture(succeeded(new Request().withRepresentation(representation)))
-//      .thenCompose(r -> r.combineAfter(configurationRepository::lookupTlrSettings,
-//        RepresentationValidationContext::withTlrSettingsConfiguration));
   }
 
   private CompletableFuture<Result<Boolean>> shouldFetchInstance(Request request) {
@@ -178,7 +174,8 @@ class RequestFromRepresentationService {
   private Result<Request> validateRequestLevel(Request request) {
     JsonObject representation = request.getRequestRepresentation();
 
-    RequestLevel requestLevel = RequestLevel.from(representation.getString("requestLevel"));
+    String requestLevelRaw = representation.getString("requestLevel");
+    RequestLevel requestLevel = RequestLevel.from(requestLevelRaw);
     boolean tlrEnabled = request.getTlrSettingsConfiguration().isTitleLevelRequestsFeatureEnabled();
 
     List<RequestLevel> allowedStatuses = tlrEnabled
@@ -186,10 +183,13 @@ class RequestFromRepresentationService {
       : List.of(RequestLevel.ITEM);
 
     if (!allowedStatuses.contains(requestLevel)) {
-      return failed(new BadRequestFailure("requestLevel must be one of the following: " +
-        allowedStatuses.stream()
-          .map(existingLevel -> StringUtils.wrap(existingLevel.getValue(), '"'))
-          .collect(Collectors.joining(", "))));
+      String allowedStatusesJoined = allowedStatuses.stream()
+        .map(existingLevel -> StringUtils.wrap(existingLevel.getValue(), '"'))
+        .collect(Collectors.joining(", "));
+
+      return failedValidation(
+        "requestLevel must be one of the following: " + allowedStatusesJoined, "requestLevel",
+        requestLevelRaw);
     }
 
     return succeeded(request);
