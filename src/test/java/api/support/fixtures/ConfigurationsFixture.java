@@ -22,4 +22,10 @@ public class ConfigurationsFixture {
       tlrConfigurationEntryId = null;
     }
   }
+
+  public void titleLevelRequestWithExpirationNotices(UUID expirationTemplateId) {
+    tlrConfigurationEntryId = client.create(
+      ConfigurationExample.tlrFeatureEnabledWithNoticesConfiguration(
+      null, null, expirationTemplateId)).getId();
+  }
 }

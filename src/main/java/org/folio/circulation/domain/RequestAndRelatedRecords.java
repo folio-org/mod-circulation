@@ -3,6 +3,7 @@ package org.folio.circulation.domain;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 
+import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
 import org.folio.circulation.domain.policy.RequestPolicy;
 
 public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedRecord {
@@ -11,15 +12,16 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
   private final RequestQueue requestQueue;
   private final RequestPolicy requestPolicy;
   private final ZoneId timeZone;
-
   private final MoveRequestRecord moveRequestRecord;
+  private final TlrSettingsConfiguration tlrSettingsConfiguration;
 
   private RequestAndRelatedRecords(
     Request request,
     RequestQueue requestQueue,
     RequestPolicy requestPolicy,
     MoveRequestRecord moveRequestRecord,
-    ZoneId timeZone) {
+    ZoneId timeZone,
+    TlrSettingsConfiguration tlrSettingsConfiguration) {
 
     this.request = request;
     this.originalRequest = request.copy();
@@ -27,10 +29,11 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
     this.requestPolicy = requestPolicy;
     this.timeZone = timeZone;
     this.moveRequestRecord = moveRequestRecord;
+    this.tlrSettingsConfiguration = tlrSettingsConfiguration;
   }
 
   public RequestAndRelatedRecords(Request request) {
-    this(request, null, null, null, ZoneOffset.UTC);
+    this(request, null, null, null, ZoneOffset.UTC, null);
   }
 
   public RequestAndRelatedRecords withRequest(Request newRequest) {
@@ -39,7 +42,8 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
       this.requestQueue,
       null,
       this.moveRequestRecord,
-      this.timeZone
+      this.timeZone,
+      this.tlrSettingsConfiguration
     );
   }
 
@@ -49,7 +53,8 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
       this.requestQueue,
       newRequestPolicy,
       this.moveRequestRecord,
-      this.timeZone
+      this.timeZone,
+      this.tlrSettingsConfiguration
     );
   }
 
@@ -59,7 +64,8 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
       newRequestQueue,
       this.requestPolicy,
       this.moveRequestRecord,
-      this.timeZone
+      this.timeZone,
+      this.tlrSettingsConfiguration
     );
   }
 
@@ -69,7 +75,8 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
       this.requestQueue,
       this.requestPolicy,
       this.moveRequestRecord,
-      this.timeZone
+      this.timeZone,
+      this.tlrSettingsConfiguration
     );
   }
 
@@ -79,7 +86,8 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
       this.requestQueue,
       this.requestPolicy,
       this.moveRequestRecord,
-      this.timeZone
+      this.timeZone,
+      this.tlrSettingsConfiguration
     );
   }
 
@@ -89,13 +97,27 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
       this.requestQueue,
       this.requestPolicy,
       this.moveRequestRecord,
-      this.timeZone
+      this.timeZone,
+      this.tlrSettingsConfiguration
     );
   }
 
   RequestAndRelatedRecords withTimeZone(ZoneId newTimeZone) {
     return new RequestAndRelatedRecords(request, requestQueue, requestPolicy,
-      moveRequestRecord, newTimeZone);
+      moveRequestRecord, newTimeZone, tlrSettingsConfiguration);
+  }
+
+  public RequestAndRelatedRecords withTlrSettingsConfiguration(
+    TlrSettingsConfiguration tlrSettingsConfiguration) {
+
+    return new RequestAndRelatedRecords(
+      this.request,
+      this.requestQueue,
+      this.requestPolicy,
+      this.moveRequestRecord,
+      this.timeZone,
+      tlrSettingsConfiguration
+    );
   }
 
   public RequestAndRelatedRecords asMove(String originalItemId, String destinationItemId) {
@@ -103,7 +125,8 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
       this.request,
       this.requestQueue,
       this.requestPolicy,
-      MoveRequestRecord.with(originalItemId, destinationItemId), timeZone
+      MoveRequestRecord.with(originalItemId, destinationItemId), timeZone,
+      this.tlrSettingsConfiguration
     );
   }
 
@@ -146,5 +169,9 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
 
   public Request getOriginalRequest() {
     return originalRequest;
+  }
+
+  public TlrSettingsConfiguration getTlrSettingsConfiguration() {
+    return tlrSettingsConfiguration;
   }
 }

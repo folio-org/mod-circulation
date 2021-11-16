@@ -2,6 +2,8 @@ package api.support.fixtures;
 
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
+import java.util.UUID;
+
 import api.support.builders.ConfigRecordBuilder;
 import api.support.builders.TlrSettingsConfigurationBuilder;
 import io.vertx.core.json.JsonObject;
@@ -42,6 +44,19 @@ public class ConfigurationExample {
     return new ConfigRecordBuilder("SETTINGS", "TLR",
       new TlrSettingsConfigurationBuilder()
         .withTitleLevelRequestsFeatureEnabled(true)
+        .create()
+        .encodePrettily());
+  }
+
+  public static ConfigRecordBuilder tlrFeatureEnabledWithNoticesConfiguration(
+    UUID confirmationTemplateId, UUID cancellationTemplateId, UUID expirationTemplateId) {
+
+    return new ConfigRecordBuilder("SETTINGS", "TLR",
+      new TlrSettingsConfigurationBuilder()
+        .withTitleLevelRequestsFeatureEnabled(true)
+        .withConfirmationPatronNoticeTemplateId(confirmationTemplateId)
+        .withCancellationPatronNoticeTemplateId(cancellationTemplateId)
+        .withExpirationPatronNoticeTemplateId(expirationTemplateId)
         .create()
         .encodePrettily());
   }

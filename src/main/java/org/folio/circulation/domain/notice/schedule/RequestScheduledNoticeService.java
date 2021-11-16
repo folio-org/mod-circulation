@@ -1,6 +1,10 @@
 package org.folio.circulation.domain.notice.schedule;
 
+import static org.folio.circulation.domain.RequestLevel.ITEM;
+import static org.folio.circulation.domain.RequestLevel.TITLE;
 import static org.folio.circulation.domain.notice.NoticeTiming.UPON_AT;
+import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.REQUEST_EXPIRATION;
+import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.TITLE_LEVEL_REQUEST_EXPIRATION;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.time.ZonedDateTime;
@@ -10,9 +14,13 @@ import java.util.UUID;
 import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
+import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
 import org.folio.circulation.domain.notice.NoticeConfiguration;
+import org.folio.circulation.domain.notice.NoticeConfigurationBuilder;
 import org.folio.circulation.domain.notice.NoticeEventType;
+import org.folio.circulation.domain.notice.NoticeFormat;
 import org.folio.circulation.domain.notice.PatronNoticePolicy;
+import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.notices.PatronNoticePolicyRepository;
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
 import org.folio.circulation.support.Clients;
@@ -22,22 +30,37 @@ public class RequestScheduledNoticeService {
   public static RequestScheduledNoticeService using(Clients clients) {
     return new RequestScheduledNoticeService(
       ScheduledNoticesRepository.using(clients),
-      new PatronNoticePolicyRepository(clients));
+      new PatronNoticePolicyRepository(clients),
+      new ConfigurationRepository(clients));
   }
 
   private final ScheduledNoticesRepository scheduledNoticesRepository;
   private final PatronNoticePolicyRepository noticePolicyRepository;
+  private final ConfigurationRepository configurationRepository;
 
   private RequestScheduledNoticeService(
     ScheduledNoticesRepository scheduledNoticesRepository,
-    PatronNoticePolicyRepository noticePolicyRepository) {
+    PatronNoticePolicyRepository noticePolicyRepository,
+    ConfigurationRepository configurationRepository) {
     this.scheduledNoticesRepository = scheduledNoticesRepository;
     this.noticePolicyRepository = noticePolicyRepository;
+    this.configurationRepository = configurationRepository;
   }
 
 
   public Result<RequestAndRelatedRecords> scheduleRequestNotices(RequestAndRelatedRecords relatedRecords) {
-    scheduleRequestNotices(relatedRecords.getRequest());
+    Request request = relatedRecords.getRequest();
+    if (request.isClosed()) {
+      return succeeded(relatedRecords);
+    }
+
+    if (relatedRecords.getRequest().getRequestLevel() == TITLE) {
+      scheduleTlrRequestNotices(relatedRecords);
+    }
+    else if (relatedRecords.getRequest().getRequestLevel() == ITEM) {
+      scheduleRequestNotices(relatedRecords.getRequest());
+    }
+
     return succeeded(relatedRecords);
   }
 
@@ -79,7 +102,7 @@ public class RequestScheduledNoticeService {
     NoticeEventType eventType = cfg.getNoticeEventType();
 
     if (eventType == NoticeEventType.REQUEST_EXPIRATION) {
-      return createRequestExpirationScheduledNotice(request, cfg);
+      return createRequestExpirationScheduledNotice(request, cfg, REQUEST_EXPIRATION);
     } else if (eventType == NoticeEventType.HOLD_EXPIRATION) {
       return createHoldExpirationScheduledNotice(request, cfg);
     } else {
@@ -88,11 +111,11 @@ public class RequestScheduledNoticeService {
   }
 
   private Optional<ScheduledNotice> createRequestExpirationScheduledNotice(
-    Request request, NoticeConfiguration cfg) {
+    Request request, NoticeConfiguration cfg, TriggeringEvent triggeringEvent) {
 
     return Optional.ofNullable(request.getRequestExpirationDate())
       .map(expirationDate -> determineNextRunTime(expirationDate, cfg))
-      .map(nextRunTime -> createScheduledNotice(request, nextRunTime, cfg, TriggeringEvent.REQUEST_EXPIRATION));
+      .map(nextRunTime -> createScheduledNotice(request, nextRunTime, cfg, triggeringEvent));
   }
 
   private Optional<ScheduledNotice> createHoldExpirationScheduledNotice(
@@ -140,5 +163,38 @@ public class RequestScheduledNoticeService {
     }
 
     return succeeded(request);
+  }
+
+  private Result<RequestAndRelatedRecords> scheduleTlrRequestNotices(
+    RequestAndRelatedRecords relatedRecords) {
+
+    Request request = relatedRecords.getRequest();
+    TlrSettingsConfiguration tlrSettings = relatedRecords.getTlrSettingsConfiguration();
+    if (tlrSettings.isTitleLevelRequestsFeatureEnabled()) {
+      scheduleRequestNoticesBasedOnTlrSettings(request, tlrSettings);
+    }
+
+    return succeeded(relatedRecords);
+  }
+
+  private Result<TlrSettingsConfiguration> scheduleRequestNoticesBasedOnTlrSettings(
+    Request request, TlrSettingsConfiguration tlrSettingsConfiguration) {
+
+    UUID expirationTemplateId = tlrSettingsConfiguration.getExpirationPatronNoticeTemplateId();
+    if (expirationTemplateId != null) {
+      NoticeConfiguration noticeConfiguration = new NoticeConfigurationBuilder()
+        .setTemplateId(expirationTemplateId.toString())
+        .setNoticeFormat(NoticeFormat.EMAIL)
+        .setNoticeEventType(NoticeEventType.TITLE_LEVEL_REQUEST_EXPIRATION)
+        .setTiming(UPON_AT)
+        .setRecurring(false)
+        .setSendInRealTime(true)
+        .build();
+
+      createRequestExpirationScheduledNotice(request, noticeConfiguration, TITLE_LEVEL_REQUEST_EXPIRATION)
+        .map(scheduledNoticesRepository::create);
+    }
+
+    return succeeded(tlrSettingsConfiguration);
   }
 }

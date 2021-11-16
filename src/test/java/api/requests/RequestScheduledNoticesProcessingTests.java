@@ -534,6 +534,43 @@ class RequestScheduledNoticesProcessingTests extends APITests {
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
   }
 
+  @Test
+  void titleLevelRequestExpirationNoticeShouldBeSentAndDeleted() {
+    configurationsFixture.titleLevelRequestWithExpirationNotices(templateId);
+
+    final LocalDate localDate = getLocalDate().minusDays(1);
+    final var requestExpiration = LocalDate.of(localDate.getYear(),
+      localDate.getMonthValue(), localDate.getDayOfMonth());
+
+    IndividualResource request = requestsFixture.place(new RequestBuilder()
+      .page()
+      .titleRequestLevel()
+      .withInstanceId(item.getInstanceId())
+      .withRequesterId(requester.getId())
+      .withRequestDate(getZonedDateTime())
+      .withStatus(OPEN_NOT_YET_FILLED)
+      .withPickupServicePoint(pickupServicePoint)
+      .withRequestExpiration(requestExpiration));
+
+    verifyNumberOfScheduledNotices(1);
+
+    //close request
+    IndividualResource requestInStorage = requestsStorageClient.get(request);
+
+    requestsStorageClient.replace(request.getId(),
+      requestInStorage.getJson().put("status", "Closed - Unfilled"));
+
+    scheduledNoticeProcessingClient.runRequestNoticesProcessing();
+
+    verifyNumberOfSentNotices(1);
+    assertThat(
+      FakeModNotify.getFirstSentPatronNotice(), getTemplateContextMatcherForTlrRequest(templateId, request));
+
+    verifyNumberOfScheduledNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 1);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+  }
+
   private IndividualResource prepareNotice() {
     setupNoticePolicyWithRequestNotice(
       new NoticeConfigurationBuilder()
@@ -581,6 +618,17 @@ class RequestScheduledNoticesProcessingTests extends APITests {
     Map<String, Matcher<String>> templateContextMatchers = new HashMap<>();
     templateContextMatchers.putAll(TemplateContextMatchers.getUserContextMatchers(requester));
     templateContextMatchers.putAll(TemplateContextMatchers.getItemContextMatchers(item, true));
+    templateContextMatchers.put("request.servicePointPickup", notNullValue(String.class));
+    templateContextMatchers.put("request.requestExpirationDate ",
+      isEquivalentTo(getDateTimeProperty(request.getJson(), "requestExpirationDate")));
+
+    return hasEmailNoticeProperties(requester.getId(), templateId, templateContextMatchers);
+  }
+
+  private Matcher<JsonObject> getTemplateContextMatcherForTlrRequest(UUID templateId, IndividualResource request) {
+    Map<String, Matcher<String>> templateContextMatchers = new HashMap<>();
+    templateContextMatchers.putAll(TemplateContextMatchers.getUserContextMatchers(requester));
+    templateContextMatchers.put("request.requestLevel", is("Title"));
     templateContextMatchers.put("request.servicePointPickup", notNullValue(String.class));
     templateContextMatchers.put("request.requestExpirationDate ",
       isEquivalentTo(getDateTimeProperty(request.getJson(), "requestExpirationDate")));
