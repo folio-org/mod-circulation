@@ -563,9 +563,6 @@ class RequestScheduledNoticesProcessingTests extends APITests {
     scheduledNoticeProcessingClient.runRequestNoticesProcessing();
 
     verifyNumberOfSentNotices(1);
-    assertThat(
-      FakeModNotify.getFirstSentPatronNotice(), getTemplateContextMatcherForTlrRequest(templateId, request));
-
     verifyNumberOfScheduledNotices(0);
     verifyNumberOfPublishedEvents(NOTICE, 1);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
@@ -624,16 +621,4 @@ class RequestScheduledNoticesProcessingTests extends APITests {
 
     return hasEmailNoticeProperties(requester.getId(), templateId, templateContextMatchers);
   }
-
-  private Matcher<JsonObject> getTemplateContextMatcherForTlrRequest(UUID templateId, IndividualResource request) {
-    Map<String, Matcher<String>> templateContextMatchers = new HashMap<>();
-    templateContextMatchers.putAll(TemplateContextMatchers.getUserContextMatchers(requester));
-    templateContextMatchers.put("request.requestLevel", is("Title"));
-    templateContextMatchers.put("request.servicePointPickup", notNullValue(String.class));
-    templateContextMatchers.put("request.requestExpirationDate ",
-      isEquivalentTo(getDateTimeProperty(request.getJson(), "requestExpirationDate")));
-
-    return hasEmailNoticeProperties(requester.getId(), templateId, templateContextMatchers);
-  }
-
 }
