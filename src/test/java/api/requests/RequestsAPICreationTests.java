@@ -126,7 +126,7 @@ public class RequestsAPICreationTests extends APITests {
   @AfterEach
   public void afterEach() {
     mockClockManagerToReturnDefaultDateTime();
-    configurationsFixture.disableTlrFeature();
+    configurationsFixture.deleteTlrFeatureConfig();
   }
 
   @Test

@@ -43,15 +43,13 @@ import api.support.http.ItemResource;
 class HoldShelfFulfillmentTests extends APITests {
   @AfterEach
   public void afterEach() {
-    configurationsFixture.disableTlrFeature();
+    configurationsFixture.deleteTlrFeatureConfig();
   }
 
   @ParameterizedTest
-  @ValueSource(booleans = {false, true})
-  void itemIsReadyForPickUpWhenCheckedInAtPickupServicePoint(boolean tlrFeatureEnabled) {
-    if (tlrFeatureEnabled) {
-      configurationsFixture.enableTlrFeature();
-    }
+  @ValueSource(strings = {"enabled", "disabled", "not-configured"})
+  void itemIsReadyForPickUpWhenCheckedInAtPickupServicePoint(String tlrFeatureStatus) {
+    reconfigureTlrFeature(tlrFeatureStatus);
 
     final IndividualResource pickupServicePoint = servicePointsFixture.cd1();
 
@@ -189,11 +187,9 @@ class HoldShelfFulfillmentTests extends APITests {
   }
 
   @ParameterizedTest
-  @ValueSource(booleans = {false, true})
-  void canBeCheckedOutToRequestingPatronWhenReadyForPickup(boolean tlrFeatureEnabled) {
-    if (tlrFeatureEnabled) {
-      configurationsFixture.enableTlrFeature();
-    }
+  @ValueSource(strings = {"enabled", "disabled", "not-configured"})
+  void canBeCheckedOutToRequestingPatronWhenReadyForPickup(String tlrFeatureStatus) {
+    reconfigureTlrFeature(tlrFeatureStatus);
 
     final IndividualResource pickupServicePoint = servicePointsFixture.cd1();
 
@@ -231,11 +227,9 @@ class HoldShelfFulfillmentTests extends APITests {
   }
 
   @ParameterizedTest
-  @ValueSource(booleans = {false, true})
-  void checkInAtDifferentServicePointPlacesItemInTransit(boolean tlrFeatureEnabled) {
-    if (tlrFeatureEnabled) {
-      configurationsFixture.enableTlrFeature();
-    }
+  @ValueSource(strings = {"enabled", "disabled", "not-configured"})
+  void checkInAtDifferentServicePointPlacesItemInTransit(String tlrFeatureStatus) {
+    reconfigureTlrFeature(tlrFeatureStatus);
 
     final IndividualResource pickupServicePoint = servicePointsFixture.cd1();
     final IndividualResource checkInServicePoint = servicePointsFixture.cd2();
@@ -315,11 +309,9 @@ class HoldShelfFulfillmentTests extends APITests {
   }
 
   @ParameterizedTest
-  @ValueSource(booleans = {false, true})
-  void canBeCheckedOutToRequestingPatronWhenInTransit(boolean tlrFeatureEnabled) {
-    if (tlrFeatureEnabled) {
-      configurationsFixture.enableTlrFeature();
-    }
+  @ValueSource(strings = {"enabled", "disabled", "not-configured"})
+  void canBeCheckedOutToRequestingPatronWhenInTransit(String tlrFeatureStatus) {
+    reconfigureTlrFeature(tlrFeatureStatus);
 
     final IndividualResource pickupServicePoint = servicePointsFixture.cd1();
     final IndividualResource checkInServicePoint = servicePointsFixture.cd2();
@@ -357,13 +349,9 @@ class HoldShelfFulfillmentTests extends APITests {
   }
 
   @ParameterizedTest
-  @ValueSource(booleans = {false, true})
-  void itemIsReadyForPickUpWhenCheckedInAtPickupServicePointAfterTransit(
-    boolean tlrFeatureEnabled) {
-
-    if (tlrFeatureEnabled) {
-      configurationsFixture.enableTlrFeature();
-    }
+  @ValueSource(strings = {"enabled", "disabled", "not-configured"})
+  void itemIsReadyForPickUpWhenCheckedInAtPickupServicePointAfterTransit(String tlrFeatureStatus) {
+    reconfigureTlrFeature(tlrFeatureStatus);
 
     final IndividualResource pickupServicePoint = servicePointsFixture.cd1();
     final IndividualResource checkInServicePoint = servicePointsFixture.cd2();
@@ -445,11 +433,9 @@ class HoldShelfFulfillmentTests extends APITests {
   }
 
   @ParameterizedTest
-  @ValueSource(booleans = {false, true})
-  void cannotCheckOutToOtherPatronWhenRequestIsAwaitingPickup(boolean tlrFeatureEnabled) {
-    if (tlrFeatureEnabled) {
-      configurationsFixture.enableTlrFeature();
-    }
+  @ValueSource(strings = {"enabled", "disabled", "not-configured"})
+  void cannotCheckOutToOtherPatronWhenRequestIsAwaitingPickup(String tlrFeatureStatus) {
+    reconfigureTlrFeature(tlrFeatureStatus);
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
@@ -488,11 +474,9 @@ class HoldShelfFulfillmentTests extends APITests {
   }
 
   @ParameterizedTest
-  @ValueSource(booleans = {false, true})
-  void cannotCheckOutToOtherPatronWhenRequestIsInTransitForPickup(boolean tlrFeatureEnabled) {
-    if (tlrFeatureEnabled) {
-      configurationsFixture.enableTlrFeature();
-    }
+  @ValueSource(strings = {"enabled", "disabled", "not-configured"})
+  void cannotCheckOutToOtherPatronWhenRequestIsInTransitForPickup(String tlrFeatureStatus) {
+    reconfigureTlrFeature(tlrFeatureStatus);
 
     final IndividualResource requestServicePoint = servicePointsFixture.cd1();
     final IndividualResource checkInServicePoint = servicePointsFixture.cd2();
@@ -547,5 +531,17 @@ class HoldShelfFulfillmentTests extends APITests {
         instanceBuilder -> sapInstanceBuilder,
         itemBuilder -> itemBuilder.withBarcode("0000" + num)))
       .collect(Collectors.toList());
+  }
+
+  private void reconfigureTlrFeature(String tlrFeatureStatus) {
+    if (tlrFeatureStatus.equals("enabled")) {
+      configurationsFixture.enableTlrFeature();
+    }
+    else if (tlrFeatureStatus.equals("disabled")) {
+      configurationsFixture.disableTlrFeature();
+    }
+    else {
+      configurationsFixture.deleteTlrFeatureConfig();
+    }
   }
 }

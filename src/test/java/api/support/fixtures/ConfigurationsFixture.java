@@ -13,10 +13,16 @@ public class ConfigurationsFixture {
   }
 
   public void enableTlrFeature() {
+    deleteTlrFeatureConfig();
     tlrConfigurationEntryId = client.create(ConfigurationExample.tlrFeatureEnabled()).getId();
   }
 
   public void disableTlrFeature() {
+    deleteTlrFeatureConfig();
+    tlrConfigurationEntryId = client.create(ConfigurationExample.tlrFeatureDisabled()).getId();
+  }
+
+  public void deleteTlrFeatureConfig() {
     if (tlrConfigurationEntryId != null) {
       client.delete(tlrConfigurationEntryId);
       tlrConfigurationEntryId = null;
