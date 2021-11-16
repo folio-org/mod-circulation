@@ -10,7 +10,19 @@ import static org.folio.circulation.domain.RequestStatus.CLOSED_UNFILLED;
 import static org.folio.circulation.domain.RequestStatus.OPEN_AWAITING_PICKUP;
 import static org.folio.circulation.domain.RequestStatus.OPEN_IN_TRANSIT;
 import static org.folio.circulation.domain.RequestStatus.OPEN_NOT_YET_FILLED;
-import static org.folio.circulation.domain.representations.RequestProperties.*;
+import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_ADDITIONAL_INFORMATION;
+import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_ID;
+import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_NAME;
+import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_PUBLIC_DESCRIPTION;
+import static org.folio.circulation.domain.representations.RequestProperties.HOLD_SHELF_EXPIRATION_DATE;
+import static org.folio.circulation.domain.representations.RequestProperties.INSTANCE_ID;
+import static org.folio.circulation.domain.representations.RequestProperties.ITEM_ID;
+import static org.folio.circulation.domain.representations.RequestProperties.POSITION;
+import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_DATE;
+import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_EXPIRATION_DATE;
+import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_LEVEL;
+import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_TYPE;
+import static org.folio.circulation.domain.representations.RequestProperties.STATUS;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getIntegerProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
@@ -22,19 +34,43 @@ import java.time.ZonedDateTime;
 import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
+import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
 
 import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.With;
 
 @AllArgsConstructor
+@Getter
 public class Request implements ItemRelatedRecord, UserRelatedRecord {
+  private final TlrSettingsConfiguration tlrSettingsConfiguration;
+
+  @With
   private final JsonObject requestRepresentation;
+
+  @With
   private final JsonObject cancellationReasonRepresentation;
+
+  @With
+  private final Instance instance;
+
   private final Item item;
+
+  @With
   private final User requester;
+
+  @With
   private final User proxy;
+
+  @With
   private final AddressType addressType;
+
+  // For TLR there can be multiple loans, only using the first one.
+  @With
   private final Loan loan;
+
+  @With
   private final ServicePoint pickupServicePoint;
 
   private boolean changedPosition;
@@ -42,35 +78,15 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   private boolean changedStatus;
 
   public static Request from(JsonObject representation) {
-    return new Request(representation, null, null, null, null, null, null, null, false, null, false);
+    return new Request(null, representation, null, null, null, null, null,
+      null, null, null, false, null, false);
   }
 
-  public Request withRequestJsonRepresentation(JsonObject representation) {
-    return new Request(representation,
-      cancellationReasonRepresentation,
-      getItem(),
-      getRequester(),
-      getProxy(),
-      getAddressType(),
-      getLoan(),
-      getPickupServicePoint(),
-      hasChangedPosition(),
-      getPreviousPosition(),
-      hasChangedStatus());
-  }
+  public static Request from(TlrSettingsConfiguration tlrSettingsConfiguration,
+    JsonObject representation) {
 
-  public Request withCancellationReasonJsonRepresentation(JsonObject representation) {
-    return new Request(requestRepresentation,
-      representation,
-      getItem(),
-      getRequester(),
-      getProxy(),
-      getAddressType(),
-      getLoan(),
-      getPickupServicePoint(),
-      hasChangedPosition(),
-      getPreviousPosition(),
-      hasChangedStatus());
+    return new Request(tlrSettingsConfiguration, representation, null, null,
+      null, null, null, null, null, null, false, null, false);
   }
 
   public JsonObject asJson() {
@@ -136,36 +152,14 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
 
   public Request withItem(Item newItem) {
     // NOTE: this is null in RequestsAPIUpdatingTests.replacingAnExistingRequestRemovesItemInformationWhenItemDoesNotExist test
-    if (newItem.getItemId() != null) {
+    if (newItem != null && newItem.getItemId() != null) {
       requestRepresentation.put(ITEM_ID, newItem.getItemId());
     }
-    return new Request(requestRepresentation, cancellationReasonRepresentation, newItem, requester, proxy, addressType,
-      loan == null ? null : loan.withItem(newItem), pickupServicePoint, changedPosition, previousPosition, changedStatus);
-  }
 
-  public Request withRequester(User newRequester) {
-    return new Request(requestRepresentation, cancellationReasonRepresentation, item, newRequester, proxy, addressType, loan,
-      pickupServicePoint, changedPosition, previousPosition, changedStatus);
-  }
-
-  public Request withProxy(User newProxy) {
-    return new Request(requestRepresentation, cancellationReasonRepresentation, item, requester, newProxy, addressType, loan,
-      pickupServicePoint, changedPosition, previousPosition, changedStatus);
-  }
-
-  public Request withAddressType(AddressType addressType) {
-    return new Request(requestRepresentation, cancellationReasonRepresentation, item, requester, proxy, addressType, loan,
-      pickupServicePoint, changedPosition, previousPosition, changedStatus);
-  }
-
-  public Request withLoan(Loan newLoan) {
-    return new Request(requestRepresentation, cancellationReasonRepresentation, item, requester, proxy, addressType, newLoan,
-      pickupServicePoint, changedPosition, previousPosition, changedStatus);
-  }
-
-  public Request withPickupServicePoint(ServicePoint newPickupServicePoint) {
-    return new Request(requestRepresentation, cancellationReasonRepresentation, item, requester, proxy, addressType, loan,
-      newPickupServicePoint, changedPosition, previousPosition, changedStatus);
+    return new Request(tlrSettingsConfiguration, requestRepresentation,
+      cancellationReasonRepresentation, instance, newItem, requester, proxy, addressType,
+      loan == null ? null : loan.withItem(newItem), pickupServicePoint, changedPosition,
+      previousPosition, changedStatus);
   }
 
   @Override
@@ -222,18 +216,6 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return this;
   }
 
-  public Item getItem() {
-    return item;
-  }
-
-  public Loan getLoan() {
-    return loan;
-  }
-
-  public User getRequester() {
-    return requester;
-  }
-
   public JsonObject getRequesterFromRepresentation() {
     return requestRepresentation.getJsonObject("requester");
   }
@@ -246,20 +228,8 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return requestRepresentation.getString("requesterId", EMPTY);
   }
 
-  public User getProxy() {
-    return proxy;
-  }
-
-  public AddressType getAddressType() {
-    return addressType;
-  }
-
   public String getPickupServicePointId() {
     return requestRepresentation.getString("pickupServicePointId");
-  }
-
-  public ServicePoint getPickupServicePoint() {
-    return pickupServicePoint;
   }
 
   void changePosition(Integer newPosition) {
@@ -283,10 +253,6 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
 
   public boolean hasChangedPosition() {
     return changedPosition;
-  }
-
-  public Integer getPreviousPosition() {
-    return previousPosition;
   }
 
   ItemStatus checkedInItemStatus() {
@@ -335,7 +301,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Request copy() {
-    return withRequestJsonRepresentation(requestRepresentation.copy());
+    return withRequestRepresentation(requestRepresentation.copy());
   }
 
   public String getPatronComments() {
@@ -357,22 +323,5 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
 
   public boolean hasChangedStatus() {
     return changedStatus;
-  }
-
-  public boolean canBeFulfilledByItem(Item item) {
-    if (getRequestLevel() == RequestLevel.TITLE) {
-      String itemInstanceId = item.getInstanceId();
-      String requestInstanceId = this.getInstanceId();
-
-      return itemInstanceId != null && itemInstanceId.equals(requestInstanceId);
-    }
-    else if (getRequestLevel() == RequestLevel.ITEM) {
-      String itemId = item.getItemId();
-      String requestItemId = this.getItemId();
-
-      return itemId != null && itemId.equals(requestItemId);
-    }
-
-    return false;
   }
 }

@@ -3,6 +3,7 @@ package api.support.fixtures;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
 import api.support.builders.ConfigRecordBuilder;
+import api.support.builders.TlrSettingsConfigurationBuilder;
 import io.vertx.core.json.JsonObject;
 
 public class ConfigurationExample {
@@ -35,6 +36,22 @@ public class ConfigurationExample {
   public static ConfigRecordBuilder schedulerNoticesLimitConfiguration(String limit){
     return new ConfigRecordBuilder(DEFAULT_NOTIFICATION_SCHEDULER_MODULE_NAME,
       DEFAULT_NOTIFICATION_SCHEDULER_CONFIG_NAME, limit);
+  }
+
+  public static ConfigRecordBuilder tlrFeatureEnabled() {
+    return new ConfigRecordBuilder("SETTINGS", "TLR",
+      new TlrSettingsConfigurationBuilder()
+        .withTitleLevelRequestsFeatureEnabled(true)
+        .create()
+        .encodePrettily());
+  }
+
+  public static ConfigRecordBuilder tlrFeatureDisabled() {
+    return new ConfigRecordBuilder("SETTINGS", "TLR",
+      new TlrSettingsConfigurationBuilder()
+        .withTitleLevelRequestsFeatureEnabled(false)
+        .create()
+        .encodePrettily());
   }
 
   private static JsonObject combinedTimeZoneConfig(String timezone) {

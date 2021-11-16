@@ -23,6 +23,7 @@ import org.junit.jupiter.api.Test;
 import api.support.APITests;
 import api.support.builders.RequestBuilder;
 import api.support.http.IndividualResource;
+import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 
 class ClosedRequestTests extends APITests {
@@ -38,7 +39,7 @@ class ClosedRequestTests extends APITests {
     ZonedDateTime requestDate = ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC);
 
     final IndividualResource request =
-      requestsFixture.placeHoldShelfRequest(smallAngryPlanet, requester, requestDate);
+      requestsFixture.placeItemLevelHoldShelfRequest(smallAngryPlanet, requester, requestDate);
 
     ZonedDateTime cancelDate = ZonedDateTime.of(2018, 1, 14, 8, 30, 45, 0, UTC);
 
@@ -72,7 +73,7 @@ class ClosedRequestTests extends APITests {
     ZonedDateTime requestDate = ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC);
 
     final IndividualResource request =
-      requestsFixture.placeHoldShelfRequest(smallAngryPlanet,
+      requestsFixture.placeItemLevelHoldShelfRequest(smallAngryPlanet,
         usersFixture.steve(), requestDate);
 
     requestsFixture.cancelRequest(request);
@@ -101,7 +102,7 @@ class ClosedRequestTests extends APITests {
     ZonedDateTime requestDate = ZonedDateTime.of(2018, 6, 22, 10, 22, 54, 0, UTC);
 
     final IndividualResource request =
-      requestsFixture.placeHoldShelfRequest(smallAngryPlanet,
+      requestsFixture.placeItemLevelHoldShelfRequest(smallAngryPlanet,
         steve, requestDate);
 
     checkInFixture.checkInByBarcode(smallAngryPlanet);
@@ -124,8 +125,7 @@ class ClosedRequestTests extends APITests {
   @Test
   void canCancelARequestLeavingEmptyQueueAndItemStatusChange() {
 
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-
+    ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource jessica = usersFixture.jessica();
 
     // make requests for smallAngryPlanet
@@ -133,12 +133,13 @@ class ClosedRequestTests extends APITests {
       .page()
       .fulfilToHoldShelf()
       .withItemId(smallAngryPlanet.getId())
+      .withInstanceId(smallAngryPlanet.getInstanceId())
       .withRequestDate(ClockUtil.getZonedDateTime().minusHours(4))
       .withRequesterId(jessica.getId())
       .withPickupServicePointId(servicePointsFixture.cd1().getId()));
 
-    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
-    assertThat(smallAngryPlanet, hasItemStatus(PAGED));
+    IndividualResource pagedSmallAngryPlanet = itemsClient.get(smallAngryPlanet);
+    assertThat(pagedSmallAngryPlanet, hasItemStatus(PAGED));
 
     final IndividualResource courseReservesCancellationReason
       = cancellationReasonsFixture.courseReserves();
@@ -150,7 +151,7 @@ class ClosedRequestTests extends APITests {
           .withCancelledByUserId(jessica.getId())
           .withCancelledDate(ClockUtil.getZonedDateTime().minusHours(3)));
 
-    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
-    assertThat(smallAngryPlanet, hasItemStatus(AVAILABLE));
+    IndividualResource availableSmallAngryPlanet = itemsClient.get(smallAngryPlanet);
+    assertThat(availableSmallAngryPlanet, hasItemStatus(AVAILABLE));
   }
 }

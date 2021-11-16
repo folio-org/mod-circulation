@@ -295,6 +295,11 @@ public class ItemsFixture {
       .withCopyNumbers(copyNumbers);
   }
 
+  public InstanceBuilder instanceBasedUponSmallAngryPlanet() {
+    return InstanceExamples.basedUponSmallAngryPlanet(booksInstanceTypeId(),
+      getPersonalContributorNameTypeId());
+  }
+
   private UUID booksInstanceTypeId() {
 
     final JsonObject booksInstanceType = new JsonObject();

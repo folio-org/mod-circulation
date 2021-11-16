@@ -20,6 +20,7 @@ import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.override.BlockOverrides;
 
 import api.support.http.IndividualResource;
+import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -219,7 +220,13 @@ public class RequestBuilder extends JsonBuilder implements Builder {
   }
 
   public RequestBuilder forItem(IndividualResource item) {
-    return withItemId(item.getId());
+    RequestBuilder builder = withItemId(item.getId());
+
+    if (item instanceof ItemResource) {
+      return builder.withInstanceId(((ItemResource) item).getInstanceId());
+    }
+
+    return builder;
   }
 
   public RequestBuilder by(IndividualResource requester) {

@@ -61,25 +61,27 @@ public class UpdateRequestQueue {
     }
 
     final RequestQueue requestQueue = relatedRecords.getRequestQueue();
+    final Item item = relatedRecords.getLoan().getItem();
+    final String checkInServicePointId = relatedRecords.getLoan().getCheckInServicePointId();
 
-    return onCheckIn(requestQueue, relatedRecords.getLoan().getCheckInServicePointId())
+    return onCheckIn(requestQueue, item, checkInServicePointId)
       .thenApply(result -> result.map(relatedRecords::withRequestQueue));
   }
 
   public CompletableFuture<Result<RequestQueue>> onCheckIn(
-    RequestQueue requestQueue, String checkInServicePointId) {
+    RequestQueue requestQueue, Item item, String checkInServicePointId) {
 
     if (requestQueue.hasOutstandingFulfillableRequests()) {
-      return updateOutstandingRequestOnCheckIn(requestQueue, checkInServicePointId);
+      return updateOutstandingRequestOnCheckIn(requestQueue, item, checkInServicePointId);
     } else {
       return completedFuture(succeeded(requestQueue));
     }
   }
 
   private CompletableFuture<Result<RequestQueue>> updateOutstandingRequestOnCheckIn(
-    RequestQueue requestQueue, String checkInServicePointId) {
+    RequestQueue requestQueue, Item item, String checkInServicePointId) {
 
-    Request requestBeingFulfilled = requestQueue.getHighestPriorityFulfillableRequest();
+    Request requestBeingFulfilled = requestQueue.getHighestPriorityRequestFulfillableByItem(item);
 
     Request originalRequest = Request.from(requestBeingFulfilled.asJson());
 

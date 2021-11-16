@@ -48,6 +48,7 @@ import org.folio.circulation.domain.validation.RequestLoanValidator;
 import org.folio.circulation.domain.validation.ServicePointPickupLocationValidator;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
+import org.folio.circulation.infrastructure.storage.inventory.InstanceRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
@@ -261,6 +262,7 @@ public class RequestByInstanceIdResource extends Resource {
 
     final RequestFromRepresentationService requestFromRepresentationService =
       new RequestFromRepresentationService(
+        new InstanceRepository(clients),
         new ItemRepository(clients, true, false, false),
         RequestQueueRepository.using(clients),
         userRepository,

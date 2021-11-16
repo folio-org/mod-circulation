@@ -16,9 +16,21 @@ import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
 
 public class RequestServiceUtility {
+  private static final String INSTANCE_ID = "instanceId";
   private static final String ITEM_ID = "itemId";
 
   private RequestServiceUtility() { }
+
+  static Result<RequestAndRelatedRecords> refuseWhenInstanceDoesNotExist(
+    RequestAndRelatedRecords requestAndRelatedRecords) {
+
+    if (requestAndRelatedRecords.getRequest().getInstance().isNotFound()) {
+      return failedValidation("Instance does not exist", INSTANCE_ID,
+        requestAndRelatedRecords.getRequest().getInstanceId());
+    } else {
+      return succeeded(requestAndRelatedRecords);
+    }
+  }
 
   static Result<RequestAndRelatedRecords> refuseWhenItemDoesNotExist(
     RequestAndRelatedRecords requestAndRelatedRecords) {

@@ -36,6 +36,7 @@ import api.support.fixtures.CheckInFixture;
 import api.support.fixtures.CheckOutFixture;
 import api.support.fixtures.CirculationRulesFixture;
 import api.support.fixtures.ClaimItemReturnedFixture;
+import api.support.fixtures.ConfigurationsFixture;
 import api.support.fixtures.DeclareLostFixtures;
 import api.support.fixtures.EndPatronSessionClient;
 import api.support.fixtures.EventSubscribersFixture;
@@ -204,6 +205,9 @@ public abstract class APITests {
 
   protected final AddressTypesFixture addressTypesFixture
     = new AddressTypesFixture(ResourceClient.forAddressTypes());
+
+  protected final ConfigurationsFixture configurationsFixture =
+    new ConfigurationsFixture(configClient);
 
   protected final PatronGroupsFixture patronGroupsFixture
     = new PatronGroupsFixture(patronGroupsClient);

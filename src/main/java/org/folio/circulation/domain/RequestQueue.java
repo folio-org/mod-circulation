@@ -38,9 +38,9 @@ public class RequestQueue {
       .collect(Collectors.toList()));
   }
 
-  ItemStatus checkedInItemStatus() {
+  ItemStatus checkedInItemStatus(Item item) {
     return hasOutstandingFulfillableRequests()
-      ? getHighestPriorityFulfillableRequest().checkedInItemStatus()
+      ? getHighestPriorityRequestFulfillableByItem(item).checkedInItemStatus()
       : AVAILABLE;
   }
 
@@ -50,6 +50,30 @@ public class RequestQueue {
 
   Request getHighestPriorityFulfillableRequest() {
     return fulfillableRequests().get(0);
+  }
+
+  Request getHighestPriorityRequestFulfillableByItem(Item item) {
+    return fulfillableRequests().stream()
+      .filter(request -> requestIsFulfillableByItem(request, item))
+      .findFirst()
+      .orElse(null);
+  }
+
+  private boolean requestIsFulfillableByItem(Request request, Item item) {
+    if (request.getRequestLevel() == RequestLevel.TITLE) {
+      String itemInstanceId = item.getInstanceId();
+      String requestInstanceId = request.getInstanceId();
+
+      return itemInstanceId != null && itemInstanceId.equals(requestInstanceId);
+    }
+    else if (request.getRequestLevel() == RequestLevel.ITEM) {
+      String itemId = item.getItemId();
+      String requestItemId = request.getItemId();
+
+      return itemId != null && itemId.equals(requestItemId);
+    }
+
+    return false;
   }
 
   boolean containsRequestOfType(RequestType type) {

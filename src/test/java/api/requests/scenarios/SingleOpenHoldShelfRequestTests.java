@@ -54,7 +54,7 @@ class SingleOpenHoldShelfRequestTests extends APITests {
 
     final var loan = checkOutResource.getJson();
 
-    IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
+    IndividualResource requestByJessica = requestsFixture.placeItemLevelHoldShelfRequest(
       smallAngryPlanet, jessica, ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC));
 
     clearPublishedEvents();
@@ -94,7 +94,7 @@ class SingleOpenHoldShelfRequestTests extends APITests {
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
-    IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
+    IndividualResource requestByJessica = requestsFixture.placeItemLevelHoldShelfRequest(
       smallAngryPlanet, jessica, ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC));
 
     checkInFixture.checkInByBarcode(smallAngryPlanet);
@@ -138,7 +138,7 @@ class SingleOpenHoldShelfRequestTests extends APITests {
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
-    IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
+    IndividualResource requestByJessica = requestsFixture.placeItemLevelHoldShelfRequest(
       smallAngryPlanet, jessica, ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC));
 
     checkInFixture.checkInByBarcode(smallAngryPlanet);
@@ -170,7 +170,7 @@ class SingleOpenHoldShelfRequestTests extends APITests {
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
-    requestsFixture.placeHoldShelfRequest(smallAngryPlanet, jessica,
+    requestsFixture.placeItemLevelHoldShelfRequest(smallAngryPlanet, jessica,
       ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC));
 
     checkInFixture.checkInByBarcode(smallAngryPlanet);
@@ -193,7 +193,7 @@ class SingleOpenHoldShelfRequestTests extends APITests {
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
-    IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
+    IndividualResource requestByJessica = requestsFixture.placeItemLevelHoldShelfRequest(
       smallAngryPlanet, jessica, ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC));
 
     checkInFixture.checkInByBarcode(smallAngryPlanet);

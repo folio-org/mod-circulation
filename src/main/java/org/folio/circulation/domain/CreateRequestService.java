@@ -1,8 +1,12 @@
 package org.folio.circulation.domain;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.RequestLevel.TITLE;
 import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_CREATED;
 import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_CREATED_THROUGH_OVERRIDE;
 import static org.folio.circulation.domain.representations.logs.RequestUpdateLogEventMapper.mapToRequestLogEventJson;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INSTANCE_DOES_NOT_EXIST;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_INSTANCE_ID;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_ITEM_ID;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_USER_OR_PATRON_GROUP_ID;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ITEM_ALREADY_LOANED_TO_SAME_USER;
@@ -68,6 +72,7 @@ public class CreateRequestService {
       .thenApply(r -> errorHandler.handleValidationResult(r, automatedBlocksValidator.getErrorType(), result))
       .thenCompose(r -> r.after(manualBlocksValidator::validate))
       .thenApply(r -> errorHandler.handleValidationResult(r, manualBlocksValidator.getErrorType(), result))
+      .thenComposeAsync(r -> r.after(when(this::shouldCheckInstance, this::checkInstance, this::doNothing)))
       .thenComposeAsync(r -> r.after(when(this::shouldCheckItem, this::checkItem, this::doNothing)))
       .thenComposeAsync(r -> r.after(when(this::shouldCheckPolicy, this::checkPolicy, this::doNothing)))
       .thenComposeAsync(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
@@ -82,9 +87,24 @@ public class CreateRequestService {
         return r.next(requestNoticeSender::sendNoticeOnRequestCreated);
       });
   }
+  private CompletableFuture<Result<RequestAndRelatedRecords>> checkInstance(
+    RequestAndRelatedRecords records) {
+
+    return completedFuture(succeeded(records)
+      .next(RequestServiceUtility::refuseWhenInstanceDoesNotExist)
+      .mapFailure(err ->
+        errorHandler.handleValidationError(err, INSTANCE_DOES_NOT_EXIST, records)));
+  }
 
   private CompletableFuture<Result<RequestAndRelatedRecords>> checkItem(
     RequestAndRelatedRecords records) {
+
+    boolean tlrFeatureEnabled = records.getRequest().getTlrSettingsConfiguration()
+      .isTitleLevelRequestsFeatureEnabled();
+
+    if (tlrFeatureEnabled && records.getRequest().getRequestLevel() == TITLE) {
+      return completedFuture(succeeded(records));
+    }
 
     return succeeded(records)
       .next(RequestServiceUtility::refuseWhenItemDoesNotExist)
@@ -98,9 +118,20 @@ public class CreateRequestService {
   private CompletableFuture<Result<RequestAndRelatedRecords>> checkPolicy(
     RequestAndRelatedRecords records) {
 
+    boolean tlrFeatureEnabled = records.getRequest().getTlrSettingsConfiguration()
+      .isTitleLevelRequestsFeatureEnabled();
+
+    if (tlrFeatureEnabled && records.getRequest().getRequestLevel() == TITLE) {
+      return completedFuture(succeeded(records));
+    }
+
     return repositories.getRequestPolicyRepository().lookupRequestPolicy(records)
       .thenApply(r -> r.next(RequestServiceUtility::refuseWhenRequestCannotBeFulfilled)
         .mapFailure(err -> errorHandler.handleValidationError(err, REQUESTING_DISALLOWED_BY_POLICY, r)));
+  }
+
+  private CompletableFuture<Result<Boolean>> shouldCheckInstance(RequestAndRelatedRecords records) {
+    return ofAsync(() -> errorHandler.hasNone(INVALID_INSTANCE_ID));
   }
 
   private CompletableFuture<Result<Boolean>> shouldCheckItem(RequestAndRelatedRecords records) {

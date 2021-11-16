@@ -458,7 +458,6 @@
   },
   "additionalProperties": false,
   "required": [
-    "itemId",
     "instanceId",
     "requesterId",
     "requestType",
