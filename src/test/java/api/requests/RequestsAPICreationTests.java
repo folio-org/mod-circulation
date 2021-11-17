@@ -82,6 +82,7 @@ import org.junit.jupiter.params.provider.EmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import api.support.APITests;
+import api.support.TlrFeatureStatus;
 import api.support.builders.Address;
 import api.support.builders.HoldingBuilder;
 import api.support.builders.ItemBuilder;
@@ -354,22 +355,23 @@ public class RequestsAPICreationTests extends APITests {
 
   @ParameterizedTest
   @CsvSource({
-    "false, Page, Item",
-    "false, Hold, Item",
-    "false, Recall, Item",
-    "true, Page, Item",
-    "true, Page, Title",
-    "true, Hold, Item",
-    "true, Hold, Title",
-    "true, Recall, Item",
-    "true, Recall, Title"
+    "NOT_CONFIGURED, Page, Item",
+    "NOT_CONFIGURED, Hold, Item",
+    "NOT_CONFIGURED, Recall, Item",
+    "DISABLED, Page, Item",
+    "DISABLED, Hold, Item",
+    "DISABLED, Recall, Item",
+    "ENABLED, Page, Item",
+    "ENABLED, Page, Title",
+    "ENABLED, Hold, Item",
+    "ENABLED, Hold, Title",
+    "ENABLED, Recall, Item",
+    "ENABLED, Recall, Title"
   })
-  void cannotCreateTitleLevelRequestForUnknownInstance(String tlrFeatureEnabledString,
+  void cannotCreateTitleLevelRequestForUnknownInstance(String tlrFeatureStatus,
     String requestType, String requestLevel) {
 
-    if (Boolean.parseBoolean(tlrFeatureEnabledString)) {
-      configurationsFixture.enableTlrFeature();
-    }
+    reconfigureTlrFeature(TlrFeatureStatus.valueOf(tlrFeatureStatus));
 
     UUID patronId = usersFixture.charlotte().getId();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -388,12 +390,15 @@ public class RequestsAPICreationTests extends APITests {
 
   @ParameterizedTest
   @CsvSource({
-    "false, Page",
-    "false, Hold",
-    "false, Recall",
-    "true, Page",
-    "true, Hold",
-    "true, Recall"
+    "NOT_CONFIGURED, Page",
+    "NOT_CONFIGURED, Hold",
+    "NOT_CONFIGURED, Recall",
+    "DISABLED, Page",
+    "DISABLED, Hold",
+    "DISABLED, Recall",
+    "ENABLED, Page",
+    "ENABLED, Hold",
+    "ENABLED, Recall"
   })
   void cannotCreateRequestForUnknownItem(String tlrFeatureEnabledString, String requestType) {
     if (Boolean.parseBoolean(tlrFeatureEnabledString)) {
@@ -1302,14 +1307,14 @@ public class RequestsAPICreationTests extends APITests {
   @Test
   void canCreateRecallRequestWhenItemIsPaged() {
     final IndividualResource requestPickupServicePoint = servicePointsFixture.cd1();
-    final IndividualResource smallAngryPlanet = setupPagedItem(requestPickupServicePoint,
+    final ItemResource smallAngryPlanet = setupPagedItem(requestPickupServicePoint,
       itemsFixture, requestsClient, usersFixture);
     final IndividualResource pagedItem = itemsClient.get(smallAngryPlanet);
 
     final Response recallResponse = requestsClient.attemptCreate(new RequestBuilder()
       .recall()
       .forItem(pagedItem)
-      .withInstanceId(((ItemResource) smallAngryPlanet).getInstanceId())
+      .withInstanceId(smallAngryPlanet.getInstanceId())
       .withPickupServicePointId(requestPickupServicePoint.getId())
       .by(usersFixture.jessica()));
 
@@ -2538,10 +2543,10 @@ public class RequestsAPICreationTests extends APITests {
       .withTags(new RequestBuilder.Tags(asList("new", "important")));
   }
 
-  public static IndividualResource setupPagedItem(IndividualResource requestPickupServicePoint,
+  public static ItemResource setupPagedItem(IndividualResource requestPickupServicePoint,
     ItemsFixture itemsFixture, ResourceClient requestClient, UsersFixture usersFixture) {
 
-    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
     final IndividualResource pagedRequest = requestClient.create(new RequestBuilder()
       .page()

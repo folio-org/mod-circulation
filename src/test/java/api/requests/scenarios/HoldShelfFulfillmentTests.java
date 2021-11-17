@@ -36,6 +36,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import api.support.APITests;
+import api.support.TlrFeatureStatus;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.InstanceBuilder;
 import api.support.http.IndividualResource;
@@ -87,10 +88,10 @@ class HoldShelfFulfillmentTests extends APITests {
 
     final IndividualResource pickupServicePoint = servicePointsFixture.cd1();
 
-    List<IndividualResource> items = createMultipleItemsForTheSameInstance(3);
-    IndividualResource smallAngryPlanet1 = items.get(0);
-    IndividualResource smallAngryPlanet2 = items.get(1);
-    UUID instanceId = ((ItemResource) smallAngryPlanet1).getInstanceId();
+    List<ItemResource> items = createMultipleItemsForTheSameInstance(3);
+    ItemResource smallAngryPlanet1 = items.get(0);
+    ItemResource smallAngryPlanet2 = items.get(1);
+    UUID instanceId = smallAngryPlanet1.getInstanceId();
 
     IndividualResource james = usersFixture.james();
     IndividualResource steve = usersFixture.steve();
@@ -143,15 +144,15 @@ class HoldShelfFulfillmentTests extends APITests {
 
       // Item #1 should be awaiting pickup and shouldn't have a destination service point
       // because it was checked in at a pickup service point
-      smallAngryPlanet1 = itemsClient.get(smallAngryPlanet1.getId());
-      assertThat(smallAngryPlanet1, hasItemStatus(AWAITING_PICKUP));
+      IndividualResource updatedSmallAngryPlanet1 = itemsClient.get(smallAngryPlanet1.getId());
+      assertThat(updatedSmallAngryPlanet1, hasItemStatus(AWAITING_PICKUP));
       assertThat("awaiting pickup item should not have a destination",
-        smallAngryPlanet1.getJson().containsKey("inTransitDestinationServicePointId"),
+        updatedSmallAngryPlanet1.getJson().containsKey("inTransitDestinationServicePointId"),
         is(false));
 
       // Item #2 should still be checked out
-      smallAngryPlanet2 = itemsClient.get(smallAngryPlanet2.getId());
-      assertThat(smallAngryPlanet2, hasItemStatus(CHECKED_OUT));
+      IndividualResource updatedSmallAngryPlanet2 = itemsClient.get(smallAngryPlanet2.getId());
+      assertThat(updatedSmallAngryPlanet2, hasItemStatus(CHECKED_OUT));
     }
 
     if (checkedInItemNumber == 2) {
@@ -174,15 +175,15 @@ class HoldShelfFulfillmentTests extends APITests {
       assertThat(updatedRequestByCharlotte.getJson(), hasPosition(3));
 
       // Item #1 should still be checked out
-      smallAngryPlanet1 = itemsClient.get(smallAngryPlanet1.getId());
-      assertThat(smallAngryPlanet1, hasItemStatus(CHECKED_OUT));
+      IndividualResource updatedSmallAngryPlanet1 = itemsClient.get(smallAngryPlanet1.getId());
+      assertThat(updatedSmallAngryPlanet1, hasItemStatus(CHECKED_OUT));
 
       // Item #2 should be awaiting pickup and shouldn't have a destination service point
       // because it was checked in at a pickup service point
-      smallAngryPlanet2 = itemsClient.get(smallAngryPlanet2.getId());
-      assertThat(smallAngryPlanet2, hasItemStatus(AWAITING_PICKUP));
+      IndividualResource updatedSmallAngryPlanet2 = itemsClient.get(smallAngryPlanet2.getId());
+      assertThat(updatedSmallAngryPlanet2, hasItemStatus(AWAITING_PICKUP));
       assertThat("awaiting pickup item should not have a destination",
-        smallAngryPlanet2.getJson().containsKey("inTransitDestinationServicePointId"),
+        updatedSmallAngryPlanet2.getJson().containsKey("inTransitDestinationServicePointId"),
         is(false));
     }
   }
@@ -270,10 +271,10 @@ class HoldShelfFulfillmentTests extends APITests {
     final IndividualResource pickupServicePoint = servicePointsFixture.cd1();
     final IndividualResource checkInServicePoint = servicePointsFixture.cd2();
 
-    List<IndividualResource> items = createMultipleItemsForTheSameInstance(2);
-    IndividualResource smallAngryPlanet1 = items.get(0);
-    IndividualResource smallAngryPlanet2 = items.get(1);
-    UUID instanceId = ((ItemResource) smallAngryPlanet1).getInstanceId();
+    List<ItemResource> items = createMultipleItemsForTheSameInstance(2);
+    ItemResource smallAngryPlanet1 = items.get(0);
+    ItemResource smallAngryPlanet2 = items.get(1);
+    UUID instanceId = smallAngryPlanet1.getInstanceId();
 
     IndividualResource james = usersFixture.james();
     IndividualResource jessica = usersFixture.jessica();
@@ -295,16 +296,12 @@ class HoldShelfFulfillmentTests extends APITests {
 
     Response request = requestsClient.getById(requestByJessica.getId());
     assertThat(request.getJson(), isTitleLevel());
-
     assertThat(request.getJson().getString("status"), is(OPEN_IN_TRANSIT));
 
-    smallAngryPlanet2 = itemsClient.get(smallAngryPlanet2);
-
-    assertThat(smallAngryPlanet2, hasItemStatus(IN_TRANSIT));
-
-    final String destinationServicePoint = smallAngryPlanet2.getJson()
+    IndividualResource updatedSmallAngryPlanet2 = itemsClient.get(smallAngryPlanet2);
+    assertThat(updatedSmallAngryPlanet2, hasItemStatus(IN_TRANSIT));
+    final String destinationServicePoint = updatedSmallAngryPlanet2.getJson()
       .getString("inTransitDestinationServicePointId");
-
     assertThat("in transit item should have a destination",
       destinationServicePoint, is(pickupServicePoint.getId()));
   }
@@ -393,10 +390,10 @@ class HoldShelfFulfillmentTests extends APITests {
     final IndividualResource pickupServicePoint = servicePointsFixture.cd1();
     final IndividualResource checkInServicePoint = servicePointsFixture.cd2();
 
-    List<IndividualResource> items = createMultipleItemsForTheSameInstance(2);
-    IndividualResource smallAngryPlanet1 = items.get(0);
-    IndividualResource smallAngryPlanet2 = items.get(1);
-    UUID instanceId = ((ItemResource) smallAngryPlanet1).getInstanceId();
+    List<ItemResource> items = createMultipleItemsForTheSameInstance(2);
+    ItemResource smallAngryPlanet1 = items.get(0);
+    ItemResource smallAngryPlanet2 = items.get(1);
+    UUID instanceId = smallAngryPlanet1.getInstanceId();
 
     IndividualResource james = usersFixture.james();
     IndividualResource jessica = usersFixture.jessica();
@@ -421,15 +418,12 @@ class HoldShelfFulfillmentTests extends APITests {
 
     Response request = requestsClient.getById(requestByJessica.getId());
     assertThat(request.getJson(), isTitleLevel());
-
     assertThat(request.getJson().getString("status"), is(OPEN_AWAITING_PICKUP));
 
-    smallAngryPlanet2 = itemsClient.get(smallAngryPlanet2);
-
-    assertThat(smallAngryPlanet2, hasItemStatus(AWAITING_PICKUP));
-
+    IndividualResource updatedSmallAngryPlanet2 = itemsClient.get(smallAngryPlanet2);
+    assertThat(updatedSmallAngryPlanet2, hasItemStatus(AWAITING_PICKUP));
     assertThat("awaiting pickup item should not have a destination",
-      smallAngryPlanet2.getJson().containsKey("inTransitDestinationServicePointId"),
+      updatedSmallAngryPlanet2.getJson().containsKey("inTransitDestinationServicePointId"),
       is(false));
   }
 
@@ -521,7 +515,7 @@ class HoldShelfFulfillmentTests extends APITests {
     // TODO: Should be completed in scope of CIRC-1297
   }
 
-  private List<IndividualResource> createMultipleItemsForTheSameInstance(int size) {
+  private List<ItemResource> createMultipleItemsForTheSameInstance(int size) {
     UUID instanceId = UUID.randomUUID();
     InstanceBuilder sapInstanceBuilder = itemsFixture.instanceBasedUponSmallAngryPlanet()
       .withId(instanceId);
@@ -532,23 +526,5 @@ class HoldShelfFulfillmentTests extends APITests {
         instanceBuilder -> sapInstanceBuilder,
         itemBuilder -> itemBuilder.withBarcode("0000" + num)))
       .collect(Collectors.toList());
-  }
-
-  private enum TlrFeatureStatus {
-    ENABLED,
-    DISABLED,
-    NOT_CONFIGURED
-  }
-
-  private void reconfigureTlrFeature(TlrFeatureStatus tlrFeatureStatus) {
-    if (tlrFeatureStatus == TlrFeatureStatus.ENABLED) {
-      configurationsFixture.enableTlrFeature();
-    }
-    else if (tlrFeatureStatus == TlrFeatureStatus.DISABLED) {
-      configurationsFixture.disableTlrFeature();
-    }
-    else {
-      configurationsFixture.deleteTlrFeatureConfig();
-    }
   }
 }

@@ -24,7 +24,7 @@ class SingleClosedRequestTests extends APITests {
   @Test
   void closedRequestDoesNotStopCheckOutToRequester() {
 
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
     IndividualResource jessica = usersFixture.jessica();
 
@@ -39,7 +39,7 @@ class SingleClosedRequestTests extends APITests {
       .withRequestDate(ZonedDateTime.of(2018, 1, 10, 15, 34, 21, 0, UTC))
       .fulfilled() //TODO: Replace with closed cancelled when introduced
       .withItemId(smallAngryPlanet.getId())
-      .withInstanceId(((ItemResource) smallAngryPlanet).getInstanceId())
+      .withInstanceId(smallAngryPlanet.getInstanceId())
       .withRequesterId(jessica.getId()));
 
     checkInFixture.checkInByBarcode(smallAngryPlanet);
@@ -52,9 +52,9 @@ class SingleClosedRequestTests extends APITests {
 
     assertThat(request.getJson().getString("status"), is(CLOSED_FILLED));
 
-    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
+    IndividualResource checkedOutSmallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
-    assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
+    assertThat(checkedOutSmallAngryPlanet, hasItemStatus(CHECKED_OUT));
   }
 
   @Test
