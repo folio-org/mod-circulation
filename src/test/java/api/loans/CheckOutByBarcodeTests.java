@@ -816,7 +816,7 @@ class CheckOutByBarcodeTests extends APITests {
 
   @Test
   void canCheckOutOnOrderItemWithRequest() {
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
+    ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
       item -> item
         .onOrder()
         .withEnumeration("v.70:no.1-6")
@@ -827,7 +827,7 @@ class CheckOutByBarcodeTests extends APITests {
 
     requestsFixture.place(new RequestBuilder()
       .withItemId(smallAngryPlanet.getId())
-      .withInstanceId(((ItemResource) smallAngryPlanet).getInstanceId())
+      .withInstanceId(smallAngryPlanet.getInstanceId())
       .withRequesterId(jessica.getId())
       .withPickupServicePoint(servicePointsFixture.cd1()));
 
@@ -859,9 +859,9 @@ class CheckOutByBarcodeTests extends APITests {
     assertThat("has item volume",
       loan.getJsonObject("item").getString("volume"), is("testVolume"));
 
-    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
+    IndividualResource checkedOutSmallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
-    assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
+    assertThat(checkedOutSmallAngryPlanet, hasItemStatus(CHECKED_OUT));
   }
 
   @Test
@@ -911,7 +911,7 @@ class CheckOutByBarcodeTests extends APITests {
 
   @Test
   void canCheckOutInProcessItemWithRequest() {
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
+    ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
       item -> item
         .inProcess()
         .withEnumeration("v.70:no.1-6")
@@ -922,7 +922,7 @@ class CheckOutByBarcodeTests extends APITests {
 
     requestsFixture.place(new RequestBuilder()
       .withItemId(smallAngryPlanet.getId())
-      .withInstanceId(((ItemResource) smallAngryPlanet).getInstanceId())
+      .withInstanceId(smallAngryPlanet.getInstanceId())
       .withRequesterId(jessica.getId())
       .withPickupServicePoint(servicePointsFixture.cd1()));
 
@@ -954,9 +954,9 @@ class CheckOutByBarcodeTests extends APITests {
     assertThat("has item volume",
       loan.getJsonObject("item").getString("volume"), is("testVolume"));
 
-    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
+    IndividualResource checkedOutSmallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
-    assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
+    assertThat(checkedOutSmallAngryPlanet, hasItemStatus(CHECKED_OUT));
   }
 
   @Test
