@@ -48,6 +48,14 @@ public class ConfigurationExample {
         .encodePrettily());
   }
 
+  public static ConfigRecordBuilder tlrFeatureDisabled() {
+    return new ConfigRecordBuilder("SETTINGS", "TLR",
+      new TlrSettingsConfigurationBuilder()
+        .withTitleLevelRequestsFeatureEnabled(false)
+        .create()
+        .encodePrettily());
+  }
+
   public static ConfigRecordBuilder tlrFeatureEnabledWithNoticesConfiguration(
     UUID confirmationTemplateId, UUID cancellationTemplateId, UUID expirationTemplateId) {
 
@@ -57,14 +65,6 @@ public class ConfigurationExample {
         .withConfirmationPatronNoticeTemplateId(confirmationTemplateId)
         .withCancellationPatronNoticeTemplateId(cancellationTemplateId)
         .withExpirationPatronNoticeTemplateId(expirationTemplateId)
-        .create()
-        .encodePrettily());
-  }
-
-  public static ConfigRecordBuilder tlrFeatureDisabled() {
-    return new ConfigRecordBuilder("SETTINGS", "TLR",
-      new TlrSettingsConfigurationBuilder()
-        .withTitleLevelRequestsFeatureEnabled(false)
         .create()
         .encodePrettily());
   }
