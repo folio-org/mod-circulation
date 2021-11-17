@@ -77,6 +77,7 @@ import org.hamcrest.Matcher;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -125,7 +126,7 @@ public class RequestsAPICreationTests extends APITests {
   @AfterEach
   public void afterEach() {
     mockClockManagerToReturnDefaultDateTime();
-    configurationsFixture.disableTlrFeature();
+    configurationsFixture.deleteTlrFeatureConfig();
   }
 
   @Test
@@ -351,17 +352,31 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(tagsRepresentation.getJsonArray("tagList"), contains("new", "important"));
   }
 
-  @Test
-  void cannotCreateTitleLevelRequestForUnknownInstance() {
-    configurationsFixture.enableTlrFeature();
+  @ParameterizedTest
+  @CsvSource({
+    "false, Page, Item",
+    "false, Hold, Item",
+    "false, Recall, Item",
+    "true, Page, Item",
+    "true, Page, Title",
+    "true, Hold, Item",
+    "true, Hold, Title",
+    "true, Recall, Item",
+    "true, Recall, Title"
+  })
+  void cannotCreateTitleLevelRequestForUnknownInstance(String tlrFeatureEnabledString,
+    String requestType, String requestLevel) {
+
+    if (Boolean.parseBoolean(tlrFeatureEnabledString)) {
+      configurationsFixture.enableTlrFeature();
+    }
 
     UUID patronId = usersFixture.charlotte().getId();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    //Check RECALL -- should give the same response when placing other types of request.
     Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
-      .recall()
-      .titleRequestLevel()
+      .withRequestType(requestType)
+      .withRequestLevel(requestLevel)
       .withItemId(null)
       .withInstanceId(UUID.randomUUID())
       .withPickupServicePointId(pickupServicePointId)
@@ -371,16 +386,27 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(postResponse.getJson(), hasErrorWith(hasMessage("Instance does not exist")));
   }
 
-  @Test
-  void cannotCreateRequestForUnknownItem() {
+  @ParameterizedTest
+  @CsvSource({
+    "false, Page",
+    "false, Hold",
+    "false, Recall",
+    "true, Page",
+    "true, Hold",
+    "true, Recall"
+  })
+  void cannotCreateRequestForUnknownItem(String tlrFeatureEnabledString, String requestType) {
+    if (Boolean.parseBoolean(tlrFeatureEnabledString)) {
+      configurationsFixture.enableTlrFeature();
+    }
+
     IndividualResource instance = instancesFixture.basedUponDunkirk();
     UUID itemId = UUID.randomUUID();
     UUID patronId = usersFixture.charlotte().getId();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    //Check RECALL -- should give the same response when placing other types of request.
     Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
-      .recall()
+      .withRequestType(requestType)
       .withInstanceId(instance.getId())
       .withItemId(itemId)
       .withPickupServicePointId(pickupServicePointId)
@@ -388,6 +414,26 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(postResponse.getJson(), hasErrorWith(hasMessage("Item does not exist")));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"Page", "Hold", "Recall"})
+  void cannotCreateTitleLevelRequestWhenTlrDisabled(String requestType) {
+    UUID patronId = usersFixture.charlotte().getId();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+
+    Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
+      .withRequestType(requestType)
+      .titleRequestLevel()
+      .withItemId(null)
+      .withInstanceId(UUID.randomUUID())
+      .withPickupServicePointId(pickupServicePointId)
+      .withRequesterId(patronId));
+
+    assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(postResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("requestLevel must be one of the following: \"Item\""),
+      hasParameter("requestLevel", "Title"))));
   }
 
   @Test
@@ -418,13 +464,15 @@ public class RequestsAPICreationTests extends APITests {
     Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
       .recall()
       .withItemId(item.getId())
-      .titleRequestLevel()
+      .withRequestLevel("invalid")
       .withInstanceId(instanceId)
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(patronId));
 
-    assertThat(postResponse, hasStatus(HTTP_BAD_REQUEST));
-    assertThat(postResponse.getBody(), is("requestLevel must be one of the following: \"Item\""));
+    assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(postResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("requestLevel must be one of the following: \"Item\""),
+      hasParameter("requestLevel", "invalid"))));
   }
 
   @Test
@@ -465,9 +513,10 @@ public class RequestsAPICreationTests extends APITests {
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(patronId));
 
-    assertThat(postResponse, hasStatus(HTTP_BAD_REQUEST));
-    assertThat(postResponse.getBody(), is("requestLevel must be one of the following: " +
-      "\"Item\", \"Title\""));
+    assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(postResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("requestLevel must be one of the following: \"Item\", \"Title\""),
+      hasParameter("requestLevel", "invalid"))));
   }
 
   @Test

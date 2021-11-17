@@ -28,15 +28,14 @@ import api.support.http.ItemResource;
 class PageRequestWorkflowTests extends APITests {
   @Test
   void canBeFulfilledWithoutPriorCheckIn() {
-
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource jessica = usersFixture.jessica();
 
     IndividualResource requestByJessica = requestsFixture.place(new RequestBuilder()
       .page()
       .fulfilToHoldShelf()
       .withItemId(smallAngryPlanet.getId())
-      .withInstanceId(((ItemResource) smallAngryPlanet).getInstanceId())
+      .withInstanceId(smallAngryPlanet.getInstanceId())
       .withRequestDate(ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC))
       .withRequesterId(jessica.getId())
       .withPickupServicePointId(servicePointsFixture.cd1().getId()));
@@ -44,14 +43,11 @@ class PageRequestWorkflowTests extends APITests {
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica);
 
     Response getByIdResponse = requestsClient.getById(requestByJessica.getId());
-
     assertThat(getByIdResponse, hasStatus(HTTP_OK));
-
     assertThat(getByIdResponse.getJson().getString("status"), is(CLOSED_FILLED));
 
-    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
-
-    assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
+    IndividualResource checkedOutSmallAngryPlanet = itemsClient.get(smallAngryPlanet);
+    assertThat(checkedOutSmallAngryPlanet, hasItemStatus(CHECKED_OUT));
   }
 
   @Test

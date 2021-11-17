@@ -83,7 +83,7 @@ public class RequestsFixture {
       .withPickupServicePointId(servicePointsFixture.cd1().getId()));
   }
 
-  public IndividualResource placeDeliveryRequest(IndividualResource item,
+  public IndividualResource placeItemLevelDeliveryRequest(IndividualResource item,
       IndividualResource by, ZonedDateTime on) {
 
     return place(new RequestBuilder()
@@ -122,7 +122,7 @@ public class RequestsFixture {
       .withPickupServicePointId(pickupServicePointId));
   }
 
-  public IndividualResource placeHoldShelfRequest(IndividualResource item,
+  public IndividualResource placeItemLevelHoldShelfRequest(IndividualResource item,
       IndividualResource by, ZonedDateTime on, UUID pickupServicePointId, String type) {
 
     return place(new RequestBuilder()
@@ -136,7 +136,7 @@ public class RequestsFixture {
       .withPickupServicePointId(pickupServicePointId));
   }
 
-  public IndividualResource placeHoldShelfRequest(IndividualResource item,
+  public IndividualResource placeItemLevelHoldShelfRequest(IndividualResource item,
       IndividualResource by, ZonedDateTime on, String type) {
 
     return place(new RequestBuilder()
@@ -148,7 +148,7 @@ public class RequestsFixture {
       .withRequesterId(by.getId()));
   }
 
-  public Response attemptPlaceHoldShelfRequest(IndividualResource item,
+  public Response attemptPlaceItemLevelHoldShelfRequest(IndividualResource item,
     IndividualResource by, ZonedDateTime on, UUID pickupServicePointId, String type) {
 
     return attemptPlace(new RequestBuilder()

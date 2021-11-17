@@ -137,9 +137,7 @@ class CheckInProcessAdapter {
       return requestQueueRepository.getByItemId(context.getItem().getItemId());
     }
     else {
-      return requestQueueRepository.getByInstanceId(context.getItem().getInstanceId())
-        .thenApply(r -> r.map(queue ->
-          queue.filter(request -> request.canBeFulfilledByItem(context.getItem()))));
+      return requestQueueRepository.getByInstanceId(context.getItem().getInstanceId());
     }
   }
 
@@ -152,8 +150,11 @@ class CheckInProcessAdapter {
   CompletableFuture<Result<RequestQueue>> updateRequestQueue(
     CheckInContext context) {
 
-    return requestQueueUpdate.onCheckIn(context.getRequestQueue(),
-      context.getCheckInServicePointId().toString());
+    final RequestQueue requestQueue = context.getRequestQueue();
+    final Item item = context.getItem();
+    final String checkInServicePointId = context.getCheckInServicePointId().toString();
+
+    return requestQueueUpdate.onCheckIn(requestQueue, item, checkInServicePointId);
   }
 
   CompletableFuture<Result<Loan>> updateLoan(CheckInContext context) {

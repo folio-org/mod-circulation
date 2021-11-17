@@ -34,6 +34,11 @@ public final class RequestMatchers {
     return hasLevel("Title");
   }
 
+  public static Matcher<JsonObject> hasPosition(int position) {
+    return describedAs("Request with position [%0]",
+      hasJsonPath("position", position), position);
+  }
+
   private static Matcher<JsonObject> hasStatus(String status) {
     return describedAs("Request with status [%0]",
       hasJsonPath("status", status), status);
