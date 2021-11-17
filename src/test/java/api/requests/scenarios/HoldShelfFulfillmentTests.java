@@ -32,6 +32,7 @@ import org.folio.circulation.support.utils.ClockUtil;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import api.support.APITests;
@@ -47,8 +48,8 @@ class HoldShelfFulfillmentTests extends APITests {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"enabled", "disabled", "not-configured"})
-  void itemIsReadyForPickUpWhenCheckedInAtPickupServicePoint(String tlrFeatureStatus) {
+  @EnumSource(TlrFeatureStatus.class)
+  void itemIsReadyForPickUpWhenCheckedInAtPickupServicePoint(TlrFeatureStatus tlrFeatureStatus) {
     reconfigureTlrFeature(tlrFeatureStatus);
 
     final IndividualResource pickupServicePoint = servicePointsFixture.cd1();
@@ -187,8 +188,8 @@ class HoldShelfFulfillmentTests extends APITests {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"enabled", "disabled", "not-configured"})
-  void canBeCheckedOutToRequestingPatronWhenReadyForPickup(String tlrFeatureStatus) {
+  @EnumSource(TlrFeatureStatus.class)
+  void canBeCheckedOutToRequestingPatronWhenReadyForPickup(TlrFeatureStatus tlrFeatureStatus) {
     reconfigureTlrFeature(tlrFeatureStatus);
 
     final IndividualResource pickupServicePoint = servicePointsFixture.cd1();
@@ -227,8 +228,8 @@ class HoldShelfFulfillmentTests extends APITests {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"enabled", "disabled", "not-configured"})
-  void checkInAtDifferentServicePointPlacesItemInTransit(String tlrFeatureStatus) {
+  @EnumSource(TlrFeatureStatus.class)
+  void checkInAtDifferentServicePointPlacesItemInTransit(TlrFeatureStatus tlrFeatureStatus) {
     reconfigureTlrFeature(tlrFeatureStatus);
 
     final IndividualResource pickupServicePoint = servicePointsFixture.cd1();
@@ -309,8 +310,8 @@ class HoldShelfFulfillmentTests extends APITests {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"enabled", "disabled", "not-configured"})
-  void canBeCheckedOutToRequestingPatronWhenInTransit(String tlrFeatureStatus) {
+  @EnumSource(TlrFeatureStatus.class)
+  void canBeCheckedOutToRequestingPatronWhenInTransit(TlrFeatureStatus tlrFeatureStatus) {
     reconfigureTlrFeature(tlrFeatureStatus);
 
     final IndividualResource pickupServicePoint = servicePointsFixture.cd1();
@@ -349,8 +350,8 @@ class HoldShelfFulfillmentTests extends APITests {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"enabled", "disabled", "not-configured"})
-  void itemIsReadyForPickUpWhenCheckedInAtPickupServicePointAfterTransit(String tlrFeatureStatus) {
+  @EnumSource(TlrFeatureStatus.class)
+  void itemIsReadyForPickUpWhenCheckedInAtPickupServicePointAfterTransit(TlrFeatureStatus tlrFeatureStatus) {
     reconfigureTlrFeature(tlrFeatureStatus);
 
     final IndividualResource pickupServicePoint = servicePointsFixture.cd1();
@@ -433,8 +434,8 @@ class HoldShelfFulfillmentTests extends APITests {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"enabled", "disabled", "not-configured"})
-  void cannotCheckOutToOtherPatronWhenRequestIsAwaitingPickup(String tlrFeatureStatus) {
+  @EnumSource(TlrFeatureStatus.class)
+  void cannotCheckOutToOtherPatronWhenRequestIsAwaitingPickup(TlrFeatureStatus tlrFeatureStatus) {
     reconfigureTlrFeature(tlrFeatureStatus);
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
@@ -474,8 +475,8 @@ class HoldShelfFulfillmentTests extends APITests {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"enabled", "disabled", "not-configured"})
-  void cannotCheckOutToOtherPatronWhenRequestIsInTransitForPickup(String tlrFeatureStatus) {
+  @EnumSource(TlrFeatureStatus.class)
+  void cannotCheckOutToOtherPatronWhenRequestIsInTransitForPickup(TlrFeatureStatus tlrFeatureStatus) {
     reconfigureTlrFeature(tlrFeatureStatus);
 
     final IndividualResource requestServicePoint = servicePointsFixture.cd1();
@@ -533,11 +534,17 @@ class HoldShelfFulfillmentTests extends APITests {
       .collect(Collectors.toList());
   }
 
-  private void reconfigureTlrFeature(String tlrFeatureStatus) {
-    if (tlrFeatureStatus.equals("enabled")) {
+  private enum TlrFeatureStatus {
+    ENABLED,
+    DISABLED,
+    NOT_CONFIGURED
+  }
+
+  private void reconfigureTlrFeature(TlrFeatureStatus tlrFeatureStatus) {
+    if (tlrFeatureStatus == TlrFeatureStatus.ENABLED) {
       configurationsFixture.enableTlrFeature();
     }
-    else if (tlrFeatureStatus.equals("disabled")) {
+    else if (tlrFeatureStatus == TlrFeatureStatus.DISABLED) {
       configurationsFixture.disableTlrFeature();
     }
     else {

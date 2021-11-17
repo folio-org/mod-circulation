@@ -349,7 +349,7 @@ public class ItemRepository {
   public <T extends ItemRelatedRecord> CompletableFuture<Result<MultipleRecords<T>>>
   fetchItemsWithHoldings(Result<MultipleRecords<T>> result, BiFunction<T, Item, T> includeItemMap) {
 
-    return fetchItemsFor(result, includeItemMap, this::fetchForWithHoldingsRecords);
+    return fetchItemsFor(result, includeItemMap, this::fetchItemsWithHoldingsRecords);
   }
 
   public <T extends ItemRelatedRecord> CompletableFuture<Result<MultipleRecords<T>>>
@@ -403,7 +403,7 @@ public class ItemRepository {
       .thenComposeAsync(this::fetchMaterialTypes);
   }
 
-  private CompletableFuture<Result<Collection<Item>>> fetchForWithHoldingsRecords(
+  private CompletableFuture<Result<Collection<Item>>> fetchItemsWithHoldingsRecords(
     Collection<String> itemIds) {
 
     return fetchItems(itemIds)
