@@ -8,6 +8,7 @@ import static org.folio.circulation.support.results.MappingFunctions.toFixedValu
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.succeeded;
 
+import java.lang.invoke.MethodHandles;
 import java.time.ZonedDateTime;
 import java.util.concurrent.CompletableFuture;
 
@@ -35,7 +36,11 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public class ChangeDueDateResource extends Resource {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   public ChangeDueDateResource(HttpClient client) {
     super(client);
   }
@@ -73,15 +78,15 @@ public class ChangeDueDateResource extends Resource {
     final EventPublisher eventPublisher = new EventPublisher(routingContext);
 
     final LoanNoticeSender loanNoticeSender = LoanNoticeSender.using(clients);
-
+    log.info("starting change due date process for loan " + request.getLoanId());
     return succeeded(request)
       .after(r -> getExistingLoan(loanRepository, r))
       .thenApply(LoanValidator::refuseWhenLoanIsClosed)
       .thenApply(this::toLoanAndRelatedRecords)
       .thenComposeAsync(r -> r.after(requestQueueRepository::get))
-      .thenApply(r -> r.map(this::unsetDueDateChangedByRecallIfNoOpenRecallsInQueue))
       .thenApply(itemStatusValidator::refuseWhenItemStatusDoesNotAllowDueDateChange)
       .thenApply(r -> changeDueDate(r, request))
+      .thenApply(r -> r.map(this::unsetDueDateChangedByRecallIfNoOpenRecallsInQueue))
       .thenComposeAsync(r -> r.after(loanRepository::updateLoan))
       .thenComposeAsync(r -> r.after(eventPublisher::publishDueDateChangedEvent))
       .thenApply(r -> r.next(scheduledNoticeService::rescheduleDueDateNotices))
@@ -90,13 +95,15 @@ public class ChangeDueDateResource extends Resource {
   
   private LoanAndRelatedRecords unsetDueDateChangedByRecallIfNoOpenRecallsInQueue(
       LoanAndRelatedRecords loanAndRelatedRecords) {
-
+    
     RequestQueue queue = loanAndRelatedRecords.getRequestQueue();
     Loan loan = loanAndRelatedRecords.getLoan();
+    log.info("Loan " + loan.getId() + " prior to flag check: " + loan.asJson().toString());
     if (loan.wasDueDateChangedByRecall() && !queue.hasOpenRecalls()) {
+      log.info("Loan " + loan.getId() + " registers as having due date change flag set to true and no open recalls in queue.");
       return loanAndRelatedRecords.withLoan(loan.unsetDueDateChangedByRecall());
-    }
-    else {
+    } else {
+      log.info("Loan " + loan.getId() + " registers as either not having due date change flag set to true or as having open recalls in queue.");
       return loanAndRelatedRecords;
     }
   }
