@@ -391,4 +391,16 @@ public abstract class APITests {
   protected void mockClockManagerToReturnDefaultDateTime() {
     setDefaultClock();
   }
+
+  protected void reconfigureTlrFeature(TlrFeatureStatus tlrFeatureStatus) {
+    if (tlrFeatureStatus == TlrFeatureStatus.ENABLED) {
+      configurationsFixture.enableTlrFeature();
+    }
+    else if (tlrFeatureStatus == TlrFeatureStatus.DISABLED) {
+      configurationsFixture.disableTlrFeature();
+    }
+    else {
+      configurationsFixture.deleteTlrFeatureConfig();
+    }
+  }
 }

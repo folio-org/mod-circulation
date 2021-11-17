@@ -53,7 +53,7 @@ class PageRequestWorkflowTests extends APITests {
   @Test
   void itemCannotBeCheckedOutToOtherPatronWhenItemIsPagedAndNotYetBeingFulfilled() {
 
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource jessica = usersFixture.jessica();
     IndividualResource rebecca = usersFixture.rebecca();
 
@@ -61,7 +61,7 @@ class PageRequestWorkflowTests extends APITests {
       .page()
       .fulfilToHoldShelf()
       .withItemId(smallAngryPlanet.getId())
-      .withInstanceId(((ItemResource) smallAngryPlanet).getInstanceId())
+      .withInstanceId(smallAngryPlanet.getInstanceId())
       .withRequestDate(ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC))
       .withRequesterId(jessica.getId())
       .withPickupServicePointId(servicePointsFixture.cd1().getId()));
@@ -80,8 +80,8 @@ class PageRequestWorkflowTests extends APITests {
 
     assertThat(getByIdResponse.getJson().getString("status"), is(OPEN_NOT_YET_FILLED));
 
-    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
+    IndividualResource pagedSmallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
-    assertThat(smallAngryPlanet, hasItemStatus(PAGED));
+    assertThat(pagedSmallAngryPlanet, hasItemStatus(PAGED));
   }
 }
