@@ -31,6 +31,7 @@ import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
 import org.joda.time.Period;
 import org.junit.jupiter.api.Test;
+import java.time.ZonedDateTime;
 
 import api.support.APITests;
 import api.support.builders.ClaimItemReturnedRequestBuilder;
@@ -46,7 +47,12 @@ import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import java.lang.invoke.MethodHandles;
+
 class ChangeDueDateByReplacingLoanTests extends APITests {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   @Test
   void canManuallyChangeTheDueDateOfLoan() {
     final ItemResource item = itemsFixture.basedUponNod();
@@ -60,7 +66,8 @@ class ChangeDueDateByReplacingLoanTests extends APITests {
     DateTime dueDate = parseJodaDateTime(loanToChange.getString("dueDate"));
     DateTime newDueDate = dueDate.plus(Period.days(14));
 
-    JsonObject loanToChange = loanForDueDateChangeRequest(fetchedLoan, newDueDate);
+    write(loanToChange, "action", "dueDateChange");
+    write(loanToChange, "dueDate", newDueDate);
 
     loansFixture.replaceLoan(loan.getId(), loanToChange);
 
@@ -335,7 +342,7 @@ class ChangeDueDateByReplacingLoanTests extends APITests {
 
     final var initialLoan = checkOutFixture.checkOutByBarcode(smallAngryPlanet, steve);
     final var loanId = initialLoan.getId();
-    final var initialDueDate = ZonedDateTime.parse(initialLoan.getJson().getString("dueDate"));
+    final var initialDueDate = parseJodaDateTime(initialLoan.getJson().getString("dueDate"));
 
     final var recall = requestsFixture.place(new RequestBuilder()
       .recall()
@@ -349,7 +356,7 @@ class ChangeDueDateByReplacingLoanTests extends APITests {
 
     requestsFixture.cancelRequest(recall);
 
-    final var newDueDate = initialDueDate.plusMonths(1);
+    final DateTime newDueDate = initialDueDate.plus(Period.months(1));
 
     loansClient.replace(loanId, loanForDueDateChangeRequest(recalledLoan, newDueDate));
 
@@ -385,7 +392,7 @@ class ChangeDueDateByReplacingLoanTests extends APITests {
 
     final var initialLoan = checkOutFixture.checkOutByBarcode(smallAngryPlanet, steve);
     final var loanId = initialLoan.getId();
-    final var initialDueDate = ZonedDateTime.parse(initialLoan.getJson().getString("dueDate"));
+    final var initialDueDate = parseJodaDateTime(initialLoan.getJson().getString("dueDate"));
 
     final var recall = requestsFixture.place(new RequestBuilder()
       .recall()
@@ -399,7 +406,7 @@ class ChangeDueDateByReplacingLoanTests extends APITests {
 
     requestsFixture.cancelRequest(recall);
 
-    final var newDueDate = initialDueDate.plusMonths(1);
+    final DateTime newDueDate = initialDueDate.plus(Period.months(1));
 
     // Intended to represent a replacement of a loan that does not change the due date
     // If checks are added later for identical loan representations,
@@ -411,12 +418,13 @@ class ChangeDueDateByReplacingLoanTests extends APITests {
     assertThat(dueDateChangedLoan.getBoolean("dueDateChangedByRecall"), equalTo(true));
   }
 
-  private JsonObject loanForDueDateChangeRequest(Response fetchedLoan, ZonedDateTime newDueDate) {
+  private JsonObject loanForDueDateChangeRequest(Response fetchedLoan, DateTime newDueDate) {
     JsonObject loanToChange = fetchedLoan.getJson().copy();
 
     write(loanToChange, "action", "dueDateChange");
     write(loanToChange, "dueDate", newDueDate);
 
+    log.info("changed loan object: " + loanToChange.toString());
     return loanToChange;
   }
 }
