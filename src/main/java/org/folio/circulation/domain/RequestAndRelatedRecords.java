@@ -3,7 +3,6 @@ package org.folio.circulation.domain;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 
-import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
 import org.folio.circulation.domain.policy.RequestPolicy;
 
 public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedRecord {
