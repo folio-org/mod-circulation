@@ -8,8 +8,11 @@ import static org.folio.circulation.support.results.MappingFunctions.toFixedValu
 import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.results.Result.succeeded;
 
+import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
@@ -50,6 +53,8 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 
 public class LoanCollectionResource extends CollectionResource {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
+
   public LoanCollectionResource(HttpClient client) {
     super(client, "/circulation/loans");
   }
@@ -176,6 +181,7 @@ public class LoanCollectionResource extends CollectionResource {
       .thenCombineAsync(userRepository.getUser(loan.getUserId()), this::addUser)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
       .thenCombineAsync(requestQueueRepository.get(loan.getItemId()), this::addRequestQueue)
+      .thenApply(r -> r.map(this::unsetDueDateChangedByRecallIfNoOpenRecallsInQueue))
       .thenComposeAsync(result -> result.after(requestQueueUpdate::onCheckIn))
       .thenComposeAsync(result -> result.after(updateItem::onLoanUpdate))
       // Loan must be updated after item
@@ -377,5 +383,20 @@ public class LoanCollectionResource extends CollectionResource {
         loan.setPreviousDueDate(exitingLoan.getDueDate());
         return exitingLoan;
       }));
+  }
+
+  private LoanAndRelatedRecords unsetDueDateChangedByRecallIfNoOpenRecallsInQueue(
+    LoanAndRelatedRecords loanAndRelatedRecords) {
+
+    RequestQueue queue = loanAndRelatedRecords.getRequestQueue();
+    Loan loan = loanAndRelatedRecords.getLoan();
+    log.info("Loan " + loan.getId() + " prior to flag check: " + loan.asJson().toString());
+    if (loan.wasDueDateChangedByRecall() && !queue.hasOpenRecalls()) {
+      log.info("Loan " + loan.getId() + " registers as having due date change flag set to true and no open recalls in queue.");
+      return loanAndRelatedRecords.withLoan(loan.unsetDueDateChangedByRecall());
+    } else {
+      log.info("Loan " + loan.getId() + " registers as either not having due date change flag set to true or as having open recalls in queue.");
+      return loanAndRelatedRecords;
+    }
   }
 }

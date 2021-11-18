@@ -29,7 +29,6 @@ import java.util.UUID;
 
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.Matcher;
-import org.junit.Ignore;
 import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
@@ -308,7 +307,6 @@ class ChangeDueDateByReplacingLoanTests extends APITests {
       loanInStorage.containsKey("checkoutServicePoint"), is(false));
   }
 
-  @Ignore("WIP")
   @Test
   void dueDateChangeShouldClearRenewalFlagWhenSetAndNoOpenRecallsInQueue() {
     final var loanPolicy = loanPoliciesFixture.create(
