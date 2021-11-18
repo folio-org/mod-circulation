@@ -7,6 +7,7 @@ import static org.folio.circulation.support.ValidationErrorFailure.singleValidat
 import static org.folio.circulation.support.results.MappingFunctions.toFixedValue;
 import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.results.Result.succeeded;
+import static org.folio.circulation.support.utils.DateTimeUtil.isSameMillis;
 
 import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
@@ -388,15 +389,25 @@ public class LoanCollectionResource extends CollectionResource {
   private LoanAndRelatedRecords unsetDueDateChangedByRecallIfNoOpenRecallsInQueue(
     LoanAndRelatedRecords loanAndRelatedRecords) {
 
-    RequestQueue queue = loanAndRelatedRecords.getRequestQueue();
-    Loan loan = loanAndRelatedRecords.getLoan();
-    log.info("Loan " + loan.getId() + " prior to flag check: " + loan.asJson().toString());
-    if (loan.wasDueDateChangedByRecall() && !queue.hasOpenRecalls()) {
-      log.info("Loan " + loan.getId() + " registers as having due date change flag set to true and no open recalls in queue.");
-      return loanAndRelatedRecords.withLoan(loan.unsetDueDateChangedByRecall());
-    } else {
-      log.info("Loan " + loan.getId() + " registers as either not having due date change flag set to true or as having open recalls in queue.");
+    if (dueDateHasNotChanged(loanAndRelatedRecords.getExistingLoan(),
+      loanAndRelatedRecords.getLoan())) {
+
       return loanAndRelatedRecords;
     }
+
+    RequestQueue queue = loanAndRelatedRecords.getRequestQueue();
+    Loan loan = loanAndRelatedRecords.getLoan();
+    log.info("Loan {} prior to flag check: {}", loan.getId(), loan.asJson());
+    if (loan.wasDueDateChangedByRecall() && !queue.hasOpenRecalls()) {
+      log.info("Loan {} registers as having due date change flag set to true and no open recalls in queue.", loan.getId());
+      return loanAndRelatedRecords.withLoan(loan.unsetDueDateChangedByRecall());
+    } else {
+      log.info("Loan {} registers as either not having due date change flag set to true or as having open recalls in queue.", loan.getId());
+      return loanAndRelatedRecords;
+    }
+  }
+
+  private boolean dueDateHasNotChanged(Loan existingLoan, Loan changedLoan) {
+    return existingLoan == null || isSameMillis(existingLoan.getDueDate(), changedLoan.getDueDate());
   }
 }
