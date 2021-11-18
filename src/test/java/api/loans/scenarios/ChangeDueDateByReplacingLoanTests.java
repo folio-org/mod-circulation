@@ -8,6 +8,7 @@ import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfPublishedEvents;
 import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfSentNotices;
+import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.folio.HttpStatus.HTTP_NO_CONTENT;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
@@ -15,6 +16,7 @@ import static org.folio.circulation.domain.representations.logs.LogEventType.NOT
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.utils.DateFormatUtil.parseDateTime;
 import static org.hamcrest.CoreMatchers.allOf;
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -25,9 +27,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.Matcher;
+import org.junit.Ignore;
 import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
@@ -53,13 +55,10 @@ class ChangeDueDateByReplacingLoanTests extends APITests {
 
     Response fetchedLoan = loansClient.getById(loan.getId());
 
-    JsonObject loanToChange = fetchedLoan.getJson().copy();
-
-    ZonedDateTime dueDate = parseDateTime(loanToChange.getString("dueDate"));
+    ZonedDateTime dueDate = parseDateTime(fetchedLoan.getJson().getString("dueDate"));
     ZonedDateTime newDueDate = dueDate.plusDays(14);
 
-    write(loanToChange, "action", "dueDateChange");
-    write(loanToChange, "dueDate", newDueDate);
+    JsonObject loanToChange = loanForDueDateChangeRequest(fetchedLoan, newDueDate);
 
     loansFixture.replaceLoan(loan.getId(), loanToChange);
 
@@ -219,7 +218,7 @@ class ChangeDueDateByReplacingLoanTests extends APITests {
     ItemBuilder itemBuilder = ItemExamples.basedUponSmallAngryPlanet(
       materialTypesFixture.book().getId(),
       loanTypesFixture.canCirculate().getId(),
-      StringUtils.EMPTY,
+      EMPTY,
       "ItemPrefix",
       "ItemSuffix",
       "");
@@ -307,5 +306,65 @@ class ChangeDueDateByReplacingLoanTests extends APITests {
       loanInStorage.containsKey("checkinServicePoint"), is(false));
     assertThat("Should not contain check out service point summary",
       loanInStorage.containsKey("checkoutServicePoint"), is(false));
+  }
+
+  @Ignore("WIP")
+  @Test
+  void dueDateChangeShouldClearRenewalFlagWhenSetAndNoOpenRecallsInQueue() {
+    final var loanPolicy = loanPoliciesFixture.create(
+      new LoanPolicyBuilder()
+        .withName("loan policy")
+        .withRecallsMinimumGuaranteedLoanPeriod(org.folio.circulation.domain.policy.Period.weeks(2))
+        .rolling(org.folio.circulation.domain.policy.Period.months(1)));
+
+    useFallbackPolicies(loanPolicy.getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId(),
+      overdueFinePoliciesFixture.facultyStandardDoNotCountClosed().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
+
+    final var itemBuilder = ItemExamples.basedUponSmallAngryPlanet(
+      materialTypesFixture.book().getId(), loanTypesFixture.canCirculate().getId(),
+      EMPTY, "ItemPrefix", "ItemSuffix", "");
+
+    final var smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
+      itemBuilder, itemsFixture.thirdFloorHoldings());
+
+    final var steve = usersFixture.steve();
+
+    final var initialLoan = checkOutFixture.checkOutByBarcode(smallAngryPlanet, steve);
+    final var loanId = initialLoan.getId();
+    final var initialDueDate = ZonedDateTime.parse(initialLoan.getJson().getString("dueDate"));
+
+    final var recall = requestsFixture.place(new RequestBuilder()
+      .recall()
+      .forItem(smallAngryPlanet)
+      .by(usersFixture.charlotte())
+      .fulfilToHoldShelf(servicePointsFixture.cd1()));
+
+    Response recalledLoan = loansClient.getById(loanId);
+
+    assertThat(recalledLoan.getJson().getBoolean("dueDateChangedByRecall"), equalTo(true));
+
+    requestsFixture.cancelRequest(recall);
+
+    final var newDueDate = initialDueDate.plusMonths(1);
+
+    loansClient.replace(loanId, loanForDueDateChangeRequest(recalledLoan, newDueDate));
+
+    final var dueDateChangedLoan = loansClient.getById(loanId).getJson();
+
+    assertThat(dueDateChangedLoan.getBoolean("dueDateChangedByRecall"), equalTo(false));
+    assertThat("due date should be provided new due date",
+      dueDateChangedLoan.getString("dueDate"), isEquivalentTo(newDueDate));
+  }
+
+  private JsonObject loanForDueDateChangeRequest(Response fetchedLoan, ZonedDateTime newDueDate) {
+    JsonObject loanToChange = fetchedLoan.getJson().copy();
+
+    write(loanToChange, "action", "dueDateChange");
+    write(loanToChange, "dueDate", newDueDate);
+
+    return loanToChange;
   }
 }
