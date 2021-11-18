@@ -60,6 +60,25 @@ class RequestFromRepresentationService {
   private final ServicePointPickupLocationValidator pickupLocationValidator;
   private final CirculationErrorHandler errorHandler;
 
+  RequestFromRepresentationService(ItemRepository itemRepository,
+    RequestQueueRepository requestQueueRepository, UserRepository userRepository,
+    LoanRepository loanRepository, ServicePointRepository servicePointRepository,
+    ConfigurationRepository configurationRepository,
+    ProxyRelationshipValidator proxyRelationshipValidator,
+    ServicePointPickupLocationValidator pickupLocationValidator,
+    CirculationErrorHandler errorHandler) {
+
+    this.loanRepository = loanRepository;
+    this.itemRepository = itemRepository;
+    this.requestQueueRepository = requestQueueRepository;
+    this.userRepository = userRepository;
+    this.servicePointRepository = servicePointRepository;
+    this.configurationRepository = configurationRepository;
+    this.proxyRelationshipValidator = proxyRelationshipValidator;
+    this.pickupLocationValidator = pickupLocationValidator;
+    this.errorHandler = errorHandler;
+  }
+
   CompletableFuture<Result<RequestAndRelatedRecords>> getRequestFrom(JsonObject representation) {
     return initRequest(representation)
       .thenApply(r -> r.next(this::validateStatus))
@@ -68,8 +87,6 @@ class RequestFromRepresentationService {
         .mapFailure(err -> errorHandler.handleValidationError(err, INVALID_INSTANCE_ID, r)))
       .thenApply(r -> r.next(this::refuseWhenNoItemId)
         .mapFailure(err -> errorHandler.handleValidationError(err, INVALID_ITEM_ID, r)))
-      .thenApply(r -> r.next(this::refuseWhenNoInstanceId)
-        .mapFailure(err -> errorHandler.handleValidationError(err, INVALID_INSTANCE_ID, r)))
       .thenApply(r -> r.map(this::removeRelatedRecordInformation))
       .thenApply(r -> r.map(this::removeProcessingParameters))
       .thenCompose(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
@@ -217,18 +234,6 @@ class RequestFromRepresentationService {
 
     if (!tlrEnabled && isBlank(itemId)) {
       return failedValidation("Cannot create a request with no item ID", "itemId", itemId);
-    }
-    else {
-      return of(() -> request);
-    }
-  }
-
-  private Result<Request> refuseWhenNoInstanceId(Request request) {
-    JsonObject representation = request.getRepresentation();
-    String instanceId = getProperty(representation, INSTANCE_ID);
-
-    if (isBlank(instanceId)) {
-      return failedValidation("Cannot create a request with no instance ID", "instanceId", instanceId);
     }
     else {
       return of(() -> request);
