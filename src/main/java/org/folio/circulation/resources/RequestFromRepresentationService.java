@@ -60,25 +60,6 @@ class RequestFromRepresentationService {
   private final ServicePointPickupLocationValidator pickupLocationValidator;
   private final CirculationErrorHandler errorHandler;
 
-  RequestFromRepresentationService(ItemRepository itemRepository,
-    RequestQueueRepository requestQueueRepository, UserRepository userRepository,
-    LoanRepository loanRepository, ServicePointRepository servicePointRepository,
-    ConfigurationRepository configurationRepository,
-    ProxyRelationshipValidator proxyRelationshipValidator,
-    ServicePointPickupLocationValidator pickupLocationValidator,
-    CirculationErrorHandler errorHandler) {
-
-    this.loanRepository = loanRepository;
-    this.itemRepository = itemRepository;
-    this.requestQueueRepository = requestQueueRepository;
-    this.userRepository = userRepository;
-    this.servicePointRepository = servicePointRepository;
-    this.configurationRepository = configurationRepository;
-    this.proxyRelationshipValidator = proxyRelationshipValidator;
-    this.pickupLocationValidator = pickupLocationValidator;
-    this.errorHandler = errorHandler;
-  }
-
   CompletableFuture<Result<RequestAndRelatedRecords>> getRequestFrom(JsonObject representation) {
     return initRequest(representation)
       .thenApply(r -> r.next(this::validateStatus))

@@ -25,12 +25,15 @@ import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasServiceP
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasUserBarcodeParameter;
 import static api.support.matchers.EventMatchers.isValidCheckOutLogEvent;
 import static api.support.matchers.EventMatchers.isValidItemCheckedOutEvent;
+import static api.support.matchers.ItemMatchers.isAwaitingPickup;
 import static api.support.matchers.ItemMatchers.isCheckedOut;
 import static api.support.matchers.ItemMatchers.isLostAndPaid;
 import static api.support.matchers.ItemMatchers.isWithdrawn;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static api.support.matchers.LoanMatchers.isOpen;
+import static api.support.matchers.RequestMatchers.isClosedFilled;
+import static api.support.matchers.RequestMatchers.isOpenAwaitingPickup;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
@@ -83,6 +86,8 @@ import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.domain.representations.logs.LogEventType;
 import org.folio.circulation.support.http.client.Response;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import api.support.APITests;
 import api.support.builders.CheckOutBlockOverrides;
@@ -2164,6 +2169,68 @@ class CheckOutByBarcodeTests extends APITests {
       is(ZonedDateTime.of(MONDAY_DATE, LocalTime.MIDNIGHT.minusSeconds(1), UTC)));
   }
 
+  @ParameterizedTest
+  @CsvSource({
+    "Item, Item",
+    "Item, Title",
+    // TODO: uncomment once creation of Page TLR request changes the item status to "Paged"
+//    "Title, Item",
+    "Title, Title"
+  })
+  void canFulfilPageAndHoldRequestsWithMixedLevels(String pageRequestLevel, String holdRequestLevel) {
+    configurationsFixture.enableTlrFeature();
+
+    ItemResource item = itemsFixture.basedUponNod();
+    UUID instanceId = item.getInstanceId();
+    UserResource firstUser = usersFixture.steve();
+    UserResource secondUser = usersFixture.james();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+
+    IndividualResource firstRequest = requestsClient.create(
+      new RequestBuilder()
+        .page()
+        .withRequestLevel(pageRequestLevel)
+        .withItemId("Item".equals(pageRequestLevel) ? item.getId() : null)
+        .withInstanceId(instanceId)
+        .withPickupServicePointId(pickupServicePointId)
+        .withRequesterId(firstUser.getId()));
+
+    IndividualResource secondRequest = requestsClient.create(
+      new RequestBuilder()
+        .hold()
+        .withRequestLevel(holdRequestLevel)
+        .withItemId("Item".equals(holdRequestLevel) ? item.getId() : null)
+        .withInstanceId(instanceId)
+        .withPickupServicePointId(pickupServicePointId)
+        .withRequesterId(secondUser.getId()));
+
+    checkInFixture.checkInByBarcode(item);
+
+    assertThat(fetchItemJson(item), isAwaitingPickup());
+    assertThat(fetchRequestJson(firstRequest), isOpenAwaitingPickup());
+
+    // fulfil first request
+
+    checkOutFixture.checkOutByBarcode(item, firstUser);
+
+    assertThat(fetchItemJson(item), isCheckedOut());
+    assertThat(fetchRequestJson(firstRequest), isClosedFilled());
+
+    // check the item back in
+
+    checkInFixture.checkInByBarcode(item);
+
+    assertThat(fetchItemJson(item), isAwaitingPickup());
+    assertThat(fetchRequestJson(secondRequest), isOpenAwaitingPickup());
+
+    // fulfil second request
+
+    checkOutFixture.checkOutByBarcode(item, secondUser);
+
+    assertThat(fetchItemJson(item), isCheckedOut());
+    assertThat(fetchRequestJson(firstRequest), isClosedFilled());
+  }
+
   private LoanPolicyBuilder buildLoanPolicyWithFixedLoan(DueDateManagement strategy,
     ZonedDateTime dueDate) {
 
@@ -2260,5 +2327,13 @@ class CheckOutByBarcodeTests extends APITests {
     return loanPolicy.getJson()
       .getJsonObject("loansPolicy")
       .getJsonObject("gracePeriod");
+  }
+
+  private JsonObject fetchItemJson(ItemResource item) {
+    return itemsClient.get(item).getJson();
+  }
+
+  private JsonObject fetchRequestJson(IndividualResource request) {
+    return requestsClient.get(request).getJson();
   }
 }

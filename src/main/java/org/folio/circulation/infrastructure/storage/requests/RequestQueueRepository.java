@@ -7,15 +7,10 @@ import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.http.client.PageLimit.oneThousand;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
-import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
-import org.folio.circulation.domain.CheckInContext;
-import org.folio.circulation.domain.ItemRelatedRecord;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
@@ -28,10 +23,6 @@ import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.PageLimit;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.folio.circulation.support.results.ResultBinding;
-import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.results.Result;
 
 public class RequestQueueRepository {
