@@ -7,20 +7,23 @@ import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.REQUE
 import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.TITLE_LEVEL_REQUEST_EXPIRATION;
 import static org.folio.circulation.support.results.Result.succeeded;
 
+import java.lang.invoke.MethodHandles;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
+import org.folio.circulation.domain.RequestLevel;
 import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
 import org.folio.circulation.domain.notice.NoticeConfiguration;
 import org.folio.circulation.domain.notice.NoticeConfigurationBuilder;
 import org.folio.circulation.domain.notice.NoticeEventType;
 import org.folio.circulation.domain.notice.NoticeFormat;
 import org.folio.circulation.domain.notice.PatronNoticePolicy;
-import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.notices.PatronNoticePolicyRepository;
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
 import org.folio.circulation.support.Clients;
@@ -30,21 +33,18 @@ public class RequestScheduledNoticeService {
   public static RequestScheduledNoticeService using(Clients clients) {
     return new RequestScheduledNoticeService(
       ScheduledNoticesRepository.using(clients),
-      new PatronNoticePolicyRepository(clients),
-      new ConfigurationRepository(clients));
+      new PatronNoticePolicyRepository(clients));
   }
 
   private final ScheduledNoticesRepository scheduledNoticesRepository;
   private final PatronNoticePolicyRepository noticePolicyRepository;
-  private final ConfigurationRepository configurationRepository;
+  private final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   private RequestScheduledNoticeService(
     ScheduledNoticesRepository scheduledNoticesRepository,
-    PatronNoticePolicyRepository noticePolicyRepository,
-    ConfigurationRepository configurationRepository) {
+    PatronNoticePolicyRepository noticePolicyRepository) {
     this.scheduledNoticesRepository = scheduledNoticesRepository;
     this.noticePolicyRepository = noticePolicyRepository;
-    this.configurationRepository = configurationRepository;
   }
 
 
@@ -54,10 +54,11 @@ public class RequestScheduledNoticeService {
       return succeeded(relatedRecords);
     }
 
-    if (relatedRecords.getRequest().getRequestLevel() == TITLE) {
-      scheduleTlrRequestNotices(relatedRecords);
+    RequestLevel requestLevel = relatedRecords.getRequest().getRequestLevel();
+    if (requestLevel == TITLE) {
+      scheduleTlrRequestNotices(relatedRecords.getRequest());
     }
-    else if (relatedRecords.getRequest().getRequestLevel() == ITEM) {
+    else if (requestLevel == ITEM) {
       scheduleRequestNotices(relatedRecords.getRequest());
     }
 
@@ -165,16 +166,13 @@ public class RequestScheduledNoticeService {
     return succeeded(request);
   }
 
-  private Result<RequestAndRelatedRecords> scheduleTlrRequestNotices(
-    RequestAndRelatedRecords relatedRecords) {
-
-    Request request = relatedRecords.getRequest();
+  private Result<Request> scheduleTlrRequestNotices(Request request) {
     TlrSettingsConfiguration tlrSettings = request.getTlrSettingsConfiguration();
     if (tlrSettings.isTitleLevelRequestsFeatureEnabled()) {
       scheduleRequestNoticesBasedOnTlrSettings(request, tlrSettings);
     }
 
-    return succeeded(relatedRecords);
+    return succeeded(request);
   }
 
   private Result<TlrSettingsConfiguration> scheduleRequestNoticesBasedOnTlrSettings(
@@ -193,6 +191,8 @@ public class RequestScheduledNoticeService {
 
       createRequestExpirationScheduledNotice(request, noticeConfiguration, TITLE_LEVEL_REQUEST_EXPIRATION)
         .map(scheduledNoticesRepository::create);
+    } else {
+      log.info("ExpirationPatronNoticeTemplateId is not present, scheduled notice will not be created");
     }
 
     return succeeded(tlrSettingsConfiguration);

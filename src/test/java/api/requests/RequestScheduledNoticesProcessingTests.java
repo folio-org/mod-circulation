@@ -3,7 +3,8 @@ package api.requests;
 import static api.support.builders.RequestBuilder.CLOSED_PICKUP_EXPIRED;
 import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
-import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
+import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
+import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfPublishedEvents;
 import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfScheduledNotices;
 import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfSentNotices;
@@ -30,14 +31,18 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.folio.circulation.domain.policy.Period;
+import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.Matcher;
 import org.junit.FixMethodOrder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.runners.MethodSorters;
 
 import api.support.APITests;
+import api.support.TlrFeatureStatus;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.HoldingBuilder;
 import api.support.builders.ItemBuilder;
@@ -82,12 +87,7 @@ class RequestScheduledNoticesProcessingTests extends APITests {
    */
   @Test
   void aUponAtRequestExpirationNoticeShouldBeSentAndDeletedWhenRequestExpirationDateHasPassed() {
-    JsonObject noticeConfiguration = new NoticeConfigurationBuilder()
-      .withTemplateId(templateId)
-      .withRequestExpirationEvent()
-      .withUponAtTiming()
-      .sendInRealTime(true)
-      .create();
+    JsonObject noticeConfiguration = buildNoticeConfigurationForItemLevelRequests();
     setupNoticePolicyWithRequestNotice(noticeConfiguration);
 
     final LocalDate localDate = getLocalDate().minusDays(1);
@@ -123,12 +123,7 @@ class RequestScheduledNoticesProcessingTests extends APITests {
 
   @Test
   void uponAtRequestExpirationNoticeShouldNotBeSentWhenRequestExpirationDateHasPassedAndRequestIsNotClosed() {
-    JsonObject noticeConfiguration = new NoticeConfigurationBuilder()
-      .withTemplateId(templateId)
-      .withRequestExpirationEvent()
-      .withUponAtTiming()
-      .sendInRealTime(true)
-      .create();
+    JsonObject noticeConfiguration = buildNoticeConfigurationForItemLevelRequests();
     setupNoticePolicyWithRequestNotice(noticeConfiguration);
 
     final LocalDate localDate = getLocalDate().minusDays(1);
@@ -536,21 +531,70 @@ class RequestScheduledNoticesProcessingTests extends APITests {
 
   @Test
   void titleLevelRequestExpirationNoticeShouldBeSentAndDeletedWithEnabledTlr() {
-    configurationsFixture.titleLevelRequestWithExpirationNotices(templateId);
+    reconfigureTlrFeature(TlrFeatureStatus.ENABLED, null, null, templateId);
+
+    final LocalDate localDate = getLocalDate().minusDays(1);
+    final var requestExpiration = LocalDate.of(localDate.getYear(),
+      localDate.getMonthValue(), localDate.getDayOfMonth());
+    IndividualResource request = requestsFixture.place(buildTitleLevelRequest(requestExpiration));
+
+    verifyNumberOfScheduledNotices(1);
+
+    //close request
+    IndividualResource requestInStorage = requestsStorageClient.get(request);
+    requestsStorageClient.replace(request.getId(),
+      requestInStorage.getJson().put("status", "Closed - Unfilled"));
+
+    scheduledNoticeProcessingClient.runRequestNoticesProcessing();
+
+    verifyNumberOfSentNotices(1);
+    verifyNumberOfScheduledNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 1);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+  }
+
+  @Test
+  void titleLevelRequestExpirationNoticeShouldNotBeCreatedWithDisabledTlr() {
+    reconfigureTlrFeature(TlrFeatureStatus.DISABLED, null, null, templateId);
 
     final LocalDate localDate = getLocalDate().minusDays(1);
     final var requestExpiration = LocalDate.of(localDate.getYear(),
       localDate.getMonthValue(), localDate.getDayOfMonth());
 
-    IndividualResource request = requestsFixture.place(new RequestBuilder()
-      .page()
-      .titleRequestLevel()
-      .withInstanceId(item.getInstanceId())
-      .withRequesterId(requester.getId())
-      .withRequestDate(getZonedDateTime())
-      .withStatus(OPEN_NOT_YET_FILLED)
-      .withPickupServicePoint(pickupServicePoint)
-      .withRequestExpiration(requestExpiration));
+    Response response = requestsFixture.attemptPlace(buildTitleLevelRequest(requestExpiration));
+
+    assertThat(response.getStatusCode(), is(422));
+    assertThat(response.getJson(), hasErrorWith(
+      hasMessage("requestLevel must be one of the following: \"Item\"")));
+    verifyNumberOfScheduledNotices(0);
+  }
+
+  @Test
+  void titleLevelRequestExpirationNoticeShouldNotBeCreatedIfEnabledTlrButNoTemplateId() {
+    reconfigureTlrFeature(TlrFeatureStatus.ENABLED, null, null, null);
+
+    final LocalDate localDate = getLocalDate().minusDays(1);
+    final var requestExpiration = LocalDate.of(localDate.getYear(),
+      localDate.getMonthValue(), localDate.getDayOfMonth());
+    requestsFixture.place(buildTitleLevelRequest(requestExpiration));
+
+    verifyNumberOfScheduledNotices(0);
+  }
+
+  @ParameterizedTest
+  @EnumSource(TlrFeatureStatus.class)
+  void itemLevelRequestExpirationNoticeShouldBeCreatedAndSentRegardlessTlr(
+    TlrFeatureStatus tlrFeatureStatus) {
+
+    reconfigureTlrFeature(tlrFeatureStatus, null, null, null);
+    JsonObject noticeConfiguration = buildNoticeConfigurationForItemLevelRequests();
+    setupNoticePolicyWithRequestNotice(noticeConfiguration);
+
+    final LocalDate localDate = getLocalDate().minusDays(1);
+    final var requestExpiration = LocalDate.of(localDate.getYear(),
+      localDate.getMonthValue(), localDate.getDayOfMonth());
+
+    IndividualResource request = requestsFixture.place(buildItemLevelRequest(requestExpiration));
 
     verifyNumberOfScheduledNotices(1);
 
@@ -563,9 +607,115 @@ class RequestScheduledNoticesProcessingTests extends APITests {
     scheduledNoticeProcessingClient.runRequestNoticesProcessing();
 
     verifyNumberOfSentNotices(1);
+    assertThat(
+      FakeModNotify.getFirstSentPatronNotice(), getTemplateContextMatcher(templateId, request));
+
     verifyNumberOfScheduledNotices(0);
     verifyNumberOfPublishedEvents(NOTICE, 1);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+  }
+
+  @Test
+  void itemLevelRequestExpirationNoticeAndTitleLevelRequestExpirationShouldBeCreatedAndSent() {
+    reconfigureTlrFeature(TlrFeatureStatus.ENABLED, null, null, templateId);
+    JsonObject noticeConfiguration = buildNoticeConfigurationForItemLevelRequests();
+    setupNoticePolicyWithRequestNotice(noticeConfiguration);
+
+    final LocalDate localDate = getLocalDate().minusDays(1);
+    final var requestExpiration = LocalDate.of(localDate.getYear(),
+      localDate.getMonthValue(), localDate.getDayOfMonth());
+
+    IndividualResource itemLevelRequest = requestsFixture.place(
+      buildItemLevelRequest(requestExpiration));
+
+    IndividualResource titleLevelRequest = requestsFixture.place(
+      buildTitleLevelRequest(requestExpiration));
+
+    verifyNumberOfScheduledNotices(2);
+
+    //close requests
+    IndividualResource itemLevelRequestInStorage = requestsStorageClient.get(itemLevelRequest);
+    IndividualResource titleLevelRequestInStorage = requestsStorageClient.get(titleLevelRequest);
+
+    requestsStorageClient.replace(itemLevelRequest.getId(),
+      itemLevelRequestInStorage.getJson().put("status", "Closed - Unfilled"));
+    requestsStorageClient.replace(titleLevelRequest.getId(),
+      titleLevelRequestInStorage.getJson().put("status", "Closed - Unfilled"));
+
+    scheduledNoticeProcessingClient.runRequestNoticesProcessing();
+
+    verifyNumberOfSentNotices(2);
+    verifyNumberOfScheduledNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 2);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+  }
+
+  @Test
+  void itemLevelRequestExpirationNoticeShouldBeCreatedAndSentButTlrFeatureIsDisabled() {
+    reconfigureTlrFeature(TlrFeatureStatus.DISABLED, null, null, templateId);
+    JsonObject noticeConfiguration = buildNoticeConfigurationForItemLevelRequests();
+    setupNoticePolicyWithRequestNotice(noticeConfiguration);
+
+    final LocalDate localDate = getLocalDate().minusDays(1);
+    final var requestExpiration = LocalDate.of(localDate.getYear(),
+      localDate.getMonthValue(), localDate.getDayOfMonth());
+
+    IndividualResource itemLevelRequest = requestsFixture.place(
+      buildItemLevelRequest(requestExpiration));
+
+    Response titleLevelResponse = requestsFixture.attemptPlace(
+      buildTitleLevelRequest(requestExpiration));
+
+    assertThat(titleLevelResponse.getStatusCode(), is(422));
+    assertThat(titleLevelResponse.getJson(), hasErrorWith(
+      hasMessage("requestLevel must be one of the following: \"Item\"")));
+
+    verifyNumberOfScheduledNotices(1);
+
+    //close requests
+    IndividualResource itemLevelRequestInStorage = requestsStorageClient.get(itemLevelRequest);
+    requestsStorageClient.replace(itemLevelRequest.getId(),
+      itemLevelRequestInStorage.getJson().put("status", "Closed - Unfilled"));
+    scheduledNoticeProcessingClient.runRequestNoticesProcessing();
+
+    verifyNumberOfSentNotices(1);
+    verifyNumberOfScheduledNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 1);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+  }
+
+  private JsonObject buildNoticeConfigurationForItemLevelRequests() {
+    return new NoticeConfigurationBuilder()
+      .withTemplateId(templateId)
+      .withRequestExpirationEvent()
+      .withUponAtTiming()
+      .sendInRealTime(true)
+      .create();
+  }
+
+  private RequestBuilder buildItemLevelRequest(LocalDate requestExpiration) {
+    return new RequestBuilder()
+      .forItem(item)
+      .page()
+      .itemRequestLevel()
+      .withInstanceId(item.getInstanceId())
+      .withRequesterId(requester.getId())
+      .withRequestDate(getZonedDateTime())
+      .withStatus(OPEN_NOT_YET_FILLED)
+      .withPickupServicePoint(pickupServicePoint)
+      .withRequestExpiration(requestExpiration);
+  }
+
+  private RequestBuilder buildTitleLevelRequest(LocalDate requestExpiration) {
+    return new RequestBuilder()
+      .page()
+      .titleRequestLevel()
+      .withInstanceId(item.getInstanceId())
+      .withRequesterId(usersFixture.charlotte().getId())
+      .withRequestDate(getZonedDateTime())
+      .withStatus(OPEN_NOT_YET_FILLED)
+      .withPickupServicePoint(pickupServicePoint)
+      .withRequestExpiration(requestExpiration);
   }
 
   private IndividualResource prepareNotice() {

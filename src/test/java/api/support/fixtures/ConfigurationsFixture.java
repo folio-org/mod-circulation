@@ -29,9 +29,12 @@ public class ConfigurationsFixture {
     }
   }
 
-  public void titleLevelRequestWithExpirationNotices(UUID expirationTemplateId) {
-    tlrConfigurationEntryId = client.create(
-      ConfigurationExample.tlrFeatureEnabledWithNoticesConfiguration(
-      null, null, expirationTemplateId)).getId();
+  public void configureTlrFeature(boolean isTlrFeatureEnabled,  UUID confirmationTemplateId,
+    UUID cancellationTemplateId, UUID expirationTemplateId) {
+
+    deleteTlrFeatureConfig();
+    tlrConfigurationEntryId = client.create(ConfigurationExample.tlrNoticesConfiguration(
+      isTlrFeatureEnabled, confirmationTemplateId, cancellationTemplateId, expirationTemplateId))
+      .getId();
   }
 }

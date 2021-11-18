@@ -72,7 +72,8 @@ public class TemplateContextUtil {
       .put(USER, createUserContext(request.getRequester()))
       .put(REQUEST, createRequestContext(request));
 
-    if (request.getItem() != null) {
+    // item may be missing if it is a title level request
+    if (request.getItem() != null && request.getItem().isFound()) {
       requestNoticeContext.put(ITEM, createItemContext(request.getItem()));
     }
 
