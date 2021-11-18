@@ -346,7 +346,6 @@ class ChangeDueDateAPITests extends APITests {
 
   @Test
   void dueDateChangeShouldClearRenewalFlagWhenSetAndNoOpenRecallsInQueue() {
-
     IndividualResource loanPolicy = loanPoliciesFixture.create(
       new LoanPolicyBuilder()
         .withName("loan policy")
