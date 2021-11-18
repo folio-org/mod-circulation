@@ -49,7 +49,7 @@ public class RequestQueue {
     return requests.stream().anyMatch(request -> request.getRequestType() == type);
   }
 
-  public Boolean hasOpenRecalls() {
+  public boolean hasOpenRecalls() {
     return requests.stream()
         .anyMatch(request -> request.getRequestType() == RequestType.RECALL && request.isNotYetFilled());
   }

@@ -360,6 +360,57 @@ class ChangeDueDateByReplacingLoanTests extends APITests {
       dueDateChangedLoan.getString("dueDate"), isEquivalentTo(newDueDate));
   }
 
+  @Test
+  void dueDateChangedFlagShouldNotBeResetWhenDueDateDoesNotChange() {
+    final var loanPolicy = loanPoliciesFixture.create(
+      new LoanPolicyBuilder()
+        .withName("loan policy")
+        .withRecallsMinimumGuaranteedLoanPeriod(org.folio.circulation.domain.policy.Period.weeks(2))
+        .rolling(org.folio.circulation.domain.policy.Period.months(1)));
+
+    useFallbackPolicies(loanPolicy.getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId(),
+      overdueFinePoliciesFixture.facultyStandardDoNotCountClosed().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
+
+    final var itemBuilder = ItemExamples.basedUponSmallAngryPlanet(
+      materialTypesFixture.book().getId(), loanTypesFixture.canCirculate().getId(),
+      EMPTY, "ItemPrefix", "ItemSuffix", "");
+
+    final var smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
+      itemBuilder, itemsFixture.thirdFloorHoldings());
+
+    final var steve = usersFixture.steve();
+
+    final var initialLoan = checkOutFixture.checkOutByBarcode(smallAngryPlanet, steve);
+    final var loanId = initialLoan.getId();
+    final var initialDueDate = ZonedDateTime.parse(initialLoan.getJson().getString("dueDate"));
+
+    final var recall = requestsFixture.place(new RequestBuilder()
+      .recall()
+      .forItem(smallAngryPlanet)
+      .by(usersFixture.charlotte())
+      .fulfilToHoldShelf(servicePointsFixture.cd1()));
+
+    Response recalledLoan = loansClient.getById(loanId);
+
+    assertThat(recalledLoan.getJson().getBoolean("dueDateChangedByRecall"), equalTo(true));
+
+    requestsFixture.cancelRequest(recall);
+
+    final var newDueDate = initialDueDate.plusMonths(1);
+
+    // Intended to represent a replacement of a loan that does not change the due date
+    // If checks are added later for identical loan representations,
+    // this may provide false positive
+    loansClient.replace(loanId, recalledLoan.getJson());
+
+    final var dueDateChangedLoan = loansClient.getById(loanId).getJson();
+
+    assertThat(dueDateChangedLoan.getBoolean("dueDateChangedByRecall"), equalTo(true));
+  }
+
   private JsonObject loanForDueDateChangeRequest(Response fetchedLoan, ZonedDateTime newDueDate) {
     JsonObject loanToChange = fetchedLoan.getJson().copy();
 
