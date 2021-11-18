@@ -41,7 +41,6 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.awaitility.Awaitility;
-import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.Matcher;
 import org.junit.jupiter.api.BeforeEach;
@@ -341,7 +340,6 @@ class ChangeDueDateAPITests extends APITests {
 
   @Test
   void dueDateChangeShouldClearRenewalFlagWhenSetAndNoOpenRecallsInQueue() {
-
     IndividualResource loanPolicy = loanPoliciesFixture.create(
       new LoanPolicyBuilder()
         .withName("loan policy")
@@ -357,12 +355,12 @@ class ChangeDueDateAPITests extends APITests {
     ItemBuilder itemBuilder = ItemExamples.basedUponSmallAngryPlanet(
       materialTypesFixture.book().getId(), loanTypesFixture.canCirculate().getId(),
       EMPTY, "ItemPrefix", "ItemSuffix", "");
-  
+
     ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
       itemBuilder, itemsFixture.thirdFloorHoldings());
-  
+
     IndividualResource steve = usersFixture.steve();
-  
+
     IndividualResource initialLoan = checkOutFixture.checkOutByBarcode(smallAngryPlanet, steve);
 
     ZonedDateTime initialDueDate = ZonedDateTime.parse(initialLoan.getJson().getString("dueDate"));
@@ -389,7 +387,7 @@ class ChangeDueDateAPITests extends APITests {
       .withDueDate(newDueDate));
 
     JsonObject dueDateChangedLoan = loansClient.getById(initialLoan.getId()).getJson();
-    
+
     assertThat(dueDateChangedLoan.getBoolean("dueDateChangedByRecall"), equalTo(false));
     assertThat("due date should be provided new due date",
     dueDateChangedLoan.getString("dueDate"), isEquivalentTo(newDueDate));
