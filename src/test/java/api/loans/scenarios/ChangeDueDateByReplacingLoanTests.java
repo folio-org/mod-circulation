@@ -308,7 +308,7 @@ class ChangeDueDateByReplacingLoanTests extends APITests {
   }
 
   @Test
-  void dueDateChangeShouldClearRenewalFlagWhenSetAndNoOpenRecallsInQueue() {
+  void dueDateChangeShouldResetDueDateChangedFlagWhenNoOpenRecallsInQueue() {
     final var loanPolicy = loanPoliciesFixture.create(
       new LoanPolicyBuilder()
         .withName("loan policy")
@@ -358,7 +358,7 @@ class ChangeDueDateByReplacingLoanTests extends APITests {
   }
 
   @Test
-  void dueDateChangedFlagShouldNotBeResetWhenDueDateDoesNotChange() {
+  void dueDateChangedFlagShouldNotBeResetWhenDueDateHasNotChanged() {
     final var loanPolicy = loanPoliciesFixture.create(
       new LoanPolicyBuilder()
         .withName("loan policy")
