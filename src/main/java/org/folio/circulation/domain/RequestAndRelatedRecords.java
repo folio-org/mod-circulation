@@ -13,15 +13,13 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
   private final RequestPolicy requestPolicy;
   private final ZoneId timeZone;
   private final MoveRequestRecord moveRequestRecord;
-  private final TlrSettingsConfiguration tlrSettingsConfiguration;
 
   private RequestAndRelatedRecords(
     Request request,
     RequestQueue requestQueue,
     RequestPolicy requestPolicy,
     MoveRequestRecord moveRequestRecord,
-    ZoneId timeZone,
-    TlrSettingsConfiguration tlrSettingsConfiguration) {
+    ZoneId timeZone) {
 
     this.request = request;
     this.originalRequest = request.copy();
@@ -29,11 +27,10 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
     this.requestPolicy = requestPolicy;
     this.timeZone = timeZone;
     this.moveRequestRecord = moveRequestRecord;
-    this.tlrSettingsConfiguration = tlrSettingsConfiguration;
   }
 
   public RequestAndRelatedRecords(Request request) {
-    this(request, null, null, null, ZoneOffset.UTC, null);
+    this(request, null, null, null, ZoneOffset.UTC);
   }
 
   public RequestAndRelatedRecords withRequest(Request newRequest) {
@@ -42,8 +39,7 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
       this.requestQueue,
       null,
       this.moveRequestRecord,
-      this.timeZone,
-      this.tlrSettingsConfiguration
+      this.timeZone
     );
   }
 
@@ -53,8 +49,7 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
       this.requestQueue,
       newRequestPolicy,
       this.moveRequestRecord,
-      this.timeZone,
-      this.tlrSettingsConfiguration
+      this.timeZone
     );
   }
 
@@ -64,8 +59,7 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
       newRequestQueue,
       this.requestPolicy,
       this.moveRequestRecord,
-      this.timeZone,
-      this.tlrSettingsConfiguration
+      this.timeZone
     );
   }
 
@@ -75,8 +69,7 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
       this.requestQueue,
       this.requestPolicy,
       this.moveRequestRecord,
-      this.timeZone,
-      this.tlrSettingsConfiguration
+      this.timeZone
     );
   }
 
@@ -86,8 +79,7 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
       this.requestQueue,
       this.requestPolicy,
       this.moveRequestRecord,
-      this.timeZone,
-      this.tlrSettingsConfiguration
+      this.timeZone
     );
   }
 
@@ -97,27 +89,13 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
       this.requestQueue,
       this.requestPolicy,
       this.moveRequestRecord,
-      this.timeZone,
-      this.tlrSettingsConfiguration
+      this.timeZone
     );
   }
 
   RequestAndRelatedRecords withTimeZone(ZoneId newTimeZone) {
     return new RequestAndRelatedRecords(request, requestQueue, requestPolicy,
-      moveRequestRecord, newTimeZone, tlrSettingsConfiguration);
-  }
-
-  public RequestAndRelatedRecords withTlrSettingsConfiguration(
-    TlrSettingsConfiguration tlrSettingsConfiguration) {
-
-    return new RequestAndRelatedRecords(
-      this.request,
-      this.requestQueue,
-      this.requestPolicy,
-      this.moveRequestRecord,
-      this.timeZone,
-      tlrSettingsConfiguration
-    );
+      moveRequestRecord, newTimeZone);
   }
 
   public RequestAndRelatedRecords asMove(String originalItemId, String destinationItemId) {
@@ -125,8 +103,7 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
       this.request,
       this.requestQueue,
       this.requestPolicy,
-      MoveRequestRecord.with(originalItemId, destinationItemId), timeZone,
-      this.tlrSettingsConfiguration
+      MoveRequestRecord.with(originalItemId, destinationItemId), timeZone
     );
   }
 
@@ -169,9 +146,5 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
 
   public Request getOriginalRequest() {
     return originalRequest;
-  }
-
-  public TlrSettingsConfiguration getTlrSettingsConfiguration() {
-    return tlrSettingsConfiguration;
   }
 }

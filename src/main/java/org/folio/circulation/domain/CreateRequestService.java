@@ -53,7 +53,7 @@ public class CreateRequestService {
   }
 
   public CompletableFuture<Result<RequestAndRelatedRecords>> createRequest(
-      RequestAndRelatedRecords requestAndRelatedRecords) {
+    RequestAndRelatedRecords requestAndRelatedRecords) {
 
     final var requestRepository = repositories.getRequestRepository();
     final var configurationRepository = repositories.getConfigurationRepository();
@@ -78,8 +78,6 @@ public class CreateRequestService {
       .thenComposeAsync(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
         RequestAndRelatedRecords::withTimeZone))
       .thenApply(r -> r.next(errorHandler::failWithValidationErrors))
-      .thenComposeAsync(r -> r.combineAfter(configurationRepository::lookupTlrSettings,
-        RequestAndRelatedRecords::withTlrSettingsConfiguration))
       .thenComposeAsync(r -> r.after(updateUponRequest.updateItem::onRequestCreateOrUpdate))
       .thenComposeAsync(r -> r.after(updateUponRequest.updateLoan::onRequestCreateOrUpdate))
       .thenComposeAsync(r -> r.after(requestRepository::create))

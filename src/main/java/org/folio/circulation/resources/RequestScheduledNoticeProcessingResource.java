@@ -3,6 +3,7 @@ package org.folio.circulation.resources;
 import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.HOLD_EXPIRATION;
 import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.REQUEST_EXPIRATION;
 import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.TITLE_LEVEL_REQUEST_EXPIRATION;
+import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
 import java.util.Arrays;
@@ -14,10 +15,8 @@ import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.notice.schedule.ItemLevelRequestScheduledNoticeHandler;
-import org.folio.circulation.domain.notice.schedule.RequestScheduledNoticeHandler;
 import org.folio.circulation.domain.notice.schedule.ScheduledNotice;
 import org.folio.circulation.domain.notice.schedule.TitleLevelRequestScheduledNoticeHandler;
-import org.folio.circulation.domain.notice.schedule.TriggeringEvent;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
 import org.folio.circulation.support.Clients;
@@ -53,11 +52,33 @@ public class RequestScheduledNoticeProcessingResource extends ScheduledNoticePro
       .stream()
       .collect(Collectors.groupingBy(this::isTitleLevelRequestNotice));
 
-    return new ItemLevelRequestScheduledNoticeHandler(clients)
-      .handleNotices(noticesByRequestLevel.get(false))
-      .thenCompose(v -> new TitleLevelRequestScheduledNoticeHandler(clients)
-        .handleNotices(noticesByRequestLevel.get(true)))
+    return handleItemLevelRequestNotices(clients, noticesByRequestLevel)
+      .thenCompose(v -> handleTitleLevelRequestNotices(clients, noticesByRequestLevel))
       .thenApply(mapResult(v -> scheduledNotices));
+  }
+
+  private CompletableFuture<Result<List<ScheduledNotice>>> handleItemLevelRequestNotices(
+    Clients clients, Map<Boolean, List<ScheduledNotice>> noticesByRequestLevel) {
+
+    List<ScheduledNotice> itemLevelNotices = noticesByRequestLevel.get(false);
+    if (itemLevelNotices == null || itemLevelNotices.isEmpty()) {
+      return ofAsync(() -> null);
+    }
+
+    return new ItemLevelRequestScheduledNoticeHandler(clients)
+      .handleNotices(itemLevelNotices);
+  }
+
+  private CompletableFuture<Result<List<ScheduledNotice>>> handleTitleLevelRequestNotices(
+    Clients clients, Map<Boolean, List<ScheduledNotice>> noticesByRequestLevel) {
+
+    List<ScheduledNotice> titleLevelNotices = noticesByRequestLevel.get(true);
+    if (titleLevelNotices == null || titleLevelNotices.isEmpty()) {
+      return ofAsync(() -> null);
+    }
+
+    return new TitleLevelRequestScheduledNoticeHandler(clients)
+      .handleNotices(titleLevelNotices);
   }
 
   private boolean isTitleLevelRequestNotice(ScheduledNotice notice) {

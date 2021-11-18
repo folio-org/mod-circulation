@@ -133,9 +133,9 @@ public class RequestScheduledNoticeService {
   }
 
   private ScheduledNotice createScheduledNotice(Request request,
-                                                ZonedDateTime nextRunTime,
-                                                NoticeConfiguration cfg,
-                                                TriggeringEvent triggeringEvent) {
+    ZonedDateTime nextRunTime,
+    NoticeConfiguration cfg,
+    TriggeringEvent triggeringEvent) {
     return new ScheduledNoticeBuilder()
       .setId(UUID.randomUUID().toString())
       .setRequestId(request.getId())
@@ -169,7 +169,7 @@ public class RequestScheduledNoticeService {
     RequestAndRelatedRecords relatedRecords) {
 
     Request request = relatedRecords.getRequest();
-    TlrSettingsConfiguration tlrSettings = relatedRecords.getTlrSettingsConfiguration();
+    TlrSettingsConfiguration tlrSettings = request.getTlrSettingsConfiguration();
     if (tlrSettings.isTitleLevelRequestsFeatureEnabled()) {
       scheduleRequestNoticesBasedOnTlrSettings(request, tlrSettings);
     }

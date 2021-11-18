@@ -64,10 +64,6 @@ public abstract class ScheduledNoticeHandler {
   public CompletableFuture<Result<List<ScheduledNotice>>> handleNotices(
     Collection<ScheduledNotice> scheduledNotices) {
 
-    if (scheduledNotices == null) {
-      return ofAsync(() -> null);
-    }
-
     return allOf(scheduledNotices, this::handleNotice);
   }
 

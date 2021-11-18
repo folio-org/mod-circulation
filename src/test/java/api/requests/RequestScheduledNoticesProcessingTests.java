@@ -376,10 +376,10 @@ class RequestScheduledNoticesProcessingTests extends APITests {
       .at(pickupServicePoint);
     checkInFixture.checkInByBarcode(builder);
 
-   verifyNumberOfScheduledNotices(1);
+    verifyNumberOfScheduledNotices(1);
 
     scheduledNoticeProcessingClient.runRequestNoticesProcessing(
-    atStartOfDay(getLocalDate().plusDays(28), UTC));
+      atStartOfDay(getLocalDate().plusDays(28), UTC));
 
     verifyNumberOfSentNotices(1);
     assertThat(FakeModNotify.getFirstSentPatronNotice(),
@@ -535,7 +535,7 @@ class RequestScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  void titleLevelRequestExpirationNoticeShouldBeSentAndDeleted() {
+  void titleLevelRequestExpirationNoticeShouldBeSentAndDeletedWithEnabledTlr() {
     configurationsFixture.titleLevelRequestWithExpirationNotices(templateId);
 
     final LocalDate localDate = getLocalDate().minusDays(1);
