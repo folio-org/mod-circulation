@@ -46,6 +46,14 @@ public class ConfigurationExample {
         .encodePrettily());
   }
 
+  public static ConfigRecordBuilder tlrFeatureDisabled() {
+    return new ConfigRecordBuilder("SETTINGS", "TLR",
+      new TlrSettingsConfigurationBuilder()
+        .withTitleLevelRequestsFeatureEnabled(false)
+        .create()
+        .encodePrettily());
+  }
+
   private static JsonObject combinedTimeZoneConfig(String timezone) {
     final JsonObject encodedValue = new JsonObject();
     write(encodedValue, "locale", US_LOCALE);

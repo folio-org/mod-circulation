@@ -40,7 +40,7 @@ class MultipleMixedFulfilmentRequestsTests extends APITests {
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
-    IndividualResource deliveryRequestByRebecca = requestsFixture.placeDeliveryRequest(
+    IndividualResource deliveryRequestByRebecca = requestsFixture.placeItemLevelDeliveryRequest(
       smallAngryPlanet, rebecca, DATE_TIME_2017);
 
     IndividualResource requestByJessica = requestsFixture.placeItemLevelHoldShelfRequest(
@@ -78,7 +78,7 @@ class MultipleMixedFulfilmentRequestsTests extends APITests {
     IndividualResource requestByJessica = requestsFixture.placeItemLevelHoldShelfRequest(
       smallAngryPlanet, jessica, DATE_TIME_2017);
 
-    IndividualResource deliveryRequestByRebecca = requestsFixture.placeDeliveryRequest(
+    IndividualResource deliveryRequestByRebecca = requestsFixture.placeItemLevelDeliveryRequest(
       smallAngryPlanet, rebecca, DATE_TIME_2017);
 
     IndividualResource requestBySteve = requestsFixture.placeItemLevelHoldShelfRequest(
@@ -114,7 +114,7 @@ class MultipleMixedFulfilmentRequestsTests extends APITests {
     IndividualResource requestByJessica = requestsFixture.placeItemLevelHoldShelfRequest(
       smallAngryPlanet, jessica, DATE_TIME_2017);
 
-    IndividualResource deliveryRequestByRebecca = requestsFixture.placeDeliveryRequest(
+    IndividualResource deliveryRequestByRebecca = requestsFixture.placeItemLevelDeliveryRequest(
       smallAngryPlanet, rebecca, DATE_TIME_2018);
 
     IndividualResource requestBySteve = requestsFixture.placeItemLevelHoldShelfRequest(
@@ -143,7 +143,7 @@ class MultipleMixedFulfilmentRequestsTests extends APITests {
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
-    IndividualResource requestByRebecca = requestsFixture.placeDeliveryRequest(
+    IndividualResource requestByRebecca = requestsFixture.placeItemLevelDeliveryRequest(
       smallAngryPlanet, rebecca, DATE_TIME_2017);
 
     IndividualResource requestByJessica = requestsFixture.placeItemLevelHoldShelfRequest(

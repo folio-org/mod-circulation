@@ -1,6 +1,5 @@
 package org.folio.circulation.resources;
 
-import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.folio.circulation.domain.representations.RequestProperties.INSTANCE_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.ITEM_ID;
@@ -21,10 +20,6 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.With;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.MultipleRecords;
@@ -33,7 +28,6 @@ import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.RequestLevel;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.User;
-import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.ServicePointPickupLocationValidator;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
@@ -49,7 +43,9 @@ import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.json.JsonObject;
+import lombok.AllArgsConstructor;
 
+@AllArgsConstructor
 class RequestFromRepresentationService {
   private static final PageLimit LOANS_PAGE_LIMIT = limit(10000);
 
@@ -64,28 +60,8 @@ class RequestFromRepresentationService {
   private final ServicePointPickupLocationValidator pickupLocationValidator;
   private final CirculationErrorHandler errorHandler;
 
-  RequestFromRepresentationService(InstanceRepository instanceRepository,
-    ItemRepository itemRepository, RequestQueueRepository requestQueueRepository,
-    UserRepository userRepository, LoanRepository loanRepository,
-    ServicePointRepository servicePointRepository, ConfigurationRepository configurationRepository,
-    ProxyRelationshipValidator proxyRelationshipValidator,
-    ServicePointPickupLocationValidator pickupLocationValidator,
-    CirculationErrorHandler errorHandler) {
-
-    this.instanceRepository = instanceRepository;
-    this.loanRepository = loanRepository;
-    this.itemRepository = itemRepository;
-    this.requestQueueRepository = requestQueueRepository;
-    this.userRepository = userRepository;
-    this.servicePointRepository = servicePointRepository;
-    this.configurationRepository = configurationRepository;
-    this.proxyRelationshipValidator = proxyRelationshipValidator;
-    this.pickupLocationValidator = pickupLocationValidator;
-    this.errorHandler = errorHandler;
-  }
-
   CompletableFuture<Result<RequestAndRelatedRecords>> getRequestFrom(JsonObject representation) {
-    return initRepresentationValidationContext(representation)
+    return initRequest(representation)
       .thenApply(r -> r.next(this::validateStatus))
       .thenApply(r -> r.next(this::validateRequestLevel))
       .thenApply(r -> r.next(this::refuseWhenNoInstanceId)
@@ -96,7 +72,6 @@ class RequestFromRepresentationService {
         .mapFailure(err -> errorHandler.handleValidationError(err, INVALID_INSTANCE_ID, r)))
       .thenApply(r -> r.map(this::removeRelatedRecordInformation))
       .thenApply(r -> r.map(this::removeProcessingParameters))
-      .thenApply(r -> r.map(ctx -> Request.from(ctx.tlrSettingsConfiguration, ctx.representation)))
       .thenCompose(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
         Request::truncateRequestExpirationDateToTheEndOfTheDay))
       .thenComposeAsync(r -> r.after(when(
@@ -116,12 +91,11 @@ class RequestFromRepresentationService {
         .mapFailure(err -> errorHandler.handleValidationError(err, INVALID_PICKUP_SERVICE_POINT, r)));
   }
 
-  private CompletableFuture<Result<RepresentationValidationContext>> initRepresentationValidationContext(
+  private CompletableFuture<Result<Request>> initRequest(
     JsonObject representation) {
 
-    return completedFuture(succeeded(new RepresentationValidationContext().withRepresentation(representation)))
-      .thenCompose(r -> r.combineAfter(configurationRepository::lookupTlrSettings,
-        RepresentationValidationContext::withTlrSettingsConfiguration));
+    return configurationRepository.lookupTlrSettings()
+      .thenApply(r -> r.map(tlrSettings -> Request.from(tlrSettings, representation)));
   }
 
   private CompletableFuture<Result<Boolean>> shouldFetchInstance(Request request) {
@@ -186,10 +160,8 @@ class RequestFromRepresentationService {
     return request.withLoan(request.getLoan().withUser(user));
   }
 
-  private Result<RepresentationValidationContext> validateStatus(
-    RepresentationValidationContext context) {
-
-    JsonObject representation = context.getRepresentation();
+  private Result<Request> validateStatus(Request request) {
+    JsonObject representation = request.getRequestRepresentation();
     RequestStatus status = RequestStatus.from(representation);
 
     if (!status.isValid()) {
@@ -197,34 +169,36 @@ class RequestFromRepresentationService {
     }
     else {
       status.writeTo(representation);
-      return succeeded(context);
+      return succeeded(request);
     }
   }
 
-  private Result<RepresentationValidationContext> validateRequestLevel(RepresentationValidationContext context) {
-    JsonObject representation = context.getRepresentation();
+  private Result<Request> validateRequestLevel(Request request) {
+    JsonObject representation = request.getRequestRepresentation();
 
-    RequestLevel requestLevel = RequestLevel.from(representation.getString("requestLevel"));
-    boolean tlrEnabled = context.getTlrSettingsConfiguration().isTitleLevelRequestsFeatureEnabled();
+    String requestLevelRaw = representation.getString("requestLevel");
+    RequestLevel requestLevel = RequestLevel.from(requestLevelRaw);
+    boolean tlrEnabled = request.getTlrSettingsConfiguration().isTitleLevelRequestsFeatureEnabled();
 
     List<RequestLevel> allowedStatuses = tlrEnabled
       ? List.of(RequestLevel.ITEM, RequestLevel.TITLE)
       : List.of(RequestLevel.ITEM);
 
     if (!allowedStatuses.contains(requestLevel)) {
-      return failed(new BadRequestFailure("requestLevel must be one of the following: " +
-        allowedStatuses.stream()
-          .map(existingLevel -> StringUtils.wrap(existingLevel.getValue(), '"'))
-          .collect(Collectors.joining(", "))));
+      String allowedStatusesJoined = allowedStatuses.stream()
+        .map(existingLevel -> StringUtils.wrap(existingLevel.getValue(), '"'))
+        .collect(Collectors.joining(", "));
+
+      return failedValidation(
+        "requestLevel must be one of the following: " + allowedStatusesJoined, "requestLevel",
+        requestLevelRaw);
     }
 
-    return succeeded(context);
+    return succeeded(request);
   }
 
-  private Result<RepresentationValidationContext> refuseWhenNoInstanceId(
-    RepresentationValidationContext context) {
-
-    JsonObject representation = context.getRepresentation();
+  private Result<Request> refuseWhenNoInstanceId(Request context) {
+    JsonObject representation = context.getRequestRepresentation();
     String instanceId = getProperty(representation, INSTANCE_ID);
 
     if (isBlank(instanceId)) {
@@ -236,35 +210,33 @@ class RequestFromRepresentationService {
     }
   }
 
-    private Result<RepresentationValidationContext> refuseWhenNoItemId(
-      RepresentationValidationContext context) {
-
-    JsonObject representation = context.getRepresentation();
+    private Result<Request> refuseWhenNoItemId(Request request) {
+    JsonObject representation = request.getRequestRepresentation();
     String itemId = getProperty(representation, ITEM_ID);
-    boolean tlrEnabled = context.getTlrSettingsConfiguration().isTitleLevelRequestsFeatureEnabled();
+    boolean tlrEnabled = request.getTlrSettingsConfiguration().isTitleLevelRequestsFeatureEnabled();
 
     if (!tlrEnabled && isBlank(itemId)) {
       return failedValidation("Cannot create a request with no item ID", "itemId", itemId);
     }
     else {
-      return of(() -> context);
+      return of(() -> request);
     }
   }
 
-  private Result<RepresentationValidationContext> refuseWhenNoInstanceId(RepresentationValidationContext context) {
-    JsonObject representation = context.getRepresentation();
+  private Result<Request> refuseWhenNoInstanceId(Request request) {
+    JsonObject representation = request.getRepresentation();
     String instanceId = getProperty(representation, INSTANCE_ID);
 
     if (isBlank(instanceId)) {
       return failedValidation("Cannot create a request with no instance ID", "instanceId", instanceId);
     }
     else {
-      return of(() -> context);
+      return of(() -> request);
     }
   }
 
-  private RepresentationValidationContext removeRelatedRecordInformation(RepresentationValidationContext context) {
-    JsonObject representation = context.getRepresentation();
+  private Request removeRelatedRecordInformation(Request request) {
+    JsonObject representation = request.getRequestRepresentation();
 
     representation.remove("item");
     representation.remove("requester");
@@ -273,23 +245,14 @@ class RequestFromRepresentationService {
     representation.remove("pickupServicePoint");
     representation.remove("deliveryAddress");
 
-    return context;
+    return request;
   }
 
-  private RepresentationValidationContext removeProcessingParameters(RepresentationValidationContext context) {
-    JsonObject representation = context.getRepresentation();
+  private Request removeProcessingParameters(Request request) {
+    JsonObject representation = request.getRequestRepresentation();
 
     representation.remove("requestProcessingParameters");
 
-    return context;
-  }
-
-  @AllArgsConstructor
-  @NoArgsConstructor(force = true)
-  @With
-  @Getter
-  private static final class RepresentationValidationContext {
-    private final JsonObject representation;
-    private final TlrSettingsConfiguration tlrSettingsConfiguration;
+    return request;
   }
 }

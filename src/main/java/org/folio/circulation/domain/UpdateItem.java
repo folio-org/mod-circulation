@@ -61,7 +61,7 @@ public class UpdateItem {
   private Result<Item> changeItemWithOutstandingRequest(Item item, RequestQueue requestQueue,
     UUID checkInServicePointId) {
 
-    Request req = requestQueue.getHighestPriorityFulfillableRequest();
+    Request req = requestQueue.getHighestPriorityRequestFulfillableByItem(item);
 
     Result<Item> itemResult;
     switch (req.getFulfilmentPreference()) {
@@ -202,7 +202,7 @@ public class UpdateItem {
 
   private ItemStatus itemStatusOnLoanUpdate(Loan loan, RequestQueue requestQueue) {
     if(loan.isClosed()) {
-      return itemStatusOnCheckIn(requestQueue);
+      return itemStatusOnCheckIn(requestQueue, loan.getItem());
     }
     else if(loan.getItem().isDeclaredLost()) {
       return loan.getItem().getStatus();
@@ -210,7 +210,7 @@ public class UpdateItem {
     return CHECKED_OUT;
   }
 
-  private ItemStatus itemStatusOnCheckIn(RequestQueue requestQueue) {
-    return requestQueue.checkedInItemStatus();
+  private ItemStatus itemStatusOnCheckIn(RequestQueue requestQueue, Item item) {
+    return requestQueue.checkedInItemStatus(item);
   }
 }

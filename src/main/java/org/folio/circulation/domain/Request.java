@@ -324,21 +324,4 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   public boolean hasChangedStatus() {
     return changedStatus;
   }
-
-  public boolean canBeFulfilledByItem(Item item) {
-    if (getRequestLevel() == RequestLevel.TITLE) {
-      String itemInstanceId = item.getInstanceId();
-      String requestInstanceId = this.getInstanceId();
-
-      return itemInstanceId != null && itemInstanceId.equals(requestInstanceId);
-    }
-    else if (getRequestLevel() == RequestLevel.ITEM) {
-      String itemId = item.getItemId();
-      String requestItemId = this.getItemId();
-
-      return itemId != null && itemId.equals(requestItemId);
-    }
-
-    return false;
-  }
 }

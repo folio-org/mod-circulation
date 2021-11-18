@@ -131,7 +131,14 @@ class CheckInProcessAdapter {
   }
 
   CompletableFuture<Result<RequestQueue>> getRequestQueue(CheckInContext context) {
-    return requestQueueRepository.get(context);
+    boolean tlrEnabled = context.getTlrSettings().isTitleLevelRequestsFeatureEnabled();
+
+    if (!tlrEnabled) {
+      return requestQueueRepository.getByItemId(context.getItem().getItemId());
+    }
+    else {
+      return requestQueueRepository.getByInstanceId(context.getItem().getInstanceId());
+    }
   }
 
   CompletableFuture<Result<Item>> updateItem(CheckInContext context) {
@@ -143,8 +150,11 @@ class CheckInProcessAdapter {
   CompletableFuture<Result<RequestQueue>> updateRequestQueue(
     CheckInContext context) {
 
-    return requestQueueUpdate.onCheckIn(context.getRequestQueue(),
-      context.getCheckInServicePointId().toString());
+    final RequestQueue requestQueue = context.getRequestQueue();
+    final Item item = context.getItem();
+    final String checkInServicePointId = context.getCheckInServicePointId().toString();
+
+    return requestQueueUpdate.onCheckIn(requestQueue, item, checkInServicePointId);
   }
 
   CompletableFuture<Result<Loan>> updateLoan(CheckInContext context) {
