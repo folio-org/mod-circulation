@@ -20,12 +20,13 @@ public class RequestQueueValidation {
     throw new UnsupportedOperationException("Do not instantiate");
   }
 
-  public static Result<ReorderRequestContext> queueFoundForItem(
+  public static Result<ReorderRequestContext> queueIsFound(
     Result<ReorderRequestContext> result) {
+
     return result.failWhen(
       r -> Result.succeeded(r.getRequestQueue().getRequests().isEmpty()),
-      r -> new RecordNotFoundFailure("Item", r.getItemId())
-    );
+      r -> new RecordNotFoundFailure(r.isQueueForInstance() ? "Instance" : "Item",
+        r.isQueueForInstance() ? r.getInstanceId() : r.getItemId()));
   }
 
   /**

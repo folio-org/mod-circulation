@@ -372,7 +372,31 @@
           "methods": [
             "POST"
           ],
-          "pathPattern": "/circulation/requests/queue/{itemId}/reorder",
+          "pathPattern": "/circulation/requests/queue/{id}/reorder",
+          "permissionsRequired": [
+            "circulation.requests.queue.reorder.collection.post"
+          ],
+          "modulePermissions": [
+            "modperms.circulation.requests.queue.reorder.collection.post"
+          ]
+        },
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/circulation/requests/instance/queue/{id}",
+          "permissionsRequired": [
+            "circulation.requests.queue.collection.get"
+          ],
+          "modulePermissions": [
+            "modperms.circulation.requests.queue.collection.get"
+          ]
+        },
+        {
+          "methods": [
+            "POST"
+          ],
+          "pathPattern": "/circulation/requests/instance/queue/{id}/reorder",
           "permissionsRequired": [
             "circulation.requests.queue.reorder.collection.post"
           ],

@@ -8,22 +8,21 @@ import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.reorder.ReorderRequest;
 import org.folio.circulation.domain.reorder.ReorderQueueRequest;
 
+import lombok.Getter;
+
+@Getter
 public class ReorderRequestContext {
+  private final String instanceId;
   private final String itemId;
   private final ReorderQueueRequest reorderQueueRequest;
   private RequestQueue requestQueue;
 
-  public ReorderRequestContext(String itemId, ReorderQueueRequest reorderQueueRequest) {
+  public ReorderRequestContext(String instanceId, String itemId,
+    ReorderQueueRequest reorderQueueRequest) {
+
+    this.instanceId = instanceId;
     this.itemId = itemId;
     this.reorderQueueRequest = reorderQueueRequest;
-  }
-
-  public ReorderQueueRequest getReorderQueueRequest() {
-    return reorderQueueRequest;
-  }
-
-  public RequestQueue getRequestQueue() {
-    return requestQueue;
   }
 
   public ReorderRequestContext withRequestQueue(RequestQueue requestQueue) {
@@ -32,8 +31,8 @@ public class ReorderRequestContext {
     return this;
   }
 
-  public String getItemId() {
-    return itemId;
+  public boolean isQueueForInstance() {
+    return instanceId != null && itemId == null;
   }
 
   /**
