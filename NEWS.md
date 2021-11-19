@@ -1,6 +1,6 @@
-## 22.1.3 2021-11-18
+## 22.1.3 2021-11-19
 
-* fixes for due date changed by recall flag applied to loans endpoint (CIRC-1112)
+* Fixes for due date changed by recall flag applied to loans endpoint (CIRC-1112)
 
 ## 22.1.2 2021-11-12
 
