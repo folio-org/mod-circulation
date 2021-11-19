@@ -30,6 +30,7 @@ import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.Response;
@@ -40,6 +41,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.runners.MethodSorters;
 
 import api.support.APITests;
@@ -60,7 +62,7 @@ import io.vertx.core.json.JsonObject;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class RequestScheduledNoticesProcessingTests extends APITests {
-  private final UUID templateId = UUID.randomUUID();
+  private static final UUID TEMPLATE_ID = UUID.randomUUID();
   private ItemResource item;
   private UserResource requester;
   private IndividualResource pickupServicePoint;
@@ -79,7 +81,7 @@ class RequestScheduledNoticesProcessingTests extends APITests {
     requester = usersFixture.steve();
     pickupServicePoint = servicePointsFixture.cd1();
 
-    templateFixture.createDummyNoticeTemplate(templateId);
+    templateFixture.createDummyNoticeTemplate(TEMPLATE_ID);
   }
 
   /**
@@ -115,7 +117,7 @@ class RequestScheduledNoticesProcessingTests extends APITests {
 
     verifyNumberOfSentNotices(1);
     assertThat(
-      FakeModNotify.getFirstSentPatronNotice(), getTemplateContextMatcher(templateId, request));
+      FakeModNotify.getFirstSentPatronNotice(), getTemplateContextMatcher(TEMPLATE_ID, request));
 
     verifyNumberOfScheduledNotices(0);
     verifyNumberOfPublishedEvents(NOTICE, 1);
@@ -154,7 +156,7 @@ class RequestScheduledNoticesProcessingTests extends APITests {
   //TODO fix this test and make it useful again
   public void uponAtHoldExpirationNoticeShouldBeSentAndDeletedWhenHoldExpirationDateHasPassed() {
     JsonObject noticeConfiguration = new NoticeConfigurationBuilder()
-      .withTemplateId(templateId)
+      .withTemplateId(TEMPLATE_ID)
       .withHoldShelfExpirationEvent()
       .withUponAtTiming()
       .sendInRealTime(true)
@@ -193,7 +195,7 @@ class RequestScheduledNoticesProcessingTests extends APITests {
   @Test
   void uponAtHoldExpirationNoticeShouldNotBeSentWhenHoldExpirationDateHasPassedAndRequestIsNotClosed() {
     JsonObject noticeConfiguration = new NoticeConfigurationBuilder()
-      .withTemplateId(templateId)
+      .withTemplateId(TEMPLATE_ID)
       .withHoldShelfExpirationEvent()
       .withUponAtTiming()
       .sendInRealTime(true)
@@ -227,7 +229,7 @@ class RequestScheduledNoticesProcessingTests extends APITests {
   @Test
   void uponAtHoldExpirationNoticeShouldNotBeSentWhenHoldExpirationDateHasPassedAndItemCheckedOut() {
     JsonObject noticeConfiguration = new NoticeConfigurationBuilder()
-      .withTemplateId(templateId)
+      .withTemplateId(TEMPLATE_ID)
       .withHoldShelfExpirationEvent()
       .withUponAtTiming()
       .sendInRealTime(true)
@@ -269,7 +271,7 @@ class RequestScheduledNoticesProcessingTests extends APITests {
   @Test
   void beforeRequestExpirationNoticeShouldBeSentAndDeletedWhenIsNotRecurring() {
     JsonObject noticeConfiguration = new NoticeConfigurationBuilder()
-      .withTemplateId(templateId)
+      .withTemplateId(TEMPLATE_ID)
       .withRequestExpirationEvent()
       .withBeforeTiming(Period.days(5))
       .sendInRealTime(true)
@@ -294,7 +296,7 @@ class RequestScheduledNoticesProcessingTests extends APITests {
     scheduledNoticeProcessingClient.runRequestNoticesProcessing();
 
     verifyNumberOfSentNotices(1);
-    assertThat(FakeModNotify.getFirstSentPatronNotice(), getTemplateContextMatcher(templateId, request));
+    assertThat(FakeModNotify.getFirstSentPatronNotice(), getTemplateContextMatcher(TEMPLATE_ID, request));
 
     verifyNumberOfScheduledNotices(0);
     verifyNumberOfPublishedEvents(NOTICE, 1);
@@ -304,7 +306,7 @@ class RequestScheduledNoticesProcessingTests extends APITests {
   @Test
   void beforeRequestExpirationRecurringNoticeShouldBeSentAndUpdatedWhenFirstThresholdBeforeExpirationHasPassed() {
     JsonObject noticeConfiguration = new NoticeConfigurationBuilder()
-      .withTemplateId(templateId)
+      .withTemplateId(TEMPLATE_ID)
       .withRequestExpirationEvent()
       .withBeforeTiming(Period.days(3))
       .recurring(Period.days(1))
@@ -337,7 +339,7 @@ class RequestScheduledNoticesProcessingTests extends APITests {
     assertThat(nextRunTimeBeforeProcessing, is(nextRunTimeAfterProcessing.minusDays(1)));
 
     verifyNumberOfSentNotices(1);
-    assertThat(FakeModNotify.getFirstSentPatronNotice(), getTemplateContextMatcher(templateId, request));
+    assertThat(FakeModNotify.getFirstSentPatronNotice(), getTemplateContextMatcher(TEMPLATE_ID, request));
 
     verifyNumberOfScheduledNotices(1);
     verifyNumberOfPublishedEvents(NOTICE, 1);
@@ -347,7 +349,7 @@ class RequestScheduledNoticesProcessingTests extends APITests {
   @Test
   void beforeHoldExpirationNoticeShouldBeSentAndDeletedWhenIsNotRecurring() {
     JsonObject noticeConfiguration = new NoticeConfigurationBuilder()
-      .withTemplateId(templateId)
+      .withTemplateId(TEMPLATE_ID)
       .withHoldShelfExpirationEvent()
       .withBeforeTiming(Period.days(5))
       .sendInRealTime(true)
@@ -379,7 +381,7 @@ class RequestScheduledNoticesProcessingTests extends APITests {
 
     verifyNumberOfSentNotices(1);
     assertThat(FakeModNotify.getFirstSentPatronNotice(),
-      getTemplateContextMatcher(templateId, requestsClient.get(request.getId())));
+      getTemplateContextMatcher(TEMPLATE_ID, requestsClient.get(request.getId())));
 
     verifyNumberOfScheduledNotices(0);
     verifyNumberOfPublishedEvents(NOTICE, 1);
@@ -389,7 +391,7 @@ class RequestScheduledNoticesProcessingTests extends APITests {
   @Test
   void scheduledNoticesShouldNotBeSentAfterRequestCancellation() {
     JsonObject noticeConfiguration = new NoticeConfigurationBuilder()
-      .withTemplateId(templateId)
+      .withTemplateId(TEMPLATE_ID)
       .withHoldShelfExpirationEvent()
       .withBeforeTiming(Period.minutes(35))
       .recurring(Period.minutes(5))
@@ -425,7 +427,7 @@ class RequestScheduledNoticesProcessingTests extends APITests {
   @Test
   void uponAtNoticesShouldBeSentWhenRequestPickupExpired() {
     JsonObject noticeConfiguration = new NoticeConfigurationBuilder()
-      .withTemplateId(templateId)
+      .withTemplateId(TEMPLATE_ID)
       .withHoldShelfExpirationEvent()
       .withUponAtTiming()
       .sendInRealTime(true)
@@ -464,7 +466,7 @@ class RequestScheduledNoticesProcessingTests extends APITests {
   void scheduledNoticesShouldNotBeSentWhenTemplateWasNotFound() {
     prepareNotice();
 
-    templateFixture.delete(templateId);
+    templateFixture.delete(TEMPLATE_ID);
 
     scheduledNoticeProcessingClient.runRequestNoticesProcessing(getZonedDateTime().plusMonths(2));
 
@@ -532,7 +534,7 @@ class RequestScheduledNoticesProcessingTests extends APITests {
 
   @Test
   void titleLevelRequestExpirationNoticeShouldBeSentAndDeletedWithEnabledTlr() {
-    reconfigureTlrFeature(TlrFeatureStatus.ENABLED, null, null, templateId);
+    reconfigureTlrFeature(TlrFeatureStatus.ENABLED, null, null, TEMPLATE_ID);
 
     final LocalDate localDate = getLocalDate().minusDays(1);
     final var requestExpiration = LocalDate.of(localDate.getYear(),
@@ -554,9 +556,10 @@ class RequestScheduledNoticesProcessingTests extends APITests {
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 
-  @Test
-  void titleLevelRequestExpirationNoticeShouldNotBeCreatedWithDisabledTlr() {
-    reconfigureTlrFeature(TlrFeatureStatus.DISABLED, null, null, templateId);
+  @ParameterizedTest
+  @MethodSource("templatesId")
+  void titleLevelRequestExpirationNoticeShouldNotBeCreatedWithDisabledTlr(UUID expirationTemplateId) {
+    reconfigureTlrFeature(TlrFeatureStatus.DISABLED, null, null, expirationTemplateId);
 
     final LocalDate localDate = getLocalDate().minusDays(1);
     final var requestExpiration = LocalDate.of(localDate.getYear(),
@@ -609,7 +612,7 @@ class RequestScheduledNoticesProcessingTests extends APITests {
 
     verifyNumberOfSentNotices(1);
     assertThat(
-      FakeModNotify.getFirstSentPatronNotice(), getTemplateContextMatcher(templateId, request));
+      FakeModNotify.getFirstSentPatronNotice(), getTemplateContextMatcher(TEMPLATE_ID, request));
 
     verifyNumberOfScheduledNotices(0);
     verifyNumberOfPublishedEvents(NOTICE, 1);
@@ -618,7 +621,7 @@ class RequestScheduledNoticesProcessingTests extends APITests {
 
   @Test
   void itemLevelRequestExpirationNoticeAndTitleLevelRequestExpirationShouldBeCreatedAndSent() {
-    reconfigureTlrFeature(TlrFeatureStatus.ENABLED, null, null, templateId);
+    reconfigureTlrFeature(TlrFeatureStatus.ENABLED, null, null, TEMPLATE_ID);
     JsonObject noticeConfiguration = buildNoticeConfigurationForItemLevelRequests();
     setupNoticePolicyWithRequestNotice(noticeConfiguration);
 
@@ -649,9 +652,13 @@ class RequestScheduledNoticesProcessingTests extends APITests {
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 
+  private static Stream<UUID> templatesId() {
+    return Stream.of(TEMPLATE_ID, null);
+  }
+
   private JsonObject buildNoticeConfigurationForItemLevelRequests() {
     return new NoticeConfigurationBuilder()
-      .withTemplateId(templateId)
+      .withTemplateId(TEMPLATE_ID)
       .withRequestExpirationEvent()
       .withUponAtTiming()
       .sendInRealTime(true)
@@ -686,7 +693,7 @@ class RequestScheduledNoticesProcessingTests extends APITests {
   private IndividualResource prepareNotice() {
     setupNoticePolicyWithRequestNotice(
       new NoticeConfigurationBuilder()
-        .withTemplateId(templateId)
+        .withTemplateId(TEMPLATE_ID)
         .withRequestExpirationEvent()
         .withAfterTiming(Period.hours(1))
         .sendInRealTime(true)
