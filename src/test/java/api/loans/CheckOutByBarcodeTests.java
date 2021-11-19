@@ -32,6 +32,7 @@ import static api.support.matchers.ItemMatchers.isWithdrawn;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static api.support.matchers.LoanMatchers.isOpen;
+import static api.support.matchers.RequestMatchers.hasPosition;
 import static api.support.matchers.RequestMatchers.isClosedFilled;
 import static api.support.matchers.RequestMatchers.isOpenAwaitingPickup;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
@@ -2169,6 +2170,68 @@ class CheckOutByBarcodeTests extends APITests {
       is(ZonedDateTime.of(MONDAY_DATE, LocalTime.MIDNIGHT.minusSeconds(1), UTC)));
   }
 
+  @Test
+  void cannotCheckoutWhenItemIsRequestedByTitleLevelRequestOfDifferentUser() {
+    configurationsFixture.enableTlrFeature();
+
+    ItemResource item = itemsFixture.basedUponNod();
+    UserResource borrower = usersFixture.steve();
+    UserResource requester = usersFixture.james();
+
+    requestsClient.create(new RequestBuilder()
+      .page()
+      .titleRequestLevel()
+      .withInstanceId(item.getInstanceId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
+      .withRequesterId(requester.getId()));
+
+    Response checkoutResponse = checkOutFixture.attemptCheckOutByBarcode(item, borrower);
+
+    assertThat(checkoutResponse.getStatusCode(), is(422));
+    assertThat(checkoutResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("Nod (Barcode: 565578437802) cannot be checked out to user Jones, Steven" +
+        " because it has been requested by another patron"),
+      hasUserBarcodeParameter(borrower))));
+  }
+
+  @Test
+  void titleLevelRequestIsIgnoredWhenFeatureIsDisabled() {
+    configurationsFixture.enableTlrFeature();
+
+    ItemResource item = itemsFixture.basedUponNod();
+    UserResource borrower = usersFixture.steve();
+    UserResource requester = usersFixture.james();
+
+    requestsClient.create(new RequestBuilder()
+      .page()
+      .titleRequestLevel()
+      .withInstanceId(item.getInstanceId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
+      .withRequesterId(requester.getId()));
+
+    configurationsFixture.disableTlrFeature();
+    checkOutFixture.checkOutByBarcode(item, borrower);
+  }
+
+  @Test
+  void checkoutUpdatesTitleLevelRequest() {
+    configurationsFixture.enableTlrFeature();
+
+    ItemResource item = itemsFixture.basedUponNod();
+    UserResource requester = usersFixture.steve();
+
+    IndividualResource firstRequest = requestsClient.create(
+      new RequestBuilder()
+        .page()
+        .titleRequestLevel()
+        .withInstanceId(item.getInstanceId())
+        .withPickupServicePointId(servicePointsFixture.cd1().getId())
+        .withRequesterId(requester.getId()));
+
+    checkOutFixture.checkOutByBarcode(item, requester);
+    assertThat(fetchRequestJson(firstRequest), isClosedFilled());
+  }
+
   @ParameterizedTest
   @CsvSource({
     "Item, Item",
@@ -2181,52 +2244,55 @@ class CheckOutByBarcodeTests extends APITests {
     configurationsFixture.enableTlrFeature();
 
     ItemResource item = itemsFixture.basedUponNod();
-    UUID instanceId = item.getInstanceId();
-    UserResource firstUser = usersFixture.steve();
-    UserResource secondUser = usersFixture.james();
+    UserResource firstRequester = usersFixture.steve();
+    UserResource secondRequester = usersFixture.james();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+
+    UUID instanceId = item.getInstanceId();
+    UUID pageRequestItemId = "Item".equals(pageRequestLevel) ? item.getId() : null;
+    UUID holdRequestItemId = "Item".equals(holdRequestLevel) ? item.getId() : null;
 
     IndividualResource firstRequest = requestsClient.create(
       new RequestBuilder()
         .page()
         .withRequestLevel(pageRequestLevel)
-        .withItemId("Item".equals(pageRequestLevel) ? item.getId() : null)
+        .withItemId(pageRequestItemId)
         .withInstanceId(instanceId)
         .withPickupServicePointId(pickupServicePointId)
-        .withRequesterId(firstUser.getId()));
+        .withRequesterId(firstRequester.getId()));
+
+    assertThat(firstRequest.getJson(), hasPosition(1));
+    // TODO: uncomment once creation of Page TLR request changes the item status to "Paged"
+//    assertThat(fetchItemJson(item), isPaged());
 
     IndividualResource secondRequest = requestsClient.create(
       new RequestBuilder()
         .hold()
         .withRequestLevel(holdRequestLevel)
-        .withItemId("Item".equals(holdRequestLevel) ? item.getId() : null)
+        .withItemId(holdRequestItemId)
         .withInstanceId(instanceId)
         .withPickupServicePointId(pickupServicePointId)
-        .withRequesterId(secondUser.getId()));
+        .withRequesterId(secondRequester.getId()));
+
+    assertThat(secondRequest.getJson(), hasPosition(2));
 
     checkInFixture.checkInByBarcode(item);
-
     assertThat(fetchItemJson(item), isAwaitingPickup());
     assertThat(fetchRequestJson(firstRequest), isOpenAwaitingPickup());
 
-    // fulfil first request
-
-    checkOutFixture.checkOutByBarcode(item, firstUser);
-
+    // fulfil page request
+    checkOutFixture.checkOutByBarcode(item, firstRequester);
     assertThat(fetchItemJson(item), isCheckedOut());
     assertThat(fetchRequestJson(firstRequest), isClosedFilled());
 
     // check the item back in
-
     checkInFixture.checkInByBarcode(item);
-
     assertThat(fetchItemJson(item), isAwaitingPickup());
     assertThat(fetchRequestJson(secondRequest), isOpenAwaitingPickup());
+    assertThat(fetchRequestJson(secondRequest), hasPosition(1));
 
-    // fulfil second request
-
-    checkOutFixture.checkOutByBarcode(item, secondUser);
-
+    // fulfil hold request
+    checkOutFixture.checkOutByBarcode(item, secondRequester);
     assertThat(fetchItemJson(item), isCheckedOut());
     assertThat(fetchRequestJson(firstRequest), isClosedFilled());
   }
