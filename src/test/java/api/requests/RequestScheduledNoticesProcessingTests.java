@@ -584,7 +584,7 @@ class RequestScheduledNoticesProcessingTests extends APITests {
 
   @ParameterizedTest
   @EnumSource(TlrFeatureStatus.class)
-  void itemLevelRequestExpirationNoticeShouldBeCreatedAndSentRegardlessTlr(
+  void itemLevelRequestExpirationNoticeShouldBeCreatedAndSentRegardlessTlrSettings(
     TlrFeatureStatus tlrFeatureStatus) {
 
     reconfigureTlrFeature(tlrFeatureStatus, null, null, null);
@@ -628,10 +628,8 @@ class RequestScheduledNoticesProcessingTests extends APITests {
 
     IndividualResource itemLevelRequest = requestsFixture.place(
       buildItemLevelRequest(requestExpiration));
-
     IndividualResource titleLevelRequest = requestsFixture.place(
       buildTitleLevelRequest(requestExpiration));
-
     verifyNumberOfScheduledNotices(2);
 
     //close requests
@@ -648,40 +646,6 @@ class RequestScheduledNoticesProcessingTests extends APITests {
     verifyNumberOfSentNotices(2);
     verifyNumberOfScheduledNotices(0);
     verifyNumberOfPublishedEvents(NOTICE, 2);
-    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
-  }
-
-  @Test
-  void itemLevelRequestExpirationNoticeShouldBeCreatedAndSentButTlrFeatureIsDisabled() {
-    reconfigureTlrFeature(TlrFeatureStatus.DISABLED, null, null, templateId);
-    JsonObject noticeConfiguration = buildNoticeConfigurationForItemLevelRequests();
-    setupNoticePolicyWithRequestNotice(noticeConfiguration);
-
-    final LocalDate localDate = getLocalDate().minusDays(1);
-    final var requestExpiration = LocalDate.of(localDate.getYear(),
-      localDate.getMonthValue(), localDate.getDayOfMonth());
-
-    IndividualResource itemLevelRequest = requestsFixture.place(
-      buildItemLevelRequest(requestExpiration));
-
-    Response titleLevelResponse = requestsFixture.attemptPlace(
-      buildTitleLevelRequest(requestExpiration));
-
-    assertThat(titleLevelResponse.getStatusCode(), is(422));
-    assertThat(titleLevelResponse.getJson(), hasErrorWith(
-      hasMessage("requestLevel must be one of the following: \"Item\"")));
-
-    verifyNumberOfScheduledNotices(1);
-
-    //close requests
-    IndividualResource itemLevelRequestInStorage = requestsStorageClient.get(itemLevelRequest);
-    requestsStorageClient.replace(itemLevelRequest.getId(),
-      itemLevelRequestInStorage.getJson().put("status", "Closed - Unfilled"));
-    scheduledNoticeProcessingClient.runRequestNoticesProcessing();
-
-    verifyNumberOfSentNotices(1);
-    verifyNumberOfScheduledNotices(0);
-    verifyNumberOfPublishedEvents(NOTICE, 1);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 

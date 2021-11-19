@@ -52,15 +52,14 @@ public class RequestScheduledNoticeProcessingResource extends ScheduledNoticePro
       .stream()
       .collect(Collectors.groupingBy(this::isTitleLevelRequestNotice));
 
-    return handleItemLevelRequestNotices(clients, noticesByRequestLevel)
-      .thenCompose(v -> handleTitleLevelRequestNotices(clients, noticesByRequestLevel))
+    return handleItemLevelRequestNotices(clients, noticesByRequestLevel.get(false))
+      .thenCompose(v -> handleTitleLevelRequestNotices(clients, noticesByRequestLevel.get(true)))
       .thenApply(mapResult(v -> scheduledNotices));
   }
 
   private CompletableFuture<Result<List<ScheduledNotice>>> handleItemLevelRequestNotices(
-    Clients clients, Map<Boolean, List<ScheduledNotice>> noticesByRequestLevel) {
+    Clients clients, List<ScheduledNotice> itemLevelNotices) {
 
-    List<ScheduledNotice> itemLevelNotices = noticesByRequestLevel.get(false);
     if (itemLevelNotices == null || itemLevelNotices.isEmpty()) {
       return ofAsync(() -> null);
     }
@@ -70,9 +69,8 @@ public class RequestScheduledNoticeProcessingResource extends ScheduledNoticePro
   }
 
   private CompletableFuture<Result<List<ScheduledNotice>>> handleTitleLevelRequestNotices(
-    Clients clients, Map<Boolean, List<ScheduledNotice>> noticesByRequestLevel) {
+    Clients clients, List<ScheduledNotice> titleLevelNotices) {
 
-    List<ScheduledNotice> titleLevelNotices = noticesByRequestLevel.get(true);
     if (titleLevelNotices == null || titleLevelNotices.isEmpty()) {
       return ofAsync(() -> null);
     }
