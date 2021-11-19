@@ -21,6 +21,7 @@ public enum NoticeEventType {
   REQUEST_CANCELLATION("Request cancellation"),
   AVAILABLE("Available"),
   REQUEST_EXPIRATION("Request expiration"),
+  TITLE_LEVEL_REQUEST_EXPIRATION("Title level request expiration"),
   HOLD_EXPIRATION("Hold expiration"),
 
   // Fee/fine notices

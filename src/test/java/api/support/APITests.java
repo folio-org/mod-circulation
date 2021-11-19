@@ -17,6 +17,7 @@ import static org.hamcrest.core.Is.is;
 
 import java.time.Clock;
 import java.time.ZonedDateTime;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
@@ -390,5 +391,33 @@ public abstract class APITests {
 
   protected void mockClockManagerToReturnDefaultDateTime() {
     setDefaultClock();
+  }
+
+  protected void reconfigureTlrFeature(TlrFeatureStatus tlrFeatureStatus) {
+    if (tlrFeatureStatus == TlrFeatureStatus.ENABLED) {
+      configurationsFixture.enableTlrFeature();
+    }
+    else if (tlrFeatureStatus == TlrFeatureStatus.DISABLED) {
+      configurationsFixture.disableTlrFeature();
+    }
+    else {
+      configurationsFixture.deleteTlrFeatureConfig();
+    }
+  }
+
+  protected void reconfigureTlrFeature(TlrFeatureStatus tlrFeatureStatus,
+    UUID confirmationTemplateId, UUID cancellationTemplateId, UUID expirationTemplateId) {
+
+    if (tlrFeatureStatus == TlrFeatureStatus.ENABLED) {
+      configurationsFixture.configureTlrFeature(true, confirmationTemplateId,
+        cancellationTemplateId, expirationTemplateId);
+    }
+    else if (tlrFeatureStatus == TlrFeatureStatus.DISABLED) {
+      configurationsFixture.configureTlrFeature(false, confirmationTemplateId,
+        cancellationTemplateId, expirationTemplateId);
+    }
+    else {
+      configurationsFixture.deleteTlrFeatureConfig();
+    }
   }
 }
