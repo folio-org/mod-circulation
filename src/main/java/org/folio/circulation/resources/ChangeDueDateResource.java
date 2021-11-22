@@ -12,11 +12,12 @@ import java.lang.invoke.MethodHandles;
 import java.time.ZonedDateTime;
 import java.util.concurrent.CompletableFuture;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.RequestQueue;
-import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.notice.schedule.LoanScheduledNoticeService;
 import org.folio.circulation.domain.representations.ChangeDueDateRequest;
 import org.folio.circulation.domain.validation.ItemStatusValidator;
@@ -35,9 +36,6 @@ import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class ChangeDueDateResource extends Resource {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
