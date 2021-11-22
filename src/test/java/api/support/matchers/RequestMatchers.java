@@ -26,6 +26,10 @@ public final class RequestMatchers {
     return hasStatus("Open - In transit");
   }
 
+  public static Matcher<JsonObject> isClosedFilled() {
+    return hasStatus("Closed - Filled");
+  }
+
   public static Matcher<JsonObject> isItemLevel() {
     return hasLevel("Item");
   }

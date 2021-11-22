@@ -43,6 +43,10 @@ public final class ItemMatchers {
     return hasStatus("Claimed returned");
   }
 
+  public static Matcher<JsonObject> isPaged() {
+    return hasStatus("Paged");
+  }
+
   public static Matcher<JsonObject> isAgedToLost() {
     return hasStatus("Aged to lost");
   }
