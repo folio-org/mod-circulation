@@ -89,8 +89,10 @@ import org.folio.circulation.support.http.client.Response;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import api.support.APITests;
+import api.support.TlrFeatureStatus;
 import api.support.builders.CheckOutBlockOverrides;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.FixedDueDateSchedule;
@@ -2194,8 +2196,9 @@ class CheckOutByBarcodeTests extends APITests {
       hasUserBarcodeParameter(borrower))));
   }
 
-  @Test
-  void titleLevelRequestIsIgnoredWhenFeatureIsDisabled() {
+  @ParameterizedTest
+  @EnumSource(value = TlrFeatureStatus.class, names = {"DISABLED", "NOT_CONFIGURED"})
+  void titleLevelRequestIsIgnoredWhenTlrFeatureIsNotEnabled(TlrFeatureStatus tlrFeatureStatus) {
     configurationsFixture.enableTlrFeature();
 
     ItemResource item = itemsFixture.basedUponNod();
@@ -2209,27 +2212,8 @@ class CheckOutByBarcodeTests extends APITests {
       .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .withRequesterId(requester.getId()));
 
-    configurationsFixture.disableTlrFeature();
+    reconfigureTlrFeature(tlrFeatureStatus);
     checkOutFixture.checkOutByBarcode(item, borrower);
-  }
-
-  @Test
-  void checkoutUpdatesTitleLevelRequest() {
-    configurationsFixture.enableTlrFeature();
-
-    ItemResource item = itemsFixture.basedUponNod();
-    UserResource requester = usersFixture.steve();
-
-    IndividualResource firstRequest = requestsClient.create(
-      new RequestBuilder()
-        .page()
-        .titleRequestLevel()
-        .withInstanceId(item.getInstanceId())
-        .withPickupServicePointId(servicePointsFixture.cd1().getId())
-        .withRequesterId(requester.getId()));
-
-    checkOutFixture.checkOutByBarcode(item, requester);
-    assertThat(fetchRequestJson(firstRequest), isClosedFilled());
   }
 
   @ParameterizedTest
@@ -2294,7 +2278,7 @@ class CheckOutByBarcodeTests extends APITests {
     // fulfil hold request
     checkOutFixture.checkOutByBarcode(item, secondRequester);
     assertThat(fetchItemJson(item), isCheckedOut());
-    assertThat(fetchRequestJson(firstRequest), isClosedFilled());
+    assertThat(fetchRequestJson(secondRequest), isClosedFilled());
   }
 
   private LoanPolicyBuilder buildLoanPolicyWithFixedLoan(DueDateManagement strategy,
