@@ -49,7 +49,6 @@ import static org.hamcrest.core.IsNot.not;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.time.LocalDate;
-import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
@@ -279,11 +278,11 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     assertThat(userContext.getString("region"), is(address.getRegion()));
     assertThat(userContext.getString("postalCode"), is(address.getPostalCode()));
     assertThat(userContext.getString("countryId"), is(address.getCountryId()));
-
     assertThat(requestContext.getString("deliveryAddressType"), is(addressTypesFixture.home().getJson().getString("addressType")));
     assertThat(requestContext.getString("requestExpirationDate"), isEquivalentTo(
       ZonedDateTime.of(requestExpiration.atTime(23, 59, 59), ZoneOffset.UTC)));
-    assertThat(requestContext.getString("holdShelfExpirationDate"), isEquivalentTo(toZonedStartOfDay(holdShelfExpiration)));
+    assertThat(requestContext.getString("holdShelfExpirationDate"), isEquivalentTo(
+      ZonedDateTime.of(holdShelfExpiration.atStartOfDay(), ZoneOffset.UTC)));
     assertThat(requestContext.getString("requestID"), is(request.getId()));
     assertThat(requestContext.getString("servicePointPickup"), is(servicePoint.getJson().getString("name")));
     assertThat(requestContext.getString("patronComments"), is("I need the book"));
@@ -1481,12 +1480,6 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
       assertThat(checkInOperation.getString("servicePointId"), is(servicePoint.toString()));
       assertThat(checkInOperation.getString("performedByUserId"), is(getUserId()));
     });
-  }
-
-  private ZonedDateTime toZonedStartOfDay(LocalDate date) {
-    final var startOfDay = date.atStartOfDay();
-
-    return ZonedDateTime.of(startOfDay, ZoneId.systemDefault().normalized());
   }
 
   private LocalDate toLocalDate(ZonedDateTime dateTime) {
