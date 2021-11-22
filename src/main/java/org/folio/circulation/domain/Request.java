@@ -105,7 +105,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return getStatus() == OPEN_IN_TRANSIT;
   }
 
-  private boolean isNotYetFilled() {
+  public boolean isNotYetFilled() {
     return getStatus() == OPEN_NOT_YET_FILLED;
   }
 

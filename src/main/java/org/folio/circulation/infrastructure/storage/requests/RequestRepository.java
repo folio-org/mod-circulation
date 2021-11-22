@@ -126,12 +126,16 @@ public class RequestRepository {
   }
 
   public CompletableFuture<Result<Request>> getById(String id) {
-    return fetchRequest(id)
+    return getByIdWithoutItem(id)
       .thenComposeAsync(result -> result.combineAfter(itemRepository::fetchFor,
         Request::withItem))
+      .thenComposeAsync(this::fetchLoan);
+  }
+
+  public CompletableFuture<Result<Request>> getByIdWithoutItem(String id) {
+    return fetchRequest(id)
       .thenComposeAsync(this::fetchRequester)
       .thenComposeAsync(this::fetchProxy)
-      .thenComposeAsync(this::fetchLoan)
       .thenComposeAsync(this::fetchPickupServicePoint)
       .thenComposeAsync(this::fetchPatronGroups);
   }

@@ -282,7 +282,8 @@ public class EventPublisher {
   }
 
   public CompletableFuture<Result<Void>> publishRenewedEvent(Loan loan) {
-    return publishLogRecord(LoanLogContext.from(loan).asJson(), LOAN);
+    return publishLogRecord(LoanLogContext.from(loan)
+      .withDescription(String.format("New due date: %s (from %s)", formatDateTimeOptional(loan.getDueDate()), formatDateTimeOptional(loan.getPreviousDueDate()))).asJson(), LOAN);
   }
 
   public CompletableFuture<Result<Void>> publishNoticeLogEvent(NoticeLogContext noticeLogContext,

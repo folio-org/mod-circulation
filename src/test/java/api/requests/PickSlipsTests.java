@@ -12,6 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.List;
@@ -226,7 +227,8 @@ class PickSlipsTests extends APITests {
     assertThat(requestContext.getString("requestExpirationDate"),
       isEquivalentTo(requestExpiration.atTime(23, 59, 59).atZone(UTC)));
     assertThat(requestContext.getString("holdShelfExpirationDate"),
-      isEquivalentTo(holdShelfExpiration.atStartOfDay(UTC)));
+      isEquivalentTo(ZonedDateTime.of(
+        holdShelfExpiration.atStartOfDay(), ZoneOffset.UTC)));
     assertThat(requestContext.getString("requestID"),
       UUIDMatcher.is(requestResource.getId()));
     assertThat(requestContext.getString("servicePointPickup"),
