@@ -39,7 +39,6 @@ import io.vertx.core.json.JsonObject;
 
 public class Item {
   private final JsonObject itemRepresentation;
-  private final JsonObject holdingRepresentation;
   private final JsonObject instanceRepresentation;
   private final Location location;
   private final JsonObject materialTypeRepresentation;
@@ -55,7 +54,6 @@ public class Item {
   private final Holdings holdings;
 
   public Item(JsonObject itemRepresentation,
-    JsonObject holdingRepresentation,
     JsonObject instanceRepresentation,
     Location location, JsonObject materialTypeRepresentation,
     ServicePoint primaryServicePoint,
@@ -68,7 +66,6 @@ public class Item {
     Holdings holdings) {
 
     this.itemRepresentation = itemRepresentation;
-    this.holdingRepresentation = holdingRepresentation;
     this.instanceRepresentation = instanceRepresentation;
     this.location = location;
     this.materialTypeRepresentation = materialTypeRepresentation;
@@ -84,7 +81,6 @@ public class Item {
 
   public static Item from(JsonObject representation) {
     return new Item(representation,
-      null,
       null,
       null,
       null,
@@ -384,7 +380,6 @@ public class Item {
   public Item withLocation(Location newLocation) {
     return new Item(
       this.itemRepresentation,
-      this.holdingRepresentation,
       this.instanceRepresentation,
       newLocation,
       this.materialTypeRepresentation,
@@ -400,7 +395,6 @@ public class Item {
   public Item withMaterialType(JsonObject newMaterialType) {
     return new Item(
       this.itemRepresentation,
-      this.holdingRepresentation,
       this.instanceRepresentation,
       this.location,
       newMaterialType,
@@ -418,7 +412,6 @@ public class Item {
 
     return new Item(
       this.itemRepresentation,
-      newHoldingsRecordRepresentation,
       this.instanceRepresentation,
       this.location,
       this.materialTypeRepresentation,
@@ -435,7 +428,6 @@ public class Item {
   public Item withInstance(JsonObject newInstanceRepresentation) {
     return new Item(
       this.itemRepresentation,
-      this.holdingRepresentation,
       newInstanceRepresentation,
       this.location,
       this.materialTypeRepresentation,
@@ -451,7 +443,6 @@ public class Item {
   public Item withPrimaryServicePoint(ServicePoint servicePoint) {
     return new Item(
       this.itemRepresentation,
-      this.holdingRepresentation,
       this.instanceRepresentation,
       this.location,
       this.materialTypeRepresentation,
@@ -467,7 +458,6 @@ public class Item {
   public Item withLoanType(JsonObject newLoanTypeRepresentation) {
     return new Item(
       this.itemRepresentation,
-      this.holdingRepresentation,
       this.instanceRepresentation,
       this.location,
       this.materialTypeRepresentation,
@@ -483,7 +473,6 @@ public class Item {
   public Item withLastCheckIn(LastCheckIn lastCheckIn) {
     return new Item(
       this.itemRepresentation,
-      this.holdingRepresentation,
       this.instanceRepresentation,
       this.location,
       this.materialTypeRepresentation,
@@ -499,7 +488,6 @@ public class Item {
   public Item withPermanentLocation(Location permanentLocation) {
     return new Item(
       this.itemRepresentation,
-      this.holdingRepresentation,
       this.instanceRepresentation,
       this.location,
       this.materialTypeRepresentation,
