@@ -34,6 +34,7 @@ import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
+import org.folio.circulation.storage.mappers.HoldingsMapper;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FindWithCqlQuery;
 import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
@@ -256,13 +257,16 @@ public class ItemRepository {
         .distinct()
         .collect(Collectors.toList());
 
-      final FindWithMultipleCqlIndexValues<JsonObject> fetcher
+      final var fetcher
         = findWithMultipleCqlIndexValues(holdingsClient, "holdingsRecords", identity());
+
+      final var holdingsMapper = new HoldingsMapper();
 
       return fetcher.findByIds(holdingsIds)
         .thenApply(r -> r.map(holdings -> items.stream()
-          .map(item -> item.withHoldingsRecord(
-            findById(item.getHoldingsRecordId(), holdings.getRecords()).orElse(null)))
+          .map(item -> item.withHoldings(
+            holdingsMapper.toDomain(
+              findById(item.getHoldingsRecordId(), holdings.getRecords()).orElse(null))))
           .collect(Collectors.toList())));
     });
   }
@@ -317,10 +321,13 @@ public class ItemRepository {
         return completedFuture(succeeded(item));
       }
       else {
+        final var holdingsMapper = new HoldingsMapper();
+
         return SingleRecordFetcher.json(holdingsClient, "holding",
             r -> failedValidation("Holding does not exist", ITEM_ID, item.getItemId()))
           .fetch(item.getHoldingsRecordId())
-          .thenApply(r -> r.map(item::withHoldingsRecord));
+          .thenApply(r -> r.map(holdingsMapper::toDomain))
+          .thenApply(r -> r.map(item::withHoldings));
       }
     });
   }

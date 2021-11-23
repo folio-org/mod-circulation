@@ -4,7 +4,7 @@ import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
 public class Holdings {
-  static Holdings unknown() {
+  public static Holdings unknown() {
     return new Holdings(null, null, null);
   }
 

@@ -407,6 +407,22 @@ public class Item {
       this.changed, holdings);
   }
 
+  public Item withHoldings(Holdings holdings) {
+    return new Item(
+      this.itemRepresentation,
+      this.instanceRepresentation,
+      this.location,
+      this.materialTypeRepresentation,
+      this.primaryServicePoint,
+      this.loanTypeRepresentation,
+      this.lastCheckIn,
+      this.callNumberComponents,
+      this.permanentLocation,
+      this.inTransitDestinationServicePoint,
+      this.changed,
+      holdings);
+  }
+
   public Item withHoldingsRecord(JsonObject newHoldingsRecordRepresentation) {
     final var holdingsMapper = new HoldingsMapper();
 
