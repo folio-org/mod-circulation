@@ -1,7 +1,9 @@
 package org.folio.circulation.resources;
 
+import static java.lang.String.format;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.representations.logs.RequestUpdateLogEventMapper.mapToRequestLogEventJson;
+import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -12,6 +14,7 @@ import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.RequestRepresentation;
 import org.folio.circulation.domain.UpdateRequestQueue;
+import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
 import org.folio.circulation.domain.reorder.ReorderQueueRequest;
 import org.folio.circulation.domain.representations.logs.LogEventType;
 import org.folio.circulation.domain.validation.RequestQueueValidation;
@@ -33,6 +36,9 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
 public class RequestQueueResource extends Resource {
+  private static final String ITEM_ID_PARAM_NAME = "itemId";
+  private static final String INSTANCE_ID_PARAM_NAME = "instanceId";
+
   public RequestQueueResource(HttpClient client) {
     super(client);
   }
@@ -43,14 +49,15 @@ public class RequestQueueResource extends Resource {
     final String circulationRequestQueueForInstanceUri = "/circulation/requests/instance/queue/";
 
     //TODO: Replace with route registration, for failure handling
-    router.get(circulationRequestQueueForItemUri + ":itemId").handler(this::getQueueForItem);
-    router.get(circulationRequestQueueForInstanceUri + ":instanceId").handler(
+    router.get(circulationRequestQueueForItemUri + ":" + ITEM_ID_PARAM_NAME).handler(
+      this::getQueueForItem);
+    router.get(circulationRequestQueueForInstanceUri + ":" + INSTANCE_ID_PARAM_NAME).handler(
       this::getQueueForInstance);
 
-    new RouteRegistration(circulationRequestQueueForItemUri + ":itemId/reorder", router)
-      .create(this::reorderQueueForItem);
-    new RouteRegistration(circulationRequestQueueForInstanceUri + ":instanceId/reorder",
-      router).create(this::reorderQueueForInstance);
+    new RouteRegistration(circulationRequestQueueForItemUri + ":"
+      + ITEM_ID_PARAM_NAME + "/reorder", router).create(this::reorderQueueForItem);
+    new RouteRegistration(circulationRequestQueueForInstanceUri + ":"
+      + INSTANCE_ID_PARAM_NAME + "/reorder", router).create(this::reorderQueueForInstance);
   }
 
   private void getQueueForInstance(RoutingContext routingContext) {
@@ -58,35 +65,7 @@ public class RequestQueueResource extends Resource {
   }
 
   private void reorderQueueForInstance(RoutingContext routingContext) {
-    ReorderRequestContext reorderContext = new ReorderRequestContext(
-      routingContext.request().getParam("instanceId"), null,
-      routingContext.getBodyAsJson().mapTo(ReorderQueueRequest.class));
-
-    final EventPublisher eventPublisher = new EventPublisher(routingContext);
-
-    final WebContext context = new WebContext(routingContext);
-    final Clients clients = Clients.create(context, client);
-    final RequestRepository requestRepository = RequestRepository.using(clients);
-    final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
-
-    final UpdateRequestQueue updateRequestQueue = new UpdateRequestQueue(
-      requestQueueRepository, requestRepository, new ServicePointRepository(clients),
-      new ConfigurationRepository(clients));
-
-    requestQueueRepository.getByInstanceId(reorderContext.getItemId())
-      .thenApply(r -> r.map(reorderContext::withRequestQueue))
-      // Validation block
-      .thenApply(RequestQueueValidation::queueIsFound)
-      .thenApply(RequestQueueValidation::positionsAreSequential)
-      .thenApply(RequestQueueValidation::queueIsConsistent)
-      .thenApply(RequestQueueValidation::pageRequestHasFirstPosition)
-      .thenApply(RequestQueueValidation::fulfillingRequestHasFirstPosition)
-      // Business logic block
-      .thenCompose(updateRequestQueue::onReorder)
-      .thenApply(q -> publishReorderedQueue(eventPublisher, q))
-      .thenCompose(r -> r.after(this::toRepresentation))
-      .thenApply(r -> r.map(JsonHttpResponse::ok))
-      .thenAccept(context::writeResultToHttpResponse);
+    reorderQueue(routingContext, true);
   }
 
   private void getQueueForItem(RoutingContext routingContext) {
@@ -94,35 +73,7 @@ public class RequestQueueResource extends Resource {
   }
 
   private void reorderQueueForItem(RoutingContext routingContext) {
-    ReorderRequestContext reorderContext = new ReorderRequestContext(
-      null, routingContext.request().getParam("itemId"),
-      routingContext.getBodyAsJson().mapTo(ReorderQueueRequest.class));
-
-    final EventPublisher eventPublisher = new EventPublisher(routingContext);
-
-    final WebContext context = new WebContext(routingContext);
-    final Clients clients = Clients.create(context, client);
-    final RequestRepository requestRepository = RequestRepository.using(clients);
-    final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
-
-    final UpdateRequestQueue updateRequestQueue = new UpdateRequestQueue(
-      requestQueueRepository, requestRepository, new ServicePointRepository(clients),
-      new ConfigurationRepository(clients));
-
-    requestQueueRepository.getByItemId(reorderContext.getItemId())
-      .thenApply(r -> r.map(reorderContext::withRequestQueue))
-      // Validation block
-      .thenApply(RequestQueueValidation::queueIsFound)
-      .thenApply(RequestQueueValidation::positionsAreSequential)
-      .thenApply(RequestQueueValidation::queueIsConsistent)
-      .thenApply(RequestQueueValidation::pageRequestHasFirstPosition)
-      .thenApply(RequestQueueValidation::fulfillingRequestHasFirstPosition)
-      // Business logic block
-      .thenCompose(updateRequestQueue::onReorder)
-      .thenApply(q -> publishReorderedQueue(eventPublisher, q))
-      .thenCompose(r -> r.after(this::toRepresentation))
-      .thenApply(r -> r.map(JsonHttpResponse::ok))
-      .thenAccept(context::writeResultToHttpResponse);
+    reorderQueue(routingContext, false);
   }
 
   private void getQueue(RoutingContext routingContext, boolean queueForInstance) {
@@ -134,11 +85,11 @@ public class RequestQueueResource extends Resource {
 
     CompletableFuture<Result<RequestQueue>> requestQueue;
     if (queueForInstance) {
-      String instanceId = routingContext.request().getParam("instanceId");
+      String instanceId = routingContext.request().getParam(INSTANCE_ID_PARAM_NAME);
       requestQueue = requestQueueRepository.getByInstanceId(instanceId);
     }
     else {
-      String itemId = routingContext.request().getParam("itemId");
+      String itemId = routingContext.request().getParam(ITEM_ID_PARAM_NAME);
       requestQueue = requestQueueRepository.getByItemId(itemId);
     }
 
@@ -148,6 +99,59 @@ public class RequestQueueResource extends Resource {
         requests.asJson(requestRepresentation::extendedRepresentation, "requests")))
       .thenApply(r -> r.map(JsonHttpResponse::ok))
       .thenAccept(context::writeResultToHttpResponse);
+  }
+
+  private void reorderQueue(RoutingContext routingContext, boolean queueForInstance) {
+    String instanceId = routingContext.request().getParam(INSTANCE_ID_PARAM_NAME);
+    String itemId = routingContext.request().getParam(ITEM_ID_PARAM_NAME);
+
+    ReorderRequestContext reorderContext = new ReorderRequestContext(instanceId, itemId,
+      routingContext.getBodyAsJson().mapTo(ReorderQueueRequest.class));
+
+    final EventPublisher eventPublisher = new EventPublisher(routingContext);
+
+    final WebContext context = new WebContext(routingContext);
+    final Clients clients = Clients.create(context, client);
+    final RequestRepository requestRepository = RequestRepository.using(clients);
+    final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
+    final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
+
+    final UpdateRequestQueue updateRequestQueue = new UpdateRequestQueue(
+      requestQueueRepository, requestRepository, new ServicePointRepository(clients),
+      configurationRepository);
+
+    validateTlrFeatureStatus(configurationRepository, queueForInstance, instanceId, itemId)
+      .thenCompose(r -> r.after(tlrSettings -> queueForInstance
+        ? requestQueueRepository.getByInstanceId(instanceId)
+        : requestQueueRepository.getByItemId(itemId)))
+      .thenApply(r -> r.map(reorderContext::withRequestQueue))
+      // Validation block
+      .thenApply(RequestQueueValidation::queueIsFound)
+      .thenApply(RequestQueueValidation::positionsAreSequential)
+      .thenApply(RequestQueueValidation::queueIsConsistent)
+      .thenApply(RequestQueueValidation::pageRequestsPositioning)
+      .thenApply(RequestQueueValidation::fulfillingRequestsPositioning)
+      // Business logic block
+      .thenCompose(updateRequestQueue::onReorder)
+      .thenApply(q -> publishReorderedQueue(eventPublisher, q))
+      .thenCompose(r -> r.after(this::toRepresentation))
+      .thenApply(r -> r.map(JsonHttpResponse::ok))
+      .thenAccept(context::writeResultToHttpResponse);
+  }
+
+  private CompletableFuture<Result<TlrSettingsConfiguration>> validateTlrFeatureStatus(
+    ConfigurationRepository configurationRepository, boolean queueForInstance, String instanceId,
+    String itemId) {
+
+    return configurationRepository.lookupTlrSettings()
+      .thenApply(r -> r.failWhen(tlrSettings ->
+          Result.succeeded(queueForInstance ^ tlrSettings.isTitleLevelRequestsFeatureEnabled()),
+        tlrSettings -> singleValidationError(
+          format("Refuse to reorder request queue, TLR feature status is %s.",
+            tlrSettings.isTitleLevelRequestsFeatureEnabled() ? "ENABLED" : "DISABLED"),
+          queueForInstance ? INSTANCE_ID_PARAM_NAME : ITEM_ID_PARAM_NAME,
+          queueForInstance ? instanceId : itemId)
+      ));
   }
 
   private Result<ReorderRequestContext> publishReorderedQueue(EventPublisher eventPublisher, Result<ReorderRequestContext> reorderRequestContext) {
