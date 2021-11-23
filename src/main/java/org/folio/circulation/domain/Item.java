@@ -31,7 +31,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.folio.circulation.domain.representations.ItemProperties;
-import org.folio.circulation.storage.mappers.HoldingsMapper;
 import org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher;
 
 import io.vertx.core.json.JsonArray;
@@ -421,24 +420,6 @@ public class Item {
       this.inTransitDestinationServicePoint,
       this.changed,
       holdings);
-  }
-
-  public Item withHoldingsRecord(JsonObject newHoldingsRecordRepresentation) {
-    final var holdingsMapper = new HoldingsMapper();
-
-    return new Item(
-      this.itemRepresentation,
-      this.instanceRepresentation,
-      this.location,
-      this.materialTypeRepresentation,
-      this.primaryServicePoint,
-      this.loanTypeRepresentation,
-      this.lastCheckIn,
-      this.callNumberComponents,
-      this.permanentLocation,
-      this.inTransitDestinationServicePoint,
-      this.changed,
-      holdingsMapper.toDomain(newHoldingsRecordRepresentation));
   }
 
   public Item withInstance(JsonObject newInstanceRepresentation) {
