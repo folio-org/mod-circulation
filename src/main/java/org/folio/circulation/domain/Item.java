@@ -9,7 +9,6 @@ import static org.folio.circulation.domain.ItemStatus.DECLARED_LOST;
 import static org.folio.circulation.domain.ItemStatus.IN_TRANSIT;
 import static org.folio.circulation.domain.ItemStatus.MISSING;
 import static org.folio.circulation.domain.ItemStatus.PAGED;
-import static org.folio.circulation.domain.representations.HoldingsProperties.COPY_NUMBER_ID;
 import static org.folio.circulation.domain.representations.InstanceProperties.CONTRIBUTORS;
 import static org.folio.circulation.domain.representations.ItemProperties.EFFECTIVE_LOCATION_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.IDENTIFIERS;
@@ -96,7 +95,7 @@ public class Item {
       null,
       null,
       false,
-      new Holdings(null));
+      new Holdings(null, null));
   }
 
   public boolean isCheckedOut() {
@@ -234,8 +233,7 @@ public class Item {
   public String getCopyNumber() {
     return firstNonBlank(
       getProperty(getItem(), ITEM_COPY_NUMBER_ID),
-      getProperty(holdingRepresentation, COPY_NUMBER_ID)
-    );
+      holdings.copyNumber);
   }
 
   public String getMaterialTypeId() {
