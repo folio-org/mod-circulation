@@ -3,6 +3,8 @@ package org.folio.circulation.infrastructure.storage.inventory;
 import static java.util.Objects.isNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Function.identity;
+import static org.folio.circulation.domain.representations.LoanProperties.ITEM_ID;
+import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.http.CommonResponseInterpreters.noContentRecordInterpreter;
 import static org.folio.circulation.support.json.JsonKeys.byId;
 import static org.folio.circulation.support.results.Result.ofAsync;
@@ -315,7 +317,8 @@ public class ItemRepository {
         return completedFuture(succeeded(item));
       }
       else {
-        return SingleRecordFetcher.jsonOrNull(holdingsClient, "holding")
+        return SingleRecordFetcher.json(holdingsClient, "holding",
+            r -> failedValidation("Holding does not exist", ITEM_ID, item.getItemId()))
           .fetch(item.getHoldingsRecordId())
           .thenApply(r -> r.map(item::withHoldingsRecord));
       }

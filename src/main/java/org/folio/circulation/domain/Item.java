@@ -375,10 +375,6 @@ public class Item {
     return lastCheckIn;
   }
 
-  public boolean doesNotHaveHolding() {
-    return holdingRepresentation == null;
-  }
-
   public String getPermanentLocationId() {
     final String itemLocation = getProperty(itemRepresentation, PERMANENT_LOCATION_ID);
 

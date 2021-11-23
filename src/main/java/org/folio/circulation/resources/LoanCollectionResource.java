@@ -2,7 +2,6 @@ package org.folio.circulation.resources;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.representations.LoanProperties.ITEM_ID;
-import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.results.MappingFunctions.toFixedValue;
 import static org.folio.circulation.support.results.Result.of;
@@ -111,7 +110,6 @@ public class LoanCollectionResource extends CollectionResource {
       .thenApply(spLoanLocationValidator::checkServicePointLoanLocation)
       .thenCombineAsync(itemRepository.fetchFor(loan), this::addItem)
       .thenApply(itemNotFoundValidator::refuseWhenItemNotFound)
-      .thenApply(this::refuseWhenHoldingDoesNotExist)
       .thenApply(alreadyCheckedOutValidator::refuseWhenItemIsAlreadyCheckedOut)
       .thenApply(itemStatusValidator::refuseWhenItemIsMissing)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
@@ -300,20 +298,6 @@ public class LoanCollectionResource extends CollectionResource {
     Result<User> getUserResult) {
 
     return loanResult.combine(getUserResult, LoanAndRelatedRecords::withRequestingUser);
-  }
-
-  private Result<LoanAndRelatedRecords> refuseWhenHoldingDoesNotExist(
-    Result<LoanAndRelatedRecords> result) {
-
-    return result.next(loan -> {
-      if(loan.getLoan().getItem().doesNotHaveHolding()) {
-        return failedValidation("Holding does not exist",
-          ITEM_ID, loan.getLoan().getItemId());
-      }
-      else {
-        return result;
-      }
-    });
   }
 
   private Result<LoanAndRelatedRecords> refuseWhenClosedAndNoCheckInServicePointId(
