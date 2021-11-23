@@ -36,9 +36,7 @@ import org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import lombok.AllArgsConstructor;
 
-@AllArgsConstructor
 public class Item {
   private final JsonObject itemRepresentation;
   private final JsonObject holdingRepresentation;
@@ -53,6 +51,32 @@ public class Item {
 
   private ServicePoint inTransitDestinationServicePoint;
   private boolean changed;
+
+  public Item(JsonObject itemRepresentation,
+    JsonObject holdingRepresentation,
+    JsonObject instanceRepresentation,
+    Location location, JsonObject materialTypeRepresentation,
+    ServicePoint primaryServicePoint,
+    JsonObject loanTypeRepresentation,
+    LastCheckIn lastCheckIn,
+    CallNumberComponents callNumberComponents,
+    Location permanentLocation,
+    ServicePoint inTransitDestinationServicePoint,
+    boolean changed) {
+
+    this.itemRepresentation = itemRepresentation;
+    this.holdingRepresentation = holdingRepresentation;
+    this.instanceRepresentation = instanceRepresentation;
+    this.location = location;
+    this.materialTypeRepresentation = materialTypeRepresentation;
+    this.primaryServicePoint = primaryServicePoint;
+    this.loanTypeRepresentation = loanTypeRepresentation;
+    this.lastCheckIn = lastCheckIn;
+    this.callNumberComponents = callNumberComponents;
+    this.permanentLocation = permanentLocation;
+    this.inTransitDestinationServicePoint = inTransitDestinationServicePoint;
+    this.changed = changed;
+  }
 
   public static Item from(JsonObject representation) {
     return new Item(representation,
