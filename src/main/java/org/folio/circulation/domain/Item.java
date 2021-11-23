@@ -91,7 +91,7 @@ public class Item {
       null,
       null,
       false,
-      new Holdings(null, null, null));
+      Holdings.unknown());
   }
 
   public boolean isCheckedOut() {
