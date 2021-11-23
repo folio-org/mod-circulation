@@ -6,4 +6,5 @@ import lombok.AllArgsConstructor;
 public class Holdings {
   public final String instanceId;
   public final String copyNumber;
+  public final String permanentLocationId;
 }

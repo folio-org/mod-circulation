@@ -95,7 +95,7 @@ public class Item {
       null,
       null,
       false,
-      new Holdings(null, null));
+      new Holdings(null, null, null));
   }
 
   public boolean isCheckedOut() {
@@ -381,9 +381,8 @@ public class Item {
 
   public String getPermanentLocationId() {
     final String itemLocation = getProperty(itemRepresentation, PERMANENT_LOCATION_ID);
-    final String holdingsLocation = getProperty(holdingRepresentation, PERMANENT_LOCATION_ID);
 
-    return firstNonBlank(itemLocation, holdingsLocation);
+    return firstNonBlank(itemLocation, holdings.permanentLocationId);
   }
 
   public Item withLocation(Location newLocation) {
