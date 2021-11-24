@@ -1,10 +1,9 @@
 package org.folio.circulation.domain.representations;
 
+import static org.folio.circulation.domain.representations.ContributorsToNamesMapper.mapContributorsToNamesOnly;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
-import java.util.Objects;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.Account;
 import org.folio.circulation.domain.FeeAmount;
@@ -53,12 +52,7 @@ public class StoredAccount extends JsonObject {
     this.put("paymentStatus", createNamedObject("Outstanding"));
     this.put("status", createNamedObject("Open"));
 
-    if (item.getContributorsJson() != null) {
-      this.put("contributors", item.getContributorsJson()
-        .map(contributor -> new JsonObject().put("name", contributor.getString("name")))
-        .filter(Objects::nonNull)
-        .collect(Collectors.toList()));
-    }
+    this.put("contributors", mapContributorsToNamesOnly(item.getContributors()));
   }
 
   private StoredAccount(JsonObject json) {

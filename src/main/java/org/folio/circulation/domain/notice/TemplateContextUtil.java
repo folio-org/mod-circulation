@@ -14,6 +14,7 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.folio.circulation.domain.Account;
 import org.folio.circulation.domain.CallNumberComponents;
 import org.folio.circulation.domain.CheckInContext;
+import org.folio.circulation.domain.Contributor;
 import org.folio.circulation.domain.FeeFineAction;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
@@ -155,8 +156,8 @@ public class TemplateContextUtil {
   }
 
   private static JsonObject createItemContext(Item item) {
-    String contributorNamesToken = item.getContributorsJson()
-      .map(o -> o.getString("name"))
+    String contributorNamesToken = item.getContributors()
+      .map(Contributor::getName)
       .collect(joining("; "));
 
     String yearCaptionsToken = String.join("; ", item.getYearCaption());

@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.folio.circulation.domain.CallNumberComponents;
+import org.folio.circulation.domain.Contributor;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Location;
@@ -172,8 +173,8 @@ class PickSlipsTests extends APITests {
     Item item = Item.from(itemResource.getJson())
       .withInstance(itemResource.getInstance().getJson());
 
-    String contributorNames = item.getContributorsJson()
-      .map(this::getName)
+    String contributorNames = item.getContributors()
+      .map(Contributor::getName)
       .collect(joining("; "));
 
     String yearCaptionsToken = String.join("; ", item.getYearCaption());

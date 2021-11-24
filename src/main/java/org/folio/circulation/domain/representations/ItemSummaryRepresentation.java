@@ -9,11 +9,11 @@ import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import java.lang.invoke.MethodHandles;
 import java.util.Objects;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.ServicePoint;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import io.vertx.core.json.JsonObject;
 
@@ -33,7 +33,7 @@ public class ItemSummaryRepresentation {
     write(itemSummary, "title", item.getTitle());
     write(itemSummary, "barcode", item.getBarcode());
     write(itemSummary, "contributors",
-      mapContributorsToNamesOnly(item.getContributorsJson()));
+      mapContributorsToNamesOnly(item.getContributors()));
     write(itemSummary, "callNumber", item.getCallNumber());
     write(itemSummary, "enumeration", item.getEnumeration());
     write(itemSummary, "chronology", item.getChronology());

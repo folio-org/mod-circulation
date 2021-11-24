@@ -14,7 +14,6 @@ import java.lang.invoke.MethodHandles;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class RequestRepresentation {
@@ -75,11 +74,7 @@ public class RequestRepresentation {
       write(itemSummary, "location", locationSummary(location));
     }
 
-    JsonArray contributorNames = mapContributorsToNamesOnly(item.getContributorsJson());
-
-    if (contributorNames != null) {
-      itemSummary.put("contributorNames", contributorNames);
-    }
+    itemSummary.put("contributorNames", mapContributorsToNamesOnly(item.getContributors()));
 
     String enumeration = item.getEnumeration();
     if (enumeration != null) {
