@@ -384,7 +384,7 @@
           "methods": [
             "GET"
           ],
-          "pathPattern": "/circulation/requests/instance/queue/{id}",
+          "pathPattern": "/circulation/requests/title-level/queue/{id}",
           "permissionsRequired": [
             "circulation.requests.queue.collection.get"
           ],
@@ -396,7 +396,7 @@
           "methods": [
             "POST"
           ],
-          "pathPattern": "/circulation/requests/instance/queue/{id}/reorder",
+          "pathPattern": "/circulation/requests/title-level/queue/{id}/reorder",
           "permissionsRequired": [
             "circulation.requests.queue.reorder.collection.post"
           ],

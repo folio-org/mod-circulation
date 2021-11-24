@@ -51,6 +51,10 @@ public class RequestQueueValidation {
   public static Result<ReorderRequestContext> fulfillingRequestsPositioning(
     Result<ReorderRequestContext> result) {
 
+    if (result.failed()) {
+      return result;
+    }
+
     return result.value().isQueueForInstance()
       ? fulfillingRequestsHaveTopPositions(result)
       : fulfillingRequestHasFirstPosition(result);
@@ -77,6 +81,10 @@ public class RequestQueueValidation {
 
   public static Result<ReorderRequestContext> pageRequestsPositioning(
     Result<ReorderRequestContext> result) {
+
+    if (result.failed()) {
+      return result;
+    }
 
     return result.value().isQueueForInstance()
       ? pageRequestsHaveTopPositions(result)
