@@ -169,6 +169,7 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(representation.getString("requestLevel"), is("Item"));
     assertThat(representation.getString("requestDate"), isEquivalentTo(requestDate));
     assertThat(representation.getString("itemId"), is(item.getId().toString()));
+    assertThat(representation.getString("holdingsRecordId"), is(item.getHoldingsRecordId()));
     assertThat(representation.getString("instanceId"), is(instanceId));
     assertThat(representation.getString("requesterId"), is(requester.getId().toString()));
     assertThat(representation.getString("fulfilmentPreference"), is("Hold Shelf"));
