@@ -35,6 +35,7 @@ import org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import lombok.NonNull;
 
 public class Item {
   private final JsonObject itemRepresentation;
@@ -406,7 +407,7 @@ public class Item {
       this.changed, holdings);
   }
 
-  public Item withHoldings(Holdings holdings) {
+  public Item withHoldings(@NonNull Holdings holdings) {
     return new Item(
       this.itemRepresentation,
       this.instanceRepresentation,
