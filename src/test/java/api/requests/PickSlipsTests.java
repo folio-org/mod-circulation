@@ -172,7 +172,7 @@ class PickSlipsTests extends APITests {
     Item item = Item.from(itemResource.getJson())
       .withInstance(itemResource.getInstance().getJson());
 
-    String contributorNames = item.getContributors()
+    String contributorNames = item.getContributorsJson()
       .map(this::getName)
       .collect(joining("; "));
 

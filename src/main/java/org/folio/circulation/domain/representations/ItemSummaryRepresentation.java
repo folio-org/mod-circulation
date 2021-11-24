@@ -33,7 +33,7 @@ public class ItemSummaryRepresentation {
     write(itemSummary, "title", item.getTitle());
     write(itemSummary, "barcode", item.getBarcode());
     write(itemSummary, "contributors",
-      mapContributorsToNamesOnly(item.getContributors()));
+      mapContributorsToNamesOnly(item.getContributorsJson()));
     write(itemSummary, "callNumber", item.getCallNumber());
     write(itemSummary, "enumeration", item.getEnumeration());
     write(itemSummary, "chronology", item.getChronology());

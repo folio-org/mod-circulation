@@ -53,8 +53,8 @@ public class StoredAccount extends JsonObject {
     this.put("paymentStatus", createNamedObject("Outstanding"));
     this.put("status", createNamedObject("Open"));
 
-    if (item.getContributors() != null) {
-      this.put("contributors", item.getContributors()
+    if (item.getContributorsJson() != null) {
+      this.put("contributors", item.getContributorsJson()
         .map(contributor -> new JsonObject().put("name", contributor.getString("name")))
         .filter(Objects::nonNull)
         .collect(Collectors.toList()));

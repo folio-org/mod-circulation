@@ -75,7 +75,7 @@ public class RequestRepresentation {
       write(itemSummary, "location", locationSummary(location));
     }
 
-    JsonArray contributorNames = mapContributorsToNamesOnly(item.getContributors());
+    JsonArray contributorNames = mapContributorsToNamesOnly(item.getContributorsJson());
 
     if (contributorNames != null) {
       itemSummary.put("contributorNames", contributorNames);

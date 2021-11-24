@@ -37,7 +37,7 @@ public class ItemReportRepresentation {
     write(itemReport, "title", item.getTitle());
     write(itemReport, "barcode", item.getBarcode());
     write(itemReport, "contributors",
-      mapContributorsToNamesOnly(item.getContributors()));
+      mapContributorsToNamesOnly(item.getContributorsJson()));
     write(itemReport, "callNumber", item.getCallNumber());
     write(itemReport, "enumeration", item.getEnumeration());
     write(itemReport, "volume", item.getVolume());

@@ -131,14 +131,14 @@ public class Item {
   }
 
   public String getPrimaryContributorName() {
-    return getContributors()
+    return getContributorsJson()
       .filter(c -> c.getBoolean("primary", false))
       .findFirst()
       .map(c -> c.getString("name"))
       .orElse(null);
   }
 
-  public Stream<JsonObject> getContributors() {
+  public Stream<JsonObject> getContributorsJson() {
     return JsonObjectArrayPropertyFetcher.toStream(instanceRepresentation, CONTRIBUTORS);
   }
 
