@@ -142,12 +142,8 @@ public class Item {
   public Stream<Contributor> getContributors() {
     final var mapper = new ContributorMapper();
 
-    return getContributorsJson()
+    return JsonObjectArrayPropertyFetcher.toStream(instanceRepresentation, CONTRIBUTORS)
       .map(mapper::toDomain);
-  }
-
-  public Stream<JsonObject> getContributorsJson() {
-    return JsonObjectArrayPropertyFetcher.toStream(instanceRepresentation, CONTRIBUTORS);
   }
 
   public String getBarcode() {
