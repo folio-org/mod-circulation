@@ -43,6 +43,11 @@
       "type": "string",
       "$ref": "raml-util/schemas/uuid.schema"
     },
+    "holdingsRecordId": {
+      "description": "ID of the holdings record being requested",
+      "type": "string",
+      "$ref": "raml-util/schemas/uuid.schema"
+    },
     "itemId": {
       "description": "ID of the item being requested",
       "type": "string",
