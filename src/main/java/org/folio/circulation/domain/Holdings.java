@@ -1,15 +1,14 @@
 package org.folio.circulation.domain;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.Value;
 
-@AllArgsConstructor
+@Value
 public class Holdings {
   public static Holdings unknown() {
     return new Holdings(null, null, null);
   }
 
-  @Getter private final String instanceId;
-  @Getter private final String copyNumber;
-  @Getter private final String permanentLocationId;
+  String instanceId;
+  String copyNumber;
+  String permanentLocationId;
 }
