@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.folio.circulation.domain.representations.ItemProperties;
+import org.folio.circulation.storage.mappers.ContributorMapper;
 import org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher;
 
 import io.vertx.core.json.JsonArray;
@@ -131,11 +132,18 @@ public class Item {
   }
 
   public String getPrimaryContributorName() {
-    return getContributorsJson()
-      .filter(c -> c.getBoolean("primary", false))
+    return getContributors()
+      .filter(Contributor::getPrimary)
       .findFirst()
-      .map(c -> c.getString("name"))
+      .map(Contributor::getName)
       .orElse(null);
+  }
+
+  public Stream<Contributor> getContributors() {
+    final var mapper = new ContributorMapper();
+
+    return getContributorsJson()
+      .map(mapper::toDomain);
   }
 
   public Stream<JsonObject> getContributorsJson() {
