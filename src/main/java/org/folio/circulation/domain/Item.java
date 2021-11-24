@@ -179,7 +179,7 @@ public class Item {
   }
 
   public String getInstanceId() {
-    return holdings.instanceId;
+    return holdings.getInstanceId();
   }
 
   public String getCallNumber() {
@@ -229,7 +229,7 @@ public class Item {
   public String getCopyNumber() {
     return firstNonBlank(
       getProperty(getItem(), ITEM_COPY_NUMBER_ID),
-      holdings.copyNumber);
+      holdings.getCopyNumber());
   }
 
   public String getMaterialTypeId() {
@@ -374,7 +374,7 @@ public class Item {
   public String getPermanentLocationId() {
     final String itemLocation = getProperty(itemRepresentation, PERMANENT_LOCATION_ID);
 
-    return firstNonBlank(itemLocation, holdings.permanentLocationId);
+    return firstNonBlank(itemLocation, holdings.getPermanentLocationId());
   }
 
   public Item withLocation(Location newLocation) {

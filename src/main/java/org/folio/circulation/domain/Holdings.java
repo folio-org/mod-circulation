@@ -1,6 +1,7 @@
 package org.folio.circulation.domain;
 
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 @AllArgsConstructor
 public class Holdings {
@@ -8,7 +9,7 @@ public class Holdings {
     return new Holdings(null, null, null);
   }
 
-  public final String instanceId;
-  public final String copyNumber;
-  public final String permanentLocationId;
+  @Getter private final String instanceId;
+  @Getter private final String copyNumber;
+  @Getter private final String permanentLocationId;
 }
