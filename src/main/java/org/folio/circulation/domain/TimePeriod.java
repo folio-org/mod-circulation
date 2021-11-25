@@ -3,22 +3,12 @@ package org.folio.circulation.domain;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 
+import lombok.Value;
+
+@Value
 public class TimePeriod {
-  private final int duration;
-  private final String intervalId;
-
-  public TimePeriod(int duration, String intervalId) {
-    this.duration = duration;
-    this.intervalId = intervalId;
-  }
-
-  public int getDuration() {
-    return duration;
-  }
-
-  public String getIntervalId() {
-    return intervalId;
-  }
+  int duration;
+  String intervalId;
 
   public ChronoUnit getInterval() {
     final String id = getIntervalId();
