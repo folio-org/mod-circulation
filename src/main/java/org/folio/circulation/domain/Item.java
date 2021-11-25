@@ -32,6 +32,7 @@ import java.util.stream.Stream;
 
 import org.folio.circulation.domain.representations.ItemProperties;
 import org.folio.circulation.storage.mappers.ContributorMapper;
+import org.folio.circulation.storage.mappers.IdentifierMapper;
 import org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher;
 
 import io.vertx.core.json.JsonArray;
@@ -127,8 +128,11 @@ public class Item {
     return getProperty(instanceRepresentation, TITLE);
   }
 
-  public JsonArray getIdentifiersJson() {
-    return getArrayProperty(instanceRepresentation, IDENTIFIERS);
+  public Stream<Identifier> getIdentifiers() {
+    final var mapper = new IdentifierMapper();
+
+    return JsonObjectArrayPropertyFetcher.toStream(instanceRepresentation, IDENTIFIERS)
+      .map(mapper::toDomain);
   }
 
   public String getPrimaryContributorName() {
