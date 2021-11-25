@@ -38,6 +38,7 @@ import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.storage.mappers.HoldingsMapper;
 import org.folio.circulation.storage.mappers.InstanceMapper;
+import org.folio.circulation.storage.mappers.MaterialTypeMapper;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FindWithCqlQuery;
 import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
@@ -184,12 +185,14 @@ public class ItemRepository {
   private CompletableFuture<Result<Collection<Item>>> fetchMaterialTypes(
     Result<Collection<Item>> result) {
 
-    if(fetchMaterialType) {
+    final var mapper = new MaterialTypeMapper();
+
+    if (fetchMaterialType) {
       return result.after(items ->
         materialTypeRepository.getMaterialTypes(items)
           .thenApply(r -> r.map(materialTypes -> items.stream()
-              .map(item -> item.withMaterialType(materialTypes
-                .getOrDefault(item.getMaterialTypeId(), null)))
+              .map(item -> item.withMaterialType(mapper.toDomain(materialTypes
+                .getOrDefault(item.getMaterialTypeId(), null))))
               .collect(Collectors.toList()))));
     }
     else {

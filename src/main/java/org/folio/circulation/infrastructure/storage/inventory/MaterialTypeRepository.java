@@ -15,6 +15,8 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.Item;
+import org.folio.circulation.domain.MaterialType;
+import org.folio.circulation.storage.mappers.MaterialTypeMapper;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
@@ -30,16 +32,19 @@ public class MaterialTypeRepository {
     materialTypesStorageClient = clients.materialTypesStorage();
   }
 
-  public CompletableFuture<Result<JsonObject>> getFor(Item item) {
+  public CompletableFuture<Result<MaterialType>> getFor(Item item) {
     final String materialTypeId = item.getMaterialTypeId();
 
-    if(isNull(materialTypeId)) {
-      return Result.ofAsync(() -> null);
+    if (isNull(materialTypeId)) {
+      return Result.ofAsync(MaterialType::unknown);
     }
+
+    final var mapper = new MaterialTypeMapper();
 
     return SingleRecordFetcher.json(materialTypesStorageClient, "material types",
       response -> succeeded(null))
-      .fetch(materialTypeId);
+      .fetch(materialTypeId)
+      .thenApply(r -> r.map(mapper::toDomain));
   }
 
   public CompletableFuture<Result<Map<String, JsonObject>>> getMaterialTypes(

@@ -382,7 +382,7 @@ public class Item {
       this.changed, holdings, this.instance, this.materialType);
   }
 
-  public Item withMaterialType(JsonObject newMaterialType) {
+  public Item withMaterialType(MaterialType materialType) {
     return new Item(
       this.itemRepresentation,
       this.location,
@@ -393,7 +393,7 @@ public class Item {
       this.permanentLocation,
       this.inTransitDestinationServicePoint,
       this.changed, holdings, this.instance,
-      new MaterialTypeMapper().toDomain(newMaterialType));
+      materialType);
   }
 
   public Item withHoldings(@NonNull Holdings holdings) {
