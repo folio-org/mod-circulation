@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.folio.circulation.domain.representations.ItemProperties;
+import org.folio.circulation.storage.mappers.MaterialTypeMapper;
 
 import io.vertx.core.json.JsonObject;
 import lombok.NonNull;
@@ -46,6 +47,7 @@ public class Item {
 
   @NonNull private final Holdings holdings;
   @NonNull private final Instance instance;
+  @NonNull private final MaterialType materialType;
 
   public Item(JsonObject itemRepresentation,
     Location location, JsonObject materialTypeRepresentation,
@@ -57,7 +59,8 @@ public class Item {
     ServicePoint inTransitDestinationServicePoint,
     boolean changed,
     @NonNull Holdings holdings,
-    @NonNull Instance instance) {
+    @NonNull Instance instance,
+    @NonNull MaterialType materialType) {
 
     this.itemRepresentation = itemRepresentation;
     this.location = location;
@@ -71,6 +74,7 @@ public class Item {
     this.changed = changed;
     this.holdings = holdings;
     this.instance = instance;
+    this.materialType = materialType;
   }
 
   public static Item from(JsonObject representation) {
@@ -85,7 +89,8 @@ public class Item {
       null,
       false,
       Holdings.unknown(),
-      Instance.unknown());
+      Instance.unknown(),
+      MaterialType.unknown());
   }
 
   public boolean isCheckedOut() {
@@ -378,7 +383,7 @@ public class Item {
       this.callNumberComponents,
       this.permanentLocation,
       this.inTransitDestinationServicePoint,
-      this.changed, holdings, this.instance);
+      this.changed, holdings, this.instance, this.materialType);
   }
 
   public Item withMaterialType(JsonObject newMaterialType) {
@@ -392,7 +397,8 @@ public class Item {
       this.callNumberComponents,
       this.permanentLocation,
       this.inTransitDestinationServicePoint,
-      this.changed, holdings, this.instance);
+      this.changed, holdings, this.instance,
+      new MaterialTypeMapper().toDomain(newMaterialType));
   }
 
   public Item withHoldings(@NonNull Holdings holdings) {
@@ -407,7 +413,7 @@ public class Item {
       this.permanentLocation,
       this.inTransitDestinationServicePoint,
       this.changed,
-      holdings, this.instance);
+      holdings, this.instance, this.materialType);
   }
 
   public Item withInstance(@NonNull Instance instance) {
@@ -422,7 +428,7 @@ public class Item {
       this.permanentLocation,
       this.inTransitDestinationServicePoint,
       this.changed, holdings,
-      instance);
+      instance, this.materialType);
   }
 
   public Item withPrimaryServicePoint(ServicePoint servicePoint) {
@@ -436,7 +442,7 @@ public class Item {
       this.callNumberComponents,
       this.permanentLocation,
       this.inTransitDestinationServicePoint,
-      this.changed, holdings, this.instance);
+      this.changed, holdings, this.instance, this.materialType);
   }
 
   public Item withLoanType(JsonObject newLoanTypeRepresentation) {
@@ -450,7 +456,7 @@ public class Item {
       this.callNumberComponents,
       this.permanentLocation,
       this.inTransitDestinationServicePoint,
-      this.changed, holdings, this.instance);
+      this.changed, holdings, this.instance, this.materialType);
   }
 
   public Item withLastCheckIn(LastCheckIn lastCheckIn) {
@@ -464,7 +470,7 @@ public class Item {
       this.callNumberComponents,
       this.permanentLocation,
       this.inTransitDestinationServicePoint,
-      this.changed, holdings, this.instance);
+      this.changed, holdings, this.instance, this.materialType);
   }
 
   public Item withPermanentLocation(Location permanentLocation) {
@@ -478,6 +484,6 @@ public class Item {
       this.callNumberComponents,
       permanentLocation,
       this.inTransitDestinationServicePoint,
-      this.changed, holdings, this.instance);
+      this.changed, holdings, this.instance, this.materialType);
   }
 }
