@@ -1,8 +1,12 @@
 package api.queue;
 
 import static api.support.fakes.PublishedEvents.byLogEventType;
+import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
+import static api.support.matchers.ValidationErrorMatchers.hasMessage;
+import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static java.util.stream.Collectors.toList;
 import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_REORDERED;
+import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
@@ -25,12 +29,15 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import api.support.APITests;
+import api.support.TlrFeatureStatus;
 import api.support.builders.ReorderQueueBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.fakes.FakePubSub;
 import api.support.http.IndividualResource;
+import api.support.http.ItemResource;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -54,8 +61,45 @@ class RequestQueueResourceTest extends APITests {
   }
 
   @Test
-  void validationErrorOnItemDoNotExists() {
-    Response response = requestQueueFixture.attemptReorderQueue(
+  void validationErrorWhenTlrEnabledAndReorderingQueueForItem() {
+    reconfigureTlrFeature(TlrFeatureStatus.ENABLED);
+
+    Response response = requestQueueFixture.attemptReorderQueueForItem(
+      UUID.randomUUID().toString(),
+      new ReorderQueueBuilder()
+        .addReorderRequest(UUID.randomUUID().toString(), 1)
+        .create());
+
+    assertThat(response.getStatusCode(), is(422));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Refuse to reorder request queue, TLR feature status is ENABLED."))));
+  }
+
+  @ParameterizedTest
+  @EnumSource(TlrFeatureStatus.class)
+  void validationErrorWhenTlrDisabledAndReorderingQueueForInstance(
+    TlrFeatureStatus tlrFeatureStatus) {
+
+    if (tlrFeatureStatus == TlrFeatureStatus.ENABLED) {
+      return;
+    }
+
+    reconfigureTlrFeature(tlrFeatureStatus);
+
+    Response response = requestQueueFixture.attemptReorderQueueForInstance(
+      UUID.randomUUID().toString(),
+      new ReorderQueueBuilder()
+        .addReorderRequest(UUID.randomUUID().toString(), 1)
+        .create());
+
+    assertThat(response.getStatusCode(), is(422));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Refuse to reorder request queue, TLR feature status is DISABLED."))));
+  }
+
+  @Test
+  void notFoundErrorWhenItemDoesNotExists() {
+    Response response = requestQueueFixture.attemptReorderQueueForItem(
       UUID.randomUUID().toString(),
       new ReorderQueueBuilder()
         .addReorderRequest(UUID.randomUUID().toString(), 1)
@@ -67,11 +111,26 @@ class RequestQueueResourceTest extends APITests {
   }
 
   @Test
+  void notFoundErrorWhenInstanceDoesNotExists() {
+    reconfigureTlrFeature(TlrFeatureStatus.ENABLED);
+
+    Response response = requestQueueFixture.attemptReorderQueueForInstance(
+      UUID.randomUUID().toString(),
+      new ReorderQueueBuilder()
+        .addReorderRequest(UUID.randomUUID().toString(), 1)
+        .create());
+
+    assertThat(response.getStatusCode(), is(404));
+    assertTrue(response.getBody()
+      .matches("Instance record with ID .+ cannot be found"));
+  }
+
+  @Test
   void refuseAttemptToMovePageRequestFromFirstPosition() {
     IndividualResource pageRequest = pageRequest(steve);
     IndividualResource recallRequest = recallRequest(jessica);
 
-    Response response = requestQueueFixture.attemptReorderQueue(
+    Response response = requestQueueFixture.attemptReorderQueueForItem(
       item.getId().toString(),
       new ReorderQueueBuilder()
         .addReorderRequest(recallRequest.getId().toString(), 1)
@@ -82,6 +141,26 @@ class RequestQueueResourceTest extends APITests {
       is("Page requests can not be displaced from position 1."));
   }
 
+//  @Test
+//  void refuseAttemptToMovePageRequestFromOneOfTheTopPositionsWhenTlrEnabled() {
+//    reconfigureTlrFeature(TlrFeatureStatus.ENABLED);
+//
+//    // It is possible to have multiple page requests in the unified queue when TLR feature is
+//    // enabled
+//    IndividualResource pageRequest = pageRequest(steve);
+//    IndividualResource recallRequest = recallRequest(jessica);
+//
+//    Response response = requestQueueFixture.attemptReorderQueueForItem(
+//      item.getId().toString(),
+//      new ReorderQueueBuilder()
+//        .addReorderRequest(recallRequest.getId().toString(), 1)
+//        .addReorderRequest(pageRequest.getId().toString(), 2)
+//        .create());
+//
+//    verifyValidationFailure(response,
+//      is("Page requests can not be displaced from position 1."));
+//  }
+
   @Test
   void refuseAttemptToMoveRequestBeingFulfilledFromFirstPosition() {
     checkOutFixture.checkOutByBarcode(item, usersFixture.rebecca());
@@ -89,7 +168,7 @@ class RequestQueueResourceTest extends APITests {
     IndividualResource inFulfillmentRequest = inFulfillmentRecallRequest(steve);
     IndividualResource recallRequest = recallRequest(jessica);
 
-    Response response = requestQueueFixture.attemptReorderQueue(
+    Response response = requestQueueFixture.attemptReorderQueueForItem(
       item.getId().toString(),
       new ReorderQueueBuilder()
         .addReorderRequest(recallRequest.getId().toString(), 1)
@@ -107,7 +186,7 @@ class RequestQueueResourceTest extends APITests {
     IndividualResource firstRecallRequest = recallRequest(steve);
     IndividualResource secondRecallRequest = recallRequest(jessica);
 
-    Response response = requestQueueFixture.attemptReorderQueue(
+    Response response = requestQueueFixture.attemptReorderQueueForItem(
       item.getId().toString(),
       new ReorderQueueBuilder()
         .addReorderRequest(secondRecallRequest.getId().toString(), 1)
@@ -127,7 +206,7 @@ class RequestQueueResourceTest extends APITests {
 
     IndividualResource secondRecallRequest = recallRequest(jessica);
 
-    Response response = requestQueueFixture.attemptReorderQueue(
+    Response response = requestQueueFixture.attemptReorderQueueForItem(
       item.getId().toString(),
       new ReorderQueueBuilder()
         .addReorderRequest(secondRecallRequest.getId().toString(), 1)
@@ -164,7 +243,7 @@ class RequestQueueResourceTest extends APITests {
       .addReorderRequest(secondRecallRequest.getId().toString(), fourthPosition)
       .create();
 
-    Response response = requestQueueFixture.attemptReorderQueue(
+    Response response = requestQueueFixture.attemptReorderQueueForItem(
       item.getId().toString(), reorderQueue);
 
     verifyValidationFailure(response, is("Positions must have sequential order."));
@@ -177,7 +256,7 @@ class RequestQueueResourceTest extends APITests {
     IndividualResource holdRequest = holdRequest(steve);
     IndividualResource recallRequest = recallRequest(jessica);
 
-    Response response = requestQueueFixture.attemptReorderQueue(
+    Response response = requestQueueFixture.attemptReorderQueueForItem(
       item.getId().toString(),
       new ReorderQueueBuilder()
         .addReorderRequest(recallRequest.getId().toString(), 1)
@@ -216,7 +295,7 @@ class RequestQueueResourceTest extends APITests {
       .create();
 
     JsonObject response = requestQueueFixture
-      .reorderQueue(item.getId().toString(), reorderQueue);
+      .reorderQueueForItem(item.getId().toString(), reorderQueue);
 
     verifyQueueUpdated(reorderQueue, response);
   }
@@ -237,7 +316,7 @@ class RequestQueueResourceTest extends APITests {
       .addReorderRequest(secondRecallRequest.getId().toString(), 3)
       .create();
 
-    JsonObject response = requestQueueFixture.reorderQueue(item.getId()
+    JsonObject response = requestQueueFixture.reorderQueueForItem(item.getId()
       .toString(), reorderQueue);
 
     verifyQueueUpdated(reorderQueue, response);
@@ -287,7 +366,7 @@ class RequestQueueResourceTest extends APITests {
       .create();
 
     JsonObject initialReorderResponse = requestQueueFixture
-      .reorderQueue(item.getId().toString(), initialReorder);
+      .reorderQueueForItem(item.getId().toString(), initialReorder);
 
     verifyQueueUpdated(initialReorder, initialReorderResponse);
 
@@ -299,7 +378,7 @@ class RequestQueueResourceTest extends APITests {
       .create();
 
     JsonObject subsequentReorderResponse = requestQueueFixture
-      .reorderQueue(item.getId().toString(), subsequentReorder);
+      .reorderQueueForItem(item.getId().toString(), subsequentReorder);
 
     verifyQueueUpdated(subsequentReorder, subsequentReorderResponse);
   }
@@ -360,7 +439,7 @@ class RequestQueueResourceTest extends APITests {
     assertQueue(expectedRequests, reorderedRequests);
 
     JsonArray requestsFromDb = requestQueueFixture
-      .retrieveQueue(item.getId().toString())
+      .retrieveQueueForItem(item.getId().toString())
       .getJsonArray("requests");
 
     assertEquals(reorderedRequests.size(), requestsFromDb.size(),

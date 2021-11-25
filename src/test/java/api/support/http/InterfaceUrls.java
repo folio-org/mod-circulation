@@ -239,13 +239,22 @@ public class InterfaceUrls {
     return APITestContext.viaOkapiModuleUrl("/patron-action-session-storage/expired-session-patron-ids");
   }
 
-  public static URL reorderQueueUrl(String itemId) {
-    return requestQueueUrl(itemId + "/reorder");
+  public static URL reorderRequestQueueForItemUrl(String itemId) {
+    return requestQueueForItemUrl(itemId + "/reorder");
   }
 
-  public static URL requestQueueUrl(String itemId) {
+  public static URL reorderRequestQueueForInstanceUrl(String instanceId) {
+    return requestQueueForInstanceUrl(instanceId + "/reorder");
+  }
+
+  public static URL requestQueueForItemUrl(String itemId) {
     return circulationModuleUrl(String
       .format("/circulation/requests/queue/%s", itemId));
+  }
+
+  public static URL requestQueueForInstanceUrl(String instanceId) {
+    return circulationModuleUrl(String
+      .format("/circulation/requests/instance/queue/%s", instanceId));
   }
 
   static URL userManualBlocksStorageUrl() {
