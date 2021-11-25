@@ -32,6 +32,7 @@ import java.util.stream.Stream;
 import org.folio.circulation.domain.representations.ItemProperties;
 import org.folio.circulation.storage.mappers.ContributorMapper;
 import org.folio.circulation.storage.mappers.IdentifierMapper;
+import org.folio.circulation.storage.mappers.InstanceMapper;
 import org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher;
 
 import io.vertx.core.json.JsonObject;
@@ -52,6 +53,7 @@ public class Item {
   private boolean changed;
 
   private final Holdings holdings;
+  private final Instance instance;
 
   public Item(JsonObject itemRepresentation,
     JsonObject instanceRepresentation,
@@ -64,7 +66,8 @@ public class Item {
     Location permanentLocation,
     ServicePoint inTransitDestinationServicePoint,
     boolean changed,
-    Holdings holdings) {
+    Holdings holdings,
+    Instance instance) {
 
     this.itemRepresentation = itemRepresentation;
     this.instanceRepresentation = instanceRepresentation;
@@ -78,6 +81,7 @@ public class Item {
     this.inTransitDestinationServicePoint = inTransitDestinationServicePoint;
     this.changed = changed;
     this.holdings = holdings;
+    this.instance = instance;
   }
 
   public static Item from(JsonObject representation) {
@@ -92,7 +96,8 @@ public class Item {
       null,
       null,
       false,
-      Holdings.unknown());
+      Holdings.unknown(),
+      Instance.unknown());
   }
 
   public boolean isCheckedOut() {
@@ -396,7 +401,7 @@ public class Item {
       this.callNumberComponents,
       this.permanentLocation,
       this.inTransitDestinationServicePoint,
-      this.changed, holdings);
+      this.changed, holdings, this.instance);
   }
 
   public Item withMaterialType(JsonObject newMaterialType) {
@@ -411,7 +416,7 @@ public class Item {
       this.callNumberComponents,
       this.permanentLocation,
       this.inTransitDestinationServicePoint,
-      this.changed, holdings);
+      this.changed, holdings, this.instance);
   }
 
   public Item withHoldings(@NonNull Holdings holdings) {
@@ -427,10 +432,12 @@ public class Item {
       this.permanentLocation,
       this.inTransitDestinationServicePoint,
       this.changed,
-      holdings);
+      holdings, this.instance);
   }
 
   public Item withInstance(JsonObject newInstanceRepresentation) {
+    final var mapper = new InstanceMapper();
+
     return new Item(
       this.itemRepresentation,
       newInstanceRepresentation,
@@ -442,7 +449,8 @@ public class Item {
       this.callNumberComponents,
       this.permanentLocation,
       this.inTransitDestinationServicePoint,
-      this.changed, holdings);
+      this.changed, holdings,
+      mapper.toDomain(newInstanceRepresentation));
   }
 
   public Item withPrimaryServicePoint(ServicePoint servicePoint) {
@@ -457,7 +465,7 @@ public class Item {
       this.callNumberComponents,
       this.permanentLocation,
       this.inTransitDestinationServicePoint,
-      this.changed, holdings);
+      this.changed, holdings, this.instance);
   }
 
   public Item withLoanType(JsonObject newLoanTypeRepresentation) {
@@ -472,7 +480,7 @@ public class Item {
       this.callNumberComponents,
       this.permanentLocation,
       this.inTransitDestinationServicePoint,
-      this.changed, holdings);
+      this.changed, holdings, this.instance);
   }
 
   public Item withLastCheckIn(LastCheckIn lastCheckIn) {
@@ -487,7 +495,7 @@ public class Item {
       this.callNumberComponents,
       this.permanentLocation,
       this.inTransitDestinationServicePoint,
-      this.changed, holdings);
+      this.changed, holdings, this.instance);
   }
 
   public Item withPermanentLocation(Location permanentLocation) {
@@ -502,6 +510,6 @@ public class Item {
       this.callNumberComponents,
       permanentLocation,
       this.inTransitDestinationServicePoint,
-      this.changed, holdings);
+      this.changed, holdings, this.instance);
   }
 }
