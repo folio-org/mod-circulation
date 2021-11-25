@@ -38,6 +38,7 @@ import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.storage.mappers.HoldingsMapper;
 import org.folio.circulation.storage.mappers.InstanceMapper;
+import org.folio.circulation.storage.mappers.LoanTypeMapper;
 import org.folio.circulation.storage.mappers.MaterialTypeMapper;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FindWithCqlQuery;
@@ -140,7 +141,10 @@ public class ItemRepository {
     if (!fetchLoanType) {
       return completedFuture(result);
     }
-    return result.combineAfter(this::getLoanType, Item::withLoanType);
+
+    return result.combineAfter(this::getLoanType,
+      (item, newLoanTypeRepresentation) -> item.withLoanType(
+        new LoanTypeMapper().toDomain(newLoanTypeRepresentation)));
   }
 
   private CompletableFuture<Result<JsonObject>> getLoanType(Item item) {
@@ -223,11 +227,13 @@ public class ItemRepository {
   private Result<Collection<Item>> matchLoanTypesToItems(
     Map<Item, String> itemToLoanTypeId, Map<String, JsonObject> loanTypes) {
 
+    final var mapper = new LoanTypeMapper();
+
     return succeeded(
       itemToLoanTypeId.entrySet().stream()
-        .map(e -> e.getKey().withLoanType(loanTypes.get(e.getValue())))
-        .collect(Collectors.toList())
-    );
+        .map(e -> e.getKey().withLoanType(
+          mapper.toDomain(loanTypes.get(e.getValue()))))
+        .collect(Collectors.toList()));
   }
 
   private CompletableFuture<Result<Collection<Item>>> fetchInstances(

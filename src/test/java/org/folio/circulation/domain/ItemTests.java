@@ -28,4 +28,11 @@ class ItemTests {
 
     assertThrows(NullPointerException.class, () -> item.withMaterialType(null));
   }
+
+  @Test
+  void cannotHaveANullLoanType() {
+    val item = Item.from(new ItemBuilder().create());
+
+    assertThrows(NullPointerException.class, () -> item.withLoanType(null));
+  }
 }
