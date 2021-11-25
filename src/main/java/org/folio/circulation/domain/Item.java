@@ -12,6 +12,7 @@ import static org.folio.circulation.domain.ItemStatus.PAGED;
 import static org.folio.circulation.domain.representations.ItemProperties.EFFECTIVE_LOCATION_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.IN_TRANSIT_DESTINATION_SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.ITEM_COPY_NUMBER_ID;
+import static org.folio.circulation.domain.representations.ItemProperties.MATERIAL_TYPE_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.PERMANENT_LOCATION_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.STATUS_PROPERTY;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedStringProperty;
@@ -218,7 +219,7 @@ public class Item {
   }
 
   public String getMaterialTypeName() {
-    return getProperty(materialTypeRepresentation, "name");
+    return materialType.getName();
   }
 
   public String getCopyNumber() {
@@ -228,7 +229,7 @@ public class Item {
   }
 
   public String getMaterialTypeId() {
-    return getProperty(getItem(), ItemProperties.MATERIAL_TYPE_ID);
+    return getProperty(getItem(), MATERIAL_TYPE_ID);
   }
 
   public String getLocationId() {
