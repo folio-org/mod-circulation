@@ -40,7 +40,6 @@ import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.services.FeeFineFacade;
 import org.folio.circulation.services.feefine.FeeFineService;
-import org.folio.circulation.storage.mappers.ServicePointMapper;
 import org.folio.circulation.support.utils.ClockUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -692,9 +691,8 @@ class OverdueFineServiceTest {
   }
 
   private ServicePoint createServicePoint() {
-    return new ServicePointMapper().toDomain(new JsonObject()
-      .put("id", CHECK_IN_SERVICE_POINT_ID)
-      .put("name", CHECK_IN_SERVICE_POINT_NAME));
+    return new ServicePoint(CHECK_IN_SERVICE_POINT_ID.toString(), CHECK_IN_SERVICE_POINT_NAME,
+      null, false, null, null, null, null);
   }
 
   private static Collection<Object[]> testParameters() {
