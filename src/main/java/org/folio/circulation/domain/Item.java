@@ -36,7 +36,6 @@ import lombok.NonNull;
 public class Item {
   private final JsonObject itemRepresentation;
   private final Location location;
-  private final JsonObject materialTypeRepresentation;
   private final ServicePoint primaryServicePoint;
   private final JsonObject loanTypeRepresentation;
   private final LastCheckIn lastCheckIn;
@@ -51,7 +50,7 @@ public class Item {
   @NonNull private final MaterialType materialType;
 
   public Item(JsonObject itemRepresentation,
-    Location location, JsonObject materialTypeRepresentation,
+    Location location,
     ServicePoint primaryServicePoint,
     JsonObject loanTypeRepresentation,
     LastCheckIn lastCheckIn,
@@ -65,7 +64,6 @@ public class Item {
 
     this.itemRepresentation = itemRepresentation;
     this.location = location;
-    this.materialTypeRepresentation = materialTypeRepresentation;
     this.primaryServicePoint = primaryServicePoint;
     this.loanTypeRepresentation = loanTypeRepresentation;
     this.lastCheckIn = lastCheckIn;
@@ -80,7 +78,6 @@ public class Item {
 
   public static Item from(JsonObject representation) {
     return new Item(representation,
-      null,
       null,
       null,
       null,
@@ -376,7 +373,6 @@ public class Item {
     return new Item(
       this.itemRepresentation,
       newLocation,
-      this.materialTypeRepresentation,
       this.primaryServicePoint,
       this.loanTypeRepresentation,
       this.lastCheckIn,
@@ -390,7 +386,6 @@ public class Item {
     return new Item(
       this.itemRepresentation,
       this.location,
-      newMaterialType,
       this.primaryServicePoint,
       this.loanTypeRepresentation,
       this.lastCheckIn,
@@ -405,7 +400,6 @@ public class Item {
     return new Item(
       this.itemRepresentation,
       this.location,
-      this.materialTypeRepresentation,
       this.primaryServicePoint,
       this.loanTypeRepresentation,
       this.lastCheckIn,
@@ -420,7 +414,6 @@ public class Item {
     return new Item(
       this.itemRepresentation,
       this.location,
-      this.materialTypeRepresentation,
       this.primaryServicePoint,
       this.loanTypeRepresentation,
       this.lastCheckIn,
@@ -435,7 +428,6 @@ public class Item {
     return new Item(
       this.itemRepresentation,
       this.location,
-      this.materialTypeRepresentation,
       servicePoint,
       this.loanTypeRepresentation,
       this.lastCheckIn,
@@ -449,7 +441,6 @@ public class Item {
     return new Item(
       this.itemRepresentation,
       this.location,
-      this.materialTypeRepresentation,
       this.primaryServicePoint,
       newLoanTypeRepresentation,
       this.lastCheckIn,
@@ -463,7 +454,6 @@ public class Item {
     return new Item(
       this.itemRepresentation,
       this.location,
-      this.materialTypeRepresentation,
       this.primaryServicePoint,
       this.loanTypeRepresentation,
       lastCheckIn,
@@ -477,7 +467,6 @@ public class Item {
     return new Item(
       this.itemRepresentation,
       this.location,
-      this.materialTypeRepresentation,
       this.primaryServicePoint,
       this.loanTypeRepresentation,
       this.lastCheckIn,
