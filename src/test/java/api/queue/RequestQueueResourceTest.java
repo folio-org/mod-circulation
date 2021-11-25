@@ -477,8 +477,15 @@ class RequestQueueResourceTest extends APITests {
       .addReorderRequest(secondRecallRequest.getId().toString(), 3)
       .create();
 
-    JsonObject response = requestQueueFixture.reorderQueueForItem(item.getId()
-      .toString(), reorderQueue);
+    JsonObject response;
+    if (tlrFeatureStatus == TlrFeatureStatus.ENABLED) {
+      response = requestQueueFixture.reorderQueueForInstance(item.getInstanceId().toString(),
+        reorderQueue);
+    }
+    else {
+      response = requestQueueFixture.reorderQueueForItem(item.getId().toString(),
+        reorderQueue);
+    }
 
     verifyQueueUpdatedForItem(reorderQueue, response);
 
