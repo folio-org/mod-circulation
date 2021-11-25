@@ -14,4 +14,11 @@ class ItemTests {
 
     assertThrows(NullPointerException.class, () -> item.withHoldings(null));
   }
+
+  @Test
+  void cannotHaveANullInstance() {
+    val item = Item.from(new ItemBuilder().create());
+
+    assertThrows(NullPointerException.class, () -> item.withInstance(null));
+  }
 }
