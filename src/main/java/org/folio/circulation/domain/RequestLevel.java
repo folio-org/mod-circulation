@@ -1,7 +1,8 @@
 package org.folio.circulation.domain;
 
 public enum RequestLevel {
-  ITEM("Item");
+  ITEM("Item"),
+  TITLE("Title");
 
   private final String value;
 

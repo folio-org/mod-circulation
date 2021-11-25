@@ -65,6 +65,7 @@ import java.util.stream.IntStream;
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.domain.RequestLevel;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.override.BlockOverrides;
@@ -78,6 +79,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EmptySource;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import api.support.APITests;
@@ -369,23 +371,6 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  void cannotCreateRequestWithNoItemReference() {
-    UUID patronId = usersFixture.charlotte().getId();
-    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
-
-    Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
-      .recall()
-      .withNoItemId()
-      .withPickupServicePointId(pickupServicePointId)
-      .withRequesterId(patronId));
-
-    assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
-    assertThat(postResponse.getJson(), hasErrors(1));
-    assertThat(postResponse.getJson(), hasErrorWith(
-      hasMessage("Cannot create a request with no item ID")));
-  }
-
-  @Test
   void cannotCreateRequestWithNonExistentRequestLevel() {
     UUID patronId = usersFixture.charlotte().getId();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -393,15 +378,15 @@ public class RequestsAPICreationTests extends APITests {
     UUID instanceId = item.getInstanceId();
 
     Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
-      .recall()
+      .page()
       .withItemId(item.getId())
-      .titleRequestLevel()
+      .withRequestLevel("Fake request level")
       .withInstanceId(instanceId)
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(patronId));
 
     assertThat(postResponse, hasStatus(HTTP_BAD_REQUEST));
-    assertThat(postResponse.getBody(), is("requestLevel must be one of the following: \"Item\""));
+    assertThat(postResponse.getBody(), is("requestLevel must be one of the following: \"Item\", \"Title\""));
   }
 
   @Test
@@ -2158,7 +2143,7 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(responseJson, hasErrors(3));
 
     assertThat(responseJson, hasErrorWith(allOf(
-        hasMessage("Cannot create a request with no item ID"),
+        hasMessage("Cannot create an item level request with no item ID"),
         hasNullParameter("itemId"))));
 
     assertThat(responseJson, hasErrorWith(allOf(
@@ -2332,6 +2317,56 @@ public class RequestsAPICreationTests extends APITests {
     assertOverrideResponseSuccess(response);
 
     assertThat(response.getJson(), hasNoJsonPath("requestProcessingParameters"));
+  }
+
+  @ParameterizedTest
+  @EnumSource(RequestLevel.class)
+  void cannotCreateRequestWithoutInstanceId(RequestLevel requestLevel) {
+    Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
+      .page()
+      .withRequestLevel(requestLevel.value())
+      .forItem(itemsFixture.basedUponNod())
+      .withInstanceId(null)
+      .withRequesterId(usersFixture.steve().getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId()));
+
+    assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(postResponse.getJson(), hasErrors(1));
+    assertThat(postResponse.getJson(), hasErrorWith(
+      hasMessage("Cannot create a request with no instance ID")));
+  }
+
+  @Test
+  void cannotCreateItemLevelRequestWithoutItemId() {
+    Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
+      .page()
+      .itemRequestLevel()
+      .forItem(itemsFixture.basedUponNod())
+      .withItemId(null)
+      .withRequesterId(usersFixture.steve().getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId()));
+
+    assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(postResponse.getJson(), hasErrors(1));
+    assertThat(postResponse.getJson(), hasErrorWith(
+      hasMessage("Cannot create an item level request with no item ID")));
+  }
+
+  @ParameterizedTest
+  @EnumSource(RequestLevel.class)
+  void cannotCreateRequestWithItemIdButNoHoldingsRecordId(RequestLevel requestLevel) {
+    Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
+      .page()
+      .withRequestLevel(requestLevel.value())
+      .forItem(itemsFixture.basedUponNod())
+      .withHoldingsRecordId(null)
+      .withRequesterId(usersFixture.steve().getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId()));
+
+    assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(postResponse.getJson(), hasErrors(1));
+    assertThat(postResponse.getJson(), hasErrorWith(
+      hasMessage("Cannot create a request with item ID but no holdings record ID")));
   }
 
   private static void assertOverrideResponseSuccess(Response response) {
