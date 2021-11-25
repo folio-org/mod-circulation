@@ -1,29 +1,17 @@
 package org.folio.circulation.domain;
 
+import lombok.AllArgsConstructor;
+
+@AllArgsConstructor
 public class ServicePoint {
-  private final String name;
   private final String id;
+  private final String name;
   private final String code;
+  private final boolean pickupLocation;
   private final String discoveryDisplayName;
   private final String description;
   private final Integer shelvingLagTime;
   private final TimePeriod holdShelfExpiryPeriod;
-  private final boolean pickupLocation;
-
-  public ServicePoint(String id, String name,
-    String code, boolean pickupLocation, String discoveryDisplayName,
-    String description, Integer shelvingLagTime,
-    TimePeriod holdShelfExpiryPeriod) {
-
-    this.name = name;
-    this.id = id;
-    this.code = code;
-    this.pickupLocation = pickupLocation;
-    this.discoveryDisplayName = discoveryDisplayName;
-    this.description = description;
-    this.shelvingLagTime = shelvingLagTime;
-    this.holdShelfExpiryPeriod = holdShelfExpiryPeriod;
-  }
 
   public boolean isPickupLocation() {
     return pickupLocation;
