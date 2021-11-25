@@ -27,6 +27,7 @@ import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.User;
+import org.folio.circulation.storage.mappers.InstanceMapper;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher;
 import org.folio.circulation.support.utils.ClockUtil;
@@ -171,7 +172,7 @@ class PickSlipsTests extends APITests {
     JsonObject itemContext = pickSlip.getJsonObject(ITEM_KEY);
 
     Item item = Item.from(itemResource.getJson())
-      .withInstance(itemResource.getInstance().getJson());
+      .withInstance(new InstanceMapper().toDomain(itemResource.getInstance().getJson()));
 
     String contributorNames = item.getContributors()
       .map(Contributor::getName)

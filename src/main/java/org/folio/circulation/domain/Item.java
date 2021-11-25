@@ -27,7 +27,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.folio.circulation.domain.representations.ItemProperties;
-import org.folio.circulation.storage.mappers.InstanceMapper;
 
 import io.vertx.core.json.JsonObject;
 import lombok.NonNull;
@@ -416,9 +415,7 @@ public class Item {
       holdings, this.instance);
   }
 
-  public Item withInstance(JsonObject newInstanceRepresentation) {
-    final var mapper = new InstanceMapper();
-
+  public Item withInstance(Instance instance) {
     return new Item(
       this.itemRepresentation,
       this.location,
@@ -430,7 +427,7 @@ public class Item {
       this.permanentLocation,
       this.inTransitDestinationServicePoint,
       this.changed, holdings,
-      mapper.toDomain(newInstanceRepresentation));
+      instance);
   }
 
   public Item withPrimaryServicePoint(ServicePoint servicePoint) {
