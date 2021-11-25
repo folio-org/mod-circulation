@@ -11,7 +11,6 @@ import static org.folio.circulation.domain.ItemStatus.MISSING;
 import static org.folio.circulation.domain.ItemStatus.PAGED;
 import static org.folio.circulation.domain.representations.InstanceProperties.CONTRIBUTORS;
 import static org.folio.circulation.domain.representations.ItemProperties.EFFECTIVE_LOCATION_ID;
-import static org.folio.circulation.domain.representations.ItemProperties.IDENTIFIERS;
 import static org.folio.circulation.domain.representations.ItemProperties.IN_TRANSIT_DESTINATION_SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.ITEM_COPY_NUMBER_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.PERMANENT_LOCATION_ID;
@@ -30,7 +29,6 @@ import java.util.stream.Stream;
 
 import org.folio.circulation.domain.representations.ItemProperties;
 import org.folio.circulation.storage.mappers.ContributorMapper;
-import org.folio.circulation.storage.mappers.IdentifierMapper;
 import org.folio.circulation.storage.mappers.InstanceMapper;
 import org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher;
 
@@ -156,10 +154,7 @@ public class Item {
   }
 
   public Stream<Identifier> getIdentifiers() {
-    final var mapper = new IdentifierMapper();
-
-    return JsonObjectArrayPropertyFetcher.toStream(instanceRepresentation, IDENTIFIERS)
-      .map(mapper::toDomain);
+    return instance.getIdentifiers().stream();
   }
 
   public String getPrimaryContributorName() {
