@@ -9,7 +9,6 @@ import static org.folio.circulation.domain.ItemStatus.DECLARED_LOST;
 import static org.folio.circulation.domain.ItemStatus.IN_TRANSIT;
 import static org.folio.circulation.domain.ItemStatus.MISSING;
 import static org.folio.circulation.domain.ItemStatus.PAGED;
-import static org.folio.circulation.domain.representations.InstanceProperties.CONTRIBUTORS;
 import static org.folio.circulation.domain.representations.ItemProperties.EFFECTIVE_LOCATION_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.IN_TRANSIT_DESTINATION_SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.ITEM_COPY_NUMBER_ID;
@@ -28,9 +27,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.folio.circulation.domain.representations.ItemProperties;
-import org.folio.circulation.storage.mappers.ContributorMapper;
 import org.folio.circulation.storage.mappers.InstanceMapper;
-import org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher;
 
 import io.vertx.core.json.JsonObject;
 import lombok.NonNull;
@@ -166,10 +163,7 @@ public class Item {
   }
 
   public Stream<Contributor> getContributors() {
-    final var mapper = new ContributorMapper();
-
-    return JsonObjectArrayPropertyFetcher.toStream(instanceRepresentation, CONTRIBUTORS)
-      .map(mapper::toDomain);
+    return instance.getContributors().stream();
   }
 
   public String getBarcode() {
