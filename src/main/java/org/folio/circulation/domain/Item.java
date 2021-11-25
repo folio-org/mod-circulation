@@ -17,7 +17,6 @@ import static org.folio.circulation.domain.representations.ItemProperties.ITEM_C
 import static org.folio.circulation.domain.representations.ItemProperties.PERMANENT_LOCATION_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.STATUS_PROPERTY;
 import static org.folio.circulation.domain.representations.ItemProperties.TITLE;
-import static org.folio.circulation.support.json.JsonPropertyFetcher.getArrayProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.json.JsonPropertyWriter.remove;
@@ -35,12 +34,9 @@ import org.folio.circulation.storage.mappers.ContributorMapper;
 import org.folio.circulation.storage.mappers.IdentifierMapper;
 import org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher;
 
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import lombok.AllArgsConstructor;
 import lombok.NonNull;
 
-@AllArgsConstructor
 public class Item {
   private final JsonObject itemRepresentation;
   private final JsonObject instanceRepresentation;
@@ -56,6 +52,33 @@ public class Item {
   private boolean changed;
 
   private final Holdings holdings;
+
+  public Item(JsonObject itemRepresentation,
+    JsonObject instanceRepresentation,
+    Location location,
+    JsonObject materialTypeRepresentation,
+    ServicePoint primaryServicePoint,
+    JsonObject loanTypeRepresentation,
+    LastCheckIn lastCheckIn,
+    CallNumberComponents callNumberComponents,
+    Location permanentLocation,
+    ServicePoint inTransitDestinationServicePoint,
+    boolean changed,
+    Holdings holdings) {
+
+    this.itemRepresentation = itemRepresentation;
+    this.instanceRepresentation = instanceRepresentation;
+    this.location = location;
+    this.materialTypeRepresentation = materialTypeRepresentation;
+    this.primaryServicePoint = primaryServicePoint;
+    this.loanTypeRepresentation = loanTypeRepresentation;
+    this.lastCheckIn = lastCheckIn;
+    this.callNumberComponents = callNumberComponents;
+    this.permanentLocation = permanentLocation;
+    this.inTransitDestinationServicePoint = inTransitDestinationServicePoint;
+    this.changed = changed;
+    this.holdings = holdings;
+  }
 
   public static Item from(JsonObject representation) {
     return new Item(representation,
