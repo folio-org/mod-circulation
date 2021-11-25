@@ -1,12 +1,5 @@
 package org.folio.circulation.domain;
 
-import static org.folio.circulation.support.json.JsonPropertyFetcher.getBooleanProperty;
-import static org.folio.circulation.support.json.JsonPropertyFetcher.getIntegerProperty;
-import static org.folio.circulation.support.json.JsonPropertyFetcher.getObjectProperty;
-import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
-
-import io.vertx.core.json.JsonObject;
-
 public class ServicePoint {
   private final String name;
   private final String id;
@@ -17,17 +10,19 @@ public class ServicePoint {
   private final TimePeriod holdShelfExpiryPeriod;
   private final boolean pickupLocation;
 
-  public ServicePoint(JsonObject representation) {
-    name = getProperty(representation, "name");
-    id = getProperty(representation, "id");
-    code = getProperty(representation, "code");
-    pickupLocation = getBooleanProperty(representation, "pickupLocation");
-    discoveryDisplayName = getProperty(representation, "discoveryDisplayName");
-    description = getProperty(representation, "description");
-    shelvingLagTime = getIntegerProperty(representation, "shelvingLagTime",
-      null);
-    holdShelfExpiryPeriod = TimePeriod.from(
-      getObjectProperty(representation, "holdShelfExpiryPeriod"));
+  public ServicePoint(String id, String name,
+    String code, boolean pickupLocation, String discoveryDisplayName,
+    String description, Integer shelvingLagTime,
+    TimePeriod holdShelfExpiryPeriod) {
+
+    this.name = name;
+    this.id = id;
+    this.code = code;
+    this.pickupLocation = pickupLocation;
+    this.discoveryDisplayName = discoveryDisplayName;
+    this.description = description;
+    this.shelvingLagTime = shelvingLagTime;
+    this.holdShelfExpiryPeriod = holdShelfExpiryPeriod;
   }
 
   public boolean isPickupLocation() {
