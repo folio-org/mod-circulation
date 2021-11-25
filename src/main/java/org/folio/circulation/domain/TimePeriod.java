@@ -1,12 +1,7 @@
 package org.folio.circulation.domain;
 
-import static org.folio.circulation.support.json.JsonPropertyFetcher.getIntegerProperty;
-import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
-
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-
-import io.vertx.core.json.JsonObject;
 
 public class TimePeriod {
   private final int duration;
@@ -44,12 +39,5 @@ public class TimePeriod {
 
     return chronoUnit == ChronoUnit.DAYS || chronoUnit == ChronoUnit.WEEKS
       || chronoUnit == ChronoUnit.MONTHS;
-  }
-
-  public static TimePeriod from(JsonObject representation) {
-    final int duration = getIntegerProperty(representation, "duration", 0);
-    final String intervalId = getProperty(representation, "intervalId");
-
-    return new TimePeriod(duration, intervalId);
   }
 }

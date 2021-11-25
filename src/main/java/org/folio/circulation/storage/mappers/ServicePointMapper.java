@@ -6,12 +6,13 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getObjectPr
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 
 import org.folio.circulation.domain.ServicePoint;
-import org.folio.circulation.domain.TimePeriod;
 
 import io.vertx.core.json.JsonObject;
 
 public class ServicePointMapper {
   public ServicePoint toDomain(JsonObject representation) {
+    final var timePeriodMapper = new TimePeriodMapper();
+
     return new ServicePoint(getProperty(representation, "id"),
       getProperty(representation, "name"),
       getProperty(representation, "code"),
@@ -20,6 +21,7 @@ public class ServicePointMapper {
       getProperty(representation, "description"),
       getIntegerProperty(representation, "shelvingLagTime",
         null),
-      TimePeriod.from(getObjectProperty(representation, "holdShelfExpiryPeriod")));
+      timePeriodMapper.toDomain(
+        getObjectProperty(representation, "holdShelfExpiryPeriod")));
   }
 }
