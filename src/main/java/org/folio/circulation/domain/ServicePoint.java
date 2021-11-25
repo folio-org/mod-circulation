@@ -8,41 +8,57 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty
 import io.vertx.core.json.JsonObject;
 
 public class ServicePoint {
-  private final JsonObject representation;
+  private final String name;
+  private final String id;
+  private final String code;
+  private final String discoveryDisplayName;
+  private final String description;
+  private final Integer shelvingLagTime;
+  private final TimePeriod holdShelfExpiryPeriod;
+  private final boolean pickupLocation;
 
   public ServicePoint(JsonObject representation) {
-    this.representation = representation;
+    name = getProperty(representation, "name");
+    id = getProperty(representation, "id");
+    code = getProperty(representation, "code");
+    pickupLocation = getBooleanProperty(representation, "pickupLocation");
+    discoveryDisplayName = getProperty(representation, "discoveryDisplayName");
+    description = getProperty(representation, "description");
+    shelvingLagTime = getIntegerProperty(representation, "shelvingLagTime",
+      null);
+    holdShelfExpiryPeriod = TimePeriod.from(
+      getObjectProperty(representation, "holdShelfExpiryPeriod"));
   }
 
   public boolean isPickupLocation() {
-    return getBooleanProperty(representation, "pickupLocation");
+    return pickupLocation;
   }
 
   public String getName() {
-    return getProperty(representation, "name");
+    return name;
   }
 
   public String getId() {
-    return getProperty(representation, "id");
+    return id;
   }
 
   public String getCode() {
-    return getProperty(representation, "code");
+    return code;
   }
 
   public String getDiscoveryDisplayName() {
-    return getProperty(representation, "discoveryDisplayName");
+    return discoveryDisplayName;
   }
 
   public String getDescription() {
-    return getProperty(representation, "description");
+    return description;
   }
 
   public Integer getShelvingLagTime() {
-    return getIntegerProperty(representation, "shelvingLagTime", null);
+    return shelvingLagTime;
   }
 
   public TimePeriod getHoldShelfExpiryPeriod() {
-    return TimePeriod.from(getObjectProperty(representation, "holdShelfExpiryPeriod"));
+    return holdShelfExpiryPeriod;
   }
 }
