@@ -16,7 +16,6 @@ import static org.folio.circulation.domain.representations.ItemProperties.IN_TRA
 import static org.folio.circulation.domain.representations.ItemProperties.ITEM_COPY_NUMBER_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.PERMANENT_LOCATION_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.STATUS_PROPERTY;
-import static org.folio.circulation.domain.representations.ItemProperties.TITLE;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.json.JsonPropertyWriter.remove;
@@ -153,7 +152,7 @@ public class Item {
   }
 
   public String getTitle() {
-    return getProperty(instanceRepresentation, TITLE);
+    return instance.getTitle();
   }
 
   public Stream<Identifier> getIdentifiers() {

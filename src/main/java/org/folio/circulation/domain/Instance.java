@@ -5,6 +5,8 @@ import lombok.Value;
 @Value
 public class Instance {
   public static Instance unknown() {
-    return new Instance();
+    return new Instance(null);
   }
+
+  String title;
 }
