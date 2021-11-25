@@ -21,11 +21,11 @@ public class TlrSettingsConfigurationBuilder extends JsonBuilder implements Buil
   public JsonObject create() {
     JsonObject request = new JsonObject();
 
-    put(request, "titleLevelRequestsFeatureEnabled", titleLevelRequestsFeatureEnabled);
-    put(request, "createTitleLevelRequestsByDefault", createTitleLevelRequestsByDefault);
-    put(request, "confirmationPatronNoticeTemplateId", confirmationPatronNoticeTemplateId);
-    put(request, "cancellationPatronNoticeTemplateId", cancellationPatronNoticeTemplateId);
-    put(request, "expirationPatronNoticeTemplateId", expirationPatronNoticeTemplateId);
+    request.put("titleLevelRequestsFeatureEnabled", titleLevelRequestsFeatureEnabled);
+    request.put("createTitleLevelRequestsByDefault", createTitleLevelRequestsByDefault);
+    request.put("confirmationPatronNoticeTemplateId", confirmationPatronNoticeTemplateId);
+    request.put("cancellationPatronNoticeTemplateId", cancellationPatronNoticeTemplateId);
+    request.put("expirationPatronNoticeTemplateId", expirationPatronNoticeTemplateId);
 
     return request;
   }

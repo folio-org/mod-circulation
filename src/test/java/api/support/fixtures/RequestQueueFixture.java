@@ -43,7 +43,7 @@ public class RequestQueueFixture {
   }
 
   public JsonObject retrieveQueueForInstance(String instanceId) {
-    return restAssuredClient.get(InterfaceUrls.requestQueueForItemUrl(instanceId), 200,
+    return restAssuredClient.get(InterfaceUrls.requestQueueForInstanceUrl(instanceId), 200,
       "get-request-queue-for-instance").getJson();
   }
 }

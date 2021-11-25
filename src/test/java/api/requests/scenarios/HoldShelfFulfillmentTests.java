@@ -88,7 +88,7 @@ class HoldShelfFulfillmentTests extends APITests {
 
     final IndividualResource pickupServicePoint = servicePointsFixture.cd1();
 
-    List<ItemResource> items = createMultipleItemsForTheSameInstance(3);
+    List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(3);
     ItemResource smallAngryPlanet1 = items.get(0);
     ItemResource smallAngryPlanet2 = items.get(1);
     UUID instanceId = smallAngryPlanet1.getInstanceId();
@@ -225,7 +225,30 @@ class HoldShelfFulfillmentTests extends APITests {
   void canBeCheckedOutToPatronRequestingTitleWhenReadyForPickup() {
     configurationsFixture.enableTlrFeature();
 
-    // TODO: Should be completed in scope of CIRC-1297
+    final IndividualResource pickupServicePoint = servicePointsFixture.cd1();
+
+    ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource james = usersFixture.james();
+    IndividualResource jessica = usersFixture.jessica();
+
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
+
+    IndividualResource requestByJessica = requestsFixture.placeTitleLevelHoldShelfRequest(
+      smallAngryPlanet.getInstanceId(), jessica,
+      ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC),
+      pickupServicePoint.getId());
+
+    checkInFixture.checkInByBarcode(smallAngryPlanet,
+      ClockUtil.getZonedDateTime(), pickupServicePoint.getId());
+
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica);
+
+    Response request = requestsClient.getById(requestByJessica.getId());
+    assertThat(request.getJson(), isTitleLevel());
+
+    assertThat(request.getJson().getString("status"), is(CLOSED_FILLED));
+
+    assertThat(itemsClient.get(smallAngryPlanet), hasItemStatus(CHECKED_OUT));
   }
 
   @ParameterizedTest
@@ -271,7 +294,7 @@ class HoldShelfFulfillmentTests extends APITests {
     final IndividualResource pickupServicePoint = servicePointsFixture.cd1();
     final IndividualResource checkInServicePoint = servicePointsFixture.cd2();
 
-    List<ItemResource> items = createMultipleItemsForTheSameInstance(2);
+    List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
     ItemResource smallAngryPlanet1 = items.get(0);
     ItemResource smallAngryPlanet2 = items.get(1);
     UUID instanceId = smallAngryPlanet1.getInstanceId();
@@ -340,10 +363,33 @@ class HoldShelfFulfillmentTests extends APITests {
   }
 
   @Test
-  void canBeCheckedOutToRequestingPatronWhenInTransit() {
+  void canCheckoutItemForTitleLevelRequestWhenInTransit() {
     configurationsFixture.enableTlrFeature();
 
-    // TODO: Should be completed in scope of CIRC-1297
+    final IndividualResource pickupServicePoint = servicePointsFixture.cd1();
+    final IndividualResource checkInServicePoint = servicePointsFixture.cd2();
+
+    ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource james = usersFixture.james();
+    IndividualResource jessica = usersFixture.jessica();
+
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
+
+    IndividualResource requestByJessica = requestsFixture.placeTitleLevelHoldShelfRequest(
+      smallAngryPlanet.getInstanceId(), jessica,
+      ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC),
+      pickupServicePoint.getId());
+
+    checkInFixture.checkInByBarcode(smallAngryPlanet,
+      ClockUtil.getZonedDateTime(), checkInServicePoint.getId());
+
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica);
+
+    Response request = requestsClient.getById(requestByJessica.getId());
+
+    assertThat(request.getJson().getString("status"), is(CLOSED_FILLED));
+
+    assertThat(itemsClient.get(smallAngryPlanet), hasItemStatus(CHECKED_OUT));
   }
 
   @ParameterizedTest
@@ -390,7 +436,7 @@ class HoldShelfFulfillmentTests extends APITests {
     final IndividualResource pickupServicePoint = servicePointsFixture.cd1();
     final IndividualResource checkInServicePoint = servicePointsFixture.cd2();
 
-    List<ItemResource> items = createMultipleItemsForTheSameInstance(2);
+    List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
     ItemResource smallAngryPlanet1 = items.get(0);
     ItemResource smallAngryPlanet2 = items.get(1);
     UUID instanceId = smallAngryPlanet1.getInstanceId();
@@ -465,7 +511,31 @@ class HoldShelfFulfillmentTests extends APITests {
   void cannotCheckOutToOtherPatronWhenTlrRequestIsAwaitingPickup() {
     configurationsFixture.enableTlrFeature();
 
-    // TODO: Should be completed in scope of CIRC-1297
+    ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource james = usersFixture.james();
+    IndividualResource jessica = usersFixture.jessica();
+    IndividualResource rebecca = usersFixture.rebecca();
+
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
+
+    IndividualResource requestByJessica = requestsFixture.placeTitleLevelHoldShelfRequest(
+      smallAngryPlanet.getInstanceId(), jessica, ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC));
+
+    checkInFixture.checkInByBarcode(smallAngryPlanet);
+
+    Response response = checkOutFixture.attemptCheckOutByBarcode(smallAngryPlanet, rebecca);
+
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("The Long Way to a Small, Angry Planet (Barcode: 036000291452) " +
+        "cannot be checked out to user Stuart, Rebecca " +
+        "because it has been requested by another patron"),
+      hasUserBarcodeParameter(rebecca))));
+
+    Response request = requestsClient.getById(requestByJessica.getId());
+
+    assertThat(request.getJson().getString("status"), is(OPEN_AWAITING_PICKUP));
+
+    assertThat(itemsClient.get(smallAngryPlanet), hasItemStatus(AWAITING_PICKUP));
   }
 
   @ParameterizedTest
@@ -512,19 +582,38 @@ class HoldShelfFulfillmentTests extends APITests {
   @Test
   void cannotCheckOutToOtherPatronWhenTlrRequestIsInTransitForPickup() {
     configurationsFixture.enableTlrFeature();
-    // TODO: Should be completed in scope of CIRC-1297
-  }
 
-  private List<ItemResource> createMultipleItemsForTheSameInstance(int size) {
-    UUID instanceId = UUID.randomUUID();
-    InstanceBuilder sapInstanceBuilder = itemsFixture.instanceBasedUponSmallAngryPlanet()
-      .withId(instanceId);
+    final IndividualResource requestServicePoint = servicePointsFixture.cd1();
+    final IndividualResource checkInServicePoint = servicePointsFixture.cd2();
 
-    return IntStream.range(0, size)
-      .mapToObj(num -> itemsFixture.basedUponSmallAngryPlanet(
-        holdingsBuilder -> holdingsBuilder.forInstance(instanceId),
-        instanceBuilder -> sapInstanceBuilder,
-        itemBuilder -> itemBuilder.withBarcode("0000" + num)))
-      .collect(Collectors.toList());
+    ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource james = usersFixture.james();
+    IndividualResource jessica = usersFixture.jessica();
+    IndividualResource rebecca = usersFixture.rebecca();
+
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
+
+    IndividualResource requestByJessica = requestsFixture.placeTitleLevelHoldShelfRequest(
+      smallAngryPlanet.getInstanceId(), jessica, ClockUtil.getZonedDateTime(),
+      requestServicePoint.getId());
+
+    checkInFixture.checkInByBarcode(
+      new CheckInByBarcodeRequestBuilder()
+        .forItem(smallAngryPlanet)
+        .at(checkInServicePoint.getId()));
+
+    Response response = checkOutFixture.attemptCheckOutByBarcode(smallAngryPlanet, rebecca);
+
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("The Long Way to a Small, Angry Planet (Barcode: 036000291452) " +
+        "cannot be checked out to user Stuart, Rebecca " +
+        "because it has been requested by another patron"),
+      hasUserBarcodeParameter(rebecca))));
+
+    Response request = requestsClient.getById(requestByJessica.getId());
+
+    assertThat(request.getJson().getString("status"), is(OPEN_IN_TRANSIT));
+
+    assertThat(itemsClient.get(smallAngryPlanet), hasItemStatus(IN_TRANSIT));
   }
 }

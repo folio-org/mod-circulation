@@ -25,8 +25,8 @@
   <properties>
     <antlr4.version>4.7.2</antlr4.version>
     <drools.version>7.53.0.Final</drools.version>
-    <rmb.version>31.1.0</rmb.version>
-    <vertx.version>4.1.1</vertx.version>
+    <rmb.version>33.1.1</rmb.version>
+    <vertx.version>4.2.1</vertx.version>
     <log4j2.version>2.13.3</log4j2.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -145,7 +145,7 @@
     <dependency>
       <groupId>org.folio</groupId>
       <artifactId>mod-pubsub-client</artifactId>
-      <version>2.0.7</version>
+      <version>2.4.0</version>
       <exclusions>
         <exclusion>
           <groupId>org.hamcrest</groupId>

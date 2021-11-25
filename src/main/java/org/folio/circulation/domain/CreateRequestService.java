@@ -53,7 +53,7 @@ public class CreateRequestService {
   }
 
   public CompletableFuture<Result<RequestAndRelatedRecords>> createRequest(
-      RequestAndRelatedRecords requestAndRelatedRecords) {
+    RequestAndRelatedRecords requestAndRelatedRecords) {
 
     final var requestRepository = repositories.getRequestRepository();
     final var configurationRepository = repositories.getConfigurationRepository();

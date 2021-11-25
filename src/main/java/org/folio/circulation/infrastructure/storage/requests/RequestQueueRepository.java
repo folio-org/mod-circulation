@@ -6,6 +6,7 @@ import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.http.client.PageLimit.oneThousand;
 import static org.folio.circulation.support.results.Result.succeeded;
+import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
@@ -18,6 +19,7 @@ import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.RequestStatus;
+import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.http.client.CqlQuery;
@@ -38,11 +40,17 @@ public class RequestQueueRepository {
     return new RequestQueueRepository(RequestRepository.using(clients));
   }
 
-  public CompletableFuture<Result<LoanAndRelatedRecords>> get(
-    LoanAndRelatedRecords loanAndRelatedRecords) {
+  public CompletableFuture<Result<LoanAndRelatedRecords>> get(LoanAndRelatedRecords records) {
+    return getQueue(records)
+      .thenApply(mapResult(records::withRequestQueue));
+  }
 
-    return getByItemId(loanAndRelatedRecords.getLoan().getItemId())
-      .thenApply(result -> result.map(loanAndRelatedRecords::withRequestQueue));
+  private CompletableFuture<Result<RequestQueue>> getQueue(LoanAndRelatedRecords records) {
+    TlrSettingsConfiguration tlrSettings = records.getTlrSettings();
+
+    return tlrSettings != null && tlrSettings.isTitleLevelRequestsFeatureEnabled()
+      ? getByInstanceId(records.getItem().getInstanceId())
+      : getByItemId(records.getItem().getItemId());
   }
 
   public CompletableFuture<Result<RenewalContext>> get(RenewalContext renewalContext) {

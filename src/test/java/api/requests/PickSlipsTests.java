@@ -12,7 +12,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.time.LocalDate;
-import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
@@ -225,10 +224,11 @@ class PickSlipsTests extends APITests {
 
     assertThat(requestContext.getString("deliveryAddressType"),
       is(addressTypeResource.getJson().getString("addressType")));
-    assertThat(requestContext.getString("requestExpirationDate"), isEquivalentTo(ZonedDateTime.of(
-      requestExpiration.atTime(23, 59, 59), ZoneOffset.UTC)));
+    assertThat(requestContext.getString("requestExpirationDate"),
+      isEquivalentTo(requestExpiration.atTime(23, 59, 59).atZone(UTC)));
     assertThat(requestContext.getString("holdShelfExpirationDate"),
-      isEquivalentTo(toZonedStartOfDay(holdShelfExpiration)));
+      isEquivalentTo(ZonedDateTime.of(
+        holdShelfExpiration.atStartOfDay(), ZoneOffset.UTC)));
     assertThat(requestContext.getString("requestID"),
       UUIDMatcher.is(requestResource.getId()));
     assertThat(requestContext.getString("servicePointPickup"),
@@ -455,11 +455,5 @@ class PickSlipsTests extends APITests {
 
   private String getName(JsonObject jsonObject) {
     return jsonObject.getString("name");
-  }
-
-  private ZonedDateTime toZonedStartOfDay(LocalDate date) {
-    final var startOfDay = date.atStartOfDay();
-
-    return ZonedDateTime.of(startOfDay, ZoneId.systemDefault().normalized());
   }
 }

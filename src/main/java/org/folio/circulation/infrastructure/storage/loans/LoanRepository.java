@@ -99,7 +99,8 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> updateLoan(
     LoanAndRelatedRecords loanAndRelatedRecords) {
-
+    Loan loan = loanAndRelatedRecords.getLoan();
+    log.info("Loan " + loan.getId() + " prior to update:  " + loan.asJson().toString());
     return updateLoan(loanAndRelatedRecords.getLoan())
       .thenApply(mapResult(loanAndRelatedRecords::withLoan));
   }

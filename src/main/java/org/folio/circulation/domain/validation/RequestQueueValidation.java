@@ -43,7 +43,7 @@ public class RequestQueueValidation {
     return result.failWhen(
       context -> succeeded(isQueueInconsistent(context)),
       context -> singleValidationError(
-        "There is inconsistency between provided reordered queue and item queue.",
+        "There is inconsistency between provided reordered queue and existing queue.",
         null, null)
     );
   }
@@ -177,6 +177,7 @@ public class RequestQueueValidation {
       r -> singleValidationError(onFailureMessage, "newPosition", null)
     );
   }
+
   private static Result<ReorderRequestContext> validateRequestsAtTopPositions(
     Result<ReorderRequestContext> result,
     Predicate<Request> requestTypePredicate,
@@ -191,8 +192,8 @@ public class RequestQueueValidation {
           .sorted()
           .collect(Collectors.toList());
 
-        return succeeded(newPositions.size() == 0
-          || IntStream.range(0, newPositions.size()).allMatch(i -> newPositions.get(i) == i + 1));
+        return succeeded(IntStream.range(0, newPositions.size())
+          .anyMatch(i -> newPositions.get(i) != i + 1));
       },
       r -> singleValidationError(onFailureMessage, "newPosition", null)
     );
