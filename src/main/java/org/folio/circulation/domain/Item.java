@@ -34,7 +34,6 @@ import lombok.NonNull;
 
 public class Item {
   private final JsonObject itemRepresentation;
-  private final JsonObject instanceRepresentation;
   private final Location location;
   private final JsonObject materialTypeRepresentation;
   private final ServicePoint primaryServicePoint;
@@ -50,7 +49,6 @@ public class Item {
   private final Instance instance;
 
   public Item(JsonObject itemRepresentation,
-    JsonObject instanceRepresentation,
     Location location,
     JsonObject materialTypeRepresentation,
     ServicePoint primaryServicePoint,
@@ -64,7 +62,6 @@ public class Item {
     Instance instance) {
 
     this.itemRepresentation = itemRepresentation;
-    this.instanceRepresentation = instanceRepresentation;
     this.location = location;
     this.materialTypeRepresentation = materialTypeRepresentation;
     this.primaryServicePoint = primaryServicePoint;
@@ -80,7 +77,6 @@ public class Item {
 
   public static Item from(JsonObject representation) {
     return new Item(representation,
-      null,
       null,
       null,
       null,
@@ -380,7 +376,6 @@ public class Item {
   public Item withLocation(Location newLocation) {
     return new Item(
       this.itemRepresentation,
-      this.instanceRepresentation,
       newLocation,
       this.materialTypeRepresentation,
       this.primaryServicePoint,
@@ -395,7 +390,6 @@ public class Item {
   public Item withMaterialType(JsonObject newMaterialType) {
     return new Item(
       this.itemRepresentation,
-      this.instanceRepresentation,
       this.location,
       newMaterialType,
       this.primaryServicePoint,
@@ -410,7 +404,6 @@ public class Item {
   public Item withHoldings(@NonNull Holdings holdings) {
     return new Item(
       this.itemRepresentation,
-      this.instanceRepresentation,
       this.location,
       this.materialTypeRepresentation,
       this.primaryServicePoint,
@@ -428,7 +421,6 @@ public class Item {
 
     return new Item(
       this.itemRepresentation,
-      newInstanceRepresentation,
       this.location,
       this.materialTypeRepresentation,
       this.primaryServicePoint,
@@ -444,7 +436,6 @@ public class Item {
   public Item withPrimaryServicePoint(ServicePoint servicePoint) {
     return new Item(
       this.itemRepresentation,
-      this.instanceRepresentation,
       this.location,
       this.materialTypeRepresentation,
       servicePoint,
@@ -459,7 +450,6 @@ public class Item {
   public Item withLoanType(JsonObject newLoanTypeRepresentation) {
     return new Item(
       this.itemRepresentation,
-      this.instanceRepresentation,
       this.location,
       this.materialTypeRepresentation,
       this.primaryServicePoint,
@@ -474,7 +464,6 @@ public class Item {
   public Item withLastCheckIn(LastCheckIn lastCheckIn) {
     return new Item(
       this.itemRepresentation,
-      this.instanceRepresentation,
       this.location,
       this.materialTypeRepresentation,
       this.primaryServicePoint,
@@ -489,7 +478,6 @@ public class Item {
   public Item withPermanentLocation(Location permanentLocation) {
     return new Item(
       this.itemRepresentation,
-      this.instanceRepresentation,
       this.location,
       this.materialTypeRepresentation,
       this.primaryServicePoint,
