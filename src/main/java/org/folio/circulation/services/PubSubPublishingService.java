@@ -58,16 +58,16 @@ public class PubSubPublishingService {
             event.getId(), event.getEventType(), event.getEventPayload());
           publishResult.complete(true);
         } else {
-          logger.error("Failed to publish event. ID: {}, type: {}, payload: {}", throwable,
-            event.getId(), event.getEventType(), event.getEventPayload());
-
+          logger.error("Failed to publish event. ID: {}, type: {}, payload: {}, cause: {}",
+            event.getId(), event.getEventType(), event.getEventPayload(), throwable);
           if (throwable == null) {
             publishResult.complete(false);
           } else {
             publishResult.completeExceptionally(throwable);
           }
         }
-      }));
+      })
+    );
 
     return publishResult;
   }
