@@ -214,8 +214,8 @@ public class Item {
     return permanentLocation;
   }
 
-  public JsonObject getMaterialType() {
-    return materialTypeRepresentation;
+  public MaterialType getMaterialType() {
+    return materialType;
   }
 
   public String getMaterialTypeName() {
@@ -287,7 +287,6 @@ public class Item {
   public String getLoanTypeName() {
     return getProperty(loanTypeRepresentation, "name");
   }
-
 
   public Item changeStatus(ItemStatus newStatus) {
     if (isNotSameStatus(newStatus)) {
