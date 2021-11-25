@@ -380,13 +380,13 @@ public class RequestsAPICreationTests extends APITests {
     Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
       .page()
       .withItemId(item.getId())
-      .withRequestLevel("Fake request level")
+      .titleRequestLevel()
       .withInstanceId(instanceId)
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(patronId));
 
     assertThat(postResponse, hasStatus(HTTP_BAD_REQUEST));
-    assertThat(postResponse.getBody(), is("requestLevel must be one of the following: \"Item\", \"Title\""));
+    assertThat(postResponse.getBody(), is("requestLevel must be one of the following: \"Item\""));
   }
 
   @Test

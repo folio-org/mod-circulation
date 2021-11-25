@@ -32,7 +32,6 @@ import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.RequestLevel;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.User;
-import org.folio.circulation.domain.representations.RequestProperties;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.ServicePointPickupLocationValidator;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
@@ -156,9 +155,9 @@ class RequestFromRepresentationService {
         Arrays.stream(RequestLevel.values())
           .map(existingLevel -> StringUtils.wrap(existingLevel.value(), '"'))
           .collect(Collectors.joining(", "))));
-    } else {
-      return of(() -> representation);
     }
+
+    return succeeded(representation);
   }
 
   private Result<JsonObject> refuseWhenNoInstanceId(JsonObject representation) {
