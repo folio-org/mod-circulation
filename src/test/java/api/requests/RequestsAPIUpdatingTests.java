@@ -116,6 +116,7 @@ class RequestsAPIUpdatingTests extends APITests {
     assertThat(representation.getString("requestType"), is("Hold"));
     assertThat(representation.getString("requestDate"), isEquivalentTo(requestDate));
     assertThat(representation.getString("itemId"), is(temeraire.getId()));
+    assertThat(representation.getString("holdingsRecordId"), is(temeraire.getHoldingsRecordId()));
     assertThat(representation.getString("instanceId"), is(temeraire.getInstanceId()));
     assertThat(representation.getString("requestLevel"), is("Item"));
     assertThat(representation.getString("requesterId"), is(charlotte.getId()));

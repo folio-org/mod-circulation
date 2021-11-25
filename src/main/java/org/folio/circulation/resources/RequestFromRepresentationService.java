@@ -2,7 +2,14 @@ package org.folio.circulation.resources;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static org.folio.circulation.domain.RequestLevel.ITEM;
+import static org.folio.circulation.domain.representations.RequestProperties.HOLDINGS_RECORD_ID;
+import static org.folio.circulation.domain.representations.RequestProperties.INSTANCE_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.ITEM_ID;
+import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_LEVEL;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_HOLDINGS_RECORD_ID;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_INSTANCE_ID;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_ITEM_ID;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_PICKUP_SERVICE_POINT;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_PROXY_RELATIONSHIP;
@@ -73,8 +80,12 @@ class RequestFromRepresentationService {
     return completedFuture(succeeded(representation))
       .thenApply(r -> r.next(this::validateStatus))
       .thenApply(r -> r.next(this::validateRequestLevel))
+      .thenApply(r -> r.next(this::refuseWhenNoInstanceId)
+        .mapFailure(err -> errorHandler.handleValidationError(err, INVALID_INSTANCE_ID, r)))
       .thenApply(r -> r.next(this::refuseWhenNoItemId)
         .mapFailure(err -> errorHandler.handleValidationError(err, INVALID_ITEM_ID, r)))
+      .thenApply(r -> r.next(this::refuseWhenNoHoldingsRecordId)
+        .mapFailure(err -> errorHandler.handleValidationError(err, INVALID_HOLDINGS_RECORD_ID, r)))
       .thenApply(r -> r.map(this::removeRelatedRecordInformation))
       .thenApply(r -> r.map(this::removeProcessingParameters))
       .thenApply(r -> r.map(Request::from))
@@ -136,7 +147,7 @@ class RequestFromRepresentationService {
   }
 
   private Result<JsonObject> validateRequestLevel(JsonObject representation) {
-    String requestLevel = representation.getString("requestLevel");
+    String requestLevel = representation.getString(REQUEST_LEVEL);
     if (Arrays.stream(RequestLevel.values()).noneMatch(
       existingLevel -> existingLevel.value().equals(requestLevel))) {
 
@@ -149,11 +160,36 @@ class RequestFromRepresentationService {
     return succeeded(representation);
   }
 
+  private Result<JsonObject> refuseWhenNoInstanceId(JsonObject representation) {
+    String instanceId = getProperty(representation, INSTANCE_ID);
+
+    if (isBlank(instanceId)) {
+      return failedValidation("Cannot create a request with no instance ID", "instanceId",
+        instanceId);
+    }
+    else {
+      return of(() -> representation);
+    }
+  }
+
   private Result<JsonObject> refuseWhenNoItemId(JsonObject representation) {
+    String requestLevel = getProperty(representation, REQUEST_LEVEL);
     String itemId = getProperty(representation, ITEM_ID);
 
-    if (isBlank(itemId)) {
-      return failedValidation("Cannot create a request with no item ID", "itemId", itemId);
+    if (ITEM.value().equals(requestLevel) && isBlank(itemId)) {
+      return failedValidation("Cannot create an item level request with no item ID", "itemId", itemId);
+    }
+    else {
+      return of(() -> representation);
+    }
+  }
+
+  private Result<JsonObject> refuseWhenNoHoldingsRecordId(JsonObject representation) {
+    String holdingsRecordId = getProperty(representation, HOLDINGS_RECORD_ID);
+
+    if (isNotBlank(getProperty(representation, ITEM_ID)) && isBlank(holdingsRecordId)) {
+      return failedValidation("Cannot create a request with item ID but no holdings record ID",
+        "holdingsRecordId", holdingsRecordId);
     }
     else {
       return of(() -> representation);

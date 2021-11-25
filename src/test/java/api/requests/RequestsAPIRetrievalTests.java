@@ -91,7 +91,6 @@ class RequestsAPIRetrievalTests extends APITests {
         .itemRequestLevel()
         .withRequestDate(requestDate)
         .forItem(smallAngryPlanet)
-        .withInstanceId(instanceId)
         .by(sponsor)
         .proxiedBy(proxy)
         .fulfilToHoldShelf()
@@ -113,7 +112,8 @@ class RequestsAPIRetrievalTests extends APITests {
     assertThat(representation.getString("requestLevel"), is("Item"));
     assertThat(representation.getString("requestDate"), isEquivalentTo(requestDate));
     assertThat(representation.getString("itemId"), is(smallAngryPlanet.getId()));
-    assertThat(representation.getString("instanceId"), is(instanceId));
+    assertThat(representation.getString("holdingsRecordId"), is(smallAngryPlanet.getHoldingsRecordId()));
+    assertThat(representation.getString("instanceId"), is(smallAngryPlanet.getInstanceId()));
     assertThat(representation.getString("requesterId"), is(sponsor.getId()));
     assertThat(representation.getString("fulfilmentPreference"), is("Hold Shelf"));
     assertThat(representation.getString("requestExpirationDate"), is("2017-07-30T23:59:59.000Z"));
@@ -715,6 +715,8 @@ class RequestsAPIRetrievalTests extends APITests {
     hasProperty("requestDate", request, "request");
     hasProperty("requesterId", request, "request");
     hasProperty("itemId", request, "request");
+    hasProperty("instanceId", request, "request");
+    hasProperty("holdingsRecordId", request, "request");
     hasProperty("fulfilmentPreference", request, "request");
     hasProperty("item", request, "request");
     hasProperty("requester", request, "request");
