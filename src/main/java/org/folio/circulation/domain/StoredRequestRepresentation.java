@@ -35,7 +35,7 @@ public class StoredRequestRepresentation {
 
     write(itemSummary, "title", item.getTitle());
     write(itemSummary, "barcode", item.getBarcode());
-    write(itemSummary, "identifiers", item.getIdentifiers());
+    write(itemSummary, "identifiers", item.getIdentifiersJson());
 
     request.put("item", itemSummary);
   }

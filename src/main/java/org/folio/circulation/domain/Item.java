@@ -127,7 +127,7 @@ public class Item {
     return getProperty(instanceRepresentation, TITLE);
   }
 
-  public JsonArray getIdentifiers() {
+  public JsonArray getIdentifiersJson() {
     return getArrayProperty(instanceRepresentation, IDENTIFIERS);
   }
 
