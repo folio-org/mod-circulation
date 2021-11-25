@@ -28,11 +28,12 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.folio.circulation.domain.representations.ItemProperties;
-import org.folio.circulation.storage.mappers.MaterialTypeMapper;
 
 import io.vertx.core.json.JsonObject;
+import lombok.AllArgsConstructor;
 import lombok.NonNull;
 
+@AllArgsConstructor
 public class Item {
   private final JsonObject itemRepresentation;
   private final Location location;
@@ -48,33 +49,6 @@ public class Item {
   @NonNull private final Holdings holdings;
   @NonNull private final Instance instance;
   @NonNull private final MaterialType materialType;
-
-  public Item(JsonObject itemRepresentation,
-    Location location,
-    ServicePoint primaryServicePoint,
-    JsonObject loanTypeRepresentation,
-    LastCheckIn lastCheckIn,
-    CallNumberComponents callNumberComponents,
-    Location permanentLocation,
-    ServicePoint inTransitDestinationServicePoint,
-    boolean changed,
-    @NonNull Holdings holdings,
-    @NonNull Instance instance,
-    @NonNull MaterialType materialType) {
-
-    this.itemRepresentation = itemRepresentation;
-    this.location = location;
-    this.primaryServicePoint = primaryServicePoint;
-    this.loanTypeRepresentation = loanTypeRepresentation;
-    this.lastCheckIn = lastCheckIn;
-    this.callNumberComponents = callNumberComponents;
-    this.permanentLocation = permanentLocation;
-    this.inTransitDestinationServicePoint = inTransitDestinationServicePoint;
-    this.changed = changed;
-    this.holdings = holdings;
-    this.instance = instance;
-    this.materialType = materialType;
-  }
 
   public static Item from(JsonObject representation) {
     return new Item(representation,
