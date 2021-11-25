@@ -9,6 +9,7 @@ import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
+import org.folio.circulation.storage.mappers.ServicePointMapper;
 import org.junit.jupiter.api.Test;
 
 import api.support.builders.Address;
@@ -79,7 +80,7 @@ class RequestRepresentationTests {
       .withId(SERVICE_POINT_ID)
       .withPickupLocation(TRUE);
 
-    final ServicePoint servicePoint = new ServicePoint(servicePointBuilder.create());
+    final var servicePoint = new ServicePointMapper().toDomain(servicePointBuilder.create());
 
     JsonObject requestJsonObject = new RequestBuilder()
       .recall()

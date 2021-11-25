@@ -45,8 +45,4 @@ public class ServicePoint {
   public TimePeriod getHoldShelfExpiryPeriod() {
     return TimePeriod.from(getObjectProperty(representation, "holdShelfExpiryPeriod"));
   }
-
-  public static ServicePoint from(JsonObject representation) {
-    return new ServicePoint(representation);
-  }
 }
