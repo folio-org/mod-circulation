@@ -1,6 +1,7 @@
 package org.folio.circulation.resources;
 
 import static java.util.concurrent.CompletableFuture.runAsync;
+import static org.folio.circulation.domain.RequestLevel.TITLE;
 import static org.folio.circulation.domain.notice.TemplateContextUtil.createRequestNoticeContext;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.ofAsync;
@@ -85,20 +86,28 @@ public class RequestNoticeSender {
     User requester = request.getRequester();
     NoticeEventType eventType =
       requestTypeToEventMap.getOrDefault(request.getRequestType(), NoticeEventType.UNKNOWN);
-    PatronNoticeEvent requestCreatedEvent = new PatronNoticeEventBuilder()
-      .withItem(item)
-      .withUser(requester)
-      .withEventType(eventType)
-      .withNoticeContext(createRequestNoticeContext(request))
-      .withNoticeLogContext(NoticeLogContext.from(request))
-      .build();
-    patronNoticeService.acceptNoticeEvent(requestCreatedEvent);
+    PatronNoticeEventBuilder patronNoticeEventBuilder = createPatronNoticeEventBuilder(request,
+      requester, eventType);
 
-    Loan loan = request.getLoan();
-    if (request.getRequestType() == RequestType.RECALL && loan != null) {
-      sendNoticeOnItemRecalledEvent(loan);
-      sendLogEvent(loan);
+    if (request.getRequestLevel() == TITLE
+      && request.getTlrSettingsConfiguration().isTitleLevelRequestsFeatureEnabled()
+      && request.getTlrSettingsConfiguration().getConfirmationPatronNoticeTemplateId() != null) {
+
+      PatronNoticeEvent requestCreatedEvent = patronNoticeEventBuilder.build();
+      patronNoticeService.applyTlrConfirmationNotice(request.getTlrSettingsConfiguration(),
+        requestCreatedEvent);
+    } else {
+      PatronNoticeEvent requestCreatedEvent = patronNoticeEventBuilder
+        .withItem(item)
+        .build();
+      patronNoticeService.acceptNoticeEvent(requestCreatedEvent);
+      Loan loan = request.getLoan();
+      if (request.getRequestType() == RequestType.RECALL && loan != null) {
+        sendNoticeOnItemRecalledEvent(loan);
+        sendLogEvent(loan);
+      }
     }
+
     return Result.succeeded(relatedRecords);
   }
 
@@ -133,20 +142,34 @@ public class RequestNoticeSender {
 
   private Result<Void> sendNoticeOnRequestCancelled(RequestAndRelatedRecords relatedRecords) {
     Request request = relatedRecords.getRequest();
-    Item item = request.getItem();
-    User requester = request.getRequester();
+    PatronNoticeEventBuilder patronNoticeEventBuilder = createPatronNoticeEventBuilder(
+      request, request.getRequester(), NoticeEventType.REQUEST_CANCELLATION);
 
-    PatronNoticeEvent requestCancelledEvent = new PatronNoticeEventBuilder()
-      .withItem(item)
-      .withUser(requester)
-      .withEventType(NoticeEventType.REQUEST_CANCELLATION)
-      .withNoticeContext(createRequestNoticeContext(request))
-      .withNoticeLogContext(NoticeLogContext.from(request))
-      .withNoticeLogContext(NoticeLogContext.from(request))
-      .build();
-    patronNoticeService.acceptNoticeEvent(requestCancelledEvent);
+    if (request.getRequestLevel() == TITLE
+      && request.getTlrSettingsConfiguration().isTitleLevelRequestsFeatureEnabled()
+      && request.getTlrSettingsConfiguration().getCancellationPatronNoticeTemplateId() != null) {
+
+      PatronNoticeEvent requestCancelledEvent = patronNoticeEventBuilder.build();
+      patronNoticeService.applyTlrCancellationNotice(request.getTlrSettingsConfiguration(),
+        requestCancelledEvent);
+    } else {
+      PatronNoticeEvent requestCancelledEvent = patronNoticeEventBuilder
+        .withItem(request.getItem())
+        .build();
+      patronNoticeService.acceptNoticeEvent(requestCancelledEvent);
+    }
 
     return Result.succeeded(null);
+  }
+
+  private PatronNoticeEventBuilder createPatronNoticeEventBuilder(Request request, User requester,
+    NoticeEventType eventType) {
+
+    return new PatronNoticeEventBuilder()
+      .withUser(requester)
+      .withEventType(eventType)
+      .withNoticeContext(createRequestNoticeContext(request))
+      .withNoticeLogContext(NoticeLogContext.from(request));
   }
 
   private Result<Void> sendNoticeOnItemRecalledEvent(Loan loan) {

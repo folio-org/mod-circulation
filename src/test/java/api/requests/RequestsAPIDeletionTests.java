@@ -1,17 +1,24 @@
 package api.requests;
 
+import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.UUIDMatcher.is;
+import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfSentNotices;
 import static org.folio.HttpStatus.HTTP_NOT_FOUND;
+import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+
+import java.util.UUID;
 
 import org.folio.circulation.domain.MultipleRecords;
 import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
+import api.support.TlrFeatureStatus;
 import api.support.builders.RequestBuilder;
+import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import api.support.http.UserResource;
 import io.vertx.core.json.JsonObject;
@@ -65,6 +72,40 @@ class RequestsAPIDeletionTests extends APITests {
     assertThat(allRequests.totalRecords(), is(0));
   }
 
+  @Test
+  void titleLevelRequestCancellationNoticeShouldBeSentWithEnabledTlr() {
+    UUID templateId = UUID.randomUUID();
+    templateFixture.createDummyNoticeTemplate(templateId);
+    reconfigureTlrFeature(TlrFeatureStatus.ENABLED, null, templateId, null);
+
+    IndividualResource request = requestsFixture.place(buildTitleLevelRequest());
+    verifyNumberOfSentNotices(0);
+    requestsFixture.cancelRequest(request);
+    verifyNumberOfSentNotices(1);
+  }
+
+  @Test
+  void titleLevelRequestCancellationNoticeShouldNotBeSentWithDisabledTlr() {
+    UUID templateId = UUID.randomUUID();
+    templateFixture.createDummyNoticeTemplate(templateId);
+    reconfigureTlrFeature(TlrFeatureStatus.DISABLED, null, templateId, null);
+
+    IndividualResource request = requestsFixture.place(buildTitleLevelRequest());
+    verifyNumberOfSentNotices(0);
+    requestsFixture.cancelRequest(request);
+    verifyNumberOfSentNotices(1);
+  }
+
+  @Test
+  void titleLevelRequestCancellationNoticeShouldNotBeSentWithoutConfiguredTemplate() {
+    reconfigureTlrFeature(TlrFeatureStatus.ENABLED, null, null, null);
+
+    IndividualResource request = requestsFixture.place(buildTitleLevelRequest());
+    verifyNumberOfSentNotices(0);
+    requestsFixture.cancelRequest(request);
+    verifyNumberOfSentNotices(0);
+  }
+
   private RequestBuilder requestFor(ItemResource item) {
     return requestFor(item, usersFixture.rebecca());
   }
@@ -83,5 +124,16 @@ class RequestsAPIDeletionTests extends APITests {
 
   private JsonObject second(MultipleRecords<JsonObject> records) {
     return records.getRecords().stream().skip(1).findFirst().orElse(null);
+  }
+
+  private RequestBuilder buildTitleLevelRequest() {
+    return new RequestBuilder()
+      .page()
+      .titleRequestLevel()
+      .withInstanceId(itemsFixture.basedUponSmallAngryPlanet().getInstanceId())
+      .withRequesterId(usersFixture.charlotte().getId())
+      .withRequestDate(getZonedDateTime())
+      .withStatus(OPEN_NOT_YET_FILLED)
+      .withPickupServicePoint(servicePointsFixture.cd1());
   }
 }

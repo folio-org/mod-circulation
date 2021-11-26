@@ -11,8 +11,10 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
+import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
 import org.folio.circulation.domain.notice.combiner.NoticeContextCombiner;
 import org.folio.circulation.domain.representations.logs.NoticeLogContext;
 import org.folio.circulation.infrastructure.storage.notices.PatronNoticePolicyRepository;
@@ -91,6 +93,50 @@ public class ImmediatePatronNoticeService extends PatronNoticeService {
       .map(this::updateNoticeLogContext)
       .map(this::sendNotice)
       .orElseGet(() -> ofAsync(() -> null));
+  }
+
+  public CompletableFuture<Result<Void>> applyTlrConfirmationNotice(
+    TlrSettingsConfiguration tlrSettings, PatronNoticeEvent patronNoticeEvent) {
+
+    UUID confirmationTemplateId = tlrSettings.getConfirmationPatronNoticeTemplateId();
+    if (confirmationTemplateId != null) {
+      NoticeLogContext noticeLogContext = new NoticeLogContext()
+        .withTriggeringEvent(patronNoticeEvent.getEventType().getRepresentation())
+        .withTemplateId(confirmationTemplateId.toString());
+      NoticeConfiguration noticeConfiguration = buildTlrNoticeConfiguration(patronNoticeEvent,
+        confirmationTemplateId);
+      PatronNotice patronNotice = new PatronNotice(patronNoticeEvent.getUser().getId(),
+        patronNoticeEvent.getNoticeContext(), noticeConfiguration);
+
+      return sendNotice(patronNotice, noticeLogContext);
+    }
+
+    return ofAsync(() -> null);
+  }
+
+  public CompletableFuture<Result<Void>> applyTlrCancellationNotice(
+    TlrSettingsConfiguration tlrSettings, PatronNoticeEvent patronNoticeEvent) {
+
+    UUID cancellationTemplateId = tlrSettings.getCancellationPatronNoticeTemplateId();
+    if (cancellationTemplateId != null) {
+      NoticeLogContext noticeLogContext = new NoticeLogContext()
+        .withTriggeringEvent(patronNoticeEvent.getEventType().getRepresentation())
+        .withTemplateId(cancellationTemplateId.toString());
+      NoticeConfiguration noticeConfiguration = buildTlrNoticeConfiguration(patronNoticeEvent,
+        cancellationTemplateId);
+      PatronNotice patronNotice = new PatronNotice(patronNoticeEvent.getUser().getId(),
+        patronNoticeEvent.getNoticeContext(), noticeConfiguration);
+
+      return sendNotice(patronNotice, noticeLogContext);
+    }
+
+    return ofAsync(() -> null);
+  }
+
+  private NoticeConfiguration buildTlrNoticeConfiguration(PatronNoticeEvent patronNoticeEvent,
+    UUID cancellationTemplateId) {
+    return new NoticeConfiguration(cancellationTemplateId.toString(), NoticeFormat.EMAIL,
+      patronNoticeEvent.getEventType(), null, null, false, null, false);
   }
 
   private Optional<NoticeConfiguration> findMatchingNoticeConfiguration(EventGroupContext context) {
