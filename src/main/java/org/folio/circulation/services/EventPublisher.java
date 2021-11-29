@@ -2,6 +2,7 @@ package org.folio.circulation.services;
 
 import static java.util.Optional.ofNullable;
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static java.util.concurrent.CompletableFuture.failedFuture;
 import static java.util.concurrent.CompletableFuture.runAsync;
 import static org.folio.circulation.domain.EventType.ITEM_AGED_TO_LOST;
 import static org.folio.circulation.domain.EventType.ITEM_CHECKED_IN;
@@ -24,6 +25,7 @@ import static org.folio.circulation.domain.representations.logs.LogEventType.NOT
 import static org.folio.circulation.domain.representations.logs.RequestUpdateLogEventMapper.mapToRequestLogEventJson;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
+import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
@@ -52,6 +54,8 @@ import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.HttpFailure;
+import org.folio.circulation.support.ValidationErrorFailure;
+import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.json.JsonObject;
@@ -101,7 +105,8 @@ public class EventPublisher {
           Result.succeeded(pubSubPublishingService.publishEvent(LOG_RECORD.name(), mapToCheckOutLogEventContent(loanAndRelatedRecords, loggedInUser)))))));
 
       return pubSubPublishingService.publishEvent(ITEM_CHECKED_OUT.name(), payloadJsonObject.encode())
-        .thenApply(r -> succeeded(loanAndRelatedRecords));
+        .thenApply(r -> succeeded(loanAndRelatedRecords))
+          .exceptionally(ex -> failed(ValidationErrorFailure.singleValidationError(new ValidationError(ex, "loanId", loan.getId()))));
     }
     else {
       logger.error(FAILED_TO_PUBLISH_LOG_TEMPLATE, ITEM_CHECKED_OUT.name());
@@ -125,10 +130,9 @@ public class EventPublisher {
       write(payloadJsonObject, LOAN_ID_FIELD, loan.getId());
       write(payloadJsonObject, RETURN_DATE_FIELD, loan.getReturnDate());
 
-      return
-        pubSubPublishingService.publishEvent(ITEM_CHECKED_IN.name(),
-        payloadJsonObject.encode())
-        .thenApply(r -> succeeded(checkInContext));
+      return pubSubPublishingService.publishEvent(ITEM_CHECKED_IN.name(), payloadJsonObject.encode())
+        .thenApply(r -> succeeded(checkInContext))
+        .exceptionally(ex -> failed(ValidationErrorFailure.singleValidationError(new ValidationError(ex, "loanId", loan.getId()))));
     }
     else {
       logger.error(FAILED_TO_PUBLISH_LOG_TEMPLATE, ITEM_CHECKED_IN.name());
@@ -162,7 +166,8 @@ public class EventPublisher {
     write(payloadJson, LOAN_ID_FIELD, loan.getId());
 
     return pubSubPublishingService.publishEvent(eventName, payloadJson.encode())
-      .thenApply(r -> succeeded(loan));
+      .thenApply(r -> succeeded(loan))
+      .exceptionally(ex -> failed(ValidationErrorFailure.singleValidationError(new ValidationError(ex, "loanId", loan.getId()))));
   }
 
   public CompletableFuture<Result<Loan>> publishLoanClosedEvent(Loan loan) {
@@ -178,7 +183,8 @@ public class EventPublisher {
     write(payload, LOAN_ID_FIELD, loan.getId());
 
     return pubSubPublishingService.publishEvent(eventName, payload.encode())
-      .thenApply(r -> succeeded(loan));
+      .thenApply(r -> succeeded(loan))
+      .exceptionally(ex -> failed(ValidationErrorFailure.singleValidationError(new ValidationError(ex, "loanId", loan.getId()))));
   }
 
   private CompletableFuture<Result<Loan>> publishDueDateChangedEvent(Loan loan, RequestAndRelatedRecords records) {
@@ -198,9 +204,9 @@ public class EventPublisher {
         runAsync(() -> publishRenewedEvent(loan.copy().withUser(user)));
       }
 
-      return pubSubPublishingService.publishEvent(LOAN_DUE_DATE_CHANGED.name(),
-        payloadJsonObject.encode())
-        .thenApply(r -> succeeded(loan));
+      return pubSubPublishingService.publishEvent(LOAN_DUE_DATE_CHANGED.name(), payloadJsonObject.encode())
+        .thenApply(r -> succeeded(loan))
+        .exceptionally(ex -> failed(ValidationErrorFailure.singleValidationError(new ValidationError(ex, "loanId", loan.getId()))));
     }
     else {
       logger.error(FAILED_TO_PUBLISH_LOG_TEMPLATE, LOAN_DUE_DATE_CHANGED.name());
@@ -336,7 +342,12 @@ public class EventPublisher {
     write(eventJson, PAYLOAD.value(), context);
 
     return pubSubPublishingService.publishEvent(LOG_RECORD.name(), eventJson.encode())
-      .thenApply(r -> succeeded(null));
+      .handle((result, error) -> {
+        if(error != null) {
+          return failed(new ValidationErrorFailure(new ValidationError(error, LOG_EVENT_TYPE.value(), payloadType.value())));
+        }
+        return succeeded(null);
+      });
   }
 
   public RequestAndRelatedRecords publishLogRecordAsync(RequestAndRelatedRecords requestAndRelatedRecords, Request originalRequest, LogEventType logEventType) {
