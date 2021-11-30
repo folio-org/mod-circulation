@@ -226,6 +226,19 @@ class RequestsAPIRetrievalTests extends APITests {
     assertThat(contributors, CoreMatchers.notNullValue());
     assertThat(contributors.size(), is(1));
     assertThat(contributors.getJsonObject(0).getString("name"), is("Chambers, Becky"));
+
+    JsonArray editions = instanceSummary.getJsonArray("editions");
+    assertThat(editions, notNullValue());
+    assertThat(editions.size(), is(1));
+    assertThat(editions.getString(0), is("First American Edition"));
+
+    JsonArray publication = instanceSummary.getJsonArray("publication");
+    assertThat(publication, notNullValue());
+    assertThat(publication.size(), is(1));
+    JsonObject firstPublication = publication.getJsonObject(0);
+    assertThat(firstPublication.getString("publisher"), is("Alfred A. Knopf"));
+    assertThat(firstPublication.getString("place"), is("New York"));
+    assertThat(firstPublication.getString("dateOfPublication"), is("2016"));
   }
 
   @Test
