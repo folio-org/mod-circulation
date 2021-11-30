@@ -1422,7 +1422,7 @@ class CheckOutByBarcodeTests extends APITests {
 
     FakePubSub.setFailPublishingWithBadRequestError(true);
 
-    Response response = checkOutFixture.attemptCheckOutByBarcode(422,
+    Response response = checkOutFixture.attemptCheckOutByBarcode(500,
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)

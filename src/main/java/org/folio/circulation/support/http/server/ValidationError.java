@@ -34,8 +34,9 @@ public class ValidationError {
 
   private static String mapsToStringMessage(Throwable error) {
 
-    if(error.getCause() != null) {
-      return error.getCause().getMessage();
+    Throwable cause = error.getCause();
+    if(cause != null) {
+      return cause.getMessage();
     }
 
     return "Unknown internal error";

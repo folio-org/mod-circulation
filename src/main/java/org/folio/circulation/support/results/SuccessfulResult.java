@@ -5,7 +5,7 @@ import org.folio.circulation.support.HttpFailure;
 public class SuccessfulResult<T> implements Result<T> {
   private final T value;
 
-  SuccessfulResult(T value) {
+  public SuccessfulResult(T value) {
     this.value = value;
   }
 
