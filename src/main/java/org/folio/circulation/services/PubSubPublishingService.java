@@ -58,7 +58,7 @@ public class PubSubPublishingService {
     params.setTenantId(okapiHeaders.get(OKAPI_TENANT_HEADER));
     params.setToken(okapiHeaders.get(OKAPI_TOKEN_HEADER));
 
-    vertxContext.runOnContext(v -> mockSendEventMessage(event, params)
+    vertxContext.runOnContext(v -> PubSubClientUtils.sendEventMessage(event, params)
       .whenComplete((result, throwable) -> {
         if (Boolean.TRUE.equals(result)) {
           logger.info("Event published successfully. ID: {}, type: {}, payload: {}",
@@ -77,12 +77,5 @@ public class PubSubPublishingService {
     );
 
     return publishResult;
-  }
-
-  public CompletableFuture<Boolean> mockSendEventMessage(Event eventMessage, OkapiConnectionParams params) {
-    CompletableFuture<Boolean> result = new CompletableFuture<>();
-    EventSendingException exception = new EventSendingException(String.format("Error during publishing Event Message in PubSub. Status code: %s . Status message: %s ", 400, "BAD REQUEST"));
-    result.completeExceptionally(exception);
-    return result;
   }
 }

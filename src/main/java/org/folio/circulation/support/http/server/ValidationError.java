@@ -28,20 +28,6 @@ public class ValidationError {
     this.parameters = parameters;
   }
 
-  public ValidationError(Throwable error, String key, String value) {
-    this(mapsToStringMessage(error), key, value);
-  }
-
-  private static String mapsToStringMessage(Throwable error) {
-
-    Throwable cause = error.getCause();
-    if(cause != null) {
-      return cause.getMessage();
-    }
-
-    return "Unknown internal error";
-  }
-
   public JsonObject toJson() {
     JsonArray mappedParameters = new JsonArray(
       parameters.keySet().stream()
