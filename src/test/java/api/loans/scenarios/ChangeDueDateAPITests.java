@@ -346,8 +346,8 @@ class ChangeDueDateAPITests extends APITests {
     IndividualResource loanPolicy = loanPoliciesFixture.create(
       new LoanPolicyBuilder()
         .withName("loan policy")
-        .withRecallsMinimumGuaranteedLoanPeriod(org.folio.circulation.domain.policy.Period.weeks(2))
-        .rolling(org.folio.circulation.domain.policy.Period.months(1)));
+        .withRecallsMinimumGuaranteedLoanPeriod(org.folio.circulation.domain.policy.Period.days(3))
+        .rolling(org.folio.circulation.domain.policy.Period.days(7)));
 
     useFallbackPolicies(loanPolicy.getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
@@ -380,7 +380,7 @@ class ChangeDueDateAPITests extends APITests {
     ZonedDateTime recalledLoanDueDate = ZonedDateTime.parse(recalledLoan.getJson().getString("dueDate"));
 
     assertThat(recalledLoan.getJson().getBoolean("dueDateChangedByRecall"), equalTo(true));
-    assertThat(calculateDaysBetween(initialDueDate, recalledLoanDueDate), equalTo(16));
+    assertThat(calculateDaysBetween(initialDueDate, recalledLoanDueDate), equalTo(4));
 
     requestsFixture.cancelRequest(recall);
 
