@@ -10,7 +10,6 @@ import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.lang.invoke.MethodHandles;
 import java.time.ZonedDateTime;
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.logging.log4j.LogManager;
