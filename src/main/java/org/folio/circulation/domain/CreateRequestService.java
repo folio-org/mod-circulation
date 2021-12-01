@@ -87,6 +87,7 @@ public class CreateRequestService {
         return r.next(requestNoticeSender::sendNoticeOnRequestCreated);
       });
   }
+
   private CompletableFuture<Result<RequestAndRelatedRecords>> checkInstance(
     RequestAndRelatedRecords records) {
 

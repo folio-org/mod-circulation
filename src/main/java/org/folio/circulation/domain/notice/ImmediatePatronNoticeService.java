@@ -95,50 +95,6 @@ public class ImmediatePatronNoticeService extends PatronNoticeService {
       .orElseGet(() -> ofAsync(() -> null));
   }
 
-  public CompletableFuture<Result<Void>> applyTlrConfirmationNotice(
-    TlrSettingsConfiguration tlrSettings, PatronNoticeEvent patronNoticeEvent) {
-
-    UUID confirmationTemplateId = tlrSettings.getConfirmationPatronNoticeTemplateId();
-    if (confirmationTemplateId != null) {
-      NoticeLogContext noticeLogContext = new NoticeLogContext()
-        .withTriggeringEvent(patronNoticeEvent.getEventType().getRepresentation())
-        .withTemplateId(confirmationTemplateId.toString());
-      NoticeConfiguration noticeConfiguration = buildTlrNoticeConfiguration(patronNoticeEvent,
-        confirmationTemplateId);
-      PatronNotice patronNotice = new PatronNotice(patronNoticeEvent.getUser().getId(),
-        patronNoticeEvent.getNoticeContext(), noticeConfiguration);
-
-      return sendNotice(patronNotice, noticeLogContext);
-    }
-
-    return ofAsync(() -> null);
-  }
-
-  public CompletableFuture<Result<Void>> applyTlrCancellationNotice(
-    TlrSettingsConfiguration tlrSettings, PatronNoticeEvent patronNoticeEvent) {
-
-    UUID cancellationTemplateId = tlrSettings.getCancellationPatronNoticeTemplateId();
-    if (cancellationTemplateId != null) {
-      NoticeLogContext noticeLogContext = new NoticeLogContext()
-        .withTriggeringEvent(patronNoticeEvent.getEventType().getRepresentation())
-        .withTemplateId(cancellationTemplateId.toString());
-      NoticeConfiguration noticeConfiguration = buildTlrNoticeConfiguration(patronNoticeEvent,
-        cancellationTemplateId);
-      PatronNotice patronNotice = new PatronNotice(patronNoticeEvent.getUser().getId(),
-        patronNoticeEvent.getNoticeContext(), noticeConfiguration);
-
-      return sendNotice(patronNotice, noticeLogContext);
-    }
-
-    return ofAsync(() -> null);
-  }
-
-  private NoticeConfiguration buildTlrNoticeConfiguration(PatronNoticeEvent patronNoticeEvent,
-    UUID cancellationTemplateId) {
-    return new NoticeConfiguration(cancellationTemplateId.toString(), NoticeFormat.EMAIL,
-      patronNoticeEvent.getEventType(), null, null, false, null, false);
-  }
-
   private Optional<NoticeConfiguration> findMatchingNoticeConfiguration(EventGroupContext context) {
     return context.getPatronNoticePolicy().lookupNoticeConfiguration(
       context.getGroupDefinition().getEventType());

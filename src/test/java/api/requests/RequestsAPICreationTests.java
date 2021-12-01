@@ -81,6 +81,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EmptySource;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import api.support.APITests;
@@ -2484,27 +2485,32 @@ public class RequestsAPICreationTests extends APITests {
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 
-  @Test
-  void titleLevelRequestConfirmationNoticeShouldNotBeSentWithDisabledTlr() {
+  @ParameterizedTest
+  @EnumSource(value = TlrFeatureStatus.class, names = {"DISABLED", "NOT_CONFIGURED"})
+  void titleLevelRequestConfirmationNoticeShouldNotBeSentWithDisabledTlr(
+    TlrFeatureStatus tlrFeatureStatus) {
+
     UUID templateId = UUID.randomUUID();
     templateFixture.createDummyNoticeTemplate(templateId);
-    reconfigureTlrFeature(TlrFeatureStatus.DISABLED, templateId, null, null);
+    reconfigureTlrFeature(tlrFeatureStatus, templateId, null, null);
 
     Response response = requestsFixture.attemptPlace(buildTitleLevelRequest());
     assertThat(response.getStatusCode(), CoreMatchers.is(422));
     assertThat(response.getJson(), hasErrorWith(
       hasMessage("requestLevel must be one of the following: \"Item\"")));
     verifyNumberOfSentNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 
   @Test
   void titleLevelRequestConfirmationNoticeShouldNotBeSentWithoutConfiguredNoticeTemplate() {
-    UUID templateId = UUID.randomUUID();
-    templateFixture.createDummyNoticeTemplate(templateId);
     reconfigureTlrFeature(TlrFeatureStatus.ENABLED, null, null, null);
 
     requestsFixture.place(buildTitleLevelRequest());
     verifyNumberOfSentNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 
   private static void assertOverrideResponseSuccess(Response response) {

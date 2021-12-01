@@ -46,10 +46,19 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class RequestNoticeSender {
-
+  public RequestNoticeSender(Clients clients) {
+    this(
+      new SingleImmediatePatronNoticeService(clients),
+      RequestRepository.using(clients),
+      new LoanRepository(clients),
+      new UserRepository(clients),
+      new ServicePointRepository(clients),
+      new EventPublisher(clients.pubSubPublishingService())
+    );
+  }
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
-  private static final Map<RequestType, NoticeEventType> requestTypeToEventMap;
+  protected static final Map<RequestType, NoticeEventType> requestTypeToEventMap;
 
   static {
     Map<RequestType, NoticeEventType> map = new EnumMap<>(RequestType.class);
@@ -60,17 +69,10 @@ public class RequestNoticeSender {
   }
 
   public static RequestNoticeSender using(Clients clients) {
-    return new RequestNoticeSender(
-      new SingleImmediatePatronNoticeService(clients),
-      RequestRepository.using(clients),
-      new LoanRepository(clients),
-      new UserRepository(clients),
-      new ServicePointRepository(clients),
-      new EventPublisher(clients.pubSubPublishingService())
-    );
+    return new RequestNoticeSender(clients);
   }
 
-  private final ImmediatePatronNoticeService patronNoticeService;
+  protected final ImmediatePatronNoticeService patronNoticeService;
   private final RequestRepository requestRepository;
   private final LoanRepository loanRepository;
   private final UserRepository userRepository;
@@ -80,38 +82,10 @@ public class RequestNoticeSender {
   public Result<RequestAndRelatedRecords> sendNoticeOnRequestCreated(
     RequestAndRelatedRecords relatedRecords) {
 
-    Request request = relatedRecords.getRequest();
-
-    Item item = request.getItem();
-    User requester = request.getRequester();
-    NoticeEventType eventType =
-      requestTypeToEventMap.getOrDefault(request.getRequestType(), NoticeEventType.UNKNOWN);
-    PatronNoticeEventBuilder patronNoticeEventBuilder = createPatronNoticeEventBuilder(request,
-      requester, eventType);
-
-    if (request.getRequestLevel() == TITLE
-      && request.getTlrSettingsConfiguration().isTitleLevelRequestsFeatureEnabled()
-      && request.getTlrSettingsConfiguration().getConfirmationPatronNoticeTemplateId() != null) {
-
-      PatronNoticeEvent requestCreatedEvent = patronNoticeEventBuilder.build();
-      patronNoticeService.applyTlrConfirmationNotice(request.getTlrSettingsConfiguration(),
-        requestCreatedEvent);
-    } else {
-      PatronNoticeEvent requestCreatedEvent = patronNoticeEventBuilder
-        .withItem(item)
-        .build();
-      patronNoticeService.acceptNoticeEvent(requestCreatedEvent);
-      Loan loan = request.getLoan();
-      if (request.getRequestType() == RequestType.RECALL && loan != null) {
-        sendNoticeOnItemRecalledEvent(loan);
-        sendLogEvent(loan);
-      }
-    }
-
-    return Result.succeeded(relatedRecords);
+    return sendNoticeOnRequestCreated(relatedRecords);
   }
 
-  private void sendLogEvent(Loan loan) {
+  protected void sendLogEvent(Loan loan) {
     runAsync(() -> loanRepository.getById(loan.getId())
       .thenAccept(existingLoan -> existingLoan.map(l -> loan.setPreviousDueDate(l.getDueDate())))
       .thenApply(vVoid -> eventPublisher.publishRecallRequestedEvent(loan)));
@@ -140,39 +114,22 @@ public class RequestNoticeSender {
     return Result.succeeded(relatedRecords);
   }
 
-  private Result<Void> sendNoticeOnRequestCancelled(RequestAndRelatedRecords relatedRecords) {
-    Request request = relatedRecords.getRequest();
-    PatronNoticeEventBuilder patronNoticeEventBuilder = createPatronNoticeEventBuilder(
-      request, request.getRequester(), NoticeEventType.REQUEST_CANCELLATION);
-
-    if (request.getRequestLevel() == TITLE
-      && request.getTlrSettingsConfiguration().isTitleLevelRequestsFeatureEnabled()
-      && request.getTlrSettingsConfiguration().getCancellationPatronNoticeTemplateId() != null) {
-
-      PatronNoticeEvent requestCancelledEvent = patronNoticeEventBuilder.build();
-      patronNoticeService.applyTlrCancellationNotice(request.getTlrSettingsConfiguration(),
-        requestCancelledEvent);
-    } else {
-      PatronNoticeEvent requestCancelledEvent = patronNoticeEventBuilder
-        .withItem(request.getItem())
-        .build();
-      patronNoticeService.acceptNoticeEvent(requestCancelledEvent);
-    }
-
-    return Result.succeeded(null);
+  protected Result<Void> sendNoticeOnRequestCancelled(RequestAndRelatedRecords relatedRecords) {
+    return sendNoticeOnRequestCancelled(relatedRecords);
   }
 
-  private PatronNoticeEventBuilder createPatronNoticeEventBuilder(Request request, User requester,
+  protected PatronNoticeEvent createPatronNoticeEvent(Request request,
     NoticeEventType eventType) {
 
     return new PatronNoticeEventBuilder()
-      .withUser(requester)
+      .withUser(request.getRequester())
       .withEventType(eventType)
       .withNoticeContext(createRequestNoticeContext(request))
-      .withNoticeLogContext(NoticeLogContext.from(request));
+      .withNoticeLogContext(NoticeLogContext.from(request))
+      .build();
   }
 
-  private Result<Void> sendNoticeOnItemRecalledEvent(Loan loan) {
+  protected Result<Void> sendNoticeOnItemRecalledEvent(Loan loan) {
     if (loan.getUser() != null && loan.getItem() != null) {
       PatronNoticeEvent itemRecalledEvent = new PatronNoticeEventBuilder()
         .withItem(loan.getItem())
