@@ -433,7 +433,7 @@ class ChangeDueDateAPITests extends APITests {
 
     configurationsFixture.enableTlrFeature();
     requestsClient.create(new RequestBuilder()
-      .page()
+      .recall()
       .titleRequestLevel()
       .withInstanceId(smallAngryPlanet.getInstanceId())
       .withPickupServicePointId(servicePointsFixture.cd1().getId())
@@ -489,7 +489,7 @@ class ChangeDueDateAPITests extends APITests {
     configurationsFixture.enableTlrFeature();
 
     requestsClient.create(new RequestBuilder()
-      .page()
+      .recall()
       .titleRequestLevel()
       .withInstanceId(smallAngryPlanet.getInstanceId())
       .withPickupServicePointId(servicePointsFixture.cd1().getId())

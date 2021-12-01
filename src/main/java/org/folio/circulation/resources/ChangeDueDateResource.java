@@ -103,8 +103,7 @@ public class ChangeDueDateResource extends Resource {
     RequestQueue queue = loanAndRelatedRecords.getRequestQueue();
     Loan loan = loanAndRelatedRecords.getLoan();
     log.info("Loan {} prior to flag check: {}", loan.getId(), loan.asJson().toString());
-    if (loan.wasDueDateChangedByRecall() && !queue.hasOpenRecalls() && (Objects.isNull(loanAndRelatedRecords.getTlrSettings())
-    || Objects.nonNull(loanAndRelatedRecords.getTlrSettings()) && !loanAndRelatedRecords.getTlrSettings().isTitleLevelRequestsFeatureEnabled())) {
+    if (loan.wasDueDateChangedByRecall() && !queue.hasOpenRecalls()) {
       log.info("Loan {} registers as having due date change flag set to true and no open recalls in queue.", loan.getId());
       return loanAndRelatedRecords.withLoan(loan.unsetDueDateChangedByRecall());
     } else {
