@@ -22,6 +22,7 @@ import org.folio.circulation.domain.notice.schedule.LoanScheduledNoticeService;
 import org.folio.circulation.domain.representations.ChangeDueDateRequest;
 import org.folio.circulation.domain.validation.ItemStatusValidator;
 import org.folio.circulation.domain.validation.LoanValidator;
+import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.services.EventPublisher;
@@ -76,11 +77,15 @@ public class ChangeDueDateResource extends Resource {
     final EventPublisher eventPublisher = new EventPublisher(routingContext);
 
     final LoanNoticeSender loanNoticeSender = LoanNoticeSender.using(clients);
-    log.info("starting change due date process for loan " + request.getLoanId());
+
+    final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
+    log.info("starting change due date process for loan {}", request.getLoanId());
     return succeeded(request)
       .after(r -> getExistingLoan(loanRepository, r))
       .thenApply(LoanValidator::refuseWhenLoanIsClosed)
       .thenApply(this::toLoanAndRelatedRecords)
+      .thenComposeAsync(r -> r.combineAfter(configurationRepository::lookupTlrSettings,
+        LoanAndRelatedRecords::withTlrSettings))
       .thenComposeAsync(r -> r.after(requestQueueRepository::get))
       .thenApply(itemStatusValidator::refuseWhenItemStatusDoesNotAllowDueDateChange)
       .thenApply(r -> changeDueDate(r, request))
@@ -96,12 +101,12 @@ public class ChangeDueDateResource extends Resource {
     
     RequestQueue queue = loanAndRelatedRecords.getRequestQueue();
     Loan loan = loanAndRelatedRecords.getLoan();
-    log.info("Loan " + loan.getId() + " prior to flag check: " + loan.asJson().toString());
+    log.info("Loan {} prior to flag check: {}", loan.getId(), loan.asJson().toString());
     if (loan.wasDueDateChangedByRecall() && !queue.hasOpenRecalls()) {
-      log.info("Loan " + loan.getId() + " registers as having due date change flag set to true and no open recalls in queue.");
+      log.info("Loan {} registers as having due date change flag set to true and no open recalls in queue.", loan.getId());
       return loanAndRelatedRecords.withLoan(loan.unsetDueDateChangedByRecall());
     } else {
-      log.info("Loan " + loan.getId() + " registers as either not having due date change flag set to true or as having open recalls in queue.");
+      log.info("Loan {} registers as either not having due date change flag set to true or as having open recalls in queue.", loan.getId());
       return loanAndRelatedRecords;
     }
   }
