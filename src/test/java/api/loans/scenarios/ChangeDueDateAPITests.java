@@ -383,7 +383,7 @@ class ChangeDueDateAPITests extends APITests {
     ZonedDateTime recalledLoanDueDate = ZonedDateTime.parse(recalledLoan.getJson().getString("dueDate"));
 
     assertThat(recalledLoan.getJson().getBoolean("dueDateChangedByRecall"), equalTo(true));
-    assertThat(calculateDaysBetween(initialDueDate, recalledLoanDueDate), equalTo(4));
+    assertThat(calculateDaysBetween(initialDueDate, recalledLoanDueDate), equalTo(16));
 
     requestsFixture.cancelRequest(recall);
 
