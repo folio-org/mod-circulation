@@ -2,8 +2,11 @@ package org.folio.circulation.domain;
 
 import static java.lang.Boolean.TRUE;
 import static java.time.ZoneOffset.UTC;
+import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
@@ -15,6 +18,7 @@ import api.support.builders.Address;
 import api.support.builders.RequestBuilder;
 import api.support.builders.ServicePointBuilder;
 import api.support.builders.UserBuilder;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 class RequestRepresentationTests {
@@ -23,6 +27,9 @@ class RequestRepresentationTests {
   private static final UUID ADDRESS_ID = UUID.randomUUID();
   private static final UUID SERVICE_POINT_ID = UUID.randomUUID();
   private static final UUID INSTANCE_ID = UUID.randomUUID();
+  private static final String EDITIONS = "editions";
+  private static final String PUBLICATION = "publication";
+  private static final String INSTANCE = "instance";
 
   @Test
   void testExtendedRepresentation() {
@@ -35,6 +42,20 @@ class RequestRepresentationTests {
 
     assertThat("Extended representation should have a delivery address",
       extendedRepresentation.containsKey("deliveryAddress"), is(true));
+
+    assertThat("Extended representation should have an instance",
+      extendedRepresentation.containsKey(INSTANCE), is(true));
+
+    JsonObject instance = extendedRepresentation.getJsonObject(INSTANCE);
+
+    assertTrue(instance.containsKey(EDITIONS));
+    assertTrue(instance.containsKey(PUBLICATION));
+    assertEquals("First American Edition", instance.getJsonArray(EDITIONS).getString(0));
+    JsonObject publication = instance.getJsonArray(PUBLICATION).getJsonObject(0);
+    assertEquals("fake publisher", publication.getString("publisher"));
+    assertEquals("fake place", publication.getString("place"));
+    assertEquals("2016", publication.getString("dateOfPublication"));
+
   }
 
   @Test
@@ -82,6 +103,16 @@ class RequestRepresentationTests {
 
     final ServicePoint servicePoint = new ServicePoint(servicePointBuilder.create());
 
+    JsonObject instanceRepresentation = new JsonObject();
+    write(instanceRepresentation, EDITIONS, new JsonArray().add("First American Edition"));
+    JsonObject publication = new JsonObject();
+    publication.put("publisher", "fake publisher");
+    publication.put("place", "fake place");
+    publication.put("dateOfPublication", "2016");
+    write(instanceRepresentation, PUBLICATION, new JsonArray().add(publication));
+
+    final Item item = Item.from(new JsonObject()).withInstance(instanceRepresentation);
+
     JsonObject requestJsonObject = new RequestBuilder()
       .recall()
       .withId(REQUEST_ID)
@@ -98,6 +129,7 @@ class RequestRepresentationTests {
 
     return Request.from(requestJsonObject)
       .withRequester(requester)
-      .withPickupServicePoint(servicePoint);
+      .withPickupServicePoint(servicePoint)
+      .withItem(item);
   }
 }

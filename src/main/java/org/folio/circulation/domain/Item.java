@@ -11,6 +11,8 @@ import static org.folio.circulation.domain.ItemStatus.MISSING;
 import static org.folio.circulation.domain.ItemStatus.PAGED;
 import static org.folio.circulation.domain.representations.HoldingsProperties.COPY_NUMBER_ID;
 import static org.folio.circulation.domain.representations.InstanceProperties.CONTRIBUTORS;
+import static org.folio.circulation.domain.representations.InstanceProperties.EDITIONS;
+import static org.folio.circulation.domain.representations.InstanceProperties.PUBLICATION;
 import static org.folio.circulation.domain.representations.ItemProperties.EFFECTIVE_LOCATION_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.IDENTIFIERS;
 import static org.folio.circulation.domain.representations.ItemProperties.IN_TRANSIT_DESTINATION_SERVICE_POINT_ID;
@@ -156,6 +158,14 @@ public class Item {
 
   public String getInstanceId() {
     return getProperty(holdingRepresentation, "instanceId");
+  }
+
+  public JsonArray getPublication() {
+    return getArrayProperty(instanceRepresentation, PUBLICATION);
+  }
+
+  public JsonArray getEditions() {
+    return getArrayProperty(instanceRepresentation, EDITIONS);
   }
 
   public String getCallNumber() {
