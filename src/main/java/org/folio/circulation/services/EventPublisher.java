@@ -24,11 +24,13 @@ import static org.folio.circulation.domain.representations.logs.LogEventType.NOT
 import static org.folio.circulation.domain.representations.logs.RequestUpdateLogEventMapper.mapToRequestLogEventJson;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
+import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTimeOptional;
 
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.logging.log4j.LogManager;
@@ -101,7 +103,7 @@ public class EventPublisher {
           Result.succeeded(pubSubPublishingService.publishEvent(LOG_RECORD.name(), mapToCheckOutLogEventContent(loanAndRelatedRecords, loggedInUser)))))));
 
       return pubSubPublishingService.publishEvent(ITEM_CHECKED_OUT.name(), payloadJsonObject.encode())
-        .thenApply(r -> succeeded(loanAndRelatedRecords));
+        .handle((result, error) -> handlePublishEventError(error, loanAndRelatedRecords));
     }
     else {
       logger.error(FAILED_TO_PUBLISH_LOG_TEMPLATE, ITEM_CHECKED_OUT.name());
@@ -125,10 +127,8 @@ public class EventPublisher {
       write(payloadJsonObject, LOAN_ID_FIELD, loan.getId());
       write(payloadJsonObject, RETURN_DATE_FIELD, loan.getReturnDate());
 
-      return
-        pubSubPublishingService.publishEvent(ITEM_CHECKED_IN.name(),
-        payloadJsonObject.encode())
-        .thenApply(r -> succeeded(checkInContext));
+      return pubSubPublishingService.publishEvent(ITEM_CHECKED_IN.name(), payloadJsonObject.encode())
+        .handle((result, error) -> handlePublishEventError(error, checkInContext));
     }
     else {
       logger.error(FAILED_TO_PUBLISH_LOG_TEMPLATE, ITEM_CHECKED_IN.name());
@@ -162,7 +162,7 @@ public class EventPublisher {
     write(payloadJson, LOAN_ID_FIELD, loan.getId());
 
     return pubSubPublishingService.publishEvent(eventName, payloadJson.encode())
-      .thenApply(r -> succeeded(loan));
+      .handle((result, error) -> handlePublishEventError(error, loan));
   }
 
   public CompletableFuture<Result<Loan>> publishLoanClosedEvent(Loan loan) {
@@ -178,7 +178,7 @@ public class EventPublisher {
     write(payload, LOAN_ID_FIELD, loan.getId());
 
     return pubSubPublishingService.publishEvent(eventName, payload.encode())
-      .thenApply(r -> succeeded(loan));
+      .handle((result, error) -> handlePublishEventError(error, loan));
   }
 
   private CompletableFuture<Result<Loan>> publishDueDateChangedEvent(Loan loan, RequestAndRelatedRecords records) {
@@ -198,9 +198,8 @@ public class EventPublisher {
         runAsync(() -> publishRenewedEvent(loan.copy().withUser(user)));
       }
 
-      return pubSubPublishingService.publishEvent(LOAN_DUE_DATE_CHANGED.name(),
-        payloadJsonObject.encode())
-        .thenApply(r -> succeeded(loan));
+      return pubSubPublishingService.publishEvent(LOAN_DUE_DATE_CHANGED.name(), payloadJsonObject.encode())
+        .handle((result, error) -> handlePublishEventError(error, loan));
     }
     else {
       logger.error(FAILED_TO_PUBLISH_LOG_TEMPLATE, LOAN_DUE_DATE_CHANGED.name());
@@ -336,7 +335,7 @@ public class EventPublisher {
     write(eventJson, PAYLOAD.value(), context);
 
     return pubSubPublishingService.publishEvent(LOG_RECORD.name(), eventJson.encode())
-      .thenApply(r -> succeeded(null));
+      .handle((result, error) -> handlePublishEventError(error, null));
   }
 
   public RequestAndRelatedRecords publishLogRecordAsync(RequestAndRelatedRecords requestAndRelatedRecords, Request originalRequest, LogEventType logEventType) {
@@ -344,4 +343,10 @@ public class EventPublisher {
     return requestAndRelatedRecords;
   }
 
+  private <T> Result<T> handlePublishEventError(Throwable error, T value) {
+    if (error != null) {
+      return failedDueToServerError(error.getMessage());
+    }
+    return succeeded(value);
+  }
 }

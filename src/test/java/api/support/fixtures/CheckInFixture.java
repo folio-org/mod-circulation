@@ -12,6 +12,7 @@ import org.folio.circulation.support.utils.ClockUtil;
 import api.support.CheckInByBarcodeResponse;
 import api.support.RestAssuredClient;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
+import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.http.IndividualResource;
 import api.support.http.OkapiHeaders;
 import io.vertx.core.json.JsonObject;
@@ -80,6 +81,11 @@ public class CheckInFixture {
       .at(servicePointId).create();
 
     restAssuredClient.post(representation, checkInByBarcodeUrl(), 200, okapiHeaders);
+  }
+
+  public Response attemptCheckInByBarcode(int expectedStatusCode, CheckInByBarcodeRequestBuilder builder) {
+    return restAssuredClient.post(builder.create(), checkInByBarcodeUrl(),
+      expectedStatusCode, "check-in-by-barcode-request");
   }
 
   private IndividualResource defaultServicePoint() {

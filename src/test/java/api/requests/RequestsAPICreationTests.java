@@ -39,6 +39,7 @@ import static org.folio.circulation.domain.representations.ItemProperties.CALL_N
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE_ERROR;
 import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_CREATED_THROUGH_OVERRIDE;
+import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.hasItems;
@@ -73,12 +74,14 @@ import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.utils.ClockUtil;
+import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matcher;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EmptySource;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import api.support.APITests;
@@ -2470,6 +2473,46 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(response.getJson(), hasNoJsonPath("requestProcessingParameters"));
   }
 
+  @Test
+  void titleLevelRequestConfirmationNoticeShouldBeSentWithEnabledTlr() {
+    UUID templateId = UUID.randomUUID();
+    templateFixture.createDummyNoticeTemplate(templateId);
+    reconfigureTlrFeature(TlrFeatureStatus.ENABLED, templateId, null, null);
+
+    requestsFixture.place(buildTitleLevelRequest());
+    verifyNumberOfSentNotices(1);
+    verifyNumberOfPublishedEvents(NOTICE, 1);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+  }
+
+  @ParameterizedTest
+  @EnumSource(value = TlrFeatureStatus.class, names = {"DISABLED", "NOT_CONFIGURED"})
+  void titleLevelRequestConfirmationNoticeShouldNotBeSentWithDisabledTlr(
+    TlrFeatureStatus tlrFeatureStatus) {
+
+    UUID templateId = UUID.randomUUID();
+    templateFixture.createDummyNoticeTemplate(templateId);
+    reconfigureTlrFeature(tlrFeatureStatus, templateId, null, null);
+
+    Response response = requestsFixture.attemptPlace(buildTitleLevelRequest());
+    assertThat(response.getStatusCode(), CoreMatchers.is(422));
+    assertThat(response.getJson(), hasErrorWith(
+      hasMessage("requestLevel must be one of the following: \"Item\"")));
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+  }
+
+  @Test
+  void titleLevelRequestConfirmationNoticeShouldNotBeSentWithoutConfiguredNoticeTemplate() {
+    reconfigureTlrFeature(TlrFeatureStatus.ENABLED, null, null, null);
+
+    requestsFixture.place(buildTitleLevelRequest());
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+  }
+
   private static void assertOverrideResponseSuccess(Response response) {
     assertThat(response, hasStatus(HTTP_CREATED));
     assertThat(response.getJson(), hasErrors(0));
@@ -2625,5 +2668,16 @@ public class RequestsAPICreationTests extends APITests {
 
   private static JsonArray getErrorsFromResponse(Response response) {
     return response.getJson().getJsonArray("errors");
+  }
+
+  private RequestBuilder buildTitleLevelRequest() {
+    return new RequestBuilder()
+      .page()
+      .titleRequestLevel()
+      .withInstanceId(itemsFixture.basedUponSmallAngryPlanet().getInstanceId())
+      .withRequesterId(usersFixture.charlotte().getId())
+      .withRequestDate(getZonedDateTime())
+      .withStatus(OPEN_NOT_YET_FILLED)
+      .withPickupServicePoint(servicePointsFixture.cd1());
   }
 }
