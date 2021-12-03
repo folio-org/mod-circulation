@@ -38,7 +38,9 @@ import static org.folio.circulation.domain.RequestStatus.CLOSED_UNFILLED;
 import static org.folio.circulation.domain.representations.logs.LogEventType.CHECK_IN;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE_ERROR;
+import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.hamcrest.CoreMatchers.allOf;
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -74,6 +76,7 @@ import api.support.CheckInByBarcodeResponse;
 import api.support.MultipleJsonRecords;
 import api.support.builders.Address;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
+import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.FeeFineBuilder;
 import api.support.builders.FeeFineOwnerBuilder;
 import api.support.builders.LoanPolicyBuilder;
@@ -300,6 +303,24 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
 
     assertThat(response.getJson(), hasErrorWith(hasMessage(
       "No item with barcode 543593485458 exists")));
+  }
+
+  @Test
+  void checkInFailsWhenEventPublishingFailsWithBadRequestError() {
+    ZonedDateTime loanDate = ZonedDateTime.of(2018, 3, 1, 13, 25, 46, 0, UTC);
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource steve = usersFixture.steve();
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, steve, loanDate);
+
+    FakePubSub.setFailPublishingWithBadRequestError(true);
+    Response response = checkInFixture.attemptCheckInByBarcode(500,
+      new CheckInByBarcodeRequestBuilder()
+        .forItem(smallAngryPlanet)
+        .on(getZonedDateTime())
+        .at(UUID.randomUUID()));
+
+    assertThat(response.getBody(), containsString(
+      "Error during publishing Event Message in PubSub. Status code: 400"));
   }
 
   @Test

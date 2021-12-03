@@ -9,7 +9,9 @@ import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static org.folio.circulation.domain.representations.LoanProperties.ACTION;
 import static org.folio.circulation.domain.representations.LoanProperties.ACTION_COMMENT;
+import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.hamcrest.CoreMatchers.allOf;
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -17,13 +19,13 @@ import java.util.List;
 import java.util.UUID;
 
 import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.utils.ClockUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.ClaimItemReturnedRequestBuilder;
 import api.support.builders.DeclareClaimedReturnedItemAsMissingRequestBuilder;
+import api.support.fakes.FakePubSub;
 import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 
@@ -44,7 +46,7 @@ class DeclareClaimedReturnedItemAsMissingApiTests extends APITests {
   void canDeclareItemMissingWhenClaimedReturned() {
     claimItemReturnedFixture.claimItemReturned(new ClaimItemReturnedRequestBuilder()
       .forLoan(loanId)
-      .withItemClaimedReturnedDate(ClockUtil.getZonedDateTime()));
+      .withItemClaimedReturnedDate(getZonedDateTime()));
 
     claimItemReturnedFixture.declareClaimedReturnedItemAsMissing(
       new DeclareClaimedReturnedItemAsMissingRequestBuilder()
@@ -57,6 +59,21 @@ class DeclareClaimedReturnedItemAsMissingApiTests extends APITests {
 
     var loan = loansClient.getById(UUID.fromString(loanId)).getJson();
     assertThatPublishedLoanLogRecordEventsAreValid(loan);
+  }
+
+  @Test
+  void declareItemMissingFailsWhenEventPublishingFailsWithBadRequestError() {
+    claimItemReturnedFixture.claimItemReturned(new ClaimItemReturnedRequestBuilder()
+      .forLoan(loanId)
+      .withItemClaimedReturnedDate(getZonedDateTime()));
+
+    FakePubSub.setFailPublishingWithBadRequestError(true);
+    Response response = claimItemReturnedFixture.attemptDeclareClaimedReturnedItemAsMissing(500,
+      new DeclareClaimedReturnedItemAsMissingRequestBuilder()
+        .forLoan(loanId)
+        .withComment(TESTING_COMMENT));
+
+    assertThat(response.getBody(), containsString("Error during publishing Event Message in PubSub. Status code: 400"));
   }
 
   @Test
