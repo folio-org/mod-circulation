@@ -17,11 +17,14 @@ import static api.support.matchers.ValidationErrorMatchers.hasNullParameter;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfPublishedEvents;
 import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfSentNotices;
+import static java.time.ZoneOffset.UTC;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.folio.HttpStatus.HTTP_NOT_FOUND;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
+import static org.folio.circulation.domain.policy.Period.months;
+import static org.folio.circulation.domain.policy.Period.weeks;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE_ERROR;
 import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;
@@ -41,7 +44,6 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.awaitility.Awaitility;
-import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.Matcher;
 import org.junit.jupiter.api.BeforeEach;
@@ -214,7 +216,7 @@ class ChangeDueDateAPITests extends APITests {
     IndividualResource policyWithLimitedRenewals = loanPoliciesFixture.create(
       new LoanPolicyBuilder()
         .withName("Limited renewals loan policy")
-        .rolling(org.folio.circulation.domain.policy.Period.months(1))
+        .rolling(months(1))
         .limitedRenewals(renewalLimit));
 
     useFallbackPolicies(
@@ -282,7 +284,7 @@ class ChangeDueDateAPITests extends APITests {
     IndividualResource policyWithLimitedRenewals = loanPoliciesFixture.create(
       new LoanPolicyBuilder()
         .withName("Limited renewals loan policy")
-        .rolling(org.folio.circulation.domain.policy.Period.months(1))
+        .rolling(months(1))
         .limitedRenewals(renewalLimit));
 
     useFallbackPolicies(
@@ -341,12 +343,11 @@ class ChangeDueDateAPITests extends APITests {
 
   @Test
   void dueDateChangeShouldClearRenewalFlagWhenSetAndNoOpenRecallsInQueue() {
-
     IndividualResource loanPolicy = loanPoliciesFixture.create(
       new LoanPolicyBuilder()
         .withName("loan policy")
-        .withRecallsMinimumGuaranteedLoanPeriod(org.folio.circulation.domain.policy.Period.weeks(2))
-        .rolling(org.folio.circulation.domain.policy.Period.months(1)));
+        .withRecallsMinimumGuaranteedLoanPeriod(weeks(2))
+        .rolling(months(1)));
 
     useFallbackPolicies(loanPolicy.getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
@@ -357,13 +358,13 @@ class ChangeDueDateAPITests extends APITests {
     ItemBuilder itemBuilder = ItemExamples.basedUponSmallAngryPlanet(
       materialTypesFixture.book().getId(), loanTypesFixture.canCirculate().getId(),
       EMPTY, "ItemPrefix", "ItemSuffix", "");
-  
+
     ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
       itemBuilder, itemsFixture.thirdFloorHoldings());
-  
+
     IndividualResource steve = usersFixture.steve();
-  
-    IndividualResource initialLoan = checkOutFixture.checkOutByBarcode(smallAngryPlanet, steve);
+    ZonedDateTime loanDate = ZonedDateTime.of(2021, 11, 20, 13, 25, 46, 0, UTC);
+    IndividualResource initialLoan = checkOutFixture.checkOutByBarcode(smallAngryPlanet, steve, loanDate);
 
     ZonedDateTime initialDueDate = ZonedDateTime.parse(initialLoan.getJson().getString("dueDate"));
 
@@ -389,7 +390,7 @@ class ChangeDueDateAPITests extends APITests {
       .withDueDate(newDueDate));
 
     JsonObject dueDateChangedLoan = loansClient.getById(initialLoan.getId()).getJson();
-    
+
     assertThat(dueDateChangedLoan.getBoolean("dueDateChangedByRecall"), equalTo(false));
     assertThat("due date should be provided new due date",
     dueDateChangedLoan.getString("dueDate"), isEquivalentTo(newDueDate));

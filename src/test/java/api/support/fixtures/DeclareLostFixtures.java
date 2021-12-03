@@ -26,6 +26,11 @@ public class DeclareLostFixtures {
       204, "declare-item-lost-request");
   }
 
+  public Response attemptDeclareItemLost(int expectedStatusCode, DeclareItemLostRequestBuilder builder) {
+    return restAssuredClient.post(builder.create(), declareLoanItemLostURL(builder.getLoanId()),
+      expectedStatusCode, "declare-item-lost-request");
+  }
+
   public Response attemptDeclareItemLost(DeclareItemLostRequestBuilder builder) {
 
     JsonObject request = builder.create();
