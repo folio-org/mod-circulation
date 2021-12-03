@@ -116,12 +116,6 @@
           "type": "string",
           "readonly": true
         },
-        "holdingsRecordId": {
-          "description": "The ID of the holdings for the item",
-          "type": "string",
-          "readonly": true,
-          "$ref": "uuid.json"
-        },
         "instanceId": {
           "description": "The ID of the instance for the item",
           "type": "string",
