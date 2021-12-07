@@ -35,15 +35,11 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.joda.time.Period.weeks;
 
-import java.lang.invoke.MethodHandles;
-import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.awaitility.Awaitility;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.Matcher;
@@ -380,11 +376,6 @@ class ChangeDueDateAPITests extends APITests {
       .fulfilToHoldShelf(servicePointsFixture.cd1()));
 
     Response recalledLoan = loansClient.getById(initialLoan.getId());
-    var recalledLoanDueDate = DateTime.parse(recalledLoan.getJson().getString("dueDate"));
-
-    assertThat(recalledLoan.getJson().getBoolean("dueDateChangedByRecall"), equalTo(true));
-    assertThat(calculateDaysBetween(toZonedDateTime(initialDueDate),
-      toZonedDateTime(recalledLoanDueDate)), equalTo(16));
 
     requestsFixture.cancelRequest(recall);
 
@@ -396,13 +387,9 @@ class ChangeDueDateAPITests extends APITests {
     JsonObject dueDateChangedLoan = loansClient.getById(initialLoan.getId()).getJson();
 
     assertThat(dueDateChangedLoan.getBoolean("dueDateChangedByRecall"), equalTo(false));
-    assertThat("due date should be provided new due date",
-    dueDateChangedLoan.getString("dueDate"), isEquivalentTo(newDueDate));
-  }
 
-  private Integer calculateDaysBetween(ZonedDateTime initialDate, ZonedDateTime secondDate) {
-    var period = java.time.Period.between(initialDate.toLocalDate(), secondDate.toLocalDate());
-    return Math.abs(period.getDays());
+    assertThat("due date should be provided new due date",
+      dueDateChangedLoan.getString("dueDate"), isEquivalentTo(newDueDate));
   }
 
   private void chargeFeesForLostItemToKeepLoanOpen() {
