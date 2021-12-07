@@ -17,6 +17,7 @@ import static org.folio.circulation.domain.representations.LoanProperties.ACTION
 import static org.folio.circulation.domain.representations.LoanProperties.CLAIMED_RETURNED_DATE;
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.hamcrest.CoreMatchers.allOf;
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
@@ -62,6 +63,18 @@ class ClaimItemReturnedAPITests extends APITests {
         .withComment(comment));
 
     assertLoanAndItem(response, comment, dateTime);
+  }
+
+  @Test
+  void claimItemReturnFailsWhenEventPublishingFailsWithBadRequestError() {
+    FakePubSub.setFailPublishingWithBadRequestError(true);
+    final Response response = claimItemReturnedFixture
+      .attemptClaimItemReturned(500, new ClaimItemReturnedRequestBuilder()
+        .forLoan(loanId)
+        .withItemClaimedReturnedDate(getZonedDateTime())
+        .withComment("testing"));
+
+    assertThat(response.getBody(), containsString("Error during publishing Event Message in PubSub. Status code: 400"));
   }
 
   @Test
