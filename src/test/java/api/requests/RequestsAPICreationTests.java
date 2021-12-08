@@ -475,7 +475,7 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(postResponse.getJson(), hasErrors(1));
     assertThat(postResponse.getJson(), hasErrorWith(
-      hasMessage("Cannot create a request with no item ID")));
+      hasMessage("Cannot create an item level request with no item ID")));
   }
 
   @Test
@@ -2530,8 +2530,10 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @ParameterizedTest
-  @EnumSource(RequestLevel.class)
+  @EnumSource(value = RequestLevel.class, names = {"ITEM", "TITLE"})
   void cannotCreateRequestWithoutInstanceId(RequestLevel requestLevel) {
+    reconfigureTlrFeature(TlrFeatureStatus.ENABLED, null, null, null);
+
     Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
       .page()
       .withRequestLevel(requestLevel.getValue())
@@ -2563,8 +2565,10 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @ParameterizedTest
-  @EnumSource(RequestLevel.class)
+  @EnumSource(value = RequestLevel.class, names = {"ITEM", "TITLE"})
   void cannotCreateRequestWithItemIdButNoHoldingsRecordId(RequestLevel requestLevel) {
+    reconfigureTlrFeature(TlrFeatureStatus.ENABLED, null, null, null);
+
     Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
       .page()
       .withRequestLevel(requestLevel.getValue())
