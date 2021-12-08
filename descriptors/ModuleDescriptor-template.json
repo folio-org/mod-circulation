@@ -360,7 +360,7 @@
           "methods": [
             "GET"
           ],
-          "pathPattern": "/circulation/requests/queue/{id}",
+          "pathPattern": "/circulation/requests/queue/item/{id}",
           "permissionsRequired": [
             "circulation.requests.queue.collection.get"
           ],
@@ -372,7 +372,7 @@
           "methods": [
             "POST"
           ],
-          "pathPattern": "/circulation/requests/queue/{id}/reorder",
+          "pathPattern": "/circulation/requests/queue/item/{id}/reorder",
           "permissionsRequired": [
             "circulation.requests.queue.reorder.collection.post"
           ],
@@ -384,7 +384,7 @@
           "methods": [
             "GET"
           ],
-          "pathPattern": "/circulation/requests/title-level/queue/{id}",
+          "pathPattern": "/circulation/requests/queue/instance/{id}",
           "permissionsRequired": [
             "circulation.requests.queue.collection.get"
           ],
@@ -396,7 +396,7 @@
           "methods": [
             "POST"
           ],
-          "pathPattern": "/circulation/requests/title-level/queue/{id}/reorder",
+          "pathPattern": "/circulation/requests/queue/instance/{id}/reorder",
           "permissionsRequired": [
             "circulation.requests.queue.reorder.collection.post"
           ],

@@ -28,7 +28,7 @@ public class RequestQueueValidation {
     return result.failWhen(
       r -> succeeded(r.getRequestQueue().getRequests().isEmpty()),
       r -> new RecordNotFoundFailure(r.isQueueForInstance() ? "Instance" : "Item",
-        r.isQueueForInstance() ? r.getInstanceId() : r.getItemId()));
+        r.getIdParamValue()));
   }
 
   /**
@@ -112,7 +112,7 @@ public class RequestQueueValidation {
 
   /**
    * Verifies that newPositions has sequential order, i.e. 1, 2, 3, 4 but not 1, 2, 3, 40.
-   * Used for both ILR and TLR.
+   * Used for both item and instance queues.
    *
    * @param result - Context object.
    * @return New Result, failed if validation have not been passed.

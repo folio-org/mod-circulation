@@ -3,7 +3,10 @@ package org.folio.circulation.resources;
 import static java.lang.String.format;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.representations.logs.RequestUpdateLogEventMapper.mapToRequestLogEventJson;
+import static org.folio.circulation.resources.context.RequestQueueType.FOR_INSTANCE;
+import static org.folio.circulation.resources.context.RequestQueueType.FOR_ITEM;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
+import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -23,6 +26,7 @@ import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.resources.context.ReorderRequestContext;
+import org.folio.circulation.resources.context.RequestQueueType;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.RouteRegistration;
@@ -36,8 +40,9 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
 public class RequestQueueResource extends Resource {
-  private static final String ITEM_ID_PARAM_NAME = "itemId";
-  private static final String INSTANCE_ID_PARAM_NAME = "instanceId";
+  public static final String URI_BASE = "/circulation/requests/queue";
+  public static final String INSTANCE_ID_PARAM_NAME = "instanceId";
+  public static final String ITEM_ID_PARAM_NAME = "itemId";
 
   public RequestQueueResource(HttpClient client) {
     super(client);
@@ -45,53 +50,38 @@ public class RequestQueueResource extends Resource {
 
   @Override
   public void register(Router router) {
-    final String circulationRequestQueueForItemUri = "/circulation/requests/queue/";
-    final String circulationRequestQueueForInstanceUri = "/circulation/requests/instance/queue/";
-
-    //TODO: Replace with route registration, for failure handling
-    router.get(circulationRequestQueueForItemUri + ":" + ITEM_ID_PARAM_NAME).handler(
-      this::getQueueForItem);
-    router.get(circulationRequestQueueForInstanceUri + ":" + INSTANCE_ID_PARAM_NAME).handler(
-      this::getQueueForInstance);
-
-    new RouteRegistration(circulationRequestQueueForItemUri + ":"
-      + ITEM_ID_PARAM_NAME + "/reorder", router).create(this::reorderQueueForItem);
-    new RouteRegistration(circulationRequestQueueForInstanceUri + ":"
-      + INSTANCE_ID_PARAM_NAME + "/reorder", router).create(this::reorderQueueForInstance);
+    new RouteRegistration(format("%s/instance/:%s", URI_BASE, INSTANCE_ID_PARAM_NAME), router)
+      .create(this::getQueueForInstance);
+    new RouteRegistration(format("%s/instance/:%s/reorder", URI_BASE, INSTANCE_ID_PARAM_NAME), router)
+      .create(this::reorderQueueForInstance);
+    new RouteRegistration(format("%s/item/:%s", URI_BASE, ITEM_ID_PARAM_NAME), router)
+      .create(this::getQueueForItem);
+    new RouteRegistration(format("%s/item/:%s/reorder", URI_BASE, ITEM_ID_PARAM_NAME), router)
+      .create(this::reorderQueueForItem);
   }
 
   private void getQueueForInstance(RoutingContext routingContext) {
-    getQueue(routingContext, true);
+    getQueue(routingContext, FOR_INSTANCE);
   }
 
   private void reorderQueueForInstance(RoutingContext routingContext) {
-    reorderQueue(routingContext, true);
+    reorderQueue(routingContext, FOR_INSTANCE);
   }
 
   private void getQueueForItem(RoutingContext routingContext) {
-    getQueue(routingContext, false);
+    getQueue(routingContext, FOR_ITEM);
   }
 
   private void reorderQueueForItem(RoutingContext routingContext) {
-    reorderQueue(routingContext, false);
+    reorderQueue(routingContext, FOR_ITEM);
   }
 
-  private void getQueue(RoutingContext routingContext, boolean queueForInstance) {
-    WebContext context = new WebContext(routingContext);
-    Clients clients = Clients.create(context, client);
-
-    final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
+  private void getQueue(RoutingContext routingContext, RequestQueueType requestQueueType) {
+    final WebContext context = new WebContext(routingContext);
     final RequestRepresentation requestRepresentation = new RequestRepresentation();
 
-    CompletableFuture<Result<RequestQueue>> requestQueue;
-    if (queueForInstance) {
-      String instanceId = routingContext.request().getParam(INSTANCE_ID_PARAM_NAME);
-      requestQueue = requestQueueRepository.getByInstanceId(instanceId);
-    }
-    else {
-      String itemId = routingContext.request().getParam(ITEM_ID_PARAM_NAME);
-      requestQueue = requestQueueRepository.getByItemId(itemId);
-    }
+    CompletableFuture<Result<RequestQueue>> requestQueue = getRequestQueueByType(routingContext,
+      context, requestQueueType);
 
     requestQueue
       .thenApply(r -> r.map(queue -> new MultipleRecords<>(queue.getRequests(), queue.size())))
@@ -101,11 +91,10 @@ public class RequestQueueResource extends Resource {
       .thenAccept(context::writeResultToHttpResponse);
   }
 
-  private void reorderQueue(RoutingContext routingContext, boolean queueForInstance) {
-    String instanceId = routingContext.request().getParam(INSTANCE_ID_PARAM_NAME);
-    String itemId = routingContext.request().getParam(ITEM_ID_PARAM_NAME);
+  private void reorderQueue(RoutingContext routingContext, RequestQueueType requestQueueType) {
+    String idParamValue = getIdParameterValueByQueueType(routingContext, requestQueueType);
 
-    ReorderRequestContext reorderContext = new ReorderRequestContext(instanceId, itemId,
+    ReorderRequestContext reorderContext = new ReorderRequestContext(requestQueueType, idParamValue,
       routingContext.getBodyAsJson().mapTo(ReorderQueueRequest.class));
 
     final EventPublisher eventPublisher = new EventPublisher(routingContext);
@@ -120,10 +109,11 @@ public class RequestQueueResource extends Resource {
       requestQueueRepository, requestRepository, new ServicePointRepository(clients),
       configurationRepository);
 
-    validateTlrFeatureStatus(configurationRepository, queueForInstance, instanceId, itemId)
-      .thenCompose(r -> r.after(tlrSettings -> queueForInstance
-        ? requestQueueRepository.getByInstanceId(instanceId)
-        : requestQueueRepository.getByItemId(itemId)))
+    getRequestQueueByType(routingContext, context, requestQueueType);
+
+    validateTlrFeatureStatus(configurationRepository, requestQueueType, idParamValue)
+      .thenCompose(r -> r.after(tlrSettings ->
+        getRequestQueueByType(routingContext, context, requestQueueType)))
       .thenApply(r -> r.map(reorderContext::withRequestQueue))
       // Validation block
       .thenApply(RequestQueueValidation::queueIsFound)
@@ -140,17 +130,17 @@ public class RequestQueueResource extends Resource {
   }
 
   private CompletableFuture<Result<TlrSettingsConfiguration>> validateTlrFeatureStatus(
-    ConfigurationRepository configurationRepository, boolean queueForInstance, String instanceId,
-    String itemId) {
+    ConfigurationRepository configurationRepository, RequestQueueType requestQueueType,
+    String idParamValue) {
 
     return configurationRepository.lookupTlrSettings()
-      .thenApply(r -> r.failWhen(tlrSettings ->
-          Result.succeeded(queueForInstance ^ tlrSettings.isTitleLevelRequestsFeatureEnabled()),
+      .thenApply(r -> r.failWhen(
+        tlrSettings -> succeeded(
+          requestQueueType == FOR_INSTANCE ^ tlrSettings.isTitleLevelRequestsFeatureEnabled()),
         tlrSettings -> singleValidationError(
           format("Refuse to reorder request queue, TLR feature status is %s.",
             tlrSettings.isTitleLevelRequestsFeatureEnabled() ? "ENABLED" : "DISABLED"),
-          queueForInstance ? INSTANCE_ID_PARAM_NAME : ITEM_ID_PARAM_NAME,
-          queueForInstance ? instanceId : itemId)
+          getIdParameterNameByQueueType(requestQueueType), idParamValue)
       ));
   }
 
@@ -168,9 +158,48 @@ public class RequestQueueResource extends Resource {
   private CompletableFuture<Result<JsonObject>> toRepresentation(ReorderRequestContext context) {
     final RequestRepresentation requestRepresentation = new RequestRepresentation();
 
-    return completedFuture(Result.succeeded(context.getRequestQueue()))
+    return completedFuture(succeeded(context.getRequestQueue()))
       .thenApply(r -> r.map(queue -> new MultipleRecords<>(queue.getRequests(), queue.size())))
       .thenApply(r -> r.map(requests -> requests
         .asJson(requestRepresentation::extendedRepresentation, "requests")));
+  }
+
+  /**
+   * @param requestQueueType Request queue type - is it for instance or for item
+   * @return Either instanceId or itemId parameter name depending on the queue type
+   */
+  private String getIdParameterNameByQueueType(RequestQueueType requestQueueType) {
+    if (requestQueueType == FOR_INSTANCE) {
+      return INSTANCE_ID_PARAM_NAME;
+    } else {
+      return ITEM_ID_PARAM_NAME;
+    }
+  }
+
+  /**
+   *
+   * @param routingContext Routing context
+   * @param requestQueueType Request queue type - is it for instance or for item
+   * @return Either instanceId or itemId parameter value depending on the queue type
+   */
+  private String getIdParameterValueByQueueType(RoutingContext routingContext,
+    RequestQueueType requestQueueType) {
+
+    return routingContext.request().getParam(getIdParameterNameByQueueType(requestQueueType));
+  }
+
+  private CompletableFuture<Result<RequestQueue>> getRequestQueueByType(
+    RoutingContext routingContext, WebContext context, RequestQueueType requestQueueType) {
+
+    Clients clients = Clients.create(context, client);
+    final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
+
+    String idParamValue = getIdParameterValueByQueueType(routingContext, requestQueueType);
+
+    if (requestQueueType == FOR_INSTANCE) {
+      return requestQueueRepository.getByInstanceId(idParamValue);
+    } else {
+      return requestQueueRepository.getByItemId(idParamValue);
+    }
   }
 }

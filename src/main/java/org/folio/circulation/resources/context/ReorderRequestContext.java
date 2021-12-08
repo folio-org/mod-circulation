@@ -1,5 +1,7 @@
 package org.folio.circulation.resources.context;
 
+import static org.folio.circulation.resources.context.RequestQueueType.FOR_INSTANCE;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -12,16 +14,19 @@ import lombok.Getter;
 
 @Getter
 public class ReorderRequestContext {
-  private final String instanceId;
-  private final String itemId;
+  private final RequestQueueType requestQueueType;
+
+  // Can be either instanceId or itemId depending on the queue type
+  private final String idParamValue;
+
   private final ReorderQueueRequest reorderQueueRequest;
   private RequestQueue requestQueue;
 
-  public ReorderRequestContext(String instanceId, String itemId,
+  public ReorderRequestContext(RequestQueueType requestQueueType, String idParamValue,
     ReorderQueueRequest reorderQueueRequest) {
 
-    this.instanceId = instanceId;
-    this.itemId = itemId;
+    this.requestQueueType = requestQueueType;
+    this.idParamValue = idParamValue;
     this.reorderQueueRequest = reorderQueueRequest;
   }
 
@@ -32,7 +37,7 @@ public class ReorderRequestContext {
   }
 
   public boolean isQueueForInstance() {
-    return instanceId != null && itemId == null;
+    return requestQueueType == FOR_INSTANCE;
   }
 
   /**
