@@ -1,9 +1,11 @@
 package org.folio.circulation.domain;
 
 import static java.util.Objects.isNull;
+import static org.folio.circulation.domain.representations.ContributorsToNamesMapper.mapContributorsToNamesOnly;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
 import java.lang.invoke.MethodHandles;
+import java.util.Objects;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -17,7 +19,7 @@ public class StoredRequestRepresentation {
     final JsonObject representation = request.asJson();
 
     addStoredItemProperties(representation, request.getItem());
-    addStoredInstanceProperties(representation, request.getItem());
+    addStoredInstanceProperties(representation, request.getInstance());
     addStoredRequesterProperties(representation, request.getRequester());
     addStoredProxyProperties(representation, request.getProxy());
 
@@ -38,15 +40,20 @@ public class StoredRequestRepresentation {
     request.put("item", itemSummary);
   }
 
-  private static void addStoredInstanceProperties(JsonObject request, Item item) {
-    if (item == null || item.isNotFound()) {
-      logUnableAddItemToTheRequest(request, item);
+  private static void addStoredInstanceProperties(JsonObject request, Instance instance) {
+    if (Objects.isNull(instance) || instance.isNotFound()) {
+      log.info("Unable to add instance properties to request {}, instance is {}",
+        request.getString("id"), request.getString("instanceId"));
       return;
     }
-    JsonObject instance = new JsonObject();
-    write(instance, "title", item.getTitle());
-    write(instance, "identifiers", item.getIdentifiers());
-    request.put("instance", instance);
+    JsonObject instanceSummary = new JsonObject();
+    write(instanceSummary, "title", instance.getTitle());
+    write(instanceSummary, "identifiers", instance.getIdentifiers());
+    write(instanceSummary, "contributorNames", mapContributorsToNamesOnly(instance.getContributors()));
+    write(instanceSummary, "publication", instance.getPublication());
+    write(instanceSummary, "editions", instance.getEditions());
+
+    request.put("instance", instanceSummary);
   }
 
   private static void addStoredRequesterProperties(JsonObject request, User requester) {
