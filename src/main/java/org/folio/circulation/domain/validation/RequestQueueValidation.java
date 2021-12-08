@@ -34,7 +34,7 @@ public class RequestQueueValidation {
   /**
    * Verifies that provided reordered queue has exact the same requests that currently present
    * in the DB. No new requests added to neither reorderedQueue nor actual queue in DB.
-   * Used for both ILR and TLR.
+   * Used for both item and instance queues.
    *
    * @param result - Context.
    * @return New result, failed when the validation has not been passed.
