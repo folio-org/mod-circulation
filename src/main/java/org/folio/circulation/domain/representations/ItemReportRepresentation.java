@@ -1,7 +1,7 @@
 package org.folio.circulation.domain.representations;
 
 import static org.folio.circulation.domain.representations.CallNumberComponentsRepresentation.createCallNumberComponents;
-import static org.folio.circulation.domain.representations.ContributorsToNamesMapper.mapContributorsToNamesOnly;
+import static org.folio.circulation.domain.representations.ContributorsToNamesMapper.mapContributorNamesToJson;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.json.JsonPropertyWriter.writeNamedObject;
 
@@ -36,8 +36,7 @@ public class ItemReportRepresentation {
     write(itemReport, "id", item.getItemId());
     write(itemReport, "title", item.getTitle());
     write(itemReport, "barcode", item.getBarcode());
-    write(itemReport, "contributors",
-      mapContributorsToNamesOnly(item.getContributors()));
+    write(itemReport, "contributors", mapContributorNamesToJson(item));
     write(itemReport, "callNumber", item.getCallNumber());
     write(itemReport, "enumeration", item.getEnumeration());
     write(itemReport, "volume", item.getVolume());

@@ -1,7 +1,7 @@
 package org.folio.circulation.domain.representations;
 
 import static org.folio.circulation.domain.representations.CallNumberComponentsRepresentation.createCallNumberComponents;
-import static org.folio.circulation.domain.representations.ContributorsToNamesMapper.mapContributorsToNamesOnly;
+import static org.folio.circulation.domain.representations.ContributorsToNamesMapper.mapContributorNamesToJson;
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 import static org.folio.circulation.domain.representations.ItemProperties.LAST_CHECK_IN;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
@@ -32,8 +32,7 @@ public class ItemSummaryRepresentation {
     write(itemSummary, "instanceId", item.getInstanceId());
     write(itemSummary, "title", item.getTitle());
     write(itemSummary, "barcode", item.getBarcode());
-    write(itemSummary, "contributors",
-      mapContributorsToNamesOnly(item.getContributors()));
+    write(itemSummary, "contributors", mapContributorNamesToJson(item));
     write(itemSummary, "callNumber", item.getCallNumber());
     write(itemSummary, "enumeration", item.getEnumeration());
     write(itemSummary, "chronology", item.getChronology());

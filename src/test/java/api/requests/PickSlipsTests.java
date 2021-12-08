@@ -21,7 +21,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.folio.circulation.domain.CallNumberComponents;
-import org.folio.circulation.domain.Contributor;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Location;
@@ -174,9 +173,7 @@ class PickSlipsTests extends APITests {
     Item item = Item.from(itemResource.getJson())
       .withInstance(new InstanceMapper().toDomain(itemResource.getInstance().getJson()));
 
-    String contributorNames = item.getContributors()
-      .map(Contributor::getName)
-      .collect(joining("; "));
+    String contributorNames = item.getContributorNames().collect(joining("; "));
 
     String yearCaptionsToken = String.join("; ", item.getYearCaption());
     String copyNumber = item.getCopyNumber() != null ? item.getCopyNumber() : "";
@@ -187,8 +184,7 @@ class PickSlipsTests extends APITests {
     assertEquals(item.getTitle(), itemContext.getString("title"));
     assertEquals(item.getBarcode(), itemContext.getString("barcode"));
     assertEquals(ItemStatus.PAGED.getValue(), itemContext.getString("status"));
-    assertEquals(item.getPrimaryContributorName(),
-      itemContext.getString("primaryContributor"));
+    assertEquals(item.getPrimaryContributorName(), itemContext.getString("primaryContributor"));
     assertEquals(contributorNames, itemContext.getString("allContributors"));
     assertEquals(item.getEnumeration(), itemContext.getString("enumeration"));
     assertEquals(item.getVolume(), itemContext.getString("volume"));

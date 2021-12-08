@@ -120,20 +120,16 @@ public class Item {
     return instance.getTitle();
   }
 
-  public Stream<Identifier> getIdentifiers() {
-    return instance.getIdentifiers().stream();
+  public Stream<String> getContributorNames() {
+    return instance.getContributorNames();
   }
 
   public String getPrimaryContributorName() {
-    return getContributors()
-      .filter(Contributor::getPrimary)
-      .findFirst()
-      .map(Contributor::getName)
-      .orElse(null);
+    return instance.getPrimaryContributorName();
   }
 
-  public Stream<Contributor> getContributors() {
-    return instance.getContributors().stream();
+  public Stream<Identifier> getIdentifiers() {
+    return instance.getIdentifiers().stream();
   }
 
   public String getBarcode() {
