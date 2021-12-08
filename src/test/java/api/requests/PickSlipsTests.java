@@ -170,7 +170,6 @@ class PickSlipsTests extends APITests {
     JsonObject itemContext = pickSlip.getJsonObject(ITEM_KEY);
 
     Item item = Item.from(itemResource.getJson())
-      .withHoldingsRecord(itemResource.getHoldingsRecord().getJson())
       .withInstance(itemResource.getInstance().getJson());
 
     String contributorNames = item.getContributors()
