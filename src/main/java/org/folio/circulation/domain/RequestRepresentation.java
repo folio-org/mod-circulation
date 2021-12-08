@@ -97,6 +97,8 @@ public class RequestRepresentation {
       write(instance, "title", item.getTitle());
       write(instance, "identifiers", item.getIdentifiers());
       write(instance, "contributorNames", mapContributorsToNamesOnly(item.getContributors()));
+      write(instance, "publication", item.getPublication());
+      write(instance, "editions", item.getEditions());
     }
     write(request, "instance", instance);
   }
