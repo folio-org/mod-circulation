@@ -1,8 +1,12 @@
 package org.folio.circulation.resources;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static org.folio.circulation.domain.representations.RequestProperties.HOLDINGS_RECORD_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.INSTANCE_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.ITEM_ID;
+import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_LEVEL;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_HOLDINGS_RECORD_ID;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_INSTANCE_ID;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_ITEM_ID;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_PICKUP_SERVICE_POINT;
@@ -68,6 +72,8 @@ class RequestFromRepresentationService {
         .mapFailure(err -> errorHandler.handleValidationError(err, INVALID_INSTANCE_ID, r)))
       .thenApply(r -> r.next(this::refuseWhenNoItemId)
         .mapFailure(err -> errorHandler.handleValidationError(err, INVALID_ITEM_ID, r)))
+      .thenApply(r -> r.next(this::refuseWhenNoHoldingsRecordId)
+        .mapFailure(err -> errorHandler.handleValidationError(err, INVALID_HOLDINGS_RECORD_ID, r)))
       .thenApply(r -> r.map(this::removeRelatedRecordInformation))
       .thenApply(r -> r.map(this::removeProcessingParameters))
       .thenCompose(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
@@ -174,7 +180,7 @@ class RequestFromRepresentationService {
   private Result<Request> validateRequestLevel(Request request) {
     JsonObject representation = request.getRequestRepresentation();
 
-    String requestLevelRaw = representation.getString("requestLevel");
+    String requestLevelRaw = representation.getString(REQUEST_LEVEL);
     RequestLevel requestLevel = RequestLevel.from(requestLevelRaw);
     boolean tlrEnabled = request.getTlrSettingsConfiguration().isTitleLevelRequestsFeatureEnabled();
 
@@ -208,13 +214,26 @@ class RequestFromRepresentationService {
     }
   }
 
-    private Result<Request> refuseWhenNoItemId(Request request) {
+  private Result<Request> refuseWhenNoItemId(Request request) {
     JsonObject representation = request.getRequestRepresentation();
     String itemId = getProperty(representation, ITEM_ID);
     boolean tlrEnabled = request.getTlrSettingsConfiguration().isTitleLevelRequestsFeatureEnabled();
 
     if (!tlrEnabled && isBlank(itemId)) {
       return failedValidation("Cannot create a request with no item ID", "itemId", itemId);
+    }
+    else {
+      return of(() -> request);
+    }
+  }
+
+  private Result<Request> refuseWhenNoHoldingsRecordId(Request request) {
+    JsonObject representation = request.getRequestRepresentation();
+    String holdingsRecordId = getProperty(representation, HOLDINGS_RECORD_ID);
+
+    if (isNotBlank(getProperty(representation, ITEM_ID)) && isBlank(holdingsRecordId)) {
+      return failedValidation("Cannot create a request with item ID but no holdings record ID",
+        "holdingsRecordId", holdingsRecordId);
     }
     else {
       return of(() -> request);
