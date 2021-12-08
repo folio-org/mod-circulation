@@ -249,12 +249,12 @@ public class InterfaceUrls {
 
   public static URL requestQueueForItemUrl(String itemId) {
     return circulationModuleUrl(String
-      .format("/circulation/requests/queue/%s", itemId));
+      .format("/circulation/requests/queue/item/%s", itemId));
   }
 
   public static URL requestQueueForInstanceUrl(String instanceId) {
     return circulationModuleUrl(String
-      .format("/circulation/requests/instance/queue/%s", instanceId));
+      .format("/circulation/requests/queue/instance/%s", instanceId));
   }
 
   static URL userManualBlocksStorageUrl() {
