@@ -114,7 +114,8 @@
           "methods": ["POST"],
           "pathPattern": "/circulation/loans/{id}/change-due-date",
           "permissionsRequired": [
-            "circulation.loans.change-due-date.post"
+            "circulation.loans.change-due-date.post",
+            "configuration.entries.collection.get"
           ],
           "modulePermissions": [
             "modperms.circulation.loans.change-due-date.post"

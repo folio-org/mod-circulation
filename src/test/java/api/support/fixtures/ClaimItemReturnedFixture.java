@@ -27,6 +27,11 @@ public class ClaimItemReturnedFixture {
       claimItemReturnedURL(request.getLoanId()), 204, "claim-item-returned-request");
   }
 
+  public Response attemptClaimItemReturned(int expectedStatusCode, ClaimItemReturnedRequestBuilder request) {
+    return restAssuredClient.post(request.create(), claimItemReturnedURL(request.getLoanId()),
+      expectedStatusCode, "claim-item-returned-request");
+  }
+
   public Response attemptClaimItemReturned(ClaimItemReturnedRequestBuilder request) {
     return restAssuredClient.post(request.create(),
       claimItemReturnedURL(request.getLoanId()), "attempt-claim-item-returned-request");
@@ -37,6 +42,14 @@ public class ClaimItemReturnedFixture {
 
     return restAssuredClient.post(request.create(),
       declareClaimedReturnedItemAsMissingUrl(request.getLoanId()), 204,
+      "declare-claimed-returned-item-as-missing-request");
+  }
+
+  public Response attemptDeclareClaimedReturnedItemAsMissing(int expectedStatusCode,
+    DeclareClaimedReturnedItemAsMissingRequestBuilder request) {
+
+    return restAssuredClient.post(request.create(),
+      declareClaimedReturnedItemAsMissingUrl(request.getLoanId()), expectedStatusCode,
       "declare-claimed-returned-item-as-missing-request");
   }
 

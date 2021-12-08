@@ -43,6 +43,7 @@ public class RequestBuilder extends JsonBuilder implements Builder {
   private final String requestLevel;
   private final ZonedDateTime requestDate;
   private final UUID itemId;
+  private final UUID holdingsRecordId;
   private final UUID instanceId;
   private final UUID requesterId;
   private final String fulfilmentPreference;
@@ -68,6 +69,7 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       "Hold",
       "Item",
       ZonedDateTime.of(2017, 7, 15, 9, 35, 27, 0, UTC),
+      UUID.randomUUID(),
       UUID.randomUUID(),
       UUID.randomUUID(),
       UUID.randomUUID(),
@@ -99,6 +101,7 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       getProperty(representation, "requestLevel"),
       getDateTimeProperty(representation, "requestDate"),
       getUUIDProperty(representation, "itemId"),
+      getUUIDProperty(representation, "holdingsRecordId"),
       getUUIDProperty(representation, "instanceId"),
       getUUIDProperty(representation, "requesterId"),
       getProperty(representation, "fulfilmentPreference"),
@@ -130,6 +133,7 @@ public class RequestBuilder extends JsonBuilder implements Builder {
     put(request, "requestLevel", this.requestLevel);
     put(request, "requestDate", formatDateTimeOptional(this.requestDate));
     put(request, "itemId", this.itemId);
+    put(request, "holdingsRecordId", this.holdingsRecordId);
     put(request, "instanceId", this.instanceId);
     put(request, "requesterId", this.requesterId);
     put(request, "fulfilmentPreference", this.fulfilmentPreference);
@@ -223,7 +227,9 @@ public class RequestBuilder extends JsonBuilder implements Builder {
     RequestBuilder builder = withItemId(item.getId());
 
     if (item instanceof ItemResource) {
-      return builder.withInstanceId(((ItemResource) item).getInstanceId());
+      ItemResource itemResource = (ItemResource) item;
+      return builder.withInstanceId(itemResource.getInstanceId())
+        .withHoldingsRecordId(itemResource.getHoldingsRecordId());
     }
 
     return builder;

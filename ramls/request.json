@@ -17,7 +17,7 @@
     "requestLevel": {
       "description": "Level of the request - Item or Title",
       "type": "string",
-      "enum": ["Item", "Title"]
+      "enum": ["Item"]
     },
     "requestDate": {
       "description": "Date the request was made",
@@ -40,6 +40,11 @@
     },
     "instanceId": {
       "description": "ID of the instance being requested",
+      "type": "string",
+      "$ref": "raml-util/schemas/uuid.schema"
+    },
+    "holdingsRecordId": {
+      "description": "ID of the holdings record being requested",
       "type": "string",
       "$ref": "raml-util/schemas/uuid.schema"
     },
@@ -110,12 +115,6 @@
           "description" : "Deprecated call number from the holdings record, use callNumberComponents.callNumber instead",
           "type": "string",
           "readonly": true
-        },
-        "holdingsRecordId": {
-          "description": "The ID of the holdings for the item",
-          "type": "string",
-          "readonly": true,
-          "$ref": "uuid.json"
         },
         "instanceId": {
           "description": "The ID of the instance for the item",

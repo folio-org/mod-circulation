@@ -39,6 +39,7 @@ import static org.folio.circulation.domain.representations.ItemProperties.CALL_N
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE_ERROR;
 import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_CREATED_THROUGH_OVERRIDE;
+import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.hasItems;
@@ -65,6 +66,7 @@ import java.util.stream.IntStream;
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.domain.RequestLevel;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.override.BlockOverrides;
@@ -73,12 +75,15 @@ import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.utils.ClockUtil;
+import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matcher;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EmptySource;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import api.support.APITests;
@@ -172,6 +177,7 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(representation.getString("requestLevel"), is("Item"));
     assertThat(representation.getString("requestDate"), isEquivalentTo(requestDate));
     assertThat(representation.getString("itemId"), is(item.getId().toString()));
+    assertThat(representation.getString("holdingsRecordId"), is(item.getHoldingsRecordId()));
     assertThat(representation.getString("instanceId"), is(instanceId));
     assertThat(representation.getString("requesterId"), is(requester.getId().toString()));
     assertThat(representation.getString("fulfilmentPreference"), is("Hold Shelf"));
@@ -257,6 +263,19 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(contributors, notNullValue());
     assertThat(contributors.size(), is(1));
     assertThat(contributors.getJsonObject(0).getString("name"), is("Chambers, Becky"));
+
+    JsonArray editions = requestInstance.getJsonArray("editions");
+    assertThat(editions, Matchers.notNullValue());
+    assertThat(editions.size(), is(1));
+    assertThat(editions.getString(0), is("First American Edition"));
+
+    JsonArray publication = requestInstance.getJsonArray("publication");
+    assertThat(publication, Matchers.notNullValue());
+    assertThat(publication.size(), is(1));
+    JsonObject firstPublication = publication.getJsonObject(0);
+    assertThat(firstPublication.getString("publisher"), is("Alfred A. Knopf"));
+    assertThat(firstPublication.getString("place"), is("New York"));
+    assertThat(firstPublication.getString("dateOfPublication"), is("2016"));
   }
 
   @Test
@@ -2288,8 +2307,8 @@ public class RequestsAPICreationTests extends APITests {
       hasNullParameter("instanceId"))));
 
     assertThat(responseJson, hasErrorWith(allOf(
-      hasMessage("Cannot create a request with no item ID"),
-      hasNullParameter("itemId"))));
+        hasMessage("Cannot create an item level request with no item ID"),
+        hasNullParameter("itemId"))));
 
     assertThat(responseJson, hasErrorWith(allOf(
       hasMessage("A valid user and patron group are required. User is null"),
@@ -2470,6 +2489,96 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(response.getJson(), hasNoJsonPath("requestProcessingParameters"));
   }
 
+  @Test
+  void titleLevelRequestConfirmationNoticeShouldBeSentWithEnabledTlr() {
+    UUID templateId = UUID.randomUUID();
+    templateFixture.createDummyNoticeTemplate(templateId);
+    reconfigureTlrFeature(TlrFeatureStatus.ENABLED, templateId, null, null);
+
+    requestsFixture.place(buildTitleLevelRequest());
+    verifyNumberOfSentNotices(1);
+    verifyNumberOfPublishedEvents(NOTICE, 1);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+  }
+
+  @ParameterizedTest
+  @EnumSource(value = TlrFeatureStatus.class, names = {"DISABLED", "NOT_CONFIGURED"})
+  void titleLevelRequestConfirmationNoticeShouldNotBeSentWithDisabledTlr(
+    TlrFeatureStatus tlrFeatureStatus) {
+
+    UUID templateId = UUID.randomUUID();
+    templateFixture.createDummyNoticeTemplate(templateId);
+    reconfigureTlrFeature(tlrFeatureStatus, templateId, null, null);
+
+    Response response = requestsFixture.attemptPlace(buildTitleLevelRequest());
+    assertThat(response.getStatusCode(), CoreMatchers.is(422));
+    assertThat(response.getJson(), hasErrorWith(
+      hasMessage("requestLevel must be one of the following: \"Item\"")));
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+  }
+
+  @Test
+  void titleLevelRequestConfirmationNoticeShouldNotBeSentWithoutConfiguredNoticeTemplate() {
+    reconfigureTlrFeature(TlrFeatureStatus.ENABLED, null, null, null);
+
+    requestsFixture.place(buildTitleLevelRequest());
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+  }
+
+  @ParameterizedTest
+  @EnumSource(RequestLevel.class)
+  void cannotCreateRequestWithoutInstanceId(RequestLevel requestLevel) {
+    Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
+      .page()
+      .withRequestLevel(requestLevel.getValue())
+      .forItem(itemsFixture.basedUponNod())
+      .withInstanceId(null)
+      .withRequesterId(usersFixture.steve().getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId()));
+
+    assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(postResponse.getJson(), hasErrors(1));
+    assertThat(postResponse.getJson(), hasErrorWith(
+      hasMessage("Cannot create a request with no instance ID")));
+  }
+
+  @Test
+  void cannotCreateItemLevelRequestWithoutItemId() {
+    Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
+      .page()
+      .itemRequestLevel()
+      .forItem(itemsFixture.basedUponNod())
+      .withItemId(null)
+      .withRequesterId(usersFixture.steve().getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId()));
+
+    assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(postResponse.getJson(), hasErrors(1));
+    assertThat(postResponse.getJson(), hasErrorWith(
+      hasMessage("Cannot create an item level request with no item ID")));
+  }
+
+  @ParameterizedTest
+  @EnumSource(RequestLevel.class)
+  void cannotCreateRequestWithItemIdButNoHoldingsRecordId(RequestLevel requestLevel) {
+    Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
+      .page()
+      .withRequestLevel(requestLevel.getValue())
+      .forItem(itemsFixture.basedUponNod())
+      .withHoldingsRecordId(null)
+      .withRequesterId(usersFixture.steve().getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId()));
+
+    assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(postResponse.getJson(), hasErrors(1));
+    assertThat(postResponse.getJson(), hasErrorWith(
+      hasMessage("Cannot create a request with item ID but no holdings record ID")));
+  }
+
   private static void assertOverrideResponseSuccess(Response response) {
     assertThat(response, hasStatus(HTTP_CREATED));
     assertThat(response.getJson(), hasErrors(0));
@@ -2625,5 +2734,16 @@ public class RequestsAPICreationTests extends APITests {
 
   private static JsonArray getErrorsFromResponse(Response response) {
     return response.getJson().getJsonArray("errors");
+  }
+
+  private RequestBuilder buildTitleLevelRequest() {
+    return new RequestBuilder()
+      .page()
+      .titleRequestLevel()
+      .withInstanceId(itemsFixture.basedUponSmallAngryPlanet().getInstanceId())
+      .withRequesterId(usersFixture.charlotte().getId())
+      .withRequestDate(getZonedDateTime())
+      .withStatus(OPEN_NOT_YET_FILLED)
+      .withPickupServicePoint(servicePointsFixture.cd1());
   }
 }

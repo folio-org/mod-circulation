@@ -112,6 +112,7 @@ class RequestsAPIRetrievalTests extends APITests {
     assertThat(representation.getString("requestLevel"), is("Item"));
     assertThat(representation.getString("requestDate"), isEquivalentTo(requestDate));
     assertThat(representation.getString("itemId"), is(smallAngryPlanet.getId()));
+    assertThat(representation.getString("holdingsRecordId"), is(smallAngryPlanet.getHoldingsRecordId()));
     assertThat(representation.getString("instanceId"), is(smallAngryPlanet.getInstanceId()));
     assertThat(representation.getString("requesterId"), is(sponsor.getId()));
     assertThat(representation.getString("fulfilmentPreference"), is("Hold Shelf"));
@@ -225,6 +226,19 @@ class RequestsAPIRetrievalTests extends APITests {
     assertThat(contributors, CoreMatchers.notNullValue());
     assertThat(contributors.size(), is(1));
     assertThat(contributors.getJsonObject(0).getString("name"), is("Chambers, Becky"));
+
+    JsonArray editions = instanceSummary.getJsonArray("editions");
+    assertThat(editions, notNullValue());
+    assertThat(editions.size(), is(1));
+    assertThat(editions.getString(0), is("First American Edition"));
+
+    JsonArray publication = instanceSummary.getJsonArray("publication");
+    assertThat(publication, notNullValue());
+    assertThat(publication.size(), is(1));
+    JsonObject firstPublication = publication.getJsonObject(0);
+    assertThat(firstPublication.getString("publisher"), is("Alfred A. Knopf"));
+    assertThat(firstPublication.getString("place"), is("New York"));
+    assertThat(firstPublication.getString("dateOfPublication"), is("2016"));
   }
 
   @Test
@@ -714,6 +728,8 @@ class RequestsAPIRetrievalTests extends APITests {
     hasProperty("requestDate", request, "request");
     hasProperty("requesterId", request, "request");
     hasProperty("itemId", request, "request");
+    hasProperty("instanceId", request, "request");
+    hasProperty("holdingsRecordId", request, "request");
     hasProperty("fulfilmentPreference", request, "request");
     hasProperty("item", request, "request");
     hasProperty("requester", request, "request");

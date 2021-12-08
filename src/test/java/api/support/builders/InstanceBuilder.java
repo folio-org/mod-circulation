@@ -20,27 +20,32 @@ public class InstanceBuilder extends JsonBuilder implements Builder {
   private final UUID instanceTypeId;
   private final JsonArray contributors;
   private final List<Pair<UUID, String>> identifiers;
+  private final JsonArray publication;
+  private final JsonArray editions;
 
   public InstanceBuilder(String title, UUID instanceTypeId) {
     this(UUID.randomUUID(), title, instanceTypeId);
   }
 
   private InstanceBuilder(UUID id, String title, UUID instanceTypeId) {
-    this(id, title, new JsonArray(), instanceTypeId, Collections.emptyList());
+    this(id, title, new JsonArray(), instanceTypeId, Collections.emptyList(), new JsonArray(), new JsonArray());
   }
 
-  private InstanceBuilder(
-    UUID id,
+  private InstanceBuilder(UUID id,
     String title,
     JsonArray contributors,
     UUID instanceTypeId,
-    List<Pair<UUID, String>> identifiers) {
+    List<Pair<UUID, String>> identifiers,
+    JsonArray publication,
+    JsonArray editions) {
 
     this.id = id;
     this.title = title;
     this.contributors = contributors;
     this.instanceTypeId = instanceTypeId;
     this.identifiers = identifiers;
+    this.editions = editions;
+    this.publication = publication;
   }
 
   @Override
@@ -54,6 +59,8 @@ public class InstanceBuilder extends JsonBuilder implements Builder {
     put(instance, "instanceTypeId", instanceTypeId);
     put(instance, "contributors", contributors);
     put(instance, "identifiers", identifiersToJson());
+    put(instance, "editions", editions);
+    put(instance, "publication", publication);
 
     return instance;
   }
@@ -72,7 +79,9 @@ public class InstanceBuilder extends JsonBuilder implements Builder {
       this.title,
       this.contributors,
       this.instanceTypeId,
-      this.identifiers);
+      this.identifiers,
+      this.publication,
+      this.editions);
   }
 
   public Builder withInstanceTypeId(UUID instanceTypeId) {
@@ -81,7 +90,9 @@ public class InstanceBuilder extends JsonBuilder implements Builder {
       this.title,
       this.contributors,
       instanceTypeId,
-      this.identifiers);
+      this.identifiers,
+      this.publication,
+      this.editions);
   }
 
   public InstanceBuilder withContributor(String name, UUID typeId) {
@@ -104,7 +115,43 @@ public class InstanceBuilder extends JsonBuilder implements Builder {
       this.title,
       contributors,
       this.instanceTypeId,
-      this.identifiers);
+      this.identifiers,
+      this.publication,
+      this.editions);
+  }
+
+  public InstanceBuilder withSinglePublication(String publisher, String place, String dateOfPublication) {
+    final JsonObject singlePublication = new JsonObject();
+    write(singlePublication, "publisher", publisher);
+    write(singlePublication, "place", place);
+    write(singlePublication, "dateOfPublication", dateOfPublication);
+    return withPublication(this.publication.copy().add(singlePublication));
+  }
+
+  private InstanceBuilder withPublication(JsonArray publication) {
+    return new InstanceBuilder(
+      this.id,
+      this.title,
+      contributors,
+      this.instanceTypeId,
+      this.identifiers,
+      publication,
+      this.editions);
+  }
+
+  public InstanceBuilder withSingleEdition(String edition) {
+    return withEditions(this.editions.copy().add(edition));
+  }
+
+  private InstanceBuilder withEditions(JsonArray editions) {
+    return new InstanceBuilder(
+      this.id,
+      this.title,
+      contributors,
+      this.instanceTypeId,
+      this.identifiers,
+      this.publication,
+      editions);
   }
 
   public InstanceBuilder addIdentifier(UUID typeId, String value) {
@@ -116,6 +163,8 @@ public class InstanceBuilder extends JsonBuilder implements Builder {
       this.title,
       this.contributors,
       this.instanceTypeId,
-      identifiersCopy);
+      identifiersCopy,
+      this.publication,
+      this.editions);
   }
 }

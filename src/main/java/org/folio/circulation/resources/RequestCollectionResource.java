@@ -1,5 +1,6 @@
 package org.folio.circulation.resources;
 
+import static org.folio.circulation.domain.RequestLevel.TITLE;
 import static org.folio.circulation.domain.representations.RequestProperties.PROXY_USER_ID;
 import static org.folio.circulation.resources.RequestBlockValidators.regularRequestBlockValidators;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
@@ -75,7 +76,7 @@ public class RequestCollectionResource extends CollectionResource {
     final var userRepository = new UserRepository(clients);
     final var loanRepository = new LoanRepository(clients);
     final var loanPolicyRepository = new LoanPolicyRepository(clients);
-    final var requestNoticeSender = RequestNoticeSender.using(clients);
+    final var requestNoticeSender = createRequestNoticeSender(clients, representation);
     final var configurationRepository = new ConfigurationRepository(clients);
 
     final var updateUponRequest = new UpdateUponRequest(new UpdateItem(clients),
@@ -128,7 +129,7 @@ public class RequestCollectionResource extends CollectionResource {
     final var loanRepository = new LoanRepository(clients);
     final var loanPolicyRepository = new LoanPolicyRepository(clients);
     final var eventPublisher = new EventPublisher(routingContext);
-    final var requestNoticeSender = RequestNoticeSender.using(clients);
+    final var requestNoticeSender = createRequestNoticeSender(clients, representation);
     final var configurationRepository = new ConfigurationRepository(clients);
 
     final var updateItem = new UpdateItem(clients);
@@ -296,5 +297,15 @@ public class RequestCollectionResource extends CollectionResource {
 
   private String getRequestId(RoutingContext routingContext) {
     return routingContext.request().getParam("id");
+  }
+
+  private RequestNoticeSender createRequestNoticeSender(Clients clients,
+    JsonObject representation) {
+
+    String requestLevel = representation.getString("requestLevel");
+    if (TITLE.getValue().equals(requestLevel)) {
+      return new TitleLevelRequestNoticeSender(clients);
+    }
+    return new ItemLevelRequestNoticeSender(clients);
   }
 }

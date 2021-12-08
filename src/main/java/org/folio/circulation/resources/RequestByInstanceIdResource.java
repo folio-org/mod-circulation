@@ -219,7 +219,7 @@ public class RequestByInstanceIdResource extends Resource {
   private CompletableFuture<Result<RequestAndRelatedRecords>> placeRequests(
     List<JsonObject> itemRequestRepresentations, Clients clients, EventPublisher eventPublisher) {
 
-    final RequestNoticeSender requestNoticeSender = RequestNoticeSender.using(clients);
+    final RequestNoticeSender requestNoticeSender = new ItemLevelRequestNoticeSender(clients);
     final LoanRepository loanRepository = new LoanRepository(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
     final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
@@ -350,6 +350,7 @@ public class RequestByInstanceIdResource extends Resource {
           }
           write(requestBody, "patronComments", requestByInstanceIdRequest.getPatronComments());
           write(requestBody, "instanceId", requestByInstanceIdRequest.getInstanceId());
+          write(requestBody, "holdingsRecordId", item.getHoldingsRecordId());
           write(requestBody, "requestLevel", requestByInstanceIdRequest.getRequestLevel());
           requests.add(requestBody);
         }

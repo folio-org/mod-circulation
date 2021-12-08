@@ -178,14 +178,24 @@ public class RequestsFixture {
   }
 
   public void cancelRequest(IndividualResource request) {
+    final RequestBuilder cancelledRequestBySteve = buildCancelledRequest(request);
+    requestsClient.replace(request.getId(), cancelledRequestBySteve);
+  }
+
+  public Response attemptCancelRequest(IndividualResource request) {
+    final RequestBuilder cancelledRequestBySteve = buildCancelledRequest(request);
+
+    return requestsClient.attemptReplace(request.getId(), cancelledRequestBySteve);
+  }
+
+  private RequestBuilder buildCancelledRequest(IndividualResource request) {
+
     final IndividualResource courseReservesCancellationReason
       = cancellationReasonsFixture.courseReserves();
 
-    final RequestBuilder cancelledRequestBySteve = RequestBuilder.from(request)
+    return RequestBuilder.from(request)
       .cancelled()
       .withCancellationReasonId(courseReservesCancellationReason.getId());
-
-    requestsClient.replace(request.getId(), cancelledRequestBySteve);
   }
 
   public void expireRequest(IndividualResource request) {
