@@ -130,7 +130,7 @@ public class InterfaceUrls {
   }
 
   public static URL requestQueueUrl(UUID itemId) {
-    return requestsUrl(String.format("/queue/%s", itemId));
+    return requestsUrl(String.format("/queue/item/%s", itemId));
   }
 
   public static URL checkOutByBarcodeUrl() {
