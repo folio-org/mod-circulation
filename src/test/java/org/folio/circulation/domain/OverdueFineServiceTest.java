@@ -120,9 +120,8 @@ class OverdueFineServiceTest {
       userRepository,
       servicePointRepository, feeFineService);
 
-    overdueFineService = new OverdueFineService(
-      new OverdueFineService.Repos(overdueFinePolicyRepository, itemRepository,
-        feeFineOwnerRepository, feeFineRepository, scheduledNoticesRepository),
+    overdueFineService = new OverdueFineService(overdueFinePolicyRepository, itemRepository,
+        feeFineOwnerRepository, feeFineRepository, scheduledNoticesRepository,
       overduePeriodCalculatorService, feeFineFacade);
 
     when(userRepository.getUser(any(String.class))).thenReturn(
