@@ -55,8 +55,7 @@ public class UpdateRequestQueue {
     final var requestRepository = RequestRepository.using(clients, itemRepository,
       userRepository, loanRepository);
 
-    return new UpdateRequestQueue(
-      RequestQueueRepository.using(clients),
+    return new UpdateRequestQueue(new RequestQueueRepository(requestRepository),
       requestRepository,
       new ServicePointRepository(clients),
       new ConfigurationRepository(clients));

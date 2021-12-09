@@ -20,8 +20,11 @@ import java.util.concurrent.TimeUnit;
 
 import org.folio.circulation.domain.reorder.ReorderQueueRequest;
 import org.folio.circulation.domain.reorder.ReorderRequest;
+import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
+import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
+import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.context.ReorderRequestContext;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
@@ -35,7 +38,6 @@ import api.support.builders.RequestBuilder;
 import io.vertx.core.json.JsonObject;
 
 class UpdateRequestQueueTest {
-
   private final Response serverErrorBatchResponse =
     new Response(500, "Server Error", "text/plain");
 
@@ -47,8 +49,13 @@ class UpdateRequestQueueTest {
   public void setUp() {
     Clients clients = createServerErrorMockBatchRequestClient();
 
-    requestQueueRepository = spy(RequestQueueRepository.using(clients));
+    final ItemRepository itemRepository = new ItemRepository(clients);
+    final UserRepository userRepository = new UserRepository(clients);
+    final var loanRepository = new LoanRepository(clients,
+      itemRepository, userRepository);
     requestRepository = mock(RequestRepository.class);
+    requestQueueRepository = spy(new RequestQueueRepository(
+      RequestRepository.using(clients, itemRepository, userRepository, loanRepository)));
 
     updateRequestQueue =
       new UpdateRequestQueue(requestQueueRepository, requestRepository, null, null);

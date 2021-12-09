@@ -80,11 +80,19 @@ public class RequestQueueResource extends Resource {
   }
 
   private void getQueue(RoutingContext routingContext, RequestQueueType requestQueueType) {
-    final WebContext context = new WebContext(routingContext);
+    final var context = new WebContext(routingContext);
+    final var clients = Clients.create(context, client);
+
+    final var itemRepository = new ItemRepository(clients);
+    final var userRepository = new UserRepository(clients);
+    final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
+    final var requestQueueRepository = new RequestQueueRepository(
+      RequestRepository.using(clients, itemRepository, userRepository, loanRepository));
+
     final RequestRepresentation requestRepresentation = new RequestRepresentation();
 
     CompletableFuture<Result<RequestQueue>> requestQueue = getRequestQueueByType(routingContext,
-      context, requestQueueType);
+      requestQueueType, requestQueueRepository);
 
     requestQueue
       .thenApply(r -> r.map(queue -> new MultipleRecords<>(queue.getRequests(), queue.size())))
@@ -102,25 +110,26 @@ public class RequestQueueResource extends Resource {
 
     final EventPublisher eventPublisher = new EventPublisher(routingContext);
 
-    final WebContext context = new WebContext(routingContext);
-    final Clients clients = Clients.create(context, client);
-    final ItemRepository itemRepository = new ItemRepository(clients);
-    final UserRepository userRepository = new UserRepository(clients);
+    final var context = new WebContext(routingContext);
+    final var clients = Clients.create(context, client);
+
+    final var itemRepository = new ItemRepository(clients);
+    final var userRepository = new UserRepository(clients);
     final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
-    final RequestRepository requestRepository = RequestRepository.using(clients,
+    final var requestRepository = RequestRepository.using(clients,
       itemRepository, userRepository, loanRepository);
-    final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
-    final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
+    final var configurationRepository = new ConfigurationRepository(clients);
+    final var requestQueueRepository = new RequestQueueRepository(requestRepository);
 
     final UpdateRequestQueue updateRequestQueue = new UpdateRequestQueue(
       requestQueueRepository, requestRepository, new ServicePointRepository(clients),
       configurationRepository);
 
-    getRequestQueueByType(routingContext, context, requestQueueType);
+    getRequestQueueByType(routingContext, requestQueueType, requestQueueRepository);
 
     validateTlrFeatureStatus(configurationRepository, requestQueueType, idParamValue)
       .thenCompose(r -> r.after(tlrSettings ->
-        getRequestQueueByType(routingContext, context, requestQueueType)))
+        getRequestQueueByType(routingContext, requestQueueType, requestQueueRepository)))
       .thenApply(r -> r.map(reorderContext::withRequestQueue))
       // Validation block
       .thenApply(RequestQueueValidation::queueIsFound)
@@ -196,10 +205,8 @@ public class RequestQueueResource extends Resource {
   }
 
   private CompletableFuture<Result<RequestQueue>> getRequestQueueByType(
-    RoutingContext routingContext, WebContext context, RequestQueueType requestQueueType) {
-
-    Clients clients = Clients.create(context, client);
-    final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
+    RoutingContext routingContext, RequestQueueType requestQueueType,
+    RequestQueueRepository requestQueueRepository) {
 
     String idParamValue = getIdParameterValueByQueueType(routingContext, requestQueueType);
 

@@ -26,6 +26,7 @@ import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
+import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
@@ -66,11 +67,13 @@ public class ChangeDueDateResource extends Resource {
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context, client);
 
-    final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
-
-    final LoanRepository loanRepository = new LoanRepository(clients,
-      new ItemRepository(clients),
-      new UserRepository(clients));
+    final var itemRepository = new ItemRepository(clients);
+    final var userRepository = new UserRepository(clients);
+    final var loanRepository = new LoanRepository(clients,
+      new ItemRepository(clients), new UserRepository(clients));
+    final var requestRepository = RequestRepository.using(clients,
+      itemRepository, userRepository, loanRepository);
+    final var requestQueueRepository = new RequestQueueRepository(requestRepository);
 
     final LoanScheduledNoticeService scheduledNoticeService
       = LoanScheduledNoticeService.using(clients);

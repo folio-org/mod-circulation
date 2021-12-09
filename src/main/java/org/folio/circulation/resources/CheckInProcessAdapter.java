@@ -31,6 +31,7 @@ import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.loans.OverdueFinePolicyRepository;
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
+import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.infrastructure.storage.users.AddressTypeRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.services.EventPublisher;
@@ -97,6 +98,8 @@ class CheckInProcessAdapter {
     final var itemRepository = new ItemRepository(clients);
     final var userRepository = new UserRepository(clients);
     final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
+    final var requestRepository = RequestRepository.using(clients,
+      itemRepository, userRepository, loanRepository);
 
     final ItemByBarcodeInStorageFinder itemFinder =
       new ItemByBarcodeInStorageFinder(itemRepository);
@@ -116,7 +119,7 @@ class CheckInProcessAdapter {
     return new CheckInProcessAdapter(itemFinder,
       singleOpenLoanFinder,
       new LoanCheckInService(),
-      RequestQueueRepository.using(clients),
+      new RequestQueueRepository(requestRepository),
       new UpdateItem(itemRepository),
       UpdateRequestQueue.using(clients),
       loanRepository,

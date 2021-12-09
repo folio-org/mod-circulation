@@ -55,6 +55,7 @@ import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestPolicyRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
+import org.folio.circulation.infrastructure.storage.users.PatronGroupRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.handlers.error.FailFastErrorHandler;
 import org.folio.circulation.services.EventPublisher;
@@ -180,7 +181,11 @@ public class RequestByInstanceIdResource extends Resource {
     Collection<Item> items,
     InstanceRequestRelatedRecords instanceRequestPackage, Clients clients) {
 
-    RequestQueueRepository queueRepository = RequestQueueRepository.using(clients);
+    final var itemRepository = new ItemRepository(clients);
+    final var userRepository = new UserRepository(clients);
+    final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
+    var queueRepository = new RequestQueueRepository(RequestRepository.using(clients,
+        itemRepository, userRepository, loanRepository));
     Map<Item, CompletableFuture<Result<RequestQueue>>> itemRequestQueueMap = new HashMap<>();
 
     instanceRequestPackage.setAllUnsortedItems(items);
@@ -251,8 +256,6 @@ public class RequestByInstanceIdResource extends Resource {
     List<JsonObject> itemRequests, int startIndex, CreateRequestService createRequestService,
     Clients clients, LoanRepository loanRepository, List<String> errors) {
 
-    final UserRepository userRepository = new UserRepository(clients);
-
     log.debug("RequestByInstanceIdResource.placeRequest, startIndex={}, itemRequestSize={}",
       startIndex, itemRequests.size());
 
@@ -265,11 +268,15 @@ public class RequestByInstanceIdResource extends Resource {
 
     JsonObject currentItemRequest = itemRequests.get(startIndex);
     ItemRepository itemRepository = new ItemRepository(clients);
+    final var userRepository = new UserRepository(clients);
+    final var requestRepository = new RequestRepository(clients,
+      itemRepository, userRepository, loanRepository, new ServicePointRepository(clients),
+      new PatronGroupRepository(clients));
     final RequestFromRepresentationService requestFromRepresentationService =
       new RequestFromRepresentationService(
         new InstanceRepository(clients),
         itemRepository,
-        RequestQueueRepository.using(clients),
+        new RequestQueueRepository(requestRepository),
         userRepository,
         loanRepository,
         new ServicePointRepository(clients),
