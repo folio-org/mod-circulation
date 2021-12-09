@@ -3,11 +3,13 @@ package org.folio.circulation.resources;
 import static org.folio.circulation.domain.RequestLevel.TITLE;
 import static org.folio.circulation.domain.representations.RequestProperties.PROXY_USER_ID;
 import static org.folio.circulation.resources.RequestBlockValidators.regularRequestBlockValidators;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_INSTANCE_ID;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.results.AsynchronousResult.fromFutureResult;
 import static org.folio.circulation.support.results.MappingFunctions.toFixedValue;
 import static org.folio.circulation.support.results.MappingFunctions.when;
+import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.concurrent.CompletableFuture;
@@ -42,6 +44,7 @@ import org.folio.circulation.infrastructure.storage.requests.RequestPolicyReposi
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
+import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
 import org.folio.circulation.resources.handlers.error.FailFastErrorHandler;
 import org.folio.circulation.resources.handlers.error.OverridingErrorHandler;
 import org.folio.circulation.services.EventPublisher;
@@ -181,9 +184,13 @@ public class RequestCollectionResource extends CollectionResource {
     final var requestRepository = RequestRepository.using(clients);
     final var id = getRequestId(routingContext);
     final var instanceRepository = new InstanceRepository(clients);
+    final var permissions = OkapiPermissions.from(context.getHeaders());
+    final var errorHandler = new OverridingErrorHandler(permissions);
 
     fromFutureResult(requestRepository.getById(id)
-      .thenComposeAsync(req -> fetchInstance(instanceRepository, req.value())))
+      .thenComposeAsync(r -> r.after(when(
+        req -> shouldFetchInstance(errorHandler, req),
+        req -> fetchInstance(instanceRepository, req), req -> ofAsync(() -> req)))))
       .map(new RequestRepresentation()::extendedRepresentation)
       .map(JsonHttpResponse::ok)
       .onComplete(context::write, context::write);
@@ -317,5 +324,9 @@ public class RequestCollectionResource extends CollectionResource {
   private CompletableFuture<Result<Request>> fetchInstance(InstanceRepository instanceRepository, Request request) {
     return succeeded(request)
       .combineAfter(instanceRepository::fetch, Request::withInstance);
+  }
+
+  private CompletableFuture<Result<Boolean>> shouldFetchInstance(CirculationErrorHandler errorHandler, Request request) {
+    return ofAsync(() -> errorHandler.hasNone(INVALID_INSTANCE_ID));
   }
 }
