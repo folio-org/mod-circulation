@@ -5,14 +5,14 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Function.identity;
 import static org.folio.circulation.domain.representations.LoanProperties.ITEM_ID;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
+import static org.folio.circulation.support.fetching.MultipleCqlIndexValuesCriteria.byIndex;
+import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.http.CommonResponseInterpreters.noContentRecordInterpreter;
 import static org.folio.circulation.support.json.JsonKeys.byId;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
-import static org.folio.circulation.support.fetching.MultipleCqlIndexValuesCriteria.byIndex;
-import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.utils.CollectionUtil.map;
 
 import java.lang.invoke.MethodHandles;
@@ -28,6 +28,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemRelatedRecord;
 import org.folio.circulation.domain.Location;
@@ -35,18 +37,17 @@ import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.storage.mappers.HoldingsMapper;
+import org.folio.circulation.storage.mappers.InstanceMapper;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FindWithCqlQuery;
 import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
-import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.SingleRecordFetcher;
 import org.folio.circulation.support.fetching.RecordFetching;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.results.CommonFailures;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
@@ -239,10 +240,12 @@ public class ItemRepository {
       final FindWithMultipleCqlIndexValues<JsonObject> fetcher
         = findWithMultipleCqlIndexValues(instancesClient, "instances", identity());
 
+      final var mapper = new InstanceMapper();
+
       return fetcher.findByIds(instanceIds)
         .thenApply(r -> r.map(instances -> items.stream()
-          .map(item -> item.withInstance(
-            findById(item.getInstanceId(), instances.getRecords()).orElse(null)))
+          .map(item -> item.withInstance(mapper.toDomain(
+              findById(item.getInstanceId(), instances.getRecords()).orElse(null))))
           .collect(Collectors.toList())));
     });
   }
@@ -260,12 +263,11 @@ public class ItemRepository {
       final var fetcher
         = findWithMultipleCqlIndexValues(holdingsClient, "holdingsRecords", identity());
 
-      final var holdingsMapper = new HoldingsMapper();
+      final var mapper = new HoldingsMapper();
 
       return fetcher.findByIds(holdingsIds)
         .thenApply(r -> r.map(holdings -> items.stream()
-          .map(item -> item.withHoldings(
-            holdingsMapper.toDomain(
+          .map(item -> item.withHoldings(mapper.toDomain(
               findById(item.getHoldingsRecordId(), holdings.getRecords()).orElse(null))))
           .collect(Collectors.toList())));
     });
@@ -321,12 +323,12 @@ public class ItemRepository {
         return completedFuture(succeeded(item));
       }
       else {
-        final var holdingsMapper = new HoldingsMapper();
+        final var mapper = new HoldingsMapper();
 
         return SingleRecordFetcher.json(holdingsClient, "holding",
             r -> failedValidation("Holding does not exist", ITEM_ID, item.getItemId()))
           .fetch(item.getHoldingsRecordId())
-          .thenApply(r -> r.map(holdingsMapper::toDomain))
+          .thenApply(r -> r.map(mapper::toDomain))
           .thenApply(r -> r.map(item::withHoldings));
       }
     });
@@ -339,8 +341,11 @@ public class ItemRepository {
         return completedFuture(succeeded(item));
       }
       else {
+        final var mapper = new InstanceMapper();
+
         return SingleRecordFetcher.jsonOrNull(instancesClient, "instance")
           .fetch(item.getInstanceId())
+          .thenApply(r -> r.map(mapper::toDomain))
           .thenApply(r -> r.map(item::withInstance));
       }
     });

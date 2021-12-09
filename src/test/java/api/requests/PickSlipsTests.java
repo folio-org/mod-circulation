@@ -26,6 +26,7 @@ import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.User;
+import org.folio.circulation.storage.mappers.InstanceMapper;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher;
 import org.folio.circulation.support.utils.ClockUtil;
@@ -170,11 +171,9 @@ class PickSlipsTests extends APITests {
     JsonObject itemContext = pickSlip.getJsonObject(ITEM_KEY);
 
     Item item = Item.from(itemResource.getJson())
-      .withInstance(itemResource.getInstance().getJson());
+      .withInstance(new InstanceMapper().toDomain(itemResource.getInstance().getJson()));
 
-    String contributorNames = item.getContributors()
-      .map(this::getName)
-      .collect(joining("; "));
+    String contributorNames = item.getContributorNames().collect(joining("; "));
 
     String yearCaptionsToken = String.join("; ", item.getYearCaption());
     String copyNumber = item.getCopyNumber() != null ? item.getCopyNumber() : "";
@@ -185,8 +184,7 @@ class PickSlipsTests extends APITests {
     assertEquals(item.getTitle(), itemContext.getString("title"));
     assertEquals(item.getBarcode(), itemContext.getString("barcode"));
     assertEquals(ItemStatus.PAGED.getValue(), itemContext.getString("status"));
-    assertEquals(item.getPrimaryContributorName(),
-      itemContext.getString("primaryContributor"));
+    assertEquals(item.getPrimaryContributorName(), itemContext.getString("primaryContributor"));
     assertEquals(contributorNames, itemContext.getString("allContributors"));
     assertEquals(item.getEnumeration(), itemContext.getString("enumeration"));
     assertEquals(item.getVolume(), itemContext.getString("volume"));

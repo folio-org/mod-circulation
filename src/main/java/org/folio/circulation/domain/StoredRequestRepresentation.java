@@ -4,6 +4,7 @@ import static java.util.Objects.isNull;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
 import java.lang.invoke.MethodHandles;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -35,9 +36,22 @@ public class StoredRequestRepresentation {
 
     write(itemSummary, "title", item.getTitle());
     write(itemSummary, "barcode", item.getBarcode());
-    write(itemSummary, "identifiers", item.getIdentifiers());
+
+    write(itemSummary, "identifiers",
+      item.getIdentifiers()
+        .map(StoredRequestRepresentation::identifierToJson)
+        .collect(Collectors.toList()));
 
     request.put("item", itemSummary);
+  }
+
+  private static JsonObject identifierToJson(Identifier identifier) {
+    final var representation = new JsonObject();
+
+    write(representation, "identifierTypeId", identifier.getTypeId());
+    write(representation, "value", identifier.getValue());
+
+    return representation;
   }
 
   private static void addStoredRequesterProperties(JsonObject request, User requester) {
@@ -67,6 +81,7 @@ public class StoredRequestRepresentation {
     write(userSummary, "firstName", user.getFirstName());
     write(userSummary, "middleName", user.getMiddleName());
     write(userSummary, "barcode", user.getBarcode());
+
     return userSummary;
   }
 

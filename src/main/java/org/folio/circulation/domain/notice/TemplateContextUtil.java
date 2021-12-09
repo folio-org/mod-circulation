@@ -155,8 +155,7 @@ public class TemplateContextUtil {
   }
 
   private static JsonObject createItemContext(Item item) {
-    String contributorNamesToken = item.getContributors()
-      .map(o -> o.getString("name"))
+    String contributorNamesToken = item.getContributorNames()
       .collect(joining("; "));
 
     String yearCaptionsToken = String.join("; ", item.getYearCaption());

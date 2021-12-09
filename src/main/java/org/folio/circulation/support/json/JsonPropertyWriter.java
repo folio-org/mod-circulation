@@ -2,9 +2,9 @@ package org.folio.circulation.support.json;
 
 import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;
 
-
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.UUID;
 
 import org.apache.commons.lang3.StringUtils;
@@ -38,6 +38,12 @@ public class JsonPropertyWriter {
     JsonArray value) {
 
     if(value != null && !value.isEmpty()) {
+      to.put(propertyName, value);
+    }
+  }
+
+  public static <T> void write(JsonObject to, String propertyName, Collection<T> value) {
+    if (value != null && !value.isEmpty()) {
       to.put(propertyName, value);
     }
   }
