@@ -36,9 +36,7 @@ import org.folio.circulation.domain.representations.CheckOutByBarcodeRequest;
 import org.folio.circulation.domain.validation.overriding.BlockValidator;
 import org.folio.circulation.domain.validation.overriding.OverridingLoanValidator;
 import org.folio.circulation.infrastructure.storage.AutomatedPatronBlocksRepository;
-import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
-import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.ValidationErrorFailure;
@@ -63,13 +61,10 @@ public class CheckOutValidators {
   private final CirculationErrorHandler errorHandler;
 
   public CheckOutValidators(CheckOutByBarcodeRequest request, Clients clients,
-    CirculationErrorHandler errorHandler, OkapiPermissions permissions) {
+    CirculationErrorHandler errorHandler, OkapiPermissions permissions,
+    LoanRepository loanRepository) {
 
     this.errorHandler = errorHandler;
-
-    final var itemRepository = new ItemRepository(clients);
-    final var userRepository = new UserRepository(clients);
-    final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
 
     final AutomatedPatronBlocksRepository automatedPatronBlocksRepository =
       new AutomatedPatronBlocksRepository(clients);
@@ -100,7 +95,8 @@ public class CheckOutValidators {
     openLoanValidator = new ExistingOpenLoanValidator(loanRepository,
       message -> singleValidationError(message, ITEM_BARCODE, request.getItemBarcode()));
 
-    itemLimitValidator = createItemLimitValidator(request, permissions, loanRepository);
+    itemLimitValidator = createItemLimitValidator(request, permissions,
+      loanRepository);
 
     automatedPatronBlocksValidator = createAutomatedPatronBlocksValidator(request, permissions,
       automatedPatronBlocksRepository);

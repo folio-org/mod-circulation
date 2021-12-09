@@ -100,7 +100,7 @@ public class CheckOutByBarcodeResource extends Resource {
     OkapiPermissions permissions = OkapiPermissions.from(new WebContext(routingContext).getHeaders());
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(permissions);
     CheckOutValidators validators = new CheckOutValidators(request, clients, errorHandler,
-      permissions);
+      permissions, loanRepository);
 
     final UpdateRequestQueue requestQueueUpdate = UpdateRequestQueue.using(clients);
 
