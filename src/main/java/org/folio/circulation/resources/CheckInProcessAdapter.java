@@ -118,6 +118,7 @@ class CheckInProcessAdapter {
     return new CheckInProcessAdapter(itemFinder,
       singleOpenLoanFinder,
       new LoanCheckInService(),
+      new RequestQueueRepository(requestRepository),
       requestQueueRepository,
       new UpdateItem(itemRepository),
       UpdateRequestQueue.using(clients, requestRepository,
