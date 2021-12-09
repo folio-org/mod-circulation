@@ -14,8 +14,10 @@ import static org.folio.circulation.domain.representations.ItemProperties.IN_TRA
 import static org.folio.circulation.domain.representations.ItemProperties.ITEM_COPY_NUMBER_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.LAST_CHECK_IN;
 import static org.folio.circulation.domain.representations.ItemProperties.MATERIAL_TYPE_ID;
+import static org.folio.circulation.domain.representations.ItemProperties.PERMANENT_LOAN_TYPE_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.PERMANENT_LOCATION_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.STATUS_PROPERTY;
+import static org.folio.circulation.domain.representations.ItemProperties.TEMPORARY_LOAN_TYPE_ID;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.json.JsonPropertyWriter.remove;
@@ -27,8 +29,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import org.folio.circulation.domain.representations.ItemProperties;
 
 import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
@@ -258,14 +258,8 @@ public class Item {
   }
 
   public String getLoanTypeId() {
-    if (itemRepresentation == null) {
-      return null;
-    }
-
-    return itemRepresentation.containsKey(ItemProperties.TEMPORARY_LOAN_TYPE_ID)
-      && !itemRepresentation.getString(ItemProperties.TEMPORARY_LOAN_TYPE_ID).isEmpty()
-      ? itemRepresentation.getString(ItemProperties.TEMPORARY_LOAN_TYPE_ID)
-      : itemRepresentation.getString(ItemProperties.PERMANENT_LOAN_TYPE_ID);
+    return firstNonBlank(getProperty(itemRepresentation, TEMPORARY_LOAN_TYPE_ID),
+      getProperty(itemRepresentation, PERMANENT_LOAN_TYPE_ID));
   }
 
   public String getLoanTypeName() {
