@@ -1,10 +1,12 @@
 package org.folio.circulation.resources.agedtolost;
 
-import static org.folio.circulation.support.Clients.create;
 import static org.folio.circulation.support.results.MappingFunctions.toFixedValue;
 
+import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
+import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.resources.Resource;
 import org.folio.circulation.services.agedtolost.MarkOverdueLoansAsAgedLostService;
+import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.server.NoContentResponse;
 import org.folio.circulation.support.http.server.WebContext;
@@ -26,8 +28,13 @@ public class ScheduledAgeToLostResource extends Resource {
 
   private void scheduledAgeToLost(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
+    final var clients = Clients.create(context, client);
+
+    final var itemRepository = new ItemRepository(clients, false, false, false);
+    final var loanRepository = new LoanRepository(clients);
+
     final MarkOverdueLoansAsAgedLostService ageToLostService =
-      new MarkOverdueLoansAsAgedLostService(create(context, client));
+      new MarkOverdueLoansAsAgedLostService(clients, itemRepository, loanRepository);
 
     ageToLostService.processAgeToLost()
       .thenApply(r -> r.map(toFixedValue(NoContentResponse::noContent)))

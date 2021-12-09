@@ -70,10 +70,10 @@ public class DeclareLostResource extends Resource {
   private CompletableFuture<Result<Loan>> declareItemLost(DeclareItemLostRequest request,
     Clients clients, WebContext context) {
 
-    final LoanRepository loanRepository = new LoanRepository(clients);
-    final ItemRepository itemRepository = new ItemRepository(clients, true, true, true);
-    final StoreLoanAndItem storeLoanAndItem = new StoreLoanAndItem(loanRepository, itemRepository);
-    final LostItemFeeChargingService lostItemFeeService = new LostItemFeeChargingService(clients);
+    final var loanRepository = new LoanRepository(clients);
+    final var itemRepository = new ItemRepository(clients, true, true, true);
+    final var storeLoanAndItem = new StoreLoanAndItem(loanRepository, itemRepository);
+    final var lostItemFeeService = new LostItemFeeChargingService(clients, storeLoanAndItem);
 
     return loanRepository.getById(request.getLoanId())
       .thenApply(LoanValidator::refuseWhenLoanIsClosed)

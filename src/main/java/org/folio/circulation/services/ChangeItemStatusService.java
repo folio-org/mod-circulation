@@ -18,7 +18,7 @@ public class ChangeItemStatusService {
   public ChangeItemStatusService(Clients clients) {
     this.loanRepository = new LoanRepository(clients);
       this.storeLoanAndItem = new StoreLoanAndItem(loanRepository,
-              new ItemRepository(clients, false, false, false));
+        new ItemRepository(clients, false, false, false));
   }
 
   public <T extends ChangeItemStatusRequest> CompletableFuture<Result<Loan>> getOpenLoan(T request) {

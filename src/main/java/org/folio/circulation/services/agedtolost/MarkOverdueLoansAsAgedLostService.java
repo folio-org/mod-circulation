@@ -44,12 +44,14 @@ public class MarkOverdueLoansAsAgedLostService {
   private final LoanScheduledNoticeService loanScheduledNoticeService;
   private final UserRepository userRepository;
 
-  public MarkOverdueLoansAsAgedLostService(Clients clients) {
+  public MarkOverdueLoansAsAgedLostService(Clients clients,
+    ItemRepository itemRepository, LoanRepository loanRepository) {
+
+    this.itemRepository = itemRepository;
     this.lostItemPolicyRepository = new LostItemPolicyRepository(clients);
-      this.itemRepository = new ItemRepository(clients, false, false, false);
-    this.storeLoanAndItem = new StoreLoanAndItem(clients);
+    this.storeLoanAndItem = new StoreLoanAndItem(loanRepository, itemRepository);
     this.eventPublisher = new EventPublisher(clients.pubSubPublishingService());
-    this.loanPageableFetcher = new PageableFetcher<>(new LoanRepository(clients));
+    this.loanPageableFetcher = new PageableFetcher<>(loanRepository);
     this.loanScheduledNoticeService = LoanScheduledNoticeService.using(clients);
     this.userRepository = new UserRepository(clients);
   }
