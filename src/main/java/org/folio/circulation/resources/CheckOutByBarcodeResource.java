@@ -85,7 +85,7 @@ public class CheckOutByBarcodeResource extends Resource {
     final UserRepository userRepository = new UserRepository(clients);
     final ItemRepository itemRepository = new ItemRepository(clients, true, true, true);
     final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
-    final LoanRepository loanRepository = new LoanRepository(clients);
+    final LoanRepository loanRepository = new LoanRepository(clients, itemRepository, userRepository);
     final LoanService loanService = new LoanService(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
     final OverdueFinePolicyRepository overdueFinePolicyRepository = new OverdueFinePolicyRepository(clients);

@@ -20,6 +20,7 @@ import org.folio.circulation.domain.validation.LoanValidator;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.notes.NotesRepository;
+import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.services.LostItemFeeChargingService;
 import org.folio.circulation.support.Clients;
@@ -70,8 +71,9 @@ public class DeclareLostResource extends Resource {
   private CompletableFuture<Result<Loan>> declareItemLost(DeclareItemLostRequest request,
     Clients clients, WebContext context) {
 
-    final var loanRepository = new LoanRepository(clients);
     final var itemRepository = new ItemRepository(clients, true, true, true);
+    final var loanRepository = new LoanRepository(clients, itemRepository,
+      new UserRepository(clients));
     final var storeLoanAndItem = new StoreLoanAndItem(loanRepository, itemRepository);
     final var lostItemFeeService = new LostItemFeeChargingService(clients, storeLoanAndItem);
 

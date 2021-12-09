@@ -13,8 +13,10 @@ import org.folio.circulation.domain.anonymization.service.LoansForTenantFinder;
 import org.folio.circulation.domain.representations.anonymization.AnonymizeLoansRepresentation;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
+import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.AnonymizeStorageLoansRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
+import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.RouteRegistration;
@@ -50,7 +52,9 @@ public class ScheduledAnonymizationProcessingResource extends Resource {
     final Clients clients = Clients.create(context, client);
 
     ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
-    final var loanRepository = new LoanRepository(clients);
+    final var itemRepository = new ItemRepository(clients, true, true, true);
+    final var userRepository = new UserRepository(clients);
+    final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
     final var accountRepository = new AccountRepository(clients);
 
     final var anonymizeStorageLoansRepository = new AnonymizeStorageLoansRepository(clients);

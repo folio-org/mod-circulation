@@ -46,7 +46,6 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.results.CommonFailures;
 import org.folio.circulation.support.results.Result;
-import org.folio.circulation.support.utils.ClockUtil;
 import org.folio.circulation.support.utils.DateTimeUtil;
 
 public class LostItemFeeRefundService {
@@ -63,12 +62,12 @@ public class LostItemFeeRefundService {
   private final FeeFineScheduledNoticeService scheduledNoticeService;
 
   public LostItemFeeRefundService(Clients clients) {
+    this.itemRepository = new ItemRepository(clients, true, true, true);
+    this.userRepository = new UserRepository(clients);
     this.lostItemPolicyRepository = new LostItemPolicyRepository(clients);
     this.feeFineFacade = new FeeFineFacade(clients);
     this.accountRepository = new AccountRepository(clients);
-    this.loanRepository = new LoanRepository(clients);
-    this.userRepository = new UserRepository(clients);
-    this.itemRepository = new ItemRepository(clients, true, false, false);
+    this.loanRepository = new LoanRepository(clients, itemRepository, userRepository);
     this.scheduledNoticeService = FeeFineScheduledNoticeService.using(clients);
   }
 

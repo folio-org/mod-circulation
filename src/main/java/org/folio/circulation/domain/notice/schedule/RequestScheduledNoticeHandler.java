@@ -29,7 +29,7 @@ public abstract class RequestScheduledNoticeHandler extends ScheduledNoticeHandl
 
   public RequestScheduledNoticeHandler(Clients clients) {
     super(clients);
-    this.requestRepository = RequestRepository.using(clients, true);
+    this.requestRepository = RequestRepository.using(clients);
   }
 
   @Override

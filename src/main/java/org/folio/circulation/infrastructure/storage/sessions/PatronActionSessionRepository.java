@@ -41,6 +41,7 @@ import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.notice.session.ExpiredSession;
 import org.folio.circulation.domain.notice.session.PatronActionType;
 import org.folio.circulation.domain.notice.session.PatronSessionRecord;
+import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.inventory.LocationRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
@@ -67,7 +68,8 @@ public class PatronActionSessionRepository {
   public static PatronActionSessionRepository using(Clients clients) {
     return new PatronActionSessionRepository(
       clients.patronActionSessionsStorageClient(),
-      new LoanRepository(clients),
+      new LoanRepository(clients, new ItemRepository(clients, true, true, true),
+        new UserRepository(clients)),
       new UserRepository(clients),
       new LoanPolicyRepository(clients),
       LocationRepository.using(clients));

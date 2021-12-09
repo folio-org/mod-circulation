@@ -20,6 +20,7 @@ import org.folio.circulation.infrastructure.storage.feesandfines.AccountReposito
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.loans.LostItemPolicyRepository;
+import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.Resource;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
@@ -71,8 +72,9 @@ public class LoanRelatedFeeFineClosedHandlerResource extends Resource {
     WebContext context, LoanRelatedFeeFineClosedEvent event) {
 
     final Clients clients = create(context, client);
-    final var loanRepository = new LoanRepository(clients);
-    final var itemRepository = new ItemRepository(clients, false, false, false);
+    final var itemRepository = new ItemRepository(clients, true, true, true);
+    final var userRepository = new UserRepository(clients);
+    final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
     final var accountRepository = new AccountRepository(clients);
     final var lostItemPolicyRepository = new LostItemPolicyRepository(clients);
 

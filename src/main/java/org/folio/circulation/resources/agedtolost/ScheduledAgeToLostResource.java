@@ -4,6 +4,7 @@ import static org.folio.circulation.support.results.MappingFunctions.toFixedValu
 
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
+import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.Resource;
 import org.folio.circulation.services.agedtolost.MarkOverdueLoansAsAgedLostService;
 import org.folio.circulation.support.Clients;
@@ -30,8 +31,9 @@ public class ScheduledAgeToLostResource extends Resource {
     final WebContext context = new WebContext(routingContext);
     final var clients = Clients.create(context, client);
 
-    final var itemRepository = new ItemRepository(clients, false, false, false);
-    final var loanRepository = new LoanRepository(clients);
+    final var itemRepository = new ItemRepository(clients, true, true, true);
+    final var userRepository = new UserRepository(clients);
+    final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
 
     final MarkOverdueLoansAsAgedLostService ageToLostService =
       new MarkOverdueLoansAsAgedLostService(clients, itemRepository, loanRepository);

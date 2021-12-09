@@ -46,6 +46,7 @@ import org.folio.circulation.storage.mappers.HoldingsMapper;
 import org.folio.circulation.storage.mappers.InstanceMapper;
 import org.folio.circulation.storage.mappers.LoanTypeMapper;
 import org.folio.circulation.storage.mappers.MaterialTypeMapper;
+import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FindWithCqlQuery;
 import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
@@ -76,7 +77,7 @@ public class ItemRepository {
 
   private static final String ITEMS_COLLECTION_PROPERTY_NAME = "items";
 
-  public ItemRepository(org.folio.circulation.support.Clients clients,
+  public ItemRepository(Clients clients,
     boolean fetchLocation, boolean fetchMaterialType, boolean fetchLoanType) {
 
     this(clients.itemsStorage(), clients.holdingsStorage(),

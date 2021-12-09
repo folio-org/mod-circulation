@@ -9,8 +9,10 @@ import org.folio.circulation.domain.anonymization.service.AnonymizationCheckersS
 import org.folio.circulation.domain.anonymization.service.LoansForBorrowerFinder;
 import org.folio.circulation.domain.representations.anonymization.AnonymizeLoansRepresentation;
 import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
+import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.AnonymizeStorageLoansRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
+import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.RouteRegistration;
@@ -40,7 +42,9 @@ public class LoanAnonymizationResource extends Resource {
 
     String borrowerId = routingContext.request().getParam("userId");
 
-    final var loanRepository = new LoanRepository(clients);
+    final var loanRepository = new LoanRepository(clients,
+      new ItemRepository(clients, true, true, true),
+      new UserRepository(clients));
     final var accountRepository = new AccountRepository(clients);
 
     final var loansFinder = new LoansForBorrowerFinder(borrowerId,

@@ -23,8 +23,10 @@ import org.folio.circulation.domain.representations.ChangeDueDateRequest;
 import org.folio.circulation.domain.validation.ItemStatusValidator;
 import org.folio.circulation.domain.validation.LoanValidator;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
+import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
+import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.RouteRegistration;
@@ -66,7 +68,9 @@ public class ChangeDueDateResource extends Resource {
 
     final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
 
-    final LoanRepository loanRepository = new LoanRepository(clients);
+    final LoanRepository loanRepository = new LoanRepository(clients,
+      new ItemRepository(clients, true, true, true),
+      new UserRepository(clients));
 
     final LoanScheduledNoticeService scheduledNoticeService
       = LoanScheduledNoticeService.using(clients);
@@ -95,10 +99,10 @@ public class ChangeDueDateResource extends Resource {
       .thenApply(r -> r.next(scheduledNoticeService::rescheduleDueDateNotices))
       .thenCompose(r -> r.after(loanNoticeSender::sendManualDueDateChangeNotice));
   }
-  
+
   private LoanAndRelatedRecords unsetDueDateChangedByRecallIfNoOpenRecallsInQueue(
       LoanAndRelatedRecords loanAndRelatedRecords) {
-    
+
     RequestQueue queue = loanAndRelatedRecords.getRequestQueue();
     Loan loan = loanAndRelatedRecords.getLoan();
     log.info("Loan {} prior to flag check: {}", loan.getId(), loan.asJson().toString());

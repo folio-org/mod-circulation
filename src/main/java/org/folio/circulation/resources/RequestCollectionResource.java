@@ -76,7 +76,7 @@ public class RequestCollectionResource extends CollectionResource {
 
     final var itemRepository = new ItemRepository(clients, true, true, true);
     final var userRepository = new UserRepository(clients);
-    final var loanRepository = new LoanRepository(clients);
+    final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
     final var loanPolicyRepository = new LoanPolicyRepository(clients);
     final var requestNoticeSender = createRequestNoticeSender(clients, representation);
     final var configurationRepository = new ConfigurationRepository(clients);
@@ -91,15 +91,18 @@ public class RequestCollectionResource extends CollectionResource {
     final var requestBlocksValidators = new RequestBlockValidators(
       blockOverrides, okapiPermissions, clients);
 
+    final var requestLoanValidator = new RequestLoanValidator(
+      new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository),
+      loanRepository);
+
     final var createRequestService = new CreateRequestService(
       new CreateRequestRepositories(RequestRepository.using(clients),
         new RequestPolicyRepository(clients), configurationRepository),
-      updateUponRequest, new RequestLoanValidator(new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository), loanRepository),
-      requestNoticeSender, requestBlocksValidators, eventPublisher, errorHandler);
+      updateUponRequest, requestLoanValidator, requestNoticeSender,
+      requestBlocksValidators, eventPublisher, errorHandler);
 
     final var requestFromRepresentationService = new RequestFromRepresentationService(
-      new InstanceRepository(clients),
-      itemRepository,
+      new InstanceRepository(clients), itemRepository,
       RequestQueueRepository.using(clients), userRepository, loanRepository,
       new ServicePointRepository(clients), configurationRepository,
       createProxyRelationshipValidator(representation, clients),
@@ -127,11 +130,11 @@ public class RequestCollectionResource extends CollectionResource {
     final var representation = routingContext.getBodyAsJson();
 
     write(representation, "id", getRequestId(routingContext));
-    
+
     final var itemRepository = new ItemRepository(clients, true, true, true);
     final var requestRepository = RequestRepository.using(clients);
     final var updateRequestQueue = UpdateRequestQueue.using(clients);
-    final var loanRepository = new LoanRepository(clients);
+    final var loanRepository = new LoanRepository(clients, itemRepository, new UserRepository(clients));
     final var loanPolicyRepository = new LoanPolicyRepository(clients);
     final var eventPublisher = new EventPublisher(routingContext);
     final var requestNoticeSender = createRequestNoticeSender(clients, representation);
@@ -251,7 +254,8 @@ public class RequestCollectionResource extends CollectionResource {
     final var requestQueueRepository = RequestQueueRepository.using(clients);
 
     final var itemRepository = new ItemRepository(clients, true, true, true);
-    final var loanRepository = new LoanRepository(clients);
+    final var userRepository = new UserRepository(clients);
+    final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
     final var loanPolicyRepository = new LoanPolicyRepository(clients);
     final var configurationRepository = new ConfigurationRepository(clients);
 
