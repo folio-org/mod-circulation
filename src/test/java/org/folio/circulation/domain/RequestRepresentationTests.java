@@ -128,6 +128,7 @@ class RequestRepresentationTests {
       .create();
 
     return Request.from(requestJsonObject)
+      .withInstance(Instance.from(instanceRepresentation))
       .withRequester(requester)
       .withPickupServicePoint(servicePoint)
       .withItem(item);
