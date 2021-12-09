@@ -71,7 +71,7 @@ public class RequestPolicyRepository {
 
     String materialTypeId = item.getMaterialTypeId();
     String patronGroupId = user.getPatronGroupId();
-    String loanTypeId = item.determineLoanTypeForItem();
+    String loanTypeId = item.getLoanTypeId();
     String locationId = item.getLocationId();
 
     log.info(

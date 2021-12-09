@@ -66,7 +66,7 @@ public class ItemLimitValidator {
     }
 
     Item item = records.getLoan().getItem();
-    String loanTypeId = item.determineLoanTypeForItem();
+    String loanTypeId = item.getLoanTypeId();
     Integer itemLimit = records.getLoan().getLoanPolicy().getItemLimit();
     AppliedRuleConditions ruleConditions = records.getLoan().getLoanPolicy().getRuleConditions();
 
@@ -100,7 +100,7 @@ public class ItemLimitValidator {
     }
 
     return expectedLoanType != null
-      && expectedLoanType.equals(loanRecord.getItem().determineLoanTypeForItem());
+      && expectedLoanType.equals(loanRecord.getItem().getLoanTypeId());
   }
 
   private String getErrorMessage(AppliedRuleConditions ruleConditionsEntity) {

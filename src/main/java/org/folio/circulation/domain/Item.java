@@ -134,15 +134,15 @@ public class Item {
   }
 
   public String getBarcode() {
-    return getProperty(getItem(), "barcode");
+    return getProperty(itemRepresentation, "barcode");
   }
 
   public String getItemId() {
-    return getProperty(getItem(), "id");
+    return getProperty(itemRepresentation, "id");
   }
 
   public String getHoldingsRecordId() {
-    return getProperty(getItem(), "holdingsRecordId");
+    return getProperty(itemRepresentation, "holdingsRecordId");
   }
 
   public String getInstanceId() {
@@ -178,11 +178,11 @@ public class Item {
   }
 
   public String getStatusName() {
-    return getNestedStringProperty(getItem(), STATUS_PROPERTY, "name");
+    return getNestedStringProperty(itemRepresentation, STATUS_PROPERTY, "name");
   }
 
   private String getStatusDate() {
-    return getNestedStringProperty(getItem(), STATUS_PROPERTY, "date");
+    return getNestedStringProperty(itemRepresentation, STATUS_PROPERTY, "date");
   }
 
   public Location getLocation() {
@@ -203,20 +203,20 @@ public class Item {
 
   public String getCopyNumber() {
     return firstNonBlank(
-      getProperty(getItem(), ITEM_COPY_NUMBER_ID),
+      getProperty(itemRepresentation, ITEM_COPY_NUMBER_ID),
       holdings.getCopyNumber());
   }
 
   public String getMaterialTypeId() {
-    return getProperty(getItem(), MATERIAL_TYPE_ID);
+    return getProperty(itemRepresentation, MATERIAL_TYPE_ID);
   }
 
   public String getLocationId() {
-    return getProperty(getItem(), EFFECTIVE_LOCATION_ID);
+    return getProperty(itemRepresentation, EFFECTIVE_LOCATION_ID);
   }
 
   public String getEnumeration() {
-    return getProperty(getItem(), "enumeration");
+    return getProperty(itemRepresentation, "enumeration");
   }
 
   public String getInTransitDestinationServicePointId() {
@@ -232,19 +232,19 @@ public class Item {
   }
 
   public String getVolume() {
-    return getProperty(getItem(), "volume");
+    return getProperty(itemRepresentation, "volume");
   }
 
   public String getChronology() {
-    return getProperty(getItem(), "chronology");
+    return getProperty(itemRepresentation, "chronology");
   }
 
   public String getNumberOfPieces() {
-    return getProperty(getItem(), "numberOfPieces");
+    return getProperty(itemRepresentation, "numberOfPieces");
   }
 
   public String getDescriptionOfPieces() {
-    return getProperty(getItem(), "descriptionOfPieces");
+    return getProperty(itemRepresentation, "descriptionOfPieces");
   }
 
   public List<String> getYearCaption() {
@@ -256,11 +256,15 @@ public class Item {
     return primaryServicePoint;
   }
 
-  public String determineLoanTypeForItem() {
-    return getItem().containsKey(ItemProperties.TEMPORARY_LOAN_TYPE_ID)
-      && !getItem().getString(ItemProperties.TEMPORARY_LOAN_TYPE_ID).isEmpty()
-      ? getItem().getString(ItemProperties.TEMPORARY_LOAN_TYPE_ID)
-      : getItem().getString(ItemProperties.PERMANENT_LOAN_TYPE_ID);
+  public String getLoanTypeId() {
+    if (itemRepresentation == null) {
+      return null;
+    }
+
+    return itemRepresentation.containsKey(ItemProperties.TEMPORARY_LOAN_TYPE_ID)
+      && !itemRepresentation.getString(ItemProperties.TEMPORARY_LOAN_TYPE_ID).isEmpty()
+      ? itemRepresentation.getString(ItemProperties.TEMPORARY_LOAN_TYPE_ID)
+      : itemRepresentation.getString(ItemProperties.PERMANENT_LOAN_TYPE_ID);
   }
 
   public String getLoanTypeName() {
@@ -339,7 +343,7 @@ public class Item {
   }
 
   public boolean isFound() {
-    return getItem() != null;
+    return itemRepresentation != null;
   }
 
   public LastCheckIn getLastCheckIn() {
