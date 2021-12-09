@@ -16,20 +16,18 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
-import org.folio.circulation.domain.representations.ItemSummaryRepresentation;
-import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.support.results.Result;
 
-public class UpdateItem {
-  private final CollectionResourceClient itemsStorageClient;
+import lombok.AllArgsConstructor;
 
-  public UpdateItem(Clients clients) {
-    itemsStorageClient = clients.itemsStorage();
-  }
+@AllArgsConstructor
+public class UpdateItem {
+  private final ItemRepository itemRepository;
 
   public CompletableFuture<Result<Item>> onCheckIn(Item item, RequestQueue requestQueue,
       UUID checkInServicePointId, String loggedInUserId, ZonedDateTime dateTime) {
+
     return changeItemOnCheckIn(item, requestQueue, checkInServicePointId)
       .next(addLastCheckInProperties(checkInServicePointId, loggedInUserId, dateTime))
       .after(this::storeItem);
@@ -165,9 +163,7 @@ public class UpdateItem {
   }
 
   private CompletableFuture<Result<Item>> storeItem(Item item) {
-    return itemsStorageClient.put(item.getItemId(),
-      new ItemSummaryRepresentation().createItemStorageRepresentation(item))
-      .thenApply(noContentRecordInterpreter(item)::flatMap);
+    return itemRepository.updateItem(item);
   }
 
   private CompletableFuture<Result<Boolean>> loanIsClosed(
