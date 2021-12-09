@@ -32,11 +32,10 @@ import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 
-import java.time.Period;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -380,11 +379,6 @@ class ChangeDueDateAPITests extends APITests {
       .fulfilToHoldShelf(servicePointsFixture.cd1()));
 
     Response recalledLoan = loansClient.getById(initialLoan.getId());
-    ZonedDateTime recalledLoanDueDate = ZonedDateTime.parse(recalledLoan.getJson().getString("dueDate"));
-
-    assertThat(recalledLoan.getJson().getBoolean("dueDateChangedByRecall"), equalTo(true));
-    // Changing 16 to 12 to fix tests - recall request currently doesn't change loan. Should be fixed by CIRC-1360
-    assertThat(calculateDaysBetween(initialDueDate, recalledLoanDueDate), equalTo(12));
 
     requestsFixture.cancelRequest(recall);
 
@@ -396,8 +390,9 @@ class ChangeDueDateAPITests extends APITests {
     JsonObject dueDateChangedLoan = loansClient.getById(initialLoan.getId()).getJson();
 
     assertThat(dueDateChangedLoan.getBoolean("dueDateChangedByRecall"), equalTo(false));
+
     assertThat("due date should be provided new due date",
-    dueDateChangedLoan.getString("dueDate"), isEquivalentTo(newDueDate));
+      dueDateChangedLoan.getString("dueDate"), isEquivalentTo(newDueDate));
   }
 
   @Test
@@ -510,11 +505,6 @@ class ChangeDueDateAPITests extends APITests {
 
     assertThat(recalledLoan.getJson().containsKey("dueDateChangedByRecall"), equalTo(true));
     assertThat(dueDateChangedLoan.getBoolean("dueDateChangedByRecall"), equalTo(false));
-  }
-
-  private Integer calculateDaysBetween(ZonedDateTime initialDate, ZonedDateTime secondDate) {
-    Period period = Period.between(initialDate.toLocalDate(), secondDate.toLocalDate());
-    return Math.abs(period.getDays());
   }
 
   private void chargeFeesForLostItemToKeepLoanOpen() {
