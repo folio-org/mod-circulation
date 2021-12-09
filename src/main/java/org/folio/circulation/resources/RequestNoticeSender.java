@@ -57,6 +57,7 @@ public class RequestNoticeSender {
     servicePointRepository = new ServicePointRepository(clients);
     eventPublisher = new EventPublisher(clients.pubSubPublishingService());
   }
+
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   protected static final Map<RequestType, NoticeEventType> requestTypeToEventMap;
