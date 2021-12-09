@@ -12,6 +12,7 @@ import static org.folio.circulation.domain.ItemStatus.PAGED;
 import static org.folio.circulation.domain.representations.ItemProperties.EFFECTIVE_LOCATION_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.IN_TRANSIT_DESTINATION_SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.ITEM_COPY_NUMBER_ID;
+import static org.folio.circulation.domain.representations.ItemProperties.LAST_CHECK_IN;
 import static org.folio.circulation.domain.representations.ItemProperties.MATERIAL_TYPE_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.PERMANENT_LOCATION_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.STATUS_PROPERTY;
@@ -434,8 +435,17 @@ public class Item {
   }
 
   public Item withLastCheckIn(LastCheckIn lastCheckIn) {
+    final var changedItemRepresentation= itemRepresentation.copy();
+
+    if (lastCheckIn == null) {
+      itemRepresentation.remove(LAST_CHECK_IN);
+    }
+    else {
+      write(changedItemRepresentation, LAST_CHECK_IN, lastCheckIn.toJson());
+    }
+
     return new Item(
-      this.itemRepresentation,
+      changedItemRepresentation,
       this.location,
       this.primaryServicePoint,
       lastCheckIn,
