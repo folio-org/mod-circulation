@@ -58,13 +58,13 @@ public class ItemsInTransitReportService {
 
   public ItemsInTransitReportService(Clients clients) {
     this.itemReportRepository = new ItemReportRepository(clients);
-    this.loanRepository = new LoanRepository(clients);
+    this.itemRepository = new ItemRepository(clients);
+    this.userRepository = new UserRepository(clients);
+    this.loanRepository = new LoanRepository(clients, itemRepository, userRepository);
     this.locationRepository = LocationRepository.using(clients);
     this.servicePointRepository = new ServicePointRepository(clients);
     this.requestRepository = new RequestRepository(clients, itemRepository, userRepository,
       loanRepository, servicePointRepository, patronGroupRepository);
-    this.itemRepository = new ItemRepository(clients, true, true, true);
-    this.userRepository = new UserRepository(clients);
     this.patronGroupRepository = new PatronGroupRepository(clients);
   }
 

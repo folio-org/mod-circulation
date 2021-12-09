@@ -69,14 +69,15 @@ public class LoanCollectionResource extends CollectionResource {
 
     final Clients clients = Clients.create(context, client);
 
-    final ItemRepository itemRepository = new ItemRepository(clients, true, true, false);
+    final ItemRepository itemRepository = new ItemRepository(clients);
     final ServicePointRepository servicePointRepository = new ServicePointRepository(clients);
     final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
     final UserRepository userRepository = new UserRepository(clients);
 
     final UpdateRequestQueue requestQueueUpdate = UpdateRequestQueue.using(clients);
-    final UpdateItem updateItem = new UpdateItem(clients);
-    final LoanRepository loanRepository = new LoanRepository(clients);
+    final UpdateItem updateItem = new UpdateItem(itemRepository);
+    final LoanRepository loanRepository = new LoanRepository(clients,
+      itemRepository, userRepository);
     final LoanService loanService = new LoanService(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
     final EventPublisher eventPublisher = new EventPublisher(routingContext);
@@ -141,12 +142,13 @@ public class LoanCollectionResource extends CollectionResource {
     final Clients clients = Clients.create(context, client);
     final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
     final ServicePointRepository servicePointRepository = new ServicePointRepository(clients);
-    final ItemRepository itemRepository = new ItemRepository(clients, true, true, true);
+    final ItemRepository itemRepository = new ItemRepository(clients);
     final UserRepository userRepository = new UserRepository(clients);
 
     final UpdateRequestQueue requestQueueUpdate = UpdateRequestQueue.using(clients);
-    final UpdateItem updateItem = new UpdateItem(clients);
-    final LoanRepository loanRepository = new LoanRepository(clients);
+    final UpdateItem updateItem = new UpdateItem(itemRepository);
+    final LoanRepository loanRepository = new LoanRepository(clients,
+      itemRepository, userRepository);
 
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
       clients, () -> singleValidationError("proxyUserId is not valid", "proxyUserId",
@@ -199,7 +201,9 @@ public class LoanCollectionResource extends CollectionResource {
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context, client);
 
-    final LoanRepository loanRepository = new LoanRepository(clients);
+    final var loanRepository = new LoanRepository(clients,
+      new ItemRepository(clients),
+      new UserRepository(clients));
     final ServicePointRepository servicePointRepository = new ServicePointRepository(clients);
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
     final UserRepository userRepository = new UserRepository(clients);
@@ -241,10 +245,11 @@ public class LoanCollectionResource extends CollectionResource {
     WebContext context = new WebContext(routingContext);
     Clients clients = Clients.create(context, client);
 
-    final LoanRepository loanRepository = new LoanRepository(clients);
+    final var userRepository = new UserRepository(clients);
+    final var itemRepository = new ItemRepository(clients);
+    final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
     final ServicePointRepository servicePointRepository = new ServicePointRepository(clients);
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
-    final UserRepository userRepository = new UserRepository(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
     final OverdueFinePolicyRepository overdueFinePolicyRepository = new OverdueFinePolicyRepository(clients);
     final LostItemPolicyRepository lostItemPolicyRepository = new LostItemPolicyRepository(clients);

@@ -6,7 +6,6 @@ import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.CheckInContext;
@@ -14,19 +13,27 @@ import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanCheckInService;
 import org.folio.circulation.domain.OverdueFineService;
+import org.folio.circulation.domain.OverduePeriodCalculatorService;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.domain.UpdateItem;
 import org.folio.circulation.domain.UpdateRequestQueue;
 import org.folio.circulation.domain.notice.schedule.FeeFineScheduledNoticeService;
+import org.folio.circulation.infrastructure.storage.CalendarRepository;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
+import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineOwnerRepository;
+import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
+import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
+import org.folio.circulation.infrastructure.storage.loans.OverdueFinePolicyRepository;
+import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.infrastructure.storage.users.AddressTypeRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.services.EventPublisher;
+import org.folio.circulation.services.FeeFineFacade;
 import org.folio.circulation.services.LogCheckInService;
 import org.folio.circulation.services.LostItemFeeRefundService;
 import org.folio.circulation.storage.ItemByBarcodeInStorageFinder;
@@ -86,10 +93,9 @@ class CheckInProcessAdapter {
   }
 
   public static CheckInProcessAdapter newInstance(Clients clients) {
-    final LoanRepository loanRepository = new LoanRepository(clients);
-    final UserRepository userRepository = new UserRepository(clients);
-
-    final ItemRepository itemRepository = new ItemRepository(clients, true, true, true);
+    final var itemRepository = new ItemRepository(clients);
+    final var userRepository = new UserRepository(clients);
+    final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
 
     final ItemByBarcodeInStorageFinder itemFinder =
       new ItemByBarcodeInStorageFinder(itemRepository);
@@ -97,18 +103,27 @@ class CheckInProcessAdapter {
     final SingleOpenLoanForItemInStorageFinder singleOpenLoanFinder
       = new SingleOpenLoanForItemInStorageFinder(loanRepository, userRepository, true);
 
+    final var overdueFineService = new OverdueFineService(
+      new OverdueFinePolicyRepository(clients), itemRepository,
+      new FeeFineOwnerRepository(clients),
+      new FeeFineRepository(clients),
+      ScheduledNoticesRepository.using(clients),
+      new OverduePeriodCalculatorService(new CalendarRepository(clients),
+        new LoanPolicyRepository(clients)),
+      new FeeFineFacade(clients));
+
     return new CheckInProcessAdapter(itemFinder,
       singleOpenLoanFinder,
       new LoanCheckInService(),
       RequestQueueRepository.using(clients),
-      new UpdateItem(clients),
+      new UpdateItem(itemRepository),
       UpdateRequestQueue.using(clients),
       loanRepository,
       new ServicePointRepository(clients),
       userRepository,
       new AddressTypeRepository(clients),
       new LogCheckInService(clients),
-      OverdueFineService.using(clients),
+      overdueFineService,
       FeeFineScheduledNoticeService.using(clients),
       new LostItemFeeRefundService(clients),
       new EventPublisher(clients.pubSubPublishingService()));

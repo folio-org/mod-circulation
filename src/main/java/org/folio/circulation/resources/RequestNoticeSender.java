@@ -33,6 +33,7 @@ import org.folio.circulation.domain.notice.SingleImmediatePatronNoticeService;
 import org.folio.circulation.domain.notice.TemplateContextUtil;
 import org.folio.circulation.domain.representations.logs.NoticeLogContext;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
+import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
@@ -47,14 +48,14 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class RequestNoticeSender {
   public RequestNoticeSender(Clients clients) {
-    this(
-      new SingleImmediatePatronNoticeService(clients),
-      RequestRepository.using(clients),
-      new LoanRepository(clients),
-      new UserRepository(clients),
-      new ServicePointRepository(clients),
-      new EventPublisher(clients.pubSubPublishingService())
-    );
+    final var itemRepository = new ItemRepository(clients);
+
+    userRepository = new UserRepository(clients);
+    patronNoticeService = new SingleImmediatePatronNoticeService(clients);
+    requestRepository = RequestRepository.using(clients);
+    loanRepository = new LoanRepository(clients, itemRepository, userRepository);
+    servicePointRepository = new ServicePointRepository(clients);
+    eventPublisher = new EventPublisher(clients.pubSubPublishingService());
   }
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 

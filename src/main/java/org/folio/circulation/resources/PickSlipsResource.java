@@ -118,7 +118,7 @@ public class PickSlipsResource extends Resource {
       return completedFuture(succeeded(emptyList()));
     }
 
-    final ItemRepository itemRepository = new ItemRepository(clients, false, true, true);
+    final ItemRepository itemRepository = new ItemRepository(clients);
     Result<CqlQuery> statusQuery = exactMatch(STATUS_NAME_KEY, ItemStatus.PAGED.getValue());
 
     return itemRepository.findByIndexNameAndQuery(locationIds, EFFECTIVE_LOCATION_ID_KEY, statusQuery)
