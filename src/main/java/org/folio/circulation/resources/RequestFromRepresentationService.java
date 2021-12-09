@@ -220,7 +220,8 @@ class RequestFromRepresentationService {
     boolean tlrEnabled = request.getTlrSettingsConfiguration().isTitleLevelRequestsFeatureEnabled();
 
     if (!tlrEnabled && isBlank(itemId)) {
-      return failedValidation("Cannot create a request with no item ID", "itemId", itemId);
+      return failedValidation("Cannot create an item level request with no item ID",
+        "itemId", itemId);
     }
     else {
       return of(() -> request);

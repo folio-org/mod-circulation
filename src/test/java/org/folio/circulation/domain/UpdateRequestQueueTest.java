@@ -215,7 +215,7 @@ class UpdateRequestQueueTest {
       reorderRequest.setNewPosition(requestCount - request.getPosition());
     }
 
-    return new ReorderRequestContext(itemId.toString(), reorderQueueRequest)
+    return new ReorderRequestContext(null, itemId.toString(), reorderQueueRequest)
       .withRequestQueue(requestQueue);
   }
 

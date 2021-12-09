@@ -9,6 +9,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.folio.circulation.domain.ItemStatus;
 import api.support.http.IndividualResource;
@@ -298,6 +300,19 @@ public class ItemsFixture {
   public InstanceBuilder instanceBasedUponSmallAngryPlanet() {
     return InstanceExamples.basedUponSmallAngryPlanet(booksInstanceTypeId(),
       getPersonalContributorNameTypeId());
+  }
+
+  public List<ItemResource> createMultipleItemsForTheSameInstance(int size) {
+    UUID instanceId = UUID.randomUUID();
+    InstanceBuilder sapInstanceBuilder = instanceBasedUponSmallAngryPlanet()
+      .withId(instanceId);
+
+    return IntStream.range(0, size)
+      .mapToObj(num -> basedUponSmallAngryPlanet(
+        holdingsBuilder -> holdingsBuilder.forInstance(instanceId),
+        instanceBuilder -> sapInstanceBuilder,
+        itemBuilder -> itemBuilder.withBarcode("0000" + num)))
+      .collect(Collectors.toList());
   }
 
   private UUID booksInstanceTypeId() {
