@@ -39,7 +39,6 @@ import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 import static org.folio.circulation.support.utils.DateTimeUtil.isAfterMillis;
 
-import java.util.stream.Collectors;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.EnumSet;
