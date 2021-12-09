@@ -1,7 +1,6 @@
 package org.folio.circulation;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.infrastructure.storage.inventory.ItemRepository.noLocationMaterialTypeAndLoanTypeInstance;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
@@ -25,7 +24,8 @@ public class StoreLoanAndItem {
   }
 
   public StoreLoanAndItem(Clients clients) {
-    this(new LoanRepository(clients), noLocationMaterialTypeAndLoanTypeInstance(clients));
+    this(new LoanRepository(clients),
+      new ItemRepository(clients, false, false, false));
   }
 
   public CompletableFuture<Result<RenewalContext>> updateLoanAndItemInStorage(

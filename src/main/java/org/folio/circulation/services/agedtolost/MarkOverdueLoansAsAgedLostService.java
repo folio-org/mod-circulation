@@ -3,7 +3,6 @@ package org.folio.circulation.services.agedtolost;
 import static org.folio.circulation.domain.ItemStatus.AGED_TO_LOST;
 import static org.folio.circulation.domain.ItemStatus.CLAIMED_RETURNED;
 import static org.folio.circulation.domain.ItemStatus.DECLARED_LOST;
-import static org.folio.circulation.infrastructure.storage.inventory.ItemRepository.noLocationMaterialTypeAndLoanTypeInstance;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.CqlSortBy.ascending;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
@@ -47,7 +46,7 @@ public class MarkOverdueLoansAsAgedLostService {
 
   public MarkOverdueLoansAsAgedLostService(Clients clients) {
     this.lostItemPolicyRepository = new LostItemPolicyRepository(clients);
-    this.itemRepository = noLocationMaterialTypeAndLoanTypeInstance(clients);
+      this.itemRepository = new ItemRepository(clients, false, false, false);
     this.storeLoanAndItem = new StoreLoanAndItem(clients);
     this.eventPublisher = new EventPublisher(clients.pubSubPublishingService());
     this.loanPageableFetcher = new PageableFetcher<>(new LoanRepository(clients));

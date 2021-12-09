@@ -500,8 +500,4 @@ public class ItemRepository {
       .thenComposeAsync(this::fetchMaterialType)
       .thenComposeAsync(this::fetchLoanType);
   }
-
-  public static ItemRepository noLocationMaterialTypeAndLoanTypeInstance(org.folio.circulation.support.Clients clients) {
-    return new ItemRepository(clients, false, false, false);
-  }
 }
