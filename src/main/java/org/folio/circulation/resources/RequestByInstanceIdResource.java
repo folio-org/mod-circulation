@@ -7,6 +7,10 @@ import static org.folio.circulation.domain.RequestType.HOLD;
 import static org.folio.circulation.domain.RequestType.PAGE;
 import static org.folio.circulation.domain.RequestType.RECALL;
 import static org.folio.circulation.domain.representations.RequestProperties.FULFILMENT_PREFERENCE;
+import static org.folio.circulation.domain.RequestFulfilmentPreference.HOLD_SHELF;
+import static org.folio.circulation.domain.RequestType.HOLD;
+import static org.folio.circulation.domain.RequestType.PAGE;
+import static org.folio.circulation.domain.RequestType.RECALL;
 import static org.folio.circulation.domain.representations.RequestProperties.ITEM_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.PROXY_USER_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUESTER_ID;
@@ -67,6 +71,7 @@ import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestPolicyRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
+import org.folio.circulation.infrastructure.storage.users.PatronGroupRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.handlers.error.FailFastErrorHandler;
 import org.folio.circulation.services.EventPublisher;
@@ -285,6 +290,7 @@ public class RequestByInstanceIdResource extends Resource {
 
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
     final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
+
     final UpdateUponRequest updateUponRequest = new UpdateUponRequest(
       new UpdateItem(itemRepository),
       new UpdateLoan(clients, loanRepository, loanPolicyRepository),
