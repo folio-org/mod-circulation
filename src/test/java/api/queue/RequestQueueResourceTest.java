@@ -460,7 +460,6 @@ class RequestQueueResourceTest extends APITests {
 
   @ParameterizedTest
   @EnumSource(TlrFeatureStatus.class)
-//  @EnumSource(value = TlrFeatureStatus.class, names = {"ENABLED"})
   void logRecordEventIsPublished(TlrFeatureStatus tlrFeatureStatus) {
     reconfigureTlrFeature(tlrFeatureStatus);
 
