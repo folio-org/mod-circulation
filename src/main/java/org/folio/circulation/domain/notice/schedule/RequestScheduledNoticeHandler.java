@@ -17,7 +17,9 @@ import org.folio.circulation.domain.notice.NoticeTiming;
 import org.folio.circulation.domain.representations.logs.NoticeLogContext;
 import org.folio.circulation.domain.representations.logs.NoticeLogContextItem;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
+import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
+import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.rules.CirculationRuleMatch;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
@@ -30,7 +32,12 @@ public abstract class RequestScheduledNoticeHandler extends ScheduledNoticeHandl
 
   public RequestScheduledNoticeHandler(Clients clients, ItemRepository itemRepository) {
     super(clients, itemRepository);
-    this.requestRepository = RequestRepository.using(clients);
+    final var userRepository = new UserRepository(clients);
+    final var loanRepository = new LoanRepository(clients, itemRepository,
+      userRepository);
+
+    this.requestRepository = RequestRepository.using(clients,
+      itemRepository, userRepository, loanRepository);
   }
 
   @Override

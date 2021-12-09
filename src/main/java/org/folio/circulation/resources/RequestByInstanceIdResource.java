@@ -234,7 +234,8 @@ public class RequestByInstanceIdResource extends Resource {
         UpdateRequestQueue.using(clients));
 
     final CreateRequestService createRequestService = new CreateRequestService(
-      new CreateRequestRepositories(RequestRepository.using(clients),
+      new CreateRequestRepositories(RequestRepository.using(clients,
+        itemRepository, userRepository, loanRepository),
         new RequestPolicyRepository(clients), configurationRepository),
       updateUponRequest,
       new RequestLoanValidator(null, loanRepository),

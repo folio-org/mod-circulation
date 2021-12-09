@@ -24,6 +24,9 @@ import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
+import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
+import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
+import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.http.client.CqlQuery;
@@ -41,7 +44,11 @@ public class RequestQueueRepository {
   }
 
   public static RequestQueueRepository using(Clients clients) {
-    return new RequestQueueRepository(RequestRepository.using(clients));
+    final ItemRepository itemRepository = new ItemRepository(clients);
+    final UserRepository userRepository = new UserRepository(clients);
+    return new RequestQueueRepository(RequestRepository.using(clients,
+      itemRepository, userRepository, new LoanRepository(clients,
+        itemRepository, userRepository)));
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> get(LoanAndRelatedRecords records) {
