@@ -1,7 +1,6 @@
 package org.folio.circulation.domain;
 
 import static java.util.Objects.isNull;
-import static org.folio.circulation.domain.representations.ContributorsToNamesMapper.mapContributorsToNamesOnly;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
 import java.lang.invoke.MethodHandles;
@@ -49,9 +48,6 @@ public class StoredRequestRepresentation {
     JsonObject instanceSummary = new JsonObject();
     write(instanceSummary, "title", instance.getTitle());
     write(instanceSummary, "identifiers", instance.getIdentifiers());
-    write(instanceSummary, "contributorNames", mapContributorsToNamesOnly(instance.getContributors()));
-    write(instanceSummary, "publication", instance.getPublication());
-    write(instanceSummary, "editions", instance.getEditions());
 
     request.put("instance", instanceSummary);
   }

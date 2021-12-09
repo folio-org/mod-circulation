@@ -8,6 +8,9 @@ import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.results.AsynchronousResult.fromFutureResult;
 import static org.folio.circulation.support.results.MappingFunctions.toFixedValue;
 import static org.folio.circulation.support.results.MappingFunctions.when;
+import static org.folio.circulation.support.results.Result.succeeded;
+
+import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.CreateRequestRepositories;
 import org.folio.circulation.domain.CreateRequestService;
@@ -47,6 +50,7 @@ import org.folio.circulation.support.http.OkapiPermissions;
 import org.folio.circulation.support.http.server.JsonHttpResponse;
 import org.folio.circulation.support.http.server.NoContentResponse;
 import org.folio.circulation.support.http.server.WebContext;
+import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
@@ -175,10 +179,11 @@ public class RequestCollectionResource extends CollectionResource {
     final var clients = Clients.create(context, client);
 
     final var requestRepository = RequestRepository.using(clients);
-
     final var id = getRequestId(routingContext);
+    final var instanceRepository = new InstanceRepository(clients);
 
-    fromFutureResult(requestRepository.getById(id))
+    fromFutureResult(requestRepository.getById(id)
+      .thenComposeAsync(req -> fetchInstance(instanceRepository, req.value())))
       .map(new RequestRepresentation()::extendedRepresentation)
       .map(JsonHttpResponse::ok)
       .onComplete(context::write, context::write);
@@ -307,5 +312,10 @@ public class RequestCollectionResource extends CollectionResource {
       return new TitleLevelRequestNoticeSender(clients);
     }
     return new ItemLevelRequestNoticeSender(clients);
+  }
+
+  private CompletableFuture<Result<Request>> fetchInstance(InstanceRepository instanceRepository, Request request) {
+    return succeeded(request)
+      .combineAfter(instanceRepository::fetch, Request::withInstance);
   }
 }
