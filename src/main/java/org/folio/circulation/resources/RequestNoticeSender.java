@@ -52,8 +52,8 @@ public class RequestNoticeSender {
 
     userRepository = new UserRepository(clients);
     patronNoticeService = new SingleImmediatePatronNoticeService(clients);
-    requestRepository = RequestRepository.using(clients);
     loanRepository = new LoanRepository(clients, itemRepository, userRepository);
+    requestRepository = RequestRepository.using(clients, itemRepository, userRepository, loanRepository);
     servicePointRepository = new ServicePointRepository(clients);
     eventPublisher = new EventPublisher(clients.pubSubPublishingService());
   }

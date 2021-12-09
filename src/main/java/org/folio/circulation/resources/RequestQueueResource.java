@@ -23,8 +23,11 @@ import org.folio.circulation.domain.representations.logs.LogEventType;
 import org.folio.circulation.domain.validation.RequestQueueValidation;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
+import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
+import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
+import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.context.ReorderRequestContext;
 import org.folio.circulation.resources.context.RequestQueueType;
 import org.folio.circulation.services.EventPublisher;
@@ -101,7 +104,11 @@ public class RequestQueueResource extends Resource {
 
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context, client);
-    final RequestRepository requestRepository = RequestRepository.using(clients);
+    final ItemRepository itemRepository = new ItemRepository(clients);
+    final UserRepository userRepository = new UserRepository(clients);
+    final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
+    final RequestRepository requestRepository = RequestRepository.using(clients,
+      itemRepository, userRepository, loanRepository);
     final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
     final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
 
