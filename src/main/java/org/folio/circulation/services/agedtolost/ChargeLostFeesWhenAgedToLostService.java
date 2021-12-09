@@ -74,7 +74,7 @@ public class ChargeLostFeesWhenAgedToLostService {
   private final FeeFineScheduledNoticeService feeFineScheduledNoticeService;
 
   public ChargeLostFeesWhenAgedToLostService(Clients clients) {
-    this.itemRepository = new ItemRepository(clients, true, true, true);
+    this.itemRepository = new ItemRepository(clients);
     this.userRepository = new UserRepository(clients);
     this.lostItemPolicyRepository = new LostItemPolicyRepository(clients);
     this.feeFineOwnerRepository = new FeeFineOwnerRepository(clients);

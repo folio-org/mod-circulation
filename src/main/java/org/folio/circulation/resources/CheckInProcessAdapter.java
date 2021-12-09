@@ -94,7 +94,7 @@ class CheckInProcessAdapter {
   }
 
   public static CheckInProcessAdapter newInstance(Clients clients) {
-    final var itemRepository = new ItemRepository(clients, true, true, true);
+    final var itemRepository = new ItemRepository(clients);
     final var userRepository = new UserRepository(clients);
     final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
 

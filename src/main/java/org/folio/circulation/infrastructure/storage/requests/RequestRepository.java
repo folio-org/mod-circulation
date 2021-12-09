@@ -84,7 +84,7 @@ public class RequestRepository {
   }
 
   public static RequestRepository using(org.folio.circulation.support.Clients clients) {
-    final var itemRepository = new ItemRepository(clients, true, true, true);
+    final var itemRepository = new ItemRepository(clients);
     final var userRepository = new UserRepository(clients);
     final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
 

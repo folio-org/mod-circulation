@@ -31,7 +31,7 @@ public class ScheduledAgeToLostResource extends Resource {
     final WebContext context = new WebContext(routingContext);
     final var clients = Clients.create(context, client);
 
-    final var itemRepository = new ItemRepository(clients, true, true, true);
+    final var itemRepository = new ItemRepository(clients);
     final var userRepository = new UserRepository(clients);
     final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
 

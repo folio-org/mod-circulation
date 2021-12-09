@@ -98,7 +98,7 @@ public class RequestByInstanceIdResource extends Resource {
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context, client);
 
-    final ItemRepository itemRepository = new ItemRepository(clients, true, true, true);
+    final ItemRepository itemRepository = new ItemRepository(clients);
     final ItemByInstanceIdFinder finder = new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository);
 
     final Result<RequestByInstanceIdRequest> requestByInstanceIdRequestResult =
@@ -146,7 +146,7 @@ public class RequestByInstanceIdResource extends Resource {
       return CompletableFuture.completedFuture(succeeded(null));
     }
 
-    final var itemRepository = new ItemRepository(clients, true, true, true);
+    final var itemRepository = new ItemRepository(clients);
     final var userRepository = new UserRepository(clients);
     LoanRepository loanRepository = new LoanRepository(clients, itemRepository, userRepository);
     Map<Item, CompletableFuture<Result<Loan>>> itemLoanFuturesMap = new HashMap<>();
@@ -220,9 +220,9 @@ public class RequestByInstanceIdResource extends Resource {
 
   private CompletableFuture<Result<RequestAndRelatedRecords>> placeRequests(
     List<JsonObject> itemRequestRepresentations, Clients clients, EventPublisher eventPublisher) {
-
+    
     final RequestNoticeSender requestNoticeSender = new ItemLevelRequestNoticeSender(clients);
-    final var itemRepository = new ItemRepository(clients, false, false, false);
+    final var itemRepository = new ItemRepository(clients);
     final var userRepository = new UserRepository(clients);
     final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
@@ -263,7 +263,7 @@ public class RequestByInstanceIdResource extends Resource {
     }
 
     JsonObject currentItemRequest = itemRequests.get(startIndex);
-    ItemRepository itemRepository = new ItemRepository(clients, true, false, false);
+    ItemRepository itemRepository = new ItemRepository(clients);
     final RequestFromRepresentationService requestFromRepresentationService =
       new RequestFromRepresentationService(
         new InstanceRepository(clients),

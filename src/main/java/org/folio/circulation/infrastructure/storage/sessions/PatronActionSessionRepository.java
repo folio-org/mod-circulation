@@ -68,7 +68,7 @@ public class PatronActionSessionRepository {
   public static PatronActionSessionRepository using(Clients clients) {
     return new PatronActionSessionRepository(
       clients.patronActionSessionsStorageClient(),
-      new LoanRepository(clients, new ItemRepository(clients, true, true, true),
+      new LoanRepository(clients, new ItemRepository(clients),
         new UserRepository(clients)),
       new UserRepository(clients),
       new LoanPolicyRepository(clients),

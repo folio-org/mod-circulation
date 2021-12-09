@@ -69,7 +69,7 @@ public class ChangeDueDateResource extends Resource {
     final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
 
     final LoanRepository loanRepository = new LoanRepository(clients,
-      new ItemRepository(clients, true, true, true),
+      new ItemRepository(clients),
       new UserRepository(clients));
 
     final LoanScheduledNoticeService scheduledNoticeService

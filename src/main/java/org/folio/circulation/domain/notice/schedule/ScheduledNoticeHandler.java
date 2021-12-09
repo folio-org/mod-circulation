@@ -54,7 +54,7 @@ public abstract class ScheduledNoticeHandler {
   protected final EventPublisher eventPublisher;
 
   protected ScheduledNoticeHandler(Clients clients) {
-    final var itemRepository = new ItemRepository(clients, true, true, true);
+    final var itemRepository = new ItemRepository(clients);
     final var userRepository = new UserRepository(clients);
 
     this.scheduledNoticesRepository = ScheduledNoticesRepository.using(clients);

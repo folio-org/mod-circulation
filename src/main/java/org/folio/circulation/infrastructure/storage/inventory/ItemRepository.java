@@ -71,19 +71,13 @@ public class ItemRepository {
   private final LocationRepository locationRepository;
   private final MaterialTypeRepository materialTypeRepository;
   private final ServicePointRepository servicePointRepository;
-  private final boolean fetchLocation;
-  private final boolean fetchMaterialType;
-  private final boolean fetchLoanType;
 
   private static final String ITEMS_COLLECTION_PROPERTY_NAME = "items";
 
-  public ItemRepository(Clients clients,
-    boolean fetchLocation, boolean fetchMaterialType, boolean fetchLoanType) {
-
+  public ItemRepository(Clients clients) {
     this(clients.itemsStorage(), clients.holdingsStorage(),
       clients.instancesStorage(), clients.loanTypesStorage(), LocationRepository.using(clients),
-      new MaterialTypeRepository(clients), new ServicePointRepository(clients),
-      fetchLocation, fetchMaterialType, fetchLoanType);
+      new MaterialTypeRepository(clients), new ServicePointRepository(clients));
   }
 
   public CompletableFuture<Result<Item>> fetchFor(ItemRelatedRecord record) {
@@ -95,10 +89,8 @@ public class ItemRepository {
   }
 
   private CompletableFuture<Result<Item>> fetchLocation(Result<Item> result) {
-    return fetchLocation
-      ? result.combineAfter(locationRepository::getLocation, Item::withLocation)
-          .thenComposeAsync(this::fetchPrimaryServicePoint)
-      : completedFuture(result);
+    return result.combineAfter(locationRepository::getLocation, Item::withLocation)
+      .thenComposeAsync(this::fetchPrimaryServicePoint);
   }
 
   private CompletableFuture<Result<Item>> fetchPrimaryServicePoint(Result<Item> itemResult) {
@@ -149,16 +141,10 @@ public class ItemRepository {
   }
 
   private CompletableFuture<Result<Item>> fetchMaterialType(Result<Item> result) {
-    return fetchMaterialType
-      ? result.combineAfter(materialTypeRepository::getFor, Item::withMaterialType)
-      : completedFuture(result);
+    return result.combineAfter(materialTypeRepository::getFor, Item::withMaterialType);
   }
 
   private CompletableFuture<Result<Item>> fetchLoanType(Result<Item> result) {
-    if (!fetchLoanType) {
-      return completedFuture(result);
-    }
-
     return result.combineAfter(this::getLoanType, Item::withLoanType);
   }
 
@@ -186,12 +172,8 @@ public class ItemRepository {
   private CompletableFuture<Result<Collection<Item>>> fetchLocations(
     Result<Collection<Item>> result) {
 
-    if (fetchLocation) {
-      return result.after(items -> locationRepository.getAllItemLocations(items)
-        .thenApply(r -> r.map(locations -> map(items, populateItemLocations(locations)))));
-    } else {
-      return completedFuture(result);
-    }
+    return result.after(items -> locationRepository.getAllItemLocations(items)
+      .thenApply(r -> r.map(locations -> map(items, populateItemLocations(locations)))));
   }
 
   private Function<Item, Item> populateItemLocations(Map<String, Location> locations) {
@@ -208,24 +190,15 @@ public class ItemRepository {
 
     final var mapper = new MaterialTypeMapper();
 
-    if (fetchMaterialType) {
-      return result.after(items ->
-        materialTypeRepository.getMaterialTypes(items)
-          .thenApply(r -> r.map(materialTypes -> items.stream()
-              .map(item -> item.withMaterialType(mapper.toDomain(materialTypes
-                .getOrDefault(item.getMaterialTypeId(), null))))
-              .collect(Collectors.toList()))));
-    }
-    else {
-      return completedFuture(result);
-    }
+    return result.after(items ->
+      materialTypeRepository.getMaterialTypes(items)
+        .thenApply(r -> r.map(materialTypes -> items.stream()
+            .map(item -> item.withMaterialType(mapper.toDomain(materialTypes
+              .getOrDefault(item.getMaterialTypeId(), null))))
+            .collect(Collectors.toList()))));
   }
 
   private CompletableFuture<Result<Collection<Item>>> fetchLoanTypes(Result<Collection<Item>> result) {
-    if (!fetchLoanType) {
-      return completedFuture(result);
-    }
-
     return result.after(items -> {
       Map<Item, String> itemToLoanTypeIdMap = items.stream()
         .collect(Collectors.toMap(identity(), Item::getLoanTypeId));

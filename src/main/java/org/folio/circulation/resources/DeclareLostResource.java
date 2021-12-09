@@ -71,7 +71,7 @@ public class DeclareLostResource extends Resource {
   private CompletableFuture<Result<Loan>> declareItemLost(DeclareItemLostRequest request,
     Clients clients, WebContext context) {
 
-    final var itemRepository = new ItemRepository(clients, true, true, true);
+    final var itemRepository = new ItemRepository(clients);
     final var loanRepository = new LoanRepository(clients, itemRepository,
       new UserRepository(clients));
     final var storeLoanAndItem = new StoreLoanAndItem(loanRepository, itemRepository);

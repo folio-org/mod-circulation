@@ -43,7 +43,7 @@ public class LoanAnonymizationResource extends Resource {
     String borrowerId = routingContext.request().getParam("userId");
 
     final var loanRepository = new LoanRepository(clients,
-      new ItemRepository(clients, true, true, true),
+      new ItemRepository(clients),
       new UserRepository(clients));
     final var accountRepository = new AccountRepository(clients);
 

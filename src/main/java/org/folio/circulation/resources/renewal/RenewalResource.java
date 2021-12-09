@@ -136,7 +136,7 @@ public abstract class RenewalResource extends Resource {
 
     final CirculationErrorHandler errorHandler = new OverridingErrorHandler(okapiPermissions);
 
-    final var itemRepository = new ItemRepository(clients, true, true, true);
+    final var itemRepository = new ItemRepository(clients);
     final var userRepository = new UserRepository(clients);
     final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
     final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
@@ -233,7 +233,7 @@ public abstract class RenewalResource extends Resource {
 
     final var overdueFineService = new OverdueFineService(
       new OverdueFinePolicyRepository(clients),
-      new ItemRepository(clients, true, false, false),
+      new ItemRepository(clients),
       new FeeFineOwnerRepository(clients),
       new FeeFineRepository(clients),
       ScheduledNoticesRepository.using(clients),

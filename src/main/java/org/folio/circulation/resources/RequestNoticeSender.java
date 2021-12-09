@@ -47,7 +47,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class RequestNoticeSender {
   public RequestNoticeSender(Clients clients) {
-    final var itemRepository = new ItemRepository(clients, true, true, true);
+    final var itemRepository = new ItemRepository(clients);
 
     userRepository = new UserRepository(clients);
     patronNoticeService = new SingleImmediatePatronNoticeService(clients);
