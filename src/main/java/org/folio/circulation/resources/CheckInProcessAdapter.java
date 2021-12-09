@@ -118,7 +118,7 @@ class CheckInProcessAdapter {
       singleOpenLoanFinder,
       new LoanCheckInService(),
       RequestQueueRepository.using(clients),
-      new UpdateItem(clients),
+      new UpdateItem(itemRepository),
       UpdateRequestQueue.using(clients),
       loanRepository,
       new ServicePointRepository(clients),

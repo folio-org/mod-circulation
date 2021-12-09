@@ -81,7 +81,7 @@ public class RequestCollectionResource extends CollectionResource {
     final var requestNoticeSender = createRequestNoticeSender(clients, representation);
     final var configurationRepository = new ConfigurationRepository(clients);
 
-    final var updateUponRequest = new UpdateUponRequest(new UpdateItem(clients),
+    final var updateUponRequest = new UpdateUponRequest(new UpdateItem(itemRepository),
       new UpdateLoan(clients, loanRepository, loanPolicyRepository),
       UpdateRequestQueue.using(clients));
 
@@ -127,7 +127,7 @@ public class RequestCollectionResource extends CollectionResource {
     final var representation = routingContext.getBodyAsJson();
 
     write(representation, "id", getRequestId(routingContext));
-
+    
     final var itemRepository = new ItemRepository(clients, true, true, true);
     final var requestRepository = RequestRepository.using(clients);
     final var updateRequestQueue = UpdateRequestQueue.using(clients);
@@ -137,7 +137,7 @@ public class RequestCollectionResource extends CollectionResource {
     final var requestNoticeSender = createRequestNoticeSender(clients, representation);
     final var configurationRepository = new ConfigurationRepository(clients);
 
-    final var updateItem = new UpdateItem(clients);
+    final var updateItem = new UpdateItem(itemRepository);
 
     final var updateUponRequest = new UpdateUponRequest(updateItem,
       new UpdateLoan(clients, loanRepository, loanPolicyRepository), updateRequestQueue);
@@ -255,7 +255,7 @@ public class RequestCollectionResource extends CollectionResource {
     final var loanPolicyRepository = new LoanPolicyRepository(clients);
     final var configurationRepository = new ConfigurationRepository(clients);
 
-    final var updateUponRequest = new UpdateUponRequest(new UpdateItem(clients),
+    final var updateUponRequest = new UpdateUponRequest(new UpdateItem(itemRepository),
       new UpdateLoan(clients, loanRepository, loanPolicyRepository),
       UpdateRequestQueue.using(clients));
 

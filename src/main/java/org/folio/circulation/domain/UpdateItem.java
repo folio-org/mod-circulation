@@ -16,15 +16,13 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
-import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
 
+import lombok.AllArgsConstructor;
+
+@AllArgsConstructor
 public class UpdateItem {
   private final ItemRepository itemRepository;
-
-  public UpdateItem(Clients clients) {
-    itemRepository = new ItemRepository(clients, false, false, false);
-  }
 
   public CompletableFuture<Result<Item>> onCheckIn(Item item, RequestQueue requestQueue,
       UUID checkInServicePointId, String loggedInUserId, ZonedDateTime dateTime) {

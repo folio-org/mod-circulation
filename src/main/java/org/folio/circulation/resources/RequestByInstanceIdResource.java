@@ -221,11 +221,12 @@ public class RequestByInstanceIdResource extends Resource {
 
     final RequestNoticeSender requestNoticeSender = new ItemLevelRequestNoticeSender(clients);
     final LoanRepository loanRepository = new LoanRepository(clients);
+    final ItemRepository itemRepository = new ItemRepository(clients, true, true, true);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
     final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
 
     final UpdateUponRequest updateUponRequest = new UpdateUponRequest(
-        new UpdateItem(clients),
+        new UpdateItem(itemRepository),
         new UpdateLoan(clients, loanRepository, loanPolicyRepository),
         UpdateRequestQueue.using(clients));
 

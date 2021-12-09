@@ -75,7 +75,7 @@ public class LoanCollectionResource extends CollectionResource {
     final UserRepository userRepository = new UserRepository(clients);
 
     final UpdateRequestQueue requestQueueUpdate = UpdateRequestQueue.using(clients);
-    final UpdateItem updateItem = new UpdateItem(clients);
+    final UpdateItem updateItem = new UpdateItem(itemRepository);
     final LoanRepository loanRepository = new LoanRepository(clients);
     final LoanService loanService = new LoanService(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
@@ -145,7 +145,7 @@ public class LoanCollectionResource extends CollectionResource {
     final UserRepository userRepository = new UserRepository(clients);
 
     final UpdateRequestQueue requestQueueUpdate = UpdateRequestQueue.using(clients);
-    final UpdateItem updateItem = new UpdateItem(clients);
+    final UpdateItem updateItem = new UpdateItem(itemRepository);
     final LoanRepository loanRepository = new LoanRepository(clients);
 
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
