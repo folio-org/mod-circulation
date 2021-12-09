@@ -4,8 +4,10 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
 import static org.folio.circulation.domain.ItemStatus.PAGED;
+import static org.folio.circulation.domain.representations.ItemProperties.LAST_CHECK_IN;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.http.CommonResponseInterpreters.noContentRecordInterpreter;
+import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.results.MappingFunctions.when;
 import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.results.Result.succeeded;
@@ -16,10 +18,11 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
-import org.folio.circulation.domain.representations.ItemSummaryRepresentation;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.results.Result;
+
+import io.vertx.core.json.JsonObject;
 
 public class UpdateItem {
   private final CollectionResourceClient itemsStorageClient;
@@ -165,9 +168,18 @@ public class UpdateItem {
   }
 
   private CompletableFuture<Result<Item>> storeItem(Item item) {
-    return itemsStorageClient.put(item.getItemId(),
-      new ItemSummaryRepresentation().createItemStorageRepresentation(item))
+    return itemsStorageClient.put(item.getItemId(), createItemStorageRepresentation(item))
       .thenApply(noContentRecordInterpreter(item)::flatMap);
+  }
+
+  public JsonObject createItemStorageRepresentation(Item item) {
+    JsonObject summary = item.getItem().copy();
+
+    if (item.getLastCheckIn() != null) {
+      write(summary, LAST_CHECK_IN, item.getLastCheckIn().toJson());
+    }
+
+    return summary;
   }
 
   private CompletableFuture<Result<Boolean>> loanIsClosed(
