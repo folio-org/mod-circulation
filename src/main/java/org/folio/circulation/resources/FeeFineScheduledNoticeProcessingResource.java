@@ -14,6 +14,7 @@ import org.folio.circulation.domain.notice.schedule.FeeFineScheduledNoticeHandle
 import org.folio.circulation.domain.notice.schedule.ScheduledNotice;
 import org.folio.circulation.domain.notice.schedule.TriggeringEvent;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
+import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CqlSortBy;
@@ -47,9 +48,10 @@ public class FeeFineScheduledNoticeProcessingResource extends ScheduledNoticePro
 
   @Override
   protected CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> handleNotices(
-    Clients clients, MultipleRecords<ScheduledNotice> scheduledNotices) {
+    Clients clients, ItemRepository itemRepository,
+    MultipleRecords<ScheduledNotice> scheduledNotices) {
 
-    return new FeeFineScheduledNoticeHandler(clients)
+    return new FeeFineScheduledNoticeHandler(clients, new ItemRepository(clients))
       .handleNotices(scheduledNotices.getRecords())
       .thenApply(mapResult(v -> scheduledNotices));
   }

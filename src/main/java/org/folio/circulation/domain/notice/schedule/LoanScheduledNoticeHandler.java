@@ -26,6 +26,7 @@ import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.representations.logs.NoticeLogContext;
 import org.folio.circulation.domain.representations.logs.NoticeLogContextItem;
+import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.RecordNotFoundFailure;
@@ -38,8 +39,10 @@ public class LoanScheduledNoticeHandler extends ScheduledNoticeHandler {
   private final LoanPolicyRepository loanPolicyRepository;
   private final ZonedDateTime systemTime;
 
-  public LoanScheduledNoticeHandler(Clients clients, ZonedDateTime systemTime) {
-    super(clients);
+  public LoanScheduledNoticeHandler(Clients clients,
+    ItemRepository itemRepository, ZonedDateTime systemTime) {
+
+    super(clients, itemRepository);
     this.systemTime = systemTime;
     this.loanPolicyRepository = new LoanPolicyRepository(clients);
   }

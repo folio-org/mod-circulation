@@ -53,8 +53,7 @@ public abstract class ScheduledNoticeHandler {
   protected final ScheduledPatronNoticeService patronNoticeService;
   protected final EventPublisher eventPublisher;
 
-  protected ScheduledNoticeHandler(Clients clients) {
-    final var itemRepository = new ItemRepository(clients);
+  protected ScheduledNoticeHandler(Clients clients, ItemRepository itemRepository) {
     final var userRepository = new UserRepository(clients);
 
     this.scheduledNoticesRepository = ScheduledNoticesRepository.using(clients);

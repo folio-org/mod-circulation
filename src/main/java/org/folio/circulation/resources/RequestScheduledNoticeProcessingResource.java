@@ -18,6 +18,7 @@ import org.folio.circulation.domain.notice.schedule.ItemLevelRequestScheduledNot
 import org.folio.circulation.domain.notice.schedule.ScheduledNotice;
 import org.folio.circulation.domain.notice.schedule.TitleLevelRequestScheduledNoticeHandler;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
+import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CqlSortBy;
@@ -45,37 +46,41 @@ public class RequestScheduledNoticeProcessingResource extends ScheduledNoticePro
 
   @Override
   protected CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> handleNotices(
-    Clients clients, MultipleRecords<ScheduledNotice> scheduledNotices) {
+    Clients clients, ItemRepository itemRepository,
+    MultipleRecords<ScheduledNotice> scheduledNotices) {
 
     Collection<ScheduledNotice> records = scheduledNotices.getRecords();
     Map<Boolean, List<ScheduledNotice>> noticesByRequestLevel = records
       .stream()
       .collect(Collectors.groupingBy(this::isTitleLevelRequestNotice));
 
-    return handleItemLevelRequestNotices(clients, noticesByRequestLevel.get(false))
-      .thenCompose(v -> handleTitleLevelRequestNotices(clients, noticesByRequestLevel.get(true)))
+    return handleItemLevelRequestNotices(clients, itemRepository,
+      noticesByRequestLevel.get(false))
+      .thenCompose(v -> handleTitleLevelRequestNotices(clients,
+        itemRepository, noticesByRequestLevel.get(true)
+      ))
       .thenApply(mapResult(v -> scheduledNotices));
   }
 
   private CompletableFuture<Result<List<ScheduledNotice>>> handleItemLevelRequestNotices(
-    Clients clients, List<ScheduledNotice> itemLevelNotices) {
+    Clients clients, ItemRepository itemRepository, List<ScheduledNotice> itemLevelNotices) {
 
     if (itemLevelNotices == null || itemLevelNotices.isEmpty()) {
       return ofAsync(() -> null);
     }
 
-    return new ItemLevelRequestScheduledNoticeHandler(clients)
+    return new ItemLevelRequestScheduledNoticeHandler(clients, itemRepository)
       .handleNotices(itemLevelNotices);
   }
 
   private CompletableFuture<Result<List<ScheduledNotice>>> handleTitleLevelRequestNotices(
-    Clients clients, List<ScheduledNotice> titleLevelNotices) {
+    Clients clients, ItemRepository itemRepository, List<ScheduledNotice> titleLevelNotices) {
 
     if (titleLevelNotices == null || titleLevelNotices.isEmpty()) {
       return ofAsync(() -> null);
     }
 
-    return new TitleLevelRequestScheduledNoticeHandler(clients)
+    return new TitleLevelRequestScheduledNoticeHandler(clients, itemRepository)
       .handleNotices(titleLevelNotices);
   }
 
