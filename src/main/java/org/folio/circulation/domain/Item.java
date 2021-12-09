@@ -256,7 +256,11 @@ public class Item {
     return primaryServicePoint;
   }
 
-  public String determineLoanTypeForItem() {
+  public String getLoanTypeId() {
+    if (itemRepresentation == null) {
+      return null;
+    }
+
     return itemRepresentation.containsKey(ItemProperties.TEMPORARY_LOAN_TYPE_ID)
       && !itemRepresentation.getString(ItemProperties.TEMPORARY_LOAN_TYPE_ID).isEmpty()
       ? itemRepresentation.getString(ItemProperties.TEMPORARY_LOAN_TYPE_ID)

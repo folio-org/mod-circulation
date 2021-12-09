@@ -3,11 +3,11 @@ package org.folio.circulation.infrastructure.storage.inventory;
 import static java.util.Objects.isNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Function.identity;
-import static org.folio.circulation.domain.representations.LoanProperties.ITEM_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.HOLDINGS_RECORD_ID;
+import static org.folio.circulation.domain.representations.LoanProperties.ITEM_ID;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
-import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQuery;
 import static org.folio.circulation.support.fetching.MultipleCqlIndexValuesCriteria.byIndex;
+import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQuery;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.http.CommonResponseInterpreters.noContentRecordInterpreter;
 import static org.folio.circulation.support.json.JsonKeys.byId;
@@ -37,6 +37,7 @@ import org.folio.circulation.domain.Instance;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemRelatedRecord;
 import org.folio.circulation.domain.ItemStatus;
+import org.folio.circulation.domain.LoanType;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.ServicePoint;
@@ -57,8 +58,8 @@ import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
 
+@AllArgsConstructor
 public class ItemRepository {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
@@ -78,26 +79,10 @@ public class ItemRepository {
   public ItemRepository(org.folio.circulation.support.Clients clients,
     boolean fetchLocation, boolean fetchMaterialType, boolean fetchLoanType) {
 
-    this(new Clients(clients.itemsStorage(), clients.holdingsStorage(),
-      clients.instancesStorage(), clients.loanTypesStorage()), LocationRepository.using(clients),
+    this(clients.itemsStorage(), clients.holdingsStorage(),
+      clients.instancesStorage(), clients.loanTypesStorage(), LocationRepository.using(clients),
       new MaterialTypeRepository(clients), new ServicePointRepository(clients),
       fetchLocation, fetchMaterialType, fetchLoanType);
-  }
-
-  private ItemRepository(Clients clients, LocationRepository locationRepository,
-    MaterialTypeRepository materialTypeRepository, ServicePointRepository servicePointRepository,
-    boolean fetchLocation, boolean fetchMaterialType, boolean fetchLoanType) {
-
-    this.itemsClient = clients.getItemsClient();
-    this.holdingsClient = clients.getHoldingsClient();
-    this.instancesClient = clients.getInstancesClient();
-    this.loanTypesClient = clients.getLoanTypesClient();
-    this.locationRepository = locationRepository;
-    this.materialTypeRepository = materialTypeRepository;
-    this.servicePointRepository = servicePointRepository;
-    this.fetchLocation = fetchLocation;
-    this.fetchMaterialType = fetchMaterialType;
-    this.fetchLoanType = fetchLoanType;
   }
 
   public CompletableFuture<Result<Item>> fetchFor(ItemRelatedRecord record) {
@@ -173,18 +158,18 @@ public class ItemRepository {
       return completedFuture(result);
     }
 
-    return result.combineAfter(this::getLoanType,
-      (item, newLoanTypeRepresentation) -> item.withLoanType(
-        new LoanTypeMapper().toDomain(newLoanTypeRepresentation)));
+    return result.combineAfter(this::getLoanType, Item::withLoanType);
   }
 
-  private CompletableFuture<Result<JsonObject>> getLoanType(Item item) {
-    if (item.getItem() == null) {
-      return completedFuture(succeeded(null));
+  private CompletableFuture<Result<LoanType>> getLoanType(Item item) {
+    if (item.getLoanTypeId() == null) {
+      return completedFuture(succeeded(LoanType.unknown()));
     }
+
     return SingleRecordFetcher.json(loanTypesClient, "loan types",
       response -> succeeded(null))
-      .fetch(item.determineLoanTypeForItem());
+      .fetch(item.getLoanTypeId())
+      .thenApply(r -> r.map(new LoanTypeMapper()::toDomain));
   }
 
   public CompletableFuture<Result<Item>> fetchByBarcode(String barcode) {
@@ -242,7 +227,7 @@ public class ItemRepository {
 
     return result.after(items -> {
       Map<Item, String> itemToLoanTypeIdMap = items.stream()
-        .collect(Collectors.toMap(identity(), Item::determineLoanTypeForItem));
+        .collect(Collectors.toMap(identity(), Item::getLoanTypeId));
 
       Set<String> loanTypeIdsToFetch = itemToLoanTypeIdMap.values().stream()
         .filter(StringUtils::isNoneBlank)
@@ -518,14 +503,5 @@ public class ItemRepository {
 
   public static ItemRepository noLocationMaterialTypeAndLoanTypeInstance(org.folio.circulation.support.Clients clients) {
     return new ItemRepository(clients, false, false, false);
-  }
-
-  @AllArgsConstructor
-  @Getter
-  private static class Clients {
-    private final CollectionResourceClient itemsClient;
-    private final CollectionResourceClient holdingsClient;
-    private final CollectionResourceClient instancesClient;
-    private final CollectionResourceClient loanTypesClient;
   }
 }

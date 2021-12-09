@@ -109,7 +109,7 @@ public abstract class CirculationPolicyRepository<T> {
       return completedFuture(failedDueToServerError("Unable to apply circulation rules to an item with null value as locationId"));
     }
 
-    if (item.determineLoanTypeForItem() == null) {
+    if (item.getLoanTypeId() == null) {
       log.error("LoanTypeId is null for item {}", item.getItemId());
       return completedFuture(failedDueToServerError("Unable to apply circulation rules to an item which loan type can not be determined"));
     }
