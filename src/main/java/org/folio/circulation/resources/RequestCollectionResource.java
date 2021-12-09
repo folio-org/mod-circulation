@@ -82,10 +82,10 @@ public class RequestCollectionResource extends CollectionResource {
     final var loanPolicyRepository = new LoanPolicyRepository(clients);
     final var requestNoticeSender = createRequestNoticeSender(clients, representation);
     final var configurationRepository = new ConfigurationRepository(clients);
-
     final var updateUponRequest = new UpdateUponRequest(new UpdateItem(itemRepository),
       new UpdateLoan(clients, loanRepository, loanPolicyRepository),
-      UpdateRequestQueue.using(clients));
+      UpdateRequestQueue.using(clients, requestRepository,
+        new RequestQueueRepository(requestRepository)));
 
     final var okapiPermissions = OkapiPermissions.from(context.getHeaders());
     final var blockOverrides = BlockOverrides.fromRequest(representation);
@@ -138,7 +138,9 @@ public class RequestCollectionResource extends CollectionResource {
     final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
     final var requestRepository = RequestRepository.using(clients,
       itemRepository, userRepository, loanRepository);
-    final var updateRequestQueue = UpdateRequestQueue.using(clients);
+    final var requestQueueRepository = new RequestQueueRepository(requestRepository);
+    final var updateRequestQueue = UpdateRequestQueue.using(clients,
+      requestRepository, requestQueueRepository);
     final var loanPolicyRepository = new LoanPolicyRepository(clients);
     final var eventPublisher = new EventPublisher(routingContext);
     final var requestNoticeSender = createRequestNoticeSender(clients, representation);
@@ -279,7 +281,7 @@ public class RequestCollectionResource extends CollectionResource {
 
     final var updateUponRequest = new UpdateUponRequest(new UpdateItem(itemRepository),
       new UpdateLoan(clients, loanRepository, loanPolicyRepository),
-      UpdateRequestQueue.using(clients));
+      UpdateRequestQueue.using(clients, requestRepository, requestQueueRepository));
 
     final var moveRequestProcessAdapter = new MoveRequestProcessAdapter(itemRepository,
       loanRepository, requestRepository);

@@ -69,8 +69,7 @@ public class ChangeDueDateResource extends Resource {
 
     final var itemRepository = new ItemRepository(clients);
     final var userRepository = new UserRepository(clients);
-    final var loanRepository = new LoanRepository(clients,
-      new ItemRepository(clients), new UserRepository(clients));
+    final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
     final var requestRepository = RequestRepository.using(clients,
       itemRepository, userRepository, loanRepository);
     final var requestQueueRepository = new RequestQueueRepository(requestRepository);

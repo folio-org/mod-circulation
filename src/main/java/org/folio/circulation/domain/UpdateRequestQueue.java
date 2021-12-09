@@ -18,11 +18,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
-import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
-import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
-import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.context.ReorderRequestContext;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
@@ -47,17 +44,12 @@ public class UpdateRequestQueue {
     this.configurationRepository = configurationRepository;
   }
 
-  public static UpdateRequestQueue using(Clients clients) {
-    final var itemRepository = new ItemRepository(clients);
-    final var userRepository = new UserRepository(clients);
-    final var loanRepository = new LoanRepository(clients, itemRepository,
-      userRepository);
-    final var requestRepository = RequestRepository.using(clients, itemRepository,
-      userRepository, loanRepository);
+  public static UpdateRequestQueue using(Clients clients,
+    RequestRepository requestRepository,
+    RequestQueueRepository requestQueueRepository) {
 
-    return new UpdateRequestQueue(new RequestQueueRepository(requestRepository),
-      requestRepository,
-      new ServicePointRepository(clients),
+    return new UpdateRequestQueue(requestQueueRepository,
+      requestRepository, new ServicePointRepository(clients),
       new ConfigurationRepository(clients));
   }
 

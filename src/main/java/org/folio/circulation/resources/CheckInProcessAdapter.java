@@ -100,9 +100,9 @@ class CheckInProcessAdapter {
     final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
     final var requestRepository = RequestRepository.using(clients,
       itemRepository, userRepository, loanRepository);
+    final var requestQueueRepository = new RequestQueueRepository(requestRepository);
 
-    final ItemByBarcodeInStorageFinder itemFinder =
-      new ItemByBarcodeInStorageFinder(itemRepository);
+    final var itemFinder = new ItemByBarcodeInStorageFinder(itemRepository);
 
     final SingleOpenLoanForItemInStorageFinder singleOpenLoanFinder
       = new SingleOpenLoanForItemInStorageFinder(loanRepository, userRepository, true);
@@ -115,13 +115,13 @@ class CheckInProcessAdapter {
       new OverduePeriodCalculatorService(new CalendarRepository(clients),
         new LoanPolicyRepository(clients)),
       new FeeFineFacade(clients));
-
     return new CheckInProcessAdapter(itemFinder,
       singleOpenLoanFinder,
       new LoanCheckInService(),
-      new RequestQueueRepository(requestRepository),
+      requestQueueRepository,
       new UpdateItem(itemRepository),
-      UpdateRequestQueue.using(clients),
+      UpdateRequestQueue.using(clients, requestRepository,
+        requestQueueRepository),
       loanRepository,
       new ServicePointRepository(clients),
       userRepository,

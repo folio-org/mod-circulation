@@ -105,7 +105,8 @@ public class CheckOutByBarcodeResource extends Resource {
     CheckOutValidators validators = new CheckOutValidators(request, clients, errorHandler,
       permissions, loanRepository);
 
-    final UpdateRequestQueue requestQueueUpdate = UpdateRequestQueue.using(clients);
+    final var requestQueueUpdate = UpdateRequestQueue.using(clients,
+      requestRepository, requestQueueRepository);
 
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
 

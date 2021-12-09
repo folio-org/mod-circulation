@@ -232,15 +232,16 @@ public class RequestByInstanceIdResource extends Resource {
     final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
     final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
-
+    final var requestRepository = RequestRepository.using(clients,
+      itemRepository, userRepository, loanRepository);
+    final var requestQueueRepository = new RequestQueueRepository(requestRepository);
     final UpdateUponRequest updateUponRequest = new UpdateUponRequest(
         new UpdateItem(itemRepository),
         new UpdateLoan(clients, loanRepository, loanPolicyRepository),
-        UpdateRequestQueue.using(clients));
+        UpdateRequestQueue.using(clients, requestRepository, requestQueueRepository));
 
     final CreateRequestService createRequestService = new CreateRequestService(
-      new CreateRequestRepositories(RequestRepository.using(clients,
-        itemRepository, userRepository, loanRepository),
+      new CreateRequestRepositories(requestRepository,
         new RequestPolicyRepository(clients), configurationRepository),
       updateUponRequest,
       new RequestLoanValidator(null, loanRepository),

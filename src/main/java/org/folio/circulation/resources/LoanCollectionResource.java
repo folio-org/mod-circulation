@@ -74,10 +74,11 @@ public class LoanCollectionResource extends CollectionResource {
     final var userRepository = new UserRepository(clients);
     final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
     final var servicePointRepository = new ServicePointRepository(clients);
-    final var requestQueueRepository = new RequestQueueRepository(
-      RequestRepository.using(clients, itemRepository, userRepository, loanRepository));
-
-    final UpdateRequestQueue requestQueueUpdate = UpdateRequestQueue.using(clients);
+    final var requestRepository = RequestRepository.using(clients, itemRepository,
+      userRepository, loanRepository);
+    final var requestQueueRepository = new RequestQueueRepository(requestRepository);
+    final var requestQueueUpdate = UpdateRequestQueue.using(clients,
+      requestRepository, requestQueueRepository);
     final UpdateItem updateItem = new UpdateItem(itemRepository);
     final LoanService loanService = new LoanService(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
@@ -141,15 +142,17 @@ public class LoanCollectionResource extends CollectionResource {
     final Loan loan = Loan.from(incomingRepresentation);
 
     final Clients clients = Clients.create(context, client);
-    final ItemRepository itemRepository = new ItemRepository(clients);
-    final UserRepository userRepository = new UserRepository(clients);
-    final LoanRepository loanRepository = new LoanRepository(clients,
+    final var itemRepository = new ItemRepository(clients);
+    final var userRepository = new UserRepository(clients);
+    final var loanRepository = new LoanRepository(clients,
       itemRepository, userRepository);
-    final RequestQueueRepository requestQueueRepository = new RequestQueueRepository(
-      RequestRepository.using(clients, itemRepository, userRepository, loanRepository));
+    final var requestRepository = RequestRepository.using(clients,
+      itemRepository, userRepository, loanRepository);
+    final var requestQueueRepository = new RequestQueueRepository(requestRepository);
     final ServicePointRepository servicePointRepository = new ServicePointRepository(clients);
 
-    final UpdateRequestQueue requestQueueUpdate = UpdateRequestQueue.using(clients);
+    final var requestQueueUpdate = UpdateRequestQueue.using(clients,
+      requestRepository, requestQueueRepository);
     final UpdateItem updateItem = new UpdateItem(itemRepository);
 
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
