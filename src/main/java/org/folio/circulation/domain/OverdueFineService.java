@@ -22,17 +22,14 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.folio.circulation.domain.policy.OverdueFineCalculationParameters;
 import org.folio.circulation.domain.policy.OverdueFineInterval;
 import org.folio.circulation.domain.policy.OverdueFinePolicy;
-import org.folio.circulation.infrastructure.storage.CalendarRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineOwnerRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
-import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
 import org.folio.circulation.infrastructure.storage.loans.OverdueFinePolicyRepository;
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.services.FeeFineFacade;
 import org.folio.circulation.services.support.CreateAccountCommand;
-import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.utils.ClockUtil;
 
@@ -48,21 +45,6 @@ public class OverdueFineService {
   private final ScheduledNoticesRepository scheduledNoticesRepository;
   private final OverduePeriodCalculatorService overduePeriodCalculatorService;
   private final FeeFineFacade feeFineFacade;
-
-  public static OverdueFineService using(Clients clients) {
-    return new OverdueFineService(clients,
-      new ItemRepository(clients, true, false, false));
-  }
-
-  private OverdueFineService(Clients clients, ItemRepository itemRepository) {
-    this(new OverdueFinePolicyRepository(clients), itemRepository,
-      new FeeFineOwnerRepository(clients),
-      new FeeFineRepository(clients),
-      ScheduledNoticesRepository.using(clients),
-      new OverduePeriodCalculatorService(new CalendarRepository(clients),
-        new LoanPolicyRepository(clients)),
-      new FeeFineFacade(clients));
-  }
 
   public CompletableFuture<Result<RenewalContext>> createOverdueFineIfNecessary(
     RenewalContext context) {

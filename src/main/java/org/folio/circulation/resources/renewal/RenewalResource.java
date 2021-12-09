@@ -5,7 +5,6 @@ import static org.folio.circulation.domain.ItemStatus.AGED_TO_LOST;
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
 import static org.folio.circulation.domain.ItemStatus.CLAIMED_RETURNED;
 import static org.folio.circulation.domain.ItemStatus.DECLARED_LOST;
-import static org.folio.circulation.domain.OverdueFineService.using;
 import static org.folio.circulation.domain.RequestType.HOLD;
 import static org.folio.circulation.domain.RequestType.RECALL;
 import static org.folio.circulation.domain.override.OverridableBlockType.PATRON_BLOCK;
@@ -40,7 +39,6 @@ import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 import static org.folio.circulation.support.utils.DateTimeUtil.isAfterMillis;
 
-import java.util.stream.Collectors;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -54,6 +52,7 @@ import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanRepresentation;
 import org.folio.circulation.domain.OverdueFineService;
+import org.folio.circulation.domain.OverduePeriodCalculatorService;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.RequestType;
@@ -69,10 +68,15 @@ import org.folio.circulation.domain.validation.Validator;
 import org.folio.circulation.domain.validation.overriding.BlockValidator;
 import org.folio.circulation.domain.validation.overriding.OverridingBlockValidator;
 import org.folio.circulation.infrastructure.storage.AutomatedPatronBlocksRepository;
+import org.folio.circulation.infrastructure.storage.CalendarRepository;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
+import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineOwnerRepository;
+import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
+import org.folio.circulation.infrastructure.storage.loans.OverdueFinePolicyRepository;
+import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.LoanNoticeSender;
@@ -82,6 +86,7 @@ import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
 import org.folio.circulation.resources.handlers.error.CirculationErrorType;
 import org.folio.circulation.resources.handlers.error.OverridingErrorHandler;
 import org.folio.circulation.services.EventPublisher;
+import org.folio.circulation.services.FeeFineFacade;
 import org.folio.circulation.services.LostItemFeeRefundService;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.RouteRegistration;
@@ -191,7 +196,7 @@ public abstract class RenewalResource extends Resource {
       .thenApply(r -> r.map(this::toResponse))
       .thenAccept(webContext::writeResultToHttpResponse);
   }
-  
+
   private RenewalContext unsetDueDateChangedByRecallIfNoOpenRecallsInQueue(
     RenewalContext renewalContext) {
 
@@ -226,7 +231,16 @@ public abstract class RenewalResource extends Resource {
   private CompletableFuture<Result<RenewalContext>> processFeesFinesForRegularRenew(
     RenewalContext renewalContext, Clients clients) {
 
-    final OverdueFineService overdueFineService = using(clients);
+    final var overdueFineService = new OverdueFineService(
+      new OverdueFinePolicyRepository(clients),
+      new ItemRepository(clients, true, false, false),
+      new FeeFineOwnerRepository(clients),
+      new FeeFineRepository(clients),
+      ScheduledNoticesRepository.using(clients),
+      new OverduePeriodCalculatorService(new CalendarRepository(clients),
+        new LoanPolicyRepository(clients)),
+      new FeeFineFacade(clients));
+
     return overdueFineService.createOverdueFineIfNecessary(renewalContext);
   }
 
