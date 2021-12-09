@@ -29,6 +29,7 @@ public class ScheduledAgeToLostResource extends Resource {
 
   private void scheduledAgeToLost(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
+
     final var clients = Clients.create(context, client);
 
     final var itemRepository = new ItemRepository(clients);
