@@ -3,16 +3,11 @@ package org.folio.circulation.resources;
 import static org.folio.circulation.domain.RequestLevel.TITLE;
 import static org.folio.circulation.domain.representations.RequestProperties.PROXY_USER_ID;
 import static org.folio.circulation.resources.RequestBlockValidators.regularRequestBlockValidators;
-import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_INSTANCE_ID;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.results.AsynchronousResult.fromFutureResult;
 import static org.folio.circulation.support.results.MappingFunctions.toFixedValue;
 import static org.folio.circulation.support.results.MappingFunctions.when;
-import static org.folio.circulation.support.results.Result.ofAsync;
-import static org.folio.circulation.support.results.Result.succeeded;
-
-import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.CreateRequestRepositories;
 import org.folio.circulation.domain.CreateRequestService;
@@ -44,7 +39,6 @@ import org.folio.circulation.infrastructure.storage.requests.RequestPolicyReposi
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
-import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
 import org.folio.circulation.resources.handlers.error.FailFastErrorHandler;
 import org.folio.circulation.resources.handlers.error.OverridingErrorHandler;
 import org.folio.circulation.services.EventPublisher;
@@ -53,7 +47,6 @@ import org.folio.circulation.support.http.OkapiPermissions;
 import org.folio.circulation.support.http.server.JsonHttpResponse;
 import org.folio.circulation.support.http.server.NoContentResponse;
 import org.folio.circulation.support.http.server.WebContext;
-import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
@@ -314,14 +307,5 @@ public class RequestCollectionResource extends CollectionResource {
       return new TitleLevelRequestNoticeSender(clients);
     }
     return new ItemLevelRequestNoticeSender(clients);
-  }
-
-  private CompletableFuture<Result<Request>> fetchInstance(InstanceRepository instanceRepository, Request request) {
-    return succeeded(request)
-      .combineAfter(instanceRepository::fetch, Request::withInstance);
-  }
-
-  private CompletableFuture<Result<Boolean>> shouldFetchInstance(CirculationErrorHandler errorHandler, Request request) {
-    return ofAsync(() -> errorHandler.hasNone(INVALID_INSTANCE_ID));
   }
 }
