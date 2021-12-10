@@ -2513,6 +2513,72 @@ public class RequestsAPICreationTests extends APITests {
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 
+  @Test
+  void recallTlrRequestShouldBeAppliedToLoanWithClosestDueDate() {
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    UUID instanceId = UUID.randomUUID();
+    configurationsFixture.enableTlrFeature();
+    ItemResource firstItem = buildItem(instanceId, "111");
+    ItemResource secondItem = buildItem(instanceId, "222");
+
+    updateCirculationRulesWithLoanPeriod("One day loan policy", Period.days(1));
+    checkOutFixture.checkOutByBarcode(firstItem, usersFixture.jessica());
+
+    updateCirculationRulesWithLoanPeriod("Five days loan policy", Period.days(5));
+    checkOutFixture.checkOutByBarcode(secondItem, usersFixture.charlotte());
+
+    IndividualResource requester = usersFixture.steve();
+    ZonedDateTime requestDate = ZonedDateTime.of(2021, 7, 22, 10, 22, 54, 0, UTC);
+    IndividualResource request = requestsFixture.place(new RequestBuilder()
+      .withId(UUID.randomUUID())
+      .open()
+      .recall()
+      .titleRequestLevel()
+      .withInstanceId(instanceId)
+      .by(requester)
+      .withRequestDate(requestDate)
+      .fulfilToHoldShelf()
+      .withRequestExpiration(LocalDate.of(2021, 7, 30))
+      .withHoldShelfExpiration(LocalDate.of(2021, 8, 31))
+      .withPickupServicePointId(pickupServicePointId)
+      .withTags(new RequestBuilder.Tags(asList("new", "important")))
+      .withPatronComments("I need this book"));
+
+    JsonObject representation = request.getJson();
+
+    assertThat(representation.getString("requestType"), is("Recall"));
+    assertThat(representation.getString("requestLevel"), is("Title"));
+    assertThat(representation.getString("requestDate"), isEquivalentTo(requestDate));
+    assertThat(representation.getString("itemId"), is(firstItem.getId().toString()));
+    assertThat(representation.getString("instanceId"), is(instanceId));
+    assertThat(representation.getString("requesterId"), is(requester.getId().toString()));
+    assertThat(representation.getString("fulfilmentPreference"), is("Hold Shelf"));
+    assertThat(representation.getString("requestExpirationDate"), is("2021-07-30T23:59:59.000Z"));
+    assertThat(representation.getString("holdShelfExpirationDate"), is("2021-08-31"));
+    assertThat(representation.getString("status"), is("Open - Not yet filled"));
+    assertThat(representation.getString("pickupServicePointId"), is(pickupServicePointId.toString()));
+    assertThat(representation.getString("patronComments"), is("I need this book"));
+  }
+
+  private void updateCirculationRulesWithLoanPeriod(String policyName, Period loanPeriod) {
+    policiesActivation.use(new LoanPolicyBuilder()
+      .withName(policyName)
+      .withDescription("Can circulate item")
+      .rolling(loanPeriod)
+      .notRenewable());
+  }
+
+  private ItemResource buildItem(UUID instanceId, String barcode) {
+    UUID isbnIdentifierId = identifierTypesFixture.isbn().getId();
+
+    return itemsFixture.basedUponSmallAngryPlanet(
+        holdingBuilder -> holdingBuilder.forInstance(instanceId),
+        instanceBuilder -> instanceBuilder
+          .addIdentifier(isbnIdentifierId, "9780866989732")
+          .withId(instanceId),
+        itemBuilder -> itemBuilder.withBarcode(barcode));
+  }
+
   private static void assertOverrideResponseSuccess(Response response) {
     assertThat(response, hasStatus(HTTP_CREATED));
     assertThat(response.getJson(), hasErrors(0));
