@@ -14,6 +14,7 @@ import static org.folio.circulation.domain.representations.RequestProperties.CAN
 import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_NAME;
 import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_PUBLIC_DESCRIPTION;
+import static org.folio.circulation.domain.representations.RequestProperties.HOLDINGS_RECORD_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.HOLD_SHELF_EXPIRATION_DATE;
 import static org.folio.circulation.domain.representations.RequestProperties.INSTANCE_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.ITEM_ID;
@@ -154,6 +155,10 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     // NOTE: this is null in RequestsAPIUpdatingTests.replacingAnExistingRequestRemovesItemInformationWhenItemDoesNotExist test
     if (newItem != null && newItem.getItemId() != null) {
       requestRepresentation.put(ITEM_ID, newItem.getItemId());
+      String holdingsRecordId = newItem.getHoldingsRecordId();
+      if (holdingsRecordId != null) {
+        requestRepresentation.put(HOLDINGS_RECORD_ID, holdingsRecordId);
+      }
     }
 
     return new Request(tlrSettingsConfiguration, requestRepresentation,
