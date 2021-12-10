@@ -94,13 +94,10 @@ class CheckInProcessAdapter {
     this.eventPublisher = eventPublisher;
   }
 
-  public static CheckInProcessAdapter newInstance(Clients clients) {
-    final var itemRepository = new ItemRepository(clients);
-    final var userRepository = new UserRepository(clients);
-    final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
-    final var requestRepository = RequestRepository.using(clients,
-      itemRepository, userRepository, loanRepository);
-    final var requestQueueRepository = new RequestQueueRepository(requestRepository);
+  public static CheckInProcessAdapter newInstance(Clients clients,
+    ItemRepository itemRepository, UserRepository userRepository,
+    LoanRepository loanRepository, RequestRepository requestRepository,
+    RequestQueueRepository requestQueueRepository) {
 
     final var itemFinder = new ItemByBarcodeInStorageFinder(itemRepository);
 
