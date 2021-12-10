@@ -37,6 +37,7 @@ import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.RequestLevel;
 import org.folio.circulation.domain.RequestStatus;
+import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.ServicePointPickupLocationValidator;
@@ -124,29 +125,26 @@ class RequestFromRepresentationService {
   }
 
   private CompletableFuture<Result<Request>> fetchItemAndLoan(Request request) {
-    if (request.getRequestLevel() == TITLE) {
-      return fetchItemAndLoanForTlrRequest(request);
+    if (request.getRequestLevel() == TITLE && request.getRequestType() == RequestType.RECALL) {
+
+      return fetchItemAndLoanForRecallTlrRequest(request);
     }
 
-    return fetchItemAndLoanForIlrRequest(request);
-  }
-
-  private CompletableFuture<Result<Request>> fetchItemAndLoanForIlrRequest(Request request) {
     return succeeded(request)
       .combineAfter(itemRepository::fetchFor, Request::withItem)
       .thenComposeAsync(r -> r.after(this::fetchLoan))
       .thenComposeAsync(r -> r.combineAfter(this::getUserForExistingLoan, this::addUserToLoan));
   }
 
-  private CompletableFuture<Result<Request>> fetchItemAndLoanForTlrRequest(Request request) {
+  private CompletableFuture<Result<Request>> fetchItemAndLoanForRecallTlrRequest(Request request) {
     return finder.getItemsByInstanceId(UUID.fromString(request.getInstanceId()))
       .thenComposeAsync(r -> r.after(items -> loanRepository.findLoanWithClosestDueDate(
         mapToItemIds(items)))
-          .thenApply(resultLoan -> resultLoan.map(request::withLoan))
-          .thenComposeAsync(requestResult -> requestResult.combineAfter(
-            record -> itemRepository.fetchFor(record.getLoan()), Request::withItem))
-          .thenComposeAsync(requestResult -> requestResult.combineAfter(
-            this::getUserForExistingLoan, this::addUserToLoan)));
+        .thenApply(resultLoan -> resultLoan.map(request::withLoan))
+        .thenComposeAsync(requestResult -> requestResult.combineAfter(
+          record -> itemRepository.fetchFor(record.getLoan()), Request::withItem))
+        .thenComposeAsync(requestResult -> requestResult.combineAfter(
+          this::getUserForExistingLoan, this::addUserToLoan)));
   }
 
   private List<String> mapToItemIds(Collection<Item> items) {
