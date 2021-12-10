@@ -351,6 +351,7 @@ public class RequestByInstanceIdResource extends Resource {
           }
           write(requestBody, "patronComments", requestByInstanceIdRequest.getPatronComments());
           write(requestBody, "instanceId", requestByInstanceIdRequest.getInstanceId());
+          write(requestBody, "holdingsRecordId", item.getHoldingsRecordId());
           write(requestBody, "requestLevel", requestByInstanceIdRequest.getRequestLevel());
           requests.add(requestBody);
         }

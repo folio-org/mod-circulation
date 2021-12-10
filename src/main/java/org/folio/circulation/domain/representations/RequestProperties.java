@@ -6,6 +6,7 @@ public class RequestProperties {
   public static final String STATUS = "status";
   public static final String INSTANCE_ID = "instanceId";
   public static final String ITEM_ID = "itemId";
+  public static final String HOLDINGS_RECORD_ID = "holdingsRecordId";
   public static final String REQUEST_LEVEL = "requestLevel";
   public static final String REQUEST_TYPE = "requestType";
   public static final String PROXY_USER_ID = "proxyUserId";

@@ -8,42 +8,40 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 
-import api.support.builders.HoldingBuilder;
 import api.support.builders.ItemBuilder;
 import lombok.val;
 
 class ItemPermanentLocationTest {
-
   @Test
   void itemLocationTakesPriorityOverHoldings() {
     val itemLocation = UUID.randomUUID();
-    val holdingsLocation = UUID.randomUUID();
+    val holdingsLocation = UUID.randomUUID().toString();
 
     val itemJson = new ItemBuilder().withPermanentLocation(itemLocation).create();
-    val holdingsJson = new HoldingBuilder().withPermanentLocation(holdingsLocation).create();
 
-    val item = Item.from(itemJson).withHoldingsRecord(holdingsJson);
+    val item = Item.from(itemJson)
+      .withHoldings(new Holdings(null, null, holdingsLocation));
 
     assertThat(item.getPermanentLocationId(), is(itemLocation.toString()));
   }
 
   @Test
   void holdingsLocationIsReturnedByDefault() {
-    val holdingsLocation = UUID.randomUUID();
+    val holdingsLocation = UUID.randomUUID().toString();
 
     val itemJson = new ItemBuilder().withPermanentLocation((UUID) null).create();
-    val holdingsJson = new HoldingBuilder().withPermanentLocation(holdingsLocation).create();
 
-    val item = Item.from(itemJson).withHoldingsRecord(holdingsJson);
+    val item = Item.from(itemJson)
+      .withHoldings(new Holdings(null, null, holdingsLocation));
 
     assertThat(item.getPermanentLocationId(), is(holdingsLocation.toString()));
   }
 
   @Test
-  void nullIsReturnedWhenNoHoldingsJsonPresent() {
+  void nullIsReturnedWhenNoHoldingsPresent() {
     val itemJson = new ItemBuilder().withPermanentLocation((UUID) null).create();
 
-    val item = Item.from(itemJson).withHoldingsRecord(null);
+    val item = Item.from(itemJson).withHoldings(Holdings.unknown());
 
     assertThat(item.getPermanentLocationId(), nullValue());
   }

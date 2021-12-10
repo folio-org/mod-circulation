@@ -88,7 +88,7 @@ class HoldShelfFulfillmentTests extends APITests {
 
     final IndividualResource pickupServicePoint = servicePointsFixture.cd1();
 
-    List<ItemResource> items = createMultipleItemsForTheSameInstance(3);
+    List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(3);
     ItemResource smallAngryPlanet1 = items.get(0);
     ItemResource smallAngryPlanet2 = items.get(1);
     UUID instanceId = smallAngryPlanet1.getInstanceId();
@@ -294,7 +294,7 @@ class HoldShelfFulfillmentTests extends APITests {
     final IndividualResource pickupServicePoint = servicePointsFixture.cd1();
     final IndividualResource checkInServicePoint = servicePointsFixture.cd2();
 
-    List<ItemResource> items = createMultipleItemsForTheSameInstance(2);
+    List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
     ItemResource smallAngryPlanet1 = items.get(0);
     ItemResource smallAngryPlanet2 = items.get(1);
     UUID instanceId = smallAngryPlanet1.getInstanceId();
@@ -436,7 +436,7 @@ class HoldShelfFulfillmentTests extends APITests {
     final IndividualResource pickupServicePoint = servicePointsFixture.cd1();
     final IndividualResource checkInServicePoint = servicePointsFixture.cd2();
 
-    List<ItemResource> items = createMultipleItemsForTheSameInstance(2);
+    List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
     ItemResource smallAngryPlanet1 = items.get(0);
     ItemResource smallAngryPlanet2 = items.get(1);
     UUID instanceId = smallAngryPlanet1.getInstanceId();
@@ -615,18 +615,5 @@ class HoldShelfFulfillmentTests extends APITests {
     assertThat(request.getJson().getString("status"), is(OPEN_IN_TRANSIT));
 
     assertThat(itemsClient.get(smallAngryPlanet), hasItemStatus(IN_TRANSIT));
-  }
-
-  private List<ItemResource> createMultipleItemsForTheSameInstance(int size) {
-    UUID instanceId = UUID.randomUUID();
-    InstanceBuilder sapInstanceBuilder = itemsFixture.instanceBasedUponSmallAngryPlanet()
-      .withId(instanceId);
-
-    return IntStream.range(0, size)
-      .mapToObj(num -> itemsFixture.basedUponSmallAngryPlanet(
-        holdingsBuilder -> holdingsBuilder.forInstance(instanceId),
-        instanceBuilder -> sapInstanceBuilder,
-        itemBuilder -> itemBuilder.withBarcode("0000" + num)))
-      .collect(Collectors.toList());
   }
 }
