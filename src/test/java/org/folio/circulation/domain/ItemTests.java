@@ -21,4 +21,11 @@ class ItemTests {
 
     assertThrows(NullPointerException.class, () -> item.withInstance(null));
   }
+
+  @Test
+  void cannotHaveANullMaterialType() {
+    val item = Item.from(new ItemBuilder().create());
+
+    assertThrows(NullPointerException.class, () -> item.withMaterialType(null));
+  }
 }

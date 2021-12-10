@@ -5,12 +5,10 @@ import static org.folio.circulation.domain.representations.ContributorsToNamesMa
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 import static org.folio.circulation.domain.representations.ItemProperties.LAST_CHECK_IN;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
+import static org.folio.circulation.support.json.JsonPropertyWriter.writeByPath;
 
-import java.lang.invoke.MethodHandles;
 import java.util.Objects;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.ServicePoint;
@@ -18,8 +16,6 @@ import org.folio.circulation.domain.ServicePoint;
 import io.vertx.core.json.JsonObject;
 
 public class ItemSummaryRepresentation {
-  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
-
   public JsonObject createItemSummary(Item item) {
     if(item == null || item.isNotFound()) {
       return new JsonObject();
@@ -76,29 +72,12 @@ public class ItemSummaryRepresentation {
         .put("name", location.getName()));
     }
 
-    final String materialTypeProperty = "materialType";
-
-    final JsonObject materialType = item.getMaterialType();
-
-    if(materialType != null) {
-      if(materialType.containsKey("name") && materialType.getString("name") != null) {
-        itemSummary.put(materialTypeProperty, new JsonObject()
-          .put("name", materialType.getString("name")));
-      } else {
-        log.warn("Missing or null property for material type for item id {}",
-          item.getItemId());
-      }
-    } else {
-      log.warn("No material type {} found for item {}", item.getMaterialTypeId(),
-        item.getItemId());
-    }
+    writeByPath(itemSummary, item.getMaterialTypeName(), "materialType", "name");
 
     return itemSummary;
   }
 
-
   public JsonObject createItemStorageRepresentation(Item item) {
-
     JsonObject summary = item.getItem().copy();
     if (item.getLastCheckIn() != null) {
       write(summary, LAST_CHECK_IN, item.getLastCheckIn().toJson());
@@ -106,5 +85,4 @@ public class ItemSummaryRepresentation {
 
     return summary;
   }
-
 }

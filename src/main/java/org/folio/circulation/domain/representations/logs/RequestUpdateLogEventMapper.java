@@ -20,10 +20,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class RequestUpdateLogEventMapper {
-  public static final String ITEM_SOURCE = "source";
-
-  private RequestUpdateLogEventMapper() {
-  }
+  private RequestUpdateLogEventMapper() {}
 
   public static JsonObject mapToRequestLogEventJson(Request request) {
     JsonObject logEventPayload = new JsonObject();
@@ -60,7 +57,7 @@ public class RequestUpdateLogEventMapper {
       write(logEventPayload, ITEM_STATUS_NAME.value(), item.getStatusName());
       ofNullable(item.getInTransitDestinationServicePoint())
         .ifPresent(sp -> write(logEventPayload, DESTINATION_SERVICE_POINT.value(), sp.getName()));
-      ofNullable(item.getMaterialType()).ifPresent(mt -> write(logEventPayload, SOURCE.value(), mt.getString(ITEM_SOURCE)));
+      write(logEventPayload, SOURCE.value(), item.getMaterialType().getSource());
     });
   }
 

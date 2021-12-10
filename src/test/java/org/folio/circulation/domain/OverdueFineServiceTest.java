@@ -606,10 +606,6 @@ class OverdueFineServiceTest {
       .create();
     item.put("effectiveCallNumberComponents", new JsonObject().put("callNumber", CALL_NUMBER));
 
-    JsonObject materialType = new JsonObject()
-      .put("id", ITEM_MATERIAL_TYPE_ID.toString())
-      .put("name", ITEM_MATERIAL_TYPE_NAME);
-
     final var contributors = List.of(
       new Contributor("Contributor 1", false),
       new Contributor("Contributor 2", false));
@@ -621,7 +617,7 @@ class OverdueFineServiceTest {
           .withPrimaryServicePoint(SERVICE_POINT_ID)
           .create()))
       .withInstance(new Instance(TITLE, emptyList(), contributors))
-      .withMaterialType(materialType);
+      .withMaterialType(new MaterialType(ITEM_MATERIAL_TYPE_NAME, null));
   }
 
   private OverdueFinePolicy createOverdueFinePolicy(
