@@ -235,7 +235,7 @@ public abstract class RenewalResource extends Resource {
 
     return lostFeeRefundService.refundLostItemFees(renewalContext, servicePointId(renewalContext))
       .thenCompose(r -> r.after(context -> processFeesFinesForRegularRenew(context, clients,
-        new ItemRepository(clients))));
+        itemRepository)));
   }
 
   private CompletableFuture<Result<RenewalContext>> processFeesFinesForRegularRenew(
