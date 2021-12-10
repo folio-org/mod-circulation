@@ -7,11 +7,8 @@ import static org.folio.circulation.domain.representations.ItemProperties.LAST_C
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.json.JsonPropertyWriter.writeByPath;
 
-import java.lang.invoke.MethodHandles;
 import java.util.Objects;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.ServicePoint;
@@ -19,8 +16,6 @@ import org.folio.circulation.domain.ServicePoint;
 import io.vertx.core.json.JsonObject;
 
 public class ItemSummaryRepresentation {
-  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
-
   public JsonObject createItemSummary(Item item) {
     if(item == null || item.isNotFound()) {
       return new JsonObject();
