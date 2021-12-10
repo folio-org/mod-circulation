@@ -93,7 +93,7 @@ public class RequestRepresentation {
   }
 
   private static void addInstanceProperties(JsonObject request, Instance instance) {
-    if (Objects.isNull(instance) || instance.isNotFound()) {
+    if (instance == null || instance.isNotFound()) {
       log.info("Unable to add instance properties to request {}, instance is {}",
         request.getString("id"), request.getString("instanceId"));
       return;

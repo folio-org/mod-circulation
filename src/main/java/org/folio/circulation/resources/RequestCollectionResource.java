@@ -182,15 +182,10 @@ public class RequestCollectionResource extends CollectionResource {
     final var clients = Clients.create(context, client);
 
     final var requestRepository = RequestRepository.using(clients);
-    final var id = getRequestId(routingContext);
-    final var instanceRepository = new InstanceRepository(clients);
-    final var permissions = OkapiPermissions.from(context.getHeaders());
-    final var errorHandler = new OverridingErrorHandler(permissions);
 
-    fromFutureResult(requestRepository.getById(id)
-      .thenComposeAsync(r -> r.after(when(
-        req -> shouldFetchInstance(errorHandler, req),
-        req -> fetchInstance(instanceRepository, req), req -> ofAsync(() -> req)))))
+    final var id = getRequestId(routingContext);
+
+    fromFutureResult(requestRepository.getById(id))
       .map(new RequestRepresentation()::extendedRepresentation)
       .map(JsonHttpResponse::ok)
       .onComplete(context::write, context::write);
