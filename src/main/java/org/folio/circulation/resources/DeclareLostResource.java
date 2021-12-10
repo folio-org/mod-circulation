@@ -23,6 +23,7 @@ import org.folio.circulation.infrastructure.storage.notes.NotesRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.services.LostItemFeeChargingService;
+import org.folio.circulation.services.LostItemFeeRefundService;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.http.server.NoContentResponse;
 import org.folio.circulation.support.http.server.WebContext;
@@ -72,10 +73,13 @@ public class DeclareLostResource extends Resource {
     Clients clients, WebContext context) {
 
     final var itemRepository = new ItemRepository(clients);
+    final UserRepository userRepository = new UserRepository(clients);
     final var loanRepository = new LoanRepository(clients, itemRepository,
       new UserRepository(clients));
     final var storeLoanAndItem = new StoreLoanAndItem(loanRepository, itemRepository);
-    final var lostItemFeeService = new LostItemFeeChargingService(clients, storeLoanAndItem);
+    final var lostItemFeeService = new LostItemFeeChargingService(clients, storeLoanAndItem,
+      new LostItemFeeRefundService(clients,
+        itemRepository, userRepository, loanRepository));
 
     return loanRepository.getById(request.getLoanId())
       .thenApply(LoanValidator::refuseWhenLoanIsClosed)

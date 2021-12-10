@@ -61,13 +61,16 @@ public class LostItemFeeRefundService {
   private final ItemRepository itemRepository;
   private final FeeFineScheduledNoticeService scheduledNoticeService;
 
-  public LostItemFeeRefundService(Clients clients) {
-    this.itemRepository = new ItemRepository(clients);
-    this.userRepository = new UserRepository(clients);
+  public LostItemFeeRefundService(Clients clients,
+    ItemRepository itemRepository, UserRepository userRepository,
+    LoanRepository loanRepository) {
+
+    this.itemRepository = itemRepository;
+    this.userRepository = userRepository;
     this.lostItemPolicyRepository = new LostItemPolicyRepository(clients);
     this.feeFineFacade = new FeeFineFacade(clients);
     this.accountRepository = new AccountRepository(clients);
-    this.loanRepository = new LoanRepository(clients, itemRepository, userRepository);
+    this.loanRepository = loanRepository;
     this.scheduledNoticeService = FeeFineScheduledNoticeService.using(clients);
   }
 

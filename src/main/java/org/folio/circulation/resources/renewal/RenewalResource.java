@@ -190,7 +190,8 @@ public abstract class RenewalResource extends Resource {
       .thenApply(r -> r.next(errorHandler::failWithValidationErrors))
       .thenApply(r -> r.map(this::unsetDueDateChangedByRecallIfNoOpenRecallsInQueue))
       .thenComposeAsync(r -> r.after(storeLoanAndItem::updateLoanAndItemInStorage))
-      .thenComposeAsync(r -> r.after(context -> processFeesFines(context, clients)))
+      .thenComposeAsync(r -> r.after(context -> processFeesFines(context, clients,
+        itemRepository, userRepository, loanRepository)))
       .thenApplyAsync(r -> r.next(feeFineNoticesService::scheduleOverdueFineNotices))
       .thenComposeAsync(r -> r.after(eventPublisher::publishDueDateChangedEvent))
       .thenApply(r -> r.next(scheduledNoticeService::rescheduleDueDateNotices))
@@ -214,29 +215,35 @@ public abstract class RenewalResource extends Resource {
     }
   }
 
-  private CompletableFuture<Result<RenewalContext>> processFeesFines(RenewalContext renewalContext,
-    Clients clients) {
+  private CompletableFuture<Result<RenewalContext>> processFeesFines(
+    RenewalContext renewalContext, Clients clients, ItemRepository itemRepository,
+    UserRepository userRepository, LoanRepository loanRepository) {
 
     return isRenewalBlockOverrideRequested
-      ? processFeesFinesForRenewalBlockOverride(renewalContext, clients)
-      : processFeesFinesForRegularRenew(renewalContext, clients);
+      ? processFeesFinesForRenewalBlockOverride(renewalContext, clients,
+        itemRepository, userRepository, loanRepository)
+      : processFeesFinesForRegularRenew(renewalContext, clients, itemRepository);
   }
 
   private CompletableFuture<Result<RenewalContext>> processFeesFinesForRenewalBlockOverride(
-    RenewalContext renewalContext, Clients clients) {
+    RenewalContext renewalContext, Clients clients,
+    ItemRepository itemRepository, UserRepository userRepository,
+    LoanRepository loanRepository) {
 
-    final LostItemFeeRefundService lostFeeRefundService = new LostItemFeeRefundService(clients);
+    final LostItemFeeRefundService lostFeeRefundService = new LostItemFeeRefundService(clients,
+      itemRepository, userRepository, loanRepository);
 
     return lostFeeRefundService.refundLostItemFees(renewalContext, servicePointId(renewalContext))
-      .thenCompose(r -> r.after(context -> processFeesFinesForRegularRenew(context, clients)));
+      .thenCompose(r -> r.after(context -> processFeesFinesForRegularRenew(context, clients,
+        new ItemRepository(clients))));
   }
 
   private CompletableFuture<Result<RenewalContext>> processFeesFinesForRegularRenew(
-    RenewalContext renewalContext, Clients clients) {
+    RenewalContext renewalContext, Clients clients, ItemRepository itemRepository) {
 
     final var overdueFineService = new OverdueFineService(
       new OverdueFinePolicyRepository(clients),
-      new ItemRepository(clients),
+      itemRepository,
       new FeeFineOwnerRepository(clients),
       new FeeFineRepository(clients),
       ScheduledNoticesRepository.using(clients),

@@ -205,12 +205,11 @@ public class LoanCollectionResource extends CollectionResource {
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context, client);
 
+    final var userRepository = new UserRepository(clients);
     final var loanRepository = new LoanRepository(clients,
-      new ItemRepository(clients),
-      new UserRepository(clients));
+      new ItemRepository(clients), userRepository);
     final ServicePointRepository servicePointRepository = new ServicePointRepository(clients);
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
-    final UserRepository userRepository = new UserRepository(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
     final OverdueFinePolicyRepository overdueFinePolicyRepository = new OverdueFinePolicyRepository(clients);
     final LostItemPolicyRepository lostItemPolicyRepository = new LostItemPolicyRepository(clients);

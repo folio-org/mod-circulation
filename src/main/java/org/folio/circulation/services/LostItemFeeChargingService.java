@@ -51,8 +51,8 @@ public class LostItemFeeChargingService {
   private String servicePointId;
 
   public LostItemFeeChargingService(Clients clients,
-    StoreLoanAndItem storeLoanAndItem) {
-    
+    StoreLoanAndItem storeLoanAndItem, LostItemFeeRefundService refundService) {
+
     this.lostItemPolicyRepository = new LostItemPolicyRepository(clients);
     this.feeFineOwnerRepository = new FeeFineOwnerRepository(clients);
     this.feeFineRepository = new FeeFineRepository(clients);
@@ -60,7 +60,7 @@ public class LostItemFeeChargingService {
     this.storeLoanAndItem = storeLoanAndItem;
     this.locationRepository = LocationRepository.using(clients);
     this.eventPublisher = new EventPublisher(clients.pubSubPublishingService());
-    this.refundService = new LostItemFeeRefundService(clients);
+    this.refundService = refundService;
     this.accountRepository = new AccountRepository(clients);
   }
 
