@@ -38,6 +38,7 @@ import org.folio.circulation.infrastructure.storage.notices.PatronNoticePolicyRe
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
+import org.folio.circulation.infrastructure.storage.sessions.PatronActionSessionRepository;
 import org.folio.circulation.infrastructure.storage.users.PatronGroupRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
@@ -113,7 +114,9 @@ public class CheckOutByBarcodeResource extends Resource {
     final EventPublisher eventPublisher = new EventPublisher(routingContext);
 
     final PatronActionSessionService patronActionSessionService =
-      PatronActionSessionService.using(clients);
+      PatronActionSessionService.using(clients,
+        PatronActionSessionRepository.using(clients, loanRepository,
+          userRepository));
 
     ofAsync(() -> new LoanAndRelatedRecords(request.toLoan()))
       .thenApply(validators::refuseCheckOutWhenServicePointIsNotPresent)
