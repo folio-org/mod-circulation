@@ -68,10 +68,6 @@ public class CirculationItemMapper {
     write(status, NAME, circulationItem.getString(STATUS));
     write(item, STATUS, status);
 
-    final JsonObject holdingsRecord = new JsonObject();
-    write(holdingsRecord, INSTANCE_ID, circulationItem.getString(INSTANCE_ID));
-    write(holdingsRecord, COPY_NUMBER, circulationItem.getString(HOLDINGS_LEVEL_COPY_NUMBER));
-
     final JsonObject callNumberComponents = new JsonObject();
     write(callNumberComponents, CALL_NUMBER, circulationItem.getString(CALL_NUMBER));
     write(callNumberComponents, PREFIX, circulationItem.getString(CALL_NUMBER_PREFIX));
