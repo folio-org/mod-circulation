@@ -19,6 +19,7 @@ import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.ServicePoint;
+import org.folio.circulation.storage.mappers.ServicePointMapper;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FetchSingleRecord;
@@ -49,9 +50,11 @@ public class ServicePointRepository {
       return ofAsync(() -> null);
     }
 
+    final var mapper = new ServicePointMapper();
+
     return FetchSingleRecord.<ServicePoint>forRecord("service point")
         .using(servicePointsStorageClient)
-        .mapTo(ServicePoint::new)
+        .mapTo(mapper::toDomain)
         .whenNotFound(succeeded(null))
         .fetch(id);
   }
@@ -175,7 +178,9 @@ public class ServicePointRepository {
   }
 
   private FindWithMultipleCqlIndexValues<ServicePoint> createServicePointsFetcher() {
+    final var mapper = new ServicePointMapper();
+
     return findWithMultipleCqlIndexValues(servicePointsStorageClient,
-      "servicepoints", ServicePoint::from);
+      "servicepoints", mapper::toDomain);
   }
 }
