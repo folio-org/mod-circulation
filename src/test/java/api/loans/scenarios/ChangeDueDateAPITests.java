@@ -377,10 +377,6 @@ class ChangeDueDateAPITests extends APITests {
       .fulfilToHoldShelf(servicePointsFixture.cd1()));
 
     Response recalledLoan = loansClient.getById(initialLoan.getId());
-    ZonedDateTime recalledLoanDueDate = ZonedDateTime.parse(recalledLoan.getJson().getString("dueDate"));
-
-    assertThat(recalledLoan.getJson().getBoolean("dueDateChangedByRecall"), equalTo(true));
-    assertThat(calculateDaysBetween(initialDueDate, recalledLoanDueDate), equalTo(16));
 
     requestsFixture.cancelRequest(recall);
 
@@ -392,13 +388,9 @@ class ChangeDueDateAPITests extends APITests {
     JsonObject dueDateChangedLoan = loansClient.getById(initialLoan.getId()).getJson();
 
     assertThat(dueDateChangedLoan.getBoolean("dueDateChangedByRecall"), equalTo(false));
-    assertThat("due date should be provided new due date",
-    dueDateChangedLoan.getString("dueDate"), isEquivalentTo(newDueDate));
-  }
 
-  private Integer calculateDaysBetween(ZonedDateTime initialDate, ZonedDateTime secondDate) {
-    Period period = Period.between(initialDate.toLocalDate(), secondDate.toLocalDate());
-    return Math.abs(period.getDays());
+    assertThat("due date should be provided new due date",
+      dueDateChangedLoan.getString("dueDate"), isEquivalentTo(newDueDate));
   }
 
   private void chargeFeesForLostItemToKeepLoanOpen() {

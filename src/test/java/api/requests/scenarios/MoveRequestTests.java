@@ -43,7 +43,6 @@ import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.policy.Period;
-import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -151,8 +150,6 @@ class MoveRequestTests extends APITests {
     assertThat(holdRequestForItemCopyA.getJson().getString("requesterId"), is(charlotte.getId().toString()));
     assertThat(holdRequestForItemCopyA.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
     assertThat(holdRequestForItemCopyA.getJson().getJsonObject("item").getString("status"), is(ItemStatus.CHECKED_OUT.getValue()));
-    assertThat("HoldingsRecordId field should not present",
-      holdRequestForItemCopyA.getJson().getJsonObject("item").containsKey("holdingsRecordId"), CoreMatchers.is(false));
     assertThat(holdRequestForItemCopyA.getJson().getInteger("position"), is(1));
     retainsStoredSummaries(holdRequestForItemCopyA);
 
@@ -161,8 +158,6 @@ class MoveRequestTests extends APITests {
     assertThat(pageRequestForItemCopyB.getJson().getString("requesterId"), is(jessica.getId().toString()));
     assertThat(pageRequestForItemCopyB.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
     assertThat(pageRequestForItemCopyB.getJson().getJsonObject("item").getString("status"), is(ItemStatus.PAGED.getValue()));
-    assertThat("HoldingsRecordId field should not present",
-      holdRequestForItemCopyA.getJson().getJsonObject("item").containsKey("holdingsRecordId"), CoreMatchers.is(false));
     assertThat(pageRequestForItemCopyB.getJson().getInteger("position"), is(1));
     retainsStoredSummaries(pageRequestForItemCopyB);
 
