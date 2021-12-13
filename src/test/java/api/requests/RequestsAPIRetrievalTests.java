@@ -37,6 +37,7 @@ import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.MultipleJsonRecords;
+import api.support.TlrFeatureStatus;
 import api.support.builders.Address;
 import api.support.builders.ItemBuilder;
 import api.support.builders.RequestBuilder;
@@ -214,6 +215,99 @@ class RequestsAPIRetrievalTests extends APITests {
     assertThat(tagsRepresentation.getJsonArray("tagList"), contains(NEW_TAG, IMPORTANT_TAG));
 
     requestHasCallNumberStringProperties(representation, "");
+
+    JsonArray identifiers = instanceSummary.getJsonArray("identifiers");
+    assertThat(identifiers, CoreMatchers.notNullValue());
+    assertThat(identifiers.size(), is(1));
+    assertThat(identifiers.getJsonObject(0).getString("identifierTypeId"),
+      is(isbnIdentifierId.toString()));
+    assertThat(identifiers.getJsonObject(0).getString("value"),
+      is(isbnValue));
+    JsonArray contributors = instanceSummary.getJsonArray("contributorNames");
+    assertThat(contributors, CoreMatchers.notNullValue());
+    assertThat(contributors.size(), is(1));
+    assertThat(contributors.getJsonObject(0).getString("name"), is("Chambers, Becky"));
+
+    JsonArray editions = instanceSummary.getJsonArray("editions");
+    assertThat(editions, notNullValue());
+    assertThat(editions.size(), is(1));
+    assertThat(editions.getString(0), is("First American Edition"));
+
+    JsonArray publication = instanceSummary.getJsonArray("publication");
+    assertThat(publication, notNullValue());
+    assertThat(publication.size(), is(1));
+    JsonObject firstPublication = publication.getJsonObject(0);
+    assertThat(firstPublication.getString("publisher"), is("Alfred A. Knopf"));
+    assertThat(firstPublication.getString("place"), is("New York"));
+    assertThat(firstPublication.getString("dateOfPublication"), is("2016"));
+  }
+
+  @Test
+  void canGetATitleLevelRequestByIdWithExtendedRepresentation() {
+    UUID facultyGroupId = patronGroupsFixture.faculty().getId();
+    UUID staffGroupId = patronGroupsFixture.staff().getId();
+    UUID isbnIdentifierId = identifierTypesFixture.isbn().getId();
+    String isbnValue = "9780866989427";
+
+    final ItemResource smallAngryPlanet = itemsFixture
+      .basedUponSmallAngryPlanet(
+        identity(),
+        instanceBuilder -> instanceBuilder.addIdentifier(isbnIdentifierId, isbnValue),
+        itemBuilder -> itemBuilder
+          .withCallNumber("itCn", "itCnPrefix", "itCnSuffix")
+          .withEnumeration("enumeration1")
+          .withChronology("chronology")
+          .withVolume("vol.1")
+          .withCopyNumber(ONE_COPY_NUMBER));
+
+    final IndividualResource sponsor = usersFixture.rebecca(user -> user
+      .withPatronGroupId(facultyGroupId));
+
+    final IndividualResource proxy = usersFixture.steve(user -> user
+      .withPatronGroupId(staffGroupId));
+
+    proxyRelationshipsFixture.nonExpiringProxyFor(sponsor, proxy);
+
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet);
+
+    ZonedDateTime requestDate = ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC);
+
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+
+    UUID instanceId = smallAngryPlanet.getInstanceId();
+
+    configurationsFixture.enableTlrFeature();
+
+    IndividualResource requestResource = requestsClient.create(new RequestBuilder()
+      .page()
+      .titleRequestLevel()
+      .withInstanceId(instanceId)
+      .withPickupServicePointId(pickupServicePointId)
+      .withRequestDate(requestDate)
+      .withRequesterId(sponsor.getId()));
+
+    Response getResponse = requestsFixture.getById(UUID.fromString(requestResource.getJson().getString("id")));
+
+    assertThat(format("Failed to get request: %s", getResponse.getBody()),
+      getResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
+
+    JsonObject representation = getResponse.getJson();
+
+    assertThat(representation.getString("id"), is(requestResource.getJson().getString("id")));
+    assertThat(representation.getString("requestType"), is("Page"));
+    assertThat(representation.getString("requestLevel"), is("Title"));
+    assertThat(representation.getString("requestDate"), isEquivalentTo(requestDate));
+
+    assertThat(representation.getString("instanceId"), is(smallAngryPlanet.getInstanceId()));
+    assertThat(representation.getString("requesterId"), is(sponsor.getId()));
+    assertThat(representation.getString("fulfilmentPreference"), is("Hold Shelf"));
+
+    final JsonObject instanceSummary = representation.getJsonObject("instance");
+    assertThat("title is taken from instance",
+      instanceSummary.getString("title"), is("The Long Way to a Small, Angry Planet"));
+
+    assertThat("has information taken from requesting user",
+      representation.containsKey("requester"), is(true));
 
     JsonArray identifiers = instanceSummary.getJsonArray("identifiers");
     assertThat(identifiers, CoreMatchers.notNullValue());
