@@ -26,6 +26,7 @@ import org.folio.circulation.domain.policy.library.ClosedLibraryStrategyService;
 import org.folio.circulation.domain.representations.CheckOutByBarcodeRequest;
 import org.folio.circulation.domain.validation.CheckOutValidators;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
+import org.folio.circulation.infrastructure.storage.inventory.CirculationItemRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
@@ -78,6 +79,7 @@ public class CheckOutByBarcodeResource extends Resource {
 
     final UserRepository userRepository = new UserRepository(clients);
     final ItemRepository itemRepository = new ItemRepository(clients, true, true, true);
+    final CirculationItemRepository circulationItemRepository = new CirculationItemRepository(clients);
     final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
     final LoanRepository loanRepository = new LoanRepository(clients);
     final LoanService loanService = new LoanService(clients);
@@ -114,7 +116,9 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenApply(validators::refuseWhenUserIsInactive)
       .thenApply(validators::refuseWhenProxyUserIsInactive)
       .thenComposeAsync(validators::refuseWhenInvalidProxyRelationship)
-      .thenComposeAsync(r -> lookupItem(request.getItemBarcode(), itemRepository, r))
+      // TODO: validate result
+      .thenComposeAsync(r -> r .after(loan ->
+        lookupCirculationItem(request.getItemBarcode(), loan, circulationItemRepository)))
       .thenApply(validators::refuseWhenItemNotFound)
       .thenApply(validators::refuseWhenItemIsAlreadyCheckedOut)
       .thenApply(validators::refuseWhenItemIsNotAllowedForCheckOut)
@@ -122,6 +126,7 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenComposeAsync(r -> r.after(requestQueueRepository::get))
       .thenApply(validators::refuseWhenRequestedByAnotherPatron)
       .thenComposeAsync(r -> r.after(l -> lookupLoanPolicy(l, loanPolicyRepository, errorHandler)))
+      // TODO: fetch only the item for every open loan (do not fetch holdings, instance, etc.)
       .thenComposeAsync(validators::refuseWhenItemLimitIsReached)
       .thenCompose(validators::refuseWhenItemIsNotLoanable)
       .thenApply(r -> r.next(errorHandler::failWithValidationErrors))
@@ -132,7 +137,7 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenApply(r -> r.next(this::setItemLocationIdAtCheckout))
       .thenComposeAsync(r -> r.after(relatedRecords -> checkOut(relatedRecords,
         routingContext.getBodyAsJson(), clients)))
-      .thenApply(r -> r.map(this::checkOutItem))
+      .thenApply(r -> r.map(this::checkOutItem)) // result of this step is discarded
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
       .thenComposeAsync(r -> r.after(loanService::truncateLoanWhenItemRecalled))
       .thenComposeAsync(r -> r.after(patronGroupRepository::findPatronGroupForLoanAndRelatedRecords))
@@ -162,7 +167,7 @@ public class CheckOutByBarcodeResource extends Resource {
   private CompletableFuture<Result<LoanAndRelatedRecords>> updateItem(
     LoanAndRelatedRecords loanAndRelatedRecords, ItemRepository itemRepository) {
 
-    return itemRepository.updateItem(loanAndRelatedRecords.getItem())
+    return itemRepository.checkOutItem(loanAndRelatedRecords.getItem())
       .thenApply(r -> r.map(loanAndRelatedRecords::withItem));
   }
 
@@ -201,6 +206,13 @@ public class CheckOutByBarcodeResource extends Resource {
 
     return itemRepository.fetchByBarcode(barcode)
       .thenApply(itemResult -> loanResult.combine(itemResult, LoanAndRelatedRecords::withItem));
+  }
+
+  private CompletableFuture<Result<LoanAndRelatedRecords>> lookupCirculationItem(String itemBarcode,
+    LoanAndRelatedRecords loan, CirculationItemRepository circulationItemRepository) {
+
+    return circulationItemRepository.fetchByBarcode(itemBarcode)
+      .thenApply(r -> r.map(loan::withItem));
   }
 
   private Result<LoanAndRelatedRecords> setItemLocationIdAtCheckout(

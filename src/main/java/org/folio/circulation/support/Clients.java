@@ -61,6 +61,8 @@ public class Clients {
   private final CirculationRulesProcessor circulationRulesProcessor;
   private final CollectionResourceClient accountsRefundClient;
   private final CollectionResourceClient accountsCancelClient;
+  private final CollectionResourceClient circulationItemsClient;
+  private final CollectionResourceClient itemCheckOutClient;
 
   public static Clients create(WebContext context, HttpClient httpClient) {
     return new Clients(context.createHttpClient(httpClient), context);
@@ -120,6 +122,8 @@ public class Clients {
         circulationRulesStorageClient, locationsStorageClient);
       accountsRefundClient = createAccountsRefundClient(client, context);
       accountsCancelClient = createAccountsCancelClient(client, context);
+      circulationItemsClient = createCirculationItemsClient(client, context);
+      itemCheckOutClient = createItemCheckOutClient(client, context);
     }
     catch(MalformedURLException e) {
       throw new InvalidOkapiLocationException(context.getOkapiLocation(), e);
@@ -144,6 +148,10 @@ public class Clients {
 
   public CollectionResourceClient itemsStorage() {
     return itemsStorageClient;
+  }
+
+  public CollectionResourceClient circulationItemsStorage() {
+    return circulationItemsClient;
   }
 
   public CollectionResourceClient holdingsStorage() {
@@ -324,6 +332,10 @@ public class Clients {
 
   public CollectionResourceClient accountsCancelClient() {
     return accountsCancelClient;
+  }
+
+  public CollectionResourceClient itemCheckOutClient() {
+    return itemCheckOutClient;
   }
 
   private static CollectionResourceClient getCollectionResourceClient(
@@ -707,5 +719,17 @@ public class Clients {
     OkapiHttpClient client, WebContext context) throws MalformedURLException {
 
     return getCollectionResourceClient(client, context, "/accounts/%s/cancel");
+  }
+
+  private CollectionResourceClient createCirculationItemsClient(
+    OkapiHttpClient client, WebContext context) throws MalformedURLException {
+
+    return getCollectionResourceClient(client, context, "/circulation-items");
+  }
+
+  private CollectionResourceClient createItemCheckOutClient(
+    OkapiHttpClient client, WebContext context) throws MalformedURLException {
+
+    return getCollectionResourceClient(client, context, "/item-storage/items/%s/check-out");
   }
 }

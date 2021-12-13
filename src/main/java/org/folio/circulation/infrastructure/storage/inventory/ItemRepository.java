@@ -62,6 +62,7 @@ public class ItemRepository {
   private final CollectionResourceClient holdingsClient;
   private final CollectionResourceClient instancesClient;
   private final CollectionResourceClient loanTypesClient;
+  private final CollectionResourceClient itemCheckOutClient;
   private final LocationRepository locationRepository;
   private final MaterialTypeRepository materialTypeRepository;
   private final ServicePointRepository servicePointRepository;
@@ -75,7 +76,8 @@ public class ItemRepository {
     boolean fetchLocation, boolean fetchMaterialType, boolean fetchLoanType) {
 
     this(new Clients(clients.itemsStorage(), clients.holdingsStorage(),
-      clients.instancesStorage(), clients.loanTypesStorage()), LocationRepository.using(clients),
+      clients.instancesStorage(), clients.loanTypesStorage(), clients.itemCheckOutClient()),
+      LocationRepository.using(clients),
       new MaterialTypeRepository(clients), new ServicePointRepository(clients),
       fetchLocation, fetchMaterialType, fetchLoanType);
   }
@@ -88,6 +90,7 @@ public class ItemRepository {
     this.holdingsClient = clients.getHoldingsClient();
     this.instancesClient = clients.getInstancesClient();
     this.loanTypesClient = clients.getLoanTypesClient();
+    this.itemCheckOutClient = clients.getItemCheckoutClient();
     this.locationRepository = locationRepository;
     this.materialTypeRepository = materialTypeRepository;
     this.servicePointRepository = servicePointRepository;
@@ -444,6 +447,12 @@ public class ItemRepository {
     return new ItemRepository(clients, false, false, false);
   }
 
+  public CompletableFuture<Result<Item>> checkOutItem(Item item) {
+    return itemCheckOutClient.post(new JsonObject(), item.getItemId())
+      // TODO: this interpreter ignores HTTP errors
+      .thenApply(noContentRecordInterpreter(item)::flatMap);
+  }
+
   @AllArgsConstructor
   @Getter
   private static class Clients {
@@ -451,5 +460,6 @@ public class ItemRepository {
     private final CollectionResourceClient holdingsClient;
     private final CollectionResourceClient instancesClient;
     private final CollectionResourceClient loanTypesClient;
+    private final CollectionResourceClient itemCheckoutClient;
   }
 }
