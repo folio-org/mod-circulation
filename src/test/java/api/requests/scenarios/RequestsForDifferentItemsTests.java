@@ -60,5 +60,14 @@ class RequestsForDifferentItemsTests extends APITests {
     assertThat(secondRequestForSmallAngryPlannet.getJson().getInteger("position"), is(2));
     assertThat(firstRequestForNod.getJson().getInteger("position"), is(1));
     assertThat(secondRequestForNod.getJson().getInteger("position"), is(2));
+
+    assertThat("HoldingsRecordId field should not present",
+      firstRequestForSmallAngryPlanet.getJson().getJsonObject("item").containsKey("holdingsRecordId"), is(false));
+    assertThat("HoldingsRecordId field should not present",
+      secondRequestForSmallAngryPlannet.getJson().getJsonObject("item").containsKey("holdingsRecordId"), is(false));
+    assertThat("HoldingsRecordId field should not present",
+      firstRequestForNod.getJson().getJsonObject("item").containsKey("holdingsRecordId"), is(false));
+    assertThat("HoldingsRecordId field should not present",
+      secondRequestForNod.getJson().getJsonObject("item").containsKey("holdingsRecordId"), is(false));
   }
 }

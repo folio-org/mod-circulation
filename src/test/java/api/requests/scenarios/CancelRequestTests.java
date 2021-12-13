@@ -60,6 +60,9 @@ class CancelRequestTests extends APITests {
 
     assertThat("Should retain stored requester summary",
       cancelledRequest.containsKey("requester"), is(true));
+
+    assertThat("HoldingsRecordId field should not present",
+      cancelledRequest.getJsonObject("item").containsKey("holdingsRecordId"), is(false));
   }
 
   @Test
