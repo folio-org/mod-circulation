@@ -63,11 +63,11 @@ class RequestsAPIRetrievalTests extends APITests {
         identity(),
         instanceBuilder -> instanceBuilder.addIdentifier(isbnIdentifierId, isbnValue),
         itemBuilder -> itemBuilder
-        .withCallNumber("itCn", "itCnPrefix", "itCnSuffix")
-        .withEnumeration("enumeration1")
-        .withChronology("chronology")
-        .withVolume("vol.1")
-        .withCopyNumber(ONE_COPY_NUMBER));
+          .withCallNumber("itCn", "itCnPrefix", "itCnSuffix")
+          .withEnumeration("enumeration1")
+          .withChronology("chronology")
+          .withVolume("vol.1")
+          .withCopyNumber(ONE_COPY_NUMBER));
 
     final IndividualResource sponsor = usersFixture.rebecca(user -> user
       .withPatronGroupId(facultyGroupId));
@@ -243,40 +243,21 @@ class RequestsAPIRetrievalTests extends APITests {
   }
 
   @Test
-  void canGetATitleLevelRequestByIdWithExtendedRepresentation() {
-    UUID facultyGroupId = patronGroupsFixture.faculty().getId();
-    UUID staffGroupId = patronGroupsFixture.staff().getId();
+  void titleLevelRequestRetrievalById() {
+    configurationsFixture.enableTlrFeature();
+
     UUID isbnIdentifierId = identifierTypesFixture.isbn().getId();
     String isbnValue = "9780866989427";
-
-    final ItemResource smallAngryPlanet = itemsFixture
-      .basedUponSmallAngryPlanet(
-        identity(),
-        instanceBuilder -> instanceBuilder.addIdentifier(isbnIdentifierId, isbnValue),
-        itemBuilder -> itemBuilder
-          .withCallNumber("itCn", "itCnPrefix", "itCnSuffix")
-          .withEnumeration("enumeration1")
-          .withChronology("chronology")
-          .withVolume("vol.1")
-          .withCopyNumber(ONE_COPY_NUMBER));
-
-    final IndividualResource sponsor = usersFixture.rebecca(user -> user
-      .withPatronGroupId(facultyGroupId));
-
-    final IndividualResource proxy = usersFixture.steve(user -> user
-      .withPatronGroupId(staffGroupId));
-
-    proxyRelationshipsFixture.nonExpiringProxyFor(sponsor, proxy);
-
+    ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
+      identity(),
+      instanceBuilder -> instanceBuilder.addIdentifier(isbnIdentifierId, isbnValue),
+      itemsFixture.addCallNumberStringComponents());
     checkOutFixture.checkOutByBarcode(smallAngryPlanet);
 
+    UUID requesterId = usersFixture.steve().getId();
     ZonedDateTime requestDate = ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC);
-
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
-
     UUID instanceId = smallAngryPlanet.getInstanceId();
-
-    configurationsFixture.enableTlrFeature();
 
     IndividualResource requestResource = requestsClient.create(new RequestBuilder()
       .page()
@@ -284,30 +265,18 @@ class RequestsAPIRetrievalTests extends APITests {
       .withInstanceId(instanceId)
       .withPickupServicePointId(pickupServicePointId)
       .withRequestDate(requestDate)
-      .withRequesterId(sponsor.getId()));
+      .withRequesterId(requesterId));
 
-    Response getResponse = requestsFixture.getById(UUID.fromString(requestResource.getJson().getString("id")));
-
-    assertThat(format("Failed to get request: %s", getResponse.getBody()),
-      getResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
-
-    JsonObject representation = getResponse.getJson();
+    Response response = requestsFixture.getById(UUID.fromString(requestResource.getJson().getString("id")));
+    JsonObject representation = response.getJson();
 
     assertThat(representation.getString("id"), is(requestResource.getJson().getString("id")));
     assertThat(representation.getString("requestType"), is("Page"));
     assertThat(representation.getString("requestLevel"), is("Title"));
-    assertThat(representation.getString("requestDate"), isEquivalentTo(requestDate));
-
-    assertThat(representation.getString("instanceId"), is(smallAngryPlanet.getInstanceId()));
-    assertThat(representation.getString("requesterId"), is(sponsor.getId()));
-    assertThat(representation.getString("fulfilmentPreference"), is("Hold Shelf"));
 
     final JsonObject instanceSummary = representation.getJsonObject("instance");
     assertThat("title is taken from instance",
       instanceSummary.getString("title"), is("The Long Way to a Small, Angry Planet"));
-
-    assertThat("has information taken from requesting user",
-      representation.containsKey("requester"), is(true));
 
     JsonArray identifiers = instanceSummary.getJsonArray("identifiers");
     assertThat(identifiers, CoreMatchers.notNullValue());
@@ -316,6 +285,7 @@ class RequestsAPIRetrievalTests extends APITests {
       is(isbnIdentifierId.toString()));
     assertThat(identifiers.getJsonObject(0).getString("value"),
       is(isbnValue));
+
     JsonArray contributors = instanceSummary.getJsonArray("contributorNames");
     assertThat(contributors, CoreMatchers.notNullValue());
     assertThat(contributors.size(), is(1));
@@ -561,7 +531,7 @@ class RequestsAPIRetrievalTests extends APITests {
       .deliverToAddress(workAddressType.getId())
       .by(charlotte));
 
-      checkInFixture.checkInByBarcode(smallAngryPlanet);
+    checkInFixture.checkInByBarcode(smallAngryPlanet);
 
     final MultipleJsonRecords allRequests = requestsFixture.getAllRequests();
 
