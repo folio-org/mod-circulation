@@ -17,7 +17,7 @@ public class StoredRequestRepresentation {
     final JsonObject representation = request.asJson();
 
     addStoredItemProperties(representation, request.getItem());
-    addStoredInstanceProperties(representation, request.getItem());
+    addStoredInstanceProperties(representation, request.getInstance());
     addStoredRequesterProperties(representation, request.getRequester());
     addStoredProxyProperties(representation, request.getProxy());
 
@@ -38,15 +38,17 @@ public class StoredRequestRepresentation {
     request.put("item", itemSummary);
   }
 
-  private static void addStoredInstanceProperties(JsonObject request, Item item) {
-    if (item == null || item.isNotFound()) {
-      logUnableAddItemToTheRequest(request, item);
+  private static void addStoredInstanceProperties(JsonObject request, Instance instance) {
+    if (instance == null || instance.isNotFound()) {
+      log.info("Unable to add instance properties to request {}, instance is {}",
+        request.getString("id"), request.getString("instanceId"));
       return;
     }
-    JsonObject instance = new JsonObject();
-    write(instance, "title", item.getTitle());
-    write(instance, "identifiers", item.getIdentifiers());
-    request.put("instance", instance);
+    JsonObject instanceSummary = new JsonObject();
+    write(instanceSummary, "title", instance.getTitle());
+    write(instanceSummary, "identifiers", instance.getIdentifiers());
+
+    request.put("instance", instanceSummary);
   }
 
   private static void addStoredRequesterProperties(JsonObject request, User requester) {
