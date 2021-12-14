@@ -4,7 +4,7 @@ import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
-import java.util.Collection;
+import java.util.List;
 
 import org.folio.circulation.domain.Contributor;
 import org.folio.circulation.domain.Holdings;
@@ -84,8 +84,14 @@ public class CirculationItemMapper {
     Holdings holdings = new Holdings(circulationItem.getString(INSTANCE_ID),
       circulationItem.getString(HOLDINGS_LEVEL_COPY_NUMBER), null);
 
-    Instance instance = new Instance(circulationItem.getString(TITLE), emptyList(),
-      getContributors(circulationItem));
+    List<Contributor> contributors = circulationItem.getJsonArray(CONTRIBUTORS)
+      .stream()
+      .filter(String.class::isInstance)
+      .map(String.class::cast)
+      .map(name -> new Contributor(name, null))
+      .collect(toList());
+
+    Instance instance = new Instance(circulationItem.getString(TITLE), emptyList(), contributors);
 
     MaterialType materialType = new MaterialType(circulationItem.getString(MATERIAL_TYPE_NAME), null);
 
@@ -94,15 +100,6 @@ public class CirculationItemMapper {
       .withInstance(instance)
       .withMaterialType(materialType)
       .withLocation(Location.from(location));
-  }
-
-  private static Collection<Contributor> getContributors(JsonObject circulationItem) {
-    return circulationItem.getJsonArray(CONTRIBUTORS)
-      .stream()
-      .filter(String.class::isInstance)
-      .map(String.class::cast)
-      .map(name -> new Contributor(name, null))
-      .collect(toList());
   }
 
 }

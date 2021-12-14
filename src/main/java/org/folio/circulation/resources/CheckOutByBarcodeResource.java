@@ -116,7 +116,6 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenApply(validators::refuseWhenUserIsInactive)
       .thenApply(validators::refuseWhenProxyUserIsInactive)
       .thenComposeAsync(validators::refuseWhenInvalidProxyRelationship)
-      // TODO: validate result
       .thenComposeAsync(r -> r .after(loan ->
         lookupCirculationItem(request.getItemBarcode(), loan, circulationItemRepository)))
       .thenApply(validators::refuseWhenItemNotFound)
