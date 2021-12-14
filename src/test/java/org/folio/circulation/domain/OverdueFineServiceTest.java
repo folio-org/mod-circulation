@@ -691,10 +691,8 @@ class OverdueFineServiceTest {
   }
 
   private ServicePoint createServicePoint() {
-    return new ServicePoint(new JsonObject()
-      .put("id", CHECK_IN_SERVICE_POINT_ID)
-      .put("name", CHECK_IN_SERVICE_POINT_NAME)
-    );
+    return new ServicePoint(CHECK_IN_SERVICE_POINT_ID.toString(), CHECK_IN_SERVICE_POINT_NAME,
+      null, false, null, null, null, null);
   }
 
   private static Collection<Object[]> testParameters() {
