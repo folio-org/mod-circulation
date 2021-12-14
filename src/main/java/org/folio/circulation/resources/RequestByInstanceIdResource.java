@@ -260,10 +260,11 @@ public class RequestByInstanceIdResource extends Resource {
 
     JsonObject currentItemRequest = itemRequests.get(startIndex);
 
+    ItemRepository itemRepository = new ItemRepository(clients, true, false, false);
     final RequestFromRepresentationService requestFromRepresentationService =
       new RequestFromRepresentationService(
         new InstanceRepository(clients),
-        new ItemRepository(clients, true, false, false),
+        itemRepository,
         RequestQueueRepository.using(clients),
         userRepository,
         loanRepository,
@@ -271,8 +272,8 @@ public class RequestByInstanceIdResource extends Resource {
         new ConfigurationRepository(clients),
         createProxyRelationshipValidator(currentItemRequest, clients),
         new ServicePointPickupLocationValidator(),
-        new FailFastErrorHandler()
-      );
+        new FailFastErrorHandler(),
+        new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository));
 
     return requestFromRepresentationService.getRequestFrom(currentItemRequest)
       .thenCompose(r -> r.after(createRequestService::createRequest))

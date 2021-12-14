@@ -12,6 +12,7 @@ import static org.folio.circulation.resources.handlers.error.CirculationErrorTyp
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ITEM_ALREADY_LOANED_TO_SAME_USER;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ITEM_ALREADY_REQUESTED_BY_SAME_USER;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ITEM_DOES_NOT_EXIST;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.NO_AVAILABLE_ITEMS_FOR_INSTANCE_ID;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.REQUESTING_DISALLOWED;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.REQUESTING_DISALLOWED_BY_POLICY;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_INACTIVE;
@@ -66,6 +67,8 @@ public class CreateRequestService {
       .mapFailure(err -> errorHandler.handleValidationError(err, INVALID_USER_OR_PATRON_GROUP_ID, result))
       .next(RequestServiceUtility::refuseWhenUserIsInactive)
       .mapFailure(err -> errorHandler.handleValidationError(err, USER_IS_INACTIVE, result))
+      .next(RequestServiceUtility::refuseWhenPagedTlrInstanceDoesNotHaveAvailableItems)
+      .mapFailure(err ->  errorHandler.handleValidationError(err, NO_AVAILABLE_ITEMS_FOR_INSTANCE_ID, result))
       .next(RequestServiceUtility::refuseWhenUserHasAlreadyRequestedItem)
       .mapFailure(err -> errorHandler.handleValidationError(err, ITEM_ALREADY_REQUESTED_BY_SAME_USER, result))
       .after(automatedBlocksValidator::validate)

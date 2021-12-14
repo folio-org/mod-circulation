@@ -11,6 +11,7 @@ import static org.folio.circulation.resources.handlers.error.CirculationErrorTyp
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_ITEM_ID;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_PICKUP_SERVICE_POINT;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_PROXY_RELATIONSHIP;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.NO_AVAILABLE_ITEMS_FOR_INSTANCE_ID;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.http.client.PageLimit.limit;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
@@ -31,6 +32,7 @@ import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.RequestLevel;
 import org.folio.circulation.domain.RequestStatus;
+import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.ServicePointPickupLocationValidator;
@@ -42,6 +44,7 @@ import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
+import org.folio.circulation.storage.ItemByInstanceIdFinder;
 import org.folio.circulation.support.BadRequestFailure;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.results.Result;
@@ -63,6 +66,7 @@ class RequestFromRepresentationService {
   private final ProxyRelationshipValidator proxyRelationshipValidator;
   private final ServicePointPickupLocationValidator pickupLocationValidator;
   private final CirculationErrorHandler errorHandler;
+  private final ItemByInstanceIdFinder itemByInstanceIdFinder;
 
   CompletableFuture<Result<RequestAndRelatedRecords>> getRequestFrom(JsonObject representation) {
     return initRequest(representation)
@@ -116,10 +120,21 @@ class RequestFromRepresentationService {
   }
 
   private CompletableFuture<Result<Request>> fetchItemAndLoan(Request request) {
-    return succeeded(request)
-      .combineAfter(itemRepository::fetchFor, Request::withItem)
-      .thenComposeAsync(r -> r.after(this::fetchLoan))
-      .thenComposeAsync(r -> r.combineAfter(this::getUserForExistingLoan, this::addUserToLoan));
+      return succeeded(request)
+        .after(this::fetchItem)
+        .thenComposeAsync(r -> r.after(this::fetchLoan))
+        .thenComposeAsync(r -> r.combineAfter(this::getUserForExistingLoan, this::addUserToLoan));
+  }
+
+  private CompletableFuture<Result<Request>> fetchItem(Request request) {
+    if (request.getTlrSettingsConfiguration().isTitleLevelRequestsFeatureEnabled()
+      && request.getRequestType() == RequestType.PAGE) {
+      return itemByInstanceIdFinder.getFirstAvailableItemByInstanceId(request.getInstanceId())
+        .thenApply(r -> r.map(request::withItem));
+    } else {
+      return itemRepository.fetchFor(request)
+        .thenApply(r -> r.map(request::withItem));
+    }
   }
 
   private CompletableFuture<Result<Request>> fetchLoan(Request request) {

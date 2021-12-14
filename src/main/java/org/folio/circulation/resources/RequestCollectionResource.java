@@ -42,6 +42,7 @@ import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.handlers.error.FailFastErrorHandler;
 import org.folio.circulation.resources.handlers.error.OverridingErrorHandler;
 import org.folio.circulation.services.EventPublisher;
+import org.folio.circulation.storage.ItemByInstanceIdFinder;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.http.OkapiPermissions;
 import org.folio.circulation.support.http.server.JsonHttpResponse;
@@ -95,13 +96,15 @@ public class RequestCollectionResource extends CollectionResource {
       updateUponRequest, new RequestLoanValidator(loanRepository),
       requestNoticeSender, requestBlocksValidators, eventPublisher, errorHandler);
 
+    ItemRepository itemRepository = new ItemRepository(clients, true, true, true);
     final var requestFromRepresentationService = new RequestFromRepresentationService(
       new InstanceRepository(clients),
-      new ItemRepository(clients, true, true, true),
+      itemRepository,
       RequestQueueRepository.using(clients), userRepository, loanRepository,
       new ServicePointRepository(clients), configurationRepository,
       createProxyRelationshipValidator(representation, clients),
-      new ServicePointPickupLocationValidator(), errorHandler);
+      new ServicePointPickupLocationValidator(), errorHandler,
+      new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository));
 
     final var scheduledNoticeService = RequestScheduledNoticeService.using(clients);
 
@@ -150,13 +153,15 @@ public class RequestCollectionResource extends CollectionResource {
       updateRequestQueue, new ClosedRequestValidator(requestRepository),
       requestNoticeSender, updateItem, eventPublisher);
 
+    ItemRepository itemRepository = new ItemRepository(clients, true, true, true);
     final var requestFromRepresentationService = new RequestFromRepresentationService(
       new InstanceRepository(clients),
-      new ItemRepository(clients, true, true, true),
-      RequestQueueRepository.using(clients), new UserRepository(clients),
-      loanRepository, new ServicePointRepository(clients), configurationRepository,
+      itemRepository,
+      RequestQueueRepository.using(clients), new UserRepository(clients), loanRepository,
+      new ServicePointRepository(clients), configurationRepository,
       createProxyRelationshipValidator(representation, clients),
-      new ServicePointPickupLocationValidator(), errorHandler);
+      new ServicePointPickupLocationValidator(), errorHandler,
+      new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository));
 
     final var requestScheduledNoticeService = RequestScheduledNoticeService.using(clients);
 
