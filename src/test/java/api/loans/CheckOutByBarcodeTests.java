@@ -28,6 +28,7 @@ import static api.support.matchers.EventMatchers.isValidItemCheckedOutEvent;
 import static api.support.matchers.ItemMatchers.isAwaitingPickup;
 import static api.support.matchers.ItemMatchers.isCheckedOut;
 import static api.support.matchers.ItemMatchers.isLostAndPaid;
+import static api.support.matchers.ItemMatchers.isPaged;
 import static api.support.matchers.ItemMatchers.isWithdrawn;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
@@ -2220,8 +2221,7 @@ class CheckOutByBarcodeTests extends APITests {
   @CsvSource({
     "Item, Item",
     "Item, Title",
-    // TODO: uncomment once creation of Page TLR request changes the item status to "Paged"
-//    "Title, Item",
+    "Title, Item",
     "Title, Title"
   })
   void canFulfilPageAndHoldRequestsWithMixedLevels(String pageRequestLevel, String holdRequestLevel) {
@@ -2246,8 +2246,7 @@ class CheckOutByBarcodeTests extends APITests {
         .withRequesterId(firstRequester.getId()));
 
     assertThat(firstRequest.getJson(), hasPosition(1));
-    // TODO: uncomment once creation of Page TLR request changes the item status to "Paged"
-//    assertThat(fetchItemJson(item), isPaged());
+    assertThat(fetchItemJson(item), isPaged());
 
     IndividualResource secondRequest = requestsClient.create(
       new RequestBuilder()

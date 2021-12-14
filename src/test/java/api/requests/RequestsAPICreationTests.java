@@ -1151,6 +1151,62 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
+  void cannotCreateTitleLevelPagedRequestIfThereAreNoAvailableItems() {
+    UUID patronId = usersFixture.charlotte().getId();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    configurationsFixture.enableTlrFeature();
+
+    IndividualResource uponDunkirkInstance = instancesFixture.basedUponDunkirk();
+    UUID instanceId = uponDunkirkInstance.getId();
+    IndividualResource defaultWithHoldings = holdingsFixture.defaultWithHoldings(instanceId);
+    itemsClient.create(new ItemBuilder()
+      .forHolding(defaultWithHoldings.getId())
+      .checkOut()
+      .withMaterialType(UUID.randomUUID())
+      .withPermanentLoanType(UUID.randomUUID())
+      .create());
+
+    Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
+      .page()
+      .titleRequestLevel()
+      .withInstanceId(instanceId)
+      .withNoItemId()
+      .withPickupServicePointId(pickupServicePointId)
+      .withRequesterId(patronId));
+
+    assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(postResponse.getJson(), hasErrors(1));
+    assertThat(postResponse.getJson(), hasErrorWith(
+      hasMessage("Cannot create paged TLR for this instance ID - no available items found")));
+    assertThat(postResponse.getJson(), hasErrorWith(hasParameter("instanceId",
+      instanceId.toString())));
+  }
+
+  @Test
+  void canCreateTitleLevelPagedRequest() {
+    UUID patronId = usersFixture.charlotte().getId();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    configurationsFixture.enableTlrFeature();
+
+    ItemResource itemResource = itemsFixture.basedUponSmallAngryPlanet();
+    UUID instanceId = itemResource.getInstanceId();
+    IndividualResource pagedRequest = requestsClient.create(new RequestBuilder()
+      .page()
+      .titleRequestLevel()
+      .withInstanceId(instanceId)
+      .withNoItemId()
+      .withPickupServicePointId(pickupServicePointId)
+      .withRequesterId(patronId));
+
+    String finalStatus = pagedRequest.getResponse().getJson().getJsonObject("item")
+      .getString("status");
+    assertThat(pagedRequest.getJson().getString("requestType"), is(RequestType.PAGE.getValue()));
+    assertThat(pagedRequest.getResponse(), hasStatus(HTTP_CREATED));
+    assertThat(finalStatus, is(ItemStatus.PAGED.getValue()));
+    assertThat(pagedRequest.getJson().getString("requestLevel"), is(RequestLevel.TITLE.getValue()));
+  }
+
+  @Test
   void cannotCreatePagedRequestWhenItemStatusIsCheckedOut() {
     //Set up the item's initial status to be CHECKED OUT
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
