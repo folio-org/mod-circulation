@@ -38,7 +38,7 @@ public class RequestServiceUtility {
     Request request = requestAndRelatedRecords.getRequest();
     if (request.getTlrSettingsConfiguration().isTitleLevelRequestsFeatureEnabled()
       && request.getRequestType() == RequestType.PAGE
-      && request.getItem().getItem() == null) {
+      && request.getItem().isNotFound()) {
 
       return failedValidation(
         "Cannot create paged TLR for this instance ID - no available items found", INSTANCE_ID,

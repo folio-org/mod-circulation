@@ -1,5 +1,6 @@
 package org.folio.circulation.resources;
 
+import static java.util.concurrent.CompletableFuture.*;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.folio.circulation.domain.representations.RequestProperties.HOLDINGS_RECORD_ID;
@@ -128,6 +129,9 @@ class RequestFromRepresentationService {
   private CompletableFuture<Result<Request>> fetchItem(Request request) {
     if (request.getTlrSettingsConfiguration().isTitleLevelRequestsFeatureEnabled()
       && request.getRequestType() == RequestType.PAGE) {
+      if (request.getItemId() != null) {
+        return completedFuture(succeeded(request));
+      }
       return itemByInstanceIdFinder.getFirstAvailableItemByInstanceId(request.getInstanceId())
         .thenApply(r -> r.map(request::withItem));
     } else {
