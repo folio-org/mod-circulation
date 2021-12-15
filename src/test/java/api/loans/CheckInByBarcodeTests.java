@@ -43,6 +43,7 @@ import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasSize;
@@ -79,6 +80,7 @@ import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.FeeFineBuilder;
 import api.support.builders.FeeFineOwnerBuilder;
+import api.support.builders.ItemBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
@@ -1470,6 +1472,65 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
 
     assertThat(FakeModNotify.getFirstSentPatronNotice(), hasEmailNoticeProperties(requester.getId(), templateId,
       getUserContextMatchers(updatedRequesterJson)));
+  }
+
+  @Test
+  void linkItemToHoldTLRWhenCheckedIn(){
+    configurationsFixture.deleteTlrFeatureConfig();
+    UUID patronId = usersFixture.charlotte().getId();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    configurationsFixture.enableTlrFeature();
+
+    IndividualResource uponDunkirkInstance = instancesFixture.basedUponDunkirk();
+    UUID instanceId = uponDunkirkInstance.getId();
+    IndividualResource defaultWithHoldings = holdingsFixture.defaultWithHoldings(instanceId);
+
+    IndividualResource checkedOutItem = itemsClient.create(new ItemBuilder()
+      .forHolding(defaultWithHoldings.getId())
+      .checkOut()
+      .withMaterialType(UUID.randomUUID())
+      .withPermanentLoanType(UUID.randomUUID())
+      .create());
+
+    IndividualResource holdRequestBeforeFulfilled = requestsClient.create(new RequestBuilder()
+      .hold()
+      .titleRequestLevel()
+      .withInstanceId(instanceId)
+      .withNoItemId()
+      .withPickupServicePointId(pickupServicePointId)
+      .withRequesterId(patronId));
+
+
+    checkInFixture.checkInByBarcode(checkedOutItem, pickupServicePointId);
+
+    IndividualResource itemAfter = itemsClient.get(checkedOutItem.getId());
+
+    IndividualResource holdRequestAfterFulfilled  = requestsClient.get(holdRequestBeforeFulfilled.getId());
+
+    //validating request before fulfilled
+    JsonObject representationBefore = holdRequestBeforeFulfilled.getJson();
+    assertThat(representationBefore.getString("itemId"), nullValue());
+    assertThat(representationBefore.getString("item"), nullValue());
+    assertThat(representationBefore.getString("requestType"), is("Hold"));
+    assertThat(representationBefore.getString("instanceId"), is(instanceId));
+    assertThat(representationBefore.getString("requestLevel"), is("Title"));
+    assertThat(representationBefore.getString("status"), is("Open - Not yet filled"));
+    assertThat(representationBefore.getString("position"), is("1"));
+
+    //validating request after fulfilled
+    JsonObject representation = holdRequestAfterFulfilled.getJson();
+    assertThat(representation.getString("itemId"), is(checkedOutItem.getId().toString()));
+    assertThat(representation.getString("item"), notNullValue());
+    assertThat(representation.getString("requestType"), is("Hold"));
+    assertThat(representation.getString("instanceId"), is(instanceId));
+    assertThat(representation.getString("holdingsRecordId"), is(defaultWithHoldings.getId()));
+    assertThat(representation.getString("requestLevel"), is("Title"));
+    assertThat(representation.getString("status"), is("Open - Awaiting pickup"));
+    assertThat(representation.getString("position"), is("1"));
+
+    JsonObject itemRepresentation = itemAfter.getJson();
+    assertThat(itemRepresentation.getJsonObject("status").getString("name"), is("Awaiting pickup"));
+
   }
 
   private void checkPatronNoticeEvent(IndividualResource request, IndividualResource requester,

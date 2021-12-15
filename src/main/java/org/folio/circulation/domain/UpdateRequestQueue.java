@@ -89,6 +89,9 @@ public class UpdateRequestQueue {
 
     switch (requestBeingFulfilled.getFulfilmentPreference()) {
       case HOLD_SHELF:
+        if (requestBeingFulfilled.getItemId() == null) {
+          requestBeingFulfilled = requestBeingFulfilled.withItem(item);
+        }
         if (checkInServicePointId.equalsIgnoreCase(requestBeingFulfilled.getPickupServicePointId())) {
           updatedReq = awaitPickup(requestBeingFulfilled);
         } else {
