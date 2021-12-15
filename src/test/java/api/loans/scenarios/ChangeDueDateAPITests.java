@@ -473,11 +473,14 @@ class ChangeDueDateAPITests extends APITests {
     IndividualResource steve = usersFixture.steve();
     IndividualResource initialLoan = checkOutFixture.checkOutByBarcode(smallAngryPlanet, steve);
     ZonedDateTime initialDueDate = ZonedDateTime.parse(initialLoan.getJson().getString("dueDate"));
+    UUID instanceId = smallAngryPlanet.getInstanceId();
 
     assertThat(initialLoan.getJson().containsKey("dueDateChangedByRecall"), equalTo(false));
 
     IndividualResource recall = requestsFixture.place(new RequestBuilder()
       .recall()
+      .itemRequestLevel()
+      .withInstanceId(instanceId)
       .forItem(smallAngryPlanet)
       .by(usersFixture.charlotte())
       .fulfilToHoldShelf(servicePointsFixture.cd1()));
@@ -490,7 +493,7 @@ class ChangeDueDateAPITests extends APITests {
     requestsClient.create(new RequestBuilder()
       .recall()
       .titleRequestLevel()
-      .withInstanceId(smallAngryPlanet.getInstanceId())
+      .withInstanceId(instanceId)
       .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .withRequesterId(usersFixture.jessica().getId()));
 

@@ -125,7 +125,10 @@ class RequestFromRepresentationService {
   }
 
   private CompletableFuture<Result<Request>> fetchItemAndLoan(Request request) {
-    if (request.getRequestLevel() == TITLE && request.getRequestType() == RequestType.RECALL) {
+    if (request.getRequestLevel() == TITLE &&
+      request.getTlrSettingsConfiguration() != null &&
+      request.getTlrSettingsConfiguration().isTitleLevelRequestsFeatureEnabled() &&
+      request.getRequestType() == RequestType.RECALL) {
 
       return fetchItemAndLoanForRecallTlrRequest(request);
     }
