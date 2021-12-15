@@ -6,7 +6,7 @@ import static org.folio.circulation.support.ValidationErrorFailure.failedValidat
 import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQuery;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.json.JsonKeys.byId;
-import static org.folio.circulation.support.results.Result.*;
+import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.Collection;
 import java.util.Set;
@@ -46,8 +46,7 @@ public class ItemByInstanceIdFinder {
       .thenCompose(this::getItems);
   }
 
-  public CompletableFuture<Result<Item>> getFirstAvailableItemByInstanceId(
-    String instanceId) {
+  public CompletableFuture<Result<Item>> getFirstAvailableItemByInstanceId(String instanceId) {
 
     final FindWithCqlQuery<JsonObject> fetcher = findWithCqlQuery(
       holdingsStorageClient, "holdingsRecords", identity());
@@ -66,7 +65,8 @@ public class ItemByInstanceIdFinder {
 
       Set<String> holdingsIds = holdingsRecords.toKeys(byId());
 
-      return itemRepository.findByIndexNameAndQuery(holdingsIds, HOLDINGS_RECORD_ID,
+     return itemRepository.findByIndexNameAndQuery(
+        holdingsIds, HOLDINGS_RECORD_ID,
         CqlQuery.exactMatch("status.name", ItemStatus.AVAILABLE.getValue()))
         .thenApply(r -> r.map(items -> items.stream().findFirst().orElse(null)));
     });

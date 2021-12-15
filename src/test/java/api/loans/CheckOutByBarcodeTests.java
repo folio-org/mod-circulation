@@ -2207,7 +2207,7 @@ class CheckOutByBarcodeTests extends APITests {
     UserResource requester = usersFixture.james();
 
     requestsClient.create(new RequestBuilder()
-      .page()
+      .hold()
       .titleRequestLevel()
       .withInstanceId(item.getInstanceId())
       .withPickupServicePointId(servicePointsFixture.cd1().getId())

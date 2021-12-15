@@ -680,7 +680,7 @@ class RequestScheduledNoticesProcessingTests extends APITests {
 
   private RequestBuilder buildTitleLevelRequest(LocalDate requestExpiration) {
     return new RequestBuilder()
-      .page()
+      .hold()
       .titleRequestLevel()
       .withInstanceId(item.getInstanceId())
       .withRequesterId(usersFixture.charlotte().getId())
