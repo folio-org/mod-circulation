@@ -65,8 +65,7 @@ public class ItemByInstanceIdFinder {
 
       Set<String> holdingsIds = holdingsRecords.toKeys(byId());
 
-     return itemRepository.findByIndexNameAndQuery(
-        holdingsIds, HOLDINGS_RECORD_ID,
+     return itemRepository.findByIndexNameAndQuery(holdingsIds, HOLDINGS_RECORD_ID,
         CqlQuery.exactMatch("status.name", ItemStatus.AVAILABLE.getValue()))
         .thenApply(r -> r.map(items -> items.stream().findFirst().orElse(null)));
     });
