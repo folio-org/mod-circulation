@@ -2800,6 +2800,7 @@ public class RequestsAPICreationTests extends APITests {
     return new RequestBuilder()
       .page()
       .titleRequestLevel()
+      .withNoItemId()
       .withInstanceId(itemsFixture.basedUponSmallAngryPlanet().getInstanceId())
       .withRequesterId(usersFixture.charlotte().getId())
       .withRequestDate(getZonedDateTime())

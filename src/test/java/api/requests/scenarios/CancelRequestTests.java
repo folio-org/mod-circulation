@@ -367,6 +367,7 @@ class CancelRequestTests extends APITests {
       .page()
       .titleRequestLevel()
       .withInstanceId(itemsFixture.basedUponSmallAngryPlanet().getInstanceId())
+      .withNoItemId()
       .withRequesterId(usersFixture.charlotte().getId())
       .withRequestDate(getZonedDateTime())
       .withStatus(OPEN_NOT_YET_FILLED)

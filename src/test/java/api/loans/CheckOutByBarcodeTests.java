@@ -2184,6 +2184,7 @@ class CheckOutByBarcodeTests extends APITests {
     requestsClient.create(new RequestBuilder()
       .page()
       .titleRequestLevel()
+      .withNoItemId()
       .withInstanceId(item.getInstanceId())
       .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .withRequesterId(requester.getId()));
