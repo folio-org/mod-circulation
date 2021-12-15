@@ -1188,8 +1188,15 @@ public class RequestsAPICreationTests extends APITests {
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     configurationsFixture.enableTlrFeature();
 
-    ItemResource itemResource = itemsFixture.basedUponSmallAngryPlanet();
-    UUID instanceId = itemResource.getInstanceId();
+    IndividualResource uponDunkirkInstance = instancesFixture.basedUponDunkirk();
+    UUID instanceId = uponDunkirkInstance.getId();
+    IndividualResource defaultWithHoldings = holdingsFixture.defaultWithHoldings(instanceId);
+    IndividualResource item = itemsClient.create(new ItemBuilder()
+      .forHolding(defaultWithHoldings.getId())
+      .withMaterialType(UUID.randomUUID())
+      .withPermanentLoanType(UUID.randomUUID())
+      .create());
+
     IndividualResource pagedRequest = requestsClient.create(new RequestBuilder()
       .page()
       .titleRequestLevel()
@@ -1198,12 +1205,18 @@ public class RequestsAPICreationTests extends APITests {
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(patronId));
 
+
     String finalStatus = pagedRequest.getResponse().getJson().getJsonObject("item")
       .getString("status");
-    assertThat(pagedRequest.getJson().getString("requestType"), is(RequestType.PAGE.getValue()));
+
+    JsonObject json = pagedRequest.getJson();
+    assertThat(json.getString("requestType"), is(RequestType.PAGE.getValue()));
+    assertThat(json.getString("holdingsRecordId"), is(defaultWithHoldings.getId().toString()));
+    assertThat(json.getString("itemId"), is(item.getId()));
+    assertThat(json.getString("instanceId"), is(instanceId));
     assertThat(pagedRequest.getResponse(), hasStatus(HTTP_CREATED));
     assertThat(finalStatus, is(ItemStatus.PAGED.getValue()));
-    assertThat(pagedRequest.getJson().getString("requestLevel"), is(RequestLevel.TITLE.getValue()));
+    assertThat(json.getString("requestLevel"), is(RequestLevel.TITLE.getValue()));
   }
 
   @Test

@@ -1,6 +1,6 @@
 package org.folio.circulation.resources;
 
-import static java.util.concurrent.CompletableFuture.*;
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.folio.circulation.domain.representations.RequestProperties.HOLDINGS_RECORD_ID;
