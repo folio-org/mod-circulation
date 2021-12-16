@@ -1183,6 +1183,38 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
+  void cannotCreateTitleLevelPagedRequestIfThereAreItemIdAndHoldingsRecordIds() {
+    UUID patronId = usersFixture.charlotte().getId();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    configurationsFixture.enableTlrFeature();
+
+    IndividualResource uponDunkirkInstance = instancesFixture.basedUponDunkirk();
+    UUID instanceId = uponDunkirkInstance.getId();
+    IndividualResource defaultWithHoldings = holdingsFixture.defaultWithHoldings(instanceId);
+    IndividualResource item = itemsClient.create(new ItemBuilder()
+      .forHolding(defaultWithHoldings.getId())
+      .withMaterialType(UUID.randomUUID())
+      .withPermanentLoanType(UUID.randomUUID())
+      .create());
+
+    Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
+      .page()
+      .titleRequestLevel()
+      .withInstanceId(instanceId)
+      .withItemId(item.getId())
+      .withHoldingsRecordId(defaultWithHoldings.getId())
+      .withPickupServicePointId(pickupServicePointId)
+      .withRequesterId(patronId));
+
+    assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(postResponse.getJson(), hasErrors(1));
+    assertThat(postResponse.getJson(), hasErrorWith(
+      hasMessage("Cannot create paged TLR for this instance ID - no available items found")));
+    assertThat(postResponse.getJson(), hasErrorWith(hasParameter("instanceId",
+      instanceId.toString())));
+  }
+
+  @Test
   void canCreateTitleLevelPagedRequest() {
     UUID patronId = usersFixture.charlotte().getId();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -1204,7 +1236,6 @@ public class RequestsAPICreationTests extends APITests {
       .withNoItemId()
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(patronId));
-
 
     String finalStatus = pagedRequest.getResponse().getJson().getJsonObject("item")
       .getString("status");

@@ -129,7 +129,7 @@ class RequestFromRepresentationService {
   private CompletableFuture<Result<Request>> fetchItem(Request request) {
     if (request.getTlrSettingsConfiguration().isTitleLevelRequestsFeatureEnabled()
       && request.getRequestType() == RequestType.PAGE) {
-      if (request.getItemId() != null) {
+      if (request.getItemId() != null && request.getItem() != null && request.getItem().isFound()) {
         return completedFuture(succeeded(request));
       }
       return itemByInstanceIdFinder.getFirstAvailableItemByInstanceId(request.getInstanceId())
