@@ -34,7 +34,7 @@
     <spring.version>5.2.7.RELEASE</spring.version>
     <maven.site.plugin.version>3.9.1</maven.site.plugin.version>
     <jacoco.skip>true</jacoco.skip>
-    <sonar.coverage.exclusions>**/test/**/*.*</sonar.coverage.exclusions>
+    <sonar.coverage.exclusions>**/*.*</sonar.coverage.exclusions>
   </properties>
 
   <dependencyManagement>
