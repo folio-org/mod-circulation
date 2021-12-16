@@ -105,6 +105,7 @@ import api.support.fixtures.ItemsFixture;
 import api.support.fixtures.RequestsFixture;
 import api.support.fixtures.TemplateContextMatchers;
 import api.support.fixtures.UsersFixture;
+import api.support.http.CheckOutResource;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import api.support.http.OkapiHeaders;
@@ -2592,7 +2593,8 @@ public class RequestsAPICreationTests extends APITests {
     ItemResource secondItem = buildItem(instanceId, "222");
 
     updateCirculationRulesWithLoanPeriod("One day loan policy", Period.days(1));
-    checkOutFixture.checkOutByBarcode(firstItem, usersFixture.jessica());
+    CheckOutResource firstLoan = checkOutFixture.checkOutByBarcode(firstItem,
+      usersFixture.jessica());
 
     updateCirculationRulesWithLoanPeriod("Five days loan policy", Period.days(5));
     checkOutFixture.checkOutByBarcode(secondItem, usersFixture.charlotte());
@@ -2614,20 +2616,20 @@ public class RequestsAPICreationTests extends APITests {
       .withTags(new RequestBuilder.Tags(asList("new", "important")))
       .withPatronComments("I need this book"));
 
-    JsonObject representation = request.getJson();
+    var recalledLoanJson = loansFixture.getLoanById(firstLoan.getId()).getJson();
+    assertThat(recalledLoanJson.getBoolean("dueDateChangedByRecall"), is(true));
 
-    assertThat(representation.getString("requestType"), is("Recall"));
-    assertThat(representation.getString("requestLevel"), is("Title"));
-    assertThat(representation.getString("requestDate"), isEquivalentTo(requestDate));
-    assertThat(representation.getString("itemId"), is(firstItem.getId().toString()));
-    assertThat(representation.getString("instanceId"), is(instanceId));
-    assertThat(representation.getString("requesterId"), is(requester.getId().toString()));
-    assertThat(representation.getString("fulfilmentPreference"), is("Hold Shelf"));
-    assertThat(representation.getString("requestExpirationDate"), is("2021-07-30T23:59:59.000Z"));
-    assertThat(representation.getString("holdShelfExpirationDate"), is("2021-08-31"));
-    assertThat(representation.getString("status"), is("Open - Not yet filled"));
-    assertThat(representation.getString("pickupServicePointId"), is(pickupServicePointId.toString()));
-    assertThat(representation.getString("patronComments"), is("I need this book"));
+    var requestJson = request.getJson();
+    assertThat(requestJson.getString("requestType"), is("Recall"));
+    assertThat(requestJson.getString("requestLevel"), is("Title"));
+    assertThat(requestJson.getString("requestDate"), isEquivalentTo(requestDate));
+    assertThat(requestJson.getString("itemId"), is(firstItem.getId().toString()));
+    assertThat(requestJson.getString("instanceId"), is(instanceId));
+    assertThat(requestJson.getString("requesterId"), is(requester.getId().toString()));
+    assertThat(requestJson.getString("requestExpirationDate"), is("2021-07-30T23:59:59.000Z"));
+    assertThat(requestJson.getString("holdShelfExpirationDate"), is("2021-08-31"));
+    assertThat(requestJson.getString("status"), is("Open - Not yet filled"));
+    assertThat(requestJson.getString("pickupServicePointId"), is(pickupServicePointId.toString()));
   }
 
   private void updateCirculationRulesWithLoanPeriod(String policyName, Period loanPeriod) {
