@@ -219,6 +219,7 @@ public class RequestByInstanceIdResource extends Resource {
   private CompletableFuture<Result<RequestAndRelatedRecords>> placeRequests(
     List<JsonObject> itemRequestRepresentations, Clients clients, EventPublisher eventPublisher) {
 
+    final ItemRepository itemRepository = new ItemRepository(clients, true, true, true);
     final RequestNoticeSender requestNoticeSender = new ItemLevelRequestNoticeSender(clients);
     final LoanRepository loanRepository = new LoanRepository(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
@@ -233,7 +234,7 @@ public class RequestByInstanceIdResource extends Resource {
       new CreateRequestRepositories(RequestRepository.using(clients),
         new RequestPolicyRepository(clients), configurationRepository),
       updateUponRequest,
-      new RequestLoanValidator(loanRepository),
+      new RequestLoanValidator(new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository), loanRepository),
       requestNoticeSender,
       regularRequestBlockValidators(clients),
       eventPublisher, new FailFastErrorHandler());

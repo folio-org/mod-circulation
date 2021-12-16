@@ -544,6 +544,77 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
+  void canCreateTlrRequestWhenUserHasNoLoanForAnyItemsOfInstance() {
+    reconfigureTlrFeature(TlrFeatureStatus.ENABLED);
+
+    IndividualResource instanceMultipleCopies = instancesFixture.basedUponDunkirk();
+    IndividualResource holdings = holdingsFixture.defaultWithHoldings(
+      instanceMultipleCopies.getId());
+    IndividualResource locationsResource = locationsFixture.mainFloor();
+
+    IndividualResource individualResource = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(),
+      locationsResource.getId());
+
+    String instanceId = holdings.getJson().getString("instanceId");
+    String holdingsId = holdings.getJson().getString("id");
+
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+
+    checkOutFixture.checkOutByBarcode(individualResource, usersFixture.steve());
+
+    final IndividualResource response = requestsClient.create(
+      new RequestBuilder()
+        .hold()
+        .withPickupServicePointId(pickupServicePointId)
+        .titleRequestLevel()
+        .forItem(individualResource)
+        .withInstanceId(UUID.fromString(instanceId))
+        .withHoldingsRecordId(UUID.fromString(holdingsId))
+        .by(usersFixture.jessica())
+        .create());
+
+    assertThat(response.getJson().getInteger("position"), CoreMatchers.is(1));
+  }
+
+  @Test
+  void cannotCreateTlrRequestWhenUserHasLoanForSomeItemsOfInstance() {
+    reconfigureTlrFeature(TlrFeatureStatus.ENABLED);
+
+    IndividualResource instanceMultipleCopies = instancesFixture.basedUponDunkirk();
+    IndividualResource holdings = holdingsFixture.defaultWithHoldings(
+      instanceMultipleCopies.getId());
+    IndividualResource locationsResource = locationsFixture.mainFloor();
+
+    IndividualResource individualResource = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocationRandomBarcode(holdings.getId(),
+      locationsResource.getId());
+    IndividualResource individualResource2 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocationRandomBarcode(holdings.getId(),
+      locationsResource.getId());
+
+    String instanceId = holdings.getJson().getString("instanceId");
+    String holdingsId = holdings.getJson().getString("id");
+
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+
+    checkOutFixture.checkOutByBarcode(individualResource2, usersFixture.jessica());
+
+    Response postResponse = requestsClient.attemptCreate(
+      new RequestBuilder()
+        .hold()
+        .withPickupServicePointId(pickupServicePointId)
+        .titleRequestLevel()
+        .forItem(individualResource)
+        .withInstanceId(UUID.fromString(instanceId))
+        .withHoldingsRecordId(UUID.fromString(holdingsId))
+        .by(usersFixture.jessica())
+        .create());
+
+    assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(postResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("This requester has some item of instance on loan."),
+      hasParameter("userId", usersFixture.jessica().getId().toString()))));
+  }
+
+  @Test
   void cannotCreateRecallRequestWhenItemIsNotCheckedOut() {
     ItemResource item = itemsFixture.basedUponSmallAngryPlanet(
       ItemBuilder::available);
@@ -2336,15 +2407,11 @@ public class RequestsAPICreationTests extends APITests {
 
     final JsonObject responseJson = postResponse.getJson();
 
-    assertThat(responseJson, hasErrors(4));
+    assertThat(responseJson, hasErrors(3));
 
     assertThat(responseJson, hasErrorWith(allOf(
       hasMessage("Instance does not exist"),
       hasUUIDParameter("instanceId", instanceId))));
-
-    assertThat(responseJson, hasErrorWith(allOf(
-      hasMessage("Item does not exist"),
-      hasUUIDParameter("itemId", itemId))));
 
     assertThat(responseJson, hasErrorWith(allOf(
       hasMessage("A valid user and patron group are required. User is null"),

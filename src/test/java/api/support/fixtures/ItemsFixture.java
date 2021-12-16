@@ -82,6 +82,19 @@ public class ItemsFixture {
     return itemsClient.create(item1);
   }
 
+  public IndividualResource basedUponDunkirkWithCustomHoldingAndLocationRandomBarcode(UUID holdingsId, UUID locationId) {
+
+    JsonObject item1 = ItemExamples.basedUponDunkirk(UUID.randomUUID(), loanTypesFixture.canCirculate().getId())
+      .forHolding(holdingsId)
+      .available()
+      .withBarcode(UUID.randomUUID().toString())
+      .withTemporaryLocation(locationId)
+      .withMaterialType(materialTypesFixture.videoRecording().getId())
+      .create();
+
+    return itemsClient.create(item1);
+  }
+
   public IndividualResource basedUponDunkirkWithCustomHoldingAndLocationAndCheckedOut(UUID holdingsId, UUID locationId) {
 
     JsonObject item1 = ItemExamples.basedUponDunkirk(UUID.randomUUID(), loanTypesFixture.canCirculate().getId())

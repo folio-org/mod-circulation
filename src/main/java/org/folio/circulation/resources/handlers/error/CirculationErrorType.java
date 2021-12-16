@@ -24,6 +24,7 @@ public enum CirculationErrorType {
 
   // Errors related to the loan
   FAILED_TO_FIND_SINGLE_OPEN_LOAN,
+  AT_LEAST_ONE_ITEM_HAS_OPEN_LOAN,
 
   // Errors that represent fetch failures
   FAILED_TO_FETCH_ITEM,

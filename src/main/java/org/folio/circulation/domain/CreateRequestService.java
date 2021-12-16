@@ -5,6 +5,7 @@ import static org.folio.circulation.domain.RequestLevel.TITLE;
 import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_CREATED;
 import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_CREATED_THROUGH_OVERRIDE;
 import static org.folio.circulation.domain.representations.logs.RequestUpdateLogEventMapper.mapToRequestLogEventJson;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.AT_LEAST_ONE_ITEM_HAS_OPEN_LOAN;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INSTANCE_DOES_NOT_EXIST;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_INSTANCE_ID;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_ITEM_ID;
@@ -73,6 +74,7 @@ public class CreateRequestService {
       .thenCompose(r -> r.after(manualBlocksValidator::validate))
       .thenApply(r -> errorHandler.handleValidationResult(r, manualBlocksValidator.getErrorType(), result))
       .thenComposeAsync(r -> r.after(when(this::shouldCheckInstance, this::checkInstance, this::doNothing)))
+      .thenApply(r -> r.next(errorHandler::failWithValidationErrors))
       .thenComposeAsync(r -> r.after(when(this::shouldCheckItem, this::checkItem, this::doNothing)))
       .thenComposeAsync(r -> r.after(when(this::shouldCheckPolicy, this::checkPolicy, this::doNothing)))
       .thenComposeAsync(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
@@ -104,7 +106,9 @@ public class CreateRequestService {
       .isTitleLevelRequestsFeatureEnabled();
 
     if (tlrFeatureEnabled && records.getRequest().getRequestLevel() == TITLE) {
-      return completedFuture(succeeded(records));
+      return succeeded(records)
+        .after(requestLoanValidator::refuseWhenUserHasAlreadyBeenLoanedAtLeastOneItem)
+        .thenApply(result -> errorHandler.handleValidationResult(result, AT_LEAST_ONE_ITEM_HAS_OPEN_LOAN, records));
     }
 
     return succeeded(records)
