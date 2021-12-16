@@ -1,3 +1,7 @@
+## 22.1.4 2021-12-16
+
+* Upgrade to Log4j 2.16.0 (CIRC-1387)
+
 ## 22.1.3 2021-11-19
 
 * Fixes for due date changed by recall flag applied to loans endpoint (CIRC-1112)
