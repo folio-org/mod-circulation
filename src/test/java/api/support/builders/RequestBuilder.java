@@ -223,6 +223,10 @@ public class RequestBuilder extends JsonBuilder implements Builder {
     return withItemId(null);
   }
 
+  public RequestBuilder withNoHoldingsRecordId() {
+    return withHoldingsRecordId(null);
+  }
+
   public RequestBuilder forItem(IndividualResource item) {
     RequestBuilder builder = withItemId(item.getId());
 

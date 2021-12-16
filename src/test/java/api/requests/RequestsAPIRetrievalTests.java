@@ -262,6 +262,8 @@ class RequestsAPIRetrievalTests extends APITests {
     IndividualResource requestResource = requestsClient.create(new RequestBuilder()
       .hold()
       .titleRequestLevel()
+      .withNoItemId()
+      .withNoHoldingsRecordId()
       .withInstanceId(instanceId)
       .withPickupServicePointId(pickupServicePointId)
       .withRequestDate(requestDate)

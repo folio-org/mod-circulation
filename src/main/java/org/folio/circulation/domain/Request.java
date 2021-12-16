@@ -151,6 +151,10 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return requestRepresentation.getString(ITEM_ID);
   }
 
+  public String getHoldingsRecordId(){
+    return requestRepresentation.getString(HOLDINGS_RECORD_ID);
+  }
+
   public Request withItem(Item newItem) {
     // NOTE: this is null in RequestsAPIUpdatingTests.replacingAnExistingRequestRemovesItemInformationWhenItemDoesNotExist test
     if (newItem != null && newItem.getItemId() != null) {

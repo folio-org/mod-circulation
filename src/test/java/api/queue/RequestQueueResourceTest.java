@@ -612,8 +612,9 @@ class RequestQueueResourceTest extends APITests {
       .titleRequestLevel()
       .open()
       .page()
+      .withNoItemId()
+      .withNoHoldingsRecordId()
       .withInstanceId(item.getInstanceId())
-      .forItem(item)
       .by(requester)
       .withPickupServicePoint(servicePointsFixture.cd1()));
   }
@@ -695,6 +696,8 @@ class RequestQueueResourceTest extends APITests {
       .withStatus(RequestBuilder.OPEN_IN_TRANSIT)
       .forItem(item)
       .withInstanceId(item.getInstanceId())
+      .withNoItemId()
+      .withNoHoldingsRecordId()
       .by(requester)
       .withPickupServicePoint(servicePointsFixture.cd1()));
   }

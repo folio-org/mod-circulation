@@ -510,7 +510,8 @@ public class RequestsAPICreationTests extends APITests {
 
     IndividualResource requestResource = requestsClient.create(new RequestBuilder()
       .page()
-      .withItemId(item.getId())
+      .withNoHoldingsRecordId()
+      .withNoItemId()
       .titleRequestLevel()
       .withInstanceId(instanceId)
       .withPickupServicePointId(pickupServicePointId)
@@ -1209,9 +1210,11 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(postResponse.getJson(), hasErrors(1));
     assertThat(postResponse.getJson(), hasErrorWith(
-      hasMessage("Cannot create paged TLR for this instance ID - no available items found")));
-    assertThat(postResponse.getJson(), hasErrorWith(hasParameter("instanceId",
-      instanceId.toString())));
+      hasMessage("On TLR creation, both holdings record ID and item ID should be empty")));
+    assertThat(postResponse.getJson(), hasErrorWith(hasParameter("holdingsRecordId",
+      defaultWithHoldings.getId().toString())));
+    assertThat(postResponse.getJson(), hasErrorWith(hasParameter("itemId",
+      item.getId().toString())));
   }
 
   @Test

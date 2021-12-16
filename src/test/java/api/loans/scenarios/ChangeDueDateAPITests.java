@@ -434,6 +434,8 @@ class ChangeDueDateAPITests extends APITests {
     requestsClient.create(new RequestBuilder()
       .recall()
       .titleRequestLevel()
+      .withNoHoldingsRecordId()
+      .withNoItemId()
       .withInstanceId(smallAngryPlanet.getInstanceId())
       .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .withRequesterId(usersFixture.jessica().getId()));
@@ -490,6 +492,8 @@ class ChangeDueDateAPITests extends APITests {
     requestsClient.create(new RequestBuilder()
       .recall()
       .titleRequestLevel()
+      .withNoHoldingsRecordId()
+      .withNoItemId()
       .withInstanceId(smallAngryPlanet.getInstanceId())
       .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .withRequesterId(usersFixture.jessica().getId()));
