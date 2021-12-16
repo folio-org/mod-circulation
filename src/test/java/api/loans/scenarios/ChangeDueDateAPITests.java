@@ -477,7 +477,7 @@ class ChangeDueDateAPITests extends APITests {
 
     assertThat(initialLoan.getJson().containsKey("dueDateChangedByRecall"), equalTo(false));
 
-    IndividualResource recall = requestsFixture.place(new RequestBuilder()
+    IndividualResource itemLevelRecall = requestsFixture.place(new RequestBuilder()
       .recall()
       .itemRequestLevel()
       .withInstanceId(instanceId)
@@ -497,7 +497,7 @@ class ChangeDueDateAPITests extends APITests {
       .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .withRequesterId(usersFixture.jessica().getId()));
 
-    requestsFixture.cancelRequest(recall);
+    requestsFixture.cancelRequest(itemLevelRecall);
     reconfigureTlrFeature(tlrFeatureStatus);
 
     final ZonedDateTime newDueDate = initialDueDate.plusMonths(1);
