@@ -122,9 +122,9 @@ public class RequestServiceUtility {
     if (requestOptional.isPresent()) {
       Map<String, String> parameters = new HashMap<>();
       parameters.put("requesterId", request.getRequest().getUserId());
-      parameters.put(ITEM_ID, request.getRequest().getItemId());
+      parameters.put(INSTANCE_ID, request.getRequest().getInstanceId());
       parameters.put("requestId", requestOptional.get().getId());
-      String message = "This requester already has an open request for this item";
+      String message = "This requester already has an open request for this instance";
       return failedValidation(new ValidationError(message, parameters));
     } else {
       return of(() -> request);

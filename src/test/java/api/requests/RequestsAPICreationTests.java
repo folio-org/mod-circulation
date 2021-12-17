@@ -1478,7 +1478,7 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(response.getJson(), hasErrors(1));
     assertThat(
       response.getJson(),
-      hasErrorWith(hasMessage("This requester already has an open request for this item"))
+      hasErrorWith(hasMessage("This requester already has an open request for this instance"))
     );
   }
 
