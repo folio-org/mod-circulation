@@ -32,21 +32,6 @@ public class RequestServiceUtility {
     }
   }
 
-  static Result<RequestAndRelatedRecords> refuseWhenPagedTlrInstanceDoesNotHaveAvailableItems(
-    RequestAndRelatedRecords requestAndRelatedRecords) {
-
-    Request request = requestAndRelatedRecords.getRequest();
-    if (request.isPageTitleLevelRequest()
-      && (request.getItem() == null || request.getItem().isNotFound())) {
-
-      return failedValidation(
-        "Cannot create paged TLR for this instance ID - no available items found", INSTANCE_ID,
-        requestAndRelatedRecords.getRequest().getInstanceId());
-    } else {
-      return succeeded(requestAndRelatedRecords);
-    }
-  }
-
   static Result<RequestAndRelatedRecords> refuseWhenItemDoesNotExist(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
