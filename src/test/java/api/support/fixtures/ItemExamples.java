@@ -37,7 +37,8 @@ public class ItemExamples {
     return new ItemBuilder()
       .withPermanentLoanType(loanTypeId)
       .withMaterialType(bookMaterialTypeId)
-      .withBarcode("565578437802");
+      .withBarcode("565578437802")
+      .available();
   }
 
   static ItemBuilder basedUponUprooted(

@@ -6,6 +6,8 @@ import static java.util.stream.Collectors.toList;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getIntegerProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getLocalDateProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedObjectProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getObjectProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getUUIDProperty;
 import static org.folio.circulation.support.json.JsonStringArrayPropertyFetcher.toStream;
@@ -108,7 +110,7 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       getUUIDProperty(representation, "deliveryAddressTypeId"),
       getLocalDatePropertyForDateWithTime(representation, "requestExpirationDate"),
       getLocalDateProperty(representation, "holdShelfExpirationDate"),
-      null, //TODO, re-populate these from the representation (possibly shouldn't given use)
+      ItemSummary.fromRepresentation(representation),
       null, //TODO, re-populate these from the representation (possibly shouldn't given use)
       getProperty(representation, "status"),
       getUUIDProperty(representation, "proxyUserId"),
@@ -149,7 +151,6 @@ public class RequestBuilder extends JsonBuilder implements Builder {
     put(request, "cancelledDate", formatDateTimeOptional(cancelledDate));
     put(request, "pickupServicePointId", this.pickupServicePointId);
     put(request, "patronComments", this.patronComments);
-
     if (itemSummary != null) {
       final JsonObject itemRepresentation = new JsonObject();
 
@@ -295,6 +296,17 @@ public class RequestBuilder extends JsonBuilder implements Builder {
   private static class ItemSummary {
     private final String title;
     private final String barcode;
+
+    public static ItemSummary fromRepresentation(JsonObject representation) {
+      JsonObject item = representation.getJsonObject("item");
+      String title = null;
+      String barcode = null;
+      if (item != null) {
+        title = item.getString("title");
+        barcode = item.getString("barcode");
+      }
+      return new ItemSummary(title, barcode);
+    }
   }
 
   @AllArgsConstructor

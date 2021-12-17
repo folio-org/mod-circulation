@@ -56,8 +56,8 @@ public class ItemByInstanceIdFinder {
   }
 
   private CompletableFuture<Result<Item>> getAvailableItem(
-    Result<MultipleRecords<JsonObject>> holdingsRecordsResult
-  ) {
+    Result<MultipleRecords<JsonObject>> holdingsRecordsResult) {
+
     return holdingsRecordsResult.after(holdingsRecords -> {
       if (holdingsRecords == null || holdingsRecords.isEmpty()) {
         return completedFuture(succeeded(Item.from(null)));

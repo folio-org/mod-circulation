@@ -1178,43 +1178,9 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(postResponse.getJson(), hasErrors(1));
     assertThat(postResponse.getJson(), hasErrorWith(
-      hasMessage("Cannot create paged TLR for this instance ID - no available items found")));
+      hasMessage("Cannot create page TLR for this instance ID - no available items found")));
     assertThat(postResponse.getJson(), hasErrorWith(hasParameter("instanceId",
       instanceId.toString())));
-  }
-
-  @Test
-  void cannotCreateTitleLevelPagedRequestIfThereAreItemIdAndHoldingsRecordIds() {
-    UUID patronId = usersFixture.charlotte().getId();
-    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
-    configurationsFixture.enableTlrFeature();
-
-    IndividualResource uponDunkirkInstance = instancesFixture.basedUponDunkirk();
-    UUID instanceId = uponDunkirkInstance.getId();
-    IndividualResource defaultWithHoldings = holdingsFixture.defaultWithHoldings(instanceId);
-    IndividualResource item = itemsClient.create(new ItemBuilder()
-      .forHolding(defaultWithHoldings.getId())
-      .withMaterialType(UUID.randomUUID())
-      .withPermanentLoanType(UUID.randomUUID())
-      .create());
-
-    Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
-      .page()
-      .titleRequestLevel()
-      .withInstanceId(instanceId)
-      .withItemId(item.getId())
-      .withHoldingsRecordId(defaultWithHoldings.getId())
-      .withPickupServicePointId(pickupServicePointId)
-      .withRequesterId(patronId));
-
-    assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
-    assertThat(postResponse.getJson(), hasErrors(1));
-    assertThat(postResponse.getJson(), hasErrorWith(
-      hasMessage("On TLR creation, both holdings record ID and item ID should be empty")));
-    assertThat(postResponse.getJson(), hasErrorWith(hasParameter("holdingsRecordId",
-      defaultWithHoldings.getId().toString())));
-    assertThat(postResponse.getJson(), hasErrorWith(hasParameter("itemId",
-      item.getId().toString())));
   }
 
   @Test
@@ -2676,7 +2642,7 @@ public class RequestsAPICreationTests extends APITests {
       .page()
       .withRequestLevel(requestLevel.getValue())
       .forItem(itemsFixture.basedUponNod())
-      .withHoldingsRecordId(null)
+      .withNoHoldingsRecordId()
       .withRequesterId(usersFixture.steve().getId())
       .withPickupServicePointId(servicePointsFixture.cd1().getId()));
 

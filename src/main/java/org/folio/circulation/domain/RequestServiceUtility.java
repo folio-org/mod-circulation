@@ -36,32 +36,12 @@ public class RequestServiceUtility {
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
     Request request = requestAndRelatedRecords.getRequest();
-    if (request.getTlrSettingsConfiguration().isTitleLevelRequestsFeatureEnabled()
-      && request.getRequestLevel() == RequestLevel.TITLE
-      && request.getRequestType() == RequestType.PAGE
-      && request.getItem().isNotFound()) {
+    if (request.isPageTitleLevelRequest()
+      && (request.getItem() == null || request.getItem().isNotFound())) {
 
       return failedValidation(
         "Cannot create paged TLR for this instance ID - no available items found", INSTANCE_ID,
         requestAndRelatedRecords.getRequest().getInstanceId());
-    } else {
-      return succeeded(requestAndRelatedRecords);
-    }
-  }
-
-  static Result<RequestAndRelatedRecords> refuseWhenIncorrectHoldingsRecordIdAndItemIdCombination(
-    RequestAndRelatedRecords requestAndRelatedRecords) {
-
-    Request request = requestAndRelatedRecords.getRequest();
-    String holdingsRecordId = request.getHoldingsRecordId();
-    String itemId = request.getItemId();
-    if (itemId != null && holdingsRecordId != null && request.getRequestLevel() == RequestLevel.TITLE
-      && request.getTlrSettingsConfiguration().isTitleLevelRequestsFeatureEnabled() &&
-      (request.getItem() == null || request.getItem().isNotFound())) {
-      return failedValidation(new ValidationError(
-        "On TLR creation, both holdings record ID and item ID should be empty",
-        Map.of("holdingsRecordId", holdingsRecordId, "itemId", itemId)
-      ));
     } else {
       return succeeded(requestAndRelatedRecords);
     }

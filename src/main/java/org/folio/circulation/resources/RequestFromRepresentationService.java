@@ -15,6 +15,7 @@ import static org.folio.circulation.resources.handlers.error.CirculationErrorTyp
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.http.client.PageLimit.limit;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.results.AsynchronousResult.fromFutureResult;
 import static org.folio.circulation.support.results.MappingFunctions.when;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.of;
@@ -32,7 +33,6 @@ import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.RequestLevel;
 import org.folio.circulation.domain.RequestStatus;
-import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.ServicePointPickupLocationValidator;
@@ -120,25 +120,38 @@ class RequestFromRepresentationService {
   }
 
   private CompletableFuture<Result<Request>> fetchItemAndLoan(Request request) {
-      return succeeded(request)
-        .after(this::fetchItem)
-        .thenComposeAsync(r -> r.after(this::fetchLoan))
-        .thenComposeAsync(r -> r.combineAfter(this::getUserForExistingLoan, this::addUserToLoan));
+    if (request.isPageTitleLevelRequest()) {
+      return fetchItemAndLoanForPageTlrRequest(request);
+    }
+
+    return succeeded(request)
+      .combineAfter(itemRepository::fetchFor, Request::withItem)
+      .thenComposeAsync(r -> r.after(this::fetchLoan))
+      .thenComposeAsync(r -> r.combineAfter(this::getUserForExistingLoan, this::addUserToLoan));
   }
 
-  private CompletableFuture<Result<Request>> fetchItem(Request request) {
-    if (request.getTlrSettingsConfiguration().isTitleLevelRequestsFeatureEnabled()
-      && request.getRequestLevel() == RequestLevel.TITLE
-      && request.getRequestType() == RequestType.PAGE) {
+  private CompletableFuture<Result<Request>> fetchItemAndLoanForPageTlrRequest(Request request) {
+    return fromFutureResult(fetchItemForPageTlr(request))
+      .flatMapFuture(this::fetchFirstLoanForUserWithTheSameInstanceId)
+      .toCompletionStage()
+      .toCompletableFuture();
+  }
+
+  private CompletableFuture<Result<Request>> fetchItemForPageTlr(Request request) {
+    // If itemId is present - fromRepresentation is called from replace method
       if (request.getItemId() != null) {
         return completedFuture(succeeded(request));
       }
+
       return itemByInstanceIdFinder.getFirstAvailableItemByInstanceId(request.getInstanceId())
-        .thenApply(r -> r.map(request::withItem));
-    } else {
-      return itemRepository.fetchFor(request)
-        .thenApply(r -> r.map(request::withItem));
-    }
+        .thenApply(r -> r.next(item -> {
+          if (item == null) {
+            return failedValidation(
+              "Cannot create page TLR for this instance ID - no available items found", INSTANCE_ID,
+              request.getInstanceId());
+          } else {
+            return succeeded(request.withItem(item));
+          }}));
   }
 
   private CompletableFuture<Result<Request>> fetchLoan(Request request) {
@@ -147,16 +160,22 @@ class RequestFromRepresentationService {
       // them because it is enough to determine whether the patron has open loans for any
       // of the title's items
 
-      return loanRepository.findOpenLoansByUserIdWithItemAndHoldings(LOANS_PAGE_LIMIT,
-          request.getUserId())
-        .thenApply(r -> r.map(loans -> getLoanForItemOfTheSameInstance(request, loans)))
-        .thenApply(r -> r.map(request::withLoan))
+      return fetchFirstLoanForUserWithTheSameInstanceId(request)
         .thenCompose(r -> r.combineAfter(itemRepository::fetchFor, Request::withItem));
     }
     else {
       return loanRepository.findOpenLoanForRequest(request)
         .thenApply(r -> r.map(request::withLoan));
     }
+  }
+
+  private CompletableFuture<Result<Request>> fetchFirstLoanForUserWithTheSameInstanceId(
+    Request request) {
+
+    return loanRepository.findOpenLoansByUserIdWithItemAndHoldings(LOANS_PAGE_LIMIT,
+        request.getUserId())
+      .thenApply(r -> r.map(loans -> getLoanForItemOfTheSameInstance(request, loans)))
+      .thenApply(r -> r.map(request::withLoan));
   }
 
   private Loan getLoanForItemOfTheSameInstance(Request request, MultipleRecords<Loan> loans) {

@@ -3,6 +3,7 @@ package org.folio.circulation.domain;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.folio.circulation.domain.RequestFulfilmentPreference.DELIVERY;
 import static org.folio.circulation.domain.RequestFulfilmentPreference.HOLD_SHELF;
+import static org.folio.circulation.domain.RequestLevel.TITLE;
 import static org.folio.circulation.domain.RequestStatus.CLOSED_CANCELLED;
 import static org.folio.circulation.domain.RequestStatus.CLOSED_FILLED;
 import static org.folio.circulation.domain.RequestStatus.CLOSED_PICKUP_EXPIRED;
@@ -87,7 +88,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     JsonObject representation) {
 
     return new Request(tlrSettingsConfiguration, representation, null, null,
-      null, null, null, null, null, null, false, null, false);
+      Item.from(representation.getJsonObject("item")), null, null, null, null, null, false, null, false);
   }
 
   public JsonObject asJson() {
@@ -98,6 +99,16 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return getFulfilmentPreference() == HOLD_SHELF || getFulfilmentPreference() == DELIVERY;
   }
 
+
+  public boolean isPageTitleLevelRequest() {
+    return isTitleLevelRequest() && this.getRequestType() == RequestType.PAGE;
+  }
+
+  public boolean isTitleLevelRequest() {
+    return this.getRequestLevel() == TITLE &&
+      this.getTlrSettingsConfiguration() != null &&
+      this.getTlrSettingsConfiguration().isTitleLevelRequestsFeatureEnabled();
+  }
   public boolean isOpen() {
     return isAwaitingPickup() || isNotYetFilled() || isInTransit();
   }
