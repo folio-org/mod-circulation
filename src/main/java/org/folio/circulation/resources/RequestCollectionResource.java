@@ -156,7 +156,7 @@ public class RequestCollectionResource extends CollectionResource {
     final var itemRepository = new ItemRepository(clients, true, true, true);
     final var requestFromRepresentationService = new RequestFromRepresentationService(
       new InstanceRepository(clients),
-      new ItemRepository(clients, true, true, true),
+      itemRepository,
       RequestQueueRepository.using(clients), new UserRepository(clients),
       loanRepository, new ServicePointRepository(clients), configurationRepository,
       createProxyRelationshipValidator(representation, clients),

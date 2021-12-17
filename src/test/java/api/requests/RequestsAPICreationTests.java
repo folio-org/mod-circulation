@@ -35,6 +35,7 @@ import static org.folio.HttpStatus.HTTP_CREATED;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.domain.ItemStatus.PAGED;
 import static org.folio.circulation.domain.RequestType.RECALL;
+import static org.folio.circulation.domain.policy.Period.hours;
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE_ERROR;
@@ -49,6 +50,7 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.emptyString;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -2597,7 +2599,8 @@ public class RequestsAPICreationTests extends APITests {
       usersFixture.jessica());
 
     updateCirculationRulesWithLoanPeriod("Five days loan policy", Period.days(5));
-    checkOutFixture.checkOutByBarcode(secondItem, usersFixture.charlotte());
+    CheckOutResource secondLoan = checkOutFixture.checkOutByBarcode(secondItem,
+      usersFixture.charlotte());
 
     IndividualResource requester = usersFixture.steve();
     ZonedDateTime requestDate = ZonedDateTime.of(2021, 7, 22, 10, 22, 54, 0, UTC);
@@ -2617,7 +2620,9 @@ public class RequestsAPICreationTests extends APITests {
       .withPatronComments("I need this book"));
 
     var recalledLoanJson = loansFixture.getLoanById(firstLoan.getId()).getJson();
+    var notRecalledLoanJson = loansFixture.getLoanById(secondLoan.getId()).getJson();
     assertThat(recalledLoanJson.getBoolean("dueDateChangedByRecall"), is(true));
+    assertThat(notRecalledLoanJson.getBoolean("dueDateChangedByRecall"), nullValue());
 
     var requestJson = request.getJson();
     assertThat(requestJson.getString("requestType"), is("Recall"));
@@ -2637,7 +2642,8 @@ public class RequestsAPICreationTests extends APITests {
       .withName(policyName)
       .withDescription("Can circulate item")
       .rolling(loanPeriod)
-      .notRenewable());
+      .notRenewable()
+      .withRecallsRecallReturnInterval(hours(1)));
   }
 
   private ItemResource buildItem(UUID instanceId, String barcode) {
