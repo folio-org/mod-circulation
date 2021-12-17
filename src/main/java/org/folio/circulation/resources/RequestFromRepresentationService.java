@@ -143,7 +143,7 @@ class RequestFromRepresentationService {
         return completedFuture(succeeded(request));
       }
 
-      return itemByInstanceIdFinder.getFirstAvailableItemByInstanceId(request.getInstanceId())
+      return itemRepository.getFirstAvailableItemByInstanceId(request.getInstanceId())
         .thenApply(r -> r.next(item -> {
           if (item == null) {
             return failedValidation(
