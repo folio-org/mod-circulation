@@ -585,13 +585,12 @@ public class RequestsAPICreationTests extends APITests {
       instanceMultipleCopies.getId());
     IndividualResource locationsResource = locationsFixture.mainFloor();
 
-    IndividualResource individualResource = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocationRandomBarcode(holdings.getId(),
+    IndividualResource individualResource = itemsFixture.createItemWithHoldingsAndLocation(holdings.getId(),
       locationsResource.getId());
-    IndividualResource individualResource2 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocationRandomBarcode(holdings.getId(),
+    IndividualResource individualResource2 = itemsFixture.createItemWithHoldingsAndLocation(holdings.getId(),
       locationsResource.getId());
 
-    String instanceId = holdings.getJson().getString("instanceId");
-    String holdingsId = holdings.getJson().getString("id");
+    JsonObject holdingsJson = holdings.getJson();
 
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
@@ -603,8 +602,8 @@ public class RequestsAPICreationTests extends APITests {
         .withPickupServicePointId(pickupServicePointId)
         .titleRequestLevel()
         .forItem(individualResource)
-        .withInstanceId(UUID.fromString(instanceId))
-        .withHoldingsRecordId(UUID.fromString(holdingsId))
+        .withInstanceId(UUID.fromString(holdingsJson.getString("instanceId")))
+        .withHoldingsRecordId(UUID.fromString(holdingsJson.getString("id")))
         .by(usersFixture.jessica())
         .create());
 

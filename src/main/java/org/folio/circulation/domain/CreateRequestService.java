@@ -107,7 +107,7 @@ public class CreateRequestService {
 
     if (tlrFeatureEnabled && records.getRequest().getRequestLevel() == TITLE) {
       return succeeded(records)
-        .after(requestLoanValidator::refuseWhenUserHasAlreadyBeenLoanedAtLeastOneItem)
+        .after(requestLoanValidator::refuseWhenAtLeastOneItemHasBeenAlreadyLoanedByUser)
         .thenApply(result -> errorHandler.handleValidationResult(result, AT_LEAST_ONE_ITEM_HAS_OPEN_LOAN, records));
     }
 

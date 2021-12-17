@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.Item;
@@ -19,6 +20,7 @@ import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.storage.ItemByInstanceIdFinder;
+import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.results.Result;
@@ -52,30 +54,38 @@ public class RequestLoanValidator {
       }).map(loan -> requestAndRelatedRecords));
   }
 
-  public CompletableFuture<Result<RequestAndRelatedRecords>> refuseWhenUserHasAlreadyBeenLoanedAtLeastOneItem(
+  public CompletableFuture<Result<RequestAndRelatedRecords>> refuseWhenAtLeastOneItemHasBeenAlreadyLoanedByUser(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
     final Request request = requestAndRelatedRecords.getRequest();
 
-    CompletableFuture<Result<Collection<Item>>> itemsByInstanceId = itemByInstanceIdFinder.getItemsByInstanceId(UUID.fromString(request.getInstanceId()));
-    CompletableFuture<Result<MultipleRecords<Loan>>> openLoansByUserIdWithItem = loanRepository.findOpenLoansByUserIdWithItem(LOANS_PAGE_LIMIT, request.getUserId());
+    return itemByInstanceIdFinder.getItemsByInstanceId(UUID.fromString(request.getInstanceId()))
+      .thenCombine(loanRepository.findOpenLoansByUserIdWithItem(LOANS_PAGE_LIMIT, request.getUserId()),
+        this::isUserHasOpenLoanAmongItems)
+      .thenApply(
+        isFound -> Result.succeeded(isFound)
+          .failWhen(RequestLoanValidator::activationCondition, createValidationErrorFailure(request))
+          .map(any -> requestAndRelatedRecords));
+  }
 
-    return itemsByInstanceId
-      .thenCombine(openLoansByUserIdWithItem, (collectionResult, multipleRecordsResult) -> {
+  private boolean isUserHasOpenLoanAmongItems(Result<Collection<Item>> items, Result<MultipleRecords<Loan>> loans) {
+    List<String> itemIds = items.value().stream()
+      .map(Item::getItemId)
+      .collect(Collectors.toList());
 
-        List<String> itemIds = collectionResult.value().stream()
-          .map(Item::getItemId)
-          .collect(Collectors.toList());
+    return loans.value().getRecords().stream()
+      .anyMatch(loan -> itemIds.contains(loan.getItemId()));
+  }
 
-        return multipleRecordsResult.value().getRecords().stream()
-          .anyMatch(loan -> itemIds.contains(loan.getItemId()));
-    }).thenApply(isFound -> Result.succeeded(isFound)
-        .failWhen(found -> of(() -> found),
-          bool -> {
-            String message = "This requester has some item of instance on loan.";
-            ValidationError error = new ValidationError(message, "userId", request.getUserId());
-            return new ValidationErrorFailure(error);
-          })
-    .map(any -> requestAndRelatedRecords));
+  private static Result<Boolean> activationCondition(Boolean found) {
+    return of(() -> found);
+  }
+
+  private Function<Boolean, HttpFailure> createValidationErrorFailure(Request request) {
+    return bool -> {
+      String message = "This requester has some item of instance on loan.";
+      ValidationError error = new ValidationError(message, "userId", request.getUserId());
+      return new ValidationErrorFailure(error);
+    };
   }
 }
