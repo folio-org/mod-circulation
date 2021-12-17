@@ -74,7 +74,7 @@ public class RequestCollectionResource extends CollectionResource {
 
     final var eventPublisher = new EventPublisher(routingContext);
 
-    final ItemRepository itemRepository = new ItemRepository(clients, true, true, true);
+    final var itemRepository = new ItemRepository(clients, true, true, true);
     final var userRepository = new UserRepository(clients);
     final var loanRepository = new LoanRepository(clients);
     final var loanPolicyRepository = new LoanPolicyRepository(clients);
@@ -126,7 +126,7 @@ public class RequestCollectionResource extends CollectionResource {
 
     write(representation, "id", getRequestId(routingContext));
 
-    final ItemRepository itemRepository = new ItemRepository(clients, true, true, true);
+    final var itemRepository = new ItemRepository(clients, true, true, true);
     final var requestRepository = RequestRepository.using(clients);
     final var updateRequestQueue = UpdateRequestQueue.using(clients);
     final var loanRepository = new LoanRepository(clients);

@@ -64,7 +64,8 @@ public class RequestLoanValidator {
         this::isUserHasOpenLoanAmongItems)
       .thenApply(
         isFound -> Result.succeeded(isFound)
-          .failWhen(RequestLoanValidator::activationCondition, createValidationErrorFailure(request))
+          .failWhen(this::activationCondition,
+            bool -> createValidationErrorFailure(request))
           .map(any -> requestAndRelatedRecords));
   }
 
@@ -77,15 +78,13 @@ public class RequestLoanValidator {
       .anyMatch(loan -> itemIds.contains(loan.getItemId()));
   }
 
-  private static Result<Boolean> activationCondition(Boolean found) {
+  private Result<Boolean> activationCondition(Boolean found) {
     return of(() -> found);
   }
 
-  private Function<Boolean, HttpFailure> createValidationErrorFailure(Request request) {
-    return bool -> {
-      String message = "This requester has some item of instance on loan.";
-      ValidationError error = new ValidationError(message, "userId", request.getUserId());
-      return new ValidationErrorFailure(error);
-    };
+  private ValidationErrorFailure createValidationErrorFailure(Request request) {
+    return new ValidationErrorFailure(
+      new ValidationError("This requester has some item of instance on loan.",
+        "userId", request.getUserId()));
   }
 }

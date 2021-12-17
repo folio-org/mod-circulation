@@ -551,25 +551,21 @@ public class RequestsAPICreationTests extends APITests {
     IndividualResource holdings = holdingsFixture.defaultWithHoldings(
       instanceMultipleCopies.getId());
     IndividualResource locationsResource = locationsFixture.mainFloor();
-
-    IndividualResource individualResource = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(),
+    IndividualResource item = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(),
       locationsResource.getId());
-
-    String instanceId = holdings.getJson().getString("instanceId");
-    String holdingsId = holdings.getJson().getString("id");
-
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    JsonObject holdingsJson = holdings.getJson();
 
-    checkOutFixture.checkOutByBarcode(individualResource, usersFixture.steve());
+    checkOutFixture.checkOutByBarcode(item, usersFixture.steve());
 
     final IndividualResource response = requestsClient.create(
       new RequestBuilder()
         .hold()
         .withPickupServicePointId(pickupServicePointId)
         .titleRequestLevel()
-        .forItem(individualResource)
-        .withInstanceId(UUID.fromString(instanceId))
-        .withHoldingsRecordId(UUID.fromString(holdingsId))
+        .forItem(item)
+        .withInstanceId(UUID.fromString(holdingsJson.getString("instanceId")))
+        .withHoldingsRecordId(UUID.fromString(holdingsJson.getString("id")))
         .by(usersFixture.jessica())
         .create());
 
@@ -584,24 +580,21 @@ public class RequestsAPICreationTests extends APITests {
     IndividualResource holdings = holdingsFixture.defaultWithHoldings(
       instanceMultipleCopies.getId());
     IndividualResource locationsResource = locationsFixture.mainFloor();
-
-    IndividualResource individualResource = itemsFixture.createItemWithHoldingsAndLocation(holdings.getId(),
+    IndividualResource firstItem = itemsFixture.createItemWithHoldingsAndLocation(holdings.getId(),
       locationsResource.getId());
-    IndividualResource individualResource2 = itemsFixture.createItemWithHoldingsAndLocation(holdings.getId(),
+    IndividualResource secondItem = itemsFixture.createItemWithHoldingsAndLocation(holdings.getId(),
       locationsResource.getId());
-
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     JsonObject holdingsJson = holdings.getJson();
 
-    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
-
-    checkOutFixture.checkOutByBarcode(individualResource2, usersFixture.jessica());
+    checkOutFixture.checkOutByBarcode(secondItem, usersFixture.jessica());
 
     Response postResponse = requestsClient.attemptCreate(
       new RequestBuilder()
         .hold()
         .withPickupServicePointId(pickupServicePointId)
         .titleRequestLevel()
-        .forItem(individualResource)
+        .forItem(firstItem)
         .withInstanceId(UUID.fromString(holdingsJson.getString("instanceId")))
         .withHoldingsRecordId(UUID.fromString(holdingsJson.getString("id")))
         .by(usersFixture.jessica())
