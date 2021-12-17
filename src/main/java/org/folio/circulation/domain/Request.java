@@ -3,6 +3,7 @@ package org.folio.circulation.domain;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.folio.circulation.domain.RequestFulfilmentPreference.DELIVERY;
 import static org.folio.circulation.domain.RequestFulfilmentPreference.HOLD_SHELF;
+import static org.folio.circulation.domain.RequestLevel.TITLE;
 import static org.folio.circulation.domain.RequestStatus.CLOSED_CANCELLED;
 import static org.folio.circulation.domain.RequestStatus.CLOSED_FILLED;
 import static org.folio.circulation.domain.RequestStatus.CLOSED_PICKUP_EXPIRED;
@@ -143,6 +144,16 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
 
   public String getInstanceId() {
     return requestRepresentation.getString(INSTANCE_ID);
+  }
+
+  public boolean isPage() {
+    return getRequestType() == RequestType.RECALL;
+  }
+
+  public boolean isTitleLevel() {
+    return getRequestLevel() == TITLE &&
+      getTlrSettingsConfiguration() != null &&
+      getTlrSettingsConfiguration().isTitleLevelRequestsFeatureEnabled();
   }
 
   @Override

@@ -1,6 +1,8 @@
 package org.folio.circulation.infrastructure.storage.requests;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.RequestLevel.ITEM;
+import static org.folio.circulation.domain.RequestLevel.TITLE;
 import static org.folio.circulation.support.CqlSortBy.ascending;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
@@ -9,6 +11,7 @@ import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.logging.log4j.LogManager;
@@ -72,18 +75,22 @@ public class RequestQueueRepository {
   }
 
   public CompletableFuture<Result<RequestQueue>> getByInstanceId(String instanceId) {
-    return get("instanceId", instanceId);
+    return get("instanceId", instanceId, List.of(ITEM.getValue(), TITLE.getValue()));
   }
 
   public CompletableFuture<Result<RequestQueue>> getByItemId(String itemId) {
-    return get("itemId", itemId);
+    return get("itemId", itemId, List.of(ITEM.getValue()));
   }
 
-  private CompletableFuture<Result<RequestQueue>> get(String idFieldName, String id) {
+  private CompletableFuture<Result<RequestQueue>> get(String idFieldName, String id,
+    List<String> requestLevels) {
+
     final Result<CqlQuery> itemIdQuery = exactMatch(idFieldName, id);
     final Result<CqlQuery> statusQuery = exactMatchAny("status", RequestStatus.openStates());
+    final Result<CqlQuery> requestLevelQuery = exactMatchAny("requestLevel", requestLevels);
 
     return itemIdQuery.combine(statusQuery, CqlQuery::and)
+      .combine(requestLevelQuery, CqlQuery::and)
       .map(q -> q.sortBy(ascending("position")))
       .after(query -> requestRepository.findBy(query,
         MAXIMUM_SUPPORTED_REQUEST_QUEUE_SIZE))
