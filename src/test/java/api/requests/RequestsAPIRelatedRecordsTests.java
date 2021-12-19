@@ -36,10 +36,10 @@ class RequestsAPIRelatedRecordsTests extends APITests {
 
     JsonObject createdRequest = response.getJson();
 
-    assertThat("Item has not holdings record ID",
+    assertThat("Item has a holdingsRecordId",
       createdRequest.getJsonObject("item").containsKey("holdingsRecordId"), is(false));
 
-    assertThat("has correct holdings record ID",
+    assertThat("has incorrect holdings record ID",
       createdRequest.getString("holdingsRecordId"),
       is(smallAngryPlanet.getHoldingsRecordId()));
 
@@ -56,10 +56,10 @@ class RequestsAPIRelatedRecordsTests extends APITests {
 
     JsonObject fetchedRequest = fetchedRequestResponse.getJson();
 
-    assertThat("Item has not holdings record ID",
+    assertThat("Item has a holdingsRecordId",
       fetchedRequest.getJsonObject("item").containsKey("holdingsRecordId"), is(false));
 
-    assertThat("has correct holdings record ID",
+    assertThat("has incorrect holdings record ID",
       fetchedRequest.getString("holdingsRecordId"),
       is(smallAngryPlanet.getHoldingsRecordId()));
 
@@ -126,7 +126,7 @@ class RequestsAPIRelatedRecordsTests extends APITests {
     JsonObject secondItemRecord = getRecordById(fetchedRequestsResponse, secondRequestId).get();
     JsonObject secondItem = secondItemRecord.getJsonObject("item");
 
-    assertThat("Item has not holdings record ID",
+    assertThat("Item has a holdingsRecordId",
       secondItem.containsKey("holdingsRecordId"), is(false));
 
     assertThat("has correct holdings record ID",
