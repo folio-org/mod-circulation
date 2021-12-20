@@ -5,8 +5,7 @@ import static org.folio.circulation.domain.representations.RequestProperties.ITE
 import static org.folio.circulation.domain.representations.RequestProperties.PROXY_USER_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUESTER_ID;
 import static org.folio.circulation.resources.RequestBlockValidators.regularRequestBlockValidators;
-import static org.folio.circulation.resources.RequestFromRepresentationService.*;
-import static org.folio.circulation.resources.RequestFromRepresentationService.Operation.*;
+import static org.folio.circulation.resources.RequestFromRepresentationService.Operation.CREATION;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
@@ -261,7 +260,6 @@ public class RequestByInstanceIdResource extends Resource {
     }
 
     JsonObject currentItemRequest = itemRequests.get(startIndex);
-
     ItemRepository itemRepository = new ItemRepository(clients, true, false, false);
     final RequestFromRepresentationService requestFromRepresentationService =
       new RequestFromRepresentationService(

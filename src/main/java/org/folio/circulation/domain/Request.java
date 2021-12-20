@@ -157,6 +157,16 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return requestRepresentation.getString(INSTANCE_ID);
   }
 
+  public boolean isRecall() {
+    return getRequestType() == RequestType.RECALL;
+  }
+
+  public boolean isTitleLevel() {
+    return getRequestLevel() == TITLE &&
+      getTlrSettingsConfiguration() != null &&
+      getTlrSettingsConfiguration().isTitleLevelRequestsFeatureEnabled();
+  }
+
   @Override
   public String getItemId() {
     return requestRepresentation.getString(ITEM_ID);
@@ -168,13 +178,9 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
 
   public Request withItem(Item newItem) {
     // NOTE: this is null in RequestsAPIUpdatingTests.replacingAnExistingRequestRemovesItemInformationWhenItemDoesNotExist test
-    if (newItem != null) {
-      String itemId = newItem.getItemId();
-      String holdingsRecordId = newItem.getHoldingsRecordId();
-      if (itemId != null && holdingsRecordId != null) {
-        requestRepresentation.put(ITEM_ID, itemId);
-        requestRepresentation.put(HOLDINGS_RECORD_ID, holdingsRecordId);
-      }
+    if (newItem != null && newItem.getItemId() != null && newItem.getHoldingsRecordId() != null) {
+      requestRepresentation.put(ITEM_ID, newItem.getItemId());
+      requestRepresentation.put(HOLDINGS_RECORD_ID, newItem.getHoldingsRecordId());
     }
 
     return new Request(tlrSettingsConfiguration, requestRepresentation,

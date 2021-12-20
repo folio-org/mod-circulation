@@ -4,6 +4,7 @@ import static java.lang.String.format;
 import static java.util.Objects.nonNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.representations.LoanProperties.BORROWER;
+import static org.folio.circulation.domain.representations.LoanProperties.DUE_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.FEESANDFINES;
 import static org.folio.circulation.domain.representations.LoanProperties.LOAN_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.LOAN_POLICY;
@@ -11,7 +12,9 @@ import static org.folio.circulation.domain.representations.LoanProperties.LOST_I
 import static org.folio.circulation.domain.representations.LoanProperties.OVERDUE_FINE_POLICY;
 import static org.folio.circulation.domain.representations.LoanProperties.PATRON_GROUP_AT_CHECKOUT;
 import static org.folio.circulation.domain.representations.LoanProperties.PATRON_GROUP_ID_AT_CHECKOUT;
+import static org.folio.circulation.support.CqlSortBy.ascending;
 import static org.folio.circulation.support.CqlSortBy.descending;
+import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.of;
@@ -384,6 +387,14 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
   public CompletableFuture<Result<Loan>> findLastLoanForItem(String itemId) {
     final Result<CqlQuery> cqlQuery = exactMatch(ITEM_ID, itemId)
       .map(cql -> cql.sortBy(descending(LOAN_DATE)));
+
+    return queryLoanStorage(cqlQuery, one())
+      .thenApply(r -> r.map(CollectionUtil::firstOrNull));
+  }
+
+  public CompletableFuture<Result<Loan>> findLoanWithClosestDueDate(List<String> itemIds) {
+    final Result<CqlQuery> cqlQuery = exactMatchAny(ITEM_ID, itemIds)
+      .map(cql -> cql.sortBy(ascending(DUE_DATE)));
 
     return queryLoanStorage(cqlQuery, one())
       .thenApply(r -> r.map(CollectionUtil::firstOrNull));

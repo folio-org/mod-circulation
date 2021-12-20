@@ -82,7 +82,9 @@ public class UpdateRequestQueue {
     RequestQueue requestQueue, Item item, String checkInServicePointId) {
 
     Request requestBeingFulfilled = requestQueue.getHighestPriorityRequestFulfillableByItem(item);
-
+    if (requestBeingFulfilled.getItemId() == null) {
+      requestBeingFulfilled = requestBeingFulfilled.withItem(item);
+    }
     Request originalRequest = Request.from(requestBeingFulfilled.asJson());
 
     CompletableFuture<Result<Request>> updatedReq;

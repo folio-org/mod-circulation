@@ -63,7 +63,6 @@ public class RequestRepresentation {
 
     JsonObject itemSummary = new JsonObject();
     write(itemSummary, "barcode", item.getBarcode());
-    write(itemSummary, "holdingsRecordId", item.getHoldingsRecordId());
 
     final Location location = item.getLocation();
 

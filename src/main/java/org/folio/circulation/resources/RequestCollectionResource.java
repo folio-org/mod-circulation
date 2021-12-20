@@ -98,7 +98,8 @@ public class RequestCollectionResource extends CollectionResource {
       updateUponRequest, new RequestLoanValidator(loanRepository),
       requestNoticeSender, requestBlocksValidators, eventPublisher, errorHandler);
 
-    ItemRepository itemRepository = new ItemRepository(clients, true, true, true);
+    final var itemRepository = new ItemRepository(clients, true, true, true);
+
     final var requestFromRepresentationService = new RequestFromRepresentationService(
       new InstanceRepository(clients),
       itemRepository,
@@ -157,7 +158,7 @@ public class RequestCollectionResource extends CollectionResource {
       updateRequestQueue, new ClosedRequestValidator(requestRepository),
       requestNoticeSender, updateItem, eventPublisher);
 
-    ItemRepository itemRepository = new ItemRepository(clients, true, true, true);
+    final var itemRepository = new ItemRepository(clients, true, true, true);
     final var requestFromRepresentationService = new RequestFromRepresentationService(
       new InstanceRepository(clients),
       itemRepository,
