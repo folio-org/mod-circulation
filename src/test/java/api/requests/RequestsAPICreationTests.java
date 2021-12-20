@@ -547,35 +547,6 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  void canCreateTlrRequestWhenUserHasNoLoanForAnyItemsOfInstance() {
-    reconfigureTlrFeature(TlrFeatureStatus.ENABLED);
-
-    IndividualResource instanceMultipleCopies = instancesFixture.basedUponDunkirk();
-    IndividualResource holdings = holdingsFixture.defaultWithHoldings(
-      instanceMultipleCopies.getId());
-    IndividualResource locationsResource = locationsFixture.mainFloor();
-    IndividualResource item = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(),
-      locationsResource.getId());
-    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
-    JsonObject holdingsJson = holdings.getJson();
-
-    checkOutFixture.checkOutByBarcode(item, usersFixture.steve());
-
-    final IndividualResource response = requestsClient.create(
-      new RequestBuilder()
-        .hold()
-        .withPickupServicePointId(pickupServicePointId)
-        .titleRequestLevel()
-        .forItem(item)
-        .withInstanceId(UUID.fromString(holdingsJson.getString("instanceId")))
-        .withHoldingsRecordId(UUID.fromString(holdingsJson.getString("id")))
-        .by(usersFixture.jessica())
-        .create());
-
-    assertThat(response.getJson().getInteger("position"), CoreMatchers.is(1));
-  }
-
-  @Test
   void cannotCreateTlrRequestWhenUserHasLoanForSomeItemsOfInstance() {
     reconfigureTlrFeature(TlrFeatureStatus.ENABLED);
 
@@ -583,21 +554,18 @@ public class RequestsAPICreationTests extends APITests {
     IndividualResource holdings = holdingsFixture.defaultWithHoldings(
       instanceMultipleCopies.getId());
     IndividualResource locationsResource = locationsFixture.mainFloor();
-    IndividualResource firstItem = itemsFixture.createItemWithHoldingsAndLocation(holdings.getId(),
-      locationsResource.getId());
-    IndividualResource secondItem = itemsFixture.createItemWithHoldingsAndLocation(holdings.getId(),
+    IndividualResource item = itemsFixture.createItemWithHoldingsAndLocation(holdings.getId(),
       locationsResource.getId());
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     JsonObject holdingsJson = holdings.getJson();
 
-    checkOutFixture.checkOutByBarcode(secondItem, usersFixture.jessica());
+    checkOutFixture.checkOutByBarcode(item, usersFixture.jessica());
 
     Response postResponse = requestsClient.attemptCreate(
       new RequestBuilder()
         .hold()
         .withPickupServicePointId(pickupServicePointId)
         .titleRequestLevel()
-        .forItem(firstItem)
         .withInstanceId(UUID.fromString(holdingsJson.getString("instanceId")))
         .withHoldingsRecordId(UUID.fromString(holdingsJson.getString("id")))
         .by(usersFixture.jessica())
@@ -605,7 +573,8 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(postResponse.getJson(), hasErrorWith(allOf(
-      hasMessage("This requester has some item of instance on loan."),
+      hasMessage("One of the items of the requested title is already loaned to the requester"),
+      hasParameter("itemId", item.getId().toString()),
       hasParameter("userId", usersFixture.jessica().getId().toString()))));
   }
 
@@ -2402,7 +2371,7 @@ public class RequestsAPICreationTests extends APITests {
 
     final JsonObject responseJson = postResponse.getJson();
 
-    assertThat(responseJson, hasErrors(3));
+    assertThat(responseJson, hasErrors(4));
 
     assertThat(responseJson, hasErrorWith(allOf(
       hasMessage("Instance does not exist"),
@@ -2874,10 +2843,12 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   private RequestBuilder buildTitleLevelRequest() {
+    ItemResource itemResource = itemsFixture.basedUponSmallAngryPlanet();
     return new RequestBuilder()
       .page()
       .titleRequestLevel()
-      .withInstanceId(itemsFixture.basedUponSmallAngryPlanet().getInstanceId())
+      .withItemId(itemResource.getId())
+      .withInstanceId(itemResource.getInstanceId())
       .withRequesterId(usersFixture.charlotte().getId())
       .withRequestDate(getZonedDateTime())
       .withStatus(OPEN_NOT_YET_FILLED)

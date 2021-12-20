@@ -24,7 +24,6 @@ public enum CirculationErrorType {
 
   // Errors related to the loan
   FAILED_TO_FIND_SINGLE_OPEN_LOAN,
-  AT_LEAST_ONE_ITEM_HAS_OPEN_LOAN,
 
   // Errors that represent fetch failures
   FAILED_TO_FETCH_ITEM,
@@ -43,6 +42,7 @@ public enum CirculationErrorType {
   // Errors related to requests
   REQUESTING_DISALLOWED,
   REQUESTING_DISALLOWED_BY_POLICY,
+  ONE_OF_INSATANCES_ITEMS_HAS_OPEN_LOAN,
 
   // Errors related ro renewal
   RENEWAL_VALIDATION_ERROR,

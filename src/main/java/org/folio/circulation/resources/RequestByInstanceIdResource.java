@@ -234,7 +234,7 @@ public class RequestByInstanceIdResource extends Resource {
       new CreateRequestRepositories(RequestRepository.using(clients),
         new RequestPolicyRepository(clients), configurationRepository),
       updateUponRequest,
-      new RequestLoanValidator(new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository), loanRepository),
+      new RequestLoanValidator(null, loanRepository),
       requestNoticeSender,
       regularRequestBlockValidators(clients),
       eventPublisher, new FailFastErrorHandler());

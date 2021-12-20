@@ -97,7 +97,6 @@ public class RequestCollectionResource extends CollectionResource {
       updateUponRequest, new RequestLoanValidator(new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository), loanRepository),
       requestNoticeSender, requestBlocksValidators, eventPublisher, errorHandler);
 
-    final var itemRepository = new ItemRepository(clients, true, true, true);
     final var requestFromRepresentationService = new RequestFromRepresentationService(
       new InstanceRepository(clients),
       itemRepository,
@@ -155,7 +154,6 @@ public class RequestCollectionResource extends CollectionResource {
       updateRequestQueue, new ClosedRequestValidator(requestRepository),
       requestNoticeSender, updateItem, eventPublisher);
 
-    final var itemRepository = new ItemRepository(clients, true, true, true);
     final var requestFromRepresentationService = new RequestFromRepresentationService(
       new InstanceRepository(clients),
       itemRepository,

@@ -363,10 +363,12 @@ class CancelRequestTests extends APITests {
   }
 
   private RequestBuilder buildTitleLevelRequest() {
+    ItemResource itemResource = itemsFixture.basedUponSmallAngryPlanet();
     return new RequestBuilder()
       .page()
       .titleRequestLevel()
-      .withInstanceId(itemsFixture.basedUponSmallAngryPlanet().getInstanceId())
+      .withItemId(itemResource.getId())
+      .withInstanceId(itemResource.getInstanceId())
       .withRequesterId(usersFixture.charlotte().getId())
       .withRequestDate(getZonedDateTime())
       .withStatus(OPEN_NOT_YET_FILLED)
