@@ -133,23 +133,21 @@ class RequestFromRepresentationService {
   }
 
   private CompletableFuture<Result<Request>> fetchItemAndLoanForPageTlrRequest(Request request) {
-    switch (operation) {
-    case CREATION:
+    if (operation.isCreation()) {
       return fromFutureResult(fetchItemForPageTlr(request)
         .thenApply(r -> r.mapFailure(err -> errorHandler.handleValidationError(err,
           NO_AVAILABLE_ITEMS_FOR_INSTANCE_ID_FOR_TLR, r))))
+        //TODO fail when user has already requested item for the same instanceId
         .flatMapFuture(this::fetchFirstLoanForUserWithTheSameInstanceId)
         .flatMapFuture(req -> succeeded(req)
           .combineAfter(this::getUserForExistingLoan, this::addUserToLoan))
         .toCompletionStage()
         .toCompletableFuture();
-    case REPLACEMENT:
+    } else {
       return succeeded(request)
         .combineAfter(itemRepository::fetchFor, Request::withItem)
         .thenComposeAsync(r -> r.combineAfter(loanRepository::findOpenLoanForRequest, Request::withLoan))
         .thenComposeAsync(r -> r.combineAfter(this::getUserForExistingLoan, this::addUserToLoan));
-    default:
-      return null;
     }
   }
 
