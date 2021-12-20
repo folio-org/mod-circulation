@@ -1,11 +1,15 @@
 package org.folio.circulation.resources;
 
+import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static org.folio.circulation.domain.RequestLevel.ITEM;
+import static org.folio.circulation.domain.RequestLevel.TITLE;
 import static org.folio.circulation.domain.representations.RequestProperties.HOLDINGS_RECORD_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.INSTANCE_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.ITEM_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_LEVEL;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INSTANCE_DOES_NOT_EXIST;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_HOLDINGS_RECORD_ID;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_INSTANCE_ID;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_ITEM_ID;
@@ -20,17 +24,21 @@ import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
+import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.RequestLevel;
 import org.folio.circulation.domain.RequestStatus;
+import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.ServicePointPickupLocationValidator;
@@ -42,6 +50,7 @@ import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
+import org.folio.circulation.storage.ItemByInstanceIdFinder;
 import org.folio.circulation.support.BadRequestFailure;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.results.Result;
@@ -63,6 +72,7 @@ class RequestFromRepresentationService {
   private final ProxyRelationshipValidator proxyRelationshipValidator;
   private final ServicePointPickupLocationValidator pickupLocationValidator;
   private final CirculationErrorHandler errorHandler;
+  private final ItemByInstanceIdFinder finder;
 
   CompletableFuture<Result<RequestAndRelatedRecords>> getRequestFrom(JsonObject representation) {
     return initRequest(representation)
@@ -116,10 +126,32 @@ class RequestFromRepresentationService {
   }
 
   private CompletableFuture<Result<Request>> fetchItemAndLoan(Request request) {
+    if (request.isTitleLevel() && request.isPage()) {
+      return fetchItemAndLoanForRecallTlrRequest(request);
+    }
+
     return succeeded(request)
       .combineAfter(itemRepository::fetchFor, Request::withItem)
       .thenComposeAsync(r -> r.after(this::fetchLoan))
       .thenComposeAsync(r -> r.combineAfter(this::getUserForExistingLoan, this::addUserToLoan));
+  }
+
+  private CompletableFuture<Result<Request>> fetchItemAndLoanForRecallTlrRequest(Request request) {
+    return finder.getItemsByInstanceId(UUID.fromString(request.getInstanceId()))
+      .thenComposeAsync(r -> r.after(items -> loanRepository.findLoanWithClosestDueDate(
+        mapToItemIds(items)))
+        .thenApply(resultLoan -> resultLoan.map(request::withLoan))
+        .thenComposeAsync(requestResult -> requestResult.combineAfter(
+          record -> itemRepository.fetchFor(record.getLoan()), Request::withItem))
+        .thenComposeAsync(requestResult -> requestResult.combineAfter(
+          this::getUserForExistingLoan, this::addUserToLoan)))
+      .thenApply(r -> errorHandler.handleValidationResult(r, INSTANCE_DOES_NOT_EXIST, request));
+  }
+
+  private List<String> mapToItemIds(Collection<Item> items) {
+    return items.stream()
+      .map(Item::getItemId)
+      .collect(toList());
   }
 
   private CompletableFuture<Result<Request>> fetchLoan(Request request) {
@@ -185,8 +217,8 @@ class RequestFromRepresentationService {
     boolean tlrEnabled = request.getTlrSettingsConfiguration().isTitleLevelRequestsFeatureEnabled();
 
     List<RequestLevel> allowedStatuses = tlrEnabled
-      ? List.of(RequestLevel.ITEM, RequestLevel.TITLE)
-      : List.of(RequestLevel.ITEM);
+      ? List.of(ITEM, TITLE)
+      : List.of(ITEM);
 
     if (!allowedStatuses.contains(requestLevel)) {
       String allowedStatusesJoined = allowedStatuses.stream()

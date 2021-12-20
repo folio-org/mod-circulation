@@ -97,13 +97,15 @@ public class RequestCollectionResource extends CollectionResource {
       updateUponRequest, new RequestLoanValidator(new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository), loanRepository),
       requestNoticeSender, requestBlocksValidators, eventPublisher, errorHandler);
 
+    final var itemRepository = new ItemRepository(clients, true, true, true);
     final var requestFromRepresentationService = new RequestFromRepresentationService(
       new InstanceRepository(clients),
-      new ItemRepository(clients, true, true, true),
+      itemRepository,
       RequestQueueRepository.using(clients), userRepository, loanRepository,
       new ServicePointRepository(clients), configurationRepository,
       createProxyRelationshipValidator(representation, clients),
-      new ServicePointPickupLocationValidator(), errorHandler);
+      new ServicePointPickupLocationValidator(), errorHandler,
+      new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository));
 
     final var scheduledNoticeService = RequestScheduledNoticeService.using(clients);
 
@@ -153,13 +155,15 @@ public class RequestCollectionResource extends CollectionResource {
       updateRequestQueue, new ClosedRequestValidator(requestRepository),
       requestNoticeSender, updateItem, eventPublisher);
 
+    final var itemRepository = new ItemRepository(clients, true, true, true);
     final var requestFromRepresentationService = new RequestFromRepresentationService(
       new InstanceRepository(clients),
-      new ItemRepository(clients, true, true, true),
+      itemRepository,
       RequestQueueRepository.using(clients), new UserRepository(clients),
       loanRepository, new ServicePointRepository(clients), configurationRepository,
       createProxyRelationshipValidator(representation, clients),
-      new ServicePointPickupLocationValidator(), errorHandler);
+      new ServicePointPickupLocationValidator(), errorHandler,
+      new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository));
 
     final var requestScheduledNoticeService = RequestScheduledNoticeService.using(clients);
 

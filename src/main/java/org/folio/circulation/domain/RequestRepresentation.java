@@ -25,7 +25,7 @@ public class RequestRepresentation {
     final JsonObject requestRepresentation = request.asJson();
 
     addItemProperties(requestRepresentation, request.getItem());
-    addInstanceProperties(requestRepresentation, request.getItem());
+    addInstanceProperties(requestRepresentation, request.getInstance());
     addAdditionalLoanProperties(requestRepresentation, request.getLoan());
     addAdditionalRequesterProperties(requestRepresentation, request.getRequester());
     addAdditionalProxyProperties(requestRepresentation, request.getProxy());
@@ -63,7 +63,6 @@ public class RequestRepresentation {
 
     JsonObject itemSummary = new JsonObject();
     write(itemSummary, "barcode", item.getBarcode());
-    write(itemSummary, "holdingsRecordId", item.getHoldingsRecordId());
 
     final Location location = item.getLocation();
 
@@ -91,16 +90,20 @@ public class RequestRepresentation {
     write(request, "item", itemSummary);
   }
 
-  private static void addInstanceProperties(JsonObject request, Item item) {
-    JsonObject instance = new JsonObject();
-    if (item != null && item.isFound()) {
-      write(instance, "title", item.getTitle());
-      write(instance, "identifiers", item.getIdentifiers());
-      write(instance, "contributorNames", mapContributorsToNamesOnly(item.getContributors()));
-      write(instance, "publication", item.getPublication());
-      write(instance, "editions", item.getEditions());
+  private static void addInstanceProperties(JsonObject request, Instance instance) {
+    if (instance == null || instance.isNotFound()) {
+      log.info("Unable to add instance properties to request {}, instance is {}",
+        request.getString("id"), request.getString("instanceId"));
+      return;
     }
-    write(request, "instance", instance);
+    JsonObject instanceSummary = new JsonObject();
+    write(instanceSummary, "title", instance.getTitle());
+    write(instanceSummary, "identifiers", instance.getIdentifiers());
+    write(instanceSummary, "contributorNames", mapContributorsToNamesOnly(instance.getContributors()));
+    write(instanceSummary, "publication", instance.getPublication());
+    write(instanceSummary, "editions", instance.getEditions());
+
+    write(request, "instance", instanceSummary);
   }
 
   private static JsonObject locationSummary(Location location) {

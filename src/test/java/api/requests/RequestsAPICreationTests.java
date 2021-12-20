@@ -35,6 +35,7 @@ import static org.folio.HttpStatus.HTTP_CREATED;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.domain.ItemStatus.PAGED;
 import static org.folio.circulation.domain.RequestType.RECALL;
+import static org.folio.circulation.domain.policy.Period.hours;
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE_ERROR;
@@ -49,6 +50,7 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.emptyString;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -105,6 +107,7 @@ import api.support.fixtures.ItemsFixture;
 import api.support.fixtures.RequestsFixture;
 import api.support.fixtures.TemplateContextMatchers;
 import api.support.fixtures.UsersFixture;
+import api.support.http.CheckOutResource;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import api.support.http.OkapiHeaders;
@@ -2640,6 +2643,77 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(postResponse.getJson(), hasErrors(1));
     assertThat(postResponse.getJson(), hasErrorWith(
       hasMessage("Cannot create a request with item ID but no holdings record ID")));
+  }
+
+  @Test
+  void recallTlrRequestShouldBeAppliedToLoanWithClosestDueDate() {
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    UUID instanceId = UUID.randomUUID();
+    configurationsFixture.enableTlrFeature();
+    ItemResource firstItem = buildItem(instanceId, "111");
+    ItemResource secondItem = buildItem(instanceId, "222");
+
+    updateCirculationRulesWithLoanPeriod("One day loan policy", Period.days(1));
+    CheckOutResource firstLoan = checkOutFixture.checkOutByBarcode(firstItem,
+      usersFixture.jessica());
+
+    updateCirculationRulesWithLoanPeriod("Five days loan policy", Period.days(5));
+    CheckOutResource secondLoan = checkOutFixture.checkOutByBarcode(secondItem,
+      usersFixture.charlotte());
+
+    IndividualResource requester = usersFixture.steve();
+    ZonedDateTime requestDate = ZonedDateTime.of(2021, 7, 22, 10, 22, 54, 0, UTC);
+    IndividualResource request = requestsFixture.place(new RequestBuilder()
+      .withId(UUID.randomUUID())
+      .open()
+      .recall()
+      .titleRequestLevel()
+      .withInstanceId(instanceId)
+      .by(requester)
+      .withRequestDate(requestDate)
+      .fulfilToHoldShelf()
+      .withRequestExpiration(LocalDate.of(2021, 7, 30))
+      .withHoldShelfExpiration(LocalDate.of(2021, 8, 31))
+      .withPickupServicePointId(pickupServicePointId)
+      .withTags(new RequestBuilder.Tags(asList("new", "important")))
+      .withPatronComments("I need this book"));
+
+    var recalledLoanJson = loansFixture.getLoanById(firstLoan.getId()).getJson();
+    var notRecalledLoanJson = loansFixture.getLoanById(secondLoan.getId()).getJson();
+    assertThat(recalledLoanJson.getBoolean("dueDateChangedByRecall"), is(true));
+    assertThat(notRecalledLoanJson.getBoolean("dueDateChangedByRecall"), nullValue());
+
+    var requestJson = request.getJson();
+    assertThat(requestJson.getString("requestType"), is("Recall"));
+    assertThat(requestJson.getString("requestLevel"), is("Title"));
+    assertThat(requestJson.getString("requestDate"), isEquivalentTo(requestDate));
+    assertThat(requestJson.getString("itemId"), is(firstItem.getId().toString()));
+    assertThat(requestJson.getString("instanceId"), is(instanceId));
+    assertThat(requestJson.getString("requesterId"), is(requester.getId().toString()));
+    assertThat(requestJson.getString("requestExpirationDate"), is("2021-07-30T23:59:59.000Z"));
+    assertThat(requestJson.getString("holdShelfExpirationDate"), is("2021-08-31"));
+    assertThat(requestJson.getString("status"), is("Open - Not yet filled"));
+    assertThat(requestJson.getString("pickupServicePointId"), is(pickupServicePointId.toString()));
+  }
+
+  private void updateCirculationRulesWithLoanPeriod(String policyName, Period loanPeriod) {
+    policiesActivation.use(new LoanPolicyBuilder()
+      .withName(policyName)
+      .withDescription("Can circulate item")
+      .rolling(loanPeriod)
+      .notRenewable()
+      .withRecallsRecallReturnInterval(hours(1)));
+  }
+
+  private ItemResource buildItem(UUID instanceId, String barcode) {
+    UUID isbnIdentifierId = identifierTypesFixture.isbn().getId();
+
+    return itemsFixture.basedUponSmallAngryPlanet(
+        holdingBuilder -> holdingBuilder.forInstance(instanceId),
+        instanceBuilder -> instanceBuilder
+          .addIdentifier(isbnIdentifierId, "9780866989732")
+          .withId(instanceId),
+        itemBuilder -> itemBuilder.withBarcode(barcode));
   }
 
   private static void assertOverrideResponseSuccess(Response response) {

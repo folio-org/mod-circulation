@@ -19,6 +19,7 @@ import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.domain.StoredRequestRepresentation;
 import org.folio.circulation.domain.User;
+import org.folio.circulation.infrastructure.storage.inventory.InstanceRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
@@ -48,11 +49,12 @@ public class RequestRepository {
   private final LoanRepository loanRepository;
   private final ServicePointRepository servicePointRepository;
   private final PatronGroupRepository patronGroupRepository;
+  private final InstanceRepository instanceRepository;
 
   private RequestRepository(Clients clients, ItemRepository itemRepository,
     UserRepository userRepository, LoanRepository loanRepository,
     ServicePointRepository servicePointRepository,
-    PatronGroupRepository patronGroupRepository) {
+    PatronGroupRepository patronGroupRepository, InstanceRepository instanceRepository) {
 
     this.requestsStorageClient = clients.getRequestsStorageClient();
     this.requestsBatchStorageClient = clients.getRequestsBatchStorageClient();
@@ -62,6 +64,7 @@ public class RequestRepository {
     this.loanRepository = loanRepository;
     this.servicePointRepository = servicePointRepository;
     this.patronGroupRepository = patronGroupRepository;
+    this.instanceRepository = instanceRepository;
   }
 
   public static RequestRepository using(org.folio.circulation.support.Clients clients) {
@@ -76,7 +79,8 @@ public class RequestRepository {
       new UserRepository(clients),
       new LoanRepository(clients),
       new ServicePointRepository(clients),
-      new PatronGroupRepository(clients));
+      new PatronGroupRepository(clients),
+      new InstanceRepository(clients));
   }
 
   public CompletableFuture<Result<MultipleRecords<Request>>> findBy(String query) {
@@ -129,6 +133,8 @@ public class RequestRepository {
     return getByIdWithoutItem(id)
       .thenComposeAsync(result -> result.combineAfter(itemRepository::fetchFor,
         Request::withItem))
+      .thenComposeAsync(result -> result.combineAfter(instanceRepository::fetch,
+        Request::withInstance))
       .thenComposeAsync(this::fetchLoan);
   }
 
