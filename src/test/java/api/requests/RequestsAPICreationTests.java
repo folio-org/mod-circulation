@@ -1157,8 +1157,7 @@ public class RequestsAPICreationTests extends APITests {
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     configurationsFixture.enableTlrFeature();
 
-    IndividualResource uponDunkirkInstance = instancesFixture.basedUponDunkirk();
-    UUID instanceId = uponDunkirkInstance.getId();
+    UUID instanceId = instancesFixture.basedUponDunkirk().getId();
     IndividualResource defaultWithHoldings = holdingsFixture.defaultWithHoldings(instanceId);
     itemsClient.create(new ItemBuilder()
       .forHolding(defaultWithHoldings.getId())
@@ -1167,13 +1166,8 @@ public class RequestsAPICreationTests extends APITests {
       .withPermanentLoanType(UUID.randomUUID())
       .create());
 
-    Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
-      .page()
-      .titleRequestLevel()
-      .withInstanceId(instanceId)
-      .withNoItemId()
-      .withPickupServicePointId(pickupServicePointId)
-      .withRequesterId(patronId));
+    Response postResponse = requestsClient.attemptCreate(
+      buildPageTitleLevelRequest(patronId, pickupServicePointId, instanceId));
 
     assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(postResponse.getJson(), hasErrors(1));
@@ -1198,16 +1192,8 @@ public class RequestsAPICreationTests extends APITests {
       .withPermanentLoanType(UUID.randomUUID())
       .create());
 
-    IndividualResource pagedRequest = requestsClient.create(new RequestBuilder()
-      .page()
-      .titleRequestLevel()
-      .withInstanceId(instanceId)
-      .withNoItemId()
-      .withPickupServicePointId(pickupServicePointId)
-      .withRequesterId(patronId));
-
-    String finalStatus = pagedRequest.getResponse().getJson().getJsonObject("item")
-      .getString("status");
+    IndividualResource pagedRequest = requestsClient.create(buildPageTitleLevelRequest(patronId,
+      pickupServicePointId, instanceId));
 
     JsonObject json = pagedRequest.getJson();
     assertThat(json.getString("requestType"), is(RequestType.PAGE.getValue()));
@@ -1215,7 +1201,8 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(json.getString("itemId"), is(item.getId()));
     assertThat(json.getString("instanceId"), is(instanceId));
     assertThat(pagedRequest.getResponse(), hasStatus(HTTP_CREATED));
-    assertThat(finalStatus, is(ItemStatus.PAGED.getValue()));
+    assertThat(json.getJsonObject("item")
+      .getString("status"), is(ItemStatus.PAGED.getValue()));
     assertThat(json.getString("requestLevel"), is(RequestLevel.TITLE.getValue()));
   }
 
@@ -2819,5 +2806,17 @@ public class RequestsAPICreationTests extends APITests {
       .withRequestDate(getZonedDateTime())
       .withStatus(OPEN_NOT_YET_FILLED)
       .withPickupServicePoint(servicePointsFixture.cd1());
+  }
+
+  private RequestBuilder buildPageTitleLevelRequest(UUID patronId, UUID pickupServicePointId,
+    UUID instanceId) {
+    return new RequestBuilder()
+      .page()
+      .titleRequestLevel()
+      .withInstanceId(instanceId)
+      .withNoItemId()
+      .withNoHoldingsRecordId()
+      .withPickupServicePointId(pickupServicePointId)
+      .withRequesterId(patronId);
   }
 }

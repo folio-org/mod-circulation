@@ -1,6 +1,5 @@
 package org.folio.circulation.resources;
 
-import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.folio.circulation.domain.representations.RequestProperties.HOLDINGS_RECORD_ID;
@@ -12,6 +11,7 @@ import static org.folio.circulation.resources.handlers.error.CirculationErrorTyp
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_ITEM_ID;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_PICKUP_SERVICE_POINT;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_PROXY_RELATIONSHIP;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.NO_AVAILABLE_ITEMS_FOR_INSTANCE_ID_FOR_TLR;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.http.client.PageLimit.limit;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
@@ -121,7 +121,7 @@ class RequestFromRepresentationService {
   }
 
   private CompletableFuture<Result<Request>> fetchItemAndLoan(Request request) {
-    if (request.isPageTitleLevelRequest()) {
+    if (request.isTitleLevelRequest() && request.isPage()) {
       return fetchItemAndLoanForPageTlrRequest(request);
     }
 
@@ -137,7 +137,9 @@ class RequestFromRepresentationService {
       return fetchFirstLoanForUserWithTheSameInstanceId(request);
     }
 
-    return fromFutureResult(fetchItemForPageTlr(request))
+    return fromFutureResult(fetchItemForPageTlr(request)
+      .thenApply(r -> r.mapFailure(err -> errorHandler.handleValidationError(err,
+        NO_AVAILABLE_ITEMS_FOR_INSTANCE_ID_FOR_TLR, r))))
       .flatMapFuture(this::fetchFirstLoanForUserWithTheSameInstanceId)
       .toCompletionStage()
       .toCompletableFuture();

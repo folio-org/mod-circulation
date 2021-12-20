@@ -89,7 +89,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     JsonObject representation) {
 
     return new Request(tlrSettingsConfiguration, representation, null, null,
-      Item.from(representation.getJsonObject("item")), null, null, null, null, null, false, null, false);
+     null, null, null, null, null, null, false, null, false);
   }
 
   public JsonObject asJson() {
@@ -100,9 +100,8 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return getFulfilmentPreference() == HOLD_SHELF || getFulfilmentPreference() == DELIVERY;
   }
 
-
-  public boolean isPageTitleLevelRequest() {
-    return isTitleLevelRequest() && this.getRequestType() == RequestType.PAGE;
+  public boolean isPage() {
+    return getRequestType() == RequestType.PAGE;
   }
 
   public boolean isTitleLevelRequest() {
@@ -169,10 +168,11 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
 
   public Request withItem(Item newItem) {
     // NOTE: this is null in RequestsAPIUpdatingTests.replacingAnExistingRequestRemovesItemInformationWhenItemDoesNotExist test
-    if (newItem != null && newItem.getItemId() != null) {
-      requestRepresentation.put(ITEM_ID, newItem.getItemId());
+    if (newItem != null) {
+      String itemId = newItem.getItemId();
       String holdingsRecordId = newItem.getHoldingsRecordId();
-      if (holdingsRecordId != null) {
+      if (itemId != null && holdingsRecordId != null) {
+        requestRepresentation.put(ITEM_ID, itemId);
         requestRepresentation.put(HOLDINGS_RECORD_ID, holdingsRecordId);
       }
     }

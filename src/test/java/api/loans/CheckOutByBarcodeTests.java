@@ -2185,6 +2185,7 @@ class CheckOutByBarcodeTests extends APITests {
       .page()
       .titleRequestLevel()
       .withNoItemId()
+      .withNoHoldingsRecordId()
       .withInstanceId(item.getInstanceId())
       .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .withRequesterId(requester.getId()));

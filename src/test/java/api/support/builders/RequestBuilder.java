@@ -154,7 +154,6 @@ public class RequestBuilder extends JsonBuilder implements Builder {
     if (itemSummary != null) {
       final JsonObject itemRepresentation = new JsonObject();
 
-      put(itemRepresentation, "title", itemSummary.title);
       put(itemRepresentation, "barcode", itemSummary.barcode);
 
       put(request, "item", itemRepresentation);
@@ -294,18 +293,15 @@ public class RequestBuilder extends JsonBuilder implements Builder {
 
   @AllArgsConstructor
   private static class ItemSummary {
-    private final String title;
     private final String barcode;
 
     public static ItemSummary fromRepresentation(JsonObject representation) {
       JsonObject item = representation.getJsonObject("item");
-      String title = null;
       String barcode = null;
       if (item != null) {
-        title = item.getString("title");
         barcode = item.getString("barcode");
       }
-      return new ItemSummary(title, barcode);
+      return new ItemSummary(barcode);
     }
   }
 
