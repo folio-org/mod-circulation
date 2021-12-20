@@ -82,16 +82,15 @@ public class UpdateRequestQueue {
     RequestQueue requestQueue, Item item, String checkInServicePointId) {
 
     Request requestBeingFulfilled = requestQueue.getHighestPriorityRequestFulfillableByItem(item);
-
+    if (requestBeingFulfilled.getItemId() == null) {
+      requestBeingFulfilled = requestBeingFulfilled.withItem(item);
+    }
     Request originalRequest = Request.from(requestBeingFulfilled.asJson());
 
     CompletableFuture<Result<Request>> updatedReq;
 
     switch (requestBeingFulfilled.getFulfilmentPreference()) {
       case HOLD_SHELF:
-        if (requestBeingFulfilled.getItemId() == null) {
-          requestBeingFulfilled = requestBeingFulfilled.withItem(item);
-        }
         if (checkInServicePointId.equalsIgnoreCase(requestBeingFulfilled.getPickupServicePointId())) {
           updatedReq = awaitPickup(requestBeingFulfilled);
         } else {

@@ -75,9 +75,9 @@ import org.junit.jupiter.api.Test;
 import api.support.APITests;
 import api.support.CheckInByBarcodeResponse;
 import api.support.MultipleJsonRecords;
+import api.support.TlrFeatureStatus;
 import api.support.builders.Address;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
-import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.FeeFineBuilder;
 import api.support.builders.FeeFineOwnerBuilder;
 import api.support.builders.ItemBuilder;
@@ -97,6 +97,12 @@ import io.vertx.core.json.JsonObject;
 import lombok.val;
 
 class CheckInByBarcodeTests extends APITests {
+  private final static String HOLD_SHELF = "Hold Shelf";
+  private final static String DELIVERY = "Delivery";
+  private final static String OPEN_NOT_YET_FILLED = "Open - Not yet filled";
+  private final static String OPEN_AWAITING_PICKUP = "Open - Awaiting pickup";
+  private final static String OPEN_AWAITING_DELIVERY = "Open - Awaiting delivery";
+
   @Test
   void canCloseAnOpenLoanByCheckingInTheItem() {
     final IndividualResource james = usersFixture.james();
@@ -1475,62 +1481,99 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
   }
 
   @Test
-  void linkItemToHoldTLRWhenCheckedIn(){
-    configurationsFixture.deleteTlrFeatureConfig();
-    UUID patronId = usersFixture.charlotte().getId();
-    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+  void linkItemToHoldTLRWithHoldShelfWhenCheckedInItemThenFulfilledWithSuccess(){
+    reconfigureTlrFeature(TlrFeatureStatus.NOT_CONFIGURED);
     configurationsFixture.enableTlrFeature();
-
-    IndividualResource uponDunkirkInstance = instancesFixture.basedUponDunkirk();
-    UUID instanceId = uponDunkirkInstance.getId();
+    UUID instanceId = instancesFixture.basedUponDunkirk().getId();
     IndividualResource defaultWithHoldings = holdingsFixture.defaultWithHoldings(instanceId);
+    IndividualResource checkedOutItem = itemsClient.create(buildCheckedOutItemWithHoldingRecordsId(defaultWithHoldings.getId()));
+    IndividualResource holdRequestBeforeFulfilled = requestsClient.create(buildHoldTLRWithHoldShelfFulfilmentPreference(instanceId));
 
-    IndividualResource checkedOutItem = itemsClient.create(new ItemBuilder()
-      .forHolding(defaultWithHoldings.getId())
-      .checkOut()
-      .withMaterialType(UUID.randomUUID())
-      .withPermanentLoanType(UUID.randomUUID())
-      .create());
-
-    IndividualResource holdRequestBeforeFulfilled = requestsClient.create(new RequestBuilder()
-      .hold()
-      .titleRequestLevel()
-      .withInstanceId(instanceId)
-      .withNoItemId()
-      .withPickupServicePointId(pickupServicePointId)
-      .withRequesterId(patronId));
-
-
-    checkInFixture.checkInByBarcode(checkedOutItem, pickupServicePointId);
-
-    IndividualResource itemAfter = itemsClient.get(checkedOutItem.getId());
-
-    IndividualResource holdRequestAfterFulfilled  = requestsClient.get(holdRequestBeforeFulfilled.getId());
+    checkInFixture.checkInByBarcode(checkedOutItem, servicePointsFixture.cd1().getId());
 
     //validating request before fulfilled
+    IndividualResource holdRequestAfterFulfilled  = requestsClient.get(holdRequestBeforeFulfilled.getId());
     JsonObject representationBefore = holdRequestBeforeFulfilled.getJson();
     assertThat(representationBefore.getString("itemId"), nullValue());
-    assertThat(representationBefore.getString("item"), nullValue());
-    assertThat(representationBefore.getString("requestType"), is("Hold"));
-    assertThat(representationBefore.getString("instanceId"), is(instanceId));
-    assertThat(representationBefore.getString("requestLevel"), is("Title"));
-    assertThat(representationBefore.getString("status"), is("Open - Not yet filled"));
-    assertThat(representationBefore.getString("position"), is("1"));
+    validateTLRequestByFields(representationBefore,
+      HOLD_SHELF, instanceId, OPEN_NOT_YET_FILLED);
 
     //validating request after fulfilled
     JsonObject representation = holdRequestAfterFulfilled.getJson();
     assertThat(representation.getString("itemId"), is(checkedOutItem.getId().toString()));
-    assertThat(representation.getString("item"), notNullValue());
-    assertThat(representation.getString("requestType"), is("Hold"));
-    assertThat(representation.getString("instanceId"), is(instanceId));
     assertThat(representation.getString("holdingsRecordId"), is(defaultWithHoldings.getId()));
-    assertThat(representation.getString("requestLevel"), is("Title"));
-    assertThat(representation.getString("status"), is("Open - Awaiting pickup"));
-    assertThat(representation.getString("position"), is("1"));
-
+    validateTLRequestByFields(representation, HOLD_SHELF, instanceId, OPEN_AWAITING_PICKUP);
+    IndividualResource itemAfter = itemsClient.get(checkedOutItem.getId());
     JsonObject itemRepresentation = itemAfter.getJson();
     assertThat(itemRepresentation.getJsonObject("status").getString("name"), is("Awaiting pickup"));
+  }
 
+  @Test
+  void linkItemToHoldTLRWithDeliveryWhenCheckedInThenFulfilledWithSuccess(){
+    reconfigureTlrFeature(TlrFeatureStatus.NOT_CONFIGURED);
+    configurationsFixture.enableTlrFeature();
+    UUID instanceId = instancesFixture.basedUponDunkirk().getId();
+    IndividualResource defaultWithHoldings = holdingsFixture.defaultWithHoldings(instanceId);
+    IndividualResource checkedOutItem = itemsClient.create(buildCheckedOutItemWithHoldingRecordsId(defaultWithHoldings.getId()));
+    IndividualResource holdRequestBeforeFulfilled = requestsClient.create(buildHoldTLRWithDeliveryFulfilmentPreference(instanceId));
+
+    checkInFixture.checkInByBarcode(checkedOutItem, servicePointsFixture.cd1().getId());
+
+    //validating request before fulfilled
+    IndividualResource holdRequestAfterFulfilled  = requestsClient.get(holdRequestBeforeFulfilled.getId());
+    JsonObject representationBefore = holdRequestBeforeFulfilled.getJson();
+    assertThat(representationBefore.getString("itemId"), nullValue());
+    validateTLRequestByFields(representationBefore, DELIVERY, instanceId, OPEN_NOT_YET_FILLED);
+
+    //validating request after fulfilled
+    JsonObject representation = holdRequestAfterFulfilled.getJson();
+    assertThat(representation.getString("itemId"), is(checkedOutItem.getId().toString()));
+    assertThat(representation.getString("holdingsRecordId"), is(defaultWithHoldings.getId()));
+    validateTLRequestByFields(representation, DELIVERY, instanceId, OPEN_AWAITING_DELIVERY);
+    IndividualResource itemAfter = itemsClient.get(checkedOutItem.getId());
+    JsonObject itemRepresentation = itemAfter.getJson();
+    assertThat(itemRepresentation.getJsonObject("status").getString("name"), is("Awaiting delivery"));
+  }
+
+  private JsonObject buildCheckedOutItemWithHoldingRecordsId(UUID holdingRecordsId) {
+    return new ItemBuilder()
+      .forHolding(holdingRecordsId)
+      .checkOut()
+      .withMaterialType(UUID.randomUUID())
+      .withPermanentLoanType(UUID.randomUUID())
+      .create();
+  }
+
+  private JsonObject buildHoldTLRWithHoldShelfFulfilmentPreference(UUID instanceId) {
+    return new RequestBuilder()
+      .hold()
+      .fulfilToHoldShelf()
+      .titleRequestLevel()
+      .withInstanceId(instanceId)
+      .withNoItemId()
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
+      .withRequesterId(usersFixture.charlotte().getId()).create();
+  }
+
+  private JsonObject buildHoldTLRWithDeliveryFulfilmentPreference(UUID instanceId) {
+    return new RequestBuilder()
+      .hold()
+      .deliverToAddress(servicePointsFixture.cd1().getId())
+      .titleRequestLevel()
+      .withInstanceId(instanceId)
+      .withNoItemId()
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
+      .withRequesterId(usersFixture.charlotte().getId()).create();
+  }
+
+  private void validateTLRequestByFields(JsonObject representation, String expectedFulfilmentPreference,
+    UUID expectedInstanceId, String expectedStatus){
+    assertThat(representation.getString("requestLevel"), is("Title"));
+    assertThat(representation.getString("requestType"), is("Hold"));
+    assertThat(representation.getString("fulfilmentPreference"), is(expectedFulfilmentPreference));
+    assertThat(representation.getString("instanceId"), is(expectedInstanceId));
+    assertThat(representation.getString("status"), is(expectedStatus));
+    assertThat(representation.getString("position"), is("1"));
   }
 
   private void checkPatronNoticeEvent(IndividualResource request, IndividualResource requester,
