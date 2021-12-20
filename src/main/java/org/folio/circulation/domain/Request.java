@@ -45,6 +45,7 @@ import lombok.With;
 
 @AllArgsConstructor
 @Getter
+//TODO add enum of the calling operations(replace, create)
 public class Request implements ItemRelatedRecord, UserRelatedRecord {
   private final TlrSettingsConfiguration tlrSettingsConfiguration;
 

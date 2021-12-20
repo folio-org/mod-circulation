@@ -104,6 +104,7 @@ public class CreateRequestService {
       .isTitleLevelRequestsFeatureEnabled();
 
     if (tlrFeatureEnabled && records.getRequest().getRequestLevel() == TITLE) {
+      //TODO Refuse if user has open loan for item for the same instance
       return completedFuture(succeeded(records));
     }
 

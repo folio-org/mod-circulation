@@ -137,10 +137,10 @@ public class ItemRepository {
 
   public CompletableFuture<Result<Item>> getFirstAvailableItemByInstanceId(String instanceId) {
 
-    final FindWithCqlQuery<JsonObject> fetcher = findWithCqlQuery(
+    final FindWithCqlQuery<JsonObject> holdingsRecordFetcher = findWithCqlQuery(
       holdingsClient, "holdingsRecords", identity());
 
-    return fetcher.findByQuery(CqlQuery.exactMatch("instanceId", instanceId))
+    return holdingsRecordFetcher.findByQuery(CqlQuery.exactMatch("instanceId", instanceId))
       .thenCompose(this::getAvailableItem);
   }
 
@@ -152,9 +152,7 @@ public class ItemRepository {
         return completedFuture(succeeded(Item.from(null)));
       }
 
-      Set<String> holdingsIds = holdingsRecords.toKeys(byId());
-
-      return findByIndexNameAndQuery(holdingsIds, HOLDINGS_RECORD_ID,
+      return findByIndexNameAndQuery(holdingsRecords.toKeys(byId()), HOLDINGS_RECORD_ID,
           CqlQuery.exactMatch("status.name", ItemStatus.AVAILABLE.getValue()))
         .thenApply(r -> r.map(items -> items.stream().findFirst().orElse(null)));
     });

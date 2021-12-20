@@ -66,7 +66,7 @@ class RequestFromRepresentationService {
   private final ProxyRelationshipValidator proxyRelationshipValidator;
   private final ServicePointPickupLocationValidator pickupLocationValidator;
   private final CirculationErrorHandler errorHandler;
-  private final ItemByInstanceIdFinder itemByInstanceIdFinder;
+  private final ItemByInstanceIdFinder finder;
 
   CompletableFuture<Result<RequestAndRelatedRecords>> getRequestFrom(JsonObject representation) {
     return initRequest(representation)
@@ -117,6 +117,7 @@ class RequestFromRepresentationService {
   private CompletableFuture<Result<Request>> fetchInstance(Request request) {
     return succeeded(request)
        .combineAfter(instanceRepository::fetch, Request::withInstance);
+      //TODO fail if does instance not exist
   }
 
   private CompletableFuture<Result<Request>> fetchItemAndLoan(Request request) {
@@ -131,6 +132,11 @@ class RequestFromRepresentationService {
   }
 
   private CompletableFuture<Result<Request>> fetchItemAndLoanForPageTlrRequest(Request request) {
+    // If itemId is present - fromRepresentation is called from replace method
+    if (request.getItemId() != null) {
+      return fetchFirstLoanForUserWithTheSameInstanceId(request);
+    }
+
     return fromFutureResult(fetchItemForPageTlr(request))
       .flatMapFuture(this::fetchFirstLoanForUserWithTheSameInstanceId)
       .toCompletionStage()
@@ -138,20 +144,16 @@ class RequestFromRepresentationService {
   }
 
   private CompletableFuture<Result<Request>> fetchItemForPageTlr(Request request) {
-    // If itemId is present - fromRepresentation is called from replace method
-      if (request.getItemId() != null) {
-        return completedFuture(succeeded(request));
-      }
-
-      return itemRepository.getFirstAvailableItemByInstanceId(request.getInstanceId())
-        .thenApply(r -> r.next(item -> {
-          if (item == null) {
-            return failedValidation(
-              "Cannot create page TLR for this instance ID - no available items found", INSTANCE_ID,
-              request.getInstanceId());
-          } else {
-            return succeeded(request.withItem(item));
-          }}));
+    return itemRepository.getFirstAvailableItemByInstanceId(request.getInstanceId())
+      .thenApply(r -> r.next(item -> {
+        if (item == null) {
+          return failedValidation(
+            "Cannot create page TLR for this instance ID - no available items found", INSTANCE_ID,
+            request.getInstanceId());
+        } else {
+          return succeeded(request.withItem(item));
+        }
+      }));
   }
 
   private CompletableFuture<Result<Request>> fetchLoan(Request request) {

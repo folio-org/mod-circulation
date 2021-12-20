@@ -108,6 +108,7 @@ public class RequestCollectionResource extends CollectionResource {
 
     final var scheduledNoticeService = RequestScheduledNoticeService.using(clients);
 
+    //TODO fail if holdingsRecordId and itemId are present
     fromFutureResult(requestFromRepresentationService.getRequestFrom(representation))
       .flatMapFuture(createRequestService::createRequest)
       .onSuccess(scheduledNoticeService::scheduleRequestNotices)

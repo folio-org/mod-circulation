@@ -42,6 +42,7 @@ public class ItemByInstanceIdFinder {
     return fetcher.findByQuery(CqlQuery.exactMatch("instanceId", instanceId.toString()))
       .thenCompose(this::getItems);
   }
+
   private CompletableFuture<Result<Collection<Item>>> getItems(
     Result<MultipleRecords<JsonObject>> holdingsRecordsResult) {
 
