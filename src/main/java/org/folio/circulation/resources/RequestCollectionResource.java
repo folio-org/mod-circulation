@@ -3,6 +3,8 @@ package org.folio.circulation.resources;
 import static org.folio.circulation.domain.RequestLevel.TITLE;
 import static org.folio.circulation.domain.representations.RequestProperties.PROXY_USER_ID;
 import static org.folio.circulation.resources.RequestBlockValidators.regularRequestBlockValidators;
+import static org.folio.circulation.resources.RequestFromRepresentationService.Operation.CREATION;
+import static org.folio.circulation.resources.RequestFromRepresentationService.Operation.REPLACEMENT;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.results.AsynchronousResult.fromFutureResult;
@@ -104,7 +106,8 @@ public class RequestCollectionResource extends CollectionResource {
       new ServicePointRepository(clients), configurationRepository,
       createProxyRelationshipValidator(representation, clients),
       new ServicePointPickupLocationValidator(), errorHandler,
-      new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository));
+      new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository),
+      CREATION);
 
     final var scheduledNoticeService = RequestScheduledNoticeService.using(clients);
 
@@ -162,7 +165,8 @@ public class RequestCollectionResource extends CollectionResource {
       new ServicePointRepository(clients), configurationRepository,
       createProxyRelationshipValidator(representation, clients),
       new ServicePointPickupLocationValidator(), errorHandler,
-      new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository));
+      new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository),
+      REPLACEMENT);
 
     final var requestScheduledNoticeService = RequestScheduledNoticeService.using(clients);
 

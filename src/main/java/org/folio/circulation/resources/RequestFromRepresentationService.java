@@ -67,6 +67,7 @@ class RequestFromRepresentationService {
   private final ServicePointPickupLocationValidator pickupLocationValidator;
   private final CirculationErrorHandler errorHandler;
   private final ItemByInstanceIdFinder finder;
+  private final Operation operation;
 
   CompletableFuture<Result<RequestAndRelatedRecords>> getRequestFrom(JsonObject representation) {
     return initRequest(representation)
@@ -132,21 +133,28 @@ class RequestFromRepresentationService {
   }
 
   private CompletableFuture<Result<Request>> fetchItemAndLoanForPageTlrRequest(Request request) {
-    // If itemId is present - fromRepresentation is called from replace method
-    if (request.getItemId() != null) {
-      return fetchFirstLoanForUserWithTheSameInstanceId(request);
+    switch (operation) {
+    case CREATION:
+      return fromFutureResult(fetchItemForPageTlr(request)
+        .thenApply(r -> r.mapFailure(err -> errorHandler.handleValidationError(err,
+          NO_AVAILABLE_ITEMS_FOR_INSTANCE_ID_FOR_TLR, r))))
+        .flatMapFuture(this::fetchFirstLoanForUserWithTheSameInstanceId)
+        .flatMapFuture(req -> succeeded(req)
+          .combineAfter(this::getUserForExistingLoan, this::addUserToLoan))
+        .toCompletionStage()
+        .toCompletableFuture();
+    case REPLACEMENT:
+      return succeeded(request)
+        .combineAfter(itemRepository::fetchFor, Request::withItem)
+        .thenComposeAsync(r -> r.combineAfter(loanRepository::findOpenLoanForRequest, Request::withLoan))
+        .thenComposeAsync(r -> r.combineAfter(this::getUserForExistingLoan, this::addUserToLoan));
+    default:
+      return null;
     }
-
-    return fromFutureResult(fetchItemForPageTlr(request)
-      .thenApply(r -> r.mapFailure(err -> errorHandler.handleValidationError(err,
-        NO_AVAILABLE_ITEMS_FOR_INSTANCE_ID_FOR_TLR, r))))
-      .flatMapFuture(this::fetchFirstLoanForUserWithTheSameInstanceId)
-      .toCompletionStage()
-      .toCompletableFuture();
   }
 
   private CompletableFuture<Result<Request>> fetchItemForPageTlr(Request request) {
-    return itemRepository.getFirstAvailableItemByInstanceId(request.getInstanceId())
+        return itemRepository.getFirstAvailableItemByInstanceId(request.getInstanceId())
       .thenApply(r -> r.next(item -> {
         if (item == null) {
           return failedValidation(
@@ -302,5 +310,17 @@ class RequestFromRepresentationService {
     representation.remove("requestProcessingParameters");
 
     return request;
+  }
+
+  enum Operation {
+    CREATION, REPLACEMENT;
+
+    public boolean isCreation(){
+      return this == CREATION;
+    }
+
+    public boolean isReplacement(){
+      return this == REPLACEMENT;
+    }
   }
 }
