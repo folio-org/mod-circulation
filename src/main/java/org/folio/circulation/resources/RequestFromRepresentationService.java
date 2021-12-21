@@ -1,5 +1,6 @@
 package org.folio.circulation.resources;
 
+import static java.util.concurrent.CompletableFuture.*;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
@@ -40,7 +41,6 @@ import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.RequestLevel;
 import org.folio.circulation.domain.RequestStatus;
-import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.ServicePointPickupLocationValidator;
@@ -138,10 +138,10 @@ class RequestFromRepresentationService {
       return fetchItemAndLoanForRecallTlrRequest(request);
     }
 
-    return succeeded(request)
-      .combineAfter(itemRepository::fetchFor, Request::withItem)
-      .thenComposeAsync(r -> r.after(this::fetchLoan))
-      .thenComposeAsync(r -> r.combineAfter(this::getUserForExistingLoan, this::addUserToLoan));
+    return fromFutureResult(fetchItemForRequest(request))
+      .flatMapFuture(this::fetchLoan)
+      .flatMapFuture(this::fetchUserForLoan)
+      .toCompletableFuture();
   }
 
   private CompletableFuture<Result<Request>> fetchItemAndLoanForPageTlrRequest(Request request) {
@@ -150,15 +150,14 @@ class RequestFromRepresentationService {
         .thenApply(r -> r.mapFailure(err -> errorHandler.handleValidationError(err,
           NO_AVAILABLE_ITEMS_FOR_INSTANCE_ID_FOR_TLR, r))))
         .flatMapFuture(this::fetchFirstLoanForUserWithTheSameInstanceId)
-        .flatMapFuture(req -> succeeded(req)
-          .combineAfter(this::getUserForExistingLoan, this::addUserToLoan))
-        .toCompletionStage()
+        .flatMapFuture(this::fetchUserForLoan)
         .toCompletableFuture();
     } else {
-      return succeeded(request)
-        .combineAfter(itemRepository::fetchFor, Request::withItem)
-        .thenComposeAsync(r -> r.combineAfter(loanRepository::findOpenLoanForRequest, Request::withLoan))
-        .thenComposeAsync(r -> r.combineAfter(this::getUserForExistingLoan, this::addUserToLoan));
+      return fromFutureResult(fetchItemForRequest(request))
+        .flatMapFuture(loanRepository::findOpenLoanForRequest)
+        .flatMapFuture(loan -> completedFuture(succeeded(request.withLoan(loan))))
+        .flatMapFuture(this::fetchUserForLoan)
+        .toCompletableFuture();
     }
   }
 
@@ -339,7 +338,15 @@ class RequestFromRepresentationService {
     return request;
   }
 
-  private
+  private CompletableFuture<Result<Request>> fetchItemForRequest(Request request) {
+    return succeeded(request)
+      .combineAfter(itemRepository::fetchFor, Request::withItem);
+  }
+
+  private CompletableFuture<Result<Request>> fetchUserForLoan(Request request) {
+    return succeeded(request)
+        .combineAfter(this::getUserForExistingLoan, this::addUserToLoan);
+  }
 
   enum Operation {
     CREATION, REPLACEMENT;
