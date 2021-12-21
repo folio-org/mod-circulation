@@ -339,6 +339,8 @@ class RequestFromRepresentationService {
     return request;
   }
 
+  private
+
   enum Operation {
     CREATION, REPLACEMENT;
 
