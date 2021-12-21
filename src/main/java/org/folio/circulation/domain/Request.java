@@ -167,7 +167,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return requestRepresentation.getString(ITEM_ID);
   }
 
-  public String getHoldingsRecordId(){
+  public String getHoldingsRecordId() {
     return requestRepresentation.getString(HOLDINGS_RECORD_ID);
   }
 

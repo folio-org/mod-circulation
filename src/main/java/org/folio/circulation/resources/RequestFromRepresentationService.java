@@ -149,7 +149,6 @@ class RequestFromRepresentationService {
       return fromFutureResult(fetchItemForPageTlr(request)
         .thenApply(r -> r.mapFailure(err -> errorHandler.handleValidationError(err,
           NO_AVAILABLE_ITEMS_FOR_INSTANCE_ID_FOR_TLR, r))))
-        //TODO fail when user has already requested item for the same instanceId
         .flatMapFuture(this::fetchFirstLoanForUserWithTheSameInstanceId)
         .flatMapFuture(req -> succeeded(req)
           .combineAfter(this::getUserForExistingLoan, this::addUserToLoan))
