@@ -86,7 +86,9 @@ public class RequestQueueValidation {
       return result;
     }
 
-    return pageRequestHasFirstPosition(result);
+    return result.value().isQueueForInstance()
+    ? result
+    : pageRequestHasFirstPosition(result);
   }
 
   /**
