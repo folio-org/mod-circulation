@@ -89,7 +89,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     JsonObject representation) {
 
     return new Request(tlrSettingsConfiguration, representation, null, null,
-       null, null, null, null, null, null, false, null, false);
+      null, null, null, null, null, null, false, null, false);
   }
 
   public JsonObject asJson() {
@@ -104,11 +104,6 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return getRequestType() == RequestType.PAGE;
   }
 
-  public boolean isTitleLevelRequest() {
-    return this.getRequestLevel() == TITLE &&
-      this.getTlrSettingsConfiguration() != null &&
-      this.getTlrSettingsConfiguration().isTitleLevelRequestsFeatureEnabled();
-  }
   public boolean isOpen() {
     return isAwaitingPickup() || isNotYetFilled() || isInTransit();
   }

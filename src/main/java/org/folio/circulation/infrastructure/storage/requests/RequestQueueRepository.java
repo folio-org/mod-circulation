@@ -84,6 +84,7 @@ public class RequestQueueRepository {
 
   private CompletableFuture<Result<RequestQueue>> get(String idFieldName, String id,
     List<String> requestLevels) {
+
     final Result<CqlQuery> itemIdQuery = exactMatch(idFieldName, id);
     final Result<CqlQuery> statusQuery = exactMatchAny("status", RequestStatus.openStates());
     final Result<CqlQuery> requestLevelQuery = exactMatchAny("requestLevel", requestLevels);
@@ -104,7 +105,7 @@ public class RequestQueueRepository {
     return itemIdQuery.combine(statusQuery, CqlQuery::and)
       .map(q -> q.sortBy(ascending("position")))
       .after(query -> requestRepository.findByWithoutItems(query,
-          MAXIMUM_SUPPORTED_REQUEST_QUEUE_SIZE))
+        MAXIMUM_SUPPORTED_REQUEST_QUEUE_SIZE))
       .thenApply(r -> r.map(MultipleRecords::getRecords))
       .thenApply(r -> r.map(RequestQueue::new));
   }

@@ -312,7 +312,6 @@ class CancelRequestTests extends APITests {
 
     IndividualResource request = requestsFixture.place(buildTitleLevelRequest());
     verifyNumberOfSentNotices(0);
-    System.out.println(requestsFixture.getById(request.getId()).getBody());
     requestsFixture.cancelRequest(request);
     verifyNumberOfSentNotices(1);
   }

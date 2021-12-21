@@ -130,7 +130,7 @@ class RequestFromRepresentationService {
   }
 
   private CompletableFuture<Result<Request>> fetchItemAndLoan(Request request) {
-    if (request.isTitleLevelRequest() && request.isPage()) {
+    if (request.isTitleLevel() && request.isPage()) {
       return fetchItemAndLoanForPageTlrRequest(request);
     }
 
