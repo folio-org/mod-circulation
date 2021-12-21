@@ -93,7 +93,7 @@ public class RequestQueueRepository {
       .combine(requestLevelQuery, CqlQuery::and)
       .map(q -> q.sortBy(ascending("position")))
       .after(query -> requestRepository.findBy(query,
-          MAXIMUM_SUPPORTED_REQUEST_QUEUE_SIZE))
+        MAXIMUM_SUPPORTED_REQUEST_QUEUE_SIZE))
       .thenApply(r -> r.map(MultipleRecords::getRecords))
       .thenApply(r -> r.map(RequestQueue::new));
   }
@@ -105,7 +105,7 @@ public class RequestQueueRepository {
     return itemIdQuery.combine(statusQuery, CqlQuery::and)
       .map(q -> q.sortBy(ascending("position")))
       .after(query -> requestRepository.findByWithoutItems(query,
-        MAXIMUM_SUPPORTED_REQUEST_QUEUE_SIZE))
+          MAXIMUM_SUPPORTED_REQUEST_QUEUE_SIZE))
       .thenApply(r -> r.map(MultipleRecords::getRecords))
       .thenApply(r -> r.map(RequestQueue::new));
   }
