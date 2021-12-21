@@ -86,25 +86,15 @@ public class RequestQueueValidation {
       return result;
     }
 
-    return result.value().isQueueForInstance()
-      ? pageRequestsHaveTopPositions(result)
-      : pageRequestHasFirstPosition(result);
+    return pageRequestHasFirstPosition(result);
   }
 
   /**
-   * Makes sure that all Page requests are always at the top of the unified queue (TLR feature
-   * enabled).
+   * Makes sure that all Page requests are always at the first position of the unified queue.
    *
    * @param result - Context
    * @return New result, failed if validation has failed
    */
-  private static Result<ReorderRequestContext> pageRequestsHaveTopPositions(
-    Result<ReorderRequestContext> result) {
-
-    return validateRequestsAtTopPositions(result, RequestHelper::isPageRequest,
-      "Page requests can not be displaced from top positions.");
-  }
-
   private static Result<ReorderRequestContext> pageRequestHasFirstPosition(Result<ReorderRequestContext> result) {
     return validateRequestAtFirstPosition(result, RequestHelper::isPageRequest,
       "Page requests can not be displaced from position 1.");
