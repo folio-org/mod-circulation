@@ -2593,18 +2593,30 @@ public class RequestsAPICreationTests extends APITests {
   void cannotCreateRequestWithoutInstanceId(RequestLevel requestLevel) {
     reconfigureTlrFeature(TlrFeatureStatus.ENABLED, null, null, null);
 
+    ItemResource item = itemsFixture.basedUponNod();
+
     Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
       .page()
       .withRequestLevel(requestLevel.getValue())
-      .forItem(itemsFixture.basedUponNod())
+      .forItem(item)
       .withInstanceId(null)
       .withRequesterId(usersFixture.steve().getId())
       .withPickupServicePointId(servicePointsFixture.cd1().getId()));
 
     assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
-    assertThat(postResponse.getJson(), hasErrors(1));
-    assertThat(postResponse.getJson(), hasErrorWith(
-      hasMessage("Cannot create a request with no instance ID")));
+    assertThat(postResponse.getJson(), hasErrors(requestLevel == RequestLevel.ITEM ? 1 : 2));
+    assertThat(postResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("Cannot create a request with no instance ID"),
+      hasNullParameter("instanceId")
+    )));
+
+    if (requestLevel == RequestLevel.TITLE) {
+      assertThat(postResponse.getJson(), hasErrorWith(allOf(
+        hasMessage("Attempt to create TLR request linked to an item"),
+        hasUUIDParameter("itemId", item.getId()),
+        hasUUIDParameter("holdingsRecordId", item.getHoldingsRecordId())
+      )));
+    }
   }
 
   @Test
@@ -2666,6 +2678,8 @@ public class RequestsAPICreationTests extends APITests {
       .recall()
       .titleRequestLevel()
       .withInstanceId(instanceId)
+      .withNoItemId()
+      .withNoHoldingsRecordId()
       .by(requester)
       .withRequestDate(requestDate)
       .fulfilToHoldShelf()
@@ -2875,6 +2889,7 @@ public class RequestsAPICreationTests extends APITests {
       .page()
       .titleRequestLevel()
       .withNoItemId()
+      .withNoHoldingsRecordId()
       .withInstanceId(itemsFixture.basedUponSmallAngryPlanet().getInstanceId())
       .withRequesterId(usersFixture.charlotte().getId())
       .withRequestDate(getZonedDateTime())

@@ -43,6 +43,7 @@ public enum CirculationErrorType {
   // Errors related to requests
   REQUESTING_DISALLOWED,
   REQUESTING_DISALLOWED_BY_POLICY,
+  ATTEMPT_TO_CREATE_TLR_LINKED_TO_AN_ITEM,
 
   // Errors related ro renewal
   RENEWAL_VALIDATION_ERROR,

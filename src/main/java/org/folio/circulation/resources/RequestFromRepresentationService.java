@@ -5,10 +5,9 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.folio.circulation.domain.RequestLevel.ITEM;
 import static org.folio.circulation.domain.RequestLevel.TITLE;
-import static org.folio.circulation.domain.representations.RequestProperties.HOLDINGS_RECORD_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.INSTANCE_ID;
-import static org.folio.circulation.domain.representations.RequestProperties.ITEM_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_LEVEL;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ATTEMPT_TO_CREATE_TLR_LINKED_TO_AN_ITEM;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INSTANCE_DOES_NOT_EXIST;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_HOLDINGS_RECORD_ID;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_INSTANCE_ID;
@@ -27,7 +26,9 @@ import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -40,7 +41,6 @@ import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.RequestLevel;
 import org.folio.circulation.domain.RequestStatus;
-import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.ServicePointPickupLocationValidator;
@@ -74,19 +74,19 @@ class RequestFromRepresentationService {
   private final ProxyRelationshipValidator proxyRelationshipValidator;
   private final ServicePointPickupLocationValidator pickupLocationValidator;
   private final CirculationErrorHandler errorHandler;
-  private final ItemByInstanceIdFinder finder;
-  private final Operation operation;
+  private final ItemByInstanceIdFinder itemByInstanceIdFinder;
 
-  CompletableFuture<Result<RequestAndRelatedRecords>> getRequestFrom(JsonObject representation) {
-    return initRequest(representation)
+  CompletableFuture<Result<RequestAndRelatedRecords>> getRequestFrom(Request.Operation operation,
+    JsonObject representation) {
+
+    return initRequest(operation, representation)
       .thenApply(r -> r.next(this::validateStatus))
       .thenApply(r -> r.next(this::validateRequestLevel))
-      .thenApply(r -> r.next(this::refuseWhenNoInstanceId)
-        .mapFailure(err -> errorHandler.handleValidationError(err, INVALID_INSTANCE_ID, r)))
-      .thenApply(r -> r.next(this::refuseWhenNoItemId)
-        .mapFailure(err -> errorHandler.handleValidationError(err, INVALID_ITEM_ID, r)))
-      .thenApply(r -> r.next(this::refuseWhenNoHoldingsRecordId)
-        .mapFailure(err -> errorHandler.handleValidationError(err, INVALID_HOLDINGS_RECORD_ID, r)))
+      // TODO: do we need to also check here that these IDs are valid UUIDs?
+      .thenApply(this::refuseWhenNoInstanceId)
+      .thenApply(this::refuseWhenNoItemId)
+      .thenApply(this::refuseWhenNoHoldingsRecordId)
+      .thenApply(this::refuseToCreateTlrLinkedToAnItem)
       .thenApply(r -> r.map(this::removeRelatedRecordInformation))
       .thenApply(r -> r.map(this::removeProcessingParameters))
       .thenCompose(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
@@ -108,11 +108,11 @@ class RequestFromRepresentationService {
         .mapFailure(err -> errorHandler.handleValidationError(err, INVALID_PICKUP_SERVICE_POINT, r)));
   }
 
-  private CompletableFuture<Result<Request>> initRequest(
+  private CompletableFuture<Result<Request>> initRequest(Request.Operation operation,
     JsonObject representation) {
 
     return configurationRepository.lookupTlrSettings()
-      .thenApply(r -> r.map(tlrSettings -> Request.from(tlrSettings, representation)));
+      .thenApply(r -> r.map(tlrSettings -> Request.from(tlrSettings, operation, representation)));
   }
 
   private CompletableFuture<Result<Boolean>> shouldFetchInstance(Request request) {
@@ -126,7 +126,7 @@ class RequestFromRepresentationService {
   private CompletableFuture<Result<Request>> fetchInstance(Request request) {
     return succeeded(request)
        .combineAfter(instanceRepository::fetch, Request::withInstance);
-      //TODO fail if does instance not exist
+      // TODO:  fail if instance doesn't exist
   }
 
   private CompletableFuture<Result<Request>> fetchItemAndLoan(Request request) {
@@ -145,11 +145,11 @@ class RequestFromRepresentationService {
   }
 
   private CompletableFuture<Result<Request>> fetchItemAndLoanForPageTlrRequest(Request request) {
-    if (operation.isCreation()) {
+    if (request.getOperation() == Request.Operation.CREATE) {
       return fromFutureResult(fetchItemForPageTlr(request)
         .thenApply(r -> r.mapFailure(err -> errorHandler.handleValidationError(err,
           NO_AVAILABLE_ITEMS_FOR_INSTANCE_ID_FOR_TLR, r))))
-        //TODO fail when user has already requested item for the same instanceId
+        // TODO: CIRC-1395 refuse when user has already requested item for the same instanceId
         .flatMapFuture(this::fetchFirstLoanForUserWithTheSameInstanceId)
         .flatMapFuture(req -> succeeded(req)
           .combineAfter(this::getUserForExistingLoan, this::addUserToLoan))
@@ -177,7 +177,7 @@ class RequestFromRepresentationService {
   }
 
   private CompletableFuture<Result<Request>> fetchItemAndLoanForRecallTlrRequest(Request request) {
-    return finder.getItemsByInstanceId(UUID.fromString(request.getInstanceId()))
+    return itemByInstanceIdFinder.getItemsByInstanceId(UUID.fromString(request.getInstanceId()))
       .thenComposeAsync(r -> r.after(items -> loanRepository.findLoanWithClosestDueDate(
         mapToItemIds(items)))
         .thenApply(resultLoan -> resultLoan.map(request::withLoan))
@@ -279,7 +279,12 @@ class RequestFromRepresentationService {
     return succeeded(request);
   }
 
-  private Result<Request> refuseWhenNoInstanceId(Request context) {
+  private Result<Request> refuseWhenNoInstanceId(Result<Request> result) {
+    return result.next(this::validateInstanceIdPresence)
+      .mapFailure(err -> errorHandler.handleValidationError(err, INVALID_INSTANCE_ID, result));
+  }
+
+  private Result<Request> validateInstanceIdPresence(Request context) {
     JsonObject representation = context.getRequestRepresentation();
     String instanceId = getProperty(representation, INSTANCE_ID);
 
@@ -292,12 +297,15 @@ class RequestFromRepresentationService {
     }
   }
 
-  private Result<Request> refuseWhenNoItemId(Request request) {
-    JsonObject representation = request.getRequestRepresentation();
-    String itemId = getProperty(representation, ITEM_ID);
-    boolean tlrEnabled = request.getTlrSettingsConfiguration().isTitleLevelRequestsFeatureEnabled();
+  private Result<Request> refuseWhenNoItemId(Result<Request> request) {
+    return request.next(this::validateItemIdPresence)
+      .mapFailure(err -> errorHandler.handleValidationError(err, INVALID_ITEM_ID, request));
+  }
 
-    if (!tlrEnabled && isBlank(itemId)) {
+  private Result<Request> validateItemIdPresence(Request request) {
+    String itemId = request.getItemId();
+
+    if (request.getRequestLevel() == ITEM && isBlank(itemId)) {
       return failedValidation("Cannot create an item level request with no item ID",
         "itemId", itemId);
     }
@@ -306,13 +314,46 @@ class RequestFromRepresentationService {
     }
   }
 
-  private Result<Request> refuseWhenNoHoldingsRecordId(Request request) {
-    JsonObject representation = request.getRequestRepresentation();
-    String holdingsRecordId = getProperty(representation, HOLDINGS_RECORD_ID);
+  private Result<Request> refuseWhenNoHoldingsRecordId(Result<Request> request) {
+    return request.next(this::validateHoldingsRecordIdPresence)
+      .mapFailure(err -> errorHandler.handleValidationError(err, INVALID_HOLDINGS_RECORD_ID, request));
+  }
 
-    if (isNotBlank(getProperty(representation, ITEM_ID)) && isBlank(holdingsRecordId)) {
+  private Result<Request> validateHoldingsRecordIdPresence(Request request) {
+    String holdingsRecordId = request.getHoldingsRecordId();
+
+    if (errorHandler.hasNone(INVALID_ITEM_ID)
+      && isNotBlank(request.getItemId())
+      && isBlank(holdingsRecordId)) {
+
       return failedValidation("Cannot create a request with item ID but no holdings record ID",
         "holdingsRecordId", holdingsRecordId);
+    }
+    else {
+      return of(() -> request);
+    }
+  }
+
+  private Result<Request> refuseToCreateTlrLinkedToAnItem(Result<Request> request) {
+    return request.next(this::validateAbsenceOfItemLinkInTlr)
+      .mapFailure(err -> errorHandler.handleValidationError(err,
+        ATTEMPT_TO_CREATE_TLR_LINKED_TO_AN_ITEM, request));
+  }
+
+  private Result<Request> validateAbsenceOfItemLinkInTlr(Request request) {
+    String itemId = request.getItemId();
+    String holdingsRecordId = request.getHoldingsRecordId();
+
+    if (errorHandler.hasNone(INVALID_ITEM_ID, INVALID_HOLDINGS_RECORD_ID)
+      && request.getOperation() == Request.Operation.CREATE
+      && request.getRequestLevel() == TITLE
+      && (isNotBlank(itemId) || isNotBlank(holdingsRecordId))) {
+
+      Map<String, String> errorParameters = new HashMap<>();
+      errorParameters.put("itemId", itemId);
+      errorParameters.put("holdingsRecordId", holdingsRecordId);
+      return failedValidation("Attempt to create TLR request linked to an item",
+        errorParameters);
     }
     else {
       return of(() -> request);
@@ -338,13 +379,5 @@ class RequestFromRepresentationService {
     representation.remove("requestProcessingParameters");
 
     return request;
-  }
-
-  enum Operation {
-    CREATION, REPLACEMENT;
-
-    public boolean isCreation(){
-      return this == CREATION;
-    }
   }
 }
