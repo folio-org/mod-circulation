@@ -138,10 +138,10 @@ class RequestFromRepresentationService {
       return fetchItemAndLoanForRecallTlrRequest(request);
     }
 
-    return succeeded(request)
-      .combineAfter(itemRepository::fetchFor, Request::withItem)
-      .thenComposeAsync(r -> r.after(this::fetchLoan))
-      .thenComposeAsync(r -> r.combineAfter(this::getUserForExistingLoan, this::addUserToLoan));
+    return fromFutureResult(fetchItemForRequest(request))
+      .flatMapFuture(this::fetchLoan)
+      .flatMapFuture(this::fetchUserForLoan)
+      .toCompletableFuture();
   }
 
   private CompletableFuture<Result<Request>> fetchItemAndLoanForPageTlrRequest(Request request) {
@@ -151,15 +151,14 @@ class RequestFromRepresentationService {
           NO_AVAILABLE_ITEMS_FOR_INSTANCE_ID_FOR_TLR, r))))
         // TODO: CIRC-1395 refuse when user has already requested item for the same instanceId
         .flatMapFuture(this::fetchFirstLoanForUserWithTheSameInstanceId)
-        .flatMapFuture(req -> succeeded(req)
-          .combineAfter(this::getUserForExistingLoan, this::addUserToLoan))
-        .toCompletionStage()
+        .flatMapFuture(this::fetchUserForLoan)
         .toCompletableFuture();
     } else {
-      return succeeded(request)
-        .combineAfter(itemRepository::fetchFor, Request::withItem)
-        .thenComposeAsync(r -> r.combineAfter(loanRepository::findOpenLoanForRequest, Request::withLoan))
-        .thenComposeAsync(r -> r.combineAfter(this::getUserForExistingLoan, this::addUserToLoan));
+      return fromFutureResult(fetchItemForRequest(request))
+        .flatMapFuture(req -> succeeded(req).after(loanRepository::findOpenLoanForRequest)
+          .thenApply(r -> r.map(req::withLoan)))
+        .flatMapFuture(this::fetchUserForLoan)
+        .toCompletableFuture();
     }
   }
 
@@ -379,5 +378,23 @@ class RequestFromRepresentationService {
     representation.remove("requestProcessingParameters");
 
     return request;
+  }
+
+  private CompletableFuture<Result<Request>> fetchItemForRequest(Request request) {
+    return succeeded(request)
+      .combineAfter(itemRepository::fetchFor, Request::withItem);
+  }
+
+  private CompletableFuture<Result<Request>> fetchUserForLoan(Request request) {
+    return succeeded(request)
+        .combineAfter(this::getUserForExistingLoan, this::addUserToLoan);
+  }
+
+  enum Operation {
+    CREATION, REPLACEMENT;
+
+    public boolean isCreation(){
+      return this == CREATION;
+    }
   }
 }
