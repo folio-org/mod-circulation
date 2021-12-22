@@ -42,6 +42,7 @@ public enum CirculationErrorType {
   // Errors related to requests
   REQUESTING_DISALLOWED,
   REQUESTING_DISALLOWED_BY_POLICY,
+  ONE_OF_INSATANCES_ITEMS_HAS_OPEN_LOAN,
 
   // Errors related ro renewal
   RENEWAL_VALIDATION_ERROR,

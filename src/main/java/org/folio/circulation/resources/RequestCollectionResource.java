@@ -74,6 +74,7 @@ public class RequestCollectionResource extends CollectionResource {
 
     final var eventPublisher = new EventPublisher(routingContext);
 
+    final var itemRepository = new ItemRepository(clients, true, true, true);
     final var userRepository = new UserRepository(clients);
     final var loanRepository = new LoanRepository(clients);
     final var loanPolicyRepository = new LoanPolicyRepository(clients);
@@ -93,10 +94,9 @@ public class RequestCollectionResource extends CollectionResource {
     final var createRequestService = new CreateRequestService(
       new CreateRequestRepositories(RequestRepository.using(clients),
         new RequestPolicyRepository(clients), configurationRepository),
-      updateUponRequest, new RequestLoanValidator(loanRepository),
+      updateUponRequest, new RequestLoanValidator(new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository), loanRepository),
       requestNoticeSender, requestBlocksValidators, eventPublisher, errorHandler);
 
-    final var itemRepository = new ItemRepository(clients, true, true, true);
     final var requestFromRepresentationService = new RequestFromRepresentationService(
       new InstanceRepository(clients),
       itemRepository,
@@ -127,6 +127,7 @@ public class RequestCollectionResource extends CollectionResource {
 
     write(representation, "id", getRequestId(routingContext));
 
+    final var itemRepository = new ItemRepository(clients, true, true, true);
     final var requestRepository = RequestRepository.using(clients);
     final var updateRequestQueue = UpdateRequestQueue.using(clients);
     final var loanRepository = new LoanRepository(clients);
@@ -145,7 +146,7 @@ public class RequestCollectionResource extends CollectionResource {
     final var createRequestService = new CreateRequestService(
       new CreateRequestRepositories(requestRepository,
         new RequestPolicyRepository(clients), configurationRepository),
-      updateUponRequest, new RequestLoanValidator(loanRepository),
+      updateUponRequest, new RequestLoanValidator(new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository), loanRepository),
       requestNoticeSender, regularRequestBlockValidators(clients),
       eventPublisher, errorHandler);
 
@@ -153,7 +154,6 @@ public class RequestCollectionResource extends CollectionResource {
       updateRequestQueue, new ClosedRequestValidator(requestRepository),
       requestNoticeSender, updateItem, eventPublisher);
 
-    final var itemRepository = new ItemRepository(clients, true, true, true);
     final var requestFromRepresentationService = new RequestFromRepresentationService(
       new InstanceRepository(clients),
       itemRepository,
@@ -264,7 +264,7 @@ public class RequestCollectionResource extends CollectionResource {
 
     final var moveRequestService = new MoveRequestService(
       requestRepository, new RequestPolicyRepository(clients),
-      updateUponRequest, moveRequestProcessAdapter, new RequestLoanValidator(loanRepository),
+      updateUponRequest, moveRequestProcessAdapter, new RequestLoanValidator(new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository), loanRepository),
       RequestNoticeSender.using(clients), configurationRepository, eventPublisher);
 
     fromFutureResult(requestRepository.getById(id))

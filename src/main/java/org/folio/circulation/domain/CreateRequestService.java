@@ -5,6 +5,7 @@ import static org.folio.circulation.domain.RequestLevel.TITLE;
 import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_CREATED;
 import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_CREATED_THROUGH_OVERRIDE;
 import static org.folio.circulation.domain.representations.logs.RequestUpdateLogEventMapper.mapToRequestLogEventJson;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ONE_OF_INSATANCES_ITEMS_HAS_OPEN_LOAN;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INSTANCE_DOES_NOT_EXIST;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_INSTANCE_ID;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_ITEM_ID;
@@ -104,7 +105,19 @@ public class CreateRequestService {
       .isTitleLevelRequestsFeatureEnabled();
 
     if (tlrFeatureEnabled && records.getRequest().getRequestLevel() == TITLE) {
-      return completedFuture(succeeded(records));
+      Result<RequestAndRelatedRecords> result = succeeded(records);
+      if (records.getRequest().getItemId() != null) {
+        result = result
+          .next(RequestServiceUtility::refuseWhenItemDoesNotExist)
+          .mapFailure(err -> errorHandler.handleValidationError(err, ITEM_DOES_NOT_EXIST, records));
+      }
+
+      if (errorHandler.hasNone(INVALID_INSTANCE_ID, INSTANCE_DOES_NOT_EXIST)) {
+        return result
+          .after(requestLoanValidator::refuseWhenUserHasAlreadyBeenLoanedOneOfInstancesItems)
+          .thenApply(r -> errorHandler.handleValidationResult(r, ONE_OF_INSATANCES_ITEMS_HAS_OPEN_LOAN, records));
+      }
+      return completedFuture(result);
     }
 
     return succeeded(records)

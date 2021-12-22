@@ -682,6 +682,7 @@ class RequestScheduledNoticesProcessingTests extends APITests {
     return new RequestBuilder()
       .page()
       .titleRequestLevel()
+      .withItemId(item.getId())
       .withInstanceId(item.getInstanceId())
       .withRequesterId(usersFixture.charlotte().getId())
       .withRequestDate(getZonedDateTime())
