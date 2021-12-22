@@ -1,6 +1,5 @@
 package org.folio.circulation.resources;
 
-import static java.util.concurrent.CompletableFuture.*;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;

@@ -99,7 +99,6 @@ public class RequestCollectionResource extends CollectionResource {
       requestNoticeSender, requestBlocksValidators, eventPublisher, errorHandler);
 
     final var itemRepository = new ItemRepository(clients, true, true, true);
-
     final var requestFromRepresentationService = new RequestFromRepresentationService(
       new InstanceRepository(clients),
       itemRepository,
