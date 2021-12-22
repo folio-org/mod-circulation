@@ -1,6 +1,7 @@
 package api.queue;
 
 import static api.support.fakes.PublishedEvents.byLogEventType;
+import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static java.util.stream.Collectors.toList;
@@ -41,6 +42,9 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 class RequestQueueResourceTest extends APITests {
+  private static final String REQUESTS_KEY = "requests";
+  public static final String ID_PROPERTY = "id";
+  public static final String POSITION_PROPERTY = "position";
   private ItemResource item;
 
   private List<ItemResource> items;
@@ -144,7 +148,7 @@ class RequestQueueResourceTest extends APITests {
   }
 
   @Test
-  void refuseAttemptToMovePageRequestFromOneOfTheTopPositionsWhenTlrEnabled() {
+  void movePageRequestFromOneOfTheTopPositionsWhenTlrEnabled() {
     reconfigureTlrFeature(TlrFeatureStatus.ENABLED);
 
     // It is possible to have multiple page requests in the unified queue when TLR feature is
@@ -163,8 +167,11 @@ class RequestQueueResourceTest extends APITests {
         .addReorderRequest(pageRequestByCharlotte.getId().toString(), 4)
         .create());
 
-    verifyValidationFailure(response,
-      is("Page requests can not be displaced from top positions."));
+    assertThat(response.getStatusCode(), is(200));
+    assertThat(response.getJson().getJsonArray(REQUESTS_KEY).getJsonObject(3),
+      hasJsonPath(ID_PROPERTY, pageRequestByCharlotte.getId().toString()));
+    assertThat(response.getJson().getJsonArray(REQUESTS_KEY).getJsonObject(3),
+      hasJsonPath(POSITION_PROPERTY, 4));
   }
 
   @Test

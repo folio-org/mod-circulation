@@ -548,6 +548,38 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
+  void cannotCreateTlrRequestWhenUserHasLoanForSomeItemsOfInstance() {
+    reconfigureTlrFeature(TlrFeatureStatus.ENABLED);
+
+    IndividualResource instanceMultipleCopies = instancesFixture.basedUponDunkirk();
+    IndividualResource holdings = holdingsFixture.defaultWithHoldings(
+      instanceMultipleCopies.getId());
+    IndividualResource locationsResource = locationsFixture.mainFloor();
+    IndividualResource item = itemsFixture.createItemWithHoldingsAndLocation(holdings.getId(),
+      locationsResource.getId());
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    JsonObject holdingsJson = holdings.getJson();
+
+    checkOutFixture.checkOutByBarcode(item, usersFixture.jessica());
+
+    Response postResponse = requestsClient.attemptCreate(
+      new RequestBuilder()
+        .hold()
+        .withPickupServicePointId(pickupServicePointId)
+        .titleRequestLevel()
+        .withInstanceId(UUID.fromString(holdingsJson.getString("instanceId")))
+        .withHoldingsRecordId(UUID.fromString(holdingsJson.getString("id")))
+        .by(usersFixture.jessica())
+        .create());
+
+    assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(postResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("One of the items of the requested title is already loaned to the requester"),
+      hasParameter("itemId", item.getId().toString()),
+      hasParameter("userId", usersFixture.jessica().getId().toString()))));
+  }
+
+  @Test
   void cannotCreateRecallRequestWhenItemIsNotCheckedOut() {
     ItemResource item = itemsFixture.basedUponSmallAngryPlanet(
       ItemBuilder::available);
@@ -2402,10 +2434,6 @@ public class RequestsAPICreationTests extends APITests {
       hasUUIDParameter("instanceId", instanceId))));
 
     assertThat(responseJson, hasErrorWith(allOf(
-      hasMessage("Item does not exist"),
-      hasUUIDParameter("itemId", itemId))));
-
-    assertThat(responseJson, hasErrorWith(allOf(
       hasMessage("A valid user and patron group are required. User is null"),
       hasUUIDParameter("userId", userId))));
 
@@ -2885,12 +2913,13 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   private RequestBuilder buildTitleLevelRequest() {
+    ItemResource itemResource = itemsFixture.basedUponSmallAngryPlanet();
     return new RequestBuilder()
       .page()
       .titleRequestLevel()
       .withNoItemId()
       .withNoHoldingsRecordId()
-      .withInstanceId(itemsFixture.basedUponSmallAngryPlanet().getInstanceId())
+      .withInstanceId(itemResource.getInstanceId())
       .withRequesterId(usersFixture.charlotte().getId())
       .withRequestDate(getZonedDateTime())
       .withStatus(OPEN_NOT_YET_FILLED)

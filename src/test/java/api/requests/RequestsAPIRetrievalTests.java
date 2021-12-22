@@ -262,6 +262,7 @@ class RequestsAPIRetrievalTests extends APITests {
     IndividualResource requestResource = requestsClient.create(new RequestBuilder()
       .hold()
       .titleRequestLevel()
+      .withItemId(smallAngryPlanet.getId())
       .withInstanceId(instanceId)
       .withPickupServicePointId(pickupServicePointId)
       .withRequestDate(requestDate)
