@@ -14,7 +14,7 @@ import static org.folio.circulation.resources.handlers.error.CirculationErrorTyp
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_ITEM_ID;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_PICKUP_SERVICE_POINT;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_PROXY_RELATIONSHIP;
-import static org.folio.circulation.resources.handlers.error.CirculationErrorType.NO_AVAILABLE_ITEMS_FOR_INSTANCE_ID_FOR_TLR;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.NO_AVAILABLE_ITEMS_FOR_TLR;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.http.client.PageLimit.limit;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
@@ -148,7 +148,7 @@ class RequestFromRepresentationService {
     if (request.getOperation() == Request.Operation.CREATE) {
       return fromFutureResult(fetchItemForPageTlr(request)
         .thenApply(r -> r.mapFailure(err -> errorHandler.handleValidationError(err,
-          NO_AVAILABLE_ITEMS_FOR_INSTANCE_ID_FOR_TLR, r))))
+          NO_AVAILABLE_ITEMS_FOR_TLR, r))))
         // TODO: CIRC-1395 refuse when user has already requested item for the same instanceId
         .flatMapFuture(this::fetchFirstLoanForUserWithTheSameInstanceId)
         .flatMapFuture(this::fetchUserForLoan)

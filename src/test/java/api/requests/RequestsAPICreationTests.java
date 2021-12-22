@@ -2627,7 +2627,7 @@ public class RequestsAPICreationTests extends APITests {
       .page()
       .withRequestLevel(requestLevel.getValue())
       .forItem(item)
-      .withInstanceId(null)
+      .withNoInstanceId()
       .withRequesterId(usersFixture.steve().getId())
       .withPickupServicePointId(servicePointsFixture.cd1().getId()));
 

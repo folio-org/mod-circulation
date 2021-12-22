@@ -198,6 +198,7 @@ class RequestQueueResourceTest extends APITests {
 
     checkOutFixture.checkOutByBarcode(items.get(0), usersFixture.rebecca());
     checkOutFixture.checkOutByBarcode(items.get(1), usersFixture.rebecca());
+    checkOutFixture.checkOutByBarcode(items.get(2), usersFixture.rebecca());
 
     // It is possible to have multiple requests in fulfillment process in the unified queue when
     // TLR feature is enabled
@@ -205,8 +206,8 @@ class RequestQueueResourceTest extends APITests {
       items.get(0));
     IndividualResource inFulfillmentRequestByJames = inFulfillmentRecallRequestForItem(james,
       items.get(1));
-    IndividualResource inFulfillmentRequestByCharlotte =
-      inFulfillmentRecallTitleLevelRequestForItem(charlotte, items.get(2));
+    IndividualResource inFulfillmentRequestByCharlotte = inFulfillmentRecallRequestForItem(
+      charlotte, items.get(2));
     IndividualResource recallRequestByJessica = recallRequestForItem(jessica, items.get(1));
 
     Response response = requestQueueFixture.attemptReorderQueueForInstance(
@@ -645,7 +646,8 @@ class RequestQueueResourceTest extends APITests {
       .open()
       .hold()
       .withInstanceId(instanceId)
-      .withItemId(null)
+      .withNoItemId()
+      .withNoHoldingsRecordId()
       .by(requester)
       .withPickupServicePoint(servicePointsFixture.cd1()));
   }
@@ -670,7 +672,8 @@ class RequestQueueResourceTest extends APITests {
       .open()
       .recall()
       .withInstanceId(instanceId)
-      .withItemId(null)
+      .withNoItemId()
+      .withNoHoldingsRecordId()
       .by(requester)
       .withPickupServicePoint(servicePointsFixture.cd1()));
   }
@@ -689,20 +692,6 @@ class RequestQueueResourceTest extends APITests {
       .recall()
       .withStatus(RequestBuilder.OPEN_IN_TRANSIT)
       .forItem(item)
-      .by(requester)
-      .withPickupServicePoint(servicePointsFixture.cd1()));
-  }
-
-  private IndividualResource inFulfillmentRecallTitleLevelRequestForItem(
-    IndividualResource requester, ItemResource item) {
-
-    return requestsFixture.place(new RequestBuilder()
-      .titleRequestLevel()
-      .open()
-      .recall()
-      .withStatus(RequestBuilder.OPEN_IN_TRANSIT)
-      .forItem(item)
-      .withInstanceId(item.getInstanceId())
       .by(requester)
       .withPickupServicePoint(servicePointsFixture.cd1()));
   }

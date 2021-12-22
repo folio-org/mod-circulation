@@ -219,6 +219,10 @@ public class RequestBuilder extends JsonBuilder implements Builder {
     return withRequestLevel("Title");
   }
 
+  public RequestBuilder withNoInstanceId() {
+    return withInstanceId(null);
+  }
+
   public RequestBuilder withNoItemId() {
     return withItemId(null);
   }
