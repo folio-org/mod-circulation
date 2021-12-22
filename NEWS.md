@@ -1,3 +1,7 @@
+## 22.0.7 2021-12-22
+
+* Upgrade Log4j to v2.16.0 (CIRC-1390)
+
 ## 22.0.6 2021-11-05
 
 * Includes permission for fetching notice policy when processing notices (CIRC-1321)
