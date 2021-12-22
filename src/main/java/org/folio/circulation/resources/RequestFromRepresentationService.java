@@ -154,8 +154,8 @@ class RequestFromRepresentationService {
         .toCompletableFuture();
     } else {
       return fromFutureResult(fetchItemForRequest(request))
-        .flatMapFuture(loanRepository::findOpenLoanForRequest)
-        .flatMapFuture(loan -> completedFuture(succeeded(request.withLoan(loan))))
+        .flatMapFuture(req -> succeeded(req).after(loanRepository::findOpenLoanForRequest)
+          .thenApply(r -> r.map(req::withLoan)))
         .flatMapFuture(this::fetchUserForLoan)
         .toCompletableFuture();
     }
