@@ -18,6 +18,7 @@ public class StoredRequestRepresentation {
     final JsonObject representation = request.asJson();
 
     addStoredItemProperties(representation, request.getItem());
+    addStoredInstanceProperties(representation, request.getItem());
     addStoredRequesterProperties(representation, request.getRequester());
     addStoredProxyProperties(representation, request.getProxy());
 
