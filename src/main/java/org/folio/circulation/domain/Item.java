@@ -149,12 +149,12 @@ public class Item {
     return holdings.getInstanceId();
   }
 
-  public JsonArray getPublication() {
-    return getArrayProperty(instanceRepresentation, PUBLICATION);
+  public Stream<Publication> getPublication() {
+    return instance.getPublication().stream();
   }
 
-  public JsonArray getEditions() {
-    return getArrayProperty(instanceRepresentation, EDITIONS);
+  public Stream<String> getEditions() {
+    return instance.getEditions().stream();
   }
 
   public String getCallNumber() {
