@@ -1,9 +1,11 @@
 package org.folio.circulation.storage.mappers;
 
 import static org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher.mapToList;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getArrayProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.Contributor;
 import org.folio.circulation.domain.Identifier;
@@ -32,7 +34,9 @@ public class InstanceMapper {
   }
 
   private List<String> mapEditions(JsonObject representation) {
-    return mapToList(representation, "editions",
-      res -> getProperty(representation, "editions"));
+    return getArrayProperty(representation, "editions")
+      .stream()
+      .map(String.class::cast)
+      .collect(Collectors.toList());
   }
 }
