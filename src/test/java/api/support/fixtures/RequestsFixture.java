@@ -76,8 +76,9 @@ public class RequestsFixture {
       .hold()
       .fulfilToHoldShelf()
       .withRequestLevel("Title")
-      .withItemId(null)
       .withInstanceId(instanceId)
+      .withNoItemId()
+      .withNoHoldingsRecordId()
       .withRequestDate(on)
       .withRequesterId(by.getId())
       .withPickupServicePointId(servicePointsFixture.cd1().getId()));
@@ -115,8 +116,9 @@ public class RequestsFixture {
       .hold()
       .fulfilToHoldShelf()
       .withRequestLevel("Title")
-      .withItemId(null)
       .withInstanceId(instanceId)
+      .withNoItemId()
+      .withNoHoldingsRecordId()
       .withRequestDate(on)
       .withRequesterId(by.getId())
       .withPickupServicePointId(pickupServicePointId));

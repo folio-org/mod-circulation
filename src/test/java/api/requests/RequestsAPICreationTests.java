@@ -568,7 +568,8 @@ public class RequestsAPICreationTests extends APITests {
         .withPickupServicePointId(pickupServicePointId)
         .titleRequestLevel()
         .withInstanceId(UUID.fromString(holdingsJson.getString("instanceId")))
-        .withHoldingsRecordId(UUID.fromString(holdingsJson.getString("id")))
+        .withNoItemId()
+        .withNoHoldingsRecordId()
         .by(usersFixture.jessica())
         .create());
 

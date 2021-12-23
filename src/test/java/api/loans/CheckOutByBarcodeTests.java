@@ -2238,50 +2238,56 @@ class CheckOutByBarcodeTests extends APITests {
 
     UUID instanceId = item.getInstanceId();
     UUID pageRequestItemId = "Item".equals(pageRequestLevel) ? item.getId() : null;
+    UUID pageRequestHoldingsRecordId = "Item".equals(pageRequestLevel)
+      ? item.getHoldingsRecordId() : null;
     UUID holdRequestItemId = "Item".equals(holdRequestLevel) ? item.getId() : null;
+    UUID holdRequestHoldingsRecordId = "Item".equals(holdRequestLevel)
+      ? item.getHoldingsRecordId() : null;
 
-    IndividualResource firstRequest = requestsClient.create(
+    IndividualResource pageRequest = requestsClient.create(
       new RequestBuilder()
         .page()
         .withRequestLevel(pageRequestLevel)
         .withItemId(pageRequestItemId)
+        .withHoldingsRecordId(pageRequestHoldingsRecordId)
         .withInstanceId(instanceId)
         .withPickupServicePointId(pickupServicePointId)
         .withRequesterId(firstRequester.getId()));
 
-    assertThat(firstRequest.getJson(), hasPosition(1));
+    assertThat(pageRequest.getJson(), hasPosition(1));
     assertThat(fetchItemJson(item), isPaged());
 
-    IndividualResource secondRequest = requestsClient.create(
+    IndividualResource holdRequest = requestsClient.create(
       new RequestBuilder()
         .hold()
         .withRequestLevel(holdRequestLevel)
         .withItemId(holdRequestItemId)
+        .withHoldingsRecordId(holdRequestHoldingsRecordId)
         .withInstanceId(instanceId)
         .withPickupServicePointId(pickupServicePointId)
         .withRequesterId(secondRequester.getId()));
 
-    assertThat(secondRequest.getJson(), hasPosition(2));
+    assertThat(holdRequest.getJson(), hasPosition(2));
 
     checkInFixture.checkInByBarcode(item);
     assertThat(fetchItemJson(item), isAwaitingPickup());
-    assertThat(fetchRequestJson(firstRequest), isOpenAwaitingPickup());
+    assertThat(fetchRequestJson(pageRequest), isOpenAwaitingPickup());
 
     // fulfil page request
     checkOutFixture.checkOutByBarcode(item, firstRequester);
     assertThat(fetchItemJson(item), isCheckedOut());
-    assertThat(fetchRequestJson(firstRequest), isClosedFilled());
+    assertThat(fetchRequestJson(pageRequest), isClosedFilled());
 
     // check the item back in
     checkInFixture.checkInByBarcode(item);
     assertThat(fetchItemJson(item), isAwaitingPickup());
-    assertThat(fetchRequestJson(secondRequest), isOpenAwaitingPickup());
-    assertThat(fetchRequestJson(secondRequest), hasPosition(1));
+    assertThat(fetchRequestJson(holdRequest), isOpenAwaitingPickup());
+    assertThat(fetchRequestJson(holdRequest), hasPosition(1));
 
     // fulfil hold request
     checkOutFixture.checkOutByBarcode(item, secondRequester);
     assertThat(fetchItemJson(item), isCheckedOut());
-    assertThat(fetchRequestJson(secondRequest), isClosedFilled());
+    assertThat(fetchRequestJson(holdRequest), isClosedFilled());
   }
 
   private LoanPolicyBuilder buildLoanPolicyWithFixedLoan(DueDateManagement strategy,

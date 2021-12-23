@@ -176,6 +176,10 @@ class RequestFromRepresentationService {
   }
 
   private CompletableFuture<Result<Request>> fetchItemAndLoanForRecallTlrRequest(Request request) {
+    if (errorHandler.hasAny(INVALID_INSTANCE_ID)) {
+      return ofAsync(() -> request);
+    }
+
     return itemByInstanceIdFinder.getItemsByInstanceId(UUID.fromString(request.getInstanceId()))
       .thenComposeAsync(r -> r.after(items -> loanRepository.findLoanWithClosestDueDate(
         mapToItemIds(items)))

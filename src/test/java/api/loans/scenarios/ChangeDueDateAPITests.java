@@ -435,6 +435,8 @@ class ChangeDueDateAPITests extends APITests {
       .recall()
       .titleRequestLevel()
       .withInstanceId(smallAngryPlanet.getInstanceId())
+      .withNoItemId()
+      .withNoHoldingsRecordId()
       .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .withRequesterId(usersFixture.jessica().getId()));
 
@@ -494,6 +496,8 @@ class ChangeDueDateAPITests extends APITests {
       .recall()
       .titleRequestLevel()
       .withInstanceId(instanceId)
+      .withNoItemId()
+      .withNoHoldingsRecordId()
       .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .withRequesterId(usersFixture.jessica().getId()));
 
