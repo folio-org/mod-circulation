@@ -4,6 +4,7 @@ import static java.util.Objects.isNull;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
 import java.lang.invoke.MethodHandles;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -17,7 +18,6 @@ public class StoredRequestRepresentation {
     final JsonObject representation = request.asJson();
 
     addStoredItemProperties(representation, request.getItem());
-    addStoredInstanceProperties(representation, request.getItem());
     addStoredRequesterProperties(representation, request.getRequester());
     addStoredProxyProperties(representation, request.getProxy());
 
@@ -45,8 +45,20 @@ public class StoredRequestRepresentation {
     }
     JsonObject instance = new JsonObject();
     write(instance, "title", item.getTitle());
-    write(instance, "identifiers", item.getIdentifiers());
+    write(instance, "identifiers",
+      item.getIdentifiers()
+        .map(StoredRequestRepresentation::identifierToJson)
+        .collect(Collectors.toList()));
     request.put("instance", instance);
+  }
+
+  private static JsonObject identifierToJson(Identifier identifier) {
+    final var representation = new JsonObject();
+
+    write(representation, "identifierTypeId", identifier.getTypeId());
+    write(representation, "value", identifier.getValue());
+
+    return representation;
   }
 
   private static void addStoredRequesterProperties(JsonObject request, User requester) {
@@ -76,6 +88,7 @@ public class StoredRequestRepresentation {
     write(userSummary, "firstName", user.getFirstName());
     write(userSummary, "middleName", user.getMiddleName());
     write(userSummary, "barcode", user.getBarcode());
+
     return userSummary;
   }
 

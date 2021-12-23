@@ -100,11 +100,6 @@ public abstract class CirculationPolicyRepository<T> {
         "Unable to apply circulation rules for unknown item"));
     }
 
-    if (item.doesNotHaveHolding()) {
-      return completedFuture(failedDueToServerError(
-        "Unable to apply circulation rules for unknown holding"));
-    }
-
     return getPolicyAndMatch(forItem(item, user));
   }
 

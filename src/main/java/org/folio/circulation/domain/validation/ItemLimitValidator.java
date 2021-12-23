@@ -66,9 +66,6 @@ public class ItemLimitValidator {
     }
 
     Item item = records.getLoan().getItem();
-    String materialTypeId = item.getMaterialType() != null
-      ? item.getMaterialTypeId()
-      : null;
     String loanTypeId = item.determineLoanTypeForItem();
     Integer itemLimit = records.getLoan().getLoanPolicy().getItemLimit();
     AppliedRuleConditions ruleConditions = records.getLoan().getLoanPolicy().getRuleConditions();
@@ -77,7 +74,7 @@ public class ItemLimitValidator {
       .thenApply(r -> r.map(loanRecords -> loanRecords.getRecords().stream()
         .filter(loanRecord -> !loanRecord.getItem().isClaimedReturned())
         .filter(loanRecord -> isMaterialTypeMatchInRetrievedLoan(
-          materialTypeId, loanRecord, ruleConditions))
+          item.getMaterialTypeId(), loanRecord, ruleConditions))
         .filter(loanRecord -> isLoanTypeMatchInRetrievedLoan(
           loanTypeId, loanRecord, ruleConditions))
         .count()))
