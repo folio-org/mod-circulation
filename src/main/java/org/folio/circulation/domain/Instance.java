@@ -11,12 +11,14 @@ import lombok.Value;
 @Value
 public class Instance {
   public static Instance unknown() {
-    return new Instance(null, emptyList(), emptyList());
+    return new Instance(null, emptyList(), emptyList(), emptyList(), emptyList());
   }
 
   String title;
   @NonNull Collection<Identifier> identifiers;
   @NonNull Collection<Contributor> contributors;
+  @NonNull Collection<Publication> publication;
+  @NonNull Collection<String> editions;
 
   public Stream<String> getContributorNames() {
     return contributors.stream()
