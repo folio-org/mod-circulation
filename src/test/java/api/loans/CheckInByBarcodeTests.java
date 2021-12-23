@@ -1551,6 +1551,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
       .titleRequestLevel()
       .withInstanceId(instanceId)
       .withNoItemId()
+      .withNoHoldingsRecordId()
       .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .withRequesterId(usersFixture.charlotte().getId()).create();
   }
@@ -1562,6 +1563,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
       .titleRequestLevel()
       .withInstanceId(instanceId)
       .withNoItemId()
+      .withNoHoldingsRecordId()
       .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .withRequesterId(usersFixture.charlotte().getId()).create();
   }

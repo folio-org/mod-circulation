@@ -108,7 +108,8 @@ public class RequestCollectionResource extends CollectionResource {
 
     final var scheduledNoticeService = RequestScheduledNoticeService.using(clients);
 
-    fromFutureResult(requestFromRepresentationService.getRequestFrom(representation))
+    fromFutureResult(requestFromRepresentationService.getRequestFrom(Request.Operation.CREATE,
+      representation))
       .flatMapFuture(createRequestService::createRequest)
       .onSuccess(scheduledNoticeService::scheduleRequestNotices)
       .onSuccess(records -> eventPublisher.publishDueDateChangedEvent(records, clients))
@@ -157,15 +158,16 @@ public class RequestCollectionResource extends CollectionResource {
     final var requestFromRepresentationService = new RequestFromRepresentationService(
       new InstanceRepository(clients),
       itemRepository,
-      RequestQueueRepository.using(clients), new UserRepository(clients),
-      loanRepository, new ServicePointRepository(clients), configurationRepository,
+      RequestQueueRepository.using(clients), new UserRepository(clients), loanRepository,
+      new ServicePointRepository(clients), configurationRepository,
       createProxyRelationshipValidator(representation, clients),
       new ServicePointPickupLocationValidator(), errorHandler,
       new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository));
 
     final var requestScheduledNoticeService = RequestScheduledNoticeService.using(clients);
 
-    fromFutureResult(requestFromRepresentationService.getRequestFrom(representation))
+    fromFutureResult(requestFromRepresentationService.getRequestFrom(Request.Operation.REPLACE,
+      representation))
       .flatMapFuture(when(requestRepository::exists, updateRequestService::replaceRequest,
         createRequestService::createRequest))
       .flatMapFuture(records -> eventPublisher.publishDueDateChangedEvent(records, clients))

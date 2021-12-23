@@ -273,10 +273,10 @@ public class RequestByInstanceIdResource extends Resource {
         createProxyRelationshipValidator(currentItemRequest, clients),
         new ServicePointPickupLocationValidator(),
         new FailFastErrorHandler(),
-        new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository)
-      );
+        new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository));
 
-    return requestFromRepresentationService.getRequestFrom(currentItemRequest)
+    return requestFromRepresentationService.getRequestFrom(Request.Operation.CREATE,
+        currentItemRequest)
       .thenCompose(r -> r.after(createRequestService::createRequest))
       .thenCompose(r -> {
           if (r.succeeded()) {

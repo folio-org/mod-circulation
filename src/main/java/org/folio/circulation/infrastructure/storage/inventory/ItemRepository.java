@@ -4,7 +4,9 @@ import static java.util.Objects.isNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Function.identity;
 import static org.folio.circulation.domain.representations.LoanProperties.ITEM_ID;
+import static org.folio.circulation.domain.representations.ItemProperties.HOLDINGS_RECORD_ID;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
+import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQuery;
 import static org.folio.circulation.support.http.CommonResponseInterpreters.noContentRecordInterpreter;
 import static org.folio.circulation.support.json.JsonKeys.byId;
 import static org.folio.circulation.support.results.Result.ofAsync;
@@ -30,6 +32,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemRelatedRecord;
+import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.ServicePoint;
@@ -130,6 +133,29 @@ public class ItemRepository {
     return itemsClient.put(item.getItemId(), item.getItem())
       .thenApply(noContentRecordInterpreter(item)::flatMap)
       .thenCompose(x -> ofAsync(() -> item));
+  }
+
+  public CompletableFuture<Result<Item>> getFirstAvailableItemByInstanceId(String instanceId) {
+
+    final FindWithCqlQuery<JsonObject> holdingsRecordFetcher = findWithCqlQuery(
+      holdingsClient, "holdingsRecords", identity());
+
+    return holdingsRecordFetcher.findByQuery(CqlQuery.exactMatch("instanceId", instanceId))
+      .thenCompose(this::getAvailableItem);
+  }
+
+  private CompletableFuture<Result<Item>> getAvailableItem(
+    Result<MultipleRecords<JsonObject>> holdingsRecordsResult) {
+
+    return holdingsRecordsResult.after(holdingsRecords -> {
+      if (holdingsRecords == null || holdingsRecords.isEmpty()) {
+        return completedFuture(succeeded(Item.from(null)));
+      }
+
+      return findByIndexNameAndQuery(holdingsRecords.toKeys(byId()), HOLDINGS_RECORD_ID,
+          CqlQuery.exactMatch("status.name", ItemStatus.AVAILABLE.getValue()))
+        .thenApply(r -> r.map(items -> items.stream().findFirst().orElse(null)));
+    });
   }
 
   private CompletableFuture<Result<Item>> fetchMaterialType(Result<Item> result) {

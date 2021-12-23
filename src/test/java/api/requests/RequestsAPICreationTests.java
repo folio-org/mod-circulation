@@ -513,7 +513,8 @@ public class RequestsAPICreationTests extends APITests {
 
     IndividualResource requestResource = requestsClient.create(new RequestBuilder()
       .page()
-      .withItemId(item.getId())
+      .withNoHoldingsRecordId()
+      .withNoItemId()
       .titleRequestLevel()
       .withInstanceId(instanceId)
       .withPickupServicePointId(pickupServicePointId)
@@ -567,7 +568,8 @@ public class RequestsAPICreationTests extends APITests {
         .withPickupServicePointId(pickupServicePointId)
         .titleRequestLevel()
         .withInstanceId(UUID.fromString(holdingsJson.getString("instanceId")))
-        .withHoldingsRecordId(UUID.fromString(holdingsJson.getString("id")))
+        .withNoItemId()
+        .withNoHoldingsRecordId()
         .by(usersFixture.jessica())
         .create());
 
@@ -1183,6 +1185,61 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(pagedRequest.getJson().getString("requestType"), is(RequestType.PAGE.getValue()));
     assertThat(pagedRequest.getResponse(), hasStatus(HTTP_CREATED));
     assertThat(finalStatus, is(ItemStatus.PAGED.getValue()));
+  }
+
+  @Test
+  void cannotCreateTitleLevelPagedRequestIfThereAreNoAvailableItems() {
+    UUID patronId = usersFixture.charlotte().getId();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    configurationsFixture.enableTlrFeature();
+
+    UUID instanceId = instancesFixture.basedUponDunkirk().getId();
+    IndividualResource defaultWithHoldings = holdingsFixture.defaultWithHoldings(instanceId);
+    itemsClient.create(new ItemBuilder()
+      .forHolding(defaultWithHoldings.getId())
+      .checkOut()
+      .withMaterialType(UUID.randomUUID())
+      .withPermanentLoanType(UUID.randomUUID())
+      .create());
+
+    Response postResponse = requestsClient.attemptCreate(
+      buildPageTitleLevelRequest(patronId, pickupServicePointId, instanceId));
+
+    assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(postResponse.getJson(), hasErrors(1));
+    assertThat(postResponse.getJson(), hasErrorWith(
+      hasMessage("Cannot create page TLR for this instance ID - no available items found")));
+    assertThat(postResponse.getJson(), hasErrorWith(hasParameter("instanceId",
+      instanceId.toString())));
+  }
+
+  @Test
+  void canCreateTitleLevelPagedRequest() {
+    UUID patronId = usersFixture.charlotte().getId();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    configurationsFixture.enableTlrFeature();
+
+    IndividualResource uponDunkirkInstance = instancesFixture.basedUponDunkirk();
+    UUID instanceId = uponDunkirkInstance.getId();
+    IndividualResource defaultWithHoldings = holdingsFixture.defaultWithHoldings(instanceId);
+    IndividualResource item = itemsClient.create(new ItemBuilder()
+      .forHolding(defaultWithHoldings.getId())
+      .withMaterialType(UUID.randomUUID())
+      .withPermanentLoanType(UUID.randomUUID())
+      .create());
+
+    IndividualResource pagedRequest = requestsClient.create(buildPageTitleLevelRequest(patronId,
+      pickupServicePointId, instanceId));
+
+    JsonObject json = pagedRequest.getJson();
+    assertThat(json.getString("requestType"), is(RequestType.PAGE.getValue()));
+    assertThat(json.getString("holdingsRecordId"), is(defaultWithHoldings.getId().toString()));
+    assertThat(json.getString("itemId"), is(item.getId()));
+    assertThat(json.getString("instanceId"), is(instanceId));
+    assertThat(pagedRequest.getResponse(), hasStatus(HTTP_CREATED));
+    assertThat(json.getJsonObject("item")
+      .getString("status"), is(ItemStatus.PAGED.getValue()));
+    assertThat(json.getString("requestLevel"), is(RequestLevel.TITLE.getValue()));
   }
 
   @Test
@@ -2565,18 +2622,30 @@ public class RequestsAPICreationTests extends APITests {
   void cannotCreateRequestWithoutInstanceId(RequestLevel requestLevel) {
     reconfigureTlrFeature(TlrFeatureStatus.ENABLED, null, null, null);
 
+    ItemResource item = itemsFixture.basedUponNod();
+
     Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
       .page()
       .withRequestLevel(requestLevel.getValue())
-      .forItem(itemsFixture.basedUponNod())
-      .withInstanceId(null)
+      .forItem(item)
+      .withNoInstanceId()
       .withRequesterId(usersFixture.steve().getId())
       .withPickupServicePointId(servicePointsFixture.cd1().getId()));
 
     assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
-    assertThat(postResponse.getJson(), hasErrors(1));
-    assertThat(postResponse.getJson(), hasErrorWith(
-      hasMessage("Cannot create a request with no instance ID")));
+    assertThat(postResponse.getJson(), hasErrors(requestLevel == RequestLevel.ITEM ? 1 : 2));
+    assertThat(postResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("Cannot create a request with no instance ID"),
+      hasNullParameter("instanceId")
+    )));
+
+    if (requestLevel == RequestLevel.TITLE) {
+      assertThat(postResponse.getJson(), hasErrorWith(allOf(
+        hasMessage("Attempt to create TLR request linked to an item"),
+        hasUUIDParameter("itemId", item.getId()),
+        hasUUIDParameter("holdingsRecordId", item.getHoldingsRecordId())
+      )));
+    }
   }
 
   @Test
@@ -2604,7 +2673,7 @@ public class RequestsAPICreationTests extends APITests {
       .page()
       .withRequestLevel(requestLevel.getValue())
       .forItem(itemsFixture.basedUponNod())
-      .withHoldingsRecordId(null)
+      .withNoHoldingsRecordId()
       .withRequesterId(usersFixture.steve().getId())
       .withPickupServicePointId(servicePointsFixture.cd1().getId()));
 
@@ -2638,6 +2707,8 @@ public class RequestsAPICreationTests extends APITests {
       .recall()
       .titleRequestLevel()
       .withInstanceId(instanceId)
+      .withNoItemId()
+      .withNoHoldingsRecordId()
       .by(requester)
       .withRequestDate(requestDate)
       .fulfilToHoldShelf()
@@ -2847,11 +2918,24 @@ public class RequestsAPICreationTests extends APITests {
     return new RequestBuilder()
       .page()
       .titleRequestLevel()
-      .withItemId(itemResource.getId())
+      .withNoItemId()
+      .withNoHoldingsRecordId()
       .withInstanceId(itemResource.getInstanceId())
       .withRequesterId(usersFixture.charlotte().getId())
       .withRequestDate(getZonedDateTime())
       .withStatus(OPEN_NOT_YET_FILLED)
       .withPickupServicePoint(servicePointsFixture.cd1());
+  }
+
+  private RequestBuilder buildPageTitleLevelRequest(UUID patronId, UUID pickupServicePointId,
+    UUID instanceId) {
+    return new RequestBuilder()
+      .page()
+      .titleRequestLevel()
+      .withInstanceId(instanceId)
+      .withNoItemId()
+      .withNoHoldingsRecordId()
+      .withPickupServicePointId(pickupServicePointId)
+      .withRequesterId(patronId);
   }
 }

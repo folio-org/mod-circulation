@@ -47,6 +47,7 @@ import lombok.With;
 @Getter
 public class Request implements ItemRelatedRecord, UserRelatedRecord {
   private final TlrSettingsConfiguration tlrSettingsConfiguration;
+  private final Operation operation;
 
   @With
   private final JsonObject requestRepresentation;
@@ -80,14 +81,16 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   private boolean changedStatus;
 
   public static Request from(JsonObject representation) {
-    return new Request(null, representation, null, null, null, null, null,
+    // TODO: make sure that operation and TLR settings don't matter for all processes calling
+    //  this constructor
+    return new Request(null, null, representation, null, null, null, null, null,
       null, null, null, false, null, false);
   }
 
-  public static Request from(TlrSettingsConfiguration tlrSettingsConfiguration,
+  public static Request from(TlrSettingsConfiguration tlrSettingsConfiguration, Operation operation,
     JsonObject representation) {
 
-    return new Request(tlrSettingsConfiguration, representation, null, null,
+    return new Request(tlrSettingsConfiguration, operation, representation, null, null,
       null, null, null, null, null, null, false, null, false);
   }
 
@@ -97,6 +100,10 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
 
   boolean isFulfillable() {
     return getFulfilmentPreference() == HOLD_SHELF || getFulfilmentPreference() == DELIVERY;
+  }
+
+  public boolean isPage() {
+    return getRequestType() == RequestType.PAGE;
   }
 
   public boolean isOpen() {
@@ -147,7 +154,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return requestRepresentation.getString(INSTANCE_ID);
   }
 
-  public boolean isPage() {
+  public boolean isRecall() {
     return getRequestType() == RequestType.RECALL;
   }
 
@@ -162,6 +169,10 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return requestRepresentation.getString(ITEM_ID);
   }
 
+  public String getHoldingsRecordId() {
+    return requestRepresentation.getString(HOLDINGS_RECORD_ID);
+  }
+
   public Request withItem(Item newItem) {
     // NOTE: this is null in RequestsAPIUpdatingTests.replacingAnExistingRequestRemovesItemInformationWhenItemDoesNotExist test
     if (newItem != null && newItem.getItemId() != null && newItem.getHoldingsRecordId() != null) {
@@ -169,7 +180,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
       requestRepresentation.put(HOLDINGS_RECORD_ID, newItem.getHoldingsRecordId());
     }
 
-    return new Request(tlrSettingsConfiguration, requestRepresentation,
+    return new Request(tlrSettingsConfiguration, operation, requestRepresentation,
       cancellationReasonRepresentation, instance, newItem, requester, proxy, addressType,
       loan == null ? null : loan.withItem(newItem), pickupServicePoint, changedPosition,
       previousPosition, changedStatus);
@@ -336,5 +347,9 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
 
   public boolean hasChangedStatus() {
     return changedStatus;
+  }
+
+  public enum Operation {
+    CREATE, REPLACE;
   }
 }

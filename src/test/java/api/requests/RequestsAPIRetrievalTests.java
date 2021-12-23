@@ -260,10 +260,11 @@ class RequestsAPIRetrievalTests extends APITests {
     UUID instanceId = smallAngryPlanet.getInstanceId();
 
     IndividualResource requestResource = requestsClient.create(new RequestBuilder()
-      .page()
+      .hold()
       .titleRequestLevel()
-      .withItemId(smallAngryPlanet.getId())
       .withInstanceId(instanceId)
+      .withNoItemId()
+      .withNoHoldingsRecordId()
       .withPickupServicePointId(pickupServicePointId)
       .withRequestDate(requestDate)
       .withRequesterId(requesterId));
@@ -272,7 +273,7 @@ class RequestsAPIRetrievalTests extends APITests {
     JsonObject representation = response.getJson();
 
     assertThat(representation.getString("id"), is(requestResource.getJson().getString("id")));
-    assertThat(representation.getString("requestType"), is("Page"));
+    assertThat(representation.getString("requestType"), is("Hold"));
     assertThat(representation.getString("requestLevel"), is("Title"));
 
     final JsonObject instanceSummary = representation.getJsonObject("instance");
