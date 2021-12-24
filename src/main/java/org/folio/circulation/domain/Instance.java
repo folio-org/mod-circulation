@@ -51,4 +51,8 @@ public class Instance {
   public JsonArray getEditions() {
     return getArrayProperty(instanceRepresentation, EDITIONS);
   }
+
+  public String getId() {
+    return getProperty(instanceRepresentation, "id");
+  }
 }

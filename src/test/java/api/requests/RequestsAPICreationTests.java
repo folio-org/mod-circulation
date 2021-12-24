@@ -2274,6 +2274,24 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
+  void getManyRequestWithIdParamQueryShouldReturnRequestWithFetchedInstance() {
+    IndividualResource request = requestsFixture.place(
+      new RequestBuilder()
+        .open()
+        .page()
+        .forItem(itemsFixture.basedUponSmallAngryPlanet())
+        .by(usersFixture.charlotte())
+        .fulfilToHoldShelf()
+        .withPickupServicePointId(servicePointsFixture.cd1().getId()));
+    JsonObject requestRepresentation = requestsClient.getMany(exactMatch("id", request.getId().toString())).getFirst();
+
+    assertThat(requestRepresentation, notNullValue());
+    JsonObject instanceRepresentation = requestRepresentation.getJsonObject("instance");
+    assertThat(instanceRepresentation, notNullValue());
+    validateInstanceRepresentation(instanceRepresentation);
+  }
+
+  @Test
   void requestRefusedWhenAutomatedBlockExistsForPatron() {
     final IndividualResource steve = usersFixture.steve();
     final ItemResource item = itemsFixture.basedUponTemeraire();
@@ -2937,5 +2955,25 @@ public class RequestsAPICreationTests extends APITests {
       .withNoHoldingsRecordId()
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(patronId);
+  }
+
+  private void validateInstanceRepresentation(JsonObject requestInstance){
+    JsonArray contributors = requestInstance.getJsonArray("contributorNames");
+    assertThat(contributors, notNullValue());
+    assertThat(contributors.size(), is(1));
+    assertThat(contributors.getJsonObject(0).getString("name"), is("Chambers, Becky"));
+
+    JsonArray editions = requestInstance.getJsonArray("editions");
+    assertThat(editions, Matchers.notNullValue());
+    assertThat(editions.size(), is(1));
+    assertThat(editions.getString(0), is("First American Edition"));
+
+    JsonArray publication = requestInstance.getJsonArray("publication");
+    assertThat(publication, Matchers.notNullValue());
+    assertThat(publication.size(), is(1));
+    JsonObject firstPublication = publication.getJsonObject(0);
+    assertThat(firstPublication.getString("publisher"), is("Alfred A. Knopf"));
+    assertThat(firstPublication.getString("place"), is("New York"));
+    assertThat(firstPublication.getString("dateOfPublication"), is("2016"));
   }
 }
