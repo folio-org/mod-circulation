@@ -46,15 +46,11 @@ final class LoanToChargeFees {
   }
 
   String getOwnerServicePointId() {
-    if (loan.getItem() != null && loan.getItem().getPermanentLocation() != null &&
-      loan.getItem().getPermanentLocation().getPrimaryServicePointId() != null) {
-
+    try {
       return loan.getItem().getPermanentLocation().getPrimaryServicePointId().toString();
-    } else {
-      String errorMessage = format("Failed to get service point id for loanId: \"%s\"",
-        loan.getId());
-      log.error(errorMessage);
-      throw new IllegalStateException(errorMessage);
+    } catch (RuntimeException e) {
+      log.error(format("Failed to get service pointId for the loanId: \"%s\"", loan.getId()));
+      return null;
     }
   }
 
