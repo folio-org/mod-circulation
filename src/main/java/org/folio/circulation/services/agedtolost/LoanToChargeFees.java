@@ -1,9 +1,11 @@
 package org.folio.circulation.services.agedtolost;
 
+import static java.lang.String.format;
 import static java.util.function.Function.identity;
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_FEE_TYPE;
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_PROCESSING_FEE_TYPE;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -15,6 +17,8 @@ import org.folio.circulation.domain.FeeFineOwner;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.policy.lostitem.LostItemPolicy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -23,6 +27,8 @@ import lombok.Getter;
 @Getter(AccessLevel.PACKAGE)
 @AllArgsConstructor(access = AccessLevel.PACKAGE)
 final class LoanToChargeFees {
+  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+
   private final Loan loan;
   private final FeeFineOwner owner;
   private final Map<String, FeeFine> feeFineTypes;
@@ -40,7 +46,16 @@ final class LoanToChargeFees {
   }
 
   String getOwnerServicePointId() {
-    return loan.getItem().getPermanentLocation().getPrimaryServicePointId().toString();
+    if (loan.getItem() != null && loan.getItem().getPermanentLocation() != null &&
+      loan.getItem().getPermanentLocation().getPrimaryServicePointId() != null) {
+
+      return loan.getItem().getPermanentLocation().getPrimaryServicePointId().toString();
+    } else {
+      String errorMessage = format("Failed to get service point id for loanId: \"%s\"",
+        loan.getId());
+      log.error(errorMessage);
+      throw new IllegalStateException(errorMessage);
+    }
   }
 
   FeeFine getLostItemFeeType() {
