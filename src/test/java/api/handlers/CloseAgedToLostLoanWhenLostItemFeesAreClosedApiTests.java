@@ -116,7 +116,7 @@ class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends APITests {
 
     JsonObject loanById = loansFixture.getLoanById(loan.getId()).getJson();
     assertThat(loanById, isOpen());
-    assertThat(loanById.getString("itemId"), is(item.getId()));
+    assertThat(loanById.getString("itemId"), is(item.getId().toString()));
   }
 
   @Test
