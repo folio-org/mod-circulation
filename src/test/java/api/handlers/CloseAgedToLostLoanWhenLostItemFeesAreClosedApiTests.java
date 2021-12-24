@@ -6,6 +6,7 @@ import static api.support.matchers.ItemMatchers.isLostAndPaid;
 import static api.support.matchers.LoanMatchers.isClosed;
 import static api.support.matchers.LoanMatchers.isOpen;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getUUIDProperty;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 import api.support.http.IndividualResource;
@@ -14,6 +15,7 @@ import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.ItemBuilder;
+import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
@@ -101,6 +103,20 @@ class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends APITests {
 
     assertThat(loansFixture.getLoanById(loan.getId()).getJson(), isOpen());
     assertThat(itemsClient.getById(item.getId()).getJson(), isAgedToLost());
+  }
+
+  @Test
+  public void shouldNotFailWhenAgedToLostLoanHasNonExistentItem() {
+    var item = itemsFixture.basedUponNod(ItemBuilder::withRandomBarcode);
+    var loan = checkOutFixture.checkOutByBarcode(item, usersFixture.steve());
+    ageToLostFixture.ageToLost();
+    itemsClient.delete(item.getId());
+
+    ageToLostFixture.chargeFees();
+
+    JsonObject loanById = loansFixture.getLoanById(loan.getId()).getJson();
+    assertThat(loanById, isOpen());
+    assertThat(loanById.getString("itemId"), is(item.getId()));
   }
 
   @Test
