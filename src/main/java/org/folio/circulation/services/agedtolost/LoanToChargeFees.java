@@ -26,7 +26,7 @@ import lombok.Getter;
 
 @Getter(AccessLevel.PACKAGE)
 @AllArgsConstructor(access = AccessLevel.PACKAGE)
-final class LoanToChargeFees {
+public final class LoanToChargeFees {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private final Loan loan;
@@ -45,7 +45,7 @@ final class LoanToChargeFees {
     return owner == null;
   }
 
-  String getOwnerServicePointId() {
+  public String getOwnerServicePointId() {
     try {
       return loan.getItem().getPermanentLocation().getPrimaryServicePointId().toString();
     } catch (RuntimeException e) {
@@ -82,7 +82,7 @@ final class LoanToChargeFees {
       && !getLostItemPolicy().getAgeToLostProcessingFee().isChargeable();
   }
 
-  static LoanToChargeFees usingLoan(Loan loan) {
+  public static LoanToChargeFees usingLoan(Loan loan) {
     return new LoanToChargeFees(loan, null, Collections.emptyMap());
   }
 

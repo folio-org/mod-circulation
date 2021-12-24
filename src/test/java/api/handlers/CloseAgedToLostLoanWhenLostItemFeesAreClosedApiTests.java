@@ -7,9 +7,13 @@ import static api.support.matchers.LoanMatchers.isClosed;
 import static api.support.matchers.LoanMatchers.isOpen;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getUUIDProperty;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-import api.support.http.IndividualResource;
+import java.util.UUID;
+
+import org.folio.circulation.domain.Loan;
+import org.folio.circulation.services.agedtolost.LoanToChargeFees;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -117,6 +121,13 @@ class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends APITests {
     JsonObject loanById = loansFixture.getLoanById(loan.getId()).getJson();
     assertThat(loanById, isOpen());
     assertThat(loanById.getString("itemId"), is(item.getId().toString()));
+  }
+
+  @Test
+  public void getOwnerServicePointIdShouldNotFailIfItemDoesNotExist() {
+    JsonObject loanJson = new JsonObject().put("id", UUID.randomUUID().toString());
+    assertThat(LoanToChargeFees.usingLoan(Loan.from(loanJson)).getOwnerServicePointId(),
+      nullValue());
   }
 
   @Test
