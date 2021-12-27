@@ -85,21 +85,20 @@ public class RequestRepository {
 
   public CompletableFuture<Result<MultipleRecords<Request>>> findBy(String query) {
     return requestsStorageClient.getManyWithRawQueryStringParameters(query)
-      .thenApply(flatMapResult(this::mapResponseToRequests))
-      .thenComposeAsync(result -> itemRepository.fetchItemsFor(result, Request::withItem))
+      .thenApply(flatMapResult(this::mapResponseToRequests)).thenComposeAsync(this::fetchFields);
+  }
+
+  CompletableFuture<Result<MultipleRecords<Request>>> findBy(CqlQuery query, PageLimit pageLimit) {
+    return findByWithoutItems(query, pageLimit).thenComposeAsync(this::fetchFields);
+  }
+
+  private CompletableFuture<Result<MultipleRecords<Request>>> fetchFields(Result<MultipleRecords<Request>> coreResult) {
+    return itemRepository.fetchItemsFor(coreResult, Request::withItem)
       .thenComposeAsync(result -> result.after(loanRepository::findOpenLoansFor))
       .thenComposeAsync(result -> result.after(servicePointRepository::findServicePointsForRequests))
       .thenComposeAsync(result -> result.after(userRepository::findUsersForRequests))
       .thenComposeAsync(result -> result.after(patronGroupRepository::findPatronGroupsForRequestsUsers))
       .thenComposeAsync(result -> result.after(instanceRepository::findInstancesForRequests));
-  }
-
-  CompletableFuture<Result<MultipleRecords<Request>>> findBy(CqlQuery query,
-    PageLimit pageLimit) {
-
-    return findByWithoutItems(query, pageLimit)
-      .thenComposeAsync(requests ->
-        itemRepository.fetchItemsFor(requests, Request::withItem));
   }
 
   CompletableFuture<Result<MultipleRecords<Request>>> findByWithoutItems(
