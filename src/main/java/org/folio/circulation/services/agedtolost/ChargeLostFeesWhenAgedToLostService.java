@@ -222,12 +222,12 @@ public class ChargeLostFeesWhenAgedToLostService {
     MultipleRecords<Loan> loans) {
 
     return itemRepository.fetchItemsFor(succeeded(loans), Loan::withItem)
-      .thenApply(r -> r.next(this::excludeLoansWithNonExistentItems))
+      .thenApply(r -> r.next(this::excludeLoansWithNonexistentItems))
       .thenCompose(r -> r.after(userRepository::findUsersForLoans))
       .thenComposeAsync(r -> r.after(lostItemPolicyRepository::findLostItemPoliciesForLoans));
   }
 
-  private Result<MultipleRecords<Loan>> excludeLoansWithNonExistentItems(
+  private Result<MultipleRecords<Loan>> excludeLoansWithNonexistentItems(
     MultipleRecords<Loan> loans) {
 
     return succeeded(loans.filter(loan -> loan.getItem().isFound()));

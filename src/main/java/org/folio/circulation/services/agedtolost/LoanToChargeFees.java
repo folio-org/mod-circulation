@@ -49,7 +49,7 @@ public final class LoanToChargeFees {
     try {
       return loan.getItem().getPermanentLocation().getPrimaryServicePointId().toString();
     } catch (RuntimeException e) {
-      log.error(format("Failed to get service pointId for the loanId: \"%s\"", loan.getId()));
+      log.error(format("Failed to get servicePointId for the loanId: \"%s\"", loan.getId()));
       return null;
     }
   }

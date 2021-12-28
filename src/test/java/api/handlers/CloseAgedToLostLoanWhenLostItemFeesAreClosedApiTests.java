@@ -1,5 +1,6 @@
 package api.handlers;
 
+import static api.support.http.CqlQuery.exactMatch;
 import static api.support.matchers.ItemMatchers.isAgedToLost;
 import static api.support.matchers.ItemMatchers.isCheckedOut;
 import static api.support.matchers.ItemMatchers.isLostAndPaid;
@@ -110,7 +111,7 @@ class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends APITests {
   }
 
   @Test
-  public void shouldNotFailWhenAgedToLostLoanHasNonExistentItem() {
+  public void shouldNotFailWhenAgedToLostLoanHasNonexistentItem() {
     var item = itemsFixture.basedUponNod(ItemBuilder::withRandomBarcode);
     var loan = checkOutFixture.checkOutByBarcode(item, usersFixture.steve());
     ageToLostFixture.ageToLost();
@@ -121,6 +122,8 @@ class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends APITests {
     JsonObject loanById = loansFixture.getLoanById(loan.getId()).getJson();
     assertThat(loanById, isOpen());
     assertThat(loanById.getString("itemId"), is(item.getId().toString()));
+    assertThat(accountsClient.getMany(exactMatch("loanId", loan.getId().toString())).size(),
+      is(0));
   }
 
   @Test
