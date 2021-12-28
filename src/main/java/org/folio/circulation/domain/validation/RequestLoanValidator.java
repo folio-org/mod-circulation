@@ -1,7 +1,7 @@
 package org.folio.circulation.domain.validation;
 
+import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.http.client.PageLimit.limit;
-import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.results.Result.succeeded;
@@ -21,7 +21,6 @@ import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.storage.ItemByInstanceIdFinder;
-import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.server.ValidationError;
@@ -76,16 +75,16 @@ public class RequestLoanValidator {
 
     return matchingLoans.isEmpty()
       ? succeeded(requestAndRelatedRecords)
-      : failed(createValidationError(requestAndRelatedRecords, matchingLoans.get(0)));
+      : failure(requestAndRelatedRecords, matchingLoans.get(0));
   }
 
-  private ValidationErrorFailure createValidationError(RequestAndRelatedRecords requestAndRelatedRecords,
+  private Result<RequestAndRelatedRecords> failure(RequestAndRelatedRecords requestAndRelatedRecords,
       Loan loan) {
-    return new ValidationErrorFailure(
-      new ValidationError("One of the items of the requested title is already loaned to the requester",
-        Map.of(
-          "userId", requestAndRelatedRecords.getRequest().getUserId(),
-          "itemId", loan.getItemId()
-        )));
+    String message = "One of the items of the requested title is already loaned to the requester";
+    HashMap<String, String> parameters = new HashMap<>();
+    parameters.put("userId", requestAndRelatedRecords.getRequest().getUserId());
+    parameters.put("itemId", loan.getItemId());
+
+    return failedValidation(message, parameters);
   }
 }

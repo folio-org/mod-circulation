@@ -581,6 +581,83 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
+  void cannotCreateTlrRequestWhenUserHasAlreadyRequestedInstanceOrItemTlrOnRequestLevelTitle() {
+    reconfigureTlrFeature(TlrFeatureStatus.ENABLED);
+
+    IndividualResource instanceMultipleCopies = instancesFixture.basedUponDunkirk();
+    IndividualResource holdings = holdingsFixture.defaultWithHoldings(
+      instanceMultipleCopies.getId());
+    IndividualResource locationsResource = locationsFixture.mainFloor();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    String instanceId = holdings.getJson().getString("instanceId");
+
+    itemsFixture.createItemWithHoldingsAndLocation(holdings.getId(),
+      locationsResource.getId());
+    requestsClient.attemptCreate(
+      new RequestBuilder()
+        .hold()
+        .withPickupServicePointId(pickupServicePointId)
+        .titleRequestLevel()
+        .withInstanceId(UUID.fromString(instanceId))
+        .withNoItemId()
+        .withNoHoldingsRecordId()
+        .by(usersFixture.james())
+        .create());
+
+    Response postResponse = requestsClient.attemptCreate(
+      new RequestBuilder()
+        .hold()
+        .withPickupServicePointId(pickupServicePointId)
+        .titleRequestLevel()
+        .withInstanceId(UUID.fromString(instanceId))
+        .withNoItemId()
+        .withNoHoldingsRecordId()
+        .by(usersFixture.james())
+        .create());
+
+
+    assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(postResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("This requester already has an open request for this instance"),
+      hasParameter("requesterId", usersFixture.james().getId().toString()),
+      hasParameter("instanceId", instanceId))));
+  }
+
+  @Test
+  void cannotCreateTlrRequestWhenUserHasAlreadyRequestedInstanceOrItemTlrOnRequestLevelItem() {
+    reconfigureTlrFeature(TlrFeatureStatus.ENABLED);
+
+    final ItemResource checkedOutItem = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource requestPickupServicePoint = servicePointsFixture.cd1();
+    final IndividualResource charlotte = usersFixture.charlotte();
+    final IndividualResource jessica = usersFixture.jessica();
+
+    checkOutFixture.checkOutByBarcode(checkedOutItem, charlotte);
+
+    requestsClient.create(new RequestBuilder()
+      .recall()
+      .itemRequestLevel()
+      .forItem(checkedOutItem)
+      .withPickupServicePointId(requestPickupServicePoint.getId())
+      .by(jessica));
+
+    final Response response = requestsClient.attemptCreate(new RequestBuilder()
+      .recall()
+      .itemRequestLevel()
+      .forItem(checkedOutItem)
+      .withPickupServicePointId(requestPickupServicePoint.getId())
+      .by(jessica));
+
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(response.getJson(), hasErrors(1));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("This requester already has an open request for one of the instance's items"),
+      hasParameter("itemId", checkedOutItem.getId().toString()),
+      hasParameter("requesterId", jessica.getId().toString()),
+      hasParameter("instanceId", checkedOutItem.getInstanceId().toString()))));
+  }
+
+  @Test
   void cannotCreateRecallRequestWhenItemIsNotCheckedOut() {
     ItemResource item = itemsFixture.basedUponSmallAngryPlanet(
       ItemBuilder::available);

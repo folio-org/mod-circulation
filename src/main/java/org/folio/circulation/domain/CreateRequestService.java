@@ -68,7 +68,7 @@ public class CreateRequestService {
       .mapFailure(err -> errorHandler.handleValidationError(err, INVALID_USER_OR_PATRON_GROUP_ID, result))
       .next(RequestServiceUtility::refuseWhenUserIsInactive)
       .mapFailure(err -> errorHandler.handleValidationError(err, USER_IS_INACTIVE, result))
-      .next(RequestServiceUtility::refuseWhenUserHasAlreadyRequestedItem)
+      .next(RequestServiceUtility::refuseWhenAlreadyRequested)
       .mapFailure(err -> errorHandler.handleValidationError(err, ITEM_ALREADY_REQUESTED_BY_SAME_USER, result))
       .after(automatedBlocksValidator::validate)
       .thenApply(r -> errorHandler.handleValidationResult(r, automatedBlocksValidator.getErrorType(), result))
