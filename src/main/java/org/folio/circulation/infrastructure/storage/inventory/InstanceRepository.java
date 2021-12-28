@@ -5,10 +5,10 @@ import static org.folio.circulation.support.fetching.RecordFetching.findWithMult
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.lang.invoke.MethodHandles;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -19,7 +19,6 @@ import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
 import org.folio.circulation.support.SingleRecordFetcher;
 import org.folio.circulation.support.results.Result;
 
@@ -55,37 +54,27 @@ public class InstanceRepository {
       return completedFuture(succeeded(multipleRequests));
     }
 
-    final FindWithMultipleCqlIndexValues<Instance> fetcher = createInstancesFetcher();
-
-    return fetcher.findByIds(instanceIdsToFetch)
+    return  findWithMultipleCqlIndexValues(instancesClient, "instances", Instance::from)
+      .findByIds(instanceIdsToFetch)
       .thenApply(multipleInstancesResult -> multipleInstancesResult.next(
         multipleInstances -> {
-          List<Request> newRequestList = new ArrayList<>();
-          Collection<Instance> instanceCollection = multipleInstances.getRecords();
-          for (Request request : requests) {
-            Request newRequest = null;
-            boolean foundInstance = false;
-            for (Instance instance : instanceCollection) {
-              if (request.getInstanceId() != null && request.getInstanceId().equals(instance.getId())) {
-                newRequest = request.withInstance(instance);
-                foundInstance = true;
-                break;
+          List<Request> newRequestList = requests.stream()
+            .map(request -> {
+              Optional<Instance> matchedInstance = multipleInstances.getRecords().stream()
+                .filter(instance -> (request.getInstanceId() != null && request.getInstanceId().equals(instance.getId())))
+                .findFirst();
+              if (matchedInstance.isEmpty()) {
+                log.info("No instance found for request {} (instanceId {})", request.getId(), request.getInstanceId());
+                return request;
+              } else {
+                return request.withInstance(matchedInstance.get());
               }
-            }
-            if (!foundInstance) {
-              log.info("No instance (out of {}) found for request {} (instanceId {})",
-                instanceCollection.size(), request.getId(), request.getInstanceId());
-              newRequest = request;
-            }
-            newRequestList.add(newRequest);
-          }
+            }).collect(Collectors.toList());
+
           return succeeded(new MultipleRecords<>(newRequestList,
             multipleRequests.getTotalRecords()));
         }
       ));
   }
 
-  private FindWithMultipleCqlIndexValues<Instance> createInstancesFetcher() {
-    return findWithMultipleCqlIndexValues(instancesClient, "instances", Instance::from);
-  }
 }
