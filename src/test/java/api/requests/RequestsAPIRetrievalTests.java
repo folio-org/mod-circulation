@@ -55,7 +55,6 @@ class RequestsAPIRetrievalTests extends APITests {
     UUID facultyGroupId = patronGroupsFixture.faculty().getId();
     UUID staffGroupId = patronGroupsFixture.staff().getId();
     UUID isbnIdentifierId = identifierTypesFixture.isbn().getId();
-    UUID instanceId = UUID.randomUUID();
     String isbnValue = "9780866989732";
 
     final ItemResource smallAngryPlanet = itemsFixture

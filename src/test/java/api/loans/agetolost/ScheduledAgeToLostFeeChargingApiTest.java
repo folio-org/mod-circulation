@@ -90,7 +90,7 @@ class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     assertThat(result.getLoan(), hasLostItemFeeCreatedBySystemAction());
 
     assertThat(result.getLoan(), hasLoanHistoryInOrder(
-      hasJsonPath("loan.action", ""),
+      hasJsonPath("loan.action", "lostFeesCharged"),
       hasJsonPath("loan.action", "itemAgedToLost"),
       hasJsonPath("loan.action", "checkedout")
     ));
