@@ -1,19 +1,26 @@
 package api.handlers;
 
+import static api.support.http.CqlQuery.exactMatch;
 import static api.support.matchers.ItemMatchers.isAgedToLost;
 import static api.support.matchers.ItemMatchers.isCheckedOut;
 import static api.support.matchers.ItemMatchers.isLostAndPaid;
 import static api.support.matchers.LoanMatchers.isClosed;
 import static api.support.matchers.LoanMatchers.isOpen;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getUUIDProperty;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-import api.support.http.IndividualResource;
+import java.util.UUID;
+
+import org.folio.circulation.domain.Loan;
+import org.folio.circulation.services.agedtolost.LoanToChargeFees;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.ItemBuilder;
+import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
@@ -101,6 +108,29 @@ class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends APITests {
 
     assertThat(loansFixture.getLoanById(loan.getId()).getJson(), isOpen());
     assertThat(itemsClient.getById(item.getId()).getJson(), isAgedToLost());
+  }
+
+  @Test
+  public void shouldNotFailWhenAgedToLostLoanHasNonexistentItem() {
+    var item = itemsFixture.basedUponNod(ItemBuilder::withRandomBarcode);
+    var loan = checkOutFixture.checkOutByBarcode(item, usersFixture.steve());
+    ageToLostFixture.ageToLost();
+    itemsClient.delete(item.getId());
+
+    ageToLostFixture.chargeFees();
+
+    JsonObject loanById = loansFixture.getLoanById(loan.getId()).getJson();
+    assertThat(loanById, isOpen());
+    assertThat(loanById.getString("itemId"), is(item.getId().toString()));
+    assertThat(accountsClient.getMany(exactMatch("loanId", loan.getId().toString())).size(),
+      is(0));
+  }
+
+  @Test
+  public void getOwnerServicePointIdShouldNotFailIfItemDoesNotExist() {
+    JsonObject loanJson = new JsonObject().put("id", UUID.randomUUID().toString());
+    assertThat(LoanToChargeFees.usingLoan(Loan.from(loanJson)).getOwnerServicePointId(),
+      nullValue());
   }
 
   @Test
