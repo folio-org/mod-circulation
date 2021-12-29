@@ -29,9 +29,7 @@
         "title": "Children of Time"
       },
       "item": {
-        "status": "Checked out",
-        "barcode": "760932543816",
-        "copyNumber": "cp2"
+        "barcode": "760932543816"
       },
       "requester": {
         "firstName": "Stephen",
