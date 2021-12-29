@@ -122,8 +122,7 @@
             }
           }
         }
-      }
-    },
+      },
     "item": {
       "description": "Copy of some item metadata (used for searching and sorting)",
       "type": "object",
