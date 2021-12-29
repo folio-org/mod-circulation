@@ -26,7 +26,6 @@ import org.apache.logging.log4j.Logger;
 import io.vertx.core.json.JsonObject;
 
 public abstract class CirculationPolicyRepository<T> {
-  public static final String LOCATION_ID_NAME = "location_id";
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   protected final CollectionResourceClient policyStorageClient;
@@ -98,6 +97,26 @@ public abstract class CirculationPolicyRepository<T> {
     if (item.isNotFound()) {
       return completedFuture(failedDueToServerError(
         "Unable to apply circulation rules for unknown item"));
+    }
+
+    if (user.getPatronGroupId() == null) {
+      log.error("PatronGroupId is null for user {}", user.getId());
+      return completedFuture(failedDueToServerError("Unable to apply circulation rules with user that is patronGroup is null"));
+    }
+
+    if (item.getLocationId() == null) {
+      log.error("LocationId is null for item {}", item.getItemId());
+      return completedFuture(failedDueToServerError("Unable to apply circulation rules with item that is LocationId is null"));
+    }
+
+    if (item.determineLoanTypeForItem() == null) {
+      log.error("LoanTypeId is null for item {}", item.getItemId());
+      return completedFuture(failedDueToServerError("Unable to apply circulation rules with item that is loanTypeId is null"));
+    }
+
+    if (item.getMaterialTypeId() == null) {
+      log.error("MaterialTypeId is null for item {}", item.getItemId());
+      return completedFuture(failedDueToServerError("Unable to apply circulation rules with item that is materialTypeId is null"));
     }
 
     return getPolicyAndMatch(forItem(item, user));
