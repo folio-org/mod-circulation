@@ -23,6 +23,7 @@ public class RequestByInstanceIdRequest {
   private static final String INSTANCE_ID = "instanceId";
   private static final String REQUEST_EXPIRATION_DATE = "requestExpirationDate";
   private static final String PICKUP_SERVICE_POINT_ID = "pickupServicePointId";
+  private static final String REQUEST_LEVEL = "requestLevel";
 
   private final ZonedDateTime requestDate;
   private final UUID requesterId;
@@ -30,6 +31,7 @@ public class RequestByInstanceIdRequest {
   private final ZonedDateTime requestExpirationDate;
   private final UUID pickupServicePointId;
   private final String patronComments;
+  private final String requestLevel;
 
   public static Result<RequestByInstanceIdRequest> from(JsonObject json) {
     final ZonedDateTime requestDate = getDateTimeProperty(json, REQUEST_DATE);
@@ -52,8 +54,10 @@ public class RequestByInstanceIdRequest {
 
     final ZonedDateTime requestExpirationDate = getDateTimeProperty(json, REQUEST_EXPIRATION_DATE);
     final UUID pickupServicePointId = getUUIDProperty(json, PICKUP_SERVICE_POINT_ID);
+    final String requestLevel = json.getString("requestLevel");
 
     return succeeded(new RequestByInstanceIdRequest(requestDate, requesterId, instanceId,
-        requestExpirationDate, pickupServicePointId, getProperty(json, "patronComments")));
+      requestExpirationDate, pickupServicePointId, getProperty(json, "patronComments"),
+      requestLevel));
   }
 }

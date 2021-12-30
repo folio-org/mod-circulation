@@ -34,10 +34,10 @@ class RequestsAPITitleTests extends APITests {
     JsonObject createdRequest = response.getJson();
 
     assertThat("has item title",
-      createdRequest.getJsonObject("item").containsKey("title"), is(true));
+      createdRequest.getJsonObject("instance").containsKey("title"), is(true));
 
     assertThat("title is taken from instance",
-      createdRequest.getJsonObject("item").getString("title"),
+      createdRequest.getJsonObject("instance").getString("title"),
       is("The Long Way to a Small, Angry Planet"));
 
     Response fetchedRequestResponse = requestsClient.getById(response.getId());
@@ -47,10 +47,10 @@ class RequestsAPITitleTests extends APITests {
     JsonObject fetchedRequest = fetchedRequestResponse.getJson();
 
     assertThat("has item title",
-      fetchedRequest.getJsonObject("item").containsKey("title"), is(true));
+      fetchedRequest.getJsonObject("instance").containsKey("title"), is(true));
 
     assertThat("title is taken from instance",
-      fetchedRequest.getJsonObject("item").getString("title"),
+      fetchedRequest.getJsonObject("instance").getString("title"),
       is("The Long Way to a Small, Angry Planet"));
   }
 
@@ -83,10 +83,10 @@ class RequestsAPITitleTests extends APITests {
     JsonObject fetchedRequest = fetchedRequestResponse.getJson();
 
     assertThat("has item title",
-      fetchedRequest.getJsonObject("item").containsKey("title"), is(true));
+      fetchedRequest.getJsonObject("instance").containsKey("title"), is(true));
 
     assertThat("title is taken from instance",
-      fetchedRequest.getJsonObject("item").getString("title"),
+      fetchedRequest.getJsonObject("instance").getString("title"),
       is("A new instance title"));
   }
 
@@ -122,17 +122,17 @@ class RequestsAPITitleTests extends APITests {
       fetchedRequestsResponse, secondRequestId).get();
 
     assertThat("has item title",
-      firstFetchedRequest.getJsonObject("item").containsKey("title"), is(true));
+      firstFetchedRequest.getJsonObject("instance").containsKey("title"), is(true));
 
     assertThat("title is taken from instance",
-      firstFetchedRequest.getJsonObject("item").getString("title"),
+      firstFetchedRequest.getJsonObject("instance").getString("title"),
       is("The Long Way to a Small, Angry Planet"));
 
     assertThat("has item title",
-      secondFetchedRequest.getJsonObject("item").containsKey("title"), is(true));
+      secondFetchedRequest.getJsonObject("instance").containsKey("title"), is(true));
 
     assertThat("title is taken from instance",
-      secondFetchedRequest.getJsonObject("item").getString("title"),
+      secondFetchedRequest.getJsonObject("instance").getString("title"),
       is("Temeraire"));
   }
 }

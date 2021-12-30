@@ -8,11 +8,21 @@ import org.junit.jupiter.api.Test;
 class InstanceTests {
   @Test
   void cannotHaveANullCollectionOfIdentifiers() {
-    assertThrows(NullPointerException.class, () -> new Instance("Title", null, emptyList()));
+    assertThrows(NullPointerException.class, () -> new Instance("Title", null, emptyList(), emptyList(), emptyList()));
   }
 
   @Test
   void cannotHaveANullCollectionOfContributors() {
-    assertThrows(NullPointerException.class, () -> new Instance("Title", emptyList(), null));
+    assertThrows(NullPointerException.class, () -> new Instance("Title", emptyList(), null, emptyList(), emptyList()));
+  }
+
+  @Test
+  void cannotHaveANullCollectionOfPublication() {
+    assertThrows(NullPointerException.class, () -> new Instance("Title", emptyList(), emptyList(), null, emptyList()));
+  }
+
+  @Test
+  void cannotHaveANullCollectionOfEditions() {
+    assertThrows(NullPointerException.class, () -> new Instance("Title", emptyList(), emptyList(), emptyList(), null));
   }
 }
