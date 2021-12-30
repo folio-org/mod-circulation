@@ -1,11 +1,13 @@
 package api.requests;
 
+import static api.support.builders.RequestBuilder.OPEN_AWAITING_PICKUP;
 import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
 import static api.support.fakes.FakePubSub.getPublishedEventsAsList;
 import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.fixtures.AutomatedPatronBlocksFixture.MAX_NUMBER_OF_ITEMS_CHARGED_OUT_MESSAGE;
 import static api.support.fixtures.AutomatedPatronBlocksFixture.MAX_OUTSTANDING_FEE_FINE_BALANCE_MESSAGE;
 import static api.support.http.CqlQuery.exactMatch;
+import static api.support.http.CqlQuery.notEqual;
 import static api.support.http.Limit.limit;
 import static api.support.http.Offset.noOffset;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
@@ -2752,6 +2754,57 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(requestJson.getString("holdShelfExpirationDate"), is("2021-08-31"));
     assertThat(requestJson.getString("status"), is("Open - Not yet filled"));
     assertThat(requestJson.getString("pickupServicePointId"), is(pickupServicePointId.toString()));
+  }
+
+  @Test
+  void statusOfTlrRequestShouldBeChangedIfAssociatedItemCheckedIn() {
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    UUID instanceId = UUID.randomUUID();
+    configurationsFixture.enableTlrFeature();
+    ItemResource firstItem = buildItem(instanceId, "111");
+    ItemResource secondItem = buildItem(instanceId, "222");
+
+    IndividualResource firstTlrRequest = requestsFixture.place(
+      buildPageRequest(instanceId, pickupServicePointId, usersFixture.steve()));
+    IndividualResource secondTlrRequest = requestsFixture.place(
+      buildPageRequest(instanceId, pickupServicePointId, usersFixture.jessica()));
+
+    assertThat(firstTlrRequest.getJson().getString("status"), is(OPEN_NOT_YET_FILLED));
+    assertThat(secondTlrRequest.getJson().getString("status"), is(OPEN_NOT_YET_FILLED));
+
+    checkInFixture.checkInByBarcode(secondItem);
+    var requestAssociatedWithSecondItem = requestsFixture.getRequests(
+      exactMatch("itemId", secondItem.getId().toString()), limit(1), noOffset()).getFirst();
+    var requestAssociatedWithFirstItem = requestsFixture.getRequests(
+      notEqual("itemId", secondItem.getId().toString()), limit(1), noOffset()).getFirst();
+    assertThat(requestAssociatedWithSecondItem.getString("status"), is(OPEN_AWAITING_PICKUP));
+    assertThat(requestAssociatedWithFirstItem.getString("status"), is(OPEN_NOT_YET_FILLED));
+
+    checkInFixture.checkInByBarcode(firstItem);
+    requestAssociatedWithFirstItem = requestsFixture.getRequests(
+      notEqual("itemId", secondItem.getId().toString()), limit(1), noOffset()).getFirst();
+    assertThat(requestAssociatedWithFirstItem.getString("status"), is(OPEN_AWAITING_PICKUP));
+  }
+
+  private RequestBuilder buildPageRequest(UUID instanceId, UUID pickupServicePointId,
+    UserResource jessica) {
+
+    return new RequestBuilder()
+      .withId(UUID.randomUUID())
+      .open()
+      .page()
+      .titleRequestLevel()
+      .withInstanceId(instanceId)
+      .withNoItemId()
+      .withNoHoldingsRecordId()
+      .by(jessica)
+      .withRequestDate(ZonedDateTime.of(2021, 7, 22, 10, 22, 54, 0, UTC))
+      .fulfilToHoldShelf()
+      .withRequestExpiration(LocalDate.of(2021, 7, 30))
+      .withHoldShelfExpiration(LocalDate.of(2021, 8, 31))
+      .withPickupServicePointId(pickupServicePointId)
+      .withTags(new RequestBuilder.Tags(asList("new", "important")))
+      .withPatronComments("I need this book");
   }
 
   private void updateCirculationRulesWithLoanPeriod(String policyName, Period loanPeriod) {
