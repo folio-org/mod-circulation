@@ -87,6 +87,7 @@ class RequestsAPIRetrievalTests extends APITests {
     final IndividualResource createdRequest = requestsFixture.place(
       new RequestBuilder()
         .recall()
+        .itemRequestLevel()
         .withRequestDate(requestDate)
         .forItem(smallAngryPlanet)
         .by(sponsor)
@@ -107,8 +108,11 @@ class RequestsAPIRetrievalTests extends APITests {
 
     assertThat(representation.getString("id"), is(createdRequest.getId()));
     assertThat(representation.getString("requestType"), is("Recall"));
+    assertThat(representation.getString("requestLevel"), is("Item"));
     assertThat(representation.getString("requestDate"), isEquivalentTo(requestDate));
     assertThat(representation.getString("itemId"), is(smallAngryPlanet.getId()));
+    assertThat(representation.getString("holdingsRecordId"), is(smallAngryPlanet.getHoldingsRecordId()));
+    assertThat(representation.getString("instanceId"), is(smallAngryPlanet.getInstanceId()));
     assertThat(representation.getString("requesterId"), is(sponsor.getId()));
     assertThat(representation.getString("fulfilmentPreference"), is("Hold Shelf"));
     assertThat(representation.getString("requestExpirationDate"), is("2017-07-30T23:59:59.000Z"));
@@ -148,10 +152,6 @@ class RequestsAPIRetrievalTests extends APITests {
       representation.containsKey("item"), is(true));
 
     final JsonObject itemSummary = representation.getJsonObject("item");
-
-    assertThat("title is taken from item",
-      itemSummary.getString("title"), is("The Long Way to a Small, Angry Planet"));
-
     assertThat("barcode is taken from item",
       itemSummary.getString("barcode"), is("036000291452"));
 
@@ -161,6 +161,10 @@ class RequestsAPIRetrievalTests extends APITests {
 
     assertThat(itemSummary.getString("copyNumber"),
       is(ONE_COPY_NUMBER));
+
+    final JsonObject instanceSummary = representation.getJsonObject("instance");
+    assertThat("title is taken from instance",
+      instanceSummary.getString("title"), is("The Long Way to a Small, Angry Planet"));
 
     assertThat("has information taken from requesting user",
       representation.containsKey("requester"), is(true));
@@ -210,13 +214,30 @@ class RequestsAPIRetrievalTests extends APITests {
 
     requestHasCallNumberStringProperties(representation, "");
 
-    JsonArray identifiers = itemSummary.getJsonArray("identifiers");
+    JsonArray identifiers = instanceSummary.getJsonArray("identifiers");
     assertThat(identifiers, CoreMatchers.notNullValue());
     assertThat(identifiers.size(), is(1));
     assertThat(identifiers.getJsonObject(0).getString("identifierTypeId"),
       is(isbnIdentifierId.toString()));
     assertThat(identifiers.getJsonObject(0).getString("value"),
       is(isbnValue));
+    JsonArray contributors = instanceSummary.getJsonArray("contributorNames");
+    assertThat(contributors, CoreMatchers.notNullValue());
+    assertThat(contributors.size(), is(1));
+    assertThat(contributors.getJsonObject(0).getString("name"), is("Chambers, Becky"));
+
+    JsonArray editions = instanceSummary.getJsonArray("editions");
+    assertThat(editions, notNullValue());
+    assertThat(editions.size(), is(1));
+    assertThat(editions.getString(0), is("First American Edition"));
+
+    JsonArray publication = instanceSummary.getJsonArray("publication");
+    assertThat(publication, notNullValue());
+    assertThat(publication.size(), is(1));
+    JsonObject firstPublication = publication.getJsonObject(0);
+    assertThat(firstPublication.getString("publisher"), is("Alfred A. Knopf"));
+    assertThat(firstPublication.getString("place"), is("New York"));
+    assertThat(firstPublication.getString("dateOfPublication"), is("2016"));
   }
 
   @Test
@@ -617,7 +638,7 @@ class RequestsAPIRetrievalTests extends APITests {
   }
 
   @Test
-  void canSearchForRequestsByItemTitle() {
+  void canSearchForRequestsByInstanceTitle() {
     UUID requesterId = usersFixture.charlotte().getId();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
@@ -657,7 +678,7 @@ class RequestsAPIRetrievalTests extends APITests {
       .withRequesterId(requesterId));
 
     final MultipleJsonRecords requests = requestsFixture.getRequests(
-      queryFromTemplate("item.title=%s", "Nod"),
+      queryFromTemplate("instance.title=%s", "Nod"),
       noLimit(), noOffset());
 
     assertThat(requests.size(), is(2));
@@ -706,6 +727,8 @@ class RequestsAPIRetrievalTests extends APITests {
     hasProperty("requestDate", request, "request");
     hasProperty("requesterId", request, "request");
     hasProperty("itemId", request, "request");
+    hasProperty("instanceId", request, "request");
+    hasProperty("holdingsRecordId", request, "request");
     hasProperty("fulfilmentPreference", request, "request");
     hasProperty("item", request, "request");
     hasProperty("requester", request, "request");
