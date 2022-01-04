@@ -20,6 +20,7 @@ import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.override.BlockOverrides;
 
 import api.support.http.IndividualResource;
+import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -39,8 +40,11 @@ public class RequestBuilder extends JsonBuilder implements Builder {
 
   private final UUID id;
   private final String requestType;
+  private final String requestLevel;
   private final ZonedDateTime requestDate;
   private final UUID itemId;
+  private final UUID holdingsRecordId;
+  private final UUID instanceId;
   private final UUID requesterId;
   private final String fulfilmentPreference;
   private final UUID deliveryAddressType;
@@ -63,7 +67,10 @@ public class RequestBuilder extends JsonBuilder implements Builder {
   public RequestBuilder() {
     this(UUID.randomUUID(),
       "Hold",
+      "Item",
       ZonedDateTime.of(2017, 7, 15, 9, 35, 27, 0, UTC),
+      UUID.randomUUID(),
+      UUID.randomUUID(),
       UUID.randomUUID(),
       UUID.randomUUID(),
       "Hold Shelf",
@@ -91,8 +98,11 @@ public class RequestBuilder extends JsonBuilder implements Builder {
     return new RequestBuilder(
       UUID.fromString(representation.getString("id")),
       getProperty(representation, "requestType"),
+      getProperty(representation, "requestLevel"),
       getDateTimeProperty(representation, "requestDate"),
       getUUIDProperty(representation, "itemId"),
+      getUUIDProperty(representation, "holdingsRecordId"),
+      getUUIDProperty(representation, "instanceId"),
       getUUIDProperty(representation, "requesterId"),
       getProperty(representation, "fulfilmentPreference"),
       getUUIDProperty(representation, "deliveryAddressTypeId"),
@@ -120,8 +130,11 @@ public class RequestBuilder extends JsonBuilder implements Builder {
 
     put(request, "id", this.id);
     put(request, "requestType", this.requestType);
+    put(request, "requestLevel", this.requestLevel);
     put(request, "requestDate", formatDateTimeOptional(this.requestDate));
     put(request, "itemId", this.itemId);
+    put(request, "holdingsRecordId", this.holdingsRecordId);
+    put(request, "instanceId", this.instanceId);
     put(request, "requesterId", this.requesterId);
     put(request, "fulfilmentPreference", this.fulfilmentPreference);
     put(request, "position", this.position);
@@ -198,12 +211,28 @@ public class RequestBuilder extends JsonBuilder implements Builder {
     return withRequestType("Recall");
   }
 
+  public RequestBuilder itemRequestLevel() {
+    return withRequestLevel("Item");
+  }
+
+  public RequestBuilder titleRequestLevel() {
+    return withRequestLevel("Title");
+  }
+
   public RequestBuilder withNoItemId() {
     return withItemId(null);
   }
 
   public RequestBuilder forItem(IndividualResource item) {
-    return withItemId(item.getId());
+    RequestBuilder builder = withItemId(item.getId());
+
+    if (item instanceof ItemResource) {
+      ItemResource itemResource = (ItemResource) item;
+      return builder.withInstanceId(itemResource.getInstanceId())
+        .withHoldingsRecordId(itemResource.getHoldingsRecordId());
+    }
+
+    return builder;
   }
 
   public RequestBuilder by(IndividualResource requester) {

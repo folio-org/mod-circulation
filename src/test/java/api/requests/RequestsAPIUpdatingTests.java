@@ -87,6 +87,8 @@ class RequestsAPIUpdatingTests extends APITests {
       new RequestBuilder()
         .recall()
         .withRequestDate(requestDate)
+        .itemRequestLevel()
+        .withInstanceId(temeraire.getInstanceId())
         .forItem(temeraire)
         .by(steve)
         .fulfilToHoldShelf()
@@ -114,6 +116,9 @@ class RequestsAPIUpdatingTests extends APITests {
     assertThat(representation.getString("requestType"), is("Hold"));
     assertThat(representation.getString("requestDate"), isEquivalentTo(requestDate));
     assertThat(representation.getString("itemId"), is(temeraire.getId()));
+    assertThat(representation.getString("holdingsRecordId"), is(temeraire.getHoldingsRecordId()));
+    assertThat(representation.getString("instanceId"), is(temeraire.getInstanceId()));
+    assertThat(representation.getString("requestLevel"), is("Item"));
     assertThat(representation.getString("requesterId"), is(charlotte.getId()));
     assertThat(representation.getString("fulfilmentPreference"), is("Hold Shelf"));
     assertThat(representation.getString("requestExpirationDate"), is("2017-07-30T23:59:59.000Z"));
@@ -122,9 +127,13 @@ class RequestsAPIUpdatingTests extends APITests {
     assertThat("has information taken from item",
       representation.containsKey("item"), is(true));
 
-    assertThat("title is taken from item",
-      representation.getJsonObject("item").getString("title"),
-      is("Temeraire"));
+    JsonObject instance = representation.getJsonObject("instance");
+    assertThat("title is taken from instance", instance.getString("title"), is("Temeraire"));
+
+    JsonArray contributors = instance.getJsonArray("contributorNames");
+    assertThat(contributors, notNullValue());
+    assertThat(contributors.size(), is(1));
+    assertThat(contributors.getJsonObject(0).getString("name"), is("Novik, Naomi"));
 
     assertThat("barcode is taken from item",
       representation.getJsonObject("item").getString("barcode"),
@@ -404,8 +413,8 @@ class RequestsAPIUpdatingTests extends APITests {
     assertThat("has information taken from item",
       representation.containsKey("item"), is(true));
 
-    assertThat("title is taken from item",
-      representation.getJsonObject("item").getString("title"),
+    assertThat("title is taken from instance",
+      representation.getJsonObject("instance").getString("title"),
       is("Temeraire"));
 
     assertThat("barcode is not taken from item",
@@ -697,6 +706,8 @@ class RequestsAPIUpdatingTests extends APITests {
       new RequestBuilder()
         .page()
         .forItem(item)
+        .itemRequestLevel()
+        .withInstanceId(instanceId)
         .by(usersFixture.steve())
         .fulfilToHoldShelf()
         .withPickupServicePointId(servicePointsFixture.cd1().getId()));
@@ -710,15 +721,23 @@ class RequestsAPIUpdatingTests extends APITests {
 
     requestsClient.replace(request.getId(), request.copyJson());
 
-    JsonArray identifiers = requestsClient.getById(request.getId())
-      .getJson().getJsonObject("item").getJsonArray("identifiers");
+    Response response = requestsClient.getById(request.getId());
+    assertThat(response.getJson().getString("instanceId"), is(instanceId));
+    assertThat(response.getJson().getString("requestLevel"), is("Item"));
 
+    JsonObject instance = response.getJson().getJsonObject("instance");
+    JsonArray identifiers = instance.getJsonArray("identifiers");
     assertThat(identifiers, CoreMatchers.notNullValue());
     assertThat(identifiers.size(), is(1));
     assertThat(identifiers.getJsonObject(0).getString("identifierTypeId"),
       is(isbnIdentifierId.toString()));
     assertThat(identifiers.getJsonObject(0).getString("value"),
       is(isbnValue));
+
+    JsonArray contributors = instance.getJsonArray("contributorNames");
+    assertThat(contributors, CoreMatchers.notNullValue());
+    assertThat(contributors.size(), is(1));
+    assertThat(contributors.getJsonObject(0).getString("name"), is("Chambers, Becky"));
   }
 
   @Test

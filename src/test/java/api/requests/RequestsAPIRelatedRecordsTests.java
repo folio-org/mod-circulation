@@ -31,22 +31,23 @@ class RequestsAPIRelatedRecordsTests extends APITests {
     IndividualResource response = requestsClient.create(new RequestBuilder()
       .forItem(smallAngryPlanet)
       .withPickupServicePointId(pickupServicePointId)
+      .withInstanceId(smallAngryPlanet.getInstanceId())
       .by(usersFixture.charlotte()));
 
     JsonObject createdRequest = response.getJson();
 
-    assertThat("has holdings record ID",
-      createdRequest.getJsonObject("item").containsKey("holdingsRecordId"), is(true));
+    assertThat("Item has not a holdingsRecordId",
+      createdRequest.getJsonObject("item").containsKey("holdingsRecordId"), is(false));
 
-    assertThat("has correct holdings record ID",
-      createdRequest.getJsonObject("item").getString("holdingsRecordId"),
+    assertThat("Request has holdings record ID",
+      createdRequest.getString("holdingsRecordId"),
       is(smallAngryPlanet.getHoldingsRecordId()));
 
-    assertThat("has instance ID",
-      createdRequest.getJsonObject("item").containsKey("instanceId"), is(true));
+    assertThat("Request has instance ID",
+      createdRequest.containsKey("instanceId"), is(true));
 
-    assertThat("has correct instance ID",
-      createdRequest.getJsonObject("item").getString("instanceId"),
+    assertThat("Request has correct instance ID",
+      createdRequest.getString("instanceId"),
       is(smallAngryPlanet.getInstanceId()));
 
     Response fetchedRequestResponse = requestsClient.getById(response.getId());
@@ -55,18 +56,18 @@ class RequestsAPIRelatedRecordsTests extends APITests {
 
     JsonObject fetchedRequest = fetchedRequestResponse.getJson();
 
-    assertThat("has holdings record ID",
-      fetchedRequest.getJsonObject("item").containsKey("holdingsRecordId"), is(true));
+    assertThat("Item has not a holdingsRecordId",
+      fetchedRequest.getJsonObject("item").containsKey("holdingsRecordId"), is(false));
 
-    assertThat("has correct holdings record ID",
-      fetchedRequest.getJsonObject("item").getString("holdingsRecordId"),
+    assertThat("Request has holdings record ID",
+      fetchedRequest.getString("holdingsRecordId"),
       is(smallAngryPlanet.getHoldingsRecordId()));
 
-    assertThat("has instance ID",
-      fetchedRequest.getJsonObject("item").containsKey("instanceId"), is(true));
+    assertThat("Request has instance ID",
+      fetchedRequest.containsKey("instanceId"), is(true));
 
-    assertThat("has correct instance ID",
-      fetchedRequest.getJsonObject("item").getString("instanceId"),
+    assertThat("Request has correct instance ID",
+      fetchedRequest.getString("instanceId"),
       is(smallAngryPlanet.getInstanceId()));
   }
 
@@ -85,57 +86,58 @@ class RequestsAPIRelatedRecordsTests extends APITests {
 
     final IndividualResource charlotte = usersFixture.charlotte();
 
+    UUID instanceId = temeraire.getInstanceId();
     UUID firstRequestId = requestsClient.create(new RequestBuilder()
       .forItem(smallAngryPlanet)
       .withPickupServicePointId(pickupServicePointId)
+      .withInstanceId(instanceId)
       .by(charlotte))
       .getId();
 
     UUID secondRequestId = requestsClient.create(new RequestBuilder()
       .forItem(temeraire)
       .withPickupServicePointId(pickupServicePointId)
+      .withInstanceId(instanceId)
       .by(charlotte))
       .getId();
 
     List<JsonObject> fetchedRequestsResponse = requestsClient.getAll();
 
-    JsonObject firstItem = getRecordById(fetchedRequestsResponse, firstRequestId).
-      get()
-      .getJsonObject("item");
+    JsonObject firstItemRecord = getRecordById(fetchedRequestsResponse, firstRequestId).get();
+    JsonObject firstItem = firstItemRecord.getJsonObject("item");
 
-    assertThat("has holdings record ID",
-      firstItem.containsKey("holdingsRecordId"), is(true));
+    assertThat("Item has not holdings record ID",
+      firstItem.containsKey("holdingsRecordId"), is(false));
 
-    assertThat("has correct holdings record ID",
-      firstItem.getString("holdingsRecordId"),
+    assertThat("Request has correct holdings record ID",
+      firstItemRecord.getString("holdingsRecordId"),
       is(smallAngryPlanet.getHoldingsRecordId()));
 
-    assertThat("has instance ID",
-      firstItem.containsKey("instanceId"), is(true));
+    assertThat("Request has instance ID",
+      fetchedRequestsResponse.get(0).containsKey("instanceId"), is(true));
 
-    assertThat("has correct instance ID",
-      firstItem.getString("instanceId"),
-      is(smallAngryPlanet.getInstanceId()));
+    assertThat("Request has correct instance ID",
+      fetchedRequestsResponse.get(0).getString("instanceId"),
+      is(instanceId));
 
     assertThat(firstItem.containsKey("copyNumber"), is(true));
     assertThat(firstItem.getString("copyNumber"), is(TWO_COPY_NUMBER));
 
-    JsonObject secondItem = getRecordById(fetchedRequestsResponse, secondRequestId)
-      .get()
-      .getJsonObject("item");
+    JsonObject secondItemRecord = getRecordById(fetchedRequestsResponse, secondRequestId).get();
+    JsonObject secondItem = secondItemRecord.getJsonObject("item");
 
-    assertThat("has holdings record ID",
-      secondItem.containsKey("holdingsRecordId"), is(true));
+    assertThat("Item has not a holdingsRecordId",
+      secondItem.containsKey("holdingsRecordId"), is(false));
 
-    assertThat("has correct holdings record ID",
-      secondItem.getString("holdingsRecordId"),
+    assertThat("Request has correct holdings record ID",
+      secondItemRecord.getString("holdingsRecordId"),
       is(temeraire.getHoldingsRecordId()));
 
-    assertThat("has instance ID",
-      secondItem.containsKey("instanceId"), is(true));
+    assertThat("Request has instance ID",
+      fetchedRequestsResponse.get(1).containsKey("instanceId"), is(true));
 
-    assertThat("has correct instance ID",
-      secondItem.getString("instanceId"),
-      is(temeraire.getInstanceId()));
+    assertThat("Request has correct instance ID",
+      fetchedRequestsResponse.get(1).getString("instanceId"),
+      is(instanceId));
   }
 }
