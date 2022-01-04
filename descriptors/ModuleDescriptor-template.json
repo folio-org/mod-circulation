@@ -971,7 +971,7 @@
     },
     {
       "id": "request-storage-batch",
-      "version": "0.3"
+      "version": "1.0"
     },
     {
       "id": "users",
