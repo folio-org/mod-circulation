@@ -189,13 +189,13 @@ class RequestQueueTests extends APITests {
 
       JsonObject item = request.getJsonObject("item");
 
-      assertThat(String.format("item summary has a holdings record ID: %s",
+      assertThat(String.format("item summary has not a holdings record ID: %s",
         request.encodePrettily()),
-        item.containsKey("holdingsRecordId"), is(true));
+        item.containsKey("holdingsRecordId"), is(false));
 
       assertThat(String.format("item summary has an instance ID: %s",
         request.encodePrettily()),
-        item.containsKey("instanceId"), is(true));
+        request.containsKey("instanceId"), is(true));
 
       assertThat(String.format("item summary has a location: %s",
         request.encodePrettily()),

@@ -30,6 +30,7 @@ public class RequestByInstanceIdRequestBuilder implements Builder {
     JsonObject requestBody = new JsonObject();
 
     write(requestBody, "instanceId", instanceId);
+    write(requestBody, "requestLevel", "Item");
     write(requestBody, "requestDate", formatDateTimeOptional(requestDate));
     write(requestBody, "requesterId", requesterId);
     write(requestBody, "pickupServicePointId", pickupServicePointId);

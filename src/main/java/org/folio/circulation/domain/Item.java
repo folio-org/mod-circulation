@@ -149,6 +149,14 @@ public class Item {
     return holdings.getInstanceId();
   }
 
+  public Stream<Publication> getPublication() {
+    return instance.getPublication().stream();
+  }
+
+  public Stream<String> getEditions() {
+    return instance.getEditions().stream();
+  }
+
   public String getCallNumber() {
     return Optional.ofNullable(callNumberComponents)
       .map(CallNumberComponents::getCallNumber)

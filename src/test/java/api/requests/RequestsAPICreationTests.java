@@ -65,6 +65,7 @@ import java.util.stream.IntStream;
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.domain.RequestLevel;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.override.BlockOverrides;
@@ -74,10 +75,12 @@ import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.utils.ClockUtil;
 import org.hamcrest.Matcher;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EmptySource;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import api.support.APITests;
@@ -134,7 +137,7 @@ public class RequestsAPICreationTests extends APITests {
     UUID isbnIdentifierId = identifierTypesFixture.isbn().getId();
     String isbnValue = "9780866989732";
 
-    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet(
+    ItemResource item = itemsFixture.basedUponSmallAngryPlanet(
       identity(),
       instanceBuilder -> instanceBuilder.addIdentifier(isbnIdentifierId, isbnValue),
       itemsFixture.addCallNumberStringComponents());
@@ -144,12 +147,15 @@ public class RequestsAPICreationTests extends APITests {
     IndividualResource requester = usersFixture.steve();
 
     ZonedDateTime requestDate = ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC);
+    UUID instanceId = item.getInstanceId();
 
     IndividualResource request = requestsFixture.place(new RequestBuilder()
       .withId(id)
       .open()
       .recall()
       .forItem(item)
+      .itemRequestLevel()
+      .withInstanceId(instanceId)
       .by(requester)
       .withRequestDate(requestDate)
       .fulfilToHoldShelf()
@@ -163,8 +169,11 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(representation.getString("id"), is(id.toString()));
     assertThat(representation.getString("requestType"), is("Recall"));
+    assertThat(representation.getString("requestLevel"), is("Item"));
     assertThat(representation.getString("requestDate"), isEquivalentTo(requestDate));
     assertThat(representation.getString("itemId"), is(item.getId().toString()));
+    assertThat(representation.getString("holdingsRecordId"), is(item.getHoldingsRecordId()));
+    assertThat(representation.getString("instanceId"), is(instanceId));
     assertThat(representation.getString("requesterId"), is(requester.getId().toString()));
     assertThat(representation.getString("fulfilmentPreference"), is("Hold Shelf"));
     assertThat(representation.getString("requestExpirationDate"), is("2017-07-30T23:59:59.000Z"));
@@ -177,13 +186,14 @@ public class RequestsAPICreationTests extends APITests {
       representation.containsKey("item"), is(true));
 
     JsonObject requestItem = representation.getJsonObject("item");
-    assertThat("title is taken from item",
-      requestItem.getString("title"),
-      is("The Long Way to a Small, Angry Planet"));
-
     assertThat("barcode is taken from item",
       requestItem.getString("barcode"),
       is("036000291452"));
+
+    JsonObject requestInstance = representation.getJsonObject("instance");
+    assertThat("title is taken from instance",
+      requestInstance.getString("title"),
+      is("The Long Way to a Small, Angry Planet"));
 
     assertThat("has information taken from requesting user",
       representation.containsKey("requester"), is(true));
@@ -237,13 +247,30 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(requestItem.getString("chronology"), is("chronology"));
     assertThat(requestItem.getString("volume"), is("vol.1"));
 
-    JsonArray identifiers = requestItem.getJsonArray("identifiers");
+    JsonArray identifiers = requestInstance.getJsonArray("identifiers");
     assertThat(identifiers, notNullValue());
     assertThat(identifiers.size(), is(1));
     assertThat(identifiers.getJsonObject(0).getString("identifierTypeId"),
       is(isbnIdentifierId.toString()));
     assertThat(identifiers.getJsonObject(0).getString("value"),
       is(isbnValue));
+    JsonArray contributors = requestInstance.getJsonArray("contributorNames");
+    assertThat(contributors, notNullValue());
+    assertThat(contributors.size(), is(1));
+    assertThat(contributors.getJsonObject(0).getString("name"), is("Chambers, Becky"));
+
+    JsonArray editions = requestInstance.getJsonArray("editions");
+    assertThat(editions, Matchers.notNullValue());
+    assertThat(editions.size(), is(1));
+    assertThat(editions.getString(0), is("First American Edition"));
+
+    JsonArray publication = requestInstance.getJsonArray("publication");
+    assertThat(publication, Matchers.notNullValue());
+    assertThat(publication.size(), is(1));
+    JsonObject firstPublication = publication.getJsonObject(0);
+    assertThat(firstPublication.getString("publisher"), is("Alfred A. Knopf"));
+    assertThat(firstPublication.getString("place"), is("New York"));
+    assertThat(firstPublication.getString("dateOfPublication"), is("2016"));
   }
 
   @Test
@@ -292,8 +319,8 @@ public class RequestsAPICreationTests extends APITests {
     assertThat("has information taken from item",
       representation.containsKey("item"), is(true));
 
-    assertThat("title is taken from item",
-      representation.getJsonObject("item").getString("title"),
+    assertThat("title is taken from instance",
+      representation.getJsonObject("instance").getString("title"),
       is("The Long Way to a Small, Angry Planet"));
 
     assertThat("barcode is taken from item",
@@ -358,20 +385,22 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  void cannotCreateRequestWithNoItemReference() {
+  void cannotCreateRequestWithNonExistentRequestLevel() {
     UUID patronId = usersFixture.charlotte().getId();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+    UUID instanceId = item.getInstanceId();
 
     Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
-      .recall()
-      .withNoItemId()
+      .page()
+      .withItemId(item.getId())
+      .titleRequestLevel()
+      .withInstanceId(instanceId)
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(patronId));
 
-    assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
-    assertThat(postResponse.getJson(), hasErrors(1));
-    assertThat(postResponse.getJson(), hasErrorWith(
-      hasMessage("Cannot create a request with no item ID")));
+    assertThat(postResponse, hasStatus(HTTP_BAD_REQUEST));
+    assertThat(postResponse.getBody(), is("requestLevel must be one of the following: \"Item\""));
   }
 
   @Test
@@ -801,8 +830,8 @@ public class RequestsAPICreationTests extends APITests {
     assertThat("has information taken from item",
       representation.containsKey("item"), is(true));
 
-    assertThat("title is taken from item",
-      representation.getJsonObject("item").getString("title"),
+    assertThat("title is taken from instance",
+      representation.getJsonObject("instance").getString("title"),
       is("The Long Way to a Small, Angry Planet"));
 
     assertThat("barcode is not taken from item when none present",
@@ -847,8 +876,8 @@ public class RequestsAPICreationTests extends APITests {
     assertThat("has information taken from item",
       representation.containsKey("item"), is(true));
 
-    assertThat("title is taken from item",
-      representation.getJsonObject("item").getString("title"),
+    assertThat("title is taken from instance",
+      representation.getJsonObject("instance").getString("title"),
       is("The Long Way to a Small, Angry Planet"));
 
     assertThat("barcode is taken from item",
@@ -2128,7 +2157,7 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(responseJson, hasErrors(3));
 
     assertThat(responseJson, hasErrorWith(allOf(
-        hasMessage("Cannot create a request with no item ID"),
+        hasMessage("Cannot create an item level request with no item ID"),
         hasNullParameter("itemId"))));
 
     assertThat(responseJson, hasErrorWith(allOf(
@@ -2302,6 +2331,56 @@ public class RequestsAPICreationTests extends APITests {
     assertOverrideResponseSuccess(response);
 
     assertThat(response.getJson(), hasNoJsonPath("requestProcessingParameters"));
+  }
+
+  @ParameterizedTest
+  @EnumSource(RequestLevel.class)
+  void cannotCreateRequestWithoutInstanceId(RequestLevel requestLevel) {
+    Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
+      .page()
+      .withRequestLevel(requestLevel.value())
+      .forItem(itemsFixture.basedUponNod())
+      .withInstanceId(null)
+      .withRequesterId(usersFixture.steve().getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId()));
+
+    assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(postResponse.getJson(), hasErrors(1));
+    assertThat(postResponse.getJson(), hasErrorWith(
+      hasMessage("Cannot create a request with no instance ID")));
+  }
+
+  @Test
+  void cannotCreateItemLevelRequestWithoutItemId() {
+    Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
+      .page()
+      .itemRequestLevel()
+      .forItem(itemsFixture.basedUponNod())
+      .withItemId(null)
+      .withRequesterId(usersFixture.steve().getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId()));
+
+    assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(postResponse.getJson(), hasErrors(1));
+    assertThat(postResponse.getJson(), hasErrorWith(
+      hasMessage("Cannot create an item level request with no item ID")));
+  }
+
+  @ParameterizedTest
+  @EnumSource(RequestLevel.class)
+  void cannotCreateRequestWithItemIdButNoHoldingsRecordId(RequestLevel requestLevel) {
+    Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
+      .page()
+      .withRequestLevel(requestLevel.value())
+      .forItem(itemsFixture.basedUponNod())
+      .withHoldingsRecordId(null)
+      .withRequesterId(usersFixture.steve().getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId()));
+
+    assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(postResponse.getJson(), hasErrors(1));
+    assertThat(postResponse.getJson(), hasErrorWith(
+      hasMessage("Cannot create a request with item ID but no holdings record ID")));
   }
 
   private static void assertOverrideResponseSuccess(Response response) {

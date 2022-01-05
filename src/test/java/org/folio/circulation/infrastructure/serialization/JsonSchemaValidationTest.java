@@ -45,7 +45,9 @@ class JsonSchemaValidationTest {
 
     final JsonObject request = new RequestBuilder()
       .hold()
+      .itemRequestLevel()
       .withItemId(UUID.randomUUID())
+      .withInstanceId(UUID.randomUUID())
       .withRequesterId(UUID.randomUUID())
       .fulfilToHoldShelf(UUID.randomUUID())
       .withRequestDate(ClockUtil.getZonedDateTime())
