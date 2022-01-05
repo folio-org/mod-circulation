@@ -14,9 +14,9 @@ import io.vertx.core.json.JsonObject;
  * Once the feature is implemented, ItemsInTransitReportService will replace the existing
  * items-in-transit report logic and will be covered by existing API tests.
  */
-public class ItemsInTransitReportServiceTest {
+class ItemsInTransitReportServiceTest {
   @Test
-  public void itemsInTransitReportServiceTest() {
+  void itemsInTransitReportServiceTest() {
     ItemsInTransitReportService service = new ItemsInTransitReportService(null, null, null, null,
       null, null, null);
     CompletableFuture<Result<JsonObject>> report = service.buildReport();
