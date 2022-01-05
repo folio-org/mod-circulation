@@ -40,6 +40,8 @@ public class ItemsInTransitReportService {
       .thenCompose(this::fetchLoanTypes)
       .thenCompose(this::fetchLoans)
       .thenCompose(this::fetchRequests)
+      .thenCompose(this::fetchUsers)
+      .thenCompose(this::fetchPatronGroups)
       .thenCompose(this::fetchServicePoints)
       .thenApply(this::mapToJsonObject);
   }
@@ -92,6 +94,18 @@ public class ItemsInTransitReportService {
   }
 
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchRequests(
+    Result<ItemsInTransitReportContext> context) {
+
+    return completedFuture(context);
+  }
+
+  private CompletableFuture<Result<ItemsInTransitReportContext>> fetchUsers(
+    Result<ItemsInTransitReportContext> context) {
+
+    return completedFuture(context);
+  }
+
+  private CompletableFuture<Result<ItemsInTransitReportContext>> fetchPatronGroups(
     Result<ItemsInTransitReportContext> context) {
 
     return completedFuture(context);
