@@ -138,8 +138,7 @@ public class ChargeLostFeesWhenAgedToLostService {
 
   private CompletableFuture<Result<Loan>> updateLoanBillingInfo(LoanToChargeFees loanToChargeFees) {
     final Loan updatedLoan = loanToChargeFees.getLoan()
-      .setLostItemHasBeenBilled()
-      .setLostItemFees();
+      .setLostItemHasBeenBilled();
 
     return loanRepository.updateLoan(updatedLoan);
   }
