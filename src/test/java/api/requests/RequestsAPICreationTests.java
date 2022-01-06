@@ -587,13 +587,12 @@ public class RequestsAPICreationTests extends APITests {
     reconfigureTlrFeature(TlrFeatureStatus.ENABLED);
 
     IndividualResource instanceMultipleCopies = instancesFixture.basedUponDunkirk();
-    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     UUID instanceId = instanceMultipleCopies.getId();
 
     buildItem(instanceId, UUID.randomUUID().toString());
-    requestsClient.attemptCreate(makeRepresentation(pickupServicePointId, instanceId));
+    requestsClient.attemptCreate(buildTitleLevelRequest(instanceId));
 
-    Response postResponse = requestsClient.attemptCreate(makeRepresentation(pickupServicePointId, instanceId));
+    Response postResponse = requestsClient.attemptCreate(buildTitleLevelRequest(instanceId));
 
     assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(postResponse.getJson(), hasErrorWith(allOf(
@@ -602,33 +601,17 @@ public class RequestsAPICreationTests extends APITests {
       hasParameter("instanceId", instanceId.toString()))));
   }
 
-  private JsonObject makeRepresentation(UUID pickupServicePointId, UUID instanceId) {
-    return new RequestBuilder()
-      .hold()
-      .withPickupServicePointId(pickupServicePointId)
-      .titleRequestLevel()
-      .withInstanceId(instanceId)
-      .withNoItemId()
-      .withNoHoldingsRecordId()
-      .by(usersFixture.james())
-      .create();
-  }
-
   @Test
   void cannotCreateTlrRequestWhenUserHasAlreadyRequestedInstanceOrItemTlrOnRequestLevelItem() {
     reconfigureTlrFeature(TlrFeatureStatus.ENABLED);
 
     final ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
-    final IndividualResource requestPickupServicePoint = servicePointsFixture.cd1();
     final IndividualResource charlotte = usersFixture.charlotte();
     final IndividualResource jessica = usersFixture.jessica();
 
     checkOutFixture.checkOutByBarcode(item, charlotte);
-
-    requestsClient.create(makeRequestBuilder(item, requestPickupServicePoint, jessica));
-
-    final Response response = requestsClient.attemptCreate(
-      makeRequestBuilder(item, requestPickupServicePoint, jessica));
+    requestsClient.create(buildItemLevelRequest(item, jessica));
+    final Response response = requestsClient.attemptCreate(buildItemLevelRequest(item, jessica));
 
     assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(response.getJson(), hasErrors(1));
@@ -639,13 +622,24 @@ public class RequestsAPICreationTests extends APITests {
       hasParameter("instanceId", item.getInstanceId().toString()))));
   }
 
-  private RequestBuilder makeRequestBuilder(ItemResource item, IndividualResource requestPickupServicePoint,
-    IndividualResource jessica) {
+  private JsonObject buildTitleLevelRequest(UUID instanceId) {
+    return new RequestBuilder()
+      .hold()
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
+      .titleRequestLevel()
+      .withInstanceId(instanceId)
+      .withNoItemId()
+      .withNoHoldingsRecordId()
+      .by(usersFixture.james())
+      .create();
+  }
+
+  private RequestBuilder buildItemLevelRequest(ItemResource item, IndividualResource jessica) {
     return new RequestBuilder()
       .recall()
       .itemRequestLevel()
       .forItem(item)
-      .withPickupServicePointId(requestPickupServicePoint.getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .by(jessica);
   }
 

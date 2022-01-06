@@ -80,11 +80,11 @@ public class RequestLoanValidator {
 
   private Result<RequestAndRelatedRecords> failure(RequestAndRelatedRecords requestAndRelatedRecords,
       Loan loan) {
-    String message = "One of the items of the requested title is already loaned to the requester";
+
     HashMap<String, String> parameters = new HashMap<>();
     parameters.put("userId", requestAndRelatedRecords.getRequest().getUserId());
     parameters.put("itemId", loan.getItemId());
 
-    return failedValidation(message, parameters);
+    return failedValidation("One of the items of the requested title is already loaned to the requester", parameters);
   }
 }

@@ -157,24 +157,22 @@ public class RequestServiceUtility {
   private static Result<RequestAndRelatedRecords> requestLevelTitleAndTlrEnabledErrorMapper(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
-    String message = "This requester already has an open request for this instance";
     HashMap<String, String> parameters = new HashMap<>();
     parameters.put(REQUESTER_ID, requestAndRelatedRecords.getRequest().getUserId());
     parameters.put(INSTANCE_ID, requestAndRelatedRecords.getRequest().getInstanceId());
 
-    return failedValidation(message, parameters);
+    return failedValidation("This requester already has an open request for this instance", parameters);
   }
 
   private static Result<RequestAndRelatedRecords> requestLevelItemAndTlrEnabledErrorMapper(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
-    String message = "This requester already has an open request for one of the instance's items";
     HashMap<String, String> parameters = new HashMap<>();
     parameters.put(REQUESTER_ID, requestAndRelatedRecords.getRequest().getUserId());
     parameters.put(ITEM_ID, requestAndRelatedRecords.getRequest().getItemId());
     parameters.put(INSTANCE_ID, requestAndRelatedRecords.getRequest().getInstanceId());
 
-    return failedValidation(message, parameters);
+    return failedValidation("This requester already has an open request for one of the instance's items", parameters);
   }
 
   private static Result<RequestAndRelatedRecords> requestLevelItemAndTlrDisabledErrorMapper(
@@ -184,9 +182,8 @@ public class RequestServiceUtility {
     parameters.put(REQUESTER_ID, requestAndRelatedRecords.getRequest().getUserId());
     parameters.put(ITEM_ID, requestAndRelatedRecords.getRequest().getItemId());
     parameters.put(REQUEST_ID, requestAndRelatedRecords.getRequest().getId());
-    String message = "This requester already has an open request for this item";
 
-    return failedValidation(message, parameters);
+    return failedValidation("This requester already has an open request for this item", parameters);
   }
 
 }
