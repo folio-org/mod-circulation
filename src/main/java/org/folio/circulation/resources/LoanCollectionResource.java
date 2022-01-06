@@ -3,13 +3,16 @@ package org.folio.circulation.resources;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.representations.LoanProperties.ITEM_ID;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
+import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 import static org.folio.circulation.support.results.MappingFunctions.toFixedValue;
 import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.utils.DateTimeUtil.isSameMillis;
 
 import java.lang.invoke.MethodHandles;
+import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -18,6 +21,7 @@ import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.LoanRepresentation;
 import org.folio.circulation.domain.LoanService;
+import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.UpdateItem;
 import org.folio.circulation.domain.UpdateRequestQueue;
@@ -252,6 +256,7 @@ public class LoanCollectionResource extends CollectionResource {
     final PatronGroupRepository patronGroupRepository = new PatronGroupRepository(clients);
 
     loanRepository.findBy(routingContext.request().query())
+      .thenApply(this::refuseWhenLoanWithoutItem)
       .thenCompose(multiLoanRecordsResult ->
         multiLoanRecordsResult.after(accountRepository::findAccountsForLoans))
       .thenCompose(multiLoanRecordsResult ->
@@ -348,6 +353,20 @@ public class LoanCollectionResource extends CollectionResource {
       () -> singleValidationError(
         String.format("No item with ID %s could be found", loan.getItemId()),
         ITEM_ID, loan.getItemId()));
+  }
+
+  private Result<MultipleRecords<Loan>> refuseWhenLoanWithoutItem(Result<MultipleRecords<Loan>> resultMultipleLoans) {
+    AtomicBoolean isItemMissing = new AtomicBoolean(false);
+    Collection<Loan> loans = resultMultipleLoans.value().getRecords();
+    loans.forEach(loan -> {
+      if (loan.getItem() == null || loan.getItem().isNotFound()) {
+        log.warn("No item [{}] found for loan [{}]", loan.getItemId(), loan.getId());
+        isItemMissing.set(true);
+      }
+    });
+    return isItemMissing.get()
+      ? failedDueToServerError("No item found for loan")
+      : resultMultipleLoans;
   }
 
   private static ValidationErrorFailure errorWhenInIncorrectStatus(Item item) {
