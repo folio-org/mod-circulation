@@ -583,7 +583,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  void cannotCreateTlrRequestWhenUserHasAlreadyRequestedInstanceOrItemTlrOnRequestLevelTitle() {
+  void cannotCreateTlrWhenUserAlreadyRequestedTheSameTitle() {
     reconfigureTlrFeature(TlrFeatureStatus.ENABLED);
 
     IndividualResource instanceMultipleCopies = instancesFixture.basedUponDunkirk();
@@ -602,7 +602,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  void cannotCreateTlrRequestWhenUserHasAlreadyRequestedInstanceOrItemTlrOnRequestLevelItem() {
+  void cannotCreateIlrWhenTlrFeatureEnabledAndUserAlreadyRequestedAnotherItemFromTheSameTitle() {
     reconfigureTlrFeature(TlrFeatureStatus.ENABLED);
 
     final ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
