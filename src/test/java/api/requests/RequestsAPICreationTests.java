@@ -583,6 +583,55 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
+  void cannotCreateTlrWhenUserAlreadyRequestedTheSameTitle() {
+    reconfigureTlrFeature(TlrFeatureStatus.ENABLED);
+
+    final IndividualResource james = usersFixture.james();
+    UUID instanceId = instancesFixture.basedUponDunkirk().getId();
+
+    buildItem(instanceId, UUID.randomUUID().toString());
+    requestsFixture.placeTitleLevelHoldShelfRequest(instanceId, james);
+    Response postResponse = requestsFixture.attemptPlaceTitleLevelHoldShelfRequest(instanceId,
+      james);
+
+    assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(postResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("This requester already has an open request for this instance"),
+      hasParameter("requesterId", usersFixture.james().getId().toString()),
+      hasParameter("instanceId", instanceId.toString()))));
+  }
+
+  @Test
+  void cannotCreateTlrWhenUserAlreadyRequestedAnItemFromTheSameTitle() {
+    reconfigureTlrFeature(TlrFeatureStatus.ENABLED);
+
+    List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
+    ItemResource item1 = items.get(0);
+    ItemResource item2 = items.get(1);
+
+    final IndividualResource charlotte = usersFixture.charlotte();
+    final IndividualResource jessica = usersFixture.jessica();
+
+    checkOutFixture.checkOutByBarcode(item1, charlotte);
+    checkOutFixture.checkOutByBarcode(item2, charlotte);
+
+    // Item-level request that should prevent a subsequent title-level request from being created
+    requestsFixture.placeItemLevelHoldShelfRequest(item1, jessica);
+
+    // Title-level request that should be refused because item-level request for one of the title's
+    // items already exists
+    final Response response = requestsFixture.attemptPlaceTitleLevelHoldShelfRequest(
+      item1.getInstanceId(), jessica);
+
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(response.getJson(), hasErrors(1));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("This requester already has an open request for one of the instance's items"),
+      hasParameter("requesterId", jessica.getId().toString()),
+      hasParameter("instanceId", item1.getInstanceId().toString()))));
+  }
+
+  @Test
   void cannotCreateRecallRequestWhenItemIsNotCheckedOut() {
     ItemResource item = itemsFixture.basedUponSmallAngryPlanet(
       ItemBuilder::available);

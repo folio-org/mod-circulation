@@ -69,6 +69,12 @@ public class RequestsFixture {
       .withPickupServicePointId(servicePointsFixture.cd1().getId()));
   }
 
+  public IndividualResource placeItemLevelHoldShelfRequest(IndividualResource item,
+    IndividualResource by) {
+
+    return placeItemLevelHoldShelfRequest(item, by, ZonedDateTime.now());
+  }
+
   public IndividualResource placeTitleLevelHoldShelfRequest(UUID instanceId,
     IndividualResource by, ZonedDateTime on) {
 
@@ -82,6 +88,12 @@ public class RequestsFixture {
       .withRequestDate(on)
       .withRequesterId(by.getId())
       .withPickupServicePointId(servicePointsFixture.cd1().getId()));
+  }
+
+  public IndividualResource placeTitleLevelHoldShelfRequest(UUID instanceId,
+    IndividualResource by) {
+
+    return placeTitleLevelHoldShelfRequest(instanceId, by, ZonedDateTime.now());
   }
 
   public IndividualResource placeItemLevelDeliveryRequest(IndividualResource item,
@@ -162,6 +174,20 @@ public class RequestsFixture {
       .withRequestDate(on)
       .withRequesterId(by.getId())
       .withPickupServicePointId(pickupServicePointId));
+  }
+
+  public Response attemptPlaceTitleLevelHoldShelfRequest(UUID instanceId,
+    IndividualResource requester) {
+
+    return attemptPlace(new RequestBuilder()
+      .hold()
+      .fulfilToHoldShelf()
+      .titleRequestLevel()
+      .withInstanceId(instanceId)
+      .withNoItemId()
+      .withNoHoldingsRecordId()
+      .withRequesterId(requester.getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId()));
   }
 
   public Response attemptToPlaceForInstance(JsonObject representation) {
