@@ -94,6 +94,7 @@ import api.support.APITests;
 import api.support.TlrFeatureStatus;
 import api.support.builders.Address;
 import api.support.builders.HoldingBuilder;
+import api.support.builders.InstanceBuilder;
 import api.support.builders.ItemBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.MoveRequestBuilder;
@@ -604,22 +605,26 @@ public class RequestsAPICreationTests extends APITests {
   void cannotCreateIlrWhenTlrFeatureEnabledAndUserAlreadyRequestedAnotherItemFromTheSameTitle() {
     reconfigureTlrFeature(TlrFeatureStatus.ENABLED);
 
-    final ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+    List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
+    ItemResource item1 = items.get(0);
+    ItemResource item2 = items.get(1);
+
     final IndividualResource charlotte = usersFixture.charlotte();
     final IndividualResource jessica = usersFixture.jessica();
 
-    checkOutFixture.checkOutByBarcode(item, charlotte);
-    requestsFixture.placeItemLevelHoldShelfRequest(item, jessica);
+    checkOutFixture.checkOutByBarcode(item1, charlotte);
+    checkOutFixture.checkOutByBarcode(item2, charlotte);
+    requestsFixture.placeItemLevelHoldShelfRequest(item1, jessica);
     final Response response = requestsFixture.attemptPlaceItemLevelHoldShelfRequest(
-      item, jessica, ZonedDateTime.now(), servicePointsFixture.cd1().getId(), "Recall");
+      item2, jessica, ZonedDateTime.now(), servicePointsFixture.cd1().getId(), "Recall");
 
     assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(response.getJson(), hasErrors(1));
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("This requester already has an open request for one of the instance's items"),
-      hasParameter("itemId", item.getId().toString()),
+      hasParameter("itemId", item2.getId().toString()),
       hasParameter("requesterId", jessica.getId().toString()),
-      hasParameter("instanceId", item.getInstanceId().toString()))));
+      hasParameter("instanceId", item2.getInstanceId().toString()))));
   }
 
   @Test
