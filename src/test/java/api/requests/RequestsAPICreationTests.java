@@ -590,9 +590,8 @@ public class RequestsAPICreationTests extends APITests {
     UUID instanceId = instanceMultipleCopies.getId();
 
     buildItem(instanceId, UUID.randomUUID().toString());
-    requestsClient.attemptCreate(buildTitleLevelRequest(instanceId));
-
-    Response postResponse = requestsClient.attemptCreate(buildTitleLevelRequest(instanceId));
+    requestsFixture.placeTitleLevelHoldShelfRequest(instanceId, usersFixture.james());
+    Response postResponse = requestsFixture.attemptPlaceTitleLevelHoldShelfRequest(instanceId, usersFixture.james());
 
     assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(postResponse.getJson(), hasErrorWith(allOf(
@@ -610,8 +609,9 @@ public class RequestsAPICreationTests extends APITests {
     final IndividualResource jessica = usersFixture.jessica();
 
     checkOutFixture.checkOutByBarcode(item, charlotte);
-    requestsClient.create(buildItemLevelRequest(item, jessica));
-    final Response response = requestsClient.attemptCreate(buildItemLevelRequest(item, jessica));
+    requestsFixture.placeItemLevelHoldShelfRequest(item, jessica, ZonedDateTime.now());
+    final Response response = requestsFixture.attemptPlaceItemLevelHoldShelfRequest(
+      item, jessica, ZonedDateTime.now(), servicePointsFixture.cd1().getId(), "Recall");
 
     assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(response.getJson(), hasErrors(1));
@@ -620,27 +620,6 @@ public class RequestsAPICreationTests extends APITests {
       hasParameter("itemId", item.getId().toString()),
       hasParameter("requesterId", jessica.getId().toString()),
       hasParameter("instanceId", item.getInstanceId().toString()))));
-  }
-
-  private JsonObject buildTitleLevelRequest(UUID instanceId) {
-    return new RequestBuilder()
-      .hold()
-      .withPickupServicePointId(servicePointsFixture.cd1().getId())
-      .titleRequestLevel()
-      .withInstanceId(instanceId)
-      .withNoItemId()
-      .withNoHoldingsRecordId()
-      .by(usersFixture.james())
-      .create();
-  }
-
-  private RequestBuilder buildItemLevelRequest(ItemResource item, IndividualResource jessica) {
-    return new RequestBuilder()
-      .recall()
-      .itemRequestLevel()
-      .forItem(item)
-      .withPickupServicePointId(servicePointsFixture.cd1().getId())
-      .by(jessica);
   }
 
   @Test
