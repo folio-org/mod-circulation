@@ -44,6 +44,7 @@ import java.util.stream.Stream;
 import org.awaitility.Awaitility;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
@@ -1269,6 +1270,7 @@ class LoanAPITests extends APITests {
       is("Checked out"));
   }
 
+  @Disabled
   @Test
   void loanInCollectionDoesNotProvideItemInformationForUnknownItem() {
     final ItemResource item = itemsFixture.basedUponNod();
