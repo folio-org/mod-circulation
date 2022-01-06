@@ -72,7 +72,7 @@ public class RequestsFixture {
   public IndividualResource placeItemLevelHoldShelfRequest(IndividualResource item,
     IndividualResource by) {
 
-    return placeItemLevelHoldShelfRequest(item, by);
+    return placeItemLevelHoldShelfRequest(item, by, ZonedDateTime.now());
   }
 
   public IndividualResource placeTitleLevelHoldShelfRequest(UUID instanceId,
