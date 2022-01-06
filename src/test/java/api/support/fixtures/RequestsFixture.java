@@ -176,15 +176,17 @@ public class RequestsFixture {
       .withPickupServicePointId(pickupServicePointId));
   }
 
-  public Response attemptPlaceTitleLevelHoldShelfRequest(UUID instanceId, IndividualResource by) {
+  public Response attemptPlaceTitleLevelHoldShelfRequest(UUID instanceId,
+    IndividualResource requester) {
+
     return attemptPlace(new RequestBuilder()
       .hold()
       .fulfilToHoldShelf()
-      .withRequestLevel("Title")
+      .titleRequestLevel()
       .withInstanceId(instanceId)
       .withNoItemId()
       .withNoHoldingsRecordId()
-      .withRequesterId(by.getId())
+      .withRequesterId(requester.getId())
       .withPickupServicePointId(servicePointsFixture.cd1().getId()));
   }
 

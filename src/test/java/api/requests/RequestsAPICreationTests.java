@@ -586,12 +586,13 @@ public class RequestsAPICreationTests extends APITests {
   void cannotCreateTlrWhenUserAlreadyRequestedTheSameTitle() {
     reconfigureTlrFeature(TlrFeatureStatus.ENABLED);
 
-    IndividualResource instanceMultipleCopies = instancesFixture.basedUponDunkirk();
-    UUID instanceId = instanceMultipleCopies.getId();
+    final IndividualResource james = usersFixture.james();
+    UUID instanceId = instancesFixture.basedUponDunkirk().getId();
 
     buildItem(instanceId, UUID.randomUUID().toString());
-    requestsFixture.placeTitleLevelHoldShelfRequest(instanceId, usersFixture.james());
-    Response postResponse = requestsFixture.attemptPlaceTitleLevelHoldShelfRequest(instanceId, usersFixture.james());
+    requestsFixture.placeTitleLevelHoldShelfRequest(instanceId, james);
+    Response postResponse = requestsFixture.attemptPlaceTitleLevelHoldShelfRequest(instanceId,
+      james);
 
     assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(postResponse.getJson(), hasErrorWith(allOf(
