@@ -128,11 +128,11 @@ public class RequestServiceUtility {
 
     if (isTlrEnabled(request)) {
       alreadyRequestedErrorMapper = (request.getRequestLevel() == TITLE)
-        ? req -> requestLevelTitleAndTlrEnabledErrorMapper((requestAndRelatedRecords))
-        : req -> requestLevelItemAndTlrEnabledErrorMapper((requestAndRelatedRecords));
+        ? req -> requestLevelTitleAndTlrEnabledErrorMapper(requestAndRelatedRecords)
+        : req -> requestLevelItemAndTlrEnabledErrorMapper(requestAndRelatedRecords);
       isAlreadyRequested = req -> isTheSameRequester(requestAndRelatedRecords, req);
     } else {
-      alreadyRequestedErrorMapper = req -> requestLevelItemAndTlrDisabledErrorMapper((requestAndRelatedRecords));
+      alreadyRequestedErrorMapper = req -> requestLevelItemAndTlrDisabledErrorMapper(requestAndRelatedRecords);
       isAlreadyRequested = req -> requestAndRelatedRecords.getItemId().equals(req.getItemId())
         && isTheSameRequester(requestAndRelatedRecords, req) && req.isOpen();
     }
