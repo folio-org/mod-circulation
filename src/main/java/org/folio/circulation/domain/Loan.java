@@ -281,9 +281,6 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     if (newItem != null && newItem.isFound()) {
       newRepresentation.put("itemId", newItem.getItemId());
     }
-    else {
-      newRepresentation.put("itemId", null);
-    }
 
     return new Loan(newRepresentation, newItem, user, proxy, checkinServicePoint,
       checkoutServicePoint, originalDueDate, previousDueDate, policies, accounts);
