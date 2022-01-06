@@ -159,9 +159,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public boolean isTitleLevel() {
-    return getRequestLevel() == TITLE &&
-      getTlrSettingsConfiguration() != null &&
-      getTlrSettingsConfiguration().isTitleLevelRequestsFeatureEnabled();
+    return getRequestLevel() == TITLE;
   }
 
   @Override
