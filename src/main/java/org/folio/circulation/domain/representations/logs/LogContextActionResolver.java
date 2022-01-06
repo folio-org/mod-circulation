@@ -12,7 +12,6 @@ import static org.folio.circulation.domain.LoanAction.MISSING;
 import static org.folio.circulation.domain.LoanAction.RECALLREQUESTED;
 import static org.folio.circulation.domain.LoanAction.RENEWED;
 import static org.folio.circulation.domain.LoanAction.RENEWED_THROUGH_OVERRIDE;
-import static org.folio.circulation.domain.LoanAction.LOST_FEES_CHARGED;
 
 import java.util.HashMap;
 
@@ -31,7 +30,6 @@ public class LogContextActionResolver {
     loanLogActions.put(CLOSED_LOAN.getValue(), "Closed loan");
     loanLogActions.put(ITEM_AGED_TO_LOST.getValue(), "Age to lost");
     loanLogActions.put(DUE_DATE_CHANGED.getValue(), "Changed due date");
-    loanLogActions.put(LOST_FEES_CHARGED.getValue(), "Charge lost fees");
   }
 
   public static String resolveAction(String action) {
