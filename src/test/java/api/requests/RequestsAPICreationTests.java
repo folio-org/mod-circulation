@@ -609,7 +609,7 @@ public class RequestsAPICreationTests extends APITests {
     final IndividualResource jessica = usersFixture.jessica();
 
     checkOutFixture.checkOutByBarcode(item, charlotte);
-    requestsFixture.placeItemLevelHoldShelfRequest(item, jessica, ZonedDateTime.now());
+    requestsFixture.placeItemLevelHoldShelfRequest(item, jessica);
     final Response response = requestsFixture.attemptPlaceItemLevelHoldShelfRequest(
       item, jessica, ZonedDateTime.now(), servicePointsFixture.cd1().getId(), "Recall");
 
