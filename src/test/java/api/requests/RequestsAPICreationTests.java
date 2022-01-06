@@ -94,7 +94,6 @@ import api.support.APITests;
 import api.support.TlrFeatureStatus;
 import api.support.builders.Address;
 import api.support.builders.HoldingBuilder;
-import api.support.builders.InstanceBuilder;
 import api.support.builders.ItemBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.MoveRequestBuilder;
