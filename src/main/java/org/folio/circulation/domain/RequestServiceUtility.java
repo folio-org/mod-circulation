@@ -107,7 +107,7 @@ public class RequestServiceUtility {
     if (requester != null && requester.isInactive()) {
       Map<String, String> parameters = new HashMap<>();
 
-      parameters.put("requesterId", request.getRequest().getUserId());
+      parameters.put(REQUESTER_ID, request.getRequest().getUserId());
       parameters.put(ITEM_ID, request.getRequest().getItemId());
 
       String message = "Inactive users cannot make requests";
