@@ -90,7 +90,8 @@ public class RequestRepository {
       .thenComposeAsync(result -> result.after(loanRepository::findOpenLoansFor))
       .thenComposeAsync(result -> result.after(servicePointRepository::findServicePointsForRequests))
       .thenComposeAsync(result -> result.after(userRepository::findUsersForRequests))
-      .thenComposeAsync(result -> result.after(patronGroupRepository::findPatronGroupsForRequestsUsers));
+      .thenComposeAsync(result -> result.after(patronGroupRepository::findPatronGroupsForRequestsUsers))
+      .thenComposeAsync(result -> result.after(instanceRepository::findInstancesForRequests));
   }
 
   CompletableFuture<Result<MultipleRecords<Request>>> findBy(CqlQuery query,
