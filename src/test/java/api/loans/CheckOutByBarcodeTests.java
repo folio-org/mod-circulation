@@ -257,6 +257,22 @@ class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
+  void checkOutFailedWhenPatronGroupIdIsMissingInUser() {
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource noUserGroupBob = usersFixture.noUserGroupBob();
+
+    final Response response = checkOutFixture.attemptCheckOutByBarcode(500,
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(smallAngryPlanet)
+        .to(noUserGroupBob)
+        .on(getZonedDateTime())
+        .at(UUID.randomUUID()));
+
+    assertThat(response.getStatusCode(), is(500));
+    assertThat(response.getBody(), is("Unable to apply circulation rules to a user with null value as patronGroupId"));
+  }
+
+  @Test
   void canCheckOutUsingFixedDueDateLoanPolicy() {
 
     IndividualResource loanPolicy = loanPoliciesFixture.canCirculateFixed();
@@ -1054,7 +1070,7 @@ class CheckOutByBarcodeTests extends APITests {
 
     final UUID book = materialTypesFixture.book().getId();
 
-    circulationRulesFixture.updateCirculationRules(createRules( "m " + book));
+    circulationRulesFixture.updateCirculationRules(createRules("m " + book));
 
     IndividualResource firstBookTypeItem = itemsFixture.basedUponNod();
     IndividualResource secondBookTypeItem = itemsFixture.basedUponSmallAngryPlanet();

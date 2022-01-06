@@ -19,6 +19,7 @@ import static org.hamcrest.Matchers.hasSize;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -28,8 +29,10 @@ import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.EndSessionBuilder;
+import api.support.builders.ItemBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
+import api.support.builders.UserBuilder;
 import api.support.fakes.FakeModNotify;
 import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.IndividualResource;
@@ -120,7 +123,7 @@ class EndExpiredPatronActionSessionTests extends APITests {
     expiredSessionProcessingClient.runRequestExpiredSessionsProcessing(204);
 
     waitAtMost(1, SECONDS)
-      .until(patronSessionRecordsClient::getAll,  hasSize(2));
+      .until(patronSessionRecordsClient::getAll, hasSize(2));
 
     verifyNumberOfSentNotices(1);
     verifyNumberOfPublishedEvents(NOTICE, 1);
@@ -153,7 +156,7 @@ class EndExpiredPatronActionSessionTests extends APITests {
     expiredSessionProcessingClient.runRequestExpiredSessionsProcessing(204);
 
     waitAtMost(1, SECONDS)
-      .until(patronSessionRecordsClient::getAll,  hasSize(2));
+      .until(patronSessionRecordsClient::getAll, hasSize(2));
 
     verifyNumberOfSentNotices(1);
     verifyNumberOfPublishedEvents(NOTICE, 1);
@@ -248,7 +251,7 @@ class EndExpiredPatronActionSessionTests extends APITests {
     expiredSessionProcessingClient.runRequestExpiredSessionsProcessing(204);
 
     waitAtMost(1, SECONDS)
-      .until(patronSessionRecordsClient::getAll,  hasSize(3));
+      .until(patronSessionRecordsClient::getAll, hasSize(3));
 
     expiredEndSessionClient.deleteAll();
 
@@ -401,7 +404,7 @@ class EndExpiredPatronActionSessionTests extends APITests {
     expiredSessionProcessingClient.runRequestExpiredSessionsProcessing(204);
 
     waitAtMost(1, SECONDS)
-      .until(patronSessionRecordsClient::getAll,  empty());
+      .until(patronSessionRecordsClient::getAll, empty());
 
     verifyNumberOfSentNotices(1);
     verifyNumberOfPublishedEvents(NOTICE, 1);
@@ -437,6 +440,23 @@ class EndExpiredPatronActionSessionTests extends APITests {
     verifyNumberOfSentNotices(0);
     verifyNumberOfPublishedEvents(NOTICE, 0);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
+  }
+
+  @Test
+  void expiredSessionClosedWithSuccessWhenPatronGroupIdIsNull() {
+    IndividualResource james = usersFixture.james();
+    ItemResource nod = itemsFixture.basedUponNod();
+
+    checkOutFixture.checkOutByBarcode(nod, james);
+    JsonObject user = james.getJson();
+    user.put("patronGroup", null);
+    usersClient.replace(james.getId(), user);
+    List<JsonObject> sessions = patronSessionRecordsClient.getAll();
+    assertThat(sessions, hasSize(1));
+    String patronId = sessions.get(0).getString(PATRON_ID);
+    createExpiredEndSession(patronId, CHECK_OUT);
+    expiredSessionProcessingClient.runRequestExpiredSessionsProcessing(204);
+    assertThat(patronSessionRecordsClient.getAll(), empty());
   }
 
   private void checkThatBunchOfExpiredSessionsWereAddedAndRemovedByTimer(
