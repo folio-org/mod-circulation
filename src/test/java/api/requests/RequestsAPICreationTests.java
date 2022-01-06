@@ -602,7 +602,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  void cannotCreateIlrWhenTlrFeatureEnabledAndUserAlreadyRequestedAnotherItemFromTheSameTitle() {
+  void cannotCreateTlrWhenUserAlreadyRequestedAnItemFromTheSameTitle() {
     reconfigureTlrFeature(TlrFeatureStatus.ENABLED);
 
     List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
@@ -614,17 +614,21 @@ public class RequestsAPICreationTests extends APITests {
 
     checkOutFixture.checkOutByBarcode(item1, charlotte);
     checkOutFixture.checkOutByBarcode(item2, charlotte);
+
+    // Item-level request that should prevent a subsequent title-level request from being created
     requestsFixture.placeItemLevelHoldShelfRequest(item1, jessica);
-    final Response response = requestsFixture.attemptPlaceItemLevelHoldShelfRequest(
-      item2, jessica, ZonedDateTime.now(), servicePointsFixture.cd1().getId(), "Recall");
+
+    // Title-level request that should be refused because item-level request for one of the title's
+    // items already exists
+    final Response response = requestsFixture.attemptPlaceTitleLevelHoldShelfRequest(
+      item1.getInstanceId(), jessica);
 
     assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(response.getJson(), hasErrors(1));
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("This requester already has an open request for one of the instance's items"),
-      hasParameter("itemId", item2.getId().toString()),
       hasParameter("requesterId", jessica.getId().toString()),
-      hasParameter("instanceId", item2.getInstanceId().toString()))));
+      hasParameter("instanceId", item1.getInstanceId().toString()))));
   }
 
   @Test
