@@ -1,14 +1,14 @@
 package org.folio.circulation.infrastructure.storage.requests;
 
 import static java.util.Objects.isNull;
+import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
+import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
-import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
-import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
 
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
@@ -19,22 +19,22 @@ import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.domain.StoredRequestRepresentation;
 import org.folio.circulation.domain.User;
-import org.folio.circulation.infrastructure.storage.inventory.InstanceRepository;
-import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
+import org.folio.circulation.infrastructure.storage.inventory.InstanceRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
+import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.users.PatronGroupRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.storage.RequestBatch;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.RecordNotFoundFailure;
-import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.SingleRecordFetcher;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
+import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
@@ -92,8 +92,8 @@ public class RequestRepository {
     return findByWithoutItems(query, pageLimit).thenComposeAsync(this::fetchFields);
   }
 
-  private CompletableFuture<Result<MultipleRecords<Request>>> fetchFields(Result<MultipleRecords<Request>> coreResult) {
-    return itemRepository.fetchItemsFor(coreResult, Request::withItem)
+  private CompletableFuture<Result<MultipleRecords<Request>>> fetchFields(Result<MultipleRecords<Request>> recordsWithoutFetchedFields) {
+    return itemRepository.fetchItemsFor(recordsWithoutFetchedFields, Request::withItem)
       .thenComposeAsync(result -> result.after(loanRepository::findOpenLoansFor))
       .thenComposeAsync(result -> result.after(servicePointRepository::findServicePointsForRequests))
       .thenComposeAsync(result -> result.after(userRepository::findUsersForRequests))

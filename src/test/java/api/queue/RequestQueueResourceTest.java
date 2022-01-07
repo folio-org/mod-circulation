@@ -13,6 +13,7 @@ import static org.folio.circulation.domain.representations.logs.LogEventType.REQ
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -30,7 +31,6 @@ import java.util.stream.Collectors;
 import org.awaitility.Awaitility;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.Matcher;
-import org.hamcrest.core.Is;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -45,7 +45,6 @@ import api.support.builders.RequestBuilder;
 import api.support.fakes.FakePubSub;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
-import api.support.matchers.UUIDMatcher;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -275,22 +274,11 @@ class RequestQueueResourceTest extends APITests {
 
     assertThat(request.containsKey("instance"), is(true));
     JsonObject instance = request.getJsonObject("instance");
-    assertThat(instance.containsKey("title"), is(true));
-    assertThat(instance.containsKey("identifiers"), is(true));
-    assertThat(instance.containsKey("contributorNames"), is(true));
-    assertThat(instance.containsKey("publication"), is(true));
-    assertThat(instance.containsKey("editions"), is(true));
+    assertThat(instance.fieldNames(), contains("title", "identifiers", "contributorNames", "publication", "editions"));
 
     assertThat(request.containsKey("item"), is(true));
     JsonObject item = request.getJsonObject("item");
-    assertThat(item.containsKey("barcode"), is(true));
-    assertThat(item.containsKey("location"), is(true));
-    assertThat(item.containsKey("enumeration"), is(true));
-    assertThat(item.containsKey("volume"), is(true));
-    assertThat(item.containsKey("chronology"), is(true));
-    assertThat(item.containsKey("status"), is(true));
-    assertThat(item.containsKey("callNumber"), is(true));
-    assertThat(item.containsKey("copyNumber"), is(true));
+    assertThat(item.fieldNames(), contains("barcode", "location", "enumeration", "volume", "chronology", "status", "callNumber", "callNumberComponents", "copyNumber"));
 
     assertThat(request.containsKey("loan"), is(true));
     JsonObject loan = request.getJsonObject("loan");
@@ -298,25 +286,18 @@ class RequestQueueResourceTest extends APITests {
 
     assertThat(request.containsKey("requester"), is(true));
     JsonObject requester = request.getJsonObject("requester");
-    assertThat(requester.containsKey("lastName"), is(true));
-    assertThat(requester.containsKey("firstName"), is(true));
-    assertThat(requester.containsKey("middleName"), is(false));
-    assertThat(requester.containsKey("barcode"), is(true));
-    assertThat(requester.containsKey("patronGroup"), is(true));
+    assertThat(requester.fieldNames(), contains("lastName", "firstName", "barcode", "patronGroup", "patronGroupId"));
 
     assertThat(request.containsKey("proxy"), is(true));
     final JsonObject proxySummary = request.getJsonObject("proxy");
-    assertThat(proxySummary.containsKey("patronGroup"), is(true));
+    assertThat(proxySummary.fieldNames(), contains("lastName", "firstName", "barcode", "patronGroup", "patronGroupId"));
     assertThat(proxySummary.getString("patronGroupId"), is(staffGroupId));
     assertThat(proxySummary.getJsonObject("patronGroup").getString("id"),
       is(staffGroupId));
 
     assertThat(request.containsKey("pickupServicePoint"), is(true));
     final JsonObject pickupServicePoint = request.getJsonObject("pickupServicePoint");
-    assertThat(pickupServicePoint.containsKey("name"), is(true));
-    assertThat(pickupServicePoint.containsKey("code"), is(true));
-    assertThat(pickupServicePoint.containsKey("discoveryDisplayName"), is(true));
-    assertThat(pickupServicePoint.containsKey("pickupLocation"), is(true));
+    assertThat(pickupServicePoint.fieldNames(), contains("name", "code", "discoveryDisplayName", "description" ,"shelvingLagTime", "pickupLocation"));
   }
 
   @Test
@@ -657,7 +638,7 @@ class RequestQueueResourceTest extends APITests {
 
   @ParameterizedTest
   @ArgumentsSource(ReorderQueueTestDataSource.class)
-  public void canReorderQueueTwice(Integer[] initialState, Integer[] targetState) {
+  void canReorderQueueTwice(Integer[] initialState, Integer[] targetState) {
     checkOutFixture.checkOutByBarcode(item, rebecca);
 
     IndividualResource firstHoldRequest = holdRequestForDefaultItem(steve);
@@ -692,7 +673,7 @@ class RequestQueueResourceTest extends APITests {
 
   @ParameterizedTest
   @ArgumentsSource(ReorderQueueTestDataSource.class)
-  public void canReorderUnifiedQueueTwice(Integer[] initialState, Integer[] targetState) {
+  void canReorderUnifiedQueueTwice(Integer[] initialState, Integer[] targetState) {
     reconfigureTlrFeature(TlrFeatureStatus.ENABLED);
 
     checkOutFixture.checkOutByBarcode(items.get(0), rebecca);
