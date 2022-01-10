@@ -10,11 +10,15 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.FeeFine;
 import org.folio.circulation.domain.FeeFineOwner;
+import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.policy.lostitem.LostItemPolicy;
 import org.slf4j.Logger;
@@ -45,13 +49,16 @@ public final class LoanToChargeFees {
     return owner == null;
   }
 
-  public String getOwnerServicePointId() {
-    try {
-      return loan.getItem().getPermanentLocation().getPrimaryServicePointId().toString();
-    } catch (RuntimeException e) {
-      log.error(format("Failed to get servicePointId for the loanId: \"%s\"", loan.getId()));
-      return null;
-    }
+  public String getPrimaryServicePointId() {
+    return Optional.of(loan)
+      .map(Loan::getItem)
+      .map(Item::getPermanentLocation)
+      .map(Location::getPrimaryServicePointId)
+      .map(UUID::toString)
+      .orElseGet(() -> {
+        log.error("Failed to get servicePointId for loan {}", loan.getId());
+        return null;
+      });
   }
 
   FeeFine getLostItemFeeType() {
@@ -66,6 +73,10 @@ public final class LoanToChargeFees {
     return loan.getLostItemPolicy();
   }
 
+  String getLoanId() {
+    return loan != null ? loan.getId() : null;
+  }
+
   LoanToChargeFees withFeeFineTypes(Collection<FeeFine> allFeeFines) {
     final Map<String, FeeFine> feeFineTypeToFeeFineMap = allFeeFines.stream()
       .collect(Collectors.toMap(FeeFine::getFeeFineType, identity()));
@@ -74,7 +85,7 @@ public final class LoanToChargeFees {
   }
 
   LoanToChargeFees withOwner(Map<String, FeeFineOwner> owners) {
-    return new LoanToChargeFees(loan, owners.get(getOwnerServicePointId()), feeFineTypes);
+    return new LoanToChargeFees(loan, owners.get(getPrimaryServicePointId()), feeFineTypes);
   }
 
   boolean shouldCloseLoan() {

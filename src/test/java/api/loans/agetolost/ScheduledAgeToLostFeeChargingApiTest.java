@@ -249,13 +249,16 @@ class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     useLostItemPolicy(lostItemFeePoliciesFixture.create(policy).getId());
 
     val item = itemsFixture.basedUponNod(ItemBuilder::withRandomBarcode);
-    val loan = checkOutFixture.checkOutByBarcode(item, usersFixture.steve()).getJson();
+    val loanBefore = checkOutFixture.checkOutByBarcode(item, usersFixture.steve());
+    ageToLostFixture.ageToLostAndChargeFees();
 
-    val response = ageToLostFixture.ageToLostAndAttemptChargeFees();
+    IndividualResource loanAfter = loansFixture.getLoanById(loanBefore.getId());
 
-    assertThat(response.getJson(), hasErrorWith(
-      hasMessage("No automated Lost item processing fee type found")));
-    assertThatPublishedLoanLogRecordEventsAreValid(loan);
+    assertThat(loanAfter, hasNoLostItemFee());
+    assertThat(loanAfter, hasNoLostItemProcessingFee());
+    assertThat(accountsClient.getAll(), hasSize(0));
+    assertThat(scheduledNoticesClient.getAll(), hasSize(0));
+    assertThatPublishedLoanLogRecordEventsAreValid(loanAfter.getJson());
   }
 
   @Test
@@ -270,12 +273,16 @@ class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     useLostItemPolicy(lostItemFeePoliciesFixture.create(policy).getId());
 
     val item = itemsFixture.basedUponNod(ItemBuilder::withRandomBarcode);
-    val loan = checkOutFixture.checkOutByBarcode(item, usersFixture.steve());
-    assertThatPublishedLoanLogRecordEventsAreValid(loan.getJson());
-    val response = ageToLostFixture.ageToLostAndAttemptChargeFees();
+    val loanBefore = checkOutFixture.checkOutByBarcode(item, usersFixture.steve());
+    ageToLostFixture.ageToLostAndChargeFees();
 
-    assertThat(response.getJson(), hasErrorWith(
-      hasMessage("No automated Lost item fee type found")));
+    IndividualResource loanAfter = loansFixture.getLoanById(loanBefore.getId());
+
+    assertThat(loanAfter, hasNoLostItemFee());
+    assertThat(loanAfter, hasNoLostItemProcessingFee());
+    assertThat(accountsClient.getAll(), hasSize(0));
+    assertThat(scheduledNoticesClient.getAll(), hasSize(0));
+    assertThatPublishedLoanLogRecordEventsAreValid(loanAfter.getJson());
   }
 
   @Test
@@ -434,6 +441,43 @@ class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     assertThat(itemsClient.get(firstItem).getJson(), isAgedToLost());
     assertThat(itemsClient.attemptGet(secondItem).getStatusCode(), is(404));
     assertThat(itemsClient.get(thirdItem).getJson(), isAgedToLost());
+  }
+
+  @Test
+  void loanWithMissingPrimaryServicePointOwnerDoesNotBlockTheQueue() {
+    useLostItemPolicy(lostItemFeePoliciesFixture.ageToLostAfterOneMinute().getId());
+
+    IndividualResource locationWithoutOwner = locationsFixture.basedUponExampleLocation(
+      builder -> builder.withPrimaryServicePoint(servicePointsFixture.cd2().getId()));
+
+    final var firstItem = itemsFixture.basedUponSmallAngryPlanet();
+    final var secondItem = itemsFixture.basedUponNod(
+      itemBuilder -> itemBuilder.withPermanentLocation(locationWithoutOwner));
+    final var thirdItem = itemsFixture.basedUponTemeraire();
+
+    final var firstLoanBefore = checkOutFixture.checkOutByBarcode(firstItem, usersFixture.charlotte());
+    final var secondLoanBefore = checkOutFixture.checkOutByBarcode(secondItem, usersFixture.steve());
+    final var thirdLoanBefore = checkOutFixture.checkOutByBarcode(thirdItem, usersFixture.james());
+
+    ageToLostFixture.ageToLostAndChargeFees();
+
+    assertThat(accountsClient.getAll(), hasSize(4));
+
+    IndividualResource firstLoanAfter = loansStorageClient.get(firstLoanBefore);
+    IndividualResource secondLoanAfter = loansStorageClient.get(secondLoanBefore);
+    IndividualResource thirdLoanAfter = loansStorageClient.get(thirdLoanBefore);
+
+    assertThat(firstLoanAfter.getJson(), isLostItemHasBeenBilled());
+    assertThat(firstLoanAfter, hasLostItemFee(isOpen(10.0)));
+    assertThat(firstLoanAfter, hasLostItemProcessingFee(isOpen(5.0)));
+
+    assertThat(secondLoanAfter.getJson(), isLostItemHasNotBeenBilled());
+    assertThat(secondLoanAfter, hasNoLostItemFee());
+    assertThat(secondLoanAfter, hasNoLostItemProcessingFee());
+
+    assertThat(thirdLoanAfter.getJson(), isLostItemHasBeenBilled());
+    assertThat(thirdLoanAfter, hasLostItemFee(isOpen(10.0)));
+    assertThat(thirdLoanAfter, hasLostItemProcessingFee(isOpen(5.0)));
   }
 
   private Map<IndividualResource, Double> checkoutTenItems() {

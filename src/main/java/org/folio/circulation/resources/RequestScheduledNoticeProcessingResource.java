@@ -22,7 +22,7 @@ import io.vertx.core.http.HttpClient;
 public class RequestScheduledNoticeProcessingResource extends ScheduledNoticeProcessingResource {
 
   public RequestScheduledNoticeProcessingResource(HttpClient client) {
-    super("/circulation/request-scheduled-notices-processing" ,client);
+    super("/circulation/request-scheduled-notices-processing", client);
   }
 
   @Override

@@ -111,7 +111,7 @@ class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends APITests {
   }
 
   @Test
-  public void shouldNotFailWhenAgedToLostLoanHasNonexistentItem() {
+  void shouldNotFailWhenAgedToLostLoanHasNonexistentItem() {
     var item = itemsFixture.basedUponNod(ItemBuilder::withRandomBarcode);
     var loan = checkOutFixture.checkOutByBarcode(item, usersFixture.steve());
     ageToLostFixture.ageToLost();
@@ -127,9 +127,9 @@ class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends APITests {
   }
 
   @Test
-  public void getOwnerServicePointIdShouldNotFailIfItemDoesNotExist() {
+  void getOwnerServicePointIdShouldNotFailIfItemDoesNotExist() {
     JsonObject loanJson = new JsonObject().put("id", UUID.randomUUID().toString());
-    assertThat(LoanToChargeFees.usingLoan(Loan.from(loanJson)).getOwnerServicePointId(),
+    assertThat(LoanToChargeFees.usingLoan(Loan.from(loanJson)).getPrimaryServicePointId(),
       nullValue());
   }
 
