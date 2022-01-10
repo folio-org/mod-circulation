@@ -1,10 +1,14 @@
 package org.folio.circulation.services;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.ItemStatus.IN_TRANSIT;
+import static org.folio.circulation.support.results.Result.combineAll;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
+import org.folio.circulation.domain.Item;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemReportRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
@@ -54,7 +58,14 @@ public class ItemsInTransitReportService {
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchItems(
     Result<ItemsInTransitReportContext> context) {
 
-    return completedFuture(context);
+    return itemReportRepository.getAllItemsByField("status.name", IN_TRANSIT.getValue())
+      .thenApply(r -> r.next(itemsReportFetcher ->
+        combineAll(itemsReportFetcher.getResultListOfItems())
+          .map(listOfPages -> listOfPages.stream()
+            .flatMap(page -> page.getRecords().stream())
+            .collect(Collectors.toList()))))
+      .thenApply(r -> r.combine(context,
+        (items, ctx) -> ctx.with(items, Item::getItemId, ctx::withItems)));
   }
 
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchHoldingsRecords(
