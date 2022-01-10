@@ -2,19 +2,26 @@ package api.queue;
 
 import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
+import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
+import static java.time.ZoneOffset.UTC;
+import static java.util.Arrays.asList;
+import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toList;
 import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_REORDERED;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.time.LocalDate;
+import java.time.ZonedDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
@@ -221,6 +228,109 @@ class RequestQueueResourceTest extends APITests {
 
     verifyValidationFailure(response,
       is("Requests can not be displaced from top positions when fulfillment begun."));
+  }
+
+  @Test
+  void shouldGetRequestQueueForItemSuccessfully() {
+    UUID facultyGroupId = patronGroupsFixture.faculty().getId();
+    UUID staffGroupId = patronGroupsFixture.staff().getId();
+    UUID isbnIdentifierId = identifierTypesFixture.isbn().getId();
+
+    final ItemResource smallAngryPlanet = itemsFixture
+      .basedUponSmallAngryPlanet(
+        identity(),
+        instanceBuilder -> instanceBuilder.addIdentifier(isbnIdentifierId, "9780866989732").withId(instanceId),
+        itemBuilder -> itemBuilder
+          .withCallNumber("itCn", "itCnPrefix", "itCnSuffix")
+          .withEnumeration("enumeration1")
+          .withChronology("chronology")
+          .withVolume("vol.1")
+          .withCopyNumber("1"),
+        "649113164644");
+
+    final IndividualResource sponsor = usersFixture.rebecca(user -> user.withPatronGroupId(facultyGroupId));
+    final IndividualResource proxy = usersFixture.undergradHenry(user -> user.withPatronGroupId(staffGroupId));
+    proxyRelationshipsFixture.nonExpiringProxyFor(sponsor, proxy);
+
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet);
+
+    requestsFixture.place(
+      new RequestBuilder()
+        .recall()
+        .itemRequestLevel()
+        .withRequestDate(ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC))
+        .forItem(smallAngryPlanet)
+        .withInstanceId(smallAngryPlanet.getInstanceId())
+        .by(sponsor)
+        .proxiedBy(proxy)
+        .fulfilToHoldShelf()
+        .withRequestExpiration(LocalDate.of(2017, 7, 30))
+        .withHoldShelfExpiration(LocalDate.of(2017, 8, 31))
+        .withPickupServicePointId(servicePointsFixture.cd1().getId())
+        .withTags(new RequestBuilder.Tags(asList("new", "important")))
+        .withPatronComments("I need the book"));
+
+    JsonObject request = requestQueueFixture.retrieveQueueForItem(smallAngryPlanet.getId().toString()).getJsonArray("requests").getJsonObject(0);
+
+    assertThat(request.containsKey("instance"), is(true));
+    JsonObject instance = request.getJsonObject("instance");
+    assertThat(instance.fieldNames(), contains("title", "identifiers", "contributorNames", "publication", "editions"));
+
+    assertThat(request.containsKey("item"), is(true));
+    JsonObject item = request.getJsonObject("item");
+    assertThat(item.fieldNames(), contains("barcode", "location", "enumeration", "volume", "chronology", "status", "callNumber", "callNumberComponents", "copyNumber"));
+
+    assertThat(request.containsKey("loan"), is(true));
+    JsonObject loan = request.getJsonObject("loan");
+    assertThat(loan.containsKey("dueDate"), is(true));
+
+    assertThat(request.containsKey("requester"), is(true));
+    JsonObject requester = request.getJsonObject("requester");
+    assertThat(requester.fieldNames(), contains("lastName", "firstName", "barcode", "patronGroup", "patronGroupId"));
+
+    assertThat(request.containsKey("proxy"), is(true));
+    final JsonObject proxySummary = request.getJsonObject("proxy");
+    assertThat(proxySummary.fieldNames(), contains("lastName", "firstName", "barcode", "patronGroup", "patronGroupId"));
+    assertThat(proxySummary.getString("patronGroupId"), is(staffGroupId));
+    assertThat(proxySummary.getJsonObject("patronGroup").getString("id"),
+      is(staffGroupId));
+
+    assertThat(request.containsKey("pickupServicePoint"), is(true));
+    final JsonObject pickupServicePoint = request.getJsonObject("pickupServicePoint");
+    assertThat(pickupServicePoint.fieldNames(), contains("name", "code", "discoveryDisplayName", "description" ,"shelvingLagTime", "pickupLocation"));
+  }
+
+  @Test
+  void shouldGetRequestQueueForInstanceSuccessfully() {
+    configurationsFixture.enableTlrFeature();
+
+    UUID isbnIdentifierId = identifierTypesFixture.isbn().getId();
+    String isbnValue = "9780866989427";
+    ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
+      identity(),
+      instanceBuilder -> instanceBuilder.addIdentifier(isbnIdentifierId, isbnValue).withId(instanceId),
+      itemsFixture.addCallNumberStringComponents());
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet);
+
+    requestsClient.create(new RequestBuilder()
+      .hold()
+      .titleRequestLevel()
+      .withInstanceId(instanceId)
+      .withNoItemId()
+      .withNoHoldingsRecordId()
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
+      .withRequestDate(ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC))
+      .withRequesterId(usersFixture.steve().getId()));
+
+    JsonObject request = requestQueueFixture.retrieveQueueForInstance(smallAngryPlanet.getInstanceId().toString()).getJsonArray("requests").getJsonObject(0);
+
+    assertThat(request.containsKey("instance"), is(true));
+    JsonObject instance = request.getJsonObject("instance");
+    assertThat(instance.containsKey("title"), is(true));
+    assertThat(instance.containsKey("identifiers"), is(true));
+    assertThat(instance.containsKey("contributorNames"), is(true));
+    assertThat(instance.containsKey("publication"), is(true));
+    assertThat(instance.containsKey("editions"), is(true));
   }
 
   @ParameterizedTest
@@ -528,7 +638,7 @@ class RequestQueueResourceTest extends APITests {
 
   @ParameterizedTest
   @ArgumentsSource(ReorderQueueTestDataSource.class)
-  public void canReorderQueueTwice(Integer[] initialState, Integer[] targetState) {
+  void canReorderQueueTwice(Integer[] initialState, Integer[] targetState) {
     checkOutFixture.checkOutByBarcode(item, rebecca);
 
     IndividualResource firstHoldRequest = holdRequestForDefaultItem(steve);
@@ -563,7 +673,7 @@ class RequestQueueResourceTest extends APITests {
 
   @ParameterizedTest
   @ArgumentsSource(ReorderQueueTestDataSource.class)
-  public void canReorderUnifiedQueueTwice(Integer[] initialState, Integer[] targetState) {
+  void canReorderUnifiedQueueTwice(Integer[] initialState, Integer[] targetState) {
     reconfigureTlrFeature(TlrFeatureStatus.ENABLED);
 
     checkOutFixture.checkOutByBarcode(items.get(0), rebecca);

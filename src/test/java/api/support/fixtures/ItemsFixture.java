@@ -164,6 +164,23 @@ public class ItemsFixture {
         loanTypesFixture.canCirculate().getId()));
   }
 
+  public ItemResource basedUponSmallAngryPlanet(
+    Function<HoldingBuilder, HoldingBuilder> additionalHoldingsRecordProperties,
+    Function<InstanceBuilder, InstanceBuilder> additionalInstanceProperties,
+    Function<ItemBuilder, ItemBuilder> additionalItemProperties,
+    String barcode) {
+
+    return applyAdditionalProperties(
+      additionalHoldingsRecordProperties,
+      additionalInstanceProperties,
+      additionalItemProperties,
+      InstanceExamples.basedUponSmallAngryPlanet(booksInstanceTypeId(),
+        getPersonalContributorNameTypeId()),
+      thirdFloorHoldings(),
+      ItemExamples.basedUponSmallAngryPlanet(materialTypesFixture.book().getId(),
+        loanTypesFixture.canCirculate().getId(), barcode));
+  }
+
   public ItemResource basedUponNod() {
     return basedUponNod(identity());
   }
