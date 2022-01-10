@@ -122,52 +122,6 @@ class RequestScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  void requestExpirationNoticeShouldBeSentAndDeletedWhenRequestExpirationDateHasPassedForWithdrawnItem() {
-    JsonObject noticeConfiguration = new NoticeConfigurationBuilder()
-      .withTemplateId(templateId)
-      .withRequestExpirationEvent()
-      .withUponAtTiming()
-      .sendInRealTime(true)
-      .create();
-    setupNoticePolicyWithRequestNotice(noticeConfiguration);
-
-    final LocalDate localDate = getLocalDate().minusDays(1);
-    final var requestExpiration = LocalDate.of(localDate.getYear(),
-      localDate.getMonth(), localDate.getDayOfMonth());
-
-    IndividualResource request = requestsFixture.place(new RequestBuilder().page()
-      .forItem(item)
-      .withRequesterId(requester.getId())
-      .withRequestDate(getZonedDateTime())
-      .withStatus(OPEN_NOT_YET_FILLED)
-      .withPickupServicePoint(pickupServicePoint)
-      .withRequestExpiration(requestExpiration));
-
-    verifyNumberOfScheduledNotices(1);
-
-    //close request
-    IndividualResource requestInStorage = requestsStorageClient.get(request);
-
-    requestsStorageClient.replace(request.getId(),
-      requestInStorage.getJson().put("status", "Closed - Unfilled"));
-
-    IndividualResource i1 = itemsClient.get(item.getId());
-    JsonObject json = i1.getJson();
-    json.getJsonObject("status").put("name", "Withdrawn");
-    itemsClient.replace(i1.getId(), json);
-
-    scheduledNoticeProcessingClient.runRequestNoticesProcessing();
-
-    verifyNumberOfSentNotices(1);
-    assertThat(
-      FakeModNotify.getFirstSentPatronNotice(), getTemplateContextMatcher(templateId, request));
-
-    verifyNumberOfScheduledNotices(0);
-    verifyNumberOfPublishedEvents(NOTICE, 1);
-    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
-  }
-
-  @Test
   void uponAtRequestExpirationNoticeShouldNotBeSentWhenRequestExpirationDateHasPassedAndRequestIsNotClosed() {
     JsonObject noticeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(templateId)
