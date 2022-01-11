@@ -52,11 +52,4 @@ public class ItemsInTransitReportContext {
 
   // Service points are needed for items, loans and requests
   private Map<String, ServicePoint> servicePoints;
-
-  public <T> ItemsInTransitReportContext with(List<T> list, Function<T, String> idMapper,
-    Function<Map<String, T>, ItemsInTransitReportContext> wither) {
-
-    return wither.apply(list.stream()
-      .collect(Collectors.toMap(idMapper, identity())));
-  }
 }
