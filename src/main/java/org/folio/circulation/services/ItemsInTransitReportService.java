@@ -1,17 +1,27 @@
 package org.folio.circulation.services;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.RequestStatus.openStates;
+import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
+import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.results.Result.succeeded;
 
+import java.util.Collection;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
+import org.folio.circulation.domain.Request;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemReportRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.users.PatronGroupRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.services.support.ItemsInTransitReportContext;
+import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
 import org.folio.circulation.support.GetManyRecordsClient;
+import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.json.JsonObject;
@@ -96,7 +106,17 @@ public class ItemsInTransitReportService {
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchRequests(
     Result<ItemsInTransitReportContext> context) {
 
-    return completedFuture(context);
+    final Result<CqlQuery> cqlQuery = exactMatchAny("status", openStates());
+    FindWithMultipleCqlIndexValues<Request> fetcher
+      = findWithMultipleCqlIndexValues(requestsStorageClient, "requests",
+        Request::from);
+
+    ItemsInTransitReportContext reportContext = context.value();
+    return fetcher.findByIdIndexAndQuery(reportContext.getItems().keySet(), "itemId", cqlQuery)
+      .thenApply(requests -> {
+        reportContext.setRequests(listToMap(requests.value().getRecords()));
+        return context;
+      });
   }
 
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchUsers(
@@ -116,5 +136,10 @@ public class ItemsInTransitReportService {
     Result<ItemsInTransitReportContext> context) {
 
     return completedFuture(context);
+  }
+
+  private Map<String, Request> listToMap(Collection<Request> records) {
+    return records.stream()
+      .collect(Collectors.toMap(Request::getId, Function.identity()));
   }
 }
