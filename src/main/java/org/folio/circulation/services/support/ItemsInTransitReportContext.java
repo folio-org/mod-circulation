@@ -1,11 +1,6 @@
 package org.folio.circulation.services.support;
 
-import static java.util.function.Function.identity;
-
-import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.Holdings;
 import org.folio.circulation.domain.Instance;
