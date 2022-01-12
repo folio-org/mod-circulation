@@ -7,6 +7,7 @@ import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
@@ -63,6 +64,9 @@ public class ItemsInTransitReportService {
 
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchItems(
     Result<ItemsInTransitReportContext> context) {
+
+    // added for testing purpose, remove after fetchItems method would have implementation
+    context.value().setItems(new HashMap<>());
 
     return completedFuture(context);
   }

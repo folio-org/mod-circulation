@@ -2,6 +2,9 @@ package org.folio.circulation.services.support;
 
 import java.util.Map;
 
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
+import lombok.With;
 import org.folio.circulation.domain.Holdings;
 import org.folio.circulation.domain.Instance;
 import org.folio.circulation.domain.Item;
@@ -19,6 +22,9 @@ import lombok.Setter;
 
 @Getter
 @Setter
+@With
+@AllArgsConstructor
+@NoArgsConstructor
 public class ItemsInTransitReportContext {
   // All maps contain (id -> entity) pairs
   // All entities need to be fetched in batches
