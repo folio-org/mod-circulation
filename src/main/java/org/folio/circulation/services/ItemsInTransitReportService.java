@@ -1,10 +1,18 @@
 package org.folio.circulation.services;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static java.util.function.Function.identity;
+import static org.folio.circulation.domain.ItemStatus.IN_TRANSIT;
+import static org.folio.circulation.support.results.Result.combineAll;
 import static org.folio.circulation.support.results.Result.succeeded;
 
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
+import org.folio.circulation.domain.Item;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemReportRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
@@ -32,7 +40,7 @@ public class ItemsInTransitReportService {
 
   public CompletableFuture<Result<JsonObject>> buildReport() {
     return completedFuture(succeeded(new ItemsInTransitReportContext()))
-      .thenCompose(this::fetchItems)
+      .thenCompose(r -> r.after(this::fetchItems))
       .thenCompose(this::fetchHoldingsRecords)
       .thenCompose(this::fetchInstances)
       .thenCompose(this::fetchLocations)
@@ -52,9 +60,16 @@ public class ItemsInTransitReportService {
   }
 
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchItems(
-    Result<ItemsInTransitReportContext> context) {
+    ItemsInTransitReportContext context) {
 
-    return completedFuture(context);
+    return itemReportRepository.getAllItemsByField("status.name", IN_TRANSIT.getValue())
+      .thenApply(r -> r.next(itemsReportFetcher ->
+        combineAll(itemsReportFetcher.getResultListOfItems())
+          .map(listOfPages -> listOfPages.stream()
+            .flatMap(page -> page.getRecords().stream())
+            .collect(Collectors.toList()))))
+      .thenApply(r -> r.map(items -> toMap(items, Item::getItemId)))
+      .thenApply(r -> r.map(context::withItems));
   }
 
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchHoldingsRecords(
@@ -116,5 +131,10 @@ public class ItemsInTransitReportService {
     Result<ItemsInTransitReportContext> context) {
 
     return completedFuture(context);
+  }
+
+  public <T> Map<String, T> toMap(List<T> list, Function<T, String> idMapper) {
+    return list.stream()
+      .collect(Collectors.toMap(idMapper, identity()));
   }
 }
