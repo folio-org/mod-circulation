@@ -28,8 +28,10 @@ import org.folio.circulation.rules.CirculationRuleMatch;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.ForwardOnFailure;
 import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.RecordNotFoundFailure;
+import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
 import org.folio.circulation.support.results.Result;
 import org.apache.logging.log4j.LogManager;
@@ -206,7 +208,8 @@ public abstract class ScheduledNoticeHandler {
     HttpFailure failure = result.cause();
     log.error("Processing scheduled notice {} failed: {}", notice.getId(), failure);
 
-    if (failure instanceof RecordNotFoundFailure) {
+    if (failure instanceof RecordNotFoundFailure || failure instanceof ServerErrorFailure ||
+      failure instanceof ForwardOnFailure) {
       return deleteNotice(notice, failure.toString());
     }
 
@@ -214,9 +217,8 @@ public abstract class ScheduledNoticeHandler {
   }
 
   private Result<ScheduledNotice> handleException(Throwable throwable, ScheduledNotice notice) {
-    log.error("An exception was thrown while processing scheduled notice {}: {}",
-      notice.getId(), throwable.getMessage());
-
+    deleteNotice(notice, String.format("an exception was thrown while processing scheduled notice %s: %s",
+    notice.getId(), throwable.getMessage()));
     return succeeded(notice);
   }
 
