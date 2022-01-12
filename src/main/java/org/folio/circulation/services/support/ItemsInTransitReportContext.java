@@ -17,8 +17,11 @@ import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.domain.User;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.With;
 
 @Getter
 @Setter
@@ -47,6 +50,4 @@ public class ItemsInTransitReportContext {
 
   // Service points are needed for items, loans and requests
   private Map<String, ServicePoint> servicePoints;
-
-
 }
