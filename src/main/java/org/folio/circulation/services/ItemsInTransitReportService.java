@@ -9,7 +9,7 @@ import static org.folio.circulation.support.fetching.RecordFetching.findWithMult
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.results.Result.succeeded;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
@@ -124,10 +124,10 @@ public class ItemsInTransitReportService {
 
     ItemsInTransitReportContext reportContext = context.value();
     return fetcher.findByIdIndexAndQuery(reportContext.getItems().keySet(), "itemId", cqlQuery)
-      .thenApply(requests -> {
-        reportContext.setRequests(listToMap(requests.value().getRecords()));
-        return context;
-      });
+      .thenApply(requests ->
+        reportContext.withRequests(toMap(requests.value().getRecords(), Request::getId))
+      )
+      .thenApply(Result::succeeded);
   }
 
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchUsers(
@@ -149,8 +149,8 @@ public class ItemsInTransitReportService {
     return completedFuture(context);
   }
 
-  public <T> Map<String, T> toMap(List<T> list, Function<T, String> idMapper) {
-    return list.stream()
+  public <T> Map<String, T> toMap(Collection<T> collection, Function<T, String> idMapper) {
+    return collection.stream()
       .collect(Collectors.toMap(idMapper, identity()));
   }
 }

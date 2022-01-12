@@ -48,7 +48,8 @@ class ItemsInTransitReportServiceTest {
         List.of(Item.from(new JsonObject())), 1))));
 
     ItemsInTransitReportService service = new ItemsInTransitReportService(itemReportRepository,
-      null, null, requestsStorageClient, null, null, null);
+      null, null, requestsStorageClient,
+      null, null, null);
     CompletableFuture<Result<JsonObject>> report = service.buildReport();
     assertNotNull(report);
   }
