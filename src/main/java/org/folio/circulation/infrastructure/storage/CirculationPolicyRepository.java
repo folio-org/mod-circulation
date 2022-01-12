@@ -101,26 +101,22 @@ public abstract class CirculationPolicyRepository<T> {
 
     if (user.getPatronGroupId() == null) {
       log.error("PatronGroupId is null for user {}", user.getId());
-      return completedFuture(failedDueToServerError(
-        "Unable to apply circulation rules to a user with null value as patronGroupId"));
+      return completedFuture(failedDueToServerError("Unable to apply circulation rules to a user with null value as patronGroupId"));
     }
 
     if (item.getLocationId() == null) {
       log.error("LocationId is null for item {}", item.getItemId());
-      return completedFuture(failedDueToServerError(
-        "Unable to apply circulation rules to an item with null value as locationId"));
+      return completedFuture(failedDueToServerError("Unable to apply circulation rules to an item with null value as locationId"));
     }
 
     if (item.determineLoanTypeForItem() == null) {
       log.error("LoanTypeId is null for item {}", item.getItemId());
-      return completedFuture(failedDueToServerError(
-        "Unable to apply circulation rules to an item which loan type can not be determined"));
+      return completedFuture(failedDueToServerError("Unable to apply circulation rules to an item which loan type can not be determined"));
     }
 
     if (item.getMaterialTypeId() == null) {
       log.error("MaterialTypeId is null for item {}", item.getItemId());
-      return completedFuture(failedDueToServerError(
-        "Unable to apply circulation rules to an item with null value as materialTypeId"));
+      return completedFuture(failedDueToServerError("Unable to apply circulation rules to an item with null value as materialTypeId"));
     }
 
     return getPolicyAndMatch(forItem(item, user));
