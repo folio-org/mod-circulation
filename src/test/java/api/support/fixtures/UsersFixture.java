@@ -52,6 +52,7 @@ public class UsersFixture {
   public UserResource steve() {
     return steve(identity());
   }
+
   public UserResource steve(Function<UserBuilder, UserBuilder> additionalConfiguration) {
     return createIfAbsent(additionalConfiguration.apply(basedUponStevenJones()
       .inGroupFor(patronGroupsFixture.regular())));

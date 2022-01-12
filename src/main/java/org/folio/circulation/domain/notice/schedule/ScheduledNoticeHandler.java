@@ -32,6 +32,7 @@ import org.folio.circulation.support.ForwardOnFailure;
 import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.RecordNotFoundFailure;
 import org.folio.circulation.support.ServerErrorFailure;
+import org.folio.circulation.support.UnableToApplyCircRulesErrorFailure;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
 import org.folio.circulation.support.results.Result;
 import org.apache.logging.log4j.LogManager;
@@ -208,8 +209,8 @@ public abstract class ScheduledNoticeHandler {
     HttpFailure failure = result.cause();
     log.error("Processing scheduled notice {} failed: {}", notice.getId(), failure);
 
-    if (failure instanceof RecordNotFoundFailure || failure instanceof ServerErrorFailure ||
-      failure instanceof ForwardOnFailure) {
+    if (failure instanceof RecordNotFoundFailure || failure instanceof UnableToApplyCircRulesErrorFailure
+      || failure instanceof ForwardOnFailure) {
       return deleteNotice(notice, failure.toString());
     }
 

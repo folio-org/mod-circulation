@@ -24,7 +24,7 @@ class CirculationPolicyRepositoryTest {
     when(user.getPatronGroupId()).thenReturn(null);
     Result<CirculationRuleMatch> result = (Result<CirculationRuleMatch>) repository.lookupPolicyId(item, user).get();
 
-    assertEquals("Server error failure, reason: Unable to apply circulation rules to a user with null value as patronGroupId", result.cause().toString());
+    assertEquals("Unable to apply circulation rules error failure, reason: user with null value as patronGroupId", result.cause().toString());
   }
 
   @Test
@@ -34,7 +34,7 @@ class CirculationPolicyRepositoryTest {
     when(item.getLocationId()).thenReturn(null);
     Result<CirculationRuleMatch> result = (Result<CirculationRuleMatch>) repository.lookupPolicyId(item, user).get();
 
-    assertEquals("Server error failure, reason: Unable to apply circulation rules to an item with null value as locationId", result.cause().toString());
+    assertEquals("Unable to apply circulation rules error failure, reason: item with null value as locationId", result.cause().toString());
   }
 
   @Test
@@ -46,7 +46,7 @@ class CirculationPolicyRepositoryTest {
 
     Result<CirculationRuleMatch> result = (Result<CirculationRuleMatch>) repository.lookupPolicyId(item, user).get();
 
-    assertEquals("Server error failure, reason: Unable to apply circulation rules to an item which loan type can not be determined", result.cause().toString());
+    assertEquals("Unable to apply circulation rules error failure, reason: item which loan type can not be determined", result.cause().toString());
   }
 
   @Test
@@ -59,6 +59,6 @@ class CirculationPolicyRepositoryTest {
 
     Result<CirculationRuleMatch> result = (Result<CirculationRuleMatch>) repository.lookupPolicyId(item, user).get();
 
-    assertEquals("Server error failure, reason: Unable to apply circulation rules to an item with null value as materialTypeId", result.cause().toString());
+    assertEquals("Unable to apply circulation rules error failure, reason: item with null value as materialTypeId", result.cause().toString());
   }
 }
