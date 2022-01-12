@@ -65,14 +65,7 @@ public class RequestScheduledNoticeHandler extends ScheduledNoticeHandler {
 
   @Override
   protected boolean isNoticeIrrelevant(ScheduledNoticeContext context) {
-    Request request = context.getRequest();
-    ScheduledNotice notice = context.getNotice();
-
-    boolean isHoldExpirationNotice = HOLD_EXPIRATION.equals(notice.getTriggeringEvent());
-    boolean isUponAtNotice = UPON_AT.equals(notice.getConfiguration().getTiming());
-
-    return isHoldExpirationNotice &&
-      ((!isUponAtNotice && request.isClosed()) || (isUponAtNotice && request.isClosedExceptPickupExpired()));
+    return isNoticeNotRelevantYet(context) || isNoticeNoLongerRelevant(context);
   }
 
   @Override
@@ -84,12 +77,13 @@ public class RequestScheduledNoticeHandler extends ScheduledNoticeHandler {
   protected CompletableFuture<Result<ScheduledNotice>> updateNotice(ScheduledNoticeContext context) {
     Request request = context.getRequest();
     ScheduledNotice notice = context.getNotice();
+    boolean isNoticeNonRecurring = !notice.getConfiguration().isRecurring();
 
-    if (isUponAtNoticeForOpenRequest(context)) {
+    if (isNoticeNotRelevantYet(context)) {
       return ofAsync(() -> notice);
     }
 
-    if (request.isClosed() || !notice.getConfiguration().isRecurring() || isNoticeIrrelevant(context)) {
+    if (request.isClosed() || isNoticeNonRecurring || isNoticeNoLongerRelevant(context)) {
       return deleteNoticeAsIrrelevant(notice);
     }
 
@@ -116,14 +110,26 @@ public class RequestScheduledNoticeHandler extends ScheduledNoticeHandler {
       .withItems(singletonList(logContextItem));
   }
 
-  @Override
-  protected boolean noticeShouldNotBeSent(ScheduledNoticeContext context) {
-    return super.noticeShouldNotBeSent(context) || isUponAtNoticeForOpenRequest(context);
+  private static boolean isNoticeNotRelevantYet(ScheduledNoticeContext context) {
+    Request request = context.getRequest();
+    ScheduledNotice notice = context.getNotice();
+
+    return notice.getConfiguration().getTiming() == UPON_AT &&
+      request.isOpen() &&
+      !(notice.getTriggeringEvent() == HOLD_EXPIRATION && request.isNotYetFilled());
   }
 
-  private static boolean isUponAtNoticeForOpenRequest(ScheduledNoticeContext context) {
-    return context.getNotice().getConfiguration().getTiming() == UPON_AT &&
-      context.getRequest().isOpen();
+  private static boolean isNoticeNoLongerRelevant(ScheduledNoticeContext context) {
+    return context.getNotice().getTriggeringEvent() == HOLD_EXPIRATION &&
+      isHoldExpirationNoticeIrrelevant(context);
+  }
+
+  private static boolean isHoldExpirationNoticeIrrelevant(ScheduledNoticeContext context) {
+    Request request = context.getRequest();
+
+    return context.getNotice().getConfiguration().getTiming() == UPON_AT
+      ? request.isClosed() && !request.isPickupExpired() || request.isNotYetFilled()
+      : request.isClosed();
   }
 
   private static ScheduledNotice updateNoticeNextRunTime(ScheduledNotice notice) {

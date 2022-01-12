@@ -99,10 +99,6 @@ public abstract class ScheduledNoticeHandler {
 
   protected abstract JsonObject buildNoticeContextJson(ScheduledNoticeContext context);
 
-  protected boolean noticeShouldNotBeSent(ScheduledNoticeContext context) {
-    return isNoticeIrrelevant(context);
-  }
-
   protected Result<ScheduledNoticeContext> publishErrorEvent(HttpFailure failure,
     ScheduledNotice notice) {
 
@@ -156,7 +152,7 @@ public abstract class ScheduledNoticeHandler {
   private CompletableFuture<Result<ScheduledNoticeContext>> sendNotice(
     ScheduledNoticeContext context) {
 
-    if (noticeShouldNotBeSent(context)) {
+    if (isNoticeIrrelevant(context)) {
       return ofAsync(() -> context);
     }
 

@@ -3,6 +3,7 @@ package api.requests;
 import static api.support.builders.RequestBuilder.CLOSED_PICKUP_EXPIRED;
 import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
+import static api.support.matchers.RequestMatchers.isOpenAwaitingPickup;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfPublishedEvents;
 import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfScheduledNotices;
@@ -35,6 +36,8 @@ import org.junit.FixMethodOrder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.junit.runners.MethodSorters;
 
 import api.support.APITests;
@@ -156,7 +159,7 @@ class RequestScheduledNoticesProcessingTests extends APITests {
   @Test
   @Disabled("notice is deleted once the request status is changed to 'Closed - Pickup expired'")
   //TODO fix this test and make it useful again
-  public void uponAtHoldExpirationNoticeShouldBeSentAndDeletedWhenHoldExpirationDateHasPassed() {
+  void uponAtHoldExpirationNoticeShouldBeSentAndDeletedWhenHoldExpirationDateHasPassed() {
     JsonObject noticeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(templateId)
       .withHoldShelfExpirationEvent()
@@ -534,6 +537,54 @@ class RequestScheduledNoticesProcessingTests extends APITests {
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
   }
 
+  @ParameterizedTest
+  @ValueSource(strings = {
+    "In process",
+    "In process (non-requestable)",
+    "Intellectual item",
+    "Long missing",
+    "Missing",
+    "Restricted",
+    "Unavailable",
+    "Unknown",
+    "Withdrawn"
+  })
+  void uponAtHoldExpirationNoticeShouldBeDeletedWithoutSendingWhenItemIsMarkedAs(String itemStatus) {
+    setupNoticePolicyWithRequestNotice(
+      new NoticeConfigurationBuilder()
+        .withTemplateId(templateId)
+        .withHoldShelfExpirationEvent()
+        .withUponAtTiming()
+        .sendInRealTime(true)
+        .create());
+
+    IndividualResource request = requestsFixture.place(new RequestBuilder().page()
+      .forItem(item)
+      .withRequesterId(requester.getId())
+      .withRequestDate(getZonedDateTime())
+      .withStatus(OPEN_NOT_YET_FILLED)
+      .withPickupServicePoint(pickupServicePoint));
+
+    checkInFixture.checkInByBarcode(
+      new CheckInByBarcodeRequestBuilder()
+        .forItem(item)
+        .withItemBarcode(item.getBarcode())
+        .at(pickupServicePoint));
+
+    assertThat(requestsClient.getById(request.getId()).getJson(), isOpenAwaitingPickup());
+    verifyNumberOfScheduledNotices(1);
+
+    markItemAs(itemStatus, item.getId(), request.getId());
+
+    scheduledNoticeProcessingClient.runRequestNoticesProcessing(
+      atStartOfDay(getLocalDate().plusDays(31), UTC));
+
+    verifyNumberOfScheduledNotices(0);
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+  }
+
   private IndividualResource prepareNotice() {
     setupNoticePolicyWithRequestNotice(
       new NoticeConfigurationBuilder()
@@ -586,6 +637,18 @@ class RequestScheduledNoticesProcessingTests extends APITests {
       isEquivalentTo(getDateTimeProperty(request.getJson(), "requestExpirationDate")));
 
     return hasEmailNoticeProperties(requester.getId(), templateId, templateContextMatchers);
+  }
+
+  // Update item and request to imitate mod-inventory's behavior upon marking an item
+  // as Withdrawn, Missing, Restricted, etc.
+  private void markItemAs(String itemStatus, UUID itemId, UUID requestId) {
+    JsonObject item = itemsClient.get(itemId).getJson();
+    item.getJsonObject("status").put("name", itemStatus);
+    itemsClient.replace(itemId, item);
+
+    IndividualResource request = requestsStorageClient.get(requestId);
+    requestsStorageClient.replace(requestId,
+      request.getJson().put("status", "Open - Not yet filled"));
   }
 
 }
