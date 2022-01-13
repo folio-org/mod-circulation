@@ -13,6 +13,7 @@ import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemsReportFetcher;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.infrastructure.storage.inventory.ItemReportRepository;
+import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.support.results.Result;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,6 +35,9 @@ class ItemsInTransitReportServiceTest {
   @Mock
   ItemsReportFetcher itemsReportFetcher;
 
+  @Mock
+  ItemRepository itemRepository;
+
   @Test
   void itemsInTransitReportServiceTest() {
     when(itemReportRepository.getAllItemsByField(any(), any()))
@@ -44,7 +48,7 @@ class ItemsInTransitReportServiceTest {
         List.of(Item.from(new JsonObject())), 1))));
 
     ItemsInTransitReportService service = new ItemsInTransitReportService(itemReportRepository,
-      null, null, null, null, null, null);
+      null, null, null, itemRepository, null, null);
     CompletableFuture<Result<JsonObject>> report = service.buildReport();
     assertNotNull(report);
   }

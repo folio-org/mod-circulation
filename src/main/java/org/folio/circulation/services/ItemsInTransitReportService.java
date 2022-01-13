@@ -79,7 +79,7 @@ public class ItemsInTransitReportService {
     ItemsInTransitReportContext context) {
 
     return findIds(context, Item::getHoldingsRecordId)
-      .after(holdingsIds -> itemRepository.findHoldingsByIds(holdingsIds))
+      .after(itemRepository::findHoldingsByIds)
       .thenApply(r -> r.map(records -> toMap(records.getRecords(), Holdings::getId)))
       .thenApply(r -> r.map(context::withHoldingsRecords));
   }
