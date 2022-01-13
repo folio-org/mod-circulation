@@ -31,6 +31,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Holdings;
+import org.folio.circulation.domain.Instance;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemRelatedRecord;
 import org.folio.circulation.domain.Location;
@@ -72,6 +73,7 @@ public class ItemRepository {
 
   private static final String ITEMS_COLLECTION_PROPERTY_NAME = "items";
   private static final String HOLDINGS_RECORDS_COLLECTION_PROPERTY_NAME = "holdingsRecords";
+  private static final String INSTANCES_RECORDS_PROPERTY_NAME = "instances";
 
   public ItemRepository(org.folio.circulation.support.Clients clients,
     boolean fetchLocation, boolean fetchMaterialType, boolean fetchLoanType) {
@@ -238,6 +240,13 @@ public class ItemRepository {
         .collect(Collectors.toList()));
   }
 
+  public CompletableFuture<Result<MultipleRecords<Instance>>> findInstancesByIds(
+    Collection<String> ids) {
+
+    return fetchInstancesByIds(ids)
+      .thenApply(mapResult(multipleRecords -> multipleRecords.mapRecords(new InstanceMapper()::toDomain)));
+  }
+
   private CompletableFuture<Result<Collection<Item>>> fetchInstances(
     Result<Collection<Item>> result) {
 
@@ -248,17 +257,20 @@ public class ItemRepository {
         .distinct()
         .collect(Collectors.toList());
 
-      final FindWithMultipleCqlIndexValues<JsonObject> fetcher
-        = findWithMultipleCqlIndexValues(instancesClient, "instances", identity());
-
       final var mapper = new InstanceMapper();
 
-      return fetcher.findByIds(instanceIds)
+      return fetchInstancesByIds(instanceIds)
         .thenApply(r -> r.map(instances -> items.stream()
           .map(item -> item.withInstance(mapper.toDomain(
               findById(item.getInstanceId(), instances.getRecords()).orElse(null))))
           .collect(Collectors.toList())));
     });
+  }
+
+  private CompletableFuture<Result<MultipleRecords<JsonObject>>> fetchInstancesByIds(
+    Collection<String> ids) {
+
+    return findWithMultipleCqlIndexValues(instancesClient, INSTANCES_RECORDS_PROPERTY_NAME, identity()).findByIds(ids);
   }
 
   private CompletableFuture<Result<Collection<Item>>> fetchHoldingRecords(

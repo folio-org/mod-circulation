@@ -12,6 +12,7 @@ import static org.folio.circulation.support.fetching.RecordFetching.findWithMult
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -168,7 +169,21 @@ public class UserRepository {
   public CompletableFuture<Result<MultipleRecords<Request>>> findUsersForRequests(
     MultipleRecords<Request> multipleRequests) {
 
-    Collection<Request> requests = multipleRequests.getRecords();
+    return fetchUsersByRequests(multipleRequests.getRecords())
+      .thenApply(multipleUsersResult -> multipleUsersResult.next(
+        multipleUsers -> of(() ->
+          multipleRequests.mapRecords(request ->
+            matchUsersToRequests(request, multipleUsers)))));
+  }
+
+  public CompletableFuture<Result<MultipleRecords<User>>> findUsersByRequests(
+    Collection<Request> requests) {
+
+    return fetchUsersByRequests(requests);
+  }
+
+  private CompletableFuture<Result<MultipleRecords<User>>> fetchUsersByRequests(
+    Collection<Request> requests) {
 
     final List<String> usersToFetch = requests.stream()
       .map(this::getUsersFromRequest)
@@ -177,18 +192,14 @@ public class UserRepository {
       .collect(Collectors.toList());
 
     if (usersToFetch.isEmpty()) {
-      return completedFuture(succeeded(multipleRequests));
+      return completedFuture(succeeded(MultipleRecords.empty()));
     }
 
     final FindWithMultipleCqlIndexValues<User> fetcher
       = findWithMultipleCqlIndexValues(usersStorageClient, USERS_RECORD_PROPERTY,
-        User::from);
+      User::from);
 
-    return fetcher.findByIds(usersToFetch)
-      .thenApply(multipleUsersResult -> multipleUsersResult.next(
-        multipleUsers -> of(() ->
-          multipleRequests.mapRecords(request ->
-            matchUsersToRequests(request, multipleUsers)))));
+    return fetcher.findByIds(usersToFetch);
   }
 
   private ArrayList<String> getUsersFromRequest(Request request) {
