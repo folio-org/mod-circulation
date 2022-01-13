@@ -177,6 +177,12 @@ public class ServicePointRepository {
           }));
   }
 
+  public CompletableFuture<Result<MultipleRecords<ServicePoint>>> findServicePointsByIds(
+    Collection<String> ids) {
+
+    return createServicePointsFetcher().findByIds(ids);
+  }
+
   private FindWithMultipleCqlIndexValues<ServicePoint> createServicePointsFetcher() {
     final var mapper = new ServicePointMapper();
 
