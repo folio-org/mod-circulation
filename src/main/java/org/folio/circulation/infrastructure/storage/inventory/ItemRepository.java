@@ -30,6 +30,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.circulation.domain.Holdings;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemRelatedRecord;
 import org.folio.circulation.domain.Location;
@@ -383,6 +384,21 @@ public class ItemRepository {
       .thenComposeAsync(this::fetchInstances)
       .thenComposeAsync(this::fetchLocations)
       .thenComposeAsync(this::fetchMaterialTypes);
+  }
+
+  public CompletableFuture<Result<MultipleRecords<Holdings>>> findHoldingsByIds(
+    Collection<String> ids) {
+
+    final var mapper = new HoldingsMapper();
+    return fetchHoldingsByIds(ids)
+      .thenApply(r -> r.map(multipleRecords -> multipleRecords.mapRecords(mapper::toDomain)));
+  }
+
+  private  CompletableFuture<Result<MultipleRecords<JsonObject>>> fetchHoldingsByIds(Collection<String> ids) {
+    final var fetcher
+      = findWithMultipleCqlIndexValues(holdingsClient, "holdingsRecords", identity());
+
+    return fetcher.findByIds(ids);
   }
 
   public CompletableFuture<Result<Collection<Item>>> findByIndexNameAndQuery(

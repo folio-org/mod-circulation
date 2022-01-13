@@ -6,12 +6,15 @@ import static org.folio.circulation.domain.ItemStatus.IN_TRANSIT;
 import static org.folio.circulation.support.results.Result.combineAll;
 import static org.folio.circulation.support.results.Result.succeeded;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.folio.circulation.domain.Holdings;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemReportRepository;
@@ -41,7 +44,7 @@ public class ItemsInTransitReportService {
   public CompletableFuture<Result<JsonObject>> buildReport() {
     return completedFuture(succeeded(new ItemsInTransitReportContext()))
       .thenCompose(r -> r.after(this::fetchItems))
-      .thenCompose(this::fetchHoldingsRecords)
+      .thenCompose(r -> r.after(this::fetchHoldingsRecords))
       .thenCompose(this::fetchInstances)
       .thenCompose(this::fetchLocations)
       .thenCompose(this::fetchMaterialTypes)
@@ -73,9 +76,12 @@ public class ItemsInTransitReportService {
   }
 
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchHoldingsRecords(
-    Result<ItemsInTransitReportContext> context) {
+    ItemsInTransitReportContext context) {
 
-    return completedFuture(context);
+    return findIds(context, Item::getHoldingsRecordId)
+      .after(holdingsIds -> itemRepository.findHoldingsByIds(holdingsIds))
+      .thenApply(r -> r.map(records -> toMap(records.getRecords(), Holdings::getId)))
+      .thenApply(r -> r.map(context::withHoldingsRecords));
   }
 
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchInstances(
@@ -133,8 +139,15 @@ public class ItemsInTransitReportService {
     return completedFuture(context);
   }
 
-  public <T> Map<String, T> toMap(List<T> list, Function<T, String> idMapper) {
-    return list.stream()
+  private Result<Set<String>> findIds(ItemsInTransitReportContext context, Function<Item, String> function) {
+    return succeeded(context.getItems().values().stream()
+    .map(function)
+    .filter(Objects::nonNull)
+    .collect(Collectors.toSet()));
+  }
+
+  public <T> Map<String, T> toMap(Collection<T> collection, Function<T, String> idMapper) {
+    return collection.stream()
       .collect(Collectors.toMap(idMapper, identity()));
   }
 }
