@@ -6,12 +6,15 @@ import static org.folio.circulation.domain.ItemStatus.IN_TRANSIT;
 import static org.folio.circulation.support.results.Result.combineAll;
 import static org.folio.circulation.support.results.Result.succeeded;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.folio.circulation.domain.Instance;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemReportRepository;
@@ -42,7 +45,7 @@ public class ItemsInTransitReportService {
     return completedFuture(succeeded(new ItemsInTransitReportContext()))
       .thenCompose(r -> r.after(this::fetchItems))
       .thenCompose(this::fetchHoldingsRecords)
-      .thenCompose(this::fetchInstances)
+      .thenCompose(r -> r.after(this::fetchInstances))
       .thenCompose(this::fetchLocations)
       .thenCompose(this::fetchMaterialTypes)
       .thenCompose(this::fetchLoanTypes)
@@ -79,9 +82,19 @@ public class ItemsInTransitReportService {
   }
 
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchInstances(
-    Result<ItemsInTransitReportContext> context) {
+    ItemsInTransitReportContext context) {
 
-    return completedFuture(context);
+    return findInstanceIdsToFetch(context)
+      .after(itemRepository::findInstancesByIds)
+      .thenApply(r -> r.map(records -> toMap(records.getRecords(), Instance::getId)))
+      .thenApply(r -> r.map(context::withInstances));
+  }
+
+  private Result<Set<String>> findInstanceIdsToFetch(ItemsInTransitReportContext context) {
+    return succeeded(context.getItems().values().stream()
+      .map(Item::getInstanceId)
+      .filter(Objects::nonNull)
+      .collect(Collectors.toSet()));
   }
 
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchLocations(
@@ -133,8 +146,8 @@ public class ItemsInTransitReportService {
     return completedFuture(context);
   }
 
-  public <T> Map<String, T> toMap(List<T> list, Function<T, String> idMapper) {
-    return list.stream()
+  public <T> Map<String, T> toMap(Collection<T> collection, Function<T, String> idMapper) {
+    return collection.stream()
       .collect(Collectors.toMap(idMapper, identity()));
   }
 }
