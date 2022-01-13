@@ -208,8 +208,7 @@ public abstract class ScheduledNoticeHandler {
     HttpFailure failure = result.cause();
     log.error("Processing scheduled notice {} failed: {}", notice.getId(), failure);
 
-    if (failure instanceof RecordNotFoundFailure || failure instanceof UnableToApplyCircRulesErrorFailure
-      || failure instanceof ForwardOnFailure) {
+    if (failure instanceof RecordNotFoundFailure || failure instanceof UnableToApplyCircRulesErrorFailure) {
       return deleteNotice(notice, failure.toString());
     }
 
