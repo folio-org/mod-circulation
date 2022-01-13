@@ -7,13 +7,15 @@ import io.vertx.core.http.HttpServerResponse;
 public class UnableToApplyCircRulesErrorFailure implements HttpFailure {
   public final String reason;
 
+  public final String UNABLE_TO_APPLY = "Unable to apply circulation rules for ";
+
   public UnableToApplyCircRulesErrorFailure(String reason) {
     this.reason = reason;
   }
 
   @Override
   public void writeTo(HttpServerResponse response) {
-    ServerErrorResponse.internalError(response, reason);
+    ServerErrorResponse.internalError(response, UNABLE_TO_APPLY + reason);
   }
 
   @Override

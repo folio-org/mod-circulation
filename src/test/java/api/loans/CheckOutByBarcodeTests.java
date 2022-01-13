@@ -269,7 +269,7 @@ class CheckOutByBarcodeTests extends APITests {
         .at(UUID.randomUUID()));
 
     assertThat(response.getStatusCode(), is(500));
-    assertThat(response.getBody(), is("Unable to apply circulation rules to a user with null value as patronGroupId"));
+    assertThat(response.getBody(), is("Unable to apply circulation rules for user with null value as patronGroupId"));
   }
 
   @Test

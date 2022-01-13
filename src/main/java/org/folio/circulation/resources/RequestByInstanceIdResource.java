@@ -458,7 +458,9 @@ public class RequestByInstanceIdResource extends Resource {
     if (failure instanceof ServerErrorFailure ){
       reason = ((ServerErrorFailure) failure).reason;
     } else if (failure instanceof UnableToApplyCircRulesErrorFailure) {
-      reason = ((UnableToApplyCircRulesErrorFailure) failure).reason;
+      UnableToApplyCircRulesErrorFailure circRulesFailure =
+        (UnableToApplyCircRulesErrorFailure) failure;
+      reason = circRulesFailure.UNABLE_TO_APPLY + circRulesFailure.reason;
     } else if (failure instanceof ValidationErrorFailure){
       reason = failure.toString();
     } else if (failure instanceof BadRequestFailure){
