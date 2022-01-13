@@ -53,7 +53,7 @@ public class ItemsInTransitReportService {
       .thenCompose(this::fetchMaterialTypes)
       .thenCompose(this::fetchLoanTypes)
       .thenCompose(this::fetchLoans)
-      .thenCompose(this::fetchRequests)
+      .thenCompose(r -> r.after(this::fetchRequests))
       .thenCompose(this::fetchUsers)
       .thenCompose(this::fetchPatronGroups)
       .thenCompose(this::fetchServicePoints)
@@ -115,19 +115,16 @@ public class ItemsInTransitReportService {
   }
 
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchRequests(
-    Result<ItemsInTransitReportContext> context) {
+    ItemsInTransitReportContext context) {
 
     final Result<CqlQuery> cqlQuery = exactMatchAny("status", openStates());
     FindWithMultipleCqlIndexValues<Request> fetcher
       = findWithMultipleCqlIndexValues(requestsStorageClient, "requests",
         Request::from);
 
-    ItemsInTransitReportContext reportContext = context.value();
-    return fetcher.findByIdIndexAndQuery(reportContext.getItems().keySet(), "itemId", cqlQuery)
-      .thenApply(requests ->
-        reportContext.withRequests(toMap(requests.value().getRecords(), Request::getId))
-      )
-      .thenApply(Result::succeeded);
+    return fetcher.findByIdIndexAndQuery(context.getItems().keySet(), "itemId", cqlQuery)
+      .thenApply(r -> r.map(records -> toMap(records.getRecords(), Request::getId)))
+      .thenApply(r -> r.map(context::withRequests));
   }
 
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchUsers(
