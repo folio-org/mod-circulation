@@ -31,7 +31,6 @@ import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.ForwardOnFailure;
 import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.RecordNotFoundFailure;
-import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.UnableToApplyCircRulesErrorFailure;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
 import org.folio.circulation.support.results.Result;

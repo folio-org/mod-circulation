@@ -7,7 +7,7 @@ import io.vertx.core.http.HttpServerResponse;
 public class UnableToApplyCircRulesErrorFailure implements HttpFailure {
   public final String reason;
 
-  public final String UNABLE_TO_APPLY = "Unable to apply circulation rules for ";
+  public static final String UNABLE_TO_APPLY = "Unable to apply circulation rules for ";
 
   public UnableToApplyCircRulesErrorFailure(String reason) {
     this.reason = reason;

@@ -19,6 +19,7 @@ import org.folio.circulation.support.BadRequestFailure;
 import org.folio.circulation.support.ForwardOnFailure;
 import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.ServerErrorFailure;
+import org.folio.circulation.support.UnableToApplyCircRulesErrorFailure;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.ValidationError;
@@ -89,6 +90,10 @@ public class RequestByInstanceIdResourceTests {
     HttpFailure forwardOnFailure = new ForwardOnFailure(fakeResponse);
     errorMessage = RequestByInstanceIdResource.getErrorMessage(forwardOnFailure);
     assertEquals("fakeResponseFailure", errorMessage);
+
+    HttpFailure circRulesErrorFailure = new UnableToApplyCircRulesErrorFailure("item is null");
+    errorMessage = RequestByInstanceIdResource.getErrorMessage(circRulesErrorFailure);
+    assertEquals("Unable to apply circulation rules for item is null", errorMessage);
   }
 
   public static JsonObject getJsonInstanceRequest(UUID pickupServicePointId) {

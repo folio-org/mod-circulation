@@ -460,7 +460,7 @@ public class RequestByInstanceIdResource extends Resource {
     } else if (failure instanceof UnableToApplyCircRulesErrorFailure) {
       UnableToApplyCircRulesErrorFailure circRulesFailure =
         (UnableToApplyCircRulesErrorFailure) failure;
-      reason = circRulesFailure.UNABLE_TO_APPLY + circRulesFailure.reason;
+      reason = UnableToApplyCircRulesErrorFailure.UNABLE_TO_APPLY + circRulesFailure.reason;
     } else if (failure instanceof ValidationErrorFailure){
       reason = failure.toString();
     } else if (failure instanceof BadRequestFailure){
