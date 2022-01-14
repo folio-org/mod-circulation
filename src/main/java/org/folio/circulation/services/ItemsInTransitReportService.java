@@ -3,9 +3,6 @@ package org.folio.circulation.services;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Function.identity;
 import static org.folio.circulation.domain.ItemStatus.IN_TRANSIT;
-import static org.folio.circulation.domain.RequestStatus.openStates;
-import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
-import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.results.Result.combineAll;
 import static org.folio.circulation.support.results.Result.succeeded;
 
@@ -19,7 +16,6 @@ import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.Instance;
 import org.folio.circulation.domain.Item;
-import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemReportRepository;
@@ -27,9 +23,7 @@ import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.users.PatronGroupRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.services.support.ItemsInTransitReportContext;
-import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
 import org.folio.circulation.support.GetManyRecordsClient;
-import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.json.JsonObject;
