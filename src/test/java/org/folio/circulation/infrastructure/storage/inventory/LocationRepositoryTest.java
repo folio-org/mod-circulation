@@ -2,7 +2,6 @@ package org.folio.circulation.infrastructure.storage.inventory;
 
 import static org.folio.circulation.infrastructure.storage.inventory.LocationRepository.using;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
@@ -12,8 +11,6 @@ import org.folio.circulation.support.results.Result;
 import org.junit.jupiter.api.Test;
 
 import lombok.val;
-
-import java.util.ArrayList;
 
 class LocationRepositoryTest {
 
@@ -26,15 +23,5 @@ class LocationRepositoryTest {
 
     assertTrue(result.succeeded());
     assertNull(result.value());
-  }
-
-  @Test
-  void shouldReturnEmptyLocations() {
-    final LocationRepository repository = using(mock(Clients.class));
-    val result = repository.getLocations(new ArrayList<>())
-      .getNow(Result.failed(new ServerErrorFailure("Error")));
-
-    assertTrue(result.succeeded());
-    assertNotNull(result.value());
   }
 }
