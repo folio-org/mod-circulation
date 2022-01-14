@@ -12,9 +12,11 @@ import static org.folio.circulation.support.results.ResultBinding.mapResult;
 import static org.folio.circulation.support.utils.CollectionUtil.nonNullUniqueSetOf;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -67,19 +69,6 @@ public class LocationRepository {
       .thenCompose(r -> r.after(this::loadInstitution));
   }
 
-  public CompletableFuture<Result<Map<String, Location>>> getLocations(Collection<Item> items) {
-    final Set<String> locationIds = items.stream()
-      .map(Item::getLocationId)
-      .filter(StringUtils::isNotBlank)
-      .collect(Collectors.toSet());
-
-    final FindWithMultipleCqlIndexValues<Location> fetcher
-      = findWithMultipleCqlIndexValues(locationsStorageClient, "locations", Location::from);
-
-    return fetcher.findByIds(locationIds)
-      .thenApply(mapResult(sds -> sds.toMap(Location::getId)));
-  }
-
   public CompletableFuture<Result<Location>> fetchLocationById(String id) {
     if (isBlank(id)) {
       return ofAsync(() -> null);
@@ -92,10 +81,10 @@ public class LocationRepository {
   }
 
   public CompletableFuture<Result<Map<String, Location>>> getAllItemLocations(
-    Collection<Item> inventoryRecords) {
+    Collection<Item> inventoryRecords, List<Function<Item, String>> searchByItemFields) {
 
     final Set<String> locationIds = inventoryRecords.stream()
-      .flatMap(item -> Stream.of(item.getPermanentLocationId(), item.getLocationId()))
+      .flatMap(item -> getItemFieldsValues(searchByItemFields, item))
       .filter(StringUtils::isNotBlank)
       .collect(Collectors.toSet());
 
@@ -105,6 +94,12 @@ public class LocationRepository {
     return fetcher.findByIds(locationIds)
       .thenCompose(this::loadLibrariesForLocations)
       .thenApply(mapResult(sds -> sds.toMap(Location::getId)));
+  }
+
+  private Stream<String> getItemFieldsValues(List<Function<Item, String>> searchByItemFields, Item item) {
+    return Stream.of(searchByItemFields)
+      .flatMap(Collection::stream)
+      .map(function -> function.apply(item));
   }
 
   private CompletableFuture<Result<Location>> loadLibrary(Location location) {

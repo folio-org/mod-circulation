@@ -7,6 +7,7 @@ import static org.folio.circulation.support.results.Result.combineAll;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -95,7 +96,8 @@ public class ItemsInTransitReportService {
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchLocations(
     ItemsInTransitReportContext context) {
 
-    return locationRepository.getLocations(context.getItems().values())
+    return locationRepository
+      .getAllItemLocations(context.getItems().values(), List.of(Item::getLocationId))
       .thenApply(r -> r.map(context::withLocations));
   }
 
