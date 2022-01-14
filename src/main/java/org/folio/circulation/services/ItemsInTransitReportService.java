@@ -139,46 +139,31 @@ public class ItemsInTransitReportService {
     return completedFuture(context);
   }
 
-  // Needs to fetch all service points for items, loans and requests
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchServicePoints(
     ItemsInTransitReportContext context) {
 
-    return findServicePointsToFetch(context)
+    Stream<String> itemServicePointIds = context.getItems().values().stream()
+      .flatMap(item -> Stream.of(item.getInTransitDestinationServicePointId(),
+        item.getLastCheckInServicePointId().toString()));
+
+    Stream<String> loanServicePointIds = context.getLoans().values().stream()
+      .flatMap(loan -> Stream.of(loan.getCheckInServicePointId(),
+        loan.getCheckoutServicePointId()));
+
+    Stream<String> requestServicePointIds = context.getRequests().values().stream()
+      .map(Request::getPickupServicePointId);
+
+    Set<String> servicePointIds = Stream.of(itemServicePointIds, loanServicePointIds,
+        requestServicePointIds)
+      .flatMap(identity())
+      .filter(Objects::nonNull)
+      .collect(toSet());
+
+    return succeeded(servicePointIds)
       .after(servicePointsIds -> servicePointRepository.findServicePointsByIds(servicePointsIds))
       .thenApply(mapResult(this::toList))
       .thenApply(mapResult(servicePoints -> toMap(servicePoints, ServicePoint::getId)))
       .thenApply(mapResult(context::withServicePoints));
-  }
-
-  private Result<Set<String>> findServicePointsToFetch(ItemsInTransitReportContext context) {
-    return succeeded(concat(
-      concat(
-        findServicePointsIds(context.getItems().values(),
-          Item::getInTransitDestinationServicePointId,
-          item -> item.getLastCheckInServicePointId().toString()),
-        findServicePointsIds(context.getLoans().values(), Loan::getCheckInServicePointId,
-          Loan::getCheckoutServicePointId)
-      ),
-      findServicePointsIds(context.getRequests().values(), Request::getPickupServicePointId))
-      .collect(toSet()));
-  }
-
-  private <T> Stream<String> findServicePointsIds(Collection<T> entities,
-    Function<T, String> firstServicePointIdFunction,
-    Function<T, String> secondServicePointIdFunction) {
-
-    return concat(
-      findServicePointsIds(entities, firstServicePointIdFunction),
-      findServicePointsIds(entities, secondServicePointIdFunction));
-  }
-
-  private <T> Stream<String> findServicePointsIds(Collection<T> entities,
-    Function<T, String> servicePointIdFunction) {
-
-    return entities.stream()
-      .filter(Objects::nonNull)
-      .map(servicePointIdFunction)
-      .filter(Objects::nonNull);
   }
 
   private <T> List<T> toList(MultipleRecords<T> records) {
