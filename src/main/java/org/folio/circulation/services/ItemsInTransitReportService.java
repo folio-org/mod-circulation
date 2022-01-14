@@ -138,7 +138,6 @@ public class ItemsInTransitReportService {
     return completedFuture(context);
   }
 
-  // Needs to fetch all service points for items, loans and requests
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchServicePoints(
     ItemsInTransitReportContext context) {
 
@@ -163,20 +162,20 @@ public class ItemsInTransitReportService {
   }
 
   private <T> Stream<String> findIds(Collection<T> entities,
-    Function<T, String> firstServicePointIdFunction,
-    Function<T, String> secondServicePointIdFunction) {
+    Function<T, String> firstGetIdFunction,
+    Function<T, String> secondGetIdFunction) {
 
     return concat(
-      findIds(entities, firstServicePointIdFunction),
-      findIds(entities, secondServicePointIdFunction));
+      findIds(entities, firstGetIdFunction),
+      findIds(entities, secondGetIdFunction));
   }
 
   private <T> Stream<String> findIds(Collection<T> entities,
-    Function<T, String> servicePointIdFunction) {
+    Function<T, String> getIdFunction) {
 
     return entities.stream()
       .filter(Objects::nonNull)
-      .map(servicePointIdFunction)
+      .map(getIdFunction)
       .filter(Objects::nonNull);
   }
 
