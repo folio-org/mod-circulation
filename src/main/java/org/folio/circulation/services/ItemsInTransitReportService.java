@@ -97,7 +97,7 @@ public class ItemsInTransitReportService {
     ItemsInTransitReportContext context) {
 
     return locationRepository
-      .getAllItemLocations(context.getItems().values(), List.of(Item::getLocationId))
+      .getItemLocations(context.getItems().values(), List.of(Item::getLocationId))
       .thenApply(r -> r.map(context::withLocations));
   }
 

@@ -81,6 +81,13 @@ public class LocationRepository {
   }
 
   public CompletableFuture<Result<Map<String, Location>>> getAllItemLocations(
+    Collection<Item> inventoryRecords) {
+
+    return getItemLocations(
+      inventoryRecords, List.of(Item::getLocationId, Item::getPermanentLocationId));
+  }
+
+  public CompletableFuture<Result<Map<String, Location>>> getItemLocations(
     Collection<Item> inventoryRecords, List<Function<Item, String>> searchByItemFields) {
 
     final Set<String> locationIds = inventoryRecords.stream()

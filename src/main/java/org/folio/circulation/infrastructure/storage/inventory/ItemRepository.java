@@ -172,8 +172,7 @@ public class ItemRepository {
     Result<Collection<Item>> result) {
 
     if (fetchLocation) {
-      return result.after(items -> locationRepository
-        .getAllItemLocations(items, List.of(Item::getLocationId, Item::getPermanentLocationId))
+      return result.after(items -> locationRepository.getAllItemLocations(items)
         .thenApply(r -> r.map(locations -> map(items, populateItemLocations(locations)))));
     } else {
       return completedFuture(result);

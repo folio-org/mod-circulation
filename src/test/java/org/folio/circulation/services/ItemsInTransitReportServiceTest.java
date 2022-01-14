@@ -58,7 +58,7 @@ class ItemsInTransitReportServiceTest {
       .thenReturn(completedFuture(succeeded(new MultipleRecords<>(
               List.of(Holdings.unknown()), 1))));
 
-    when(locationRepository.getAllItemLocations(any(), any()))
+    when(locationRepository.getItemLocations(any(), any()))
       .thenReturn(completedFuture(succeeded(Map.of("locationKey", Location.from(new JsonObject())))));
 
     ItemsInTransitReportService service = new ItemsInTransitReportService(itemReportRepository, locationRepository,
