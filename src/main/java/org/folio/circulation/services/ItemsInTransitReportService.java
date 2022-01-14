@@ -2,10 +2,13 @@ package org.folio.circulation.services;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.toList;
 import static org.folio.circulation.domain.ItemStatus.IN_TRANSIT;
 import static org.folio.circulation.support.results.Result.combineAll;
+import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -13,6 +16,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.Item;
+import org.folio.circulation.domain.PatronGroup;
+import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.representations.ItemInTransitReport;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemReportRepository;
@@ -59,7 +64,7 @@ public class ItemsInTransitReportService {
       .thenCompose(this::fetchLoans)
       .thenCompose(this::fetchRequests)
       .thenCompose(this::fetchUsers)
-      .thenCompose(this::fetchPatronGroups)
+      .thenCompose(r -> r.after(this::fetchPatronGroups))
       .thenCompose(this::fetchServicePoints)
       .thenApply(this::mapToJsonObject);
   }
@@ -72,7 +77,7 @@ public class ItemsInTransitReportService {
         combineAll(itemsReportFetcher.getResultListOfItems())
           .map(listOfPages -> listOfPages.stream()
             .flatMap(page -> page.getRecords().stream())
-            .collect(Collectors.toList()))))
+            .collect(toList()))))
       .thenApply(r -> r.map(items -> toMap(items, Item::getItemId)))
       .thenApply(r -> r.map(context::withItems));
   }
@@ -114,9 +119,18 @@ public class ItemsInTransitReportService {
   }
 
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchPatronGroups(
-    Result<ItemsInTransitReportContext> context) {
+    ItemsInTransitReportContext context) {
 
-    return completedFuture(context);
+    List<String> patronGroupIds = context.getUsers()
+      .values()
+      .stream()
+      .map(User::getPatronGroupId)
+      .collect(toList());
+
+    return ofAsync(() -> patronGroupIds)
+      .thenCompose(r -> r.after(patronGroupRepository::findPatronGroupsByIds))
+      .thenApply(r -> r.map(groups -> toMap(groups, PatronGroup::getId)))
+      .thenApply(r -> r.map(context::withPatronGroups));
   }
 
   // Needs to fetch all service points for items, loans and requests
@@ -126,7 +140,7 @@ public class ItemsInTransitReportService {
     return completedFuture(context);
   }
 
-  public <T> Map<String, T> toMap(List<T> list, Function<T, String> idMapper) {
+  public <T> Map<String, T> toMap(Collection<T> list, Function<T, String> idMapper) {
     return list.stream()
       .collect(Collectors.toMap(idMapper, identity()));
   }
