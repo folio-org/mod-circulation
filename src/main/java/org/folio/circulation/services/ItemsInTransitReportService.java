@@ -13,12 +13,14 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.Item;
+import org.folio.circulation.domain.representations.ItemInTransitReport;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemReportRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.users.PatronGroupRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.services.support.ItemsInTransitReportContext;
+import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.GetManyRecordsClient;
 import org.folio.circulation.support.results.Result;
 
@@ -38,25 +40,28 @@ public class ItemsInTransitReportService {
   private UserRepository userRepository;
   private PatronGroupRepository patronGroupRepository;
 
+  public ItemsInTransitReportService(Clients clients) {
+    this.loansStorageClient = clients.loansStorage();
+    this.requestsStorageClient = clients.requestsStorage();
+    this.itemRepository = new ItemRepository(clients, true, true, true);
+    this.servicePointRepository = new ServicePointRepository(clients);
+    this.itemReportRepository = new ItemReportRepository(clients);
+    this.userRepository = new UserRepository(clients);
+    this.patronGroupRepository = new PatronGroupRepository(clients);
+  }
+
   public CompletableFuture<Result<JsonObject>> buildReport() {
     return completedFuture(succeeded(new ItemsInTransitReportContext()))
       .thenCompose(r -> r.after(this::fetchItems))
       .thenCompose(this::fetchHoldingsRecords)
       .thenCompose(this::fetchInstances)
       .thenCompose(this::fetchLocations)
-      .thenCompose(this::fetchMaterialTypes)
-      .thenCompose(this::fetchLoanTypes)
       .thenCompose(this::fetchLoans)
       .thenCompose(this::fetchRequests)
       .thenCompose(this::fetchUsers)
       .thenCompose(this::fetchPatronGroups)
       .thenCompose(this::fetchServicePoints)
       .thenApply(this::mapToJsonObject);
-  }
-
-  private Result<JsonObject> mapToJsonObject(Result<ItemsInTransitReportContext> context) {
-
-    return succeeded(new JsonObject());
   }
 
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchItems(
@@ -85,18 +90,6 @@ public class ItemsInTransitReportService {
   }
 
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchLocations(
-    Result<ItemsInTransitReportContext> context) {
-
-    return completedFuture(context);
-  }
-
-  private CompletableFuture<Result<ItemsInTransitReportContext>> fetchMaterialTypes(
-    Result<ItemsInTransitReportContext> context) {
-
-    return completedFuture(context);
-  }
-
-  private CompletableFuture<Result<ItemsInTransitReportContext>> fetchLoanTypes(
     Result<ItemsInTransitReportContext> context) {
 
     return completedFuture(context);
@@ -136,5 +129,10 @@ public class ItemsInTransitReportService {
   public <T> Map<String, T> toMap(List<T> list, Function<T, String> idMapper) {
     return list.stream()
       .collect(Collectors.toMap(idMapper, identity()));
+  }
+
+  private Result<JsonObject> mapToJsonObject(Result<ItemsInTransitReportContext> context) {
+    return context.map(ItemInTransitReport::new)
+      .map(ItemInTransitReport::build);
   }
 }
