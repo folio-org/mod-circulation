@@ -2,18 +2,17 @@ package org.folio.circulation.services;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Function.identity;
-import static org.folio.circulation.domain.ItemStatus.IN_TRANSIT;
-import static org.folio.circulation.support.results.Result.combineAll;
-import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toSet;
 import static java.util.stream.Stream.concat;
+import static org.folio.circulation.domain.ItemStatus.IN_TRANSIT;
+import static org.folio.circulation.support.results.Result.combineAll;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
-import java.util.List;
-import java.util.Map;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -153,26 +152,26 @@ public class ItemsInTransitReportService {
   private Result<Set<String>> findServicePointsToFetch(ItemsInTransitReportContext context) {
     return succeeded(concat(
       concat(
-        findServicePointsIds(context.getItems().values(),
+        findIds(context.getItems().values(),
           Item::getInTransitDestinationServicePointId,
           item -> item.getLastCheckInServicePointId().toString()),
-        findServicePointsIds(context.getLoans().values(), Loan::getCheckInServicePointId,
+        findIds(context.getLoans().values(), Loan::getCheckInServicePointId,
           Loan::getCheckoutServicePointId)
       ),
-      findServicePointsIds(context.getRequests().values(), Request::getPickupServicePointId))
+      findIds(context.getRequests().values(), Request::getPickupServicePointId))
       .collect(toSet()));
   }
 
-  private <T> Stream<String> findServicePointsIds(Collection<T> entities,
+  private <T> Stream<String> findIds(Collection<T> entities,
     Function<T, String> firstServicePointIdFunction,
     Function<T, String> secondServicePointIdFunction) {
 
     return concat(
-      findServicePointsIds(entities, firstServicePointIdFunction),
-      findServicePointsIds(entities, secondServicePointIdFunction));
+      findIds(entities, firstServicePointIdFunction),
+      findIds(entities, secondServicePointIdFunction));
   }
 
-  private <T> Stream<String> findServicePointsIds(Collection<T> entities,
+  private <T> Stream<String> findIds(Collection<T> entities,
     Function<T, String> servicePointIdFunction) {
 
     return entities.stream()
