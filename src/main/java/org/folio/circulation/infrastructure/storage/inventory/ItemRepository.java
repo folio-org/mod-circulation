@@ -30,6 +30,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.circulation.domain.Holdings;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemRelatedRecord;
 import org.folio.circulation.domain.Location;
@@ -70,6 +71,7 @@ public class ItemRepository {
   private final boolean fetchLoanType;
 
   private static final String ITEMS_COLLECTION_PROPERTY_NAME = "items";
+  private static final String HOLDINGS_RECORDS_COLLECTION_PROPERTY_NAME = "holdingsRecords";
 
   public ItemRepository(org.folio.circulation.support.Clients clients,
     boolean fetchLocation, boolean fetchMaterialType, boolean fetchLoanType) {
@@ -270,7 +272,8 @@ public class ItemRepository {
         .collect(Collectors.toList());
 
       final var fetcher
-        = findWithMultipleCqlIndexValues(holdingsClient, "holdingsRecords", identity());
+        = findWithMultipleCqlIndexValues(holdingsClient, HOLDINGS_RECORDS_COLLECTION_PROPERTY_NAME,
+        identity());
 
       final var mapper = new HoldingsMapper();
 
@@ -383,6 +386,16 @@ public class ItemRepository {
       .thenComposeAsync(this::fetchInstances)
       .thenComposeAsync(this::fetchLocations)
       .thenComposeAsync(this::fetchMaterialTypes);
+  }
+
+  public CompletableFuture<Result<MultipleRecords<Holdings>>> findHoldingsByIds(
+    Collection<String> ids) {
+
+    return findWithMultipleCqlIndexValues(holdingsClient,
+      HOLDINGS_RECORDS_COLLECTION_PROPERTY_NAME, identity())
+      .findByIds(ids)
+      .thenApply(r -> r.map(
+        multipleRecords -> multipleRecords.mapRecords(new HoldingsMapper()::toDomain)));
   }
 
   public CompletableFuture<Result<Collection<Item>>> findByIndexNameAndQuery(

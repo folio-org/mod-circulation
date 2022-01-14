@@ -8,7 +8,8 @@ import io.vertx.core.json.JsonObject;
 
 public class HoldingsMapper {
   public Holdings toDomain(JsonObject holdingsRepresentation) {
-    return new Holdings(getProperty(holdingsRepresentation, "instanceId"),
+    return new Holdings(getProperty(holdingsRepresentation, "id"),
+      getProperty(holdingsRepresentation, "instanceId"),
       getProperty(holdingsRepresentation, "copyNumber"),
       getProperty(holdingsRepresentation, "permanentLocationId"));
   }

@@ -10,16 +10,21 @@ import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
+import org.folio.circulation.domain.Holdings;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemsReportFetcher;
 import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemReportRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
+import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
+import org.folio.circulation.infrastructure.storage.inventory.LocationRepository;
 import org.folio.circulation.support.results.Result;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -50,6 +55,9 @@ class ItemsInTransitReportServiceTest {
   @Mock
   ItemRepository itemRepository;
 
+  @Mock
+  LocationRepository locationRepository;
+
   @Test
   void itemsInTransitReportServiceTest() {
     String servicePointId = UUID.randomUUID().toString();
@@ -67,8 +75,16 @@ class ItemsInTransitReportServiceTest {
           .put("checkoutServicePointId", servicePointId)
           .put("checkinServicePointId", servicePointId))), 1)));
 
+    when(itemRepository.findHoldingsByIds(any()))
+      .thenReturn(completedFuture(succeeded(new MultipleRecords<>(
+              List.of(Holdings.unknown()), 1))));
+
+    when(locationRepository.getItemLocations(any(), any()))
+      .thenReturn(completedFuture(succeeded(Map.of("locationKey", Location.from(new JsonObject())))));
+
     ItemsInTransitReportService service = new ItemsInTransitReportService(itemReportRepository,
-      loanRepository, servicePointRepository, null, itemRepository, null, null);
+      loanRepository, locationRepository, servicePointRepository, null, itemRepository,
+      null, null);
     CompletableFuture<Result<JsonObject>> report = service.buildReport();
     assertNotNull(report);
   }
