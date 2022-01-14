@@ -19,6 +19,7 @@ import org.folio.circulation.domain.Item;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemReportRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
+import org.folio.circulation.infrastructure.storage.inventory.LocationRepository;
 import org.folio.circulation.infrastructure.storage.users.PatronGroupRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.services.support.ItemsInTransitReportContext;
@@ -34,6 +35,7 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class ItemsInTransitReportService {
   private ItemReportRepository itemReportRepository;
+  private LocationRepository locationRepository;
   private GetManyRecordsClient loansStorageClient;
   private ServicePointRepository servicePointRepository;
   private GetManyRecordsClient requestsStorageClient;
@@ -46,7 +48,7 @@ public class ItemsInTransitReportService {
       .thenCompose(r -> r.after(this::fetchItems))
       .thenCompose(r -> r.after(this::fetchHoldingsRecords))
       .thenCompose(this::fetchInstances)
-      .thenCompose(this::fetchLocations)
+      .thenCompose(r -> r.after(this::fetchLocations))
       .thenCompose(this::fetchMaterialTypes)
       .thenCompose(this::fetchLoanTypes)
       .thenCompose(this::fetchLoans)
@@ -91,9 +93,10 @@ public class ItemsInTransitReportService {
   }
 
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchLocations(
-    Result<ItemsInTransitReportContext> context) {
+    ItemsInTransitReportContext context) {
 
-    return completedFuture(context);
+    return locationRepository.getLocations(context.getItems().values())
+      .thenApply(r -> r.map(context::withLocations));
   }
 
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchMaterialTypes(
