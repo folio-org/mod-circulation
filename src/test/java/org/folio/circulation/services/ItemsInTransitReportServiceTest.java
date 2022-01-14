@@ -1,19 +1,25 @@
 package org.folio.circulation.services;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemsReportFetcher;
+import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemReportRepository;
+import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
+import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.support.results.Result;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,17 +44,31 @@ class ItemsInTransitReportServiceTest {
   @Mock
   ItemsReportFetcher itemsReportFetcher;
 
+  @Mock
+  LoanRepository loanRepository;
+
+  @Mock
+  ItemRepository itemRepository;
+
   @Test
   void itemsInTransitReportServiceTest() {
+    String servicePointId = UUID.randomUUID().toString();
     when(itemReportRepository.getAllItemsByField(any(), any()))
       .thenReturn(completedFuture(succeeded(itemsReportFetcher)));
 
     when(itemsReportFetcher.getResultListOfItems())
       .thenReturn(List.of(succeeded(new MultipleRecords<>(
-        List.of(Item.from(new JsonObject())), 1))));
+        List.of(Item.from(new JsonObject()
+          .put("inTransitDestinationServicePointId", servicePointId))), 1))));
+
+    when(loanRepository.findByItemIds(anyCollection()))
+      .thenReturn(ofAsync(() -> new MultipleRecords<>(
+        List.of(Loan.from(new JsonObject()
+          .put("checkoutServicePointId", servicePointId)
+          .put("checkinServicePointId", servicePointId))), 1)));
 
     ItemsInTransitReportService service = new ItemsInTransitReportService(itemReportRepository,
-      null, servicePointRepository, null, null, null, null);
+      loanRepository, servicePointRepository, null, itemRepository, null, null);
     CompletableFuture<Result<JsonObject>> report = service.buildReport();
     assertNotNull(report);
   }

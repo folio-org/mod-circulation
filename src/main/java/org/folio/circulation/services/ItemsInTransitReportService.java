@@ -3,7 +3,6 @@ package org.folio.circulation.services;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toSet;
-import static java.util.stream.Stream.concat;
 import static org.folio.circulation.domain.ItemStatus.IN_TRANSIT;
 import static org.folio.circulation.support.results.Result.combineAll;
 import static org.folio.circulation.support.results.Result.succeeded;
@@ -15,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -28,6 +28,7 @@ import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemReportRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
+import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.users.PatronGroupRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.services.support.ItemsInTransitReportContext;
@@ -43,7 +44,7 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class ItemsInTransitReportService {
   private ItemReportRepository itemReportRepository;
-  private GetManyRecordsClient loansStorageClient;
+  private LoanRepository loanRepository;
   private ServicePointRepository servicePointRepository;
   private GetManyRecordsClient requestsStorageClient;
   private ItemRepository itemRepository;
@@ -56,9 +57,7 @@ public class ItemsInTransitReportService {
       .thenCompose(this::fetchHoldingsRecords)
       .thenCompose(this::fetchInstances)
       .thenCompose(this::fetchLocations)
-      .thenCompose(this::fetchMaterialTypes)
-      .thenCompose(this::fetchLoanTypes)
-      .thenCompose(this::fetchLoans)
+      .thenCompose(r -> r.after(this::fetchLoans))
       .thenCompose(this::fetchRequests)
       .thenCompose(this::fetchUsers)
       .thenCompose(this::fetchPatronGroups)
@@ -102,22 +101,14 @@ public class ItemsInTransitReportService {
     return completedFuture(context);
   }
 
-  private CompletableFuture<Result<ItemsInTransitReportContext>> fetchMaterialTypes(
-    Result<ItemsInTransitReportContext> context) {
-
-    return completedFuture(context);
-  }
-
-  private CompletableFuture<Result<ItemsInTransitReportContext>> fetchLoanTypes(
-    Result<ItemsInTransitReportContext> context) {
-
-    return completedFuture(context);
-  }
-
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchLoans(
-    Result<ItemsInTransitReportContext> context) {
+    ItemsInTransitReportContext context) {
 
-    return completedFuture(context);
+    return succeeded(findIds(context.getItems().values(), Item::getItemId))
+      .after(itemIds -> loanRepository.findByItemIds(itemIds.collect(Collectors.toSet())))
+      .thenApply(mapResult(this::toList))
+      .thenApply(mapResult(loans -> toMap(loans, Loan::getId)))
+      .thenApply(mapResult(context::withLoans));
   }
 
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchRequests(
@@ -141,33 +132,39 @@ public class ItemsInTransitReportService {
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchServicePoints(
     ItemsInTransitReportContext context) {
 
-    return findServicePointsToFetch(context)
-      .after(servicePointsIds -> servicePointRepository.findServicePointsByIds(servicePointsIds))
+    Collection<Item> items = context.getItems().values();
+    Stream<String> itemInTransitDestinationServicePointIds = items.stream()
+      .map(Item::getInTransitDestinationServicePointId)
+      .filter(Objects::nonNull);
+    Stream<String> itemLastCheckInServicePointIds = items.stream()
+      .map(Item::getLastCheckInServicePointId)
+      .filter(Objects::nonNull)
+      .map(UUID::toString);
+
+    Collection<Loan> loans = context.getLoans().values();
+    Stream<String> loanCheckInServicePointIds = loans.stream()
+      .map(Loan::getCheckInServicePointId)
+      .filter(Objects::nonNull);
+    Stream<String> loanCheckoutServicePointIds = loans.stream()
+      .map(Loan::getCheckoutServicePointId)
+      .filter(Objects::nonNull);
+
+    Stream<String> requestServicePointIds = context.getRequests().values().stream()
+      .map(Request::getPickupServicePointId)
+      .filter(Objects::nonNull);
+
+    Set<String> servicePointIds = Stream.of(itemInTransitDestinationServicePointIds,
+        itemLastCheckInServicePointIds, loanCheckInServicePointIds, loanCheckoutServicePointIds,
+        requestServicePointIds)
+      .flatMap(identity())
+      .filter(Objects::nonNull)
+      .collect(toSet());
+
+    return succeeded(servicePointIds)
+      .after(servicePointRepository::findServicePointsByIds)
       .thenApply(mapResult(this::toList))
       .thenApply(mapResult(servicePoints -> toMap(servicePoints, ServicePoint::getId)))
       .thenApply(mapResult(context::withServicePoints));
-  }
-
-  private Result<Set<String>> findServicePointsToFetch(ItemsInTransitReportContext context) {
-    return succeeded(concat(
-      concat(
-        findIds(context.getItems().values(),
-          Item::getInTransitDestinationServicePointId,
-          item -> item.getLastCheckInServicePointId().toString()),
-        findIds(context.getLoans().values(), Loan::getCheckInServicePointId,
-          Loan::getCheckoutServicePointId)
-      ),
-      findIds(context.getRequests().values(), Request::getPickupServicePointId))
-      .collect(toSet()));
-  }
-
-  private <T> Stream<String> findIds(Collection<T> entities,
-    Function<T, String> firstGetIdFunction,
-    Function<T, String> secondGetIdFunction) {
-
-    return concat(
-      findIds(entities, firstGetIdFunction),
-      findIds(entities, secondGetIdFunction));
   }
 
   private <T> Stream<String> findIds(Collection<T> entities,

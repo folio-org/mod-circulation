@@ -3,6 +3,7 @@ package org.folio.circulation.infrastructure.storage.loans;
 import static java.lang.String.format;
 import static java.util.Objects.nonNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.ItemStatus.IN_TRANSIT;
 import static org.folio.circulation.domain.representations.LoanProperties.BORROWER;
 import static org.folio.circulation.domain.representations.LoanProperties.FEESANDFINES;
 import static org.folio.circulation.domain.representations.LoanProperties.LOAN_DATE;
@@ -222,6 +223,16 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
 
     return fetcher.findByIds(loanIds)
       .thenComposeAsync(loans -> itemRepository.fetchItemsFor(loans, Loan::withItem));
+  }
+
+  public CompletableFuture<Result<MultipleRecords<Loan>>> findByItemIds(
+    Collection<String> itemIds) {
+
+    Result<CqlQuery> statusQuery = exactMatch("itemStatus", IN_TRANSIT.getValue());
+    FindWithMultipleCqlIndexValues<Loan> fetcher = findWithMultipleCqlIndexValues(
+      loansStorageClient, RECORDS_PROPERTY_NAME, Loan::from);
+
+    return fetcher.findByIdIndexAndQuery(itemIds, ITEM_ID, statusQuery);
   }
 
   private Result<MultipleRecords<Loan>> mapResponseToLoans(Response response) {
