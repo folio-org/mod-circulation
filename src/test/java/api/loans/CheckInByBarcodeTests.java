@@ -49,6 +49,7 @@ import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNot.not;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.time.LocalDate;
@@ -102,6 +103,7 @@ class CheckInByBarcodeTests extends APITests {
   private final static String OPEN_NOT_YET_FILLED = "Open - Not yet filled";
   private final static String OPEN_AWAITING_PICKUP = "Open - Awaiting pickup";
   private final static String OPEN_AWAITING_DELIVERY = "Open - Awaiting delivery";
+  private final static String POSITION = "position";
 
   @Test
   void canCloseAnOpenLoanByCheckingInTheItem() {
@@ -1487,7 +1489,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     UUID instanceId = instancesFixture.basedUponDunkirk().getId();
     IndividualResource defaultWithHoldings = holdingsFixture.defaultWithHoldings(instanceId);
     IndividualResource checkedOutItem = itemsClient.create(buildCheckedOutItemWithHoldingRecordsId(defaultWithHoldings.getId()));
-    IndividualResource holdRequestBeforeFulfilled = requestsClient.create(buildHoldTLRWithHoldShelfFulfilmentPreference(instanceId));
+    IndividualResource holdRequestBeforeFulfilled = requestsClient.create(buildHoldTLRWithHoldShelfFulfilmentPreference(instanceId, usersFixture.charlotte().getId()));
 
     checkInFixture.checkInByBarcode(checkedOutItem, servicePointsFixture.cd1().getId());
 
@@ -1535,6 +1537,50 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     assertThat(itemRepresentation.getJsonObject("status").getString("name"), is("Awaiting delivery"));
   }
 
+  @Test
+  void requestsShouldChangePositionWhenTheyGoInFulfillmentOnCheckIn() {
+    reconfigureTlrFeature(TlrFeatureStatus.NOT_CONFIGURED);
+    configurationsFixture.enableTlrFeature();
+
+    ZonedDateTime requestDate = ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC);
+    IndividualResource instance = instancesFixture.basedUponDunkirk();
+    IndividualResource holdings = holdingsFixture.defaultWithHoldings(instance.getId());
+    IndividualResource locationsResource = locationsFixture.mainFloor();
+
+    IndividualResource availableItem1 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), locationsResource.getId());
+    IndividualResource checkedOutItem2 = itemsClient.create(buildCheckedOutItemWithHoldingRecordsId(holdings.getId()));
+
+    IndividualResource tlrHoldBeforeCheckIn = requestsClient.create(buildHoldTLRWithHoldShelfFulfilmentPreference(instance.getId(), usersFixture.steve().getId()));
+    IndividualResource tlrPageBeforeCheckIn = requestsClient.create(createTitleLevelPageRequestObject(instance.getId(),
+      usersFixture.jessica().getId(), servicePointsFixture.cd1().getId(), requestDate));
+
+    // Validate request positions before check-in
+    assertEquals(1, tlrHoldBeforeCheckIn.getJson().getInteger(POSITION));
+    assertEquals(2, tlrPageBeforeCheckIn.getJson().getInteger(POSITION));
+
+    checkInFixture.checkInByBarcode(checkedOutItem2, servicePointsFixture.cd1().getId());
+
+    IndividualResource tlrHoldAfterCheckIn = requestsClient.get(tlrHoldBeforeCheckIn.getId());
+    IndividualResource tlrPageAfterCheckIn = requestsClient.get(UUID.fromString(tlrPageBeforeCheckIn.getJson().getString("id")));
+    // Validate request positions after check-in
+    assertEquals(2, tlrHoldAfterCheckIn.getJson().getInteger(POSITION));
+    assertEquals(1, tlrPageAfterCheckIn.getJson().getInteger(POSITION));
+  }
+
+  private JsonObject createTitleLevelPageRequestObject(UUID instanceId,
+    UUID requesterId, UUID pickupServicePointId, ZonedDateTime requestDate) {
+    return new RequestBuilder()
+      .withInstanceId(instanceId)
+      .withNoItemId()
+      .withNoHoldingsRecordId()
+      .withRequesterId(requesterId)
+      .withRequestDate(requestDate)
+      .withPickupServicePointId(pickupServicePointId)
+      .titleRequestLevel()
+      .page()
+      .create();
+  }
+
   private JsonObject buildCheckedOutItemWithHoldingRecordsId(UUID holdingRecordsId) {
     return new ItemBuilder()
       .forHolding(holdingRecordsId)
@@ -1544,7 +1590,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
       .create();
   }
 
-  private JsonObject buildHoldTLRWithHoldShelfFulfilmentPreference(UUID instanceId) {
+  private JsonObject buildHoldTLRWithHoldShelfFulfilmentPreference(UUID instanceId, UUID requesterId) {
     return new RequestBuilder()
       .hold()
       .fulfilToHoldShelf()
@@ -1553,7 +1599,8 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
       .withNoItemId()
       .withNoHoldingsRecordId()
       .withPickupServicePointId(servicePointsFixture.cd1().getId())
-      .withRequesterId(usersFixture.charlotte().getId()).create();
+      .withRequesterId(requesterId)
+      .create();
   }
 
   private JsonObject buildHoldTLRWithDeliveryFulfilmentPreference(UUID instanceId) {

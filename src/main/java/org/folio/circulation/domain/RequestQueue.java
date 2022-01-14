@@ -124,6 +124,16 @@ public class RequestQueue {
     reSequenceRequests();
   }
 
+  public void setRequestToPositionOne(Request request) {
+    if (requests.size() > 1) {
+      requests = requests.stream()
+        .filter(r -> !r.getId().equals(request.getId()))
+        .collect(Collectors.toList());
+      requests.add(0, request);
+      reSequenceRequests();
+    }
+  }
+
   private void reSequenceRequests() {
     final AtomicInteger position = new AtomicInteger(1);
     requests.forEach(req -> req.changePosition(position.getAndIncrement()));
