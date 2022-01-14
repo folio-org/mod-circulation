@@ -7,10 +7,13 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
+import org.folio.circulation.domain.Holdings;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemsReportFetcher;
+import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.infrastructure.storage.inventory.ItemReportRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
@@ -50,6 +53,13 @@ class ItemsInTransitReportServiceTest {
     when(itemsReportFetcher.getResultListOfItems())
       .thenReturn(List.of(succeeded(new MultipleRecords<>(
         List.of(Item.from(new JsonObject())), 1))));
+
+    when(itemRepository.findHoldingsByIds(any()))
+      .thenReturn(completedFuture(succeeded(new MultipleRecords<>(
+              List.of(Holdings.unknown()), 1))));
+
+    when(locationRepository.getAllItemLocations(any(), any()))
+      .thenReturn(completedFuture(succeeded(Map.of("locationKey", Location.from(new JsonObject())))));
 
     ItemsInTransitReportService service = new ItemsInTransitReportService(itemReportRepository, locationRepository,
       null, null, null,
