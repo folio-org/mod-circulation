@@ -22,6 +22,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
+/**
+ * Temporary tests to pass Sonar checks
+ * TODO: delete
+ */
 @ExtendWith(MockitoExtension.class)
 class ItemRepositoryTest {
 
