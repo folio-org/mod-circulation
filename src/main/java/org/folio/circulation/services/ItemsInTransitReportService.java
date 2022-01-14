@@ -8,12 +8,12 @@ import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.Collection;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.Holdings;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
@@ -145,7 +145,7 @@ public class ItemsInTransitReportService {
   private <T> Set<String> mapToStrings(Collection<T> collection, Function<T, String> mapper) {
     return collection.stream()
     .map(mapper)
-    .filter(Objects::nonNull)
+    .filter(StringUtils::isNotBlank)
     .collect(Collectors.toSet());
   }
 
