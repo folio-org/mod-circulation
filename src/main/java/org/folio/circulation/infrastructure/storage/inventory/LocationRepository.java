@@ -88,25 +88,20 @@ public class LocationRepository {
   }
 
   public CompletableFuture<Result<Map<String, Location>>> getItemLocations(
-    Collection<Item> inventoryRecords, List<Function<Item, String>> searchByItemFields) {
+    Collection<Item> inventoryRecords, List<Function<Item, String>> locationIdMappers) {
 
     final Set<String> locationIds = inventoryRecords.stream()
-      .flatMap(item -> getItemFieldsValues(searchByItemFields, item))
+      .flatMap(item -> mapItemToStrings(item, locationIdMappers))
       .filter(StringUtils::isNotBlank)
       .collect(Collectors.toSet());
 
     final FindWithMultipleCqlIndexValues<Location> fetcher
-      = findWithMultipleCqlIndexValues(locationsStorageClient, "locations", Location::from);
+      = findWithMultipleCqlIndexValues(locationsStorageClient, "locations",
+      Location::from);
 
     return fetcher.findByIds(locationIds)
       .thenCompose(this::loadLibrariesForLocations)
       .thenApply(mapResult(sds -> sds.toMap(Location::getId)));
-  }
-
-  private Stream<String> getItemFieldsValues(List<Function<Item, String>> searchByItemFields, Item item) {
-    return Stream.of(searchByItemFields)
-      .flatMap(Collection::stream)
-      .map(function -> function.apply(item));
   }
 
   private CompletableFuture<Result<Location>> loadLibrary(Location location) {
@@ -215,4 +210,10 @@ public class LocationRepository {
           .collect(toSet()))));
   }
 
+  private Stream<String> mapItemToStrings(Item item,
+    List<Function<Item, String>> mappers) {
+
+    return mappers.stream()
+      .map(mapper -> mapper.apply(item));
+  }
 }
