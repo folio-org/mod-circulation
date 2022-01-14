@@ -67,6 +67,19 @@ public class LocationRepository {
       .thenCompose(r -> r.after(this::loadInstitution));
   }
 
+  public CompletableFuture<Result<Map<String, Location>>> getLocations(Collection<Item> items) {
+    final Set<String> locationIds = items.stream()
+      .flatMap(item -> Stream.of(item.getPermanentLocationId(), item.getLocationId()))
+      .filter(StringUtils::isNotBlank)
+      .collect(Collectors.toSet());
+
+    final FindWithMultipleCqlIndexValues<Location> fetcher
+      = findWithMultipleCqlIndexValues(locationsStorageClient, "locations", Location::from);
+
+    return fetcher.findByIds(locationIds)
+      .thenApply(mapResult(sds -> sds.toMap(Location::getId)));
+  }
+
   public CompletableFuture<Result<Location>> fetchLocationById(String id) {
     if (isBlank(id)) {
       return ofAsync(() -> null);
