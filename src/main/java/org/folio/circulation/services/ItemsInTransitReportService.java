@@ -78,7 +78,7 @@ public class ItemsInTransitReportService {
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchHoldingsRecords(
     ItemsInTransitReportContext context) {
 
-    return findIds(context, Item::getHoldingsRecordId)
+    return succeeded(mapToStrings(context.getItems().values(), Item::getHoldingsRecordId))
       .after(itemRepository::findHoldingsByIds)
       .thenApply(r -> r.map(records -> toMap(records.getRecords(), Holdings::getId)))
       .thenApply(r -> r.map(context::withHoldingsRecords));
@@ -139,15 +139,15 @@ public class ItemsInTransitReportService {
     return completedFuture(context);
   }
 
-  private Result<Set<String>> findIds(ItemsInTransitReportContext context, Function<Item, String> function) {
-    return succeeded(context.getItems().values().stream()
-    .map(function)
+  private <T> Set<String> mapToStrings(Collection<T> collection, Function<T, String> mapper) {
+    return collection.stream()
+    .map(mapper)
     .filter(Objects::nonNull)
-    .collect(Collectors.toSet()));
+    .collect(Collectors.toSet());
   }
 
-  public <T> Map<String, T> toMap(Collection<T> collection, Function<T, String> idMapper) {
+  public <T> Map<String, T> toMap(Collection<T> collection, Function<T, String> keyMapper) {
     return collection.stream()
-      .collect(Collectors.toMap(idMapper, identity()));
+      .collect(Collectors.toMap(keyMapper, identity()));
   }
 }
