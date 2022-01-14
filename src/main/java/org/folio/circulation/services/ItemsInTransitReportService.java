@@ -3,6 +3,9 @@ package org.folio.circulation.services;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Function.identity;
 import static org.folio.circulation.domain.ItemStatus.IN_TRANSIT;
+import static org.folio.circulation.domain.RequestStatus.openStates;
+import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
+import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.results.Result.combineAll;
 import static org.folio.circulation.support.results.Result.succeeded;
 
@@ -16,13 +19,17 @@ import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.Instance;
 import org.folio.circulation.domain.Item;
+import org.folio.circulation.domain.Request;
+import org.folio.circulation.domain.User;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemReportRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.users.PatronGroupRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.services.support.ItemsInTransitReportContext;
+import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
 import org.folio.circulation.support.GetManyRecordsClient;
+import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.json.JsonObject;
@@ -51,7 +58,7 @@ public class ItemsInTransitReportService {
       .thenCompose(this::fetchLoanTypes)
       .thenCompose(this::fetchLoans)
       .thenCompose(this::fetchRequests)
-      .thenCompose(this::fetchUsers)
+      .thenCompose(r -> r.after(this::fetchUsers))
       .thenCompose(this::fetchPatronGroups)
       .thenCompose(this::fetchServicePoints)
       .thenApply(this::mapToJsonObject);
@@ -84,17 +91,10 @@ public class ItemsInTransitReportService {
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchInstances(
     ItemsInTransitReportContext context) {
 
-    return findInstanceIdsToFetch(context)
+    return succeeded(mapToStrings(context.getItems().values(), Item::getInstanceId))
       .after(itemRepository::findInstancesByIds)
       .thenApply(r -> r.map(records -> toMap(records.getRecords(), Instance::getId)))
       .thenApply(r -> r.map(context::withInstances));
-  }
-
-  private Result<Set<String>> findInstanceIdsToFetch(ItemsInTransitReportContext context) {
-    return succeeded(context.getItems().values().stream()
-      .map(Item::getInstanceId)
-      .filter(Objects::nonNull)
-      .collect(Collectors.toSet()));
   }
 
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchLocations(
@@ -128,9 +128,11 @@ public class ItemsInTransitReportService {
   }
 
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchUsers(
-    Result<ItemsInTransitReportContext> context) {
+    ItemsInTransitReportContext context) {
 
-    return completedFuture(context);
+    return userRepository.findUsersByRequests(context.getRequests().values())
+        .thenApply(r -> r.map(userMultipleRecords -> toMap(userMultipleRecords.getRecords(), User::getId)))
+        .thenApply(r -> r.map(context::withUsers));
   }
 
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchPatronGroups(
@@ -144,6 +146,13 @@ public class ItemsInTransitReportService {
     Result<ItemsInTransitReportContext> context) {
 
     return completedFuture(context);
+  }
+
+  private <T> Set<String> mapToStrings(Collection<T> collection, Function<T, String> mapper) {
+    return collection.stream()
+      .map(mapper)
+      .filter(Objects::nonNull)
+      .collect(Collectors.toSet());
   }
 
   public <T> Map<String, T> toMap(Collection<T> collection, Function<T, String> idMapper) {
