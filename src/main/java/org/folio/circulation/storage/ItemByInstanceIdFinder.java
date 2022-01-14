@@ -5,6 +5,7 @@ import static java.util.function.Function.identity;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQuery;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
+import static org.folio.circulation.support.http.client.PageLimit.tenThousand;
 import static org.folio.circulation.support.json.JsonKeys.byId;
 
 import java.util.Collection;
@@ -54,7 +55,7 @@ public class ItemByInstanceIdFinder {
 
       Set<String> holdingsIds = holdingsRecords.toKeys(byId());
 
-      return itemRepository.findByQuery(exactMatchAny("holdingsRecordId", holdingsIds));
+      return itemRepository.findByQuery(exactMatchAny("holdingsRecordId", holdingsIds), tenThousand());
     });
   }
 }

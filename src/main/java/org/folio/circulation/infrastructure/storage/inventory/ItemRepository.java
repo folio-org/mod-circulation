@@ -374,10 +374,10 @@ public class ItemRepository {
         records.getTotalRecords()));
   }
 
-  public CompletableFuture<Result<Collection<Item>>> findByQuery(Result<CqlQuery> queryResult) {
+  public CompletableFuture<Result<Collection<Item>>> findByQuery(Result<CqlQuery> queryResult, PageLimit pageLimit) {
     FindWithCqlQuery<Item> fetcher = RecordFetching.findWithCqlQuery(itemsClient, ITEMS_COLLECTION_PROPERTY_NAME, Item::from);
 
-    return fetcher.findByQuery(queryResult)
+    return fetcher.findByQuery(queryResult, pageLimit)
       .thenApply(mapResult(MultipleRecords::getRecords))
       .thenComposeAsync(this::fetchHoldingRecords)
       .thenComposeAsync(this::fetchInstances)
