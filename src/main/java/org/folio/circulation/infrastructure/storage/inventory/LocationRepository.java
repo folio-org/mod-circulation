@@ -69,7 +69,7 @@ public class LocationRepository {
 
   public CompletableFuture<Result<Map<String, Location>>> getLocations(Collection<Item> items) {
     final Set<String> locationIds = items.stream()
-      .flatMap(item -> Stream.of(item.getPermanentLocationId(), item.getLocationId()))
+      .map(Item::getLocationId)
       .filter(StringUtils::isNotBlank)
       .collect(Collectors.toSet());
 
