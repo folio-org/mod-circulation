@@ -128,8 +128,7 @@ public class ItemsInTransitReportService {
     ItemsInTransitReportContext context) {
 
     return requestRepository.findOpenRequestsByItemIds(context.getItems().keySet())
-      .thenApply(mapResult(this::toList))
-      .thenApply(mapResult(requests -> toMap(requests, Request::getId)))
+      .thenApply(mapResult(requests -> toMap(requests.getRecords(), Request::getId)))
       .thenApply(mapResult(context::withRequests));
   }
 
@@ -161,9 +160,5 @@ public class ItemsInTransitReportService {
   public <T> Map<String, T> toMap(Collection<T> collection, Function<T, String> keyMapper) {
     return collection.stream()
       .collect(Collectors.toMap(keyMapper, identity()));
-  }
-
-  private <T> List<T> toList(MultipleRecords<T> records) {
-    return new ArrayList<>(records.getRecords());
   }
 }
