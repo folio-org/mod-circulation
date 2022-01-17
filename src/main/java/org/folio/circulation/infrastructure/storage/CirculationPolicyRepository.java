@@ -126,8 +126,6 @@ public abstract class CirculationPolicyRepository<T> {
 
   protected abstract Result<T> toPolicy(JsonObject representation, AppliedRuleConditions ruleConditionsEntity);
 
-  protected abstract String fetchPolicyId(JsonObject jsonObject);
-
   protected abstract CompletableFuture<Result<CirculationRuleMatch>> getPolicyAndMatch(
     RulesExecutionParameters rulesExecutionParameters);
 }
