@@ -16,7 +16,6 @@ import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemsReportFetcher;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.MultipleRecords;
-import org.folio.circulation.domain.User;
 import org.folio.circulation.infrastructure.storage.inventory.ItemReportRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.inventory.LocationRepository;
