@@ -4,9 +4,6 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Function.identity;
 import static org.folio.circulation.domain.ItemStatus.IN_TRANSIT;
 import static org.folio.circulation.support.results.Result.combineAll;
-import static org.folio.circulation.domain.RequestStatus.openStates;
-import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
-import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.Collection;
@@ -25,12 +22,11 @@ import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemReportRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.inventory.LocationRepository;
+import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.infrastructure.storage.users.PatronGroupRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.services.support.ItemsInTransitReportContext;
-import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
 import org.folio.circulation.support.GetManyRecordsClient;
-import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.json.JsonObject;
@@ -45,7 +41,7 @@ public class ItemsInTransitReportService {
   private LocationRepository locationRepository;
   private GetManyRecordsClient loansStorageClient;
   private ServicePointRepository servicePointRepository;
-  private GetManyRecordsClient requestsStorageClient;
+  private RequestRepository requestRepository;
   private ItemRepository itemRepository;
   private UserRepository userRepository;
   private PatronGroupRepository patronGroupRepository;
@@ -128,12 +124,7 @@ public class ItemsInTransitReportService {
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchRequests(
     ItemsInTransitReportContext context) {
 
-    final Result<CqlQuery> cqlQuery = exactMatchAny("status", openStates());
-    FindWithMultipleCqlIndexValues<Request> fetcher
-      = findWithMultipleCqlIndexValues(requestsStorageClient, "requests",
-        Request::from);
-
-    return fetcher.findByIdIndexAndQuery(context.getItems().keySet(), "itemId", cqlQuery)
+    return requestRepository.findOpenStatusRequestsBy(context.getItems().keySet())
       .thenApply(r -> r.map(records -> toMap(records.getRecords(), Request::getId)))
       .thenApply(r -> r.map(context::withRequests));
   }

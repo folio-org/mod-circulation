@@ -18,7 +18,7 @@ import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.infrastructure.storage.inventory.ItemReportRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.inventory.LocationRepository;
-import org.folio.circulation.support.GetManyRecordsClient;
+import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.support.results.Result;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -47,7 +47,7 @@ class ItemsInTransitReportServiceTest {
   LocationRepository locationRepository;
 
   @Mock
-  GetManyRecordsClient requestsStorageClient;
+  RequestRepository requestRepository;
 
   @Test
   void itemsInTransitReportServiceTest() {
@@ -66,7 +66,7 @@ class ItemsInTransitReportServiceTest {
       .thenReturn(completedFuture(succeeded(Map.of("locationKey", Location.from(new JsonObject())))));
 
     ItemsInTransitReportService service = new ItemsInTransitReportService(itemReportRepository, locationRepository,
-      null, null, requestsStorageClient,
+      null, null, requestRepository,
       itemRepository, null, null);
     CompletableFuture<Result<JsonObject>> report = service.buildReport();
     assertNotNull(report);
