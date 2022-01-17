@@ -87,7 +87,7 @@ class ItemsInTransitReportServiceTest {
 
     when(itemRepository.findHoldingsByIds(any()))
       .thenReturn(completedFuture(succeeded(new MultipleRecords<>(
-              List.of(Holdings.unknown()), 1))));
+        List.of(Holdings.unknown()), 1))));
 
     when(itemRepository.findInstancesByIds(any()))
       .thenReturn(completedFuture(succeeded(new MultipleRecords<>(
@@ -101,14 +101,12 @@ class ItemsInTransitReportServiceTest {
       .thenReturn(completedFuture(succeeded(Map.of("locationKey", Location.from(new JsonObject())))));
 
     when(requestRepository.findOpenRequestsByItemIds(any()))
-      .thenReturn(completedFuture(succeeded(new MultipleRecords<>(
-        List.of(new Request(new JsonObject(), null, null, null,
-          null, null, null, null,  false,
-          0, false)), 1))));
+      .thenReturn(ofAsync(() -> new MultipleRecords<>(
+        List.of(Request.from(new JsonObject())), 1)));
 
     ItemsInTransitReportService service = new ItemsInTransitReportService(itemReportRepository,
       loanRepository, locationRepository, servicePointRepository, requestRepository, itemRepository,
-      null, null);
+      userRepository, null);
     CompletableFuture<Result<JsonObject>> report = service.buildReport();
     assertNotNull(report);
   }

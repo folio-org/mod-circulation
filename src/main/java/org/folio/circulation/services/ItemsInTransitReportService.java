@@ -8,6 +8,7 @@ import static org.folio.circulation.support.results.Result.combineAll;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -86,8 +87,8 @@ public class ItemsInTransitReportService {
           .map(listOfPages -> listOfPages.stream()
             .flatMap(page -> page.getRecords().stream())
             .collect(Collectors.toList()))))
-      .thenApply(r -> r.map(items -> toMap(items, Item::getItemId)))
-      .thenApply(r -> r.map(context::withItems));
+      .thenApply(mapResult(items -> toMap(items, Item::getItemId)))
+      .thenApply(mapResult(context::withItems));
   }
 
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchHoldingsRecords(
@@ -95,16 +96,16 @@ public class ItemsInTransitReportService {
 
     return succeeded(mapToStrings(context.getItems().values(), Item::getHoldingsRecordId))
       .after(itemRepository::findHoldingsByIds)
-      .thenApply(r -> r.map(records -> toMap(records.getRecords(), Holdings::getId)))
-      .thenApply(r -> r.map(context::withHoldingsRecords));
+      .thenApply(mapResult(records -> toMap(records.getRecords(), Holdings::getId)))
+      .thenApply(mapResult(context::withHoldingsRecords));
   }
 
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchInstances(
     ItemsInTransitReportContext context) {
 
     return itemRepository.findInstancesByIds(mapToStrings(context.getItems().values(), Item::getInstanceId))
-      .thenApply(r -> r.map(records -> toMap(records.getRecords(), Instance::getId)))
-      .thenApply(r -> r.map(context::withInstances));
+      .thenApply(mapResult(records -> toMap(records.getRecords(), Instance::getId)))
+      .thenApply(mapResult(context::withInstances));
   }
 
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchLocations(
@@ -112,7 +113,7 @@ public class ItemsInTransitReportService {
 
     return locationRepository
       .getItemLocations(context.getItems().values(), List.of(Item::getLocationId))
-      .thenApply(r -> r.map(context::withLocations));
+      .thenApply(mapResult(context::withLocations));
   }
 
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchLoans(
@@ -137,8 +138,9 @@ public class ItemsInTransitReportService {
     ItemsInTransitReportContext context) {
 
     return userRepository.findUsersByRequests(context.getRequests().values())
-        .thenApply(r -> r.map(userMultipleRecords -> toMap(userMultipleRecords.getRecords(), User::getId)))
-        .thenApply(r -> r.map(context::withUsers));
+      .thenApply(mapResult(userMultipleRecords -> toMap(userMultipleRecords.getRecords(),
+        User::getId)))
+      .thenApply(mapResult(context::withUsers));
   }
 
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchPatronGroups(

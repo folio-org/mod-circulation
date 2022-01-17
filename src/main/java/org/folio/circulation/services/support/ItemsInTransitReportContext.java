@@ -38,7 +38,7 @@ public class ItemsInTransitReportContext {
   private Map<String, Loan> loans;
 
   // Requests
-  private Map<String, Request> requests = new HashMap<>();
+  private Map<String, Request> requests;
   private Map<String, User> users;
   private Map<String, PatronGroup> patronGroups;
 
