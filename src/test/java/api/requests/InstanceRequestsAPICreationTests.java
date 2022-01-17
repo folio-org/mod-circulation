@@ -307,13 +307,13 @@ class InstanceRequestsAPICreationTests extends APITests {
   }
 
   @Test
-  void canSuccessfullyPlaceATitleLevelRequestOnAvailableCopyWithAdditionalElevenUnavailableCopies() {
+  void canSuccessfullyPlaceATitleLevelRequestOnAvailableCopyWithAdditionalTwentyUnavailableCopies() {
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     IndividualResource instance = instancesFixture.basedUponDunkirk();
     IndividualResource holdings = holdingsFixture.defaultWithHoldings(instance.getId());
     IndividualResource locationsResource = locationsFixture.mainFloor();
 
-    createElevenCheckedOutItemCopies(holdings, locationsResource);
+    createTwentyCheckedOutItemCopies(holdings, locationsResource);
     final IndividualResource availableItemCopy =
       itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(),
         locationsResource.getId());
@@ -328,7 +328,7 @@ class InstanceRequestsAPICreationTests extends APITests {
     Response postResponse = requestsFixture.attemptToPlaceForInstance(requestBody);
     JsonObject representation = postResponse.getJson();
 
-    assertEquals(201, postResponse.getStatusCode());
+    assertEquals(postResponse.getStatusCode(), HTTP_CREATED.toInt());
     validateInstanceRequestResponse(representation, pickupServicePointId,
       instance.getId(), availableItemCopy.getId(), RequestType.PAGE);
   }
@@ -921,9 +921,9 @@ class InstanceRequestsAPICreationTests extends APITests {
       is(ItemStatus.CHECKED_OUT.getValue()));
   }
 
-  private void createElevenCheckedOutItemCopies(IndividualResource holdings,
+  private void createTwentyCheckedOutItemCopies(IndividualResource holdings,
     IndividualResource locationsResource) {
-    IntStream.range(0, 11)
+    IntStream.range(0, 20)
       .forEach(index -> itemsFixture.basedUponDunkirkWithCustomHoldingAndLocationAndCheckedOut(
         holdings.getId(), locationsResource.getId()));
   }
