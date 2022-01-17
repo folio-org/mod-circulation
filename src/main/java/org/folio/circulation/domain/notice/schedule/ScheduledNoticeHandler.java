@@ -74,19 +74,13 @@ public abstract class ScheduledNoticeHandler {
   private CompletableFuture<Result<ScheduledNotice>> handleNotice(ScheduledNotice notice) {
     log.info("Start processing scheduled notice {}", notice);
 
-    return processNotice(notice)
-      .thenCompose(r -> handleResult(r, notice))
-      .exceptionally(t -> handleException(t, notice));
-  }
-
-  protected CompletableFuture<Result<ScheduledNotice>> processNotice(
-    ScheduledNotice notice) {
     return ofAsync(() -> new ScheduledNoticeContext(notice))
       .thenCompose(r -> r.after(this::fetchNoticeData))
       .thenCompose(r -> r.after(this::sendNotice))
       .thenCompose(r -> r.after(this::updateNotice))
       .exceptionally(t -> CommonFailures.failedDueToServerErrorFailureWithSideEffect(t,
-        DELETE_PATRON_NOTICE));
+        DELETE_PATRON_NOTICE))
+      .thenCompose(r -> handleResult(r, notice));
   }
 
   protected CompletableFuture<Result<ScheduledNoticeContext>> fetchNoticeData(
@@ -222,12 +216,6 @@ public abstract class ScheduledNoticeHandler {
     }
 
     return ofAsync(() -> notice);
-  }
-
-  private Result<ScheduledNotice> handleException(Throwable throwable, ScheduledNotice notice) {
-    deleteNotice(notice, String.format("an exception was thrown while processing scheduled notice %s: %s",
-    notice.getId(), throwable.getMessage()));
-    return succeeded(notice);
   }
 
   @With
