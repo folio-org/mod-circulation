@@ -244,7 +244,8 @@ public class ItemRepository {
     Collection<String> ids) {
 
     return fetchInstancesByIds(ids)
-      .thenApply(mapResult(multipleRecords -> multipleRecords.mapRecords(new InstanceMapper()::toDomain)));
+      .thenApply(mapResult(multipleRecords -> multipleRecords.mapRecords(
+        new InstanceMapper()::toDomain)));
   }
 
   private CompletableFuture<Result<Collection<Item>>> fetchInstances(
@@ -270,7 +271,8 @@ public class ItemRepository {
   private CompletableFuture<Result<MultipleRecords<JsonObject>>> fetchInstancesByIds(
     Collection<String> ids) {
 
-    return findWithMultipleCqlIndexValues(instancesClient, INSTANCES_RECORDS_PROPERTY_NAME, identity()).findByIds(ids);
+    return findWithMultipleCqlIndexValues(instancesClient, INSTANCES_RECORDS_PROPERTY_NAME,
+      identity()).findByIds(ids);
   }
 
   private CompletableFuture<Result<Collection<Item>>> fetchHoldingRecords(
