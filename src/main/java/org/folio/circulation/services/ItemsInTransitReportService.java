@@ -52,6 +52,7 @@ public class ItemsInTransitReportService {
       .thenCompose(r -> r.after(this::fetchHoldingsRecords))
       .thenCompose(r -> r.after(this::fetchInstances))
       .thenCompose(r -> r.after(this::fetchLocations))
+      .thenCompose(r -> r.after(this::fetchInstances))
       .thenCompose(this::fetchMaterialTypes)
       .thenCompose(this::fetchLoanTypes)
       .thenCompose(this::fetchLoans)
