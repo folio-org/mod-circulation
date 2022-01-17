@@ -18,6 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.UUID;
+import java.util.stream.IntStream;
 
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.RequestType;
@@ -303,6 +304,33 @@ class InstanceRequestsAPICreationTests extends APITests {
     JsonObject representation = postResponse.getJson();
     validateInstanceRequestResponse(representation, pickupServicePointId,
       instance.getId(), item2.getId(), RequestType.PAGE);
+  }
+
+  @Test
+  void canSuccessfullyPlaceATitleLevelRequestOnAvailableCopyWithAdditionalElevenUnavailableCopies() {
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    IndividualResource instance = instancesFixture.basedUponDunkirk();
+    IndividualResource holdings = holdingsFixture.defaultWithHoldings(instance.getId());
+    IndividualResource locationsResource = locationsFixture.mainFloor();
+
+    createElevenCheckedOutItemCopies(holdings, locationsResource);
+    final IndividualResource availableItemCopy =
+      itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(),
+        locationsResource.getId());
+
+    IndividualResource instanceRequester = usersFixture.charlotte();
+    ZonedDateTime instanceRequestDate = ZonedDateTime.of(2022, 1, 14, 10, 22, 54, 0, UTC);
+    ZonedDateTime instanceRequestDateRequestExpirationDate
+      = instanceRequestDate.plusDays(30);
+    JsonObject requestBody = createInstanceRequestObject(instance.getId(),
+      instanceRequester.getId(), pickupServicePointId, instanceRequestDate,
+      instanceRequestDateRequestExpirationDate);
+    Response postResponse = requestsFixture.attemptToPlaceForInstance(requestBody);
+    JsonObject representation = postResponse.getJson();
+
+    assertEquals(201, postResponse.getStatusCode());
+    validateInstanceRequestResponse(representation, pickupServicePointId,
+      instance.getId(), availableItemCopy.getId(), RequestType.PAGE);
   }
 
   @Test
@@ -891,6 +919,13 @@ class InstanceRequestsAPICreationTests extends APITests {
 
     assertThat(requestedItem.getString("status"),
       is(ItemStatus.CHECKED_OUT.getValue()));
+  }
+
+  private void createElevenCheckedOutItemCopies(IndividualResource holdings,
+    IndividualResource locationsResource) {
+    IntStream.range(0, 11)
+      .forEach(index -> itemsFixture.basedUponDunkirkWithCustomHoldingAndLocationAndCheckedOut(
+        holdings.getId(), locationsResource.getId()));
   }
 
 }
