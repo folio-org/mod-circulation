@@ -113,8 +113,8 @@ public class ItemsInTransitReportService {
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchLoans(
     ItemsInTransitReportContext context) {
 
-    return succeeded(findIds(context.getItems().values(), Item::getItemId))
-      .after(itemIds -> loanRepository.findByItemIds(itemIds.collect(Collectors.toSet())))
+    return succeeded(context.getItems().keySet())
+      .after(loanRepository::findByItemIds)
       .thenApply(mapResult(this::toList))
       .thenApply(mapResult(loans -> toMap(loans, Loan::getId)))
       .thenApply(mapResult(context::withLoans));
@@ -174,15 +174,6 @@ public class ItemsInTransitReportService {
       .thenApply(mapResult(this::toList))
       .thenApply(mapResult(servicePoints -> toMap(servicePoints, ServicePoint::getId)))
       .thenApply(mapResult(context::withServicePoints));
-  }
-
-  private <T> Stream<String> findIds(Collection<T> entities,
-    Function<T, String> getIdFunction) {
-
-    return entities.stream()
-      .filter(Objects::nonNull)
-      .map(getIdFunction)
-      .filter(Objects::nonNull);
   }
 
   private <T> List<T> toList(MultipleRecords<T> records) {
