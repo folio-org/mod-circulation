@@ -8,7 +8,6 @@ import static org.folio.circulation.support.results.Result.combineAll;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -22,8 +21,9 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.Holdings;
+import org.folio.circulation.domain.Instance;
 import org.folio.circulation.domain.Item;
-import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.MultipleRecords;
@@ -62,11 +62,11 @@ public class ItemsInTransitReportService {
     return completedFuture(succeeded(new ItemsInTransitReportContext()))
       .thenCompose(r -> r.after(this::fetchItems))
       .thenCompose(r -> r.after(this::fetchHoldingsRecords))
-      .thenCompose(this::fetchInstances)
+      .thenCompose(r -> r.after(this::fetchInstances))
       .thenCompose(r -> r.after(this::fetchLocations))
       .thenCompose(r -> r.after(this::fetchLoans))
       .thenCompose(r -> r.after(this::fetchRequests))
-      .thenCompose(this::fetchUsers)
+      .thenCompose(r -> r.after(this::fetchUsers))
       .thenCompose(this::fetchPatronGroups)
       .thenCompose(r -> r.after(this::fetchServicePoints))
       .thenApply(this::mapToJsonObject);
@@ -100,9 +100,11 @@ public class ItemsInTransitReportService {
   }
 
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchInstances(
-    Result<ItemsInTransitReportContext> context) {
+    ItemsInTransitReportContext context) {
 
-    return completedFuture(context);
+    return itemRepository.findInstancesByIds(mapToStrings(context.getItems().values(), Item::getInstanceId))
+      .thenApply(r -> r.map(records -> toMap(records.getRecords(), Instance::getId)))
+      .thenApply(r -> r.map(context::withInstances));
   }
 
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchLocations(
@@ -132,9 +134,11 @@ public class ItemsInTransitReportService {
   }
 
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchUsers(
-    Result<ItemsInTransitReportContext> context) {
+    ItemsInTransitReportContext context) {
 
-    return completedFuture(context);
+    return userRepository.findUsersByRequests(context.getRequests().values())
+        .thenApply(r -> r.map(userMultipleRecords -> toMap(userMultipleRecords.getRecords(), User::getId)))
+        .thenApply(r -> r.map(context::withUsers));
   }
 
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchPatronGroups(
