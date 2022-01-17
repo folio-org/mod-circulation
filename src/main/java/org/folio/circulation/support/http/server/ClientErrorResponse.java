@@ -1,6 +1,6 @@
 package org.folio.circulation.support.http.server;
 
-import org.apache.http.entity.ContentType;
+import org.folio.circulation.support.http.ContentType;
 
 import io.vertx.core.http.HttpServerResponse;
 
@@ -18,7 +18,7 @@ public class ClientErrorResponse {
 
   public static void badRequest(HttpServerResponse response, String reason) {
     response.setStatusCode(400);
-    response.putHeader("content-type", ContentType.TEXT_PLAIN.toString());
+    response.putHeader("content-type", ContentType.TEXT_PLAIN);
     response.end(reason);
   }
 }
