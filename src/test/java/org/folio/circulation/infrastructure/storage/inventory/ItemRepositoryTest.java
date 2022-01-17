@@ -1,6 +1,8 @@
 package org.folio.circulation.infrastructure.storage.inventory;
 
 import io.vertx.core.json.JsonObject;
+
+import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.ServerErrorFailure;
@@ -33,6 +35,9 @@ class ItemRepositoryTest {
   CollectionResourceClient holdingsStorage;
 
   @Mock
+  CollectionResourceClient instancesClient;
+
+  @Mock
   Clients clients;
 
   @Test
@@ -46,6 +51,21 @@ class ItemRepositoryTest {
 
     var result = itemRepository.findHoldingsByIds(Arrays.asList("1", "2"))
       .getNow(Result.failed(new ServerErrorFailure("Error")));
+    assertTrue(result.succeeded());
+    assertNotNull(result.value());
+  }
+
+  @Test
+  void shouldReturnEmptyInstances() {
+    when(clients.instancesStorage())
+      .thenReturn(instancesClient);
+    when(instancesClient.getMany(any(), any()))
+      .thenReturn(
+        completedFuture(succeeded(new Response(200, getJsonAsString(), "contentType"))));
+    final ItemRepository itemRepository = ItemRepository.noLocationMaterialTypeAndLoanTypeInstance(clients);
+
+    var result = itemRepository.findInstancesByIds(Arrays.asList("3", "4"))
+      .getNow(Result.succeeded(MultipleRecords.empty()));
     assertTrue(result.succeeded());
     assertNotNull(result.value());
   }
