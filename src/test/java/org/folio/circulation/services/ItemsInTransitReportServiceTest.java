@@ -7,12 +7,17 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
+import org.folio.circulation.domain.Holdings;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemsReportFetcher;
+import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.infrastructure.storage.inventory.ItemReportRepository;
+import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
+import org.folio.circulation.infrastructure.storage.inventory.LocationRepository;
 import org.folio.circulation.support.GetManyRecordsClient;
 import org.folio.circulation.support.results.Result;
 import org.junit.jupiter.api.Test;
@@ -36,6 +41,12 @@ class ItemsInTransitReportServiceTest {
   ItemsReportFetcher itemsReportFetcher;
 
   @Mock
+  ItemRepository itemRepository;
+
+  @Mock
+  LocationRepository locationRepository;
+
+  @Mock
   GetManyRecordsClient requestsStorageClient;
 
   @Test
@@ -47,9 +58,16 @@ class ItemsInTransitReportServiceTest {
       .thenReturn(List.of(succeeded(new MultipleRecords<>(
         List.of(Item.from(new JsonObject())), 1))));
 
-    ItemsInTransitReportService service = new ItemsInTransitReportService(itemReportRepository,
+    when(itemRepository.findHoldingsByIds(any()))
+      .thenReturn(completedFuture(succeeded(new MultipleRecords<>(
+              List.of(Holdings.unknown()), 1))));
+
+    when(locationRepository.getItemLocations(any(), any()))
+      .thenReturn(completedFuture(succeeded(Map.of("locationKey", Location.from(new JsonObject())))));
+
+    ItemsInTransitReportService service = new ItemsInTransitReportService(itemReportRepository, locationRepository,
       null, null, requestsStorageClient,
-      null, null, null);
+      itemRepository, null, null);
     CompletableFuture<Result<JsonObject>> report = service.buildReport();
     assertNotNull(report);
   }

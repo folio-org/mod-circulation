@@ -10,16 +10,21 @@ import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
+import org.folio.circulation.domain.Holdings;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemReportRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
+import org.folio.circulation.infrastructure.storage.inventory.LocationRepository;
 import org.folio.circulation.infrastructure.storage.users.PatronGroupRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.services.support.ItemsInTransitReportContext;
@@ -37,6 +42,7 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class ItemsInTransitReportService {
   private ItemReportRepository itemReportRepository;
+  private LocationRepository locationRepository;
   private GetManyRecordsClient loansStorageClient;
   private ServicePointRepository servicePointRepository;
   private GetManyRecordsClient requestsStorageClient;
@@ -47,9 +53,9 @@ public class ItemsInTransitReportService {
   public CompletableFuture<Result<JsonObject>> buildReport() {
     return completedFuture(succeeded(new ItemsInTransitReportContext()))
       .thenCompose(r -> r.after(this::fetchItems))
-      .thenCompose(this::fetchHoldingsRecords)
+      .thenCompose(r -> r.after(this::fetchHoldingsRecords))
       .thenCompose(this::fetchInstances)
-      .thenCompose(this::fetchLocations)
+      .thenCompose(r -> r.after(this::fetchLocations))
       .thenCompose(this::fetchMaterialTypes)
       .thenCompose(this::fetchLoanTypes)
       .thenCompose(this::fetchLoans)
@@ -79,9 +85,12 @@ public class ItemsInTransitReportService {
   }
 
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchHoldingsRecords(
-    Result<ItemsInTransitReportContext> context) {
+    ItemsInTransitReportContext context) {
 
-    return completedFuture(context);
+    return succeeded(mapToStrings(context.getItems().values(), Item::getHoldingsRecordId))
+      .after(itemRepository::findHoldingsByIds)
+      .thenApply(r -> r.map(records -> toMap(records.getRecords(), Holdings::getId)))
+      .thenApply(r -> r.map(context::withHoldingsRecords));
   }
 
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchInstances(
@@ -91,9 +100,11 @@ public class ItemsInTransitReportService {
   }
 
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchLocations(
-    Result<ItemsInTransitReportContext> context) {
+    ItemsInTransitReportContext context) {
 
-    return completedFuture(context);
+    return locationRepository
+      .getItemLocations(context.getItems().values(), List.of(Item::getLocationId))
+      .thenApply(r -> r.map(context::withLocations));
   }
 
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchMaterialTypes(
@@ -146,8 +157,15 @@ public class ItemsInTransitReportService {
     return completedFuture(context);
   }
 
-  public <T> Map<String, T> toMap(Collection<T> collection, Function<T, String> idMapper) {
+  private <T> Set<String> mapToStrings(Collection<T> collection, Function<T, String> mapper) {
     return collection.stream()
-      .collect(Collectors.toMap(idMapper, identity()));
+    .map(mapper)
+    .filter(StringUtils::isNotBlank)
+    .collect(Collectors.toSet());
+  }
+
+  public <T> Map<String, T> toMap(Collection<T> collection, Function<T, String> keyMapper) {
+    return collection.stream()
+      .collect(Collectors.toMap(keyMapper, identity()));
   }
 }
