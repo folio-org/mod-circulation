@@ -73,7 +73,6 @@ public class ItemRepository {
 
   private static final String ITEMS_COLLECTION_PROPERTY_NAME = "items";
   private static final String HOLDINGS_RECORDS_PROPERTY_NAME = "holdingsRecords";
-  private static final String INSTANCES_RECORDS_PROPERTY_NAME = "instances";
 
   public ItemRepository(org.folio.circulation.support.Clients clients,
     boolean fetchLocation, boolean fetchMaterialType, boolean fetchLoanType) {
@@ -271,7 +270,7 @@ public class ItemRepository {
   private CompletableFuture<Result<MultipleRecords<JsonObject>>> fetchInstancesByIds(
     Collection<String> ids) {
 
-    return findWithMultipleCqlIndexValues(instancesClient, INSTANCES_RECORDS_PROPERTY_NAME,
+    return findWithMultipleCqlIndexValues(instancesClient, "instances",
       identity()).findByIds(ids);
   }
 
