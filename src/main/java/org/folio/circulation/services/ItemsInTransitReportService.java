@@ -5,7 +5,9 @@ import static java.util.function.Function.identity;
 import static org.folio.circulation.domain.ItemStatus.IN_TRANSIT;
 import static org.folio.circulation.support.results.Result.combineAll;
 import static org.folio.circulation.support.results.Result.succeeded;
+import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -17,10 +19,13 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.Holdings;
 import org.folio.circulation.domain.Item;
+import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.domain.Request;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemReportRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.inventory.LocationRepository;
+import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.infrastructure.storage.users.PatronGroupRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.services.support.ItemsInTransitReportContext;
@@ -39,7 +44,7 @@ public class ItemsInTransitReportService {
   private LocationRepository locationRepository;
   private GetManyRecordsClient loansStorageClient;
   private ServicePointRepository servicePointRepository;
-  private GetManyRecordsClient requestsStorageClient;
+  private RequestRepository requestRepository;
   private ItemRepository itemRepository;
   private UserRepository userRepository;
   private PatronGroupRepository patronGroupRepository;
@@ -53,7 +58,7 @@ public class ItemsInTransitReportService {
       .thenCompose(this::fetchMaterialTypes)
       .thenCompose(this::fetchLoanTypes)
       .thenCompose(this::fetchLoans)
-      .thenCompose(this::fetchRequests)
+      .thenCompose(r -> r.after(this::fetchRequests))
       .thenCompose(this::fetchUsers)
       .thenCompose(this::fetchPatronGroups)
       .thenCompose(this::fetchServicePoints)
@@ -120,9 +125,11 @@ public class ItemsInTransitReportService {
   }
 
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchRequests(
-    Result<ItemsInTransitReportContext> context) {
+    ItemsInTransitReportContext context) {
 
-    return completedFuture(context);
+    return requestRepository.findOpenRequestsByItemIds(context.getItems().keySet())
+      .thenApply(mapResult(requests -> toMap(requests.getRecords(), Request::getId)))
+      .thenApply(mapResult(context::withRequests));
   }
 
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchUsers(
@@ -143,7 +150,6 @@ public class ItemsInTransitReportService {
 
     return completedFuture(context);
   }
-
   private <T> Set<String> mapToStrings(Collection<T> collection, Function<T, String> mapper) {
     return collection.stream()
     .map(mapper)
