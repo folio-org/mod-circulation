@@ -72,7 +72,6 @@ public class ItemRepository {
   private final boolean fetchLoanType;
 
   private static final String ITEMS_COLLECTION_PROPERTY_NAME = "items";
-  private static final String HOLDINGS_COLLECTION_PROPERTY_NAME = "holdingsRecords";
 
   public ItemRepository(org.folio.circulation.support.Clients clients,
     boolean fetchLocation, boolean fetchMaterialType, boolean fetchLoanType) {
@@ -284,13 +283,9 @@ public class ItemRepository {
         .distinct()
         .collect(Collectors.toList());
 
-      final var fetcher
-        = findWithMultipleCqlIndexValues(holdingsClient, HOLDINGS_COLLECTION_PROPERTY_NAME,
-        identity());
-
       final var mapper = new HoldingsMapper();
 
-      return fetcher.findByIds(holdingsIds)
+      return fetchHoldingsByIds(holdingsIds)
         .thenApply(r -> r.map(holdings -> items.stream()
           .map(item -> item.withHoldings(mapper.toDomain(
               findById(item.getHoldingsRecordId(), holdings.getRecords()).orElse(null))))
@@ -404,11 +399,17 @@ public class ItemRepository {
   public CompletableFuture<Result<MultipleRecords<Holdings>>> findHoldingsByIds(
     Collection<String> ids) {
 
-    return findWithMultipleCqlIndexValues(holdingsClient,
-      HOLDINGS_COLLECTION_PROPERTY_NAME, identity())
-      .findByIds(ids)
+    return fetchHoldingsByIds(ids)
       .thenApply(r -> r.map(
         multipleRecords -> multipleRecords.mapRecords(new HoldingsMapper()::toDomain)));
+  }
+
+  private CompletableFuture<Result<MultipleRecords<JsonObject>>> fetchHoldingsByIds(
+    Collection<String> ids) {
+
+    return findWithMultipleCqlIndexValues(holdingsClient,
+      "holdingsRecords", identity())
+      .findByIds(ids);
   }
 
   public CompletableFuture<Result<Collection<Item>>> findByIndexNameAndQuery(
