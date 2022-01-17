@@ -7,7 +7,6 @@ public class PageLimit implements QueryParameter {
   private static final PageLimit NO_PAGE_LIMIT = new PageLimit(null);
   private static final PageLimit ONE = limit(1);
   private static final PageLimit ONE_THOUSAND = limit(1000);
-  private static final PageLimit TEN_THOUSAND = limit(10000);
 
   private final Integer value;
 
@@ -29,10 +28,6 @@ public class PageLimit implements QueryParameter {
 
   public static PageLimit oneThousand() {
     return ONE_THOUSAND;
-  }
-
-  public static PageLimit tenThousand() {
-    return TEN_THOUSAND;
   }
 
   private PageLimit(Integer value) {
