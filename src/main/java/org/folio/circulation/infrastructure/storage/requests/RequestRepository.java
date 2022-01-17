@@ -151,7 +151,6 @@ public class RequestRepository {
 
     return findWithMultipleCqlIndexValues(requestsStorageClient, "requests", Request::from)
       .findByIdIndexAndQuery(itemIds, "itemId", exactMatchAny("status", openStates()));
-
   }
 
   public CompletableFuture<Result<Request>> update(Request request) {
