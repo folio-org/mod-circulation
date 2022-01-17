@@ -1,6 +1,5 @@
 package org.folio.circulation.services.support;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import org.folio.circulation.domain.Holdings;

@@ -225,14 +225,15 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
       .thenComposeAsync(loans -> itemRepository.fetchItemsFor(loans, Loan::withItem));
   }
 
-  public CompletableFuture<Result<MultipleRecords<Loan>>> findByItemIds(
+  public CompletableFuture<Result<Collection<Loan>>> findByItemIds(
     Collection<String> itemIds) {
 
     Result<CqlQuery> statusQuery = exactMatch(ITEM_STATUS, IN_TRANSIT.getValue());
     FindWithMultipleCqlIndexValues<Loan> fetcher = findWithMultipleCqlIndexValues(
       loansStorageClient, RECORDS_PROPERTY_NAME, Loan::from);
 
-    return fetcher.findByIdIndexAndQuery(itemIds, ITEM_ID, statusQuery);
+    return fetcher.findByIdIndexAndQuery(itemIds, ITEM_ID, statusQuery)
+      .thenApply(mapResult(MultipleRecords::getRecords));
   }
 
   private Result<MultipleRecords<Loan>> mapResponseToLoans(Response response) {

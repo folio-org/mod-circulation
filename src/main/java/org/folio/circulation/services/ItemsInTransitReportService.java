@@ -121,7 +121,6 @@ public class ItemsInTransitReportService {
 
     return succeeded(context.getItems().keySet())
       .after(loanRepository::findByItemIds)
-      .thenApply(mapResult(this::toList))
       .thenApply(mapResult(loans -> toMap(loans, Loan::getId)))
       .thenApply(mapResult(context::withLoans));
   }
@@ -154,8 +153,7 @@ public class ItemsInTransitReportService {
 
     Collection<Item> items = context.getItems().values();
     Stream<String> itemInTransitDestinationServicePointIds = items.stream()
-      .map(Item::getInTransitDestinationServicePointId)
-      .filter(Objects::nonNull);
+      .map(Item::getInTransitDestinationServicePointId);
     Stream<String> itemLastCheckInServicePointIds = items.stream()
       .map(Item::getLastCheckInServicePointId)
       .filter(Objects::nonNull)
@@ -163,15 +161,12 @@ public class ItemsInTransitReportService {
 
     Collection<Loan> loans = context.getLoans().values();
     Stream<String> loanCheckInServicePointIds = loans.stream()
-      .map(Loan::getCheckInServicePointId)
-      .filter(Objects::nonNull);
+      .map(Loan::getCheckInServicePointId);
     Stream<String> loanCheckoutServicePointIds = loans.stream()
-      .map(Loan::getCheckoutServicePointId)
-      .filter(Objects::nonNull);
+      .map(Loan::getCheckoutServicePointId);
 
     Stream<String> requestServicePointIds = context.getRequests().values().stream()
-      .map(Request::getPickupServicePointId)
-      .filter(Objects::nonNull);
+      .map(Request::getPickupServicePointId);
 
     Set<String> servicePointIds = Stream.of(itemInTransitDestinationServicePointIds,
         itemLastCheckInServicePointIds, loanCheckInServicePointIds, loanCheckoutServicePointIds,
@@ -182,14 +177,10 @@ public class ItemsInTransitReportService {
 
     return succeeded(servicePointIds)
       .after(servicePointRepository::findServicePointsByIds)
-      .thenApply(mapResult(this::toList))
       .thenApply(mapResult(servicePoints -> toMap(servicePoints, ServicePoint::getId)))
       .thenApply(mapResult(context::withServicePoints));
   }
 
-  private <T> List<T> toList(MultipleRecords<T> records) {
-    return new ArrayList<>(records.getRecords());
-  }
   private <T> Set<String> mapToStrings(Collection<T> collection, Function<T, String> mapper) {
     return collection.stream()
     .map(mapper)

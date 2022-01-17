@@ -101,7 +101,7 @@ public class LocationRepository {
 
     return fetcher.findByIds(locationIds)
       .thenCompose(this::loadLibrariesForLocations)
-      .thenApply(mapResult(sds -> sds.toMap(Location::getId)));
+      .thenApply(mapResult(records -> records.toMap(Location::getId)));
   }
 
   private CompletableFuture<Result<Location>> loadLibrary(Location location) {

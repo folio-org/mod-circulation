@@ -80,10 +80,9 @@ class ItemsInTransitReportServiceTest {
           .put("inTransitDestinationServicePointId", servicePointId))), 1))));
 
     when(loanRepository.findByItemIds(anyCollection()))
-      .thenReturn(ofAsync(() -> new MultipleRecords<>(
-        List.of(Loan.from(new JsonObject()
+      .thenReturn(ofAsync(() -> List.of(Loan.from(new JsonObject()
           .put("checkoutServicePointId", servicePointId)
-          .put("checkinServicePointId", servicePointId))), 1)));
+          .put("checkinServicePointId", servicePointId)))));
 
     when(itemRepository.findHoldingsByIds(any()))
       .thenReturn(completedFuture(succeeded(new MultipleRecords<>(
