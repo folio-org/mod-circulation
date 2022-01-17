@@ -10,13 +10,11 @@ import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;

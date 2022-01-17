@@ -228,7 +228,7 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
   public CompletableFuture<Result<MultipleRecords<Loan>>> findByItemIds(
     Collection<String> itemIds) {
 
-    Result<CqlQuery> statusQuery = exactMatch("itemStatus", IN_TRANSIT.getValue());
+    Result<CqlQuery> statusQuery = exactMatch(ITEM_STATUS, IN_TRANSIT.getValue());
     FindWithMultipleCqlIndexValues<Loan> fetcher = findWithMultipleCqlIndexValues(
       loansStorageClient, RECORDS_PROPERTY_NAME, Loan::from);
 
