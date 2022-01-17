@@ -11,7 +11,6 @@ import java.util.concurrent.CompletableFuture;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Request;
-import org.folio.circulation.domain.SideEffectOnFailure;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.notice.PatronNoticeEvent;
 import org.folio.circulation.rules.AppliedRuleConditions;
@@ -105,28 +104,28 @@ public abstract class CirculationPolicyRepository<T> {
     if (user.getPatronGroupId() == null) {
       log.error("PatronGroupId is null for user {}", user.getId());
       return completedFuture(CommonFailures.failedDueToServerErrorFailureWithSideEffect(
-        "Unable to apply circulation rules to user with null value as patronGroupId",
+        "Unable to apply circulation rules to a user with null value as patronGroupId",
         DELETE_PATRON_NOTICE));
     }
 
     if (item.getLocationId() == null) {
       log.error("LocationId is null for item {}", item.getItemId());
       return completedFuture(CommonFailures.failedDueToServerErrorFailureWithSideEffect(
-        "Unable to apply circulation rules to item with null value as locationId",
+        "Unable to apply circulation rules to an item with null value as locationId",
         DELETE_PATRON_NOTICE));
     }
 
     if (item.determineLoanTypeForItem() == null) {
       log.error("LoanTypeId is null for item {}", item.getItemId());
       return completedFuture(CommonFailures.failedDueToServerErrorFailureWithSideEffect(
-        "Unable to apply circulation rules to item which loan type can not be determined",
+        "Unable to apply circulation rules to an item which loan type can not be determined",
         DELETE_PATRON_NOTICE));
     }
 
     if (item.getMaterialTypeId() == null) {
       log.error("MaterialTypeId is null for item {}", item.getItemId());
       return completedFuture(CommonFailures.failedDueToServerErrorFailureWithSideEffect(
-        "Unable to apply circulation rules to item with null value as materialTypeId",
+        "Unable to apply circulation rules to an item with null value as materialTypeId",
         DELETE_PATRON_NOTICE));
     }
 
