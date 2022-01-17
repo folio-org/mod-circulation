@@ -381,7 +381,7 @@ public class ItemRepository {
     FindWithMultipleCqlIndexValues<Item> fetcher = findWithMultipleCqlIndexValues(itemsClient,
       ITEMS_COLLECTION_PROPERTY_NAME, Item::from);
 
-    return fetcher.find(byIndex(indexName, ids).withQuery(exactMatchAny(indexName, ids)))
+    return fetcher.find(byIndex(indexName, ids))
       .thenApply(mapResult(MultipleRecords::getRecords))
       .thenComposeAsync(this::fetchHoldingRecords)
       .thenComposeAsync(this::fetchInstances)
