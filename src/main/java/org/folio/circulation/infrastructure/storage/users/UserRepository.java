@@ -168,7 +168,7 @@ public class UserRepository {
   public CompletableFuture<Result<MultipleRecords<Request>>> findUsersForRequests(
     MultipleRecords<Request> multipleRequests) {
 
-    return fetchUsersByRequests(multipleRequests.getRecords())
+    return findUsersByRequests(multipleRequests.getRecords())
       .thenApply(multipleUsersResult -> multipleUsersResult.next(
         multipleUsers -> of(() ->
           multipleRequests.mapRecords(request ->
@@ -176,12 +176,6 @@ public class UserRepository {
   }
 
   public CompletableFuture<Result<MultipleRecords<User>>> findUsersByRequests(
-    Collection<Request> requests) {
-
-    return fetchUsersByRequests(requests);
-  }
-
-  private CompletableFuture<Result<MultipleRecords<User>>> fetchUsersByRequests(
     Collection<Request> requests) {
 
     final List<String> usersToFetch = requests.stream()
