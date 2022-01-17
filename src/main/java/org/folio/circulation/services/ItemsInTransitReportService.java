@@ -124,7 +124,7 @@ public class ItemsInTransitReportService {
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchRequests(
     ItemsInTransitReportContext context) {
 
-    return requestRepository.findOpenStatusRequestsBy(context.getItems().keySet())
+    return requestRepository.findOpenRequests(context.getItems().keySet())
       .thenApply(r -> r.map(records -> toMap(records.getRecords(), Request::getId)))
       .thenApply(r -> r.map(context::withRequests));
   }

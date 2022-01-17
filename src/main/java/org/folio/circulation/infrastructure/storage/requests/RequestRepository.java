@@ -146,7 +146,7 @@ public class RequestRepository {
       .fetch(id);
   }
 
-  public CompletableFuture<Result<MultipleRecords<Request>>> findOpenStatusRequestsBy(
+  public CompletableFuture<Result<MultipleRecords<Request>>> findOpenRequests(
     Collection<String> itemIds) {
 
     return findWithMultipleCqlIndexValues(requestsStorageClient,

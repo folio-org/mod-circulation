@@ -66,7 +66,7 @@ class ItemsInTransitReportServiceTest {
     when(locationRepository.getItemLocations(any(), any()))
       .thenReturn(completedFuture(succeeded(Map.of("locationKey", Location.from(new JsonObject())))));
 
-    when(requestRepository.findOpenStatusRequestsBy(any()))
+    when(requestRepository.findOpenRequests(any()))
       .thenReturn(completedFuture(succeeded(new MultipleRecords<>(
         List.of(new Request(null, null, null, null,
           null, null, null, null,  false,
