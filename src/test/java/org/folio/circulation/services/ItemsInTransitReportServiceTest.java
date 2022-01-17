@@ -11,10 +11,12 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Holdings;
+import org.folio.circulation.domain.Instance;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemsReportFetcher;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.domain.User;
 import org.folio.circulation.infrastructure.storage.inventory.ItemReportRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.inventory.LocationRepository;
@@ -61,6 +63,16 @@ class ItemsInTransitReportServiceTest {
     when(itemRepository.findHoldingsByIds(any()))
       .thenReturn(completedFuture(succeeded(new MultipleRecords<>(
               List.of(Holdings.unknown()), 1))));
+
+
+    when(itemRepository.findInstancesByIds(any()))
+      .thenReturn(completedFuture(succeeded(new MultipleRecords<>(
+        List.of(Instance.unknown()), 1))));
+
+    // TODO: uncomment after adding fetchRequests implementation
+    /* when(userRepository.findUsersByRequests(any()))
+      .thenReturn(completedFuture(succeeded(new MultipleRecords<>(
+        List.of(User.from(new JsonObject())), 1))));*/
 
     when(locationRepository.getItemLocations(any(), any()))
       .thenReturn(completedFuture(succeeded(Map.of("locationKey", Location.from(new JsonObject())))));
