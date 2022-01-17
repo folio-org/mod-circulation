@@ -239,9 +239,9 @@ public class ItemRepository {
   }
 
   public CompletableFuture<Result<MultipleRecords<Instance>>> findInstancesByIds(
-    Collection<String> ids) {
+    Collection<String> instanceIds) {
 
-    return fetchInstancesByIds(ids)
+    return fetchInstancesByIds(instanceIds)
       .thenApply(mapResult(multipleRecords -> multipleRecords.mapRecords(
         new InstanceMapper()::toDomain)));
   }
@@ -267,10 +267,10 @@ public class ItemRepository {
   }
 
   private CompletableFuture<Result<MultipleRecords<JsonObject>>> fetchInstancesByIds(
-    Collection<String> ids) {
+    Collection<String> instanceIds) {
 
     return findWithMultipleCqlIndexValues(instancesClient, "instances",
-      identity()).findByIds(ids);
+      identity()).findByIds(instanceIds);
   }
 
   private CompletableFuture<Result<Collection<Item>>> fetchHoldingRecords(
@@ -397,19 +397,18 @@ public class ItemRepository {
   }
 
   public CompletableFuture<Result<MultipleRecords<Holdings>>> findHoldingsByIds(
-    Collection<String> ids) {
+    Collection<String> holdingsRecordIds) {
 
-    return fetchHoldingsByIds(ids)
-      .thenApply(r -> r.map(
-        multipleRecords -> multipleRecords.mapRecords(new HoldingsMapper()::toDomain)));
+    return fetchHoldingsByIds(holdingsRecordIds)
+      .thenApply(mapResult(multipleRecords ->
+        multipleRecords.mapRecords(new HoldingsMapper()::toDomain)));
   }
 
   private CompletableFuture<Result<MultipleRecords<JsonObject>>> fetchHoldingsByIds(
-    Collection<String> ids) {
+    Collection<String> holdingsRecordIds) {
 
-    return findWithMultipleCqlIndexValues(holdingsClient,
-      "holdingsRecords", identity())
-      .findByIds(ids);
+    return findWithMultipleCqlIndexValues(holdingsClient, "holdingsRecords", identity())
+      .findByIds(holdingsRecordIds);
   }
 
   public CompletableFuture<Result<Collection<Item>>> findByIndexNameAndQuery(
