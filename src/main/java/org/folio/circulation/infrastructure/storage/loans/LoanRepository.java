@@ -1,6 +1,7 @@
 package org.folio.circulation.infrastructure.storage.loans;
 
 import static java.lang.String.format;
+import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.representations.LoanProperties.BORROWER;
@@ -15,6 +16,7 @@ import static org.folio.circulation.support.CqlSortBy.descending;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.of;
+import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
@@ -57,7 +59,6 @@ import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
-import org.folio.circulation.support.results.CommonFailures;
 import org.folio.circulation.support.utils.CollectionUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -155,10 +156,13 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
   }
 
   public CompletableFuture<Result<Loan>> getById(String id) {
+    if(isNull(id)) {
+      return ofAsync(() -> null);
+    }
+
     return fetchLoan(id)
       .thenComposeAsync(this::fetchItem)
-      .thenComposeAsync(this::fetchUser)
-      .exceptionally(CommonFailures::failedDueToServerError);
+      .thenComposeAsync(this::fetchUser);
   }
 
   private CompletableFuture<Result<Loan>> fetchLoan(String id) {

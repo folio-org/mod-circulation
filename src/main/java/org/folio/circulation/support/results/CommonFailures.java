@@ -2,8 +2,8 @@ package org.folio.circulation.support.results;
 
 import static org.folio.circulation.support.results.Result.failed;
 
+import org.folio.circulation.domain.SideEffectOnFailure;
 import org.folio.circulation.support.ServerErrorFailure;
-import org.folio.circulation.support.UnableToApplyCircRulesErrorFailure;
 
 public class CommonFailures {
   private CommonFailures() {}
@@ -12,11 +12,17 @@ public class CommonFailures {
     return failed(new ServerErrorFailure(e));
   }
 
-  public static <T> Result<T> failedDueToServerError(String reason) {
-    return failed(new ServerErrorFailure(reason));
+  public static <T> Result<T> failedDueToServerErrorFailureWithSideEffect(Throwable e,
+    SideEffectOnFailure sideEffectOnFailure) {
+    return failed(ServerErrorFailure.serverErrorFailureWithSideEffect(e, sideEffectOnFailure));
   }
 
-  public static <T> Result<T> failedDueToUnableToApplyCircRulesErrorFailure(String reason) {
-    return failed(new UnableToApplyCircRulesErrorFailure(reason));
+  public static <T> Result<T> failedDueToServerErrorFailureWithSideEffect(String reason,
+    SideEffectOnFailure sideEffectOnFailure) {
+    return failed(ServerErrorFailure.serverErrorFailureWithSideEffect(reason, sideEffectOnFailure));
+  }
+
+  public static <T> Result<T> failedDueToServerError(String reason) {
+    return failed(new ServerErrorFailure(reason));
   }
 }

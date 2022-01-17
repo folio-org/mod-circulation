@@ -1,6 +1,9 @@
 package org.folio.circulation.support;
 
+import java.util.Objects;
+
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.folio.circulation.domain.SideEffectOnFailure;
 import org.folio.circulation.support.http.server.ServerErrorResponse;
 
 import io.vertx.core.http.HttpServerResponse;
@@ -8,12 +11,32 @@ import io.vertx.core.http.HttpServerResponse;
 public class ServerErrorFailure implements HttpFailure {
   public final String reason;
 
+  private SideEffectOnFailure sideEffectOnFailure;
+
+  public boolean isSideEffectOnFailureEqualTo(SideEffectOnFailure sideEffectOnFailure) {
+    return Objects.equals(sideEffectOnFailure, this.sideEffectOnFailure);
+  }
+
   public ServerErrorFailure(String reason) {
     this.reason = reason;
   }
 
   public ServerErrorFailure(Throwable e) {
     this(mapToString(e));
+  }
+
+  public static ServerErrorFailure serverErrorFailureWithSideEffect(String reason,
+    SideEffectOnFailure sideEffectOnFailure) {
+    ServerErrorFailure serverErrorFailure = new ServerErrorFailure(reason);
+    serverErrorFailure.sideEffectOnFailure = sideEffectOnFailure;
+    return serverErrorFailure;
+  }
+
+  public static ServerErrorFailure serverErrorFailureWithSideEffect(Throwable e,
+    SideEffectOnFailure sideEffectOnFailure) {
+    ServerErrorFailure serverErrorFailure = new ServerErrorFailure(e);
+    serverErrorFailure.sideEffectOnFailure = sideEffectOnFailure;
+    return serverErrorFailure;
   }
 
   @Override

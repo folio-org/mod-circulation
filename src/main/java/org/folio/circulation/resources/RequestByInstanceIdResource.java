@@ -64,7 +64,6 @@ import org.folio.circulation.support.ForwardOnFailure;
 import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.ServerErrorFailure;
-import org.folio.circulation.support.UnableToApplyCircRulesErrorFailure;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.JsonHttpResponse;
 import org.folio.circulation.support.http.server.ServerErrorResponse;
@@ -457,10 +456,6 @@ public class RequestByInstanceIdResource extends Resource {
 
     if (failure instanceof ServerErrorFailure ){
       reason = ((ServerErrorFailure) failure).reason;
-    } else if (failure instanceof UnableToApplyCircRulesErrorFailure) {
-      UnableToApplyCircRulesErrorFailure circRulesFailure =
-        (UnableToApplyCircRulesErrorFailure) failure;
-      reason = UnableToApplyCircRulesErrorFailure.UNABLE_TO_APPLY + circRulesFailure.reason;
     } else if (failure instanceof ValidationErrorFailure){
       reason = failure.toString();
     } else if (failure instanceof BadRequestFailure){

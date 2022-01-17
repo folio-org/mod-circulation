@@ -1,9 +1,9 @@
 package org.folio.circulation.infrastructure.storage;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.SideEffectOnFailure.DELETE_PATRON_NOTICE;
 import static org.folio.circulation.rules.RulesExecutionParameters.forItem;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
-import static org.folio.circulation.support.results.CommonFailures.failedDueToUnableToApplyCircRulesErrorFailure;
 
 import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
@@ -11,6 +11,7 @@ import java.util.concurrent.CompletableFuture;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Request;
+import org.folio.circulation.domain.SideEffectOnFailure;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.notice.PatronNoticeEvent;
 import org.folio.circulation.rules.AppliedRuleConditions;
@@ -20,6 +21,7 @@ import org.folio.circulation.rules.CirculationRulesProcessor;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.SingleRecordFetcher;
+import org.folio.circulation.support.results.CommonFailures;
 import org.folio.circulation.support.results.Result;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -86,42 +88,46 @@ public abstract class CirculationPolicyRepository<T> {
 
   public CompletableFuture<Result<CirculationRuleMatch>> lookupPolicyId(Item item, User user) {
     if (item == null){
-      return completedFuture(failedDueToUnableToApplyCircRulesErrorFailure(
-        "item is null"));
+      return completedFuture(CommonFailures.failedDueToServerErrorFailureWithSideEffect(
+        "Unable to apply circulation rules for item is null", DELETE_PATRON_NOTICE));
     }
 
     if (user == null){
-      return completedFuture(failedDueToUnableToApplyCircRulesErrorFailure(
-        "item with user that is null"));
+      return completedFuture(CommonFailures.failedDueToServerErrorFailureWithSideEffect(
+        "Unable to apply circulation rules for item with user that is null", DELETE_PATRON_NOTICE));
     }
 
     if (item.isNotFound()) {
-      return completedFuture(failedDueToUnableToApplyCircRulesErrorFailure(
-        "unknown item"));
+      return completedFuture(CommonFailures.failedDueToServerErrorFailureWithSideEffect(
+        "Unable to apply circulation rules for unknown item", DELETE_PATRON_NOTICE));
     }
 
     if (user.getPatronGroupId() == null) {
       log.error("PatronGroupId is null for user {}", user.getId());
-      return completedFuture(failedDueToUnableToApplyCircRulesErrorFailure(
-        "user with null value as patronGroupId"));
+      return completedFuture(CommonFailures.failedDueToServerErrorFailureWithSideEffect(
+        "Unable to apply circulation rules to user with null value as patronGroupId",
+        DELETE_PATRON_NOTICE));
     }
 
     if (item.getLocationId() == null) {
       log.error("LocationId is null for item {}", item.getItemId());
-      return completedFuture(failedDueToUnableToApplyCircRulesErrorFailure(
-        "item with null value as locationId"));
+      return completedFuture(CommonFailures.failedDueToServerErrorFailureWithSideEffect(
+        "Unable to apply circulation rules to item with null value as locationId",
+        DELETE_PATRON_NOTICE));
     }
 
     if (item.determineLoanTypeForItem() == null) {
       log.error("LoanTypeId is null for item {}", item.getItemId());
-      return completedFuture(failedDueToUnableToApplyCircRulesErrorFailure(
-        "item which loan type can not be determined"));
+      return completedFuture(CommonFailures.failedDueToServerErrorFailureWithSideEffect(
+        "Unable to apply circulation rules to item which loan type can not be determined",
+        DELETE_PATRON_NOTICE));
     }
 
     if (item.getMaterialTypeId() == null) {
       log.error("MaterialTypeId is null for item {}", item.getItemId());
-      return completedFuture(failedDueToUnableToApplyCircRulesErrorFailure(
-        "item with null value as materialTypeId"));
+      return completedFuture(CommonFailures.failedDueToServerErrorFailureWithSideEffect(
+        "Unable to apply circulation rules to item with null value as materialTypeId",
+        DELETE_PATRON_NOTICE));
     }
 
     return getPolicyAndMatch(forItem(item, user));

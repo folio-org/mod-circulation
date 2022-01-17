@@ -1,6 +1,7 @@
 package org.folio.circulation.domain.notice.schedule;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.SideEffectOnFailure.DELETE_PATRON_NOTICE;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
 import static org.folio.circulation.support.results.Result.failed;
@@ -28,11 +29,11 @@ import org.folio.circulation.rules.CirculationRuleMatch;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.ForwardOnFailure;
 import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.RecordNotFoundFailure;
-import org.folio.circulation.support.UnableToApplyCircRulesErrorFailure;
+import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
+import org.folio.circulation.support.results.CommonFailures;
 import org.folio.circulation.support.results.Result;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -73,12 +74,19 @@ public abstract class ScheduledNoticeHandler {
   private CompletableFuture<Result<ScheduledNotice>> handleNotice(ScheduledNotice notice) {
     log.info("Start processing scheduled notice {}", notice);
 
+    return processNotice(notice)
+      .thenCompose(r -> handleResult(r, notice))
+      .exceptionally(t -> handleException(t, notice));
+  }
+
+  protected CompletableFuture<Result<ScheduledNotice>> processNotice(
+    ScheduledNotice notice) {
     return ofAsync(() -> new ScheduledNoticeContext(notice))
       .thenCompose(r -> r.after(this::fetchNoticeData))
       .thenCompose(r -> r.after(this::sendNotice))
       .thenCompose(r -> r.after(this::updateNotice))
-      .thenCompose(r -> handleResult(r, notice))
-      .exceptionally(t -> handleException(t, notice));
+      .exceptionally(t -> CommonFailures.failedDueToServerErrorFailureWithSideEffect(t,
+        DELETE_PATRON_NOTICE));
   }
 
   protected CompletableFuture<Result<ScheduledNoticeContext>> fetchNoticeData(
@@ -208,7 +216,8 @@ public abstract class ScheduledNoticeHandler {
     HttpFailure failure = result.cause();
     log.error("Processing scheduled notice {} failed: {}", notice.getId(), failure);
 
-    if (failure instanceof RecordNotFoundFailure || failure instanceof UnableToApplyCircRulesErrorFailure) {
+    if (failure instanceof RecordNotFoundFailure || (failure instanceof ServerErrorFailure
+      && ((ServerErrorFailure) failure).isSideEffectOnFailureEqualTo(DELETE_PATRON_NOTICE))) {
       return deleteNotice(notice, failure.toString());
     }
 
