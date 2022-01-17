@@ -20,10 +20,12 @@ import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
+import org.folio.circulation.domain.Request;
 import org.folio.circulation.infrastructure.storage.inventory.ItemReportRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.inventory.LocationRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
+import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.support.results.Result;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -57,6 +59,9 @@ class ItemsInTransitReportServiceTest {
   @Mock
   LocationRepository locationRepository;
 
+  @Mock
+  RequestRepository requestRepository;
+
   @Test
   void itemsInTransitReportServiceTest() {
     String servicePointId = UUID.randomUUID().toString();
@@ -80,6 +85,12 @@ class ItemsInTransitReportServiceTest {
 
     when(locationRepository.getItemLocations(any(), any()))
       .thenReturn(completedFuture(succeeded(Map.of("locationKey", Location.from(new JsonObject())))));
+
+    when(requestRepository.findOpenRequestsByItemIds(any()))
+      .thenReturn(completedFuture(succeeded(new MultipleRecords<>(
+        List.of(new Request(null, null, null, null,
+          null, null, null, null,  false,
+          0, false)), 1))));
 
     ItemsInTransitReportService service = new ItemsInTransitReportService(itemReportRepository,
       loanRepository, locationRepository, servicePointRepository, null, itemRepository,

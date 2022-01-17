@@ -23,6 +23,8 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.Holdings;
 import org.folio.circulation.domain.Item;
+import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.Request;
@@ -31,6 +33,7 @@ import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemReportRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.inventory.LocationRepository;
+import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.users.PatronGroupRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
@@ -50,7 +53,7 @@ public class ItemsInTransitReportService {
   private LoanRepository loanRepository;
   private LocationRepository locationRepository;
   private ServicePointRepository servicePointRepository;
-  private GetManyRecordsClient requestsStorageClient;
+  private RequestRepository requestRepository;
   private ItemRepository itemRepository;
   private UserRepository userRepository;
   private PatronGroupRepository patronGroupRepository;
@@ -62,7 +65,7 @@ public class ItemsInTransitReportService {
       .thenCompose(this::fetchInstances)
       .thenCompose(r -> r.after(this::fetchLocations))
       .thenCompose(r -> r.after(this::fetchLoans))
-      .thenCompose(this::fetchRequests)
+      .thenCompose(r -> r.after(this::fetchRequests))
       .thenCompose(this::fetchUsers)
       .thenCompose(this::fetchPatronGroups)
       .thenCompose(r -> r.after(this::fetchServicePoints))
@@ -121,9 +124,11 @@ public class ItemsInTransitReportService {
   }
 
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchRequests(
-    Result<ItemsInTransitReportContext> context) {
+    ItemsInTransitReportContext context) {
 
-    return completedFuture(context);
+    return requestRepository.findOpenRequestsByItemIds(context.getItems().keySet())
+      .thenApply(mapResult(requests -> toMap(requests.getRecords(), Request::getId)))
+      .thenApply(mapResult(context::withRequests));
   }
 
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchUsers(
@@ -179,7 +184,6 @@ public class ItemsInTransitReportService {
   private <T> List<T> toList(MultipleRecords<T> records) {
     return new ArrayList<>(records.getRecords());
   }
-
   private <T> Set<String> mapToStrings(Collection<T> collection, Function<T, String> mapper) {
     return collection.stream()
     .map(mapper)
