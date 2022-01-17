@@ -15,6 +15,7 @@ import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemsReportFetcher;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.domain.Request;
 import org.folio.circulation.infrastructure.storage.inventory.ItemReportRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.inventory.LocationRepository;
@@ -64,6 +65,12 @@ class ItemsInTransitReportServiceTest {
 
     when(locationRepository.getItemLocations(any(), any()))
       .thenReturn(completedFuture(succeeded(Map.of("locationKey", Location.from(new JsonObject())))));
+
+    when(requestRepository.findOpenStatusRequestsBy(any()))
+      .thenReturn(completedFuture(succeeded(new MultipleRecords<>(
+        List.of(new Request(null, null, null, null,
+          null, null, null, null,  false,
+          0, false)), 1))));
 
     ItemsInTransitReportService service = new ItemsInTransitReportService(itemReportRepository, locationRepository,
       null, null, requestRepository,

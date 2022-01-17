@@ -14,11 +14,11 @@ import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.domain.User;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.With;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
 
 @Getter
 @Setter
