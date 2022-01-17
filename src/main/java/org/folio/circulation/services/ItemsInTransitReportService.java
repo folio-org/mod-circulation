@@ -5,7 +5,9 @@ import static java.util.function.Function.identity;
 import static org.folio.circulation.domain.ItemStatus.IN_TRANSIT;
 import static org.folio.circulation.support.results.Result.combineAll;
 import static org.folio.circulation.support.results.Result.succeeded;
+import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +19,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.Holdings;
 import org.folio.circulation.domain.Item;
+import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemReportRepository;
@@ -124,8 +127,9 @@ public class ItemsInTransitReportService {
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchRequests(
     ItemsInTransitReportContext context) {
 
-    return requestRepository.findOpenRequests(context.getItems().keySet())
-      .thenApply(r -> r.map(records -> toMap(records.getRecords(), Request::getId)))
+    return requestRepository.findOpenRequestsByItemIds(context.getItems().keySet())
+      .thenApply(mapResult(this::toList))
+      .thenApply(mapResult(requests -> toMap(requests, Request::getId)))
       .thenApply(r -> r.map(context::withRequests));
   }
 
@@ -147,7 +151,6 @@ public class ItemsInTransitReportService {
 
     return completedFuture(context);
   }
-
   private <T> Set<String> mapToStrings(Collection<T> collection, Function<T, String> mapper) {
     return collection.stream()
     .map(mapper)
@@ -158,5 +161,9 @@ public class ItemsInTransitReportService {
   public <T> Map<String, T> toMap(Collection<T> collection, Function<T, String> keyMapper) {
     return collection.stream()
       .collect(Collectors.toMap(keyMapper, identity()));
+  }
+
+  private <T> List<T> toList(MultipleRecords<T> records) {
+    return new ArrayList<>(records.getRecords());
   }
 }

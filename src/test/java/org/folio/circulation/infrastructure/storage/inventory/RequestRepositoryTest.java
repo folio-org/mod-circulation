@@ -44,7 +44,7 @@ class RequestRepositoryTest {
         completedFuture(succeeded(new Response(200, getJsonAsString(), "contentType"))));
     final RequestRepository requestsRepository = using(clients);
 
-    var result = requestsRepository.findOpenRequests(List.of("1", "2"))
+    var result = requestsRepository.findOpenRequestsByItemIds(List.of("1", "2"))
       .getNow(Result.failed(new ServerErrorFailure("Error")));
     assertTrue(result.succeeded());
     assertNotNull(result.value());
