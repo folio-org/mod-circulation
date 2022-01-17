@@ -16,10 +16,13 @@ import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemsReportFetcher;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.domain.Request;
+import org.folio.circulation.domain.User;
 import org.folio.circulation.infrastructure.storage.inventory.ItemReportRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.inventory.LocationRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
+import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.support.results.Result;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -48,6 +51,9 @@ class ItemsInTransitReportServiceTest {
   LocationRepository locationRepository;
 
   @Mock
+  RequestRepository requestRepository;
+
+  @Mock
   UserRepository userRepository;
 
   @Test
@@ -63,21 +69,25 @@ class ItemsInTransitReportServiceTest {
       .thenReturn(completedFuture(succeeded(new MultipleRecords<>(
               List.of(Holdings.unknown()), 1))));
 
-
     when(itemRepository.findInstancesByIds(any()))
       .thenReturn(completedFuture(succeeded(new MultipleRecords<>(
         List.of(Instance.unknown()), 1))));
 
-    // TODO: uncomment after adding fetchRequests implementation
-    /* when(userRepository.findUsersByRequests(any()))
+    when(userRepository.findUsersByRequests(any()))
       .thenReturn(completedFuture(succeeded(new MultipleRecords<>(
-        List.of(User.from(new JsonObject())), 1))));*/
+        List.of(User.from(new JsonObject())), 1))));
 
     when(locationRepository.getItemLocations(any(), any()))
       .thenReturn(completedFuture(succeeded(Map.of("locationKey", Location.from(new JsonObject())))));
 
-    ItemsInTransitReportService service = new ItemsInTransitReportService(itemReportRepository, locationRepository,
-      null, null, null,
+    when(requestRepository.findOpenRequestsByItemIds(any()))
+      .thenReturn(completedFuture(succeeded(new MultipleRecords<>(
+        List.of(new Request(new JsonObject(), null, null, null,
+          null, null, null, null,  false,
+          0, false)), 1))));
+
+    ItemsInTransitReportService service = new ItemsInTransitReportService(itemReportRepository,
+      locationRepository, null, null, requestRepository,
       itemRepository, userRepository, null);
     CompletableFuture<Result<JsonObject>> report = service.buildReport();
     assertNotNull(report);
