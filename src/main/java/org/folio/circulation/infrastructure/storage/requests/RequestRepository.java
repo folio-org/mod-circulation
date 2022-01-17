@@ -149,9 +149,9 @@ public class RequestRepository {
   public CompletableFuture<Result<MultipleRecords<Request>>> findOpenRequestsByItemIds(
     Collection<String> itemIds) {
 
-    return findWithMultipleCqlIndexValues(requestsStorageClient,
-      "requests", Request::from)
+    return findWithMultipleCqlIndexValues(requestsStorageClient, "requests", Request::from)
       .findByIdIndexAndQuery(itemIds, "itemId", exactMatchAny("status", openStates()));
+
   }
 
   public CompletableFuture<Result<Request>> update(Request request) {
