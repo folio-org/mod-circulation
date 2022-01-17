@@ -53,7 +53,7 @@ public class ItemByInstanceIdFinder {
 
       Set<String> holdingsIds = holdingsRecords.toKeys(byId());
 
-      return itemRepository.findByIndexNameAndHoldingsIds("holdingsRecordId", holdingsIds);
+      return itemRepository.findBy("holdingsRecordId", holdingsIds);
     });
   }
 }

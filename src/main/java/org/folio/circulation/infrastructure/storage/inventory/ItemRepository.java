@@ -377,7 +377,7 @@ public class ItemRepository {
         records.getTotalRecords()));
   }
 
-  public CompletableFuture<Result<Collection<Item>>> findByIndexNameAndHoldingsIds(String indexName, Collection<String> ids) {
+  public CompletableFuture<Result<Collection<Item>>> findBy(String indexName, Collection<String> ids) {
     FindWithMultipleCqlIndexValues<Item> fetcher = findWithMultipleCqlIndexValues(itemsClient,
       ITEMS_COLLECTION_PROPERTY_NAME, Item::from);
 
