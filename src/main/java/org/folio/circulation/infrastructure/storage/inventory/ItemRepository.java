@@ -3,7 +3,11 @@ package org.folio.circulation.infrastructure.storage.inventory;
 import static java.util.Objects.isNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Function.identity;
+
 import static org.folio.circulation.domain.representations.ItemProperties.HOLDINGS_RECORD_ID;
+import static org.folio.circulation.domain.representations.ItemProperties.IN_TRANSIT_DESTINATION_SERVICE_POINT_ID;
+import static org.folio.circulation.domain.representations.ItemProperties.LAST_CHECK_IN;
+import static org.folio.circulation.domain.representations.ItemProperties.STATUS_PROPERTY;
 import static org.folio.circulation.domain.representations.LoanProperties.ITEM_ID;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.fetching.MultipleCqlIndexValuesCriteria.byIndex;
@@ -11,6 +15,9 @@ import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQ
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.http.CommonResponseInterpreters.noContentRecordInterpreter;
 import static org.folio.circulation.support.json.JsonKeys.byId;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.json.JsonPropertyWriter.remove;
+import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
@@ -19,6 +26,7 @@ import static org.folio.circulation.support.utils.CollectionUtil.map;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -44,12 +52,13 @@ import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.storage.mappers.HoldingsMapper;
 import org.folio.circulation.storage.mappers.InstanceMapper;
+import org.folio.circulation.storage.mappers.ItemMapper;
 import org.folio.circulation.storage.mappers.LoanTypeMapper;
 import org.folio.circulation.storage.mappers.MaterialTypeMapper;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.FindWithCqlQuery;
 import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
+import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.SingleRecordFetcher;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.PageLimit;
@@ -71,6 +80,7 @@ public class ItemRepository {
   private final LocationRepository locationRepository;
   private final MaterialTypeRepository materialTypeRepository;
   private final ServicePointRepository servicePointRepository;
+  private final Map<String, JsonObject> identityMap = new HashMap<>();
 
   private static final String ITEMS_COLLECTION_PROPERTY_NAME = "items";
 
@@ -80,12 +90,12 @@ public class ItemRepository {
       new MaterialTypeRepository(clients), new ServicePointRepository(clients));
   }
 
-  public CompletableFuture<Result<Item>> fetchFor(ItemRelatedRecord record) {
-    if (record.getItemId() == null) {
+  public CompletableFuture<Result<Item>> fetchFor(ItemRelatedRecord itemRelatedRecord) {
+    if (itemRelatedRecord.getItemId() == null) {
       return completedFuture(succeeded(Item.from(null)));
     }
 
-    return fetchById(record.getItemId());
+    return fetchById(itemRelatedRecord.getItemId());
   }
 
   private CompletableFuture<Result<Item>> fetchLocation(Result<Item> result) {
@@ -112,14 +122,36 @@ public class ItemRepository {
       return completedFuture(null);
     }
 
-    return itemsClient.put(item.getItemId(), item.getItem())
+    if (!identityMap.containsKey(item.getItemId())) {
+      return completedFuture(Result.failed(new ServerErrorFailure(
+        "Cannot update item when original representation is not available in identity map")));
+    }
+
+    final var updatedItemRepresentation = identityMap.get(item.getItemId());
+
+    write(updatedItemRepresentation, STATUS_PROPERTY,
+      new JsonObject().put("name", item.getStatus().getValue()));
+
+    remove(updatedItemRepresentation, IN_TRANSIT_DESTINATION_SERVICE_POINT_ID);
+    write(updatedItemRepresentation, IN_TRANSIT_DESTINATION_SERVICE_POINT_ID,
+      item.getInTransitDestinationServicePointId());
+
+    final var lastCheckIn = item.getLastCheckIn();
+
+    if (lastCheckIn == null) {
+      remove(updatedItemRepresentation, LAST_CHECK_IN);
+    }
+    else {
+      write(updatedItemRepresentation, LAST_CHECK_IN, lastCheckIn.toJson());
+    }
+
+    return itemsClient.put(item.getItemId(), updatedItemRepresentation)
       .thenApply(noContentRecordInterpreter(item)::flatMap)
       .thenCompose(x -> ofAsync(() -> item));
   }
 
   public CompletableFuture<Result<Item>> getFirstAvailableItemByInstanceId(String instanceId) {
-
-    final FindWithCqlQuery<JsonObject> holdingsRecordFetcher = findWithCqlQuery(
+    final var holdingsRecordFetcher = findWithCqlQuery(
       holdingsClient, "holdingsRecords", identity());
 
     return holdingsRecordFetcher.findByQuery(CqlQuery.exactMatch("instanceId", instanceId))
@@ -290,30 +322,37 @@ public class ItemRepository {
       .findFirst();
   }
 
-  private CompletableFuture<Result<Collection<Item>>> fetchItems(
-    Collection<String> itemIds) {
+  private CompletableFuture<Result<Collection<Item>>> fetchItems(Collection<String> itemIds) {
+    final var fetcher = findWithMultipleCqlIndexValues(itemsClient,
+      ITEMS_COLLECTION_PROPERTY_NAME, identity());
 
-    final FindWithMultipleCqlIndexValues<Item> fetcher
-      = findWithMultipleCqlIndexValues(itemsClient, ITEMS_COLLECTION_PROPERTY_NAME,
-        Item::from);
+    final var mapper = new ItemMapper();
 
     return fetcher.findByIds(itemIds)
-      .thenApply(r -> r.map(MultipleRecords::getRecords));
+      .thenApply(mapResult(this::addToIdentityMap))
+      .thenApply(mapResult(records -> records.mapRecords(mapper::toDomain)))
+      .thenApply(mapResult(MultipleRecords::getRecords));
   }
 
   private CompletableFuture<Result<Item>> fetchItem(String itemId) {
+    final var mapper = new ItemMapper();
+
     return SingleRecordFetcher.jsonOrNull(itemsClient, "item")
       .fetch(itemId)
-      .thenApply(r -> r.map(Item::from));
+      .thenApply(mapResult(this::addToIdentityMap))
+      .thenApply(mapResult(mapper::toDomain));
   }
 
   private CompletableFuture<Result<Item>> fetchItemByBarcode(String barcode) {
     log.info("Fetching item with barcode: {}", barcode);
 
+    final var mapper = new ItemMapper();
+
     return CqlQuery.exactMatch("barcode", barcode)
        .after(query -> itemsClient.getMany(query, PageLimit.one()))
       .thenApply(result -> result.next(this::mapMultipleToResult))
-      .thenApply(r -> r.map(Item::from))
+      .thenApply(r -> r.map(this::addToIdentityMap))
+      .thenApply(r -> r.map(mapper::toDomain))
       .exceptionally(CommonFailures::failedDueToServerError);
   }
 
@@ -386,10 +425,14 @@ public class ItemRepository {
   }
 
   public CompletableFuture<Result<Collection<Item>>> findBy(String indexName, Collection<String> ids) {
-    FindWithMultipleCqlIndexValues<Item> fetcher = findWithMultipleCqlIndexValues(itemsClient,
-      ITEMS_COLLECTION_PROPERTY_NAME, Item::from);
+    var fetcher = findWithMultipleCqlIndexValues(itemsClient,
+      ITEMS_COLLECTION_PROPERTY_NAME, identity());
+
+    final var mapper = new ItemMapper();
 
     return fetcher.find(byIndex(indexName, ids))
+      .thenApply(mapResult(this::addToIdentityMap))
+      .thenApply(mapResult(m -> m.mapRecords(mapper::toDomain)))
       .thenApply(mapResult(MultipleRecords::getRecords))
       .thenComposeAsync(this::fetchHoldingRecords)
       .thenComposeAsync(this::fetchInstances)
@@ -415,11 +458,15 @@ public class ItemRepository {
   public CompletableFuture<Result<Collection<Item>>> findByIndexNameAndQuery(
     Collection<String> ids, String indexName, Result<CqlQuery> query) {
 
-    FindWithMultipleCqlIndexValues<Item> fetcher
+    final var mapper = new ItemMapper();
+
+    FindWithMultipleCqlIndexValues<JsonObject> fetcher
       = findWithMultipleCqlIndexValues(itemsClient,
-        ITEMS_COLLECTION_PROPERTY_NAME, Item::from);
+        ITEMS_COLLECTION_PROPERTY_NAME, identity());
 
     return fetcher.find(byIndex(indexName, ids).withQuery(query))
+      .thenApply(mapResult(this::addToIdentityMap))
+      .thenApply(mapResult(m -> m.mapRecords(mapper::toDomain)))
       .thenApply(mapResult(MultipleRecords::getRecords))
       .thenComposeAsync(this::fetchHoldingRecords)
       .thenComposeAsync(this::fetchInstances)
@@ -457,11 +504,13 @@ public class ItemRepository {
     Collection<Item> items,
     BiFunction<T, Item, T> includeItemMap) {
 
+    final var mapper = new ItemMapper();
+
     return records.getRecords().stream()
       .map(r -> includeItemMap.apply(r,
         items.stream()
           .filter(item -> StringUtils.equals(item.getItemId(), r.getItemId()))
-          .findFirst().orElse(Item.from(null))))
+          .findFirst().orElse(mapper.toDomain(null))))
       .collect(Collectors.toList());
   }
 
@@ -473,5 +522,23 @@ public class ItemRepository {
       .thenComposeAsync(this::fetchLocation)
       .thenComposeAsync(this::fetchMaterialType)
       .thenComposeAsync(this::fetchLoanType);
+  }
+
+  private MultipleRecords<JsonObject> addToIdentityMap(MultipleRecords<JsonObject> items) {
+    if (items != null) {
+      items.getRecords().forEach(this::addToIdentityMap);
+    }
+
+    return items;
+  }
+
+  private JsonObject addToIdentityMap(JsonObject item) {
+      if (item != null) {
+        // Needs to be a copy because JsonObject is mutable
+        // and passed between instances of an item
+        identityMap.put(getProperty(item, "id"), item.copy());
+      }
+
+      return item;
   }
 }
