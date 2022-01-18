@@ -1,8 +1,7 @@
 package org.folio.circulation.infrastructure.storage.inventory;
 
 import io.vertx.core.json.JsonObject;
-
-import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.ServerErrorFailure;
@@ -13,11 +12,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.List;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.infrastructure.storage.inventory.ItemRepository.noLocationMaterialTypeAndLoanTypeInstance;
+import static org.folio.circulation.infrastructure.storage.requests.RequestRepository.using;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -29,43 +27,25 @@ import static org.mockito.Mockito.when;
  * TODO: delete
  */
 @ExtendWith(MockitoExtension.class)
-class ItemRepositoryTest {
+class RequestRepositoryTest {
 
   @Mock
-  CollectionResourceClient holdingsStorage;
-
-  @Mock
-  CollectionResourceClient instancesClient;
+  CollectionResourceClient requestsStorageClient;
 
   @Mock
   Clients clients;
 
   @Test
-  void shouldReturnEmptyHoldings() {
-    when(clients.holdingsStorage())
-      .thenReturn(holdingsStorage);
-    when(holdingsStorage.getMany(any(), any()))
+  void shouldReturnEmptyRequests() {
+    when(clients.requestsStorage())
+      .thenReturn(requestsStorageClient);
+    when(requestsStorageClient.getMany(any(), any()))
       .thenReturn(
         completedFuture(succeeded(new Response(200, getJsonAsString(), "contentType"))));
-    final ItemRepository itemRepository = noLocationMaterialTypeAndLoanTypeInstance(clients);
+    final RequestRepository requestsRepository = using(clients);
 
-    var result = itemRepository.findHoldingsByIds(Arrays.asList("1", "2"))
+    var result = requestsRepository.findOpenRequestsByItemIds(List.of("1", "2"))
       .getNow(Result.failed(new ServerErrorFailure("Error")));
-    assertTrue(result.succeeded());
-    assertNotNull(result.value());
-  }
-
-  @Test
-  void shouldReturnEmptyInstances() {
-    when(clients.instancesStorage())
-      .thenReturn(instancesClient);
-    when(instancesClient.getMany(any(), any()))
-      .thenReturn(
-        completedFuture(succeeded(new Response(200, getJsonAsString(), "contentType"))));
-    final ItemRepository itemRepository = ItemRepository.noLocationMaterialTypeAndLoanTypeInstance(clients);
-
-    var result = itemRepository.findInstancesByIds(Arrays.asList("3", "4"))
-      .getNow(Result.succeeded(MultipleRecords.empty()));
     assertTrue(result.succeeded());
     assertNotNull(result.value());
   }
@@ -73,7 +53,6 @@ class ItemRepositoryTest {
   private String getJsonAsString() {
     JsonObject json = new JsonObject();
     json.put("totalRecords", 0);
-    json.put("holdings", new ArrayList<>());
     return json.toString();
   }
 }
