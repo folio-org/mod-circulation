@@ -54,6 +54,7 @@ import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
 import org.folio.circulation.support.RecordNotFoundFailure;
 import org.folio.circulation.support.fetching.GetManyRecordsRepository;
 import org.folio.circulation.support.http.client.Offset;
+import org.folio.circulation.support.results.CommonFailures;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.SingleRecordFetcher;
 import org.folio.circulation.support.http.client.CqlQuery;
@@ -163,7 +164,8 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
 
     return fetchLoan(id)
       .thenComposeAsync(this::fetchItem)
-      .thenComposeAsync(this::fetchUser);
+      .thenComposeAsync(this::fetchUser)
+      .exceptionally(CommonFailures::failedDueToServerError);
   }
 
   private CompletableFuture<Result<Loan>> fetchLoan(String id) {
