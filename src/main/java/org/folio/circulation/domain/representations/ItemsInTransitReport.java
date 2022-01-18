@@ -45,7 +45,8 @@ public class ItemsInTransitReport {
 
   private Comparator<Item> sortByCheckinServicePointComparator() {
     return comparing(item -> ofNullable(reportContext.getLoans().get(item.getItemId()))
-      .flatMap(loan -> ofNullable(loan.getCheckinServicePoint())
+      .flatMap(loan -> ofNullable(loan.getCheckInServicePointId())
+        .flatMap(servicePointId -> ofNullable(reportContext.getServicePoints().get(servicePointId)))
         .map(ServicePoint::getName))
       .orElse(null), Comparator.nullsLast(String::compareTo));
   }
