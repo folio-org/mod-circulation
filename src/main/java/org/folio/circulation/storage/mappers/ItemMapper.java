@@ -1,5 +1,7 @@
 package org.folio.circulation.storage.mappers;
 
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
+
 import org.folio.circulation.domain.CallNumberComponents;
 import org.folio.circulation.domain.Holdings;
 import org.folio.circulation.domain.Instance;
@@ -22,6 +24,7 @@ public class ItemMapper {
       Holdings.unknown(),
       Instance.unknown(),
       MaterialType.unknown(),
-      LoanType.unknown());
+      LoanType.unknown(),
+      getProperty(representation, "barcode"));
   }
 }
