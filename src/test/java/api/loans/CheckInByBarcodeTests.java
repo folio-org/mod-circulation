@@ -1589,20 +1589,6 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
       allOf(isOpenAwaitingPickup(), hasPosition(2)));
   }
 
-  private JsonObject createTitleLevelPageRequestObject(UUID instanceId,
-    UUID requesterId, UUID pickupServicePointId, ZonedDateTime requestDate) {
-    return new RequestBuilder()
-      .withInstanceId(instanceId)
-      .withNoItemId()
-      .withNoHoldingsRecordId()
-      .withRequesterId(requesterId)
-      .withRequestDate(requestDate)
-      .withPickupServicePointId(pickupServicePointId)
-      .titleRequestLevel()
-      .page()
-      .create();
-  }
-
   private JsonObject buildCheckedOutItemWithHoldingRecordsId(UUID holdingRecordsId) {
     return new ItemBuilder()
       .forHolding(holdingRecordsId)

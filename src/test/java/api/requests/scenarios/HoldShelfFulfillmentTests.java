@@ -162,12 +162,12 @@ class HoldShelfFulfillmentTests extends APITests {
       Response updatedRequestBySteve = requestsClient.getById(requestBySteve.getId());
       assertThat(updatedRequestBySteve.getJson(), isItemLevel());
       assertThat(updatedRequestBySteve.getJson(), isOpenNotYetFilled());
-      assertThat(updatedRequestBySteve.getJson(), hasPosition(1));
+      assertThat(updatedRequestBySteve.getJson(), hasPosition(2));
 
       Response updatedRequestByJessica = requestsClient.getById(requestByJessica.getId());
       assertThat(updatedRequestByJessica.getJson(), isTitleLevel());
       assertThat(updatedRequestByJessica.getJson(), isOpenAwaitingPickup());
-      assertThat(updatedRequestByJessica.getJson(), hasPosition(2));
+      assertThat(updatedRequestByJessica.getJson(), hasPosition(1));
 
       Response updatedRequestByCharlotte = requestsClient.getById(requestByCharlotte.getId());
       assertThat(updatedRequestByCharlotte.getJson(), isItemLevel());
