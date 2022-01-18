@@ -15,14 +15,12 @@ import io.vertx.core.json.JsonObject;
 
 public class ItemMapper {
   public Item toDomain(JsonObject representation) {
-    return new Item(representation, null,
-      LastCheckIn.fromItemJson(representation),
+    return new Item(getProperty(representation, "id"), representation,
+      null, LastCheckIn.fromItemJson(representation),
       CallNumberComponents.fromItemJson(representation), null,
       getInTransitServicePoint(representation), false,
       Holdings.unknown(getProperty(representation, "holdingsRecordId")),
-      Instance.unknown(),
-      MaterialType.unknown(),
-      LoanType.unknown(),
+      Instance.unknown(), MaterialType.unknown(), LoanType.unknown(),
       getProperty(representation, "barcode"));
   }
 
@@ -37,6 +35,4 @@ public class ItemMapper {
       return ServicePoint.unknown(inTransitDestinationServicePointId);
     }
   }
-
-
 }
