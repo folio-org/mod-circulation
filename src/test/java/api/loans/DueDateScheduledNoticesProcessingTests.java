@@ -310,6 +310,23 @@ class DueDateScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
+  void testNoticeIsDeletedIfLoanHasNoItemId() {
+    generateLoanAndScheduledNotices();
+
+    JsonObject brokenNotice = createNoticesOverTime(dueDate.minusMinutes(1)::minusHours, 1).get(0);
+    brokenNotice.remove("loanId");
+
+    scheduledNoticesClient.create(brokenNotice);
+    scheduledNoticeProcessingClient.runLoanNoticesProcessing(dueDate.minusSeconds(1));
+
+    checkSentNotices();
+
+    verifyNumberOfScheduledNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
+  }
+
+  @Test
   void testNoticeIsDeletedIfPatronGroupIsNull() {
     generateLoanAndScheduledNotices();
 
@@ -409,7 +426,7 @@ class DueDateScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  void testNoticeIsDeletedWhenUpdateNoticeRequestFails() {
+  void testErrorEventsAreSentWhenUpdateNoticeRequestFails() {
     generateLoanAndScheduledNotices();
 
     createNoticesOverTime(dueDate.minusMinutes(1)::minusHours, 2).forEach(
