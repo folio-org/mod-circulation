@@ -4,9 +4,6 @@ import static api.support.APITestContext.getTenantId;
 import static api.support.fakes.Storage.getStorage;
 import static api.support.http.InterfaceUrls.holdingsStorageUrl;
 import static org.apache.commons.lang3.ObjectUtils.firstNonNull;
-import static org.folio.circulation.domain.representations.ItemProperties.EFFECTIVE_LOCATION_ID;
-import static org.folio.circulation.domain.representations.ItemProperties.PERMANENT_LOCATION_ID;
-import static org.folio.circulation.domain.representations.ItemProperties.TEMPORARY_LOCATION_ID;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;
 
@@ -18,7 +15,6 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutableTriple;
 import org.apache.commons.lang3.tuple.Triple;
-import org.folio.circulation.domain.representations.ItemProperties;
 import org.folio.circulation.support.utils.ClockUtil;
 
 import io.vertx.core.json.JsonObject;
@@ -38,10 +34,13 @@ public final class StorageRecordPreProcessors {
   public static JsonObject setEffectiveLocationIdForItem(
     @SuppressWarnings("unused") JsonObject oldItem, JsonObject newItem) {
 
+    final String PERMANENT_LOCATION_ID = "permanentLocationId";
+    final String TEMPORARY_LOCATION_ID = "temporaryLocationId";
+
     final String holdingsRecordId = newItem.getString("holdingsRecordId");
     final JsonObject holding = getHoldingById(holdingsRecordId);
 
-    newItem.put(EFFECTIVE_LOCATION_ID, firstNonNull(
+    newItem.put("effectiveLocationId", firstNonNull(
       newItem.getString(TEMPORARY_LOCATION_ID),
       newItem.getString(PERMANENT_LOCATION_ID),
       holding.getString(TEMPORARY_LOCATION_ID),
@@ -51,9 +50,11 @@ public final class StorageRecordPreProcessors {
   }
 
   public static JsonObject setItemStatusDateForItem(JsonObject oldItem, JsonObject newItem) {
+    final String STATUS_PROPERTY = "status";
+
     if (Objects.nonNull(oldItem)) {
-      JsonObject oldItemStatus = oldItem.getJsonObject(ItemProperties.STATUS_PROPERTY);
-      JsonObject newItemStatus = newItem.getJsonObject(ItemProperties.STATUS_PROPERTY);
+      JsonObject oldItemStatus = oldItem.getJsonObject(STATUS_PROPERTY);
+      JsonObject newItemStatus = newItem.getJsonObject(STATUS_PROPERTY);
       if (ObjectUtils.allNotNull(oldItemStatus, newItemStatus)) {
         if (!Objects.equals(oldItemStatus.getString("name"),
           newItemStatus.getString("name"))) {
