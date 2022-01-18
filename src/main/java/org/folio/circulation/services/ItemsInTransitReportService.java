@@ -108,12 +108,7 @@ public class ItemsInTransitReportService {
     ItemsInTransitReportContext context) {
 
     return itemRepository.findInstancesByIds(mapToStrings(context.getItems().values(),
-        item -> context.getHoldingsRecords().values().stream()
-          .filter(holdingsRecord -> holdingsRecord.getId() != null)
-          .filter(holdingsRecord -> holdingsRecord.getId().equals(item.getHoldingsRecordId()))
-          .findFirst()
-          .map(Holdings::getInstanceId)
-          .orElse(null)))
+        context::getInstanceId))
       .thenApply(mapResult(records -> toMap(records.getRecords(), Instance::getId)))
       .thenApply(mapResult(context::withInstances));
   }

@@ -54,4 +54,14 @@ public class ItemsInTransitReportContext {
     patronGroups = new HashMap<>();
     servicePoints = new HashMap<>();
   }
+
+  public String getInstanceId(Item item) {
+    String holdingsRecordId = item.getHoldingsRecordId();
+
+    if (holdingsRecordId == null || !holdingsRecords.containsKey(holdingsRecordId)) {
+      return null;
+    }
+
+    return holdingsRecords.get(holdingsRecordId).getInstanceId();
+  }
 }
