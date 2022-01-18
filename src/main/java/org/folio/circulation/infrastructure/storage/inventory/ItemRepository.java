@@ -164,6 +164,10 @@ public class ItemRepository {
   }
 
   public CompletableFuture<Result<Item>> fetchById(String itemId) {
+    if(isNull(itemId)) {
+      return ofAsync(() -> null);
+    }
+
     return fetchItem(itemId)
       .thenComposeAsync(this::fetchItemRelatedRecords);
   }
