@@ -57,7 +57,7 @@ public class LastCheckIn {
     );
   }
 
-  static LastCheckIn fromItemJson(JsonObject itemJson) {
+  public static LastCheckIn fromItemJson(JsonObject itemJson) {
     if (itemJson == null) {
       return null;
     }

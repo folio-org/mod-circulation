@@ -30,6 +30,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.folio.circulation.storage.mappers.ItemMapper;
+
 import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
@@ -51,16 +53,7 @@ public class Item {
   @NonNull private final LoanType loanType;
 
   public static Item from(JsonObject representation) {
-    return new Item(representation, null,
-      LastCheckIn.fromItemJson(representation),
-      CallNumberComponents.fromItemJson(representation),
-      null,
-      null,
-      false,
-      Holdings.unknown(),
-      Instance.unknown(),
-      MaterialType.unknown(),
-      LoanType.unknown());
+    return new ItemMapper().toDomain(representation);
   }
 
   public boolean isCheckedOut() {
