@@ -156,6 +156,10 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
   }
 
   public CompletableFuture<Result<Loan>> getById(String id) {
+    if(isNull(id)) {
+      return ofAsync(() -> null);
+    }
+
     return fetchLoan(id)
       .thenComposeAsync(this::fetchItem)
       .thenComposeAsync(this::fetchUser);

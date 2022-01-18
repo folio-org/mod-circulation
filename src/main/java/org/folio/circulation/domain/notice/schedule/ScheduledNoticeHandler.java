@@ -1,7 +1,6 @@
 package org.folio.circulation.domain.notice.schedule;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.domain.SideEffectOnFailure.DELETE_PATRON_NOTICE;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
 import static org.folio.circulation.support.results.Result.failed;
@@ -31,9 +30,7 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.RecordNotFoundFailure;
-import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
-import org.folio.circulation.support.results.CommonFailures;
 import org.folio.circulation.support.results.Result;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -77,10 +74,9 @@ public abstract class ScheduledNoticeHandler {
     return ofAsync(() -> new ScheduledNoticeContext(notice))
       .thenCompose(r -> r.after(this::fetchNoticeData))
       .thenCompose(r -> r.after(this::sendNotice))
-      .thenCompose(r -> r.after(this::updateNotice))
-      .exceptionally(t -> CommonFailures.failedDueToServerErrorFailureWithSideEffect(t,
-        DELETE_PATRON_NOTICE))
-      .thenCompose(r -> handleResult(r, notice));
+      .thenCompose(r -> r.after(this::updateNoticeData))
+      .thenCompose(r -> handleResult(r, notice))
+      .exceptionally(t -> handleException(t, notice));
   }
 
   protected CompletableFuture<Result<ScheduledNoticeContext>> fetchNoticeData(
@@ -89,6 +85,17 @@ public abstract class ScheduledNoticeHandler {
     return ofAsync(() -> context)
       .thenCompose(r -> r.after(this::fetchData))
       .thenApply(r -> r.mapFailure(f -> publishErrorEvent(f, context.notice)));
+  }
+
+  protected CompletableFuture<Result<ScheduledNotice>> updateNoticeData(
+    ScheduledNoticeContext context) {
+
+    return ofAsync(() -> context)
+      .thenCompose(r -> r.after(this::updateNotice))
+      .thenApply(r -> r.mapFailure(f -> {
+        publishError(f.toString(), context.notice);
+        return failed(f);
+      }));
   }
 
   protected abstract CompletableFuture<Result<ScheduledNoticeContext>> fetchData(
@@ -110,9 +117,13 @@ public abstract class ScheduledNoticeHandler {
   protected Result<ScheduledNoticeContext> publishErrorEvent(HttpFailure failure,
     ScheduledNotice notice) {
 
-    eventPublisher.publishNoticeErrorLogEvent(NoticeLogContext.from(notice), failure);
+    publishError(failure.toString(), notice);
 
     return failed(failure);
+  }
+
+  private void publishError(String errorMessage, ScheduledNotice notice) {
+    eventPublisher.publishNoticeErrorLogEvent(NoticeLogContext.from(notice), errorMessage);
   }
 
   protected CompletableFuture<Result<ScheduledNotice>> deleteNotice(ScheduledNotice notice,
@@ -205,17 +216,23 @@ public abstract class ScheduledNoticeHandler {
     if (result.succeeded()) {
       log.info("Finished processing scheduled notice {}", notice.getId());
       return completedFuture(result);
-    }
+    } else {
+      HttpFailure failure = result.cause();
+      logFailedResult(failure.toString(), notice);
 
-    HttpFailure failure = result.cause();
-    log.error("Processing scheduled notice {} failed: {}", notice.getId(), failure);
-
-    if (failure instanceof RecordNotFoundFailure || (failure instanceof ServerErrorFailure
-      && ((ServerErrorFailure) failure).isSideEffectOnFailureEqualTo(DELETE_PATRON_NOTICE))) {
       return deleteNotice(notice, failure.toString());
     }
+  }
 
-    return ofAsync(() -> notice);
+  private void logFailedResult(String errorMessage, ScheduledNotice notice) {
+    log.error("Processing scheduled notice {} failed: {}", notice.getId(), errorMessage);
+  }
+
+  private Result<ScheduledNotice> handleException(Throwable throwable, ScheduledNotice notice) {
+    logFailedResult(throwable.getMessage(), notice);
+    publishError(throwable.getMessage(), notice);
+
+    return succeeded(notice);
   }
 
   @With

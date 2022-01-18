@@ -42,7 +42,6 @@ import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.HoldingBuilder;
 import api.support.builders.ItemBuilder;
-import api.support.builders.LoanBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.UserBuilder;
@@ -393,7 +392,7 @@ class DueDateScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  void testNoticeIsNotSentOrDeletedWhenPatronNoticeRequestFails() {
+  void testNoticeIsDeletedWhenPatronNoticeRequestFails() {
     generateLoanAndScheduledNotices(uponAtNotice());
 
     FakeModNotify.setFailPatronNoticesWithBadRequest(true);
@@ -402,7 +401,7 @@ class DueDateScheduledNoticesProcessingTests extends APITests {
 
     checkSentNotices();
 
-    verifyNumberOfScheduledNotices(1);
+    verifyNumberOfScheduledNotices(0);
     verifyNumberOfPublishedEvents(NOTICE, 0);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
   }

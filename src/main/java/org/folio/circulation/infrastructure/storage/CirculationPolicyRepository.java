@@ -1,7 +1,6 @@
 package org.folio.circulation.infrastructure.storage;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.domain.SideEffectOnFailure.DELETE_PATRON_NOTICE;
 import static org.folio.circulation.rules.RulesExecutionParameters.forItem;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
@@ -20,7 +19,6 @@ import org.folio.circulation.rules.CirculationRulesProcessor;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.SingleRecordFetcher;
-import org.folio.circulation.support.results.CommonFailures;
 import org.folio.circulation.support.results.Result;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -87,46 +85,35 @@ public abstract class CirculationPolicyRepository<T> {
 
   public CompletableFuture<Result<CirculationRuleMatch>> lookupPolicyId(Item item, User user) {
     if (item == null){
-      return completedFuture(CommonFailures.failedDueToServerErrorFailureWithSideEffect(
-        "Unable to apply circulation rules for item is null", DELETE_PATRON_NOTICE));
+      return completedFuture(failedDueToServerError("Unable to apply circulation rules for item is null"));
     }
 
     if (user == null){
-      return completedFuture(CommonFailures.failedDueToServerErrorFailureWithSideEffect(
-        "Unable to apply circulation rules for item with user that is null", DELETE_PATRON_NOTICE));
+      return completedFuture(failedDueToServerError("Unable to apply circulation rules for item with user that is null"));
     }
 
     if (item.isNotFound()) {
-      return completedFuture(CommonFailures.failedDueToServerErrorFailureWithSideEffect(
-        "Unable to apply circulation rules for unknown item", DELETE_PATRON_NOTICE));
+      return completedFuture(failedDueToServerError("Unable to apply circulation rules for unknown item"));
     }
 
     if (user.getPatronGroupId() == null) {
       log.error("PatronGroupId is null for user {}", user.getId());
-      return completedFuture(CommonFailures.failedDueToServerErrorFailureWithSideEffect(
-        "Unable to apply circulation rules to a user with null value as patronGroupId",
-        DELETE_PATRON_NOTICE));
+      return completedFuture(failedDueToServerError("Unable to apply circulation rules to a user with null value as patronGroupId"));
     }
 
     if (item.getLocationId() == null) {
       log.error("LocationId is null for item {}", item.getItemId());
-      return completedFuture(CommonFailures.failedDueToServerErrorFailureWithSideEffect(
-        "Unable to apply circulation rules to an item with null value as locationId",
-        DELETE_PATRON_NOTICE));
+      return completedFuture(failedDueToServerError("Unable to apply circulation rules to an item with null value as locationId"));
     }
 
     if (item.determineLoanTypeForItem() == null) {
       log.error("LoanTypeId is null for item {}", item.getItemId());
-      return completedFuture(CommonFailures.failedDueToServerErrorFailureWithSideEffect(
-        "Unable to apply circulation rules to an item which loan type can not be determined",
-        DELETE_PATRON_NOTICE));
+      return completedFuture(failedDueToServerError("Unable to apply circulation rules to an item which loan type can not be determined"));
     }
 
     if (item.getMaterialTypeId() == null) {
       log.error("MaterialTypeId is null for item {}", item.getItemId());
-      return completedFuture(CommonFailures.failedDueToServerErrorFailureWithSideEffect(
-        "Unable to apply circulation rules to an item with null value as materialTypeId",
-        DELETE_PATRON_NOTICE));
+      return completedFuture(failedDueToServerError("Unable to apply circulation rules to an item with null value as materialTypeId"));
     }
 
     return getPolicyAndMatch(forItem(item, user));

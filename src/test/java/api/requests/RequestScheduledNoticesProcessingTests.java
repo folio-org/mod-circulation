@@ -493,6 +493,21 @@ class RequestScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
+  void scheduledNoticesShouldNotBeSentWhenRequestIdWasNull() {
+    prepareNotice();
+
+    JsonObject entries = scheduledNoticesClient.getAll().get(0);
+    scheduledNoticesClient.replace(UUID.fromString(entries.getString("id")), entries.put("requestId", null));
+
+    scheduledNoticeProcessingClient.runRequestNoticesProcessing(getZonedDateTime().plusMonths(2));
+
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfScheduledNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
+  }
+
+  @Test
   void scheduledNoticesShouldNotBeSentWhenUserWasNotFound() {
     prepareNotice();
 
@@ -521,7 +536,7 @@ class RequestScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  void scheduledNoticesShouldNotBeSentOrDeletedWhenPatronNoticeRequestFails() {
+  void scheduledNoticesShouldNotBeSentWhenPatronNoticeRequestFails() {
     prepareNotice();
 
     FakeModNotify.setFailPatronNoticesWithBadRequest(true);
@@ -529,7 +544,7 @@ class RequestScheduledNoticesProcessingTests extends APITests {
     scheduledNoticeProcessingClient.runRequestNoticesProcessing(getZonedDateTime().plusMonths(2));
 
     verifyNumberOfSentNotices(0);
-    verifyNumberOfScheduledNotices(1);
+    verifyNumberOfScheduledNotices(0);
     verifyNumberOfPublishedEvents(NOTICE, 0);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
   }
