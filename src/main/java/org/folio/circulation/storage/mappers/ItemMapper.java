@@ -20,8 +20,8 @@ public class ItemMapper {
       CallNumberComponents.fromItemJson(representation), null,
       getInTransitServicePoint(representation), false,
       Holdings.unknown(getProperty(representation, "holdingsRecordId")),
-      Instance.unknown(), MaterialType.unknown(), LoanType.unknown(),
-      getProperty(representation, "barcode"), getProperty(representation,
+      Instance.unknown(), MaterialType.unknown(getProperty(representation, "materialTypeId")),
+      LoanType.unknown(), getProperty(representation, "barcode"), getProperty(representation,
       "copyNumber"));
   }
 

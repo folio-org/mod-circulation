@@ -10,7 +10,6 @@ import static org.folio.circulation.domain.ItemStatus.IN_TRANSIT;
 import static org.folio.circulation.domain.ItemStatus.MISSING;
 import static org.folio.circulation.domain.ItemStatus.PAGED;
 import static org.folio.circulation.domain.representations.ItemProperties.EFFECTIVE_LOCATION_ID;
-import static org.folio.circulation.domain.representations.ItemProperties.MATERIAL_TYPE_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.PERMANENT_LOAN_TYPE_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.PERMANENT_LOCATION_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.STATUS_PROPERTY;
@@ -212,7 +211,7 @@ public class Item {
   }
 
   public String getMaterialTypeId() {
-    return getProperty(itemRepresentation, MATERIAL_TYPE_ID);
+    return materialType.getId();
   }
 
   public String getLocationId() {
