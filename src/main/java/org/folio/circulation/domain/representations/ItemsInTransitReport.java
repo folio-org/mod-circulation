@@ -1,13 +1,15 @@
 package org.folio.circulation.domain.representations;
 
+import static java.util.Comparator.comparing;
+import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
 import static org.folio.circulation.domain.representations.CallNumberComponentsRepresentation.createCallNumberComponents;
 import static org.folio.circulation.domain.representations.ContributorsToNamesMapper.mapContributorNamesToJson;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.json.JsonPropertyWriter.writeNamedObject;
 
+import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 
 import org.folio.circulation.domain.Holdings;
 import org.folio.circulation.domain.Instance;
@@ -27,13 +29,12 @@ import io.vertx.core.json.JsonObject;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-public class ItemInTransitReport {
+public class ItemsInTransitReport {
   private final ItemsInTransitReportContext reportContext;
 
   public JsonObject build() {
-    List<JsonObject> reportEntries = reportContext.getItems()
-      .keySet()
-      .stream()
+    List<JsonObject> reportEntries = reportContext.getItems().values().stream()
+      .sorted(sortByCheckinServicePointComparator())
       .map(this::buildEntry)
       .collect(toList());
 
@@ -42,44 +43,46 @@ public class ItemInTransitReport {
       .put("totalRecords", reportEntries.size());
   }
 
-  private JsonObject buildEntry(String itemId) {
-    Item item = reportContext.getItems().get(itemId);
-    Holdings holdings = reportContext.getHoldingsRecords().get(item.getHoldingsRecordId());
-    Instance instance = reportContext.getInstances().get(holdings.getInstanceId());
-    Location location = reportContext.getLocations().get(item.getLocationId());
-    Loan loan = reportContext.getLoans().get(itemId);
-    Request request = reportContext.getRequests().get(itemId);
-    User requester = reportContext.getUsers().get(request.getRequesterId());
-    PatronGroup requesterPatronGroup = reportContext.getPatronGroups().get(requester.getPatronGroupId());
+  private Comparator<Item> sortByCheckinServicePointComparator() {
+    return comparing(item -> ofNullable(reportContext.getLoans().get(item.getItemId()))
+      .flatMap(loan -> ofNullable(loan.getCheckinServicePoint())
+        .map(ServicePoint::getName))
+      .orElse(null), Comparator.nullsLast(String::compareTo));
+  }
 
-    ServicePoint primaryServicePoint = reportContext.getServicePoints()
-      .get(location.getPrimaryServicePointId().toString());
+  private JsonObject buildEntry(Item item) {
+    if (item == null || item.isNotFound()) {
+      return new JsonObject();
+    }
+
+    Holdings holdings = reportContext.getHoldingsRecords().get(item.getHoldingsRecordId());
+    if (holdings != null) {
+      Instance instance = reportContext.getInstances().get(holdings.getInstanceId());
+      if (instance != null) {
+        item = item.withInstance(instance);
+      }
+    }
+
+    Loan loan = reportContext.getLoans().get(item.getItemId());
+    Request request = reportContext.getRequests().get(item.getItemId());
+
+    Location location = reportContext.getLocations().get(item.getLocationId());
+    if (location != null) {
+      ServicePoint primaryServicePoint = reportContext.getServicePoints()
+        .get(location.getPrimaryServicePointId().toString());
+      item = item
+        .withLocation(location)
+        .withPrimaryServicePoint(primaryServicePoint);
+    }
+
     ServicePoint inTransitDestinationServicePoint = reportContext.getServicePoints()
       .get(item.getInTransitDestinationServicePointId());
     ServicePoint lastCheckInServicePoint = reportContext.getServicePoints()
       .get(item.getLastCheckInServicePointId().toString());
-    ServicePoint checkoutServicePoint = reportContext.getServicePoints()
-      .get(loan.getCheckoutServicePointId());
-    ServicePoint checkInServicePoint = reportContext.getServicePoints()
-      .get(loan.getCheckInServicePointId());
-    ServicePoint pickupServicePoint = reportContext.getServicePoints()
-      .get(request.getPickupServicePointId());
-
-    request = request
-      .withRequester(requester.withPatronGroup(requesterPatronGroup))
-      .withPickupServicePoint(pickupServicePoint);
 
     item = item
-      .withHoldings(holdings)
-      .withInstance(instance)
-      .withLocation(location)
-      .withPrimaryServicePoint(primaryServicePoint)
       .updateLastCheckInServicePoint(lastCheckInServicePoint)
       .updateDestinationServicePoint(inTransitDestinationServicePoint);
-
-    loan = loan
-      .withCheckinServicePoint(checkInServicePoint)
-      .withCheckoutServicePoint(checkoutServicePoint);
 
     final JsonObject entry = new JsonObject();
 
@@ -91,7 +94,7 @@ public class ItemInTransitReport {
     write(entry, "enumeration", item.getEnumeration());
     write(entry, "volume", item.getVolume());
     write(entry, "yearCaption", new JsonArray(item.getYearCaption()));
-    writeNamedObject(entry, "status", Optional.ofNullable(item.getStatus())
+    writeNamedObject(entry, "status", ofNullable(item.getStatus())
       .map(ItemStatus::getValue).orElse(null));
     write(entry, "inTransitDestinationServicePointId",
       item.getInTransitDestinationServicePointId());
@@ -108,10 +111,30 @@ public class ItemInTransitReport {
     }
 
     if (request != null) {
+      User requester = reportContext.getUsers().get(request.getRequesterId());
+
+      PatronGroup requesterPatronGroup = requester == null ? null :
+        reportContext.getPatronGroups().get(requester.getPatronGroupId());
+      if (requesterPatronGroup != null) {
+        request = request.withRequester(requester.withPatronGroup(requesterPatronGroup));
+      }
+
+      ServicePoint pickupServicePoint = reportContext.getServicePoints().get(request.getPickupServicePointId());
+      request = request.withPickupServicePoint(pickupServicePoint);
+
       writeRequest(request, entry);
     }
 
     if (loan != null) {
+      ServicePoint checkoutServicePoint = reportContext.getServicePoints()
+        .get(loan.getCheckoutServicePointId());
+      ServicePoint checkInServicePoint = reportContext.getServicePoints()
+        .get(loan.getCheckInServicePointId());
+
+      loan = loan
+        .withCheckinServicePoint(checkInServicePoint)
+        .withCheckoutServicePoint(checkoutServicePoint);
+
       writeLoan(entry, loan);
     }
 
@@ -156,7 +179,7 @@ public class ItemInTransitReport {
     write(requestJson, "requestDate", request.getRequestDate());
     write(requestJson, "requestExpirationDate", request.getRequestExpirationDate());
     write(requestJson, "requestPickupServicePointName",
-      Optional.ofNullable(request.getPickupServicePoint())
+      ofNullable(request.getPickupServicePoint())
         .map(ServicePoint::getName).orElse(null));
 
     final JsonObject tags = request.asJson().getJsonObject("tags");
@@ -165,7 +188,7 @@ public class ItemInTransitReport {
       write(requestJson, "tags", tagsJson);
     }
 
-    Optional.ofNullable(request.getRequester())
+    ofNullable(request.getRequester())
       .map(User::getPatronGroup)
       .ifPresent(pg -> write(requestJson, "requestPatronGroup", pg.getDesc()));
 

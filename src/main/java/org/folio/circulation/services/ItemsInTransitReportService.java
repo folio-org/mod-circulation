@@ -2,7 +2,6 @@ package org.folio.circulation.services;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Function.identity;
-import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import static org.folio.circulation.domain.ItemStatus.IN_TRANSIT;
 import static org.folio.circulation.support.results.Result.combineAll;
@@ -30,7 +29,7 @@ import org.folio.circulation.domain.PatronGroup;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.domain.User;
-import org.folio.circulation.domain.representations.ItemInTransitReport;
+import org.folio.circulation.domain.representations.ItemsInTransitReport;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemReportRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
@@ -46,9 +45,6 @@ import org.folio.circulation.support.results.Result;
 import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
 
-/**
- * Placeholder class which will replace items-in-transit report logic when implemented
- */
 @AllArgsConstructor
 public class ItemsInTransitReportService {
   private ItemReportRepository itemReportRepository;
@@ -61,14 +57,15 @@ public class ItemsInTransitReportService {
   private PatronGroupRepository patronGroupRepository;
 
   public ItemsInTransitReportService(Clients clients) {
-    this.loanRepository = new LoanRepository(clients);
-    this.itemRepository = new ItemRepository(clients, true, true, true);
-    this.servicePointRepository = new ServicePointRepository(clients);
     this.itemReportRepository = new ItemReportRepository(clients);
-    this.userRepository = new UserRepository(clients);
-    this.patronGroupRepository = new PatronGroupRepository(clients);
+    this.loanRepository = new LoanRepository(clients);
+    this.locationRepository = LocationRepository.using(clients);
+    this.servicePointRepository = new ServicePointRepository(clients);
     this.requestRepository = new RequestRepository(clients, itemRepository, userRepository,
       loanRepository, servicePointRepository, patronGroupRepository);
+    this.itemRepository = new ItemRepository(clients, true, true, true);
+    this.userRepository = new UserRepository(clients);
+    this.patronGroupRepository = new PatronGroupRepository(clients);
   }
 
   public CompletableFuture<Result<JsonObject>> buildReport() {
@@ -110,7 +107,13 @@ public class ItemsInTransitReportService {
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchInstances(
     ItemsInTransitReportContext context) {
 
-    return itemRepository.findInstancesByIds(mapToStrings(context.getItems().values(), Item::getInstanceId))
+    return itemRepository.findInstancesByIds(mapToStrings(context.getItems().values(),
+        item -> context.getHoldingsRecords().values().stream()
+          .filter(holdingsRecord -> holdingsRecord.getId() != null)
+          .filter(holdingsRecord -> holdingsRecord.getId().equals(item.getHoldingsRecordId()))
+          .findFirst()
+          .map(Holdings::getInstanceId)
+          .orElse(null)))
       .thenApply(mapResult(records -> toMap(records.getRecords(), Instance::getId)))
       .thenApply(mapResult(context::withInstances));
   }
@@ -128,7 +131,7 @@ public class ItemsInTransitReportService {
 
     return succeeded(context.getItems().keySet())
       .after(loanRepository::findByItemIds)
-      .thenApply(mapResult(loans -> toMap(loans, Loan::getId)))
+      .thenApply(mapResult(loans -> toMap(loans, Loan::getItemId)))
       .thenApply(mapResult(context::withLoans));
   }
 
@@ -136,7 +139,7 @@ public class ItemsInTransitReportService {
     ItemsInTransitReportContext context) {
 
     return requestRepository.findOpenRequestsByItemIds(context.getItems().keySet())
-      .thenApply(mapResult(requests -> toMap(requests.getRecords(), Request::getId)))
+      .thenApply(mapResult(requests -> toMap(requests.getRecords(), Request::getItemId)))
       .thenApply(mapResult(context::withRequests));
   }
 
@@ -152,13 +155,7 @@ public class ItemsInTransitReportService {
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchPatronGroups(
     ItemsInTransitReportContext context) {
 
-    List<String> patronGroupIds = context.getUsers()
-      .values()
-      .stream()
-      .map(User::getPatronGroupId)
-      .collect(toList());
-
-    return ofAsync(() -> patronGroupIds)
+    return ofAsync(() -> mapToStrings(context.getUsers().values(), User::getPatronGroupId))
       .thenCompose(r -> r.after(patronGroupRepository::findPatronGroupsByIds))
       .thenApply(r -> r.map(groups -> toMap(groups, PatronGroup::getId)))
       .thenApply(r -> r.map(context::withPatronGroups));
@@ -206,11 +203,11 @@ public class ItemsInTransitReportService {
 
   public <T> Map<String, T> toMap(Collection<T> collection, Function<T, String> keyMapper) {
     return collection.stream()
-      .collect(Collectors.toMap(keyMapper, identity()));
+      .collect(Collectors.toMap(keyMapper, identity(), (left, right) -> left));
   }
 
   private Result<JsonObject> mapToJsonObject(Result<ItemsInTransitReportContext> context) {
-    return context.map(ItemInTransitReport::new)
-      .map(ItemInTransitReport::build);
+    return context.map(ItemsInTransitReport::new)
+      .map(ItemsInTransitReport::build);
   }
 }
