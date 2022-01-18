@@ -1,6 +1,9 @@
 package org.folio.circulation.infrastructure.storage.requests;
 
 import static java.util.Objects.isNull;
+import static org.folio.circulation.domain.RequestStatus.openStates;
+import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
+import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.results.Result.ofAsync;
@@ -145,6 +148,13 @@ public class RequestRepository {
       .flatMapOn(200, mapUsingJson(Request::from))
       .on(404, failed(new RecordNotFoundFailure("request", id))))
       .fetch(id);
+  }
+
+  public CompletableFuture<Result<MultipleRecords<Request>>> findOpenRequestsByItemIds(
+    Collection<String> itemIds) {
+
+    return findWithMultipleCqlIndexValues(requestsStorageClient, "requests", Request::from)
+      .findByIdIndexAndQuery(itemIds, "itemId", exactMatchAny("status", openStates()));
   }
 
   public CompletableFuture<Result<Request>> update(Request request) {
