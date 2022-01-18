@@ -2,25 +2,40 @@ package org.folio.circulation.services;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.toSet;
 import static org.folio.circulation.domain.ItemStatus.IN_TRANSIT;
 import static org.folio.circulation.support.results.Result.combineAll;
 import static org.folio.circulation.support.results.Result.succeeded;
+import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.Holdings;
+import org.folio.circulation.domain.Instance;
 import org.folio.circulation.domain.Item;
+import org.folio.circulation.domain.User;
+import org.folio.circulation.domain.Request;
+import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.domain.Request;
+import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemReportRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.inventory.LocationRepository;
+import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
+import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.users.PatronGroupRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.services.support.ItemsInTransitReportContext;
@@ -36,10 +51,10 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class ItemsInTransitReportService {
   private ItemReportRepository itemReportRepository;
+  private LoanRepository loanRepository;
   private LocationRepository locationRepository;
-  private GetManyRecordsClient loansStorageClient;
   private ServicePointRepository servicePointRepository;
-  private GetManyRecordsClient requestsStorageClient;
+  private RequestRepository requestRepository;
   private ItemRepository itemRepository;
   private UserRepository userRepository;
   private PatronGroupRepository patronGroupRepository;
@@ -48,15 +63,13 @@ public class ItemsInTransitReportService {
     return completedFuture(succeeded(new ItemsInTransitReportContext()))
       .thenCompose(r -> r.after(this::fetchItems))
       .thenCompose(r -> r.after(this::fetchHoldingsRecords))
-      .thenCompose(this::fetchInstances)
+      .thenCompose(r -> r.after(this::fetchInstances))
       .thenCompose(r -> r.after(this::fetchLocations))
-      .thenCompose(this::fetchMaterialTypes)
-      .thenCompose(this::fetchLoanTypes)
-      .thenCompose(this::fetchLoans)
-      .thenCompose(this::fetchRequests)
-      .thenCompose(this::fetchUsers)
+      .thenCompose(r -> r.after(this::fetchLoans))
+      .thenCompose(r -> r.after(this::fetchRequests))
+      .thenCompose(r -> r.after(this::fetchUsers))
       .thenCompose(this::fetchPatronGroups)
-      .thenCompose(this::fetchServicePoints)
+      .thenCompose(r -> r.after(this::fetchServicePoints))
       .thenApply(this::mapToJsonObject);
   }
 
@@ -74,8 +87,8 @@ public class ItemsInTransitReportService {
           .map(listOfPages -> listOfPages.stream()
             .flatMap(page -> page.getRecords().stream())
             .collect(Collectors.toList()))))
-      .thenApply(r -> r.map(items -> toMap(items, Item::getItemId)))
-      .thenApply(r -> r.map(context::withItems));
+      .thenApply(mapResult(items -> toMap(items, Item::getItemId)))
+      .thenApply(mapResult(context::withItems));
   }
 
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchHoldingsRecords(
@@ -83,14 +96,16 @@ public class ItemsInTransitReportService {
 
     return succeeded(mapToStrings(context.getItems().values(), Item::getHoldingsRecordId))
       .after(itemRepository::findHoldingsByIds)
-      .thenApply(r -> r.map(records -> toMap(records.getRecords(), Holdings::getId)))
-      .thenApply(r -> r.map(context::withHoldingsRecords));
+      .thenApply(mapResult(records -> toMap(records.getRecords(), Holdings::getId)))
+      .thenApply(mapResult(context::withHoldingsRecords));
   }
 
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchInstances(
-    Result<ItemsInTransitReportContext> context) {
+    ItemsInTransitReportContext context) {
 
-    return completedFuture(context);
+    return itemRepository.findInstancesByIds(mapToStrings(context.getItems().values(), Item::getInstanceId))
+      .thenApply(mapResult(records -> toMap(records.getRecords(), Instance::getId)))
+      .thenApply(mapResult(context::withInstances));
   }
 
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchLocations(
@@ -98,37 +113,33 @@ public class ItemsInTransitReportService {
 
     return locationRepository
       .getItemLocations(context.getItems().values(), List.of(Item::getLocationId))
-      .thenApply(r -> r.map(context::withLocations));
-  }
-
-  private CompletableFuture<Result<ItemsInTransitReportContext>> fetchMaterialTypes(
-    Result<ItemsInTransitReportContext> context) {
-
-    return completedFuture(context);
-  }
-
-  private CompletableFuture<Result<ItemsInTransitReportContext>> fetchLoanTypes(
-    Result<ItemsInTransitReportContext> context) {
-
-    return completedFuture(context);
+      .thenApply(mapResult(context::withLocations));
   }
 
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchLoans(
-    Result<ItemsInTransitReportContext> context) {
+    ItemsInTransitReportContext context) {
 
-    return completedFuture(context);
+    return succeeded(context.getItems().keySet())
+      .after(loanRepository::findByItemIds)
+      .thenApply(mapResult(loans -> toMap(loans, Loan::getId)))
+      .thenApply(mapResult(context::withLoans));
   }
 
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchRequests(
-    Result<ItemsInTransitReportContext> context) {
+    ItemsInTransitReportContext context) {
 
-    return completedFuture(context);
+    return requestRepository.findOpenRequestsByItemIds(context.getItems().keySet())
+      .thenApply(mapResult(requests -> toMap(requests.getRecords(), Request::getId)))
+      .thenApply(mapResult(context::withRequests));
   }
 
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchUsers(
-    Result<ItemsInTransitReportContext> context) {
+    ItemsInTransitReportContext context) {
 
-    return completedFuture(context);
+    return userRepository.findUsersByRequests(context.getRequests().values())
+      .thenApply(mapResult(userMultipleRecords -> toMap(userMultipleRecords.getRecords(),
+        User::getId)))
+      .thenApply(mapResult(context::withUsers));
   }
 
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchPatronGroups(
@@ -137,11 +148,37 @@ public class ItemsInTransitReportService {
     return completedFuture(context);
   }
 
-  // Needs to fetch all service points for items, loans and requests
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchServicePoints(
-    Result<ItemsInTransitReportContext> context) {
+    ItemsInTransitReportContext context) {
 
-    return completedFuture(context);
+    Collection<Item> items = context.getItems().values();
+    Stream<String> itemInTransitDestinationServicePointIds = items.stream()
+      .map(Item::getInTransitDestinationServicePointId);
+    Stream<String> itemLastCheckInServicePointIds = items.stream()
+      .map(Item::getLastCheckInServicePointId)
+      .filter(Objects::nonNull)
+      .map(UUID::toString);
+
+    Collection<Loan> loans = context.getLoans().values();
+    Stream<String> loanCheckInServicePointIds = loans.stream()
+      .map(Loan::getCheckInServicePointId);
+    Stream<String> loanCheckoutServicePointIds = loans.stream()
+      .map(Loan::getCheckoutServicePointId);
+
+    Stream<String> requestServicePointIds = context.getRequests().values().stream()
+      .map(Request::getPickupServicePointId);
+
+    Set<String> servicePointIds = Stream.of(itemInTransitDestinationServicePointIds,
+        itemLastCheckInServicePointIds, loanCheckInServicePointIds, loanCheckoutServicePointIds,
+        requestServicePointIds)
+      .flatMap(identity())
+      .filter(Objects::nonNull)
+      .collect(toSet());
+
+    return succeeded(servicePointIds)
+      .after(servicePointRepository::findServicePointsByIds)
+      .thenApply(mapResult(servicePoints -> toMap(servicePoints, ServicePoint::getId)))
+      .thenApply(mapResult(context::withServicePoints));
   }
 
   private <T> Set<String> mapToStrings(Collection<T> collection, Function<T, String> mapper) {
