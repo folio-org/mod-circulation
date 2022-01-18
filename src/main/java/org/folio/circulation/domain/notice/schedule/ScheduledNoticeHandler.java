@@ -122,7 +122,7 @@ public abstract class ScheduledNoticeHandler {
     return failed(failure);
   }
 
-  private void publishError(String errorMessage, ScheduledNotice notice) {
+  public void publishError(String errorMessage, ScheduledNotice notice) {
     eventPublisher.publishNoticeErrorLogEvent(NoticeLogContext.from(notice), errorMessage);
   }
 
@@ -220,7 +220,11 @@ public abstract class ScheduledNoticeHandler {
       HttpFailure failure = result.cause();
       logFailedResult(failure.toString(), notice);
 
-      return deleteNotice(notice, failure.toString());
+      return deleteNotice(notice, failure.toString())
+        .thenApply(r -> r.mapFailure(f -> {
+          logFailedResult(f.toString(), notice);
+          return succeeded(notice);
+        }));
     }
   }
 

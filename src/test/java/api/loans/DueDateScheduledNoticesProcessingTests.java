@@ -47,6 +47,8 @@ import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.UserBuilder;
 import api.support.fakes.FakeModNotify;
 import api.support.fakes.FakePubSub;
+import api.support.fakes.FakeStorageModule;
+import api.support.fakes.FakeStorageModuleBuilder;
 import api.support.fixtures.ConfigurationExample;
 import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.IndividualResource;
@@ -404,6 +406,23 @@ class DueDateScheduledNoticesProcessingTests extends APITests {
     verifyNumberOfScheduledNotices(0);
     verifyNumberOfPublishedEvents(NOTICE, 0);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
+  }
+
+  @Test
+  void testNoticeIsDeletedWhenUpdateNoticeRequestFails() {
+    generateLoanAndScheduledNotices();
+
+    createNoticesOverTime(dueDate.minusMinutes(1)::minusHours, 2).forEach(
+      scheduledNoticesClient::create);
+
+    FakeStorageModule.setFailDeleteWithBadRequest(true);
+    FakeStorageModule.setFailUpdateWithBadRequest(true);
+
+    scheduledNoticeProcessingClient.runLoanNoticesProcessing(dueDate.minusSeconds(1));
+
+    verifyNumberOfScheduledNotices(2);
+    verifyNumberOfPublishedEvents(NOTICE, 2);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 2);
   }
 
   @Test

@@ -30,6 +30,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.infrastructure.serialization.JsonSchemaValidator;
+import org.folio.circulation.support.BadRequestFailure;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.ClientErrorResponse;
 import org.folio.circulation.support.http.server.ValidationError;
@@ -47,10 +48,17 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
+import lombok.Setter;
 
 public class FakeStorageModule extends AbstractVerticle {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private static final Set<String> queries = Collections.synchronizedSet(new HashSet<>());
+
+  @Setter
+  private static boolean failDeleteWithBadRequest;
+
+  @Setter
+  private static boolean failUpdateWithBadRequest;
 
   private final String rootPath;
   private final String collectionPropertyName;
@@ -228,6 +236,11 @@ public class FakeStorageModule extends AbstractVerticle {
     WebContext context = new WebContext(routingContext);
 
     String id = routingContext.request().getParam("id");
+
+    if (failUpdateWithBadRequest) {
+      new BadRequestFailure("Bad request from fake storage " + rootPath).writeTo(routingContext.response());
+      return;
+    }
 
     JsonObject body = getJsonFromBody(routingContext);
 
@@ -414,6 +427,11 @@ public class FakeStorageModule extends AbstractVerticle {
 
   private void delete(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
+
+    if (failDeleteWithBadRequest) {
+      new BadRequestFailure("Bad request from fake storage " + rootPath).writeTo(routingContext.response());
+      return;
+    }
 
     String id = routingContext.request().getParam("id");
 

@@ -85,15 +85,18 @@ public abstract class CirculationPolicyRepository<T> {
 
   public CompletableFuture<Result<CirculationRuleMatch>> lookupPolicyId(Item item, User user) {
     if (item == null){
-      return completedFuture(failedDueToServerError("Unable to apply circulation rules for item is null"));
+      return completedFuture(failedDueToServerError(
+        "Unable to apply circulation rules for item is null"));
     }
 
     if (user == null){
-      return completedFuture(failedDueToServerError("Unable to apply circulation rules for item with user that is null"));
+      return completedFuture(failedDueToServerError(
+        "Unable to apply circulation rules for item with user that is null"));
     }
 
     if (item.isNotFound()) {
-      return completedFuture(failedDueToServerError("Unable to apply circulation rules for unknown item"));
+      return completedFuture(failedDueToServerError(
+        "Unable to apply circulation rules for unknown item"));
     }
 
     if (user.getPatronGroupId() == null) {
