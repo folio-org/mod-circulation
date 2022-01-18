@@ -21,7 +21,8 @@ public class ItemMapper {
       getInTransitServicePoint(representation), false,
       Holdings.unknown(getProperty(representation, "holdingsRecordId")),
       Instance.unknown(), MaterialType.unknown(), LoanType.unknown(),
-      getProperty(representation, "barcode"));
+      getProperty(representation, "barcode"), getProperty(representation,
+      "copyNumber"));
   }
 
   private ServicePoint getInTransitServicePoint(JsonObject representation) {

@@ -8,7 +8,6 @@ public class ItemProperties {
   public static final String TEMPORARY_LOAN_TYPE_ID = "temporaryLoanTypeId";
   public static final String PERMANENT_LOAN_TYPE_ID = "permanentLoanTypeId";
   public static final String MATERIAL_TYPE_ID = "materialTypeId";
-  public static final String ITEM_COPY_NUMBER_ID = "copyNumber";
   public static final String EFFECTIVE_LOCATION_ID = "effectiveLocationId";
   public static final String STATUS_PROPERTY = "status";
   public static final String LAST_CHECK_IN = "lastCheckIn";
