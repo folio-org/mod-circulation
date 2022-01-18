@@ -30,6 +30,8 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.circulation.domain.Holdings;
+import org.folio.circulation.domain.Instance;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemRelatedRecord;
 import org.folio.circulation.domain.Location;
@@ -236,6 +238,14 @@ public class ItemRepository {
         .collect(Collectors.toList()));
   }
 
+  public CompletableFuture<Result<MultipleRecords<Instance>>> findInstancesByIds(
+    Collection<String> instanceIds) {
+
+    return fetchInstancesByIds(instanceIds)
+      .thenApply(mapResult(multipleRecords -> multipleRecords.mapRecords(
+        new InstanceMapper()::toDomain)));
+  }
+
   private CompletableFuture<Result<Collection<Item>>> fetchInstances(
     Result<Collection<Item>> result) {
 
@@ -246,17 +256,21 @@ public class ItemRepository {
         .distinct()
         .collect(Collectors.toList());
 
-      final FindWithMultipleCqlIndexValues<JsonObject> fetcher
-        = findWithMultipleCqlIndexValues(instancesClient, "instances", identity());
-
       final var mapper = new InstanceMapper();
 
-      return fetcher.findByIds(instanceIds)
+      return fetchInstancesByIds(instanceIds)
         .thenApply(r -> r.map(instances -> items.stream()
           .map(item -> item.withInstance(mapper.toDomain(
               findById(item.getInstanceId(), instances.getRecords()).orElse(null))))
           .collect(Collectors.toList())));
     });
+  }
+
+  private CompletableFuture<Result<MultipleRecords<JsonObject>>> fetchInstancesByIds(
+    Collection<String> instanceIds) {
+
+    return findWithMultipleCqlIndexValues(instancesClient, "instances",
+      identity()).findByIds(instanceIds);
   }
 
   private CompletableFuture<Result<Collection<Item>>> fetchHoldingRecords(
@@ -269,12 +283,9 @@ public class ItemRepository {
         .distinct()
         .collect(Collectors.toList());
 
-      final var fetcher
-        = findWithMultipleCqlIndexValues(holdingsClient, "holdingsRecords", identity());
-
       final var mapper = new HoldingsMapper();
 
-      return fetcher.findByIds(holdingsIds)
+      return fetchHoldingsByIds(holdingsIds)
         .thenApply(r -> r.map(holdings -> items.stream()
           .map(item -> item.withHoldings(mapper.toDomain(
               findById(item.getHoldingsRecordId(), holdings.getRecords()).orElse(null))))
@@ -383,6 +394,21 @@ public class ItemRepository {
       .thenComposeAsync(this::fetchInstances)
       .thenComposeAsync(this::fetchLocations)
       .thenComposeAsync(this::fetchMaterialTypes);
+  }
+
+  public CompletableFuture<Result<MultipleRecords<Holdings>>> findHoldingsByIds(
+    Collection<String> holdingsRecordIds) {
+
+    return fetchHoldingsByIds(holdingsRecordIds)
+      .thenApply(mapResult(multipleRecords ->
+        multipleRecords.mapRecords(new HoldingsMapper()::toDomain)));
+  }
+
+  private CompletableFuture<Result<MultipleRecords<JsonObject>>> fetchHoldingsByIds(
+    Collection<String> holdingsRecordIds) {
+
+    return findWithMultipleCqlIndexValues(holdingsClient, "holdingsRecords", identity())
+      .findByIds(holdingsRecordIds);
   }
 
   public CompletableFuture<Result<Collection<Item>>> findByIndexNameAndQuery(
