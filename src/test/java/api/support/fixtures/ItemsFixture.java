@@ -399,7 +399,7 @@ public class ItemsFixture {
     return addCallNumberStringComponents("");
   }
 
-  public IndividualResource getById(UUID id) {
-    return new IndividualResource(itemsClient.getById(id));
+  public ItemResource getById(UUID id) {
+    return new ItemResource(new IndividualResource(itemsClient.getById(id)), null, null);
   }
 }
