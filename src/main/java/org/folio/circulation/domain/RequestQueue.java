@@ -12,6 +12,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
+
 public class RequestQueue {
   private List<Request> requests;
   private final List<UpdatedRequestPair> updatedRequests;
@@ -124,16 +126,6 @@ public class RequestQueue {
     reSequenceRequests();
   }
 
-  public void setRequestToPositionOne(Request request) {
-    if (requests.size() > 1) {
-      requests = requests.stream()
-        .filter(r -> !r.getId().equals(request.getId()))
-        .collect(Collectors.toList());
-      requests.add(0, request);
-      reSequenceRequests();
-    }
-  }
-
   private void reSequenceRequests() {
     final AtomicInteger position = new AtomicInteger(1);
     requests.forEach(req -> req.changePosition(position.getAndIncrement()));
@@ -168,4 +160,23 @@ public class RequestQueue {
   boolean isEmpty() {
     return getRequests().isEmpty();
   }
+
+  // puts request on top of all requests in status "Open - Not yet filled"
+  public void updateRequestPositionOnCheckIn(String requestId) {
+    int newIndex = -1;
+
+    for (int i = 0; i < requests.size(); i++) {
+      if (newIndex == -1) {
+        if (requests.get(i).isNotYetFilled()) {
+          newIndex = i;
+        }
+      } else if (StringUtils.equals(requestId, requests.get(i).getId())) {
+        var requestToMove = requests.remove(i);
+        requests.add(newIndex, requestToMove);
+        reSequenceRequests();
+        return;
+      }
+    }
+  }
+
 }

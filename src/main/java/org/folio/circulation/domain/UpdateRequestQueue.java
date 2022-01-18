@@ -85,8 +85,8 @@ public class UpdateRequestQueue {
     if (requestBeingFulfilled.getItemId() == null) {
       requestBeingFulfilled = requestBeingFulfilled.withItem(item);
     }
-    //request's position needs to be changed to 1
-    requestQueue.setRequestToPositionOne(requestBeingFulfilled);
+
+    requestQueue.updateRequestPositionOnCheckIn(requestBeingFulfilled.getId());
 
     Request originalRequest = Request.from(requestBeingFulfilled.asJson());
 

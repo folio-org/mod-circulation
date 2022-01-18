@@ -16,6 +16,9 @@ import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.LoanMatchers.isClosed;
 import static api.support.matchers.OverdueFineMatcher.isValidOverdueFine;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
+import static api.support.matchers.RequestMatchers.hasPosition;
+import static api.support.matchers.RequestMatchers.isOpenAwaitingPickup;
+import static api.support.matchers.RequestMatchers.isOpenNotYetFilled;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
@@ -49,7 +52,6 @@ import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNot.not;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.time.LocalDate;
@@ -103,7 +105,7 @@ class CheckInByBarcodeTests extends APITests {
   private final static String OPEN_NOT_YET_FILLED = "Open - Not yet filled";
   private final static String OPEN_AWAITING_PICKUP = "Open - Awaiting pickup";
   private final static String OPEN_AWAITING_DELIVERY = "Open - Awaiting delivery";
-  private final static String POSITION = "position";
+  private final static String REQUEST_POSITION = "position";
 
   @Test
   void canCloseAnOpenLoanByCheckingInTheItem() {
@@ -1539,32 +1541,52 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
 
   @Test
   void requestsShouldChangePositionWhenTheyGoInFulfillmentOnCheckIn() {
-    reconfigureTlrFeature(TlrFeatureStatus.NOT_CONFIGURED);
     configurationsFixture.enableTlrFeature();
 
-    ZonedDateTime requestDate = ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC);
-    IndividualResource instance = instancesFixture.basedUponDunkirk();
-    IndividualResource holdings = holdingsFixture.defaultWithHoldings(instance.getId());
-    IndividualResource locationsResource = locationsFixture.mainFloor();
+    List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(3);
+    ItemResource firstItem = items.get(0);
+    ItemResource secondItem = items.get(1);
+    ItemResource thirdItem = items.get(2);
 
-    IndividualResource availableItem1 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), locationsResource.getId());
-    IndividualResource checkedOutItem2 = itemsClient.create(buildCheckedOutItemWithHoldingRecordsId(holdings.getId()));
+    UUID instanceId = firstItem.getInstanceId();
 
-    IndividualResource tlrHoldBeforeCheckIn = requestsClient.create(buildHoldTLRWithHoldShelfFulfilmentPreference(instance.getId(), usersFixture.steve().getId()));
-    IndividualResource tlrPageBeforeCheckIn = requestsClient.create(createTitleLevelPageRequestObject(instance.getId(),
-      usersFixture.jessica().getId(), servicePointsFixture.cd1().getId(), requestDate));
+    IndividualResource firstRequest = requestsFixture.placeItemLevelPageRequest(
+      firstItem, instanceId, usersFixture.jessica());
+    IndividualResource secondRequest = requestsFixture.placeItemLevelPageRequest(
+      secondItem, instanceId, usersFixture.steve());
+    IndividualResource thirdRequest = requestsFixture.placeTitleLevelHoldShelfRequest(
+      instanceId, usersFixture.charlotte());
 
-    // Validate request positions before check-in
-    assertEquals(1, tlrHoldBeforeCheckIn.getJson().getInteger(POSITION));
-    assertEquals(2, tlrPageBeforeCheckIn.getJson().getInteger(POSITION));
+    assertThat(firstRequest.getJson(), allOf(isOpenNotYetFilled(), hasPosition(1)));
+    assertThat(secondRequest.getJson(), allOf(isOpenNotYetFilled(), hasPosition(2)));
+    assertThat(thirdRequest.getJson(), allOf(isOpenNotYetFilled(), hasPosition(3)));
 
-    checkInFixture.checkInByBarcode(checkedOutItem2, servicePointsFixture.cd1().getId());
+    checkInFixture.checkInByBarcode(secondItem);
 
-    IndividualResource tlrHoldAfterCheckIn = requestsClient.get(tlrHoldBeforeCheckIn.getId());
-    IndividualResource tlrPageAfterCheckIn = requestsClient.get(UUID.fromString(tlrPageBeforeCheckIn.getJson().getString("id")));
-    // Validate request positions after check-in
-    assertEquals(2, tlrHoldAfterCheckIn.getJson().getInteger(POSITION));
-    assertEquals(1, tlrPageAfterCheckIn.getJson().getInteger(POSITION));
+    assertThat(requestsFixture.getById(firstRequest.getId()).getJson(),
+      allOf(isOpenNotYetFilled(), hasPosition(2)));
+    assertThat(requestsFixture.getById(secondRequest.getId()).getJson(),
+      allOf(isOpenAwaitingPickup(), hasPosition(1)));
+    assertThat(requestsFixture.getById(thirdRequest.getId()).getJson(),
+      allOf(isOpenNotYetFilled(), hasPosition(3)));
+
+    checkInFixture.checkInByBarcode(thirdItem);
+
+    assertThat(requestsFixture.getById(firstRequest.getId()).getJson(),
+      allOf(isOpenNotYetFilled(), hasPosition(3)));
+    assertThat(requestsFixture.getById(secondRequest.getId()).getJson(),
+      allOf(isOpenAwaitingPickup(), hasPosition(1)));
+    assertThat(requestsFixture.getById(thirdRequest.getId()).getJson(),
+      allOf(isOpenAwaitingPickup(), hasPosition(2)));
+
+    checkInFixture.checkInByBarcode(firstItem);
+
+    assertThat(requestsFixture.getById(firstRequest.getId()).getJson(),
+      allOf(isOpenAwaitingPickup(), hasPosition(3)));
+    assertThat(requestsFixture.getById(secondRequest.getId()).getJson(),
+      allOf(isOpenAwaitingPickup(), hasPosition(1)));
+    assertThat(requestsFixture.getById(thirdRequest.getId()).getJson(),
+      allOf(isOpenAwaitingPickup(), hasPosition(2)));
   }
 
   private JsonObject createTitleLevelPageRequestObject(UUID instanceId,
