@@ -13,5 +13,4 @@ public class ItemProperties {
   public static final String STATUS_PROPERTY = "status";
   public static final String LAST_CHECK_IN = "lastCheckIn";
   public static final String CALL_NUMBER_COMPONENTS = "callNumberComponents";
-  public static final String HOLDINGS_RECORD_ID = "holdingsRecordId";
 }

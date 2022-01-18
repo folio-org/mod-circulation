@@ -4,8 +4,12 @@ import lombok.Value;
 
 @Value
 public class Holdings {
+  public static Holdings unknown(String id) {
+    return new Holdings(id, null, null, null);
+  }
+
   public static Holdings unknown() {
-    return new Holdings(null, null, null, null);
+    return unknown(null);
   }
 
   String id;

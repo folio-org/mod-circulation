@@ -11,7 +11,6 @@ import static org.folio.circulation.domain.ItemStatus.MISSING;
 import static org.folio.circulation.domain.ItemStatus.PAGED;
 import static org.folio.circulation.domain.representations.ItemProperties.EFFECTIVE_LOCATION_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.ITEM_COPY_NUMBER_ID;
-import static org.folio.circulation.domain.representations.ItemProperties.LAST_CHECK_IN;
 import static org.folio.circulation.domain.representations.ItemProperties.MATERIAL_TYPE_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.PERMANENT_LOAN_TYPE_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.PERMANENT_LOCATION_ID;
@@ -146,7 +145,7 @@ public class Item {
   }
 
   public String getHoldingsRecordId() {
-    return getProperty(itemRepresentation, "holdingsRecordId");
+    return holdings.getId();
   }
 
   public String getInstanceId() {
@@ -357,7 +356,7 @@ public class Item {
     return new Item(this.itemRepresentation, this.location,
       this.lastCheckIn, this.callNumberComponents, this.permanentLocation,
       this.inTransitDestinationServicePoint, this.changed, this.holdings,
-      this.instance, materialType, this.loanType, barcode);
+      this.instance, materialType, this.loanType, this.barcode);
   }
 
   public Item withHoldings(@NonNull Holdings holdings) {
@@ -384,7 +383,7 @@ public class Item {
   public Item withLastCheckIn(@NonNull LastCheckIn lastCheckIn) {
     return new Item(this.itemRepresentation, this.location,
       lastCheckIn, this.callNumberComponents, this.permanentLocation,
-      this.inTransitDestinationServicePoint, this.changed, holdings,
+      this.inTransitDestinationServicePoint, this.changed, this.holdings,
       this.instance, this.materialType, this.loanType, this.barcode);
   }
 
@@ -396,8 +395,9 @@ public class Item {
   }
 
   public Item withInTransitDestinationServicePoint(ServicePoint inTransitDestinationServicePoint) {
-    return new Item(itemRepresentation, location, primaryServicePoint, lastCheckIn,
-      callNumberComponents, permanentLocation, inTransitDestinationServicePoint,
-      changed, holdings, instance, materialType, loanType, barcode);
+    return new Item(this.itemRepresentation, this.location, this.lastCheckIn,
+      this.callNumberComponents, this.permanentLocation,
+      inTransitDestinationServicePoint, this.changed, this.holdings,
+      this.instance, this.materialType, this.loanType, this.barcode);
   }
 }

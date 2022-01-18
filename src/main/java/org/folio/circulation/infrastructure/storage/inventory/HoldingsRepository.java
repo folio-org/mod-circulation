@@ -1,6 +1,5 @@
 package org.folio.circulation.infrastructure.storage.inventory;
 
-import static org.folio.circulation.domain.representations.ItemProperties.HOLDINGS_RECORD_ID;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQuery;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
@@ -27,8 +26,8 @@ public class HoldingsRepository {
   CompletableFuture<Result<Holdings>> fetchById(String id) {
     final var mapper = new HoldingsMapper();
 
-    return SingleRecordFetcher.json(holdingsClient, "holding",
-        r -> failedValidation("Holding does not exist", HOLDINGS_RECORD_ID, id))
+    return SingleRecordFetcher.json(holdingsClient, "holdings",
+        r -> failedValidation("Holdings record does not exist", "id", id))
       .fetch(id)
       .thenApply(mapResult(mapper::toDomain));
   }

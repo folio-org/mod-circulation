@@ -41,7 +41,7 @@ class ItemPermanentLocationTest {
   void nullIsReturnedWhenNoHoldingsPresent() {
     val itemJson = new ItemBuilder().withPermanentLocation((UUID) null).create();
 
-    val item = Item.from(itemJson).withHoldings(Holdings.unknown());
+    val item = Item.from(itemJson).withHoldings(Holdings.unknown(null));
 
     assertThat(item.getPermanentLocationId(), nullValue());
   }

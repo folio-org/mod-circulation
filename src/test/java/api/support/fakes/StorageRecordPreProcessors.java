@@ -5,7 +5,6 @@ import static api.support.fakes.Storage.getStorage;
 import static api.support.http.InterfaceUrls.holdingsStorageUrl;
 import static org.apache.commons.lang3.ObjectUtils.firstNonNull;
 import static org.folio.circulation.domain.representations.ItemProperties.EFFECTIVE_LOCATION_ID;
-import static org.folio.circulation.domain.representations.ItemProperties.HOLDINGS_RECORD_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.PERMANENT_LOCATION_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.TEMPORARY_LOCATION_ID;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
@@ -71,7 +70,7 @@ public final class StorageRecordPreProcessors {
     @SuppressWarnings("unused") JsonObject oldItem, JsonObject newItem) {
 
     final JsonObject effectiveCallNumberComponents = new JsonObject();
-    final String holdingsId = newItem.getString(HOLDINGS_RECORD_ID);
+    final String holdingsId = newItem.getString("holdingsRecordId");
     final JsonObject holding = getHoldingById(holdingsId);
 
     CALL_NUMBER_PROPERTIES.forEach(properties -> {
