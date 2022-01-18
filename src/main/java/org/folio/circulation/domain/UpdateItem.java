@@ -117,10 +117,6 @@ public class UpdateItem {
       .thenApply(itemResult -> itemResult.map(loanAndRelatedRecords::withItem));
   }
 
-  public Item onDestinationServicePointUpdate(Item item, ServicePoint servicePoint) {
-    return item.updateDestinationServicePoint(servicePoint);
-  }
-
   private CompletableFuture<Result<Item>> onLoanUpdate(
     Loan loan,
     RequestQueue requestQueue) {

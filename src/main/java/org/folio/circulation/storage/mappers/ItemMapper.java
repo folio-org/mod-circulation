@@ -9,6 +9,7 @@ import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.LastCheckIn;
 import org.folio.circulation.domain.LoanType;
 import org.folio.circulation.domain.MaterialType;
+import org.folio.circulation.domain.ServicePoint;
 
 import io.vertx.core.json.JsonObject;
 
@@ -19,7 +20,7 @@ public class ItemMapper {
       LastCheckIn.fromItemJson(representation),
       CallNumberComponents.fromItemJson(representation),
       null,
-      null,
+      getInTransitServicePoint(representation),
       false,
       Holdings.unknown(),
       Instance.unknown(),
@@ -27,4 +28,18 @@ public class ItemMapper {
       LoanType.unknown(),
       getProperty(representation, "barcode"));
   }
+
+  private ServicePoint getInTransitServicePoint(JsonObject representation) {
+    final var inTransitDestinationServicePointId
+      = getProperty(representation, "inTransitDestinationServicePointId");
+
+    if (inTransitDestinationServicePointId == null) {
+      return null;
+    }
+    else {
+      return ServicePoint.unknown(inTransitDestinationServicePointId);
+    }
+  }
+
+
 }

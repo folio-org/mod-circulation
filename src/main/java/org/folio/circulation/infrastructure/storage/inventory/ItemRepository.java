@@ -5,7 +5,6 @@ import static java.util.function.Function.identity;
 import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
 import static org.folio.circulation.domain.MultipleRecords.CombinationMatchers.matchRecordsById;
 import static org.folio.circulation.domain.representations.ItemProperties.HOLDINGS_RECORD_ID;
-import static org.folio.circulation.domain.representations.ItemProperties.IN_TRANSIT_DESTINATION_SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.LAST_CHECK_IN;
 import static org.folio.circulation.domain.representations.ItemProperties.STATUS_PROPERTY;
 import static org.folio.circulation.support.fetching.MultipleCqlIndexValuesCriteria.byIndex;
@@ -82,6 +81,8 @@ public class ItemRepository {
   }
 
   public CompletableFuture<Result<Item>> updateItem(Item item) {
+    final String IN_TRANSIT_DESTINATION_SERVICE_POINT_ID = "inTransitDestinationServicePointId";
+
     if (item == null) {
       return ofAsync(() -> null);
     }
