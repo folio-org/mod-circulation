@@ -395,7 +395,7 @@ class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests {
     val charlotte = usersFixture.charlotte();
 
     // items
-    ItemResource nod1 = itemsFixture.basedUponNod();
+    ItemResource nod = itemsFixture.basedUponNod();
     ItemResource temeraire = itemsFixture.basedUponTemeraire();
     ItemResource planet = itemsFixture.basedUponSmallAngryPlanet();
     ItemResource times = itemsFixture.basedUponInterestingTimes();
@@ -404,7 +404,7 @@ class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests {
     ItemResource lotr = itemsFixture.basedUponLotr();
 
     // loans
-    IndividualResource nodToJames = checkOutFixture.checkOutByBarcode(nod1, james, loanDate.plusHours(1));
+    IndividualResource nodToJames = checkOutFixture.checkOutByBarcode(nod, james, loanDate.plusHours(1));
     IndividualResource temeraireToJames = checkOutFixture.checkOutByBarcode(temeraire, james, loanDate.plusHours(2));
     checkOutFixture.checkOutByBarcode(lotr, charlotte, loanDate.plusHours(3));
     IndividualResource planetToJames = checkOutFixture.checkOutByBarcode(planet, james, loanDate.plusHours(4));
@@ -429,7 +429,7 @@ class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests {
       getMultipleLoansContextMatcher(
         james,
         Arrays.asList(
-          Pair.of(nodToJames, nod1),
+          Pair.of(nodToJames, nod),
           Pair.of(planetToJames, planet)),
         loanPolicyMatcher);
 
