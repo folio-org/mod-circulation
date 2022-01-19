@@ -2,6 +2,7 @@ package org.folio.circulation.services.support;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import org.folio.circulation.domain.Holdings;
 import org.folio.circulation.domain.Instance;
@@ -56,12 +57,10 @@ public class ItemsInTransitReportContext {
   }
 
   public String getInstanceId(Item item) {
-    String holdingsRecordId = item.getHoldingsRecordId();
-
-    if (holdingsRecordId == null || !holdingsRecords.containsKey(holdingsRecordId)) {
-      return null;
-    }
-
-    return holdingsRecords.get(holdingsRecordId).getInstanceId();
+    return Optional.ofNullable(item)
+      .map(Item::getHoldingsRecordId)
+      .map(holdingsRecords::get)
+      .map(Holdings::getInstanceId)
+      .orElse(null);
   }
 }

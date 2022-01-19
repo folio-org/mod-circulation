@@ -196,6 +196,9 @@ public class ItemsInTransitReportService {
     .collect(Collectors.toSet());
   }
 
+  /**
+   * Chooses first value when key mapper generates equal keys
+   */
   public <T> Map<String, T> toMap(Collection<T> collection, Function<T, String> keyMapper) {
     return collection.stream()
       .collect(Collectors.toMap(keyMapper, identity(), (left, right) -> left));
