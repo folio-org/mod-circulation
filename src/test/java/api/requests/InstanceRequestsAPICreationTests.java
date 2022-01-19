@@ -318,23 +318,21 @@ class InstanceRequestsAPICreationTests extends APITests {
     IntStream.range(0, ITEM_COPIES_NUMBER)
       .forEach(index -> itemsFixture.basedUponDunkirkWithCustomHoldingAndLocationAndCheckedOut(
         holdings.getId(), locationsResource.getId()));
-    final IndividualResource availableItemCopy =
-      itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(),
-        locationsResource.getId());
+    var availableItem = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(
+      holdings.getId(), locationsResource.getId());
 
     IndividualResource instanceRequester = usersFixture.charlotte();
     ZonedDateTime instanceRequestDate = ZonedDateTime.of(2022, 1, 14, 10, 22, 54, 0, UTC);
-    ZonedDateTime instanceRequestDateRequestExpirationDate
-      = instanceRequestDate.plusDays(30);
+    ZonedDateTime instanceRequestExpirationDate = instanceRequestDate.plusDays(30);
     JsonObject requestBody = createInstanceRequestObject(instance.getId(),
       instanceRequester.getId(), pickupServicePointId, instanceRequestDate,
-      instanceRequestDateRequestExpirationDate);
+      instanceRequestExpirationDate);
     Response postResponse = requestsFixture.attemptToPlaceForInstance(requestBody);
     JsonObject representation = postResponse.getJson();
 
     assertEquals(postResponse.getStatusCode(), HTTP_CREATED.toInt());
     validateInstanceRequestResponse(representation, pickupServicePointId,
-      instance.getId(), availableItemCopy.getId(), RequestType.PAGE);
+      instance.getId(), availableItem.getId(), RequestType.PAGE);
   }
 
   @Test
