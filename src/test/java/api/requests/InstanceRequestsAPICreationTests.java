@@ -33,6 +33,8 @@ import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
 
 class InstanceRequestsAPICreationTests extends APITests {
+  private static final int ITEM_COPIES_NUMBER = 20;
+
   @Test
   void canCreateATitleLevelRequestForMultipleAvailableItemsAndAMatchingPickupLocationId() {
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -307,13 +309,15 @@ class InstanceRequestsAPICreationTests extends APITests {
   }
 
   @Test
-  void canSuccessfullyPlaceATitleLevelRequestOnAvailableCopyWithAdditionalTwentyUnavailableCopies() {
+  void canPlaceTitleLevelRequestOnItemWhenManyUnavailableItemsOfSameInstanceExist() {
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     IndividualResource instance = instancesFixture.basedUponDunkirk();
     IndividualResource holdings = holdingsFixture.defaultWithHoldings(instance.getId());
     IndividualResource locationsResource = locationsFixture.mainFloor();
 
-    createTwentyCheckedOutItemCopies(holdings, locationsResource);
+    IntStream.range(0, ITEM_COPIES_NUMBER)
+      .forEach(index -> itemsFixture.basedUponDunkirkWithCustomHoldingAndLocationAndCheckedOut(
+        holdings.getId(), locationsResource.getId()));
     final IndividualResource availableItemCopy =
       itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(),
         locationsResource.getId());
@@ -919,13 +923,6 @@ class InstanceRequestsAPICreationTests extends APITests {
 
     assertThat(requestedItem.getString("status"),
       is(ItemStatus.CHECKED_OUT.getValue()));
-  }
-
-  private void createTwentyCheckedOutItemCopies(IndividualResource holdings,
-    IndividualResource locationsResource) {
-    IntStream.range(0, 20)
-      .forEach(index -> itemsFixture.basedUponDunkirkWithCustomHoldingAndLocationAndCheckedOut(
-        holdings.getId(), locationsResource.getId()));
   }
 
 }
