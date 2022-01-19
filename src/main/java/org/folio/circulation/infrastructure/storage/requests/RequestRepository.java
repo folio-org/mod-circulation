@@ -2,6 +2,7 @@ package org.folio.circulation.infrastructure.storage.requests;
 
 import static java.util.Objects.isNull;
 import static org.folio.circulation.domain.RequestStatus.openStates;
+import static org.folio.circulation.support.CqlSortBy.ascending;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.results.Result.failed;
@@ -51,6 +52,20 @@ public class RequestRepository {
   private final LoanRepository loanRepository;
   private final ServicePointRepository servicePointRepository;
   private final PatronGroupRepository patronGroupRepository;
+
+  /**
+   * Public constructor to avoid creating repositories twice
+   */
+  public RequestRepository(org.folio.circulation.support.Clients clients,
+    ItemRepository itemRepository, UserRepository userRepository, LoanRepository loanRepository,
+    ServicePointRepository servicePointRepository, PatronGroupRepository patronGroupRepository) {
+
+    this(new Clients(clients.requestsStorage(), clients.requestsBatchStorage(),
+        clients.cancellationReasonStorage()), itemRepository,
+      userRepository, loanRepository,
+      servicePointRepository,
+      patronGroupRepository);
+  }
 
   private RequestRepository(Clients clients, ItemRepository itemRepository,
     UserRepository userRepository, LoanRepository loanRepository,
@@ -149,8 +164,11 @@ public class RequestRepository {
   public CompletableFuture<Result<MultipleRecords<Request>>> findOpenRequestsByItemIds(
     Collection<String> itemIds) {
 
+    Result<CqlQuery> query = exactMatchAny("status", openStates())
+      .map(q -> q.sortBy(ascending("position")));
+
     return findWithMultipleCqlIndexValues(requestsStorageClient, "requests", Request::from)
-      .findByIdIndexAndQuery(itemIds, "itemId", exactMatchAny("status", openStates()));
+      .findByIdIndexAndQuery(itemIds, "itemId", query);
   }
 
   public CompletableFuture<Result<Request>> update(Request request) {
