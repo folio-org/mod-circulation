@@ -18,6 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.UUID;
+import java.util.stream.IntStream;
 
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.RequestType;
@@ -32,6 +33,8 @@ import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
 
 class InstanceRequestsAPICreationTests extends APITests {
+  private static final int ITEM_COPIES_NUMBER = 20;
+
   @Test
   void canCreateATitleLevelRequestForMultipleAvailableItemsAndAMatchingPickupLocationId() {
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -303,6 +306,33 @@ class InstanceRequestsAPICreationTests extends APITests {
     JsonObject representation = postResponse.getJson();
     validateInstanceRequestResponse(representation, pickupServicePointId,
       instance.getId(), item2.getId(), RequestType.PAGE);
+  }
+
+  @Test
+  void canPlaceTitleLevelRequestOnItemWhenManyUnavailableItemsOfSameInstanceExist() {
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    IndividualResource instance = instancesFixture.basedUponDunkirk();
+    IndividualResource holdings = holdingsFixture.defaultWithHoldings(instance.getId());
+    IndividualResource locationsResource = locationsFixture.mainFloor();
+
+    IntStream.range(0, ITEM_COPIES_NUMBER)
+      .forEach(index -> itemsFixture.basedUponDunkirkWithCustomHoldingAndLocationAndCheckedOut(
+        holdings.getId(), locationsResource.getId()));
+    var availableItem = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(
+      holdings.getId(), locationsResource.getId());
+
+    IndividualResource instanceRequester = usersFixture.charlotte();
+    ZonedDateTime instanceRequestDate = ZonedDateTime.of(2022, 1, 14, 10, 22, 54, 0, UTC);
+    ZonedDateTime instanceRequestExpirationDate = instanceRequestDate.plusDays(30);
+    JsonObject requestBody = createInstanceRequestObject(instance.getId(),
+      instanceRequester.getId(), pickupServicePointId, instanceRequestDate,
+      instanceRequestExpirationDate);
+    Response postResponse = requestsFixture.attemptToPlaceForInstance(requestBody);
+    JsonObject representation = postResponse.getJson();
+
+    assertEquals(postResponse.getStatusCode(), HTTP_CREATED.toInt());
+    validateInstanceRequestResponse(representation, pickupServicePointId,
+      instance.getId(), availableItem.getId(), RequestType.PAGE);
   }
 
   @Test
