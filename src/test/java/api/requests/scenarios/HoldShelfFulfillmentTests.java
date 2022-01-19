@@ -156,8 +156,7 @@ class HoldShelfFulfillmentTests extends APITests {
     }
 
     if (checkedInItemNumber == 2) {
-      // Jessica's request should be fulfilled. All requests should keep their positions until
-      // re-positioning is triggered by check-out, cancellation etc.
+      // Jessica's request should be fulfilled and moved to the first position in queue
 
       Response updatedRequestBySteve = requestsClient.getById(requestBySteve.getId());
       assertThat(updatedRequestBySteve.getJson(), isItemLevel());

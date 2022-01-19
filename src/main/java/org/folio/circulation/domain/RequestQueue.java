@@ -166,17 +166,18 @@ public class RequestQueue {
     int newIndex = -1;
 
     for (int i = 0; i < requests.size(); i++) {
+      boolean isSameRequest = StringUtils.equals(requestId, requests.get(i).getId());
       if (newIndex == -1) {
-        if (requests.get(i).isNotYetFilled()) {
+        if (!isSameRequest && requests.get(i).isNotYetFilled()) {
           newIndex = i;
         }
-      } else if (StringUtils.equals(requestId, requests.get(i).getId())) {
-        var requestToMove = requests.remove(i);
-        requests.add(newIndex, requestToMove);
+      } else if (isSameRequest) {
+        requests.add(newIndex, requests.remove(i));
         reSequenceRequests();
         return;
       }
     }
   }
+
 
 }

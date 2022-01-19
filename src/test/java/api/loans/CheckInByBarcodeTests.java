@@ -1491,7 +1491,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     UUID instanceId = instancesFixture.basedUponDunkirk().getId();
     IndividualResource defaultWithHoldings = holdingsFixture.defaultWithHoldings(instanceId);
     IndividualResource checkedOutItem = itemsClient.create(buildCheckedOutItemWithHoldingRecordsId(defaultWithHoldings.getId()));
-    IndividualResource holdRequestBeforeFulfilled = requestsClient.create(buildHoldTLRWithHoldShelfFulfilmentPreference(instanceId, usersFixture.charlotte().getId()));
+    IndividualResource holdRequestBeforeFulfilled = requestsClient.create(buildHoldTLRWithHoldShelfFulfilmentPreference(instanceId));
 
     checkInFixture.checkInByBarcode(checkedOutItem, servicePointsFixture.cd1().getId());
 
@@ -1598,7 +1598,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
       .create();
   }
 
-  private JsonObject buildHoldTLRWithHoldShelfFulfilmentPreference(UUID instanceId, UUID requesterId) {
+  private JsonObject buildHoldTLRWithHoldShelfFulfilmentPreference(UUID instanceId) {
     return new RequestBuilder()
       .hold()
       .fulfilToHoldShelf()
@@ -1607,8 +1607,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
       .withNoItemId()
       .withNoHoldingsRecordId()
       .withPickupServicePointId(servicePointsFixture.cd1().getId())
-      .withRequesterId(requesterId)
-      .create();
+      .withRequesterId(usersFixture.charlotte().getId()).create();
   }
 
   private JsonObject buildHoldTLRWithDeliveryFulfilmentPreference(UUID instanceId) {
