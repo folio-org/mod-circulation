@@ -47,8 +47,6 @@ import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.UserBuilder;
 import api.support.fakes.FakeModNotify;
 import api.support.fakes.FakePubSub;
-import api.support.fakes.FakeStorageModule;
-import api.support.fakes.FakeStorageModuleBuilder;
 import api.support.fixtures.ConfigurationExample;
 import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.IndividualResource;
@@ -313,13 +311,13 @@ class DueDateScheduledNoticesProcessingTests extends APITests {
   void testNoticeIsDeletedIfPatronGroupIsNull() {
     generateLoanAndScheduledNotices();
 
-    JsonObject brokenNotice = createNoticesOverTime(dueDate.minusMinutes(1)::minusHours,
-      1).get(0);
+    JsonObject brokenNotice = createNoticesOverTime(dueDate.minusMinutes(1)::minusHours,1).get(0);
 
     usersClient.replace(borrower.getId(), new UserBuilder().withPatronGroupId(null));
     scheduledNoticesClient.create(brokenNotice);
     scheduledNoticeProcessingClient.runLoanNoticesProcessing(dueDate.minusSeconds(1));
 
+    verifyNumberOfSentNotices(0);
     verifyNumberOfScheduledNotices(0);
     verifyNumberOfPublishedEvents(NOTICE, 0);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
@@ -403,26 +401,10 @@ class DueDateScheduledNoticesProcessingTests extends APITests {
 
     checkSentNotices();
 
+    verifyNumberOfSentNotices(0);
     verifyNumberOfScheduledNotices(0);
     verifyNumberOfPublishedEvents(NOTICE, 0);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
-  }
-
-  @Test
-  void testErrorEventsAreSentWhenUpdateNoticeRequestFails() {
-    generateLoanAndScheduledNotices();
-
-    createNoticesOverTime(dueDate.minusMinutes(1)::minusHours, 2).forEach(
-      scheduledNoticesClient::create);
-
-    FakeStorageModule.setFailDeleteWithBadRequest(true);
-    FakeStorageModule.setFailUpdateWithBadRequest(true);
-
-    scheduledNoticeProcessingClient.runLoanNoticesProcessing(dueDate.minusSeconds(1));
-
-    verifyNumberOfScheduledNotices(2);
-    verifyNumberOfPublishedEvents(NOTICE, 2);
-    verifyNumberOfPublishedEvents(NOTICE_ERROR, 2);
   }
 
   @Test
@@ -484,9 +466,10 @@ class DueDateScheduledNoticesProcessingTests extends APITests {
     UUID expectedSentTemplateId2 = UUID.fromString(
       notices.get(3).getJsonObject("noticeConfig").getString("templateId"));
 
-    checkSentNoticesForSpecifiedItemAndUserAndLoan(basedUponNod, jessica, jessicaNodLoan,
+    checkSentNotices(basedUponNod, jessica, jessicaNodLoan,
       expectedSentTemplateId1, expectedSentTemplateId2);
 
+    verifyNumberOfSentNotices(2);
     verifyNumberOfScheduledNotices(expectedNumberOfUnprocessedNotices);
     verifyNumberOfPublishedEvents(NOTICE, 2);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 2);
@@ -728,10 +711,10 @@ class DueDateScheduledNoticesProcessingTests extends APITests {
 
   @SuppressWarnings("unchecked")
   private void checkSentNotices(UUID... expectedTemplateIds) {
-    checkSentNoticesForSpecifiedItemAndUserAndLoan(item, borrower, loan, expectedTemplateIds);
+    checkSentNotices(item, borrower, loan, expectedTemplateIds);
   }
 
-  private void checkSentNoticesForSpecifiedItemAndUserAndLoan(ItemResource itemResource,
+  private void checkSentNotices(ItemResource itemResource,
     UserResource userResource, IndividualResource checkoutResource, UUID... expectedTemplateIds) {
 
     Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();

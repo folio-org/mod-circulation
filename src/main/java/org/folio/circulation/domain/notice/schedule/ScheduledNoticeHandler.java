@@ -74,7 +74,7 @@ public abstract class ScheduledNoticeHandler {
     return ofAsync(() -> new ScheduledNoticeContext(notice))
       .thenCompose(r -> r.after(this::fetchNoticeData))
       .thenCompose(r -> r.after(this::sendNotice))
-      .thenCompose(r -> r.after(this::updateNoticeData))
+      .thenCompose(r -> r.after(this::updateNotice))
       .thenCompose(r -> handleResult(r, notice))
       .exceptionally(t -> handleException(t, notice));
   }
@@ -85,17 +85,6 @@ public abstract class ScheduledNoticeHandler {
     return ofAsync(() -> context)
       .thenCompose(r -> r.after(this::fetchData))
       .thenApply(r -> r.mapFailure(f -> publishErrorEvent(f, context.notice)));
-  }
-
-  protected CompletableFuture<Result<ScheduledNotice>> updateNoticeData(
-    ScheduledNoticeContext context) {
-
-    return ofAsync(() -> context)
-      .thenCompose(r -> r.after(this::updateNotice))
-      .thenApply(r -> r.mapFailure(f -> {
-        publishError(f.toString(), context.notice);
-        return failed(f);
-      }));
   }
 
   protected abstract CompletableFuture<Result<ScheduledNoticeContext>> fetchData(
@@ -117,13 +106,9 @@ public abstract class ScheduledNoticeHandler {
   protected Result<ScheduledNoticeContext> publishErrorEvent(HttpFailure failure,
     ScheduledNotice notice) {
 
-    publishError(failure.toString(), notice);
+    eventPublisher.publishNoticeErrorLogEvent(NoticeLogContext.from(notice), failure);
 
     return failed(failure);
-  }
-
-  public void publishError(String errorMessage, ScheduledNotice notice) {
-    eventPublisher.publishNoticeErrorLogEvent(NoticeLogContext.from(notice), errorMessage);
   }
 
   protected CompletableFuture<Result<ScheduledNotice>> deleteNotice(ScheduledNotice notice,
@@ -218,23 +203,15 @@ public abstract class ScheduledNoticeHandler {
       return completedFuture(result);
     } else {
       HttpFailure failure = result.cause();
-      logFailedResult(failure.toString(), notice);
+      log.error("Processing scheduled notice {} failed: {}", notice.getId(), failure);
 
-      return deleteNotice(notice, failure.toString())
-        .thenApply(r -> r.mapFailure(f -> {
-          logFailedResult(f.toString(), notice);
-          return succeeded(notice);
-        }));
+      return deleteNotice(notice, failure.toString());
     }
   }
 
-  private void logFailedResult(String errorMessage, ScheduledNotice notice) {
-    log.error("Processing scheduled notice {} failed: {}", notice.getId(), errorMessage);
-  }
-
   private Result<ScheduledNotice> handleException(Throwable throwable, ScheduledNotice notice) {
-    logFailedResult(throwable.getMessage(), notice);
-    publishError(throwable.getMessage(), notice);
+    log.error("An exception was thrown while processing scheduled notice {}: {}",
+      notice.getId(), throwable.getMessage());
 
     return succeeded(notice);
   }

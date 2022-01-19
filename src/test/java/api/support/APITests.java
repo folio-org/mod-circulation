@@ -305,8 +305,6 @@ public abstract class APITests {
 
     FakePubSub.clearPublishedEvents();
     FakePubSub.setFailPublishingWithBadRequestError(false);
-    FakeStorageModule.setFailDeleteWithBadRequest(false);
-    FakeStorageModule.setFailUpdateWithBadRequest(false);
 
     FakeModNotify.clearSentPatronNotices();
     FakeModNotify.setFailPatronNoticesWithBadRequest(false);

@@ -34,13 +34,17 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
+import api.support.builders.ItemBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
+import api.support.builders.UserBuilder;
 import api.support.fakes.FakeModNotify;
 import api.support.fakes.FakePubSub;
 import api.support.fixtures.ConfigurationExample;
+import api.support.fixtures.ItemExamples;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
+import api.support.http.UserResource;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
@@ -388,28 +392,32 @@ class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests {
     val james = usersFixture.james();
     val steve = usersFixture.steve();
     val jessica = usersFixture.jessica();
+    val charlotte = usersFixture.charlotte();
 
     // items
-    ItemResource nod = itemsFixture.basedUponNod();
+    ItemResource nod1 = itemsFixture.basedUponNod();
     ItemResource temeraire = itemsFixture.basedUponTemeraire();
     ItemResource planet = itemsFixture.basedUponSmallAngryPlanet();
     ItemResource times = itemsFixture.basedUponInterestingTimes();
     ItemResource uprooted = itemsFixture.basedUponUprooted();
     ItemResource dunkirk = itemsFixture.basedUponDunkirk();
+    ItemResource lotr = itemsFixture.basedUponLotr();
 
     // loans
-    IndividualResource nodToJames = checkOutFixture.checkOutByBarcode(nod, james, loanDate.plusHours(1));
+    IndividualResource nodToJames = checkOutFixture.checkOutByBarcode(nod1, james, loanDate.plusHours(1));
     IndividualResource temeraireToJames = checkOutFixture.checkOutByBarcode(temeraire, james, loanDate.plusHours(2));
-    IndividualResource planetToJames = checkOutFixture.checkOutByBarcode(planet, james, loanDate.plusHours(3));
-    checkOutFixture.checkOutByBarcode(times, steve, loanDate.plusHours(4));
-    IndividualResource uprootedToSteve = checkOutFixture.checkOutByBarcode(uprooted, steve, loanDate.plusHours(5));
-    checkOutFixture.checkOutByBarcode(dunkirk, jessica, loanDate.plusHours(6));
+    checkOutFixture.checkOutByBarcode(lotr, charlotte, loanDate.plusHours(3));
+    IndividualResource planetToJames = checkOutFixture.checkOutByBarcode(planet, james, loanDate.plusHours(4));
+    checkOutFixture.checkOutByBarcode(times, steve, loanDate.plusHours(5));
+    IndividualResource uprootedToSteve = checkOutFixture.checkOutByBarcode(uprooted, steve, loanDate.plusHours(6));
+    checkOutFixture.checkOutByBarcode(dunkirk, jessica, loanDate.plusHours(7));
 
+    usersClient.replace(charlotte.getId(), new UserBuilder().withPatronGroupId(null));
     loansClient.delete(temeraireToJames);
     itemsClient.delete(times);
     usersFixture.remove(jessica);
 
-    verifyNumberOfScheduledNotices(6);
+    verifyNumberOfScheduledNotices(7);
 
     ZonedDateTime dueDate = parseDateTime(nodToJames.getJson().getString("dueDate"));
 
@@ -421,7 +429,7 @@ class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests {
       getMultipleLoansContextMatcher(
         james,
         Arrays.asList(
-          Pair.of(nodToJames, nod),
+          Pair.of(nodToJames, nod1),
           Pair.of(planetToJames, planet)),
         loanPolicyMatcher);
 
@@ -439,7 +447,7 @@ class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests {
     verifyNumberOfSentNotices(2);
     verifyNumberOfScheduledNotices(0);
     verifyNumberOfPublishedEvents(NOTICE, 2);
-    verifyNumberOfPublishedEvents(NOTICE_ERROR, 3);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 4);
   }
 
   @Test

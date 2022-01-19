@@ -493,11 +493,11 @@ class RequestScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  void scheduledNoticesShouldNotBeSentWhenRequestIdWasNull() {
+  void scheduledNoticesShouldNotBeSentWhenRequestIdIsNull() {
     prepareNotice();
 
-    JsonObject entries = scheduledNoticesClient.getAll().get(0);
-    scheduledNoticesClient.replace(UUID.fromString(entries.getString("id")), entries.put("requestId", null));
+    JsonObject notice = scheduledNoticesClient.getAll().get(0);
+    scheduledNoticesClient.replace(UUID.fromString(notice.getString("id")), notice.put("requestId", null));
 
     scheduledNoticeProcessingClient.runRequestNoticesProcessing(getZonedDateTime().plusMonths(2));
 

@@ -55,4 +55,13 @@ public class InstanceExamples {
     return new InstanceBuilder("Dunkirk", booksInstanceTypeId)
       .withContributor("Nolan, Christopher", personalContributorNameTypeId);
   }
+
+  static InstanceBuilder basedUponLotr(
+    UUID booksInstanceTypeId,
+    UUID personalContributorNameTypeId) {
+
+    return new InstanceBuilder("The Lord of the Rings", booksInstanceTypeId)
+      .withContributor("Tolkien, John", personalContributorNameTypeId);
+  }
+
 }

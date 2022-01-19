@@ -54,12 +54,6 @@ public class FakeStorageModule extends AbstractVerticle {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private static final Set<String> queries = Collections.synchronizedSet(new HashSet<>());
 
-  @Setter
-  private static boolean failDeleteWithBadRequest;
-
-  @Setter
-  private static boolean failUpdateWithBadRequest;
-
   private final String rootPath;
   private final String collectionPropertyName;
   private final boolean hasCollectionDelete;
@@ -236,11 +230,6 @@ public class FakeStorageModule extends AbstractVerticle {
     WebContext context = new WebContext(routingContext);
 
     String id = routingContext.request().getParam("id");
-
-    if (failUpdateWithBadRequest) {
-      new BadRequestFailure("Bad request from fake storage " + rootPath).writeTo(routingContext.response());
-      return;
-    }
 
     JsonObject body = getJsonFromBody(routingContext);
 
@@ -427,11 +416,6 @@ public class FakeStorageModule extends AbstractVerticle {
 
   private void delete(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
-
-    if (failDeleteWithBadRequest) {
-      new BadRequestFailure("Bad request from fake storage " + rootPath).writeTo(routingContext.response());
-      return;
-    }
 
     String id = routingContext.request().getParam("id");
 

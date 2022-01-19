@@ -150,7 +150,7 @@ public class GroupedLoanScheduledNoticeHandler {
   private CompletableFuture<Result<List<ScheduledNotice>>> updateGroupedNotice(
     List<ScheduledNoticeContext> contexts) {
 
-    return allOf(contexts, loanScheduledNoticeHandler::updateNoticeData);
+    return allOf(contexts, loanScheduledNoticeHandler::updateNotice);
   }
 
   private CompletableFuture<Result<List<ScheduledNotice>>> handleResult(

@@ -58,6 +58,16 @@ public class ItemsFixture {
     contributorNameTypeRecordCreator.cleanUp();
   }
 
+  public ItemResource basedUponLotr() {
+
+    return create(
+      InstanceExamples.basedUponLotr(booksInstanceTypeId(),
+        getPersonalContributorNameTypeId()),
+      thirdFloorHoldings(),
+      ItemExamples.basedUponLotr(materialTypesFixture.book().getId(),
+        loanTypesFixture.canCirculate().getId()));
+  }
+
   public ItemResource basedUponDunkirk() {
 
     return create(
