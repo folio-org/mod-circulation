@@ -12,6 +12,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
+
 public class RequestQueue {
   private List<Request> requests;
   private final List<UpdatedRequestPair> updatedRequests;
@@ -158,4 +160,26 @@ public class RequestQueue {
   boolean isEmpty() {
     return getRequests().isEmpty();
   }
+
+  // puts request on top of all requests in status "Open - Not yet filled"
+  public void updateRequestPositionOnCheckIn(String requestId) {
+    int newIndex = -1;
+
+    for (int i = 0; i < requests.size(); i++) {
+      var currentRequest = requests.get(i);
+      boolean isSameRequest = StringUtils.equals(requestId, currentRequest.getId());
+
+      if (newIndex == -1) {
+        if (!isSameRequest && currentRequest.isNotYetFilled()) {
+          newIndex = i;
+        }
+      } else if (isSameRequest) {
+        requests.add(newIndex, requests.remove(i));
+        reSequenceRequests();
+        return;
+      }
+    }
+  }
+
+
 }

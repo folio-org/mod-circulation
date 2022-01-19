@@ -85,6 +85,9 @@ public class UpdateRequestQueue {
     if (requestBeingFulfilled.getItemId() == null) {
       requestBeingFulfilled = requestBeingFulfilled.withItem(item);
     }
+
+    requestQueue.updateRequestPositionOnCheckIn(requestBeingFulfilled.getId());
+
     Request originalRequest = Request.from(requestBeingFulfilled.asJson());
 
     CompletableFuture<Result<Request>> updatedReq;
@@ -111,7 +114,7 @@ public class UpdateRequestQueue {
 
     return updatedReq
       .thenComposeAsync(r -> r.after(requestRepository::update))
-      .thenApply(result -> result.map(v -> requestQueue));
+      .thenComposeAsync(result -> result.after(v -> requestQueueRepository.updateRequestsWithChangedPositions(requestQueue)));
   }
 
   private CompletableFuture<Result<Request>> awaitPickup(Request request) {
