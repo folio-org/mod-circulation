@@ -2,12 +2,12 @@ package org.folio.circulation.infrastructure.storage.users;
 
 import static java.util.Objects.isNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
+import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
-import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
-import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
@@ -19,6 +19,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.Request;
@@ -28,12 +30,10 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
-import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.Response;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.folio.circulation.support.results.Result;
 
 public class UserRepository {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
@@ -168,7 +168,15 @@ public class UserRepository {
   public CompletableFuture<Result<MultipleRecords<Request>>> findUsersForRequests(
     MultipleRecords<Request> multipleRequests) {
 
-    Collection<Request> requests = multipleRequests.getRecords();
+    return findUsersByRequests(multipleRequests.getRecords())
+      .thenApply(multipleUsersResult -> multipleUsersResult.next(
+        multipleUsers -> of(() ->
+          multipleRequests.mapRecords(request ->
+            matchUsersToRequests(request, multipleUsers)))));
+  }
+
+  public CompletableFuture<Result<MultipleRecords<User>>> findUsersByRequests(
+    Collection<Request> requests) {
 
     final List<String> usersToFetch = requests.stream()
       .map(this::getUsersFromRequest)
@@ -177,18 +185,14 @@ public class UserRepository {
       .collect(Collectors.toList());
 
     if (usersToFetch.isEmpty()) {
-      return completedFuture(succeeded(multipleRequests));
+      return completedFuture(succeeded(MultipleRecords.empty()));
     }
 
     final FindWithMultipleCqlIndexValues<User> fetcher
       = findWithMultipleCqlIndexValues(usersStorageClient, USERS_RECORD_PROPERTY,
-        User::from);
+      User::from);
 
-    return fetcher.findByIds(usersToFetch)
-      .thenApply(multipleUsersResult -> multipleUsersResult.next(
-        multipleUsers -> of(() ->
-          multipleRequests.mapRecords(request ->
-            matchUsersToRequests(request, multipleUsers)))));
+    return fetcher.findByIds(usersToFetch);
   }
 
   private ArrayList<String> getUsersFromRequest(Request request) {

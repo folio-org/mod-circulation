@@ -69,6 +69,13 @@ public class PatronGroupRepository {
         patronGroups -> matchGroupsToUsers(multipleRequests, patronGroups)));
   }
 
+  public CompletableFuture<Result<Collection<PatronGroup>>> findPatronGroupsByIds(
+    Collection<String> ids) {
+
+    return createGroupsFetcher().findByIds(ids)
+      .thenApply(r -> r.map(MultipleRecords::getRecords));
+  }
+
   private ArrayList<String> getGroupsFromUsers(Request request) {
     final ArrayList<String> groupsToFetch = new ArrayList<>();
 
