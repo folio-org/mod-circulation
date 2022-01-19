@@ -45,9 +45,9 @@ public class ItemsInTransitReport {
 
   private Comparator<Item> sortByCheckinServicePointComparator() {
     return comparing(item -> ofNullable(reportContext.getLoans().get(item.getItemId()))
-      .flatMap(loan -> ofNullable(loan.getCheckInServicePointId())
-        .flatMap(servicePointId -> ofNullable(reportContext.getServicePoints().get(servicePointId)))
-        .map(ServicePoint::getName))
+      .map(Loan::getCheckInServicePointId)
+      .map(id -> reportContext.getServicePoints().get(id))
+      .map(ServicePoint::getName)
       .orElse(null), Comparator.nullsLast(String::compareTo));
   }
 
@@ -56,13 +56,12 @@ public class ItemsInTransitReport {
       return new JsonObject();
     }
 
-    Holdings holdings = reportContext.getHoldingsRecords().get(item.getHoldingsRecordId());
-    if (holdings != null) {
-      Instance instance = reportContext.getInstances().get(holdings.getInstanceId());
-      if (instance != null) {
-        item = item.withInstance(instance);
-      }
-    }
+    item = ofNullable(item.getHoldingsRecordId())
+      .map(reportContext.getHoldingsRecords()::get)
+      .map(Holdings::getInstanceId)
+      .map(reportContext.getInstances()::get)
+      .map(item::withInstance)
+      .orElse(item);
 
     Loan loan = reportContext.getLoans().get(item.getItemId());
     Request request = reportContext.getRequests().get(item.getItemId());
