@@ -86,7 +86,7 @@ public abstract class CirculationPolicyRepository<T> {
   public CompletableFuture<Result<CirculationRuleMatch>> lookupPolicyId(Item item, User user) {
     if (item == null){
       return completedFuture(failedDueToServerError(
-        "Unable to apply circulation rules for item is null"));
+        "Unable to apply circulation rules for item that is null"));
     }
 
     if (user == null){

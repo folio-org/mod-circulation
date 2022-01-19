@@ -140,10 +140,6 @@ public class RequestRepository {
   }
 
   private CompletableFuture<Result<Request>> fetchRequest(String id) {
-    if(isNull(id)) {
-      return ofAsync(() -> null);
-    }
-
     return createSingleRequestFetcher(new ResponseInterpreter<Request>()
       .flatMapOn(200, mapUsingJson(Request::from))
       .on(404, failed(new RecordNotFoundFailure("request", id))))
