@@ -256,7 +256,7 @@ public class ChargeLostFeesWhenAgedToLostService {
       log.warn("No fee/fine owner present for service point {}, skipping loan {}",
         loanToChargeFees.getOwnerServicePointId(), loanToChargeFees.getLoan().getId());
 
-      return failed(singleValidationError("No fee/fine owner found for item's effective location",
+      return failed(singleValidationError("No fee/fine owner found for item's permanent location",
         "servicePointId", loanToChargeFees.getOwnerServicePointId()));
     }
 

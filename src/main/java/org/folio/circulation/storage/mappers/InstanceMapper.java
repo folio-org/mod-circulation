@@ -16,7 +16,8 @@ import io.vertx.core.json.JsonObject;
 
 public class InstanceMapper {
   public Instance toDomain(JsonObject representation) {
-    return new Instance(getProperty(representation, "title"),
+    return new Instance(getProperty(representation, "id"),
+      getProperty(representation, "title"),
       mapIdentifiers(representation), mapContributors(representation),
       mapPublication(representation), mapEditions(representation));
   }

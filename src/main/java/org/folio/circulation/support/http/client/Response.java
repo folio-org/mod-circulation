@@ -3,14 +3,13 @@ package org.folio.circulation.support.http.client;
 import static io.vertx.core.MultiMap.caseInsensitiveMultiMap;
 import static java.lang.String.format;
 
-import org.apache.commons.lang3.StringUtils;
-import org.apache.http.HttpHeaders;
-
 import io.vertx.core.MultiMap;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.HttpResponse;
 import lombok.val;
+import org.apache.commons.lang3.StringUtils;
+import org.folio.circulation.support.http.ContentType;
 
 public class Response {
   protected final String body;
@@ -39,7 +38,7 @@ public class Response {
     headers.addAll(response.headers());
 
     return new Response(response.statusCode(), response.bodyAsString(),
-      headers.get(HttpHeaders.CONTENT_TYPE), headers, url);
+      headers.get(ContentType.CONTENT_TYPE), headers, url);
   }
 
   public boolean hasBody() {
