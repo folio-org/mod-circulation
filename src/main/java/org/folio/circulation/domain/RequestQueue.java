@@ -166,9 +166,11 @@ public class RequestQueue {
     int newIndex = -1;
 
     for (int i = 0; i < requests.size(); i++) {
-      boolean isSameRequest = StringUtils.equals(requestId, requests.get(i).getId());
+      var currentRequest = requests.get(i);
+      boolean isSameRequest = StringUtils.equals(requestId, currentRequest.getId());
+
       if (newIndex == -1) {
-        if (!isSameRequest && requests.get(i).isNotYetFilled()) {
+        if (!isSameRequest && currentRequest.isNotYetFilled()) {
           newIndex = i;
         }
       } else if (isSameRequest) {
