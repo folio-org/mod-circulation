@@ -726,8 +726,8 @@ class DueDateScheduledNoticesProcessingTests extends APITests {
       TemplateContextMatchers.getLoanPolicyContextMatchersForUnlimitedRenewals());
 
     final var matchers = Stream.of(expectedTemplateIds)
-      .map(
-        templateId -> hasEmailNoticeProperties(userResource.getId(), templateId, noticeContextMatchers))
+      .map(templateId -> hasEmailNoticeProperties(userResource.getId(), templateId,
+        noticeContextMatchers))
       .toArray(Matcher[]::new);
 
     List<JsonObject> sentNotices = FakeModNotify.getSentPatronNotices();

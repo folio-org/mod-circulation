@@ -34,17 +34,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
-import api.support.builders.ItemBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.UserBuilder;
 import api.support.fakes.FakeModNotify;
 import api.support.fakes.FakePubSub;
 import api.support.fixtures.ConfigurationExample;
-import api.support.fixtures.ItemExamples;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
-import api.support.http.UserResource;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 

@@ -27,7 +27,6 @@ import org.junit.jupiter.api.BeforeEach;
 
 import api.support.fakes.FakeModNotify;
 import api.support.fakes.FakePubSub;
-import api.support.fakes.FakeStorageModule;
 import api.support.fixtures.AddressTypesFixture;
 import api.support.fixtures.AgeToLostFixture;
 import api.support.fixtures.AutomatedPatronBlocksFixture;
