@@ -201,12 +201,12 @@ public abstract class ScheduledNoticeHandler {
     if (result.succeeded()) {
       log.info("Finished processing scheduled notice {}", notice.getId());
       return completedFuture(result);
-    } else {
-      HttpFailure failure = result.cause();
-      log.error("Processing scheduled notice {} failed: {}", notice.getId(), failure);
-
-      return deleteNotice(notice, failure.toString());
     }
+
+    HttpFailure failure = result.cause();
+    log.error("Processing scheduled notice {} failed: {}", notice.getId(), failure);
+
+    return deleteNotice(notice, failure.toString());
   }
 
   private Result<ScheduledNotice> handleException(Throwable throwable, ScheduledNotice notice) {

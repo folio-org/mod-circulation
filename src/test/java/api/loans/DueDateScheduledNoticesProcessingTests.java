@@ -438,7 +438,7 @@ class DueDateScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  void testNoticesForNonExistentPatronGroupsDoNotBlockTheQueue() {
+  void testNoticesForNullPatronGroupsDoNotBlockTheQueue() {
     generateLoanAndScheduledNotices();
 
     int expectedNumberOfUnprocessedNotices = 0;

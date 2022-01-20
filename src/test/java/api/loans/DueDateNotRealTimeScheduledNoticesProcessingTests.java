@@ -372,6 +372,44 @@ class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
+  void noticeIsDeletedIfPatronGroupOfUserIsNullAndDoesNotBLockProcessing() {
+    JsonObject uponAtDueDateNoticeConfig = new NoticeConfigurationBuilder()
+      .withTemplateId(TEMPLATE_ID)
+      .withDueDateEvent()
+      .withUponAtTiming()
+      .sendInRealTime(false)
+      .create();
+
+    NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
+      .withName("Policy with due date notices")
+      .withLoanNotices(Collections.singletonList(uponAtDueDateNoticeConfig));
+
+    use(noticePolicy);
+
+    ZonedDateTime loanDate = ZonedDateTime.of(2019, 8, 23, 10, 30, 0, 0, ZoneOffset.UTC);
+
+    val james = usersFixture.james();
+    val charlotte = usersFixture.charlotte();
+    val nod = itemsFixture.basedUponNod();
+    val smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, charlotte, loanDate.plusHours(1));
+    val nodToJamesLoan = checkOutFixture.checkOutByBarcode(nod, james, loanDate.plusHours(2));
+    usersClient.replace(charlotte.getId(), new UserBuilder().withPatronGroupId(null));
+
+    verifyNumberOfScheduledNotices(2);
+
+    ZonedDateTime dueDate = parseDateTime(nodToJamesLoan.getJson().getString("dueDate"));
+    ZonedDateTime afterLoanDueDateTime = dueDate.plusDays(1);
+
+    scheduledNoticeProcessingClient.runDueDateNotRealTimeNoticesProcessing(afterLoanDueDateTime);
+
+    verifyNumberOfSentNotices(1);
+    verifyNumberOfScheduledNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 1);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
+  }
+
+  @Test
   void missingReferencedEntitiesDoNotBlockProcessing() {
     JsonObject uponAtDueDateNoticeConfig = new NoticeConfigurationBuilder()
       .withTemplateId(TEMPLATE_ID)
@@ -392,7 +430,6 @@ class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests {
     val james = usersFixture.james();
     val steve = usersFixture.steve();
     val jessica = usersFixture.jessica();
-    val charlotte = usersFixture.charlotte();
 
     // items
     ItemResource nod = itemsFixture.basedUponNod();
@@ -401,23 +438,20 @@ class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests {
     ItemResource times = itemsFixture.basedUponInterestingTimes();
     ItemResource uprooted = itemsFixture.basedUponUprooted();
     ItemResource dunkirk = itemsFixture.basedUponDunkirk();
-    ItemResource lotr = itemsFixture.basedUponLotr();
 
     // loans
     IndividualResource nodToJames = checkOutFixture.checkOutByBarcode(nod, james, loanDate.plusHours(1));
     IndividualResource temeraireToJames = checkOutFixture.checkOutByBarcode(temeraire, james, loanDate.plusHours(2));
-    checkOutFixture.checkOutByBarcode(lotr, charlotte, loanDate.plusHours(3));
-    IndividualResource planetToJames = checkOutFixture.checkOutByBarcode(planet, james, loanDate.plusHours(4));
-    checkOutFixture.checkOutByBarcode(times, steve, loanDate.plusHours(5));
-    IndividualResource uprootedToSteve = checkOutFixture.checkOutByBarcode(uprooted, steve, loanDate.plusHours(6));
-    checkOutFixture.checkOutByBarcode(dunkirk, jessica, loanDate.plusHours(7));
+    IndividualResource planetToJames = checkOutFixture.checkOutByBarcode(planet, james, loanDate.plusHours(3));
+    checkOutFixture.checkOutByBarcode(times, steve, loanDate.plusHours(4));
+    IndividualResource uprootedToSteve = checkOutFixture.checkOutByBarcode(uprooted, steve, loanDate.plusHours(5));
+    checkOutFixture.checkOutByBarcode(dunkirk, jessica, loanDate.plusHours(6));
 
-    usersClient.replace(charlotte.getId(), new UserBuilder().withPatronGroupId(null));
     loansClient.delete(temeraireToJames);
     itemsClient.delete(times);
     usersFixture.remove(jessica);
 
-    verifyNumberOfScheduledNotices(7);
+    verifyNumberOfScheduledNotices(6);
 
     ZonedDateTime dueDate = parseDateTime(nodToJames.getJson().getString("dueDate"));
 
@@ -447,7 +481,7 @@ class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests {
     verifyNumberOfSentNotices(2);
     verifyNumberOfScheduledNotices(0);
     verifyNumberOfPublishedEvents(NOTICE, 2);
-    verifyNumberOfPublishedEvents(NOTICE_ERROR, 4);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 3);
   }
 
   @Test

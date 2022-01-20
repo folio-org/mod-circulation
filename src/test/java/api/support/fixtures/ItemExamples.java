@@ -78,14 +78,4 @@ public class ItemExamples {
       .withMaterialType(videoRecordingMaterialTypeId)
       .withBarcode("70594943205");
   }
-
-  static ItemBuilder basedUponLotr(
-    UUID bookMaterialTypeId,
-    UUID loanTypeId) {
-
-    return new ItemBuilder()
-      .withPermanentLoanType(loanTypeId)
-      .withMaterialType(bookMaterialTypeId)
-      .withBarcode("67584943234");
-  }
 }
