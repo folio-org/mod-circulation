@@ -111,15 +111,9 @@ class ItemRepositoryTests {
   }
 
   private Item dummyItem() {
-<<<<<<< HEAD
     return new Item(null, null, null, null, null, null, null, false,
       Holdings.unknown(), Instance.unknown(), MaterialType.unknown(),
-      LoanType.unknown(), null, null);
-=======
-    return new Item(null, null, null, null, null, null, null, null, false,
-      Holdings.unknown(null), Instance.unknown(), MaterialType.unknown(null),
-      LoanType.unknown(), null, null, null);
->>>>>>> 0d146af9b (Introduce item enumeration field CIRC-1418)
+      LoanType.unknown(), null, null, null, null, null);
   }
 
   @SneakyThrows
