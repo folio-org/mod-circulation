@@ -3,7 +3,7 @@ package org.folio.circulation.domain;
 import static java.util.Objects.isNull;
 import static java.util.Optional.ofNullable;
 import static org.folio.circulation.domain.representations.CallNumberComponentsRepresentation.createCallNumberComponents;
-import static org.folio.circulation.domain.representations.ContributorsToNamesMapper.mapContributorsToNamesOnly;
+import static org.folio.circulation.domain.representations.ContributorsToNamesMapper.mapContributorNamesToJson;
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.copyProperty;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
@@ -99,7 +99,7 @@ public class RequestRepresentation {
     JsonObject instanceSummary = new JsonObject();
     write(instanceSummary, "title", instance.getTitle());
     write(instanceSummary, "identifiers", instance.getIdentifiers());
-    write(instanceSummary, "contributorNames", mapContributorsToNamesOnly(instance.getContributors()));
+    write(instanceSummary, "contributorNames", mapContributorNamesToJson(instance));
     write(instanceSummary, "publication", instance.getPublication());
     write(instanceSummary, "editions", instance.getEditions());
 

@@ -63,10 +63,8 @@ public class RequestRepository {
     ServicePointRepository servicePointRepository, PatronGroupRepository patronGroupRepository) {
 
     this(new Clients(clients.requestsStorage(), clients.requestsBatchStorage(),
-        clients.cancellationReasonStorage()), itemRepository,
-      userRepository, loanRepository,
-      servicePointRepository,
-      patronGroupRepository);
+        clients.cancellationReasonStorage()), itemRepository, userRepository,
+      loanRepository, servicePointRepository, patronGroupRepository, new InstanceRepository(clients));
   }
 
   private RequestRepository(Clients clients, ItemRepository itemRepository,
@@ -156,6 +154,13 @@ public class RequestRepository {
     return getByIdWithoutItem(id)
       .thenComposeAsync(result -> result.combineAfter(itemRepository::fetchFor,
         Request::withItem))
+      .thenComposeAsync(result -> result.combineAfter(instanceRepository::fetch,
+        Request::withInstance))
+      .thenComposeAsync(this::fetchLoan);
+  }
+
+  public CompletableFuture<Result<Request>> getByIdWithoutItem(String id) {
+    return fetchRequest(id)
       .thenComposeAsync(this::fetchRequester)
       .thenComposeAsync(this::fetchProxy)
       .thenComposeAsync(this::fetchPickupServicePoint)

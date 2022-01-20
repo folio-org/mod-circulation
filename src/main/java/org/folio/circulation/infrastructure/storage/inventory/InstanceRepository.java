@@ -18,6 +18,7 @@ import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Instance;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.Request;
+import org.folio.circulation.storage.mappers.InstanceMapper;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.SingleRecordFetcher;
@@ -36,9 +37,11 @@ public class InstanceRepository {
   }
 
   private CompletableFuture<Result<Instance>> fetchById(String instanceId) {
+    InstanceMapper mapper = new InstanceMapper();
+
     return SingleRecordFetcher.jsonOrNull(instancesClient, "instance")
       .fetch(instanceId)
-      .thenApply(r -> r.map(Instance::from));
+      .thenApply(r -> r.map(mapper::toDomain));
   }
 
   public CompletableFuture<Result<MultipleRecords<Request>>> findInstancesForRequests(MultipleRecords<Request> multipleRequests) {
@@ -55,7 +58,9 @@ public class InstanceRepository {
       return completedFuture(succeeded(multipleRequests));
     }
 
-    return findWithMultipleCqlIndexValues(instancesClient, "instances", Instance::from)
+    InstanceMapper mapper = new InstanceMapper();
+
+    return findWithMultipleCqlIndexValues(instancesClient, "instances", mapper::toDomain)
       .findByIds(instanceIdsToFetch)
       .thenApply(multipleInstancesResult -> multipleInstancesResult.next(
         multipleInstances -> {

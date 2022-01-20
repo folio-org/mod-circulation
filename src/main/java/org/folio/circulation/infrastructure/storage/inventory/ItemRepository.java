@@ -48,6 +48,7 @@ import org.folio.circulation.storage.mappers.InstanceMapper;
 import org.folio.circulation.storage.mappers.LoanTypeMapper;
 import org.folio.circulation.storage.mappers.MaterialTypeMapper;
 import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.FindWithCqlQuery;
 import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
 import org.folio.circulation.support.SingleRecordFetcher;
 import org.folio.circulation.support.http.client.CqlQuery;

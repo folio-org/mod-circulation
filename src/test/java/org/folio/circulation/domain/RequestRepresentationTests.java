@@ -11,6 +11,7 @@ import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
+import org.folio.circulation.storage.mappers.InstanceMapper;
 import org.junit.jupiter.api.Test;
 
 import api.support.builders.Address;
@@ -107,7 +108,9 @@ class RequestRepresentationTests {
     publication.put("dateOfPublication", "2016");
     write(instanceRepresentation, PUBLICATION, new JsonArray().add(publication));
 
-    final Item item = Item.from(new JsonObject()).withInstance(instanceRepresentation);
+    Instance instance = new InstanceMapper().toDomain(instanceRepresentation);
+
+    final Item item = Item.from(new JsonObject()).withInstance(instance);
 
     JsonObject requestJsonObject = new RequestBuilder()
       .recall()
@@ -124,7 +127,7 @@ class RequestRepresentationTests {
       .create();
 
     return Request.from(requestJsonObject)
-      .withInstance(Instance.from(instanceRepresentation))
+      .withInstance(instance)
       .withRequester(requester)
       .withPickupServicePoint(servicePoint)
       .withItem(item);
