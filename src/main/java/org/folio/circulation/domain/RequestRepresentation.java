@@ -2,6 +2,7 @@ package org.folio.circulation.domain;
 
 import static java.util.Objects.isNull;
 import static java.util.Optional.ofNullable;
+import static java.util.stream.Collectors.toList;
 import static org.folio.circulation.domain.representations.CallNumberComponentsRepresentation.createCallNumberComponents;
 import static org.folio.circulation.domain.representations.ContributorsToNamesMapper.mapContributorNamesToJson;
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
@@ -10,6 +11,7 @@ import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;
 
 import java.lang.invoke.MethodHandles;
+import java.util.Collection;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -98,12 +100,44 @@ public class RequestRepresentation {
     }
     JsonObject instanceSummary = new JsonObject();
     write(instanceSummary, "title", instance.getTitle());
-    write(instanceSummary, "identifiers", instance.getIdentifiers());
+    write(instanceSummary, "identifiers", identifiersToJson(instance.getIdentifiers()));
     write(instanceSummary, "contributorNames", mapContributorNamesToJson(instance));
-    write(instanceSummary, "publication", instance.getPublication());
+    write(instanceSummary, "publication", publicationsToJson(instance.getPublication()));
     write(instanceSummary, "editions", instance.getEditions());
 
     write(request, "instance", instanceSummary);
+  }
+
+  private static Collection<JsonObject> identifiersToJson(Collection<Identifier> identifiers) {
+    return identifiers.stream()
+      .map(RequestRepresentation::identifierToJson)
+      .collect(toList());
+  }
+
+  private static JsonObject identifierToJson(Identifier identifier) {
+    final var representation = new JsonObject();
+
+    write(representation, "identifierTypeId", identifier.getTypeId());
+    write(representation, "value", identifier.getValue());
+
+    return representation;
+  }
+
+  private static Collection<JsonObject> publicationsToJson(Collection<Publication> publications) {
+    return publications.stream()
+      .map(RequestRepresentation::publicationToJson)
+      .collect(toList());
+  }
+
+  private static JsonObject publicationToJson(Publication publication) {
+    final var representation = new JsonObject();
+
+    write(representation, "publisher", publication.getPublisher());
+    write(representation, "place", publication.getPlace());
+    write(representation, "dateOfPublication", publication.getDateOfPublication());
+    write(representation, "role", publication.getRole());
+
+    return representation;
   }
 
   private static JsonObject locationSummary(Location location) {

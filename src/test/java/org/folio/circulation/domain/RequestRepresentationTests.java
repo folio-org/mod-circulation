@@ -29,6 +29,7 @@ class RequestRepresentationTests {
   private static final String EDITIONS = "editions";
   private static final String PUBLICATION = "publication";
   private static final String INSTANCE = "instance";
+  private static final String ID = "id";
 
   @Test
   void testExtendedRepresentation() {
@@ -107,6 +108,7 @@ class RequestRepresentationTests {
     publication.put("place", "fake place");
     publication.put("dateOfPublication", "2016");
     write(instanceRepresentation, PUBLICATION, new JsonArray().add(publication));
+    write(instanceRepresentation, ID, UUID.randomUUID().toString());
 
     Instance instance = new InstanceMapper().toDomain(instanceRepresentation);
 

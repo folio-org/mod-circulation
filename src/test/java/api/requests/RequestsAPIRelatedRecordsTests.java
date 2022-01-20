@@ -126,8 +126,8 @@ class RequestsAPIRelatedRecordsTests extends APITests {
     JsonObject secondItemRecord = getRecordById(fetchedRequestsResponse, secondRequestId).get();
     JsonObject secondItem = secondItemRecord.getJsonObject("item");
 
-    assertThat("has holdings record ID",
-      secondItem.containsKey("holdingsRecordId"), is(true));
+    assertThat("Item has not a holdingsRecordId",
+      secondItem.containsKey("holdingsRecordId"), is(false));
 
     assertThat("Request has correct holdings record ID",
       secondItemRecord.getString("holdingsRecordId"),
