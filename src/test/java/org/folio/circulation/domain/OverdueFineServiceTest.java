@@ -1,6 +1,7 @@
 package org.folio.circulation.domain;
 
 import static java.time.ZoneOffset.UTC;
+import static java.util.Collections.emptyList;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.resources.context.RenewalContext.create;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
@@ -16,7 +17,6 @@ import static org.mockito.Mockito.when;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,7 +34,6 @@ import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineActionRe
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineOwnerRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
-import org.folio.circulation.infrastructure.storage.loans.LostItemPolicyRepository;
 import org.folio.circulation.infrastructure.storage.loans.OverdueFinePolicyRepository;
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
@@ -51,7 +50,6 @@ import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.FeeFineBuilder;
 import api.support.builders.FeeFineOwnerBuilder;
 import api.support.builders.FeefineActionsBuilder;
-import api.support.builders.InstanceBuilder;
 import api.support.builders.ItemBuilder;
 import api.support.builders.LoanBuilder;
 import api.support.builders.LocationBuilder;
@@ -82,9 +80,6 @@ class OverdueFineServiceTest {
     new User(new UserBuilder().withUsername("admin").create());
   private static final String LOGGED_IN_USER_ID = LOGGED_IN_USER.getId();
   private static final String CHECK_IN_SERVICE_POINT_NAME = "test service point";
-  private static final List<JsonObject> CONTRIBUTORS = List.of(
-    new JsonObject().put("name", "Contributor 1"),
-    new JsonObject().put("name", "Contributor 2"));
 
   private static final Map<String, Integer> MINUTES_IN_INTERVAL = new HashMap<>();
   static {
@@ -103,13 +98,9 @@ class OverdueFineServiceTest {
   private ItemRepository itemRepository;
   private FeeFineOwnerRepository feeFineOwnerRepository;
   private FeeFineRepository feeFineRepository;
-  private UserRepository userRepository;
   private FeeFineActionRepository feeFineActionRepository;
-  private LostItemPolicyRepository lostItemPolicyRepository;
   private ScheduledNoticesRepository scheduledNoticesRepository;
   private ServicePointRepository servicePointRepository;
-  private FeeFineFacade feeFineFacade;
-  private FeeFineService feeFineService;
 
   @BeforeEach
   public void setUp() {
@@ -119,13 +110,14 @@ class OverdueFineServiceTest {
     feeFineOwnerRepository = mock(FeeFineOwnerRepository.class);
     feeFineRepository = mock(FeeFineRepository.class);
     overduePeriodCalculatorService = mock(OverduePeriodCalculatorService.class);
-    userRepository = mock(UserRepository.class);
+    UserRepository userRepository = mock(UserRepository.class);
     feeFineActionRepository = mock(FeeFineActionRepository.class);
-    lostItemPolicyRepository = mock(LostItemPolicyRepository.class);
     scheduledNoticesRepository = mock(ScheduledNoticesRepository.class);
     servicePointRepository = mock(ServicePointRepository.class);
-    feeFineService = mock(FeeFineService.class);
-    feeFineFacade = new FeeFineFacade(accountRepository, feeFineActionRepository, userRepository,
+    FeeFineService feeFineService = mock(FeeFineService.class);
+    FeeFineFacade feeFineFacade = new FeeFineFacade(accountRepository,
+      feeFineActionRepository,
+      userRepository,
       servicePointRepository, feeFineService);
 
     overdueFineService = new OverdueFineService(
@@ -226,10 +218,10 @@ class OverdueFineServiceTest {
     assertEquals(DUE_DATE, getDateTimeProperty(account.getValue(), "dueDate"));
     assertEquals(RETURNED_DATE, getDateTimeProperty(account.getValue(), "returnedDate"));
 
-    assertEquals(CONTRIBUTORS.size(), account.getValue().getJsonArray("contributors").size());
-    assertEquals(CONTRIBUTORS.get(0).getString("name"),
+    assertEquals(2, account.getValue().getJsonArray("contributors").size());
+    assertEquals("Contributor 1",
       account.getValue().getJsonArray("contributors").getJsonObject(0).getString("name"));
-    assertEquals(CONTRIBUTORS.get(1).getString("name"),
+    assertEquals("Contributor 2",
       account.getValue().getJsonArray("contributors").getJsonObject(1).getString("name"));
 
     ArgumentCaptor<StoredFeeFineAction> feeFineAction =
@@ -614,9 +606,9 @@ class OverdueFineServiceTest {
       .create();
     item.put("effectiveCallNumberComponents", new JsonObject().put("callNumber", CALL_NUMBER));
 
-    JsonObject materialType = new JsonObject()
-      .put("id", ITEM_MATERIAL_TYPE_ID.toString())
-      .put("name", ITEM_MATERIAL_TYPE_NAME);
+    final var contributors = List.of(
+      new Contributor("Contributor 1", false),
+      new Contributor("Contributor 2", false));
 
     return Item.from(item)
       .withLocation(
@@ -624,9 +616,8 @@ class OverdueFineServiceTest {
           .withName(LOCATION_NAME)
           .withPrimaryServicePoint(SERVICE_POINT_ID)
           .create()))
-      .withInstance(new InstanceBuilder(TITLE, UUID.randomUUID()).create()
-        .put("contributors", CONTRIBUTORS))
-      .withMaterialType(materialType);
+      .withInstance(new Instance(UUID.randomUUID().toString(), TITLE, emptyList(), contributors, emptyList(), emptyList()))
+      .withMaterialType(new MaterialType(ITEM_MATERIAL_TYPE_NAME, null));
   }
 
   private OverdueFinePolicy createOverdueFinePolicy(
@@ -694,16 +685,14 @@ class OverdueFineServiceTest {
           LOCATION_NAME, ITEM_MATERIAL_TYPE_ID.toString())
       ),
       new FeeAmount(correctOverdueFine), new FeeAmount(correctOverdueFine), "Open", "Outstanding",
-      Collections.emptyList(),
+      emptyList(),
       ClockUtil.getZonedDateTime()
     );
   }
 
   private ServicePoint createServicePoint() {
-    return new ServicePoint(new JsonObject()
-      .put("id", CHECK_IN_SERVICE_POINT_ID)
-      .put("name", CHECK_IN_SERVICE_POINT_NAME)
-    );
+    return new ServicePoint(CHECK_IN_SERVICE_POINT_ID.toString(), CHECK_IN_SERVICE_POINT_NAME,
+      null, false, null, null, null, null);
   }
 
   private static Collection<Object[]> testParameters() {

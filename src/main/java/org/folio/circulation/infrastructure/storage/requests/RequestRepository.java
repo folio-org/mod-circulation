@@ -3,6 +3,10 @@ package org.folio.circulation.infrastructure.storage.requests;
 import static java.util.Objects.isNull;
 import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
 import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
+import static org.folio.circulation.domain.RequestStatus.openStates;
+import static org.folio.circulation.support.CqlSortBy.ascending;
+import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
+import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.results.Result.ofAsync;
@@ -50,6 +54,20 @@ public class RequestRepository {
   private final ServicePointRepository servicePointRepository;
   private final PatronGroupRepository patronGroupRepository;
   private final InstanceRepository instanceRepository;
+
+  /**
+   * Public constructor to avoid creating repositories twice
+   */
+  public RequestRepository(org.folio.circulation.support.Clients clients,
+    ItemRepository itemRepository, UserRepository userRepository, LoanRepository loanRepository,
+    ServicePointRepository servicePointRepository, PatronGroupRepository patronGroupRepository) {
+
+    this(new Clients(clients.requestsStorage(), clients.requestsBatchStorage(),
+        clients.cancellationReasonStorage()), itemRepository,
+      userRepository, loanRepository,
+      servicePointRepository,
+      patronGroupRepository);
+  }
 
   private RequestRepository(Clients clients, ItemRepository itemRepository,
     UserRepository userRepository, LoanRepository loanRepository,
@@ -138,13 +156,6 @@ public class RequestRepository {
     return getByIdWithoutItem(id)
       .thenComposeAsync(result -> result.combineAfter(itemRepository::fetchFor,
         Request::withItem))
-      .thenComposeAsync(result -> result.combineAfter(instanceRepository::fetch,
-        Request::withInstance))
-      .thenComposeAsync(this::fetchLoan);
-  }
-
-  public CompletableFuture<Result<Request>> getByIdWithoutItem(String id) {
-    return fetchRequest(id)
       .thenComposeAsync(this::fetchRequester)
       .thenComposeAsync(this::fetchProxy)
       .thenComposeAsync(this::fetchPickupServicePoint)
@@ -156,6 +167,16 @@ public class RequestRepository {
       .flatMapOn(200, mapUsingJson(Request::from))
       .on(404, failed(new RecordNotFoundFailure("request", id))))
       .fetch(id);
+  }
+
+  public CompletableFuture<Result<MultipleRecords<Request>>> findOpenRequestsByItemIds(
+    Collection<String> itemIds) {
+
+    Result<CqlQuery> query = exactMatchAny("status", openStates())
+      .map(q -> q.sortBy(ascending("position")));
+
+    return findWithMultipleCqlIndexValues(requestsStorageClient, "requests", Request::from)
+      .findByIdIndexAndQuery(itemIds, "itemId", query);
   }
 
   public CompletableFuture<Result<Request>> update(Request request) {

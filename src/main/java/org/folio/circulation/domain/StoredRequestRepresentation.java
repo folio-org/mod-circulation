@@ -78,6 +78,7 @@ public class StoredRequestRepresentation {
     write(userSummary, "firstName", user.getFirstName());
     write(userSummary, "middleName", user.getMiddleName());
     write(userSummary, "barcode", user.getBarcode());
+
     return userSummary;
   }
 

@@ -2949,7 +2949,7 @@ public class RequestsAPICreationTests extends APITests {
       .withTags(new RequestBuilder.Tags(asList("new", "important")));
   }
 
-  public static ItemResource setupPagedItem(IndividualResource requestPickupServicePoint,
+  public static IndividualResource setupPagedItem(IndividualResource requestPickupServicePoint,
     ItemsFixture itemsFixture, ResourceClient requestClient, UsersFixture usersFixture) {
 
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();

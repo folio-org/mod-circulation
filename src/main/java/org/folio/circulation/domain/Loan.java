@@ -664,8 +664,8 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
       AGED_TO_LOST_DATE);
   }
 
-  public Loan setLostItemFees() {
-    representation.put(LoanProperties.ACTION, LoanAction.LOST_FEES_CHARGED.getValue());
+  public Loan removePreviousAction() {
+    representation.put(LoanProperties.ACTION, "");
     return this;
   }
 

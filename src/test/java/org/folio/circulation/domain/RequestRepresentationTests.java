@@ -1,6 +1,5 @@
 package org.folio.circulation.domain;
 
-import static java.lang.Boolean.TRUE;
 import static java.time.ZoneOffset.UTC;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -16,7 +15,6 @@ import org.junit.jupiter.api.Test;
 
 import api.support.builders.Address;
 import api.support.builders.RequestBuilder;
-import api.support.builders.ServicePointBuilder;
 import api.support.builders.UserBuilder;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -97,11 +95,9 @@ class RequestRepresentationTests {
 
     final ZonedDateTime requestDate = ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC);
 
-    final ServicePointBuilder servicePointBuilder = new ServicePointBuilder("Circ Desk", "cd1", "Circulation Desk")
-      .withId(SERVICE_POINT_ID)
-      .withPickupLocation(TRUE);
-
-    final ServicePoint servicePoint = new ServicePoint(servicePointBuilder.create());
+    final var servicePoint
+      = new ServicePoint(SERVICE_POINT_ID.toString(), "Circ Desk", "cd1", true,
+      "Circulation Desk", null, null, null);
 
     JsonObject instanceRepresentation = new JsonObject();
     write(instanceRepresentation, EDITIONS, new JsonArray().add("First American Edition"));

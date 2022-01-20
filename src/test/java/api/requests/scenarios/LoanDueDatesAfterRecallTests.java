@@ -395,7 +395,7 @@ class LoanDueDatesAfterRecallTests extends APITests {
 
     final String expectedDueDate = formatDateTime(ZonedDateTime
       .of(getZonedDateTime().plusMonths(2).toLocalDate(),
-        LocalTime.MIDNIGHT.minusSeconds(1),getZoneId())); 
+        LocalTime.MIDNIGHT.minusSeconds(1),getZoneId()));
 
     assertThat("due date should be in 2 months (recall return interval)",
         storedLoan.getString("dueDate"), is(expectedDueDate));
@@ -812,7 +812,7 @@ class LoanDueDatesAfterRecallTests extends APITests {
       .withPickupServicePointId(servicePointsFixture.cd1().getId()));
 
     assertThat(loansStorageClient.getById(loan.getId()).getJson(),
-      hasJsonPath("dueDate", expectedLoanDueDate.toString()));
+      hasJsonPath("dueDate", isEquivalentTo(expectedLoanDueDate)));
 
     // verify that loan action is recorder even though due date is not changed
     final MultipleJsonRecords loanHistory = loanHistoryClient

@@ -151,6 +151,7 @@ public class RequestBuilder extends JsonBuilder implements Builder {
     put(request, "cancelledDate", formatDateTimeOptional(cancelledDate));
     put(request, "pickupServicePointId", this.pickupServicePointId);
     put(request, "patronComments", this.patronComments);
+
     if (itemSummary != null) {
       final JsonObject itemRepresentation = new JsonObject();
 
