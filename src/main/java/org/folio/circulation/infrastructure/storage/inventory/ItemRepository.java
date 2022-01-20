@@ -6,7 +6,6 @@ import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
 import static org.folio.circulation.domain.MultipleRecords.CombinationMatchers.matchRecordsById;
 import static org.folio.circulation.domain.representations.ItemProperties.LAST_CHECK_IN;
 import static org.folio.circulation.domain.representations.ItemProperties.STATUS_PROPERTY;
-import static org.folio.circulation.domain.representations.RequestProperties.HOLDINGS_RECORD_ID;
 import static org.folio.circulation.support.fetching.MultipleCqlIndexValuesCriteria.byIndex;
 import static org.folio.circulation.support.http.CommonResponseInterpreters.noContentRecordInterpreter;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
@@ -128,7 +127,7 @@ public class ItemRepository {
     }
 
     return findByIndexNameAndQuery(holdingsRecords.toKeys(Holdings::getId),
-      HOLDINGS_RECORD_ID, exactMatch("status.name", AVAILABLE.getValue()))
+      "holdingsRecordId", exactMatch("status.name", AVAILABLE.getValue()))
       .thenApply(mapResult(MultipleRecords::firstOrNull));
   }
 
@@ -149,14 +148,14 @@ public class ItemRepository {
       (items, locations) -> items
         .combineRecords(locations, matchRecordsById(Item::getPermanentLocationId, Location::getId),
           Item::withPermanentLocation, null)
-        .combineRecords(locations, matchRecordsById(Item::getLocationId, Location::getId),
+        .combineRecords(locations, matchRecordsById(Item::getEffectiveLocationId, Location::getId),
           Item::withLocation, null));
   }
 
   private CompletableFuture<Result<MultipleRecords<Location>>> fetchLocations(
     MultipleRecords<Item> items) {
 
-    final var locationIds = items.toKeys(Item::getLocationId);
+    final var locationIds = items.toKeys(Item::getEffectiveLocationId);
     final var permanentLocationIds = items.toKeys(Item::getPermanentLocationId);
 
     final var allLocationIds = new HashSet<String>();

@@ -65,7 +65,7 @@ public class ItemsInTransitReport {
     Loan loan = reportContext.getLoans().get(item.getItemId());
     Request request = reportContext.getRequests().get(item.getItemId());
 
-    Location location = reportContext.getLocations().get(item.getLocationId());
+    Location location = reportContext.getLocations().get(item.getEffectiveLocationId());
     if (location != null) {
       ServicePoint primaryServicePoint = reportContext.getServicePoints()
         .get(location.getPrimaryServicePointId().toString());

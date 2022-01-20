@@ -64,11 +64,11 @@ public class LocationRepository {
   }
 
   public CompletableFuture<Result<Location>> getLocation(Item item) {
-    if (item == null || item.getLocationId() == null) {
+    if (item == null || item.getEffectiveLocationId() == null) {
       return ofAsync(() -> null);
     }
 
-    return fetchLocationById(item.getLocationId())
+    return fetchLocationById(item.getEffectiveLocationId())
       .thenCompose(combineAfter(this::fetchPrimaryServicePoint,
         Location::withPrimaryServicePoint))
       .thenCompose(r -> r.after(this::loadLibrary))
@@ -91,7 +91,7 @@ public class LocationRepository {
     Collection<Item> inventoryRecords) {
 
     final var locationIds = new MultipleRecords<>(inventoryRecords, inventoryRecords.size())
-      .toKeys(Item::getLocationId);
+      .toKeys(Item::getEffectiveLocationId);
 
     return fetchLocations(locationIds)
       .thenApply(mapResult(records -> records.toMap(Location::getId)));

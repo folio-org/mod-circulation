@@ -132,7 +132,7 @@ public class PickSlipsResource extends Resource {
     MultipleRecords<Item> items, Collection<Location> locationsForServicePoint,
     LocationRepository locationRepository) {
 
-    Set<String> locationIdsFromItems = items.toKeys(Item::getLocationId);
+    Set<String> locationIdsFromItems = items.toKeys(Item::getEffectiveLocationId);
 
     Set<Location> locationsForItems = locationsForServicePoint.stream()
       .filter(location -> locationIdsFromItems.contains(location.getId()))
@@ -156,8 +156,9 @@ public class PickSlipsResource extends Resource {
       .collect(toMap(Location::getId, identity()));
 
     return succeeded(
-      items.mapRecords(item -> item.withLocation(locationsMap.getOrDefault(item.getLocationId(), null)))
-        .getRecords());
+      items.mapRecords(item -> item.withLocation(
+        locationsMap.getOrDefault(item.getEffectiveLocationId(), null)))
+      .getRecords());
   }
 
   private CompletableFuture<Result<MultipleRecords<Request>>> fetchOpenPageRequestsForItems(

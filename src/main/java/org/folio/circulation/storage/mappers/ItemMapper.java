@@ -24,7 +24,9 @@ public class ItemMapper {
       LoanType.unknown(), getProperty(representation, "barcode"), getProperty(representation,
       "copyNumber"), getProperty(representation, "enumeration"),
       getProperty(representation, "temporaryLoanTypeId"),
-      getProperty(representation, "permanentLoanTypeId"));
+      getProperty(representation, "permanentLoanTypeId"),
+      getProperty(representation, "effectiveLocationId"),
+      getProperty(representation, "permanentLocationId"));
   }
 
   private ServicePoint getInTransitServicePoint(JsonObject representation) {
