@@ -33,8 +33,6 @@ import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
 
 class InstanceRequestsAPICreationTests extends APITests {
-  private static final int ITEM_COPIES_NUMBER = 20;
-
   @Test
   void canCreateATitleLevelRequestForMultipleAvailableItemsAndAMatchingPickupLocationId() {
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -315,7 +313,7 @@ class InstanceRequestsAPICreationTests extends APITests {
     IndividualResource holdings = holdingsFixture.defaultWithHoldings(instance.getId());
     IndividualResource locationsResource = locationsFixture.mainFloor();
 
-    IntStream.range(0, ITEM_COPIES_NUMBER)
+    IntStream.range(0, 20)
       .forEach(index -> itemsFixture.basedUponDunkirkWithCustomHoldingAndLocationAndCheckedOut(
         holdings.getId(), locationsResource.getId()));
     var availableItem = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(
