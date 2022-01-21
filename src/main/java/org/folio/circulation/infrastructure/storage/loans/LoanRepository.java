@@ -3,7 +3,9 @@ package org.folio.circulation.infrastructure.storage.loans;
 import static java.lang.String.format;
 import static java.util.Objects.nonNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.ItemStatus.IN_TRANSIT;
 import static org.folio.circulation.domain.representations.LoanProperties.BORROWER;
+import static org.folio.circulation.domain.representations.LoanProperties.DUE_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.FEESANDFINES;
 import static org.folio.circulation.domain.representations.LoanProperties.LOAN_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.LOAN_POLICY;
@@ -11,7 +13,9 @@ import static org.folio.circulation.domain.representations.LoanProperties.LOST_I
 import static org.folio.circulation.domain.representations.LoanProperties.OVERDUE_FINE_POLICY;
 import static org.folio.circulation.domain.representations.LoanProperties.PATRON_GROUP_AT_CHECKOUT;
 import static org.folio.circulation.domain.representations.LoanProperties.PATRON_GROUP_ID_AT_CHECKOUT;
+import static org.folio.circulation.support.CqlSortBy.ascending;
 import static org.folio.circulation.support.CqlSortBy.descending;
+import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.of;
@@ -224,6 +228,17 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
       .thenComposeAsync(loans -> itemRepository.fetchItemsFor(loans, Loan::withItem));
   }
 
+  public CompletableFuture<Result<Collection<Loan>>> findByItemIds(
+    Collection<String> itemIds) {
+
+    Result<CqlQuery> statusQuery = exactMatch(ITEM_STATUS, IN_TRANSIT.getValue());
+    FindWithMultipleCqlIndexValues<Loan> fetcher = findWithMultipleCqlIndexValues(
+      loansStorageClient, RECORDS_PROPERTY_NAME, Loan::from);
+
+    return fetcher.findByIdIndexAndQuery(itemIds, ITEM_ID, statusQuery)
+      .thenApply(mapResult(MultipleRecords::getRecords));
+  }
+
   private Result<MultipleRecords<Loan>> mapResponseToLoans(Response response) {
     return MultipleRecords.from(response, Loan::from, RECORDS_PROPERTY_NAME);
   }
@@ -350,7 +365,27 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
   public CompletableFuture<Result<MultipleRecords<Loan>>> findOpenLoansByUserIdWithItem(
     PageLimit loansLimit, LoanAndRelatedRecords loanAndRelatedRecords) {
 
-    String userId = loanAndRelatedRecords.getLoan().getUser().getId();
+    return findOpenLoansByUserIdWithItem(loansLimit,
+      loanAndRelatedRecords.getLoan().getUser().getId());
+  }
+
+  public CompletableFuture<Result<MultipleRecords<Loan>>> findOpenLoansByUserIdWithItem(
+    PageLimit loansLimit, String userId) {
+
+    return findOpenLoansByUserId(loansLimit, userId)
+      .thenComposeAsync(loans -> itemRepository.fetchItemsFor(loans, Loan::withItem));
+  }
+
+  public CompletableFuture<Result<MultipleRecords<Loan>>> findOpenLoansByUserIdWithItemAndHoldings(
+    PageLimit loansLimit, String userId) {
+
+    // Only fetching HoldingsRecord for each item to avoid fetching instances, locations etc.
+    return findOpenLoansByUserId(loansLimit, userId)
+      .thenComposeAsync(loans -> itemRepository.fetchItemsWithHoldings(loans, Loan::withItem));
+  }
+
+  public CompletableFuture<Result<MultipleRecords<Loan>>> findOpenLoansByUserId(
+    PageLimit loansLimit, String userId) {
 
     final Result<CqlQuery> statusQuery = getStatusCQLQuery("Open");
     final Result<CqlQuery> userIdQuery = exactMatch(USER_ID, userId);
@@ -358,13 +393,20 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
     Result<CqlQuery> cqlQueryResult = statusQuery
       .combine(userIdQuery, CqlQuery::and);
 
-    return queryLoanStorage(cqlQueryResult, loansLimit)
-      .thenComposeAsync(loans -> itemRepository.fetchItemsFor(loans, Loan::withItem));
+    return queryLoanStorage(cqlQueryResult, loansLimit);
   }
 
   public CompletableFuture<Result<Loan>> findLastLoanForItem(String itemId) {
     final Result<CqlQuery> cqlQuery = exactMatch(ITEM_ID, itemId)
       .map(cql -> cql.sortBy(descending(LOAN_DATE)));
+
+    return queryLoanStorage(cqlQuery, one())
+      .thenApply(r -> r.map(CollectionUtil::firstOrNull));
+  }
+
+  public CompletableFuture<Result<Loan>> findLoanWithClosestDueDate(List<String> itemIds) {
+    final Result<CqlQuery> cqlQuery = exactMatchAny(ITEM_ID, itemIds)
+      .map(cql -> cql.sortBy(ascending(DUE_DATE)));
 
     return queryLoanStorage(cqlQuery, one())
       .thenApply(r -> r.map(CollectionUtil::firstOrNull));

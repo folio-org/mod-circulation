@@ -12,15 +12,17 @@ import java.lang.invoke.MethodHandles;
 import java.time.ZonedDateTime;
 import java.util.concurrent.CompletableFuture;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.RequestQueue;
-import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.notice.schedule.LoanScheduledNoticeService;
 import org.folio.circulation.domain.representations.ChangeDueDateRequest;
 import org.folio.circulation.domain.validation.ItemStatusValidator;
 import org.folio.circulation.domain.validation.LoanValidator;
+import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.services.EventPublisher;
@@ -35,9 +37,6 @@ import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class ChangeDueDateResource extends Resource {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
@@ -78,11 +77,15 @@ public class ChangeDueDateResource extends Resource {
     final EventPublisher eventPublisher = new EventPublisher(routingContext);
 
     final LoanNoticeSender loanNoticeSender = LoanNoticeSender.using(clients);
-    log.info("starting change due date process for loan " + request.getLoanId());
+
+    final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
+    log.info("starting change due date process for loan {}", request.getLoanId());
     return succeeded(request)
       .after(r -> getExistingLoan(loanRepository, r))
       .thenApply(LoanValidator::refuseWhenLoanIsClosed)
       .thenApply(this::toLoanAndRelatedRecords)
+      .thenComposeAsync(r -> r.combineAfter(configurationRepository::lookupTlrSettings,
+        LoanAndRelatedRecords::withTlrSettings))
       .thenComposeAsync(r -> r.after(requestQueueRepository::get))
       .thenApply(itemStatusValidator::refuseWhenItemStatusDoesNotAllowDueDateChange)
       .thenApply(r -> changeDueDate(r, request))
@@ -98,12 +101,12 @@ public class ChangeDueDateResource extends Resource {
     
     RequestQueue queue = loanAndRelatedRecords.getRequestQueue();
     Loan loan = loanAndRelatedRecords.getLoan();
-    log.info("Loan " + loan.getId() + " prior to flag check: " + loan.asJson().toString());
+    log.info("Loan {} prior to flag check: {}", loan.getId(), loan.asJson().toString());
     if (loan.wasDueDateChangedByRecall() && !queue.hasOpenRecalls()) {
-      log.info("Loan " + loan.getId() + " registers as having due date change flag set to true and no open recalls in queue.");
+      log.info("Loan {} registers as having due date change flag set to true and no open recalls in queue.", loan.getId());
       return loanAndRelatedRecords.withLoan(loan.unsetDueDateChangedByRecall());
     } else {
-      log.info("Loan " + loan.getId() + " registers as either not having due date change flag set to true or as having open recalls in queue.");
+      log.info("Loan {} registers as either not having due date change flag set to true or as having open recalls in queue.", loan.getId());
       return loanAndRelatedRecords;
     }
   }

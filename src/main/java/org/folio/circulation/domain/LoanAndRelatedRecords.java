@@ -4,8 +4,16 @@ package org.folio.circulation.domain;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 
-import io.vertx.core.json.JsonObject;
+import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
 
+import io.vertx.core.json.JsonObject;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.With;
+
+@AllArgsConstructor
+@With
+@Getter
 public class LoanAndRelatedRecords implements UserRelatedRecord {
   public static final String REASON_TO_OVERRIDE = "reasonToOverride";
 
@@ -15,15 +23,7 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
   private final ZoneId timeZone;
   private final JsonObject logContextProperties;
   private final String loggedInUserId;
-
-  private LoanAndRelatedRecords(Loan loan, Loan existingLoan, RequestQueue requestQueue, ZoneId timeZone, JsonObject logContextProperties, String loggedInUserId) {
-    this.loan = loan;
-    this.existingLoan = existingLoan;
-    this.requestQueue = requestQueue;
-    this.timeZone = timeZone;
-    this.logContextProperties = logContextProperties;
-    this.loggedInUserId = loggedInUserId;
-  }
+  private final TlrSettingsConfiguration tlrSettings;
 
   public LoanAndRelatedRecords(Loan loan) {
     this(loan, ZoneOffset.UTC);
@@ -34,20 +34,15 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
   }
 
   public LoanAndRelatedRecords(Loan loan, Loan existingLoan, ZoneId timeZone) {
-    this(loan, existingLoan, null, timeZone, new JsonObject(), null);
+    this(loan, existingLoan, null, timeZone, new JsonObject(), null, null);
   }
 
   public LoanAndRelatedRecords(Loan loan, ZoneId timeZone) {
-    this(loan, null, null, timeZone, new JsonObject(), null);
+    this(loan, null, null, timeZone, new JsonObject(), null, null);
   }
 
   public LoanAndRelatedRecords changeItemStatus(ItemStatus status) {
     return withItem(getItem().changeStatus(status));
-  }
-
-
-  public LoanAndRelatedRecords withLoan(Loan newLoan) {
-    return new LoanAndRelatedRecords(newLoan, existingLoan, requestQueue, timeZone, logContextProperties, loggedInUserId);
   }
 
   public LoanAndRelatedRecords withRequestingUser(User newUser) {
@@ -58,33 +53,12 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
     return withLoan(loan.withProxy(newProxy));
   }
 
-  public LoanAndRelatedRecords withRequestQueue(RequestQueue newRequestQueue) {
-    return new LoanAndRelatedRecords(loan, existingLoan, newRequestQueue,
-      timeZone, logContextProperties, loggedInUserId);
-  }
-
   public LoanAndRelatedRecords withItem(Item newItem) {
     return withLoan(loan.withItem(newItem));
   }
 
   public LoanAndRelatedRecords withItemEffectiveLocationIdAtCheckOut() {
     return withLoan(loan.changeItemEffectiveLocationIdAtCheckOut(getItem().getLocationId()));
-  }
-
-  public LoanAndRelatedRecords withTimeZone(ZoneId newTimeZone) {
-    return new LoanAndRelatedRecords(loan, existingLoan, requestQueue, newTimeZone, logContextProperties, loggedInUserId);
-  }
-
-  public LoanAndRelatedRecords withLoggedInUserId(String loggedInUserId) {
-    return new LoanAndRelatedRecords(loan, existingLoan, requestQueue, timeZone, logContextProperties, loggedInUserId);
-  }
-
-  public Loan getLoan() {
-    return loan;
-  }
-
-  public Loan getExistingLoan() {
-    return existingLoan;
   }
 
   public Item getItem() {
@@ -99,14 +73,6 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
     return loan.getProxy();
   }
 
-  public ZoneId getTimeZone() {
-    return timeZone;
-  }
-
-  public String getLoggedInUserId() {
-    return loggedInUserId;
-  }
-
   @Override
   public String getUserId() {
     return loan.getUserId();
@@ -117,7 +83,4 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
     return loan.getProxyUserId();
   }
 
-  public JsonObject getLogContextProperties() {
-    return logContextProperties;
-  }
 }

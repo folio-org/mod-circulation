@@ -72,6 +72,7 @@ class RequestsAPIDeletionTests extends APITests {
   private RequestBuilder requestFor(ItemResource item, UserResource requester) {
     return new RequestBuilder()
       .withItemId(item.getId())
+      .withInstanceId(item.getInstanceId())
       .withPickupServicePoint(servicePointsFixture.cd1())
       .withRequesterId(requester.getId());
   }

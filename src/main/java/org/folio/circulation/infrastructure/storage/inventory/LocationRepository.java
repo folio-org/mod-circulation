@@ -12,9 +12,11 @@ import static org.folio.circulation.support.results.ResultBinding.mapResult;
 import static org.folio.circulation.support.utils.CollectionUtil.nonNullUniqueSetOf;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -81,17 +83,25 @@ public class LocationRepository {
   public CompletableFuture<Result<Map<String, Location>>> getAllItemLocations(
     Collection<Item> inventoryRecords) {
 
+    return getItemLocations(
+      inventoryRecords, List.of(Item::getLocationId, Item::getPermanentLocationId));
+  }
+
+  public CompletableFuture<Result<Map<String, Location>>> getItemLocations(
+    Collection<Item> inventoryRecords, List<Function<Item, String>> locationIdMappers) {
+
     final Set<String> locationIds = inventoryRecords.stream()
-      .flatMap(item -> Stream.of(item.getPermanentLocationId(), item.getLocationId()))
+      .flatMap(item -> mapItemToStrings(item, locationIdMappers))
       .filter(StringUtils::isNotBlank)
       .collect(Collectors.toSet());
 
     final FindWithMultipleCqlIndexValues<Location> fetcher
-      = findWithMultipleCqlIndexValues(locationsStorageClient, "locations", Location::from);
+      = findWithMultipleCqlIndexValues(locationsStorageClient, "locations",
+      Location::from);
 
     return fetcher.findByIds(locationIds)
       .thenCompose(this::loadLibrariesForLocations)
-      .thenApply(mapResult(sds -> sds.toMap(Location::getId)));
+      .thenApply(mapResult(records -> records.toMap(Location::getId)));
   }
 
   private CompletableFuture<Result<Location>> loadLibrary(Location location) {
@@ -200,4 +210,10 @@ public class LocationRepository {
           .collect(toSet()))));
   }
 
+  private Stream<String> mapItemToStrings(Item item,
+    List<Function<Item, String>> mappers) {
+
+    return mappers.stream()
+      .map(mapper -> mapper.apply(item));
+  }
 }

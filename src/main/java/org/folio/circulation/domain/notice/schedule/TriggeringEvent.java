@@ -16,7 +16,8 @@ public enum TriggeringEvent {
   OVERDUE_FINE_RENEWED("Overdue fine renewed"),
   AGED_TO_LOST("Aged to lost"),
   AGED_TO_LOST_FINE_CHARGED("Aged to lost - fine charged"),
-  AGED_TO_LOST_RETURNED("Aged to lost & item returned - fine adjusted");
+  AGED_TO_LOST_RETURNED("Aged to lost & item returned - fine adjusted"),
+  TITLE_LEVEL_REQUEST_EXPIRATION("Title level request expiration");
 
   private static final Set<TriggeringEvent> AUTOMATIC_FEE_FINE_ADJUSTMENTS =
     EnumSet.of(AGED_TO_LOST_RETURNED);

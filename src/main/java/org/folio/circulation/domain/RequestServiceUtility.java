@@ -9,16 +9,31 @@ import static org.folio.circulation.support.results.Result.succeeded;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
+import java.util.function.Predicate;
 
+import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
 import org.folio.circulation.domain.policy.RequestPolicy;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
 
 public class RequestServiceUtility {
+  private static final String INSTANCE_ID = "instanceId";
   private static final String ITEM_ID = "itemId";
+  private static final String REQUESTER_ID = "requesterId";
+  private static final String REQUEST_ID = "requestId";
 
   private RequestServiceUtility() { }
+
+  static Result<RequestAndRelatedRecords> refuseWhenInstanceDoesNotExist(
+    RequestAndRelatedRecords requestAndRelatedRecords) {
+
+    if (requestAndRelatedRecords.getRequest().getInstance().isNotFound()) {
+      return failedValidation("Instance does not exist", INSTANCE_ID,
+        requestAndRelatedRecords.getRequest().getInstanceId());
+    } else {
+      return succeeded(requestAndRelatedRecords);
+    }
+  }
 
   static Result<RequestAndRelatedRecords> refuseWhenItemDoesNotExist(
     RequestAndRelatedRecords requestAndRelatedRecords) {
@@ -90,7 +105,7 @@ public class RequestServiceUtility {
     if (requester != null && requester.isInactive()) {
       Map<String, String> parameters = new HashMap<>();
 
-      parameters.put("requesterId", request.getRequest().getUserId());
+      parameters.put(REQUESTER_ID, request.getRequest().getUserId());
       parameters.put(ITEM_ID, request.getRequest().getItemId());
 
       String message = "Inactive users cannot make requests";
@@ -101,26 +116,63 @@ public class RequestServiceUtility {
     }
   }
 
-  static Result<RequestAndRelatedRecords> refuseWhenUserHasAlreadyRequestedItem(
-    RequestAndRelatedRecords request) {
+  static Result<RequestAndRelatedRecords> refuseWhenAlreadyRequested(
+    RequestAndRelatedRecords requestAndRelatedRecords) {
 
-    Optional<Request> requestOptional = request.getRequestQueue().getRequests().stream()
-      .filter(it -> isTheSameRequester(request, it) && it.isOpen()).findFirst();
+    Request request = requestAndRelatedRecords.getRequest();
+    Predicate<Request> isAlreadyRequested;
 
-    if (requestOptional.isPresent()) {
-      Map<String, String> parameters = new HashMap<>();
-      parameters.put("requesterId", request.getRequest().getUserId());
-      parameters.put(ITEM_ID, request.getRequest().getItemId());
-      parameters.put("requestId", requestOptional.get().getId());
-      String message = "This requester already has an open request for this item";
-      return failedValidation(new ValidationError(message, parameters));
+    if (isTlrEnabled(request)) {
+      isAlreadyRequested = req -> isTheSameRequester(requestAndRelatedRecords, req) && req.isOpen();
     } else {
-      return of(() -> request);
+      isAlreadyRequested = req -> requestAndRelatedRecords.getItemId().equals(req.getItemId())
+        && isTheSameRequester(requestAndRelatedRecords, req) && req.isOpen();
     }
+
+    return requestAndRelatedRecords.getRequestQueue().getRequests().stream()
+      .filter(isAlreadyRequested)
+      .findFirst()
+      .map(existingRequest -> alreadyRequestedFailure(requestAndRelatedRecords, existingRequest))
+      .orElse(of(() -> requestAndRelatedRecords));
+  }
+
+  private static Result<RequestAndRelatedRecords> alreadyRequestedFailure(
+    RequestAndRelatedRecords requestAndRelatedRecords, Request existingRequest) {
+
+    Request requestBeingPlaced = requestAndRelatedRecords.getRequest();
+    HashMap<String, String> parameters = new HashMap<>();
+    String message;
+
+    if (requestBeingPlaced.isTitleLevel()) {
+      if (existingRequest.isTitleLevel()) {
+        parameters.put(REQUESTER_ID, requestBeingPlaced.getUserId());
+        parameters.put(INSTANCE_ID, requestBeingPlaced.getInstanceId());
+
+        message = "This requester already has an open request for this instance";
+      } else {
+        parameters.put(REQUESTER_ID, requestBeingPlaced.getUserId());
+        parameters.put(INSTANCE_ID, requestBeingPlaced.getInstanceId());
+
+        message = "This requester already has an open request for one of the instance's items";
+      }
+    } else {
+      parameters.put(REQUESTER_ID, requestBeingPlaced.getUserId());
+      parameters.put(ITEM_ID, requestBeingPlaced.getItemId());
+      parameters.put(REQUEST_ID, requestBeingPlaced.getId());
+
+      message = "This requester already has an open request for this item";
+    }
+
+    return failedValidation(message, parameters);
   }
 
   static boolean isTheSameRequester(RequestAndRelatedRecords it, Request that) {
     return Objects.equals(it.getUserId(), that.getUserId());
   }
 
+  private static boolean isTlrEnabled(Request request) {
+    TlrSettingsConfiguration tlrSettingsConfiguration = request.getTlrSettingsConfiguration();
+    return tlrSettingsConfiguration != null
+      && tlrSettingsConfiguration.isTitleLevelRequestsFeatureEnabled();
+  }
 }

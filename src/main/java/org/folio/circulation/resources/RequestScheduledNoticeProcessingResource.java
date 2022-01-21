@@ -1,14 +1,22 @@
 package org.folio.circulation.resources;
 
+import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.HOLD_EXPIRATION;
+import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.REQUEST_EXPIRATION;
+import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.TITLE_LEVEL_REQUEST_EXPIRATION;
+import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.MultipleRecords;
-import org.folio.circulation.domain.notice.schedule.RequestScheduledNoticeHandler;
+import org.folio.circulation.domain.notice.schedule.ItemLevelRequestScheduledNoticeHandler;
 import org.folio.circulation.domain.notice.schedule.ScheduledNotice;
-import org.folio.circulation.domain.notice.schedule.TriggeringEvent;
+import org.folio.circulation.domain.notice.schedule.TitleLevelRequestScheduledNoticeHandler;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
 import org.folio.circulation.support.Clients;
@@ -30,9 +38,8 @@ public class RequestScheduledNoticeProcessingResource extends ScheduledNoticePro
     ConfigurationRepository configurationRepository,
     ScheduledNoticesRepository scheduledNoticesRepository, PageLimit pageLimit) {
 
-    return scheduledNoticesRepository.findNotices(
-      ClockUtil.getZonedDateTime(), true,
-      Arrays.asList(TriggeringEvent.HOLD_EXPIRATION, TriggeringEvent.REQUEST_EXPIRATION),
+    return scheduledNoticesRepository.findNotices(ClockUtil.getZonedDateTime(), true,
+      Arrays.asList(HOLD_EXPIRATION, REQUEST_EXPIRATION, TITLE_LEVEL_REQUEST_EXPIRATION),
       CqlSortBy.ascending("nextRunTime"), pageLimit);
   }
 
@@ -40,8 +47,39 @@ public class RequestScheduledNoticeProcessingResource extends ScheduledNoticePro
   protected CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> handleNotices(
     Clients clients, MultipleRecords<ScheduledNotice> scheduledNotices) {
 
-    return new RequestScheduledNoticeHandler(clients)
-      .handleNotices(scheduledNotices.getRecords())
+    Collection<ScheduledNotice> records = scheduledNotices.getRecords();
+    Map<Boolean, List<ScheduledNotice>> noticesByRequestLevel = records
+      .stream()
+      .collect(Collectors.groupingBy(this::isTitleLevelRequestNotice));
+
+    return handleItemLevelRequestNotices(clients, noticesByRequestLevel.get(false))
+      .thenCompose(v -> handleTitleLevelRequestNotices(clients, noticesByRequestLevel.get(true)))
       .thenApply(mapResult(v -> scheduledNotices));
+  }
+
+  private CompletableFuture<Result<List<ScheduledNotice>>> handleItemLevelRequestNotices(
+    Clients clients, List<ScheduledNotice> itemLevelNotices) {
+
+    if (itemLevelNotices == null || itemLevelNotices.isEmpty()) {
+      return ofAsync(() -> null);
+    }
+
+    return new ItemLevelRequestScheduledNoticeHandler(clients)
+      .handleNotices(itemLevelNotices);
+  }
+
+  private CompletableFuture<Result<List<ScheduledNotice>>> handleTitleLevelRequestNotices(
+    Clients clients, List<ScheduledNotice> titleLevelNotices) {
+
+    if (titleLevelNotices == null || titleLevelNotices.isEmpty()) {
+      return ofAsync(() -> null);
+    }
+
+    return new TitleLevelRequestScheduledNoticeHandler(clients)
+      .handleNotices(titleLevelNotices);
+  }
+
+  private boolean isTitleLevelRequestNotice(ScheduledNotice notice) {
+    return notice.getTriggeringEvent() == TITLE_LEVEL_REQUEST_EXPIRATION;
   }
 }
