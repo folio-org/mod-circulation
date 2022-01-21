@@ -61,25 +61,32 @@ public class UpdateRequestQueue {
     }
 
     final RequestQueue requestQueue = relatedRecords.getRequestQueue();
+    final Item item = relatedRecords.getLoan().getItem();
+    final String checkInServicePointId = relatedRecords.getLoan().getCheckInServicePointId();
 
-    return onCheckIn(requestQueue, relatedRecords.getLoan().getCheckInServicePointId())
+    return onCheckIn(requestQueue, item, checkInServicePointId)
       .thenApply(result -> result.map(relatedRecords::withRequestQueue));
   }
 
   public CompletableFuture<Result<RequestQueue>> onCheckIn(
-    RequestQueue requestQueue, String checkInServicePointId) {
+    RequestQueue requestQueue, Item item, String checkInServicePointId) {
 
     if (requestQueue.hasOutstandingFulfillableRequests()) {
-      return updateOutstandingRequestOnCheckIn(requestQueue, checkInServicePointId);
+      return updateOutstandingRequestOnCheckIn(requestQueue, item, checkInServicePointId);
     } else {
       return completedFuture(succeeded(requestQueue));
     }
   }
 
   private CompletableFuture<Result<RequestQueue>> updateOutstandingRequestOnCheckIn(
-    RequestQueue requestQueue, String checkInServicePointId) {
+    RequestQueue requestQueue, Item item, String checkInServicePointId) {
 
-    Request requestBeingFulfilled = requestQueue.getHighestPriorityFulfillableRequest();
+    Request requestBeingFulfilled = requestQueue.getHighestPriorityRequestFulfillableByItem(item);
+    if (requestBeingFulfilled.getItemId() == null) {
+      requestBeingFulfilled = requestBeingFulfilled.withItem(item);
+    }
+
+    requestQueue.updateRequestPositionOnCheckIn(requestBeingFulfilled.getId());
 
     Request originalRequest = Request.from(requestBeingFulfilled.asJson());
 
@@ -107,7 +114,7 @@ public class UpdateRequestQueue {
 
     return updatedReq
       .thenComposeAsync(r -> r.after(requestRepository::update))
-      .thenApply(result -> result.map(v -> requestQueue));
+      .thenComposeAsync(result -> result.after(v -> requestQueueRepository.updateRequestsWithChangedPositions(requestQueue)));
   }
 
   private CompletableFuture<Result<Request>> awaitPickup(Request request) {
@@ -244,7 +251,7 @@ public class UpdateRequestQueue {
   }
 
   public CompletableFuture<Result<Request>> onDeletion(Request request) {
-    return requestQueueRepository.get(request.getItemId())
+    return requestQueueRepository.getByItemId(request.getItemId())
       .thenApply(r -> r.map(requestQueue -> {
         requestQueue.remove(request);
         return requestQueue;

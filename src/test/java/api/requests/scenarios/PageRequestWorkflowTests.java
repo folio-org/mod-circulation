@@ -23,18 +23,19 @@ import org.junit.jupiter.api.Test;
 import api.support.APITests;
 import api.support.builders.RequestBuilder;
 import api.support.http.IndividualResource;
+import api.support.http.ItemResource;
 
 class PageRequestWorkflowTests extends APITests {
   @Test
   void canBeFulfilledWithoutPriorCheckIn() {
-
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource jessica = usersFixture.jessica();
 
     IndividualResource requestByJessica = requestsFixture.place(new RequestBuilder()
       .page()
       .fulfilToHoldShelf()
       .withItemId(smallAngryPlanet.getId())
+      .withInstanceId(smallAngryPlanet.getInstanceId())
       .withRequestDate(ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC))
       .withRequesterId(jessica.getId())
       .withPickupServicePointId(servicePointsFixture.cd1().getId()));
@@ -42,20 +43,17 @@ class PageRequestWorkflowTests extends APITests {
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica);
 
     Response getByIdResponse = requestsClient.getById(requestByJessica.getId());
-
     assertThat(getByIdResponse, hasStatus(HTTP_OK));
-
     assertThat(getByIdResponse.getJson().getString("status"), is(CLOSED_FILLED));
 
-    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
-
-    assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
+    IndividualResource checkedOutSmallAngryPlanet = itemsClient.get(smallAngryPlanet);
+    assertThat(checkedOutSmallAngryPlanet, hasItemStatus(CHECKED_OUT));
   }
 
   @Test
   void itemCannotBeCheckedOutToOtherPatronWhenItemIsPagedAndNotYetBeingFulfilled() {
 
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource jessica = usersFixture.jessica();
     IndividualResource rebecca = usersFixture.rebecca();
 
@@ -63,6 +61,7 @@ class PageRequestWorkflowTests extends APITests {
       .page()
       .fulfilToHoldShelf()
       .withItemId(smallAngryPlanet.getId())
+      .withInstanceId(smallAngryPlanet.getInstanceId())
       .withRequestDate(ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC))
       .withRequesterId(jessica.getId())
       .withPickupServicePointId(servicePointsFixture.cd1().getId()));
@@ -81,8 +80,8 @@ class PageRequestWorkflowTests extends APITests {
 
     assertThat(getByIdResponse.getJson().getString("status"), is(OPEN_NOT_YET_FILLED));
 
-    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
+    IndividualResource pagedSmallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
-    assertThat(smallAngryPlanet, hasItemStatus(PAGED));
+    assertThat(pagedSmallAngryPlanet, hasItemStatus(PAGED));
   }
 }

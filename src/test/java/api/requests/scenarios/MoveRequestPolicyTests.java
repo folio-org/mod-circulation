@@ -124,10 +124,10 @@ class MoveRequestPolicyTests extends APITests {
 
     checkOutFixture.checkOutByBarcode(interestingTimes, charlotte);
 
-    IndividualResource requestByCharlotte = requestsFixture.placeHoldShelfRequest(
+    IndividualResource requestByCharlotte = requestsFixture.placeItemLevelHoldShelfRequest(
       smallAngryPlanet, charlotte, getZonedDateTime().minusHours(2), RequestType.RECALL.getValue());
 
-    IndividualResource requestByJames = requestsFixture.placeHoldShelfRequest(
+    IndividualResource requestByJames = requestsFixture.placeItemLevelHoldShelfRequest(
       interestingTimes, james, getZonedDateTime().minusHours(1), RequestType.RECALL.getValue());
 
     // move james' recall request as a hold shelf request from smallAngryPlanet to interestingTimes
@@ -178,7 +178,7 @@ class MoveRequestPolicyTests extends APITests {
     checkOutFixture.checkOutByBarcode(interestingTimes, charlotte);
 
     // jessica places recall request on interestingTimes
-    IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
+    IndividualResource requestByJessica = requestsFixture.placeItemLevelHoldShelfRequest(
       interestingTimes, jessica, getZonedDateTime(), RequestType.RECALL.getValue());
 
     // notice for the recall is expected
@@ -227,7 +227,7 @@ class MoveRequestPolicyTests extends APITests {
     final String originalDueDate = loan.getJson().getString("dueDate");
 
     // charlotte places recall request on smallAngryPlanet
-    requestsFixture.placeHoldShelfRequest(
+    requestsFixture.placeItemLevelHoldShelfRequest(
       smallAngryPlanet, charlotte, getZonedDateTime().minusHours(1), RequestType.RECALL.getValue());
 
     JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
@@ -243,7 +243,7 @@ class MoveRequestPolicyTests extends APITests {
     checkOutFixture.checkOutByBarcode(interestingTimes, charlotte);
 
     // jessica places recall request on interestingTimes
-    IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
+    IndividualResource requestByJessica = requestsFixture.placeItemLevelHoldShelfRequest(
       interestingTimes, jessica, getZonedDateTime(), RequestType.RECALL.getValue());
 
     // There should be 2 notices for each recall
@@ -316,7 +316,7 @@ class MoveRequestPolicyTests extends APITests {
     checkOutFixture.checkOutByBarcode(interestingTimes, charlotte);
 
     // jessica places recall request on interestingTimes
-    IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
+    IndividualResource requestByJessica = requestsFixture.placeItemLevelHoldShelfRequest(
       interestingTimes, jessica, getZonedDateTime(), RequestType.RECALL.getValue());
 
     // One notice for the recall is expected
@@ -384,7 +384,7 @@ class MoveRequestPolicyTests extends APITests {
     final String originalDueDate = loan.getJson().getString("dueDate");
 
     // charlotte places recall request on smallAngryPlanet
-    requestsFixture.placeHoldShelfRequest(
+    requestsFixture.placeItemLevelHoldShelfRequest(
       smallAngryPlanet, charlotte, getZonedDateTime().minusHours(1), RequestType.RECALL.getValue());
 
     JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
@@ -400,7 +400,7 @@ class MoveRequestPolicyTests extends APITests {
     checkOutFixture.checkOutByBarcode(interestingTimes, charlotte);
 
     // jessica places recall request on interestingTimes
-    IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
+    IndividualResource requestByJessica = requestsFixture.placeItemLevelHoldShelfRequest(
       interestingTimes, jessica, getZonedDateTime(), RequestType.RECALL.getValue());
 
     // There should be 2 notices for each recall

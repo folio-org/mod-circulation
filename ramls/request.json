@@ -382,9 +382,7 @@
   },
   "additionalProperties": false,
   "required": [
-    "itemId",
     "instanceId",
-    "holdingsRecordId",
     "requesterId",
     "requestType",
     "requestLevel",

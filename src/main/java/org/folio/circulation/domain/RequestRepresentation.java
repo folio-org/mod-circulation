@@ -2,18 +2,19 @@ package org.folio.circulation.domain;
 
 import static java.util.Objects.isNull;
 import static java.util.Optional.ofNullable;
+import static java.util.stream.Collectors.toList;
 import static org.folio.circulation.domain.representations.CallNumberComponentsRepresentation.createCallNumberComponents;
+import static org.folio.circulation.domain.representations.ContributorsToNamesMapper.mapContributorNamesToJson;
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.copyProperty;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;
 
 import java.lang.invoke.MethodHandles;
-import java.util.stream.Collectors;
+import java.util.Collection;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.folio.circulation.domain.representations.ContributorsToNamesMapper;
 
 import io.vertx.core.json.JsonObject;
 
@@ -26,7 +27,7 @@ public class RequestRepresentation {
     final JsonObject requestRepresentation = request.asJson();
 
     addItemProperties(requestRepresentation, request.getItem());
-    addInstanceProperties(requestRepresentation, request.getItem());
+    addInstanceProperties(requestRepresentation, request.getInstance());
     addAdditionalLoanProperties(requestRepresentation, request.getLoan());
     addAdditionalRequesterProperties(requestRepresentation, request.getRequester());
     addAdditionalProxyProperties(requestRepresentation, request.getProxy());
@@ -91,24 +92,26 @@ public class RequestRepresentation {
     write(request, "item", itemSummary);
   }
 
-  private static void addInstanceProperties(JsonObject request, Item item) {
-    JsonObject instance = new JsonObject();
-    if (item != null && item.isFound()) {
-      write(instance, "title", item.getTitle());
-      write(instance, "identifiers",
-        item.getIdentifiers()
-          .map(RequestRepresentation::identifierToJson)
-          .collect(Collectors.toList()));
-      write(instance, "contributorNames", ContributorsToNamesMapper.mapContributorNamesToJson(item));
-      write(instance, "publication",
-        item.getPublication()
-          .map(RequestRepresentation::publicationToJson)
-          .collect(Collectors.toList()));
-      write(instance, "editions",
-        item.getEditions()
-          .collect(Collectors.toList()));
+  private static void addInstanceProperties(JsonObject request, Instance instance) {
+    if (instance == null || instance.isNotFound()) {
+      log.info("Unable to add instance properties to request {}, instance is {}",
+        request.getString("id"), request.getString("instanceId"));
+      return;
     }
-    write(request, "instance", instance);
+    JsonObject instanceSummary = new JsonObject();
+    write(instanceSummary, "title", instance.getTitle());
+    write(instanceSummary, "identifiers", identifiersToJson(instance.getIdentifiers()));
+    write(instanceSummary, "contributorNames", mapContributorNamesToJson(instance));
+    write(instanceSummary, "publication", publicationsToJson(instance.getPublication()));
+    write(instanceSummary, "editions", instance.getEditions());
+
+    write(request, "instance", instanceSummary);
+  }
+
+  private static Collection<JsonObject> identifiersToJson(Collection<Identifier> identifiers) {
+    return identifiers.stream()
+      .map(RequestRepresentation::identifierToJson)
+      .collect(toList());
   }
 
   private static JsonObject identifierToJson(Identifier identifier) {
@@ -118,6 +121,12 @@ public class RequestRepresentation {
     write(representation, "value", identifier.getValue());
 
     return representation;
+  }
+
+  private static Collection<JsonObject> publicationsToJson(Collection<Publication> publications) {
+    return publications.stream()
+      .map(RequestRepresentation::publicationToJson)
+      .collect(toList());
   }
 
   private static JsonObject publicationToJson(Publication publication) {

@@ -23,7 +23,7 @@ public abstract class PatronNoticeService {
     this.eventPublisher = new EventPublisher(clients.pubSubPublishingService());
   }
 
-  protected CompletableFuture<Result<Void>> sendNotice(PatronNotice patronNotice,
+  public CompletableFuture<Result<Void>> sendNotice(PatronNotice patronNotice,
     NoticeLogContext noticeLogContext) {
 
     return patronNoticeClient.post(JsonObject.mapFrom(patronNotice))

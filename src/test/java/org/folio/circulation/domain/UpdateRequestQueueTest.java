@@ -70,7 +70,7 @@ class UpdateRequestQueueTest {
     RequestQueue requestQueue = createRequestQueue(itemId, 4);
     Request requestToRemove = requestQueue.getRequests().iterator().next();
 
-    when(requestQueueRepository.get(itemId.toString()))
+    when(requestQueueRepository.getByItemId(itemId.toString()))
       .thenReturn(completedFuture(succeeded(requestQueue)));
 
     CompletableFuture<Result<Request>> completableFutureResult =
@@ -215,7 +215,7 @@ class UpdateRequestQueueTest {
       reorderRequest.setNewPosition(requestCount - request.getPosition());
     }
 
-    return new ReorderRequestContext(itemId.toString(), reorderQueueRequest)
+    return new ReorderRequestContext(null, itemId.toString(), reorderQueueRequest)
       .withRequestQueue(requestQueue);
   }
 

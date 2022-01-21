@@ -1,10 +1,12 @@
 package org.folio.circulation.resources;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.RequestLevel.TITLE;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.CheckInContext;
@@ -128,10 +130,15 @@ class CheckInProcessAdapter {
         context.getCheckInRequest()));
   }
 
-  CompletableFuture<Result<RequestQueue>> getRequestQueue(
-    CheckInContext context) {
+  CompletableFuture<Result<RequestQueue>> getRequestQueue(CheckInContext context) {
+    boolean tlrEnabled = context.getTlrSettings().isTitleLevelRequestsFeatureEnabled();
 
-    return requestQueueRepository.get(context.getItem().getItemId());
+    if (!tlrEnabled) {
+      return requestQueueRepository.getByItemId(context.getItem().getItemId());
+    }
+    else {
+      return requestQueueRepository.getByInstanceId(context.getItem().getInstanceId());
+    }
   }
 
   CompletableFuture<Result<Item>> updateItem(CheckInContext context) {
@@ -143,8 +150,11 @@ class CheckInProcessAdapter {
   CompletableFuture<Result<RequestQueue>> updateRequestQueue(
     CheckInContext context) {
 
-    return requestQueueUpdate.onCheckIn(context.getRequestQueue(),
-      context.getCheckInServicePointId().toString());
+    final RequestQueue requestQueue = context.getRequestQueue();
+    final Item item = context.getItem();
+    final String checkInServicePointId = context.getCheckInServicePointId().toString();
+
+    return requestQueueUpdate.onCheckIn(requestQueue, item, checkInServicePointId);
   }
 
   CompletableFuture<Result<Loan>> updateLoan(CheckInContext context) {

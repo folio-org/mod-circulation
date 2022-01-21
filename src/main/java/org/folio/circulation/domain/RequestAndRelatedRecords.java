@@ -11,7 +11,6 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
   private final RequestQueue requestQueue;
   private final RequestPolicy requestPolicy;
   private final ZoneId timeZone;
-
   private final MoveRequestRecord moveRequestRecord;
 
   private RequestAndRelatedRecords(

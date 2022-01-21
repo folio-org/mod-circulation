@@ -6,6 +6,7 @@ import static org.folio.circulation.support.results.Result.failed;
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
@@ -27,6 +28,10 @@ public class ValidationErrorFailure implements HttpFailure {
                                                String key, String value) {
 
     return failedValidation(new ValidationError(reason, key, value));
+  }
+
+  public static <T> Result<T> failedValidation(String reason, Map<String, String> parameters) {
+    return failedValidation(new ValidationError(reason, parameters));
   }
 
   public static <T> Result<T> failedValidation(ValidationError error) {
