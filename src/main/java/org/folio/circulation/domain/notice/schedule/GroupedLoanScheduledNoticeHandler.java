@@ -74,10 +74,8 @@ public class GroupedLoanScheduledNoticeHandler {
       HttpFailure cause = result.cause();
       log.error("Failed to collect data for scheduled notice: {}.\n{}", cause, notice);
 
-      if (cause instanceof RecordNotFoundFailure) {
-        return loanScheduledNoticeHandler.deleteNotice(notice, cause.toString())
-          .thenApply(r -> r.next(n -> result));
-      }
+      return loanScheduledNoticeHandler.deleteNotice(notice, cause.toString())
+        .thenApply(r -> r.next(n -> result));
     }
 
     return completedFuture(result);

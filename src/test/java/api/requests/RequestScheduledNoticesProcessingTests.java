@@ -3,6 +3,7 @@ package api.requests;
 import static api.support.builders.RequestBuilder.CLOSED_PICKUP_EXPIRED;
 import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
+import static api.support.matchers.RequestMatchers.isOpenAwaitingPickup;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
@@ -39,6 +40,8 @@ import org.junit.FixMethodOrder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -154,7 +157,7 @@ class RequestScheduledNoticesProcessingTests extends APITests {
   @Test
   @Disabled("notice is deleted once the request status is changed to 'Closed - Pickup expired'")
   //TODO fix this test and make it useful again
-  public void uponAtHoldExpirationNoticeShouldBeSentAndDeletedWhenHoldExpirationDateHasPassed() {
+  void uponAtHoldExpirationNoticeShouldBeSentAndDeletedWhenHoldExpirationDateHasPassed() {
     JsonObject noticeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(TEMPLATE_ID)
       .withHoldShelfExpirationEvent()
@@ -491,6 +494,21 @@ class RequestScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
+  void scheduledNoticesShouldNotBeSentWhenRequestIdIsNull() {
+    prepareNotice();
+
+    JsonObject notice = scheduledNoticesClient.getAll().get(0);
+    scheduledNoticesClient.replace(UUID.fromString(notice.getString("id")), notice.put("requestId", null));
+
+    scheduledNoticeProcessingClient.runRequestNoticesProcessing(getZonedDateTime().plusMonths(2));
+
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfScheduledNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
+  }
+
+  @Test
   void scheduledNoticesShouldNotBeSentWhenUserWasNotFound() {
     prepareNotice();
 
@@ -519,7 +537,7 @@ class RequestScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  void scheduledNoticesShouldNotBeSentOrDeletedWhenPatronNoticeRequestFails() {
+  void scheduledNoticesShouldNotBeSentWhenPatronNoticeRequestFails() {
     prepareNotice();
 
     FakeModNotify.setFailPatronNoticesWithBadRequest(true);
@@ -527,7 +545,7 @@ class RequestScheduledNoticesProcessingTests extends APITests {
     scheduledNoticeProcessingClient.runRequestNoticesProcessing(getZonedDateTime().plusMonths(2));
 
     verifyNumberOfSentNotices(0);
-    verifyNumberOfScheduledNotices(1);
+    verifyNumberOfScheduledNotices(0);
     verifyNumberOfPublishedEvents(NOTICE, 0);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
   }
@@ -692,6 +710,54 @@ class RequestScheduledNoticesProcessingTests extends APITests {
       .withRequestExpiration(requestExpiration);
   }
 
+  @ParameterizedTest
+  @ValueSource(strings = {
+    "In process",
+    "In process (non-requestable)",
+    "Intellectual item",
+    "Long missing",
+    "Missing",
+    "Restricted",
+    "Unavailable",
+    "Unknown",
+    "Withdrawn"
+  })
+  void uponAtHoldExpirationNoticeShouldBeDeletedWithoutSendingWhenItemIsMarkedAs(String itemStatus) {
+    setupNoticePolicyWithRequestNotice(
+      new NoticeConfigurationBuilder()
+        .withTemplateId(TEMPLATE_ID)
+        .withHoldShelfExpirationEvent()
+        .withUponAtTiming()
+        .sendInRealTime(true)
+        .create());
+
+    IndividualResource request = requestsFixture.place(new RequestBuilder().page()
+      .forItem(item)
+      .withRequesterId(requester.getId())
+      .withRequestDate(getZonedDateTime())
+      .withStatus(OPEN_NOT_YET_FILLED)
+      .withPickupServicePoint(pickupServicePoint));
+
+    checkInFixture.checkInByBarcode(
+      new CheckInByBarcodeRequestBuilder()
+        .forItem(item)
+        .withItemBarcode(item.getBarcode())
+        .at(pickupServicePoint));
+
+    assertThat(requestsClient.getById(request.getId()).getJson(), isOpenAwaitingPickup());
+    verifyNumberOfScheduledNotices(1);
+
+    markItemAs(itemStatus, item.getId(), request.getId());
+
+    scheduledNoticeProcessingClient.runRequestNoticesProcessing(
+      atStartOfDay(getLocalDate().plusDays(31), UTC));
+
+    verifyNumberOfScheduledNotices(0);
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+  }
+
   private IndividualResource prepareNotice() {
     setupNoticePolicyWithRequestNotice(
       new NoticeConfigurationBuilder()
@@ -745,4 +811,17 @@ class RequestScheduledNoticesProcessingTests extends APITests {
 
     return hasEmailNoticeProperties(requester.getId(), templateId, templateContextMatchers);
   }
+
+  // Update item and request to imitate mod-inventory's behavior upon marking an item
+  // as Withdrawn, Missing, Restricted, etc.
+  private void markItemAs(String itemStatus, UUID itemId, UUID requestId) {
+    JsonObject item = itemsClient.get(itemId).getJson();
+    item.getJsonObject("status").put("name", itemStatus);
+    itemsClient.replace(itemId, item);
+
+    IndividualResource request = requestsStorageClient.get(requestId);
+    requestsStorageClient.replace(requestId,
+      request.getJson().put("status", "Open - Not yet filled"));
+  }
+
 }

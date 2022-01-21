@@ -98,10 +98,6 @@ public abstract class ScheduledNoticeHandler {
 
   protected abstract JsonObject buildNoticeContextJson(ScheduledNoticeContext context);
 
-  protected boolean noticeShouldNotBeSent(ScheduledNoticeContext context) {
-    return isNoticeIrrelevant(context);
-  }
-
   protected Result<ScheduledNoticeContext> publishErrorEvent(HttpFailure failure,
     ScheduledNotice notice) {
 
@@ -166,7 +162,7 @@ public abstract class ScheduledNoticeHandler {
   private CompletableFuture<Result<ScheduledNoticeContext>> sendNotice(
     ScheduledNoticeContext context) {
 
-    if (noticeShouldNotBeSent(context)) {
+    if (isNoticeIrrelevant(context)) {
       return ofAsync(() -> context);
     }
 
@@ -216,11 +212,7 @@ public abstract class ScheduledNoticeHandler {
     HttpFailure failure = result.cause();
     log.error("Processing scheduled notice {} failed: {}", notice.getId(), failure);
 
-    if (failure instanceof RecordNotFoundFailure) {
-      return deleteNotice(notice, failure.toString());
-    }
-
-    return ofAsync(() -> notice);
+    return deleteNotice(notice, failure.toString());
   }
 
   private Result<ScheduledNotice> handleException(Throwable throwable, ScheduledNotice notice) {

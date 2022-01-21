@@ -291,7 +291,7 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
 
   @ParameterizedTest
   @MethodSource("testParameters")
-  void noticeIsNotSentOrDeletedWhenPatronNoticeRequestFails(TriggeringEvent triggeringEvent) {
+  void noticeIsDiscardedWhenPatronNoticeRequestFails(TriggeringEvent triggeringEvent) {
     generateOverdueFine(triggeringEvent, createNoticeConfig(triggeringEvent, UPON_AT, false));
 
     verifyNumberOfScheduledNotices(1);
@@ -302,7 +302,7 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
     scheduledNoticeProcessingClient.runFeeFineNoticesProcessing(rightAfter(actionDateTime));
 
     verifyNumberOfSentNotices(0);
-    verifyNumberOfScheduledNotices(1);
+    verifyNumberOfScheduledNotices(0);
     verifyNumberOfPublishedEvents(NOTICE, 0);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
   }

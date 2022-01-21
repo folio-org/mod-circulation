@@ -44,6 +44,7 @@ import api.support.builders.HoldingBuilder;
 import api.support.builders.ItemBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
+import api.support.builders.UserBuilder;
 import api.support.fakes.FakeModNotify;
 import api.support.fakes.FakePubSub;
 import api.support.fixtures.ConfigurationExample;
@@ -307,6 +308,22 @@ class DueDateScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
+  void testNoticeIsDeletedIfPatronGroupIsNull() {
+    generateLoanAndScheduledNotices();
+
+    JsonObject brokenNotice = createNoticesOverTime(dueDate.minusMinutes(1)::minusHours,1).get(0);
+
+    usersClient.replace(borrower.getId(), new UserBuilder().withPatronGroupId(null));
+    scheduledNoticesClient.create(brokenNotice);
+    scheduledNoticeProcessingClient.runLoanNoticesProcessing(dueDate.minusSeconds(1));
+
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfScheduledNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
+  }
+
+  @Test
   void testNoticeIsDeletedIfReferencedLoanDoesNotExist() {
     generateLoanAndScheduledNotices();
 
@@ -375,7 +392,7 @@ class DueDateScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  void testNoticeIsNotSentOrDeletedWhenPatronNoticeRequestFails() {
+  void testNoticeIsDeletedWhenPatronNoticeRequestFails() {
     generateLoanAndScheduledNotices(uponAtNotice());
 
     FakeModNotify.setFailPatronNoticesWithBadRequest(true);
@@ -384,7 +401,8 @@ class DueDateScheduledNoticesProcessingTests extends APITests {
 
     checkSentNotices();
 
-    verifyNumberOfScheduledNotices(1);
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfScheduledNotices(0);
     verifyNumberOfPublishedEvents(NOTICE, 0);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
   }
@@ -414,6 +432,44 @@ class DueDateScheduledNoticesProcessingTests extends APITests {
 
     checkSentNotices(expectedSentTemplateId1, expectedSentTemplateId2);
 
+    verifyNumberOfScheduledNotices(expectedNumberOfUnprocessedNotices);
+    verifyNumberOfPublishedEvents(NOTICE, 2);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 2);
+  }
+
+  @Test
+  void testNoticesForNullPatronGroupsDoNotBlockTheQueue() {
+    generateLoanAndScheduledNotices();
+
+    int expectedNumberOfUnprocessedNotices = 0;
+
+    List<JsonObject> notices = createNoticesOverTime(dueDate.minusMinutes(1)::minusHours, 4);
+
+    var basedUponNod = itemsFixture.basedUponNod();
+    var jessica = usersFixture.jessica();
+
+    var jessicaNodLoan = checkOutFixture.checkOutByBarcode(basedUponNod, jessica);
+
+    usersClient.replace(borrower.getId(), new UserBuilder().withPatronGroupId(null));
+    notices.get(1).put("loanId", jessicaNodLoan.getId());
+    notices.get(3).put("loanId", jessicaNodLoan.getId());
+    notices.get(3).put("recipientUserId", jessica.getId().toString());
+    notices.get(1).put("recipientUserId", jessica.getId().toString());
+
+    notices.forEach(scheduledNoticesClient::create);
+
+    scheduledNoticeProcessingClient.runLoanNoticesProcessing(dueDate.minusSeconds(1));
+
+    UUID expectedSentTemplateId1 = UUID.fromString(
+      notices.get(1).getJsonObject("noticeConfig").getString("templateId"));
+
+    UUID expectedSentTemplateId2 = UUID.fromString(
+      notices.get(3).getJsonObject("noticeConfig").getString("templateId"));
+
+    checkSentNotices(basedUponNod, jessica, jessicaNodLoan,
+      expectedSentTemplateId1, expectedSentTemplateId2);
+
+    verifyNumberOfSentNotices(2);
     verifyNumberOfScheduledNotices(expectedNumberOfUnprocessedNotices);
     verifyNumberOfPublishedEvents(NOTICE, 2);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 2);
@@ -655,14 +711,23 @@ class DueDateScheduledNoticesProcessingTests extends APITests {
 
   @SuppressWarnings("unchecked")
   private void checkSentNotices(UUID... expectedTemplateIds) {
+    checkSentNotices(item, borrower, loan, expectedTemplateIds);
+  }
+
+  private void checkSentNotices(ItemResource itemResource,
+    UserResource userResource, IndividualResource checkoutResource, UUID... expectedTemplateIds) {
+
     Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
-    noticeContextMatchers.putAll(TemplateContextMatchers.getUserContextMatchers(borrower));
-    noticeContextMatchers.putAll(TemplateContextMatchers.getItemContextMatchers(item, true));
-    noticeContextMatchers.putAll(TemplateContextMatchers.getLoanContextMatchers(loan));
-    noticeContextMatchers.putAll(TemplateContextMatchers.getLoanPolicyContextMatchersForUnlimitedRenewals());
+    noticeContextMatchers.putAll(TemplateContextMatchers.getUserContextMatchers(userResource));
+    noticeContextMatchers.putAll(
+      TemplateContextMatchers.getItemContextMatchers(itemResource, true));
+    noticeContextMatchers.putAll(TemplateContextMatchers.getLoanContextMatchers(checkoutResource));
+    noticeContextMatchers.putAll(
+      TemplateContextMatchers.getLoanPolicyContextMatchersForUnlimitedRenewals());
 
     final var matchers = Stream.of(expectedTemplateIds)
-      .map(templateId -> hasEmailNoticeProperties(borrower.getId(), templateId, noticeContextMatchers))
+      .map(templateId -> hasEmailNoticeProperties(userResource.getId(), templateId,
+        noticeContextMatchers))
       .toArray(Matcher[]::new);
 
     List<JsonObject> sentNotices = FakeModNotify.getSentPatronNotices();
