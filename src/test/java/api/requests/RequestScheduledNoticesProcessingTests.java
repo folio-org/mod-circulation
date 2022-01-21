@@ -725,7 +725,7 @@ class RequestScheduledNoticesProcessingTests extends APITests {
   void uponAtHoldExpirationNoticeShouldBeDeletedWithoutSendingWhenItemIsMarkedAs(String itemStatus) {
     setupNoticePolicyWithRequestNotice(
       new NoticeConfigurationBuilder()
-        .withTemplateId(templateId)
+        .withTemplateId(TEMPLATE_ID)
         .withHoldShelfExpirationEvent()
         .withUponAtTiming()
         .sendInRealTime(true)
