@@ -1,5 +1,6 @@
 package org.folio.circulation.services.agedtolost;
 
+import static java.util.stream.Collectors.toSet;
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_FEE_TYPE;
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_PROCESSING_FEE_TYPE;
 import static org.folio.circulation.domain.FeeFine.lostItemFeeTypes;
@@ -17,7 +18,6 @@ import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
-import static org.folio.circulation.support.utils.CollectionUtil.uniqueSetOf;
 import static org.folio.circulation.support.utils.CommonUtils.pair;
 
 import java.time.ZonedDateTime;
@@ -25,6 +25,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -105,17 +106,32 @@ public class ChargeLostFeesWhenAgedToLostService {
 
         return succeeded(LoanToChargeFees.usingLoans(allLoans))
           .after(this::fetchFeeFineOwners)
-          .thenComposeAsync(this::fetchFeeFineTypes)
-          .thenCompose(this::chargeLostFeesForLoans)
-          .thenCompose(this::publishClosedLoansLogEvents);
+          .thenCompose(this::fetchFeeFineTypes)
+          .thenCompose(this::chargeLostFeesForLoans);
       }));
   }
 
-  private CompletableFuture<Result<List<Loan>>> chargeLostFeesForLoans(
+  private CompletableFuture<Result<Void>> chargeLostFeesForLoans(
     Result<List<LoanToChargeFees>> loansToChargeFeesResult) {
 
     return loansToChargeFeesResult
-      .after(loansToChargeFees -> allOf(loansToChargeFees, this::chargeLostFeesForLoan));
+      .after(loansToChargeFees -> allOf(loansToChargeFees, this::chargeLostFees))
+      .thenApply(r -> r.map(ignored -> null));
+  }
+
+  private CompletableFuture<Result<Void>> chargeLostFees(
+    LoanToChargeFees loanToChargeFees) {
+
+    return ofAsync(() -> loanToChargeFees)
+      .thenCompose(r -> r.after(this::chargeLostFeesForLoan))
+      .thenCompose(r -> r.after(eventPublisher::publishClosedLoanEvent))
+      .thenApply(r -> r.mapFailure(failure -> handleFailure(loanToChargeFees, failure.toString())))
+      .exceptionally(t -> handleFailure(loanToChargeFees, t.getMessage()));
+  }
+
+  private static Result<Void> handleFailure(LoanToChargeFees loan, String errorMessage) {
+    log.error("Failed to charge lost item fee(s) for loan {}: {}", loan.getLoanId(), errorMessage);
+    return succeeded(null);
   }
 
   private CompletableFuture<Result<Loan>> chargeLostFeesForLoan(LoanToChargeFees loanToChargeFees) {
@@ -198,10 +214,12 @@ public class ChargeLostFeesWhenAgedToLostService {
   private CompletableFuture<Result<List<LoanToChargeFees>>> fetchFeeFineOwners(
     List<LoanToChargeFees> allLoansToCharge) {
 
-    final Set<String> ownerServicePoints = uniqueSetOf(allLoansToCharge,
-      LoanToChargeFees::getOwnerServicePointId);
+    final Set<String> primaryServicePointIds = allLoansToCharge.stream()
+      .map(LoanToChargeFees::getPrimaryServicePointId)
+      .filter(Objects::nonNull)
+      .collect(toSet());
 
-    return feeFineOwnerRepository.findOwnersForServicePoints(ownerServicePoints)
+    return feeFineOwnerRepository.findOwnersForServicePoints(primaryServicePointIds)
       .thenApply(r -> r.map(owners -> mapOwnersToLoans(owners, allLoansToCharge)));
   }
 
@@ -254,10 +272,10 @@ public class ChargeLostFeesWhenAgedToLostService {
   private Result<LoanToChargeFees> validateCanCreateAccountForLoan(LoanToChargeFees loanToChargeFees) {
     if (loanToChargeFees.hasNoFeeFineOwner()) {
       log.warn("No fee/fine owner present for service point {}, skipping loan {}",
-        loanToChargeFees.getOwnerServicePointId(), loanToChargeFees.getLoan().getId());
+        loanToChargeFees.getPrimaryServicePointId(), loanToChargeFees.getLoan().getId());
 
-      return failed(singleValidationError("No fee/fine owner found for item's permanent location",
-        "servicePointId", loanToChargeFees.getOwnerServicePointId()));
+      return failed(singleValidationError("No fee/fine owner found for item's effective location",
+        "servicePointId", loanToChargeFees.getPrimaryServicePointId()));
     }
 
     final LostItemPolicy lostItemPolicy = loanToChargeFees.getLoan().getLostItemPolicy();
@@ -292,8 +310,4 @@ public class ChargeLostFeesWhenAgedToLostService {
     return storeLoanAndItem.updateLoanAndItemInStorage(loan);
   }
 
-  private CompletableFuture<Result<Void>> publishClosedLoansLogEvents(Result<List<Loan>> loansResult) {
-    return loansResult.after(loans -> allOf(loans, eventPublisher::publishClosedLoanEvent))
-      .thenApply(r -> r.map(v -> null));
-  }
 }
