@@ -100,8 +100,7 @@ public abstract class RequestScheduledNoticeHandler extends ScheduledNoticeHandl
     Request request = context.getRequest();
     ScheduledNotice notice = context.getNotice();
 
-    return notice.getConfiguration().getTiming() == UPON_AT &&
-      request.isOpen() &&
+    return notice.getConfiguration().getTiming() == UPON_AT && request.isOpen() &&
       !(notice.getTriggeringEvent() == HOLD_EXPIRATION && request.isNotYetFilled());
   }
 
