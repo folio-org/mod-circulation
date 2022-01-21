@@ -9,7 +9,10 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
+
+import org.apache.commons.lang3.StringUtils;
 
 public class RequestQueue {
   private List<Request> requests;
@@ -31,9 +34,15 @@ public class RequestQueue {
       ));
   }
 
-  ItemStatus checkedInItemStatus() {
+  public RequestQueue filter(Predicate<Request> predicate) {
+    return new RequestQueue(requests.stream()
+      .filter(predicate)
+      .collect(Collectors.toList()));
+  }
+
+  ItemStatus checkedInItemStatus(Item item) {
     return hasOutstandingFulfillableRequests()
-      ? getHighestPriorityFulfillableRequest().checkedInItemStatus()
+      ? getHighestPriorityRequestFulfillableByItem(item).checkedInItemStatus()
       : AVAILABLE;
   }
 
@@ -43,6 +52,33 @@ public class RequestQueue {
 
   Request getHighestPriorityFulfillableRequest() {
     return fulfillableRequests().get(0);
+  }
+
+  Request getHighestPriorityRequestFulfillableByItem(Item item) {
+    return fulfillableRequests().stream()
+      .filter(request -> requestIsFulfillableByItem(request, item))
+      .findFirst()
+      .orElse(null);
+  }
+
+  private boolean requestIsFulfillableByItem(Request request, Item item) {
+    if (request.getRequestLevel() == RequestLevel.TITLE) {
+      String itemInstanceId = item.getInstanceId();
+      String requestInstanceId = request.getInstanceId();
+      String requestItemId = request.getItemId();
+      String itemId = item.getItemId();
+
+      return itemInstanceId != null && itemInstanceId.equals(requestInstanceId)
+        && (requestItemId == null ^ (item.isFound() && itemId.equals(requestItemId)));
+    }
+    else if (request.getRequestLevel() == RequestLevel.ITEM) {
+      String itemId = item.getItemId();
+      String requestItemId = request.getItemId();
+
+      return itemId != null && itemId.equals(requestItemId);
+    }
+
+    return false;
   }
 
   boolean containsRequestOfType(RequestType type) {
@@ -124,4 +160,26 @@ public class RequestQueue {
   boolean isEmpty() {
     return getRequests().isEmpty();
   }
+
+  // puts request on top of all requests in status "Open - Not yet filled"
+  public void updateRequestPositionOnCheckIn(String requestId) {
+    int newIndex = -1;
+
+    for (int i = 0; i < requests.size(); i++) {
+      var currentRequest = requests.get(i);
+      boolean isSameRequest = StringUtils.equals(requestId, currentRequest.getId());
+
+      if (newIndex == -1) {
+        if (!isSameRequest && currentRequest.isNotYetFilled()) {
+          newIndex = i;
+        }
+      } else if (isSameRequest) {
+        requests.add(newIndex, requests.remove(i));
+        reSequenceRequests();
+        return;
+      }
+    }
+  }
+
+
 }

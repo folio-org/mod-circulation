@@ -33,4 +33,10 @@ public class Instance {
       .map(Contributor::getName)
       .orElse(null);
   }
+
+  // TODO: replace this stub with proper implementation
+  public boolean isNotFound() {
+    return id == null;
+  }
+
 }

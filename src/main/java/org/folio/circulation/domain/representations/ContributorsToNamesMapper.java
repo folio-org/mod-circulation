@@ -1,7 +1,9 @@
 package org.folio.circulation.domain.representations;
 
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import org.folio.circulation.domain.Instance;
 import org.folio.circulation.domain.Item;
 
 import io.vertx.core.json.JsonArray;
@@ -11,7 +13,15 @@ public class ContributorsToNamesMapper {
   private ContributorsToNamesMapper() { }
 
   public static JsonArray mapContributorNamesToJson(Item item) {
-    return new JsonArray(item.getContributorNames()
+    return mapContributorNamesToJson(item.getContributorNames());
+  }
+
+  public static JsonArray mapContributorNamesToJson(Instance instance) {
+    return mapContributorNamesToJson(instance.getContributorNames());
+  }
+
+  public static JsonArray mapContributorNamesToJson(Stream<String> contributorNames) {
+    return new JsonArray(contributorNames
       .map(name -> new JsonObject().put("name", name))
       .collect(Collectors.toList()));
   }

@@ -140,7 +140,7 @@ class ServicePointCheckInTests extends APITests {
 
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(nod, james);
 
-    final IndividualResource request = requestsFixture.placeHoldShelfRequest(nod, jessica,
+    final IndividualResource request = requestsFixture.placeItemLevelHoldShelfRequest(nod, jessica,
       ClockUtil.getZonedDateTime(), requestServicePoint.getId());
 
     final ZonedDateTime beforeCheckIn = ClockUtil.getZonedDateTime();

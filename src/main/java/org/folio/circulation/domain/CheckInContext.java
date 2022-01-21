@@ -4,6 +4,7 @@ import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
 import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
 import org.folio.circulation.support.utils.ClockUtil;
 
@@ -22,6 +23,7 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class CheckInContext {
   private final CheckInByBarcodeRequest checkInRequest;
+  private final TlrSettingsConfiguration tlrSettings;
   private final Item item;
   private final Loan loan;
   private final RequestQueue requestQueue;
@@ -33,8 +35,23 @@ public class CheckInContext {
   private final ItemStatus itemStatusBeforeCheckIn;
 
   public CheckInContext(CheckInByBarcodeRequest checkInRequest) {
-    this(checkInRequest, null, null, null, null, null, null,
+    this(checkInRequest, null, null, null, null, null, null, null,
       ClockUtil.getZonedDateTime(), false, null);
+  }
+
+  public CheckInContext withTlrSettings(TlrSettingsConfiguration tlrSettingsConfiguration) {
+    return new CheckInContext(
+      this.checkInRequest,
+      tlrSettingsConfiguration,
+      this.item,
+      this.loan,
+      this.requestQueue,
+      this.checkInServicePoint,
+      this.highestPriorityFulfillableRequest,
+      this.loggedInUserId,
+      this.checkInProcessedDateTime,
+      this.inHouseUse,
+      this.itemStatusBeforeCheckIn);
   }
 
   public CheckInContext withItem(Item item) {
@@ -47,6 +64,7 @@ public class CheckInContext {
 
     return new CheckInContext(
       this.checkInRequest,
+      this.tlrSettings,
       item,
       updatedLoan,
       this.requestQueue,
@@ -61,6 +79,7 @@ public class CheckInContext {
   public CheckInContext withLoan(Loan loan) {
     return new CheckInContext(
       this.checkInRequest,
+      this.tlrSettings,
       this.item,
       loan,
       this.requestQueue,
@@ -76,11 +95,12 @@ public class CheckInContext {
     Request firstRequest = null;
 
     if (requestQueue.hasOutstandingFulfillableRequests()) {
-      firstRequest = requestQueue.getHighestPriorityFulfillableRequest();
+      firstRequest = requestQueue.getHighestPriorityRequestFulfillableByItem(item);
     }
 
     return new CheckInContext(
       this.checkInRequest,
+      this.tlrSettings,
       this.item,
       this.loan,
       requestQueue,
@@ -95,6 +115,7 @@ public class CheckInContext {
   public CheckInContext withCheckInServicePoint(ServicePoint checkInServicePoint) {
     return new CheckInContext(
       this.checkInRequest,
+      this.tlrSettings,
       this.item,
       this.loan,
       this.requestQueue,
@@ -109,6 +130,7 @@ public class CheckInContext {
   public CheckInContext withHighestPriorityFulfillableRequest(Request request) {
     return new CheckInContext(
       this.checkInRequest,
+      this.tlrSettings,
       this.item,
       this.loan,
       this.requestQueue,
@@ -123,6 +145,7 @@ public class CheckInContext {
   public CheckInContext withLoggedInUserId(String userId) {
     return new CheckInContext(
       this.checkInRequest,
+      this.tlrSettings,
       this.item,
       this.loan,
       this.requestQueue,
@@ -137,6 +160,7 @@ public class CheckInContext {
   public CheckInContext withInHouseUse(boolean inHouseUse) {
     return new CheckInContext(
       this.checkInRequest,
+      this.tlrSettings,
       this.item,
       this.loan,
       this.requestQueue,
@@ -151,6 +175,7 @@ public class CheckInContext {
   public CheckInContext withItemStatusBeforeCheckIn(ItemStatus itemStatus) {
     return new CheckInContext(
       this.checkInRequest,
+      this.tlrSettings,
       this.item,
       this.loan,
       this.requestQueue,
@@ -172,6 +197,10 @@ public class CheckInContext {
 
   public UUID getCheckInServicePointId() {
     return checkInRequest.getServicePointId();
+  }
+
+  public TlrSettingsConfiguration getTlrSettings() {
+    return tlrSettings;
   }
 
   public Item getItem() {

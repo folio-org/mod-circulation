@@ -9,6 +9,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.folio.circulation.domain.ItemStatus;
 import api.support.http.IndividualResource;
@@ -80,6 +82,18 @@ public class ItemsFixture {
     return itemsClient.create(item1);
   }
 
+  public IndividualResource createItemWithHoldingsAndLocation(UUID holdingsId, UUID locationId) {
+    JsonObject item = ItemExamples.basedUponDunkirk(UUID.randomUUID(), loanTypesFixture.canCirculate().getId())
+      .forHolding(holdingsId)
+      .available()
+      .withBarcode(UUID.randomUUID().toString())
+      .withTemporaryLocation(locationId)
+      .withMaterialType(materialTypesFixture.videoRecording().getId())
+      .create();
+
+    return itemsClient.create(item);
+  }
+
   public IndividualResource basedUponDunkirkWithCustomHoldingAndLocationAndCheckedOut(UUID holdingsId, UUID locationId) {
 
     JsonObject item1 = ItemExamples.basedUponDunkirk(UUID.randomUUID(), loanTypesFixture.canCirculate().getId())
@@ -148,6 +162,23 @@ public class ItemsFixture {
       thirdFloorHoldings(),
       ItemExamples.basedUponSmallAngryPlanet(materialTypesFixture.book().getId(),
         loanTypesFixture.canCirculate().getId()));
+  }
+
+  public ItemResource basedUponSmallAngryPlanet(
+    Function<HoldingBuilder, HoldingBuilder> additionalHoldingsRecordProperties,
+    Function<InstanceBuilder, InstanceBuilder> additionalInstanceProperties,
+    Function<ItemBuilder, ItemBuilder> additionalItemProperties,
+    String barcode) {
+
+    return applyAdditionalProperties(
+      additionalHoldingsRecordProperties,
+      additionalInstanceProperties,
+      additionalItemProperties,
+      InstanceExamples.basedUponSmallAngryPlanet(booksInstanceTypeId(),
+        getPersonalContributorNameTypeId()),
+      thirdFloorHoldings(),
+      ItemExamples.basedUponSmallAngryPlanet(materialTypesFixture.book().getId(),
+        loanTypesFixture.canCirculate().getId(), barcode));
   }
 
   public ItemResource basedUponNod() {
@@ -293,6 +324,24 @@ public class ItemsFixture {
       .withCallNumberPrefix(callNumberPrefix)
       .withCallNumberSuffix(callNumberSuffix)
       .withCopyNumbers(copyNumbers);
+  }
+
+  public InstanceBuilder instanceBasedUponSmallAngryPlanet() {
+    return InstanceExamples.basedUponSmallAngryPlanet(booksInstanceTypeId(),
+      getPersonalContributorNameTypeId());
+  }
+
+  public List<ItemResource> createMultipleItemsForTheSameInstance(int size) {
+    UUID instanceId = UUID.randomUUID();
+    InstanceBuilder sapInstanceBuilder = instanceBasedUponSmallAngryPlanet()
+      .withId(instanceId);
+
+    return IntStream.range(0, size)
+      .mapToObj(num -> basedUponSmallAngryPlanet(
+        holdingsBuilder -> holdingsBuilder.forInstance(instanceId),
+        instanceBuilder -> sapInstanceBuilder,
+        itemBuilder -> itemBuilder.withBarcode("0000" + num)))
+      .collect(Collectors.toList());
   }
 
   private UUID booksInstanceTypeId() {

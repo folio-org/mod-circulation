@@ -70,8 +70,12 @@ public class TemplateContextUtil {
   public static JsonObject createRequestNoticeContext(Request request) {
     JsonObject requestNoticeContext = new JsonObject()
       .put(USER, createUserContext(request.getRequester()))
-      .put(ITEM, createItemContext(request.getItem()))
       .put(REQUEST, createRequestContext(request));
+
+    // item may be missing if it is a title level request
+    if (request.getItem() != null && request.getItem().isFound()) {
+      requestNoticeContext.put(ITEM, createItemContext(request.getItem()));
+    }
 
     if (request.getRequestType() == RequestType.RECALL && request.getLoan() != null) {
       requestNoticeContext.put(LOAN, createLoanContext(request.getLoan()));

@@ -114,7 +114,8 @@
           "methods": ["POST"],
           "pathPattern": "/circulation/loans/{id}/change-due-date",
           "permissionsRequired": [
-            "circulation.loans.change-due-date.post"
+            "circulation.loans.change-due-date.post",
+            "configuration.entries.collection.get"
           ],
           "modulePermissions": [
             "modperms.circulation.loans.change-due-date.post"
@@ -150,7 +151,7 @@
     },
     {
       "id": "circulation",
-      "version": "12.0",
+      "version": "13.0",
       "handlers": [
         {
           "methods": [
@@ -360,7 +361,7 @@
           "methods": [
             "GET"
           ],
-          "pathPattern": "/circulation/requests/queue/{id}",
+          "pathPattern": "/circulation/requests/queue/item/{id}",
           "permissionsRequired": [
             "circulation.requests.queue.collection.get"
           ],
@@ -372,7 +373,31 @@
           "methods": [
             "POST"
           ],
-          "pathPattern": "/circulation/requests/queue/{itemId}/reorder",
+          "pathPattern": "/circulation/requests/queue/item/{id}/reorder",
+          "permissionsRequired": [
+            "circulation.requests.queue.reorder.collection.post"
+          ],
+          "modulePermissions": [
+            "modperms.circulation.requests.queue.reorder.collection.post"
+          ]
+        },
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/circulation/requests/queue/instance/{id}",
+          "permissionsRequired": [
+            "circulation.requests.queue.collection.get"
+          ],
+          "modulePermissions": [
+            "modperms.circulation.requests.queue.collection.get"
+          ]
+        },
+        {
+          "methods": [
+            "POST"
+          ],
+          "pathPattern": "/circulation/requests/queue/instance/{id}/reorder",
           "permissionsRequired": [
             "circulation.requests.queue.reorder.collection.post"
           ],
