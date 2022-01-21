@@ -37,7 +37,7 @@ public class MoveRequestProcessAdapter {
 
   CompletableFuture<Result<RequestAndRelatedRecords>> getDestinationRequestQueue(
       RequestAndRelatedRecords requestAndRelatedRecords) {
-    return requestQueueRepository.get(requestAndRelatedRecords.getDestinationItemId())
+    return requestQueueRepository.getByItemId(requestAndRelatedRecords.getDestinationItemId())
       .thenApply(result -> result.map(requestAndRelatedRecords::withRequestQueue));
   }
 
@@ -50,7 +50,7 @@ public class MoveRequestProcessAdapter {
 
   CompletableFuture<Result<RequestAndRelatedRecords>> getSourceRequestQueue(
       RequestAndRelatedRecords requestAndRelatedRecords) {
-    return requestQueueRepository.get(requestAndRelatedRecords.getSourceItemId())
+    return requestQueueRepository.getByItemId(requestAndRelatedRecords.getSourceItemId())
       .thenApply(result -> result.map(requestAndRelatedRecords::withRequestQueue));
   }
 

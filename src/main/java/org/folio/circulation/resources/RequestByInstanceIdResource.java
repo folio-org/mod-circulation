@@ -48,6 +48,7 @@ import org.folio.circulation.domain.validation.RequestLoanValidator;
 import org.folio.circulation.domain.validation.ServicePointPickupLocationValidator;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
+import org.folio.circulation.infrastructure.storage.inventory.InstanceRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
@@ -218,7 +219,7 @@ public class RequestByInstanceIdResource extends Resource {
   private CompletableFuture<Result<RequestAndRelatedRecords>> placeRequests(
     List<JsonObject> itemRequestRepresentations, Clients clients, EventPublisher eventPublisher) {
 
-    final RequestNoticeSender requestNoticeSender = RequestNoticeSender.using(clients);
+    final RequestNoticeSender requestNoticeSender = new ItemLevelRequestNoticeSender(clients);
     final LoanRepository loanRepository = new LoanRepository(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
     final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
@@ -232,7 +233,7 @@ public class RequestByInstanceIdResource extends Resource {
       new CreateRequestRepositories(RequestRepository.using(clients),
         new RequestPolicyRepository(clients), configurationRepository),
       updateUponRequest,
-      new RequestLoanValidator(loanRepository),
+      new RequestLoanValidator(null, loanRepository),
       requestNoticeSender,
       regularRequestBlockValidators(clients),
       eventPublisher, new FailFastErrorHandler());
@@ -258,10 +259,11 @@ public class RequestByInstanceIdResource extends Resource {
     }
 
     JsonObject currentItemRequest = itemRequests.get(startIndex);
-
+    ItemRepository itemRepository = new ItemRepository(clients, true, false, false);
     final RequestFromRepresentationService requestFromRepresentationService =
       new RequestFromRepresentationService(
-        new ItemRepository(clients, true, false, false),
+        new InstanceRepository(clients),
+        itemRepository,
         RequestQueueRepository.using(clients),
         userRepository,
         loanRepository,
@@ -269,10 +271,11 @@ public class RequestByInstanceIdResource extends Resource {
         new ConfigurationRepository(clients),
         createProxyRelationshipValidator(currentItemRequest, clients),
         new ServicePointPickupLocationValidator(),
-        new FailFastErrorHandler()
-      );
+        new FailFastErrorHandler(),
+        new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository));
 
-    return requestFromRepresentationService.getRequestFrom(currentItemRequest)
+    return requestFromRepresentationService.getRequestFrom(Request.Operation.CREATE,
+        currentItemRequest)
       .thenCompose(r -> r.after(createRequestService::createRequest))
       .thenCompose(r -> {
           if (r.succeeded()) {

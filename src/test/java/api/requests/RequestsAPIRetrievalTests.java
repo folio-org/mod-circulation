@@ -37,6 +37,7 @@ import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.MultipleJsonRecords;
+import api.support.TlrFeatureStatus;
 import api.support.builders.Address;
 import api.support.builders.ItemBuilder;
 import api.support.builders.RequestBuilder;
@@ -62,11 +63,11 @@ class RequestsAPIRetrievalTests extends APITests {
         identity(),
         instanceBuilder -> instanceBuilder.addIdentifier(isbnIdentifierId, isbnValue),
         itemBuilder -> itemBuilder
-        .withCallNumber("itCn", "itCnPrefix", "itCnSuffix")
-        .withEnumeration("enumeration1")
-        .withChronology("chronology")
-        .withVolume("vol.1")
-        .withCopyNumber(ONE_COPY_NUMBER));
+          .withCallNumber("itCn", "itCnPrefix", "itCnSuffix")
+          .withEnumeration("enumeration1")
+          .withChronology("chronology")
+          .withVolume("vol.1")
+          .withCopyNumber(ONE_COPY_NUMBER));
 
     final IndividualResource sponsor = usersFixture.rebecca(user -> user
       .withPatronGroupId(facultyGroupId));
@@ -90,6 +91,7 @@ class RequestsAPIRetrievalTests extends APITests {
         .itemRequestLevel()
         .withRequestDate(requestDate)
         .forItem(smallAngryPlanet)
+        .withInstanceId(smallAngryPlanet.getInstanceId())
         .by(sponsor)
         .proxiedBy(proxy)
         .fulfilToHoldShelf()
@@ -221,6 +223,71 @@ class RequestsAPIRetrievalTests extends APITests {
       is(isbnIdentifierId.toString()));
     assertThat(identifiers.getJsonObject(0).getString("value"),
       is(isbnValue));
+    JsonArray contributors = instanceSummary.getJsonArray("contributorNames");
+    assertThat(contributors, CoreMatchers.notNullValue());
+    assertThat(contributors.size(), is(1));
+    assertThat(contributors.getJsonObject(0).getString("name"), is("Chambers, Becky"));
+
+    JsonArray editions = instanceSummary.getJsonArray("editions");
+    assertThat(editions, notNullValue());
+    assertThat(editions.size(), is(1));
+    assertThat(editions.getString(0), is("First American Edition"));
+
+    JsonArray publication = instanceSummary.getJsonArray("publication");
+    assertThat(publication, notNullValue());
+    assertThat(publication.size(), is(1));
+    JsonObject firstPublication = publication.getJsonObject(0);
+    assertThat(firstPublication.getString("publisher"), is("Alfred A. Knopf"));
+    assertThat(firstPublication.getString("place"), is("New York"));
+    assertThat(firstPublication.getString("dateOfPublication"), is("2016"));
+  }
+
+  @Test
+  void titleLevelRequestRetrievalById() {
+    configurationsFixture.enableTlrFeature();
+
+    UUID isbnIdentifierId = identifierTypesFixture.isbn().getId();
+    String isbnValue = "9780866989427";
+    ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
+      identity(),
+      instanceBuilder -> instanceBuilder.addIdentifier(isbnIdentifierId, isbnValue),
+      itemsFixture.addCallNumberStringComponents());
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet);
+
+    UUID requesterId = usersFixture.steve().getId();
+    ZonedDateTime requestDate = ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC);
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    UUID instanceId = smallAngryPlanet.getInstanceId();
+
+    IndividualResource requestResource = requestsClient.create(new RequestBuilder()
+      .hold()
+      .titleRequestLevel()
+      .withInstanceId(instanceId)
+      .withNoItemId()
+      .withNoHoldingsRecordId()
+      .withPickupServicePointId(pickupServicePointId)
+      .withRequestDate(requestDate)
+      .withRequesterId(requesterId));
+
+    Response response = requestsFixture.getById(UUID.fromString(requestResource.getJson().getString("id")));
+    JsonObject representation = response.getJson();
+
+    assertThat(representation.getString("id"), is(requestResource.getJson().getString("id")));
+    assertThat(representation.getString("requestType"), is("Hold"));
+    assertThat(representation.getString("requestLevel"), is("Title"));
+
+    final JsonObject instanceSummary = representation.getJsonObject("instance");
+    assertThat("title is taken from instance",
+      instanceSummary.getString("title"), is("The Long Way to a Small, Angry Planet"));
+
+    JsonArray identifiers = instanceSummary.getJsonArray("identifiers");
+    assertThat(identifiers, CoreMatchers.notNullValue());
+    assertThat(identifiers.size(), is(1));
+    assertThat(identifiers.getJsonObject(0).getString("identifierTypeId"),
+      is(isbnIdentifierId.toString()));
+    assertThat(identifiers.getJsonObject(0).getString("value"),
+      is(isbnValue));
+
     JsonArray contributors = instanceSummary.getJsonArray("contributorNames");
     assertThat(contributors, CoreMatchers.notNullValue());
     assertThat(contributors.size(), is(1));
@@ -466,7 +533,7 @@ class RequestsAPIRetrievalTests extends APITests {
       .deliverToAddress(workAddressType.getId())
       .by(charlotte));
 
-      checkInFixture.checkInByBarcode(smallAngryPlanet);
+    checkInFixture.checkInByBarcode(smallAngryPlanet);
 
     final MultipleJsonRecords allRequests = requestsFixture.getAllRequests();
 
@@ -572,7 +639,7 @@ class RequestsAPIRetrievalTests extends APITests {
       .withRequesterId(secondRequester));
 
     requestsFixture.place(new RequestBuilder()
-      .withItemId(itemsFixture.basedUponTemeraire(ItemBuilder::checkOut).getId())
+      .forItem(itemsFixture.basedUponTemeraire(ItemBuilder::checkOut))
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(secondRequester));
 

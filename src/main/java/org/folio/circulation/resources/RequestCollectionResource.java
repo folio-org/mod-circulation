@@ -1,5 +1,6 @@
 package org.folio.circulation.resources;
 
+import static org.folio.circulation.domain.RequestLevel.TITLE;
 import static org.folio.circulation.domain.representations.RequestProperties.PROXY_USER_ID;
 import static org.folio.circulation.resources.RequestBlockValidators.regularRequestBlockValidators;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
@@ -30,6 +31,7 @@ import org.folio.circulation.domain.validation.RequestLoanValidator;
 import org.folio.circulation.domain.validation.ServicePointPickupLocationValidator;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
+import org.folio.circulation.infrastructure.storage.inventory.InstanceRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
@@ -40,6 +42,7 @@ import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.handlers.error.FailFastErrorHandler;
 import org.folio.circulation.resources.handlers.error.OverridingErrorHandler;
 import org.folio.circulation.services.EventPublisher;
+import org.folio.circulation.storage.ItemByInstanceIdFinder;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.http.OkapiPermissions;
 import org.folio.circulation.support.http.server.JsonHttpResponse;
@@ -71,10 +74,11 @@ public class RequestCollectionResource extends CollectionResource {
 
     final var eventPublisher = new EventPublisher(routingContext);
 
+    final var itemRepository = new ItemRepository(clients, true, true, true);
     final var userRepository = new UserRepository(clients);
     final var loanRepository = new LoanRepository(clients);
     final var loanPolicyRepository = new LoanPolicyRepository(clients);
-    final var requestNoticeSender = RequestNoticeSender.using(clients);
+    final var requestNoticeSender = createRequestNoticeSender(clients, representation);
     final var configurationRepository = new ConfigurationRepository(clients);
 
     final var updateUponRequest = new UpdateUponRequest(new UpdateItem(clients),
@@ -90,19 +94,22 @@ public class RequestCollectionResource extends CollectionResource {
     final var createRequestService = new CreateRequestService(
       new CreateRequestRepositories(RequestRepository.using(clients),
         new RequestPolicyRepository(clients), configurationRepository),
-      updateUponRequest, new RequestLoanValidator(loanRepository),
+      updateUponRequest, new RequestLoanValidator(new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository), loanRepository),
       requestNoticeSender, requestBlocksValidators, eventPublisher, errorHandler);
 
     final var requestFromRepresentationService = new RequestFromRepresentationService(
-      new ItemRepository(clients, true, true, true),
+      new InstanceRepository(clients),
+      itemRepository,
       RequestQueueRepository.using(clients), userRepository, loanRepository,
       new ServicePointRepository(clients), configurationRepository,
       createProxyRelationshipValidator(representation, clients),
-      new ServicePointPickupLocationValidator(), errorHandler);
+      new ServicePointPickupLocationValidator(), errorHandler,
+      new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository));
 
     final var scheduledNoticeService = RequestScheduledNoticeService.using(clients);
 
-    fromFutureResult(requestFromRepresentationService.getRequestFrom(representation))
+    fromFutureResult(requestFromRepresentationService.getRequestFrom(Request.Operation.CREATE,
+      representation))
       .flatMapFuture(createRequestService::createRequest)
       .onSuccess(scheduledNoticeService::scheduleRequestNotices)
       .onSuccess(records -> eventPublisher.publishDueDateChangedEvent(records, clients))
@@ -121,12 +128,13 @@ public class RequestCollectionResource extends CollectionResource {
 
     write(representation, "id", getRequestId(routingContext));
 
+    final var itemRepository = new ItemRepository(clients, true, true, true);
     final var requestRepository = RequestRepository.using(clients);
     final var updateRequestQueue = UpdateRequestQueue.using(clients);
     final var loanRepository = new LoanRepository(clients);
     final var loanPolicyRepository = new LoanPolicyRepository(clients);
     final var eventPublisher = new EventPublisher(routingContext);
-    final var requestNoticeSender = RequestNoticeSender.using(clients);
+    final var requestNoticeSender = createRequestNoticeSender(clients, representation);
     final var configurationRepository = new ConfigurationRepository(clients);
 
     final var updateItem = new UpdateItem(clients);
@@ -139,7 +147,7 @@ public class RequestCollectionResource extends CollectionResource {
     final var createRequestService = new CreateRequestService(
       new CreateRequestRepositories(requestRepository,
         new RequestPolicyRepository(clients), configurationRepository),
-      updateUponRequest, new RequestLoanValidator(loanRepository),
+      updateUponRequest, new RequestLoanValidator(new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository), loanRepository),
       requestNoticeSender, regularRequestBlockValidators(clients),
       eventPublisher, errorHandler);
 
@@ -148,15 +156,18 @@ public class RequestCollectionResource extends CollectionResource {
       requestNoticeSender, updateItem, eventPublisher);
 
     final var requestFromRepresentationService = new RequestFromRepresentationService(
-      new ItemRepository(clients, true, true, true),
-      RequestQueueRepository.using(clients), new UserRepository(clients),
-      loanRepository, new ServicePointRepository(clients), configurationRepository,
+      new InstanceRepository(clients),
+      itemRepository,
+      RequestQueueRepository.using(clients), new UserRepository(clients), loanRepository,
+      new ServicePointRepository(clients), configurationRepository,
       createProxyRelationshipValidator(representation, clients),
-      new ServicePointPickupLocationValidator(), errorHandler);
+      new ServicePointPickupLocationValidator(), errorHandler,
+      new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository));
 
     final var requestScheduledNoticeService = RequestScheduledNoticeService.using(clients);
 
-    fromFutureResult(requestFromRepresentationService.getRequestFrom(representation))
+    fromFutureResult(requestFromRepresentationService.getRequestFrom(Request.Operation.REPLACE,
+      representation))
       .flatMapFuture(when(requestRepository::exists, updateRequestService::replaceRequest,
         createRequestService::createRequest))
       .flatMapFuture(records -> eventPublisher.publishDueDateChangedEvent(records, clients))
@@ -255,7 +266,7 @@ public class RequestCollectionResource extends CollectionResource {
 
     final var moveRequestService = new MoveRequestService(
       requestRepository, new RequestPolicyRepository(clients),
-      updateUponRequest, moveRequestProcessAdapter, new RequestLoanValidator(loanRepository),
+      updateUponRequest, moveRequestProcessAdapter, new RequestLoanValidator(new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository), loanRepository),
       RequestNoticeSender.using(clients), configurationRepository, eventPublisher);
 
     fromFutureResult(requestRepository.getById(id))
@@ -293,5 +304,15 @@ public class RequestCollectionResource extends CollectionResource {
 
   private String getRequestId(RoutingContext routingContext) {
     return routingContext.request().getParam("id");
+  }
+
+  private RequestNoticeSender createRequestNoticeSender(Clients clients,
+    JsonObject representation) {
+
+    String requestLevel = representation.getString("requestLevel");
+    if (TITLE.getValue().equals(requestLevel)) {
+      return new TitleLevelRequestNoticeSender(clients);
+    }
+    return new ItemLevelRequestNoticeSender(clients);
   }
 }

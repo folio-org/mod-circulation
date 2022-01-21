@@ -1,11 +1,13 @@
 package api.requests;
 
+import static api.support.builders.RequestBuilder.OPEN_AWAITING_PICKUP;
 import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
 import static api.support.fakes.FakePubSub.getPublishedEventsAsList;
 import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.fixtures.AutomatedPatronBlocksFixture.MAX_NUMBER_OF_ITEMS_CHARGED_OUT_MESSAGE;
 import static api.support.fixtures.AutomatedPatronBlocksFixture.MAX_OUTSTANDING_FEE_FINE_BALANCE_MESSAGE;
 import static api.support.http.CqlQuery.exactMatch;
+import static api.support.http.CqlQuery.notEqual;
 import static api.support.http.Limit.limit;
 import static api.support.http.Offset.noOffset;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
@@ -35,10 +37,12 @@ import static org.folio.HttpStatus.HTTP_CREATED;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.domain.ItemStatus.PAGED;
 import static org.folio.circulation.domain.RequestType.RECALL;
+import static org.folio.circulation.domain.policy.Period.hours;
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE_ERROR;
 import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_CREATED_THROUGH_OVERRIDE;
+import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.hasItems;
@@ -48,6 +52,7 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.emptyString;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -74,16 +79,19 @@ import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.utils.ClockUtil;
+import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EmptySource;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import api.support.APITests;
+import api.support.TlrFeatureStatus;
 import api.support.builders.Address;
 import api.support.builders.HoldingBuilder;
 import api.support.builders.ItemBuilder;
@@ -101,6 +109,7 @@ import api.support.fixtures.ItemsFixture;
 import api.support.fixtures.RequestsFixture;
 import api.support.fixtures.TemplateContextMatchers;
 import api.support.fixtures.UsersFixture;
+import api.support.http.CheckOutResource;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import api.support.http.OkapiHeaders;
@@ -128,6 +137,7 @@ public class RequestsAPICreationTests extends APITests {
   @AfterEach
   public void afterEach() {
     mockClockManagerToReturnDefaultDateTime();
+    configurationsFixture.deleteTlrFeatureConfig();
   }
 
   @Test
@@ -367,21 +377,110 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(tagsRepresentation.getJsonArray("tagList"), contains("new", "important"));
   }
 
-  @Test
-  void cannotCreateRequestForUnknownItem() {
+  @ParameterizedTest
+  @CsvSource({
+    "NOT_CONFIGURED, Page, Item",
+    "NOT_CONFIGURED, Hold, Item",
+    "NOT_CONFIGURED, Recall, Item",
+    "DISABLED, Page, Item",
+    "DISABLED, Hold, Item",
+    "DISABLED, Recall, Item",
+    "ENABLED, Page, Item",
+    "ENABLED, Page, Title",
+    "ENABLED, Hold, Item",
+    "ENABLED, Hold, Title",
+    "ENABLED, Recall, Item",
+    "ENABLED, Recall, Title"
+  })
+  void cannotCreateTitleLevelRequestForUnknownInstance(String tlrFeatureStatus,
+    String requestType, String requestLevel) {
+
+    reconfigureTlrFeature(TlrFeatureStatus.valueOf(tlrFeatureStatus));
+
+    UUID patronId = usersFixture.charlotte().getId();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+
+    Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
+      .withRequestType(requestType)
+      .withRequestLevel(requestLevel)
+      .withItemId(null)
+      .withInstanceId(UUID.randomUUID())
+      .withPickupServicePointId(pickupServicePointId)
+      .withRequesterId(patronId));
+
+    assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(postResponse.getJson(), hasErrorWith(hasMessage("Instance does not exist")));
+  }
+
+  @ParameterizedTest
+  @CsvSource({
+    "NOT_CONFIGURED, Page",
+    "NOT_CONFIGURED, Hold",
+    "NOT_CONFIGURED, Recall",
+    "DISABLED, Page",
+    "DISABLED, Hold",
+    "DISABLED, Recall",
+    "ENABLED, Page",
+    "ENABLED, Hold",
+    "ENABLED, Recall"
+  })
+  void cannotCreateRequestForUnknownItem(String tlrFeatureEnabledString, String requestType) {
+    if (Boolean.parseBoolean(tlrFeatureEnabledString)) {
+      configurationsFixture.enableTlrFeature();
+    }
+
+    IndividualResource instance = instancesFixture.basedUponDunkirk();
     UUID itemId = UUID.randomUUID();
     UUID patronId = usersFixture.charlotte().getId();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    //Check RECALL -- should give the same response when placing other types of request.
     Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
-      .recall()
+      .withRequestType(requestType)
+      .withInstanceId(instance.getId())
       .withItemId(itemId)
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(patronId));
 
     assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(postResponse.getJson(), hasErrorWith(hasMessage("Item does not exist")));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"Page", "Hold", "Recall"})
+  void cannotCreateTitleLevelRequestWhenTlrDisabled(String requestType) {
+    UUID patronId = usersFixture.charlotte().getId();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+
+    Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
+      .withRequestType(requestType)
+      .titleRequestLevel()
+      .withItemId(null)
+      .withInstanceId(UUID.randomUUID())
+      .withPickupServicePointId(pickupServicePointId)
+      .withRequesterId(patronId));
+
+    assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(postResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("requestLevel must be one of the following: \"Item\""),
+      hasParameter("requestLevel", "Title"))));
+  }
+
+  @Test
+  void cannotCreateRequestWithNoItemReferenceWhenTlrDisabled() {
+    UUID patronId = usersFixture.charlotte().getId();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+
+    Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
+      .recall()
+      .withInstanceId(instancesFixture.basedUponDunkirk().getId())
+      .withNoItemId()
+      .withPickupServicePointId(pickupServicePointId)
+      .withRequesterId(patronId));
+
+    assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(postResponse.getJson(), hasErrors(1));
+    assertThat(postResponse.getJson(), hasErrorWith(
+      hasMessage("Cannot create an item level request with no item ID")));
   }
 
   @Test
@@ -392,26 +491,155 @@ public class RequestsAPICreationTests extends APITests {
     UUID instanceId = item.getInstanceId();
 
     Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
-      .page()
+      .recall()
       .withItemId(item.getId())
+      .withRequestLevel("invalid")
+      .withInstanceId(instanceId)
+      .withPickupServicePointId(pickupServicePointId)
+      .withRequesterId(patronId));
+
+    assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(postResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("requestLevel must be one of the following: \"Item\""),
+      hasParameter("requestLevel", "invalid"))));
+  }
+
+  @Test
+  void canCreateTitleLevelRequestWhenTlrEnabled() {
+    UUID patronId = usersFixture.charlotte().getId();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+    UUID instanceId = item.getInstanceId();
+
+    configurationsFixture.enableTlrFeature();
+
+    IndividualResource requestResource = requestsClient.create(new RequestBuilder()
+      .page()
+      .withNoHoldingsRecordId()
+      .withNoItemId()
       .titleRequestLevel()
       .withInstanceId(instanceId)
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(patronId));
 
-    assertThat(postResponse, hasStatus(HTTP_BAD_REQUEST));
-    assertThat(postResponse.getBody(), is("requestLevel must be one of the following: \"Item\""));
+    JsonObject request = requestResource.getJson();
+    assertThat(request.getString("requestLevel"), is("Title"));
+  }
+
+  @Test
+  void cannotCreateRequestWithNonExistentRequestLevelWhenTlrEnabled() {
+    UUID patronId = usersFixture.charlotte().getId();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+    UUID instanceId = item.getInstanceId();
+
+    configurationsFixture.enableTlrFeature();
+
+    Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
+      .recall()
+      .withItemId(item.getId())
+      .withRequestLevel("invalid")
+      .withInstanceId(instanceId)
+      .withPickupServicePointId(pickupServicePointId)
+      .withRequesterId(patronId));
+
+    assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(postResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("requestLevel must be one of the following: \"Item\", \"Title\""),
+      hasParameter("requestLevel", "invalid"))));
+  }
+
+  @Test
+  void cannotCreateTlrRequestWhenUserHasLoanForSomeItemsOfInstance() {
+    reconfigureTlrFeature(TlrFeatureStatus.ENABLED);
+
+    IndividualResource instanceMultipleCopies = instancesFixture.basedUponDunkirk();
+    IndividualResource holdings = holdingsFixture.defaultWithHoldings(
+      instanceMultipleCopies.getId());
+    IndividualResource locationsResource = locationsFixture.mainFloor();
+    IndividualResource item = itemsFixture.createItemWithHoldingsAndLocation(holdings.getId(),
+      locationsResource.getId());
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    JsonObject holdingsJson = holdings.getJson();
+
+    checkOutFixture.checkOutByBarcode(item, usersFixture.jessica());
+
+    Response postResponse = requestsClient.attemptCreate(
+      new RequestBuilder()
+        .hold()
+        .withPickupServicePointId(pickupServicePointId)
+        .titleRequestLevel()
+        .withInstanceId(UUID.fromString(holdingsJson.getString("instanceId")))
+        .withNoItemId()
+        .withNoHoldingsRecordId()
+        .by(usersFixture.jessica())
+        .create());
+
+    assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(postResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("One of the items of the requested title is already loaned to the requester"),
+      hasParameter("itemId", item.getId().toString()),
+      hasParameter("userId", usersFixture.jessica().getId().toString()))));
+  }
+
+  @Test
+  void cannotCreateTlrWhenUserAlreadyRequestedTheSameTitle() {
+    reconfigureTlrFeature(TlrFeatureStatus.ENABLED);
+
+    final IndividualResource james = usersFixture.james();
+    UUID instanceId = instancesFixture.basedUponDunkirk().getId();
+
+    buildItem(instanceId, UUID.randomUUID().toString());
+    requestsFixture.placeTitleLevelHoldShelfRequest(instanceId, james);
+    Response postResponse = requestsFixture.attemptPlaceTitleLevelHoldShelfRequest(instanceId,
+      james);
+
+    assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(postResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("This requester already has an open request for this instance"),
+      hasParameter("requesterId", usersFixture.james().getId().toString()),
+      hasParameter("instanceId", instanceId.toString()))));
+  }
+
+  @Test
+  void cannotCreateTlrWhenUserAlreadyRequestedAnItemFromTheSameTitle() {
+    reconfigureTlrFeature(TlrFeatureStatus.ENABLED);
+
+    List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
+    ItemResource item1 = items.get(0);
+    ItemResource item2 = items.get(1);
+
+    final IndividualResource charlotte = usersFixture.charlotte();
+    final IndividualResource jessica = usersFixture.jessica();
+
+    checkOutFixture.checkOutByBarcode(item1, charlotte);
+    checkOutFixture.checkOutByBarcode(item2, charlotte);
+
+    // Item-level request that should prevent a subsequent title-level request from being created
+    requestsFixture.placeItemLevelHoldShelfRequest(item1, jessica);
+
+    // Title-level request that should be refused because item-level request for one of the title's
+    // items already exists
+    final Response response = requestsFixture.attemptPlaceTitleLevelHoldShelfRequest(
+      item1.getInstanceId(), jessica);
+
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(response.getJson(), hasErrors(1));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("This requester already has an open request for one of the instance's items"),
+      hasParameter("requesterId", jessica.getId().toString()),
+      hasParameter("instanceId", item1.getInstanceId().toString()))));
   }
 
   @Test
   void cannotCreateRecallRequestWhenItemIsNotCheckedOut() {
-    UUID itemId = itemsFixture.basedUponSmallAngryPlanet(
-      ItemBuilder::available)
-      .getId();
+    ItemResource item = itemsFixture.basedUponSmallAngryPlanet(
+      ItemBuilder::available);
 
     Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
       .recall()
-      .withItemId(itemId)
+      .withInstanceId(item.getInstanceId())
+      .withItemId(item.getId())
       .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .withRequesterId(usersFixture.charlotte().getId()));
 
@@ -423,13 +651,13 @@ public class RequestsAPICreationTests extends APITests {
 
   @Test
   void cannotCreateHoldRequestWhenItemIsNotCheckedOut() {
-    UUID itemId = itemsFixture.basedUponSmallAngryPlanet(
-      ItemBuilder::available)
-      .getId();
+    ItemResource item = itemsFixture.basedUponSmallAngryPlanet(
+      ItemBuilder::available);
 
     Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
       .hold()
-      .withItemId(itemId)
+      .withInstanceId(item.getInstanceId())
+      .withItemId(item.getId())
       .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .withRequesterId(usersFixture.charlotte().getId()));
 
@@ -482,7 +710,9 @@ public class RequestsAPICreationTests extends APITests {
     UUID requesterId = usersFixture.steve().getId();
 
     final IndividualResource request = requestsFixture.place(new RequestBuilder()
-      .recall().fulfilToHoldShelf()
+      .recall()
+      .fulfilToHoldShelf()
+      .withInstanceId(smallAngryPlanet.getInstanceId())
       .withItemId(itemId)
       .withRequesterId(requesterId)
       .withPickupServicePointId(pickupServicePointId)
@@ -840,7 +1070,7 @@ public class RequestsAPICreationTests extends APITests {
 
   @Test
   void creatingARequestIgnoresReadOnlyInformationProvidedByClient() {
-    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
     final IndividualResource steve = usersFixture.steve();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -855,6 +1085,7 @@ public class RequestsAPICreationTests extends APITests {
       .recall()
       .withRequestDate(requestDate)
       .withItemId(itemId)
+      .withInstanceId(smallAngryPlanet.getInstanceId())
       .withPickupServicePointId(pickupServicePointId)
       .by(steve)
       .create();
@@ -1005,6 +1236,61 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(pagedRequest.getJson().getString("requestType"), is(RequestType.PAGE.getValue()));
     assertThat(pagedRequest.getResponse(), hasStatus(HTTP_CREATED));
     assertThat(finalStatus, is(ItemStatus.PAGED.getValue()));
+  }
+
+  @Test
+  void cannotCreateTitleLevelPagedRequestIfThereAreNoAvailableItems() {
+    UUID patronId = usersFixture.charlotte().getId();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    configurationsFixture.enableTlrFeature();
+
+    UUID instanceId = instancesFixture.basedUponDunkirk().getId();
+    IndividualResource defaultWithHoldings = holdingsFixture.defaultWithHoldings(instanceId);
+    itemsClient.create(new ItemBuilder()
+      .forHolding(defaultWithHoldings.getId())
+      .checkOut()
+      .withMaterialType(UUID.randomUUID())
+      .withPermanentLoanType(UUID.randomUUID())
+      .create());
+
+    Response postResponse = requestsClient.attemptCreate(
+      buildPageTitleLevelRequest(patronId, pickupServicePointId, instanceId));
+
+    assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(postResponse.getJson(), hasErrors(1));
+    assertThat(postResponse.getJson(), hasErrorWith(
+      hasMessage("Cannot create page TLR for this instance ID - no available items found")));
+    assertThat(postResponse.getJson(), hasErrorWith(hasParameter("instanceId",
+      instanceId.toString())));
+  }
+
+  @Test
+  void canCreateTitleLevelPagedRequest() {
+    UUID patronId = usersFixture.charlotte().getId();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    configurationsFixture.enableTlrFeature();
+
+    IndividualResource uponDunkirkInstance = instancesFixture.basedUponDunkirk();
+    UUID instanceId = uponDunkirkInstance.getId();
+    IndividualResource defaultWithHoldings = holdingsFixture.defaultWithHoldings(instanceId);
+    IndividualResource item = itemsClient.create(new ItemBuilder()
+      .forHolding(defaultWithHoldings.getId())
+      .withMaterialType(UUID.randomUUID())
+      .withPermanentLoanType(UUID.randomUUID())
+      .create());
+
+    IndividualResource pagedRequest = requestsClient.create(buildPageTitleLevelRequest(patronId,
+      pickupServicePointId, instanceId));
+
+    JsonObject json = pagedRequest.getJson();
+    assertThat(json.getString("requestType"), is(RequestType.PAGE.getValue()));
+    assertThat(json.getString("holdingsRecordId"), is(defaultWithHoldings.getId().toString()));
+    assertThat(json.getString("itemId"), is(item.getId()));
+    assertThat(json.getString("instanceId"), is(instanceId));
+    assertThat(pagedRequest.getResponse(), hasStatus(HTTP_CREATED));
+    assertThat(json.getJsonObject("item")
+      .getString("status"), is(ItemStatus.PAGED.getValue()));
+    assertThat(json.getString("requestLevel"), is(RequestLevel.TITLE.getValue()));
   }
 
   @Test
@@ -1183,12 +1469,14 @@ public class RequestsAPICreationTests extends APITests {
   @Test
   void canCreateRecallRequestWhenItemIsPaged() {
     final IndividualResource requestPickupServicePoint = servicePointsFixture.cd1();
-    final IndividualResource smallAngryPlannet = setupPagedItem(requestPickupServicePoint, itemsFixture, requestsClient, usersFixture);
-    final IndividualResource pagedItem = itemsClient.get(smallAngryPlannet);
+    final ItemResource smallAngryPlanet = setupPagedItem(requestPickupServicePoint,
+      itemsFixture, requestsClient, usersFixture);
+    final IndividualResource pagedItem = itemsClient.get(smallAngryPlanet);
 
     final Response recallResponse = requestsClient.attemptCreate(new RequestBuilder()
       .recall()
       .forItem(pagedItem)
+      .withInstanceId(smallAngryPlanet.getInstanceId())
       .withPickupServicePointId(requestPickupServicePoint.getId())
       .by(usersFixture.jessica()));
 
@@ -2037,6 +2325,24 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
+  void getManyRequestWithIdParamQueryShouldReturnRequestWithFetchedInstance() {
+    IndividualResource request = requestsFixture.place(
+      new RequestBuilder()
+        .open()
+        .page()
+        .forItem(itemsFixture.basedUponSmallAngryPlanet())
+        .by(usersFixture.charlotte())
+        .fulfilToHoldShelf()
+        .withPickupServicePointId(servicePointsFixture.cd1().getId()));
+    JsonObject requestRepresentation = requestsClient.getMany(exactMatch("id", request.getId().toString())).getFirst();
+
+    assertThat(requestRepresentation, notNullValue());
+    JsonObject instanceRepresentation = requestRepresentation.getJsonObject("instance");
+    assertThat(instanceRepresentation, notNullValue());
+    validateInstanceRepresentation(instanceRepresentation);
+  }
+
+  @Test
   void requestRefusedWhenAutomatedBlockExistsForPatron() {
     final IndividualResource steve = usersFixture.steve();
     final ItemResource item = itemsFixture.basedUponTemeraire();
@@ -2143,9 +2449,10 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  void shouldNotCreateRequestWhenItemRequesterAndPickupServicePointAreNotProvided() {
+  void shouldNotCreateRequestWhenInstanceItemRequesterAndPickupServicePointAreNotProvided() {
     Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
       .recall()
+      .withInstanceId(null)
       .withItemId(null)
       .withRequesterId(null)
       .withPickupServicePointId(null));
@@ -2154,7 +2461,11 @@ public class RequestsAPICreationTests extends APITests {
 
     final JsonObject responseJson = postResponse.getJson();
 
-    assertThat(responseJson, hasErrors(3));
+    assertThat(responseJson, hasErrors(4));
+
+    assertThat(responseJson, hasErrorWith(allOf(
+      hasMessage("Cannot create a request with no instance ID"),
+      hasNullParameter("instanceId"))));
 
     assertThat(responseJson, hasErrorWith(allOf(
         hasMessage("Cannot create an item level request with no item ID"),
@@ -2169,13 +2480,15 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  void shouldNotCreateRequestWhenItemRequesterAndPickupServicePointCannotBeFound() {
+  void shouldNotCreateRequestWhenInstanceItemRequesterAndPickupServicePointCannotBeFound() {
+    final UUID instanceId = UUID.randomUUID();
     final UUID itemId = UUID.randomUUID();
     final UUID userId = UUID.randomUUID();
     final UUID pickupServicePointId = UUID.randomUUID();
 
     Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
       .recall()
+      .withInstanceId(instanceId)
       .withItemId(itemId)
       .withRequesterId(userId)
       .withPickupServicePointId(pickupServicePointId));
@@ -2184,11 +2497,11 @@ public class RequestsAPICreationTests extends APITests {
 
     final JsonObject responseJson = postResponse.getJson();
 
-    assertThat(responseJson, hasErrors(3));
+    assertThat(responseJson, hasErrors(4));
 
     assertThat(responseJson, hasErrorWith(allOf(
-      hasMessage("Item does not exist"),
-      hasUUIDParameter("itemId", itemId))));
+      hasMessage("Instance does not exist"),
+      hasUUIDParameter("instanceId", instanceId))));
 
     assertThat(responseJson, hasErrorWith(allOf(
       hasMessage("A valid user and patron group are required. User is null"),
@@ -2333,21 +2646,75 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(response.getJson(), hasNoJsonPath("requestProcessingParameters"));
   }
 
+  @Test
+  void titleLevelRequestConfirmationNoticeShouldBeSentWithEnabledTlr() {
+    UUID templateId = UUID.randomUUID();
+    templateFixture.createDummyNoticeTemplate(templateId);
+    reconfigureTlrFeature(TlrFeatureStatus.ENABLED, templateId, null, null);
+
+    requestsFixture.place(buildTitleLevelRequest());
+    verifyNumberOfSentNotices(1);
+    verifyNumberOfPublishedEvents(NOTICE, 1);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+  }
+
   @ParameterizedTest
-  @EnumSource(RequestLevel.class)
+  @EnumSource(value = TlrFeatureStatus.class, names = {"DISABLED", "NOT_CONFIGURED"})
+  void titleLevelRequestConfirmationNoticeShouldNotBeSentWithDisabledTlr(
+    TlrFeatureStatus tlrFeatureStatus) {
+
+    UUID templateId = UUID.randomUUID();
+    templateFixture.createDummyNoticeTemplate(templateId);
+    reconfigureTlrFeature(tlrFeatureStatus, templateId, null, null);
+
+    Response response = requestsFixture.attemptPlace(buildTitleLevelRequest());
+    assertThat(response.getStatusCode(), CoreMatchers.is(422));
+    assertThat(response.getJson(), hasErrorWith(
+      hasMessage("requestLevel must be one of the following: \"Item\"")));
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+  }
+
+  @Test
+  void titleLevelRequestConfirmationNoticeShouldNotBeSentWithoutConfiguredNoticeTemplate() {
+    reconfigureTlrFeature(TlrFeatureStatus.ENABLED, null, null, null);
+
+    requestsFixture.place(buildTitleLevelRequest());
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+  }
+
+  @ParameterizedTest
+  @EnumSource(value = RequestLevel.class, names = {"ITEM", "TITLE"})
   void cannotCreateRequestWithoutInstanceId(RequestLevel requestLevel) {
+    reconfigureTlrFeature(TlrFeatureStatus.ENABLED, null, null, null);
+
+    ItemResource item = itemsFixture.basedUponNod();
+
     Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
       .page()
-      .withRequestLevel(requestLevel.value())
-      .forItem(itemsFixture.basedUponNod())
-      .withInstanceId(null)
+      .withRequestLevel(requestLevel.getValue())
+      .forItem(item)
+      .withNoInstanceId()
       .withRequesterId(usersFixture.steve().getId())
       .withPickupServicePointId(servicePointsFixture.cd1().getId()));
 
     assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
-    assertThat(postResponse.getJson(), hasErrors(1));
-    assertThat(postResponse.getJson(), hasErrorWith(
-      hasMessage("Cannot create a request with no instance ID")));
+    assertThat(postResponse.getJson(), hasErrors(requestLevel == RequestLevel.ITEM ? 1 : 2));
+    assertThat(postResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("Cannot create a request with no instance ID"),
+      hasNullParameter("instanceId")
+    )));
+
+    if (requestLevel == RequestLevel.TITLE) {
+      assertThat(postResponse.getJson(), hasErrorWith(allOf(
+        hasMessage("Attempt to create TLR request linked to an item"),
+        hasUUIDParameter("itemId", item.getId()),
+        hasUUIDParameter("holdingsRecordId", item.getHoldingsRecordId())
+      )));
+    }
   }
 
   @Test
@@ -2367,13 +2734,15 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @ParameterizedTest
-  @EnumSource(RequestLevel.class)
+  @EnumSource(value = RequestLevel.class, names = {"ITEM", "TITLE"})
   void cannotCreateRequestWithItemIdButNoHoldingsRecordId(RequestLevel requestLevel) {
+    reconfigureTlrFeature(TlrFeatureStatus.ENABLED, null, null, null);
+
     Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
       .page()
-      .withRequestLevel(requestLevel.value())
+      .withRequestLevel(requestLevel.getValue())
       .forItem(itemsFixture.basedUponNod())
-      .withHoldingsRecordId(null)
+      .withNoHoldingsRecordId()
       .withRequesterId(usersFixture.steve().getId())
       .withPickupServicePointId(servicePointsFixture.cd1().getId()));
 
@@ -2381,6 +2750,130 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(postResponse.getJson(), hasErrors(1));
     assertThat(postResponse.getJson(), hasErrorWith(
       hasMessage("Cannot create a request with item ID but no holdings record ID")));
+  }
+
+  @Test
+  void recallTlrRequestShouldBeAppliedToLoanWithClosestDueDate() {
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    UUID instanceId = UUID.randomUUID();
+    configurationsFixture.enableTlrFeature();
+    ItemResource firstItem = buildItem(instanceId, "111");
+    ItemResource secondItem = buildItem(instanceId, "222");
+
+    updateCirculationRulesWithLoanPeriod("One day loan policy", Period.days(1));
+    CheckOutResource firstLoan = checkOutFixture.checkOutByBarcode(firstItem,
+      usersFixture.jessica());
+
+    updateCirculationRulesWithLoanPeriod("Five days loan policy", Period.days(5));
+    CheckOutResource secondLoan = checkOutFixture.checkOutByBarcode(secondItem,
+      usersFixture.charlotte());
+
+    IndividualResource requester = usersFixture.steve();
+    ZonedDateTime requestDate = ZonedDateTime.of(2021, 7, 22, 10, 22, 54, 0, UTC);
+    IndividualResource request = requestsFixture.place(new RequestBuilder()
+      .withId(UUID.randomUUID())
+      .open()
+      .recall()
+      .titleRequestLevel()
+      .withInstanceId(instanceId)
+      .withNoItemId()
+      .withNoHoldingsRecordId()
+      .by(requester)
+      .withRequestDate(requestDate)
+      .fulfilToHoldShelf()
+      .withRequestExpiration(LocalDate.of(2021, 7, 30))
+      .withHoldShelfExpiration(LocalDate.of(2021, 8, 31))
+      .withPickupServicePointId(pickupServicePointId)
+      .withTags(new RequestBuilder.Tags(asList("new", "important")))
+      .withPatronComments("I need this book"));
+
+    var recalledLoanJson = loansFixture.getLoanById(firstLoan.getId()).getJson();
+    var notRecalledLoanJson = loansFixture.getLoanById(secondLoan.getId()).getJson();
+    assertThat(recalledLoanJson.getBoolean("dueDateChangedByRecall"), is(true));
+    assertThat(notRecalledLoanJson.getBoolean("dueDateChangedByRecall"), nullValue());
+
+    var requestJson = request.getJson();
+    assertThat(requestJson.getString("requestType"), is("Recall"));
+    assertThat(requestJson.getString("requestLevel"), is("Title"));
+    assertThat(requestJson.getString("requestDate"), isEquivalentTo(requestDate));
+    assertThat(requestJson.getString("itemId"), is(firstItem.getId().toString()));
+    assertThat(requestJson.getString("instanceId"), is(instanceId));
+    assertThat(requestJson.getString("requesterId"), is(requester.getId().toString()));
+    assertThat(requestJson.getString("requestExpirationDate"), is("2021-07-30T23:59:59.000Z"));
+    assertThat(requestJson.getString("holdShelfExpirationDate"), is("2021-08-31"));
+    assertThat(requestJson.getString("status"), is("Open - Not yet filled"));
+    assertThat(requestJson.getString("pickupServicePointId"), is(pickupServicePointId.toString()));
+  }
+
+  @Test
+  void statusOfTlrRequestShouldBeChangedIfAssociatedItemCheckedIn() {
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    UUID instanceId = UUID.randomUUID();
+    configurationsFixture.enableTlrFeature();
+    ItemResource firstItem = buildItem(instanceId, "111");
+    ItemResource secondItem = buildItem(instanceId, "222");
+
+    IndividualResource firstTlrRequest = requestsFixture.place(
+      buildPageRequest(instanceId, pickupServicePointId, usersFixture.steve()));
+    IndividualResource secondTlrRequest = requestsFixture.place(
+      buildPageRequest(instanceId, pickupServicePointId, usersFixture.jessica()));
+
+    assertThat(firstTlrRequest.getJson().getString("status"), is(OPEN_NOT_YET_FILLED));
+    assertThat(secondTlrRequest.getJson().getString("status"), is(OPEN_NOT_YET_FILLED));
+
+    checkInFixture.checkInByBarcode(secondItem);
+    var requestAssociatedWithSecondItem = requestsFixture.getRequests(
+      exactMatch("itemId", secondItem.getId().toString()), limit(1), noOffset()).getFirst();
+    var requestAssociatedWithFirstItem = requestsFixture.getRequests(
+      notEqual("itemId", secondItem.getId().toString()), limit(1), noOffset()).getFirst();
+    assertThat(requestAssociatedWithSecondItem.getString("status"), is(OPEN_AWAITING_PICKUP));
+    assertThat(requestAssociatedWithFirstItem.getString("status"), is(OPEN_NOT_YET_FILLED));
+
+    checkInFixture.checkInByBarcode(firstItem);
+    requestAssociatedWithFirstItem = requestsFixture.getRequests(
+      notEqual("itemId", secondItem.getId().toString()), limit(1), noOffset()).getFirst();
+    assertThat(requestAssociatedWithFirstItem.getString("status"), is(OPEN_AWAITING_PICKUP));
+  }
+
+  private RequestBuilder buildPageRequest(UUID instanceId, UUID pickupServicePointId,
+    UserResource jessica) {
+
+    return new RequestBuilder()
+      .withId(UUID.randomUUID())
+      .open()
+      .page()
+      .titleRequestLevel()
+      .withInstanceId(instanceId)
+      .withNoItemId()
+      .withNoHoldingsRecordId()
+      .by(jessica)
+      .withRequestDate(ZonedDateTime.of(2021, 7, 22, 10, 22, 54, 0, UTC))
+      .fulfilToHoldShelf()
+      .withRequestExpiration(LocalDate.of(2021, 7, 30))
+      .withHoldShelfExpiration(LocalDate.of(2021, 8, 31))
+      .withPickupServicePointId(pickupServicePointId)
+      .withTags(new RequestBuilder.Tags(asList("new", "important")))
+      .withPatronComments("I need this book");
+  }
+
+  private void updateCirculationRulesWithLoanPeriod(String policyName, Period loanPeriod) {
+    policiesActivation.use(new LoanPolicyBuilder()
+      .withName(policyName)
+      .withDescription("Can circulate item")
+      .rolling(loanPeriod)
+      .notRenewable()
+      .withRecallsRecallReturnInterval(hours(1)));
+  }
+
+  private ItemResource buildItem(UUID instanceId, String barcode) {
+    UUID isbnIdentifierId = identifierTypesFixture.isbn().getId();
+
+    return itemsFixture.basedUponSmallAngryPlanet(
+        holdingBuilder -> holdingBuilder.forInstance(instanceId),
+        instanceBuilder -> instanceBuilder
+          .addIdentifier(isbnIdentifierId, "9780866989732")
+          .withId(instanceId),
+        itemBuilder -> itemBuilder.withBarcode(barcode));
   }
 
   private static void assertOverrideResponseSuccess(Response response) {
@@ -2402,9 +2895,12 @@ public class RequestsAPICreationTests extends APITests {
   private Response attemptCreateRequestThroughOverride(UUID requesterId, OkapiHeaders okapiHeaders,
     BlockOverrides blockOverrides) {
 
+    ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+
     RequestBuilder requestBuilder = new RequestBuilder()
       .page()
-      .withItemId(itemsFixture.basedUponSmallAngryPlanet().getId())
+      .withItemId(item.getId())
+      .withInstanceId(item.getInstanceId())
       .withRequesterId(requesterId)
       .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .withBlockOverrides(blockOverrides);
@@ -2453,10 +2949,10 @@ public class RequestsAPICreationTests extends APITests {
       .withTags(new RequestBuilder.Tags(asList("new", "important")));
   }
 
-  public static IndividualResource setupPagedItem(IndividualResource requestPickupServicePoint,
+  public static ItemResource setupPagedItem(IndividualResource requestPickupServicePoint,
     ItemsFixture itemsFixture, ResourceClient requestClient, UsersFixture usersFixture) {
 
-    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
     final IndividualResource pagedRequest = requestClient.create(new RequestBuilder()
       .page()
@@ -2535,5 +3031,51 @@ public class RequestsAPICreationTests extends APITests {
 
   private static JsonArray getErrorsFromResponse(Response response) {
     return response.getJson().getJsonArray("errors");
+  }
+
+  private RequestBuilder buildTitleLevelRequest() {
+    ItemResource itemResource = itemsFixture.basedUponSmallAngryPlanet();
+    return new RequestBuilder()
+      .page()
+      .titleRequestLevel()
+      .withNoItemId()
+      .withNoHoldingsRecordId()
+      .withInstanceId(itemResource.getInstanceId())
+      .withRequesterId(usersFixture.charlotte().getId())
+      .withRequestDate(getZonedDateTime())
+      .withStatus(OPEN_NOT_YET_FILLED)
+      .withPickupServicePoint(servicePointsFixture.cd1());
+  }
+
+  private RequestBuilder buildPageTitleLevelRequest(UUID patronId, UUID pickupServicePointId,
+    UUID instanceId) {
+    return new RequestBuilder()
+      .page()
+      .titleRequestLevel()
+      .withInstanceId(instanceId)
+      .withNoItemId()
+      .withNoHoldingsRecordId()
+      .withPickupServicePointId(pickupServicePointId)
+      .withRequesterId(patronId);
+  }
+
+  private void validateInstanceRepresentation(JsonObject requestInstance){
+    JsonArray contributors = requestInstance.getJsonArray("contributorNames");
+    assertThat(contributors, notNullValue());
+    assertThat(contributors.size(), is(1));
+    assertThat(contributors.getJsonObject(0).getString("name"), is("Chambers, Becky"));
+
+    JsonArray editions = requestInstance.getJsonArray("editions");
+    assertThat(editions, Matchers.notNullValue());
+    assertThat(editions.size(), is(1));
+    assertThat(editions.getString(0), is("First American Edition"));
+
+    JsonArray publication = requestInstance.getJsonArray("publication");
+    assertThat(publication, Matchers.notNullValue());
+    assertThat(publication.size(), is(1));
+    JsonObject firstPublication = publication.getJsonObject(0);
+    assertThat(firstPublication.getString("publisher"), is("Alfred A. Knopf"));
+    assertThat(firstPublication.getString("place"), is("New York"));
+    assertThat(firstPublication.getString("dateOfPublication"), is("2016"));
   }
 }

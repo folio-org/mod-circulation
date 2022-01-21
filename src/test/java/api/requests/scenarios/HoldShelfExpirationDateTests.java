@@ -80,7 +80,7 @@ class HoldShelfExpirationDateTests extends APITests {
 
     checkOutFixture.checkOutByBarcode(nod, james);
 
-    final IndividualResource request = requestsFixture.placeHoldShelfRequest(nod, jessica,
+    final IndividualResource request = requestsFixture.placeItemLevelHoldShelfRequest(nod, jessica,
         getZonedDateTime(), checkInServicePoint.getId());
 
     checkInFixture.checkInByBarcode(
@@ -122,7 +122,7 @@ class HoldShelfExpirationDateTests extends APITests {
 
     checkOutFixture.checkOutByBarcode(nod, james);
 
-    final IndividualResource request = requestsFixture.placeHoldShelfRequest(nod, jessica,
+    final IndividualResource request = requestsFixture.placeItemLevelHoldShelfRequest(nod, jessica,
       ClockUtil.getZonedDateTime(), checkInServicePoint.getId());
 
     checkInFixture.checkInByBarcode(
@@ -160,7 +160,7 @@ class HoldShelfExpirationDateTests extends APITests {
 
     checkOutFixture.checkOutByBarcode(nod, james);
 
-    final IndividualResource request = requestsFixture.placeHoldShelfRequest(nod, jessica,
+    final IndividualResource request = requestsFixture.placeItemLevelHoldShelfRequest(nod, jessica,
       ClockUtil.getZonedDateTime(), checkInServicePoint.getId());
 
     checkInFixture.checkInByBarcode(
@@ -198,7 +198,7 @@ class HoldShelfExpirationDateTests extends APITests {
 
     checkOutFixture.checkOutByBarcode(nod, james);
 
-    final IndividualResource request = requestsFixture.placeHoldShelfRequest(nod, jessica,
+    final IndividualResource request = requestsFixture.placeItemLevelHoldShelfRequest(nod, jessica,
       ClockUtil.getZonedDateTime(), checkInServicePoint.getId());
 
     checkInFixture.checkInByBarcode(
@@ -229,7 +229,7 @@ class HoldShelfExpirationDateTests extends APITests {
 
     checkOutFixture.checkOutByBarcode(nod, james);
 
-    final IndividualResource request = requestsFixture.placeHoldShelfRequest(nod, jessica,
+    final IndividualResource request = requestsFixture.placeItemLevelHoldShelfRequest(nod, jessica,
       ClockUtil.getZonedDateTime(), checkInServicePoint.getId());
 
     checkInFixture.checkInByBarcode(
@@ -288,7 +288,7 @@ class HoldShelfExpirationDateTests extends APITests {
 
     checkOutFixture.checkOutByBarcode(nod, james);
 
-    final IndividualResource request = requestsFixture.placeHoldShelfRequest(nod, jessica,
+    final IndividualResource request = requestsFixture.placeItemLevelHoldShelfRequest(nod, jessica,
       ClockUtil.getZonedDateTime(), checkInServicePoint.getId());
 
     checkInFixture.checkInByBarcode(
@@ -337,7 +337,7 @@ class HoldShelfExpirationDateTests extends APITests {
 
     final IndividualResource requestServicePoint = checkInServicePoint;
 
-    final IndividualResource request = requestsFixture.placeHoldShelfRequest(nod, jessica,
+    final IndividualResource request = requestsFixture.placeItemLevelHoldShelfRequest(nod, jessica,
       ClockUtil.getZonedDateTime(), requestServicePoint.getId(), "Page");
 
     checkInFixture.checkInByBarcode(
@@ -374,7 +374,7 @@ class HoldShelfExpirationDateTests extends APITests {
 
     checkOutFixture.checkOutByBarcode(nod, james);
 
-    final IndividualResource request = requestsFixture.placeHoldShelfRequest(nod, jessica,
+    final IndividualResource request = requestsFixture.placeItemLevelHoldShelfRequest(nod, jessica,
       ClockUtil.getZonedDateTime(), alternateCheckInServicePoint.getId());
 
     nod = itemsClient.get(nod);
@@ -412,7 +412,7 @@ class HoldShelfExpirationDateTests extends APITests {
 
     final IndividualResource requestServicePoint = alternateServicePoint;
 
-    final IndividualResource request = requestsFixture.placeHoldShelfRequest(nod, jessica,
+    final IndividualResource request = requestsFixture.placeItemLevelHoldShelfRequest(nod, jessica,
       ClockUtil.getZonedDateTime(), requestServicePoint.getId(), "Page");
 
     nod = itemsClient.get(nod);
@@ -452,7 +452,7 @@ class HoldShelfExpirationDateTests extends APITests {
 
     checkOutFixture.checkOutByBarcode(nod, james);
 
-    final IndividualResource request = requestsFixture.placeHoldShelfRequest(nod, jessica,
+    final IndividualResource request = requestsFixture.placeItemLevelHoldShelfRequest(nod, jessica,
       ClockUtil.getZonedDateTime(), alternateCheckInServicePoint.getId());
 
     checkInFixture.checkInByBarcode(

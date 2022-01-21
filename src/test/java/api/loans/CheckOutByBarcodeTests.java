@@ -25,12 +25,17 @@ import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasServiceP
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasUserBarcodeParameter;
 import static api.support.matchers.EventMatchers.isValidCheckOutLogEvent;
 import static api.support.matchers.EventMatchers.isValidItemCheckedOutEvent;
+import static api.support.matchers.ItemMatchers.isAwaitingPickup;
 import static api.support.matchers.ItemMatchers.isCheckedOut;
 import static api.support.matchers.ItemMatchers.isLostAndPaid;
+import static api.support.matchers.ItemMatchers.isPaged;
 import static api.support.matchers.ItemMatchers.isWithdrawn;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static api.support.matchers.LoanMatchers.isOpen;
+import static api.support.matchers.RequestMatchers.hasPosition;
+import static api.support.matchers.RequestMatchers.isClosedFilled;
+import static api.support.matchers.RequestMatchers.isOpenAwaitingPickup;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
@@ -83,8 +88,12 @@ import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.domain.representations.logs.LogEventType;
 import org.folio.circulation.support.http.client.Response;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import api.support.APITests;
+import api.support.TlrFeatureStatus;
 import api.support.builders.CheckOutBlockOverrides;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.FixedDueDateSchedule;
@@ -827,7 +836,7 @@ class CheckOutByBarcodeTests extends APITests {
 
   @Test
   void canCheckOutOnOrderItemWithRequest() {
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
+    ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
       item -> item
         .onOrder()
         .withEnumeration("v.70:no.1-6")
@@ -838,6 +847,7 @@ class CheckOutByBarcodeTests extends APITests {
 
     requestsFixture.place(new RequestBuilder()
       .withItemId(smallAngryPlanet.getId())
+      .withInstanceId(smallAngryPlanet.getInstanceId())
       .withRequesterId(jessica.getId())
       .withPickupServicePoint(servicePointsFixture.cd1()));
 
@@ -869,9 +879,9 @@ class CheckOutByBarcodeTests extends APITests {
     assertThat("has item volume",
       loan.getJsonObject("item").getString("volume"), is("testVolume"));
 
-    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
+    IndividualResource checkedOutSmallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
-    assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
+    assertThat(checkedOutSmallAngryPlanet, hasItemStatus(CHECKED_OUT));
   }
 
   @Test
@@ -921,7 +931,7 @@ class CheckOutByBarcodeTests extends APITests {
 
   @Test
   void canCheckOutInProcessItemWithRequest() {
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
+    ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
       item -> item
         .inProcess()
         .withEnumeration("v.70:no.1-6")
@@ -932,6 +942,7 @@ class CheckOutByBarcodeTests extends APITests {
 
     requestsFixture.place(new RequestBuilder()
       .withItemId(smallAngryPlanet.getId())
+      .withInstanceId(smallAngryPlanet.getInstanceId())
       .withRequesterId(jessica.getId())
       .withPickupServicePoint(servicePointsFixture.cd1()));
 
@@ -963,9 +974,9 @@ class CheckOutByBarcodeTests extends APITests {
     assertThat("has item volume",
       loan.getJsonObject("item").getString("volume"), is("testVolume"));
 
-    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
+    IndividualResource checkedOutSmallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
-    assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
+    assertThat(checkedOutSmallAngryPlanet, hasItemStatus(CHECKED_OUT));
   }
 
   @Test
@@ -2178,6 +2189,123 @@ class CheckOutByBarcodeTests extends APITests {
       is(ZonedDateTime.of(MONDAY_DATE, LocalTime.MIDNIGHT.minusSeconds(1), UTC)));
   }
 
+  @Test
+  void cannotCheckoutWhenItemIsRequestedByTitleLevelRequestOfDifferentUser() {
+    configurationsFixture.enableTlrFeature();
+
+    ItemResource item = itemsFixture.basedUponNod();
+    UserResource borrower = usersFixture.steve();
+    UserResource requester = usersFixture.james();
+
+    requestsClient.create(new RequestBuilder()
+      .page()
+      .titleRequestLevel()
+      .withNoItemId()
+      .withNoHoldingsRecordId()
+      .withInstanceId(item.getInstanceId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
+      .withRequesterId(requester.getId()));
+
+    Response checkoutResponse = checkOutFixture.attemptCheckOutByBarcode(item, borrower);
+
+    assertThat(checkoutResponse.getStatusCode(), is(422));
+    assertThat(checkoutResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("Nod (Barcode: 565578437802) cannot be checked out to user Jones, Steven" +
+        " because it has been requested by another patron"),
+      hasUserBarcodeParameter(borrower))));
+  }
+
+  @ParameterizedTest
+  @EnumSource(value = TlrFeatureStatus.class, names = {"DISABLED", "NOT_CONFIGURED"})
+  void titleLevelRequestIsIgnoredWhenTlrFeatureIsNotEnabled(TlrFeatureStatus tlrFeatureStatus) {
+    configurationsFixture.enableTlrFeature();
+
+    ItemResource item = itemsFixture.basedUponNod();
+    UserResource borrower = usersFixture.steve();
+    UserResource requester = usersFixture.james();
+
+    requestsClient.create(new RequestBuilder()
+      .page()
+      .titleRequestLevel()
+      .withNoItemId()
+      .withNoHoldingsRecordId()
+      .withInstanceId(item.getInstanceId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
+      .withRequesterId(requester.getId()));
+
+    reconfigureTlrFeature(tlrFeatureStatus);
+    checkOutFixture.checkOutByBarcode(item, borrower);
+  }
+
+  @ParameterizedTest
+  @CsvSource({
+    "Item, Item",
+    "Item, Title",
+    "Title, Item",
+    "Title, Title"
+  })
+  void canFulfilPageAndHoldRequestsWithMixedLevels(String pageRequestLevel, String holdRequestLevel) {
+    configurationsFixture.enableTlrFeature();
+
+    ItemResource item = itemsFixture.basedUponNod();
+    UserResource firstRequester = usersFixture.steve();
+    UserResource secondRequester = usersFixture.james();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+
+    UUID instanceId = item.getInstanceId();
+    UUID pageRequestItemId = "Item".equals(pageRequestLevel) ? item.getId() : null;
+    UUID pageRequestHoldingsRecordId = "Item".equals(pageRequestLevel)
+      ? item.getHoldingsRecordId() : null;
+    UUID holdRequestItemId = "Item".equals(holdRequestLevel) ? item.getId() : null;
+    UUID holdRequestHoldingsRecordId = "Item".equals(holdRequestLevel)
+      ? item.getHoldingsRecordId() : null;
+
+    IndividualResource pageRequest = requestsClient.create(
+      new RequestBuilder()
+        .page()
+        .withRequestLevel(pageRequestLevel)
+        .withItemId(pageRequestItemId)
+        .withHoldingsRecordId(pageRequestHoldingsRecordId)
+        .withInstanceId(instanceId)
+        .withPickupServicePointId(pickupServicePointId)
+        .withRequesterId(firstRequester.getId()));
+
+    assertThat(pageRequest.getJson(), hasPosition(1));
+    assertThat(fetchItemJson(item), isPaged());
+
+    IndividualResource holdRequest = requestsClient.create(
+      new RequestBuilder()
+        .hold()
+        .withRequestLevel(holdRequestLevel)
+        .withItemId(holdRequestItemId)
+        .withHoldingsRecordId(holdRequestHoldingsRecordId)
+        .withInstanceId(instanceId)
+        .withPickupServicePointId(pickupServicePointId)
+        .withRequesterId(secondRequester.getId()));
+
+    assertThat(holdRequest.getJson(), hasPosition(2));
+
+    checkInFixture.checkInByBarcode(item);
+    assertThat(fetchItemJson(item), isAwaitingPickup());
+    assertThat(fetchRequestJson(pageRequest), isOpenAwaitingPickup());
+
+    // fulfil page request
+    checkOutFixture.checkOutByBarcode(item, firstRequester);
+    assertThat(fetchItemJson(item), isCheckedOut());
+    assertThat(fetchRequestJson(pageRequest), isClosedFilled());
+
+    // check the item back in
+    checkInFixture.checkInByBarcode(item);
+    assertThat(fetchItemJson(item), isAwaitingPickup());
+    assertThat(fetchRequestJson(holdRequest), isOpenAwaitingPickup());
+    assertThat(fetchRequestJson(holdRequest), hasPosition(1));
+
+    // fulfil hold request
+    checkOutFixture.checkOutByBarcode(item, secondRequester);
+    assertThat(fetchItemJson(item), isCheckedOut());
+    assertThat(fetchRequestJson(holdRequest), isClosedFilled());
+  }
+
   private LoanPolicyBuilder buildLoanPolicyWithFixedLoan(DueDateManagement strategy,
     ZonedDateTime dueDate) {
 
@@ -2274,5 +2402,13 @@ class CheckOutByBarcodeTests extends APITests {
     return loanPolicy.getJson()
       .getJsonObject("loansPolicy")
       .getJsonObject("gracePeriod");
+  }
+
+  private JsonObject fetchItemJson(ItemResource item) {
+    return itemsClient.get(item).getJson();
+  }
+
+  private JsonObject fetchRequestJson(IndividualResource request) {
+    return requestsClient.get(request).getJson();
   }
 }

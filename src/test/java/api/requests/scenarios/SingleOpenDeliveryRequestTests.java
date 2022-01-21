@@ -33,7 +33,7 @@ class SingleOpenDeliveryRequestTests extends APITests {
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
-    IndividualResource requestByJessica = requestsFixture.placeDeliveryRequest(
+    IndividualResource requestByJessica = requestsFixture.placeItemLevelDeliveryRequest(
       smallAngryPlanet, jessica, ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC));
 
     checkInFixture.checkInByBarcode(smallAngryPlanet);
@@ -52,7 +52,7 @@ class SingleOpenDeliveryRequestTests extends APITests {
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
-    IndividualResource requestByJessica = requestsFixture.placeDeliveryRequest(
+    IndividualResource requestByJessica = requestsFixture.placeItemLevelDeliveryRequest(
       smallAngryPlanet, jessica, ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC));
 
     checkInFixture.checkInByBarcode(smallAngryPlanet);
@@ -73,7 +73,7 @@ class SingleOpenDeliveryRequestTests extends APITests {
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
-    IndividualResource requestByJessica = requestsFixture.placeDeliveryRequest(
+    IndividualResource requestByJessica = requestsFixture.placeItemLevelDeliveryRequest(
       smallAngryPlanet, jessica, ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, ZoneOffset.UTC));
 
     checkInFixture.checkInByBarcode(smallAngryPlanet);
@@ -96,7 +96,7 @@ class SingleOpenDeliveryRequestTests extends APITests {
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
-    IndividualResource requestByJessica = requestsFixture.placeDeliveryRequest(
+    IndividualResource requestByJessica = requestsFixture.placeItemLevelDeliveryRequest(
       smallAngryPlanet, jessica, ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, ZoneOffset.UTC));
 
     checkInFixture.checkInByBarcode(smallAngryPlanet);
@@ -118,7 +118,7 @@ class SingleOpenDeliveryRequestTests extends APITests {
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
-    IndividualResource requestByJessica = requestsFixture.placeDeliveryRequest(
+    IndividualResource requestByJessica = requestsFixture.placeItemLevelDeliveryRequest(
       smallAngryPlanet, jessica, ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, ZoneOffset.UTC));
 
     requestsFixture.cancelRequest(requestByJessica);
