@@ -1,9 +1,9 @@
 package org.folio.circulation.domain.notice;
 
-import static org.apache.http.HttpStatus.SC_OK;
+import static org.folio.HttpStatus.HTTP_OK;
 
+import io.vertx.core.json.JsonObject;
 import java.util.concurrent.CompletableFuture;
-
 import org.folio.circulation.domain.representations.logs.NoticeLogContext;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
@@ -12,8 +12,6 @@ import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
 import org.folio.circulation.support.logging.PatronNoticeLogHelper;
 import org.folio.circulation.support.results.Result;
-
-import io.vertx.core.json.JsonObject;
 
 public abstract class PatronNoticeService {
 
@@ -25,7 +23,7 @@ public abstract class PatronNoticeService {
     this.eventPublisher = new EventPublisher(clients.pubSubPublishingService());
   }
 
-  protected CompletableFuture<Result<Void>> sendNotice(PatronNotice patronNotice,
+  public CompletableFuture<Result<Void>> sendNotice(PatronNotice patronNotice,
     NoticeLogContext noticeLogContext) {
 
     return patronNoticeClient.post(JsonObject.mapFrom(patronNotice))
@@ -37,7 +35,7 @@ public abstract class PatronNoticeService {
   private CompletableFuture<Result<Void>> logResult(PatronNotice patronNotice,
     NoticeLogContext noticeLogContext, Result<Response> result, Throwable throwable) {
 
-    PatronNoticeLogHelper.logResponse(result, throwable, SC_OK, patronNotice);
+    PatronNoticeLogHelper.logResponse(result, throwable, HTTP_OK.toInt(), patronNotice);
 
     return eventPublisher.publishNoticeLogEvent(noticeLogContext, result, throwable);
   }

@@ -18,6 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.UUID;
+import java.util.stream.IntStream;
 
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.RequestType;
@@ -228,13 +229,13 @@ class InstanceRequestsAPICreationTests extends APITests {
         holdings.getId(), locationsResource.getId());
 
     //Set up request queues. Item1 has 2 requests (1 queued request), Item2 has 0 queued request. Item2 should be satisfied.
-    placeHoldRequest(item1, pickupServicePointId, usersFixture.jessica(),
+    placeHoldRequest(instance, item1, pickupServicePointId, usersFixture.jessica(),
       requestExpirationDate);
 
-    placeHoldRequest(item1, pickupServicePointId, usersFixture.james(),
+    placeHoldRequest(instance, item1, pickupServicePointId, usersFixture.james(),
       requestExpirationDate);
 
-    placeHoldRequest(item2, pickupServicePointId, usersFixture.steve(),
+    placeHoldRequest(instance, item2, pickupServicePointId, usersFixture.steve(),
       requestExpirationDate);
 
     IndividualResource instanceRequester = usersFixture.charlotte();
@@ -280,10 +281,10 @@ class InstanceRequestsAPICreationTests extends APITests {
         locationsResource.getId());
 
     //Set up request queues. Item1 has requests (1 queued request), Item2 is Available. Item2 should be satisfied.
-    placeHoldRequest(item1, pickupServicePointId, usersFixture.jessica(),
+    placeHoldRequest(instance, item1, pickupServicePointId, usersFixture.jessica(),
       requestExpirationDate);
 
-    placeHoldRequest(item1, pickupServicePointId, usersFixture.james(),
+    placeHoldRequest(instance, item1, pickupServicePointId, usersFixture.james(),
       requestExpirationDate);
 
     IndividualResource instanceRequester = usersFixture.charlotte();
@@ -303,6 +304,33 @@ class InstanceRequestsAPICreationTests extends APITests {
     JsonObject representation = postResponse.getJson();
     validateInstanceRequestResponse(representation, pickupServicePointId,
       instance.getId(), item2.getId(), RequestType.PAGE);
+  }
+
+  @Test
+  void canPlaceTitleLevelRequestOnItemWhenManyUnavailableItemsOfSameInstanceExist() {
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    IndividualResource instance = instancesFixture.basedUponDunkirk();
+    IndividualResource holdings = holdingsFixture.defaultWithHoldings(instance.getId());
+    IndividualResource locationsResource = locationsFixture.mainFloor();
+
+    IntStream.range(0, 20)
+      .forEach(index -> itemsFixture.basedUponDunkirkWithCustomHoldingAndLocationAndCheckedOut(
+        holdings.getId(), locationsResource.getId()));
+    var availableItem = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(
+      holdings.getId(), locationsResource.getId());
+
+    IndividualResource instanceRequester = usersFixture.charlotte();
+    ZonedDateTime instanceRequestDate = ZonedDateTime.of(2022, 1, 14, 10, 22, 54, 0, UTC);
+    ZonedDateTime instanceRequestExpirationDate = instanceRequestDate.plusDays(30);
+    JsonObject requestBody = createInstanceRequestObject(instance.getId(),
+      instanceRequester.getId(), pickupServicePointId, instanceRequestDate,
+      instanceRequestExpirationDate);
+    Response postResponse = requestsFixture.attemptToPlaceForInstance(requestBody);
+    JsonObject representation = postResponse.getJson();
+
+    assertEquals(postResponse.getStatusCode(), HTTP_CREATED.toInt());
+    validateInstanceRequestResponse(representation, pickupServicePointId,
+      instance.getId(), availableItem.getId(), RequestType.PAGE);
   }
 
   @Test
@@ -336,16 +364,16 @@ class InstanceRequestsAPICreationTests extends APITests {
     loansFixture.createLoan(item2, usersFixture.charlotte(), ClockUtil.getZonedDateTime());
 
     //Set up request queues. Item1 has requests (1 queued request), Item2 is requests (1 queued), either should be satisfied.
-    placeHoldRequest(item1, pickupServicePointId, usersFixture.jessica(),
+    placeHoldRequest(instance, item1, pickupServicePointId, usersFixture.jessica(),
       requestExpirationDate1);
 
-    placeHoldRequest(item1, pickupServicePointId, usersFixture.james(),
+    placeHoldRequest(instance, item1, pickupServicePointId, usersFixture.james(),
       requestExpirationDate1);
 
-    placeHoldRequest(item2, pickupServicePointId, usersFixture.steve(),
+    placeHoldRequest(instance, item2, pickupServicePointId, usersFixture.steve(),
       requestExpirationDate2);
 
-    placeHoldRequest(item2, pickupServicePointId, usersFixture.rebecca(),
+    placeHoldRequest(instance, item2, pickupServicePointId, usersFixture.rebecca(),
       requestExpirationDate2);
 
     IndividualResource instanceRequester = usersFixture.undergradHenry();
@@ -402,10 +430,10 @@ class InstanceRequestsAPICreationTests extends APITests {
         holdings.getId(), locationsResource.getId());
 
     //Set up request queues. Item1 has requests (1 queued request)
-    placeHoldRequest(item, pickupServicePointId, usersFixture.jessica(),
+    placeHoldRequest(instance, item, pickupServicePointId, usersFixture.jessica(),
       requestExpirationDate1);
 
-    placeHoldRequest(item, pickupServicePointId, usersFixture.james(),
+    placeHoldRequest(instance, item, pickupServicePointId, usersFixture.james(),
       requestExpirationDate1);
 
     IndividualResource instanceRequester = usersFixture.charlotte();
@@ -454,10 +482,10 @@ class InstanceRequestsAPICreationTests extends APITests {
     //Set up request queues. Item1 has requests (1 queued request), Item2 has requests (1 queued), either could be satisfied.
     loansFixture.createLoan(item1, usersFixture.jessica());
 
-    placeHoldRequest(item2, pickupServicePointId, usersFixture.steve(),
+    placeHoldRequest(instance, item2, pickupServicePointId, usersFixture.steve(),
       requestExpirationDate2);
 
-    placeHoldRequest(item2, pickupServicePointId, usersFixture.rebecca(),
+    placeHoldRequest(instance, item2, pickupServicePointId, usersFixture.rebecca(),
       requestExpirationDate2);
 
     IndividualResource instanceRequester = usersFixture.jessica();
@@ -617,16 +645,16 @@ class InstanceRequestsAPICreationTests extends APITests {
 
     //Set up request queues. Item1 has requests (1 queued request), Item2 is requests (1 queued), either should be satisfied
     //but only item2 should a request be placed on because its due date is nearest.
-    placeHoldRequest(item1, pickupServicePointId, usersFixture.steve(),
+    placeHoldRequest(instance, item1, pickupServicePointId, usersFixture.steve(),
       requestExpirationDate);
 
-    placeHoldRequest(item1, pickupServicePointId, usersFixture.jessica(),
+    placeHoldRequest(instance, item1, pickupServicePointId, usersFixture.jessica(),
       requestExpirationDate);
 
-    placeHoldRequest(item2, pickupServicePointId, usersFixture.steve(),
+    placeHoldRequest(instance, item2, pickupServicePointId, usersFixture.steve(),
       requestExpirationDate);
 
-    placeHoldRequest(item2, pickupServicePointId, usersFixture.jessica(),
+    placeHoldRequest(instance, item2, pickupServicePointId, usersFixture.jessica(),
       requestExpirationDate);
 
     IndividualResource instanceRequester = usersFixture.charlotte();
@@ -773,6 +801,7 @@ class InstanceRequestsAPICreationTests extends APITests {
     requestsClient.create(new RequestBuilder()
       .page()
       .forItem(item1)
+      .withInstanceId(instanceMultipleCopies.getId())
       .withPickupServicePointId(pickupServicePointId)
       .by(usersFixture.jessica()));
 
@@ -874,7 +903,7 @@ class InstanceRequestsAPICreationTests extends APITests {
       .create();
   }
 
-  private void placeHoldRequest(IndividualResource item,
+  private void placeHoldRequest(IndividualResource instance, IndividualResource item,
     UUID requestPickupServicePointId, IndividualResource patron,
     LocalDate requestExpirationDate) {
 
@@ -882,6 +911,7 @@ class InstanceRequestsAPICreationTests extends APITests {
       new RequestBuilder()
         .hold()
         .forItem(item)
+        .withInstanceId(instance.getId())
         .withPickupServicePointId(requestPickupServicePointId)
         .withRequestExpiration(requestExpirationDate)
         .by(patron));

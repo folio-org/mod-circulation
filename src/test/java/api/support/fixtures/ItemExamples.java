@@ -18,6 +18,17 @@ public class ItemExamples {
   public static ItemBuilder basedUponSmallAngryPlanet(
     UUID bookMaterialTypeId,
     UUID loanTypeId,
+    String barcode) {
+
+    return new ItemBuilder()
+      .withPermanentLoanType(loanTypeId)
+      .withMaterialType(bookMaterialTypeId)
+      .withBarcode(barcode);
+  }
+
+  public static ItemBuilder basedUponSmallAngryPlanet(
+    UUID bookMaterialTypeId,
+    UUID loanTypeId,
     String callNumber,
     String callNumberPrefix,
     String callNumberSuffix,

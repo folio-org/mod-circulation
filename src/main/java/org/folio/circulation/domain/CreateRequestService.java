@@ -1,8 +1,14 @@
 package org.folio.circulation.domain;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.RequestLevel.TITLE;
 import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_CREATED;
 import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_CREATED_THROUGH_OVERRIDE;
 import static org.folio.circulation.domain.representations.logs.RequestUpdateLogEventMapper.mapToRequestLogEventJson;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ATTEMPT_TO_CREATE_TLR_LINKED_TO_AN_ITEM;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ONE_OF_INSTANCES_ITEMS_HAS_OPEN_LOAN;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INSTANCE_DOES_NOT_EXIST;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_INSTANCE_ID;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_ITEM_ID;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_USER_OR_PATRON_GROUP_ID;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ITEM_ALREADY_LOANED_TO_SAME_USER;
@@ -49,7 +55,7 @@ public class CreateRequestService {
   }
 
   public CompletableFuture<Result<RequestAndRelatedRecords>> createRequest(
-      RequestAndRelatedRecords requestAndRelatedRecords) {
+    RequestAndRelatedRecords requestAndRelatedRecords) {
 
     final var requestRepository = repositories.getRequestRepository();
     final var configurationRepository = repositories.getConfigurationRepository();
@@ -62,12 +68,13 @@ public class CreateRequestService {
       .mapFailure(err -> errorHandler.handleValidationError(err, INVALID_USER_OR_PATRON_GROUP_ID, result))
       .next(RequestServiceUtility::refuseWhenUserIsInactive)
       .mapFailure(err -> errorHandler.handleValidationError(err, USER_IS_INACTIVE, result))
-      .next(RequestServiceUtility::refuseWhenUserHasAlreadyRequestedItem)
+      .next(RequestServiceUtility::refuseWhenAlreadyRequested)
       .mapFailure(err -> errorHandler.handleValidationError(err, ITEM_ALREADY_REQUESTED_BY_SAME_USER, result))
       .after(automatedBlocksValidator::validate)
       .thenApply(r -> errorHandler.handleValidationResult(r, automatedBlocksValidator.getErrorType(), result))
       .thenCompose(r -> r.after(manualBlocksValidator::validate))
       .thenApply(r -> errorHandler.handleValidationResult(r, manualBlocksValidator.getErrorType(), result))
+      .thenComposeAsync(r -> r.after(when(this::shouldCheckInstance, this::checkInstance, this::doNothing)))
       .thenComposeAsync(r -> r.after(when(this::shouldCheckItem, this::checkItem, this::doNothing)))
       .thenComposeAsync(r -> r.after(when(this::shouldCheckPolicy, this::checkPolicy, this::doNothing)))
       .thenComposeAsync(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
@@ -83,8 +90,41 @@ public class CreateRequestService {
       });
   }
 
+  private CompletableFuture<Result<RequestAndRelatedRecords>> checkInstance(
+    RequestAndRelatedRecords records) {
+
+    return completedFuture(succeeded(records)
+      .next(RequestServiceUtility::refuseWhenInstanceDoesNotExist)
+      .mapFailure(err ->
+        errorHandler.handleValidationError(err, INSTANCE_DOES_NOT_EXIST, records)));
+  }
+
   private CompletableFuture<Result<RequestAndRelatedRecords>> checkItem(
     RequestAndRelatedRecords records) {
+
+    Request request = records.getRequest();
+    boolean tlrFeatureEnabled = request.getTlrSettingsConfiguration()
+      .isTitleLevelRequestsFeatureEnabled();
+
+    if (tlrFeatureEnabled && request.getRequestLevel() == TITLE) {
+      if (errorHandler.hasAny(ATTEMPT_TO_CREATE_TLR_LINKED_TO_AN_ITEM)) {
+        return ofAsync(() -> records);
+      }
+
+      Result<RequestAndRelatedRecords> result = succeeded(records);
+      if (request.getItemId() != null) {
+        result = result
+          .next(RequestServiceUtility::refuseWhenItemDoesNotExist)
+          .mapFailure(err -> errorHandler.handleValidationError(err, ITEM_DOES_NOT_EXIST, records));
+      }
+
+      if (errorHandler.hasNone(INVALID_INSTANCE_ID, INSTANCE_DOES_NOT_EXIST)) {
+        return result
+          .after(requestLoanValidator::refuseWhenUserHasAlreadyBeenLoanedOneOfInstancesItems)
+          .thenApply(r -> errorHandler.handleValidationResult(r, ONE_OF_INSTANCES_ITEMS_HAS_OPEN_LOAN, records));
+      }
+      return completedFuture(result);
+    }
 
     return succeeded(records)
       .next(RequestServiceUtility::refuseWhenItemDoesNotExist)
@@ -98,9 +138,20 @@ public class CreateRequestService {
   private CompletableFuture<Result<RequestAndRelatedRecords>> checkPolicy(
     RequestAndRelatedRecords records) {
 
+    boolean tlrFeatureEnabled = records.getRequest().getTlrSettingsConfiguration()
+      .isTitleLevelRequestsFeatureEnabled();
+
+    if (tlrFeatureEnabled && records.getRequest().getRequestLevel() == TITLE) {
+      return completedFuture(succeeded(records));
+    }
+
     return repositories.getRequestPolicyRepository().lookupRequestPolicy(records)
       .thenApply(r -> r.next(RequestServiceUtility::refuseWhenRequestCannotBeFulfilled)
         .mapFailure(err -> errorHandler.handleValidationError(err, REQUESTING_DISALLOWED_BY_POLICY, r)));
+  }
+
+  private CompletableFuture<Result<Boolean>> shouldCheckInstance(RequestAndRelatedRecords records) {
+    return ofAsync(() -> errorHandler.hasNone(INVALID_INSTANCE_ID));
   }
 
   private CompletableFuture<Result<Boolean>> shouldCheckItem(RequestAndRelatedRecords records) {

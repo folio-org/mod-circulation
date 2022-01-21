@@ -217,7 +217,7 @@ public class FakeOkapi extends AbstractVerticle {
     new FakeStorageModuleBuilder()
       .withRecordName("request")
       .withRootPath("/request-storage/requests")
-      .withRequiredProperties("itemId", "requesterId", "requestType",
+      .withRequiredProperties("instanceId", "requesterId", "requestType",
         "requestDate", "fulfilmentPreference")
       .withDisallowedProperties("pickupServicePoint", "loan", "deliveryAddress")
       .withRecordConstraint(this::requestHasSamePosition)

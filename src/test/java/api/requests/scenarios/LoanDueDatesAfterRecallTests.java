@@ -92,7 +92,7 @@ class LoanDueDatesAfterRecallTests extends APITests {
 
     final String originalDueDate = loan.getJson().getString("dueDate");
 
-    requestsFixture.placeHoldShelfRequest(smallAngryPlanet, jessica,
+    requestsFixture.placeItemLevelHoldShelfRequest(smallAngryPlanet, jessica,
         getZonedDateTime(), requestServicePoint.getId(), "Recall");
 
     final JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
@@ -128,7 +128,7 @@ class LoanDueDatesAfterRecallTests extends APITests {
 
     final String originalDueDate = loan.getJson().getString("dueDate");
 
-    requestsFixture.placeHoldShelfRequest(smallAngryPlanet, jessica,
+    requestsFixture.placeItemLevelHoldShelfRequest(smallAngryPlanet, jessica,
         getZonedDateTime(), requestServicePoint.getId(), "Recall");
 
     final JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
@@ -167,7 +167,7 @@ class LoanDueDatesAfterRecallTests extends APITests {
 
     final String originalDueDate = loan.getJson().getString("dueDate");
 
-    requestsFixture.placeHoldShelfRequest(smallAngryPlanet, jessica,
+    requestsFixture.placeItemLevelHoldShelfRequest(smallAngryPlanet, jessica,
         getZonedDateTime(), requestServicePoint.getId(), "Recall");
 
     final JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
@@ -205,7 +205,7 @@ class LoanDueDatesAfterRecallTests extends APITests {
 
     final String originalDueDate = loan.getJson().getString("dueDate");
 
-    requestsFixture.placeHoldShelfRequest(smallAngryPlanet, jessica,
+    requestsFixture.placeItemLevelHoldShelfRequest(smallAngryPlanet, jessica,
         getZonedDateTime(), requestServicePoint.getId(), "Recall");
 
     final JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
@@ -243,7 +243,7 @@ class LoanDueDatesAfterRecallTests extends APITests {
 
     final String originalDueDate = loan.getJson().getString("dueDate");
 
-    requestsFixture.placeHoldShelfRequest(smallAngryPlanet, jessica,
+    requestsFixture.placeItemLevelHoldShelfRequest(smallAngryPlanet, jessica,
         getZonedDateTime(), requestServicePoint.getId(), "Recall");
 
     final JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
@@ -293,7 +293,7 @@ class LoanDueDatesAfterRecallTests extends APITests {
 
     final String originalDueDate = loan.getJson().getString("dueDate");
 
-    requestsFixture.placeHoldShelfRequest(smallAngryPlanet, jessica,
+    requestsFixture.placeItemLevelHoldShelfRequest(smallAngryPlanet, jessica,
         getZonedDateTime(), "Recall");
 
     final JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
@@ -345,7 +345,7 @@ class LoanDueDatesAfterRecallTests extends APITests {
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, steve, loanDate);
 
-    final Response response = requestsFixture.attemptPlaceHoldShelfRequest(smallAngryPlanet, jessica,
+    final Response response = requestsFixture.attemptPlaceItemLevelHoldShelfRequest(smallAngryPlanet, jessica,
         getZonedDateTime(), requestServicePoint.getId(), "Recall");
 
     assertThat("Status code should be 422", response.getStatusCode(), is(422));
@@ -380,10 +380,10 @@ class LoanDueDatesAfterRecallTests extends APITests {
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, charlotte,
       getZonedDateTime());
 
-    requestsFixture.placeHoldShelfRequest(smallAngryPlanet, steve,
+    requestsFixture.placeItemLevelHoldShelfRequest(smallAngryPlanet, steve,
       getZonedDateTime(), requestServicePoint.getId(), "Recall");
 
-    requestsFixture.placeHoldShelfRequest(smallAngryPlanet, jessica,
+    requestsFixture.placeItemLevelHoldShelfRequest(smallAngryPlanet, jessica,
       getZonedDateTime(), requestServicePoint.getId(), "Recall");
 
     checkInFixture.checkInByBarcode(smallAngryPlanet);
@@ -395,7 +395,7 @@ class LoanDueDatesAfterRecallTests extends APITests {
 
     final String expectedDueDate = formatDateTime(ZonedDateTime
       .of(getZonedDateTime().plusMonths(2).toLocalDate(),
-        LocalTime.MIDNIGHT.minusSeconds(1),getZoneId())); 
+        LocalTime.MIDNIGHT.minusSeconds(1),getZoneId()));
 
     assertThat("due date should be in 2 months (recall return interval)",
         storedLoan.getString("dueDate"), is(expectedDueDate));
@@ -464,10 +464,10 @@ class LoanDueDatesAfterRecallTests extends APITests {
 
     setFallbackPolicies(canCirculateRollingPolicy);
 
-    requestsFixture.placeHoldShelfRequest(smallAngryPlanet, jessica,
+    requestsFixture.placeItemLevelHoldShelfRequest(smallAngryPlanet, jessica,
         getZonedDateTime(), requestServicePoint.getId(), "Page");
 
-    requestsFixture.placeHoldShelfRequest(smallAngryPlanet, james,
+    requestsFixture.placeItemLevelHoldShelfRequest(smallAngryPlanet, james,
         getZonedDateTime(), requestServicePoint.getId(), "Recall");
 
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(
@@ -484,7 +484,7 @@ class LoanDueDatesAfterRecallTests extends APITests {
 
     setClock(Clock.offset(getClock(), Duration.ofDays(1)));
 
-    requestsFixture.placeHoldShelfRequest(smallAngryPlanet, charlotte,
+    requestsFixture.placeItemLevelHoldShelfRequest(smallAngryPlanet, charlotte,
         getZonedDateTime(), requestServicePoint.getId(), "Recall");
 
     storedLoan = loansStorageClient.getById(loan.getId()).getJson();
@@ -511,10 +511,10 @@ class LoanDueDatesAfterRecallTests extends APITests {
 
      setFallbackPolicies(canCirculateRollingPolicy);
 
-    requestsFixture.placeHoldShelfRequest(smallAngryPlanet, jessica,
+    requestsFixture.placeItemLevelHoldShelfRequest(smallAngryPlanet, jessica,
         getZonedDateTime(), requestServicePoint.getId(), "Page");
 
-    requestsFixture.placeHoldShelfRequest(smallAngryPlanet, james,
+    requestsFixture.placeItemLevelHoldShelfRequest(smallAngryPlanet, james,
         getZonedDateTime(), requestServicePoint.getId(), "Recall");
 
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(
@@ -532,7 +532,7 @@ class LoanDueDatesAfterRecallTests extends APITests {
     // Move the fixed clock so that the loan is now overdue
     setClock(Clock.offset(getClock(), Duration.ofDays(15)));
 
-    requestsFixture.placeHoldShelfRequest(smallAngryPlanet, charlotte,
+    requestsFixture.placeItemLevelHoldShelfRequest(smallAngryPlanet, charlotte,
         getZonedDateTime(), requestServicePoint.getId(), "Recall");
 
     storedLoan = loansStorageClient.getById(loan.getId()).getJson();
@@ -564,7 +564,7 @@ class LoanDueDatesAfterRecallTests extends APITests {
 
     final String originalDueDate = loan.getJson().getString("dueDate");
 
-    requestsFixture.placeHoldShelfRequest(smallAngryPlanet, jessica,
+    requestsFixture.placeItemLevelHoldShelfRequest(smallAngryPlanet, jessica,
         getZonedDateTime(), requestServicePoint.getId(), "Recall");
 
     JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
@@ -579,7 +579,7 @@ class LoanDueDatesAfterRecallTests extends APITests {
 
     setClock(Clock.offset(getClock(), Duration.ofDays(7)));
 
-    requestsFixture.placeHoldShelfRequest(smallAngryPlanet, charlotte,
+    requestsFixture.placeItemLevelHoldShelfRequest(smallAngryPlanet, charlotte,
         getZonedDateTime(), requestServicePoint.getId(), "Recall");
 
     storedLoan = loansStorageClient.getById(loan.getId()).getJson();
@@ -611,7 +611,7 @@ class LoanDueDatesAfterRecallTests extends APITests {
 
     final String originalDueDate = loan.getJson().getString("dueDate");
 
-    requestsFixture.placeHoldShelfRequest(smallAngryPlanet, jessica,
+    requestsFixture.placeItemLevelHoldShelfRequest(smallAngryPlanet, jessica,
         getZonedDateTime(), requestServicePoint.getId(), "Recall");
 
     JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
@@ -627,7 +627,7 @@ class LoanDueDatesAfterRecallTests extends APITests {
     // Move the fixed clock so that the loan is now overdue
     setClock(Clock.offset(getClock(), Duration.ofDays(15)));
 
-    requestsFixture.placeHoldShelfRequest(smallAngryPlanet, charlotte,
+    requestsFixture.placeItemLevelHoldShelfRequest(smallAngryPlanet, charlotte,
         getZonedDateTime(), requestServicePoint.getId(), "Recall");
 
     storedLoan = loansStorageClient.getById(loan.getId()).getJson();
@@ -658,7 +658,7 @@ class LoanDueDatesAfterRecallTests extends APITests {
 
     final String originalDueDate = loan.getJson().getString("dueDate");
 
-    requestsFixture.placeHoldShelfRequest(smallAngryPlanet, jessica,
+    requestsFixture.placeItemLevelHoldShelfRequest(smallAngryPlanet, jessica,
         getZonedDateTime(), requestServicePoint.getId(), "Recall");
 
     JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
@@ -673,7 +673,7 @@ class LoanDueDatesAfterRecallTests extends APITests {
 
     setClock(Clock.offset(getClock(), Duration.ofDays(7)));
 
-    requestsFixture.placeHoldShelfRequest(smallAngryPlanet, charlotte,
+    requestsFixture.placeItemLevelHoldShelfRequest(smallAngryPlanet, charlotte,
         getZonedDateTime(), requestServicePoint.getId(), "Recall");
 
     storedLoan = loansStorageClient.getById(loan.getId()).getJson();
@@ -705,7 +705,7 @@ class LoanDueDatesAfterRecallTests extends APITests {
 
     final String originalDueDate = loan.getJson().getString("dueDate");
 
-    requestsFixture.placeHoldShelfRequest(smallAngryPlanet, jessica,
+    requestsFixture.placeItemLevelHoldShelfRequest(smallAngryPlanet, jessica,
         getZonedDateTime(), requestServicePoint.getId(), "Recall");
 
     JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
@@ -721,7 +721,7 @@ class LoanDueDatesAfterRecallTests extends APITests {
     // Move the fixed clock so that the loan is now overdue
     setClock(Clock.offset(getClock(), Duration.ofDays(70)));
 
-    requestsFixture.placeHoldShelfRequest(smallAngryPlanet, charlotte,
+    requestsFixture.placeItemLevelHoldShelfRequest(smallAngryPlanet, charlotte,
         getZonedDateTime(), requestServicePoint.getId(), "Recall");
 
     storedLoan = loansStorageClient.getById(loan.getId()).getJson();
@@ -755,7 +755,7 @@ class LoanDueDatesAfterRecallTests extends APITests {
 
     JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
 
-    final IndividualResource request = requestsFixture.placeHoldShelfRequest(
+    final IndividualResource request = requestsFixture.placeItemLevelHoldShelfRequest(
         smallAngryPlanet, james, getZonedDateTime(),
         requestServicePoint.getId(), "Recall");
 
@@ -773,7 +773,7 @@ class LoanDueDatesAfterRecallTests extends APITests {
 
     storedLoan = loansStorageClient.getById(renewal.getId()).getJson();
 
-    requestsFixture.placeHoldShelfRequest(smallAngryPlanet, charlotte,
+    requestsFixture.placeItemLevelHoldShelfRequest(smallAngryPlanet, charlotte,
         getZonedDateTime(), requestServicePoint.getId(), "Recall");
 
     storedLoan = loansStorageClient.getById(loan.getId()).getJson();
@@ -812,7 +812,7 @@ class LoanDueDatesAfterRecallTests extends APITests {
       .withPickupServicePointId(servicePointsFixture.cd1().getId()));
 
     assertThat(loansStorageClient.getById(loan.getId()).getJson(),
-      hasJsonPath("dueDate", expectedLoanDueDate.toString()));
+      hasJsonPath("dueDate", isEquivalentTo(expectedLoanDueDate)));
 
     // verify that loan action is recorder even though due date is not changed
     final MultipleJsonRecords loanHistory = loanHistoryClient
@@ -919,11 +919,11 @@ class LoanDueDatesAfterRecallTests extends APITests {
 
       checkOutFixture.checkOutByBarcode(smallAngryPlanet, steve, getZonedDateTime());
 
-      requestsFixture.placeHoldShelfRequest(
+      requestsFixture.placeItemLevelHoldShelfRequest(
         smallAngryPlanet, james, getZonedDateTime(),
         requestServicePoint.getId(), "Hold");
 
-      requestsFixture.placeHoldShelfRequest(
+      requestsFixture.placeItemLevelHoldShelfRequest(
         smallAngryPlanet, jessica, getZonedDateTime(),
         requestServicePoint.getId(), "Hold");
 

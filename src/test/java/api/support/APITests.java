@@ -17,6 +17,7 @@ import static org.hamcrest.core.Is.is;
 
 import java.time.Clock;
 import java.time.ZonedDateTime;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
@@ -36,6 +37,7 @@ import api.support.fixtures.CheckInFixture;
 import api.support.fixtures.CheckOutFixture;
 import api.support.fixtures.CirculationRulesFixture;
 import api.support.fixtures.ClaimItemReturnedFixture;
+import api.support.fixtures.ConfigurationsFixture;
 import api.support.fixtures.DeclareLostFixtures;
 import api.support.fixtures.EndPatronSessionClient;
 import api.support.fixtures.EventSubscribersFixture;
@@ -204,6 +206,9 @@ public abstract class APITests {
 
   protected final AddressTypesFixture addressTypesFixture
     = new AddressTypesFixture(ResourceClient.forAddressTypes());
+
+  protected final ConfigurationsFixture configurationsFixture =
+    new ConfigurationsFixture(configClient);
 
   protected final PatronGroupsFixture patronGroupsFixture
     = new PatronGroupsFixture(patronGroupsClient);
@@ -386,5 +391,33 @@ public abstract class APITests {
 
   protected void mockClockManagerToReturnDefaultDateTime() {
     setDefaultClock();
+  }
+
+  protected void reconfigureTlrFeature(TlrFeatureStatus tlrFeatureStatus) {
+    if (tlrFeatureStatus == TlrFeatureStatus.ENABLED) {
+      configurationsFixture.enableTlrFeature();
+    }
+    else if (tlrFeatureStatus == TlrFeatureStatus.DISABLED) {
+      configurationsFixture.disableTlrFeature();
+    }
+    else {
+      configurationsFixture.deleteTlrFeatureConfig();
+    }
+  }
+
+  protected void reconfigureTlrFeature(TlrFeatureStatus tlrFeatureStatus,
+    UUID confirmationTemplateId, UUID cancellationTemplateId, UUID expirationTemplateId) {
+
+    if (tlrFeatureStatus == TlrFeatureStatus.ENABLED) {
+      configurationsFixture.configureTlrFeature(true, confirmationTemplateId,
+        cancellationTemplateId, expirationTemplateId);
+    }
+    else if (tlrFeatureStatus == TlrFeatureStatus.DISABLED) {
+      configurationsFixture.configureTlrFeature(false, confirmationTemplateId,
+        cancellationTemplateId, expirationTemplateId);
+    }
+    else {
+      configurationsFixture.deleteTlrFeatureConfig();
+    }
   }
 }

@@ -13,11 +13,12 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Account;
 import org.folio.circulation.domain.FeeFineAction;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Request;
-
 import org.folio.circulation.domain.notice.ScheduledPatronNoticeService;
 import org.folio.circulation.domain.representations.logs.NoticeLogContext;
 import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
@@ -32,8 +33,6 @@ import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.RecordNotFoundFailure;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
 import org.folio.circulation.support.results.Result;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
@@ -149,6 +148,17 @@ public abstract class ScheduledNoticeHandler {
       .next(context -> contextResult);
   }
 
+  protected Result<ScheduledNoticeContext> failWhenTitleLevelRequestIsIncomplete(
+    Result<ScheduledNoticeContext> contextResult)  {
+
+    return contextResult
+      .map(ScheduledNoticeContext::getRequest)
+      .failWhen(
+        request -> succeeded(request.getRequester() == null),
+        request -> new RecordNotFoundFailure("user", request.getRequesterId()))
+      .next(context -> contextResult);
+  }
+
   private CompletableFuture<Result<ScheduledNoticeContext>> sendNotice(
     ScheduledNoticeContext context) {
 
@@ -202,11 +212,7 @@ public abstract class ScheduledNoticeHandler {
     HttpFailure failure = result.cause();
     log.error("Processing scheduled notice {} failed: {}", notice.getId(), failure);
 
-    if (failure instanceof RecordNotFoundFailure) {
-      return deleteNotice(notice, failure.toString());
-    }
-
-    return ofAsync(() -> notice);
+    return deleteNotice(notice, failure.toString());
   }
 
   private Result<ScheduledNotice> handleException(Throwable throwable, ScheduledNotice notice) {

@@ -47,8 +47,11 @@ import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.Matcher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import api.support.APITests;
+import api.support.TlrFeatureStatus;
 import api.support.builders.ChangeDueDateRequestBuilder;
 import api.support.builders.ClaimItemReturnedRequestBuilder;
 import api.support.builders.ItemBuilder;
@@ -390,6 +393,125 @@ class ChangeDueDateAPITests extends APITests {
 
     assertThat("due date should be provided new due date",
       dueDateChangedLoan.getString("dueDate"), isEquivalentTo(newDueDate));
+  }
+
+  @Test
+  void dueDateChangeShouldNotUnsetRenewalFlagValueWhenTlrFeatureEnabled() {
+    IndividualResource loanPolicy = loanPoliciesFixture.create(
+      new LoanPolicyBuilder()
+        .withName("loan policy")
+        .withRecallsMinimumGuaranteedLoanPeriod(org.folio.circulation.domain.policy.Period.weeks(2))
+        .rolling(org.folio.circulation.domain.policy.Period.months(1)));
+
+    useFallbackPolicies(loanPolicy.getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId(),
+      overdueFinePoliciesFixture.facultyStandardDoNotCountClosed().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
+
+    ItemBuilder itemBuilder = ItemExamples.basedUponSmallAngryPlanet(
+      materialTypesFixture.book().getId(), loanTypesFixture.canCirculate().getId(),
+      EMPTY, "ItemPrefix", "ItemSuffix", "");
+
+    ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
+      itemBuilder, itemsFixture.thirdFloorHoldings());
+    IndividualResource steve = usersFixture.steve();
+    IndividualResource initialLoan = checkOutFixture.checkOutByBarcode(smallAngryPlanet, steve);
+    ZonedDateTime initialDueDate = ZonedDateTime.parse(initialLoan.getJson().getString("dueDate"));
+
+    assertThat(initialLoan.getJson().containsKey("dueDateChangedByRecall"), equalTo(false));
+
+    IndividualResource recall = requestsFixture.place(new RequestBuilder()
+      .recall()
+      .forItem(smallAngryPlanet)
+      .by(usersFixture.charlotte())
+      .fulfilToHoldShelf(servicePointsFixture.cd1()));
+    Response recalledLoan = loansClient.getById(initialLoan.getId());
+
+    assertThat(recalledLoan.getJson().getBoolean("dueDateChangedByRecall"), equalTo(true));
+
+    configurationsFixture.enableTlrFeature();
+    requestsClient.create(new RequestBuilder()
+      .recall()
+      .titleRequestLevel()
+      .withInstanceId(smallAngryPlanet.getInstanceId())
+      .withNoItemId()
+      .withNoHoldingsRecordId()
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
+      .withRequesterId(usersFixture.jessica().getId()));
+
+    requestsFixture.cancelRequest(recall);
+    final ZonedDateTime newDueDate = initialDueDate.plusMonths(1);
+    changeDueDateFixture.changeDueDate(new ChangeDueDateRequestBuilder()
+      .forLoan(recalledLoan.getJson().getString("id"))
+      .withDueDate(newDueDate));
+    JsonObject dueDateChangedLoan = loansClient.getById(initialLoan.getId()).getJson();
+
+    assertThat(recalledLoan.getJson().containsKey("dueDateChangedByRecall"), equalTo(true));
+    assertThat(dueDateChangedLoan.getBoolean("dueDateChangedByRecall"), equalTo(true));
+  }
+
+  @ParameterizedTest
+  @EnumSource(value = TlrFeatureStatus.class, names = {"DISABLED", "NOT_CONFIGURED"})
+  void dueDateChangeShouldUnsetRenewalFlagValueWhenTlrFeatureDisabledOrNotConfigured(TlrFeatureStatus tlrFeatureStatus) {
+    IndividualResource loanPolicy = loanPoliciesFixture.create(
+      new LoanPolicyBuilder()
+        .withName("loan policy")
+        .withRecallsMinimumGuaranteedLoanPeriod(org.folio.circulation.domain.policy.Period.weeks(2))
+        .rolling(org.folio.circulation.domain.policy.Period.months(1)));
+
+    useFallbackPolicies(loanPolicy.getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId(),
+      overdueFinePoliciesFixture.facultyStandardDoNotCountClosed().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
+
+    ItemBuilder itemBuilder = ItemExamples.basedUponSmallAngryPlanet(
+      materialTypesFixture.book().getId(), loanTypesFixture.canCirculate().getId(),
+      EMPTY, "ItemPrefix", "ItemSuffix", "");
+
+    ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
+      itemBuilder, itemsFixture.thirdFloorHoldings());
+    IndividualResource steve = usersFixture.steve();
+    IndividualResource initialLoan = checkOutFixture.checkOutByBarcode(smallAngryPlanet, steve);
+    ZonedDateTime initialDueDate = ZonedDateTime.parse(initialLoan.getJson().getString("dueDate"));
+    UUID instanceId = smallAngryPlanet.getInstanceId();
+
+    assertThat(initialLoan.getJson().containsKey("dueDateChangedByRecall"), equalTo(false));
+
+    IndividualResource itemLevelRecall = requestsFixture.place(new RequestBuilder()
+      .recall()
+      .itemRequestLevel()
+      .withInstanceId(instanceId)
+      .forItem(smallAngryPlanet)
+      .by(usersFixture.charlotte())
+      .fulfilToHoldShelf(servicePointsFixture.cd1()));
+    Response recalledLoan = loansClient.getById(initialLoan.getId());
+
+    assertThat(recalledLoan.getJson().getBoolean("dueDateChangedByRecall"), equalTo(true));
+
+    configurationsFixture.enableTlrFeature();
+
+    requestsClient.create(new RequestBuilder()
+      .recall()
+      .titleRequestLevel()
+      .withInstanceId(instanceId)
+      .withNoItemId()
+      .withNoHoldingsRecordId()
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
+      .withRequesterId(usersFixture.jessica().getId()));
+
+    requestsFixture.cancelRequest(itemLevelRecall);
+    reconfigureTlrFeature(tlrFeatureStatus);
+
+    final ZonedDateTime newDueDate = initialDueDate.plusMonths(1);
+    changeDueDateFixture.changeDueDate(new ChangeDueDateRequestBuilder()
+      .forLoan(recalledLoan.getJson().getString("id"))
+      .withDueDate(newDueDate));
+    JsonObject dueDateChangedLoan = loansClient.getById(initialLoan.getId()).getJson();
+
+    assertThat(recalledLoan.getJson().containsKey("dueDateChangedByRecall"), equalTo(true));
+    assertThat(dueDateChangedLoan.getBoolean("dueDateChangedByRecall"), equalTo(false));
   }
 
   private void chargeFeesForLostItemToKeepLoanOpen() {

@@ -1,6 +1,9 @@
 package api.requests.scenarios;
 
+import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
+import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
+import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfPublishedEvents;
 import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfSentNotices;
 import static java.time.ZoneOffset.UTC;
@@ -8,6 +11,7 @@ import static java.util.Arrays.asList;
 import static org.folio.circulation.domain.RequestStatus.CLOSED_CANCELLED;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE_ERROR;
+import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
@@ -19,11 +23,16 @@ import java.util.Collections;
 import java.util.UUID;
 
 import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.utils.ClockUtil;
+import org.hamcrest.CoreMatchers;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import api.support.APITests;
 import api.support.MultipleJsonRecords;
+import api.support.TlrFeatureStatus;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
@@ -42,7 +51,7 @@ class CancelRequestTests extends APITests {
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
-    final IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
+    final IndividualResource requestByJessica = requestsFixture.placeItemLevelHoldShelfRequest(
       smallAngryPlanet, jessica, ClockUtil.getZonedDateTime().minusHours(5));
 
     requestsFixture.cancelRequest(requestByJessica);
@@ -74,16 +83,16 @@ class CancelRequestTests extends APITests {
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
-    final IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
+    final IndividualResource requestByJessica = requestsFixture.placeItemLevelHoldShelfRequest(
       smallAngryPlanet, jessica, ClockUtil.getZonedDateTime().minusHours(5));
 
-    final IndividualResource requestBySteve = requestsFixture.placeHoldShelfRequest(
+    final IndividualResource requestBySteve = requestsFixture.placeItemLevelHoldShelfRequest(
       smallAngryPlanet, steve, ClockUtil.getZonedDateTime().minusHours(4));
 
-    final IndividualResource requestByCharlotte = requestsFixture.placeHoldShelfRequest(
+    final IndividualResource requestByCharlotte = requestsFixture.placeItemLevelHoldShelfRequest(
       smallAngryPlanet, charlotte, ClockUtil.getZonedDateTime().minusHours(3));
 
-    final IndividualResource requestByRebecca = requestsFixture.placeHoldShelfRequest(
+    final IndividualResource requestByRebecca = requestsFixture.placeItemLevelHoldShelfRequest(
       smallAngryPlanet, rebecca, ClockUtil.getZonedDateTime().minusHours(2));
 
     requestsFixture.cancelRequest(requestBySteve);
@@ -118,16 +127,16 @@ class CancelRequestTests extends APITests {
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
-    final IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
+    final IndividualResource requestByJessica = requestsFixture.placeItemLevelHoldShelfRequest(
       smallAngryPlanet, jessica, ClockUtil.getZonedDateTime().minusHours(5));
 
-    final IndividualResource requestBySteve = requestsFixture.placeHoldShelfRequest(
+    final IndividualResource requestBySteve = requestsFixture.placeItemLevelHoldShelfRequest(
       smallAngryPlanet, steve, ClockUtil.getZonedDateTime().minusHours(4));
 
-    final IndividualResource requestByCharlotte = requestsFixture.placeHoldShelfRequest(
+    final IndividualResource requestByCharlotte = requestsFixture.placeItemLevelHoldShelfRequest(
       smallAngryPlanet, charlotte, ClockUtil.getZonedDateTime().minusHours(3));
 
-    final IndividualResource requestByRebecca = requestsFixture.placeHoldShelfRequest(
+    final IndividualResource requestByRebecca = requestsFixture.placeItemLevelHoldShelfRequest(
       smallAngryPlanet, rebecca, ClockUtil.getZonedDateTime().minusHours(2));
 
     requestsFixture.cancelRequest(requestByJessica);
@@ -162,16 +171,16 @@ class CancelRequestTests extends APITests {
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
-    final IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
+    final IndividualResource requestByJessica = requestsFixture.placeItemLevelHoldShelfRequest(
       smallAngryPlanet, jessica, ClockUtil.getZonedDateTime().minusHours(5));
 
-    final IndividualResource requestBySteve = requestsFixture.placeHoldShelfRequest(
+    final IndividualResource requestBySteve = requestsFixture.placeItemLevelHoldShelfRequest(
       smallAngryPlanet, steve, ClockUtil.getZonedDateTime().minusHours(4));
 
-    final IndividualResource requestByCharlotte = requestsFixture.placeHoldShelfRequest(
+    final IndividualResource requestByCharlotte = requestsFixture.placeItemLevelHoldShelfRequest(
       smallAngryPlanet, charlotte, ClockUtil.getZonedDateTime().minusHours(3));
 
-    final IndividualResource requestByRebecca = requestsFixture.placeHoldShelfRequest(
+    final IndividualResource requestByRebecca = requestsFixture.placeItemLevelHoldShelfRequest(
       smallAngryPlanet, rebecca, ClockUtil.getZonedDateTime().minusHours(2));
 
     requestsFixture.cancelRequest(requestByRebecca);
@@ -295,6 +304,48 @@ class CancelRequestTests extends APITests {
     assertThat(secondRequest.getString("status"), is(CLOSED_CANCELLED.getValue()));
   }
 
+  @Test
+  void titleLevelRequestCancellationNoticeShouldBeSentWithEnabledTlr() {
+    UUID templateId = UUID.randomUUID();
+    templateFixture.createDummyNoticeTemplate(templateId);
+    reconfigureTlrFeature(TlrFeatureStatus.ENABLED, null, templateId, null);
+
+    IndividualResource request = requestsFixture.place(buildTitleLevelRequest());
+    verifyNumberOfSentNotices(0);
+    requestsFixture.cancelRequest(request);
+    verifyNumberOfSentNotices(1);
+  }
+
+  @ParameterizedTest
+  @EnumSource(value = TlrFeatureStatus.class, names = {"DISABLED", "NOT_CONFIGURED"})
+  void titleLevelRequestCancellationNoticeShouldNotBeSentWithDisabledTlr(
+    TlrFeatureStatus tlrFeatureStatus) {
+
+    UUID templateId = UUID.randomUUID();
+    templateFixture.createDummyNoticeTemplate(templateId);
+    reconfigureTlrFeature(TlrFeatureStatus.ENABLED, null, templateId, null);
+    IndividualResource request = requestsFixture.place(buildTitleLevelRequest());
+    verifyNumberOfSentNotices(0);
+
+    reconfigureTlrFeature(tlrFeatureStatus, null, templateId, null);
+    Response response = requestsFixture.attemptCancelRequest(request);
+
+    assertThat(response.getStatusCode(), CoreMatchers.is(422));
+    assertThat(response.getJson(), hasErrorWith(
+      hasMessage("requestLevel must be one of the following: \"Item\"")));
+    verifyNumberOfSentNotices(0);
+  }
+
+  @Test
+  void titleLevelRequestCancellationNoticeShouldNotBeSentWithoutConfiguredTemplate() {
+    reconfigureTlrFeature(TlrFeatureStatus.ENABLED, null, null, null);
+
+    IndividualResource request = requestsFixture.place(buildTitleLevelRequest());
+    verifyNumberOfSentNotices(0);
+    requestsFixture.cancelRequest(request);
+    verifyNumberOfSentNotices(0);
+  }
+
   private IndividualResource holdRequestWithNoPosition(
     IndividualResource item, IndividualResource requester) {
 
@@ -309,5 +360,19 @@ class CancelRequestTests extends APITests {
     request.remove("position");
 
     return requestsStorageClient.create(request);
+  }
+
+  private RequestBuilder buildTitleLevelRequest() {
+    ItemResource itemResource = itemsFixture.basedUponSmallAngryPlanet();
+    return new RequestBuilder()
+      .page()
+      .titleRequestLevel()
+      .withNoItemId()
+      .withNoHoldingsRecordId()
+      .withInstanceId(itemResource.getInstanceId())
+      .withRequesterId(usersFixture.charlotte().getId())
+      .withRequestDate(getZonedDateTime())
+      .withStatus(OPEN_NOT_YET_FILLED)
+      .withPickupServicePoint(servicePointsFixture.cd1());
   }
 }

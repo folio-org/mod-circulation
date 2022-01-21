@@ -15,7 +15,7 @@ public class NoticeConfiguration {
   private final boolean sendInRealTime;
 
   @SuppressWarnings("squid:S00107")
-  NoticeConfiguration(
+  public NoticeConfiguration(
     String templateId, NoticeFormat noticeFormat, NoticeEventType noticeEventType,
     NoticeTiming timing, Period timingPeriod,
     boolean recurring, Period recurringPeriod, boolean sendInRealTime) {

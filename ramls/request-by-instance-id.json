@@ -22,7 +22,7 @@
     "requestLevel": {
       "description": "Level of the request - Item or Title",
       "type": "string",
-      "enum": ["Item"]
+      "enum": ["Item", "Title"]
     },
     "requestExpirationDate": {
       "description": "Date when the request expires",

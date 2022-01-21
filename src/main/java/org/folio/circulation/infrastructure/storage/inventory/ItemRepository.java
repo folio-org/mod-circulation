@@ -4,11 +4,15 @@ import static java.util.Objects.isNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Function.identity;
 import static org.folio.circulation.domain.representations.LoanProperties.ITEM_ID;
+import static org.folio.circulation.domain.representations.ItemProperties.HOLDINGS_RECORD_ID;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
+import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQuery;
 import static org.folio.circulation.support.fetching.MultipleCqlIndexValuesCriteria.byIndex;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.http.CommonResponseInterpreters.noContentRecordInterpreter;
+import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.json.JsonKeys.byId;
+import static org.folio.circulation.support.results.MappingFunctions.when;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
@@ -30,8 +34,11 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.circulation.domain.Holdings;
+import org.folio.circulation.domain.Instance;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemRelatedRecord;
+import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.ServicePoint;
@@ -44,7 +51,6 @@ import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FindWithCqlQuery;
 import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
 import org.folio.circulation.support.SingleRecordFetcher;
-import org.folio.circulation.support.fetching.RecordFetching;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.Response;
@@ -97,6 +103,10 @@ public class ItemRepository {
   }
 
   public CompletableFuture<Result<Item>> fetchFor(ItemRelatedRecord record) {
+    if (record.getItemId() == null) {
+      return completedFuture(succeeded(Item.from(null)));
+    }
+
     return fetchById(record.getItemId());
   }
 
@@ -129,6 +139,29 @@ public class ItemRepository {
     return itemsClient.put(item.getItemId(), item.getItem())
       .thenApply(noContentRecordInterpreter(item)::flatMap)
       .thenCompose(x -> ofAsync(() -> item));
+  }
+
+  public CompletableFuture<Result<Item>> getFirstAvailableItemByInstanceId(String instanceId) {
+
+    final FindWithCqlQuery<JsonObject> holdingsRecordFetcher = findWithCqlQuery(
+      holdingsClient, "holdingsRecords", identity());
+
+    return holdingsRecordFetcher.findByQuery(CqlQuery.exactMatch("instanceId", instanceId))
+      .thenCompose(this::getAvailableItem);
+  }
+
+  private CompletableFuture<Result<Item>> getAvailableItem(
+    Result<MultipleRecords<JsonObject>> holdingsRecordsResult) {
+
+    return holdingsRecordsResult.after(holdingsRecords -> {
+      if (holdingsRecords == null || holdingsRecords.isEmpty()) {
+        return completedFuture(succeeded(Item.from(null)));
+      }
+
+      return findByIndexNameAndQuery(holdingsRecords.toKeys(byId()), HOLDINGS_RECORD_ID,
+          CqlQuery.exactMatch("status.name", ItemStatus.AVAILABLE.getValue()))
+        .thenApply(r -> r.map(items -> items.stream().findFirst().orElse(null)));
+    });
   }
 
   private CompletableFuture<Result<Item>> fetchMaterialType(Result<Item> result) {
@@ -236,6 +269,14 @@ public class ItemRepository {
         .collect(Collectors.toList()));
   }
 
+  public CompletableFuture<Result<MultipleRecords<Instance>>> findInstancesByIds(
+    Collection<String> instanceIds) {
+
+    return fetchInstancesByIds(instanceIds)
+      .thenApply(mapResult(multipleRecords -> multipleRecords.mapRecords(
+        new InstanceMapper()::toDomain)));
+  }
+
   private CompletableFuture<Result<Collection<Item>>> fetchInstances(
     Result<Collection<Item>> result) {
 
@@ -246,17 +287,21 @@ public class ItemRepository {
         .distinct()
         .collect(Collectors.toList());
 
-      final FindWithMultipleCqlIndexValues<JsonObject> fetcher
-        = findWithMultipleCqlIndexValues(instancesClient, "instances", identity());
-
       final var mapper = new InstanceMapper();
 
-      return fetcher.findByIds(instanceIds)
+      return fetchInstancesByIds(instanceIds)
         .thenApply(r -> r.map(instances -> items.stream()
           .map(item -> item.withInstance(mapper.toDomain(
               findById(item.getInstanceId(), instances.getRecords()).orElse(null))))
           .collect(Collectors.toList())));
     });
+  }
+
+  private CompletableFuture<Result<MultipleRecords<JsonObject>>> fetchInstancesByIds(
+    Collection<String> instanceIds) {
+
+    return findWithMultipleCqlIndexValues(instancesClient, "instances",
+      identity()).findByIds(instanceIds);
   }
 
   private CompletableFuture<Result<Collection<Item>>> fetchHoldingRecords(
@@ -269,12 +314,9 @@ public class ItemRepository {
         .distinct()
         .collect(Collectors.toList());
 
-      final var fetcher
-        = findWithMultipleCqlIndexValues(holdingsClient, "holdingsRecords", identity());
-
       final var mapper = new HoldingsMapper();
 
-      return fetcher.findByIds(holdingsIds)
+      return fetchHoldingsByIds(holdingsIds)
         .thenApply(r -> r.map(holdings -> items.stream()
           .map(item -> item.withHoldings(mapper.toDomain(
               findById(item.getHoldingsRecordId(), holdings.getRecords()).orElse(null))))
@@ -360,29 +402,57 @@ public class ItemRepository {
     });
   }
 
-  public <T extends ItemRelatedRecord> CompletableFuture<Result<MultipleRecords<T>>> fetchItemsFor(
-    Result<MultipleRecords<T>> result,
-    BiFunction<T, Item, T> includeItemMap) {
+  public <T extends ItemRelatedRecord> CompletableFuture<Result<MultipleRecords<T>>>
+  fetchItemsFor(Result<MultipleRecords<T>> result, BiFunction<T, Item, T> includeItemMap) {
+
+    return fetchItemsFor(result, includeItemMap, this::fetchFor);
+  }
+
+  public <T extends ItemRelatedRecord> CompletableFuture<Result<MultipleRecords<T>>>
+  fetchItemsWithHoldings(Result<MultipleRecords<T>> result, BiFunction<T, Item, T> includeItemMap) {
+
+    return fetchItemsFor(result, includeItemMap, this::fetchItemsWithHoldingsRecords);
+  }
+
+  public <T extends ItemRelatedRecord> CompletableFuture<Result<MultipleRecords<T>>>
+  fetchItemsFor(Result<MultipleRecords<T>> result, BiFunction<T, Item, T> includeItemMap,
+    Function<Collection<String>, CompletableFuture<Result<Collection<Item>>>> fetcher) {
 
     if (result.failed() || result.value().getRecords().isEmpty()) {
       return CompletableFuture.completedFuture(result);
     }
 
-    return result.combineAfter(r -> fetchFor(getItemIds(r)),
+    return result.combineAfter(r -> fetcher.apply(getItemIds(r)),
       (records, items) -> new MultipleRecords<>(
         matchItemToRecord(records, items, includeItemMap),
         records.getTotalRecords()));
   }
 
-  public CompletableFuture<Result<Collection<Item>>> findByQuery(Result<CqlQuery> queryResult) {
-    FindWithCqlQuery<Item> fetcher = RecordFetching.findWithCqlQuery(itemsClient, ITEMS_COLLECTION_PROPERTY_NAME, Item::from);
+  public CompletableFuture<Result<Collection<Item>>> findBy(String indexName, Collection<String> ids) {
+    FindWithMultipleCqlIndexValues<Item> fetcher = findWithMultipleCqlIndexValues(itemsClient,
+      ITEMS_COLLECTION_PROPERTY_NAME, Item::from);
 
-    return fetcher.findByQuery(queryResult)
+    return fetcher.find(byIndex(indexName, ids))
       .thenApply(mapResult(MultipleRecords::getRecords))
       .thenComposeAsync(this::fetchHoldingRecords)
       .thenComposeAsync(this::fetchInstances)
       .thenComposeAsync(this::fetchLocations)
       .thenComposeAsync(this::fetchMaterialTypes);
+  }
+
+  public CompletableFuture<Result<MultipleRecords<Holdings>>> findHoldingsByIds(
+    Collection<String> holdingsRecordIds) {
+
+    return fetchHoldingsByIds(holdingsRecordIds)
+      .thenApply(mapResult(multipleRecords ->
+        multipleRecords.mapRecords(new HoldingsMapper()::toDomain)));
+  }
+
+  private CompletableFuture<Result<MultipleRecords<JsonObject>>> fetchHoldingsByIds(
+    Collection<String> holdingsRecordIds) {
+
+    return findWithMultipleCqlIndexValues(holdingsClient, "holdingsRecords", identity())
+      .findByIds(holdingsRecordIds);
   }
 
   public CompletableFuture<Result<Collection<Item>>> findByIndexNameAndQuery(
@@ -411,9 +481,17 @@ public class ItemRepository {
       .thenComposeAsync(this::fetchMaterialTypes);
   }
 
+  private CompletableFuture<Result<Collection<Item>>> fetchItemsWithHoldingsRecords(
+    Collection<String> itemIds) {
+
+    return fetchItems(itemIds)
+      .thenComposeAsync(this::fetchHoldingRecords);
+  }
+
   private <T extends ItemRelatedRecord> List<String> getItemIds(MultipleRecords<T> records) {
     return records.getRecords().stream()
       .map(ItemRelatedRecord::getItemId)
+      .filter(Objects::nonNull)
       .collect(Collectors.toList());
   }
 

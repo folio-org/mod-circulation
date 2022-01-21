@@ -24,8 +24,8 @@ import org.folio.circulation.support.utils.ClockUtil;
 
 import io.vertx.core.json.JsonObject;
 
-public class RequestScheduledNoticeHandler extends ScheduledNoticeHandler {
-  private final RequestRepository requestRepository;
+public abstract class RequestScheduledNoticeHandler extends ScheduledNoticeHandler {
+  protected final RequestRepository requestRepository;
 
   public RequestScheduledNoticeHandler(Clients clients) {
     super(clients);
@@ -33,22 +33,8 @@ public class RequestScheduledNoticeHandler extends ScheduledNoticeHandler {
   }
 
   @Override
-  protected CompletableFuture<Result<ScheduledNoticeContext>> fetchData(
-    ScheduledNoticeContext context) {
-
-    return ofAsync(() -> context)
-      .thenCompose(r -> r.after(this::fetchTemplate))
-      .thenCompose(r -> r.after(this::fetchRequest))
-      .thenCompose(r -> r.after(this::fetchPatronNoticePolicyId));
-  }
-
-  private CompletableFuture<Result<ScheduledNoticeContext>> fetchRequest(
-    ScheduledNoticeContext context) {
-
-    return requestRepository.getById(context.getNotice().getRequestId())
-      .thenApply(mapResult(context::withRequest))
-      .thenApply(this::failWhenRequestIsIncomplete);
-  }
+  protected abstract CompletableFuture<Result<ScheduledNoticeContext>> fetchData(
+    ScheduledNoticeContext context);
 
   @Override
   protected CompletableFuture<Result<ScheduledNoticeContext>> fetchPatronNoticePolicyId(
@@ -163,5 +149,4 @@ public class RequestScheduledNoticeHandler extends ScheduledNoticeHandler {
     return requestExpirationDate != null && isAfterMillis(nextRunTime, requestExpirationDate) ||
       holdShelfExpirationDate != null && isAfterMillis(nextRunTime, holdShelfExpirationDate);
   }
-
 }

@@ -24,6 +24,7 @@ import api.support.builders.MoveRequestBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.http.CqlQuery;
 import api.support.http.IndividualResource;
+import api.support.http.ItemResource;
 import api.support.http.Limit;
 import api.support.http.Offset;
 import api.support.http.ResourceClient;
@@ -55,19 +56,60 @@ public class RequestsFixture {
     return requestsClient.attemptCreate(requestToBuild);
   }
 
-  public IndividualResource placeHoldShelfRequest(IndividualResource item,
-      IndividualResource by, ZonedDateTime on) {
+  public IndividualResource placeItemLevelHoldShelfRequest(IndividualResource item,
+    IndividualResource by, ZonedDateTime on) {
 
     return place(new RequestBuilder()
       .hold()
       .fulfilToHoldShelf()
       .withItemId(item.getId())
+      .withInstanceId(((ItemResource) item).getInstanceId())
       .withRequestDate(on)
       .withRequesterId(by.getId())
       .withPickupServicePointId(servicePointsFixture.cd1().getId()));
   }
 
-  public IndividualResource placeDeliveryRequest(IndividualResource item,
+  public IndividualResource placeItemLevelPageRequest(IndividualResource item, UUID instanceId,
+    IndividualResource by) {
+
+    return place(new RequestBuilder()
+      .page()
+      .fulfilToHoldShelf()
+      .withItemId(item.getId())
+      .withInstanceId(instanceId)
+      .withRequestDate(ZonedDateTime.now())
+      .withRequesterId(by.getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId()));
+  }
+
+  public IndividualResource placeItemLevelHoldShelfRequest(IndividualResource item,
+    IndividualResource by) {
+
+    return placeItemLevelHoldShelfRequest(item, by, ZonedDateTime.now());
+  }
+
+  public IndividualResource placeTitleLevelHoldShelfRequest(UUID instanceId,
+    IndividualResource by, ZonedDateTime on) {
+
+    return place(new RequestBuilder()
+      .hold()
+      .fulfilToHoldShelf()
+      .withRequestLevel("Title")
+      .withInstanceId(instanceId)
+      .withNoItemId()
+      .withNoHoldingsRecordId()
+      .withRequestDate(on)
+      .withRequesterId(by.getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId()));
+  }
+
+  public IndividualResource placeTitleLevelHoldShelfRequest(UUID instanceId,
+    IndividualResource by) {
+
+    return placeTitleLevelHoldShelfRequest(instanceId, by, ZonedDateTime.now());
+  }
+
+  public IndividualResource placeItemLevelDeliveryRequest(IndividualResource item,
       IndividualResource by, ZonedDateTime on) {
 
     return place(new RequestBuilder()
@@ -75,35 +117,53 @@ public class RequestsFixture {
       .deliverToAddress(UUID.randomUUID())
       .withRequestDate(on)
       .withItemId(item.getId())
+      .withInstanceId(((ItemResource) item).getInstanceId())
       .withRequesterId(by.getId()));
   }
 
-  public IndividualResource placeHoldShelfRequest(IndividualResource item,
-      IndividualResource by, ZonedDateTime on, UUID pickupServicePointId) {
+  public IndividualResource placeItemLevelHoldShelfRequest(IndividualResource item, IndividualResource by,
+    ZonedDateTime on, UUID pickupServicePointId) {
 
     return place(new RequestBuilder()
-        .hold()
-        .fulfilToHoldShelf()
-        .withItemId(item.getId())
-        .withRequestDate(on)
-        .withRequesterId(by.getId())
-        .withPickupServicePointId(pickupServicePointId));
+      .hold()
+      .fulfilToHoldShelf()
+      .withItemId(item.getId())
+      .withInstanceId(((ItemResource) item).getInstanceId())
+      .withRequestDate(on)
+      .withRequesterId(by.getId())
+      .withPickupServicePointId(pickupServicePointId));
   }
 
-  public IndividualResource placeHoldShelfRequest(IndividualResource item,
+  public IndividualResource placeTitleLevelHoldShelfRequest(UUID instanceId,
+    IndividualResource by, ZonedDateTime on, UUID pickupServicePointId) {
+
+    return place(new RequestBuilder()
+      .hold()
+      .fulfilToHoldShelf()
+      .withRequestLevel("Title")
+      .withInstanceId(instanceId)
+      .withNoItemId()
+      .withNoHoldingsRecordId()
+      .withRequestDate(on)
+      .withRequesterId(by.getId())
+      .withPickupServicePointId(pickupServicePointId));
+  }
+
+  public IndividualResource placeItemLevelHoldShelfRequest(IndividualResource item,
       IndividualResource by, ZonedDateTime on, UUID pickupServicePointId, String type) {
 
     return place(new RequestBuilder()
-        .hold()
-        .withRequestType(type)
-        .fulfilToHoldShelf()
-        .withItemId(item.getId())
-        .withRequestDate(on)
-        .withRequesterId(by.getId())
-        .withPickupServicePointId(pickupServicePointId));
+      .hold()
+      .withRequestType(type)
+      .fulfilToHoldShelf()
+      .withItemId(item.getId())
+      .withInstanceId(((ItemResource) item).getInstanceId())
+      .withRequestDate(on)
+      .withRequesterId(by.getId())
+      .withPickupServicePointId(pickupServicePointId));
   }
 
-  public IndividualResource placeHoldShelfRequest(IndividualResource item,
+  public IndividualResource placeItemLevelHoldShelfRequest(IndividualResource item,
       IndividualResource by, ZonedDateTime on, String type) {
 
     return place(new RequestBuilder()
@@ -111,20 +171,36 @@ public class RequestsFixture {
       .deliverToAddress(UUID.randomUUID())
       .withRequestDate(on)
       .withItemId(item.getId())
+      .withInstanceId(((ItemResource) item).getInstanceId())
       .withRequesterId(by.getId()));
   }
 
-  public Response attemptPlaceHoldShelfRequest(IndividualResource item,
-      IndividualResource by, ZonedDateTime on, UUID pickupServicePointId, String type) {
+  public Response attemptPlaceItemLevelHoldShelfRequest(IndividualResource item,
+    IndividualResource by, ZonedDateTime on, UUID pickupServicePointId, String type) {
 
     return attemptPlace(new RequestBuilder()
-        .hold()
-        .withRequestType(type)
-        .fulfilToHoldShelf()
-        .withItemId(item.getId())
-        .withRequestDate(on)
-        .withRequesterId(by.getId())
-        .withPickupServicePointId(pickupServicePointId));
+      .hold()
+      .withRequestType(type)
+      .fulfilToHoldShelf()
+      .withItemId(item.getId())
+      .withInstanceId(((ItemResource) item).getInstanceId())
+      .withRequestDate(on)
+      .withRequesterId(by.getId())
+      .withPickupServicePointId(pickupServicePointId));
+  }
+
+  public Response attemptPlaceTitleLevelHoldShelfRequest(UUID instanceId,
+    IndividualResource requester) {
+
+    return attemptPlace(new RequestBuilder()
+      .hold()
+      .fulfilToHoldShelf()
+      .titleRequestLevel()
+      .withInstanceId(instanceId)
+      .withNoItemId()
+      .withNoHoldingsRecordId()
+      .withRequesterId(requester.getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId()));
   }
 
   public Response attemptToPlaceForInstance(JsonObject representation) {
@@ -143,14 +219,24 @@ public class RequestsFixture {
   }
 
   public void cancelRequest(IndividualResource request) {
+    final RequestBuilder cancelledRequestBySteve = buildCancelledRequest(request);
+    requestsClient.replace(request.getId(), cancelledRequestBySteve);
+  }
+
+  public Response attemptCancelRequest(IndividualResource request) {
+    final RequestBuilder cancelledRequestBySteve = buildCancelledRequest(request);
+
+    return requestsClient.attemptReplace(request.getId(), cancelledRequestBySteve);
+  }
+
+  private RequestBuilder buildCancelledRequest(IndividualResource request) {
+
     final IndividualResource courseReservesCancellationReason
       = cancellationReasonsFixture.courseReserves();
 
-    final RequestBuilder cancelledRequestBySteve = RequestBuilder.from(request)
+    return RequestBuilder.from(request)
       .cancelled()
       .withCancellationReasonId(courseReservesCancellationReason.getId());
-
-    requestsClient.replace(request.getId(), cancelledRequestBySteve);
   }
 
   public void expireRequest(IndividualResource request) {

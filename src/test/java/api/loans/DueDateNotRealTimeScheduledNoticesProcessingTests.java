@@ -36,6 +36,7 @@ import org.junit.jupiter.api.Test;
 import api.support.APITests;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
+import api.support.builders.UserBuilder;
 import api.support.fakes.FakeModNotify;
 import api.support.fakes.FakePubSub;
 import api.support.fixtures.ConfigurationExample;
@@ -364,6 +365,44 @@ class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests {
     verifyNumberOfSentNotices(0);
     verifyNumberOfScheduledNotices(0);
     verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
+  }
+
+  @Test
+  void noticeIsDeletedIfPatronGroupOfUserIsNullAndDoesNotBLockProcessing() {
+    JsonObject uponAtDueDateNoticeConfig = new NoticeConfigurationBuilder()
+      .withTemplateId(TEMPLATE_ID)
+      .withDueDateEvent()
+      .withUponAtTiming()
+      .sendInRealTime(false)
+      .create();
+
+    NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
+      .withName("Policy with due date notices")
+      .withLoanNotices(Collections.singletonList(uponAtDueDateNoticeConfig));
+
+    use(noticePolicy);
+
+    ZonedDateTime loanDate = ZonedDateTime.of(2019, 8, 23, 10, 30, 0, 0, ZoneOffset.UTC);
+
+    val james = usersFixture.james();
+    val charlotte = usersFixture.charlotte();
+    val nod = itemsFixture.basedUponNod();
+    val smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, charlotte, loanDate.plusHours(1));
+    val nodToJamesLoan = checkOutFixture.checkOutByBarcode(nod, james, loanDate.plusHours(2));
+    usersClient.replace(charlotte.getId(), new UserBuilder().withPatronGroupId(null));
+
+    verifyNumberOfScheduledNotices(2);
+
+    ZonedDateTime dueDate = parseDateTime(nodToJamesLoan.getJson().getString("dueDate"));
+    ZonedDateTime afterLoanDueDateTime = dueDate.plusDays(1);
+
+    scheduledNoticeProcessingClient.runDueDateNotRealTimeNoticesProcessing(afterLoanDueDateTime);
+
+    verifyNumberOfSentNotices(1);
+    verifyNumberOfScheduledNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 1);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
   }
 

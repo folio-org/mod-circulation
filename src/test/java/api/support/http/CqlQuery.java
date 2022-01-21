@@ -17,6 +17,10 @@ public class CqlQuery implements QueryStringParameter {
     return queryFromTemplate("%s==\"%s\"", indexName, value);
   }
 
+  public static CqlQuery notEqual(String indexName, Object value) {
+    return queryFromTemplate("%s<>\"%s\"", indexName, value);
+  }
+
   public static CqlQuery noQuery() {
     return new CqlQuery(null);
   }

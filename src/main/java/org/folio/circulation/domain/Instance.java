@@ -11,9 +11,10 @@ import lombok.Value;
 @Value
 public class Instance {
   public static Instance unknown() {
-    return new Instance(null, emptyList(), emptyList(), emptyList(), emptyList());
+    return new Instance(null, null, emptyList(), emptyList(), emptyList(), emptyList());
   }
 
+  String id;
   String title;
   @NonNull Collection<Identifier> identifiers;
   @NonNull Collection<Contributor> contributors;
@@ -32,4 +33,10 @@ public class Instance {
       .map(Contributor::getName)
       .orElse(null);
   }
+
+  // TODO: replace this stub with proper implementation
+  public boolean isNotFound() {
+    return id == null;
+  }
+
 }
