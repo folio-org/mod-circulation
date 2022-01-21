@@ -216,11 +216,7 @@ public abstract class ScheduledNoticeHandler {
     HttpFailure failure = result.cause();
     log.error("Processing scheduled notice {} failed: {}", notice.getId(), failure);
 
-    if (failure instanceof RecordNotFoundFailure) {
-      return deleteNotice(notice, failure.toString());
-    }
-
-    return ofAsync(() -> notice);
+    return deleteNotice(notice, failure.toString());
   }
 
   private Result<ScheduledNotice> handleException(Throwable throwable, ScheduledNotice notice) {
