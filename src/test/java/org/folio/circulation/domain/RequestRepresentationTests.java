@@ -28,6 +28,7 @@ class RequestRepresentationTests {
   private static final UUID INSTANCE_ID = UUID.randomUUID();
   private static final String EDITIONS = "editions";
   private static final String PUBLICATION = "publication";
+  private static final String IDENTIFIERS = "identifiers";
   private static final String INSTANCE = "instance";
   private static final String ID = "id";
 
@@ -50,12 +51,17 @@ class RequestRepresentationTests {
 
     assertTrue(instance.containsKey(EDITIONS));
     assertTrue(instance.containsKey(PUBLICATION));
+    assertTrue(instance.containsKey(IDENTIFIERS));
     assertEquals("First American Edition", instance.getJsonArray(EDITIONS).getString(0));
+
     JsonObject publication = instance.getJsonArray(PUBLICATION).getJsonObject(0);
     assertEquals("fake publisher", publication.getString("publisher"));
     assertEquals("fake place", publication.getString("place"));
     assertEquals("2016", publication.getString("dateOfPublication"));
 
+    JsonObject identifier = instance.getJsonArray(IDENTIFIERS).getJsonObject(0);
+    assertEquals("0262012103", identifier.getString("value"));
+    assertEquals("8261054f-be78-422d-bd51-4ed9f33c3422", identifier.getString("identifierTypeId"));
   }
 
   @Test
@@ -76,6 +82,13 @@ class RequestRepresentationTests {
 
     assertThat("Stored representation should not have a delivery address",
       storedRepresentation.containsKey("deliveryAddress"), is(false));
+
+    JsonObject identifier = storedRepresentation.getJsonObject("instance")
+      .getJsonArray(IDENTIFIERS).getJsonObject(0);
+    assertThat("Stored representation should contain valid identifier value",
+      identifier.getString("value"), is("0262012103"));
+    assertThat("Stored representation should contain valid identifier identifierTypeId",
+      identifier.getString("identifierTypeId"), is("8261054f-be78-422d-bd51-4ed9f33c3422"));
   }
 
   private Request createMockRequest() {
@@ -103,6 +116,9 @@ class RequestRepresentationTests {
 
     JsonObject instanceRepresentation = new JsonObject();
     write(instanceRepresentation, EDITIONS, new JsonArray().add("First American Edition"));
+    write(instanceRepresentation, IDENTIFIERS, new JsonArray().add(new JsonObject()
+      .put("identifierTypeId", "8261054f-be78-422d-bd51-4ed9f33c3422")
+      .put("value", "0262012103")));
     JsonObject publication = new JsonObject();
     publication.put("publisher", "fake publisher");
     publication.put("place", "fake place");
