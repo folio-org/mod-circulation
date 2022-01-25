@@ -2,14 +2,13 @@ package org.folio.circulation.domain;
 
 import static java.util.Objects.isNull;
 import static java.util.Optional.ofNullable;
-import static java.util.stream.Collectors.toList;
 import static org.folio.circulation.domain.representations.CallNumberComponentsRepresentation.createCallNumberComponents;
 import static org.folio.circulation.domain.representations.ContributorsToNamesMapper.mapContributorNamesToJson;
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.copyProperty;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
+import static org.folio.circulation.support.utils.CollectionUtil.map;
 import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;
-import static org.folio.circulation.support.utils.RequestRepresentationUtil.entityCollectionToJson;
 
 import java.lang.invoke.MethodHandles;
 
@@ -100,9 +99,9 @@ public class RequestRepresentation {
     }
     JsonObject instanceSummary = new JsonObject();
     write(instanceSummary, "title", instance.getTitle());
-    write(instanceSummary, "identifiers", entityCollectionToJson(instance.getIdentifiers()));
+    write(instanceSummary, "identifiers", map(instance.getIdentifiers(), Identifier::toJson));
     write(instanceSummary, "contributorNames", mapContributorNamesToJson(instance));
-    write(instanceSummary, "publication", entityCollectionToJson(instance.getPublication()));
+    write(instanceSummary, "publication", map(instance.getPublication(), Publication::toJson));
     write(instanceSummary, "editions", instance.getEditions());
 
     write(request, "instance", instanceSummary);

@@ -6,13 +6,12 @@ import io.vertx.core.json.JsonObject;
 import lombok.Value;
 
 @Value
-public class Publication implements MappableToJson {
+public class Publication {
   String publisher;
   String place;
   String dateOfPublication;
   String role;
 
-  @Override
   public JsonObject toJson() {
     final var representation = new JsonObject();
 

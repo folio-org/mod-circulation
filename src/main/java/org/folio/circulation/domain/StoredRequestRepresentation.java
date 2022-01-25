@@ -2,7 +2,7 @@ package org.folio.circulation.domain;
 
 import static java.util.Objects.isNull;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
-import static org.folio.circulation.support.utils.RequestRepresentationUtil.entityCollectionToJson;
+import static org.folio.circulation.support.utils.CollectionUtil.map;
 
 import java.lang.invoke.MethodHandles;
 
@@ -47,7 +47,7 @@ public class StoredRequestRepresentation {
     }
     JsonObject instanceSummary = new JsonObject();
     write(instanceSummary, "title", instance.getTitle());
-    write(instanceSummary, "identifiers", entityCollectionToJson(instance.getIdentifiers()));
+    write(instanceSummary, "identifiers", map(instance.getIdentifiers(), Identifier::toJson));
 
     request.put("instance", instanceSummary);
   }
