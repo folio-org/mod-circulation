@@ -26,10 +26,13 @@ class RequestRepresentationTests {
   private static final UUID ADDRESS_ID = UUID.randomUUID();
   private static final UUID SERVICE_POINT_ID = UUID.randomUUID();
   private static final UUID INSTANCE_ID = UUID.randomUUID();
+  private static final UUID IDENTIFIER_ID = UUID.randomUUID();
   private static final String EDITIONS = "editions";
   private static final String PUBLICATION = "publication";
+  private static final String IDENTIFIERS = "identifiers";
   private static final String INSTANCE = "instance";
   private static final String ID = "id";
+  public static final String IDENTIFIER_VALUE = "identifier-value";
 
   @Test
   void testExtendedRepresentation() {
@@ -50,12 +53,17 @@ class RequestRepresentationTests {
 
     assertTrue(instance.containsKey(EDITIONS));
     assertTrue(instance.containsKey(PUBLICATION));
+    assertTrue(instance.containsKey(IDENTIFIERS));
     assertEquals("First American Edition", instance.getJsonArray(EDITIONS).getString(0));
+
     JsonObject publication = instance.getJsonArray(PUBLICATION).getJsonObject(0);
     assertEquals("fake publisher", publication.getString("publisher"));
     assertEquals("fake place", publication.getString("place"));
     assertEquals("2016", publication.getString("dateOfPublication"));
 
+    JsonObject identifier = instance.getJsonArray(IDENTIFIERS).getJsonObject(0);
+    assertEquals(IDENTIFIER_VALUE, identifier.getString("value"));
+    assertEquals(IDENTIFIER_ID.toString(), identifier.getString("identifierTypeId"));
   }
 
   @Test
@@ -76,6 +84,13 @@ class RequestRepresentationTests {
 
     assertThat("Stored representation should not have a delivery address",
       storedRepresentation.containsKey("deliveryAddress"), is(false));
+
+    JsonObject identifier = storedRepresentation.getJsonObject("instance")
+      .getJsonArray(IDENTIFIERS).getJsonObject(0);
+    assertThat("Stored representation should contain valid identifier value",
+      identifier.getString("value"), is(IDENTIFIER_VALUE));
+    assertThat("Stored representation should contain valid identifier identifierTypeId",
+      identifier.getString("identifierTypeId"), is(IDENTIFIER_ID.toString()));
   }
 
   private Request createMockRequest() {
@@ -103,6 +118,9 @@ class RequestRepresentationTests {
 
     JsonObject instanceRepresentation = new JsonObject();
     write(instanceRepresentation, EDITIONS, new JsonArray().add("First American Edition"));
+    write(instanceRepresentation, IDENTIFIERS, new JsonArray().add(new JsonObject()
+      .put("identifierTypeId", IDENTIFIER_ID)
+      .put("value", IDENTIFIER_VALUE)));
     JsonObject publication = new JsonObject();
     publication.put("publisher", "fake publisher");
     publication.put("place", "fake place");
