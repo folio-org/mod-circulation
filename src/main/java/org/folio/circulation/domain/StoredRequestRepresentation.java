@@ -1,10 +1,11 @@
 package org.folio.circulation.domain;
 
 import static java.util.Objects.isNull;
+import static java.util.stream.Collectors.toList;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
-import static org.folio.circulation.support.utils.CollectionUtil.map;
 
 import java.lang.invoke.MethodHandles;
+import java.util.Collection;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -47,9 +48,24 @@ public class StoredRequestRepresentation {
     }
     JsonObject instanceSummary = new JsonObject();
     write(instanceSummary, "title", instance.getTitle());
-    write(instanceSummary, "identifiers", map(instance.getIdentifiers(), Identifier::toJson));
+    write(instanceSummary, "identifiers", identifiersToJson(instance.getIdentifiers()));
 
     request.put("instance", instanceSummary);
+  }
+
+  private static Collection<JsonObject> identifiersToJson(Collection<Identifier> identifiers) {
+    return identifiers.stream()
+      .map(StoredRequestRepresentation::identifierToJson)
+      .collect(toList());
+  }
+
+  private static JsonObject identifierToJson(Identifier identifier) {
+    final var representation = new JsonObject();
+
+    write(representation, "identifierTypeId", identifier.getTypeId());
+    write(representation, "value", identifier.getValue());
+
+    return representation;
   }
 
   private static void addStoredRequesterProperties(JsonObject request, User requester) {

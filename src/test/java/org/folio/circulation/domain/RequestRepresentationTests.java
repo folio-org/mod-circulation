@@ -32,6 +32,7 @@ class RequestRepresentationTests {
   private static final String IDENTIFIERS = "identifiers";
   private static final String INSTANCE = "instance";
   private static final String ID = "id";
+  public static final String IDENTIFIER_VALUE = "identifier-value";
 
   @Test
   void testExtendedRepresentation() {
@@ -61,7 +62,7 @@ class RequestRepresentationTests {
     assertEquals("2016", publication.getString("dateOfPublication"));
 
     JsonObject identifier = instance.getJsonArray(IDENTIFIERS).getJsonObject(0);
-    assertEquals("0262012103", identifier.getString("value"));
+    assertEquals(IDENTIFIER_VALUE, identifier.getString("value"));
     assertEquals(IDENTIFIER_ID.toString(), identifier.getString("identifierTypeId"));
   }
 
@@ -87,7 +88,7 @@ class RequestRepresentationTests {
     JsonObject identifier = storedRepresentation.getJsonObject("instance")
       .getJsonArray(IDENTIFIERS).getJsonObject(0);
     assertThat("Stored representation should contain valid identifier value",
-      identifier.getString("value"), is("0262012103"));
+      identifier.getString("value"), is(IDENTIFIER_VALUE));
     assertThat("Stored representation should contain valid identifier identifierTypeId",
       identifier.getString("identifierTypeId"), is(IDENTIFIER_ID.toString()));
   }
@@ -119,7 +120,7 @@ class RequestRepresentationTests {
     write(instanceRepresentation, EDITIONS, new JsonArray().add("First American Edition"));
     write(instanceRepresentation, IDENTIFIERS, new JsonArray().add(new JsonObject()
       .put("identifierTypeId", IDENTIFIER_ID)
-      .put("value", "0262012103")));
+      .put("value", IDENTIFIER_VALUE)));
     JsonObject publication = new JsonObject();
     publication.put("publisher", "fake publisher");
     publication.put("place", "fake place");
