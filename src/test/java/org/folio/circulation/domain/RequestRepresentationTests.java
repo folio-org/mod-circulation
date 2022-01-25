@@ -26,6 +26,7 @@ class RequestRepresentationTests {
   private static final UUID ADDRESS_ID = UUID.randomUUID();
   private static final UUID SERVICE_POINT_ID = UUID.randomUUID();
   private static final UUID INSTANCE_ID = UUID.randomUUID();
+  private static final UUID IDENTIFIER_ID = UUID.randomUUID();
   private static final String EDITIONS = "editions";
   private static final String PUBLICATION = "publication";
   private static final String IDENTIFIERS = "identifiers";
@@ -61,7 +62,7 @@ class RequestRepresentationTests {
 
     JsonObject identifier = instance.getJsonArray(IDENTIFIERS).getJsonObject(0);
     assertEquals("0262012103", identifier.getString("value"));
-    assertEquals("8261054f-be78-422d-bd51-4ed9f33c3422", identifier.getString("identifierTypeId"));
+    assertEquals(IDENTIFIER_ID.toString(), identifier.getString("identifierTypeId"));
   }
 
   @Test
@@ -88,7 +89,7 @@ class RequestRepresentationTests {
     assertThat("Stored representation should contain valid identifier value",
       identifier.getString("value"), is("0262012103"));
     assertThat("Stored representation should contain valid identifier identifierTypeId",
-      identifier.getString("identifierTypeId"), is("8261054f-be78-422d-bd51-4ed9f33c3422"));
+      identifier.getString("identifierTypeId"), is(IDENTIFIER_ID.toString()));
   }
 
   private Request createMockRequest() {
@@ -117,7 +118,7 @@ class RequestRepresentationTests {
     JsonObject instanceRepresentation = new JsonObject();
     write(instanceRepresentation, EDITIONS, new JsonArray().add("First American Edition"));
     write(instanceRepresentation, IDENTIFIERS, new JsonArray().add(new JsonObject()
-      .put("identifierTypeId", "8261054f-be78-422d-bd51-4ed9f33c3422")
+      .put("identifierTypeId", IDENTIFIER_ID)
       .put("value", "0262012103")));
     JsonObject publication = new JsonObject();
     publication.put("publisher", "fake publisher");
