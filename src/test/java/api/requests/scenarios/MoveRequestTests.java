@@ -244,12 +244,16 @@ class MoveRequestTests extends APITests {
     val holdings2Item = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(
       dunkirkHoldings2.getId(), mezzanineDisplayCase.getId());
 
+    itemsClient.getAll().stream().map(item -> item.getString("id")).forEach(System.out::println);
+
     IndividualResource pagedIlrByJesicca = requestsFixture.move(
       new MoveRequestBuilder(holdIlrByJessica.getId(), holdings2Item.getId()));
 
-    assertThat(requestsClient.get(pageTlrBySteve).getJson().getInteger("position"), is(3));
+    requestsFixture.getAllRequests().stream().map(request -> request.getString("position"))
+      .forEach(System.out::println);
     assertThat(requestsClient.get(pageIlrByCharlotte).getJson().getInteger("position"), is(1));
-    assertThat(requestsClient.get(pagedIlrByJesicca).getJson().getInteger("position") ,is(2));
+    assertThat(requestsClient.get(pagedIlrByJesicca).getJson().getInteger("position") ,is(3));
+    assertThat(requestsClient.get(pageTlrBySteve).getJson().getInteger("position"), is(2));
   }
 
   @Test

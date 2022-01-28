@@ -125,7 +125,7 @@ public class RequestServiceUtility {
     Request request = requestAndRelatedRecords.getRequest();
     Predicate<Request> isAlreadyRequested;
 
-    if (isTlrEnabled(request)) {
+    if (isTlrEnabled(request) && request.isTitleLevel()) {
       isAlreadyRequested = req -> isTheSameRequester(requestAndRelatedRecords, req) && req.isOpen();
     } else {
       isAlreadyRequested = req -> requestAndRelatedRecords.getItemId().equals(req.getItemId())

@@ -271,7 +271,7 @@ public class RequestCollectionResource extends CollectionResource {
 
     fromFutureResult(requestRepository.getById(id))
       .flatMapFuture(request -> configurationRepository.lookupTlrSettings().thenApply(r ->
-          r.map(request::withTlrSettings)))
+        r.map(request::withTlrSettings)))
       .map(RequestAndRelatedRecords::new)
       .map(request -> asMove(request, representation))
       .flatMapFuture(move -> moveRequestService.moveRequest(move, move.getOriginalRequest()))

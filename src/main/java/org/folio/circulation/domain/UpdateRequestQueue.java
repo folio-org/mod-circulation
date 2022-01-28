@@ -240,6 +240,7 @@ public class UpdateRequestQueue {
     if (requestAndRelatedRecords.getDestinationItemId().equals(request.getItemId())) {
       final RequestQueue requestQueue = requestAndRelatedRecords.getRequestQueue();
       // NOTE: it is important to remove position when moving request from one queue to another
+      requestQueue.remove(request);
       request.removePosition();
       requestQueue.add(request);
       return requestQueueRepository.updateRequestsWithChangedPositions(requestQueue)
