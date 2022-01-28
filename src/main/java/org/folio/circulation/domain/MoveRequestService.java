@@ -14,6 +14,8 @@ import org.folio.circulation.resources.RequestNoticeSender;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.results.Result;
 
+import io.vertx.core.json.JsonObject;
+
 public class MoveRequestService {
   private final RequestRepository requestRepository;
   private final RequestPolicyRepository requestPolicyRepository;

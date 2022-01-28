@@ -4,6 +4,7 @@ import static api.support.builders.ItemBuilder.AVAILABLE;
 import static api.support.builders.ItemBuilder.PAGED;
 import static api.support.builders.RequestBuilder.OPEN_AWAITING_PICKUP;
 import static api.support.fixtures.ConfigurationExample.timezoneConfigurationFor;
+import static api.support.fixtures.ConfigurationExample.tlrFeatureEnabled;
 import static api.support.matchers.EventMatchers.isValidLoanDueDateChangedEvent;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
@@ -32,9 +33,11 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.IntStream;
 
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.ItemStatus;
@@ -52,6 +55,7 @@ import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.MoveRequestBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.fakes.FakePubSub;
+import api.support.fixtures.ItemsFixture;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
@@ -169,6 +173,83 @@ class MoveRequestTests extends APITests {
     assertThat(itemsClient.get(itemCopyA).getJson().getJsonObject("status").getString("name"), is(ItemStatus.CHECKED_OUT.getValue()));
 
     assertThat(itemsClient.get(itemCopyB).getJson().getJsonObject("status").getString("name"), is(ItemStatus.PAGED.getValue()));
+  }
+
+  @Test
+  void whenHoldRequestIsMovedToPagedPositionsShouldBeConsistentWhenTlrIsEnabled() {
+    configurationsFixture.enableTlrFeature();
+
+    val dunkirkInstance = instancesFixture.basedUponDunkirk();
+    val cd1 = servicePointsFixture.cd1();
+    val mezzanineDisplayCase = locationsFixture.mezzanineDisplayCase();
+    val dunkirkHoldings1 = holdingsFixture.defaultWithHoldings(
+      dunkirkInstance.getId());
+
+    val holdings1FirstItem = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(
+      dunkirkHoldings1.getId(), mezzanineDisplayCase.getId());
+
+    val holdings1SecondItem = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(
+      dunkirkHoldings1.getId(), mezzanineDisplayCase.getId());
+
+    val holdings1ThirdItem = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(
+      dunkirkHoldings1.getId(), mezzanineDisplayCase.getId());
+
+    IndividualResource james = usersFixture.james();
+    IndividualResource jessica = usersFixture.jessica();
+    IndividualResource steve = usersFixture.steve();
+    IndividualResource charlotte = usersFixture.charlotte();
+
+    checkOutFixture.checkOutByBarcode(holdings1FirstItem, james);
+
+    System.out.println(itemsClient.get(holdings1FirstItem).getJson());
+    System.out.println(itemsClient.get(holdings1ThirdItem).getJson());
+    System.out.println(itemsClient.get(holdings1SecondItem).getJson());
+
+    val pageIlrByCharlotte = requestsFixture.place(new RequestBuilder()
+      .page()
+      .withItemId(holdings1ThirdItem.getId())
+      .withHoldingsRecordId(dunkirkHoldings1.getId())
+      .withInstanceId(dunkirkInstance.getId())
+      .withRequestDate(getZonedDateTime())
+      .withPickupServicePointId(cd1.getId())
+      .withRequesterId(charlotte.getId()));
+
+    val holdIlrByJessica = requestsFixture.place(new RequestBuilder()
+      .hold()
+      .itemRequestLevel()
+      .withItemId(holdings1FirstItem.getId())
+      .withHoldingsRecordId(dunkirkHoldings1.getId())
+      .withInstanceId(dunkirkInstance.getId())
+      .withRequestDate(getZonedDateTime())
+      .withRequesterId(jessica.getId())
+      .withPickupServicePointId(cd1.getId()));
+
+    val pageTlrBySteve = requestsFixture.place(new RequestBuilder()
+      .page()
+      .withNoItemId()
+      .withNoHoldingsRecordId()
+      .withInstanceId(dunkirkInstance.getId())
+      .withRequestDate(getZonedDateTime())
+      .titleRequestLevel()
+      .withPickupServicePointId(cd1.getId())
+      .withRequesterId(steve.getId()));
+
+    assertThat(requestsClient.get(pageTlrBySteve).getJson().getInteger("position"), is(3));
+    assertThat(requestsClient.get(pageIlrByCharlotte).getJson().getInteger("position"), is(1));
+    assertThat(requestsClient.get(holdIlrByJessica).getJson().getInteger("position") ,is(2));
+
+    val dunkirkHoldings2 = holdingsFixture.defaultWithHoldings(
+      dunkirkInstance.getId());
+
+    val holdings2Item = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(
+      dunkirkHoldings2.getId(), mezzanineDisplayCase.getId());
+
+    IndividualResource pagedIlrByJesicca = requestsFixture.move(
+      new MoveRequestBuilder(holdIlrByJessica.getId(), holdings2Item.getId()));
+
+    assertThat(requestsClient.get(pageTlrBySteve).getJson().getInteger("position"), is(3));
+    assertThat(requestsClient.get(pageIlrByCharlotte).getJson().getInteger("position"), is(1));
+    assertThat(requestsClient.get(pagedIlrByJesicca).getJson().getInteger("position") ,is(2));
   }
 
   @Test

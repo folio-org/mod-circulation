@@ -5,6 +5,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Function.identity;
 import static org.folio.circulation.domain.representations.LoanProperties.ITEM_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.HOLDINGS_RECORD_ID;
+import static org.folio.circulation.support.CqlSortBy.*;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQuery;
 import static org.folio.circulation.support.fetching.MultipleCqlIndexValuesCriteria.byIndex;
@@ -48,10 +49,14 @@ import org.folio.circulation.storage.mappers.InstanceMapper;
 import org.folio.circulation.storage.mappers.LoanTypeMapper;
 import org.folio.circulation.storage.mappers.MaterialTypeMapper;
 import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.CqlSortBy;
 import org.folio.circulation.support.FindWithCqlQuery;
 import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
 import org.folio.circulation.support.SingleRecordFetcher;
+import org.folio.circulation.support.fetching.GetManyRecordsRepository;
+import org.folio.circulation.support.fetching.PageableFetcher;
 import org.folio.circulation.support.http.client.CqlQuery;
+import org.folio.circulation.support.http.client.Offset;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.results.CommonFailures;
@@ -61,7 +66,7 @@ import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-public class ItemRepository {
+public class ItemRepository implements GetManyRecordsRepository<Item> {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   private final CollectionResourceClient itemsClient;
@@ -158,8 +163,10 @@ public class ItemRepository {
         return completedFuture(succeeded(Item.from(null)));
       }
 
+      //PageableFetcher<Item> itemPageableFetcher = new PageableFetcher<>(new ItemRepository())
       return findByIndexNameAndQuery(holdingsRecords.toKeys(byId()), HOLDINGS_RECORD_ID,
           CqlQuery.exactMatch("status.name", ItemStatus.AVAILABLE.getValue()))
+         //   .map(cql -> cql.sortBy(ascending())))
         .thenApply(r -> r.map(items -> items.stream().findFirst().orElse(null)));
     });
   }
@@ -520,6 +527,12 @@ public class ItemRepository {
 
   public static ItemRepository noLocationMaterialTypeAndLoanTypeInstance(org.folio.circulation.support.Clients clients) {
     return new ItemRepository(clients, false, false, false);
+  }
+
+  @Override
+  public CompletableFuture<Result<MultipleRecords<Item>>> getMany(CqlQuery cqlQuery,
+    PageLimit pageLimit, Offset offset) {
+    return null;
   }
 
   @AllArgsConstructor

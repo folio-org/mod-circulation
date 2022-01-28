@@ -142,9 +142,10 @@ class UpdateRequestQueueTest {
 
     String newOriginalItemId = UUID.randomUUID().toString();
     String newDestinationItemId = UUID.randomUUID().toString();
+    String newDestinationInstanceId = UUID.randomUUID().toString();
 
     RequestAndRelatedRecords moveFromRequestContext = createMoveRequestContext()
-      .asMove(newOriginalItemId, newDestinationItemId);
+      .asMove(newOriginalItemId, newDestinationItemId, newDestinationInstanceId);
 
     CompletableFuture<Result<RequestAndRelatedRecords>> completableFuture =
       updateRequestQueue.onMovedFrom(moveFromRequestContext);
@@ -162,9 +163,10 @@ class UpdateRequestQueueTest {
 
     String newOriginalItemId = UUID.randomUUID().toString();
     String newDestinationItemId = UUID.randomUUID().toString();
+    String newDestinationInstanceId = UUID.randomUUID().toString();
 
     RequestAndRelatedRecords moveFromRequestContext = createMoveRequestContext()
-      .asMove(newOriginalItemId, newDestinationItemId);
+      .asMove(newOriginalItemId, newDestinationItemId, newDestinationInstanceId);
 
     CompletableFuture<Result<RequestAndRelatedRecords>> completableFuture =
       updateRequestQueue.onMovedTo(moveFromRequestContext);
@@ -231,6 +233,7 @@ class UpdateRequestQueueTest {
 
   private RequestAndRelatedRecords createMoveRequestContext() {
     UUID itemId = UUID.randomUUID();
+    String instanceId = UUID.randomUUID().toString();
 
     RequestQueue requestQueue = createRequestQueue(itemId, 4);
     Request request = requestQueue.getRequests().iterator().next();
@@ -239,7 +242,7 @@ class UpdateRequestQueueTest {
       .withRequestQueue(requestQueue)
       // setting destination == source, to handle both moveTo and moveFrom cases
       // it does not matter for tests
-      .asMove(itemId.toString(), itemId.toString());
+      .asMove(itemId.toString(), itemId.toString(), instanceId);
   }
 
   private RequestAndRelatedRecords createCancellationContext() {

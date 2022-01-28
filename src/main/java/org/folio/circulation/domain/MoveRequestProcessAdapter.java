@@ -23,9 +23,11 @@ public class MoveRequestProcessAdapter {
   }
 
   CompletableFuture<Result<RequestAndRelatedRecords>> findDestinationItem(
-      RequestAndRelatedRecords requestAndRelatedRecords) {
+    RequestAndRelatedRecords requestAndRelatedRecords) {
     return itemRepository.fetchById(requestAndRelatedRecords.getDestinationItemId())
       .thenApply(r -> r.map(requestAndRelatedRecords::withItem))
+      .thenApply(r -> r.map(records -> records.withDestinationItemInstanceId(
+        records.getRequest().getItem().getInstanceId())))
       .thenComposeAsync(r -> r.after(this::findLoanForItem));
   }
 
@@ -36,7 +38,12 @@ public class MoveRequestProcessAdapter {
   }
 
   CompletableFuture<Result<RequestAndRelatedRecords>> getDestinationRequestQueue(
-      RequestAndRelatedRecords requestAndRelatedRecords) {
+    RequestAndRelatedRecords requestAndRelatedRecords) {
+    Request request = requestAndRelatedRecords.getRequest();
+    if (request.getTlrSettingsConfiguration().isTitleLevelRequestsFeatureEnabled()) {
+      return requestQueueRepository.getByInstanceId(requestAndRelatedRecords.getDestinationItemInstanceId())
+        .thenApply(result -> result.map(requestAndRelatedRecords::withRequestQueue));
+    }
     return requestQueueRepository.getByItemId(requestAndRelatedRecords.getDestinationItemId())
       .thenApply(result -> result.map(requestAndRelatedRecords::withRequestQueue));
   }
@@ -50,6 +57,11 @@ public class MoveRequestProcessAdapter {
 
   CompletableFuture<Result<RequestAndRelatedRecords>> getSourceRequestQueue(
       RequestAndRelatedRecords requestAndRelatedRecords) {
+    if (requestAndRelatedRecords.getRequest().getTlrSettingsConfiguration()
+      .isTitleLevelRequestsFeatureEnabled()) {
+      return requestQueueRepository.getByInstanceId(requestAndRelatedRecords.getSourceItemInstanceId())
+        .thenApply(result -> result.map(requestAndRelatedRecords::withRequestQueue));
+    }
     return requestQueueRepository.getByItemId(requestAndRelatedRecords.getSourceItemId())
       .thenApply(result -> result.map(requestAndRelatedRecords::withRequestQueue));
   }

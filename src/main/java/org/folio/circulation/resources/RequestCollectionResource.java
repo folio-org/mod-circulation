@@ -270,6 +270,8 @@ public class RequestCollectionResource extends CollectionResource {
       RequestNoticeSender.using(clients), configurationRepository, eventPublisher);
 
     fromFutureResult(requestRepository.getById(id))
+      .flatMapFuture(request -> configurationRepository.lookupTlrSettings().thenApply(r ->
+          r.map(request::withTlrSettings)))
       .map(RequestAndRelatedRecords::new)
       .map(request -> asMove(request, representation))
       .flatMapFuture(move -> moveRequestService.moveRequest(move, move.getOriginalRequest()))
@@ -285,13 +287,15 @@ public class RequestCollectionResource extends CollectionResource {
 
     final var originalItemId = requestAndRelatedRecords.getItemId();
     final var destinationItemId = representation.getString("destinationItemId");
+    final var originalItemInstanceId = requestAndRelatedRecords.getRequest().getItem().getInstanceId();
 
     if (representation.containsKey("requestType")) {
       RequestType requestType = RequestType.from(representation.getString("requestType"));
-      return requestAndRelatedRecords.withRequestType(requestType).asMove(originalItemId, destinationItemId);
+      return requestAndRelatedRecords.withRequestType(requestType)
+        .asMove(originalItemId, destinationItemId, originalItemInstanceId);
     }
 
-    return requestAndRelatedRecords.asMove(originalItemId, destinationItemId);
+    return requestAndRelatedRecords.asMove(originalItemId, destinationItemId, originalItemInstanceId);
   }
 
   private ProxyRelationshipValidator createProxyRelationshipValidator(

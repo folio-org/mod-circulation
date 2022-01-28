@@ -167,6 +167,12 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return requestRepresentation.getString(HOLDINGS_RECORD_ID);
   }
 
+  public Request withTlrSettings(TlrSettingsConfiguration tlrSettingsConfiguration) {
+    return new Request(tlrSettingsConfiguration, operation, requestRepresentation,
+      cancellationReasonRepresentation, instance, item, requester, proxy, addressType,
+      loan, pickupServicePoint, changedPosition, previousPosition, changedStatus);
+  }
+
   public Request withItem(Item newItem) {
     // NOTE: this is null in RequestsAPIUpdatingTests.replacingAnExistingRequestRemovesItemInformationWhenItemDoesNotExist test
     if (newItem != null && newItem.getItemId() != null && newItem.getHoldingsRecordId() != null) {
