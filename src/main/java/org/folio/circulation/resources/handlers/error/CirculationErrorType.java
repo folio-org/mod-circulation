@@ -53,5 +53,10 @@ public enum CirculationErrorType {
   RENEWAL_IS_NOT_POSSIBLE,
 
   // Errors related to block overrides
-  INSUFFICIENT_OVERRIDE_PERMISSIONS
+  INSUFFICIENT_OVERRIDE_PERMISSIONS,
+
+  // Errors that do not affect a loan creation
+  FAILED_TO_SAVE_SESSION_RECORD,
+  FAILED_TO_PUBLISH_CHECKOUT_EVENT,
+  FAILED_TO_SCHEDULE_NOTICE_FOR_LOAN_DUE_DATE
 }

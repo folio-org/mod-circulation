@@ -2,11 +2,15 @@ package org.folio.circulation.domain.notice.schedule;
 
 import static org.folio.circulation.domain.notice.NoticeEventType.AGED_TO_LOST;
 import static org.folio.circulation.domain.notice.NoticeEventType.DUE_DATE;
+import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.time.ZonedDateTime;
 import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
@@ -37,11 +41,13 @@ public class LoanScheduledNoticeService {
     this.noticePolicyRepository = noticePolicyRepository;
   }
 
-  public Result<LoanAndRelatedRecords> scheduleNoticesForLoanDueDate(LoanAndRelatedRecords records) {
-    Loan loan = records.getLoan();
-    scheduleLoanNotices(loan, DUE_DATE, loan.getDueDate());
+  public CompletableFuture<Result<LoanAndRelatedRecords>> scheduleNoticesForLoanDueDate(
+    LoanAndRelatedRecords records) {
 
-    return succeeded(records);
+    Loan loan = records.getLoan();
+
+    return scheduleLoanNotices(loan, DUE_DATE, loan.getDueDate())
+      .thenApply(r -> r.map(v -> records));
   }
 
   public Result<Void> scheduleAgedToLostNotices(Collection<Loan> loans) {
@@ -50,15 +56,15 @@ public class LoanScheduledNoticeService {
     return succeeded(null);
   }
 
-  private Result<Void> scheduleLoanNotices(Loan loan, NoticeEventType eventType, ZonedDateTime eventTime) {
-    noticePolicyRepository.lookupPolicy(loan)
-      .thenAccept(r -> r.next(policy ->
-        scheduleLoanNoticesBasedOnPolicy(loan, eventType, eventTime, policy)));
+  private CompletableFuture<Result<List<ScheduledNotice>>> scheduleLoanNotices(Loan loan,
+    NoticeEventType eventType, ZonedDateTime eventTime) {
 
-    return succeeded(null);
+    return noticePolicyRepository.lookupPolicy(loan)
+      .thenCompose(r -> r.after(policy -> scheduleLoanNoticesBasedOnPolicy(loan, eventType,
+        eventTime, policy)));
   }
 
-  private Result<PatronNoticePolicy> scheduleLoanNoticesBasedOnPolicy(Loan loan,
+  private CompletableFuture<Result<List<ScheduledNotice>>> scheduleLoanNoticesBasedOnPolicy(Loan loan,
      NoticeEventType eventType, ZonedDateTime eventTime, PatronNoticePolicy noticePolicy) {
 
     noticePolicy.getNoticeConfigurations().stream()
@@ -66,7 +72,12 @@ public class LoanScheduledNoticeService {
       .map(config -> createScheduledNotice(config, loan, eventType, eventTime))
       .forEach(scheduledNoticesRepository::create);
 
-    return succeeded(noticePolicy);
+    List<ScheduledNotice> scheduledNotices = noticePolicy.getNoticeConfigurations().stream()
+      .filter(config -> config.getNoticeEventType() == eventType)
+      .map(config -> createScheduledNotice(config, loan, eventType, eventTime))
+      .collect(Collectors.toList());
+
+    return allOf(scheduledNotices, scheduledNoticesRepository::create);
   }
 
   private ScheduledNotice createScheduledNotice(NoticeConfiguration configuration, Loan loan,
@@ -126,7 +137,7 @@ public class LoanScheduledNoticeService {
 
     if (!loan.isClosed()) {
       scheduledNoticesRepository.deleteByLoanIdAndTriggeringEvent(loan.getId(), triggeringEvent)
-        .thenAccept(r -> r.next(v -> scheduleLoanNotices(loan, eventType, eventTime)));
+        .thenAccept(r -> r.map(v -> scheduleLoanNotices(loan, eventType, eventTime)));
     }
 
     return succeeded(mapTo);

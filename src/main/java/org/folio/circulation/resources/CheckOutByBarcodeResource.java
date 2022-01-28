@@ -6,7 +6,11 @@ import static org.folio.circulation.domain.LoanAction.CHECKED_OUT_THROUGH_OVERRI
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_ITEM;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_PROXY_USER;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_USER;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_PUBLISH_CHECKOUT_EVENT;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_SAVE_SESSION_RECORD;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_SCHEDULE_NOTICE_FOR_LOAN_DUE_DATE;
 import static org.folio.circulation.support.http.server.JsonHttpResponse.created;
+import static org.folio.circulation.support.http.server.JsonHttpResponse.ok;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
@@ -140,15 +144,44 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenComposeAsync(r -> r.after(patronGroupRepository::findPatronGroupForLoanAndRelatedRecords))
       .thenComposeAsync(r -> r.after(l -> updateItem(l, itemRepository)))
       .thenComposeAsync(r -> r.after(loanRepository::createLoan))
-      .thenComposeAsync(r -> r.after(patronActionSessionService::saveCheckOutSessionRecord))
+      .thenComposeAsync(r -> r.after(l -> saveCheckOutSessionRecord(l, patronActionSessionService,
+        errorHandler)))
       .thenApplyAsync(r -> r.map(records -> records.withLoggedInUserId(context.getUserId())))
-      .thenComposeAsync(r -> r.after(loanAndRelatedRecords ->
-        eventPublisher.publishItemCheckedOutEvent(loanAndRelatedRecords, userRepository)))
-      .thenApply(r -> r.next(scheduledNoticeService::scheduleNoticesForLoanDueDate))
+      .thenComposeAsync(r -> r.after(l -> publishItemCheckedOutEvent(l, eventPublisher,
+        userRepository, errorHandler)))
+      .thenCompose(r -> r.after(l -> scheduleNoticesForLoanDueDate(l, scheduledNoticeService,
+        errorHandler)))
       .thenApply(r -> r.map(LoanAndRelatedRecords::getLoan))
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
-      .thenApply(this::createdLoanFrom)
+      .thenApply(r -> createdLoanFrom(r, errorHandler))
       .thenAccept(context::writeResultToHttpResponse);
+  }
+
+  private CompletableFuture<Result<LoanAndRelatedRecords>> saveCheckOutSessionRecord(
+    LoanAndRelatedRecords records, PatronActionSessionService patronActionSessionService,
+    CirculationErrorHandler errorHandler) {
+
+    return patronActionSessionService.saveCheckOutSessionRecord(records)
+      .thenApply(r -> errorHandler.handleAnyResult(r, FAILED_TO_SAVE_SESSION_RECORD,
+        succeeded(records)));
+  }
+
+  private CompletableFuture<Result<LoanAndRelatedRecords>> publishItemCheckedOutEvent(
+    LoanAndRelatedRecords records, EventPublisher eventPublisher,
+    UserRepository userRepository, CirculationErrorHandler errorHandler) {
+
+    return eventPublisher.publishItemCheckedOutEvent(records, userRepository)
+      .thenApply(r -> errorHandler.handleAnyResult(r, FAILED_TO_PUBLISH_CHECKOUT_EVENT,
+        succeeded(records)));
+  }
+
+  private CompletableFuture<Result<LoanAndRelatedRecords>> scheduleNoticesForLoanDueDate(
+    LoanAndRelatedRecords records, LoanScheduledNoticeService scheduledNoticeService,
+    CirculationErrorHandler errorHandler) {
+
+    return scheduledNoticeService.scheduleNoticesForLoanDueDate(records)
+      .thenApply(r -> errorHandler.handleAnyResult(r, FAILED_TO_SCHEDULE_NOTICE_FOR_LOAN_DUE_DATE,
+        succeeded(records)));
   }
 
   private CompletableFuture<Result<LoanAndRelatedRecords>> lookupLoanPolicy(
@@ -173,8 +206,13 @@ public class CheckOutByBarcodeResource extends Resource {
     return loanAndRelatedRecords.changeItemStatus(CHECKED_OUT);
   }
 
-  private Result<HttpResponse> createdLoanFrom(Result<JsonObject> result) {
-    return result.map(json -> created(json, urlForLoan(json.getString("id"))));
+  private Result<HttpResponse> createdLoanFrom(Result<JsonObject> result,
+    CirculationErrorHandler errorHandler) {
+
+    return result.map(json -> errorHandler.hasAny(FAILED_TO_SAVE_SESSION_RECORD,
+      FAILED_TO_SCHEDULE_NOTICE_FOR_LOAN_DUE_DATE, FAILED_TO_PUBLISH_CHECKOUT_EVENT)
+        ? ok(json, urlForLoan(json.getString("id")))
+        : created(json, urlForLoan(json.getString("id"))));
   }
 
   private String urlForLoan(String id) {

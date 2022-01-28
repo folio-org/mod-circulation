@@ -51,6 +51,10 @@ import io.vertx.ext.web.handler.BodyHandler;
 public class FakeStorageModule extends AbstractVerticle {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private static final Set<String> queries = Collections.synchronizedSet(new HashSet<>());
+  public static final String PATRON_ACTION_SESSION_STORAGE_PATH =
+    "/patron-action-session-storage/patron-action-sessions";
+  public static final String SCHEDULED_NOTICE_STORAGE_PATH =
+    "/scheduled-notice-storage/scheduled-notices";
 
   private final String rootPath;
   private final String collectionPropertyName;
@@ -69,6 +73,8 @@ public class FakeStorageModule extends AbstractVerticle {
   private final Function<JsonObject, JsonObject> batchUpdatePreProcessor;
   private final List<BiFunction<JsonObject, JsonObject, JsonObject>> recordPreProcessors;
   private final Collection<String> additionalQueryParameters;
+  private static boolean failToCreateSessionRecord;
+  private static boolean failToScheduleNotice;
 
   public static Stream<String> getQueries() {
     return queries.stream();
@@ -120,6 +126,8 @@ public class FakeStorageModule extends AbstractVerticle {
     router.route(rootPath).handler(this::checkRequestIdHeader);
     router.route(pathTree).handler(this::checkRequestIdHeader);
 
+    router.post(rootPath).handler(this::checkFailToCreateSessionRecord);
+    router.post(rootPath).handler(this::checkFailToScheduleNotice);
     router.post(rootPath).handler(BodyHandler.create());
     router.post(pathTree).handler(BodyHandler.create());
     router.put(rootPath).handler(BodyHandler.create());
@@ -154,6 +162,22 @@ public class FakeStorageModule extends AbstractVerticle {
 
       router.post(batchUpdatePath).handler(BodyHandler.create());
       router.post(batchUpdatePath).handler(this::batchUpdate);
+    }
+  }
+
+  private void checkFailToCreateSessionRecord(RoutingContext routingContext) {
+    if (PATRON_ACTION_SESSION_STORAGE_PATH.equals(rootPath) && failToCreateSessionRecord) {
+      failResponse(routingContext);
+    } else {
+      routingContext.next();
+    }
+  }
+
+  private void checkFailToScheduleNotice(RoutingContext routingContext) {
+    if (SCHEDULED_NOTICE_STORAGE_PATH.equals(rootPath) && failToScheduleNotice) {
+      failResponse(routingContext);
+    } else {
+      routingContext.next();
     }
   }
 
@@ -462,6 +486,12 @@ public class FakeStorageModule extends AbstractVerticle {
     response.end();
   }
 
+  private void failResponse(RoutingContext routingContext) {
+    HttpServerResponse response = routingContext.response();
+    response.setStatusCode(500);
+    response.end();
+  }
+
   private void checkRequestIdHeader(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
 
@@ -516,6 +546,7 @@ public class FakeStorageModule extends AbstractVerticle {
   // Routine -> string_to_uuid, V -> ERROR,
   // Message -> invalid input syntax for type uuid: "null", Severity -> ERROR))
   // when an ID parameter is not a UUID
+
   private Result<UUID> getIdParameter(RoutingContext routingContext) {
     final String id = routingContext.request().getParam("id");
 
@@ -523,7 +554,6 @@ public class FakeStorageModule extends AbstractVerticle {
       .mapFailure(r -> failedDueToServerError(format(
         "ID parameter \"%s\" is not a valid UUID", id)));
   }
-
   private void checkUniqueProperties(RoutingContext routingContext) {
     if(uniqueProperties.isEmpty()) {
       routingContext.next();
@@ -642,5 +672,13 @@ public class FakeStorageModule extends AbstractVerticle {
   private boolean isContainsQueryParameter(String queryParameter) {
     String query = StringUtils.substringBefore(queryParameter, "=");
     return this.additionalQueryParameters.contains(query);
+  }
+
+  public static void setFailToCreateSessionRecord(boolean failToCreateSessionRecord) {
+    FakeStorageModule.failToCreateSessionRecord = failToCreateSessionRecord;
+  }
+
+  public static void setFailToScheduleNotice(boolean failToScheduleNotice) {
+    FakeStorageModule.failToScheduleNotice = failToScheduleNotice;
   }
 }

@@ -45,6 +45,7 @@ import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static api.support.utl.BlockOverridesUtils.getMissingPermissions;
+import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfScheduledNotices;
 import static java.time.ZoneOffset.UTC;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.domain.EventType.ITEM_CHECKED_OUT;
@@ -64,7 +65,6 @@ import static org.folio.circulation.support.utils.DateFormatUtil.parseDateTime;
 import static org.folio.circulation.support.utils.DateTimeUtil.atEndOfDay;
 import static org.folio.circulation.support.utils.DateTimeUtil.atStartOfDay;
 import static org.hamcrest.CoreMatchers.allOf;
-import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
@@ -102,10 +102,12 @@ import api.support.builders.ItemBuilder;
 import api.support.builders.ItemNotLoanableBlockOverrideBuilder;
 import api.support.builders.LoanBuilder;
 import api.support.builders.LoanPolicyBuilder;
+import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.builders.UserBuilder;
 import api.support.fakes.FakePubSub;
+import api.support.fakes.FakeStorageModule;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import api.support.http.OkapiHeaders;
@@ -1046,7 +1048,7 @@ class CheckOutByBarcodeTests extends APITests {
 
     final ZonedDateTime loanDate = ZonedDateTime.of(2018, 3, 18, 11, 43, 54, 0, UTC);
 
-    checkOutFixture.checkOutByBarcode(
+    checkOutFixture.attemptCheckOutByBarcode(200,
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
@@ -1443,21 +1445,66 @@ class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  void checkOutFailsWhenEventPublishingFailsWithBadRequestError() {
+  void checkOutShouldNotFailIfEventPublishingFailsWithBadRequestError() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
 
     FakePubSub.setFailPublishingWithBadRequestError(true);
-
-    Response response = checkOutFixture.attemptCheckOutByBarcode(500,
+    checkOutFixture.attemptCheckOutByBarcode(200,
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
         .on(getZonedDateTime())
         .at(UUID.randomUUID()));
+    FakePubSub.setFailPublishingWithBadRequestError(false);
 
-    assertThat(response.getBody(), containsString(
-      "Error during publishing Event Message in PubSub. Status code: 400"));
+    assertThat(itemsClient.get(smallAngryPlanet), hasItemStatus(CHECKED_OUT));
+  }
+
+  @Test
+  void checkOutShouldNotFailIfSessionRecordCreatingFails() {
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource steve = usersFixture.steve();
+
+    FakeStorageModule.setFailToCreateSessionRecord(true);
+    checkOutFixture.attemptCheckOutByBarcode(200,
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(smallAngryPlanet)
+        .to(steve)
+        .on(getZonedDateTime())
+        .at(UUID.randomUUID()));
+    FakeStorageModule.setFailToCreateSessionRecord(false);
+
+    assertThat(itemsClient.get(smallAngryPlanet), hasItemStatus(CHECKED_OUT));
+  }
+
+  @Test
+  void checkOutShouldNotFailIfSchedulingNoticesFails() {
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource steve = usersFixture.steve();
+
+    JsonObject uponAtDueDateNoticeConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(UUID.randomUUID())
+      .withDueDateEvent()
+      .withUponAtTiming()
+      .sendInRealTime(false)
+      .create();
+    NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
+      .withName("Policy with due date notices")
+      .withLoanNotices(List.of(uponAtDueDateNoticeConfiguration));
+    use(noticePolicy);
+
+    FakeStorageModule.setFailToScheduleNotice(true);
+    checkOutFixture.attemptCheckOutByBarcode(200,
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(smallAngryPlanet)
+        .to(steve)
+        .on(getZonedDateTime())
+        .at(UUID.randomUUID()));
+    FakeStorageModule.setFailToScheduleNotice(false);
+
+    verifyNumberOfScheduledNotices(0);
+    assertThat(itemsClient.get(smallAngryPlanet), hasItemStatus(CHECKED_OUT));
   }
 
   @Test
