@@ -67,11 +67,6 @@ public class LoanScheduledNoticeService {
   private CompletableFuture<Result<List<ScheduledNotice>>> scheduleLoanNoticesBasedOnPolicy(Loan loan,
      NoticeEventType eventType, ZonedDateTime eventTime, PatronNoticePolicy noticePolicy) {
 
-    noticePolicy.getNoticeConfigurations().stream()
-      .filter(config -> config.getNoticeEventType() == eventType)
-      .map(config -> createScheduledNotice(config, loan, eventType, eventTime))
-      .forEach(scheduledNoticesRepository::create);
-
     List<ScheduledNotice> scheduledNotices = noticePolicy.getNoticeConfigurations().stream()
       .filter(config -> config.getNoticeEventType() == eventType)
       .map(config -> createScheduledNotice(config, loan, eventType, eventTime))

@@ -149,7 +149,7 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenApplyAsync(r -> r.map(records -> records.withLoggedInUserId(context.getUserId())))
       .thenComposeAsync(r -> r.after(l -> publishItemCheckedOutEvent(l, eventPublisher,
         userRepository, errorHandler)))
-      .thenCompose(r -> r.after(l -> scheduleNoticesForLoanDueDate(l, scheduledNoticeService,
+      .thenComposeAsync(r -> r.after(l -> scheduleNoticesForLoanDueDate(l, scheduledNoticeService,
         errorHandler)))
       .thenApply(r -> r.map(LoanAndRelatedRecords::getLoan))
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
