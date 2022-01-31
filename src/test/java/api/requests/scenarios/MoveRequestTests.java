@@ -4,7 +4,6 @@ import static api.support.builders.ItemBuilder.AVAILABLE;
 import static api.support.builders.ItemBuilder.PAGED;
 import static api.support.builders.RequestBuilder.OPEN_AWAITING_PICKUP;
 import static api.support.fixtures.ConfigurationExample.timezoneConfigurationFor;
-import static api.support.fixtures.ConfigurationExample.tlrFeatureEnabled;
 import static api.support.matchers.EventMatchers.isValidLoanDueDateChangedEvent;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
@@ -33,12 +32,10 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.IntStream;
 
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.ItemStatus;
@@ -60,7 +57,6 @@ import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.MoveRequestBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.fakes.FakePubSub;
-import api.support.fixtures.ItemsFixture;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
@@ -73,11 +69,6 @@ import lombok.val;
  * @see <a href="https://issues.folio.org/browse/CIRC-395">CIRC-395</a>
  */
 class MoveRequestTests extends APITests {
-
-  @BeforeEach
-  public void beforeEach() {
-
-  }
 
   @AfterEach
   public void afterEach() {

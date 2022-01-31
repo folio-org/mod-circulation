@@ -103,7 +103,8 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public boolean isTlrFeatureEnabled() {
-    return tlrSettingsConfiguration.isTitleLevelRequestsFeatureEnabled();
+    return tlrSettingsConfiguration != null &&
+      tlrSettingsConfiguration.isTitleLevelRequestsFeatureEnabled();
   }
 
   public boolean isPage() {
