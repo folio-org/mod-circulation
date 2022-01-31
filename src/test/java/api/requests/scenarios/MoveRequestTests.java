@@ -36,6 +36,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
@@ -48,9 +49,13 @@ import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.policy.Period;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
+import api.support.builders.HoldingBuilder;
+import api.support.builders.InstanceBuilder;
+import api.support.builders.ItemBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.MoveRequestBuilder;
 import api.support.builders.RequestBuilder;
@@ -68,6 +73,11 @@ import lombok.val;
  * @see <a href="https://issues.folio.org/browse/CIRC-395">CIRC-395</a>
  */
 class MoveRequestTests extends APITests {
+
+  @BeforeEach
+  public void beforeEach() {
+
+  }
 
   @AfterEach
   public void afterEach() {
@@ -179,20 +189,35 @@ class MoveRequestTests extends APITests {
   void whenHoldRequestIsMovedToPagedPositionsShouldBeConsistentWhenTlrIsEnabled() {
     configurationsFixture.enableTlrFeature();
 
-    val dunkirkInstance = instancesFixture.basedUponDunkirk();
+    val mainFloor = locationsFixture.mainFloor();
     val cd1 = servicePointsFixture.cd1();
-    val mezzanineDisplayCase = locationsFixture.mezzanineDisplayCase();
-    val dunkirkHoldings1 = holdingsFixture.defaultWithHoldings(
-      dunkirkInstance.getId());
+    val book = materialTypesFixture.book();
+    val canCirculate = loanTypesFixture.canCirculate();
 
-    val holdings1FirstItem = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(
-      dunkirkHoldings1.getId(), mezzanineDisplayCase.getId());
+    val commonInstance = instancesClient.create(
+      new InstanceBuilder("test", UUID.randomUUID()));
 
-    val holdings1SecondItem = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(
-      dunkirkHoldings1.getId(), mezzanineDisplayCase.getId());
+    val holdings1 = holdingsClient.create(new HoldingBuilder()
+      .withPermanentLocation(mainFloor.getId())
+      .forInstance(commonInstance.getId()));
 
-    val holdings1ThirdItem = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(
-      dunkirkHoldings1.getId(), mezzanineDisplayCase.getId());
+    val holdings1FirstItem = itemsClient.create(new ItemBuilder()
+      .forHolding(holdings1.getId())
+      .withBarcode("7777")
+      .withMaterialType(book.getId())
+      .withPermanentLoanType(canCirculate.getId()));
+
+    val holdings1SecondItem = itemsClient.create(new ItemBuilder()
+      .forHolding(holdings1.getId())
+      .withBarcode("888")
+      .withMaterialType(book.getId())
+      .withPermanentLoanType(canCirculate.getId()));
+
+    val holdings1ThirdItem = itemsClient.create(new ItemBuilder()
+      .forHolding(holdings1.getId())
+      .withBarcode("999")
+      .withMaterialType(book.getId())
+      .withPermanentLoanType(canCirculate.getId()));
 
     IndividualResource james = usersFixture.james();
     IndividualResource jessica = usersFixture.jessica();
@@ -201,25 +226,20 @@ class MoveRequestTests extends APITests {
 
     checkOutFixture.checkOutByBarcode(holdings1FirstItem, james);
 
-    System.out.println(itemsClient.get(holdings1FirstItem).getJson());
-    System.out.println(itemsClient.get(holdings1ThirdItem).getJson());
-    System.out.println(itemsClient.get(holdings1SecondItem).getJson());
-
     val pageIlrByCharlotte = requestsFixture.place(new RequestBuilder()
       .page()
       .withItemId(holdings1ThirdItem.getId())
-      .withHoldingsRecordId(dunkirkHoldings1.getId())
-      .withInstanceId(dunkirkInstance.getId())
+      .withHoldingsRecordId(holdings1.getId())
+      .withInstanceId(commonInstance.getId())
       .withRequestDate(getZonedDateTime())
       .withPickupServicePointId(cd1.getId())
       .withRequesterId(charlotte.getId()));
 
     val holdIlrByJessica = requestsFixture.place(new RequestBuilder()
       .hold()
-      .itemRequestLevel()
       .withItemId(holdings1FirstItem.getId())
-      .withHoldingsRecordId(dunkirkHoldings1.getId())
-      .withInstanceId(dunkirkInstance.getId())
+      .withHoldingsRecordId(holdings1.getId())
+      .withInstanceId(commonInstance.getId())
       .withRequestDate(getZonedDateTime())
       .withRequesterId(jessica.getId())
       .withPickupServicePointId(cd1.getId()));
@@ -228,8 +248,8 @@ class MoveRequestTests extends APITests {
       .page()
       .withNoItemId()
       .withNoHoldingsRecordId()
-      .withInstanceId(dunkirkInstance.getId())
-      .withRequestDate(getZonedDateTime())
+      .withInstanceId(commonInstance.getId())
+      .withRequestDate(getZonedDateTime().plusDays(1))
       .titleRequestLevel()
       .withPickupServicePointId(cd1.getId())
       .withRequesterId(steve.getId()));
@@ -238,19 +258,19 @@ class MoveRequestTests extends APITests {
     assertThat(requestsClient.get(pageIlrByCharlotte).getJson().getInteger("position"), is(1));
     assertThat(requestsClient.get(holdIlrByJessica).getJson().getInteger("position") ,is(2));
 
-    val dunkirkHoldings2 = holdingsFixture.defaultWithHoldings(
-      dunkirkInstance.getId());
+    val holdings2 = holdingsClient.create(new HoldingBuilder()
+      .withPermanentLocation(mainFloor.getId())
+      .forInstance(commonInstance.getId()));
 
-    val holdings2Item = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(
-      dunkirkHoldings2.getId(), mezzanineDisplayCase.getId());
-
-    itemsClient.getAll().stream().map(item -> item.getString("id")).forEach(System.out::println);
+    val holdings2Item = itemsClient.create(new ItemBuilder()
+      .forHolding(holdings2.getId())
+      .withBarcode("1000")
+      .withMaterialType(book.getId())
+      .withPermanentLoanType(canCirculate.getId()));
 
     IndividualResource pagedIlrByJesicca = requestsFixture.move(
       new MoveRequestBuilder(holdIlrByJessica.getId(), holdings2Item.getId()));
 
-    requestsFixture.getAllRequests().stream().map(request -> request.getString("position"))
-      .forEach(System.out::println);
     assertThat(requestsClient.get(pageIlrByCharlotte).getJson().getInteger("position"), is(1));
     assertThat(requestsClient.get(pagedIlrByJesicca).getJson().getInteger("position") ,is(3));
     assertThat(requestsClient.get(pageTlrBySteve).getJson().getInteger("position"), is(2));

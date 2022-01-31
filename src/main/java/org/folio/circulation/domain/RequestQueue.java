@@ -41,9 +41,14 @@ public class RequestQueue {
   }
 
   ItemStatus checkedInItemStatus(Item item) {
-    return hasOutstandingFulfillableRequests()
+    return hasOutstandingFulfillableByItemRequests(item)
       ? getHighestPriorityRequestFulfillableByItem(item).checkedInItemStatus()
       : AVAILABLE;
+  }
+
+  boolean hasOutstandingFulfillableByItemRequests(Item item) {
+    return  fulfillableRequests().stream()
+      .anyMatch(request -> requestIsFulfillableByItem(request, item));
   }
 
   boolean hasOutstandingFulfillableRequests() {
@@ -128,7 +133,11 @@ public class RequestQueue {
 
   private void reSequenceRequests() {
     final AtomicInteger position = new AtomicInteger(1);
+    System.out.println("before");
+    requests.stream().map(Request::getPosition).forEach(System.out::println);
     requests.forEach(req -> req.changePosition(position.getAndIncrement()));
+    System.out.println("after");
+    requests.stream().map(Request::getPosition).forEach(System.out::println);
   }
 
   public Integer size() {

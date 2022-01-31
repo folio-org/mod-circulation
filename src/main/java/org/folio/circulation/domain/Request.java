@@ -102,6 +102,10 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return getFulfilmentPreference() == HOLD_SHELF || getFulfilmentPreference() == DELIVERY;
   }
 
+  public boolean isTlrFeatureEnabled() {
+    return tlrSettingsConfiguration.isTitleLevelRequestsFeatureEnabled();
+  }
+
   public boolean isPage() {
     return getRequestType() == RequestType.PAGE;
   }

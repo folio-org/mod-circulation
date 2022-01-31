@@ -40,7 +40,7 @@ public class MoveRequestProcessAdapter {
   CompletableFuture<Result<RequestAndRelatedRecords>> getDestinationRequestQueue(
     RequestAndRelatedRecords requestAndRelatedRecords) {
     Request request = requestAndRelatedRecords.getRequest();
-    if (request.getTlrSettingsConfiguration().isTitleLevelRequestsFeatureEnabled()) {
+    if (request.isTlrFeatureEnabled()) {
       return requestQueueRepository.getByInstanceId(requestAndRelatedRecords.getDestinationItemInstanceId())
         .thenApply(result -> result.map(requestAndRelatedRecords::withRequestQueue));
     }
@@ -57,8 +57,7 @@ public class MoveRequestProcessAdapter {
 
   CompletableFuture<Result<RequestAndRelatedRecords>> getSourceRequestQueue(
       RequestAndRelatedRecords requestAndRelatedRecords) {
-    if (requestAndRelatedRecords.getRequest().getTlrSettingsConfiguration()
-      .isTitleLevelRequestsFeatureEnabled()) {
+    if (requestAndRelatedRecords.getRequest().isTlrFeatureEnabled()) {
       return requestQueueRepository.getByInstanceId(requestAndRelatedRecords.getSourceItemInstanceId())
         .thenApply(result -> result.map(requestAndRelatedRecords::withRequestQueue));
     }

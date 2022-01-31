@@ -64,9 +64,6 @@ public class RequestServiceUtility {
 
     Request request = requestAndRelatedRecords.getRequest();
 
-    System.out.println("!!!!!!!!!!!!");
-    System.out.println(request.getItem().getStatus());
-
     if (request.getItem().isNotFound() || request.allowedForItem()) {
       return succeeded(requestAndRelatedRecords);
     } else {
