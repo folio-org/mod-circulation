@@ -122,7 +122,7 @@ public class RequestServiceUtility {
     Request request = requestAndRelatedRecords.getRequest();
     Predicate<Request> isAlreadyRequested;
 
-    if (isTlrEnabled(request) && request.isTitleLevel()) {
+    if (request.isTlrFeatureEnabled() && request.isTitleLevel()) {
       isAlreadyRequested = req -> isTheSameRequester(requestAndRelatedRecords, req) && req.isOpen();
     } else {
       isAlreadyRequested = req -> requestAndRelatedRecords.getItemId().equals(req.getItemId())
@@ -168,11 +168,5 @@ public class RequestServiceUtility {
 
   static boolean isTheSameRequester(RequestAndRelatedRecords it, Request that) {
     return Objects.equals(it.getUserId(), that.getUserId());
-  }
-
-  private static boolean isTlrEnabled(Request request) {
-    TlrSettingsConfiguration tlrSettingsConfiguration = request.getTlrSettingsConfiguration();
-    return tlrSettingsConfiguration != null
-      && tlrSettingsConfiguration.isTitleLevelRequestsFeatureEnabled();
   }
 }
