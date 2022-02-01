@@ -42,13 +42,6 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
     );
   }
 
-  public RequestAndRelatedRecords withDestinationItemInstanceId(String destinationItemInstanceId) {
-    return new RequestAndRelatedRecords(
-      request, requestQueue, requestPolicy,
-      moveRequestRecord.withDestinationItemInstanceId(destinationItemInstanceId), timeZone
-    );
-  }
-
   public RequestAndRelatedRecords withRequestPolicy(RequestPolicy newRequestPolicy) {
     return new RequestAndRelatedRecords(
       this.request,
@@ -104,13 +97,12 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
       moveRequestRecord, newTimeZone);
   }
 
-  public RequestAndRelatedRecords asMove(String originalItemId, String destinationItemId,
-    String originalItemInstanceId) {
+  public RequestAndRelatedRecords asMove(String originalItemId, String destinationItemId) {
     return new RequestAndRelatedRecords(
       this.request,
       this.requestQueue,
       this.requestPolicy,
-      MoveRequestRecord.with(originalItemId, destinationItemId, originalItemInstanceId), timeZone
+      MoveRequestRecord.with(originalItemId, destinationItemId), timeZone
     );
   }
 
@@ -130,14 +122,6 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
 
   String getDestinationItemId() {
     return moveRequestRecord != null ? moveRequestRecord.getDestinationItemId() : null;
-  }
-
-  String getDestinationItemInstanceId() {
-    return moveRequestRecord != null ? moveRequestRecord.getDestinationItemInstanceId() : null;
-  }
-
-  String getSourceItemInstanceId() {
-    return moveRequestRecord != null ? moveRequestRecord.getSourceItemInstanceId() : null;
   }
 
   @Override

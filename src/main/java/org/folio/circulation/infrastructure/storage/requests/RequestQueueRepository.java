@@ -16,6 +16,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.Request;
@@ -44,16 +45,23 @@ public class RequestQueueRepository {
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> get(LoanAndRelatedRecords records) {
-    return getQueue(records)
+    return getQueue(records.getTlrSettings(), records.getItem())
       .thenApply(mapResult(records::withRequestQueue));
   }
 
-  private CompletableFuture<Result<RequestQueue>> getQueue(LoanAndRelatedRecords records) {
-    TlrSettingsConfiguration tlrSettings = records.getTlrSettings();
+  public CompletableFuture<Result<RequestAndRelatedRecords>> getWhenMovingRequest(
+    RequestAndRelatedRecords records) {
+    Request request = records.getRequest();
+    return getQueue(request.getTlrSettingsConfiguration(), request.getItem())
+      .thenApply(mapResult(records::withRequestQueue));
+  }
 
-    return tlrSettings != null && tlrSettings.isTitleLevelRequestsFeatureEnabled()
-      ? getByInstanceId(records.getItem().getInstanceId())
-      : getByItemId(records.getItem().getItemId());
+  public CompletableFuture<Result<RequestQueue>> getQueue(TlrSettingsConfiguration tlrSettings,
+    Item item) {
+
+    return tlrSettings != null && tlrSettings.isTitleLevelRequestsFeatureEnabled() ?
+      getByInstanceId(item.getInstanceId()) :
+      getByItemId(item.getItemId());
   }
 
   public CompletableFuture<Result<RenewalContext>> get(RenewalContext renewalContext) {

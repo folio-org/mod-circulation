@@ -260,14 +260,15 @@ public class RequestCollectionResource extends CollectionResource {
       UpdateRequestQueue.using(clients));
 
     final var moveRequestProcessAdapter = new MoveRequestProcessAdapter(itemRepository,
-      loanRepository, requestRepository, requestQueueRepository);
+      loanRepository, requestRepository);
 
     final var eventPublisher = new EventPublisher(routingContext);
 
     final var moveRequestService = new MoveRequestService(
       requestRepository, new RequestPolicyRepository(clients),
       updateUponRequest, moveRequestProcessAdapter, new RequestLoanValidator(new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository), loanRepository),
-      RequestNoticeSender.using(clients), configurationRepository, eventPublisher);
+      RequestNoticeSender.using(clients), configurationRepository, eventPublisher,
+      requestQueueRepository);
 
     fromFutureResult(requestRepository.getById(id))
       .flatMapFuture(request -> configurationRepository.lookupTlrSettings().thenApply(r ->
@@ -287,15 +288,14 @@ public class RequestCollectionResource extends CollectionResource {
 
     final var originalItemId = requestAndRelatedRecords.getItemId();
     final var destinationItemId = representation.getString("destinationItemId");
-    final var originalItemInstanceId = requestAndRelatedRecords.getRequest().getItem().getInstanceId();
 
     if (representation.containsKey("requestType")) {
       RequestType requestType = RequestType.from(representation.getString("requestType"));
       return requestAndRelatedRecords.withRequestType(requestType)
-        .asMove(originalItemId, destinationItemId, originalItemInstanceId);
+        .asMove(originalItemId, destinationItemId);
     }
 
-    return requestAndRelatedRecords.asMove(originalItemId, destinationItemId, originalItemInstanceId);
+    return requestAndRelatedRecords.asMove(originalItemId, destinationItemId);
   }
 
   private ProxyRelationshipValidator createProxyRelationshipValidator(

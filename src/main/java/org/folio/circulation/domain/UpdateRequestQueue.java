@@ -229,7 +229,8 @@ public class UpdateRequestQueue {
       requestQueue.remove(request);
       return requestQueueRepository.updateRequestsWithChangedPositions(requestQueue)
         .thenApply(r -> r.map(requestAndRelatedRecords::withRequestQueue));
-    } else {
+    }
+    else {
       return completedFuture(succeeded(requestAndRelatedRecords));
     }
   }
@@ -245,7 +246,6 @@ public class UpdateRequestQueue {
       }
       request.removePosition();
       requestQueue.add(request);
-      //TODO Inconsistent data??
       return requestQueueRepository.updateRequestsWithChangedPositions(requestQueue)
             .thenApply(r -> r.map(requestAndRelatedRecords::withRequestQueue));
     }

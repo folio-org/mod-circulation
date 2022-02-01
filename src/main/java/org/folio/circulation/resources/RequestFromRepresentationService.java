@@ -393,12 +393,4 @@ class RequestFromRepresentationService {
     return succeeded(request)
         .combineAfter(this::getUserForExistingLoan, this::addUserToLoan);
   }
-
-  enum Operation {
-    CREATION, REPLACEMENT;
-
-    public boolean isCreation(){
-      return this == CREATION;
-    }
-  }
 }
