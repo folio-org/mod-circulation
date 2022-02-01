@@ -291,8 +291,7 @@ public class RequestCollectionResource extends CollectionResource {
 
     if (representation.containsKey("requestType")) {
       RequestType requestType = RequestType.from(representation.getString("requestType"));
-      return requestAndRelatedRecords.withRequestType(requestType)
-        .asMove(originalItemId, destinationItemId);
+      return requestAndRelatedRecords.withRequestType(requestType).asMove(originalItemId, destinationItemId);
     }
 
     return requestAndRelatedRecords.asMove(originalItemId, destinationItemId);

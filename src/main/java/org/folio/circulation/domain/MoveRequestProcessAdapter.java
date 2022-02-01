@@ -20,7 +20,7 @@ public class MoveRequestProcessAdapter {
   }
 
   CompletableFuture<Result<RequestAndRelatedRecords>> findDestinationItem(
-    RequestAndRelatedRecords requestAndRelatedRecords) {
+     RequestAndRelatedRecords requestAndRelatedRecords) {
     return itemRepository.fetchById(requestAndRelatedRecords.getDestinationItemId())
       .thenApply(r -> r.map(requestAndRelatedRecords::withItem))
       .thenComposeAsync(r -> r.after(this::findLoanForItem));

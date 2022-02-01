@@ -17,7 +17,6 @@ public class MoveRequestRecord {
   public String getDestinationItemId() {
     return destinationItemId;
   }
-
   public static MoveRequestRecord with(String sourceItemId, String destinationItemId) {
     return new MoveRequestRecord(sourceItemId, destinationItemId);
   }
