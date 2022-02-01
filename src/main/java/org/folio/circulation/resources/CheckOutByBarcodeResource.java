@@ -41,6 +41,7 @@ import org.folio.circulation.infrastructure.storage.requests.RequestQueueReposit
 import org.folio.circulation.infrastructure.storage.users.PatronGroupRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
+import org.folio.circulation.resources.handlers.error.CirculationErrorType;
 import org.folio.circulation.resources.handlers.error.OverridingErrorHandler;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
@@ -58,6 +59,9 @@ import io.vertx.ext.web.RoutingContext;
 public class CheckOutByBarcodeResource extends Resource {
 
   private final String rootPath;
+  private static final CirculationErrorType[] PARTIAL_SUCCESS_ERRORS = {
+    FAILED_TO_SAVE_SESSION_RECORD, FAILED_TO_SCHEDULE_NOTICE_FOR_LOAN_DUE_DATE,
+    FAILED_TO_PUBLISH_CHECKOUT_EVENT};
 
   public CheckOutByBarcodeResource(String rootPath, HttpClient client) {
     super(client);
@@ -209,10 +213,13 @@ public class CheckOutByBarcodeResource extends Resource {
   private Result<HttpResponse> createdLoanFrom(Result<JsonObject> result,
     CirculationErrorHandler errorHandler) {
 
-    return result.map(json -> errorHandler.hasAny(FAILED_TO_SAVE_SESSION_RECORD,
-      FAILED_TO_SCHEDULE_NOTICE_FOR_LOAN_DUE_DATE, FAILED_TO_PUBLISH_CHECKOUT_EVENT)
-        ? ok(json, urlForLoan(json.getString("id")))
-        : created(json, urlForLoan(json.getString("id"))));
+    return result.map(json -> {
+      String url = urlForLoan(json.getString("id"));
+
+      return errorHandler.hasAny(PARTIAL_SUCCESS_ERRORS)
+        ? ok(json, url)
+        : created(json, url);
+    });
   }
 
   private String urlForLoan(String id) {

@@ -112,6 +112,7 @@ import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import api.support.http.OkapiHeaders;
 import api.support.http.UserResource;
+import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
@@ -132,6 +133,10 @@ class CheckOutByBarcodeTests extends APITests {
   private static final String TEST_COMMENT = "Some comment";
   private static final String CHECKED_OUT_THROUGH_OVERRIDE = "checkedOutThroughOverride";
   private static final String PATRON_WAS_BLOCKED_MESSAGE = "Patron blocked from borrowing";
+  private static final String PATRON_ACTION_SESSION_STORAGE_PATH =
+    "/patron-action-session-storage/patron-action-sessions";
+  private static final String SCHEDULED_NOTICE_STORAGE_PATH =
+    "/scheduled-notice-storage/scheduled-notices";
 
   @Test
   void canCheckOutUsingItemAndUserBarcode() {
@@ -1462,18 +1467,17 @@ class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  void checkOutShouldNotFailIfSessionRecordCreatingFails() {
+  void checkOutShouldNotFailIfSessionRecordCreationFails() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
 
-    FakeStorageModule.setFailToCreateSessionRecord(true);
+    FakeStorageModule.addFailure(HttpMethod.POST, PATRON_ACTION_SESSION_STORAGE_PATH, 500);
     checkOutFixture.attemptCheckOutByBarcode(200,
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
         .on(getZonedDateTime())
         .at(UUID.randomUUID()));
-    FakeStorageModule.setFailToCreateSessionRecord(false);
 
     assertThat(itemsClient.get(smallAngryPlanet), hasItemStatus(CHECKED_OUT));
   }
@@ -1494,14 +1498,13 @@ class CheckOutByBarcodeTests extends APITests {
       .withLoanNotices(List.of(uponAtDueDateNoticeConfiguration));
     use(noticePolicy);
 
-    FakeStorageModule.setFailToScheduleNotice(true);
+    FakeStorageModule.addFailure(HttpMethod.POST, SCHEDULED_NOTICE_STORAGE_PATH, 500);
     checkOutFixture.attemptCheckOutByBarcode(200,
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
         .on(getZonedDateTime())
         .at(UUID.randomUUID()));
-    FakeStorageModule.setFailToScheduleNotice(false);
 
     verifyNumberOfScheduledNotices(0);
     assertThat(itemsClient.get(smallAngryPlanet), hasItemStatus(CHECKED_OUT));

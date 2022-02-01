@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -40,6 +41,7 @@ import org.folio.circulation.support.utils.ClockUtil;
 import api.support.APITestContext;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
@@ -47,15 +49,13 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 public class FakeStorageModule extends AbstractVerticle {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private static final Set<String> queries = Collections.synchronizedSet(new HashSet<>());
-  public static final String PATRON_ACTION_SESSION_STORAGE_PATH =
-    "/patron-action-session-storage/patron-action-sessions";
-  public static final String SCHEDULED_NOTICE_STORAGE_PATH =
-    "/scheduled-notice-storage/scheduled-notices";
-
   private final String rootPath;
   private final String collectionPropertyName;
   private final boolean hasCollectionDelete;
@@ -73,8 +73,7 @@ public class FakeStorageModule extends AbstractVerticle {
   private final Function<JsonObject, JsonObject> batchUpdatePreProcessor;
   private final List<BiFunction<JsonObject, JsonObject, JsonObject>> recordPreProcessors;
   private final Collection<String> additionalQueryParameters;
-  private static boolean failToCreateSessionRecord;
-  private static boolean failToScheduleNotice;
+  private static Map<FailureConfig, Integer> failureConfigs = new HashMap<>();
 
   public static Stream<String> getQueries() {
     return queries.stream();
@@ -126,8 +125,7 @@ public class FakeStorageModule extends AbstractVerticle {
     router.route(rootPath).handler(this::checkRequestIdHeader);
     router.route(pathTree).handler(this::checkRequestIdHeader);
 
-    router.post(rootPath).handler(this::checkFailToCreateSessionRecord);
-    router.post(rootPath).handler(this::checkFailToScheduleNotice);
+    router.post(rootPath).handler(this::failIfRequired);
     router.post(rootPath).handler(BodyHandler.create());
     router.post(pathTree).handler(BodyHandler.create());
     router.put(rootPath).handler(BodyHandler.create());
@@ -165,17 +163,10 @@ public class FakeStorageModule extends AbstractVerticle {
     }
   }
 
-  private void checkFailToCreateSessionRecord(RoutingContext routingContext) {
-    if (PATRON_ACTION_SESSION_STORAGE_PATH.equals(rootPath) && failToCreateSessionRecord) {
-      failResponse(routingContext);
-    } else {
-      routingContext.next();
-    }
-  }
-
-  private void checkFailToScheduleNotice(RoutingContext routingContext) {
-    if (SCHEDULED_NOTICE_STORAGE_PATH.equals(rootPath) && failToScheduleNotice) {
-      failResponse(routingContext);
+  private void failIfRequired(RoutingContext routingContext) {
+    Integer status = failureConfigs.get(new FailureConfig(HttpMethod.POST, rootPath));
+    if (status != null) {
+      failResponse(routingContext, status);
     } else {
       routingContext.next();
     }
@@ -486,9 +477,9 @@ public class FakeStorageModule extends AbstractVerticle {
     response.end();
   }
 
-  private void failResponse(RoutingContext routingContext) {
+  private void failResponse(RoutingContext routingContext, int status) {
     HttpServerResponse response = routingContext.response();
-    response.setStatusCode(500);
+    response.setStatusCode(status);
     response.end();
   }
 
@@ -554,6 +545,7 @@ public class FakeStorageModule extends AbstractVerticle {
       .mapFailure(r -> failedDueToServerError(format(
         "ID parameter \"%s\" is not a valid UUID", id)));
   }
+
   private void checkUniqueProperties(RoutingContext routingContext) {
     if(uniqueProperties.isEmpty()) {
       routingContext.next();
@@ -674,11 +666,19 @@ public class FakeStorageModule extends AbstractVerticle {
     return this.additionalQueryParameters.contains(query);
   }
 
-  public static void setFailToCreateSessionRecord(boolean failToCreateSessionRecord) {
-    FakeStorageModule.failToCreateSessionRecord = failToCreateSessionRecord;
+  @Getter
+  @RequiredArgsConstructor
+  @EqualsAndHashCode
+  public static class FailureConfig {
+    private final HttpMethod httpMethod;
+    private final String url;
   }
 
-  public static void setFailToScheduleNotice(boolean failToScheduleNotice) {
-    FakeStorageModule.failToScheduleNotice = failToScheduleNotice;
+  public static void addFailure(HttpMethod httpMethod, String url, int status) {
+    failureConfigs.put(new FailureConfig(httpMethod, url), status);
+  }
+
+  public static void cleanUpFailure() {
+    failureConfigs.clear();
   }
 }

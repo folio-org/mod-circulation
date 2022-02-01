@@ -132,7 +132,7 @@ public class LoanScheduledNoticeService {
 
     if (!loan.isClosed()) {
       scheduledNoticesRepository.deleteByLoanIdAndTriggeringEvent(loan.getId(), triggeringEvent)
-        .thenAccept(r -> r.map(v -> scheduleLoanNotices(loan, eventType, eventTime)));
+        .thenAccept(r -> r.after(v -> scheduleLoanNotices(loan, eventType, eventTime)));
     }
 
     return succeeded(mapTo);

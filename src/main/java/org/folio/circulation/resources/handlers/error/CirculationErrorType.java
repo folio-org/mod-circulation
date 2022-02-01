@@ -55,7 +55,7 @@ public enum CirculationErrorType {
   // Errors related to block overrides
   INSUFFICIENT_OVERRIDE_PERMISSIONS,
 
-  // Errors that do not affect a loan creation
+  // Acceptable errors for checkout with partial success
   FAILED_TO_SAVE_SESSION_RECORD,
   FAILED_TO_PUBLISH_CHECKOUT_EVENT,
   FAILED_TO_SCHEDULE_NOTICE_FOR_LOAN_DUE_DATE
