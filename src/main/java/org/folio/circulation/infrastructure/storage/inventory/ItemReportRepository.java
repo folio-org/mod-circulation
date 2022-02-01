@@ -19,7 +19,7 @@ import org.folio.circulation.support.http.client.CqlQuery;
 public class ItemReportRepository {
   private final GetManyRecordsClient itemsClient;
 
-  private static final int PAGE_LIMIT = 100;
+  private static final int PAGE_LIMIT = 1000;
 
   public ItemReportRepository(Clients clients) {
     itemsClient = clients.itemsStorage();
