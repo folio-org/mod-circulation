@@ -49,9 +49,10 @@ public class MoveRequestService {
 
   public CompletableFuture<Result<RequestAndRelatedRecords>> moveRequest(
       RequestAndRelatedRecords requestAndRelatedRecords, Request originalRequest) {
+    //TODO validate that we don't move request to an item of another instance
     return completedFuture(of(() -> requestAndRelatedRecords))
       .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::findDestinationItem))
-      .thenComposeAsync(r -> r.after(requestQueueRepository::getWhenMovingRequest))
+      .thenComposeAsync(r -> r.after(requestQueueRepository::get))
       .thenApply(r -> r.map(this::pagedRequestIfDestinationItemAvailable))
       .thenCompose(r -> r.after(this::validateUpdateRequest))
       .thenComposeAsync(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
@@ -61,11 +62,11 @@ public class MoveRequestService {
       .thenCompose(r -> r.after(requestRepository::update))
       .thenApply(r -> r.next(requestNoticeSender::sendNoticeOnRequestMoved))
       .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::findSourceItem))
-      .thenComposeAsync(r -> r.after(requestQueueRepository::getWhenMovingRequest))
+      .thenComposeAsync(r -> r.after(requestQueueRepository::get))
       .thenCompose(r -> r.after(updateUponRequest.updateRequestQueue::onMovedFrom))
       .thenComposeAsync(r -> r.after(this::updateRelatedObjects))
       .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::findDestinationItem))
-      .thenComposeAsync(r -> r.after(requestQueueRepository::getWhenMovingRequest))
+      .thenComposeAsync(r -> r.after(requestQueueRepository::get))
       .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::getRequest))
       .thenApplyAsync(r -> r.map(u -> eventPublisher.publishLogRecordAsync(u, originalRequest, REQUEST_MOVED)));
   }
@@ -81,6 +82,11 @@ public class MoveRequestService {
 
     return requestAndRelatedRecords;
   }
+
+  /*private CompletableFuture<Result<RequestAndRelatedRecords>> validateThatSelectedItemIsFromTheSameInstance(
+    RequestAndRelatedRecords requestAndRelatedRecords) {
+    return
+  }*/
 
   private CompletableFuture<Result<RequestAndRelatedRecords>> validateUpdateRequest(
       RequestAndRelatedRecords requestAndRelatedRecords) {

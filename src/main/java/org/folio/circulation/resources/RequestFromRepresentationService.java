@@ -100,8 +100,7 @@ class RequestFromRepresentationService {
       .thenComposeAsync(r -> r.combineAfter(servicePointRepository::getServicePointForRequest,
         Request::withPickupServicePoint))
       .thenApply(r -> r.map(RequestAndRelatedRecords::new))
-      .thenComposeAsync(r -> r.combineAfter(requestQueueRepository::get,
-        RequestAndRelatedRecords::withRequestQueue))
+      .thenComposeAsync(r -> r.after(requestQueueRepository::get))
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid)
         .thenApply(res -> errorHandler.handleValidationResult(res, INVALID_PROXY_RELATIONSHIP, r)))
       .thenApply(r -> r.next(pickupLocationValidator::refuseInvalidPickupServicePoint)

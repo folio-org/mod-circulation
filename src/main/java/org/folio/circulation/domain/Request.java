@@ -182,7 +182,6 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     // NOTE: this is null in RequestsAPIUpdatingTests.replacingAnExistingRequestRemovesItemInformationWhenItemDoesNotExist test
     if (newItem != null && newItem.getItemId() != null && newItem.getHoldingsRecordId() != null) {
       requestRepresentation.put(ITEM_ID, newItem.getItemId());
-      requestRepresentation.put(INSTANCE_ID, newItem.getInstanceId());
       requestRepresentation.put(HOLDINGS_RECORD_ID, newItem.getHoldingsRecordId());
     }
 
