@@ -8,7 +8,6 @@ import static org.folio.circulation.resources.handlers.error.CirculationErrorTyp
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_USER;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_PUBLISH_CHECKOUT_EVENT;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_SAVE_SESSION_RECORD;
-import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_SCHEDULE_NOTICE_FOR_LOAN_DUE_DATE;
 import static org.folio.circulation.support.http.server.JsonHttpResponse.created;
 import static org.folio.circulation.support.http.server.JsonHttpResponse.ok;
 import static org.folio.circulation.support.results.Result.ofAsync;
@@ -60,8 +59,7 @@ public class CheckOutByBarcodeResource extends Resource {
 
   private final String rootPath;
   private static final CirculationErrorType[] PARTIAL_SUCCESS_ERRORS = {
-    FAILED_TO_SAVE_SESSION_RECORD, FAILED_TO_SCHEDULE_NOTICE_FOR_LOAN_DUE_DATE,
-    FAILED_TO_PUBLISH_CHECKOUT_EVENT};
+    FAILED_TO_SAVE_SESSION_RECORD, FAILED_TO_PUBLISH_CHECKOUT_EVENT};
 
   public CheckOutByBarcodeResource(String rootPath, HttpClient client) {
     super(client);
@@ -153,8 +151,7 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenApplyAsync(r -> r.map(records -> records.withLoggedInUserId(context.getUserId())))
       .thenComposeAsync(r -> r.after(l -> publishItemCheckedOutEvent(l, eventPublisher,
         userRepository, errorHandler)))
-      .thenComposeAsync(r -> r.after(l -> scheduleNoticesForLoanDueDate(l, scheduledNoticeService,
-        errorHandler)))
+      .thenApply(r -> r.next(scheduledNoticeService::scheduleNoticesForLoanDueDate))
       .thenApply(r -> r.map(LoanAndRelatedRecords::getLoan))
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
       .thenApply(r -> createdLoanFrom(r, errorHandler))
@@ -176,15 +173,6 @@ public class CheckOutByBarcodeResource extends Resource {
 
     return eventPublisher.publishItemCheckedOutEvent(records, userRepository)
       .thenApply(r -> errorHandler.handleAnyResult(r, FAILED_TO_PUBLISH_CHECKOUT_EVENT,
-        succeeded(records)));
-  }
-
-  private CompletableFuture<Result<LoanAndRelatedRecords>> scheduleNoticesForLoanDueDate(
-    LoanAndRelatedRecords records, LoanScheduledNoticeService scheduledNoticeService,
-    CirculationErrorHandler errorHandler) {
-
-    return scheduledNoticeService.scheduleNoticesForLoanDueDate(records)
-      .thenApply(r -> errorHandler.handleAnyResult(r, FAILED_TO_SCHEDULE_NOTICE_FOR_LOAN_DUE_DATE,
         succeeded(records)));
   }
 

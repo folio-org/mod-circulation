@@ -45,7 +45,6 @@ import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static api.support.utl.BlockOverridesUtils.getMissingPermissions;
-import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfScheduledNotices;
 import static io.vertx.core.http.HttpMethod.POST;
 import static java.time.ZoneOffset.UTC;
 import static org.folio.HttpStatus.HTTP_INTERNAL_SERVER_ERROR;
@@ -104,7 +103,6 @@ import api.support.builders.ItemBuilder;
 import api.support.builders.ItemNotLoanableBlockOverrideBuilder;
 import api.support.builders.LoanBuilder;
 import api.support.builders.LoanPolicyBuilder;
-import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.builders.UserBuilder;
@@ -136,8 +134,6 @@ class CheckOutByBarcodeTests extends APITests {
   private static final String PATRON_WAS_BLOCKED_MESSAGE = "Patron blocked from borrowing";
   private static final String PATRON_ACTION_SESSION_STORAGE_PATH =
     "/patron-action-session-storage/patron-action-sessions";
-  private static final String SCHEDULED_NOTICE_STORAGE_PATH =
-    "/scheduled-notice-storage/scheduled-notices";
 
   @Test
   void canCheckOutUsingItemAndUserBarcode() {
@@ -1054,7 +1050,7 @@ class CheckOutByBarcodeTests extends APITests {
 
     final ZonedDateTime loanDate = ZonedDateTime.of(2018, 3, 18, 11, 43, 54, 0, UTC);
 
-    checkOutFixture.attemptCheckOutByBarcode(200,
+    checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
@@ -1480,34 +1476,6 @@ class CheckOutByBarcodeTests extends APITests {
         .on(getZonedDateTime())
         .at(UUID.randomUUID()));
 
-    assertThat(itemsClient.get(smallAngryPlanet), hasItemStatus(CHECKED_OUT));
-  }
-
-  @Test
-  void checkOutShouldNotFailIfSchedulingNoticesFails() {
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    final IndividualResource steve = usersFixture.steve();
-
-    JsonObject uponAtDueDateNoticeConfiguration = new NoticeConfigurationBuilder()
-      .withTemplateId(UUID.randomUUID())
-      .withDueDateEvent()
-      .withUponAtTiming()
-      .sendInRealTime(false)
-      .create();
-    NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
-      .withName("Policy with due date notices")
-      .withLoanNotices(List.of(uponAtDueDateNoticeConfiguration));
-    use(noticePolicy);
-
-    FakeStorageModule.addRequestMapping(POST, SCHEDULED_NOTICE_STORAGE_PATH, HTTP_INTERNAL_SERVER_ERROR);
-    checkOutFixture.attemptCheckOutByBarcode(200,
-      new CheckOutByBarcodeRequestBuilder()
-        .forItem(smallAngryPlanet)
-        .to(steve)
-        .on(getZonedDateTime())
-        .at(UUID.randomUUID()));
-
-    verifyNumberOfScheduledNotices(0);
     assertThat(itemsClient.get(smallAngryPlanet), hasItemStatus(CHECKED_OUT));
   }
 
