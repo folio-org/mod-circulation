@@ -45,23 +45,24 @@ public class RequestQueueRepository {
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> get(LoanAndRelatedRecords records) {
-    return getQueue(records.getTlrSettings(), records.getItem())
+    Item item = records.getItem();
+    return getQueue(records.getTlrSettings(), item.getInstanceId(), item.getItemId())
       .thenApply(mapResult(records::withRequestQueue));
   }
 
   public CompletableFuture<Result<RequestAndRelatedRecords>> getWhenMovingRequest(
     RequestAndRelatedRecords records) {
     Request request = records.getRequest();
-    return getQueue(request.getTlrSettingsConfiguration(), request.getItem())
+    return getQueue(request.getTlrSettingsConfiguration(), request.getInstanceId(), request.getItemId())
       .thenApply(mapResult(records::withRequestQueue));
   }
 
   public CompletableFuture<Result<RequestQueue>> getQueue(TlrSettingsConfiguration tlrSettings,
-    Item item) {
+    String instanceId, String itemId) {
 
     return tlrSettings != null && tlrSettings.isTitleLevelRequestsFeatureEnabled() ?
-      getByInstanceId(item.getInstanceId()) :
-      getByItemId(item.getItemId());
+      getByInstanceId(instanceId) :
+      getByItemId(itemId);
   }
 
   public CompletableFuture<Result<RenewalContext>> get(RenewalContext renewalContext) {
