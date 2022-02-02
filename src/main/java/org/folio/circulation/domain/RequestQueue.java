@@ -41,7 +41,7 @@ public class RequestQueue {
   }
 
   ItemStatus checkedInItemStatus(Item item) {
-    return hasOutstandingFulfillableByItemRequests(item)
+    return hasOutstandingRequestsFulfillableByItem(item)
       ? getHighestPriorityRequestFulfillableByItem(item).checkedInItemStatus()
       : AVAILABLE;
   }
@@ -50,7 +50,7 @@ public class RequestQueue {
     return !fulfillableRequests().isEmpty();
   }
 
-  boolean hasOutstandingFulfillableByItemRequests(Item item) {
+  boolean hasOutstandingRequestsFulfillableByItem(Item item) {
     return  fulfillableRequests().stream()
       .anyMatch(request -> requestIsFulfillableByItem(request, item));
   }

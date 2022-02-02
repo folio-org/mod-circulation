@@ -71,7 +71,7 @@ public class UpdateRequestQueue {
   public CompletableFuture<Result<RequestQueue>> onCheckIn(
     RequestQueue requestQueue, Item item, String checkInServicePointId) {
 
-    if (requestQueue.hasOutstandingFulfillableByItemRequests(item)) {
+    if (requestQueue.hasOutstandingRequestsFulfillableByItem(item)) {
       return updateOutstandingRequestOnCheckIn(requestQueue, item, checkInServicePointId);
     } else {
       return completedFuture(succeeded(requestQueue));

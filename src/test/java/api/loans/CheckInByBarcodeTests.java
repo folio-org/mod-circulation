@@ -52,6 +52,7 @@ import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNot.not;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.time.LocalDate;
@@ -1587,6 +1588,27 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
       allOf(isOpenAwaitingPickup(), hasPosition(1)));
     assertThat(requestsFixture.getById(thirdRequest.getId()).getJson(),
       allOf(isOpenAwaitingPickup(), hasPosition(2)));
+  }
+
+  @Test
+  void canCheckinItemWhenRequestForAnotherItemOfSameInstanceExists() {
+    configurationsFixture.enableTlrFeature();
+
+    List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
+    ItemResource firstItem = items.get(0);
+    ItemResource secondItem = items.get(1);
+
+    UUID instanceId = firstItem.getInstanceId();
+    IndividualResource firstRequest = requestsFixture.placeItemLevelPageRequest(
+      firstItem, instanceId, usersFixture.jessica());
+
+    assertThat(firstRequest.getJson(), allOf(isOpenNotYetFilled(), hasPosition(1)));
+
+    CheckInByBarcodeResponse response = checkInFixture.checkInByBarcode(secondItem);
+
+    assertEquals(200, response.getResponse().getStatusCode());
+    assertThat(requestsFixture.getById(firstRequest.getId()).getJson(),
+      allOf(isOpenNotYetFilled(), hasPosition(1)));
   }
 
   private JsonObject buildCheckedOutItemWithHoldingRecordsId(UUID holdingRecordsId) {
