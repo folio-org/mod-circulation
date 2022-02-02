@@ -7,7 +7,6 @@ import static api.support.fixtures.ConfigurationExample.timezoneConfigurationFor
 import static api.support.matchers.EventMatchers.isValidLoanDueDateChangedEvent;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
-import static api.support.matchers.ValidationErrorMatchers.*;
 import static java.time.Clock.fixed;
 import static java.time.Clock.offset;
 import static java.time.Duration.ofDays;
@@ -22,13 +21,11 @@ import static org.folio.circulation.support.utils.ClockUtil.getClock;
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.folio.circulation.support.utils.ClockUtil.setClock;
 import static org.folio.circulation.support.utils.ClockUtil.setDefaultClock;
-import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Instant;
@@ -37,7 +34,6 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import org.awaitility.Awaitility;
@@ -47,24 +43,17 @@ import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.policy.Period;
-import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
-import api.support.builders.HoldingBuilder;
-import api.support.builders.InstanceBuilder;
-import api.support.builders.ItemBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.MoveRequestBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.fakes.FakePubSub;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
-import api.support.http.UserResource;
-import api.support.matchers.ValidationErrorMatchers;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 

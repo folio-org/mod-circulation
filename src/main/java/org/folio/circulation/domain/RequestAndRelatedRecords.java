@@ -34,9 +34,9 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
   }
 
   public boolean isTlrFeatureEnabled() {
-    System.out.println(request);
-    System.out.println(request.getTlrSettingsConfiguration());
-    return request.getTlrSettingsConfiguration().isTitleLevelRequestsFeatureEnabled();
+    TlrSettingsConfiguration tlrSettingsConfiguration = request.getTlrSettingsConfiguration();
+    return tlrSettingsConfiguration != null &&
+      tlrSettingsConfiguration.isTitleLevelRequestsFeatureEnabled();
   }
 
   public RequestAndRelatedRecords withRequest(Request newRequest) {
