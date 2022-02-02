@@ -16,6 +16,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.Request;
@@ -44,34 +45,29 @@ public class RequestQueueRepository {
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> get(LoanAndRelatedRecords records) {
-    return getQueue(records)
+    Item item = records.getItem();
+    return getQueue(records.getTlrSettings(), item.getInstanceId(), item.getItemId())
       .thenApply(mapResult(records::withRequestQueue));
   }
 
-  private CompletableFuture<Result<RequestQueue>> getQueue(LoanAndRelatedRecords records) {
-    TlrSettingsConfiguration tlrSettings = records.getTlrSettings();
+  public CompletableFuture<Result<RequestAndRelatedRecords>> get(RequestAndRelatedRecords records) {
+    Request request = records.getRequest();
+
+    return getQueue(request.getTlrSettingsConfiguration(), request.getInstanceId(), request.getItemId())
+      .thenApply(mapResult(records::withRequestQueue));
+  }
+
+  public CompletableFuture<Result<RequestQueue>> getQueue(TlrSettingsConfiguration tlrSettings,
+    String instanceId, String itemId) {
 
     return tlrSettings != null && tlrSettings.isTitleLevelRequestsFeatureEnabled()
-      ? getByInstanceId(records.getItem().getInstanceId())
-      : getByItemId(records.getItem().getItemId());
+      ? getByInstanceId(instanceId)
+      : getByItemId(itemId);
   }
 
   public CompletableFuture<Result<RenewalContext>> get(RenewalContext renewalContext) {
     return getByItemId(renewalContext.getLoan().getItemId())
       .thenApply(result -> result.map(renewalContext::withRequestQueue));
-  }
-
-  public CompletableFuture<Result<RequestQueue>> get(RequestAndRelatedRecords requestAndRelatedRecords) {
-    boolean tlrFeatureEnabled = requestAndRelatedRecords.getRequest().getTlrSettingsConfiguration()
-      .isTitleLevelRequestsFeatureEnabled();
-    Request request = requestAndRelatedRecords.getRequest();
-
-    if (tlrFeatureEnabled) {
-      return getByInstanceId(request.getInstanceId());
-    }
-    else {
-      return getByItemId(request.getItemId());
-    }
   }
 
   public CompletableFuture<Result<RequestQueue>> getByInstanceId(String instanceId) {

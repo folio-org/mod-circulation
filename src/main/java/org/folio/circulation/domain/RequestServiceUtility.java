@@ -11,7 +11,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Predicate;
 
-import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
 import org.folio.circulation.domain.policy.RequestPolicy;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
@@ -122,7 +121,7 @@ public class RequestServiceUtility {
     Request request = requestAndRelatedRecords.getRequest();
     Predicate<Request> isAlreadyRequested;
 
-    if (isTlrEnabled(request)) {
+    if (requestAndRelatedRecords.isTlrFeatureEnabled() && request.isTitleLevel()) {
       isAlreadyRequested = req -> isTheSameRequester(requestAndRelatedRecords, req) && req.isOpen();
     } else {
       isAlreadyRequested = req -> requestAndRelatedRecords.getItemId().equals(req.getItemId())
@@ -168,11 +167,5 @@ public class RequestServiceUtility {
 
   static boolean isTheSameRequester(RequestAndRelatedRecords it, Request that) {
     return Objects.equals(it.getUserId(), that.getUserId());
-  }
-
-  private static boolean isTlrEnabled(Request request) {
-    TlrSettingsConfiguration tlrSettingsConfiguration = request.getTlrSettingsConfiguration();
-    return tlrSettingsConfiguration != null
-      && tlrSettingsConfiguration.isTitleLevelRequestsFeatureEnabled();
   }
 }

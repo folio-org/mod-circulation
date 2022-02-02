@@ -3,6 +3,7 @@ package org.folio.circulation.domain;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 
+import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
 import org.folio.circulation.domain.policy.RequestPolicy;
 
 public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedRecord {
@@ -30,6 +31,12 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
 
   public RequestAndRelatedRecords(Request request) {
     this(request, null, null, null, ZoneOffset.UTC);
+  }
+
+  public boolean isTlrFeatureEnabled() {
+    TlrSettingsConfiguration tlrSettingsConfiguration = request.getTlrSettingsConfiguration();
+    return tlrSettingsConfiguration != null &&
+      tlrSettingsConfiguration.isTitleLevelRequestsFeatureEnabled();
   }
 
   public RequestAndRelatedRecords withRequest(Request newRequest) {
@@ -85,6 +92,16 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
   public RequestAndRelatedRecords withRequestType(RequestType newRequestType) {
     return new RequestAndRelatedRecords(
       this.request.withRequestType(newRequestType),
+      this.requestQueue,
+      this.requestPolicy,
+      this.moveRequestRecord,
+      this.timeZone
+    );
+  }
+
+  RequestAndRelatedRecords withTlrSettings(TlrSettingsConfiguration tlrSettings) {
+    return new RequestAndRelatedRecords(
+      this.request.withTlrSettingsConfiguration(tlrSettings),
       this.requestQueue,
       this.requestPolicy,
       this.moveRequestRecord,
