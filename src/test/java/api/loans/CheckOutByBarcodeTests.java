@@ -1472,7 +1472,7 @@ class CheckOutByBarcodeTests extends APITests {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
 
-    FakeStorageModule.addFailureConfig(POST, PATRON_ACTION_SESSION_STORAGE_PATH, HTTP_INTERNAL_SERVER_ERROR);
+    FakeStorageModule.addRequestMapping(POST, PATRON_ACTION_SESSION_STORAGE_PATH, HTTP_INTERNAL_SERVER_ERROR);
     checkOutFixture.attemptCheckOutByBarcode(200,
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
@@ -1499,7 +1499,7 @@ class CheckOutByBarcodeTests extends APITests {
       .withLoanNotices(List.of(uponAtDueDateNoticeConfiguration));
     use(noticePolicy);
 
-    FakeStorageModule.addFailureConfig(POST, SCHEDULED_NOTICE_STORAGE_PATH, HTTP_INTERNAL_SERVER_ERROR);
+    FakeStorageModule.addRequestMapping(POST, SCHEDULED_NOTICE_STORAGE_PATH, HTTP_INTERNAL_SERVER_ERROR);
     checkOutFixture.attemptCheckOutByBarcode(200,
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)

@@ -74,7 +74,7 @@ public class FakeStorageModule extends AbstractVerticle {
   private final Function<JsonObject, JsonObject> batchUpdatePreProcessor;
   private final List<BiFunction<JsonObject, JsonObject, JsonObject>> recordPreProcessors;
   private final Collection<String> additionalQueryParameters;
-  private final static Map<FailureConfig, HttpStatus> failureConfigs = new HashMap<>();
+  private final static Map<Endpoint, HttpStatus> requestMappings = new HashMap<>();
 
   public static Stream<String> getQueries() {
     return queries.stream();
@@ -127,7 +127,7 @@ public class FakeStorageModule extends AbstractVerticle {
     router.route(rootPath).handler(this::checkRequestIdHeader);
     router.route(pathTree).handler(this::checkRequestIdHeader);
 
-    router.post(rootPath).handler(this::failIfRequired);
+    router.post(rootPath).handler(this::applyRequestMappings);
     router.post(rootPath).handler(BodyHandler.create());
     router.post(pathTree).handler(BodyHandler.create());
     router.put(rootPath).handler(BodyHandler.create());
@@ -140,7 +140,7 @@ public class FakeStorageModule extends AbstractVerticle {
     router.post(rootPath).handler(this::create);
 
     router.get(rootPath).handler(this::checkForUnexpectedQueryParameters);
-    router.get(rootPath).handler(this::failIfRequired);
+    router.get(rootPath).handler(this::applyRequestMappings);
     router.get(rootPath).handler(this::getMany);
 
     if (hasDeleteByQuery) {
@@ -152,12 +152,12 @@ public class FakeStorageModule extends AbstractVerticle {
     router.put(rootPathWithId).handler(this::checkRepresentationAgainstRecordSchema);
     router.put(rootPathWithId).handler(this::checkRequiredProperties);
     router.put(rootPathWithId).handler(this::checkDisallowedProperties);
-    router.put(rootPathWithId).handler(this::failIfRequired);
+    router.put(rootPathWithId).handler(this::applyRequestMappings);
     router.put(rootPathWithId).handler(this::replace);
 
-    router.get(rootPathWithId).handler(this::failIfRequired);
+    router.get(rootPathWithId).handler(this::applyRequestMappings);
     router.get(rootPathWithId).handler(this::getById);
-    router.delete(rootPathWithId).handler(this::failIfRequired);
+    router.delete(rootPathWithId).handler(this::applyRequestMappings);
     router.delete(rootPathWithId).handler(this::delete);
 
     if (StringUtils.isNotBlank(batchUpdatePath)) {
@@ -169,16 +169,16 @@ public class FakeStorageModule extends AbstractVerticle {
     }
   }
 
-  private void failIfRequired(RoutingContext routingContext) {
-    HttpStatus expectedFailureStatus = failureConfigs.get(
-      new FailureConfig(routingContext.request().method(), routingContext.request().uri()));
+  private void applyRequestMappings(RoutingContext routingContext) {
+    HttpStatus expectedStatus = requestMappings.get(
+      new Endpoint(routingContext.request().method(), routingContext.request().uri()));
 
-    if (expectedFailureStatus == null) {
+    if (expectedStatus == null) {
       routingContext.next();
     } else {
-      HttpServerResponse response = routingContext.response();
-      response.setStatusCode(expectedFailureStatus.toInt());
-      response.end();
+      routingContext.response()
+        .setStatusCode(expectedStatus.toInt())
+        .end();
     }
   }
 
@@ -670,18 +670,18 @@ public class FakeStorageModule extends AbstractVerticle {
     return this.additionalQueryParameters.contains(query);
   }
 
-  public static void addFailureConfig(HttpMethod httpMethod, String url, HttpStatus status) {
-    failureConfigs.put(new FailureConfig(httpMethod, url), status);
+  public static void addRequestMapping(HttpMethod httpMethod, String url, HttpStatus status) {
+    requestMappings.put(new Endpoint(httpMethod, url), status);
   }
 
-  public static void cleanUpFailureConfigs() {
-    failureConfigs.clear();
+  public static void cleanUpRequestMappings() {
+    requestMappings.clear();
   }
 
   @Getter
   @RequiredArgsConstructor
   @EqualsAndHashCode
-  private static class FailureConfig {
+  private static class Endpoint {
     private final HttpMethod httpMethod;
     private final String url;
   }
