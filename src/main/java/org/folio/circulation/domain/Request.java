@@ -46,6 +46,7 @@ import lombok.With;
 @AllArgsConstructor
 @Getter
 public class Request implements ItemRelatedRecord, UserRelatedRecord {
+  @With
   private final TlrSettingsConfiguration tlrSettingsConfiguration;
   private final Operation operation;
 
@@ -170,12 +171,6 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
 
   public String getHoldingsRecordId() {
     return requestRepresentation.getString(HOLDINGS_RECORD_ID);
-  }
-
-  public Request withTlrSettings(TlrSettingsConfiguration tlrSettingsConfiguration) {
-    return new Request(tlrSettingsConfiguration, operation, requestRepresentation,
-      cancellationReasonRepresentation, instance, item, requester, proxy, addressType,
-      loan, pickupServicePoint, changedPosition, previousPosition, changedStatus);
   }
 
   public Request withItem(Item newItem) {

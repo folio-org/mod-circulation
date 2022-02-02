@@ -52,6 +52,7 @@ public class RequestQueueRepository {
 
   public CompletableFuture<Result<RequestAndRelatedRecords>> get(RequestAndRelatedRecords records) {
     Request request = records.getRequest();
+
     return getQueue(request.getTlrSettingsConfiguration(), request.getInstanceId(), request.getItemId())
       .thenApply(mapResult(records::withRequestQueue));
   }
@@ -59,9 +60,9 @@ public class RequestQueueRepository {
   public CompletableFuture<Result<RequestQueue>> getQueue(TlrSettingsConfiguration tlrSettings,
     String instanceId, String itemId) {
 
-    return tlrSettings != null && tlrSettings.isTitleLevelRequestsFeatureEnabled() ?
-      getByInstanceId(instanceId) :
-      getByItemId(itemId);
+    return tlrSettings != null && tlrSettings.isTitleLevelRequestsFeatureEnabled()
+      ? getByInstanceId(instanceId)
+      : getByItemId(itemId);
   }
 
   public CompletableFuture<Result<RenewalContext>> get(RenewalContext renewalContext) {

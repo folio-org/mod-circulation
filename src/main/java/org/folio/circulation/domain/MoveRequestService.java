@@ -15,6 +15,7 @@ import org.folio.circulation.resources.RequestNoticeSender;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.results.Result;
 
+
 public class MoveRequestService {
   private final RequestRepository requestRepository;
   private final RequestPolicyRepository requestPolicyRepository;
@@ -50,7 +51,8 @@ public class MoveRequestService {
   public CompletableFuture<Result<RequestAndRelatedRecords>> moveRequest(
       RequestAndRelatedRecords requestAndRelatedRecords, Request originalRequest) {
     //TODO validate that we don't move request to an item of another instance
-    return completedFuture(of(() -> requestAndRelatedRecords))
+    return configurationRepository.lookupTlrSettings()
+      .thenApply(r -> r.map(requestAndRelatedRecords::withTlrSettings))
       .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::findDestinationItem))
       .thenComposeAsync(r -> r.after(requestQueueRepository::get))
       .thenApply(r -> r.map(this::pagedRequestIfDestinationItemAvailable))
@@ -82,11 +84,6 @@ public class MoveRequestService {
 
     return requestAndRelatedRecords;
   }
-
-  /*private CompletableFuture<Result<RequestAndRelatedRecords>> validateThatSelectedItemIsFromTheSameInstance(
-    RequestAndRelatedRecords requestAndRelatedRecords) {
-    return
-  }*/
 
   private CompletableFuture<Result<RequestAndRelatedRecords>> validateUpdateRequest(
       RequestAndRelatedRecords requestAndRelatedRecords) {
