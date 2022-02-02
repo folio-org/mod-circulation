@@ -313,7 +313,7 @@ public abstract class APITests {
 
     FakeModNotify.clearSentPatronNotices();
     FakeModNotify.setFailPatronNoticesWithBadRequest(false);
-    FakeStorageModule.cleanUpFailure();
+    FakeStorageModule.cleanUpFailureConfigs();
   }
 
   @AfterEach

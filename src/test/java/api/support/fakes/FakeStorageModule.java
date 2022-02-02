@@ -30,6 +30,7 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.HttpStatus;
 import org.folio.circulation.infrastructure.serialization.JsonSchemaValidator;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.ClientErrorResponse;
@@ -73,7 +74,7 @@ public class FakeStorageModule extends AbstractVerticle {
   private final Function<JsonObject, JsonObject> batchUpdatePreProcessor;
   private final List<BiFunction<JsonObject, JsonObject, JsonObject>> recordPreProcessors;
   private final Collection<String> additionalQueryParameters;
-  private static Map<FailureConfig, Integer> failureConfigs = new HashMap<>();
+  private final static Map<FailureConfig, HttpStatus> failureConfigs = new HashMap<>();
 
   public static Stream<String> getQueries() {
     return queries.stream();
@@ -119,6 +120,7 @@ public class FakeStorageModule extends AbstractVerticle {
 
   void register(Router router) {
     String pathTree = rootPath + "/*";
+    String rootPathWithId = rootPath + "/:id";
 
     router.route(rootPath).handler(this::checkTokenHeader);
     router.route(pathTree).handler(this::checkTokenHeader);
@@ -138,6 +140,7 @@ public class FakeStorageModule extends AbstractVerticle {
     router.post(rootPath).handler(this::create);
 
     router.get(rootPath).handler(this::checkForUnexpectedQueryParameters);
+    router.get(rootPath).handler(this::failIfRequired);
     router.get(rootPath).handler(this::getMany);
 
     if (hasDeleteByQuery) {
@@ -146,13 +149,16 @@ public class FakeStorageModule extends AbstractVerticle {
       router.delete(rootPath).handler(this::empty);
     }
 
-    router.put(rootPath + "/:id").handler(this::checkRepresentationAgainstRecordSchema);
-    router.put(rootPath + "/:id").handler(this::checkRequiredProperties);
-    router.put(rootPath + "/:id").handler(this::checkDisallowedProperties);
-    router.put(rootPath + "/:id").handler(this::replace);
+    router.put(rootPathWithId).handler(this::checkRepresentationAgainstRecordSchema);
+    router.put(rootPathWithId).handler(this::checkRequiredProperties);
+    router.put(rootPathWithId).handler(this::checkDisallowedProperties);
+    router.put(rootPathWithId).handler(this::failIfRequired);
+    router.put(rootPathWithId).handler(this::replace);
 
-    router.get(rootPath + "/:id").handler(this::getById);
-    router.delete(rootPath + "/:id").handler(this::delete);
+    router.get(rootPathWithId).handler(this::failIfRequired);
+    router.get(rootPathWithId).handler(this::getById);
+    router.delete(rootPathWithId).handler(this::failIfRequired);
+    router.delete(rootPathWithId).handler(this::delete);
 
     if (StringUtils.isNotBlank(batchUpdatePath)) {
       router.route(batchUpdatePath).handler(this::checkTokenHeader);
@@ -164,11 +170,15 @@ public class FakeStorageModule extends AbstractVerticle {
   }
 
   private void failIfRequired(RoutingContext routingContext) {
-    Integer status = failureConfigs.get(new FailureConfig(HttpMethod.POST, rootPath));
-    if (status != null) {
-      failResponse(routingContext, status);
-    } else {
+    HttpStatus expectedFailureStatus = failureConfigs.get(
+      new FailureConfig(routingContext.request().method(), routingContext.request().uri()));
+
+    if (expectedFailureStatus == null) {
       routingContext.next();
+    } else {
+      HttpServerResponse response = routingContext.response();
+      response.setStatusCode(expectedFailureStatus.toInt());
+      response.end();
     }
   }
 
@@ -477,12 +487,6 @@ public class FakeStorageModule extends AbstractVerticle {
     response.end();
   }
 
-  private void failResponse(RoutingContext routingContext, int status) {
-    HttpServerResponse response = routingContext.response();
-    response.setStatusCode(status);
-    response.end();
-  }
-
   private void checkRequestIdHeader(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
 
@@ -666,19 +670,20 @@ public class FakeStorageModule extends AbstractVerticle {
     return this.additionalQueryParameters.contains(query);
   }
 
+  public static void addFailureConfig(HttpMethod httpMethod, String url, HttpStatus status) {
+    failureConfigs.put(new FailureConfig(httpMethod, url), status);
+  }
+
+  public static void cleanUpFailureConfigs() {
+    failureConfigs.clear();
+  }
+
   @Getter
   @RequiredArgsConstructor
   @EqualsAndHashCode
-  public static class FailureConfig {
+  private static class FailureConfig {
     private final HttpMethod httpMethod;
     private final String url;
   }
 
-  public static void addFailure(HttpMethod httpMethod, String url, int status) {
-    failureConfigs.put(new FailureConfig(httpMethod, url), status);
-  }
-
-  public static void cleanUpFailure() {
-    failureConfigs.clear();
-  }
 }

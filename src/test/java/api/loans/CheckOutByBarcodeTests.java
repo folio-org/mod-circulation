@@ -46,7 +46,9 @@ import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static api.support.utl.BlockOverridesUtils.getMissingPermissions;
 import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfScheduledNotices;
+import static io.vertx.core.http.HttpMethod.POST;
 import static java.time.ZoneOffset.UTC;
+import static org.folio.HttpStatus.HTTP_INTERNAL_SERVER_ERROR;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.domain.EventType.ITEM_CHECKED_OUT;
 import static org.folio.circulation.domain.policy.DueDateManagement.KEEP_THE_CURRENT_DUE_DATE;
@@ -112,7 +114,6 @@ import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import api.support.http.OkapiHeaders;
 import api.support.http.UserResource;
-import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
@@ -1471,7 +1472,7 @@ class CheckOutByBarcodeTests extends APITests {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
 
-    FakeStorageModule.addFailure(HttpMethod.POST, PATRON_ACTION_SESSION_STORAGE_PATH, 500);
+    FakeStorageModule.addFailureConfig(POST, PATRON_ACTION_SESSION_STORAGE_PATH, HTTP_INTERNAL_SERVER_ERROR);
     checkOutFixture.attemptCheckOutByBarcode(200,
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
@@ -1498,7 +1499,7 @@ class CheckOutByBarcodeTests extends APITests {
       .withLoanNotices(List.of(uponAtDueDateNoticeConfiguration));
     use(noticePolicy);
 
-    FakeStorageModule.addFailure(HttpMethod.POST, SCHEDULED_NOTICE_STORAGE_PATH, 500);
+    FakeStorageModule.addFailureConfig(POST, SCHEDULED_NOTICE_STORAGE_PATH, HTTP_INTERNAL_SERVER_ERROR);
     checkOutFixture.attemptCheckOutByBarcode(200,
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
