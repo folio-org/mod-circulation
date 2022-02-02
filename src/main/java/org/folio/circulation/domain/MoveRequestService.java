@@ -1,6 +1,5 @@
 package org.folio.circulation.domain;
 
-import static java.util.concurrent.CompletableFuture.*;
 import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_MOVED;
 import static org.folio.circulation.support.results.Result.of;
 
@@ -48,7 +47,6 @@ public class MoveRequestService {
     return configurationRepository.lookupTlrSettings()
       .thenApply(r -> r.map(requestAndRelatedRecords::withTlrSettings))
       .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::findDestinationItem))
-      .thenCompose(r -> r.after(this::validateItemInstanceId))
       .thenComposeAsync(r -> r.after(requestQueueRepository::get))
       .thenApply(r -> r.map(this::pagedRequestIfDestinationItemAvailable))
       .thenCompose(r -> r.after(this::validateUpdateRequest))
@@ -78,12 +76,6 @@ public class MoveRequestService {
     }
 
     return requestAndRelatedRecords;
-  }
-
-  private CompletableFuture<Result<RequestAndRelatedRecords>> validateItemInstanceId(
-    RequestAndRelatedRecords records) {
-
-    return completedFuture(RequestServiceUtility.refuseWhenItemToBeMovedIsFromDifferentInstance(records));
   }
 
   private CompletableFuture<Result<RequestAndRelatedRecords>> validateUpdateRequest(

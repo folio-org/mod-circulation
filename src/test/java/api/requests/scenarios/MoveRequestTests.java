@@ -183,25 +183,6 @@ class MoveRequestTests extends APITests {
   }
 
   @Test
-  void cannotMoveRequestToAnItemFromDifferentInstance() {
-    configurationsFixture.enableTlrFeature();
-
-    val nod = itemsFixture.basedUponNod();
-    val uprooted = itemsFixture.basedUponUprooted();
-    val jessica = usersFixture.jessica();
-
-    val nodPage = requestsFixture.placeItemLevelPageRequest(nod, nod.getInstanceId(),
-      jessica);
-
-    Response response = requestsFixture.attemptMove(new MoveRequestBuilder(nodPage.getId(), uprooted.getId()));
-    assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("Request can be moved only to an item with the same instance ID"),
-      hasParameter("itemId", uprooted.getId().toString()),
-      hasParameter("originalInstanceId", nod.getInstanceId().toString()),
-      hasParameter("selectedItemInstanceId", uprooted.getInstanceId().toString()))));
-  }
-
-  @Test
   void whenRequestIsMovedPositionsShouldBeConsistentWhenTlrIsEnabled() {
     configurationsFixture.enableTlrFeature();
 

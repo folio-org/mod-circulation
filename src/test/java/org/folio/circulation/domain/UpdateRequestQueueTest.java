@@ -18,6 +18,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
+import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
 import org.folio.circulation.domain.reorder.ReorderQueueRequest;
 import org.folio.circulation.domain.reorder.ReorderRequest;
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
@@ -91,7 +92,8 @@ class UpdateRequestQueueTest {
 
   @Test
   void moveFromShouldFailWhenBatchUpdateFails() throws Exception {
-    RequestAndRelatedRecords moveFromRequestContext = createMoveRequestContext();
+    RequestAndRelatedRecords moveFromRequestContext = createMoveRequestContext().withTlrSettings(
+      new TlrSettingsConfiguration(false, false, null, null, null));
 
     CompletableFuture<Result<RequestAndRelatedRecords>> completableFutureResult =
       updateRequestQueue.onMovedFrom(moveFromRequestContext);
@@ -236,6 +238,7 @@ class UpdateRequestQueueTest {
     Request request = requestQueue.getRequests().iterator().next();
 
     return new RequestAndRelatedRecords(request)
+      .withTlrSettings(new TlrSettingsConfiguration(true, false, null, null, null))
       .withRequestQueue(requestQueue)
       // setting destination == source, to handle both moveTo and moveFrom cases
       // it does not matter for tests
