@@ -33,6 +33,10 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
     this(request, null, null, null, ZoneOffset.UTC);
   }
 
+  public boolean isTlrFeatureEnabled() {
+    return request.getTlrSettingsConfiguration().isTitleLevelRequestsFeatureEnabled();
+  }
+
   public RequestAndRelatedRecords withRequest(Request newRequest) {
     return new RequestAndRelatedRecords(
       newRequest.withItem(request.getItem()),

@@ -37,4 +37,3 @@ public class MappingFunctions {
           : whenFalse.apply(value)));
   }
 }
-

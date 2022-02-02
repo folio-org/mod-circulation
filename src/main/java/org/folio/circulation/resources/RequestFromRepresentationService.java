@@ -148,7 +148,6 @@ class RequestFromRepresentationService {
       return fromFutureResult(fetchItemForPageTlr(request)
         .thenApply(r -> r.mapFailure(err -> errorHandler.handleValidationError(err,
           NO_AVAILABLE_ITEMS_FOR_TLR, r))))
-        // TODO: CIRC-1395 refuse when user has already requested item for the same instanceId
         .flatMapFuture(this::fetchFirstLoanForUserWithTheSameInstanceId)
         .flatMapFuture(this::fetchUserForLoan)
         .toCompletableFuture();

@@ -116,13 +116,30 @@ public class RequestServiceUtility {
     }
   }
 
+  static Result<RequestAndRelatedRecords> refuseWhenItemToBeMovedIsFromDifferentInstance(
+    RequestAndRelatedRecords requestAndRelatedRecords) {
+
+    Request request = requestAndRelatedRecords.getRequest();
+    Item item = request.getItem();
+    if (!Objects.equals(item.getInstanceId(), request.getInstanceId())) {
+      String message = "Request can be moved only to an item with the same instance ID";
+      HashMap<String, String> parameters = new HashMap<>();
+      parameters.put(ITEM_ID, request.getItemId());
+      parameters.put("originalInstanceId", request.getInstanceId());
+      parameters.put("selectedItemInstanceId", item.getInstanceId());
+      return failedValidation(new ValidationError(message, parameters));
+    }
+
+    return succeeded(requestAndRelatedRecords);
+  }
+
   static Result<RequestAndRelatedRecords> refuseWhenAlreadyRequested(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
     Request request = requestAndRelatedRecords.getRequest();
     Predicate<Request> isAlreadyRequested;
 
-    if (request.isTlrFeatureEnabled() && request.isTitleLevel()) {
+    if (requestAndRelatedRecords.isTlrFeatureEnabled() && request.isTitleLevel()) {
       isAlreadyRequested = req -> isTheSameRequester(requestAndRelatedRecords, req) && req.isOpen();
     } else {
       isAlreadyRequested = req -> requestAndRelatedRecords.getItemId().equals(req.getItemId())

@@ -7,6 +7,7 @@ import static api.support.fixtures.ConfigurationExample.timezoneConfigurationFor
 import static api.support.matchers.EventMatchers.isValidLoanDueDateChangedEvent;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
+import static api.support.matchers.ValidationErrorMatchers.*;
 import static java.time.Clock.fixed;
 import static java.time.Clock.offset;
 import static java.time.Duration.ofDays;
@@ -21,11 +22,13 @@ import static org.folio.circulation.support.utils.ClockUtil.getClock;
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.folio.circulation.support.utils.ClockUtil.setClock;
 import static org.folio.circulation.support.utils.ClockUtil.setDefaultClock;
+import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Instant;
@@ -44,6 +47,7 @@ import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.policy.Period;
+import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -59,6 +63,8 @@ import api.support.builders.RequestBuilder;
 import api.support.fakes.FakePubSub;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
+import api.support.http.UserResource;
+import api.support.matchers.ValidationErrorMatchers;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
@@ -177,71 +183,68 @@ class MoveRequestTests extends APITests {
   }
 
   @Test
-  void whenHoldRequestIsMovedToPagedPositionsShouldBeConsistentWhenTlrIsEnabled() {
+  void cannotMoveRequestToAnItemFromDifferentInstance() {
     configurationsFixture.enableTlrFeature();
 
-    val mainFloor = locationsFixture.mainFloor();
+    val nod = itemsFixture.basedUponNod();
+    val uprooted = itemsFixture.basedUponUprooted();
+    val jessica = usersFixture.jessica();
+
+    val nodPage = requestsFixture.placeItemLevelPageRequest(nod, nod.getInstanceId(),
+      jessica);
+
+    Response response = requestsFixture.attemptMove(new MoveRequestBuilder(nodPage.getId(), uprooted.getId()));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Request can be moved only to an item with the same instance ID"),
+      hasParameter("itemId", uprooted.getId().toString()),
+      hasParameter("originalInstanceId", nod.getInstanceId().toString()),
+      hasParameter("selectedItemInstanceId", uprooted.getInstanceId().toString()))));
+  }
+
+  @Test
+  void whenRequestIsMovedPositionsShouldBeConsistentWhenTlrIsEnabled() {
+    configurationsFixture.enableTlrFeature();
+
+    val items = itemsFixture.createMultipleItemsForTheSameInstance(3);
+
+    val firstItem = items.get(0);
+    val secondItem = items.get(1);
+    val thirdItem = items.get(2);
+
     val cd1 = servicePointsFixture.cd1();
-    val book = materialTypesFixture.book();
-    val canCirculate = loanTypesFixture.canCirculate();
-
-    val commonInstance = instancesClient.create(
-      new InstanceBuilder("test", UUID.randomUUID()));
-
-    val holdings1 = holdingsClient.create(new HoldingBuilder()
-      .withPermanentLocation(mainFloor.getId())
-      .forInstance(commonInstance.getId()));
-
-    val holdings1FirstItem = itemsClient.create(new ItemBuilder()
-      .forHolding(holdings1.getId())
-      .withBarcode("7777")
-      .withMaterialType(book.getId())
-      .withPermanentLoanType(canCirculate.getId()));
-
-    val holdings1SecondItem = itemsClient.create(new ItemBuilder()
-      .forHolding(holdings1.getId())
-      .withBarcode("888")
-      .withMaterialType(book.getId())
-      .withPermanentLoanType(canCirculate.getId()));
-
-    val holdings1ThirdItem = itemsClient.create(new ItemBuilder()
-      .forHolding(holdings1.getId())
-      .withBarcode("999")
-      .withMaterialType(book.getId())
-      .withPermanentLoanType(canCirculate.getId()));
 
     IndividualResource james = usersFixture.james();
     IndividualResource jessica = usersFixture.jessica();
     IndividualResource steve = usersFixture.steve();
     IndividualResource charlotte = usersFixture.charlotte();
 
-    checkOutFixture.checkOutByBarcode(holdings1FirstItem, james);
+    checkOutFixture.checkOutByBarcode(firstItem, james);
 
     val pageIlrByCharlotte = requestsFixture.place(new RequestBuilder()
       .page()
-      .withItemId(holdings1ThirdItem.getId())
-      .withHoldingsRecordId(holdings1.getId())
-      .withInstanceId(commonInstance.getId())
+      .withItemId(thirdItem.getId())
+      .withHoldingsRecordId(thirdItem.getHoldingsRecordId())
+      .withInstanceId(thirdItem.getInstanceId())
       .withRequestDate(getZonedDateTime())
       .withPickupServicePointId(cd1.getId())
       .withRequesterId(charlotte.getId()));
 
     val holdIlrByJessica = requestsFixture.place(new RequestBuilder()
       .hold()
-      .withItemId(holdings1FirstItem.getId())
-      .withHoldingsRecordId(holdings1.getId())
-      .withInstanceId(commonInstance.getId())
+      .withItemId(firstItem.getId())
+      .withHoldingsRecordId(firstItem.getHoldingsRecordId())
+      .withInstanceId(firstItem.getInstanceId())
       .withRequestDate(getZonedDateTime())
-      .withRequesterId(jessica.getId())
-      .withPickupServicePointId(cd1.getId()));
+      .withPickupServicePointId(cd1.getId())
+      .withRequesterId(jessica.getId()));
 
     val pageTlrBySteve = requestsFixture.place(new RequestBuilder()
       .page()
+      .titleRequestLevel()
       .withNoItemId()
       .withNoHoldingsRecordId()
-      .withInstanceId(commonInstance.getId())
+      .withInstanceId(secondItem.getInstanceId())
       .withRequestDate(getZonedDateTime().plusDays(1))
-      .titleRequestLevel()
       .withPickupServicePointId(cd1.getId())
       .withRequesterId(steve.getId()));
 
@@ -249,18 +252,10 @@ class MoveRequestTests extends APITests {
     assertThat(requestsClient.get(pageIlrByCharlotte).getJson().getInteger("position"), is(1));
     assertThat(requestsClient.get(holdIlrByJessica).getJson().getInteger("position") ,is(2));
 
-    val holdings2 = holdingsClient.create(new HoldingBuilder()
-      .withPermanentLocation(mainFloor.getId())
-      .forInstance(commonInstance.getId()));
-
-    val holdings2Item = itemsClient.create(new ItemBuilder()
-      .forHolding(holdings2.getId())
-      .withBarcode("1000")
-      .withMaterialType(book.getId())
-      .withPermanentLoanType(canCirculate.getId()));
-
-    IndividualResource pagedIlrByJesicca = requestsFixture.move(
-      new MoveRequestBuilder(holdIlrByJessica.getId(), holdings2Item.getId()));
+    val forthItem = itemsFixture.createItemWithHoldingsAndLocation(
+      firstItem.getHoldingsRecordId(), locationsFixture.mainFloor().getId());
+    val pagedIlrByJesicca = requestsFixture.move(
+      new MoveRequestBuilder(holdIlrByJessica.getId(), forthItem.getId()));
 
     assertThat(requestsClient.get(pageIlrByCharlotte).getJson().getInteger("position"), is(1));
     assertThat(requestsClient.get(pagedIlrByJesicca).getJson().getInteger("position") ,is(3));
