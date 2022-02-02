@@ -112,5 +112,5 @@ public class AsynchronousResult<T> {
 
   public CompletableFuture<Result<T>> toCompletableFuture() {
     return completionStage.toCompletableFuture();
-}
+  }
 }

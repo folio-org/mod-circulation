@@ -100,8 +100,7 @@ class RequestFromRepresentationService {
       .thenComposeAsync(r -> r.combineAfter(servicePointRepository::getServicePointForRequest,
         Request::withPickupServicePoint))
       .thenApply(r -> r.map(RequestAndRelatedRecords::new))
-      .thenComposeAsync(r -> r.combineAfter(requestQueueRepository::get,
-        RequestAndRelatedRecords::withRequestQueue))
+      .thenComposeAsync(r -> r.after(requestQueueRepository::get))
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid)
         .thenApply(res -> errorHandler.handleValidationResult(res, INVALID_PROXY_RELATIONSHIP, r)))
       .thenApply(r -> r.next(pickupLocationValidator::refuseInvalidPickupServicePoint)
@@ -149,7 +148,6 @@ class RequestFromRepresentationService {
       return fromFutureResult(fetchItemForPageTlr(request)
         .thenApply(r -> r.mapFailure(err -> errorHandler.handleValidationError(err,
           NO_AVAILABLE_ITEMS_FOR_TLR, r))))
-        // TODO: CIRC-1395 refuse when user has already requested item for the same instanceId
         .flatMapFuture(this::fetchFirstLoanForUserWithTheSameInstanceId)
         .flatMapFuture(this::fetchUserForLoan)
         .toCompletableFuture();
@@ -392,13 +390,5 @@ class RequestFromRepresentationService {
   private CompletableFuture<Result<Request>> fetchUserForLoan(Request request) {
     return succeeded(request)
         .combineAfter(this::getUserForExistingLoan, this::addUserToLoan);
-  }
-
-  enum Operation {
-    CREATION, REPLACEMENT;
-
-    public boolean isCreation(){
-      return this == CREATION;
-    }
   }
 }

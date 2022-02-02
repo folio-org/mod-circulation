@@ -10,9 +10,7 @@ import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQ
 import static org.folio.circulation.support.fetching.MultipleCqlIndexValuesCriteria.byIndex;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.http.CommonResponseInterpreters.noContentRecordInterpreter;
-import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.json.JsonKeys.byId;
-import static org.folio.circulation.support.results.MappingFunctions.when;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
@@ -159,7 +157,7 @@ public class ItemRepository {
       }
 
       return findByIndexNameAndQuery(holdingsRecords.toKeys(byId()), HOLDINGS_RECORD_ID,
-          CqlQuery.exactMatch("status.name", ItemStatus.AVAILABLE.getValue()))
+        CqlQuery.exactMatch("status.name", ItemStatus.AVAILABLE.getValue()))
         .thenApply(r -> r.map(items -> items.stream().findFirst().orElse(null)));
     });
   }

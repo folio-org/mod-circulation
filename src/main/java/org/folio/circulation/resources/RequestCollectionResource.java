@@ -260,14 +260,15 @@ public class RequestCollectionResource extends CollectionResource {
       UpdateRequestQueue.using(clients));
 
     final var moveRequestProcessAdapter = new MoveRequestProcessAdapter(itemRepository,
-      loanRepository, requestRepository, requestQueueRepository);
+      loanRepository, requestRepository);
 
     final var eventPublisher = new EventPublisher(routingContext);
 
     final var moveRequestService = new MoveRequestService(
       requestRepository, new RequestPolicyRepository(clients),
       updateUponRequest, moveRequestProcessAdapter, new RequestLoanValidator(new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository), loanRepository),
-      RequestNoticeSender.using(clients), configurationRepository, eventPublisher);
+      RequestNoticeSender.using(clients), configurationRepository, eventPublisher,
+      requestQueueRepository);
 
     fromFutureResult(requestRepository.getById(id))
       .map(RequestAndRelatedRecords::new)
