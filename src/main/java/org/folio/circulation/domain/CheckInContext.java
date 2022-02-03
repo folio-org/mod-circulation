@@ -94,7 +94,7 @@ public class CheckInContext {
   public CheckInContext withRequestQueue(RequestQueue requestQueue) {
     Request firstRequest = null;
 
-    if (requestQueue.hasOutstandingFulfillableRequests()) {
+    if (requestQueue.hasOutstandingRequestsFulfillableByItem(item)) {
       firstRequest = requestQueue.getHighestPriorityRequestFulfillableByItem(item);
     }
 

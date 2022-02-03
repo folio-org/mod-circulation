@@ -44,7 +44,7 @@ public class UpdateItem {
   private Result<Item> changeItemOnCheckIn(Item item, RequestQueue requestQueue,
     UUID checkInServicePointId) {
 
-    if (requestQueue.hasOutstandingFulfillableRequests()) {
+    if (requestQueue.hasOutstandingRequestsFulfillableByItem(item)) {
       return changeItemWithOutstandingRequest(item, requestQueue, checkInServicePointId);
     } else {
       if(Optional.ofNullable(item.getLocation())
