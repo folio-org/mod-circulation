@@ -172,6 +172,34 @@ class MoveRequestTests extends APITests {
   }
 
   @Test
+  void whenRequestIsMovedItemShouldBecomeAvailableIfTlrIsEnabled() {
+    configurationsFixture.enableTlrFeature();
+
+    val items = itemsFixture.createMultipleItemsForTheSameInstance(2);
+
+    val firstItem = items.get(0);
+    val secondItem = items.get(1);
+
+    val cd1 = servicePointsFixture.cd1();
+
+    IndividualResource james = usersFixture.james();
+
+    val pageIlrByCharlotte = requestsFixture.place(new RequestBuilder()
+      .page()
+      .withItemId(firstItem.getId())
+      .withHoldingsRecordId(firstItem.getHoldingsRecordId())
+      .withInstanceId(firstItem.getInstanceId())
+      .withRequestDate(getZonedDateTime())
+      .withPickupServicePointId(cd1.getId())
+      .withRequesterId(james.getId()));
+
+    val pagedIlrByJesicca = requestsFixture.move(
+      new MoveRequestBuilder(pageIlrByCharlotte.getId(), secondItem.getId()));
+
+    assertThat(itemsClient.get(firstItem).getJson().getJsonObject("status").getString("name"), is(ItemStatus.AVAILABLE.getValue()));
+  }
+
+  @Test
   void whenRequestIsMovedPositionsShouldBeConsistentWhenTlrIsEnabled() {
     configurationsFixture.enableTlrFeature();
 
