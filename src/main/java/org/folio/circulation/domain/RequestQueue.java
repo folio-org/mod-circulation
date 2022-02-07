@@ -95,14 +95,13 @@ public class RequestQueue {
         .anyMatch(request -> request.getRequestType() == RequestType.RECALL && request.isNotYetFilled());
   }
 
-  public boolean isRequestedByOtherPatron(User requestingUser) {
+  public boolean isRequestedByOtherPatron(User requestingUser, Item item) {
     if(!hasOutstandingFulfillableRequests()) {
       return false;
     }
     else {
-      final Request highestPriority = getHighestPriorityFulfillableRequest();
-
-      return !highestPriority.isFor(requestingUser);
+      final Request highestPriorityRequest = getHighestPriorityFulfillableRequest();
+      return highestPriorityRequest.isFor(item) && !highestPriorityRequest.isFor(requestingUser);
     }
   }
 

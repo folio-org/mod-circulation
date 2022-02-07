@@ -2325,6 +2325,23 @@ class CheckOutByBarcodeTests extends APITests {
     assertThat(fetchRequestJson(holdRequest), isClosedFilled());
   }
 
+  @Test
+  void canCheckoutItemWhenTitleLevelPageRequestExistsForDifferentItemOfSameInstance() {
+    configurationsFixture.enableTlrFeature();
+
+    List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
+    UUID instanceId = items.get(0).getInstanceId();
+
+    IndividualResource request = requestsFixture.placeTitleLevelPageRequest(instanceId, usersFixture.steve());
+
+    ItemResource itemToCheckOut = items.stream()
+      .filter(item -> !item.getId().toString().equals(request.getJson().getString("itemId")))
+      .findFirst()
+      .orElseThrow(() -> new AssertionError("Failed to find non-requested item"));
+
+    checkOutFixture.checkOutByBarcode(itemToCheckOut, usersFixture.james());
+  }
+
   private LoanPolicyBuilder buildLoanPolicyWithFixedLoan(DueDateManagement strategy,
     ZonedDateTime dueDate) {
 
