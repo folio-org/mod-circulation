@@ -184,7 +184,7 @@ class MoveRequestTests extends APITests {
 
     IndividualResource james = usersFixture.james();
 
-    val pageIlrByCharlotte = requestsFixture.place(new RequestBuilder()
+    val pageIlr = requestsFixture.place(new RequestBuilder()
       .page()
       .withItemId(firstItem.getId())
       .withHoldingsRecordId(firstItem.getHoldingsRecordId())
@@ -193,10 +193,8 @@ class MoveRequestTests extends APITests {
       .withPickupServicePointId(cd1.getId())
       .withRequesterId(james.getId()));
 
-    val pagedIlrByJesicca = requestsFixture.move(
-      new MoveRequestBuilder(pageIlrByCharlotte.getId(), secondItem.getId()));
-
-    assertThat(itemsClient.get(firstItem).getJson().getJsonObject("status").getString("name"), is(ItemStatus.AVAILABLE.getValue()));
+    requestsFixture.move(new MoveRequestBuilder(pageIlr.getId(), secondItem.getId()));
+    assertThat(itemsClient.get(firstItem), hasItemStatus(AVAILABLE));
   }
 
   @Test
