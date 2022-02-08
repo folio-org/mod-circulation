@@ -54,6 +54,7 @@ import api.support.builders.RequestBuilder;
 import api.support.fakes.FakePubSub;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
+import api.support.http.UserResource;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
@@ -172,7 +173,7 @@ class MoveRequestTests extends APITests {
   }
 
   @Test
-  void whenRequestIsMovedItemShouldBecomeAvailableIfTlrIsEnabled() {
+  void whenRequestIsMovedItemShouldBecomeAvailableIfThereAreNoRequestsInTheQueueForThisItemIfTlrIsEnabled() {
     configurationsFixture.enableTlrFeature();
 
     val items = itemsFixture.createMultipleItemsForTheSameInstance(2);
@@ -182,8 +183,10 @@ class MoveRequestTests extends APITests {
 
     val cd1 = servicePointsFixture.cd1();
 
-    IndividualResource james = usersFixture.james();
+    val james = usersFixture.james();
+    val charlotte = usersFixture.charlotte();
 
+    checkOutFixture.checkOutByBarcode(secondItem);
     val pageIlr = requestsFixture.place(new RequestBuilder()
       .page()
       .withItemId(firstItem.getId())
@@ -193,7 +196,18 @@ class MoveRequestTests extends APITests {
       .withPickupServicePointId(cd1.getId())
       .withRequesterId(james.getId()));
 
-    requestsFixture.move(new MoveRequestBuilder(pageIlr.getId(), secondItem.getId()));
+    requestsFixture.place(new RequestBuilder()
+      .hold()
+      .titleRequestLevel()
+      .withNoItemId()
+      .withNoHoldingsRecordId()
+      .withInstanceId(secondItem.getInstanceId())
+      .withRequestDate(getZonedDateTime())
+      .withPickupServicePointId(cd1.getId())
+      .withRequesterId(charlotte.getId()));
+
+    requestsFixture.move(
+      new MoveRequestBuilder(pageIlr.getId(), secondItem.getId(), RequestType.HOLD.value));
     assertThat(itemsClient.get(firstItem), hasItemStatus(AVAILABLE));
   }
 

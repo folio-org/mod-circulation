@@ -11,11 +11,13 @@ import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.time.ZonedDateTime;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
+import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.representations.ItemSummaryRepresentation;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
@@ -196,7 +198,7 @@ public class UpdateItem {
     RequestQueue requestQueue = requestAndRelatedRecords.getRequestQueue();
     return requestAndRelatedRecords.isTlrFeatureEnabled()
       ? requestQueue.getRequests().stream()
-      .noneMatch(request -> request.getItem().getItemId().equals(item.getItemId()))
+      .noneMatch(request -> Objects.equals(item.getItemId(), request.getItemId()))
       : requestQueue.isEmpty();
   }
 
