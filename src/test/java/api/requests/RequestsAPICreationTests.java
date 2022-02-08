@@ -35,6 +35,7 @@ import static java.util.function.Function.identity;
 import static org.folio.HttpStatus.HTTP_BAD_REQUEST;
 import static org.folio.HttpStatus.HTTP_CREATED;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
+import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
 import static org.folio.circulation.domain.ItemStatus.PAGED;
 import static org.folio.circulation.domain.RequestType.RECALL;
 import static org.folio.circulation.domain.policy.Period.hours;
@@ -2833,6 +2834,31 @@ public class RequestsAPICreationTests extends APITests {
     requestAssociatedWithFirstItem = requestsFixture.getRequests(
       notEqual("itemId", secondItem.getId().toString()), limit(1), noOffset()).getFirst();
     assertThat(requestAssociatedWithFirstItem.getString("status"), is(OPEN_AWAITING_PICKUP));
+  }
+
+  @Test
+  void pageRequestShouldNotChangeItemStatusIfFailsWithoutRequestDate() {
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    var item = itemsFixture.basedUponSmallAngryPlanet();
+    var requester = usersFixture.steve();
+
+    Response response = requestsClient.attemptCreate(new RequestBuilder()
+      .page()
+      .fulfilToHoldShelf()
+      .withRequesterId(requester.getId())
+      .withItemId(item.getId())
+      .withPickupServicePointId(pickupServicePointId)
+      .withInstanceId(item.getInstanceId())
+      .itemRequestLevel()
+      .withHoldingsRecordId(item.getHoldingsRecordId()).withRequestDate(null));
+
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Cannot create a request with no requestDate"),
+      hasParameter("requestDate", null))));
+    var itemById = itemsFixture.getById(item.getId());
+    assertThat(itemById.getResponse().getJson().getJsonObject("status").getString("name"),
+      is(AVAILABLE.getValue()));
   }
 
   private RequestBuilder buildPageRequest(UUID instanceId, UUID pickupServicePointId,

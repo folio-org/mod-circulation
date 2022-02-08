@@ -6,6 +6,7 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.folio.circulation.domain.RequestLevel.ITEM;
 import static org.folio.circulation.domain.RequestLevel.TITLE;
 import static org.folio.circulation.domain.representations.RequestProperties.INSTANCE_ID;
+import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_DATE;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_LEVEL;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ATTEMPT_TO_CREATE_TLR_LINKED_TO_AN_ITEM;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INSTANCE_DOES_NOT_EXIST;
@@ -17,6 +18,7 @@ import static org.folio.circulation.resources.handlers.error.CirculationErrorTyp
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.NO_AVAILABLE_ITEMS_FOR_TLR;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.http.client.PageLimit.limit;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.results.AsynchronousResult.fromFutureResult;
 import static org.folio.circulation.support.results.MappingFunctions.when;
@@ -25,6 +27,7 @@ import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
+import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -87,6 +90,7 @@ class RequestFromRepresentationService {
       .thenApply(this::refuseWhenNoItemId)
       .thenApply(this::refuseWhenNoHoldingsRecordId)
       .thenApply(this::refuseToCreateTlrLinkedToAnItem)
+      .thenApply(this::refuseWhenNoRequestDate)
       .thenApply(r -> r.map(this::removeRelatedRecordInformation))
       .thenApply(r -> r.map(this::removeProcessingParameters))
       .thenCompose(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
@@ -339,6 +343,21 @@ class RequestFromRepresentationService {
     return request.next(this::validateAbsenceOfItemLinkInTlr)
       .mapFailure(err -> errorHandler.handleValidationError(err,
         ATTEMPT_TO_CREATE_TLR_LINKED_TO_AN_ITEM, request));
+  }
+
+  private Result<Request> refuseWhenNoRequestDate(Result<Request> request) {
+    return request.next(this::validateIfRequestDateIsPresent)
+      .mapFailure(err -> errorHandler.handleValidationError(err, INVALID_ITEM_ID, request));
+  }
+
+  private Result<Request> validateIfRequestDateIsPresent(Request context) {
+    var requestDate = getDateTimeProperty(context.getRequestRepresentation(), REQUEST_DATE);
+
+    if (requestDate == null) {
+      return failedValidation("Cannot create a request with no requestDate", REQUEST_DATE, null);
+    } else {
+      return of(() -> context);
+    }
   }
 
   private Result<Request> validateAbsenceOfItemLinkInTlr(Request request) {
