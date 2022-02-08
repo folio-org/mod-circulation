@@ -483,6 +483,24 @@ class Text2DroolsTest {
   }
 
   @Test
+  void missingColonAfterPolicy() {
+    int unused = 0;
+    expectException(HEADER + "g visitor\n   m book",
+      matches("Policy missing", unused, unused));
+  }
+
+  @Test
+  void missingColonAfterFallbackPolicy() {
+    int unused = 0;
+    String rulesText = String.join("\n",
+      "priority: t, s, c, b, a, m, g",
+      "fallback-policy");
+
+    expectException(rulesText,
+      matches("Policy missing", unused, unused));
+  }
+
+  @Test
   void duplicateLoanPolicy() {
     expectException(HEADER + "m book: l policy-a l policy-b r no-hold n basic-notice o overdue i lost-item",
       matches("Only one policy of type l allowed", 3, 6));

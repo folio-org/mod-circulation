@@ -159,6 +159,16 @@ public class Text2Drools extends CirculationRulesBaseListener {
   }
 
   @Override
+  public void enterSimpleStatement(CirculationRulesParser.SimpleStatementContext ctx) {
+    ExprContext expr = ctx.expr();
+    Token token = ctx.getStart();
+    if (expr.criterium() != null && expr.policies() == null) {
+      throw new org.folio.circulation.rules.CirculationRulesException(
+        "Policy missing.", token.getLine(), token.getCharPositionInLine() + 1);
+    }
+  }
+
+  @Override
   public void exitIndent(IndentContext indent) {
     setIndentation(indent.INDENT());
   }

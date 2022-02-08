@@ -147,7 +147,10 @@ criterium : CRITERIUM_LETTER
 
 all : 'all';
 
-fallbackpolicy : 'fallback-policy' policies NEWLINE
+fallbackpolicy : 'fallback-policy'
+                ( policies NEWLINE
+                | NEWLINE { notifyErrorListeners("Policy missing."); }
+                )
                ;
 
 policies : ':' policy+
