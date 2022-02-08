@@ -6,6 +6,7 @@ import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
+import java.lang.module.FindException;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Function;
@@ -329,6 +330,22 @@ public class ItemsFixture {
   public InstanceBuilder instanceBasedUponSmallAngryPlanet() {
     return InstanceExamples.basedUponSmallAngryPlanet(booksInstanceTypeId(),
       getPersonalContributorNameTypeId());
+  }
+
+  public List<ItemResource> createMultipleItemsForTheSameInstanceWithAdditionalProperties(int size,
+    Function<HoldingBuilder, HoldingBuilder> holdingsAdditionalProperties,
+    Function<InstanceBuilder, InstanceBuilder> instanceAdditionalProperties,
+    Function<ItemBuilder, ItemBuilder> itemAdditionalProperties) {
+    UUID instanceId = UUID.randomUUID();
+    InstanceBuilder sapInstanceBuilder = instanceBasedUponSmallAngryPlanet()
+      .withId(instanceId);
+
+    return IntStream.range(0, size)
+      .mapToObj(num -> basedUponSmallAngryPlanet(
+        new HoldingBuilder().forInstance(instanceId) -> ,
+        instanceBuilder -> sapInstanceBuilder,
+        itemBuilder -> itemBuilder.withBarcode("0000" + num)))
+      .collect(Collectors.toList());
   }
 
   public List<ItemResource> createMultipleItemsForTheSameInstance(int size) {

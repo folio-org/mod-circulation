@@ -264,78 +264,19 @@ class MoveRequestTests extends APITests {
   }
 
   @Test
-  void whenRequestIsMovedPositionsShouldBeConsistentWhenTlrIsEnabled() {
-    configurationsFixture.enableTlrFeature();
-
-    val items = itemsFixture.createMultipleItemsForTheSameInstance(3);
-
-    val firstItem = items.get(0);
-    val secondItem = items.get(1);
-    val thirdItem = items.get(2);
-
-    val cd1 = servicePointsFixture.cd1();
-
-    IndividualResource james = usersFixture.james();
-    IndividualResource jessica = usersFixture.jessica();
-    IndividualResource steve = usersFixture.steve();
-    IndividualResource charlotte = usersFixture.charlotte();
-
-    checkOutFixture.checkOutByBarcode(firstItem, james);
-
-    val pageIlrByCharlotte = requestsFixture.place(new RequestBuilder()
-      .page()
-      .withItemId(thirdItem.getId())
-      .withHoldingsRecordId(thirdItem.getHoldingsRecordId())
-      .withInstanceId(thirdItem.getInstanceId())
-      .withRequestDate(getZonedDateTime())
-      .withPickupServicePointId(cd1.getId())
-      .withRequesterId(charlotte.getId()));
-
-    val holdIlrByJessica = requestsFixture.place(new RequestBuilder()
-      .hold()
-      .withItemId(firstItem.getId())
-      .withHoldingsRecordId(firstItem.getHoldingsRecordId())
-      .withInstanceId(firstItem.getInstanceId())
-      .withRequestDate(getZonedDateTime())
-      .withPickupServicePointId(cd1.getId())
-      .withRequesterId(jessica.getId()));
-
-    val pageTlrBySteve = requestsFixture.place(new RequestBuilder()
-      .page()
-      .titleRequestLevel()
-      .withNoItemId()
-      .withNoHoldingsRecordId()
-      .withInstanceId(secondItem.getInstanceId())
-      .withRequestDate(getZonedDateTime().plusDays(1))
-      .withPickupServicePointId(cd1.getId())
-      .withRequesterId(steve.getId()));
-
-    assertThat(requestsClient.get(pageTlrBySteve).getJson().getInteger("position"), is(3));
-    assertThat(requestsClient.get(pageIlrByCharlotte).getJson().getInteger("position"), is(1));
-    assertThat(requestsClient.get(holdIlrByJessica).getJson().getInteger("position") ,is(2));
-
-    val forthItem = itemsFixture.createItemWithHoldingsAndLocation(
-      firstItem.getHoldingsRecordId(), locationsFixture.mainFloor().getId());
-    val pagedIlrByJesicca = requestsFixture.move(
-      new MoveRequestBuilder(holdIlrByJessica.getId(), forthItem.getId()));
-
-    assertThat(requestsClient.get(pageIlrByCharlotte).getJson().getInteger("position"), is(1));
-    assertThat(requestsClient.get(pagedIlrByJesicca).getJson().getInteger("position") ,is(3));
-    assertThat(requestsClient.get(pageTlrBySteve).getJson().getInteger("position"), is(2));
-  }
-
-  @Test
   void canMoveAShelfHoldRequestToAnAvailableItem() {
+    itemsFixture.createMultipleItemsForTheSameInstance(2);
     ItemResource itemToMoveFrom = itemsFixture.basedUponTemeraire(
-      itemsFixture.addCallNumberStringComponents("sap"));
-    IndividualResource itemToMoveTo = itemsFixture
-      .basedUponInterestingTimes(itemsFixture.addCallNumberStringComponents("it"));
-    itemsFixture.basedUponTemeraire(itemsFixture.addCallNumberStringComponents("it"));
+      itemsFixture.addCallNumberStringComponents("if")
+        .andThen(itemBuilder -> itemBuilder.withBarcode("777")));
+    IndividualResource itemToMoveTo = itemsFixture.basedUponTemeraire(
+      itemsFixture.addCallNumberStringComponents("it")
+        .andThen(itemBuilder -> itemBuilder.withBarcode("888")));
 
     IndividualResource james = usersFixture.james();
     IndividualResource jessica = usersFixture.jessica();
 
-    // james checks out basedUponSmallAngryPlanet
+    // james checks out itemToMoveFrom
     checkOutFixture.checkOutByBarcode(itemToMoveFrom, james);
 
     // make requests for itemToMoveFrom
@@ -374,11 +315,11 @@ class MoveRequestTests extends APITests {
     requestHasCallNumberStringProperties(requestByJessica.getJson(), "it");
 
     // check item queues are correct size
-    MultipleRecords<JsonObject> smallAngryPlanetQueue = requestsFixture.getQueueFor(itemToMoveFrom);
-    assertThat(smallAngryPlanetQueue.getTotalRecords(), is(0));
+    MultipleRecords<JsonObject> itemToMoveFromQueue = requestsFixture.getQueueFor(itemToMoveFrom);
+    assertThat(itemToMoveFromQueue.getTotalRecords(), is(0));
 
-    MultipleRecords<JsonObject> interestingTimesQueue = requestsFixture.getQueueFor(itemToMoveTo);
-    assertThat(interestingTimesQueue.getTotalRecords(), is(1));
+    MultipleRecords<JsonObject> itemToMoveToQueue = requestsFixture.getQueueFor(itemToMoveTo);
+    assertThat(itemToMoveToQueue.getTotalRecords(), is(1));
   }
 
   @Test
