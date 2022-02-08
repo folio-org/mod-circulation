@@ -17,7 +17,6 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
-import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.representations.ItemSummaryRepresentation;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
@@ -197,8 +196,7 @@ public class UpdateItem {
   private boolean noRequestsOnItem(RequestAndRelatedRecords requestAndRelatedRecords, Item item) {
     RequestQueue requestQueue = requestAndRelatedRecords.getRequestQueue();
     return requestAndRelatedRecords.isTlrFeatureEnabled()
-      ? requestQueue.getRequests().stream()
-      .noneMatch(request -> Objects.equals(item.getItemId(), request.getItemId()))
+      ? requestQueue.getRequests().stream().noneMatch(request -> request.isFor(item))
       : requestQueue.isEmpty();
   }
 
