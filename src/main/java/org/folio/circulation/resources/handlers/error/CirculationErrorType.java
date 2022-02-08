@@ -53,5 +53,9 @@ public enum CirculationErrorType {
   RENEWAL_IS_NOT_POSSIBLE,
 
   // Errors related to block overrides
-  INSUFFICIENT_OVERRIDE_PERMISSIONS
+  INSUFFICIENT_OVERRIDE_PERMISSIONS,
+
+  // Acceptable errors for checkout with partial success
+  FAILED_TO_SAVE_SESSION_RECORD,
+  FAILED_TO_PUBLISH_CHECKOUT_EVENT
 }

@@ -45,7 +45,9 @@ import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static api.support.utl.BlockOverridesUtils.getMissingPermissions;
+import static io.vertx.core.http.HttpMethod.POST;
 import static java.time.ZoneOffset.UTC;
+import static org.folio.HttpStatus.HTTP_INTERNAL_SERVER_ERROR;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.domain.EventType.ITEM_CHECKED_OUT;
 import static org.folio.circulation.domain.policy.DueDateManagement.KEEP_THE_CURRENT_DUE_DATE;
@@ -64,7 +66,6 @@ import static org.folio.circulation.support.utils.DateFormatUtil.parseDateTime;
 import static org.folio.circulation.support.utils.DateTimeUtil.atEndOfDay;
 import static org.folio.circulation.support.utils.DateTimeUtil.atStartOfDay;
 import static org.hamcrest.CoreMatchers.allOf;
-import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
@@ -106,6 +107,7 @@ import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.builders.UserBuilder;
 import api.support.fakes.FakePubSub;
+import api.support.fakes.FakeStorageModule;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import api.support.http.OkapiHeaders;
@@ -130,6 +132,8 @@ class CheckOutByBarcodeTests extends APITests {
   private static final String TEST_COMMENT = "Some comment";
   private static final String CHECKED_OUT_THROUGH_OVERRIDE = "checkedOutThroughOverride";
   private static final String PATRON_WAS_BLOCKED_MESSAGE = "Patron blocked from borrowing";
+  private static final String PATRON_ACTION_SESSION_STORAGE_PATH =
+    "/patron-action-session-storage/patron-action-sessions";
 
   @Test
   void canCheckOutUsingItemAndUserBarcode() {
@@ -1443,21 +1447,36 @@ class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  void checkOutFailsWhenEventPublishingFailsWithBadRequestError() {
+  void checkOutShouldNotFailIfEventPublishingFailsWithBadRequestError() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
 
     FakePubSub.setFailPublishingWithBadRequestError(true);
+    checkOutFixture.attemptCheckOutByBarcode(200,
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(smallAngryPlanet)
+        .to(steve)
+        .on(getZonedDateTime())
+        .at(UUID.randomUUID()));
+    FakePubSub.setFailPublishingWithBadRequestError(false);
 
-    Response response = checkOutFixture.attemptCheckOutByBarcode(500,
+    assertThat(itemsClient.get(smallAngryPlanet), hasItemStatus(CHECKED_OUT));
+  }
+
+  @Test
+  void checkOutShouldNotFailIfSessionRecordCreationFails() {
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource steve = usersFixture.steve();
+
+    FakeStorageModule.addRequestMapping(POST, PATRON_ACTION_SESSION_STORAGE_PATH, HTTP_INTERNAL_SERVER_ERROR);
+    checkOutFixture.attemptCheckOutByBarcode(200,
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
         .on(getZonedDateTime())
         .at(UUID.randomUUID()));
 
-    assertThat(response.getBody(), containsString(
-      "Error during publishing Event Message in PubSub. Status code: 400"));
+    assertThat(itemsClient.get(smallAngryPlanet), hasItemStatus(CHECKED_OUT));
   }
 
   @Test

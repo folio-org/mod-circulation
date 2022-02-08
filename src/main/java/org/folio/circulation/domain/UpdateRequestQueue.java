@@ -71,7 +71,7 @@ public class UpdateRequestQueue {
   public CompletableFuture<Result<RequestQueue>> onCheckIn(
     RequestQueue requestQueue, Item item, String checkInServicePointId) {
 
-    if (requestQueue.hasOutstandingFulfillableRequests()) {
+    if (requestQueue.hasOutstandingRequestsFulfillableByItem(item)) {
       return updateOutstandingRequestOnCheckIn(requestQueue, item, checkInServicePointId);
     } else {
       return completedFuture(succeeded(requestQueue));
@@ -222,12 +222,15 @@ public class UpdateRequestQueue {
 
   CompletableFuture<Result<RequestAndRelatedRecords>> onMovedFrom(
     RequestAndRelatedRecords requestAndRelatedRecords) {
+
     final Request request = requestAndRelatedRecords.getRequest();
-    if (requestAndRelatedRecords.getSourceItemId().equals(request.getItemId())) {
+    if (requestAndRelatedRecords.getSourceItemId().equals(request.getItemId()) &&
+      !requestAndRelatedRecords.isTlrFeatureEnabled()) {
+
       final RequestQueue requestQueue = requestAndRelatedRecords.getRequestQueue();
       requestQueue.remove(request);
       return requestQueueRepository.updateRequestsWithChangedPositions(requestQueue)
-            .thenApply(r -> r.map(requestAndRelatedRecords::withRequestQueue));
+        .thenApply(r -> r.map(requestAndRelatedRecords::withRequestQueue));
     }
     else {
       return completedFuture(succeeded(requestAndRelatedRecords));
@@ -240,6 +243,9 @@ public class UpdateRequestQueue {
     if (requestAndRelatedRecords.getDestinationItemId().equals(request.getItemId())) {
       final RequestQueue requestQueue = requestAndRelatedRecords.getRequestQueue();
       // NOTE: it is important to remove position when moving request from one queue to another
+      if (requestAndRelatedRecords.isTlrFeatureEnabled()) {
+        requestQueue.remove(request);
+      }
       request.removePosition();
       requestQueue.add(request);
       return requestQueueRepository.updateRequestsWithChangedPositions(requestQueue)
