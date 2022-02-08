@@ -88,6 +88,19 @@ public class RequestsFixture {
     return placeItemLevelHoldShelfRequest(item, by, ZonedDateTime.now());
   }
 
+  public IndividualResource placeTitleLevelPageRequest(UUID instanceId, IndividualResource by) {
+    return place(new RequestBuilder()
+      .page()
+      .fulfilToHoldShelf()
+      .withRequestLevel("Title")
+      .withInstanceId(instanceId)
+      .withNoItemId()
+      .withNoHoldingsRecordId()
+      .withRequestDate(ZonedDateTime.now())
+      .withRequesterId(by.getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId()));
+  }
+
   public IndividualResource placeTitleLevelHoldShelfRequest(UUID instanceId,
     IndividualResource by, ZonedDateTime on) {
 
