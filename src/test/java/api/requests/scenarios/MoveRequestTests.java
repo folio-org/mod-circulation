@@ -11,6 +11,7 @@ import static api.support.matchers.ValidationErrorMatchers.*;
 import static java.time.Clock.fixed;
 import static java.time.Clock.offset;
 import static java.time.Duration.ofDays;
+import static java.util.function.Function.*;
 import static java.util.stream.Collectors.groupingBy;
 import static org.folio.circulation.domain.EventType.LOAN_DUE_DATE_CHANGED;
 import static org.folio.circulation.domain.EventType.LOG_RECORD;
@@ -39,6 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.Item;
@@ -265,7 +267,7 @@ class MoveRequestTests extends APITests {
 
   @Test
   void canMoveAShelfHoldRequestToAnAvailableItem() {
-    itemsFixture.createMultipleItemsForTheSameInstance(2);
+    itemsFixture.createMultipleItemsForTheSameInstanceWithAdditionalProperties(2, identity(), identity(), itemsFixture.addCallNumberStringComponents());
     ItemResource itemToMoveFrom = itemsFixture.basedUponTemeraire(
       itemsFixture.addCallNumberStringComponents("if")
         .andThen(itemBuilder -> itemBuilder.withBarcode("777")));

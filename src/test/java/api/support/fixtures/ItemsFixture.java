@@ -342,23 +342,14 @@ public class ItemsFixture {
 
     return IntStream.range(0, size)
       .mapToObj(num -> basedUponSmallAngryPlanet(
-        new HoldingBuilder().forInstance(instanceId) -> ,
-        instanceBuilder -> sapInstanceBuilder,
-        itemBuilder -> itemBuilder.withBarcode("0000" + num)))
+        holdingBuilder -> holdingsAdditionalProperties.apply(holdingBuilder.forInstance(instanceId)),
+        instanceBuilder -> instanceAdditionalProperties.apply(sapInstanceBuilder),
+        itemBuilder -> itemAdditionalProperties.apply(itemBuilder.withBarcode("0000" + num))))
       .collect(Collectors.toList());
   }
 
   public List<ItemResource> createMultipleItemsForTheSameInstance(int size) {
-    UUID instanceId = UUID.randomUUID();
-    InstanceBuilder sapInstanceBuilder = instanceBasedUponSmallAngryPlanet()
-      .withId(instanceId);
-
-    return IntStream.range(0, size)
-      .mapToObj(num -> basedUponSmallAngryPlanet(
-        holdingsBuilder -> holdingsBuilder.forInstance(instanceId),
-        instanceBuilder -> sapInstanceBuilder,
-        itemBuilder -> itemBuilder.withBarcode("0000" + num)))
-      .collect(Collectors.toList());
+    return createMultipleItemsForTheSameInstanceWithAdditionalProperties(size, identity(), identity(), identity());
   }
 
   private UUID booksInstanceTypeId() {
