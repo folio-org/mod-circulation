@@ -184,6 +184,67 @@ class MoveRequestTests extends APITests {
   }
 
   @Test
+  void whenRequestIsMovedPositionsShouldBeConsistentWhenTlrIsEnabled() {
+    configurationsFixture.enableTlrFeature();
+
+    val items = itemsFixture.createMultipleItemsForTheSameInstance(3);
+
+    val firstItem = items.get(0);
+    val secondItem = items.get(1);
+    val thirdItem = items.get(2);
+
+    val cd1 = servicePointsFixture.cd1();
+
+    IndividualResource james = usersFixture.james();
+    IndividualResource jessica = usersFixture.jessica();
+    IndividualResource steve = usersFixture.steve();
+    IndividualResource charlotte = usersFixture.charlotte();
+
+    checkOutFixture.checkOutByBarcode(firstItem, james);
+
+    val pageIlrByCharlotte = requestsFixture.place(new RequestBuilder()
+      .page()
+      .withItemId(thirdItem.getId())
+      .withHoldingsRecordId(thirdItem.getHoldingsRecordId())
+      .withInstanceId(thirdItem.getInstanceId())
+      .withRequestDate(getZonedDateTime())
+      .withPickupServicePointId(cd1.getId())
+      .withRequesterId(charlotte.getId()));
+
+    val holdIlrByJessica = requestsFixture.place(new RequestBuilder()
+      .hold()
+      .withItemId(firstItem.getId())
+      .withHoldingsRecordId(firstItem.getHoldingsRecordId())
+      .withInstanceId(firstItem.getInstanceId())
+      .withRequestDate(getZonedDateTime())
+      .withPickupServicePointId(cd1.getId())
+      .withRequesterId(jessica.getId()));
+
+    val pageTlrBySteve = requestsFixture.place(new RequestBuilder()
+      .page()
+      .titleRequestLevel()
+      .withNoItemId()
+      .withNoHoldingsRecordId()
+      .withInstanceId(secondItem.getInstanceId())
+      .withRequestDate(getZonedDateTime().plusDays(1))
+      .withPickupServicePointId(cd1.getId())
+      .withRequesterId(steve.getId()));
+
+    assertThat(requestsClient.get(pageTlrBySteve).getJson().getInteger("position"), is(3));
+    assertThat(requestsClient.get(pageIlrByCharlotte).getJson().getInteger("position"), is(1));
+    assertThat(requestsClient.get(holdIlrByJessica).getJson().getInteger("position") ,is(2));
+
+    val forthItem = itemsFixture.createItemWithHoldingsAndLocation(
+      firstItem.getHoldingsRecordId(), locationsFixture.mainFloor().getId());
+    val pagedIlrByJesicca = requestsFixture.move(
+      new MoveRequestBuilder(holdIlrByJessica.getId(), forthItem.getId()));
+
+    assertThat(requestsClient.get(pageIlrByCharlotte).getJson().getInteger("position"), is(1));
+    assertThat(requestsClient.get(pagedIlrByJesicca).getJson().getInteger("position") ,is(3));
+    assertThat(requestsClient.get(pageTlrBySteve).getJson().getInteger("position"), is(2));
+  }
+
+  @Test
   void cannotMoveRequestToAnItemFromDifferentInstance() {
     configurationsFixture.enableTlrFeature();
 

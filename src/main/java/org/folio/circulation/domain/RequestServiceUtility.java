@@ -11,7 +11,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Predicate;
 
-import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
 import org.folio.circulation.domain.policy.RequestPolicy;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;

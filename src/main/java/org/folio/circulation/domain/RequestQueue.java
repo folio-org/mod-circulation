@@ -41,13 +41,18 @@ public class RequestQueue {
   }
 
   ItemStatus checkedInItemStatus(Item item) {
-    return hasOutstandingFulfillableRequests()
+    return hasOutstandingRequestsFulfillableByItem(item)
       ? getHighestPriorityRequestFulfillableByItem(item).checkedInItemStatus()
       : AVAILABLE;
   }
 
   boolean hasOutstandingFulfillableRequests() {
     return !fulfillableRequests().isEmpty();
+  }
+
+  boolean hasOutstandingRequestsFulfillableByItem(Item item) {
+    return  fulfillableRequests().stream()
+      .anyMatch(request -> requestIsFulfillableByItem(request, item));
   }
 
   Request getHighestPriorityFulfillableRequest() {

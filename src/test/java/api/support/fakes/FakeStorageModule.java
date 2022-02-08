@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +30,7 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.HttpStatus;
 import org.folio.circulation.infrastructure.serialization.JsonSchemaValidator;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.ClientErrorResponse;
@@ -40,6 +42,7 @@ import org.folio.circulation.support.utils.ClockUtil;
 import api.support.APITestContext;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
@@ -47,11 +50,13 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 public class FakeStorageModule extends AbstractVerticle {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private static final Set<String> queries = Collections.synchronizedSet(new HashSet<>());
-
   private final String rootPath;
   private final String collectionPropertyName;
   private final boolean hasCollectionDelete;
@@ -69,6 +74,7 @@ public class FakeStorageModule extends AbstractVerticle {
   private final Function<JsonObject, JsonObject> batchUpdatePreProcessor;
   private final List<BiFunction<JsonObject, JsonObject, JsonObject>> recordPreProcessors;
   private final Collection<String> additionalQueryParameters;
+  private final static Map<Endpoint, HttpStatus> requestMappings = new HashMap<>();
 
   public static Stream<String> getQueries() {
     return queries.stream();
@@ -114,12 +120,14 @@ public class FakeStorageModule extends AbstractVerticle {
 
   void register(Router router) {
     String pathTree = rootPath + "/*";
+    String rootPathWithId = rootPath + "/:id";
 
     router.route(rootPath).handler(this::checkTokenHeader);
     router.route(pathTree).handler(this::checkTokenHeader);
     router.route(rootPath).handler(this::checkRequestIdHeader);
     router.route(pathTree).handler(this::checkRequestIdHeader);
 
+    router.post(rootPath).handler(this::applyRequestMappings);
     router.post(rootPath).handler(BodyHandler.create());
     router.post(pathTree).handler(BodyHandler.create());
     router.put(rootPath).handler(BodyHandler.create());
@@ -132,6 +140,7 @@ public class FakeStorageModule extends AbstractVerticle {
     router.post(rootPath).handler(this::create);
 
     router.get(rootPath).handler(this::checkForUnexpectedQueryParameters);
+    router.get(rootPath).handler(this::applyRequestMappings);
     router.get(rootPath).handler(this::getMany);
 
     if (hasDeleteByQuery) {
@@ -140,13 +149,16 @@ public class FakeStorageModule extends AbstractVerticle {
       router.delete(rootPath).handler(this::empty);
     }
 
-    router.put(rootPath + "/:id").handler(this::checkRepresentationAgainstRecordSchema);
-    router.put(rootPath + "/:id").handler(this::checkRequiredProperties);
-    router.put(rootPath + "/:id").handler(this::checkDisallowedProperties);
-    router.put(rootPath + "/:id").handler(this::replace);
+    router.put(rootPathWithId).handler(this::checkRepresentationAgainstRecordSchema);
+    router.put(rootPathWithId).handler(this::checkRequiredProperties);
+    router.put(rootPathWithId).handler(this::checkDisallowedProperties);
+    router.put(rootPathWithId).handler(this::applyRequestMappings);
+    router.put(rootPathWithId).handler(this::replace);
 
-    router.get(rootPath + "/:id").handler(this::getById);
-    router.delete(rootPath + "/:id").handler(this::delete);
+    router.get(rootPathWithId).handler(this::applyRequestMappings);
+    router.get(rootPathWithId).handler(this::getById);
+    router.delete(rootPathWithId).handler(this::applyRequestMappings);
+    router.delete(rootPathWithId).handler(this::delete);
 
     if (StringUtils.isNotBlank(batchUpdatePath)) {
       router.route(batchUpdatePath).handler(this::checkTokenHeader);
@@ -154,6 +166,19 @@ public class FakeStorageModule extends AbstractVerticle {
 
       router.post(batchUpdatePath).handler(BodyHandler.create());
       router.post(batchUpdatePath).handler(this::batchUpdate);
+    }
+  }
+
+  private void applyRequestMappings(RoutingContext routingContext) {
+    HttpStatus expectedStatus = requestMappings.get(
+      new Endpoint(routingContext.request().method(), routingContext.request().uri()));
+
+    if (expectedStatus == null) {
+      routingContext.next();
+    } else {
+      routingContext.response()
+        .setStatusCode(expectedStatus.toInt())
+        .end();
     }
   }
 
@@ -516,6 +541,7 @@ public class FakeStorageModule extends AbstractVerticle {
   // Routine -> string_to_uuid, V -> ERROR,
   // Message -> invalid input syntax for type uuid: "null", Severity -> ERROR))
   // when an ID parameter is not a UUID
+
   private Result<UUID> getIdParameter(RoutingContext routingContext) {
     final String id = routingContext.request().getParam("id");
 
@@ -643,4 +669,21 @@ public class FakeStorageModule extends AbstractVerticle {
     String query = StringUtils.substringBefore(queryParameter, "=");
     return this.additionalQueryParameters.contains(query);
   }
+
+  public static void addRequestMapping(HttpMethod httpMethod, String url, HttpStatus status) {
+    requestMappings.put(new Endpoint(httpMethod, url), status);
+  }
+
+  public static void cleanUpRequestMappings() {
+    requestMappings.clear();
+  }
+
+  @Getter
+  @RequiredArgsConstructor
+  @EqualsAndHashCode
+  private static class Endpoint {
+    private final HttpMethod httpMethod;
+    private final String url;
+  }
+
 }
