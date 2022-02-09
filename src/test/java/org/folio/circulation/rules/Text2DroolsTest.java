@@ -486,7 +486,7 @@ class Text2DroolsTest {
   void missingColonAfterCriteriaAndBeforePolicy() {
     int unused = 0;
     expectException(HEADER + "g visitor\n   m book",
-      matches("':' symbol is missing", unused, unused));
+      matches("Policy missing", unused, unused));
   }
 
   @Test
@@ -497,7 +497,7 @@ class Text2DroolsTest {
       "fallback-policy");
 
     expectException(rulesText,
-      matches("':' symbol is missing", unused, unused));
+      matches("Policy missing", unused, unused));
   }
 
   @Test

@@ -149,7 +149,7 @@ all : 'all';
 
 fallbackpolicy : 'fallback-policy'
                 ( policies NEWLINE
-                | NEWLINE { notifyErrorListeners("':' symbol is missing"); }
+                | NEWLINE { notifyErrorListeners("Policy missing"); }
                 )
                ;
 
