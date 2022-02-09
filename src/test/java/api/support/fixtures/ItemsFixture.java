@@ -78,13 +78,7 @@ public class ItemsFixture {
   }
 
   public ItemResource basedUponDunkirk() {
-
-    return create(
-      InstanceExamples.basedUponDunkirk(booksInstanceTypeId(),
-        getPersonalContributorNameTypeId()),
-      thirdFloorHoldings(),
-      ItemExamples.basedUponDunkirk(materialTypesFixture.videoRecording().getId(),
-        loanTypesFixture.canCirculate().getId()));
+    return basedUponDunkirk(identity(), identity(), identity());
   }
 
   public IndividualResource basedUponDunkirkWithCustomHoldingAndLocation(UUID holdingsId, UUID locationId) {
