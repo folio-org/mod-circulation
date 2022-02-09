@@ -163,8 +163,8 @@ public class Text2Drools extends CirculationRulesBaseListener {
     ExprContext expr = ctx.expr();
     Token token = ctx.getStart();
     if (expr.criterium() != null && expr.policies() == null) {
-      throw new org.folio.circulation.rules.CirculationRulesException(
-        "Policy missing.", token.getLine(), token.getCharPositionInLine() + 1);
+      throw new CirculationRulesException(
+        "':' symbol is missing", token.getLine(), token.getCharPositionInLine() + 1);
     }
   }
 
