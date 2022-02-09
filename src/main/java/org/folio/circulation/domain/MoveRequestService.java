@@ -48,7 +48,7 @@ public class MoveRequestService {
     return configurationRepository.lookupTlrSettings()
       .thenApply(r -> r.map(requestAndRelatedRecords::withTlrSettings))
       .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::findDestinationItem))
-      .thenCompose(r -> r.after(this::validateItemInstanceId))
+      .thenApply(r -> r.next(RequestServiceUtility::refuseWhenItemToBeMovedIsFromDifferentInstance))
       .thenComposeAsync(r -> r.after(requestQueueRepository::get))
       .thenApply(r -> r.map(this::pagedRequestIfDestinationItemAvailable))
       .thenCompose(r -> r.after(this::validateUpdateRequest))
@@ -78,12 +78,6 @@ public class MoveRequestService {
     }
 
     return requestAndRelatedRecords;
-  }
-
-  private CompletableFuture<Result<RequestAndRelatedRecords>> validateItemInstanceId(
-    RequestAndRelatedRecords records) {
-
-    return completedFuture(RequestServiceUtility.refuseWhenItemToBeMovedIsFromDifferentInstance(records));
   }
 
   private CompletableFuture<Result<RequestAndRelatedRecords>> validateUpdateRequest(
