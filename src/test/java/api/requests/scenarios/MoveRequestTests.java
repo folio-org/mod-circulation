@@ -257,8 +257,7 @@ class MoveRequestTests extends APITests {
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Request can be moved only to an item with the same instance ID"),
       hasParameter("itemId", uprooted.getId().toString()),
-      hasParameter("originalInstanceId", nod.getInstanceId().toString()),
-      hasParameter("selectedItemInstanceId", uprooted.getInstanceId().toString()))));
+      hasParameter("instanceId", uprooted.getInstanceId().toString()))));
   }
 
   @Test
