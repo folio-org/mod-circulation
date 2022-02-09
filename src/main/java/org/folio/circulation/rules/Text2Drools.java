@@ -164,7 +164,7 @@ public class Text2Drools extends CirculationRulesBaseListener {
     Token token = ctx.getStart();
     if (expr.criterium() != null && expr.policies() == null) {
       throw new CirculationRulesException(
-        "':' symbol is missing", token.getLine(), token.getCharPositionInLine() + 1);
+        "Policy missing", token.getLine(), token.getCharPositionInLine() + 1);
     }
   }
 

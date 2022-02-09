@@ -484,20 +484,17 @@ class Text2DroolsTest {
 
   @Test
   void missingColonAfterCriteriaAndBeforePolicy() {
-    int unused = 0;
     expectException(HEADER + "g visitor\n   m book",
-      matches("Policy missing", unused, unused));
+      matches("Policy missing", 4, 4));
   }
 
   @Test
   void missingColonAfterFallbackPolicy() {
-    int unused = 0;
     String rulesText = String.join("\n",
       "priority: t, s, c, b, a, m, g",
       "fallback-policy");
-
     expectException(rulesText,
-      matches("Policy missing", unused, unused));
+      matches("Policy missing", 2, 16));
   }
 
   @Test
@@ -695,8 +692,8 @@ class Text2DroolsTest {
   }
 
   private void expectException(String rulesText, Matcher<CirculationRulesException> matches) {
-    assertThrows(CirculationRulesException.class, () -> {
-      Text2Drools.convert(rulesText);
-    });
+    assertThat(
+      assertThrows(CirculationRulesException.class, () -> Text2Drools.convert(rulesText)),
+      matches);
   }
 }
