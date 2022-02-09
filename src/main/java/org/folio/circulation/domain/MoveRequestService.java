@@ -1,6 +1,5 @@
 package org.folio.circulation.domain;
 
-import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_MOVED;
 import static org.folio.circulation.support.results.Result.of;
 

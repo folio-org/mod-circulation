@@ -12,7 +12,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemStatus;
 import api.support.http.IndividualResource;
 
