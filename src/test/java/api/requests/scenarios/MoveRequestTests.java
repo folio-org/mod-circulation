@@ -172,10 +172,8 @@ class MoveRequestTests extends APITests {
     assertThat(itemsClient.get(itemCopyB).getJson().getJsonObject("status").getString("name"), is(ItemStatus.PAGED.getValue()));
   }
 
-  //TODO check item status when creating second hold TLR for paged item
-
   @Test
-  void whenRequestIsMovedItemShouldB() {
+  void itemShouldRemainPagedIfHoldCreatedAfterRequestHasBeenMovedToAnotherItem() {
     configurationsFixture.enableTlrFeature();
 
     val items = itemsFixture.createMultipleItemsForTheSameInstance(2);
@@ -187,9 +185,9 @@ class MoveRequestTests extends APITests {
 
     val james = usersFixture.james();
     val charlotte = usersFixture.charlotte();
+    val jessica = usersFixture.jessica();
 
-    checkOutFixture.checkOutByBarcode(secondItem);
-    val pageIlr = requestsFixture.place(new RequestBuilder()
+    val pageIlrForFirstItem = requestsFixture.place(new RequestBuilder()
       .page()
       .withItemId(firstItem.getId())
       .withHoldingsRecordId(firstItem.getHoldingsRecordId())
@@ -202,16 +200,25 @@ class MoveRequestTests extends APITests {
       .hold()
       .withItemId(firstItem.getId())
       .withHoldingsRecordId(firstItem.getHoldingsRecordId())
-      .withInstanceId(secondItem.getInstanceId())
+      .withInstanceId(firstItem.getInstanceId())
       .withRequestDate(getZonedDateTime())
       .withPickupServicePointId(cd1.getId())
       .withRequesterId(charlotte.getId()));
 
     requestsFixture.move(
-      new MoveRequestBuilder(pageIlr.getId(), secondItem.getId(), RequestType.HOLD.value));
+      new MoveRequestBuilder(pageIlrForFirstItem.getId(), secondItem.getId(), RequestType.HOLD.value));
     assertThat(itemsClient.get(firstItem), hasItemStatus(PAGED));
 
+    requestsFixture.place(new RequestBuilder()
+      .hold()
+      .withItemId(firstItem.getId())
+      .withHoldingsRecordId(firstItem.getHoldingsRecordId())
+      .withInstanceId(firstItem.getInstanceId())
+      .withRequestDate(getZonedDateTime())
+      .withPickupServicePointId(cd1.getId())
+      .withRequesterId(jessica.getId()));
 
+    assertThat(itemsClient.get(firstItem), hasItemStatus(PAGED));
   }
 
   @Test
