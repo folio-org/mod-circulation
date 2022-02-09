@@ -172,6 +172,48 @@ class MoveRequestTests extends APITests {
     assertThat(itemsClient.get(itemCopyB).getJson().getJsonObject("status").getString("name"), is(ItemStatus.PAGED.getValue()));
   }
 
+  //TODO check item status when creating second hold TLR for paged item
+
+  @Test
+  void whenRequestIsMovedItemShouldB() {
+    configurationsFixture.enableTlrFeature();
+
+    val items = itemsFixture.createMultipleItemsForTheSameInstance(2);
+
+    val firstItem = items.get(0);
+    val secondItem = items.get(1);
+
+    val cd1 = servicePointsFixture.cd1();
+
+    val james = usersFixture.james();
+    val charlotte = usersFixture.charlotte();
+
+    checkOutFixture.checkOutByBarcode(secondItem);
+    val pageIlr = requestsFixture.place(new RequestBuilder()
+      .page()
+      .withItemId(firstItem.getId())
+      .withHoldingsRecordId(firstItem.getHoldingsRecordId())
+      .withInstanceId(firstItem.getInstanceId())
+      .withRequestDate(getZonedDateTime())
+      .withPickupServicePointId(cd1.getId())
+      .withRequesterId(james.getId()));
+
+    requestsFixture.place(new RequestBuilder()
+      .hold()
+      .withItemId(firstItem.getId())
+      .withHoldingsRecordId(firstItem.getHoldingsRecordId())
+      .withInstanceId(secondItem.getInstanceId())
+      .withRequestDate(getZonedDateTime())
+      .withPickupServicePointId(cd1.getId())
+      .withRequesterId(charlotte.getId()));
+
+    requestsFixture.move(
+      new MoveRequestBuilder(pageIlr.getId(), secondItem.getId(), RequestType.HOLD.value));
+    assertThat(itemsClient.get(firstItem), hasItemStatus(PAGED));
+
+
+  }
+
   @Test
   void whenRequestIsMovedItemShouldBecomeAvailableIfThereAreNoRequestsInTheQueueForThisItemIfTlrIsEnabled() {
     configurationsFixture.enableTlrFeature();
