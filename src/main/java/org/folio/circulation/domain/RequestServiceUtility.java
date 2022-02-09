@@ -115,7 +115,7 @@ public class RequestServiceUtility {
     }
   }
 
-  static Result<RequestAndRelatedRecords> refuseWhenItemToBeMovedIsFromDifferentInstance(
+  static Result<RequestAndRelatedRecords> refuseWhenMovedToDifferentInstance(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
     Request request = requestAndRelatedRecords.getRequest();
@@ -123,8 +123,7 @@ public class RequestServiceUtility {
     if (!Objects.equals(item.getInstanceId(), request.getInstanceId())) {
       HashMap<String, String> parameters = new HashMap<>();
       parameters.put(ITEM_ID, request.getItemId());
-      parameters.put("originalInstanceId", request.getInstanceId());
-      parameters.put("selectedItemInstanceId", item.getInstanceId());
+      parameters.put(INSTANCE_ID, item.getInstanceId());
       return failedValidation(
         new ValidationError("Request can be moved only to an item with the same instance ID",
           parameters));
