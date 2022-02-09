@@ -6,13 +6,13 @@ import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-import java.lang.module.FindException;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemStatus;
 import api.support.http.IndividualResource;
 
@@ -59,6 +59,22 @@ public class ItemsFixture {
     //TODO: Also clean up created instances, holdings record and items
     instanceTypeRecordCreator.cleanUp();
     contributorNameTypeRecordCreator.cleanUp();
+  }
+
+  public ItemResource basedUponDunkirk(
+    Function<HoldingBuilder, HoldingBuilder> additionalHoldingsRecordProperties,
+    Function<InstanceBuilder, InstanceBuilder> additionalInstanceProperties,
+    Function<ItemBuilder, ItemBuilder> additionalItemProperties) {
+
+    return applyAdditionalProperties(
+      additionalHoldingsRecordProperties,
+      additionalInstanceProperties,
+      additionalItemProperties,
+      InstanceExamples.basedUponDunkirk(booksInstanceTypeId(), getPersonalContributorNameTypeId()),
+      thirdFloorHoldings(),
+      ItemExamples.basedUponDunkirk(materialTypesFixture.videoRecording().getId(),
+        loanTypesFixture.canCirculate().getId())
+    );
   }
 
   public ItemResource basedUponDunkirk() {
@@ -332,24 +348,30 @@ public class ItemsFixture {
       getPersonalContributorNameTypeId());
   }
 
-  public List<ItemResource> createMultipleItemsForTheSameInstanceWithAdditionalProperties(int size,
-    Function<HoldingBuilder, HoldingBuilder> holdingsAdditionalProperties,
-    Function<InstanceBuilder, InstanceBuilder> instanceAdditionalProperties,
-    Function<ItemBuilder, ItemBuilder> itemAdditionalProperties) {
+  public List<ItemResource> createWithCallNumberStringComponents(String... components) {
+    UUID instanceId = UUID.randomUUID();
+    InstanceBuilder sapInstanceBuilder = instanceBasedUponSmallAngryPlanet()
+      .withId(instanceId);
+
+    return IntStream.range(0, components.length)
+      .mapToObj(num -> basedUponSmallAngryPlanet(
+        holdingsBuilder -> holdingsBuilder.forInstance(instanceId),
+        instanceBuilder -> sapInstanceBuilder,
+        itemBuilder -> addCallNumberStringComponents(components[num]).apply(itemBuilder.withBarcode("0000" + num))))
+      .collect(Collectors.toList());
+  }
+
+  public List<ItemResource> createMultipleItemsForTheSameInstance(int size) {
     UUID instanceId = UUID.randomUUID();
     InstanceBuilder sapInstanceBuilder = instanceBasedUponSmallAngryPlanet()
       .withId(instanceId);
 
     return IntStream.range(0, size)
       .mapToObj(num -> basedUponSmallAngryPlanet(
-        holdingBuilder -> holdingsAdditionalProperties.apply(holdingBuilder.forInstance(instanceId)),
-        instanceBuilder -> instanceAdditionalProperties.apply(sapInstanceBuilder),
-        itemBuilder -> itemAdditionalProperties.apply(itemBuilder.withBarcode("0000" + num))))
+        holdingsBuilder -> holdingsBuilder.forInstance(instanceId),
+        instanceBuilder -> sapInstanceBuilder,
+        itemBuilder -> itemBuilder.withBarcode("0000" + num)))
       .collect(Collectors.toList());
-  }
-
-  public List<ItemResource> createMultipleItemsForTheSameInstance(int size) {
-    return createMultipleItemsForTheSameInstanceWithAdditionalProperties(size, identity(), identity(), identity());
   }
 
   private UUID booksInstanceTypeId() {
