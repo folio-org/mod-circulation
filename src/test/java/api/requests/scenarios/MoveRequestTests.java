@@ -39,7 +39,6 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.ItemStatus;
@@ -255,14 +254,16 @@ class MoveRequestTests extends APITests {
 
     Response response = requestsFixture.attemptMove(new MoveRequestBuilder(nodPage.getId(), uprooted.getId()));
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("Request can be moved only to an item with the same instance ID"),
+      hasMessage("Request can only be moved to an item with the same instance ID"),
       hasParameter("itemId", uprooted.getId().toString()),
       hasParameter("instanceId", uprooted.getInstanceId().toString()))));
   }
 
   @Test
   void canMoveAShelfHoldRequestToAnAvailableItem() {
-    val items = itemsFixture.createWithCallNumberStringComponents("if", "it");
+    val items = itemsFixture.createMultipleItemForTheSameInstanceWithItemAdditionalProperties(
+      List.of(itemsFixture.addCallNumberStringComponents("if"),
+        itemsFixture.addCallNumberStringComponents("it")));
 
     ItemResource itemToMoveFrom = items.get(0);
     IndividualResource itemToMoveTo = items.get(1);

@@ -6,6 +6,9 @@ import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Function;
@@ -341,29 +344,23 @@ public class ItemsFixture {
       getPersonalContributorNameTypeId());
   }
 
-  public List<ItemResource> createWithCallNumberStringComponents(String... components) {
-    UUID instanceId = UUID.randomUUID();
-    InstanceBuilder sapInstanceBuilder = instanceBasedUponSmallAngryPlanet()
-      .withId(instanceId);
-
-    return IntStream.range(0, components.length)
-      .mapToObj(num -> basedUponSmallAngryPlanet(
-        holdingsBuilder -> holdingsBuilder.forInstance(instanceId),
-        instanceBuilder -> sapInstanceBuilder,
-        itemBuilder -> addCallNumberStringComponents(components[num]).apply(itemBuilder.withBarcode("0000" + num))))
-      .collect(Collectors.toList());
+  public List<ItemResource> createMultipleItemsForTheSameInstance(int size) {
+    List<Function<ItemBuilder, ItemBuilder>> objects = new ArrayList<>(Collections.nCopies(size, identity()));
+    return createMultipleItemForTheSameInstanceWithItemAdditionalProperties(objects);
   }
 
-  public List<ItemResource> createMultipleItemsForTheSameInstance(int size) {
+  public List<ItemResource> createMultipleItemForTheSameInstanceWithItemAdditionalProperties(
+    List<Function<ItemBuilder, ItemBuilder>> itemAdditionalProperties) {
     UUID instanceId = UUID.randomUUID();
     InstanceBuilder sapInstanceBuilder = instanceBasedUponSmallAngryPlanet()
       .withId(instanceId);
 
-    return IntStream.range(0, size)
+    return IntStream.range(0, itemAdditionalProperties.size())
       .mapToObj(num -> basedUponSmallAngryPlanet(
         holdingsBuilder -> holdingsBuilder.forInstance(instanceId),
         instanceBuilder -> sapInstanceBuilder,
-        itemBuilder -> itemBuilder.withBarcode("0000" + num)))
+        itemBuilder -> itemAdditionalProperties.get(num)
+          .apply(itemBuilder.withBarcode("0000" + num))))
       .collect(Collectors.toList());
   }
 

@@ -125,7 +125,7 @@ public class RequestServiceUtility {
       parameters.put(ITEM_ID, request.getItemId());
       parameters.put(INSTANCE_ID, item.getInstanceId());
       return failedValidation(
-        new ValidationError("Request can be moved only to an item with the same instance ID",
+        new ValidationError("Request can only be moved to an item with the same instance ID",
           parameters));
     }
 
