@@ -95,7 +95,7 @@ public class RequestQueue {
         .anyMatch(request -> request.getRequestType() == RequestType.RECALL && request.isNotYetFilled());
   }
 
-  public boolean isRequestedByOtherPatron(User requestingUser, Item item) {
+  public boolean isRequestedByAnotherPatron(User requestingUser, Item item) {
     Request request = getHighestPriorityRequestFulfillableByItem(item);
 
     return !(request == null || request.isFor(requestingUser));
