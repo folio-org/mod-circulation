@@ -1361,6 +1361,7 @@
         "circulation.internal.fetch-items",
         "users.item.get",
         "users.collection.get",
+        "usergroups.collection.get",
         "addresstypes.item.get",
         "proxiesfor.collection.get",
         "patron-notice.post",
