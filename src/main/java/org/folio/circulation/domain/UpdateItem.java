@@ -11,7 +11,6 @@ import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.time.ZonedDateTime;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -188,12 +187,13 @@ public class UpdateItem {
 
     Item item = requestAndRelatedRecords.getRequest().getItem();
 
-    return (item.isPaged() && noRequestsOnItem(requestAndRelatedRecords, item))
+    return (item.isPaged() && noRequestsForSpecificItemInTheQueue(requestAndRelatedRecords, item))
       ? AVAILABLE
       : pagedWhenRequested(type, item);
   }
 
-  private boolean noRequestsOnItem(RequestAndRelatedRecords requestAndRelatedRecords, Item item) {
+  private boolean noRequestsForSpecificItemInTheQueue(
+    RequestAndRelatedRecords requestAndRelatedRecords, Item item) {
     RequestQueue requestQueue = requestAndRelatedRecords.getRequestQueue();
     return requestAndRelatedRecords.isTlrFeatureEnabled()
       ? requestQueue.getRequests().stream().noneMatch(request -> request.isFor(item))
