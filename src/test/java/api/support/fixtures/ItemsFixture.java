@@ -8,7 +8,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Function;
@@ -345,8 +344,8 @@ public class ItemsFixture {
   }
 
   public List<ItemResource> createMultipleItemsForTheSameInstance(int size) {
-    List<Function<ItemBuilder, ItemBuilder>> objects = new ArrayList<>(Collections.nCopies(size, identity()));
-    return createMultipleItemForTheSameInstanceWithItemAdditionalProperties(objects);
+    List<Function<ItemBuilder, ItemBuilder>> functions = new ArrayList<>(Collections.nCopies(size, identity()));
+    return createMultipleItemForTheSameInstanceWithItemAdditionalProperties(functions);
   }
 
   public List<ItemResource> createMultipleItemForTheSameInstanceWithItemAdditionalProperties(
