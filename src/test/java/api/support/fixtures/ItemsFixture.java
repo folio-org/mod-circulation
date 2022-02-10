@@ -344,8 +344,8 @@ public class ItemsFixture {
   }
 
   public List<ItemResource> createMultipleItemsForTheSameInstance(int size) {
-    List<Function<ItemBuilder, ItemBuilder>> functions = new ArrayList<>(Collections.nCopies(size, identity()));
-    return createMultipleItemForTheSameInstanceWithItemAdditionalProperties(functions);
+    return createMultipleItemForTheSameInstanceWithItemAdditionalProperties(
+      new ArrayList<>(Collections.nCopies(size, identity())));
   }
 
   public List<ItemResource> createMultipleItemForTheSameInstanceWithItemAdditionalProperties(
