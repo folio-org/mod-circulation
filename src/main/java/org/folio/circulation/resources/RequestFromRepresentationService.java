@@ -345,21 +345,6 @@ class RequestFromRepresentationService {
         ATTEMPT_TO_CREATE_TLR_LINKED_TO_AN_ITEM, request));
   }
 
-  private Result<Request> refuseWhenNoRequestDate(Result<Request> request) {
-    return request.next(this::validateIfRequestDateIsPresent)
-      .mapFailure(err -> errorHandler.handleValidationError(err, INVALID_ITEM_ID, request));
-  }
-
-  private Result<Request> validateIfRequestDateIsPresent(Request context) {
-    var requestDate = getDateTimeProperty(context.getRequestRepresentation(), REQUEST_DATE);
-
-    if (requestDate == null) {
-      return failedValidation("Cannot create a request with no requestDate", REQUEST_DATE, null);
-    } else {
-      return of(() -> context);
-    }
-  }
-
   private Result<Request> validateAbsenceOfItemLinkInTlr(Request request) {
     String itemId = request.getItemId();
     String holdingsRecordId = request.getHoldingsRecordId();
@@ -377,6 +362,21 @@ class RequestFromRepresentationService {
     }
     else {
       return of(() -> request);
+    }
+  }
+
+  private Result<Request> refuseWhenNoRequestDate(Result<Request> request) {
+    return request.next(this::validateIfRequestDateIsPresent)
+      .mapFailure(err -> errorHandler.handleValidationError(err, INVALID_ITEM_ID, request));
+  }
+
+  private Result<Request> validateIfRequestDateIsPresent(Request context) {
+    var requestDate = getDateTimeProperty(context.getRequestRepresentation(), REQUEST_DATE);
+
+    if (requestDate == null) {
+      return failedValidation("Cannot create a request with no requestDate", REQUEST_DATE, null);
+    } else {
+      return of(() -> context);
     }
   }
 
