@@ -2838,19 +2838,18 @@ public class RequestsAPICreationTests extends APITests {
 
   @Test
   void pageRequestShouldNotChangeItemStatusIfFailsWithoutRequestDate() {
-    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     var item = itemsFixture.basedUponSmallAngryPlanet();
-    var requester = usersFixture.steve();
 
     Response response = requestsClient.attemptCreate(new RequestBuilder()
       .page()
       .fulfilToHoldShelf()
-      .withRequesterId(requester.getId())
+      .withRequesterId(usersFixture.steve().getId())
       .withItemId(item.getId())
-      .withPickupServicePointId(pickupServicePointId)
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .withInstanceId(item.getInstanceId())
       .itemRequestLevel()
-      .withHoldingsRecordId(item.getHoldingsRecordId()).withRequestDate(null));
+      .withHoldingsRecordId(item.getHoldingsRecordId())
+      .withRequestDate(null));
 
     assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(response.getJson(), hasErrorWith(allOf(
