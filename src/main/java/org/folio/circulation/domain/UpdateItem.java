@@ -187,13 +187,12 @@ public class UpdateItem {
 
     Item item = requestAndRelatedRecords.getRequest().getItem();
 
-    return (item.isPaged() && noRequestsForSpecificItemInTheQueue(requestAndRelatedRecords, item))
+    return (item.isPaged() && noRequestsForItemInTheQueue(requestAndRelatedRecords, item))
       ? AVAILABLE
       : pagedWhenRequested(type, item);
   }
 
-  private boolean noRequestsForSpecificItemInTheQueue(
-    RequestAndRelatedRecords requestAndRelatedRecords, Item item) {
+  private boolean noRequestsForItemInTheQueue(RequestAndRelatedRecords requestAndRelatedRecords, Item item) {
     RequestQueue requestQueue = requestAndRelatedRecords.getRequestQueue();
     return requestAndRelatedRecords.isTlrFeatureEnabled()
       ? requestQueue.getRequests().stream().noneMatch(request -> request.isFor(item))
