@@ -96,13 +96,9 @@ public class RequestQueue {
   }
 
   public boolean isRequestedByOtherPatron(User requestingUser, Item item) {
-    if(!hasOutstandingFulfillableRequests()) {
-      return false;
-    }
-    else {
-      final Request highestPriorityRequest = getHighestPriorityFulfillableRequest();
-      return highestPriorityRequest.isFor(item) && !highestPriorityRequest.isFor(requestingUser);
-    }
+    Request request = getHighestPriorityRequestFulfillableByItem(item);
+
+    return !(request == null || request.isFor(requestingUser));
   }
 
   private List<Request> fulfillableRequests() {

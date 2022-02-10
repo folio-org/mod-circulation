@@ -47,6 +47,7 @@ import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static api.support.utl.BlockOverridesUtils.getMissingPermissions;
 import static io.vertx.core.http.HttpMethod.POST;
 import static java.time.ZoneOffset.UTC;
+import static java.util.function.Predicate.not;
 import static org.folio.HttpStatus.HTTP_INTERNAL_SERVER_ERROR;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.domain.EventType.ITEM_CHECKED_OUT;
@@ -82,6 +83,8 @@ import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.policy.DueDateManagement;
@@ -2326,20 +2329,58 @@ class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  void canCheckoutItemWhenTitleLevelPageRequestExistsForDifferentItemOfSameInstance() {
+  void canCheckoutItemWhenTitleLevelPageRequestsExistForDifferentItemsOfSameInstance() {
     configurationsFixture.enableTlrFeature();
 
-    List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
-    UUID instanceId = items.get(0).getInstanceId();
+    List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(4);
+    UUID instanceId = items.iterator().next().getInstanceId();
 
-    IndividualResource request = requestsFixture.placeTitleLevelPageRequest(instanceId, usersFixture.steve());
+    List<String> pagedItemIds = Stream.of(
+        requestsFixture.placeTitleLevelPageRequest(instanceId, usersFixture.steve()),
+        requestsFixture.placeTitleLevelPageRequest(instanceId, usersFixture.jessica()),
+        requestsFixture.placeTitleLevelPageRequest(instanceId, usersFixture.charlotte()))
+      .map(IndividualResource::getJson)
+      .map(json -> json.getString("itemId"))
+      .collect(Collectors.toList());
 
-    ItemResource itemToCheckOut = items.stream()
-      .filter(item -> !item.getId().toString().equals(request.getJson().getString("itemId")))
+    ItemResource nonPagedItem = items.stream()
+      .filter(not(item -> pagedItemIds.contains(item.getId().toString())))
       .findFirst()
-      .orElseThrow(() -> new AssertionError("Failed to find non-requested item"));
+      .orElseThrow(() -> new AssertionError("Failed to find non-paged item"));
 
-    checkOutFixture.checkOutByBarcode(itemToCheckOut, usersFixture.james());
+    checkOutFixture.checkOutByBarcode(nonPagedItem, usersFixture.james());
+  }
+
+  @Test
+  void cannotCheckoutItemWhenTitleLevelPageRequestExistsForSameItem() {
+    configurationsFixture.enableTlrFeature();
+
+    List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(3);
+    UUID instanceId = items.iterator().next().getInstanceId();
+
+    List<String> pagedItemIds = Stream.of(
+        requestsFixture.placeTitleLevelPageRequest(instanceId, usersFixture.steve()),
+        requestsFixture.placeTitleLevelPageRequest(instanceId, usersFixture.jessica()),
+        requestsFixture.placeTitleLevelPageRequest(instanceId, usersFixture.charlotte()))
+      .map(IndividualResource::getJson)
+      .map(json -> json.getString("itemId"))
+      .collect(Collectors.toList());
+
+    ItemResource lastPagedItem = items.stream()
+      .filter(item -> item.getId().toString().equals(pagedItemIds.get(2)))
+      .findFirst()
+      .orElseThrow(() -> new AssertionError("Failed to find paged item by ID"));
+
+    UserResource borrower = usersFixture.james();
+    Response response = checkOutFixture.attemptCheckOutByBarcode(lastPagedItem, borrower);
+
+    assertThat(response.getStatusCode(), is(422));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasUserBarcodeParameter(borrower),
+      hasMessage(String.format(
+        "The Long Way to a Small, Angry Planet (Barcode: %s) cannot be checked out to user " +
+          "Rodwell, James because it has been requested by another patron", lastPagedItem.getBarcode()))
+    )));
   }
 
   private LoanPolicyBuilder buildLoanPolicyWithFixedLoan(DueDateManagement strategy,
