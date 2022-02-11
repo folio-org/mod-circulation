@@ -183,12 +183,12 @@ class MoveRequestTests extends APITests {
     val charlotte = usersFixture.charlotte();
     val jessica = usersFixture.jessica();
 
-    val pageIlrForFirstItem =
-      requestsFixture.placeItemLevelPageRequest(firstItem, firstItem.getInstanceId(), james);
+    val pageIlrForFirstItem = requestsFixture.placeItemLevelPageRequest(firstItem,
+      firstItem.getInstanceId(), james);
     requestsFixture.placeItemLevelHoldShelfRequest(firstItem, charlotte, getZonedDateTime());
 
-    requestsFixture.move(
-      new MoveRequestBuilder(pageIlrForFirstItem.getId(), secondItem.getId(), RequestType.HOLD.value));
+    requestsFixture.move(new MoveRequestBuilder(pageIlrForFirstItem.getId(), secondItem.getId(),
+      RequestType.HOLD.value));
     assertThat(itemsClient.get(firstItem), hasItemStatus(PAGED));
 
     requestsFixture.placeItemLevelHoldShelfRequest(firstItem, jessica);
@@ -207,12 +207,11 @@ class MoveRequestTests extends APITests {
     val charlotte = usersFixture.charlotte();
 
     checkOutFixture.checkOutByBarcode(secondItem);
-    val pageIlr =
-      requestsFixture.placeItemLevelPageRequest(firstItem, firstItem.getInstanceId(), james);
+    val pageIlr = requestsFixture.placeItemLevelPageRequest(firstItem, firstItem.getInstanceId(),
+      james);
     requestsFixture.placeTitleLevelHoldShelfRequest(secondItem.getInstanceId(), charlotte);
 
-    requestsFixture.move(
-      new MoveRequestBuilder(pageIlr.getId(), secondItem.getId(), RequestType.HOLD.value));
+    requestsFixture.move(new MoveRequestBuilder(pageIlr.getId(), secondItem.getId(), RequestType.HOLD.value));
     assertThat(itemsClient.get(firstItem), hasItemStatus(AVAILABLE));
   }
 
