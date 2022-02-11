@@ -261,7 +261,7 @@ class MoveRequestTests extends APITests {
 
   @Test
   void canMoveAShelfHoldRequestToAnAvailableItem() {
-    val items = itemsFixture.createMultipleItemForTheSameInstanceWithItemAdditionalProperties(2,
+    val items = itemsFixture.createMultipleItemForTheSameInstance(2,
       List.of(itemsFixture.addCallNumberStringComponents("if"),
         itemsFixture.addCallNumberStringComponents("it")));
 
