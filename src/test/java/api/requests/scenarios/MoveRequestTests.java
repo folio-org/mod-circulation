@@ -177,46 +177,21 @@ class MoveRequestTests extends APITests {
     configurationsFixture.enableTlrFeature();
 
     val items = itemsFixture.createMultipleItemsForTheSameInstance(2);
-
     val firstItem = items.get(0);
     val secondItem = items.get(1);
-
-    val cd1 = servicePointsFixture.cd1();
-
     val james = usersFixture.james();
     val charlotte = usersFixture.charlotte();
     val jessica = usersFixture.jessica();
 
-    val pageIlrForFirstItem = requestsFixture.place(new RequestBuilder()
-      .page()
-      .withItemId(firstItem.getId())
-      .withHoldingsRecordId(firstItem.getHoldingsRecordId())
-      .withInstanceId(firstItem.getInstanceId())
-      .withRequestDate(getZonedDateTime())
-      .withPickupServicePointId(cd1.getId())
-      .withRequesterId(james.getId()));
-
-    requestsFixture.place(new RequestBuilder()
-      .hold()
-      .withItemId(firstItem.getId())
-      .withHoldingsRecordId(firstItem.getHoldingsRecordId())
-      .withInstanceId(firstItem.getInstanceId())
-      .withRequestDate(getZonedDateTime())
-      .withPickupServicePointId(cd1.getId())
-      .withRequesterId(charlotte.getId()));
+    val pageIlrForFirstItem =
+      requestsFixture.placeItemLevelPageRequest(firstItem, firstItem.getInstanceId(), james);
+    requestsFixture.placeItemLevelHoldShelfRequest(firstItem, charlotte, getZonedDateTime());
 
     requestsFixture.move(
       new MoveRequestBuilder(pageIlrForFirstItem.getId(), secondItem.getId(), RequestType.HOLD.value));
     assertThat(itemsClient.get(firstItem), hasItemStatus(PAGED));
 
-    requestsFixture.place(new RequestBuilder()
-      .hold()
-      .withItemId(firstItem.getId())
-      .withHoldingsRecordId(firstItem.getHoldingsRecordId())
-      .withInstanceId(firstItem.getInstanceId())
-      .withRequestDate(getZonedDateTime())
-      .withPickupServicePointId(cd1.getId())
-      .withRequesterId(jessica.getId()));
+    requestsFixture.placeItemLevelHoldShelfRequest(firstItem, jessica);
 
     assertThat(itemsClient.get(firstItem), hasItemStatus(PAGED));
   }
@@ -226,34 +201,15 @@ class MoveRequestTests extends APITests {
     configurationsFixture.enableTlrFeature();
 
     val items = itemsFixture.createMultipleItemsForTheSameInstance(2);
-
     val firstItem = items.get(0);
     val secondItem = items.get(1);
-
-    val cd1 = servicePointsFixture.cd1();
-
     val james = usersFixture.james();
     val charlotte = usersFixture.charlotte();
 
     checkOutFixture.checkOutByBarcode(secondItem);
-    val pageIlr = requestsFixture.place(new RequestBuilder()
-      .page()
-      .withItemId(firstItem.getId())
-      .withHoldingsRecordId(firstItem.getHoldingsRecordId())
-      .withInstanceId(firstItem.getInstanceId())
-      .withRequestDate(getZonedDateTime())
-      .withPickupServicePointId(cd1.getId())
-      .withRequesterId(james.getId()));
-
-    requestsFixture.place(new RequestBuilder()
-      .hold()
-      .titleRequestLevel()
-      .withNoItemId()
-      .withNoHoldingsRecordId()
-      .withInstanceId(secondItem.getInstanceId())
-      .withRequestDate(getZonedDateTime())
-      .withPickupServicePointId(cd1.getId())
-      .withRequesterId(charlotte.getId()));
+    val pageIlr =
+      requestsFixture.placeItemLevelPageRequest(firstItem, firstItem.getInstanceId(), james);
+    requestsFixture.placeTitleLevelHoldShelfRequest(secondItem.getInstanceId(), charlotte);
 
     requestsFixture.move(
       new MoveRequestBuilder(pageIlr.getId(), secondItem.getId(), RequestType.HOLD.value));
