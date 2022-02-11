@@ -344,12 +344,16 @@ public class ItemsFixture {
   }
 
   public List<ItemResource> createMultipleItemsForTheSameInstance(int size) {
-    return createMultipleItemForTheSameInstanceWithItemAdditionalProperties(
+    return createMultipleItemForTheSameInstanceWithItemAdditionalProperties(size,
       new ArrayList<>(Collections.nCopies(size, identity())));
   }
 
+  //New item is created for different additional properties
   public List<ItemResource> createMultipleItemForTheSameInstanceWithItemAdditionalProperties(
-    List<Function<ItemBuilder, ItemBuilder>> itemAdditionalProperties) {
+    int size, List<Function<ItemBuilder, ItemBuilder>> itemAdditionalProperties) {
+    if (itemAdditionalProperties.size() != size) {
+      throw new AssertionError("Number of item additional properties should be equal to the size param");
+    }
     UUID instanceId = UUID.randomUUID();
     InstanceBuilder sapInstanceBuilder = instanceBasedUponSmallAngryPlanet()
       .withId(instanceId);
