@@ -54,6 +54,7 @@ import api.support.builders.RequestBuilder;
 import api.support.fakes.FakePubSub;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
+import api.support.http.UserResource;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
@@ -169,6 +170,49 @@ class MoveRequestTests extends APITests {
     assertThat(itemsClient.get(itemCopyA).getJson().getJsonObject("status").getString("name"), is(ItemStatus.CHECKED_OUT.getValue()));
 
     assertThat(itemsClient.get(itemCopyB).getJson().getJsonObject("status").getString("name"), is(ItemStatus.PAGED.getValue()));
+  }
+
+  @Test
+  void itemShouldRemainPagedIfHoldCreatedAfterRequestHasBeenMovedToAnotherItem() {
+    configurationsFixture.enableTlrFeature();
+
+    val items = itemsFixture.createMultipleItemsForTheSameInstance(2);
+    val firstItem = items.get(0);
+    val secondItem = items.get(1);
+    val james = usersFixture.james();
+    val charlotte = usersFixture.charlotte();
+    val jessica = usersFixture.jessica();
+
+    val pageIlrForFirstItem = requestsFixture.placeItemLevelPageRequest(firstItem,
+      firstItem.getInstanceId(), james);
+    requestsFixture.placeItemLevelHoldShelfRequest(firstItem, charlotte, getZonedDateTime());
+
+    requestsFixture.move(new MoveRequestBuilder(pageIlrForFirstItem.getId(), secondItem.getId(),
+      RequestType.HOLD.value));
+    assertThat(itemsClient.get(firstItem), hasItemStatus(PAGED));
+
+    requestsFixture.placeItemLevelHoldShelfRequest(firstItem, jessica);
+
+    assertThat(itemsClient.get(firstItem), hasItemStatus(PAGED));
+  }
+
+  @Test
+  void whenRequestIsMovedItemShouldBecomeAvailableIfThereAreNoRequestsInTheQueueForThisItemIfTlrIsEnabled() {
+    configurationsFixture.enableTlrFeature();
+
+    val items = itemsFixture.createMultipleItemsForTheSameInstance(2);
+    val firstItem = items.get(0);
+    val secondItem = items.get(1);
+    val james = usersFixture.james();
+    val charlotte = usersFixture.charlotte();
+
+    checkOutFixture.checkOutByBarcode(secondItem);
+    val pageIlr = requestsFixture.placeItemLevelPageRequest(firstItem, firstItem.getInstanceId(),
+      james);
+    requestsFixture.placeTitleLevelHoldShelfRequest(secondItem.getInstanceId(), charlotte);
+
+    requestsFixture.move(new MoveRequestBuilder(pageIlr.getId(), secondItem.getId(), RequestType.HOLD.value));
+    assertThat(itemsClient.get(firstItem), hasItemStatus(AVAILABLE));
   }
 
   @Test
