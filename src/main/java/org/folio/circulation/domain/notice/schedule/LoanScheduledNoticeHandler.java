@@ -151,9 +151,7 @@ public class LoanScheduledNoticeHandler extends ScheduledNoticeHandler {
     if (noticeConfig.hasBeforeTiming() && isBeforeMillis(dueDate, systemTime)) {
       logMessages.add("Loan is overdue");
     }
-    if (isRecurringAfterNotice(notice) &&
-      loan.hasItemWithAnyStatus(DECLARED_LOST, ItemStatus.AGED_TO_LOST, CLAIMED_RETURNED)) {
-
+    if (loan.hasItemWithAnyStatus(DECLARED_LOST, ItemStatus.AGED_TO_LOST, CLAIMED_RETURNED)) {
       logMessages.add(String.format("Recurring overdue notice for item in status \"%s\"",
         loan.getItemStatus()));
     }
