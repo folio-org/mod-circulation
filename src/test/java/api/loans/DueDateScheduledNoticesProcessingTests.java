@@ -391,6 +391,20 @@ class DueDateScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
+  void testNoticeIsDeletedWhenItemIsClaimedReturned() {
+    generateLoanAndScheduledNotices(beforeNotice(false));
+
+    claimItemReturnedFixture.claimItemReturned(loanId);
+
+    DateTime beforeDueDateTime = dueDate.minusDays(BEFORE_PERIOD.timePeriod().getDays()).plusSeconds(1);
+    scheduledNoticeProcessingClient.runLoanNoticesProcessing(beforeDueDateTime);
+
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfScheduledNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+  }
+
+  @Test
   void testNoticesForNonExistentLoansDoNotBlockTheQueue() {
     generateLoanAndScheduledNotices();
 
@@ -549,34 +563,35 @@ class DueDateScheduledNoticesProcessingTests extends APITests {
 
   @Test
   void recurringAfterNoticeIsDiscardedWhenItemIsDeclaredLost() {
-    recurringAfterNoticeIsDiscardedWhenItemStatusIsWrong(
+    noticesAreDiscardedWhenItemStatusIsWrong(
       () -> declareLostFixtures.declareItemLost(loanId));
   }
 
   @Test
   void recurringAfterNoticeIsDiscardedWhenItemIsClaimedReturned() {
-    recurringAfterNoticeIsDiscardedWhenItemStatusIsWrong(
+    noticesAreDiscardedWhenItemStatusIsWrong(
       () -> claimItemReturnedFixture.claimItemReturned(loanId));
   }
 
   @Test
   void recurringAfterNoticeIsDiscardedWhenLoanIsAgedToLost() {
-    recurringAfterNoticeIsDiscardedWhenItemStatusIsWrong(ageToLostFixture::ageToLost);
+    noticesAreDiscardedWhenItemStatusIsWrong(ageToLostFixture::ageToLost);
   }
 
-  private void recurringAfterNoticeIsDiscardedWhenItemStatusIsWrong(
-    Runnable itemStatusChangingAction) {
-
+  private void noticesAreDiscardedWhenItemStatusIsWrong(Runnable itemStatusChangingAction) {
     generateLoanAndScheduledNotices(
       afterNotice(true),
-      afterNotice(false)
+      afterNotice(false),
+      beforeNotice(true),
+      beforeNotice(false),
+      uponAtNotice()
     );
 
-    verifyNumberOfScheduledNotices(2);
+    verifyNumberOfScheduledNotices(5);
 
     itemStatusChangingAction.run();
 
-    verifyNumberOfScheduledNotices(2);
+    verifyNumberOfScheduledNotices(5);
 
     var processingTime = dueDate
       .plus(AFTER_PERIOD.timePeriod())
@@ -586,11 +601,9 @@ class DueDateScheduledNoticesProcessingTests extends APITests {
     scheduledNoticeProcessingClient.runLoanNoticesProcessing(processingTime);
 
     verifyNumberOfScheduledNotices(0);
-    verifyNumberOfSentNotices(1);
-    verifyNumberOfPublishedEvents(NOTICE, 1);
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
-
-    checkSentNotices(AFTER_TEMPLATE_ID);
   }
 
   private void createNotices(int numberOfNotices) {
