@@ -692,8 +692,7 @@ class Text2DroolsTest {
   }
 
   private void expectException(String rulesText, Matcher<CirculationRulesException> matches) {
-    assertThat(
-      assertThrows(CirculationRulesException.class, () -> Text2Drools.convert(rulesText)),
+    assertThat(assertThrows(CirculationRulesException.class, () -> Text2Drools.convert(rulesText)),
       matches);
   }
 }
