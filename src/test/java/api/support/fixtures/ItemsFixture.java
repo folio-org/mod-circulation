@@ -358,7 +358,7 @@ public class ItemsFixture {
     InstanceBuilder sapInstanceBuilder = instanceBasedUponSmallAngryPlanet()
       .withId(instanceId);
 
-    return IntStream.range(0, itemAdditionalProperties.size())
+    return IntStream.range(0, size)
       .mapToObj(num -> basedUponSmallAngryPlanet(
         holdingsBuilder -> holdingsBuilder.forInstance(instanceId),
         instanceBuilder -> sapInstanceBuilder,
