@@ -103,10 +103,8 @@ public class CreateRequestService {
     RequestAndRelatedRecords records) {
 
     Request request = records.getRequest();
-    boolean tlrFeatureEnabled = request.getTlrSettingsConfiguration()
-      .isTitleLevelRequestsFeatureEnabled();
 
-    if (tlrFeatureEnabled && request.getRequestLevel() == TITLE) {
+    if (records.isTlrFeatureEnabled() && request.getRequestLevel() == TITLE) {
       if (errorHandler.hasAny(ATTEMPT_TO_CREATE_TLR_LINKED_TO_AN_ITEM)) {
         return ofAsync(() -> records);
       }
