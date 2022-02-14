@@ -2307,7 +2307,7 @@ class CheckOutByBarcodeTests extends APITests {
     configurationsFixture.enableTlrFeature();
 
     List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(4);
-    UUID instanceId = items.iterator().next().getInstanceId();
+    UUID instanceId = items.stream().findAny().orElseThrow().getInstanceId();
 
     List<String> pagedItemIds = Stream.of(
         requestsFixture.placeTitleLevelPageRequest(instanceId, usersFixture.steve()),
