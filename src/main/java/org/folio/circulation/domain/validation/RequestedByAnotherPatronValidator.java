@@ -41,6 +41,6 @@ public class RequestedByAnotherPatronValidator {
     Loan loan = loanAndRelatedRecords.getLoan();
 
     return succeeded(loanAndRelatedRecords.getRequestQueue()
-      .isRequestedByOtherPatron(loan.getUser(), loan.getItem()));
+      .isRequestedByAnotherPatron(loan.getUser(), loan.getItem()));
   }
 }
