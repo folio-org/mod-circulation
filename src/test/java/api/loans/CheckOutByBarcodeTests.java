@@ -93,10 +93,8 @@ import org.folio.circulation.domain.representations.logs.LogEventType;
 import org.folio.circulation.support.http.client.Response;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
-import org.junit.jupiter.params.provider.MethodSource;
 
 import api.support.APITests;
 import api.support.TlrFeatureStatus;
@@ -2328,54 +2326,49 @@ class CheckOutByBarcodeTests extends APITests {
   }
 
   @ParameterizedTest
-  @MethodSource("argumentsForCannotCheckoutItemWhenTitleLevelPageRequestExistsForSameItem")
-  void cannotCheckoutItemWhenTitleLevelPageRequestExistsForSameItem(List<String> requestLevels) {
+  @CsvSource({
+    "Item, Item",
+    "Item, Title",
+    "Title, Item",
+    "Title, Title"
+  })
+  void cannotCheckoutItemWhenTitleLevelPageRequestExistsForSameItem(
+    String firstRequestLevel, String secondRequestLevel) {
+
     configurationsFixture.enableTlrFeature();
 
-    UUID instanceId = UUID.randomUUID();
-    List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(
-      requestLevels.size(), instanceId);
+    List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
+    ItemResource randomItem = items.stream().findAny().orElseThrow();
 
-    List<String> pagedItemIds = Stream.of(
-        placeRequest(requestLevels.get(0), instanceId, items.get(0), usersFixture.steve()),
-        placeRequest(requestLevels.get(1), instanceId, items.get(1), usersFixture.jessica()),
-        placeRequest(requestLevels.get(2), instanceId, items.get(2), usersFixture.charlotte()))
-      .map(IndividualResource::getJson)
-      .map(json -> json.getString("itemId"))
-      .collect(Collectors.toList());
+    IndividualResource firstRequest = placeRequest(firstRequestLevel, randomItem, usersFixture.steve());
+    String requestedItemId = firstRequest.getJson().getString("itemId");
 
-    ItemResource lastPagedItem = items.stream()
-      .filter(item -> item.getId().toString().equals(pagedItemIds.get(2)))
-      .findFirst()
-      .orElseThrow(() -> new AssertionError("Failed to find paged item by ID"));
+    // If first request level is Title, the item for it is selected randomly among Available items
+    // of the instance. So for second request we have to find the other (Available) item.
+
+    ItemResource itemForSecondRequest = items.stream()
+      .filter(not(item -> item.getId().toString().equals(requestedItemId)))
+      .findAny()
+      .orElseThrow(() -> new AssertionError("Failed to find non-requested item"));
+
+    placeRequest(secondRequestLevel, itemForSecondRequest, usersFixture.jessica());
 
     UserResource borrower = usersFixture.james();
-    Response response = checkOutFixture.attemptCheckOutByBarcode(lastPagedItem, borrower);
+    Response response = checkOutFixture.attemptCheckOutByBarcode(itemForSecondRequest, borrower);
 
     assertThat(response.getStatusCode(), is(422));
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasUserBarcodeParameter(borrower),
       hasMessage(String.format(
         "The Long Way to a Small, Angry Planet (Barcode: %s) cannot be checked out to user " +
-          "Rodwell, James because it has been requested by another patron", lastPagedItem.getBarcode()))
+          "Rodwell, James because it has been requested by another patron", itemForSecondRequest.getBarcode()))
     )));
   }
 
-  private static Stream<Arguments> argumentsForCannotCheckoutItemWhenTitleLevelPageRequestExistsForSameItem() {
-    return Stream.of(
-      Arguments.of(List.of("Item", "Item", "Item")),
-      Arguments.of(List.of("Title", "Title", "Title")),
-      Arguments.of(List.of("Title", "Item", "Item")),
-      Arguments.of(List.of("Item", "Title", "Item")),
-      Arguments.of(List.of("Item", "Item", "Title")),
-      Arguments.of(List.of("Title", "Title", "Item")),
-      Arguments.of(List.of("Item", "Title", "Title")),
-      Arguments.of(List.of("Title", "Item", "Title"))
-    );
-  }
-
-  private IndividualResource placeRequest(String requestLevel, UUID instanceId, ItemResource item,
+  private IndividualResource placeRequest(String requestLevel, ItemResource item,
     IndividualResource requester) {
+
+    UUID instanceId = item.getInstanceId();
 
     if ("Item".equals(requestLevel)) {
       return requestsFixture.placeItemLevelPageRequest(item, instanceId, requester);
