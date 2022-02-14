@@ -93,8 +93,10 @@ import org.folio.circulation.domain.representations.logs.LogEventType;
 import org.folio.circulation.support.http.client.Response;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import api.support.APITests;
 import api.support.TlrFeatureStatus;
@@ -2211,32 +2213,6 @@ class CheckOutByBarcodeTests extends APITests {
       is(ZonedDateTime.of(MONDAY_DATE, LocalTime.MIDNIGHT.minusSeconds(1), UTC)));
   }
 
-  @Test
-  void cannotCheckoutWhenItemIsRequestedByTitleLevelRequestOfDifferentUser() {
-    configurationsFixture.enableTlrFeature();
-
-    ItemResource item = itemsFixture.basedUponNod();
-    UserResource borrower = usersFixture.steve();
-    UserResource requester = usersFixture.james();
-
-    requestsClient.create(new RequestBuilder()
-      .page()
-      .titleRequestLevel()
-      .withNoItemId()
-      .withNoHoldingsRecordId()
-      .withInstanceId(item.getInstanceId())
-      .withPickupServicePointId(servicePointsFixture.cd1().getId())
-      .withRequesterId(requester.getId()));
-
-    Response checkoutResponse = checkOutFixture.attemptCheckOutByBarcode(item, borrower);
-
-    assertThat(checkoutResponse.getStatusCode(), is(422));
-    assertThat(checkoutResponse.getJson(), hasErrorWith(allOf(
-      hasMessage("Nod (Barcode: 565578437802) cannot be checked out to user Jones, Steven" +
-        " because it has been requested by another patron"),
-      hasUserBarcodeParameter(borrower))));
-  }
-
   @ParameterizedTest
   @EnumSource(value = TlrFeatureStatus.class, names = {"DISABLED", "NOT_CONFIGURED"})
   void titleLevelRequestIsIgnoredWhenTlrFeatureIsNotEnabled(TlrFeatureStatus tlrFeatureStatus) {
@@ -2351,17 +2327,19 @@ class CheckOutByBarcodeTests extends APITests {
     checkOutFixture.checkOutByBarcode(nonPagedItem, usersFixture.james());
   }
 
-  @Test
-  void cannotCheckoutItemWhenTitleLevelPageRequestExistsForSameItem() {
+  @ParameterizedTest
+  @MethodSource("argumentsForCannotCheckoutItemWhenTitleLevelPageRequestExistsForSameItem")
+  void cannotCheckoutItemWhenTitleLevelPageRequestExistsForSameItem(List<String> requestLevels) {
     configurationsFixture.enableTlrFeature();
 
-    List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(3);
-    UUID instanceId = items.iterator().next().getInstanceId();
+    UUID instanceId = UUID.randomUUID();
+    List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(
+      requestLevels.size(), instanceId);
 
     List<String> pagedItemIds = Stream.of(
-        requestsFixture.placeTitleLevelPageRequest(instanceId, usersFixture.steve()),
-        requestsFixture.placeTitleLevelPageRequest(instanceId, usersFixture.jessica()),
-        requestsFixture.placeTitleLevelPageRequest(instanceId, usersFixture.charlotte()))
+        placeRequest(requestLevels.get(0), instanceId, items.get(0), usersFixture.steve()),
+        placeRequest(requestLevels.get(1), instanceId, items.get(1), usersFixture.jessica()),
+        placeRequest(requestLevels.get(2), instanceId, items.get(2), usersFixture.charlotte()))
       .map(IndividualResource::getJson)
       .map(json -> json.getString("itemId"))
       .collect(Collectors.toList());
@@ -2381,6 +2359,31 @@ class CheckOutByBarcodeTests extends APITests {
         "The Long Way to a Small, Angry Planet (Barcode: %s) cannot be checked out to user " +
           "Rodwell, James because it has been requested by another patron", lastPagedItem.getBarcode()))
     )));
+  }
+
+  private static Stream<Arguments> argumentsForCannotCheckoutItemWhenTitleLevelPageRequestExistsForSameItem() {
+    return Stream.of(
+      Arguments.of(List.of("Item", "Item", "Item")),
+      Arguments.of(List.of("Title", "Title", "Title")),
+      Arguments.of(List.of("Title", "Item", "Item")),
+      Arguments.of(List.of("Item", "Title", "Item")),
+      Arguments.of(List.of("Item", "Item", "Title")),
+      Arguments.of(List.of("Title", "Title", "Item")),
+      Arguments.of(List.of("Item", "Title", "Title")),
+      Arguments.of(List.of("Title", "Item", "Title"))
+    );
+  }
+
+  private IndividualResource placeRequest(String requestLevel, UUID instanceId, ItemResource item,
+    IndividualResource requester) {
+
+    if ("Item".equals(requestLevel)) {
+      return requestsFixture.placeItemLevelPageRequest(item, instanceId, requester);
+    } else if ("Title".equals(requestLevel)) {
+      return requestsFixture.placeTitleLevelPageRequest(instanceId, requester);
+    }
+
+    throw new AssertionError("Unknown request level: " + requestLevel);
   }
 
   private LoanPolicyBuilder buildLoanPolicyWithFixedLoan(DueDateManagement strategy,

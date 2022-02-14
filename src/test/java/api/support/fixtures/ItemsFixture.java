@@ -332,7 +332,10 @@ public class ItemsFixture {
   }
 
   public List<ItemResource> createMultipleItemsForTheSameInstance(int size) {
-    UUID instanceId = UUID.randomUUID();
+    return createMultipleItemsForTheSameInstance(size, UUID.randomUUID());
+  }
+
+  public List<ItemResource> createMultipleItemsForTheSameInstance(int size, UUID instanceId) {
     InstanceBuilder sapInstanceBuilder = instanceBasedUponSmallAngryPlanet()
       .withId(instanceId);
 
