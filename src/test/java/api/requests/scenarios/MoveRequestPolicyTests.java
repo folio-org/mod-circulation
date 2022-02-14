@@ -21,6 +21,7 @@ import static org.hamcrest.Matchers.not;
 
 import java.time.Clock;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import org.apache.commons.lang3.StringUtils;
@@ -42,6 +43,7 @@ import api.support.builders.NoticePolicyBuilder;
 import api.support.fakes.FakeModNotify;
 import api.support.fakes.FakePubSub;
 import api.support.http.IndividualResource;
+import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 
 /**
@@ -113,27 +115,29 @@ class MoveRequestPolicyTests extends APITests {
 
     setRules(rules);
 
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    IndividualResource interestingTimes = itemsFixture.basedUponInterestingTimes();
+    List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(
+      2);
+    IndividualResource itemToMoveTo = items.get(0);
+    IndividualResource itemToMoveFrom = items.get(1);
 
     IndividualResource james = usersFixture.james();
     IndividualResource jessica = usersFixture.jessica();
     IndividualResource charlotte = usersFixture.charlotte();
 
-    checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica);
+    checkOutFixture.checkOutByBarcode(itemToMoveTo, jessica);
 
-    checkOutFixture.checkOutByBarcode(interestingTimes, charlotte);
+    checkOutFixture.checkOutByBarcode(itemToMoveFrom, charlotte);
 
     IndividualResource requestByCharlotte = requestsFixture.placeItemLevelHoldShelfRequest(
-      smallAngryPlanet, charlotte, getZonedDateTime().minusHours(2), RequestType.RECALL.getValue());
+      itemToMoveTo, charlotte, getZonedDateTime().minusHours(2), RequestType.RECALL.getValue());
 
     IndividualResource requestByJames = requestsFixture.placeItemLevelHoldShelfRequest(
-      interestingTimes, james, getZonedDateTime().minusHours(1), RequestType.RECALL.getValue());
+      itemToMoveFrom, james, getZonedDateTime().minusHours(1), RequestType.RECALL.getValue());
 
-    // move james' recall request as a hold shelf request from smallAngryPlanet to interestingTimes
+    // move james' recall request as a hold shelf request from itemToMoveTo to itemToMoveFrom
     Response response = requestsFixture.attemptMove(new MoveRequestBuilder(
       requestByJames.getId(),
-      smallAngryPlanet.getId(),
+      itemToMoveTo.getId(),
       RequestType.HOLD.getValue()
     ));
 
@@ -145,55 +149,56 @@ class MoveRequestPolicyTests extends APITests {
     requestByCharlotte = requestsClient.get(requestByCharlotte);
     assertThat(requestByCharlotte.getJson().getString(REQUEST_TYPE), is(RequestType.RECALL.getValue()));
     assertThat(requestByCharlotte.getJson().getInteger("position"), is(1));
-    assertThat(requestByCharlotte.getJson().getString("itemId"), is(smallAngryPlanet.getId().toString()));
+    assertThat(requestByCharlotte.getJson().getString("itemId"), is(itemToMoveTo.getId().toString()));
 
     requestByJames = requestsClient.get(requestByJames);
     assertThat(requestByJames.getJson().getString(REQUEST_TYPE), is(RequestType.RECALL.getValue()));
     assertThat(requestByJames.getJson().getInteger("position"), is(1));
-    assertThat(requestByJames.getJson().getString("itemId"), is(interestingTimes.getId().toString()));
+    assertThat(requestByJames.getJson().getString("itemId"), is(itemToMoveFrom.getId().toString()));
 
     // check item queues are correct size
-    MultipleRecords<JsonObject> smallAngryPlanetQueue = requestsFixture.getQueueFor(smallAngryPlanet);
+    MultipleRecords<JsonObject> smallAngryPlanetQueue = requestsFixture.getQueueFor(itemToMoveTo);
     assertThat(smallAngryPlanetQueue.getTotalRecords(), is(1));
 
-    MultipleRecords<JsonObject> interestingTimesQueue = requestsFixture.getQueueFor(interestingTimes);
+    MultipleRecords<JsonObject> interestingTimesQueue = requestsFixture.getQueueFor(itemToMoveFrom);
     assertThat(interestingTimesQueue.getTotalRecords(), is(1));
   }
 
   @Test
   void moveRecallRequestWithoutExistingRecallsAndWithNoPolicyValuesChangesDueDateToSystemDate() {
-    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    final IndividualResource interestingTimes = itemsFixture.basedUponInterestingTimes();
+    List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
+    final IndividualResource itemToMoveTo = items.get(0);
+    final IndividualResource itemToMoveFrom = items.get(1);
     final IndividualResource steve = usersFixture.steve();
     final IndividualResource charlotte = usersFixture.charlotte();
     final IndividualResource jessica = usersFixture.jessica();
 
-    // steve checks out smallAngryPlanet
+    // steve checks out itemToMoveTo
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(
-      smallAngryPlanet, steve, getZonedDateTime());
+      itemToMoveTo, steve, getZonedDateTime());
 
     final String originalDueDate = loan.getJson().getString("dueDate");
 
-    // charlotte checks out interestingTimes
-    checkOutFixture.checkOutByBarcode(interestingTimes, charlotte);
+    // charlotte checks out itemToMoveFrom
+    checkOutFixture.checkOutByBarcode(itemToMoveFrom, charlotte);
 
-    // jessica places recall request on interestingTimes
+    // jessica places recall request on itemToMoveFrom
     IndividualResource requestByJessica = requestsFixture.placeItemLevelHoldShelfRequest(
-      interestingTimes, jessica, getZonedDateTime(), RequestType.RECALL.getValue());
+      itemToMoveFrom, jessica, getZonedDateTime(), RequestType.RECALL.getValue());
 
     // notice for the recall is expected
     verifyNumberOfSentNotices(1);
     verifyNumberOfPublishedEvents(NOTICE, 1);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
 
-    // move jessica's recall request from interestingTimes to smallAngryPlanet
+    // move jessica's recall request from itemToMoveFrom to itemToMoveTo
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
       requestByJessica.getId(),
-      smallAngryPlanet.getId(),
+      itemToMoveTo.getId(),
       RequestType.RECALL.getValue()));
 
     assertThat("Move request should have correct item id",
-      moveRequest.getJson().getString("itemId"), is(smallAngryPlanet.getId().toString()));
+      moveRequest.getJson().getString("itemId"), is(itemToMoveTo.getId().toString()));
 
     assertThat("Move request should have correct type",
       moveRequest.getJson().getString("requestType"), is(RequestType.RECALL.getValue()));
@@ -214,21 +219,22 @@ class MoveRequestPolicyTests extends APITests {
 
   @Test
   void moveRecallRequestWithExistingRecallsAndWithNoPolicyValuesChangesDueDateToSystemDate() {
-    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    final IndividualResource interestingTimes = itemsFixture.basedUponInterestingTimes();
+    List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
+    final IndividualResource itemToMoveTo = items.get(0);
+    final IndividualResource itemToMoveFrom = items.get(1);
     final IndividualResource steve = usersFixture.steve();
     final IndividualResource charlotte = usersFixture.charlotte();
     final IndividualResource jessica = usersFixture.jessica();
 
-    // steve checks out smallAngryPlanet
+    // steve checks out itemToMoveTo
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(
-      smallAngryPlanet, steve, getZonedDateTime());
+      itemToMoveTo, steve, getZonedDateTime());
 
     final String originalDueDate = loan.getJson().getString("dueDate");
 
-    // charlotte places recall request on smallAngryPlanet
+    // charlotte places recall request on itemToMoveTo
     requestsFixture.placeItemLevelHoldShelfRequest(
-      smallAngryPlanet, charlotte, getZonedDateTime().minusHours(1), RequestType.RECALL.getValue());
+      itemToMoveTo, charlotte, getZonedDateTime().minusHours(1), RequestType.RECALL.getValue());
 
     JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
 
@@ -239,12 +245,12 @@ class MoveRequestPolicyTests extends APITests {
     assertThat("due date is not the current date",
       storedLoan.getString("dueDate"), is(expectedDueDate));
 
-    // charlotte checks out interestingTimes
-    checkOutFixture.checkOutByBarcode(interestingTimes, charlotte);
+    // charlotte checks out itemToMoveFrom
+    checkOutFixture.checkOutByBarcode(itemToMoveFrom, charlotte);
 
-    // jessica places recall request on interestingTimes
+    // jessica places recall request on itemToMoveFrom
     IndividualResource requestByJessica = requestsFixture.placeItemLevelHoldShelfRequest(
-      interestingTimes, jessica, getZonedDateTime(), RequestType.RECALL.getValue());
+      itemToMoveFrom, jessica, getZonedDateTime(), RequestType.RECALL.getValue());
 
     // There should be 2 notices for each recall
     waitAtMost(1, SECONDS)
@@ -257,14 +263,14 @@ class MoveRequestPolicyTests extends APITests {
     verifyNumberOfPublishedEvents(NOTICE, 2);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
 
-    // move jessica's recall request from interestingTimes to smallAngryPlanet
+    // move jessica's recall request from itemToMoveFrom to itemToMoveTo
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
       requestByJessica.getId(),
-      smallAngryPlanet.getId(),
+      itemToMoveTo.getId(),
       RequestType.RECALL.getValue()));
 
     assertThat("Move request should have correct item id",
-      moveRequest.getJson().getString("itemId"), is(smallAngryPlanet.getId().toString()));
+      moveRequest.getJson().getString("itemId"), is(itemToMoveTo.getId().toString()));
 
     assertThat("Move request should have correct type",
       moveRequest.getJson().getString("requestType"), is(RequestType.RECALL.getValue()));
@@ -284,8 +290,9 @@ class MoveRequestPolicyTests extends APITests {
 
   @Test
   void moveRecallRequestWithoutExistingRecallsAndWithMGDAndRDValuesChangesDueDateToRD() {
-    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    final IndividualResource interestingTimes = itemsFixture.basedUponInterestingTimes();
+    List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
+    final IndividualResource itemToMoveTo = items.get(0);
+    final IndividualResource itemToMoveFrom = items.get(1);
     final IndividualResource steve = usersFixture.steve();
     final IndividualResource charlotte = usersFixture.charlotte();
     final IndividualResource jessica = usersFixture.jessica();
@@ -308,30 +315,30 @@ class MoveRequestPolicyTests extends APITests {
       lostItemFeePoliciesFixture.facultyStandard().getId());
 
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(
-      smallAngryPlanet, steve, getZonedDateTime());
+      itemToMoveTo, steve, getZonedDateTime());
 
     final String originalDueDate = loan.getJson().getString("dueDate");
 
-    // charlotte checks out interestingTimes
-    checkOutFixture.checkOutByBarcode(interestingTimes, charlotte);
+    // charlotte checks out itemToMoveFrom
+    checkOutFixture.checkOutByBarcode(itemToMoveFrom, charlotte);
 
-    // jessica places recall request on interestingTimes
+    // jessica places recall request on itemToMoveFrom
     IndividualResource requestByJessica = requestsFixture.placeItemLevelHoldShelfRequest(
-      interestingTimes, jessica, getZonedDateTime(), RequestType.RECALL.getValue());
+      itemToMoveFrom, jessica, getZonedDateTime(), RequestType.RECALL.getValue());
 
     // One notice for the recall is expected
     verifyNumberOfSentNotices(1);
     verifyNumberOfPublishedEvents(NOTICE, 1);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
 
-    // move jessica's recall request from interestingTimes to smallAngryPlanet
+    // move jessica's recall request from itemToMoveFrom to itemToMoveTo
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
       requestByJessica.getId(),
-      smallAngryPlanet.getId(),
+      itemToMoveTo.getId(),
       RequestType.RECALL.getValue()));
 
     assertThat("Move request should have correct item id",
-      moveRequest.getJson().getString("itemId"), is(smallAngryPlanet.getId().toString()));
+      moveRequest.getJson().getString("itemId"), is(itemToMoveTo.getId().toString()));
 
     assertThat("Move request should have correct type",
       moveRequest.getJson().getString("requestType"), is(RequestType.RECALL.getValue()));
@@ -355,8 +362,9 @@ class MoveRequestPolicyTests extends APITests {
 
   @Test
   void moveRecallRequestWithExistingRecallsAndWithMGDAndRDValuesChangesDueDateToRD() {
-    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    final IndividualResource interestingTimes = itemsFixture.basedUponInterestingTimes();
+    List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
+    final IndividualResource itemToMoveTo = items.get(0);
+    final IndividualResource itemToMoveFrom = items.get(1);
     final IndividualResource steve = usersFixture.steve();
     final IndividualResource charlotte = usersFixture.charlotte();
     final IndividualResource jessica = usersFixture.jessica();
@@ -379,13 +387,13 @@ class MoveRequestPolicyTests extends APITests {
       lostItemFeePoliciesFixture.facultyStandard().getId());
 
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(
-      smallAngryPlanet, steve, getZonedDateTime());
+      itemToMoveTo, steve, getZonedDateTime());
 
     final String originalDueDate = loan.getJson().getString("dueDate");
 
-    // charlotte places recall request on smallAngryPlanet
+    // charlotte places recall request on itemToMoveTo
     requestsFixture.placeItemLevelHoldShelfRequest(
-      smallAngryPlanet, charlotte, getZonedDateTime().minusHours(1), RequestType.RECALL.getValue());
+      itemToMoveTo, charlotte, getZonedDateTime().minusHours(1), RequestType.RECALL.getValue());
 
     JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
 
@@ -396,12 +404,12 @@ class MoveRequestPolicyTests extends APITests {
     assertThat("due date is not the recall due date (2 months)",
       storedLoan.getString("dueDate"), is(expectedDueDate));
 
-    // charlotte checks out interestingTimes
-    checkOutFixture.checkOutByBarcode(interestingTimes, charlotte);
+    // charlotte checks out itemToMoveFrom
+    checkOutFixture.checkOutByBarcode(itemToMoveFrom, charlotte);
 
-    // jessica places recall request on interestingTimes
+    // jessica places recall request on itemToMoveFrom
     IndividualResource requestByJessica = requestsFixture.placeItemLevelHoldShelfRequest(
-      interestingTimes, jessica, getZonedDateTime(), RequestType.RECALL.getValue());
+      itemToMoveFrom, jessica, getZonedDateTime(), RequestType.RECALL.getValue());
 
     // There should be 2 notices for each recall
     waitAtMost(1, SECONDS)
@@ -414,14 +422,14 @@ class MoveRequestPolicyTests extends APITests {
     verifyNumberOfPublishedEvents(NOTICE, 2);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
 
-    // move jessica's recall request from interestingTimes to smallAngryPlanet
+    // move jessica's recall request from itemToMoveFrom to itemToMoveTo
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
       requestByJessica.getId(),
-      smallAngryPlanet.getId(),
+      itemToMoveTo.getId(),
       RequestType.RECALL.getValue()));
 
     assertThat("Move request should have correct item id",
-      moveRequest.getJson().getString("itemId"), is(smallAngryPlanet.getId().toString()));
+      moveRequest.getJson().getString("itemId"), is(itemToMoveTo.getId().toString()));
 
     assertThat("Move request should have correct type",
       moveRequest.getJson().getString("requestType"), is(RequestType.RECALL.getValue()));

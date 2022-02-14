@@ -2414,8 +2414,9 @@ public class RequestsAPICreationTests extends APITests {
       lostItemFeePoliciesFixture.facultyStandard().getId());
 
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
-    IndividualResource itemToMoveTo = itemsFixture.basedUponSmallAngryPlanet();
-    IndividualResource itemToMoveFrom = itemsFixture.basedUponInterestingTimes();
+    List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
+    IndividualResource itemToMoveTo = items.get(0);
+    IndividualResource itemToMoveFrom = items.get(1);
     IndividualResource requester = usersFixture.rebecca();
     IndividualResource loanOwner = usersFixture.jessica();
 
