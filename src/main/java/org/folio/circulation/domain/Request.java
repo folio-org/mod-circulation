@@ -147,6 +147,10 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return StringUtils.equals(getUserId(), user.getId());
   }
 
+  boolean isFor(Item item) {
+    return StringUtils.equals(getItemId(), item.getItemId());
+  }
+
   public String getInstanceId() {
     return requestRepresentation.getString(INSTANCE_ID);
   }

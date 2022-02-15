@@ -6,6 +6,8 @@ import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Function;
@@ -60,14 +62,24 @@ public class ItemsFixture {
     contributorNameTypeRecordCreator.cleanUp();
   }
 
-  public ItemResource basedUponDunkirk() {
+  public ItemResource basedUponDunkirk(
+    Function<HoldingBuilder, HoldingBuilder> additionalHoldingsRecordProperties,
+    Function<InstanceBuilder, InstanceBuilder> additionalInstanceProperties,
+    Function<ItemBuilder, ItemBuilder> additionalItemProperties) {
 
-    return create(
-      InstanceExamples.basedUponDunkirk(booksInstanceTypeId(),
-        getPersonalContributorNameTypeId()),
+    return applyAdditionalProperties(
+      additionalHoldingsRecordProperties,
+      additionalInstanceProperties,
+      additionalItemProperties,
+      InstanceExamples.basedUponDunkirk(booksInstanceTypeId(), getPersonalContributorNameTypeId()),
       thirdFloorHoldings(),
       ItemExamples.basedUponDunkirk(materialTypesFixture.videoRecording().getId(),
-        loanTypesFixture.canCirculate().getId()));
+        loanTypesFixture.canCirculate().getId())
+    );
+  }
+
+  public ItemResource basedUponDunkirk() {
+    return basedUponDunkirk(identity(), identity(), identity());
   }
 
   public IndividualResource basedUponDunkirkWithCustomHoldingAndLocation(UUID holdingsId, UUID locationId) {
@@ -332,6 +344,16 @@ public class ItemsFixture {
   }
 
   public List<ItemResource> createMultipleItemsForTheSameInstance(int size) {
+    return createMultipleItemForTheSameInstance(size,
+      new ArrayList<>(Collections.nCopies(size, identity())));
+  }
+
+  //New item is created for different additional properties
+  public List<ItemResource> createMultipleItemForTheSameInstance(int size,
+    List<Function<ItemBuilder, ItemBuilder>> itemAdditionalProperties) {
+    if (itemAdditionalProperties.size() != size) {
+      throw new AssertionError("Number of item additional properties should be equal to the size param");
+    }
     UUID instanceId = UUID.randomUUID();
     InstanceBuilder sapInstanceBuilder = instanceBasedUponSmallAngryPlanet()
       .withId(instanceId);
@@ -340,7 +362,8 @@ public class ItemsFixture {
       .mapToObj(num -> basedUponSmallAngryPlanet(
         holdingsBuilder -> holdingsBuilder.forInstance(instanceId),
         instanceBuilder -> sapInstanceBuilder,
-        itemBuilder -> itemBuilder.withBarcode("0000" + num)))
+        itemBuilder -> itemAdditionalProperties.get(num)
+          .apply(itemBuilder.withBarcode("0000" + num))))
       .collect(Collectors.toList());
   }
 
