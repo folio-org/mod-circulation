@@ -2842,7 +2842,7 @@ public class RequestsAPICreationTests extends APITests {
 
     Response response = requestsClient.attemptCreate(new RequestBuilder()
       .page()
-      .fulfilToHoldShelf()
+      .withFulfilmentPreference("Hold Shelf")
       .withRequesterId(usersFixture.steve().getId())
       .withItemId(item.getId())
       .withPickupServicePointId(servicePointsFixture.cd1().getId())
@@ -2855,6 +2855,30 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Cannot create a request with no requestDate"),
       hasParameter("requestDate", null))));
+    var itemById = itemsFixture.getById(item.getId());
+    assertThat(itemById.getResponse().getJson().getJsonObject("status").getString("name"),
+      is(AVAILABLE.getValue()));
+  }
+
+  @Test
+  void pageRequestShouldNotBeCreatedIfFulfilmentPreferenceIsNotValid() {
+    var item = itemsFixture.basedUponSmallAngryPlanet();
+
+    Response response = requestsClient.attemptCreate(new RequestBuilder()
+      .page()
+      .withFulfilmentPreference("Hold shelf")
+      .withRequesterId(usersFixture.steve().getId())
+      .withItemId(item.getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
+      .withInstanceId(item.getInstanceId())
+      .itemRequestLevel()
+      .withHoldingsRecordId(item.getHoldingsRecordId())
+      .withRequestDate(ZonedDateTime.now()));
+
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("fulfilmentPreference must be one of the following: Hold Shelf, Delivery"),
+      hasParameter("fulfilmentPreference", "Hold shelf"))));
     var itemById = itemsFixture.getById(item.getId());
     assertThat(itemById.getResponse().getJson().getJsonObject("status").getString("name"),
       is(AVAILABLE.getValue()));

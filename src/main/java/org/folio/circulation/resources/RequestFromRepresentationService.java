@@ -3,6 +3,8 @@ package org.folio.circulation.resources;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static org.folio.circulation.domain.RequestFulfilmentPreference.DELIVERY;
+import static org.folio.circulation.domain.RequestFulfilmentPreference.HOLD_SHELF;
 import static org.folio.circulation.domain.RequestLevel.ITEM;
 import static org.folio.circulation.domain.RequestLevel.TITLE;
 import static org.folio.circulation.domain.representations.RequestProperties.INSTANCE_ID;
@@ -27,7 +29,6 @@ import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
-import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -85,6 +86,7 @@ class RequestFromRepresentationService {
     return initRequest(operation, representation)
       .thenApply(r -> r.next(this::validateStatus))
       .thenApply(r -> r.next(this::validateRequestLevel))
+      .thenApply(r -> r.next(this::validateFulfilmentPreference))
       // TODO: do we need to also check here that these IDs are valid UUIDs?
       .thenApply(this::refuseWhenNoInstanceId)
       .thenApply(this::refuseWhenNoItemId)
@@ -282,6 +284,18 @@ class RequestFromRepresentationService {
     }
 
     return succeeded(request);
+  }
+
+  private Result<Request> validateFulfilmentPreference(Request request) {
+    String fulfilmentPreferenceName = request.getFulfilmentPreferenceName();
+    if (fulfilmentPreferenceName != null && (fulfilmentPreferenceName.equals(HOLD_SHELF.getValue())
+      || fulfilmentPreferenceName.equals(DELIVERY.getValue()))) {
+
+      return succeeded(request);
+    }
+
+    return failedValidation("fulfilmentPreference must be one of the following: " +
+      "Hold Shelf, Delivery", "fulfilmentPreference", fulfilmentPreferenceName);
   }
 
   private Result<Request> refuseWhenNoInstanceId(Result<Request> result) {

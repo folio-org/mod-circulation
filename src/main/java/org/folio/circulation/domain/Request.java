@@ -191,7 +191,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return requestRepresentation.getString("proxyUserId");
   }
 
-  private String getFulfilmentPreferenceName() {
+  public String getFulfilmentPreferenceName() {
     return requestRepresentation.getString("fulfilmentPreference");
   }
 
