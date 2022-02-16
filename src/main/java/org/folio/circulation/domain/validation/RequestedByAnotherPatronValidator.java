@@ -37,10 +37,10 @@ public class RequestedByAnotherPatronValidator {
       item.getTitle(), item.getBarcode(), loan.getUser().getPersonalName()));
   }
 
-  private Result<Boolean> isRequestedByAnotherPatron(
-    LoanAndRelatedRecords loanAndRelatedRecords) {
+  private Result<Boolean> isRequestedByAnotherPatron(LoanAndRelatedRecords loanAndRelatedRecords) {
+    Loan loan = loanAndRelatedRecords.getLoan();
 
     return succeeded(loanAndRelatedRecords.getRequestQueue()
-      .isRequestedByOtherPatron(loanAndRelatedRecords.getLoan().getUser()));
+      .isRequestedByAnotherPatron(loan.getUser(), loan.getItem()));
   }
 }

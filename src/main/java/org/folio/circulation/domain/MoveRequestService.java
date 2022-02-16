@@ -47,6 +47,7 @@ public class MoveRequestService {
     return configurationRepository.lookupTlrSettings()
       .thenApply(r -> r.map(requestAndRelatedRecords::withTlrSettings))
       .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::findDestinationItem))
+      .thenApply(r -> r.next(RequestServiceUtility::refuseWhenMovedToDifferentInstance))
       .thenComposeAsync(r -> r.after(requestQueueRepository::get))
       .thenApply(r -> r.map(this::pagedRequestIfDestinationItemAvailable))
       .thenCompose(r -> r.after(this::validateUpdateRequest))
