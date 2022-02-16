@@ -5,6 +5,8 @@ import static org.folio.circulation.domain.ItemStatus.AWAITING_DELIVERY;
 import static org.folio.circulation.domain.ItemStatus.AWAITING_PICKUP;
 
 import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public enum RequestFulfilmentPreference {
   NONE(""),
@@ -12,6 +14,15 @@ public enum RequestFulfilmentPreference {
   DELIVERY("Delivery");
 
   private final String value;
+
+  private static final List<RequestFulfilmentPreference> ALLOWED_FULFILMENT_PREFERENCES =
+    Arrays.stream(values())
+      .filter(fulfilmentPreference -> fulfilmentPreference != NONE)
+      .collect(Collectors.toList());
+
+  private static final List<String> ALLOWED_VALUES = ALLOWED_FULFILMENT_PREFERENCES.stream()
+    .map(RequestFulfilmentPreference::getValue)
+    .collect(Collectors.toList());
 
   RequestFulfilmentPreference(String value) {
     this.value = value;
@@ -43,5 +54,13 @@ public enum RequestFulfilmentPreference {
 
   private boolean nameMatches(String value) {
     return equalsIgnoreCase(getValue(), value);
+  }
+
+  public static List<RequestFulfilmentPreference> allowedFulfilmentPreferences() {
+    return ALLOWED_FULFILMENT_PREFERENCES;
+  }
+
+  public static List<String> allowedValues() {
+    return ALLOWED_VALUES;
   }
 }
