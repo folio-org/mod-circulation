@@ -89,6 +89,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EmptySource;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import api.support.APITests;
@@ -2860,13 +2861,18 @@ public class RequestsAPICreationTests extends APITests {
       is(AVAILABLE.getValue()));
   }
 
-  @Test
-  void pageRequestShouldNotBeCreatedIfFulfilmentPreferenceIsNotValid() {
+  @ParameterizedTest
+  @NullSource
+  @ValueSource(strings = {
+    "Hold shelf",
+    "Hold Shelfffff"
+  })
+  void pageRequestShouldNotBeCreatedIfFulfilmentPreferenceIsNotValid(String fulfilmentPreference) {
     var item = itemsFixture.basedUponSmallAngryPlanet();
 
     Response response = requestsClient.attemptCreate(new RequestBuilder()
       .page()
-      .withFulfilmentPreference("Hold shelf")
+      .withFulfilmentPreference(fulfilmentPreference)
       .withRequesterId(usersFixture.steve().getId())
       .withItemId(item.getId())
       .withPickupServicePointId(servicePointsFixture.cd1().getId())
@@ -2878,7 +2884,7 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("fulfilmentPreference must be one of the following: Hold Shelf, Delivery"),
-      hasParameter("fulfilmentPreference", "Hold shelf"))));
+      hasParameter("fulfilmentPreference", fulfilmentPreference))));
     var itemById = itemsFixture.getById(item.getId());
     assertThat(itemById.getResponse().getJson().getJsonObject("status").getString("name"),
       is(AVAILABLE.getValue()));

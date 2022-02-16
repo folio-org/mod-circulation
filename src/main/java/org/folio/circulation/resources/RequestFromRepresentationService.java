@@ -1,10 +1,9 @@
 package org.folio.circulation.resources;
 
+import static java.lang.String.join;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
-import static org.folio.circulation.domain.RequestFulfilmentPreference.DELIVERY;
-import static org.folio.circulation.domain.RequestFulfilmentPreference.HOLD_SHELF;
 import static org.folio.circulation.domain.RequestLevel.ITEM;
 import static org.folio.circulation.domain.RequestLevel.TITLE;
 import static org.folio.circulation.domain.representations.RequestProperties.INSTANCE_ID;
@@ -43,6 +42,7 @@ import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
+import org.folio.circulation.domain.RequestFulfilmentPreference;
 import org.folio.circulation.domain.RequestLevel;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.User;
@@ -287,15 +287,13 @@ class RequestFromRepresentationService {
   }
 
   private Result<Request> validateFulfilmentPreference(Request request) {
-    String fulfilmentPreferenceName = request.getFulfilmentPreferenceName();
-    if (fulfilmentPreferenceName != null && (fulfilmentPreferenceName.equals(HOLD_SHELF.getValue())
-      || fulfilmentPreferenceName.equals(DELIVERY.getValue()))) {
-
-      return succeeded(request);
-    }
-
-    return failedValidation("fulfilmentPreference must be one of the following: " +
-      "Hold Shelf, Delivery", "fulfilmentPreference", fulfilmentPreferenceName);
+    return RequestFulfilmentPreference.allowedValues().stream()
+      .filter(value -> value.equals(request.getFulfilmentPreferenceName()))
+      .findFirst()
+      .map(value -> succeeded(request))
+      .orElseGet(() -> failedValidation("fulfilmentPreference must be one of the following: " +
+        join(", ", RequestFulfilmentPreference.allowedValues()), "fulfilmentPreference",
+        request.getFulfilmentPreferenceName()));
   }
 
   private Result<Request> refuseWhenNoInstanceId(Result<Request> result) {
