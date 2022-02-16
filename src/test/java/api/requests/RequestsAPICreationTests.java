@@ -2866,7 +2866,7 @@ public class RequestsAPICreationTests extends APITests {
   @NullSource
   @ValueSource(strings = {
     "Hold shelf",
-    "Hold Shelfffff"
+    "Invalid Value"
   })
   void pageRequestShouldNotBeCreatedIfFulfilmentPreferenceIsNotValid(String fulfilmentPreference) {
     var item = itemsFixture.basedUponSmallAngryPlanet();
