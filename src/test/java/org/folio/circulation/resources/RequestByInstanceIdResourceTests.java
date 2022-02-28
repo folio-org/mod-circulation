@@ -40,7 +40,7 @@ public class RequestByInstanceIdResourceTests {
     records.setSortedAvailableItems(items);
     records.setInstanceLevelRequest(requestByInstanceIdRequest);
 
-    final Result<LinkedList<JsonObject>> collectionResult = RequestByInstanceIdResource.instanceToItemRequests(records);
+    final Result<List<JsonObject>> collectionResult = RequestByInstanceIdResource.instanceToItemRequests(records);
     assertTrue(collectionResult.succeeded());
 
     Collection<JsonObject> requestRepresentations = collectionResult.value();

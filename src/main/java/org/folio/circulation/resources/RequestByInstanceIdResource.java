@@ -1,6 +1,11 @@
 package org.folio.circulation.resources;
 
+import static java.util.stream.Collectors.toList;
 import static org.folio.circulation.domain.InstanceRequestItemsComparer.sortRequestQueues;
+import static org.folio.circulation.domain.RequestFulfilmentPreference.HOLD_SHELF;
+import static org.folio.circulation.domain.RequestType.HOLD;
+import static org.folio.circulation.domain.RequestType.PAGE;
+import static org.folio.circulation.domain.RequestType.RECALL;
 import static org.folio.circulation.domain.representations.RequestProperties.ITEM_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.PROXY_USER_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUESTER_ID;
@@ -10,6 +15,7 @@ import static org.folio.circulation.support.ValidationErrorFailure.singleValidat
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 import static org.folio.circulation.support.results.Result.of;
+import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.lang.invoke.MethodHandles;
@@ -79,6 +85,8 @@ import io.vertx.ext.web.RoutingContext;
 
 public class RequestByInstanceIdResource extends Resource {
 
+  private static final List<RequestType> ORDERED_REQUEST_TYPES = List.of(HOLD, RECALL, PAGE);
+
   private final Logger log;
 
   public RequestByInstanceIdResource(HttpClient client) {
@@ -97,30 +105,58 @@ public class RequestByInstanceIdResource extends Resource {
   private void createInstanceLevelRequests(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context, client);
-
-    final ItemRepository itemRepository = new ItemRepository(clients, true, true, true);
-    final ItemByInstanceIdFinder finder = new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository);
-
-    final Result<RequestByInstanceIdRequest> requestByInstanceIdRequestResult =
-      RequestByInstanceIdRequest.from(routingContext.getBodyAsJson());
-
     final EventPublisher eventPublisher = new EventPublisher(routingContext);
 
-    requestByInstanceIdRequestResult
-      .map(InstanceRequestRelatedRecords::new)
-      .after(instanceRequest -> getPotentialItems(clients, finder, instanceRequest))
-      .thenApply( r -> r.next(RequestByInstanceIdResource::instanceToItemRequests))
-      .thenCompose( r -> r.after( requests -> placeRequests(requests, clients, eventPublisher)))
+    buildRequests(clients, routingContext.getBodyAsJson())
+      .thenCompose( r -> r.after(requests -> placeRequests(requests, clients, eventPublisher)))
       .thenApply(r -> r.map(RequestAndRelatedRecords::getRequest))
       .thenApply(r -> r.map(new RequestRepresentation()::extendedRepresentation))
       .thenApply(r -> r.map(JsonHttpResponse::created))
       .thenAccept(context::writeResultToHttpResponse)
-      .exceptionally( err -> {
-         String reason = "Error processing instance-level request";
-         log.error(reason, err);
-         ServerErrorResponse.internalError(routingContext.response(), reason);
-         return null;
+      .exceptionally(err -> {
+        String reason = "Error processing instance-level request";
+        log.error(reason, err);
+        ServerErrorResponse.internalError(routingContext.response(), reason);
+
+        return null;
       });
+  }
+
+  private CompletableFuture<Result<List<JsonObject>>> buildRequests(Clients clients,
+    JsonObject requestRepresentation) {
+
+    return new ConfigurationRepository(clients).lookupTlrSettings()
+      .thenCompose(r -> r.after(tlrConfig -> tlrConfig.isTitleLevelRequestsFeatureEnabled()
+        ? buildTitleLevelRequests(requestRepresentation)
+        : buildItemLevelRequests(requestRepresentation, clients)
+      ));
+  }
+
+  private CompletableFuture<Result<List<JsonObject>>> buildTitleLevelRequests(
+    JsonObject requestRepresentation) {
+
+    return ofAsync(() -> ORDERED_REQUEST_TYPES.stream()
+      .map(type -> requestRepresentation.copy()
+        .put("requestType", type.getValue())
+        .put("fulfilmentPreference", HOLD_SHELF.getValue()))
+      .collect(toList())
+    );
+  }
+
+  private CompletableFuture<Result<List<JsonObject>>> buildItemLevelRequests(
+    JsonObject requestRepresentation, Clients clients) {
+
+    final Result<RequestByInstanceIdRequest> requestByInstanceIdRequestResult =
+      RequestByInstanceIdRequest.from(requestRepresentation);
+
+    final ItemRepository itemRepository = new ItemRepository(clients, true, true, true);
+
+    final ItemByInstanceIdFinder finder = new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository);
+
+    return requestByInstanceIdRequestResult
+      .map(InstanceRequestRelatedRecords::new)
+      .after(instanceRequest -> getPotentialItems(clients, finder, instanceRequest))
+      .thenApply( r -> r.next(RequestByInstanceIdResource::instanceToItemRequests));
   }
 
   private CompletableFuture<Result<InstanceRequestRelatedRecords>> getPotentialItems(
@@ -317,7 +353,7 @@ public class RequestByInstanceIdResource extends Resource {
     });
   }
 
-  static Result<LinkedList<JsonObject>> instanceToItemRequests(
+  static Result<List<JsonObject>> instanceToItemRequests(
     InstanceRequestRelatedRecords requestRecords) {
 
     final RequestByInstanceIdRequest requestByInstanceIdRequest = requestRecords.getInstanceLevelRequest();
@@ -326,35 +362,31 @@ public class RequestByInstanceIdResource extends Resource {
     if (combinedItems == null || combinedItems.isEmpty()) {
       return failedValidation("Cannot create request objects when items list is null or empty", "items", "null");    }
 
-    RequestType[] types = RequestType.values();
     LinkedList<JsonObject> requests = new LinkedList<>();
 
     final String defaultFulfilmentPreference = "Hold Shelf";
 
-    for (Item item: combinedItems) {
-      for (RequestType reqType : types) {
-        if (reqType != RequestType.NONE) {
+    for (Item item : combinedItems) {
+      for (RequestType requestType : ORDERED_REQUEST_TYPES) {
+        JsonObject requestBody = new JsonObject();
 
-          JsonObject requestBody = new JsonObject();
-
-          write(requestBody, ITEM_ID, item.getItemId());
-          write(requestBody, "requestDate",
-            requestByInstanceIdRequest.getRequestDate());
-          write(requestBody, REQUESTER_ID, requestByInstanceIdRequest.getRequesterId().toString());
-          write(requestBody, "pickupServicePointId",
-            requestByInstanceIdRequest.getPickupServicePointId().toString());
-          write(requestBody, "fulfilmentPreference", defaultFulfilmentPreference);
-          write(requestBody, "requestType", reqType.getValue());
-          if (requestByInstanceIdRequest.getRequestExpirationDate() != null) {
-            write(requestBody, "requestExpirationDate",
-              requestByInstanceIdRequest.getRequestExpirationDate());
-          }
-          write(requestBody, "patronComments", requestByInstanceIdRequest.getPatronComments());
-          write(requestBody, "instanceId", requestByInstanceIdRequest.getInstanceId());
-          write(requestBody, "holdingsRecordId", item.getHoldingsRecordId());
-          write(requestBody, "requestLevel", requestByInstanceIdRequest.getRequestLevel());
-          requests.add(requestBody);
+        write(requestBody, ITEM_ID, item.getItemId());
+        write(requestBody, "requestDate",
+          requestByInstanceIdRequest.getRequestDate());
+        write(requestBody, REQUESTER_ID, requestByInstanceIdRequest.getRequesterId().toString());
+        write(requestBody, "pickupServicePointId",
+          requestByInstanceIdRequest.getPickupServicePointId().toString());
+        write(requestBody, "fulfilmentPreference", defaultFulfilmentPreference);
+        write(requestBody, "requestType", requestType.getValue());
+        if (requestByInstanceIdRequest.getRequestExpirationDate() != null) {
+          write(requestBody, "requestExpirationDate",
+            requestByInstanceIdRequest.getRequestExpirationDate());
         }
+        write(requestBody, "patronComments", requestByInstanceIdRequest.getPatronComments());
+        write(requestBody, "instanceId", requestByInstanceIdRequest.getInstanceId());
+        write(requestBody, "holdingsRecordId", item.getHoldingsRecordId());
+        write(requestBody, "requestLevel", requestByInstanceIdRequest.getRequestLevel());
+        requests.add(requestBody);
       }
     }
     return succeeded(requests);
