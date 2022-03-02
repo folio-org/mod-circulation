@@ -428,15 +428,10 @@ public class Item {
       loanType);
   }
 
-  public Item withLastCheckIn(LastCheckIn lastCheckIn) {
+  public Item withLastCheckIn(@NonNull LastCheckIn lastCheckIn) {
     final var changedItemRepresentation = itemRepresentation.copy();
 
-    if (lastCheckIn == null) {
-      itemRepresentation.remove(LAST_CHECK_IN);
-    }
-    else {
-      write(changedItemRepresentation, LAST_CHECK_IN, lastCheckIn.toJson());
-    }
+    write(changedItemRepresentation, LAST_CHECK_IN, lastCheckIn.toJson());
 
     return new Item(
       changedItemRepresentation,
