@@ -5,13 +5,17 @@ import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
 import java.util.concurrent.CompletableFuture;
 
+import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
+import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
 
 public class TitleLevelRequestScheduledNoticeHandler extends RequestScheduledNoticeHandler {
 
-  public TitleLevelRequestScheduledNoticeHandler(Clients clients) {
-    super(clients);
+  public TitleLevelRequestScheduledNoticeHandler(Clients clients,
+    RequestRepository requestRepository, LoanRepository loanRepository) {
+
+    super(clients, loanRepository, requestRepository);
   }
 
   @Override
