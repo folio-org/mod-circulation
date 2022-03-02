@@ -429,7 +429,7 @@ public class Item {
   }
 
   public Item withLastCheckIn(LastCheckIn lastCheckIn) {
-    final var changedItemRepresentation= itemRepresentation.copy();
+    final var changedItemRepresentation = itemRepresentation.copy();
 
     if (lastCheckIn == null) {
       itemRepresentation.remove(LAST_CHECK_IN);
