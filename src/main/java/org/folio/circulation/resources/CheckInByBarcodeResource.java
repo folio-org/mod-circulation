@@ -50,6 +50,8 @@ public class CheckInByBarcodeResource extends Resource {
     final var userRepository = new UserRepository(clients);
     final var itemRepository = new ItemRepository(clients);
     final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
+    final var requestRepository = RequestRepository.using(clients,
+      itemRepository, userRepository, loanRepository);
 
     final Result<CheckInByBarcodeRequest> checkInRequestResult
       = CheckInByBarcodeRequest.from(routingContext.getBodyAsJson());
@@ -58,11 +60,8 @@ public class CheckInByBarcodeResource extends Resource {
 
     final var checkInValidators = new CheckInValidators(this::errorWhenInIncorrectStatus);
     final CheckInProcessAdapter processAdapter = CheckInProcessAdapter.newInstance(clients,
-      itemRepository, userRepository,
-      loanRepository, RequestRepository.using(clients,
-        itemRepository, userRepository, loanRepository), new RequestQueueRepository(
-        RequestRepository.using(clients,
-            itemRepository, userRepository, loanRepository)));
+      itemRepository, userRepository, loanRepository, requestRepository,
+      new RequestQueueRepository(requestRepository));
 
     final RequestScheduledNoticeService requestScheduledNoticeService =
       RequestScheduledNoticeService.using(clients);
