@@ -119,7 +119,7 @@ public class RequestByInstanceIdResource extends Resource {
       .thenApply( r -> r.next(RequestByInstanceIdResource::instanceToItemRequests))
       .thenCompose( r -> r.after(requests -> placeRequests(requests, clients, eventPublisher,
         itemRepository, loanRepository, requestRepository, requestQueueRepository,
-        new UserRepository(clients))))
+        userRepository)))
       .thenApply(r -> r.map(RequestAndRelatedRecords::getRequest))
       .thenApply(r -> r.map(new RequestRepresentation()::extendedRepresentation))
       .thenApply(r -> r.map(JsonHttpResponse::created))

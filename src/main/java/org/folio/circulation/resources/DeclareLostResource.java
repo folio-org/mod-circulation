@@ -73,13 +73,11 @@ public class DeclareLostResource extends Resource {
     Clients clients, WebContext context) {
 
     final var itemRepository = new ItemRepository(clients);
-    final UserRepository userRepository = new UserRepository(clients);
-    final var loanRepository = new LoanRepository(clients, itemRepository,
-      new UserRepository(clients));
+    final var userRepository = new UserRepository(clients);
+    final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
     final var storeLoanAndItem = new StoreLoanAndItem(loanRepository, itemRepository);
     final var lostItemFeeService = new LostItemFeeChargingService(clients, storeLoanAndItem,
-      new LostItemFeeRefundService(clients,
-        itemRepository, userRepository, loanRepository));
+      new LostItemFeeRefundService(clients, itemRepository, userRepository, loanRepository));
 
     return loanRepository.getById(request.getLoanId())
       .thenApply(LoanValidator::refuseWhenLoanIsClosed)
