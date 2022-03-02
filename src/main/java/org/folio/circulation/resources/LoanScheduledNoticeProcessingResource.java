@@ -11,8 +11,9 @@ import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.notice.schedule.LoanScheduledNoticeHandler;
 import org.folio.circulation.domain.notice.schedule.ScheduledNotice;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
-import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
+import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
+import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CqlSortBy;
 import org.folio.circulation.support.http.client.PageLimit;
@@ -40,11 +41,12 @@ public class LoanScheduledNoticeProcessingResource extends ScheduledNoticeProces
 
   @Override
   protected CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> handleNotices(
-    Clients clients, ItemRepository itemRepository,
+    Clients clients,
+    RequestRepository requestRepository,
+    LoanRepository loanRepository,
     MultipleRecords<ScheduledNotice> noticesResult) {
 
-    return new LoanScheduledNoticeHandler(clients, itemRepository,
-        ClockUtil.getZonedDateTime())
+    return new LoanScheduledNoticeHandler(clients, loanRepository, ClockUtil.getZonedDateTime())
       .handleNotices(noticesResult.getRecords())
       .thenApply(mapResult(v -> noticesResult));
   }

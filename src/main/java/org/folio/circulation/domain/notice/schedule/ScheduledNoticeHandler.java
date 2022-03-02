@@ -22,11 +22,9 @@ import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.notice.ScheduledPatronNoticeService;
 import org.folio.circulation.domain.representations.logs.NoticeLogContext;
 import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
-import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.notices.PatronNoticePolicyRepository;
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
-import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.rules.CirculationRuleMatch;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
@@ -53,11 +51,9 @@ public abstract class ScheduledNoticeHandler {
   protected final ScheduledPatronNoticeService patronNoticeService;
   protected final EventPublisher eventPublisher;
 
-  protected ScheduledNoticeHandler(Clients clients, ItemRepository itemRepository) {
-    final var userRepository = new UserRepository(clients);
-
+  protected ScheduledNoticeHandler(Clients clients, LoanRepository loanRepository) {
     this.scheduledNoticesRepository = ScheduledNoticesRepository.using(clients);
-    this.loanRepository = new LoanRepository(clients, itemRepository, userRepository);
+    this.loanRepository = loanRepository;
     this.accountRepository = new AccountRepository(clients);
     this.patronNoticePolicyRepository = new PatronNoticePolicyRepository(clients);
     this.templateNoticesClient = clients.noticeTemplatesClient();

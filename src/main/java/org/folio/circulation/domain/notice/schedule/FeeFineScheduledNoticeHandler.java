@@ -15,7 +15,7 @@ import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.domain.representations.logs.NoticeLogContext;
 import org.folio.circulation.domain.representations.logs.NoticeLogContextItem;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineActionRepository;
-import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
+import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
 
@@ -24,8 +24,8 @@ import io.vertx.core.json.JsonObject;
 public class FeeFineScheduledNoticeHandler extends ScheduledNoticeHandler {
   private final FeeFineActionRepository actionRepository;
 
-  public FeeFineScheduledNoticeHandler(Clients clients, ItemRepository itemRepository) {
-    super(clients, itemRepository);
+  public FeeFineScheduledNoticeHandler(Clients clients, LoanRepository loanRepository) {
+    super(clients, loanRepository);
     this.actionRepository = new FeeFineActionRepository(clients);
   }
 

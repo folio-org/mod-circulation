@@ -16,10 +16,8 @@ import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.notice.NoticeTiming;
 import org.folio.circulation.domain.representations.logs.NoticeLogContext;
 import org.folio.circulation.domain.representations.logs.NoticeLogContextItem;
-import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
-import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.rules.CirculationRuleMatch;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
@@ -30,14 +28,11 @@ import io.vertx.core.json.JsonObject;
 public abstract class RequestScheduledNoticeHandler extends ScheduledNoticeHandler {
   protected final RequestRepository requestRepository;
 
-  public RequestScheduledNoticeHandler(Clients clients, ItemRepository itemRepository) {
-    super(clients, itemRepository);
-    final var userRepository = new UserRepository(clients);
-    final var loanRepository = new LoanRepository(clients, itemRepository,
-      userRepository);
+  public RequestScheduledNoticeHandler(Clients clients,
+    LoanRepository loanRepository, RequestRepository requestRepository) {
 
-    this.requestRepository = RequestRepository.using(clients,
-      itemRepository, userRepository, loanRepository);
+    super(clients, loanRepository);
+    this.requestRepository = requestRepository;
   }
 
   @Override

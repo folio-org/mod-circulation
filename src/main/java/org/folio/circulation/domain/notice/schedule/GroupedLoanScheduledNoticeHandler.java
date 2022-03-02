@@ -21,10 +21,9 @@ import org.folio.circulation.domain.notice.ScheduledPatronNoticeService;
 import org.folio.circulation.domain.notice.schedule.ScheduledNoticeHandler.ScheduledNoticeContext;
 import org.folio.circulation.domain.representations.logs.NoticeLogContext;
 import org.folio.circulation.domain.representations.logs.NoticeLogContextItem;
-import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
+import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.HttpFailure;
-import org.folio.circulation.support.RecordNotFoundFailure;
 import org.folio.circulation.support.results.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,9 +34,11 @@ public class GroupedLoanScheduledNoticeHandler {
   private final LoanScheduledNoticeHandler loanScheduledNoticeHandler;
   private final ScheduledPatronNoticeService patronNoticeService;
 
-  public GroupedLoanScheduledNoticeHandler(Clients clients, ZonedDateTime systemTime) {
+  public GroupedLoanScheduledNoticeHandler(Clients clients,
+    LoanRepository loanRepository, ZonedDateTime systemTime) {
+
     this.loanScheduledNoticeHandler = new LoanScheduledNoticeHandler(clients,
-      new ItemRepository(clients), systemTime);
+      loanRepository, systemTime);
 
     this.patronNoticeService = new ScheduledPatronNoticeService(clients);
   }
