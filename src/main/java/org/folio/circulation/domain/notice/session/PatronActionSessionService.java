@@ -56,9 +56,10 @@ public class PatronActionSessionService {
   private final ImmediatePatronNoticeService patronNoticeService;
   protected final EventPublisher eventPublisher;
 
-  public static PatronActionSessionService using(Clients clients) {
-    return new PatronActionSessionService(
-      PatronActionSessionRepository.using(clients),
+  public static PatronActionSessionService using(Clients clients,
+    PatronActionSessionRepository patronActionSessionRepository) {
+
+    return new PatronActionSessionService(patronActionSessionRepository,
       new ImmediatePatronNoticeService(clients, new LoanNoticeContextCombiner()),
       new EventPublisher(clients.pubSubPublishingService()));
   }

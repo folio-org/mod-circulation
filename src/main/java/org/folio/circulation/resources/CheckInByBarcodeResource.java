@@ -6,13 +6,17 @@ import static org.folio.circulation.support.ValidationErrorFailure.singleValidat
 
 import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.Item;
-import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.notice.schedule.RequestScheduledNoticeService;
 import org.folio.circulation.domain.notice.session.PatronActionSessionService;
 import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
 import org.folio.circulation.domain.representations.CheckInByBarcodeResponse;
 import org.folio.circulation.domain.validation.CheckInValidators;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
+import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
+import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
+import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
+import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
+import org.folio.circulation.infrastructure.storage.sessions.PatronActionSessionRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
@@ -43,21 +47,28 @@ public class CheckInByBarcodeResource extends Resource {
 
     final Clients clients = Clients.create(context, client);
 
+    final var userRepository = new UserRepository(clients);
+    final var itemRepository = new ItemRepository(clients);
+    final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
+    final var requestRepository = RequestRepository.using(clients,
+      itemRepository, userRepository, loanRepository);
+
     final Result<CheckInByBarcodeRequest> checkInRequestResult
       = CheckInByBarcodeRequest.from(routingContext.getBodyAsJson());
 
     final EventPublisher eventPublisher = new EventPublisher(routingContext);
 
     final var checkInValidators = new CheckInValidators(this::errorWhenInIncorrectStatus);
-    final CheckInProcessAdapter processAdapter = CheckInProcessAdapter.newInstance(clients);
+    final CheckInProcessAdapter processAdapter = CheckInProcessAdapter.newInstance(clients,
+      itemRepository, userRepository, loanRepository, requestRepository,
+      new RequestQueueRepository(requestRepository));
 
     final RequestScheduledNoticeService requestScheduledNoticeService =
       RequestScheduledNoticeService.using(clients);
 
     final PatronActionSessionService patronActionSessionService =
-      PatronActionSessionService.using(clients);
-
-    final UserRepository userRepository = new UserRepository(clients);
+      PatronActionSessionService.using(clients,
+        PatronActionSessionRepository.using(clients, loanRepository, userRepository));
 
     final RequestNoticeSender requestNoticeSender = RequestNoticeSender.using(clients);
 

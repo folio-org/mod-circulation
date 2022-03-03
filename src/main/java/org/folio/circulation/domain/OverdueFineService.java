@@ -22,17 +22,14 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.folio.circulation.domain.policy.OverdueFineCalculationParameters;
 import org.folio.circulation.domain.policy.OverdueFineInterval;
 import org.folio.circulation.domain.policy.OverdueFinePolicy;
-import org.folio.circulation.infrastructure.storage.CalendarRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineOwnerRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
-import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
 import org.folio.circulation.infrastructure.storage.loans.OverdueFinePolicyRepository;
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.services.FeeFineFacade;
 import org.folio.circulation.services.support.CreateAccountCommand;
-import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.utils.ClockUtil;
 
@@ -41,26 +38,13 @@ import lombok.With;
 
 @AllArgsConstructor
 public class OverdueFineService {
-  private final Repos repos;
+  private final OverdueFinePolicyRepository overdueFinePolicyRepository;
+  private final ItemRepository itemRepository;
+  private final FeeFineOwnerRepository feeFineOwnerRepository;
+  private final FeeFineRepository feeFineRepository;
+  private final ScheduledNoticesRepository scheduledNoticesRepository;
   private final OverduePeriodCalculatorService overduePeriodCalculatorService;
   private final FeeFineFacade feeFineFacade;
-
-  public static OverdueFineService using(Clients clients) {
-    return new OverdueFineService(clients);
-  }
-
-  private OverdueFineService(Clients clients) {
-    this(
-      new Repos(new OverdueFinePolicyRepository(clients),
-        new ItemRepository(clients, true, false, false),
-        new FeeFineOwnerRepository(clients),
-        new FeeFineRepository(clients),
-        ScheduledNoticesRepository.using(clients)),
-      new OverduePeriodCalculatorService(new CalendarRepository(clients),
-        new LoanPolicyRepository(clients)),
-      new FeeFineFacade(clients)
-    );
-  }
 
   public CompletableFuture<Result<RenewalContext>> createOverdueFineIfNecessary(
     RenewalContext context) {
@@ -134,7 +118,7 @@ public class OverdueFineService {
   private CompletableFuture<Result<FeeFineAction>> createOverdueFineIfNecessary(Loan loan,
     Scenario scenario, String loggedInUserId) {
 
-    return repos.overdueFinePolicyRepository.findOverdueFinePolicyForLoan(succeeded(loan))
+    return overdueFinePolicyRepository.findOverdueFinePolicyForLoan(succeeded(loan))
     .thenCompose(r -> r.after(l -> scenario.shouldCreateFine(l.getOverdueFinePolicy())
         ? createOverdueFine(l, loggedInUserId)
         : completedFuture(succeeded(null))));
@@ -190,7 +174,7 @@ public class OverdueFineService {
       return completedFuture(succeeded(params));
     }
 
-    return repos.itemRepository.fetchItemRelatedRecords(succeeded(params.loan.getItem()))
+    return itemRepository.fetchItemRelatedRecords(succeeded(params.loan.getItem()))
       .thenApply(mapResult(params::withItem));
   }
 
@@ -201,7 +185,7 @@ public class OverdueFineService {
       .map(Item::getLocation)
       .map(Location::getPrimaryServicePointId)
       .map(UUID::toString)
-      .map(id -> repos.feeFineOwnerRepository.findOwnerForServicePoint(id)
+      .map(id -> feeFineOwnerRepository.findOwnerForServicePoint(id)
         .thenApply(mapResult(params::withFeeFineOwner)))
       .orElse(completedFuture(succeeded(params)));
   }
@@ -209,7 +193,7 @@ public class OverdueFineService {
   private CompletableFuture<Result<CalculationParameters>> lookupFeeFine(
     CalculationParameters params) {
 
-    return repos.feeFineRepository.getFeeFine(FeeFine.OVERDUE_FINE_TYPE, true)
+    return feeFineRepository.getFeeFine(FeeFine.OVERDUE_FINE_TYPE, true)
       .thenApply(mapResult(params::withFeeFine));
   }
 
@@ -225,7 +209,7 @@ public class OverdueFineService {
       .thenCompose(r -> r.after(this::lookupItemRelatedRecords))
       .thenCompose(r -> r.after(this::lookupFeeFineOwner))
       .thenCompose(r -> r.after(this::createAccount))
-      .thenCompose(r -> r.after(feeFineAction -> repos.scheduledNoticesRepository
+      .thenCompose(r -> r.after(feeFineAction -> scheduledNoticesRepository
           .deleteOverdueNotices(loan.getId())
           .thenApply(rs -> r)));
   }
@@ -288,14 +272,5 @@ public class OverdueFineService {
     private boolean shouldCreateFine(OverdueFinePolicy overdueFinePolicy) {
       return shouldCreateFine.test(overdueFinePolicy);
     }
-  }
-
-  @AllArgsConstructor
-  public static class Repos {
-    private final OverdueFinePolicyRepository overdueFinePolicyRepository;
-    private final ItemRepository itemRepository;
-    private final FeeFineOwnerRepository feeFineOwnerRepository;
-    private final FeeFineRepository feeFineRepository;
-    private final ScheduledNoticesRepository scheduledNoticesRepository;
   }
 }

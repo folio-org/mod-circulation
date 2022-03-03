@@ -12,9 +12,12 @@ import static org.folio.circulation.domain.ItemStatus.PAGED;
 import static org.folio.circulation.domain.representations.ItemProperties.EFFECTIVE_LOCATION_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.IN_TRANSIT_DESTINATION_SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.ITEM_COPY_NUMBER_ID;
+import static org.folio.circulation.domain.representations.ItemProperties.LAST_CHECK_IN;
 import static org.folio.circulation.domain.representations.ItemProperties.MATERIAL_TYPE_ID;
+import static org.folio.circulation.domain.representations.ItemProperties.PERMANENT_LOAN_TYPE_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.PERMANENT_LOCATION_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.STATUS_PROPERTY;
+import static org.folio.circulation.domain.representations.ItemProperties.TEMPORARY_LOAN_TYPE_ID;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.json.JsonPropertyWriter.remove;
@@ -26,8 +29,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import org.folio.circulation.domain.representations.ItemProperties;
 
 import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
@@ -134,15 +135,15 @@ public class Item {
   }
 
   public String getBarcode() {
-    return getProperty(getItem(), "barcode");
+    return getProperty(itemRepresentation, "barcode");
   }
 
   public String getItemId() {
-    return getProperty(getItem(), "id");
+    return getProperty(itemRepresentation, "id");
   }
 
   public String getHoldingsRecordId() {
-    return getProperty(getItem(), "holdingsRecordId");
+    return getProperty(itemRepresentation, "holdingsRecordId");
   }
 
   public String getInstanceId() {
@@ -178,11 +179,11 @@ public class Item {
   }
 
   public String getStatusName() {
-    return getNestedStringProperty(getItem(), STATUS_PROPERTY, "name");
+    return getNestedStringProperty(itemRepresentation, STATUS_PROPERTY, "name");
   }
 
   private String getStatusDate() {
-    return getNestedStringProperty(getItem(), STATUS_PROPERTY, "date");
+    return getNestedStringProperty(itemRepresentation, STATUS_PROPERTY, "date");
   }
 
   public Location getLocation() {
@@ -203,20 +204,20 @@ public class Item {
 
   public String getCopyNumber() {
     return firstNonBlank(
-      getProperty(getItem(), ITEM_COPY_NUMBER_ID),
+      getProperty(itemRepresentation, ITEM_COPY_NUMBER_ID),
       holdings.getCopyNumber());
   }
 
   public String getMaterialTypeId() {
-    return getProperty(getItem(), MATERIAL_TYPE_ID);
+    return getProperty(itemRepresentation, MATERIAL_TYPE_ID);
   }
 
   public String getLocationId() {
-    return getProperty(getItem(), EFFECTIVE_LOCATION_ID);
+    return getProperty(itemRepresentation, EFFECTIVE_LOCATION_ID);
   }
 
   public String getEnumeration() {
-    return getProperty(getItem(), "enumeration");
+    return getProperty(itemRepresentation, "enumeration");
   }
 
   public String getInTransitDestinationServicePointId() {
@@ -232,19 +233,19 @@ public class Item {
   }
 
   public String getVolume() {
-    return getProperty(getItem(), "volume");
+    return getProperty(itemRepresentation, "volume");
   }
 
   public String getChronology() {
-    return getProperty(getItem(), "chronology");
+    return getProperty(itemRepresentation, "chronology");
   }
 
   public String getNumberOfPieces() {
-    return getProperty(getItem(), "numberOfPieces");
+    return getProperty(itemRepresentation, "numberOfPieces");
   }
 
   public String getDescriptionOfPieces() {
-    return getProperty(getItem(), "descriptionOfPieces");
+    return getProperty(itemRepresentation, "descriptionOfPieces");
   }
 
   public List<String> getYearCaption() {
@@ -256,11 +257,9 @@ public class Item {
     return primaryServicePoint;
   }
 
-  public String determineLoanTypeForItem() {
-    return getItem().containsKey(ItemProperties.TEMPORARY_LOAN_TYPE_ID)
-      && !getItem().getString(ItemProperties.TEMPORARY_LOAN_TYPE_ID).isEmpty()
-      ? getItem().getString(ItemProperties.TEMPORARY_LOAN_TYPE_ID)
-      : getItem().getString(ItemProperties.PERMANENT_LOAN_TYPE_ID);
+  public String getLoanTypeId() {
+    return firstNonBlank(getProperty(itemRepresentation, TEMPORARY_LOAN_TYPE_ID),
+      getProperty(itemRepresentation, PERMANENT_LOAN_TYPE_ID));
   }
 
   public String getLoanTypeName() {
@@ -339,7 +338,7 @@ public class Item {
   }
 
   public boolean isFound() {
-    return getItem() != null;
+    return itemRepresentation != null;
   }
 
   public LastCheckIn getLastCheckIn() {
@@ -429,9 +428,13 @@ public class Item {
       loanType);
   }
 
-  public Item withLastCheckIn(LastCheckIn lastCheckIn) {
+  public Item withLastCheckIn(@NonNull LastCheckIn lastCheckIn) {
+    final var changedItemRepresentation = itemRepresentation.copy();
+
+    write(changedItemRepresentation, LAST_CHECK_IN, lastCheckIn.toJson());
+
     return new Item(
-      this.itemRepresentation,
+      changedItemRepresentation,
       this.location,
       this.primaryServicePoint,
       lastCheckIn,

@@ -98,7 +98,13 @@ public class RequestByInstanceIdResource extends Resource {
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context, client);
 
-    final ItemRepository itemRepository = new ItemRepository(clients, true, true, true);
+    final var itemRepository = new ItemRepository(clients);
+    final var userRepository = new UserRepository(clients);
+    final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
+    final var requestRepository = RequestRepository.using(clients,
+      itemRepository, userRepository, loanRepository);
+    final var requestQueueRepository = new RequestQueueRepository(requestRepository);
+
     final ItemByInstanceIdFinder finder = new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository);
 
     final Result<RequestByInstanceIdRequest> requestByInstanceIdRequestResult =
@@ -108,9 +114,12 @@ public class RequestByInstanceIdResource extends Resource {
 
     requestByInstanceIdRequestResult
       .map(InstanceRequestRelatedRecords::new)
-      .after(instanceRequest -> getPotentialItems(clients, finder, instanceRequest))
+      .after(instanceRequest -> getPotentialItems(finder, instanceRequest,
+        loanRepository, requestQueueRepository))
       .thenApply( r -> r.next(RequestByInstanceIdResource::instanceToItemRequests))
-      .thenCompose( r -> r.after( requests -> placeRequests(requests, clients, eventPublisher)))
+      .thenCompose( r -> r.after(requests -> placeRequests(requests, clients, eventPublisher,
+        itemRepository, loanRepository, requestRepository, requestQueueRepository,
+        userRepository)))
       .thenApply(r -> r.map(RequestAndRelatedRecords::getRequest))
       .thenApply(r -> r.map(new RequestRepresentation()::extendedRepresentation))
       .thenApply(r -> r.map(JsonHttpResponse::created))
@@ -124,21 +133,22 @@ public class RequestByInstanceIdResource extends Resource {
   }
 
   private CompletableFuture<Result<InstanceRequestRelatedRecords>> getPotentialItems(
-    Clients clients, ItemByInstanceIdFinder finder,
-    InstanceRequestRelatedRecords requestRelatedRecords) {
+    ItemByInstanceIdFinder finder, InstanceRequestRelatedRecords requestRelatedRecords,
+    LoanRepository loanRepository, RequestQueueRepository requestQueueRepository) {
 
     return finder.getItemsByInstanceId(requestRelatedRecords.getInstanceLevelRequest().getInstanceId())
       .thenApply(r -> r.next(this::validateItems))
-      .thenCompose(r -> r.after(items -> getRequestQueues(items, requestRelatedRecords, clients)))
+      .thenCompose(r -> r.after(items -> getRequestQueues(items,
+        requestRelatedRecords, requestQueueRepository)))
       .thenApply(r -> r.next(items -> validateRequester(items, requestRelatedRecords)))
       .thenApply(r -> r.next(items -> segregateItemsList(requestRelatedRecords)))
       .thenApply(r -> r.next(RequestByInstanceIdResource::rankItemsByMatchingServicePoint))
-      .thenCompose(r -> r.after(relatedRecords -> getLoanItems(relatedRecords, clients)))
-      .thenApply( r -> r.next(loanItems -> combineWithUnavailableItems(loanItems, requestRelatedRecords)));
+      .thenCompose(r -> r.after(relatedRecords -> getLoanItems(relatedRecords, loanRepository)))
+      .thenApply(r -> r.next(loanItems -> combineWithUnavailableItems(loanItems, requestRelatedRecords)));
   }
 
   private CompletableFuture<Result<Map<Item, ZonedDateTime>>> getLoanItems(
-    InstanceRequestRelatedRecords instanceRequestPackage, Clients clients) {
+    InstanceRequestRelatedRecords instanceRequestPackage, LoanRepository loanRepository) {
 
     final List<Item> unsortedUnavailableItems = instanceRequestPackage.getUnsortedUnavailableItems();
     if (unsortedUnavailableItems == null ||
@@ -146,7 +156,6 @@ public class RequestByInstanceIdResource extends Resource {
       return CompletableFuture.completedFuture(succeeded(null));
     }
 
-    LoanRepository loanRepository = new LoanRepository(clients);
     Map<Item, CompletableFuture<Result<Loan>>> itemLoanFuturesMap = new HashMap<>();
 
     //Find request queues and loan items for each item
@@ -175,16 +184,15 @@ public class RequestByInstanceIdResource extends Resource {
   }
 
   private CompletableFuture<Result<Map<Item, RequestQueue>>> getRequestQueues(
-    Collection<Item> items,
-    InstanceRequestRelatedRecords instanceRequestPackage, Clients clients) {
+    Collection<Item> items, InstanceRequestRelatedRecords instanceRequestPackage,
+    RequestQueueRepository requestQueueRepository) {
 
-    RequestQueueRepository queueRepository = RequestQueueRepository.using(clients);
     Map<Item, CompletableFuture<Result<RequestQueue>>> itemRequestQueueMap = new HashMap<>();
 
     instanceRequestPackage.setAllUnsortedItems(items);
 
     for (Item item : items) {
-      itemRequestQueueMap.put(item, queueRepository.getRequestQueueWithoutItemLookup(item.getItemId()));
+      itemRequestQueueMap.put(item, requestQueueRepository.getRequestQueueWithoutItemLookup(item.getItemId()));
     }
 
     final Collection<CompletableFuture<Result<RequestQueue>>> requestQueuesFutures = itemRequestQueueMap.values();
@@ -217,20 +225,23 @@ public class RequestByInstanceIdResource extends Resource {
   }
 
   private CompletableFuture<Result<RequestAndRelatedRecords>> placeRequests(
-    List<JsonObject> itemRequestRepresentations, Clients clients, EventPublisher eventPublisher) {
+    List<JsonObject> itemRequestRepresentations, Clients clients,
+    EventPublisher eventPublisher, ItemRepository itemRepository,
+    LoanRepository loanRepository, RequestRepository requestRepository,
+    RequestQueueRepository requestQueueRepository,
+    UserRepository userRepository) {
 
     final RequestNoticeSender requestNoticeSender = new ItemLevelRequestNoticeSender(clients);
-    final LoanRepository loanRepository = new LoanRepository(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
     final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
-
     final UpdateUponRequest updateUponRequest = new UpdateUponRequest(
-        new UpdateItem(clients),
-        new UpdateLoan(clients, loanRepository, loanPolicyRepository),
-        UpdateRequestQueue.using(clients));
+      new UpdateItem(itemRepository),
+      new UpdateLoan(clients, loanRepository, loanPolicyRepository),
+        UpdateRequestQueue.using(clients, requestRepository,
+          requestQueueRepository));
 
     final CreateRequestService createRequestService = new CreateRequestService(
-      new CreateRequestRepositories(RequestRepository.using(clients),
+      new CreateRequestRepositories(requestRepository,
         new RequestPolicyRepository(clients), configurationRepository),
       updateUponRequest,
       new RequestLoanValidator(null, loanRepository),
@@ -239,14 +250,16 @@ public class RequestByInstanceIdResource extends Resource {
       eventPublisher, new FailFastErrorHandler());
 
     return placeRequest(itemRequestRepresentations, 0, createRequestService,
-                        clients, loanRepository, new ArrayList<>());
+      clients, loanRepository, new ArrayList<>(), itemRepository,
+      userRepository, requestQueueRepository);
   }
 
   private CompletableFuture<Result<RequestAndRelatedRecords>> placeRequest(
-    List<JsonObject> itemRequests, int startIndex, CreateRequestService createRequestService,
-    Clients clients, LoanRepository loanRepository, List<String> errors) {
-
-    final UserRepository userRepository = new UserRepository(clients);
+    List<JsonObject> itemRequests, int startIndex,
+    CreateRequestService createRequestService,
+    Clients clients, LoanRepository loanRepository, List<String> errors,
+    ItemRepository itemRepository, UserRepository userRepository,
+    RequestQueueRepository requestQueueRepository) {
 
     log.debug("RequestByInstanceIdResource.placeRequest, startIndex={}, itemRequestSize={}",
       startIndex, itemRequests.size());
@@ -259,14 +272,10 @@ public class RequestByInstanceIdResource extends Resource {
     }
 
     JsonObject currentItemRequest = itemRequests.get(startIndex);
-    ItemRepository itemRepository = new ItemRepository(clients, true, false, false);
+
     final RequestFromRepresentationService requestFromRepresentationService =
-      new RequestFromRepresentationService(
-        new InstanceRepository(clients),
-        itemRepository,
-        RequestQueueRepository.using(clients),
-        userRepository,
-        loanRepository,
+      new RequestFromRepresentationService(new InstanceRepository(clients), itemRepository,
+        requestQueueRepository, userRepository, loanRepository,
         new ServicePointRepository(clients),
         new ConfigurationRepository(clients),
         createProxyRelationshipValidator(currentItemRequest, clients),
@@ -287,7 +296,10 @@ public class RequestByInstanceIdResource extends Resource {
             errors.add(reason);
 
             log.debug("Failed to create request for item {} with reason: {}", currentItemRequest.getString(ITEM_ID), reason);
-            return placeRequest(itemRequests, startIndex +1, createRequestService, clients, loanRepository, errors);
+            return placeRequest(itemRequests, startIndex +1,
+              createRequestService, clients, loanRepository, errors,
+              itemRepository, userRepository,
+              requestQueueRepository);
           }
         });
   }

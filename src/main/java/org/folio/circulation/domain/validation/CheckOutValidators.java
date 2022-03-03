@@ -61,11 +61,10 @@ public class CheckOutValidators {
   private final CirculationErrorHandler errorHandler;
 
   public CheckOutValidators(CheckOutByBarcodeRequest request, Clients clients,
-    CirculationErrorHandler errorHandler, OkapiPermissions permissions) {
+    CirculationErrorHandler errorHandler, OkapiPermissions permissions,
+    LoanRepository loanRepository) {
 
     this.errorHandler = errorHandler;
-
-    final LoanRepository loanRepository = new LoanRepository(clients);
 
     final AutomatedPatronBlocksRepository automatedPatronBlocksRepository =
       new AutomatedPatronBlocksRepository(clients);
@@ -96,7 +95,8 @@ public class CheckOutValidators {
     openLoanValidator = new ExistingOpenLoanValidator(loanRepository,
       message -> singleValidationError(message, ITEM_BARCODE, request.getItemBarcode()));
 
-    itemLimitValidator = createItemLimitValidator(request, permissions, loanRepository);
+    itemLimitValidator = createItemLimitValidator(request, permissions,
+      loanRepository);
 
     automatedPatronBlocksValidator = createAutomatedPatronBlocksValidator(request, permissions,
       automatedPatronBlocksRepository);

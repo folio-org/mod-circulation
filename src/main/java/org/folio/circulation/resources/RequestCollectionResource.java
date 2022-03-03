@@ -74,16 +74,18 @@ public class RequestCollectionResource extends CollectionResource {
 
     final var eventPublisher = new EventPublisher(routingContext);
 
-    final var itemRepository = new ItemRepository(clients, true, true, true);
+    final var itemRepository = new ItemRepository(clients);
     final var userRepository = new UserRepository(clients);
-    final var loanRepository = new LoanRepository(clients);
+    final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
+    final var requestRepository = RequestRepository.using(clients, itemRepository,
+      userRepository, loanRepository);
     final var loanPolicyRepository = new LoanPolicyRepository(clients);
     final var requestNoticeSender = createRequestNoticeSender(clients, representation);
     final var configurationRepository = new ConfigurationRepository(clients);
-
-    final var updateUponRequest = new UpdateUponRequest(new UpdateItem(clients),
+    final var updateUponRequest = new UpdateUponRequest(new UpdateItem(itemRepository),
       new UpdateLoan(clients, loanRepository, loanPolicyRepository),
-      UpdateRequestQueue.using(clients));
+      UpdateRequestQueue.using(clients, requestRepository,
+        new RequestQueueRepository(requestRepository)));
 
     final var okapiPermissions = OkapiPermissions.from(context.getHeaders());
     final var blockOverrides = BlockOverrides.fromRequest(representation);
@@ -91,16 +93,19 @@ public class RequestCollectionResource extends CollectionResource {
     final var requestBlocksValidators = new RequestBlockValidators(
       blockOverrides, okapiPermissions, clients);
 
+    final var requestLoanValidator = new RequestLoanValidator(
+      new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository),
+      loanRepository);
+
     final var createRequestService = new CreateRequestService(
-      new CreateRequestRepositories(RequestRepository.using(clients),
+      new CreateRequestRepositories(requestRepository,
         new RequestPolicyRepository(clients), configurationRepository),
-      updateUponRequest, new RequestLoanValidator(new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository), loanRepository),
-      requestNoticeSender, requestBlocksValidators, eventPublisher, errorHandler);
+      updateUponRequest, requestLoanValidator, requestNoticeSender,
+      requestBlocksValidators, eventPublisher, errorHandler);
 
     final var requestFromRepresentationService = new RequestFromRepresentationService(
-      new InstanceRepository(clients),
-      itemRepository,
-      RequestQueueRepository.using(clients), userRepository, loanRepository,
+      new InstanceRepository(clients), itemRepository,
+      new RequestQueueRepository(requestRepository), userRepository, loanRepository,
       new ServicePointRepository(clients), configurationRepository,
       createProxyRelationshipValidator(representation, clients),
       new ServicePointPickupLocationValidator(), errorHandler,
@@ -112,7 +117,7 @@ public class RequestCollectionResource extends CollectionResource {
       representation))
       .flatMapFuture(createRequestService::createRequest)
       .onSuccess(scheduledNoticeService::scheduleRequestNotices)
-      .onSuccess(records -> eventPublisher.publishDueDateChangedEvent(records, clients))
+      .onSuccess(records -> eventPublisher.publishDueDateChangedEvent(records, loanRepository))
       .map(RequestAndRelatedRecords::getRequest)
       .map(new RequestRepresentation()::extendedRepresentation)
       .map(JsonHttpResponse::created)
@@ -128,16 +133,20 @@ public class RequestCollectionResource extends CollectionResource {
 
     write(representation, "id", getRequestId(routingContext));
 
-    final var itemRepository = new ItemRepository(clients, true, true, true);
-    final var requestRepository = RequestRepository.using(clients);
-    final var updateRequestQueue = UpdateRequestQueue.using(clients);
-    final var loanRepository = new LoanRepository(clients);
+    final var itemRepository = new ItemRepository(clients);
+    final var userRepository = new UserRepository(clients);
+    final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
+    final var requestRepository = RequestRepository.using(clients,
+      itemRepository, userRepository, loanRepository);
+    final var requestQueueRepository = new RequestQueueRepository(requestRepository);
+    final var updateRequestQueue = UpdateRequestQueue.using(clients,
+      requestRepository, requestQueueRepository);
     final var loanPolicyRepository = new LoanPolicyRepository(clients);
     final var eventPublisher = new EventPublisher(routingContext);
     final var requestNoticeSender = createRequestNoticeSender(clients, representation);
     final var configurationRepository = new ConfigurationRepository(clients);
 
-    final var updateItem = new UpdateItem(clients);
+    final var updateItem = new UpdateItem(itemRepository);
 
     final var updateUponRequest = new UpdateUponRequest(updateItem,
       new UpdateLoan(clients, loanRepository, loanPolicyRepository), updateRequestQueue);
@@ -151,15 +160,15 @@ public class RequestCollectionResource extends CollectionResource {
       requestNoticeSender, regularRequestBlockValidators(clients),
       eventPublisher, errorHandler);
 
-    final var updateRequestService = new UpdateRequestService(requestRepository,
+    final var updateRequestService = new UpdateRequestService(
+      requestRepository,
       updateRequestQueue, new ClosedRequestValidator(requestRepository),
       requestNoticeSender, updateItem, eventPublisher);
 
     final var requestFromRepresentationService = new RequestFromRepresentationService(
-      new InstanceRepository(clients),
-      itemRepository,
-      RequestQueueRepository.using(clients), new UserRepository(clients), loanRepository,
-      new ServicePointRepository(clients), configurationRepository,
+      new InstanceRepository(clients), itemRepository,
+      new RequestQueueRepository(requestRepository), userRepository,
+      loanRepository, new ServicePointRepository(clients), configurationRepository,
       createProxyRelationshipValidator(representation, clients),
       new ServicePointPickupLocationValidator(), errorHandler,
       new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository));
@@ -170,7 +179,7 @@ public class RequestCollectionResource extends CollectionResource {
       representation))
       .flatMapFuture(when(requestRepository::exists, updateRequestService::replaceRequest,
         createRequestService::createRequest))
-      .flatMapFuture(records -> eventPublisher.publishDueDateChangedEvent(records, clients))
+      .flatMapFuture(records -> eventPublisher.publishDueDateChangedEvent(records, loanRepository))
       .map(requestScheduledNoticeService::rescheduleRequestNotices)
       .map(toFixedValue(NoContentResponse::noContent))
       .onComplete(context::write, context::write);
@@ -181,7 +190,11 @@ public class RequestCollectionResource extends CollectionResource {
     final var context = new WebContext(routingContext);
     final var clients = Clients.create(context, client);
 
-    final var requestRepository = RequestRepository.using(clients);
+    final var itemRepository = new ItemRepository(clients);
+    final var userRepository = new UserRepository(clients);
+    final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
+    final var requestRepository = RequestRepository.using(clients,
+      itemRepository, userRepository, loanRepository);
 
     final var id = getRequestId(routingContext);
 
@@ -198,10 +211,15 @@ public class RequestCollectionResource extends CollectionResource {
 
     final var id = getRequestId(routingContext);
 
-    final var requestRepository = RequestRepository.using(clients);
+    final var itemRepository = new ItemRepository(clients);
+    final var userRepository = new UserRepository(clients);
+    final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
+    final var requestRepository = RequestRepository.using(clients,
+      itemRepository, userRepository, loanRepository);
 
-    final var updateRequestQueue = new UpdateRequestQueue(RequestQueueRepository.using(clients),
-      requestRepository, new ServicePointRepository(clients), new ConfigurationRepository(clients));
+    final var updateRequestQueue = new UpdateRequestQueue(new RequestQueueRepository(
+      requestRepository), requestRepository, new ServicePointRepository(clients),
+      new ConfigurationRepository(clients));
 
     fromFutureResult(requestRepository.getById(id))
       .flatMapFuture(requestRepository::delete)
@@ -215,7 +233,11 @@ public class RequestCollectionResource extends CollectionResource {
     final var context = new WebContext(routingContext);
     final var clients = Clients.create(context, client);
 
-    final var requestRepository = RequestRepository.using(clients);
+    final var itemRepository = new ItemRepository(clients);
+    final var userRepository = new UserRepository(clients);
+    final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
+    final var requestRepository = RequestRepository.using(clients,
+      itemRepository, userRepository, loanRepository);
 
     fromFutureResult(requestRepository.findBy(routingContext.request().query()))
       .map(this::mapToJson)
@@ -247,17 +269,19 @@ public class RequestCollectionResource extends CollectionResource {
 
     final var id = getRequestId(routingContext);
 
-    final var requestRepository = RequestRepository.using(clients);
-    final var requestQueueRepository = RequestQueueRepository.using(clients);
+    final var itemRepository = new ItemRepository(clients);
+    final var userRepository = new UserRepository(clients);
+    final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
+    final var requestRepository = RequestRepository.using(clients,
+      itemRepository, userRepository, loanRepository);
+    final var requestQueueRepository = new RequestQueueRepository(requestRepository);
 
-    final var itemRepository = new ItemRepository(clients, true, true, true);
-    final var loanRepository = new LoanRepository(clients);
     final var loanPolicyRepository = new LoanPolicyRepository(clients);
     final var configurationRepository = new ConfigurationRepository(clients);
 
-    final var updateUponRequest = new UpdateUponRequest(new UpdateItem(clients),
+    final var updateUponRequest = new UpdateUponRequest(new UpdateItem(itemRepository),
       new UpdateLoan(clients, loanRepository, loanPolicyRepository),
-      UpdateRequestQueue.using(clients));
+      UpdateRequestQueue.using(clients, requestRepository, requestQueueRepository));
 
     final var moveRequestProcessAdapter = new MoveRequestProcessAdapter(itemRepository,
       loanRepository, requestRepository);
@@ -274,7 +298,7 @@ public class RequestCollectionResource extends CollectionResource {
       .map(RequestAndRelatedRecords::new)
       .map(request -> asMove(request, representation))
       .flatMapFuture(move -> moveRequestService.moveRequest(move, move.getOriginalRequest()))
-      .onSuccess(records -> eventPublisher.publishDueDateChangedEvent(records, clients))
+      .onSuccess(records -> eventPublisher.publishDueDateChangedEvent(records, loanRepository))
       .map(RequestAndRelatedRecords::getRequest)
       .map(new RequestRepresentation()::extendedRepresentation)
       .map(JsonHttpResponse::ok)

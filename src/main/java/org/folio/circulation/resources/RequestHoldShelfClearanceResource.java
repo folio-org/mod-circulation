@@ -83,7 +83,7 @@ public class RequestHoldShelfClearanceResource extends Resource {
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context, client);
 
-    final ItemRepository itemRepository = new ItemRepository(clients, false, false, false);
+    final ItemRepository itemRepository = new ItemRepository(clients);
     final GetManyRecordsClient requestsStorage = clients.requestsStorage();
     final ItemReportRepository itemReportRepository = new ItemReportRepository(clients);
 
