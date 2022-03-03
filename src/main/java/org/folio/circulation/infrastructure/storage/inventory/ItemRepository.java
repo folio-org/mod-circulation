@@ -165,7 +165,7 @@ public class ItemRepository {
 
       return findByIndexNameAndQuery(holdingsRecords.toKeys(byId()), HOLDINGS_RECORD_ID,
         exactMatch("status.name", ItemStatus.AVAILABLE.getValue()))
-        .thenApply(r -> r.map(items -> items.stream().findFirst().orElse(null)));
+        .thenApply(mapResult(items -> items.stream().findFirst().orElse(null)));
     });
   }
 
@@ -185,7 +185,7 @@ public class ItemRepository {
     return SingleRecordFetcher.json(loanTypesClient, "loan types",
       response -> succeeded(null))
       .fetch(item.getLoanTypeId())
-      .thenApply(r -> r.map(new LoanTypeMapper()::toDomain));
+      .thenApply(mapResult(new LoanTypeMapper()::toDomain));
   }
 
   public CompletableFuture<Result<Item>> fetchByBarcode(String barcode) {
@@ -202,7 +202,7 @@ public class ItemRepository {
     Result<Collection<Item>> result) {
 
     return result.after(items -> locationRepository.getAllItemLocations(items)
-      .thenApply(r -> r.map(locations -> map(items, populateItemLocations(locations)))));
+      .thenApply(mapResult(locations -> map(items, populateItemLocations(locations)))));
   }
 
   private Function<Item, Item> populateItemLocations(Map<String, Location> locations) {
@@ -221,7 +221,7 @@ public class ItemRepository {
 
     return result.after(items ->
       materialTypeRepository.getMaterialTypes(items)
-        .thenApply(r -> r.map(materialTypes -> items.stream()
+        .thenApply(mapResult(materialTypes -> items.stream()
             .map(item -> item.withMaterialType(mapper.toDomain(materialTypes
               .getOrDefault(item.getMaterialTypeId(), null))))
             .collect(Collectors.toList()))));
@@ -276,7 +276,7 @@ public class ItemRepository {
       final var mapper = new InstanceMapper();
 
       return fetchInstancesByIds(instanceIds)
-        .thenApply(r -> r.map(instances -> items.stream()
+        .thenApply(mapResult(instances -> items.stream()
           .map(item -> item.withInstance(mapper.toDomain(
               findById(item.getInstanceId(), instances.getRecords()).orElse(null))))
           .collect(Collectors.toList())));
@@ -303,7 +303,7 @@ public class ItemRepository {
       final var mapper = new HoldingsMapper();
 
       return fetchHoldingsByIds(holdingsIds)
-        .thenApply(r -> r.map(holdings -> items.stream()
+        .thenApply(mapResult(holdings -> items.stream()
           .map(item -> item.withHoldings(mapper.toDomain(
               findById(item.getHoldingsRecordId(), holdings.getRecords()).orElse(null))))
           .collect(Collectors.toList())));
@@ -364,8 +364,8 @@ public class ItemRepository {
         return SingleRecordFetcher.json(holdingsClient, "holding",
             r -> failedValidation("Holding does not exist", ITEM_ID, item.getItemId()))
           .fetch(item.getHoldingsRecordId())
-          .thenApply(r -> r.map(mapper::toDomain))
-          .thenApply(r -> r.map(item::withHoldings));
+          .thenApply(mapResult(mapper::toDomain))
+          .thenApply(mapResult(item::withHoldings));
       }
     });
   }
@@ -381,8 +381,8 @@ public class ItemRepository {
 
         return SingleRecordFetcher.jsonOrNull(instancesClient, "instance")
           .fetch(item.getInstanceId())
-          .thenApply(r -> r.map(mapper::toDomain))
-          .thenApply(r -> r.map(item::withInstance));
+          .thenApply(mapResult(mapper::toDomain))
+          .thenApply(mapResult(item::withInstance));
       }
     });
   }
