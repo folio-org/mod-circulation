@@ -3,7 +3,6 @@ package org.folio.circulation.infrastructure.storage.inventory;
 import static java.util.Objects.isNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Function.identity;
-
 import static org.folio.circulation.domain.representations.ItemProperties.HOLDINGS_RECORD_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.IN_TRANSIT_DESTINATION_SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.LAST_CHECK_IN;
@@ -14,6 +13,8 @@ import static org.folio.circulation.support.fetching.MultipleCqlIndexValuesCrite
 import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQuery;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.http.CommonResponseInterpreters.noContentRecordInterpreter;
+import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
+import static org.folio.circulation.support.http.client.PageLimit.one;
 import static org.folio.circulation.support.json.JsonKeys.byId;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.json.JsonPropertyWriter.remove;
@@ -57,13 +58,11 @@ import org.folio.circulation.storage.mappers.LoanTypeMapper;
 import org.folio.circulation.storage.mappers.MaterialTypeMapper;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.SingleRecordFetcher;
+import org.folio.circulation.support.fetching.CqlIndexValuesFinder;
+import org.folio.circulation.support.fetching.CqlQueryFinder;
 import org.folio.circulation.support.http.client.CqlQuery;
-import org.folio.circulation.support.http.client.PageLimit;
-import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.results.CommonFailures;
 import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.json.JsonObject;
@@ -81,8 +80,6 @@ public class ItemRepository {
   private final MaterialTypeRepository materialTypeRepository;
   private final ServicePointRepository servicePointRepository;
   private final Map<String, JsonObject> identityMap = new HashMap<>();
-
-  private static final String ITEMS_COLLECTION_PROPERTY_NAME = "items";
 
   public ItemRepository(Clients clients) {
     this(clients.itemsStorage(), clients.holdingsStorage(),
@@ -154,7 +151,7 @@ public class ItemRepository {
     final var holdingsRecordFetcher = findWithCqlQuery(
       holdingsClient, "holdingsRecords", identity());
 
-    return holdingsRecordFetcher.findByQuery(CqlQuery.exactMatch("instanceId", instanceId))
+    return holdingsRecordFetcher.findByQuery(exactMatch("instanceId", instanceId))
       .thenCompose(this::getAvailableItem);
   }
 
@@ -167,7 +164,7 @@ public class ItemRepository {
       }
 
       return findByIndexNameAndQuery(holdingsRecords.toKeys(byId()), HOLDINGS_RECORD_ID,
-        CqlQuery.exactMatch("status.name", ItemStatus.AVAILABLE.getValue()))
+        exactMatch("status.name", ItemStatus.AVAILABLE.getValue()))
         .thenApply(r -> r.map(items -> items.stream().findFirst().orElse(null)));
     });
   }
@@ -323,12 +320,10 @@ public class ItemRepository {
   }
 
   private CompletableFuture<Result<Collection<Item>>> fetchItems(Collection<String> itemIds) {
-    final var fetcher = findWithMultipleCqlIndexValues(itemsClient,
-      ITEMS_COLLECTION_PROPERTY_NAME, identity());
-
+    final var finder = new CqlIndexValuesFinder<>(createItemFinder());
     final var mapper = new ItemMapper();
 
-    return fetcher.findByIds(itemIds)
+    return finder.findByIds(itemIds)
       .thenApply(mapResult(this::addToIdentityMap))
       .thenApply(mapResult(records -> records.mapRecords(mapper::toDomain)))
       .thenApply(mapResult(MultipleRecords::getRecords));
@@ -346,19 +341,13 @@ public class ItemRepository {
   private CompletableFuture<Result<Item>> fetchItemByBarcode(String barcode) {
     log.info("Fetching item with barcode: {}", barcode);
 
+    final var finder = createItemFinder();
     final var mapper = new ItemMapper();
 
-    return CqlQuery.exactMatch("barcode", barcode)
-       .after(query -> itemsClient.getMany(query, PageLimit.one()))
-      .thenApply(result -> result.next(this::mapMultipleToResult))
-      .thenApply(r -> r.map(this::addToIdentityMap))
-      .thenApply(r -> r.map(mapper::toDomain))
-      .exceptionally(CommonFailures::failedDueToServerError);
-  }
-
-  private Result<JsonObject> mapMultipleToResult(Response response) {
-    return MultipleRecords.from(response, identity(), ITEMS_COLLECTION_PROPERTY_NAME )
-      .map(items -> items.getRecords().stream().findFirst().orElse(null));
+    return finder.findByQuery(exactMatch("barcode", barcode), one())
+      .thenApply(records -> records.map(MultipleRecords::firstOrNull))
+      .thenApply(mapResult(this::addToIdentityMap))
+      .thenApply(mapResult(mapper::toDomain));
   }
 
   private CompletableFuture<Result<Item>> fetchHoldingsRecord(
@@ -425,12 +414,10 @@ public class ItemRepository {
   }
 
   public CompletableFuture<Result<Collection<Item>>> findBy(String indexName, Collection<String> ids) {
-    var fetcher = findWithMultipleCqlIndexValues(itemsClient,
-      ITEMS_COLLECTION_PROPERTY_NAME, identity());
-
+    final var finder = new CqlIndexValuesFinder<>(createItemFinder());
     final var mapper = new ItemMapper();
 
-    return fetcher.find(byIndex(indexName, ids))
+    return finder.find(byIndex(indexName, ids))
       .thenApply(mapResult(this::addToIdentityMap))
       .thenApply(mapResult(m -> m.mapRecords(mapper::toDomain)))
       .thenApply(mapResult(MultipleRecords::getRecords))
@@ -458,13 +445,10 @@ public class ItemRepository {
   public CompletableFuture<Result<Collection<Item>>> findByIndexNameAndQuery(
     Collection<String> ids, String indexName, Result<CqlQuery> query) {
 
+    final var finder = new CqlIndexValuesFinder<>(createItemFinder());
     final var mapper = new ItemMapper();
 
-    FindWithMultipleCqlIndexValues<JsonObject> fetcher
-      = findWithMultipleCqlIndexValues(itemsClient,
-        ITEMS_COLLECTION_PROPERTY_NAME, identity());
-
-    return fetcher.find(byIndex(indexName, ids).withQuery(query))
+    return finder.find(byIndex(indexName, ids).withQuery(query))
       .thenApply(mapResult(this::addToIdentityMap))
       .thenApply(mapResult(m -> m.mapRecords(mapper::toDomain)))
       .thenApply(mapResult(MultipleRecords::getRecords))
@@ -540,5 +524,9 @@ public class ItemRepository {
       }
 
       return item;
+  }
+
+  private CqlQueryFinder<JsonObject> createItemFinder() {
+    return new CqlQueryFinder<>(itemsClient, "items", identity());
   }
 }
