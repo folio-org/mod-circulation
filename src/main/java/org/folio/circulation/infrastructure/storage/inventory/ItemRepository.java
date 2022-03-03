@@ -23,16 +23,13 @@ import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
-import static org.folio.circulation.support.utils.CollectionUtil.map;
+import static org.folio.circulation.support.utils.CollectionUtil.nonNullUniqueSetOf;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -165,7 +162,7 @@ public class ItemRepository {
 
       return findByIndexNameAndQuery(holdingsRecords.toKeys(byId()), HOLDINGS_RECORD_ID,
         exactMatch("status.name", ItemStatus.AVAILABLE.getValue()))
-        .thenApply(mapResult(items -> items.stream().findFirst().orElse(null)));
+        .thenApply(mapResult(ItemRepository::firstOrNull));
     });
   }
 
@@ -232,9 +229,8 @@ public class ItemRepository {
       Map<Item, String> itemToLoanTypeIdMap = items.stream()
         .collect(Collectors.toMap(identity(), Item::getLoanTypeId));
 
-      Set<String> loanTypeIdsToFetch = itemToLoanTypeIdMap.values().stream()
-        .filter(StringUtils::isNoneBlank)
-        .collect(Collectors.toSet());
+      final var loanTypeIdsToFetch
+        = nonNullUniqueSetOf(itemToLoanTypeIdMap.values(), identity());
 
       return findWithMultipleCqlIndexValues(loanTypesClient, "loantypes", identity())
         .findByIds(loanTypeIdsToFetch)
@@ -267,11 +263,7 @@ public class ItemRepository {
     Result<Collection<Item>> result) {
 
     return result.after(items -> {
-      List<String> instanceIds = items.stream()
-        .map(Item::getInstanceId)
-        .filter(Objects::nonNull)
-        .distinct()
-        .collect(Collectors.toList());
+      final var instanceIds = nonNullUniqueSetOf(items, Item::getInstanceId);
 
       final var mapper = new InstanceMapper();
 
@@ -294,11 +286,7 @@ public class ItemRepository {
     Result<Collection<Item>> result) {
 
     return result.after(items -> {
-      List<String> holdingsIds = items.stream()
-        .map(Item::getHoldingsRecordId)
-        .filter(Objects::nonNull)
-        .distinct()
-        .collect(Collectors.toList());
+      final var holdingsIds = nonNullUniqueSetOf(items, Item::getHoldingsRecordId);
 
       final var mapper = new HoldingsMapper();
 
@@ -407,7 +395,8 @@ public class ItemRepository {
       return CompletableFuture.completedFuture(result);
     }
 
-    return result.combineAfter(r -> fetcher.apply(getItemIds(r)),
+    return result.combineAfter(
+      r -> fetcher.apply(r.toKeys(ItemRelatedRecord::getItemId)),
       (records, items) -> new MultipleRecords<>(
         matchItemToRecord(records, items, includeItemMap),
         records.getTotalRecords()));
@@ -476,13 +465,6 @@ public class ItemRepository {
       .thenComposeAsync(this::fetchHoldingRecords);
   }
 
-  private <T extends ItemRelatedRecord> List<String> getItemIds(MultipleRecords<T> records) {
-    return records.getRecords().stream()
-      .map(ItemRelatedRecord::getItemId)
-      .filter(Objects::nonNull)
-      .collect(Collectors.toList());
-  }
-
   private <T extends ItemRelatedRecord> Collection<T> matchItemToRecord(
     MultipleRecords<T> records,
     Collection<Item> items,
@@ -528,5 +510,21 @@ public class ItemRepository {
 
   private CqlQueryFinder<JsonObject> createItemFinder() {
     return new CqlQueryFinder<>(itemsClient, "items", identity());
+  }
+
+  private static <T, R> Collection<R> map(Collection<T> collection, Function<T, R> mapper) {
+    return collection.stream()
+      .map(mapper)
+      .collect(Collectors.toList());
+  }
+
+  private static <T> T firstOrNull(Collection<T> collection) {
+    if (collection == null) {
+      return null;
+    }
+
+    return collection.stream()
+      .findFirst()
+      .orElse(null);
   }
 }

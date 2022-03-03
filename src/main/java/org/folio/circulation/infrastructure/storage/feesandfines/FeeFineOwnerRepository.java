@@ -1,6 +1,7 @@
 package org.folio.circulation.infrastructure.storage.feesandfines;
 
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
+import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -14,7 +15,6 @@ import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
 import org.folio.circulation.support.fetching.MultipleCqlIndexValuesCriteria;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.results.Result;
-import org.folio.circulation.support.utils.CollectionUtil;
 
 public class FeeFineOwnerRepository {
   public static final String SERVICE_POINT_OWNER_KEY = "servicePointOwner";
@@ -27,8 +27,8 @@ public class FeeFineOwnerRepository {
   }
 
   public CompletableFuture<Result<FeeFineOwner>> findOwnerForServicePoint(String servicePointId) {
-    return findOwnersForServicePoints(Collections.singleton(servicePointId))
-      .thenApply(r -> r.map(CollectionUtil::firstOrNull));
+    return findOwners(Collections.singleton(servicePointId))
+      .thenApply(mapResult(MultipleRecords::firstOrNull));
   }
 
   public CompletableFuture<Result<FeeFineOwner>> findOwnerForServicePoint(UUID servicePointId) {
@@ -38,11 +38,17 @@ public class FeeFineOwnerRepository {
   public CompletableFuture<Result<Collection<FeeFineOwner>>> findOwnersForServicePoints(
     Collection<String> servicePointIds) {
 
+    return findOwners(servicePointIds)
+      .thenApply(mapResult(MultipleRecords::getRecords));
+  }
+
+  private CompletableFuture<Result<MultipleRecords<FeeFineOwner>>> findOwners(
+    Collection<String> servicePointIds) {
+
     return feeFineOwnersFetcher.find(MultipleCqlIndexValuesCriteria.builder()
       .indexName(SERVICE_POINT_OWNER_KEY)
       .indexOperator(CqlQuery::matchAny)
       .values(servicePointIds)
-      .build())
-      .thenApply(r -> r.map(MultipleRecords::getRecords));
+      .build());
   }
 }
