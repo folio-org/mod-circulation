@@ -79,7 +79,8 @@ public class PickSlipsResource extends Resource {
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context, client);
 
-    final UserRepository userRepository = new UserRepository(clients);
+    final var userRepository = new UserRepository(clients);
+    final var itemRepository = new ItemRepository(clients);
     final AddressTypeRepository addressTypeRepository = new AddressTypeRepository(clients);
     final ServicePointRepository servicePointRepository = new ServicePointRepository(clients);
 
@@ -87,7 +88,8 @@ public class PickSlipsResource extends Resource {
       routingContext.request().getParam(SERVICE_POINT_ID_PARAM));
 
     fetchLocationsForServicePoint(servicePointId, clients)
-      .thenComposeAsync(r -> r.after(locations -> fetchPagedItemsForLocations(locations, clients)))
+      .thenComposeAsync(r -> r.after(locations -> fetchPagedItemsForLocations(locations,
+        clients, itemRepository)))
       .thenComposeAsync(r -> r.after(items -> fetchOpenPageRequestsForItems(items, clients)))
       .thenComposeAsync(r -> r.after(userRepository::findUsersForRequests))
       .thenComposeAsync(r -> r.after(addressTypeRepository::findAddressTypesForRequests))
@@ -105,7 +107,8 @@ public class PickSlipsResource extends Resource {
   }
 
   private CompletableFuture<Result<Collection<Item>>> fetchPagedItemsForLocations(
-    MultipleRecords<Location> multipleLocations, Clients clients) {
+    MultipleRecords<Location> multipleLocations, Clients clients,
+    ItemRepository itemRepository) {
 
     Collection<Location> locations = multipleLocations.getRecords();
 
@@ -118,7 +121,6 @@ public class PickSlipsResource extends Resource {
       return completedFuture(succeeded(emptyList()));
     }
 
-    final ItemRepository itemRepository = new ItemRepository(clients, false, true, true);
     Result<CqlQuery> statusQuery = exactMatch(STATUS_NAME_KEY, ItemStatus.PAGED.getValue());
 
     return itemRepository.findByIndexNameAndQuery(locationIds, EFFECTIVE_LOCATION_ID_KEY, statusQuery)

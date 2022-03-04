@@ -17,8 +17,10 @@ import org.folio.circulation.domain.Account;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.subscribers.LoanRelatedFeeFineClosedEvent;
 import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
+import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.loans.LostItemPolicyRepository;
+import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.Resource;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
@@ -70,12 +72,18 @@ public class LoanRelatedFeeFineClosedHandlerResource extends Resource {
     WebContext context, LoanRelatedFeeFineClosedEvent event) {
 
     final Clients clients = create(context, client);
-    final LoanRepository loanRepository = new LoanRepository(clients);
+    final var itemRepository = new ItemRepository(clients);
+    final var userRepository = new UserRepository(clients);
+    final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
+    final var accountRepository = new AccountRepository(clients);
+    final var lostItemPolicyRepository = new LostItemPolicyRepository(clients);
 
     return loanRepository.getById(event.getLoanId())
       .thenCompose(r -> r.after(loan -> {
         if (loan.isItemLost()) {
-          return closeLoanWithLostItemIfLostFeesResolved(clients, loan);
+          return closeLoanWithLostItemIfLostFeesResolved(loan,
+            loanRepository, itemRepository, accountRepository,
+            lostItemPolicyRepository);
         }
 
         return completedFuture(succeeded(loan));
@@ -83,20 +91,21 @@ public class LoanRelatedFeeFineClosedHandlerResource extends Resource {
   }
 
   private CompletableFuture<Result<Loan>> closeLoanWithLostItemIfLostFeesResolved(
-    Clients clients, Loan loan) {
-
-    final AccountRepository accountRepository = new AccountRepository(clients);
-    final LostItemPolicyRepository lostItemPolicyRepository = new LostItemPolicyRepository(clients);
+    Loan loan, LoanRepository loanRepository,
+    ItemRepository itemRepository, AccountRepository accountRepository,
+    LostItemPolicyRepository lostItemPolicyRepository) {
 
     return accountRepository.findAccountsForLoan(loan)
       .thenComposeAsync(lostItemPolicyRepository::findLostItemPolicyForLoan)
-      .thenCompose(loanResult -> closeLoanAndUpdateItem(loanResult, clients));
+      .thenCompose(loanResult -> closeLoanAndUpdateItem(loanResult,
+        loanRepository, itemRepository));
   }
 
   public CompletableFuture<Result<Loan>> closeLoanAndUpdateItem(
-    Result<Loan> loanResult, Clients clients) {
+    Result<Loan> loanResult, LoanRepository loanRepository,
+    ItemRepository itemRepository) {
 
-    final StoreLoanAndItem storeLoanAndItem = new StoreLoanAndItem(clients);
+    final var storeLoanAndItem = new StoreLoanAndItem(loanRepository, itemRepository);
     return loanResult.after(loan -> {
       if (allLostFeesClosed(loan)) {
         loan.closeLoanAsLostAndPaid();

@@ -73,15 +73,18 @@ public class ChargeLostFeesWhenAgedToLostService {
   private final PageableFetcher<Loan> loanPageableFetcher;
   private final FeeFineScheduledNoticeService feeFineScheduledNoticeService;
 
-  public ChargeLostFeesWhenAgedToLostService(Clients clients) {
+  public ChargeLostFeesWhenAgedToLostService(Clients clients,
+    ItemRepository itemRepository, UserRepository userRepository) {
+    this.itemRepository = itemRepository;
+    this.userRepository = userRepository;
     this.lostItemPolicyRepository = new LostItemPolicyRepository(clients);
     this.feeFineOwnerRepository = new FeeFineOwnerRepository(clients);
     this.feeFineRepository = new FeeFineRepository(clients);
     this.feeFineFacade = new FeeFineFacade(clients);
-    this.loanRepository = new LoanRepository(clients);
-    this.itemRepository = new ItemRepository(clients, true, false, false);
-    this.userRepository = new UserRepository(clients);
-    this.storeLoanAndItem = new StoreLoanAndItem(loanRepository, itemRepository);
+    this.loanRepository = new LoanRepository(clients, itemRepository,
+      userRepository);
+    this.storeLoanAndItem = new StoreLoanAndItem(loanRepository,
+      itemRepository);
     this.eventPublisher = new EventPublisher(clients.pubSubPublishingService());
     this.loanPageableFetcher = new PageableFetcher<>(loanRepository);
     this.feeFineScheduledNoticeService = FeeFineScheduledNoticeService.using(clients);

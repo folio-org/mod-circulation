@@ -35,4 +35,11 @@ class ItemTests {
 
     assertThrows(NullPointerException.class, () -> item.withLoanType(null));
   }
+
+  @Test
+  void cannotHaveANullLastCheckIn() {
+    val item = Item.from(new ItemBuilder().create());
+
+    assertThrows(NullPointerException.class, () -> item.withLastCheckIn(null));
+  }
 }

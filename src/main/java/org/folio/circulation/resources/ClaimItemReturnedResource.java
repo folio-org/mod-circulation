@@ -8,8 +8,12 @@ import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.concurrent.CompletableFuture;
 
+import org.folio.circulation.StoreLoanAndItem;
 import org.folio.circulation.domain.ClaimItemReturnedRequest;
 import org.folio.circulation.domain.Loan;
+import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
+import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
+import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.services.ChangeItemStatusService;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
@@ -49,8 +53,12 @@ public class ClaimItemReturnedResource extends Resource {
     RoutingContext routingContext, ClaimItemReturnedRequest request) {
 
     final Clients clients = Clients.create(new WebContext(routingContext), client);
+    final var itemRepository = new ItemRepository(clients);
+    final var userRepository = new UserRepository(clients);
+    final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
     final ChangeItemStatusService changeItemStatusService =
-      new ChangeItemStatusService(clients);
+      new ChangeItemStatusService(loanRepository,
+        new StoreLoanAndItem(loanRepository, itemRepository));
 
     return changeItemStatusService.getOpenLoan(request)
       .thenApply(loan -> declareLoanClaimedReturned(loan, request))

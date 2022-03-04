@@ -83,17 +83,15 @@ public class RequestRepository {
     this.instanceRepository = instanceRepository;
   }
 
-  public static RequestRepository using(org.folio.circulation.support.Clients clients) {
-    return using(clients, false);
-  }
+  public static RequestRepository using(
+    org.folio.circulation.support.Clients clients,
+    ItemRepository itemRepository, UserRepository userRepository,
+    LoanRepository loanRepository) {
 
-  public static RequestRepository using(org.folio.circulation.support.Clients clients, boolean fetchMaterialType) {
     return new RequestRepository(
       new Clients(clients.requestsStorage(), clients.requestsBatchStorage(),
         clients.cancellationReasonStorage()),
-      new ItemRepository(clients, true, fetchMaterialType, true),
-      new UserRepository(clients),
-      new LoanRepository(clients),
+      itemRepository, userRepository, loanRepository,
       new ServicePointRepository(clients),
       new PatronGroupRepository(clients),
       new InstanceRepository(clients));

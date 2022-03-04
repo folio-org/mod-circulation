@@ -51,9 +51,9 @@ public abstract class ScheduledNoticeHandler {
   protected final ScheduledPatronNoticeService patronNoticeService;
   protected final EventPublisher eventPublisher;
 
-  protected ScheduledNoticeHandler(Clients clients) {
+  protected ScheduledNoticeHandler(Clients clients, LoanRepository loanRepository) {
     this.scheduledNoticesRepository = ScheduledNoticesRepository.using(clients);
-    this.loanRepository = new LoanRepository(clients);
+    this.loanRepository = loanRepository;
     this.accountRepository = new AccountRepository(clients);
     this.patronNoticePolicyRepository = new PatronNoticePolicyRepository(clients);
     this.templateNoticesClient = clients.noticeTemplatesClient();

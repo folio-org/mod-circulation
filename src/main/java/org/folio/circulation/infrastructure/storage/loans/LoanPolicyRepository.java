@@ -171,11 +171,6 @@ public class LoanPolicyRepository extends CirculationPolicyRepository<LoanPolicy
   }
 
   @Override
-  protected String fetchPolicyId(JsonObject jsonObject) {
-    return jsonObject.getString("loanPolicyId");
-  }
-
-  @Override
   protected CompletableFuture<Result<CirculationRuleMatch>> getPolicyAndMatch(
     RulesExecutionParameters rulesExecutionParameters) {
 

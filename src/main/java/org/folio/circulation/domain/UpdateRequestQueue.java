@@ -44,11 +44,12 @@ public class UpdateRequestQueue {
     this.configurationRepository = configurationRepository;
   }
 
-  public static UpdateRequestQueue using(Clients clients) {
-    return new UpdateRequestQueue(
-      RequestQueueRepository.using(clients),
-      RequestRepository.using(clients),
-      new ServicePointRepository(clients),
+  public static UpdateRequestQueue using(Clients clients,
+    RequestRepository requestRepository,
+    RequestQueueRepository requestQueueRepository) {
+
+    return new UpdateRequestQueue(requestQueueRepository,
+      requestRepository, new ServicePointRepository(clients),
       new ConfigurationRepository(clients));
   }
 
