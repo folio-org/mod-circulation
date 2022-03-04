@@ -27,6 +27,7 @@ import org.folio.circulation.support.utils.ClockUtil;
 import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
+import api.support.TlrFeatureStatus;
 import api.support.builders.RequestBuilder;
 import api.support.builders.RequestByInstanceIdRequestBuilder;
 import api.support.http.IndividualResource;
@@ -868,6 +869,33 @@ class InstanceRequestsAPICreationTests extends APITests {
       hasParameter("holdingsRecords", "null"))));
   }
 
+  @Test
+  void tlrRequestCreatedWhenTlrFeatureEnabled() {
+    reconfigureTlrFeature(TlrFeatureStatus.ENABLED);
+
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    UUID requesterId = usersFixture.jessica().getId();
+    IndividualResource instance = instancesFixture.basedUponDunkirk();
+    IndividualResource holdings = holdingsFixture.defaultWithHoldings(
+      instance.getId());
+    IndividualResource locationsResource = locationsFixture.mainFloor();
+
+    itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(),
+      locationsResource.getId());
+
+    ZonedDateTime requestDate = ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC);
+    JsonObject requestBody = createInstanceRequestObject(instance.getId(),
+      requesterId, pickupServicePointId, requestDate, null);
+    Response postResponse = requestsFixture.attemptToPlaceForInstance(requestBody);
+
+    assertThat(postResponse, hasStatus(HTTP_CREATED));
+
+    JsonObject representation = postResponse.getJson();
+    validateTitleLevelRequestResponse(representation, pickupServicePointId,
+      instance.getId(), RequestType.PAGE);
+    assertNull(representation.getString("requestExpirationDate"));
+  }
+
   private void validateInstanceRequestResponse(JsonObject representation,
     UUID pickupServicePointId, UUID instanceId, UUID itemId,
     RequestType expectedRequestType) {
@@ -887,7 +915,17 @@ class InstanceRequestsAPICreationTests extends APITests {
 
     if (itemId != null) {
       assertEquals(itemId.toString(), representation.getString("itemId"));
+    } else {
+      assertNull(representation.getString("itemId"));
     }
+  }
+
+  private void validateTitleLevelRequestResponse(JsonObject representation,
+    UUID pickupServicePointId, UUID instanceId,
+    RequestType expectedRequestType) {
+
+    validateInstanceRequestResponse(representation, pickupServicePointId,
+      instanceId, null, expectedRequestType);
   }
 
   private JsonObject createInstanceRequestObject(UUID instanceId,

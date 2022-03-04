@@ -41,6 +41,7 @@ import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
+import org.folio.circulation.domain.RequestLevel;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.RequestRepresentation;
 import org.folio.circulation.domain.RequestType;
@@ -137,6 +138,7 @@ public class RequestByInstanceIdResource extends Resource {
 
     return ofAsync(() -> ORDERED_REQUEST_TYPES.stream()
       .map(type -> requestRepresentation.copy()
+        .put("requestLevel", RequestLevel.TITLE.value)
         .put("requestType", type.getValue())
         .put("fulfilmentPreference", HOLD_SHELF.getValue()))
       .collect(toList())
@@ -253,7 +255,7 @@ public class RequestByInstanceIdResource extends Resource {
   }
 
   private CompletableFuture<Result<RequestAndRelatedRecords>> placeRequests(
-    List<JsonObject> itemRequestRepresentations, Clients clients, EventPublisher eventPublisher) {
+    List<JsonObject> requestRepresentations, Clients clients, EventPublisher eventPublisher) {
 
     final RequestNoticeSender requestNoticeSender = new ItemLevelRequestNoticeSender(clients);
     final LoanRepository loanRepository = new LoanRepository(clients);
@@ -274,7 +276,7 @@ public class RequestByInstanceIdResource extends Resource {
       regularRequestBlockValidators(clients),
       eventPublisher, new FailFastErrorHandler());
 
-    return placeRequest(itemRequestRepresentations, 0, createRequestService,
+    return placeRequest(requestRepresentations, 0, createRequestService,
                         clients, loanRepository, new ArrayList<>());
   }
 
