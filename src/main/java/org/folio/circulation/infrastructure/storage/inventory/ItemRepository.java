@@ -113,7 +113,7 @@ public class ItemRepository {
 
   public CompletableFuture<Result<Item>> updateItem(Item item) {
     if (item == null) {
-      return completedFuture(null);
+      return ofAsync(() -> null);
     }
 
     if (!identityMap.containsKey(item.getItemId())) {

@@ -3,6 +3,8 @@ package org.folio.circulation.infrastructure.storage.inventory;
 import static api.support.matchers.FailureMatcher.isErrorFailureContaining;
 import static api.support.matchers.ResultMatchers.succeeded;
 import static org.folio.circulation.support.results.Result.ofAsync;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -29,18 +31,6 @@ import lombok.SneakyThrows;
 
 class ItemRepositoryTests {
   @Test
-  void cannotUpdateAnItemThatHasNotBeenFetched() {
-    final var repository = createRepository(null);
-
-    final var notFetchedItem = dummyItem();
-
-    final var updateResult = get(repository.updateItem(notFetchedItem));
-
-    assertThat(updateResult, isErrorFailureContaining(
-      "Cannot update item when original representation is not available in identity map"));
-  }
-
-  @Test
   void canUpdateAnItemThatHasBeenFetched() {
     final var itemsClient = mock(CollectionResourceClient.class);
     final var repository = createRepository(itemsClient);
@@ -60,6 +50,28 @@ class ItemRepositoryTests {
     final var updateResult = get(repository.updateItem(fetchedItem));
 
     assertThat(updateResult, succeeded());
+  }
+
+  @Test
+  void cannotUpdateAnItemThatHasNotBeenFetched() {
+    final var repository = createRepository(null);
+
+    final var notFetchedItem = dummyItem();
+
+    final var updateResult = get(repository.updateItem(notFetchedItem));
+
+    assertThat(updateResult, isErrorFailureContaining(
+      "Cannot update item when original representation is not available in identity map"));
+  }
+
+  @Test
+  void nullItemIsNotUpdated() {
+    final var repository = createRepository(null);
+
+    final var updateResult = get(repository.updateItem(null));
+
+    assertThat(updateResult, succeeded());
+    assertThat(updateResult.value(), is(nullValue()));
   }
 
   private void mockedClientGet(CollectionResourceClient client, String body) {
