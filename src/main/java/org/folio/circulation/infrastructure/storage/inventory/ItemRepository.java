@@ -47,6 +47,7 @@ import org.folio.circulation.domain.LoanType;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.ServicePoint;
+import org.folio.circulation.infrastructure.storage.IdentityMap;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.storage.mappers.HoldingsMapper;
 import org.folio.circulation.storage.mappers.InstanceMapper;
@@ -76,7 +77,7 @@ public class ItemRepository {
   private final LocationRepository locationRepository;
   private final MaterialTypeRepository materialTypeRepository;
   private final ServicePointRepository servicePointRepository;
-  private final Map<String, JsonObject> identityMap = new HashMap<>();
+  private final IdentityMap<JsonObject> identityMap = new IdentityMap<>();
 
   public ItemRepository(Clients clients) {
     this(clients.itemsStorage(), clients.holdingsStorage(),
@@ -116,12 +117,12 @@ public class ItemRepository {
       return ofAsync(() -> null);
     }
 
-    if (!identityMap.containsKey(item.getItemId())) {
+    if (!identityMap.getIdentityMap().containsKey(item.getItemId())) {
       return completedFuture(Result.failed(new ServerErrorFailure(
         "Cannot update item when original representation is not available in identity map")));
     }
 
-    final var updatedItemRepresentation = identityMap.get(item.getItemId());
+    final var updatedItemRepresentation = identityMap.getIdentityMap().get(item.getItemId());
 
     write(updatedItemRepresentation, STATUS_PROPERTY,
       new JsonObject().put("name", item.getStatus().getValue()));
@@ -502,7 +503,7 @@ public class ItemRepository {
       if (item != null) {
         // Needs to be a copy because JsonObject is mutable
         // and passed between instances of an item
-        identityMap.put(getProperty(item, "id"), item.copy());
+        identityMap.getIdentityMap().put(getProperty(item, "id"), item.copy());
       }
 
       return item;
