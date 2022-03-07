@@ -20,8 +20,10 @@ import org.folio.circulation.domain.validation.LoanValidator;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.notes.NotesRepository;
+import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.services.LostItemFeeChargingService;
+import org.folio.circulation.services.LostItemFeeRefundService;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.http.server.NoContentResponse;
 import org.folio.circulation.support.http.server.WebContext;
@@ -70,10 +72,12 @@ public class DeclareLostResource extends Resource {
   private CompletableFuture<Result<Loan>> declareItemLost(DeclareItemLostRequest request,
     Clients clients, WebContext context) {
 
-    final LoanRepository loanRepository = new LoanRepository(clients);
-    final ItemRepository itemRepository = new ItemRepository(clients, true, true, true);
-    final StoreLoanAndItem storeLoanAndItem = new StoreLoanAndItem(loanRepository, itemRepository);
-    final LostItemFeeChargingService lostItemFeeService = new LostItemFeeChargingService(clients);
+    final var itemRepository = new ItemRepository(clients);
+    final var userRepository = new UserRepository(clients);
+    final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
+    final var storeLoanAndItem = new StoreLoanAndItem(loanRepository, itemRepository);
+    final var lostItemFeeService = new LostItemFeeChargingService(clients, storeLoanAndItem,
+      new LostItemFeeRefundService(clients, itemRepository, userRepository, loanRepository));
 
     return loanRepository.getById(request.getLoanId())
       .thenApply(LoanValidator::refuseWhenLoanIsClosed)

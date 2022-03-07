@@ -53,11 +53,6 @@ public class LostItemPolicyRepository extends CirculationPolicyRepository<LostIt
     return succeeded(LostItemPolicy.from(representation));
   }
 
-  @Override
-  protected String fetchPolicyId(JsonObject jsonObject) {
-    return jsonObject.getString("lostItemPolicyId");
-  }
-
   public CompletableFuture<Result<MultipleRecords<Loan>>> findLostItemPoliciesForLoans(
     MultipleRecords<Loan> multipleLoans) {
 

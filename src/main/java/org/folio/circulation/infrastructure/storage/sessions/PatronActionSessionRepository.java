@@ -64,11 +64,12 @@ public class PatronActionSessionRepository {
   private final UserRepository userRepository;
   private final LocationRepository locationRepository;
 
-  public static PatronActionSessionRepository using(Clients clients) {
+  public static PatronActionSessionRepository using(Clients clients,
+    LoanRepository loanRepository, UserRepository userRepository) {
+
     return new PatronActionSessionRepository(
       clients.patronActionSessionsStorageClient(),
-      new LoanRepository(clients),
-      new UserRepository(clients),
+      loanRepository, userRepository,
       new LoanPolicyRepository(clients),
       LocationRepository.using(clients));
   }

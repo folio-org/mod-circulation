@@ -47,6 +47,7 @@ import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static api.support.utl.BlockOverridesUtils.getMissingPermissions;
 import static io.vertx.core.http.HttpMethod.POST;
 import static java.time.ZoneOffset.UTC;
+import static java.util.function.Predicate.not;
 import static org.folio.HttpStatus.HTTP_INTERNAL_SERVER_ERROR;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.domain.EventType.ITEM_CHECKED_OUT;
@@ -82,6 +83,8 @@ import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.policy.DueDateManagement;
@@ -2208,32 +2211,6 @@ class CheckOutByBarcodeTests extends APITests {
       is(ZonedDateTime.of(MONDAY_DATE, LocalTime.MIDNIGHT.minusSeconds(1), UTC)));
   }
 
-  @Test
-  void cannotCheckoutWhenItemIsRequestedByTitleLevelRequestOfDifferentUser() {
-    configurationsFixture.enableTlrFeature();
-
-    ItemResource item = itemsFixture.basedUponNod();
-    UserResource borrower = usersFixture.steve();
-    UserResource requester = usersFixture.james();
-
-    requestsClient.create(new RequestBuilder()
-      .page()
-      .titleRequestLevel()
-      .withNoItemId()
-      .withNoHoldingsRecordId()
-      .withInstanceId(item.getInstanceId())
-      .withPickupServicePointId(servicePointsFixture.cd1().getId())
-      .withRequesterId(requester.getId()));
-
-    Response checkoutResponse = checkOutFixture.attemptCheckOutByBarcode(item, borrower);
-
-    assertThat(checkoutResponse.getStatusCode(), is(422));
-    assertThat(checkoutResponse.getJson(), hasErrorWith(allOf(
-      hasMessage("Nod (Barcode: 565578437802) cannot be checked out to user Jones, Steven" +
-        " because it has been requested by another patron"),
-      hasUserBarcodeParameter(borrower))));
-  }
-
   @ParameterizedTest
   @EnumSource(value = TlrFeatureStatus.class, names = {"DISABLED", "NOT_CONFIGURED"})
   void titleLevelRequestIsIgnoredWhenTlrFeatureIsNotEnabled(TlrFeatureStatus tlrFeatureStatus) {
@@ -2326,20 +2303,80 @@ class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  void canCheckoutItemWhenTitleLevelPageRequestExistsForDifferentItemOfSameInstance() {
+  void canCheckoutItemWhenTitleLevelPageRequestsExistForDifferentItemsOfSameInstance() {
+    configurationsFixture.enableTlrFeature();
+
+    List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(4);
+    UUID instanceId = items.stream().findAny().orElseThrow().getInstanceId();
+
+    List<String> pagedItemIds = Stream.of(
+        requestsFixture.placeTitleLevelPageRequest(instanceId, usersFixture.steve()),
+        requestsFixture.placeTitleLevelPageRequest(instanceId, usersFixture.jessica()),
+        requestsFixture.placeTitleLevelPageRequest(instanceId, usersFixture.charlotte()))
+      .map(IndividualResource::getJson)
+      .map(json -> json.getString("itemId"))
+      .collect(Collectors.toList());
+
+    ItemResource nonPagedItem = items.stream()
+      .filter(not(item -> pagedItemIds.contains(item.getId().toString())))
+      .findFirst()
+      .orElseThrow(() -> new AssertionError("Failed to find non-paged item"));
+
+    checkOutFixture.checkOutByBarcode(nonPagedItem, usersFixture.james());
+  }
+
+  @ParameterizedTest
+  @CsvSource({
+    "Item, Item",
+    "Item, Title",
+    "Title, Item",
+    "Title, Title"
+  })
+  void cannotCheckoutItemWhenTitleLevelPageRequestExistsForSameItem(
+    String firstRequestLevel, String secondRequestLevel) {
+
     configurationsFixture.enableTlrFeature();
 
     List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
-    UUID instanceId = items.get(0).getInstanceId();
+    ItemResource randomItem = items.stream().findAny().orElseThrow();
 
-    IndividualResource request = requestsFixture.placeTitleLevelPageRequest(instanceId, usersFixture.steve());
+    IndividualResource firstRequest = placeRequest(firstRequestLevel, randomItem, usersFixture.steve());
+    String requestedItemId = firstRequest.getJson().getString("itemId");
 
-    ItemResource itemToCheckOut = items.stream()
-      .filter(item -> !item.getId().toString().equals(request.getJson().getString("itemId")))
-      .findFirst()
+    // If first request level is Title, the item for it is selected randomly among Available items
+    // of the instance. So for second request we have to find the other (Available) item.
+
+    ItemResource itemForSecondRequest = items.stream()
+      .filter(not(item -> item.getId().toString().equals(requestedItemId)))
+      .findAny()
       .orElseThrow(() -> new AssertionError("Failed to find non-requested item"));
 
-    checkOutFixture.checkOutByBarcode(itemToCheckOut, usersFixture.james());
+    placeRequest(secondRequestLevel, itemForSecondRequest, usersFixture.jessica());
+
+    UserResource borrower = usersFixture.james();
+    Response response = checkOutFixture.attemptCheckOutByBarcode(itemForSecondRequest, borrower);
+
+    assertThat(response.getStatusCode(), is(422));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasUserBarcodeParameter(borrower),
+      hasMessage(String.format(
+        "The Long Way to a Small, Angry Planet (Barcode: %s) cannot be checked out to user " +
+          "Rodwell, James because it has been requested by another patron", itemForSecondRequest.getBarcode()))
+    )));
+  }
+
+  private IndividualResource placeRequest(String requestLevel, ItemResource item,
+    IndividualResource requester) {
+
+    UUID instanceId = item.getInstanceId();
+
+    if ("Item".equals(requestLevel)) {
+      return requestsFixture.placeItemLevelPageRequest(item, instanceId, requester);
+    } else if ("Title".equals(requestLevel)) {
+      return requestsFixture.placeTitleLevelPageRequest(instanceId, requester);
+    }
+
+    throw new AssertionError("Unknown request level: " + requestLevel);
   }
 
   private LoanPolicyBuilder buildLoanPolicyWithFixedLoan(DueDateManagement strategy,

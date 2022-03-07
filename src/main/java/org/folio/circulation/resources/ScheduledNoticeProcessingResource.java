@@ -8,7 +8,11 @@ import java.util.concurrent.CompletableFuture;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.notice.schedule.ScheduledNotice;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
+import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
+import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
+import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
+import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.client.PageLimit;
@@ -44,11 +48,17 @@ public abstract class ScheduledNoticeProcessingResource extends Resource {
       ScheduledNoticesRepository.using(clients);
     final ConfigurationRepository configurationRepository =
       new ConfigurationRepository(clients);
+    final var itemRepository = new ItemRepository(clients);
+    final var userRepository = new UserRepository(clients);
+    final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
+    final var requestRepository = RequestRepository.using(clients,
+      itemRepository, userRepository, loanRepository);
 
     safelyInitialise(configurationRepository::lookupSchedulerNoticesProcessingLimit)
       .thenCompose(r -> r.after(limit -> findNoticesToSend(configurationRepository,
         scheduledNoticesRepository, limit)))
-      .thenCompose(r -> r.after(notices -> handleNotices(clients, notices)))
+      .thenCompose(r -> r.after(notices -> handleNotices(clients, requestRepository,
+        loanRepository, notices)))
       .thenApply(r -> r.map(toFixedValue(NoContentResponse::noContent)))
       .exceptionally(CommonFailures::failedDueToServerError)
       .thenAccept(context::writeResultToHttpResponse);
@@ -59,5 +69,8 @@ public abstract class ScheduledNoticeProcessingResource extends Resource {
     ScheduledNoticesRepository scheduledNoticesRepository, PageLimit pageLimit);
 
   protected abstract CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> handleNotices(
-    Clients clients, MultipleRecords<ScheduledNotice> noticesResult);
+    Clients clients,
+    RequestRepository requestRepository,
+    LoanRepository loanRepository,
+    MultipleRecords<ScheduledNotice> noticesResult);
 }

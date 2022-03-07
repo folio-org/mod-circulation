@@ -14,7 +14,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.notice.session.ExpiredSession;
 import org.folio.circulation.domain.notice.session.PatronActionSessionService;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
+import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
+import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
+import org.folio.circulation.infrastructure.storage.sessions.PatronActionSessionRepository;
 import org.folio.circulation.infrastructure.storage.sessions.PatronExpiredSessionRepository;
+import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.server.NoContentResponse;
@@ -48,8 +52,12 @@ public class ExpiredSessionProcessingResource extends Resource {
     final ConfigurationRepository configurationRepository
       = new ConfigurationRepository(clients);
 
+    final var userRepository = new UserRepository(clients);
+    final var itemRepository = new ItemRepository(clients);
+    final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
     final PatronActionSessionService patronSessionService
-      = PatronActionSessionService.using(clients);
+      = PatronActionSessionService.using(clients,
+      PatronActionSessionRepository.using(clients, loanRepository, userRepository));
 
     final PatronExpiredSessionRepository patronExpiredSessionRepository
       = PatronExpiredSessionRepository.using(clients);

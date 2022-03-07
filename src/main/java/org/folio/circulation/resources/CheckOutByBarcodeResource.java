@@ -37,6 +37,8 @@ import org.folio.circulation.infrastructure.storage.loans.OverdueFinePolicyRepos
 import org.folio.circulation.infrastructure.storage.notices.PatronNoticePolicyRepository;
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
+import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
+import org.folio.circulation.infrastructure.storage.sessions.PatronActionSessionRepository;
 import org.folio.circulation.infrastructure.storage.users.PatronGroupRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
@@ -82,10 +84,12 @@ public class CheckOutByBarcodeResource extends Resource {
 
     final Clients clients = Clients.create(context, client);
 
-    final UserRepository userRepository = new UserRepository(clients);
-    final ItemRepository itemRepository = new ItemRepository(clients, true, true, true);
-    final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
-    final LoanRepository loanRepository = new LoanRepository(clients);
+    final var userRepository = new UserRepository(clients);
+    final var itemRepository = new ItemRepository(clients);
+    final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
+    final var requestRepository = RequestRepository.using(clients, itemRepository,
+      userRepository, loanRepository);
+    final var requestQueueRepository = new RequestQueueRepository(requestRepository);
     final LoanService loanService = new LoanService(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
     final OverdueFinePolicyRepository overdueFinePolicyRepository = new OverdueFinePolicyRepository(clients);
@@ -100,16 +104,19 @@ public class CheckOutByBarcodeResource extends Resource {
     OkapiPermissions permissions = OkapiPermissions.from(new WebContext(routingContext).getHeaders());
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(permissions);
     CheckOutValidators validators = new CheckOutValidators(request, clients, errorHandler,
-      permissions);
+      permissions, loanRepository);
 
-    final UpdateRequestQueue requestQueueUpdate = UpdateRequestQueue.using(clients);
+    final var requestQueueUpdate = UpdateRequestQueue.using(clients,
+      requestRepository, requestQueueRepository);
 
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
 
     final EventPublisher eventPublisher = new EventPublisher(routingContext);
 
     final PatronActionSessionService patronActionSessionService =
-      PatronActionSessionService.using(clients);
+      PatronActionSessionService.using(clients,
+        PatronActionSessionRepository.using(clients, loanRepository,
+          userRepository));
 
     ofAsync(() -> new LoanAndRelatedRecords(request.toLoan()))
       .thenApply(validators::refuseCheckOutWhenServicePointIsNotPresent)

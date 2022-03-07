@@ -35,6 +35,7 @@ import static java.util.function.Function.identity;
 import static org.folio.HttpStatus.HTTP_BAD_REQUEST;
 import static org.folio.HttpStatus.HTTP_CREATED;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
+import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
 import static org.folio.circulation.domain.ItemStatus.PAGED;
 import static org.folio.circulation.domain.RequestType.RECALL;
 import static org.folio.circulation.domain.policy.Period.hours;
@@ -88,6 +89,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EmptySource;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import api.support.APITests;
@@ -2834,6 +2836,59 @@ public class RequestsAPICreationTests extends APITests {
     requestAssociatedWithFirstItem = requestsFixture.getRequests(
       notEqual("itemId", secondItem.getId().toString()), limit(1), noOffset()).getFirst();
     assertThat(requestAssociatedWithFirstItem.getString("status"), is(OPEN_AWAITING_PICKUP));
+  }
+
+  @Test
+  void pageRequestShouldNotChangeItemStatusIfFailsWithoutRequestDate() {
+    var item = itemsFixture.basedUponSmallAngryPlanet();
+
+    Response response = requestsClient.attemptCreate(new RequestBuilder()
+      .page()
+      .withFulfilmentPreference("Hold Shelf")
+      .withRequesterId(usersFixture.steve().getId())
+      .withItemId(item.getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
+      .withInstanceId(item.getInstanceId())
+      .itemRequestLevel()
+      .withHoldingsRecordId(item.getHoldingsRecordId())
+      .withRequestDate(null));
+
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Cannot create a request with no requestDate"),
+      hasParameter("requestDate", null))));
+    var itemById = itemsFixture.getById(item.getId());
+    assertThat(itemById.getResponse().getJson().getJsonObject("status").getString("name"),
+      is(AVAILABLE.getValue()));
+  }
+
+  @ParameterizedTest
+  @NullSource
+  @ValueSource(strings = {
+    "Hold shelf",
+    "Invalid Value"
+  })
+  void pageRequestShouldNotBeCreatedIfFulfilmentPreferenceIsNotValid(String fulfilmentPreference) {
+    var item = itemsFixture.basedUponSmallAngryPlanet();
+
+    Response response = requestsClient.attemptCreate(new RequestBuilder()
+      .page()
+      .withFulfilmentPreference(fulfilmentPreference)
+      .withRequesterId(usersFixture.steve().getId())
+      .withItemId(item.getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
+      .withInstanceId(item.getInstanceId())
+      .itemRequestLevel()
+      .withHoldingsRecordId(item.getHoldingsRecordId())
+      .withRequestDate(ZonedDateTime.now()));
+
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("fulfilmentPreference must be one of the following: Hold Shelf, Delivery"),
+      hasParameter("fulfilmentPreference", fulfilmentPreference))));
+    var itemById = itemsFixture.getById(item.getId());
+    assertThat(itemById.getResponse().getJson().getJsonObject("status").getString("name"),
+      is(AVAILABLE.getValue()));
   }
 
   private RequestBuilder buildPageRequest(UUID instanceId, UUID pickupServicePointId,

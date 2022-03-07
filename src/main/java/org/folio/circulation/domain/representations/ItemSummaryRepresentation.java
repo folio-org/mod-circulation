@@ -3,7 +3,6 @@ package org.folio.circulation.domain.representations;
 import static org.folio.circulation.domain.representations.CallNumberComponentsRepresentation.createCallNumberComponents;
 import static org.folio.circulation.domain.representations.ContributorsToNamesMapper.mapContributorNamesToJson;
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
-import static org.folio.circulation.domain.representations.ItemProperties.LAST_CHECK_IN;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.json.JsonPropertyWriter.writeByPath;
 
@@ -75,14 +74,5 @@ public class ItemSummaryRepresentation {
     writeByPath(itemSummary, item.getMaterialTypeName(), "materialType", "name");
 
     return itemSummary;
-  }
-
-  public JsonObject createItemStorageRepresentation(Item item) {
-    JsonObject summary = item.getItem().copy();
-    if (item.getLastCheckIn() != null) {
-      write(summary, LAST_CHECK_IN, item.getLastCheckIn().toJson());
-    }
-
-    return summary;
   }
 }

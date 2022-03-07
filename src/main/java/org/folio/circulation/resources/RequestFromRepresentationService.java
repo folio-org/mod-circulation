@@ -1,11 +1,13 @@
 package org.folio.circulation.resources;
 
+import static java.lang.String.join;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.folio.circulation.domain.RequestLevel.ITEM;
 import static org.folio.circulation.domain.RequestLevel.TITLE;
 import static org.folio.circulation.domain.representations.RequestProperties.INSTANCE_ID;
+import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_DATE;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_LEVEL;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ATTEMPT_TO_CREATE_TLR_LINKED_TO_AN_ITEM;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INSTANCE_DOES_NOT_EXIST;
@@ -17,6 +19,7 @@ import static org.folio.circulation.resources.handlers.error.CirculationErrorTyp
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.NO_AVAILABLE_ITEMS_FOR_TLR;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.http.client.PageLimit.limit;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.results.AsynchronousResult.fromFutureResult;
 import static org.folio.circulation.support.results.MappingFunctions.when;
@@ -39,6 +42,7 @@ import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
+import org.folio.circulation.domain.RequestFulfilmentPreference;
 import org.folio.circulation.domain.RequestLevel;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.User;
@@ -82,11 +86,13 @@ class RequestFromRepresentationService {
     return initRequest(operation, representation)
       .thenApply(r -> r.next(this::validateStatus))
       .thenApply(r -> r.next(this::validateRequestLevel))
+      .thenApply(r -> r.next(this::validateFulfilmentPreference))
       // TODO: do we need to also check here that these IDs are valid UUIDs?
       .thenApply(this::refuseWhenNoInstanceId)
       .thenApply(this::refuseWhenNoItemId)
       .thenApply(this::refuseWhenNoHoldingsRecordId)
       .thenApply(this::refuseToCreateTlrLinkedToAnItem)
+      .thenApply(this::refuseWhenNoRequestDate)
       .thenApply(r -> r.map(this::removeRelatedRecordInformation))
       .thenApply(r -> r.map(this::removeProcessingParameters))
       .thenCompose(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
@@ -280,6 +286,16 @@ class RequestFromRepresentationService {
     return succeeded(request);
   }
 
+  private Result<Request> validateFulfilmentPreference(Request request) {
+    return RequestFulfilmentPreference.allowedValues().stream()
+      .filter(value -> value.equals(request.getFulfilmentPreferenceName()))
+      .findFirst()
+      .map(value -> succeeded(request))
+      .orElseGet(() -> failedValidation("fulfilmentPreference must be one of the following: " +
+        join(", ", RequestFulfilmentPreference.allowedValues()), "fulfilmentPreference",
+        request.getFulfilmentPreferenceName()));
+  }
+
   private Result<Request> refuseWhenNoInstanceId(Result<Request> result) {
     return result.next(this::validateInstanceIdPresence)
       .mapFailure(err -> errorHandler.handleValidationError(err, INVALID_INSTANCE_ID, result));
@@ -358,6 +374,21 @@ class RequestFromRepresentationService {
     }
     else {
       return of(() -> request);
+    }
+  }
+
+  private Result<Request> refuseWhenNoRequestDate(Result<Request> request) {
+    return request.next(this::validateIfRequestDateIsPresent)
+      .mapFailure(err -> errorHandler.handleValidationError(err, INVALID_ITEM_ID, request));
+  }
+
+  private Result<Request> validateIfRequestDateIsPresent(Request context) {
+    var requestDate = getDateTimeProperty(context.getRequestRepresentation(), REQUEST_DATE);
+
+    if (requestDate == null) {
+      return failedValidation("Cannot create a request with no requestDate", REQUEST_DATE, null);
+    } else {
+      return of(() -> context);
     }
   }
 

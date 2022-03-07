@@ -8,11 +8,15 @@ import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.concurrent.CompletableFuture;
 
+import org.folio.circulation.StoreLoanAndItem;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.notes.NoteCreator;
 import org.folio.circulation.domain.representations.ChangeItemStatusRequest;
 import org.folio.circulation.domain.validation.NotInItemStatusValidator;
+import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
+import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.notes.NotesRepository;
+import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.services.ChangeItemStatusService;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.services.PubSubPublishingService;
@@ -53,7 +57,11 @@ public class DeclareClaimedReturnedItemAsMissingResource extends Resource {
     RoutingContext routingContext, ChangeItemStatusRequest request) {
 
     final Clients clients = Clients.create(new WebContext(routingContext), client);
-    final ChangeItemStatusService changeItemStatusService = new ChangeItemStatusService(clients);
+    final var itemRepository = new ItemRepository(clients);
+    final var userRepository = new UserRepository(clients);
+    final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
+    final ChangeItemStatusService changeItemStatusService = new ChangeItemStatusService(
+      loanRepository, new StoreLoanAndItem(loanRepository, itemRepository));
 
     return changeItemStatusService.getOpenLoan(request)
       .thenApply(NotInItemStatusValidator::refuseWhenItemIsNotClaimedReturned)
