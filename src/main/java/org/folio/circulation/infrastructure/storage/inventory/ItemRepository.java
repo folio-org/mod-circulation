@@ -27,7 +27,6 @@ import static org.folio.circulation.support.utils.CollectionUtil.nonNullUniqueSe
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -77,7 +76,8 @@ public class ItemRepository {
   private final LocationRepository locationRepository;
   private final MaterialTypeRepository materialTypeRepository;
   private final ServicePointRepository servicePointRepository;
-  private final IdentityMap<JsonObject> identityMap = new IdentityMap<>();
+  private final IdentityMap identityMap = new IdentityMap(
+    item -> getProperty(item, "id"));
 
   public ItemRepository(Clients clients) {
     this(clients.itemsStorage(), clients.holdingsStorage(),
@@ -117,12 +117,12 @@ public class ItemRepository {
       return ofAsync(() -> null);
     }
 
-    if (!identityMap.getIdentityMap().containsKey(item.getItemId())) {
+    if (identityMap.entryNotPresent(item.getItemId())) {
       return completedFuture(Result.failed(new ServerErrorFailure(
         "Cannot update item when original representation is not available in identity map")));
     }
 
-    final var updatedItemRepresentation = identityMap.getIdentityMap().get(item.getItemId());
+    final var updatedItemRepresentation = identityMap.get(item.getItemId());
 
     write(updatedItemRepresentation, STATUS_PROPERTY,
       new JsonObject().put("name", item.getStatus().getValue()));
@@ -313,7 +313,7 @@ public class ItemRepository {
     final var mapper = new ItemMapper();
 
     return finder.findByIds(itemIds)
-      .thenApply(mapResult(this::addToIdentityMap))
+      .thenApply(mapResult(identityMap::add))
       .thenApply(mapResult(records -> records.mapRecords(mapper::toDomain)))
       .thenApply(mapResult(MultipleRecords::getRecords));
   }
@@ -323,7 +323,7 @@ public class ItemRepository {
 
     return SingleRecordFetcher.jsonOrNull(itemsClient, "item")
       .fetch(itemId)
-      .thenApply(mapResult(this::addToIdentityMap))
+      .thenApply(mapResult(identityMap::add))
       .thenApply(mapResult(mapper::toDomain));
   }
 
@@ -335,7 +335,7 @@ public class ItemRepository {
 
     return finder.findByQuery(exactMatch("barcode", barcode), one())
       .thenApply(records -> records.map(MultipleRecords::firstOrNull))
-      .thenApply(mapResult(this::addToIdentityMap))
+      .thenApply(mapResult(identityMap::add))
       .thenApply(mapResult(mapper::toDomain));
   }
 
@@ -408,7 +408,7 @@ public class ItemRepository {
     final var mapper = new ItemMapper();
 
     return finder.find(byIndex(indexName, ids))
-      .thenApply(mapResult(this::addToIdentityMap))
+      .thenApply(mapResult(identityMap::add))
       .thenApply(mapResult(m -> m.mapRecords(mapper::toDomain)))
       .thenApply(mapResult(MultipleRecords::getRecords))
       .thenComposeAsync(this::fetchHoldingRecords)
@@ -439,7 +439,7 @@ public class ItemRepository {
     final var mapper = new ItemMapper();
 
     return finder.find(byIndex(indexName, ids).withQuery(query))
-      .thenApply(mapResult(this::addToIdentityMap))
+      .thenApply(mapResult(identityMap::add))
       .thenApply(mapResult(m -> m.mapRecords(mapper::toDomain)))
       .thenApply(mapResult(MultipleRecords::getRecords))
       .thenComposeAsync(this::fetchHoldingRecords)
@@ -489,24 +489,6 @@ public class ItemRepository {
       .thenComposeAsync(this::fetchLocation)
       .thenComposeAsync(this::fetchMaterialType)
       .thenComposeAsync(this::fetchLoanType);
-  }
-
-  private MultipleRecords<JsonObject> addToIdentityMap(MultipleRecords<JsonObject> items) {
-    if (items != null) {
-      items.getRecords().forEach(this::addToIdentityMap);
-    }
-
-    return items;
-  }
-
-  private JsonObject addToIdentityMap(JsonObject item) {
-      if (item != null) {
-        // Needs to be a copy because JsonObject is mutable
-        // and passed between instances of an item
-        identityMap.getIdentityMap().put(getProperty(item, "id"), item.copy());
-      }
-
-      return item;
   }
 
   private CqlQueryFinder<JsonObject> createItemFinder() {
