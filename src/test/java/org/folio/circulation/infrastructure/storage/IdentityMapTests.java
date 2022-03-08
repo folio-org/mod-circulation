@@ -6,7 +6,9 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.sameInstance;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
@@ -24,6 +26,18 @@ class IdentityMapTests {
   @Nested
   @DisplayName("when created")
   class whenNew {
+    @Test
+    @DisplayName("cannot add null collection of entries")
+    void cannotAddNullCollectionOfEntries() {
+      assertThrows(NullPointerException.class, () -> identityMap.add((Collection<JsonObject>)null));
+    }
+
+    @Test
+    @DisplayName("cannot add null multiple records")
+    void cannotAddNullMultipleRecords() {
+      assertThrows(NullPointerException.class, () -> identityMap.add((MultipleRecords<JsonObject>)null));
+    }
+
     @Nested
     @DisplayName("after adding an entry")
     class AfterAddingAnEntry {
@@ -36,6 +50,7 @@ class IdentityMapTests {
       }
 
       @Test
+      @DisplayName("identity map includes entry")
       void includesTheEntry() {
         /*
           This is somewhat counter-intuitive.
@@ -47,6 +62,7 @@ class IdentityMapTests {
       }
 
       @Test
+      @DisplayName("entry can be retrieved")
       void theEntryCanBeRetrieved() {
         final var fetchedEntry = identityMap.get(id);
 
@@ -56,6 +72,7 @@ class IdentityMapTests {
       }
 
       @Test
+      @DisplayName("the retrieved entry is a copy of the original")
       void theRetrievedEntryIsACopy() {
         final var fetchedEntry = identityMap.get(id);
 
@@ -84,6 +101,7 @@ class IdentityMapTests {
       }
 
       @Test
+      @DisplayName("identity map includes all of the entries")
       void includesTheEntries() {
         assertThat(identityMap.entryNotPresent(firstId), is(false));
         assertThat(identityMap.entryNotPresent(secondId), is(false));
@@ -91,11 +109,13 @@ class IdentityMapTests {
       }
 
       @Test
+      @DisplayName("identity map does not include other entries")
       void doesNotIncludeOtherEntries() {
         assertThat(identityMap.entryNotPresent(UUID.randomUUID().toString()), is(true));
       }
 
       @Test
+      @DisplayName("each entry can be retrieved")
       void theEntriesCanBeRetrieved() {
         assertThat(getName(firstId), is("foo"));
         assertThat(getName(secondId), is("bar"));
