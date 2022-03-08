@@ -171,13 +171,18 @@ public class UpdateRequestQueue {
   public CompletableFuture<Result<LoanAndRelatedRecords>> onCheckOut(
     LoanAndRelatedRecords relatedRecords) {
 
-    return onCheckOut(relatedRecords.getRequestQueue())
+    return onCheckOut(relatedRecords.getRequestQueue(), relatedRecords.getItem().getItemId())
       .thenApply(result -> result.map(relatedRecords::withRequestQueue));
   }
 
-  private CompletableFuture<Result<RequestQueue>> onCheckOut(RequestQueue requestQueue) {
+  private CompletableFuture<Result<RequestQueue>> onCheckOut(RequestQueue requestQueue,
+    String itemId) {
+
     if (requestQueue.hasOutstandingFulfillableRequests()) {
       Request firstRequest = requestQueue.getHighestPriorityFulfillableRequest();
+      if (!itemId.equals(firstRequest.getItemId())) {
+        return completedFuture(succeeded(requestQueue));
+      }
 
       Request originalRequest = Request.from(firstRequest.asJson());
 
