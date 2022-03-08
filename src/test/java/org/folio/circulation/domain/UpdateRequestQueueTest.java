@@ -128,8 +128,10 @@ class UpdateRequestQueueTest {
 
   @Test
   void checkOutShouldFailWhenBatchUpdateFails() throws Exception {
-    LoanAndRelatedRecords checkOutContext = new LoanAndRelatedRecords(null)
-      .withRequestQueue(createRequestQueue(UUID.randomUUID(), 3));
+    UUID itemId = UUID.randomUUID();
+    LoanAndRelatedRecords checkOutContext = new LoanAndRelatedRecords(
+        createLoan(itemId))
+      .withRequestQueue(createRequestQueue(itemId, 3));
 
     Request fulfillRequest = checkOutContext.getRequestQueue()
       .getHighestPriorityFulfillableRequest();
@@ -279,5 +281,15 @@ class UpdateRequestQueueTest {
 
     ForwardOnFailure forwardResponse = (ForwardOnFailure) result.cause();
     assertThat(forwardResponse.getFailureResponse(), is(serverErrorBatchResponse));
+  }
+
+  private Loan createLoan(UUID itemId) {
+    final JsonObject loanRepresentation = new JsonObject()
+      .put("id", UUID.randomUUID().toString());
+    var itemRepresentation = new JsonObject()
+      .put("id", itemId.toString());
+    var item = Item.from(itemRepresentation);
+
+    return Loan.from(loanRepresentation).withItem(item);
   }
 }
