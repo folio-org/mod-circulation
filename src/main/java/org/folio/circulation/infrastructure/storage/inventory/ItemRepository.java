@@ -283,7 +283,7 @@ public class ItemRepository {
       identity()).findByIds(instanceIds);
   }
 
-  private CompletableFuture<Result<Collection<Item>>> fetchHoldingRecords(
+  private CompletableFuture<Result<Collection<Item>>> fetchHoldingsRecords(
     Result<Collection<Item>> result) {
 
     return result.after(items -> {
@@ -411,10 +411,7 @@ public class ItemRepository {
       .thenApply(mapResult(identityMap::add))
       .thenApply(mapResult(m -> m.mapRecords(mapper::toDomain)))
       .thenApply(mapResult(MultipleRecords::getRecords))
-      .thenComposeAsync(this::fetchHoldingRecords)
-      .thenComposeAsync(this::fetchInstances)
-      .thenComposeAsync(this::fetchLocations)
-      .thenComposeAsync(this::fetchMaterialTypes);
+      .thenComposeAsync(this::fetchItemsRelatedRecords);
   }
 
   public CompletableFuture<Result<MultipleRecords<Holdings>>> findHoldingsByIds(
@@ -442,28 +439,21 @@ public class ItemRepository {
       .thenApply(mapResult(identityMap::add))
       .thenApply(mapResult(m -> m.mapRecords(mapper::toDomain)))
       .thenApply(mapResult(MultipleRecords::getRecords))
-      .thenComposeAsync(this::fetchHoldingRecords)
-      .thenComposeAsync(this::fetchInstances)
-      .thenComposeAsync(this::fetchLocations)
-      .thenComposeAsync(this::fetchMaterialTypes)
-      .thenComposeAsync(this::fetchLoanTypes);
+      .thenComposeAsync(this::fetchItemsRelatedRecords);
   }
 
   private CompletableFuture<Result<Collection<Item>>> fetchFor(
     Collection<String> itemIds) {
 
     return fetchItems(itemIds)
-      .thenComposeAsync(this::fetchHoldingRecords)
-      .thenComposeAsync(this::fetchInstances)
-      .thenComposeAsync(this::fetchLocations)
-      .thenComposeAsync(this::fetchMaterialTypes);
+      .thenComposeAsync(this::fetchItemsRelatedRecords);
   }
 
   private CompletableFuture<Result<Collection<Item>>> fetchItemsWithHoldingsRecords(
     Collection<String> itemIds) {
 
     return fetchItems(itemIds)
-      .thenComposeAsync(this::fetchHoldingRecords);
+      .thenComposeAsync(this::fetchHoldingsRecords);
   }
 
   private <T extends ItemRelatedRecord> Collection<T> matchItemToRecord(
@@ -484,11 +474,21 @@ public class ItemRepository {
   public CompletableFuture<Result<Item>> fetchItemRelatedRecords(
     Result<Item> item) {
 
-    return fetchHoldingsRecord(item)
+    return this.fetchHoldingsRecord(item)
       .thenComposeAsync(this::fetchInstance)
       .thenComposeAsync(this::fetchLocation)
       .thenComposeAsync(this::fetchMaterialType)
       .thenComposeAsync(this::fetchLoanType);
+  }
+
+  public CompletableFuture<Result<Collection<Item>>> fetchItemsRelatedRecords(
+    Result<Collection<Item>> items) {
+
+    return fetchHoldingsRecords(items)
+      .thenComposeAsync(this::fetchInstances)
+      .thenComposeAsync(this::fetchLocations)
+      .thenComposeAsync(this::fetchMaterialTypes)
+      .thenComposeAsync(this::fetchLoanTypes);
   }
 
   private CqlQueryFinder<JsonObject> createItemFinder() {
