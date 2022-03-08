@@ -4,6 +4,7 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.CoreMatchers.sameInstance;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -36,6 +37,19 @@ class IdentityMapTests {
     @DisplayName("cannot add null multiple records")
     void cannotAddNullMultipleRecords() {
       assertThrows(NullPointerException.class, () -> identityMap.add((MultipleRecords<JsonObject>)null));
+    }
+
+    @Test
+    @DisplayName("nothing happens when attempting to add a null entry")
+    void nothingHappensWhenAddingANewEntry() {
+      /*
+        This is designed to make it easier to apply the identity map as a side effect
+        whilst chaining it with other steps in a process
+
+        Requiring the client to check for null would mean each use having to
+        include additional code
+       */
+      assertThat(identityMap.add((JsonObject) null), is(nullValue()));
     }
 
     @Nested
