@@ -1757,7 +1757,8 @@
         "scheduled-notice-storage.scheduled-notices.item.post",
         "manualblocks.collection.get",
         "automated-patron-blocks.collection.get",
-        "pubsub.publish.post"
+        "pubsub.publish.post",
+        "circulation-storage.fixed-due-date-schedules.collection.get"
       ],
       "visible": false
     },
