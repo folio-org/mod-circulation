@@ -919,14 +919,6 @@ class InstanceRequestsAPICreationTests extends APITests {
     }
   }
 
-  private void validateTitleLevelRequestResponse(JsonObject representation,
-    UUID pickupServicePointId, UUID instanceId,
-    RequestType expectedRequestType) {
-
-    validateInstanceRequestResponse(representation, pickupServicePointId,
-      instanceId, null, expectedRequestType);
-  }
-
   private JsonObject createInstanceRequestObject(UUID instanceId,
     UUID requesterId, UUID pickupServicePointId, ZonedDateTime requestDate,
     ZonedDateTime requestExpirationDate) {
