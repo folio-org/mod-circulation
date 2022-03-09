@@ -8,7 +8,9 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.UUID;
@@ -35,19 +37,24 @@ class ItemRepositoryTests {
     final var itemsClient = mock(CollectionResourceClient.class);
     final var repository = createRepository(itemsClient);
 
+    final var itemId = UUID.randomUUID().toString();
+
     final var itemJson = new JsonObject()
+      .put("id", itemId)
       .put("holdingsRecordId", UUID.randomUUID())
       .put("effectiveLocationId", UUID.randomUUID());
 
     mockedClientGet(itemsClient, itemJson.encodePrettily());
 
     when(itemsClient.put(any(), any())).thenReturn(ofAsync(
-      () -> new Response(204, null, "application/json")));
+      () -> new Response(204, itemJson.toString(), "application/json")));
 
-    final var fetchedItem = get(repository.fetchById(UUID.randomUUID().toString()))
+    final var fetchedItem = get(repository.fetchById(itemId))
       .value();
 
     final var updateResult = get(repository.updateItem(fetchedItem));
+
+    verify(itemsClient).put(eq(itemId), any());
 
     assertThat(updateResult, succeeded());
   }
