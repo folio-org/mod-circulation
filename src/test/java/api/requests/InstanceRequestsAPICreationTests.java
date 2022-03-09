@@ -916,8 +916,6 @@ class InstanceRequestsAPICreationTests extends APITests {
 
     if (itemId != null) {
       assertEquals(itemId.toString(), representation.getString("itemId"));
-    } else {
-      assertNull(representation.getString("itemId"));
     }
   }
 
