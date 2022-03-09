@@ -24,11 +24,12 @@ import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
-import static org.folio.circulation.support.utils.CollectionUtil.nonNullUniqueSetOf;
+import static org.folio.circulation.support.utils.CollectionUtil.uniqueSet;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
@@ -50,7 +51,6 @@ import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.infrastructure.storage.IdentityMap;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.storage.mappers.HoldingsMapper;
-import org.folio.circulation.storage.mappers.InstanceMapper;
 import org.folio.circulation.storage.mappers.ItemMapper;
 import org.folio.circulation.storage.mappers.LoanTypeMapper;
 import org.folio.circulation.storage.mappers.MaterialTypeMapper;
@@ -72,7 +72,6 @@ public class ItemRepository {
 
   private final CollectionResourceClient itemsClient;
   private final CollectionResourceClient holdingsClient;
-  private final CollectionResourceClient instancesClient;
   private final CollectionResourceClient loanTypesClient;
   private final LocationRepository locationRepository;
   private final MaterialTypeRepository materialTypeRepository;
@@ -83,7 +82,7 @@ public class ItemRepository {
 
   public ItemRepository(Clients clients) {
     this(clients.itemsStorage(), clients.holdingsStorage(),
-      clients.instancesStorage(), clients.loanTypesStorage(), LocationRepository.using(clients),
+      clients.loanTypesStorage(), LocationRepository.using(clients),
       new MaterialTypeRepository(clients), new ServicePointRepository(clients),
       new InstanceRepository(clients));
   }
@@ -234,7 +233,7 @@ public class ItemRepository {
         .collect(Collectors.toMap(identity(), Item::getLoanTypeId));
 
       final var loanTypeIdsToFetch
-        = nonNullUniqueSetOf(itemToLoanTypeIdMap.values(), identity());
+        = uniqueSet(itemToLoanTypeIdMap.values(), identity());
 
       return findWithMultipleCqlIndexValues(loanTypesClient, "loantypes", identity())
         .findByIds(loanTypeIdsToFetch)
@@ -255,42 +254,26 @@ public class ItemRepository {
         .collect(Collectors.toList()));
   }
 
-  public CompletableFuture<Result<MultipleRecords<Instance>>> findInstancesByIds(
-    Collection<String> instanceIds) {
-
-    return fetchInstancesByIds(instanceIds)
-      .thenApply(mapResult(multipleRecords -> multipleRecords.mapRecords(
-        new InstanceMapper()::toDomain)));
-  }
-
   private CompletableFuture<Result<Collection<Item>>> fetchInstances(
     Result<Collection<Item>> result) {
 
     return result.after(items -> {
-      final var instanceIds = nonNullUniqueSetOf(items, Item::getInstanceId);
+      final var instanceIds = uniqueSet(items, Item::getInstanceId);
 
-      final var mapper = new InstanceMapper();
-
-      return fetchInstancesByIds(instanceIds)
+      return instanceRepository.fetchByIds(instanceIds)
         .thenApply(mapResult(instances -> items.stream()
-          .map(item -> item.withInstance(mapper.toDomain(
-              findById(item.getInstanceId(), instances.getRecords()).orElse(null))))
+          .map(item -> item.withInstance(
+              instances.filter(instance -> Objects.equals(instance.getId(),
+                item.getInstanceId())).firstOrElse(Instance.unknown())))
           .collect(Collectors.toList())));
     });
-  }
-
-  private CompletableFuture<Result<MultipleRecords<JsonObject>>> fetchInstancesByIds(
-    Collection<String> instanceIds) {
-
-    return findWithMultipleCqlIndexValues(instancesClient, "instances",
-      identity()).findByIds(instanceIds);
   }
 
   private CompletableFuture<Result<Collection<Item>>> fetchHoldingsRecords(
     Result<Collection<Item>> result) {
 
     return result.after(items -> {
-      final var holdingsIds = nonNullUniqueSetOf(items, Item::getHoldingsRecordId);
+      final var holdingsIds = uniqueSet(items, Item::getHoldingsRecordId);
 
       final var mapper = new HoldingsMapper();
 

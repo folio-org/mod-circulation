@@ -88,7 +88,6 @@ class ItemRepositoryTests {
 
   private ItemRepository createRepository(CollectionResourceClient itemsClient) {
     final var holdingsClient = mock(CollectionResourceClient.class);
-    final var instancesClient = mock(CollectionResourceClient.class);
     final var locationRepository = mock(LocationRepository.class);
     final var materialTypeRepository = mock(MaterialTypeRepository.class);
     final var instanceRepository = mock(InstanceRepository.class);
@@ -107,7 +106,7 @@ class ItemRepositoryTests {
     when(instanceRepository.fetchById(anyString()))
       .thenReturn(ofAsync(Instance::unknown));
 
-    return new ItemRepository(itemsClient, holdingsClient, instancesClient,
+    return new ItemRepository(itemsClient, holdingsClient,
       null, locationRepository, materialTypeRepository, null,
       instanceRepository);
   }

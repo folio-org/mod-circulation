@@ -31,6 +31,7 @@ import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.representations.ItemsInTransitReport;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
+import org.folio.circulation.infrastructure.storage.inventory.InstanceRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemReportRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.inventory.LocationRepository;
@@ -55,6 +56,7 @@ public class ItemsInTransitReportService {
   private ItemRepository itemRepository;
   private UserRepository userRepository;
   private PatronGroupRepository patronGroupRepository;
+  private final InstanceRepository instanceRepository;
 
   public ItemsInTransitReportService(Clients clients) {
     this.itemReportRepository = new ItemReportRepository(clients);
@@ -66,6 +68,7 @@ public class ItemsInTransitReportService {
     this.requestRepository = new RequestRepository(clients, itemRepository, userRepository,
       loanRepository, servicePointRepository, patronGroupRepository);
     this.patronGroupRepository = new PatronGroupRepository(clients);
+    this.instanceRepository = new InstanceRepository(clients);
   }
 
   public CompletableFuture<Result<JsonObject>> buildReport() {
@@ -107,8 +110,8 @@ public class ItemsInTransitReportService {
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchInstances(
     ItemsInTransitReportContext context) {
 
-    return itemRepository.findInstancesByIds(mapToStrings(context.getItems().values(),
-        context::getInstanceId))
+    return instanceRepository.fetchByIds(mapToStrings(context.getItems().values(),
+          context::getInstanceId))
       .thenApply(mapResult(records -> toMap(records.getRecords(), Instance::getId)))
       .thenApply(mapResult(context::withInstances));
   }

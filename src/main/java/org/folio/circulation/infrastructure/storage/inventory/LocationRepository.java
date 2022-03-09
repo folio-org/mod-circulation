@@ -9,7 +9,7 @@ import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
-import static org.folio.circulation.support.utils.CollectionUtil.nonNullUniqueSetOf;
+import static org.folio.circulation.support.utils.CollectionUtil.uniqueSet;
 
 import java.util.Collection;
 import java.util.List;
@@ -150,7 +150,7 @@ public class LocationRepository {
     final FindWithMultipleCqlIndexValues<JsonObject> fetcher
       = findWithMultipleCqlIndexValues(librariesStorageClient, "loclibs", identity());
 
-    final Set<String> libraryIds = nonNullUniqueSetOf(locations, Location::getLibraryId);
+    final Set<String> libraryIds = uniqueSet(locations, Location::getLibraryId);
 
     return fetcher.findByIds(libraryIds)
             .thenApply(mapResult(records -> records.toMap(library ->
@@ -163,7 +163,7 @@ public class LocationRepository {
     final FindWithMultipleCqlIndexValues<JsonObject> fetcher
       = findWithMultipleCqlIndexValues(campusesStorageClient, "loccamps", identity());
 
-    final Set<String> campusesIds = nonNullUniqueSetOf(locations, Location::getCampusId);
+    final Set<String> campusesIds = uniqueSet(locations, Location::getCampusId);
 
     return fetcher.findByIds(campusesIds)
       .thenApply(mapResult(records -> records.toMap(campus ->
@@ -176,7 +176,7 @@ public class LocationRepository {
     final FindWithMultipleCqlIndexValues<JsonObject> fetcher
       = findWithMultipleCqlIndexValues(institutionsStorageClient, "locinsts", identity());
 
-    final Set<String> institutionsIds = nonNullUniqueSetOf(locations, Location::getInstitutionId);
+    final Set<String> institutionsIds = uniqueSet(locations, Location::getInstitutionId);
 
     return fetcher.findByIds(institutionsIds)
       .thenApply(mapResult(records -> records.toMap(institution ->

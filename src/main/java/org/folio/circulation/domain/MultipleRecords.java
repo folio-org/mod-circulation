@@ -59,7 +59,11 @@ public class MultipleRecords<T> {
   }
 
   public T firstOrNull() {
-    return getRecords().stream().findFirst().orElse(null);
+    return firstOrElse(null);
+  }
+
+  public T firstOrElse(T other) {
+    return getRecords().stream().findFirst().orElse(other);
   }
 
   public <R> Set<R> toKeys(Function<T, R> keyMapper) {

@@ -44,6 +44,17 @@ public class InstanceRepository {
       .thenApply(r -> r.map(mapper::toDomain));
   }
 
+  public CompletableFuture<Result<MultipleRecords<Instance>>> fetchByIds(
+    Collection<String> instanceIds) {
+
+    InstanceMapper mapper = new InstanceMapper();
+
+    return findWithMultipleCqlIndexValues(instancesClient, "instances",
+      mapper::toDomain)
+      .findByIds(instanceIds);
+  }
+
+
   public CompletableFuture<Result<MultipleRecords<Request>>> findInstancesForRequests(MultipleRecords<Request> multipleRequests) {
     Collection<Request> requests = multipleRequests.getRecords();
     final List<String> instanceIdsToFetch = requests.stream()
