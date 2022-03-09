@@ -3,9 +3,11 @@ package org.folio.circulation.infrastructure.storage.inventory;
 import static org.folio.circulation.domain.representations.ItemProperties.HOLDINGS_RECORD_ID;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQuery;
+import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
+import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Holdings;
@@ -38,5 +40,15 @@ public class HoldingsRepository {
       holdingsClient, "holdingsRecords", mapper::toDomain);
 
     return holdingsRecordFetcher.findByQuery(exactMatch("instanceId", instanceId));
+  }
+
+  CompletableFuture<Result<MultipleRecords<Holdings>>> fetchByIds(
+    Collection<String> holdingsRecordIds) {
+
+    final var mapper = new HoldingsMapper();
+
+    return findWithMultipleCqlIndexValues(holdingsClient, "holdingsRecords",
+        mapper::toDomain)
+      .findByIds(holdingsRecordIds);
   }
 }

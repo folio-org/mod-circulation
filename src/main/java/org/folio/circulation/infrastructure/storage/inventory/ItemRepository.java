@@ -28,7 +28,6 @@ import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -47,7 +46,6 @@ import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.infrastructure.storage.IdentityMap;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
-import org.folio.circulation.storage.mappers.HoldingsMapper;
 import org.folio.circulation.storage.mappers.ItemMapper;
 import org.folio.circulation.storage.mappers.LoanTypeMapper;
 import org.folio.circulation.storage.mappers.MaterialTypeMapper;
@@ -239,23 +237,13 @@ public class ItemRepository {
     return result.after(items -> {
       final var holdingsIds = uniqueSet(items, Item::getHoldingsRecordId);
 
-      final var mapper = new HoldingsMapper();
-
-      return fetchHoldingsByIds(holdingsIds)
-        .thenApply(mapResult(holdings -> items.stream()
-          .map(item -> item.withHoldings(mapper.toDomain(
-              findById(item.getHoldingsRecordId(), holdings.getRecords()).orElse(null))))
+      return holdingsRepository.fetchByIds(holdingsIds)
+        .thenApply(mapResult(h -> items.stream()
+          .map(item -> item.withHoldings(
+            h.filter(holdings -> Objects.equals(holdings.getId(),
+                item.getHoldingsRecordId())).firstOrElse(Holdings.unknown())))
           .collect(Collectors.toList())));
     });
-  }
-
-  private static Optional<JsonObject> findById(
-    String id,
-    Collection<JsonObject> collection) {
-
-    return collection.stream()
-      .filter(item -> item.getString("id").equals(id))
-      .findFirst();
   }
 
   private CompletableFuture<Result<Collection<Item>>> fetchItems(Collection<String> itemIds) {
@@ -330,16 +318,7 @@ public class ItemRepository {
   public CompletableFuture<Result<MultipleRecords<Holdings>>> findHoldingsByIds(
     Collection<String> holdingsRecordIds) {
 
-    return fetchHoldingsByIds(holdingsRecordIds)
-      .thenApply(mapResult(multipleRecords ->
-        multipleRecords.mapRecords(new HoldingsMapper()::toDomain)));
-  }
-
-  private CompletableFuture<Result<MultipleRecords<JsonObject>>> fetchHoldingsByIds(
-    Collection<String> holdingsRecordIds) {
-
-    return findWithMultipleCqlIndexValues(holdingsClient, "holdingsRecords", identity())
-      .findByIds(holdingsRecordIds);
+    return holdingsRepository.fetchByIds(holdingsRecordIds);
   }
 
   public CompletableFuture<Result<Collection<Item>>> findByIndexNameAndQuery(
