@@ -1,6 +1,5 @@
 package org.folio.circulation.infrastructure.storage.inventory;
 
-import static java.util.Objects.isNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Function.identity;
 import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
@@ -66,7 +65,6 @@ public class ItemRepository {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   private final CollectionResourceClient itemsClient;
-  public final CollectionResourceClient holdingsClient;
   private final CollectionResourceClient loanTypesClient;
   private final LocationRepository locationRepository;
   private final MaterialTypeRepository materialTypeRepository;
@@ -77,10 +75,10 @@ public class ItemRepository {
     item -> getProperty(item, "id"));
 
   public ItemRepository(Clients clients) {
-    this(clients.itemsStorage(), clients.holdingsStorage(),
-      clients.loanTypesStorage(), LocationRepository.using(clients),
-      new MaterialTypeRepository(clients), new ServicePointRepository(clients),
-      new InstanceRepository(clients), new HoldingsRepository(clients.holdingsStorage()));
+    this(clients.itemsStorage(), clients.loanTypesStorage(),
+      LocationRepository.using(clients), new MaterialTypeRepository(clients),
+      new ServicePointRepository(clients), new InstanceRepository(clients),
+      new HoldingsRepository(clients.holdingsStorage()));
   }
 
   public CompletableFuture<Result<Item>> fetchFor(ItemRelatedRecord itemRelatedRecord) {
@@ -89,15 +87,6 @@ public class ItemRepository {
     }
 
     return fetchById(itemRelatedRecord.getItemId());
-  }
-
-  private CompletableFuture<Result<ServicePoint>> fetchPrimaryServicePoint(Location location) {
-    if(isNull(location) || isNull(location.getPrimaryServicePointId())) {
-      return ofAsync(() -> null);
-    }
-
-    return servicePointRepository.getServicePointById(
-      location.getPrimaryServicePointId());
   }
 
   public CompletableFuture<Result<Item>> updateItem(Item item) {
@@ -225,8 +214,7 @@ public class ItemRepository {
       return instanceRepository.fetchByIds(instanceIds)
         .thenApply(mapResult(instances -> items.stream()
           .map(item -> item.withInstance(
-              instances.filter(instance -> Objects.equals(instance.getId(),
-                item.getInstanceId())).firstOrElse(Instance.unknown())))
+            findRecord(instances, item, Instance::getId, Item::getInstanceId, Instance.unknown())))
           .collect(Collectors.toList())));
     });
   }
@@ -240,10 +228,19 @@ public class ItemRepository {
       return holdingsRepository.fetchByIds(holdingsIds)
         .thenApply(mapResult(h -> items.stream()
           .map(item -> item.withHoldings(
-            h.filter(holdings -> Objects.equals(holdings.getId(),
-                item.getHoldingsRecordId())).firstOrElse(Holdings.unknown())))
+            findRecord(h, item, Holdings::getId, Item::getHoldingsRecordId,
+              Holdings.unknown())))
           .collect(Collectors.toList())));
     });
+  }
+
+  private <T> T findRecord(MultipleRecords<T> records,
+    Item item, Function<T, String> recordIdMapper,
+    Function<Item, String> referenceIdMapper, T notFoundValue) {
+
+    return records.filter(rec -> Objects.equals(recordIdMapper.apply(rec),
+        referenceIdMapper.apply(item)))
+      .firstOrElse(notFoundValue);
   }
 
   private CompletableFuture<Result<Collection<Item>>> fetchItems(Collection<String> itemIds) {
@@ -392,7 +389,14 @@ public class ItemRepository {
   }
 
   private CompletableFuture<Result<ServicePoint>> fetchPrimaryServicePoint(Item item) {
-    return fetchPrimaryServicePoint(item.getLocation());
+    if (item == null || item.getLocation() == null
+      || item.getLocation().getPrimaryServicePointId() == null) {
+
+      log.info("Location was not fund, aborting fetching primary service point");
+      return ofAsync(() -> null);
+    }
+
+    return servicePointRepository.getServicePointById(item.getLocation().getPrimaryServicePointId());
   }
 
   private CompletableFuture<Result<LoanType>> fetchLoanType(Item item) {
