@@ -77,6 +77,7 @@ public class ItemRepository {
   private final MaterialTypeRepository materialTypeRepository;
   private final ServicePointRepository servicePointRepository;
   private final InstanceRepository instanceRepository;
+  private final HoldingsRepository holdingsRepository;
   private final IdentityMap identityMap = new IdentityMap(
     item -> getProperty(item, "id"));
 
@@ -84,7 +85,7 @@ public class ItemRepository {
     this(clients.itemsStorage(), clients.holdingsStorage(),
       clients.loanTypesStorage(), LocationRepository.using(clients),
       new MaterialTypeRepository(clients), new ServicePointRepository(clients),
-      new InstanceRepository(clients));
+      new InstanceRepository(clients), new HoldingsRepository(clients.holdingsStorage()));
   }
 
   public CompletableFuture<Result<Item>> fetchFor(ItemRelatedRecord itemRelatedRecord) {

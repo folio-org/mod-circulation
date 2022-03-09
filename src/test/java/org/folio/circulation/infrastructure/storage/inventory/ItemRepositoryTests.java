@@ -91,6 +91,7 @@ class ItemRepositoryTests {
     final var locationRepository = mock(LocationRepository.class);
     final var materialTypeRepository = mock(MaterialTypeRepository.class);
     final var instanceRepository = mock(InstanceRepository.class);
+    final var holdingsRepository = mock(HoldingsRepository.class);
 
     final var holdings = new JsonObject()
       .put("instanceId", UUID.randomUUID());
@@ -108,7 +109,7 @@ class ItemRepositoryTests {
 
     return new ItemRepository(itemsClient, holdingsClient,
       null, locationRepository, materialTypeRepository, null,
-      instanceRepository);
+      instanceRepository, holdingsRepository);
   }
 
   private Item dummyItem() {
