@@ -3,12 +3,12 @@ package org.folio.circulation.infrastructure.storage.inventory;
 import static java.util.Objects.isNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Function.identity;
+import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
 import static org.folio.circulation.domain.representations.ItemProperties.HOLDINGS_RECORD_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.IN_TRANSIT_DESTINATION_SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.LAST_CHECK_IN;
 import static org.folio.circulation.domain.representations.ItemProperties.STATUS_PROPERTY;
 import static org.folio.circulation.support.fetching.MultipleCqlIndexValuesCriteria.byIndex;
-import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQuery;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.http.CommonResponseInterpreters.noContentRecordInterpreter;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
@@ -41,7 +41,6 @@ import org.folio.circulation.domain.Holdings;
 import org.folio.circulation.domain.Instance;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemRelatedRecord;
-import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.LoanType;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.MultipleRecords;
@@ -147,25 +146,20 @@ public class ItemRepository {
   }
 
   public CompletableFuture<Result<Item>> getFirstAvailableItemByInstanceId(String instanceId) {
-    final var holdingsRecordFetcher = findWithCqlQuery(
-      holdingsClient, "holdingsRecords", identity());
-
-    return holdingsRecordFetcher.findByQuery(exactMatch("instanceId", instanceId))
-      .thenCompose(this::getAvailableItem);
+    return holdingsRepository.fetchByInstanceId(instanceId)
+      .thenCompose(r -> r.after(this::getAvailableItem));
   }
 
   private CompletableFuture<Result<Item>> getAvailableItem(
-    Result<MultipleRecords<JsonObject>> holdingsRecordsResult) {
+    MultipleRecords<Holdings> holdingsRecords) {
 
-    return holdingsRecordsResult.after(holdingsRecords -> {
-      if (holdingsRecords == null || holdingsRecords.isEmpty()) {
-        return completedFuture(succeeded(Item.from(null)));
-      }
+    if (holdingsRecords == null || holdingsRecords.isEmpty()) {
+      return ofAsync(() -> Item.from(null));
+    }
 
-      return findByIndexNameAndQuery(holdingsRecords.toKeys(byId()), HOLDINGS_RECORD_ID,
-        exactMatch("status.name", ItemStatus.AVAILABLE.getValue()))
-        .thenApply(mapResult(ItemRepository::firstOrNull));
-    });
+    return findByIndexNameAndQuery(holdingsRecords.toKeys(Holdings::getId),
+      HOLDINGS_RECORD_ID, exactMatch("status.name", AVAILABLE.getValue()))
+      .thenApply(mapResult(ItemRepository::firstOrNull));
   }
 
   private CompletableFuture<Result<Item>> fetchMaterialType(Result<Item> result) {
