@@ -36,7 +36,7 @@ public class InstanceRepository {
     return fetchById(request.getInstanceId());
   }
 
-  private CompletableFuture<Result<Instance>> fetchById(String instanceId) {
+  public CompletableFuture<Result<Instance>> fetchById(String instanceId) {
     InstanceMapper mapper = new InstanceMapper();
 
     return SingleRecordFetcher.jsonOrNull(instancesClient, "instance")
@@ -92,5 +92,4 @@ public class InstanceRepository {
     }
     return instance -> request.getInstanceId().equals(instance.getId());
   }
-
 }

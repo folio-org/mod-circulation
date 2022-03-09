@@ -77,13 +77,15 @@ public class ItemRepository {
   private final LocationRepository locationRepository;
   private final MaterialTypeRepository materialTypeRepository;
   private final ServicePointRepository servicePointRepository;
+  private final InstanceRepository instanceRepository;
   private final IdentityMap identityMap = new IdentityMap(
     item -> getProperty(item, "id"));
 
   public ItemRepository(Clients clients) {
     this(clients.itemsStorage(), clients.holdingsStorage(),
       clients.instancesStorage(), clients.loanTypesStorage(), LocationRepository.using(clients),
-      new MaterialTypeRepository(clients), new ServicePointRepository(clients));
+      new MaterialTypeRepository(clients), new ServicePointRepository(clients),
+      new InstanceRepository(clients));
   }
 
   public CompletableFuture<Result<Item>> fetchFor(ItemRelatedRecord itemRelatedRecord) {
@@ -365,16 +367,8 @@ public class ItemRepository {
       log.info("Holding was not found, aborting fetching instance");
       return ofAsync(Instance::unknown);
     } else {
-      return fetchInstance(item.getInstanceId());
+      return instanceRepository.fetchById(item.getInstanceId());
     }
-  }
-
-  private CompletableFuture<Result<Instance>> fetchInstance(String instanceId) {
-    final var mapper = new InstanceMapper();
-
-    return SingleRecordFetcher.jsonOrNull(instancesClient, "instance")
-      .fetch(instanceId)
-      .thenApply(mapResult(mapper::toDomain));
   }
 
   public <T extends ItemRelatedRecord> CompletableFuture<Result<MultipleRecords<T>>>
