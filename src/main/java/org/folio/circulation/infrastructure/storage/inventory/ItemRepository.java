@@ -7,8 +7,6 @@ import static org.folio.circulation.domain.representations.ItemProperties.HOLDIN
 import static org.folio.circulation.domain.representations.ItemProperties.IN_TRANSIT_DESTINATION_SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.LAST_CHECK_IN;
 import static org.folio.circulation.domain.representations.ItemProperties.STATUS_PROPERTY;
-import static org.folio.circulation.domain.representations.LoanProperties.ITEM_ID;
-import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.fetching.MultipleCqlIndexValuesCriteria.byIndex;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQuery;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
@@ -71,7 +69,7 @@ public class ItemRepository {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   private final CollectionResourceClient itemsClient;
-  private final CollectionResourceClient holdingsClient;
+  public final CollectionResourceClient holdingsClient;
   private final CollectionResourceClient loanTypesClient;
   private final LocationRepository locationRepository;
   private final MaterialTypeRepository materialTypeRepository;
@@ -326,24 +324,14 @@ public class ItemRepository {
       .thenApply(mapResult(mapper::toDomain));
   }
 
-  private CompletableFuture<Result<Item>> fetchHoldingsRecord(
-    Result<Item> result) {
-
-    return result.after(item -> {
-      if(item == null || item.isNotFound()) {
-        log.info("Item was not found, aborting fetching holding or instance");
-        return completedFuture(succeeded(item));
-      }
-      else {
-        final var mapper = new HoldingsMapper();
-
-        return SingleRecordFetcher.json(holdingsClient, "holding",
-            r -> failedValidation("Holding does not exist", ITEM_ID, item.getItemId()))
-          .fetch(item.getHoldingsRecordId())
-          .thenApply(mapResult(mapper::toDomain))
-          .thenApply(mapResult(item::withHoldings));
-      }
-    });
+  private CompletableFuture<Result<Holdings>> fetchHoldingsRecord(Item item) {
+    if (item == null || item.isNotFound()) {
+      log.info("Item was not found, aborting fetching holding or instance");
+      return ofAsync(Holdings::unknown);
+    }
+    else {
+      return holdingsRepository.fetchById(item.getHoldingsRecordId());
+    }
   }
 
   private CompletableFuture<Result<Instance>> fetchInstance(Item item) {
@@ -450,10 +438,8 @@ public class ItemRepository {
       .collect(Collectors.toList());
   }
 
-  public CompletableFuture<Result<Item>> fetchItemRelatedRecords(
-    Result<Item> item) {
-
-    return this.fetchHoldingsRecord(item)
+  public CompletableFuture<Result<Item>> fetchItemRelatedRecords(Result<Item> itemResult) {
+    return itemResult.combineAfter(this::fetchHoldingsRecord, Item::withHoldings)
       .thenComposeAsync(combineAfter(this::fetchInstance, Item::withInstance))
       .thenComposeAsync(this::fetchLocation)
       .thenComposeAsync(this::fetchMaterialType)

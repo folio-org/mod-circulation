@@ -93,11 +93,6 @@ class ItemRepositoryTests {
     final var instanceRepository = mock(InstanceRepository.class);
     final var holdingsRepository = mock(HoldingsRepository.class);
 
-    final var holdings = new JsonObject()
-      .put("instanceId", UUID.randomUUID());
-
-    mockedClientGet(holdingsClient, holdings.encodePrettily());
-
     when(locationRepository.getLocation(any()))
       .thenReturn(ofAsync(() -> Location.from(new JsonObject())));
 
@@ -106,6 +101,9 @@ class ItemRepositoryTests {
 
     when(instanceRepository.fetchById(anyString()))
       .thenReturn(ofAsync(Instance::unknown));
+
+    when(holdingsRepository.fetchById(anyString()))
+      .thenReturn(ofAsync(Holdings::unknown));
 
     return new ItemRepository(itemsClient, holdingsClient,
       null, locationRepository, materialTypeRepository, null,
