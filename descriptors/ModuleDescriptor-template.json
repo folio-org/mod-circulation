@@ -1128,6 +1128,31 @@
       "description": "Apply circulation rules to get all matching notice policies"
     },
     {
+      "permissionName": "circulation.rules.overdue-fine-policy-all.get",
+      "displayName": "Circulation - use circulation rules to get all matching overdue fine policies",
+      "description": "Apply circulation rules to get all matching overdue fine policies"
+    },
+    {
+      "permissionName": "circulation.rules.lost-item-all.get",
+      "displayName": "Circulation - use circulation rules to get all matching lost item policies",
+      "description": "Apply circulation rules to get all matching lost item policies"
+    },
+    {
+      "permissionName": "circulation.rules.overdue-fine-policy.get",
+      "displayName": "Circulation - use circulation rules to get all matching overdue fine policy",
+      "description": "Apply circulation rules to get all matching overdue fine policy"
+    },
+    {
+      "permissionName": "circulation.rules.lost-item-policy.get",
+      "displayName": "Circulation - use circulation rules to get all matching lost item policy",
+      "description": "Apply circulation rules to get all matching lost item policy"
+    },
+    {
+      "permissionName": "note.types.collection.get",
+      "displayName": "Note types - get note types collection",
+      "description": "Get note types collection"
+    },
+    {
       "permissionName": "circulation.requests.collection.get",
       "displayName": "circulation - get request collection",
       "description": "get request collection"
