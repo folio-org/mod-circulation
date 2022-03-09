@@ -93,16 +93,6 @@ public class ItemRepository {
     return fetchById(itemRelatedRecord.getItemId());
   }
 
-  private CompletableFuture<Result<Item>> fetchLocation(Result<Item> result) {
-    return result.combineAfter(locationRepository::getLocation, Item::withLocation)
-      .thenComposeAsync(this::fetchPrimaryServicePoint);
-  }
-
-  private CompletableFuture<Result<Item>> fetchPrimaryServicePoint(Result<Item> itemResult) {
-    return itemResult.combineAfter(item ->
-      fetchPrimaryServicePoint(item.getLocation()), Item::withPrimaryServicePoint);
-  }
-
   private CompletableFuture<Result<ServicePoint>> fetchPrimaryServicePoint(Location location) {
     if(isNull(location) || isNull(location.getPrimaryServicePointId())) {
       return ofAsync(() -> null);
@@ -160,25 +150,6 @@ public class ItemRepository {
     return findByIndexNameAndQuery(holdingsRecords.toKeys(Holdings::getId),
       HOLDINGS_RECORD_ID, exactMatch("status.name", AVAILABLE.getValue()))
       .thenApply(mapResult(ItemRepository::firstOrNull));
-  }
-
-  private CompletableFuture<Result<Item>> fetchMaterialType(Result<Item> result) {
-    return result.combineAfter(materialTypeRepository::getFor, Item::withMaterialType);
-  }
-
-  private CompletableFuture<Result<Item>> fetchLoanType(Result<Item> result) {
-    return result.combineAfter(this::getLoanType, Item::withLoanType);
-  }
-
-  private CompletableFuture<Result<LoanType>> getLoanType(Item item) {
-    if (item.getLoanTypeId() == null) {
-      return completedFuture(succeeded(LoanType.unknown()));
-    }
-
-    return SingleRecordFetcher.json(loanTypesClient, "loan types",
-      response -> succeeded(null))
-      .fetch(item.getLoanTypeId())
-      .thenApply(mapResult(new LoanTypeMapper()::toDomain));
   }
 
   public CompletableFuture<Result<Item>> fetchByBarcode(String barcode) {
@@ -318,25 +289,6 @@ public class ItemRepository {
       .thenApply(mapResult(mapper::toDomain));
   }
 
-  private CompletableFuture<Result<Holdings>> fetchHoldingsRecord(Item item) {
-    if (item == null || item.isNotFound()) {
-      log.info("Item was not found, aborting fetching holding or instance");
-      return ofAsync(Holdings::unknown);
-    }
-    else {
-      return holdingsRepository.fetchById(item.getHoldingsRecordId());
-    }
-  }
-
-  private CompletableFuture<Result<Instance>> fetchInstance(Item item) {
-    if (item == null || item.isNotFound() || item.getInstanceId() == null) {
-      log.info("Holding was not found, aborting fetching instance");
-      return ofAsync(Instance::unknown);
-    } else {
-      return instanceRepository.fetchById(item.getInstanceId());
-    }
-  }
-
   public <T extends ItemRelatedRecord> CompletableFuture<Result<MultipleRecords<T>>>
   fetchItemsFor(Result<MultipleRecords<T>> result, BiFunction<T, Item, T> includeItemMap) {
 
@@ -435,9 +387,44 @@ public class ItemRepository {
   public CompletableFuture<Result<Item>> fetchItemRelatedRecords(Result<Item> itemResult) {
     return itemResult.combineAfter(this::fetchHoldingsRecord, Item::withHoldings)
       .thenComposeAsync(combineAfter(this::fetchInstance, Item::withInstance))
-      .thenComposeAsync(this::fetchLocation)
-      .thenComposeAsync(this::fetchMaterialType)
-      .thenComposeAsync(this::fetchLoanType);
+      .thenComposeAsync(combineAfter(locationRepository::getLocation, Item::withLocation))
+      .thenComposeAsync(combineAfter(this::fetchPrimaryServicePoint, Item::withPrimaryServicePoint))
+      .thenComposeAsync(combineAfter(materialTypeRepository::getFor, Item::withMaterialType))
+      .thenComposeAsync(combineAfter(this::fetchLoanType, Item::withLoanType));
+  }
+
+  private CompletableFuture<Result<Holdings>> fetchHoldingsRecord(Item item) {
+    if (item == null || item.isNotFound()) {
+      log.info("Item was not found, aborting fetching holding or instance");
+      return ofAsync(Holdings::unknown);
+    }
+    else {
+      return holdingsRepository.fetchById(item.getHoldingsRecordId());
+    }
+  }
+
+  private CompletableFuture<Result<Instance>> fetchInstance(Item item) {
+    if (item == null || item.isNotFound() || item.getInstanceId() == null) {
+      log.info("Holding was not found, aborting fetching instance");
+      return ofAsync(Instance::unknown);
+    } else {
+      return instanceRepository.fetchById(item.getInstanceId());
+    }
+  }
+
+  private CompletableFuture<Result<ServicePoint>> fetchPrimaryServicePoint(Item item) {
+    return fetchPrimaryServicePoint(item.getLocation());
+  }
+
+  private CompletableFuture<Result<LoanType>> fetchLoanType(Item item) {
+    if (item.getLoanTypeId() == null) {
+      return completedFuture(succeeded(LoanType.unknown()));
+    }
+
+    return SingleRecordFetcher.json(loanTypesClient, "loan types",
+        response -> succeeded(null))
+      .fetch(item.getLoanTypeId())
+      .thenApply(mapResult(new LoanTypeMapper()::toDomain));
   }
 
   public CompletableFuture<Result<Collection<Item>>> fetchItemsRelatedRecords(
