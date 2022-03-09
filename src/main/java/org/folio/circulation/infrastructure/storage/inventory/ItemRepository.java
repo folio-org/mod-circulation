@@ -19,6 +19,7 @@ import static org.folio.circulation.support.json.JsonKeys.byId;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.json.JsonPropertyWriter.remove;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
+import static org.folio.circulation.support.results.AsynchronousResultBindings.combineAfter;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
@@ -359,21 +360,21 @@ public class ItemRepository {
     });
   }
 
-  private CompletableFuture<Result<Item>> fetchInstance(Result<Item> result) {
-    return result.after(item -> {
-      if(item == null || item.isNotFound() || item.getInstanceId() == null) {
-        log.info("Holding was not found, aborting fetching instance");
-        return completedFuture(succeeded(item));
-      }
-      else {
-        final var mapper = new InstanceMapper();
+  private CompletableFuture<Result<Instance>> fetchInstance(Item item) {
+    if (item == null || item.isNotFound() || item.getInstanceId() == null) {
+      log.info("Holding was not found, aborting fetching instance");
+      return ofAsync(Instance::unknown);
+    } else {
+      return fetchInstance(item.getInstanceId());
+    }
+  }
 
-        return SingleRecordFetcher.jsonOrNull(instancesClient, "instance")
-          .fetch(item.getInstanceId())
-          .thenApply(mapResult(mapper::toDomain))
-          .thenApply(mapResult(item::withInstance));
-      }
-    });
+  private CompletableFuture<Result<Instance>> fetchInstance(String instanceId) {
+    final var mapper = new InstanceMapper();
+
+    return SingleRecordFetcher.jsonOrNull(instancesClient, "instance")
+      .fetch(instanceId)
+      .thenApply(mapResult(mapper::toDomain));
   }
 
   public <T extends ItemRelatedRecord> CompletableFuture<Result<MultipleRecords<T>>>
@@ -475,7 +476,7 @@ public class ItemRepository {
     Result<Item> item) {
 
     return this.fetchHoldingsRecord(item)
-      .thenComposeAsync(this::fetchInstance)
+      .thenComposeAsync(combineAfter(this::fetchInstance, Item::withInstance))
       .thenComposeAsync(this::fetchLocation)
       .thenComposeAsync(this::fetchMaterialType)
       .thenComposeAsync(this::fetchLoanType);
