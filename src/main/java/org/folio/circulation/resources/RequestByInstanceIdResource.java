@@ -6,9 +6,12 @@ import static org.folio.circulation.domain.RequestFulfilmentPreference.HOLD_SHEL
 import static org.folio.circulation.domain.RequestType.HOLD;
 import static org.folio.circulation.domain.RequestType.PAGE;
 import static org.folio.circulation.domain.RequestType.RECALL;
+import static org.folio.circulation.domain.representations.RequestProperties.FULFILMENT_PREFERENCE;
 import static org.folio.circulation.domain.representations.RequestProperties.ITEM_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.PROXY_USER_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUESTER_ID;
+import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_LEVEL;
+import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_TYPE;
 import static org.folio.circulation.resources.RequestBlockValidators.regularRequestBlockValidators;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
@@ -41,6 +44,7 @@ import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
+import org.folio.circulation.domain.RequestFulfilmentPreference;
 import org.folio.circulation.domain.RequestLevel;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.RequestRepresentation;
@@ -87,6 +91,7 @@ import io.vertx.ext.web.RoutingContext;
 public class RequestByInstanceIdResource extends Resource {
 
   private static final List<RequestType> ORDERED_REQUEST_TYPES = List.of(HOLD, RECALL, PAGE);
+  private static final RequestFulfilmentPreference DEFAULT_FULFILMENT_PREFERENCE = HOLD_SHELF;
 
   private final Logger log;
 
@@ -110,47 +115,39 @@ public class RequestByInstanceIdResource extends Resource {
     final var itemRepository = new ItemRepository(clients);
     final var userRepository = new UserRepository(clients);
     final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
-    final var requestRepository = RequestRepository.using(clients,
-      itemRepository, userRepository, loanRepository);
+    final var requestRepository = RequestRepository.using(clients, itemRepository, userRepository,
+      loanRepository);
     final var requestQueueRepository = new RequestQueueRepository(requestRepository);
+    final var configRepository = new ConfigurationRepository(clients);
+    final var itemFinder = new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository);
+    final var eventPublisher = new EventPublisher(routingContext);
 
-    final ItemByInstanceIdFinder finder = new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository);
+    final var requestBody = routingContext.getBodyAsJson();
 
-    final Result<RequestByInstanceIdRequest> requestByInstanceIdRequestResult =
-      RequestByInstanceIdRequest.from(routingContext.getBodyAsJson());
-
-    final EventPublisher eventPublisher = new EventPublisher(routingContext);
-
-    buildRequests(clients, routingContext.getBodyAsJson())
-      .thenCompose( r -> r.after(requests -> placeRequests(requests, clients, eventPublisher)))
-    requestByInstanceIdRequestResult
-      .map(InstanceRequestRelatedRecords::new)
-      .after(instanceRequest -> getPotentialItems(finder, instanceRequest,
-        loanRepository, requestQueueRepository))
-      .thenApply( r -> r.next(RequestByInstanceIdResource::instanceToItemRequests))
+    buildRequests(requestBody, configRepository, itemFinder, loanRepository, requestQueueRepository)
       .thenCompose( r -> r.after(requests -> placeRequests(requests, clients, eventPublisher,
-        itemRepository, loanRepository, requestRepository, requestQueueRepository,
-        userRepository)))
+        itemRepository, loanRepository, requestRepository, requestQueueRepository, userRepository, itemFinder)))
       .thenApply(r -> r.map(RequestAndRelatedRecords::getRequest))
       .thenApply(r -> r.map(new RequestRepresentation()::extendedRepresentation))
       .thenApply(r -> r.map(JsonHttpResponse::created))
       .thenAccept(context::writeResultToHttpResponse)
       .exceptionally(err -> {
-        String reason = "Error processing instance-level request";
-        log.error(reason, err);
-        ServerErrorResponse.internalError(routingContext.response(), reason);
-
-        return null;
+         String reason = "Error processing instance-level request";
+         log.error(reason, err);
+         ServerErrorResponse.internalError(routingContext.response(), reason);
+         return null;
       });
   }
 
-  private CompletableFuture<Result<List<JsonObject>>> buildRequests(Clients clients,
-    JsonObject requestRepresentation) {
+  private CompletableFuture<Result<List<JsonObject>>> buildRequests(
+    JsonObject requestBody, ConfigurationRepository configurationRepository,
+    ItemByInstanceIdFinder itemFinder, LoanRepository loanRepository,
+    RequestQueueRepository requestQueueRepository) {
 
-    return new ConfigurationRepository(clients).lookupTlrSettings()
+    return configurationRepository.lookupTlrSettings()
       .thenCompose(r -> r.after(tlrConfig -> tlrConfig.isTitleLevelRequestsFeatureEnabled()
-        ? buildTitleLevelRequests(requestRepresentation)
-        : buildItemLevelRequests(requestRepresentation, clients)
+        ? buildTitleLevelRequests(requestBody)
+        : buildItemLevelRequests(requestBody, itemFinder, loanRepository, requestQueueRepository)
       ));
   }
 
@@ -158,27 +155,22 @@ public class RequestByInstanceIdResource extends Resource {
     JsonObject requestRepresentation) {
 
     return ofAsync(() -> ORDERED_REQUEST_TYPES.stream()
-      .map(type -> requestRepresentation.copy()
-        .put("requestLevel", RequestLevel.TITLE.value)
-        .put("requestType", type.getValue())
-        .put("fulfilmentPreference", HOLD_SHELF.getValue()))
+      .map(requestType -> requestRepresentation.copy()
+        .put(REQUEST_TYPE, requestType.getValue())
+        .put(REQUEST_LEVEL, RequestLevel.TITLE.getValue())
+        .put(FULFILMENT_PREFERENCE, DEFAULT_FULFILMENT_PREFERENCE.getValue()))
       .collect(toList())
     );
   }
 
   private CompletableFuture<Result<List<JsonObject>>> buildItemLevelRequests(
-    JsonObject requestRepresentation, Clients clients) {
+    JsonObject requestBody, ItemByInstanceIdFinder itemFinder,
+    LoanRepository loanRepository, RequestQueueRepository requestQueueRepository) {
 
-    final Result<RequestByInstanceIdRequest> requestByInstanceIdRequestResult =
-      RequestByInstanceIdRequest.from(requestRepresentation);
-
-    final ItemRepository itemRepository = new ItemRepository(clients, true, true, true);
-
-    final ItemByInstanceIdFinder finder = new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository);
-
-    return requestByInstanceIdRequestResult
+    return RequestByInstanceIdRequest.from(requestBody)
       .map(InstanceRequestRelatedRecords::new)
-      .after(instanceRequest -> getPotentialItems(clients, finder, instanceRequest))
+      .after(instanceRequest -> getPotentialItems(itemFinder, instanceRequest,
+        loanRepository, requestQueueRepository))
       .thenApply( r -> r.next(RequestByInstanceIdResource::instanceToItemRequests));
   }
 
@@ -275,11 +267,11 @@ public class RequestByInstanceIdResource extends Resource {
   }
 
   private CompletableFuture<Result<RequestAndRelatedRecords>> placeRequests(
-    List<JsonObject> requestRepresentations, Clients clients,
+    List<JsonObject> itemRequestRepresentations, Clients clients,
     EventPublisher eventPublisher, ItemRepository itemRepository,
     LoanRepository loanRepository, RequestRepository requestRepository,
     RequestQueueRepository requestQueueRepository,
-    UserRepository userRepository) {
+    UserRepository userRepository, ItemByInstanceIdFinder itemFinder) {
 
     final RequestNoticeSender requestNoticeSender = new ItemLevelRequestNoticeSender(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
@@ -294,7 +286,7 @@ public class RequestByInstanceIdResource extends Resource {
       new CreateRequestRepositories(requestRepository,
         new RequestPolicyRepository(clients), configurationRepository),
       updateUponRequest,
-      new RequestLoanValidator(null, loanRepository),
+      new RequestLoanValidator(itemFinder, loanRepository),
       requestNoticeSender,
       regularRequestBlockValidators(clients),
       eventPublisher, new FailFastErrorHandler());
@@ -322,7 +314,7 @@ public class RequestByInstanceIdResource extends Resource {
     }
 
     JsonObject currentItemRequest = itemRequests.get(startIndex);
-    ItemRepository itemRepository = new ItemRepository(clients, true, false, false);
+
     final RequestFromRepresentationService requestFromRepresentationService =
       new RequestFromRepresentationService(new InstanceRepository(clients), itemRepository,
         requestQueueRepository, userRepository, loanRepository,
@@ -390,8 +382,6 @@ public class RequestByInstanceIdResource extends Resource {
 
     LinkedList<JsonObject> requests = new LinkedList<>();
 
-    final String defaultFulfilmentPreference = "Hold Shelf";
-
     for (Item item : combinedItems) {
       for (RequestType requestType : ORDERED_REQUEST_TYPES) {
         JsonObject requestBody = new JsonObject();
@@ -402,7 +392,7 @@ public class RequestByInstanceIdResource extends Resource {
         write(requestBody, REQUESTER_ID, requestByInstanceIdRequest.getRequesterId().toString());
         write(requestBody, "pickupServicePointId",
           requestByInstanceIdRequest.getPickupServicePointId().toString());
-        write(requestBody, "fulfilmentPreference", defaultFulfilmentPreference);
+        write(requestBody, "fulfilmentPreference", DEFAULT_FULFILMENT_PREFERENCE.getValue());
         write(requestBody, "requestType", requestType.getValue());
         if (requestByInstanceIdRequest.getRequestExpirationDate() != null) {
           write(requestBody, "requestExpirationDate",

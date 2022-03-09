@@ -876,23 +876,24 @@ class InstanceRequestsAPICreationTests extends APITests {
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     UUID requesterId = usersFixture.jessica().getId();
     IndividualResource instance = instancesFixture.basedUponDunkirk();
-    IndividualResource holdings = holdingsFixture.defaultWithHoldings(
-      instance.getId());
+    IndividualResource holdings = holdingsFixture.defaultWithHoldings(instance.getId());
     IndividualResource locationsResource = locationsFixture.mainFloor();
-
-    itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(),
-      locationsResource.getId());
-
+    IndividualResource item = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(
+      holdings.getId(), locationsResource.getId());
     ZonedDateTime requestDate = ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC);
+
     JsonObject requestBody = createInstanceRequestObject(instance.getId(),
       requesterId, pickupServicePointId, requestDate, null);
+
     Response postResponse = requestsFixture.attemptToPlaceForInstance(requestBody);
 
     assertThat(postResponse, hasStatus(HTTP_CREATED));
 
     JsonObject representation = postResponse.getJson();
-    validateTitleLevelRequestResponse(representation, pickupServicePointId,
-      instance.getId(), RequestType.PAGE);
+
+    validateInstanceRequestResponse(representation, pickupServicePointId,
+      instance.getId(), null, RequestType.HOLD);
+
     assertNull(representation.getString("requestExpirationDate"));
   }
 
