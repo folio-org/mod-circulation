@@ -53,11 +53,6 @@ public class OverdueFinePolicyRepository extends CirculationPolicyRepository<Ove
     return succeeded(OverdueFinePolicy.from((representation)));
   }
 
-  @Override
-  protected String fetchPolicyId(JsonObject jsonObject) {
-    return jsonObject.getString("overdueFinePolicyId");
-  }
-
   public CompletableFuture<Result<MultipleRecords<Loan>>>
     findOverdueFinePoliciesForLoans(MultipleRecords<Loan> multipleLoans) {
 

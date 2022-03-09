@@ -21,7 +21,9 @@ import org.folio.circulation.domain.notice.schedule.ScheduledNotice;
 import org.folio.circulation.domain.notice.schedule.ScheduledNoticeGroupDefinition;
 import org.folio.circulation.domain.notice.schedule.TriggeringEvent;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
+import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
+import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CqlSortBy;
 import org.folio.circulation.support.CqlSortClause;
@@ -72,7 +74,8 @@ public class DueDateNotRealTimeScheduledNoticeProcessingResource extends Schedul
 
   @Override
   protected CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> handleNotices(
-    Clients clients, MultipleRecords<ScheduledNotice> notices) {
+    Clients clients, RequestRepository requestRepository,
+    LoanRepository loanRepository, MultipleRecords<ScheduledNotice> notices) {
 
     Map<ScheduledNoticeGroupDefinition, List<ScheduledNotice>> orderedGroups =
       notices.getRecords().stream().collect(Collectors.groupingBy(
@@ -93,7 +96,7 @@ public class DueDateNotRealTimeScheduledNoticeProcessingResource extends Schedul
       .map(Map.Entry::getValue)
       .collect(Collectors.toList());
 
-    return new GroupedLoanScheduledNoticeHandler(clients, getZonedDateTime())
+    return new GroupedLoanScheduledNoticeHandler(clients, loanRepository, getZonedDateTime())
       .handleNotices(noticeGroups)
       .thenApply(mapResult(v -> notices));
   }

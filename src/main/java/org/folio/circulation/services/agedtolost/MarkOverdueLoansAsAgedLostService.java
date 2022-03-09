@@ -3,7 +3,6 @@ package org.folio.circulation.services.agedtolost;
 import static org.folio.circulation.domain.ItemStatus.AGED_TO_LOST;
 import static org.folio.circulation.domain.ItemStatus.CLAIMED_RETURNED;
 import static org.folio.circulation.domain.ItemStatus.DECLARED_LOST;
-import static org.folio.circulation.infrastructure.storage.inventory.ItemRepository.noLocationMaterialTypeAndLoanTypeInstance;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.CqlSortBy.ascending;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
@@ -45,12 +44,14 @@ public class MarkOverdueLoansAsAgedLostService {
   private final LoanScheduledNoticeService loanScheduledNoticeService;
   private final UserRepository userRepository;
 
-  public MarkOverdueLoansAsAgedLostService(Clients clients) {
+  public MarkOverdueLoansAsAgedLostService(Clients clients,
+    ItemRepository itemRepository, LoanRepository loanRepository) {
+
+    this.itemRepository = itemRepository;
     this.lostItemPolicyRepository = new LostItemPolicyRepository(clients);
-    this.itemRepository = noLocationMaterialTypeAndLoanTypeInstance(clients);
-    this.storeLoanAndItem = new StoreLoanAndItem(clients);
+    this.storeLoanAndItem = new StoreLoanAndItem(loanRepository, itemRepository);
     this.eventPublisher = new EventPublisher(clients.pubSubPublishingService());
-    this.loanPageableFetcher = new PageableFetcher<>(new LoanRepository(clients));
+    this.loanPageableFetcher = new PageableFetcher<>(loanRepository);
     this.loanScheduledNoticeService = LoanScheduledNoticeService.using(clients);
     this.userRepository = new UserRepository(clients);
   }

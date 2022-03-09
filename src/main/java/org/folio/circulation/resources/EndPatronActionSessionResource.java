@@ -6,6 +6,10 @@ import java.util.List;
 
 import org.folio.circulation.domain.notice.session.PatronActionSessionService;
 import org.folio.circulation.domain.representations.EndPatronSessionRequest;
+import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
+import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
+import org.folio.circulation.infrastructure.storage.sessions.PatronActionSessionRepository;
+import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.server.WebContext;
@@ -32,8 +36,12 @@ public class EndPatronActionSessionResource extends Resource {
     WebContext context = new WebContext(routingContext);
     Clients clients = Clients.create(context, client);
 
+    final var userRepository = new UserRepository(clients);
+    final var itemRepository = new ItemRepository(clients);
+    final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
     PatronActionSessionService patronActionSessionService =
-      PatronActionSessionService.using(clients);
+      PatronActionSessionService.using(clients,
+        PatronActionSessionRepository.using(clients, loanRepository, userRepository));
 
     List<Result<EndPatronSessionRequest>> resultListOfEndSessionRequestResult =
       EndPatronSessionRequest.from(routingContext.getBodyAsJson());

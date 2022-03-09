@@ -40,11 +40,6 @@ public class PatronNoticePolicyRepository extends CirculationPolicyRepository<Pa
   }
 
   @Override
-  protected String fetchPolicyId(JsonObject jsonObject) {
-    return jsonObject.getString("noticePolicyId");
-  }
-
-  @Override
   protected CompletableFuture<Result<CirculationRuleMatch>> getPolicyAndMatch(
     RulesExecutionParameters rulesExecutionParameters) {
 

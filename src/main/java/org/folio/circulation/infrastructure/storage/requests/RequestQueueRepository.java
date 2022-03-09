@@ -25,24 +25,18 @@ import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
 import org.folio.circulation.resources.context.RenewalContext;
-import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.results.Result;
 
+import lombok.AllArgsConstructor;
+
+@AllArgsConstructor
 public class RequestQueueRepository {
   private static final Logger LOG = LogManager.getLogger(RequestQueueRepository.class);
 
   private static final PageLimit MAXIMUM_SUPPORTED_REQUEST_QUEUE_SIZE = oneThousand();
   private final RequestRepository requestRepository;
-
-  private RequestQueueRepository(RequestRepository requestRepository) {
-    this.requestRepository = requestRepository;
-  }
-
-  public static RequestQueueRepository using(Clients clients) {
-    return new RequestQueueRepository(RequestRepository.using(clients));
-  }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> get(LoanAndRelatedRecords records) {
     Item item = records.getItem();

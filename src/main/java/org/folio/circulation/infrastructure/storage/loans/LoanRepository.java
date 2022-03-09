@@ -79,10 +79,12 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
   private static final String ITEM_ID = "itemId";
   private static final String USER_ID = "userId";
 
-  public LoanRepository(Clients clients) {
+  public LoanRepository(Clients clients, ItemRepository itemRepository,
+    UserRepository userRepository) {
+
     loansStorageClient = clients.loansStorage();
-    itemRepository = new ItemRepository(clients, true, true, true);
-    userRepository = new UserRepository(clients);
+    this.itemRepository = itemRepository;
+    this.userRepository = userRepository;
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> createLoan(

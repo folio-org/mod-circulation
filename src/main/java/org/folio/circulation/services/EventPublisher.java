@@ -30,7 +30,6 @@ import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTimeOptional;
 
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.logging.log4j.LogManager;
@@ -52,7 +51,6 @@ import org.folio.circulation.domain.representations.logs.NoticeLogContext;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.context.RenewalContext;
-import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.results.Result;
 
@@ -230,9 +228,8 @@ public class EventPublisher {
   }
 
   public CompletableFuture<Result<RequestAndRelatedRecords>> publishDueDateChangedEvent(
-    RequestAndRelatedRecords requestAndRelatedRecords, Clients clients) {
+    RequestAndRelatedRecords requestAndRelatedRecords, LoanRepository loanRepository) {
 
-    LoanRepository loanRepository = new LoanRepository(clients);
     loanRepository.findOpenLoanForRequest(requestAndRelatedRecords.getRequest())
       .thenCompose(r -> r.after(loan -> publishDueDateChangedEvent(loan, requestAndRelatedRecords)));
 
