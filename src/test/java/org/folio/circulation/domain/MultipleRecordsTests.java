@@ -24,12 +24,12 @@ class MultipleRecordsTests {
     final var reference = new Reference(referenceId);
 
     final var primaryRecords = new MultipleRecords<>(List.of(primary), 1);
-    final var referencedRecords = new MultipleRecords<>(List.of(reference), 0);
+    final var referencedRecords = new MultipleRecords<>(List.of(reference), 1);
 
     // Combine the sets of records together and return a set of the primary records
     final var combinedRecords = combine(primaryRecords, referencedRecords,
-      (p) -> (r) -> Objects.equals(primary.referenceId(), reference.id()),
-      Primary::withReferenced);
+      findReferencedRecordById(Primary::referenceId, Reference::id),
+      Primary::withReferenced, null);
 
     assertThat("Should have one record", combinedRecords.size(), is(1));
 
@@ -57,8 +57,8 @@ class MultipleRecordsTests {
 
     // Combine the sets of records together and return a set of the primary records
     final var combinedRecords = combine(primaryRecords, referencedRecords,
-      (p) -> (r) -> Objects.equals(p.referenceId(), r.id()),
-      Primary::withReferenced);
+      findReferencedRecordById(Primary::referenceId, Reference::id),
+      Primary::withReferenced, null);
 
     final var combinedFirstPrimary = combinedRecords
       .filter(p -> Objects.equals(p.id, firstPrimaryId)).firstOrNull();
@@ -79,14 +79,47 @@ class MultipleRecordsTests {
     assertThat(combinedSecondPrimary.referenced(), sameInstance(firstReference));
   }
 
+  @Test
+  void canDefaultReferenceRecordWhenCombining() {
+    final var primaryId = UUID.randomUUID().toString();
+    final var referenceId = UUID.randomUUID().toString();
+
+    final var primary = new Primary(primaryId, referenceId, null);
+
+    final var primaryRecords = new MultipleRecords<>(List.of(primary), 1);
+    final var referencedRecords = new MultipleRecords<Reference>(List.of(), 0);
+
+    final var defaultReference = new Reference(UUID.randomUUID().toString());
+
+    // Combine the sets of records together and return a set of the primary records
+    final var combinedRecords = combine(primaryRecords, referencedRecords,
+      findReferencedRecordById(Primary::referenceId, Reference::id),
+      Primary::withReferenced, defaultReference);
+
+    assertThat("Should have one record", combinedRecords.size(), is(1));
+
+    final var combinedPrimary = combinedRecords.firstOrNull();
+
+    assertThat("Should have a primary record", combinedPrimary, is(notNullValue()));
+    assertThat("Should be default record",
+      combinedPrimary.referenced(), sameInstance(defaultReference));
+  }
+
+  private <T, R> Function<T, Predicate<R>> findReferencedRecordById(
+    Function<T, String> idFromPrimaryRecord,
+    Function<R, String> idFromReferencedRecord) {
+
+    return (p) -> (r) -> Objects.equals(idFromPrimaryRecord.apply(p), idFromReferencedRecord.apply(r));
+  }
+
   private <T, R> MultipleRecords<T> combine(MultipleRecords<T> primaryRecords,
     MultipleRecords<R> referencedRecords, Function<T, Predicate<R>> referenceMatcher,
-    BiFunction<T, R, T> combiner) {
+    BiFunction<T, R, T> combiner, R defaultReference) {
 
     return primaryRecords.mapRecords(primary -> {
       final var foundReferenced = referencedRecords
         .filter(referenceMatcher.apply(primary))
-        .firstOrNull();
+        .firstOrElse(defaultReference);
 
       return combiner.apply(primary, foundReferenced);
     });
