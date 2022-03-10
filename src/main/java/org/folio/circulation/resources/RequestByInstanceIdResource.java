@@ -53,6 +53,7 @@ import org.folio.circulation.domain.UpdateItem;
 import org.folio.circulation.domain.UpdateLoan;
 import org.folio.circulation.domain.UpdateRequestQueue;
 import org.folio.circulation.domain.UpdateUponRequest;
+import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
 import org.folio.circulation.domain.representations.RequestByInstanceIdRequest;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.RequestLoanValidator;
@@ -118,15 +119,15 @@ public class RequestByInstanceIdResource extends Resource {
     final var requestRepository = RequestRepository.using(clients, itemRepository, userRepository,
       loanRepository);
     final var requestQueueRepository = new RequestQueueRepository(requestRepository);
-    final var configRepository = new ConfigurationRepository(clients);
     final var itemFinder = new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository);
     final var eventPublisher = new EventPublisher(routingContext);
 
     final var requestBody = routingContext.getBodyAsJson();
 
-    buildRequests(requestBody, configRepository, itemFinder, loanRepository, requestQueueRepository)
-      .thenCompose( r -> r.after(requests -> placeRequests(requests, clients, eventPublisher,
-        itemRepository, loanRepository, requestRepository, requestQueueRepository, userRepository, itemFinder)))
+    new ConfigurationRepository(clients).lookupTlrSettings()
+      .thenCompose(r -> r.after(config -> buildAndPlaceRequests(clients, eventPublisher, itemRepository,
+        loanRepository, requestRepository, requestQueueRepository, userRepository, itemFinder,
+        config, requestBody)))
       .thenApply(r -> r.map(RequestAndRelatedRecords::getRequest))
       .thenApply(r -> r.map(new RequestRepresentation()::extendedRepresentation))
       .thenApply(r -> r.map(JsonHttpResponse::created))
@@ -137,41 +138,6 @@ public class RequestByInstanceIdResource extends Resource {
          ServerErrorResponse.internalError(routingContext.response(), reason);
          return null;
       });
-  }
-
-  private CompletableFuture<Result<List<JsonObject>>> buildRequests(
-    JsonObject requestBody, ConfigurationRepository configurationRepository,
-    ItemByInstanceIdFinder itemFinder, LoanRepository loanRepository,
-    RequestQueueRepository requestQueueRepository) {
-
-    return configurationRepository.lookupTlrSettings()
-      .thenCompose(r -> r.after(tlrConfig -> tlrConfig.isTitleLevelRequestsFeatureEnabled()
-        ? buildTitleLevelRequests(requestBody)
-        : buildItemLevelRequests(requestBody, itemFinder, loanRepository, requestQueueRepository)
-      ));
-  }
-
-  private CompletableFuture<Result<List<JsonObject>>> buildTitleLevelRequests(
-    JsonObject requestRepresentation) {
-
-    return ofAsync(() -> ORDERED_REQUEST_TYPES.stream()
-      .map(requestType -> requestRepresentation.copy()
-        .put(REQUEST_TYPE, requestType.getValue())
-        .put(REQUEST_LEVEL, RequestLevel.TITLE.getValue())
-        .put(FULFILMENT_PREFERENCE, DEFAULT_FULFILMENT_PREFERENCE.getValue()))
-      .collect(toList())
-    );
-  }
-
-  private CompletableFuture<Result<List<JsonObject>>> buildItemLevelRequests(
-    JsonObject requestBody, ItemByInstanceIdFinder itemFinder,
-    LoanRepository loanRepository, RequestQueueRepository requestQueueRepository) {
-
-    return RequestByInstanceIdRequest.from(requestBody)
-      .map(InstanceRequestRelatedRecords::new)
-      .after(instanceRequest -> getPotentialItems(itemFinder, instanceRequest,
-        loanRepository, requestQueueRepository))
-      .thenApply( r -> r.next(RequestByInstanceIdResource::instanceToItemRequests));
   }
 
   private CompletableFuture<Result<InstanceRequestRelatedRecords>> getPotentialItems(
@@ -266,14 +232,57 @@ public class RequestByInstanceIdResource extends Resource {
     });
   }
 
-  private CompletableFuture<Result<RequestAndRelatedRecords>> placeRequests(
-    List<JsonObject> itemRequestRepresentations, Clients clients,
-    EventPublisher eventPublisher, ItemRepository itemRepository,
+  private CompletableFuture<Result<RequestAndRelatedRecords>> buildAndPlaceRequests(
+    Clients clients, EventPublisher eventPublisher, ItemRepository itemRepository,
     LoanRepository loanRepository, RequestRepository requestRepository,
-    RequestQueueRepository requestQueueRepository,
-    UserRepository userRepository, ItemByInstanceIdFinder itemFinder) {
+    RequestQueueRepository requestQueueRepository, UserRepository userRepository,
+    ItemByInstanceIdFinder itemFinder, TlrSettingsConfiguration tlrConfig, JsonObject requestBody) {
 
-    final RequestNoticeSender requestNoticeSender = new ItemLevelRequestNoticeSender(clients);
+    return buildRequests(requestBody, tlrConfig, itemFinder, loanRepository, requestQueueRepository)
+      .thenCompose(r -> r.after(requests -> placeRequests(clients, eventPublisher, itemRepository,
+        loanRepository, requestRepository, requestQueueRepository, userRepository, itemFinder,
+        tlrConfig, requests)));
+  }
+
+  private CompletableFuture<Result<List<JsonObject>>> buildRequests(
+    JsonObject requestBody, TlrSettingsConfiguration tlrConfig, ItemByInstanceIdFinder itemFinder,
+    LoanRepository loanRepository, RequestQueueRepository requestQueueRepository) {
+
+    return tlrConfig.isTitleLevelRequestsFeatureEnabled()
+      ? buildTitleLevelRequests(requestBody)
+      : buildItemLevelRequests(requestBody, itemFinder, loanRepository, requestQueueRepository);
+  }
+
+  private CompletableFuture<Result<List<JsonObject>>> buildTitleLevelRequests(
+    JsonObject requestRepresentation) {
+
+    return ofAsync(() -> ORDERED_REQUEST_TYPES.stream()
+      .map(requestType -> requestRepresentation.copy()
+        .put(REQUEST_TYPE, requestType.getValue())
+        .put(REQUEST_LEVEL, RequestLevel.TITLE.getValue())
+        .put(FULFILMENT_PREFERENCE, DEFAULT_FULFILMENT_PREFERENCE.getValue()))
+      .collect(toList())
+    );
+  }
+
+  private CompletableFuture<Result<List<JsonObject>>> buildItemLevelRequests(
+    JsonObject requestBody, ItemByInstanceIdFinder itemFinder,
+    LoanRepository loanRepository, RequestQueueRepository requestQueueRepository) {
+
+    return RequestByInstanceIdRequest.from(requestBody)
+      .map(InstanceRequestRelatedRecords::new)
+      .after(instanceRequest -> getPotentialItems(itemFinder, instanceRequest,
+        loanRepository, requestQueueRepository))
+      .thenApply( r -> r.next(RequestByInstanceIdResource::instanceToItemRequests));
+  }
+
+  private CompletableFuture<Result<RequestAndRelatedRecords>> placeRequests(
+    Clients clients, EventPublisher eventPublisher, ItemRepository itemRepository,
+    LoanRepository loanRepository, RequestRepository requestRepository,
+    RequestQueueRepository requestQueueRepository, UserRepository userRepository,
+    ItemByInstanceIdFinder itemFinder, TlrSettingsConfiguration tlrConfig,
+    List<JsonObject> requestRepresentations) {
+
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
     final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
     final UpdateUponRequest updateUponRequest = new UpdateUponRequest(
@@ -281,6 +290,10 @@ public class RequestByInstanceIdResource extends Resource {
       new UpdateLoan(clients, loanRepository, loanPolicyRepository),
         UpdateRequestQueue.using(clients, requestRepository,
           requestQueueRepository));
+
+    final RequestNoticeSender requestNoticeSender = tlrConfig.isTitleLevelRequestsFeatureEnabled()
+      ? new TitleLevelRequestNoticeSender(clients)
+      : new ItemLevelRequestNoticeSender(clients);
 
     final CreateRequestService createRequestService = new CreateRequestService(
       new CreateRequestRepositories(requestRepository,
@@ -291,7 +304,7 @@ public class RequestByInstanceIdResource extends Resource {
       regularRequestBlockValidators(clients),
       eventPublisher, new FailFastErrorHandler());
 
-    return placeRequest(itemRequestRepresentations, 0, createRequestService,
+    return placeRequest(requestRepresentations, 0, createRequestService,
       clients, loanRepository, new ArrayList<>(), itemRepository,
       userRepository, requestQueueRepository);
   }
@@ -347,10 +360,10 @@ public class RequestByInstanceIdResource extends Resource {
   }
 
   public static Result<InstanceRequestRelatedRecords> rankItemsByMatchingServicePoint(
-    InstanceRequestRelatedRecords record) {
+    InstanceRequestRelatedRecords records) {
 
-    final Collection<Item> unsortedAvailableItems = record.getUnsortedAvailableItems();
-    final UUID pickupServicePointId = record.getInstanceLevelRequest().getPickupServicePointId();
+    final Collection<Item> unsortedAvailableItems = records.getUnsortedAvailableItems();
+    final UUID pickupServicePointId = records.getInstanceLevelRequest().getPickupServicePointId();
 
     return of(() -> {
 
@@ -365,9 +378,9 @@ public class RequestByInstanceIdResource extends Resource {
       rankedItems.addAll(itemsPartitionedByLocationServedByPickupPoint.get(true));
       rankedItems.addAll(itemsPartitionedByLocationServedByPickupPoint.get(false));
 
-      record.setSortedAvailableItems(rankedItems);
+      records.setSortedAvailableItems(rankedItems);
 
-      return record;
+      return records;
     });
   }
 
@@ -447,14 +460,14 @@ public class RequestByInstanceIdResource extends Resource {
         Map<Item, Integer> sortedMap = sortRequestQueues(itemQueueSizeMap, itemDueDateMap,
           records.getInstanceLevelRequest().getPickupServicePointId());
 
-        ArrayList<Item> finalOrdedList = new ArrayList<>(sortedMap.keySet());
+        ArrayList<Item> finalOrderedList = new ArrayList<>(sortedMap.keySet());
 
         //put the items that it wasn't able to retrieve loans or RequestQueues for on the bottom of the list
         if (records.getItemsWithoutLoans() != null)
-          finalOrdedList.addAll(records.getItemsWithoutLoans());
+          finalOrderedList.addAll(records.getItemsWithoutLoans());
         if (records.getItemsWithoutRequests() != null)
-          finalOrdedList.addAll(records.getItemsWithoutRequests());
-        records.setSortedUnavailableItems(finalOrdedList);
+          finalOrderedList.addAll(records.getItemsWithoutRequests());
+        records.setSortedUnavailableItems(finalOrderedList);
       return records;
     });
   }
