@@ -634,6 +634,30 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
+  void cannotCreateHoldTlrWhenAvailableItemForInstance() {
+    reconfigureTlrFeature(TlrFeatureStatus.ENABLED);
+
+    List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
+    ItemResource item1 = items.get(0);
+
+    final IndividualResource charlotte = usersFixture.charlotte();
+    final IndividualResource jessica = usersFixture.jessica();
+
+    checkOutFixture.checkOutByBarcode(item1, charlotte);
+
+    // Hold TLR should be refused for the instance which has available item(s)
+    final Response response = requestsFixture.attemptPlaceTitleLevelHoldShelfRequest(
+      item1.getInstanceId(), jessica);
+
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(response.getJson(), hasErrors(1));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("This requester already has an open request for one of the instance's items"),
+      hasParameter("requesterId", jessica.getId().toString()),
+      hasParameter("instanceId", item1.getInstanceId().toString()))));
+  }
+
+  @Test
   void cannotCreateRecallRequestWhenItemIsNotCheckedOut() {
     ItemResource item = itemsFixture.basedUponSmallAngryPlanet(
       ItemBuilder::available);
