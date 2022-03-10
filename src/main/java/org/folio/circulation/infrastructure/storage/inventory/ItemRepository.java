@@ -136,7 +136,7 @@ public class ItemRepository {
 
     return findByIndexNameAndQuery(holdingsRecords.toKeys(Holdings::getId),
       HOLDINGS_RECORD_ID, exactMatch("status.name", AVAILABLE.getValue()))
-      .thenApply(mapResult(ItemRepository::firstOrNull));
+      .thenApply(mapResult(MultipleRecords::firstOrNull));
   }
 
   public CompletableFuture<Result<Item>> fetchByBarcode(String barcode) {
@@ -152,17 +152,19 @@ public class ItemRepository {
   private CompletableFuture<Result<Collection<Item>>> fetchLocations(
     Result<Collection<Item>> result) {
 
-    return result.after(items -> locationRepository.getAllItemLocations(items)
-      .thenApply(mapResult(locations -> map(items, populateItemLocations(locations)))));
-  }
+    return result.combineAfter(locationRepository::getAllItemLocations,
+      (items, locations) -> {
+        final var itemRecords = new MultipleRecords<>(items, items.size());
+        final var locationRecords = new MultipleRecords<>(locations.values(),
+          locations.size());
 
-  private Function<Item, Item> populateItemLocations(Map<String, Location> locations) {
-    return item -> {
-      final Location permLocation = locations.get(item.getPermanentLocationId());
-      final Location location = locations.get(item.getLocationId());
-
-      return item.withLocation(location).withPermanentLocation(permLocation);
-    };
+        return itemRecords
+          .combineRecords(locationRecords, matchRecordsById(Item::getPermanentLocationId, Location::getId),
+            Item::withPermanentLocation, null)
+          .combineRecords(locationRecords, matchRecordsById(Item::getLocationId, Location::getId),
+            Item::withLocation, null)
+          .getRecords();
+      });
   }
 
   private CompletableFuture<Result<Collection<Item>>> fetchMaterialTypes(
@@ -312,7 +314,7 @@ public class ItemRepository {
     return holdingsRepository.fetchByIds(holdingsRecordIds);
   }
 
-  public CompletableFuture<Result<Collection<Item>>> findByIndexNameAndQuery(
+  public CompletableFuture<Result<MultipleRecords<Item>>> findByIndexNameAndQuery(
     Collection<String> ids, String indexName, Result<CqlQuery> query) {
 
     final var finder = new CqlIndexValuesFinder<>(createItemFinder());
@@ -322,7 +324,8 @@ public class ItemRepository {
       .thenApply(mapResult(identityMap::add))
       .thenApply(mapResult(m -> m.mapRecords(mapper::toDomain)))
       .thenApply(mapResult(MultipleRecords::getRecords))
-      .thenComposeAsync(this::fetchItemsRelatedRecords);
+      .thenComposeAsync(this::fetchItemsRelatedRecords)
+      .thenApply(mapResult(items -> new MultipleRecords<>(items, items.size())));
   }
 
   private CompletableFuture<Result<Collection<Item>>> fetchFor(
@@ -416,21 +419,5 @@ public class ItemRepository {
 
   private CqlQueryFinder<JsonObject> createItemFinder() {
     return new CqlQueryFinder<>(itemsClient, "items", identity());
-  }
-
-  private static <T, R> Collection<R> map(Collection<T> collection, Function<T, R> mapper) {
-    return collection.stream()
-      .map(mapper)
-      .collect(Collectors.toList());
-  }
-
-  private static <T> T firstOrNull(Collection<T> collection) {
-    if (collection == null) {
-      return null;
-    }
-
-    return collection.stream()
-      .findFirst()
-      .orElse(null);
   }
 }

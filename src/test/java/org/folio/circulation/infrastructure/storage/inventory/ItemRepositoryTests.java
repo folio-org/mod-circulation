@@ -104,7 +104,7 @@ class ItemRepositoryTests {
     when(holdingsRepository.fetchById(anyString()))
       .thenReturn(ofAsync(Holdings::unknown));
 
-    return new ItemRepository(itemsClient, null, locationRepository,
+    return new ItemRepository(itemsClient,    null, locationRepository,
       materialTypeRepository, null, instanceRepository,
       holdingsRepository);
   }
