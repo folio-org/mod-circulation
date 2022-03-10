@@ -9,11 +9,11 @@ import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
-import static org.folio.circulation.support.utils.CollectionUtil.uniqueSet;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
@@ -58,6 +58,14 @@ public class LocationRepository {
     );
   }
 
+  public static <T, R> Set<R> uniqueSet(Collection<T> collection, Function<T, R> mapper) {
+    return collection.stream()
+      .filter(Objects::nonNull)
+      .map(mapper)
+      .filter(Objects::nonNull)
+      .collect(toSet());
+  }
+
   public CompletableFuture<Result<Location>> getLocation(Item item) {
     if(isNull(item) || isNull(item.getLocationId())) {
       return ofAsync(() -> null);
@@ -81,10 +89,10 @@ public class LocationRepository {
   }
 
   public CompletableFuture<Result<Map<String, Location>>> getAllItemLocations(
-    Collection<Item> inventoryRecords) {
+    MultipleRecords<Item> inventoryRecords) {
 
-    return getItemLocations(
-      inventoryRecords, List.of(Item::getLocationId, Item::getPermanentLocationId));
+    return getItemLocations(inventoryRecords,
+      List.of(Item::getLocationId, Item::getPermanentLocationId));
   }
 
   public CompletableFuture<Result<Map<String, Location>>> getItemLocations(
@@ -102,6 +110,12 @@ public class LocationRepository {
     return fetcher.findByIds(locationIds)
       .thenCompose(this::loadLibrariesForLocations)
       .thenApply(mapResult(records -> records.toMap(Location::getId)));
+  }
+
+  public CompletableFuture<Result<Map<String, Location>>> getItemLocations(
+    MultipleRecords<Item> inventoryRecords, List<Function<Item, String>> locationIdMappers) {
+
+    return getItemLocations(inventoryRecords.getRecords(), locationIdMappers);
   }
 
   private CompletableFuture<Result<Location>> loadLibrary(Location location) {
