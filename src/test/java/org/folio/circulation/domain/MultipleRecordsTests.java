@@ -8,9 +8,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.function.BiFunction;
-import java.util.function.Function;
-import java.util.function.Predicate;
 
 import org.junit.jupiter.api.Test;
 
@@ -27,8 +24,8 @@ class MultipleRecordsTests {
     final var referencedRecords = new MultipleRecords<>(List.of(reference), 1);
 
     // Combine the sets of records together and return a set of the primary records
-    final var combinedRecords = combine(primaryRecords, referencedRecords,
-      findReferencedRecordById(Primary::referenceId, Reference::id),
+    final var combinedRecords = primaryRecords.combineRecords(referencedRecords,
+      MultipleRecords.CombinationMatchers.matchRecordsById(Primary::referenceId, Reference::id),
       Primary::withReferenced, null);
 
     assertThat("Should have one record", combinedRecords.size(), is(1));
@@ -56,8 +53,8 @@ class MultipleRecordsTests {
     final var referencedRecords = new MultipleRecords<>(List.of(firstReference, secondReference), 2);
 
     // Combine the sets of records together and return a set of the primary records
-    final var combinedRecords = combine(primaryRecords, referencedRecords,
-      findReferencedRecordById(Primary::referenceId, Reference::id),
+    final var combinedRecords = primaryRecords.combineRecords(referencedRecords,
+      MultipleRecords.CombinationMatchers.matchRecordsById(Primary::referenceId, Reference::id),
       Primary::withReferenced, null);
 
     final var combinedFirstPrimary = combinedRecords
@@ -92,8 +89,8 @@ class MultipleRecordsTests {
     final var defaultReference = new Reference(UUID.randomUUID().toString());
 
     // Combine the sets of records together and return a set of the primary records
-    final var combinedRecords = combine(primaryRecords, referencedRecords,
-      findReferencedRecordById(Primary::referenceId, Reference::id),
+    final var combinedRecords = primaryRecords.combineRecords(referencedRecords,
+      MultipleRecords.CombinationMatchers.matchRecordsById(Primary::referenceId, Reference::id),
       Primary::withReferenced, defaultReference);
 
     assertThat("Should have one record", combinedRecords.size(), is(1));
@@ -103,26 +100,6 @@ class MultipleRecordsTests {
     assertThat("Should have a primary record", combinedPrimary, is(notNullValue()));
     assertThat("Should be default record",
       combinedPrimary.referenced(), sameInstance(defaultReference));
-  }
-
-  private <T, R> Function<T, Predicate<R>> findReferencedRecordById(
-    Function<T, String> idFromPrimaryRecord,
-    Function<R, String> idFromReferencedRecord) {
-
-    return (p) -> (r) -> Objects.equals(idFromPrimaryRecord.apply(p), idFromReferencedRecord.apply(r));
-  }
-
-  private <T, R> MultipleRecords<T> combine(MultipleRecords<T> primaryRecords,
-    MultipleRecords<R> referencedRecords, Function<T, Predicate<R>> referenceMatcher,
-    BiFunction<T, R, T> combiner, R defaultReference) {
-
-    return primaryRecords.mapRecords(primary -> {
-      final var foundReferenced = referencedRecords
-        .filter(referenceMatcher.apply(primary))
-        .firstOrElse(defaultReference);
-
-      return combiner.apply(primary, foundReferenced);
-    });
   }
 
   static class Primary {

@@ -3,6 +3,7 @@ package org.folio.circulation.infrastructure.storage.inventory;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Function.identity;
 import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
+import static org.folio.circulation.domain.MultipleRecords.CombinationMatchers.matchRecordsById;
 import static org.folio.circulation.domain.representations.ItemProperties.HOLDINGS_RECORD_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.IN_TRANSIT_DESTINATION_SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.LAST_CHECK_IN;
@@ -26,7 +27,6 @@ import static org.folio.circulation.support.utils.CollectionUtil.uniqueSet;
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -211,11 +211,13 @@ public class ItemRepository {
     return result.after(items -> {
       final var instanceIds = uniqueSet(items, Item::getInstanceId);
 
+      final var itemRecords = new MultipleRecords<>(items, items.size());
+
       return instanceRepository.fetchByIds(instanceIds)
-        .thenApply(mapResult(instances -> items.stream()
-          .map(item -> item.withInstance(
-            findRecord(instances, item, Instance::getId, Item::getInstanceId, Instance.unknown())))
-          .collect(Collectors.toList())));
+        .thenApply(mapResult(instances -> itemRecords.combineRecords(instances,
+          matchRecordsById(Item::getInstanceId, Instance::getId),
+          Item::withInstance, Instance.unknown())))
+        .thenApply(mapResult(MultipleRecords::getRecords));
     });
   }
 
@@ -225,22 +227,14 @@ public class ItemRepository {
     return result.after(items -> {
       final var holdingsIds = uniqueSet(items, Item::getHoldingsRecordId);
 
+      final var itemRecords = new MultipleRecords<>(items, items.size());
+
       return holdingsRepository.fetchByIds(holdingsIds)
-        .thenApply(mapResult(h -> items.stream()
-          .map(item -> item.withHoldings(
-            findRecord(h, item, Holdings::getId, Item::getHoldingsRecordId,
-              Holdings.unknown())))
-          .collect(Collectors.toList())));
+        .thenApply(mapResult(holdings -> itemRecords.combineRecords(holdings,
+          matchRecordsById(Item::getHoldingsRecordId, Holdings::getId),
+          Item::withHoldings, Holdings.unknown())))
+        .thenApply(mapResult(MultipleRecords::getRecords));
     });
-  }
-
-  private <T> T findRecord(MultipleRecords<T> records,
-    Item item, Function<T, String> recordIdMapper,
-    Function<Item, String> referenceIdMapper, T notFoundValue) {
-
-    return records.filter(rec -> Objects.equals(recordIdMapper.apply(rec),
-        referenceIdMapper.apply(item)))
-      .firstOrElse(notFoundValue);
   }
 
   private CompletableFuture<Result<Collection<Item>>> fetchItems(Collection<String> itemIds) {
