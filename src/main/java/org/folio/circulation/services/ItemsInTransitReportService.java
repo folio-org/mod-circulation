@@ -10,7 +10,6 @@ import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -120,7 +119,7 @@ public class ItemsInTransitReportService {
     ItemsInTransitReportContext context) {
 
     return locationRepository
-      .getItemLocations(context.getItems().values(), List.of(Item::getLocationId))
+      .getItemLocations(context.getItems().values())
       .thenApply(mapResult(context::withLocations));
   }
 

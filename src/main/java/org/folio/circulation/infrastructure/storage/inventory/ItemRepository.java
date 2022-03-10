@@ -148,16 +148,11 @@ public class ItemRepository {
     Result<MultipleRecords<Item>> result) {
 
     return result.combineAfter(locationRepository::getAllItemLocations,
-      (items, locations) -> {
-        final var locationRecords = new MultipleRecords<>(locations.values(),
-          locations.size());
-
-        return items
-          .combineRecords(locationRecords, matchRecordsById(Item::getPermanentLocationId, Location::getId),
-            Item::withPermanentLocation, null)
-          .combineRecords(locationRecords, matchRecordsById(Item::getLocationId, Location::getId),
-            Item::withLocation, null);
-      });
+      (items, locations) -> items
+        .combineRecords(locations, matchRecordsById(Item::getPermanentLocationId, Location::getId),
+          Item::withPermanentLocation, null)
+        .combineRecords(locations, matchRecordsById(Item::getLocationId, Location::getId),
+          Item::withLocation, null));
   }
 
   private CompletableFuture<Result<MultipleRecords<Item>>> fetchMaterialTypes(

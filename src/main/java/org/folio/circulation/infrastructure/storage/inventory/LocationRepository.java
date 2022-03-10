@@ -11,16 +11,13 @@ import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
 import java.util.Collection;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.MultipleRecords;
@@ -58,14 +55,6 @@ public class LocationRepository {
     );
   }
 
-  public static <T, R> Set<R> uniqueSet(Collection<T> collection, Function<T, R> mapper) {
-    return collection.stream()
-      .filter(Objects::nonNull)
-      .map(mapper)
-      .filter(Objects::nonNull)
-      .collect(toSet());
-  }
-
   public CompletableFuture<Result<Location>> getLocation(Item item) {
     if(isNull(item) || isNull(item.getLocationId())) {
       return ofAsync(() -> null);
@@ -88,34 +77,39 @@ public class LocationRepository {
       .thenApply(r -> r.map(Location::from));
   }
 
-  public CompletableFuture<Result<Map<String, Location>>> getAllItemLocations(
+  public CompletableFuture<Result<MultipleRecords<Location>>> getAllItemLocations(
     MultipleRecords<Item> inventoryRecords) {
 
-    return getItemLocations(inventoryRecords,
-      List.of(Item::getLocationId, Item::getPermanentLocationId));
+    final var locationIds = inventoryRecords.toKeys(Item::getLocationId);
+    final var permanentLocationIds = inventoryRecords.toKeys(Item::getPermanentLocationId);
+
+    final var allLocationIds = new HashSet<String>();
+
+    allLocationIds.addAll(locationIds);
+    allLocationIds.addAll(permanentLocationIds);
+
+    return fetchLocations(allLocationIds);
   }
 
   public CompletableFuture<Result<Map<String, Location>>> getItemLocations(
-    Collection<Item> inventoryRecords, List<Function<Item, String>> locationIdMappers) {
+    Collection<Item> inventoryRecords) {
 
-    final Set<String> locationIds = inventoryRecords.stream()
-      .flatMap(item -> mapItemToStrings(item, locationIdMappers))
-      .filter(StringUtils::isNotBlank)
-      .collect(Collectors.toSet());
+    final var locationIds = new MultipleRecords<>(inventoryRecords, inventoryRecords.size())
+      .toKeys(Item::getLocationId);
+
+    return fetchLocations(locationIds)
+      .thenApply(mapResult(records -> records.toMap(Location::getId)));
+  }
+
+  private CompletableFuture<Result<MultipleRecords<Location>>> fetchLocations(
+    Set<String> locationIds) {
 
     final FindWithMultipleCqlIndexValues<Location> fetcher
       = findWithMultipleCqlIndexValues(locationsStorageClient, "locations",
       Location::from);
 
     return fetcher.findByIds(locationIds)
-      .thenCompose(this::loadLibrariesForLocations)
-      .thenApply(mapResult(records -> records.toMap(Location::getId)));
-  }
-
-  public CompletableFuture<Result<Map<String, Location>>> getItemLocations(
-    MultipleRecords<Item> inventoryRecords, List<Function<Item, String>> locationIdMappers) {
-
-    return getItemLocations(inventoryRecords.getRecords(), locationIdMappers);
+      .thenCompose(this::loadLibrariesForLocations);
   }
 
   private CompletableFuture<Result<Location>> loadLibrary(Location location) {
@@ -224,10 +218,11 @@ public class LocationRepository {
           .collect(toSet()))));
   }
 
-  private Stream<String> mapItemToStrings(Item item,
-    List<Function<Item, String>> mappers) {
-
-    return mappers.stream()
-      .map(mapper -> mapper.apply(item));
+  private <T, R> Set<R> uniqueSet(Collection<T> collection, Function<T, R> mapper) {
+    return collection.stream()
+      .filter(Objects::nonNull)
+      .map(mapper)
+      .filter(Objects::nonNull)
+      .collect(toSet());
   }
 }
