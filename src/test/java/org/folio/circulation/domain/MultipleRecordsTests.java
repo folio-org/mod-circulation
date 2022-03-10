@@ -8,6 +8,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 import org.junit.jupiter.api.Test;
 
@@ -24,7 +27,9 @@ class MultipleRecordsTests {
     final var referencedRecords = new MultipleRecords<>(List.of(reference), 0);
 
     // Combine the sets of records together and return a set of the primary records
-    final var combinedRecords = combine(primaryRecords, referencedRecords);
+    final var combinedRecords = combine(primaryRecords, referencedRecords,
+      (p) -> (r) -> Objects.equals(primary.referenceId(), reference.id()),
+      Primary::withReferenced);
 
     assertThat("Should have one record", combinedRecords.size(), is(1));
 
@@ -51,7 +56,9 @@ class MultipleRecordsTests {
     final var referencedRecords = new MultipleRecords<>(List.of(firstReference, secondReference), 2);
 
     // Combine the sets of records together and return a set of the primary records
-    final var combinedRecords = combine(primaryRecords, referencedRecords);
+    final var combinedRecords = combine(primaryRecords, referencedRecords,
+      (p) -> (r) -> Objects.equals(p.referenceId(), r.id()),
+      Primary::withReferenced);
 
     final var combinedFirstPrimary = combinedRecords
       .filter(p -> Objects.equals(p.id, firstPrimaryId)).firstOrNull();
@@ -72,15 +79,16 @@ class MultipleRecordsTests {
     assertThat(combinedSecondPrimary.referenced(), sameInstance(firstReference));
   }
 
-  private MultipleRecords<Primary> combine(MultipleRecords<Primary> primaryRecords,
-    MultipleRecords<Reference> referencedRecords) {
+  private <T, R> MultipleRecords<T> combine(MultipleRecords<T> primaryRecords,
+    MultipleRecords<R> referencedRecords, Function<T, Predicate<R>> referenceMatcher,
+    BiFunction<T, R, T> combiner) {
 
     return primaryRecords.mapRecords(primary -> {
       final var foundReferenced = referencedRecords
-        .filter(reference -> Objects.equals(primary.referenceId(), reference.id()))
+        .filter(referenceMatcher.apply(primary))
         .firstOrNull();
 
-      return primary.withReferenced(foundReferenced);
+      return combiner.apply(primary, foundReferenced);
     });
   }
 
