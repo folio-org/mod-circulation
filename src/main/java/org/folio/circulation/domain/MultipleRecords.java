@@ -58,6 +58,10 @@ public class MultipleRecords<T> {
       wrappedRecords, totalRecords));
   }
 
+  public T firstOrNull() {
+    return getRecords().stream().findFirst().orElse(null);
+  }
+
   public <R> Set<R> toKeys(Function<T, R> keyMapper) {
     return getRecords().stream()
       .map(keyMapper)
