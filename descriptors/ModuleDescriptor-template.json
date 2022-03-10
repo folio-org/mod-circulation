@@ -1139,13 +1139,13 @@
     },
     {
       "permissionName": "circulation.rules.overdue-fine-policy.get",
-      "displayName": "Circulation - use circulation rules to get all matching overdue fine policy",
-      "description": "Apply circulation rules to get all matching overdue fine policy"
+      "displayName": "Circulation - use circulation rules to get matching overdue fine policy",
+      "description": "Apply circulation rules to get matching overdue fine policy"
     },
     {
       "permissionName": "circulation.rules.lost-item-policy.get",
-      "displayName": "Circulation - use circulation rules to get all matching lost item policy",
-      "description": "Apply circulation rules to get all matching lost item policy"
+      "displayName": "Circulation - use circulation rules to get matching lost item policy",
+      "description": "Apply circulation rules to get matching lost item policy"
     },
     {
       "permissionName": "note.types.collection.get",
