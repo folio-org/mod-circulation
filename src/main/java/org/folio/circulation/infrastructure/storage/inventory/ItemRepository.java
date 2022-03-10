@@ -23,6 +23,7 @@ import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -147,12 +148,26 @@ public class ItemRepository {
   private CompletableFuture<Result<MultipleRecords<Item>>> fetchLocations(
     Result<MultipleRecords<Item>> result) {
 
-    return result.combineAfter(locationRepository::getAllItemLocations,
+    return result.combineAfter(this::fetchLocations,
       (items, locations) -> items
         .combineRecords(locations, matchRecordsById(Item::getPermanentLocationId, Location::getId),
           Item::withPermanentLocation, null)
         .combineRecords(locations, matchRecordsById(Item::getLocationId, Location::getId),
           Item::withLocation, null));
+  }
+
+  private CompletableFuture<Result<MultipleRecords<Location>>> fetchLocations(
+    MultipleRecords<Item> items) {
+
+    final var locationIds = items.toKeys(Item::getLocationId);
+    final var permanentLocationIds = items.toKeys(Item::getPermanentLocationId);
+
+    final var allLocationIds = new HashSet<String>();
+
+    allLocationIds.addAll(locationIds);
+    allLocationIds.addAll(permanentLocationIds);
+
+    return locationRepository.fetchLocations(allLocationIds);
   }
 
   private CompletableFuture<Result<MultipleRecords<Item>>> fetchMaterialTypes(

@@ -77,20 +77,6 @@ public class LocationRepository {
       .thenApply(r -> r.map(Location::from));
   }
 
-  public CompletableFuture<Result<MultipleRecords<Location>>> getAllItemLocations(
-    MultipleRecords<Item> inventoryRecords) {
-
-    final var locationIds = inventoryRecords.toKeys(Item::getLocationId);
-    final var permanentLocationIds = inventoryRecords.toKeys(Item::getPermanentLocationId);
-
-    final var allLocationIds = new HashSet<String>();
-
-    allLocationIds.addAll(locationIds);
-    allLocationIds.addAll(permanentLocationIds);
-
-    return fetchLocations(allLocationIds);
-  }
-
   public CompletableFuture<Result<Map<String, Location>>> getItemLocations(
     Collection<Item> inventoryRecords) {
 
@@ -101,7 +87,7 @@ public class LocationRepository {
       .thenApply(mapResult(records -> records.toMap(Location::getId)));
   }
 
-  private CompletableFuture<Result<MultipleRecords<Location>>> fetchLocations(
+  public CompletableFuture<Result<MultipleRecords<Location>>> fetchLocations(
     Set<String> locationIds) {
 
     final FindWithMultipleCqlIndexValues<Location> fetcher
