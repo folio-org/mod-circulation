@@ -180,7 +180,7 @@ public class UpdateRequestQueue {
 
     if (requestQueue.hasOutstandingFulfillableRequests()) {
       Request firstRequest = requestQueue.getHighestPriorityFulfillableRequest();
-      if (!firstRequest.getItemId().equals(itemId)) {
+      if (!itemId.equals(firstRequest.getItemId())) {
         return completedFuture(succeeded(requestQueue));
       }
 
