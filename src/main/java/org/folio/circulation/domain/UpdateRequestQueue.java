@@ -171,16 +171,16 @@ public class UpdateRequestQueue {
   public CompletableFuture<Result<LoanAndRelatedRecords>> onCheckOut(
     LoanAndRelatedRecords relatedRecords) {
 
-    return onCheckOut(relatedRecords.getRequestQueue(), relatedRecords.getItem().getItemId())
+    return onCheckOut(relatedRecords.getRequestQueue(), relatedRecords.getItem())
       .thenApply(result -> result.map(relatedRecords::withRequestQueue));
   }
 
   private CompletableFuture<Result<RequestQueue>> onCheckOut(RequestQueue requestQueue,
-    String itemId) {
+    Item item) {
 
     if (requestQueue.hasOutstandingFulfillableRequests()) {
       Request firstRequest = requestQueue.getHighestPriorityFulfillableRequest();
-      if (!itemId.equals(firstRequest.getItemId())) {
+      if (item == null || !item.getItemId().equals(firstRequest.getItemId())) {
         return completedFuture(succeeded(requestQueue));
       }
 
