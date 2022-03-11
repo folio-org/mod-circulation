@@ -1,10 +1,15 @@
 package api.requests;
 
+import static api.support.fakes.FakeModNotify.getFirstSentPatronNotice;
+import static api.support.fixtures.TemplateContextMatchers.getUserContextMatchers;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
+import static api.support.matchers.JsonObjectMatcher.hasNoJsonPath;
+import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
+import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfSentNotices;
 import static java.time.ZoneOffset.UTC;
 import static org.folio.HttpStatus.HTTP_CREATED;
 import static org.hamcrest.CoreMatchers.allOf;
@@ -31,6 +36,7 @@ import api.support.TlrFeatureStatus;
 import api.support.builders.RequestBuilder;
 import api.support.builders.RequestByInstanceIdRequestBuilder;
 import api.support.http.IndividualResource;
+import api.support.http.UserResource;
 import io.vertx.core.json.JsonObject;
 
 class InstanceRequestsAPICreationTests extends APITests {
@@ -871,10 +877,14 @@ class InstanceRequestsAPICreationTests extends APITests {
 
   @Test
   void tlrRequestCreatedWhenTlrFeatureEnabled() {
-    reconfigureTlrFeature(TlrFeatureStatus.ENABLED);
+    UUID confirmationTemplateId = UUID.randomUUID();
+    templateFixture.createDummyNoticeTemplate(confirmationTemplateId);
+
+    reconfigureTlrFeature(TlrFeatureStatus.ENABLED, confirmationTemplateId, null, null);
 
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
-    UUID requesterId = usersFixture.jessica().getId();
+    UserResource requester = usersFixture.jessica();
+    UUID requesterId = requester.getId();
     IndividualResource instance = instancesFixture.basedUponDunkirk();
     IndividualResource holdings = holdingsFixture.defaultWithHoldings(instance.getId());
     IndividualResource locationsResource = locationsFixture.mainFloor();
@@ -889,12 +899,15 @@ class InstanceRequestsAPICreationTests extends APITests {
 
     assertThat(postResponse, hasStatus(HTTP_CREATED));
 
-    JsonObject representation = postResponse.getJson();
+    validateInstanceRequestResponse(postResponse.getJson(), pickupServicePointId, instance.getId(),
+      null, RequestType.HOLD);
 
-    validateInstanceRequestResponse(representation, pickupServicePointId,
-      instance.getId(), null, RequestType.HOLD);
+    verifyNumberOfSentNotices(1);
 
-    assertNull(representation.getString("requestExpirationDate"));
+    JsonObject sentNotice = getFirstSentPatronNotice();
+    assertThat(sentNotice, hasNoJsonPath("context.item"));
+    assertThat(sentNotice, hasEmailNoticeProperties(requesterId, confirmationTemplateId,
+      getUserContextMatchers(requester)));
   }
 
   private void validateInstanceRequestResponse(JsonObject representation,
