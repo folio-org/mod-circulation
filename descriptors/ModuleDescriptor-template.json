@@ -1148,11 +1148,6 @@
       "description": "Apply circulation rules to get matching lost item policy"
     },
     {
-      "permissionName": "note.types.collection.get",
-      "displayName": "Note types - get note types collection",
-      "description": "Get note types collection"
-    },
-    {
       "permissionName": "circulation.requests.collection.get",
       "displayName": "circulation - get request collection",
       "description": "get request collection"
