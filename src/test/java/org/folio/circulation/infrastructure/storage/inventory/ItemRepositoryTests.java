@@ -106,7 +106,7 @@ class ItemRepositoryTests {
       .thenReturn(ofAsync(Holdings::unknown));
 
     return new ItemRepository(itemsClient, locationRepository,
-      materialTypeRepository, null, instanceRepository,
+      materialTypeRepository, instanceRepository,
       holdingsRepository, loanTypeRepository);
   }
 

@@ -37,7 +37,6 @@ import org.folio.circulation.domain.LoanType;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.MaterialType;
 import org.folio.circulation.domain.MultipleRecords;
-import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.infrastructure.storage.IdentityMap;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.storage.mappers.ItemMapper;
@@ -60,7 +59,6 @@ public class ItemRepository {
   private final CollectionResourceClient itemsClient;
   private final LocationRepository locationRepository;
   private final MaterialTypeRepository materialTypeRepository;
-  private final ServicePointRepository servicePointRepository;
   private final InstanceRepository instanceRepository;
   private final HoldingsRepository holdingsRepository;
   private final LoanTypeRepository loanTypeRepository;
@@ -68,9 +66,9 @@ public class ItemRepository {
     item -> getProperty(item, "id"));
 
   public ItemRepository(Clients clients) {
-    this(clients.itemsStorage(), LocationRepository.using(clients),
-      new MaterialTypeRepository(clients), new ServicePointRepository(clients),
-      new InstanceRepository(clients),
+    this(clients.itemsStorage(), LocationRepository.using(clients,
+        new ServicePointRepository(clients)),
+      new MaterialTypeRepository(clients), new InstanceRepository(clients),
       new HoldingsRepository(clients.holdingsStorage()),
       new LoanTypeRepository(clients.loanTypesStorage()));
   }
@@ -318,7 +316,8 @@ public class ItemRepository {
     return itemResult.combineAfter(this::fetchHoldingsRecord, Item::withHoldings)
       .thenComposeAsync(combineAfter(this::fetchInstance, Item::withInstance))
       .thenComposeAsync(combineAfter(locationRepository::getLocation, Item::withLocation))
-      .thenComposeAsync(combineAfter(this::fetchPrimaryServicePoint, Item::withPrimaryServicePoint))
+      .thenComposeAsync(combineAfter(
+        locationRepository::fetchPrimaryServicePoint, Item::withPrimaryServicePoint))
       .thenComposeAsync(combineAfter(materialTypeRepository::getFor, Item::withMaterialType))
       .thenComposeAsync(combineAfter(this::fetchLoanType, Item::withLoanType));
   }
@@ -340,17 +339,6 @@ public class ItemRepository {
     } else {
       return instanceRepository.fetchById(item.getInstanceId());
     }
-  }
-
-  private CompletableFuture<Result<ServicePoint>> fetchPrimaryServicePoint(Item item) {
-    if (item == null || item.getLocation() == null
-      || item.getLocation().getPrimaryServicePointId() == null) {
-
-      log.info("Location was not fund, aborting fetching primary service point");
-      return ofAsync(() -> null);
-    }
-
-    return servicePointRepository.getServicePointById(item.getLocation().getPrimaryServicePointId());
   }
 
   private CompletableFuture<Result<LoanType>> fetchLoanType(Item item) {

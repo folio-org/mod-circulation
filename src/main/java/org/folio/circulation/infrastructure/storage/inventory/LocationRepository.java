@@ -10,17 +10,21 @@ import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.domain.ServicePoint;
+import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
@@ -30,29 +34,32 @@ import org.folio.circulation.support.results.Result;
 import io.vertx.core.json.JsonObject;
 
 public class LocationRepository {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private final CollectionResourceClient locationsStorageClient;
   private final CollectionResourceClient institutionsStorageClient;
   private final CollectionResourceClient campusesStorageClient;
   private final CollectionResourceClient librariesStorageClient;
+  private final ServicePointRepository servicePointRepository;
 
   private LocationRepository(CollectionResourceClient locationsStorageClient,
     CollectionResourceClient institutionsStorageClient,
     CollectionResourceClient campusesStorageClient,
-    CollectionResourceClient librariesStorageClient) {
+    CollectionResourceClient librariesStorageClient,
+    ServicePointRepository servicePointRepository) {
 
     this.locationsStorageClient = locationsStorageClient;
     this.institutionsStorageClient = institutionsStorageClient;
     this.campusesStorageClient = campusesStorageClient;
     this.librariesStorageClient = librariesStorageClient;
+    this.servicePointRepository = servicePointRepository;
   }
 
-  public static LocationRepository using(Clients clients) {
-    return new LocationRepository(
-      clients.locationsStorage(),
-      clients.institutionsStorage(),
-      clients.campusesStorage(),
-      clients.librariesStorage()
-    );
+  public static LocationRepository using(Clients clients,
+    ServicePointRepository servicePointRepository) {
+
+    return new LocationRepository(clients.locationsStorage(),
+      clients.institutionsStorage(), clients.campusesStorage(),
+      clients.librariesStorage(), servicePointRepository);
   }
 
   public CompletableFuture<Result<Location>> getLocation(Item item) {
@@ -202,6 +209,17 @@ public class LocationRepository {
           .map(location -> location.withCampusRepresentation(
             campuses.getOrDefault(location.getCampusId(), null)))
           .collect(toSet()))));
+  }
+
+  public CompletableFuture<Result<ServicePoint>> fetchPrimaryServicePoint(Item item) {
+    if (item == null || item.getLocation() == null
+      || item.getLocation().getPrimaryServicePointId() == null) {
+
+      log.info("Location was not fund, aborting fetching primary service point");
+      return ofAsync(() -> null);
+    }
+
+    return servicePointRepository.getServicePointById(item.getLocation().getPrimaryServicePointId());
   }
 
   private <T, R> Set<R> uniqueSet(Collection<T> collection, Function<T, R> mapper) {

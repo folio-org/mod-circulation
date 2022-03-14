@@ -62,8 +62,8 @@ public class ItemsInTransitReportService {
     this.itemRepository = new ItemRepository(clients);
     this.userRepository = new UserRepository(clients);
     this.loanRepository = new LoanRepository(clients, itemRepository, userRepository);
-    this.locationRepository = LocationRepository.using(clients);
     this.servicePointRepository = new ServicePointRepository(clients);
+    this.locationRepository = LocationRepository.using(clients, servicePointRepository);
     this.requestRepository = new RequestRepository(clients, itemRepository, userRepository,
       loanRepository, servicePointRepository, patronGroupRepository);
     this.patronGroupRepository = new PatronGroupRepository(clients);
