@@ -27,7 +27,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Holdings;
@@ -264,14 +263,12 @@ public class ItemRepository {
   fetchItemsFor(Result<MultipleRecords<T>> result, BiFunction<T, Item, T> includeItemMap,
     Function<Collection<String>, CompletableFuture<Result<MultipleRecords<Item>>>> fetcher) {
 
-    if (result.failed() || result.value().getRecords().isEmpty()) {
-      return CompletableFuture.completedFuture(result);
-    }
-
     return result.combineAfter(
       r -> fetcher.apply(r.toKeys(ItemRelatedRecord::getItemId)),
-      (records, items) ->
-        matchItemToRecord(records, items, includeItemMap));
+      (records, items) -> records
+        .combineRecords(
+          items, matchRecordsById(ItemRelatedRecord::getItemId, Item::getItemId),
+          includeItemMap, Item.from(null)));
   }
 
   public CompletableFuture<Result<Collection<Item>>> findBy(String indexName, Collection<String> ids) {
@@ -315,18 +312,6 @@ public class ItemRepository {
 
     return fetchItems(itemIds)
       .thenComposeAsync(this::fetchHoldingsRecords);
-  }
-
-  private <T extends ItemRelatedRecord> MultipleRecords<T> matchItemToRecord(
-    MultipleRecords<T> records, MultipleRecords<Item> items,
-    BiFunction<T, Item, T> includeItemMap) {
-
-    final var mapper = new ItemMapper();
-
-    return records
-      .mapRecords(r -> includeItemMap.apply(r,
-        items.filter(item -> StringUtils.equals(item.getItemId(), r.getItemId()))
-          .firstOrElse(mapper.toDomain(null))));
   }
 
   public CompletableFuture<Result<Item>> fetchItemRelatedRecords(Result<Item> itemResult) {

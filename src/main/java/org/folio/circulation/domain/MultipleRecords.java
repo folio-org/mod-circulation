@@ -78,6 +78,7 @@ public class MultipleRecords<T> {
 
   public <R> Set<R> toKeys(Function<T, R> keyMapper) {
     return getRecords().stream()
+      .filter(Objects::nonNull)
       .map(keyMapper)
       .filter(Objects::nonNull)
       .collect(Collectors.toSet());
