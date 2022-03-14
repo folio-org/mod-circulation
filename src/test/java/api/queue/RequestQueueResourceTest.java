@@ -306,23 +306,25 @@ class RequestQueueResourceTest extends APITests {
 
     UUID isbnIdentifierId = identifierTypesFixture.isbn().getId();
     String isbnValue = "9780866989427";
+    UUID localInstanceId = UUID.randomUUID();
     ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
       identity(),
-      instanceBuilder -> instanceBuilder.addIdentifier(isbnIdentifierId, isbnValue).withId(instanceId),
+      instanceBuilder -> instanceBuilder.addIdentifier(isbnIdentifierId, isbnValue).withId(localInstanceId),
       itemsFixture.addCallNumberStringComponents());
-    checkOutFixture.checkOutByBarcode(smallAngryPlanet);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.james());
 
     requestsClient.create(new RequestBuilder()
       .hold()
       .titleRequestLevel()
-      .withInstanceId(instanceId)
+      .withInstanceId(localInstanceId)
       .withNoItemId()
       .withNoHoldingsRecordId()
       .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .withRequestDate(ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC))
       .withRequesterId(usersFixture.steve().getId()));
 
-    JsonObject request = requestQueueFixture.retrieveQueueForInstance(smallAngryPlanet.getInstanceId().toString()).getJsonArray("requests").getJsonObject(0);
+    JsonObject request = requestQueueFixture.retrieveQueueForInstance(
+      smallAngryPlanet.getInstanceId().toString()).getJsonArray("requests").getJsonObject(0);
 
     assertThat(request.containsKey("instance"), is(true));
     JsonObject instance = request.getJsonObject("instance");

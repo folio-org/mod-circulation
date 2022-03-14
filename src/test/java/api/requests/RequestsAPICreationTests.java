@@ -411,7 +411,11 @@ public class RequestsAPICreationTests extends APITests {
       .withRequesterId(patronId));
 
     assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
-    assertThat(postResponse.getJson(), hasErrorWith(hasMessage("Instance does not exist")));
+    if ("Title".equals(requestLevel)) {
+      assertThat(postResponse.getJson(), hasErrorWith(hasMessage("There are no holdings for this instance")));
+    } else {
+      assertThat(postResponse.getJson(), hasErrorWith(hasMessage("Instance does not exist")));
+    }
   }
 
   @ParameterizedTest
@@ -591,7 +595,9 @@ public class RequestsAPICreationTests extends APITests {
     final IndividualResource james = usersFixture.james();
     UUID instanceId = instancesFixture.basedUponDunkirk().getId();
 
-    buildItem(instanceId, UUID.randomUUID().toString());
+    ItemResource itemResource = buildItem(instanceId, UUID.randomUUID().toString());
+    checkOutFixture.checkOutByBarcode(itemResource, usersFixture.jessica());
+
     requestsFixture.placeTitleLevelHoldShelfRequest(instanceId, james);
     Response postResponse = requestsFixture.attemptPlaceTitleLevelHoldShelfRequest(instanceId,
       james);
@@ -635,7 +641,7 @@ public class RequestsAPICreationTests extends APITests {
 
   @Test
   void cannotCreateHoldTlrWhenAvailableItemForInstance() {
-    reconfigureTlrFeature(TlrFeatureStatus.ENABLED);
+    configurationsFixture.enableTlrFeature();
 
     List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
     ItemResource item1 = items.get(0);
@@ -652,8 +658,7 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(response.getJson(), hasErrors(1));
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("This requester already has an open request for one of the instance's items"),
-      hasParameter("requesterId", jessica.getId().toString()),
+      hasMessage("Not allowed Hold/Recall TLR as Available item has been found for instance"),
       hasParameter("instanceId", item1.getInstanceId().toString()))));
   }
 
@@ -2729,17 +2734,17 @@ public class RequestsAPICreationTests extends APITests {
       .withPickupServicePointId(servicePointsFixture.cd1().getId()));
 
     assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
-    assertThat(postResponse.getJson(), hasErrors(requestLevel == RequestLevel.ITEM ? 1 : 2));
-    assertThat(postResponse.getJson(), hasErrorWith(allOf(
-      hasMessage("Cannot create a request with no instance ID"),
-      hasNullParameter("instanceId")
-    )));
+    assertThat(postResponse.getJson(), hasErrors(1));
 
     if (requestLevel == RequestLevel.TITLE) {
       assertThat(postResponse.getJson(), hasErrorWith(allOf(
-        hasMessage("Attempt to create TLR request linked to an item"),
-        hasUUIDParameter("itemId", item.getId()),
-        hasUUIDParameter("holdingsRecordId", item.getHoldingsRecordId())
+        hasMessage("Cannot create page TLR for this instance ID - no available items found"),
+        hasNullParameter("instanceId")
+      )));
+    } else {
+      assertThat(postResponse.getJson(), hasErrorWith(allOf(
+        hasMessage("Cannot create a request with no instance ID"),
+        hasNullParameter("instanceId")
       )));
     }
   }
