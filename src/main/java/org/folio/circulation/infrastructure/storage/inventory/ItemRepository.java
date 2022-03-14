@@ -9,7 +9,6 @@ import static org.folio.circulation.domain.representations.ItemProperties.IN_TRA
 import static org.folio.circulation.domain.representations.ItemProperties.LAST_CHECK_IN;
 import static org.folio.circulation.domain.representations.ItemProperties.STATUS_PROPERTY;
 import static org.folio.circulation.support.fetching.MultipleCqlIndexValuesCriteria.byIndex;
-import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.http.CommonResponseInterpreters.noContentRecordInterpreter;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.PageLimit.one;
@@ -43,7 +42,6 @@ import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.infrastructure.storage.IdentityMap;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.storage.mappers.ItemMapper;
-import org.folio.circulation.storage.mappers.LoanTypeMapper;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.ServerErrorFailure;
@@ -61,20 +59,21 @@ public class ItemRepository {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   private final CollectionResourceClient itemsClient;
-  private final CollectionResourceClient loanTypesClient;
   private final LocationRepository locationRepository;
   private final MaterialTypeRepository materialTypeRepository;
   private final ServicePointRepository servicePointRepository;
   private final InstanceRepository instanceRepository;
   private final HoldingsRepository holdingsRepository;
+  private final LoanTypeRepository loanTypeRepository;
   private final IdentityMap identityMap = new IdentityMap(
     item -> getProperty(item, "id"));
 
   public ItemRepository(Clients clients) {
-    this(clients.itemsStorage(), clients.loanTypesStorage(),
-      LocationRepository.using(clients), new MaterialTypeRepository(clients),
-      new ServicePointRepository(clients), new InstanceRepository(clients),
-      new HoldingsRepository(clients.holdingsStorage()));
+    this(clients.itemsStorage(), LocationRepository.using(clients),
+      new MaterialTypeRepository(clients), new ServicePointRepository(clients),
+      new InstanceRepository(clients),
+      new HoldingsRepository(clients.holdingsStorage()),
+      new LoanTypeRepository(clients.loanTypesStorage()));
   }
 
   public CompletableFuture<Result<Item>> fetchFor(ItemRelatedRecord itemRelatedRecord) {
@@ -183,13 +182,10 @@ public class ItemRepository {
   private CompletableFuture<Result<MultipleRecords<Item>>> fetchLoanTypes(
     Result<MultipleRecords<Item>> result) {
 
-    final var mapper = new LoanTypeMapper();
-
     return result.after(items -> {
       final var loanTypeIdsToFetch = items.toKeys(Item::getLoanTypeId);
 
-      return findWithMultipleCqlIndexValues(loanTypesClient, "loantypes", mapper::toDomain)
-        .findByIds(loanTypeIdsToFetch)
+      return loanTypeRepository.findByIds(loanTypeIdsToFetch)
         .thenApply(mapResult(loanTypes -> items.combineRecords(loanTypes,
           matchRecordsById(Item::getLoanTypeId, LoanType::getId),
           Item::withLoanType, LoanType.unknown())));
@@ -377,10 +373,7 @@ public class ItemRepository {
       return completedFuture(succeeded(LoanType.unknown()));
     }
 
-    return SingleRecordFetcher.json(loanTypesClient, "loan types",
-        response -> succeeded(null))
-      .fetch(item.getLoanTypeId())
-      .thenApply(mapResult(new LoanTypeMapper()::toDomain));
+    return loanTypeRepository.fetchById(item.getLoanTypeId());
   }
 
   public CompletableFuture<Result<MultipleRecords<Item>>> fetchItemsRelatedRecords(

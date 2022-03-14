@@ -91,6 +91,7 @@ class ItemRepositoryTests {
     final var materialTypeRepository = mock(MaterialTypeRepository.class);
     final var instanceRepository = mock(InstanceRepository.class);
     final var holdingsRepository = mock(HoldingsRepository.class);
+    final var loanTypeRepository = mock(LoanTypeRepository.class);
 
     when(locationRepository.getLocation(any()))
       .thenReturn(ofAsync(() -> Location.from(new JsonObject())));
@@ -104,9 +105,9 @@ class ItemRepositoryTests {
     when(holdingsRepository.fetchById(anyString()))
       .thenReturn(ofAsync(Holdings::unknown));
 
-    return new ItemRepository(itemsClient,    null, locationRepository,
+    return new ItemRepository(itemsClient, locationRepository,
       materialTypeRepository, null, instanceRepository,
-      holdingsRepository);
+      holdingsRepository, loanTypeRepository);
   }
 
   private Item dummyItem() {
