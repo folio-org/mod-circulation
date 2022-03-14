@@ -175,34 +175,27 @@ public class UpdateRequestQueue {
       .thenApply(result -> result.map(relatedRecords::withRequestQueue));
   }
 
-  private CompletableFuture<Result<RequestQueue>> onCheckOut(RequestQueue requestQueue,
-    Item item) {
-
-    if (requestQueue.hasOutstandingFulfillableRequests()) {
-      Request firstRequest = requestQueue.getHighestPriorityFulfillableRequest();
-      if (item == null || !item.getItemId().equals(firstRequest.getItemId())) {
-        return completedFuture(succeeded(requestQueue));
-      }
-
-      Request originalRequest = Request.from(firstRequest.asJson());
-
-      log.info("Closing request '{}'", firstRequest.getId());
-      firstRequest.changeStatus(RequestStatus.CLOSED_FILLED);
-
-      log.info("Removing request '{}' from queue", firstRequest.getId());
-      requestQueue.remove(firstRequest);
-
-      Request updatedRequest = Request.from(firstRequest.asJson());
-
-      requestQueue.update(originalRequest, updatedRequest);
-
-      return requestRepository.update(firstRequest)
-        .thenComposeAsync(r -> r.after(v ->
-          requestQueueRepository.updateRequestsWithChangedPositions(requestQueue)));
-
-    } else {
+  private CompletableFuture<Result<RequestQueue>> onCheckOut(RequestQueue requestQueue, Item item) {
+    Request firstRequest = requestQueue.getHighestPriorityRequestFulfillableByItem(item);
+    if (firstRequest == null) {
       return completedFuture(succeeded(requestQueue));
     }
+
+    Request originalRequest = Request.from(firstRequest.asJson());
+
+    log.info("Closing request '{}'", firstRequest.getId());
+    firstRequest.changeStatus(RequestStatus.CLOSED_FILLED);
+
+    log.info("Removing request '{}' from queue", firstRequest.getId());
+    requestQueue.remove(firstRequest);
+
+    Request updatedRequest = Request.from(firstRequest.asJson());
+
+    requestQueue.update(originalRequest, updatedRequest);
+
+    return requestRepository.update(firstRequest)
+      .thenComposeAsync(r -> r.after(v ->
+        requestQueueRepository.updateRequestsWithChangedPositions(requestQueue)));
   }
 
   CompletableFuture<Result<RequestAndRelatedRecords>> onCreate(
