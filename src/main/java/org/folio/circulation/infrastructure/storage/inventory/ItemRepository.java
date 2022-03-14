@@ -316,8 +316,6 @@ public class ItemRepository {
     return itemResult.combineAfter(this::fetchHoldingsRecord, Item::withHoldings)
       .thenComposeAsync(combineAfter(this::fetchInstance, Item::withInstance))
       .thenComposeAsync(combineAfter(locationRepository::getLocation, Item::withLocation))
-      .thenComposeAsync(combineAfter(
-        locationRepository::fetchPrimaryServicePoint, Item::withPrimaryServicePoint))
       .thenComposeAsync(combineAfter(materialTypeRepository::getFor, Item::withMaterialType))
       .thenComposeAsync(combineAfter(this::fetchLoanType, Item::withLoanType));
   }

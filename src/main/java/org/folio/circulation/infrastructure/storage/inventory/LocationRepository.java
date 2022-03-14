@@ -5,6 +5,7 @@ import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toSet;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
+import static org.folio.circulation.support.results.AsynchronousResultBindings.combineAfter;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
@@ -63,11 +64,13 @@ public class LocationRepository {
   }
 
   public CompletableFuture<Result<Location>> getLocation(Item item) {
-    if(isNull(item) || isNull(item.getLocationId())) {
+    if (item == null || item.getLocationId() == null) {
       return ofAsync(() -> null);
     }
 
     return fetchLocationById(item.getLocationId())
+      .thenCompose(combineAfter(this::fetchPrimaryServicePoint,
+        Location::withPrimaryServicePoint))
       .thenCompose(r -> r.after(this::loadLibrary))
       .thenCompose(r -> r.after(this::loadCampus))
       .thenCompose(r -> r.after(this::loadInstitution));
@@ -211,15 +214,13 @@ public class LocationRepository {
           .collect(toSet()))));
   }
 
-  public CompletableFuture<Result<ServicePoint>> fetchPrimaryServicePoint(Item item) {
-    if (item == null || item.getLocation() == null
-      || item.getLocation().getPrimaryServicePointId() == null) {
-
-      log.info("Location was not fund, aborting fetching primary service point");
+  private CompletableFuture<Result<ServicePoint>> fetchPrimaryServicePoint(Location location) {
+    if (location == null || location.getPrimaryServicePointId() == null) {
+      log.info("Location was not found, aborting fetching primary service point");
       return ofAsync(() -> null);
     }
 
-    return servicePointRepository.getServicePointById(item.getLocation().getPrimaryServicePointId());
+    return servicePointRepository.getServicePointById(location.getPrimaryServicePointId());
   }
 
   private <T, R> Set<R> uniqueSet(Collection<T> collection, Function<T, R> mapper) {
