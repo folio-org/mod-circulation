@@ -121,8 +121,7 @@ public class CirculationRulesProcessor {
       .using(locationStorageClient)
       .mapTo(Location::from)
       .fetch(params.getLocationId())
-      .thenApply(r -> r.failed()
-        ? Result.succeeded(params)
-        : r.map(params::withLocation));
+      .thenApply(r -> r.map(params::withLocation))
+      .thenApply(r -> r.mapFailure(failure -> succeeded(params)));
   }
 }
