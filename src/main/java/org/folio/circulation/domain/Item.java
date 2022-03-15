@@ -114,10 +114,6 @@ public class Item {
     return changed;
   }
 
-  public JsonObject getItem() {
-    return itemRepresentation;
-  }
-
   public String getTitle() {
     return instance.getTitle();
   }
