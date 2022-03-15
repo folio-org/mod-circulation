@@ -164,7 +164,8 @@ public class MultipleRecords<T> {
       Function<T, String> idFromMainRecord,
       Function<R, String> idFromOtherRecord) {
 
-      return (p) -> (r) -> Objects.equals(idFromMainRecord.apply(p), idFromOtherRecord.apply(r));
+      return mainRecord -> otherRecord
+        -> Objects.equals(idFromMainRecord.apply(mainRecord), idFromOtherRecord.apply(otherRecord));
     }
   }
 }
