@@ -43,6 +43,7 @@ import api.support.TlrFeatureStatus;
 import api.support.builders.ReorderQueueBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.fakes.FakePubSub;
+import api.support.http.CheckOutResource;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import io.vertx.core.json.JsonArray;
@@ -306,12 +307,14 @@ class RequestQueueResourceTest extends APITests {
 
     UUID isbnIdentifierId = identifierTypesFixture.isbn().getId();
     String isbnValue = "9780866989427";
-    UUID localInstanceId = UUID.randomUUID();
-    ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
+    var localInstanceId = UUID.randomUUID();
+    ItemResource itemResource = itemsFixture.basedUponSmallAngryPlanet(
       identity(),
       instanceBuilder -> instanceBuilder.addIdentifier(isbnIdentifierId, isbnValue).withId(localInstanceId),
       itemsFixture.addCallNumberStringComponents());
-    checkOutFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.james());
+
+    CheckOutResource checkOutResource = checkOutFixture.checkOutByBarcode(itemResource, usersFixture.jessica());
+    assertThat(checkOutResource.getResponse().getStatusCode(), is(201));
 
     requestsClient.create(new RequestBuilder()
       .hold()
@@ -324,7 +327,7 @@ class RequestQueueResourceTest extends APITests {
       .withRequesterId(usersFixture.steve().getId()));
 
     JsonObject request = requestQueueFixture.retrieveQueueForInstance(
-      smallAngryPlanet.getInstanceId().toString()).getJsonArray("requests").getJsonObject(0);
+      itemResource.getInstanceId().toString()).getJsonArray("requests").getJsonObject(0);
 
     assertThat(request.containsKey("instance"), is(true));
     JsonObject instance = request.getJsonObject("instance");
