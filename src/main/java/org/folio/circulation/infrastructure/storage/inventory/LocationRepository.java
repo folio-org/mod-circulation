@@ -21,12 +21,14 @@ import java.util.function.Function;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.circulation.domain.Campus;
 import org.folio.circulation.domain.Institution;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
+import org.folio.circulation.storage.mappers.CampusMapper;
 import org.folio.circulation.storage.mappers.InstitutionMapper;
 import org.folio.circulation.storage.mappers.LocationMapper;
 import org.folio.circulation.support.Clients;
@@ -128,7 +130,9 @@ public class LocationRepository {
 
     return SingleRecordFetcher.json(campusesStorageClient, "campus", response -> succeeded(null))
       .fetch(location.getCampusId())
-      .thenApply(r -> r.map(location::withCampusRepresentation));
+      .thenApply(r -> r.map(
+        campusRepresentation -> location.withCampus(
+          new CampusMapper().toDomain(campusRepresentation))));
   }
 
   public CompletableFuture<Result<Location>> loadInstitution(Location location) {
@@ -165,17 +169,17 @@ public class LocationRepository {
                     library.getString("id"))));
   }
 
-  public CompletableFuture<Result<Map<String, JsonObject>>> getCampuses(
+  public CompletableFuture<Result<Map<String, Campus>>> getCampuses(
     Collection<Location> locations) {
 
-    final FindWithMultipleCqlIndexValues<JsonObject> fetcher
-      = findWithMultipleCqlIndexValues(campusesStorageClient, "loccamps", identity());
+    final FindWithMultipleCqlIndexValues<Campus> fetcher
+      = findWithMultipleCqlIndexValues(campusesStorageClient, "loccamps",
+        new CampusMapper()::toDomain);
 
     final Set<String> campusesIds = uniqueSet(locations, Location::getCampusId);
 
     return fetcher.findByIds(campusesIds)
-      .thenApply(mapResult(records -> records.toMap(campus ->
-        campus.getString("id"))));
+      .thenApply(mapResult(records -> records.toMap(Campus::getId)));
   }
 
   public CompletableFuture<Result<Map<String, Institution>>> getInstitutions(
@@ -213,8 +217,8 @@ public class LocationRepository {
     return getCampuses(locations)
       .thenApply(flatMapResult(campuses -> succeeded(
         locations.stream()
-          .map(location -> location.withCampusRepresentation(
-            campuses.getOrDefault(location.getCampusId(), null)))
+          .map(location -> location.withCampus(
+              campuses.getOrDefault(location.getCampusId(), Campus.unknown(location.getCampusId()))))
           .collect(toSet()))));
   }
 

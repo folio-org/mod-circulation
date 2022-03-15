@@ -1,7 +1,6 @@
 package org.folio.circulation.domain;
 
 import static org.folio.circulation.domain.InstanceRequestItemsComparer.sortRequestQueues;
-import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -12,8 +11,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.folio.circulation.support.utils.ClockUtil;
-import org.junit.jupiter.api.Test
-;
+import org.junit.jupiter.api.Test;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -258,9 +256,8 @@ class InstanceRequestItemsComparerTests {
       servicePointsArray.add(withServicePointId.toString());
       homeLocation.put("servicePointIds", servicePointsArray);
 
-      location = new Location(homeLocation, null, null, new Institution(
-        getProperty(null, "id"),
-        getProperty(null, "name")), null);
+      location = new Location(homeLocation, null,
+        Institution.unknown(null), Campus.unknown(null), ServicePoint.unknown(null));
     }
 
     return Item.from(itemRepresentation)

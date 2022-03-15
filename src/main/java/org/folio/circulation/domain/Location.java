@@ -15,19 +15,17 @@ import lombok.NonNull;
 public class Location {
   private final JsonObject representation;
   private final JsonObject libraryRepresentation;
-  private final JsonObject campusRepresentation;
   private final @NonNull Institution institution;
-
+  private final @NonNull Campus campus;
   private final ServicePoint primaryServicePoint;
 
-  public Location(JsonObject representation,
-    JsonObject libraryRepresentation, JsonObject campusRepresentation,
-    Institution institution, ServicePoint primaryServicePoint) {
+  public Location(JsonObject representation, JsonObject libraryRepresentation,
+    Institution institution, Campus campus, ServicePoint primaryServicePoint) {
 
     this.representation = representation;
     this.libraryRepresentation = libraryRepresentation;
-    this.campusRepresentation = campusRepresentation;
     this.institution = institution;
+    this.campus = campus;
     this.primaryServicePoint = primaryServicePoint;
   }
 
@@ -63,7 +61,7 @@ public class Location {
   }
 
   public String getCampusId() {
-    return getProperty(representation, "campusId");
+    return campus.getId();
   }
 
   public String getInstitutionId() {
@@ -79,7 +77,7 @@ public class Location {
   }
 
   public String getCampusName() {
-    return getProperty(campusRepresentation, "name");
+    return campus.getName();
   }
 
   public String getInstitutionName() {
@@ -91,23 +89,23 @@ public class Location {
   }
 
   public Location withLibraryRepresentation(JsonObject libraryRepresentation) {
-    return new Location(representation, libraryRepresentation, campusRepresentation,
-      institution, primaryServicePoint);
-  }
-
-  public Location withCampusRepresentation(JsonObject campusRepresentation) {
-    return new Location(representation, libraryRepresentation, campusRepresentation,
-      institution, primaryServicePoint);
-  }
-
-  public Location withPrimaryServicePoint(ServicePoint servicePoint) {
-    return new Location(representation, libraryRepresentation, campusRepresentation,
-      institution, servicePoint);
+    return new Location(representation, libraryRepresentation, institution,
+      campus, primaryServicePoint);
   }
 
   public Location withInstitution(Institution institution) {
-    return new Location(representation, libraryRepresentation, campusRepresentation,
-      institution, primaryServicePoint);
+    return new Location(representation, libraryRepresentation,
+      institution, campus, primaryServicePoint);
+  }
+
+  public Location withCampus(Campus campus) {
+    return new Location(representation, libraryRepresentation, institution,
+      campus, primaryServicePoint);
+  }
+
+  public Location withPrimaryServicePoint(ServicePoint servicePoint) {
+    return new Location(representation, libraryRepresentation, institution,
+      campus, servicePoint);
   }
 
   private boolean matchesPrimaryServicePoint(UUID servicePointId) {
