@@ -21,6 +21,7 @@ import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Location;
+import org.folio.circulation.storage.mappers.LocationMapper;
 import org.hamcrest.Matcher;
 import org.junit.jupiter.api.Test;
 
@@ -684,7 +685,7 @@ class Text2DroolsTest {
   }
 
   private Location createLocation(String institutionId, String libraryId, String campusId) {
-    return Location.from(new LocationBuilder()
+    return new LocationMapper().toDomain(new LocationBuilder()
       .forInstitution(UUID.fromString(institutionId))
       .forLibrary(UUID.fromString(libraryId))
       .forCampus(UUID.fromString(campusId))

@@ -40,6 +40,7 @@ import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.services.FeeFineFacade;
 import org.folio.circulation.services.feefine.FeeFineService;
+import org.folio.circulation.storage.mappers.LocationMapper;
 import org.folio.circulation.support.utils.ClockUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -612,7 +613,7 @@ class OverdueFineServiceTest {
 
     return Item.from(item)
       .withLocation(
-        Location.from(new LocationBuilder()
+        new LocationMapper().toDomain(new LocationBuilder()
           .withName(LOCATION_NAME)
           .withPrimaryServicePoint(SERVICE_POINT_ID)
           .create()))

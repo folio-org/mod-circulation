@@ -21,11 +21,14 @@ import java.util.function.Function;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.circulation.domain.Institution;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
+import org.folio.circulation.storage.mappers.InstitutionMapper;
+import org.folio.circulation.storage.mappers.LocationMapper;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
@@ -84,7 +87,7 @@ public class LocationRepository {
     return SingleRecordFetcher.json(locationsStorageClient, "location",
       response -> succeeded(null))
       .fetch(id)
-      .thenApply(r -> r.map(Location::from));
+      .thenApply(r -> r.map(new LocationMapper()::toDomain));
   }
 
   public CompletableFuture<Result<Map<String, Location>>> getItemLocations(
@@ -102,7 +105,7 @@ public class LocationRepository {
 
     final FindWithMultipleCqlIndexValues<Location> fetcher
       = findWithMultipleCqlIndexValues(locationsStorageClient, "locations",
-      Location::from);
+      new LocationMapper()::toDomain);
 
     return fetcher.findByIds(locationIds)
       .thenCompose(this::loadLibrariesForLocations);
@@ -135,7 +138,8 @@ public class LocationRepository {
 
     return SingleRecordFetcher.json(institutionsStorageClient, "institution", response -> succeeded(null))
       .fetch(location.getInstitutionId())
-      .thenApply(r -> r.map(location::withInstitutionRepresentation));
+      .thenApply(mapResult(new InstitutionMapper()::toDomain))
+      .thenApply(mapResult(location::withInstitution));
   }
 
   private CompletableFuture<Result<MultipleRecords<Location>>> loadLibrariesForLocations(
@@ -174,17 +178,17 @@ public class LocationRepository {
         campus.getString("id"))));
   }
 
-  public CompletableFuture<Result<Map<String, JsonObject>>> getInstitutions(
+  public CompletableFuture<Result<Map<String, Institution>>> getInstitutions(
     Collection<Location> locations) {
 
-    final FindWithMultipleCqlIndexValues<JsonObject> fetcher
-      = findWithMultipleCqlIndexValues(institutionsStorageClient, "locinsts", identity());
+    final FindWithMultipleCqlIndexValues<Institution> fetcher
+      = findWithMultipleCqlIndexValues(institutionsStorageClient, "locinsts",
+      new InstitutionMapper()::toDomain);
 
     final Set<String> institutionsIds = uniqueSet(locations, Location::getInstitutionId);
 
     return fetcher.findByIds(institutionsIds)
-      .thenApply(mapResult(records -> records.toMap(institution ->
-        institution.getString("id"))));
+      .thenApply(mapResult(records -> records.toMap(Institution::getId)));
   }
 
   public CompletableFuture<Result<Collection<Location>>> fetchLibraries(Collection<Location> locations) {
@@ -200,8 +204,8 @@ public class LocationRepository {
     return getInstitutions(locations)
       .thenApply(flatMapResult(institutions -> succeeded(
         locations.stream()
-          .map(location -> location.withInstitutionRepresentation(
-            institutions.getOrDefault(location.getInstitutionId(), null)))
+          .map(location -> location.withInstitution(
+            institutions.getOrDefault(location.getInstitutionId(), Institution.unknown(location.getInstitutionId()))))
           .collect(toSet()))));
   }
 

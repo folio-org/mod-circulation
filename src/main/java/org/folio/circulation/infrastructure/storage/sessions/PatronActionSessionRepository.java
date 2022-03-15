@@ -33,6 +33,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.circulation.domain.Institution;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Location;
@@ -293,7 +294,7 @@ public class PatronActionSessionRepository {
         loans.mapRecords(loan -> setInstitutionForLoanItem(loan, institutions))));
   }
 
-  private Loan setInstitutionForLoanItem(Loan loan, Map<String, JsonObject> institutions) {
+  private Loan setInstitutionForLoanItem(Loan loan, Map<String, Institution> institutions) {
     Item item = loan.getItem();
 
     if (item.isNotFound()) {
@@ -302,8 +303,8 @@ public class PatronActionSessionRepository {
 
     Location oldLocation = item.getLocation();
 
-    JsonObject institution = institutions.get(oldLocation.getInstitutionId());
-    Location locationWithInstitution = oldLocation.withInstitutionRepresentation(institution);
+    final var institution = institutions.get(oldLocation.getInstitutionId());
+    Location locationWithInstitution = oldLocation.withInstitution(institution);
 
     return loan.withItem(item.withLocation(locationWithInstitution));
   }

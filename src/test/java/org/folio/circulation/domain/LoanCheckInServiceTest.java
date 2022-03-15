@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.UUID;
 
 import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
+import org.folio.circulation.storage.mappers.LocationMapper;
 import org.folio.circulation.support.utils.ClockUtil;
 import org.junit.jupiter.api.Test;
 
@@ -33,7 +34,7 @@ class LoanCheckInServiceTest {
     CheckInByBarcodeRequest checkInRequest = getCheckInRequest(checkInServicePoint);
 
     Item item = Item.from(itemRepresentation)
-      .withLocation(Location.from(locationRepresentation));
+      .withLocation(new LocationMapper().toDomain(locationRepresentation));
 
     assertTrue(loanCheckInService.isInHouseUse(item, createEmptyQueue(),
       checkInRequest));
@@ -54,7 +55,7 @@ class LoanCheckInServiceTest {
     CheckInByBarcodeRequest checkInRequest = getCheckInRequest(checkInServicePoint);
 
     Item item = Item.from(itemRepresentation)
-      .withLocation(Location.from(locationRepresentation));
+      .withLocation(new LocationMapper().toDomain(locationRepresentation));
 
     assertTrue(loanCheckInService.isInHouseUse(item, createEmptyQueue(), checkInRequest));
   }
@@ -73,7 +74,7 @@ class LoanCheckInServiceTest {
     CheckInByBarcodeRequest checkInRequest = getCheckInRequest(checkInServicePoint);
 
     Item item = Item.from(itemRepresentation)
-      .withLocation(Location.from(locationRepresentation));
+      .withLocation(new LocationMapper().toDomain(locationRepresentation));
 
     assertFalse(loanCheckInService.isInHouseUse(item, createEmptyQueue(),
       checkInRequest));
@@ -93,7 +94,7 @@ class LoanCheckInServiceTest {
     CheckInByBarcodeRequest checkInRequest = getCheckInRequest(checkInServicePoint);
 
     Item item = Item.from(itemRepresentation)
-      .withLocation(Location.from(locationRepresentation));
+      .withLocation(new LocationMapper().toDomain(locationRepresentation));
 
     RequestQueue requestQueue = new RequestQueue(Collections
       .singleton(Request.from(new JsonObject())));
@@ -115,7 +116,7 @@ class LoanCheckInServiceTest {
     CheckInByBarcodeRequest checkInRequest = getCheckInRequest(UUID.randomUUID());
 
     Item item = Item.from(itemRepresentation)
-      .withLocation(Location.from(locationRepresentation));
+      .withLocation(new LocationMapper().toDomain(locationRepresentation));
 
     assertFalse(loanCheckInService.isInHouseUse(item, createEmptyQueue(), checkInRequest));
   }

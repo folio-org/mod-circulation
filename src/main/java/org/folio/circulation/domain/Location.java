@@ -10,30 +10,25 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import io.vertx.core.json.JsonObject;
+import lombok.NonNull;
 
 public class Location {
   private final JsonObject representation;
   private final JsonObject libraryRepresentation;
   private final JsonObject campusRepresentation;
-  private final JsonObject institutionRepresentation;
+  private final @NonNull Institution institution;
 
   private final ServicePoint primaryServicePoint;
 
   public Location(JsonObject representation,
-    JsonObject libraryRepresentation,
-    JsonObject campusRepresentation,
-    JsonObject institutionRepresentation,
-    ServicePoint primaryServicePoint) {
+    JsonObject libraryRepresentation, JsonObject campusRepresentation,
+    Institution institution, ServicePoint primaryServicePoint) {
 
     this.representation = representation;
     this.libraryRepresentation = libraryRepresentation;
     this.campusRepresentation = campusRepresentation;
-    this.institutionRepresentation = institutionRepresentation;
+    this.institution = institution;
     this.primaryServicePoint = primaryServicePoint;
-  }
-
-  public static Location from(JsonObject locationRepresentation) {
-    return new Location(locationRepresentation, null, null, null, null);
   }
 
   public String getId() {
@@ -72,7 +67,7 @@ public class Location {
   }
 
   public String getInstitutionId() {
-    return getProperty(representation, "institutionId");
+    return institution.getId();
   }
 
   public String getCode() {
@@ -88,7 +83,7 @@ public class Location {
   }
 
   public String getInstitutionName() {
-    return getProperty(institutionRepresentation, "name");
+    return institution.getName();
   }
 
   public ServicePoint getPrimaryServicePoint() {
@@ -97,22 +92,22 @@ public class Location {
 
   public Location withLibraryRepresentation(JsonObject libraryRepresentation) {
     return new Location(representation, libraryRepresentation, campusRepresentation,
-      institutionRepresentation, primaryServicePoint);
+      institution, primaryServicePoint);
   }
 
   public Location withCampusRepresentation(JsonObject campusRepresentation) {
     return new Location(representation, libraryRepresentation, campusRepresentation,
-      institutionRepresentation, primaryServicePoint);
-  }
-
-  public Location withInstitutionRepresentation(JsonObject institutionRepresentation) {
-    return new Location(representation, libraryRepresentation, campusRepresentation,
-      institutionRepresentation, primaryServicePoint);
+      institution, primaryServicePoint);
   }
 
   public Location withPrimaryServicePoint(ServicePoint servicePoint) {
     return new Location(representation, libraryRepresentation, campusRepresentation,
-      institutionRepresentation, servicePoint);
+      institution, servicePoint);
+  }
+
+  public Location withInstitution(Institution institution) {
+    return new Location(representation, libraryRepresentation, campusRepresentation,
+      institution, primaryServicePoint);
   }
 
   private boolean matchesPrimaryServicePoint(UUID servicePointId) {

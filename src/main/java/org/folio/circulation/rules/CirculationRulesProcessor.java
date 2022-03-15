@@ -1,5 +1,6 @@
 package org.folio.circulation.rules;
 
+import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.results.Result.combined;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
@@ -11,6 +12,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.rules.cache.CirculationRulesCache;
+import org.folio.circulation.storage.mappers.LocationMapper;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.results.Result;
@@ -119,7 +121,8 @@ public class CirculationRulesProcessor {
 
     return FetchSingleRecord.<Location>forRecord("location")
       .using(locationStorageClient)
-      .mapTo(Location::from)
+      .mapTo(new LocationMapper()::toDomain)
+      .whenNotFound(failedValidation("Cannot find location", "location_id", params.getLocationId()))
       .fetch(params.getLocationId())
       .thenApply(r -> r.map(params::withLocation))
       .thenApply(r -> r.mapFailure(failure -> succeeded(params)));

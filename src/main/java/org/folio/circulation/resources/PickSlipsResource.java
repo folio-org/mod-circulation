@@ -34,6 +34,7 @@ import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.inventory.LocationRepository;
 import org.folio.circulation.infrastructure.storage.users.AddressTypeRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
+import org.folio.circulation.storage.mappers.LocationMapper;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.client.CqlQuery;
@@ -102,7 +103,7 @@ public class PickSlipsResource extends Resource {
   private CompletableFuture<Result<MultipleRecords<Location>>> fetchLocationsForServicePoint(
     UUID servicePointId, Clients clients) {
 
-    return findWithCqlQuery(clients.locationsStorage(), LOCATIONS_KEY, Location::from)
+    return findWithCqlQuery(clients.locationsStorage(), LOCATIONS_KEY, new LocationMapper()::toDomain)
       .findByQuery(exactMatch(PRIMARY_SERVICE_POINT_KEY, servicePointId.toString()), LOCATIONS_LIMIT);
   }
 
