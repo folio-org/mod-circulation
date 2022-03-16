@@ -13,7 +13,8 @@ import io.vertx.core.json.JsonObject;
 public class LocationMapper {
   public Location toDomain(JsonObject representation) {
     return new Location(getProperty(representation, "id"),
-      getProperty(representation, "name"), representation,
+      getProperty(representation, "name"),
+      getProperty(representation, "code"), representation,
       Institution.unknown(getProperty(representation, "institutionId")),
       Campus.unknown(getProperty(representation, "campusId")),
       Library.unknown(getProperty(representation, "libraryId")),

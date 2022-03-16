@@ -15,18 +15,20 @@ import lombok.NonNull;
 public class Location {
   private final String id;
   private final String name;
+  private final String code;
   private final JsonObject representation;
   private final @NonNull Institution institution;
   private final @NonNull Campus campus;
   private final @NonNull Library library;
   private final ServicePoint primaryServicePoint;
 
-  public Location(String id, String name, JsonObject representation,
+  public Location(String id, String name, String code, JsonObject representation,
     @NonNull Institution institution, @NonNull Campus campus,
     @NonNull Library library, ServicePoint primaryServicePoint) {
 
     this.id = id;
     this.name = name;
+    this.code = code;
     this.representation = representation;
     this.institution = institution;
     this.campus = campus;
@@ -74,7 +76,7 @@ public class Location {
   }
 
   public String getCode() {
-    return getProperty(representation, "code");
+    return code;
   }
 
   public String getLibraryName() {
@@ -94,22 +96,22 @@ public class Location {
   }
 
   public Location withInstitution(Institution institution) {
-    return new Location(id, name, representation, institution, campus, library,
+    return new Location(id, name, code, representation, institution, campus, library,
       primaryServicePoint);
   }
 
   public Location withCampus(Campus campus) {
-    return new Location(id, name, representation, institution, campus, library,
+    return new Location(id, name, code, representation, institution, campus, library,
       primaryServicePoint);
   }
 
   public Location withLibrary(Library library) {
-    return new Location(id, name, representation, institution, campus, library,
+    return new Location(id, name, code, representation, institution, campus, library,
       primaryServicePoint);
   }
 
   public Location withPrimaryServicePoint(ServicePoint servicePoint) {
-    return new Location(id, name, representation, institution, campus, library,
+    return new Location(id, name, code, representation, institution, campus, library,
       servicePoint);
   }
 
