@@ -5,6 +5,7 @@ import static api.support.fixtures.TemplateContextMatchers.getUserContextMatcher
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static api.support.matchers.JsonObjectMatcher.hasNoJsonPath;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
+import static api.support.matchers.RequestMatchers.isTitleLevel;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
@@ -37,6 +38,7 @@ import api.support.builders.RequestBuilder;
 import api.support.builders.RequestByInstanceIdRequestBuilder;
 import api.support.http.IndividualResource;
 import api.support.http.UserResource;
+import api.support.matchers.RequestMatchers;
 import io.vertx.core.json.JsonObject;
 
 class InstanceRequestsAPICreationTests extends APITests {
@@ -896,14 +898,14 @@ class InstanceRequestsAPICreationTests extends APITests {
       requesterId, pickupServicePointId, requestDate, null);
 
     Response postResponse = requestsFixture.attemptToPlaceForInstance(requestBody);
+    JsonObject responseJson = postResponse.getJson();
 
     assertThat(postResponse, hasStatus(HTTP_CREATED));
-
-    validateInstanceRequestResponse(postResponse.getJson(), pickupServicePointId, instance.getId(),
+    assertThat(responseJson, isTitleLevel());
+    validateInstanceRequestResponse(responseJson, pickupServicePointId, instance.getId(),
       null, RequestType.HOLD);
 
     verifyNumberOfSentNotices(1);
-
     JsonObject sentNotice = getFirstSentPatronNotice();
     assertThat(sentNotice, hasNoJsonPath("context.item"));
     assertThat(sentNotice, hasEmailNoticeProperties(requesterId, confirmationTemplateId,
