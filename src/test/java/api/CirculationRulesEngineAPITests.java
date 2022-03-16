@@ -1,11 +1,7 @@
 package api;
 
-import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
-import static api.support.matchers.ValidationErrorMatchers.hasMessage;
-import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.await;
-import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.StringContains.containsString;
@@ -355,22 +351,16 @@ class CirculationRulesEngineAPITests extends APITests {
   }
 
   @Test
-  void rulesEvaluationFailsWhenTheProvidedLocationDoesNotExist() {
+  void rulesEvaluationPassesWhenTheProvidedLocationDoesNotExist() {
     // The underlying rules are irrelevant
-    setRules(rules1);
+    setRules(rulesWithInstitution);
 
-    final var itemType = new ItemType(UUID.randomUUID().toString());
+    final var itemType = m2;
     final var loanType = new LoanType(UUID.randomUUID().toString());
     final var patronGroup = new PatronGroup(UUID.randomUUID().toString());
     final var locationThatDoesNotExist = new ItemLocation(UUID.randomUUID().toString());
 
-    final var response = circulationRulesFixture
-      .attemptToApplyRulesForRequestPolicy(itemType, loanType,
-        patronGroup, locationThatDoesNotExist);
-
-    assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("Cannot find location"),
-      hasParameter("location_id", locationThatDoesNotExist.id))));
+    assertThat(applyRequestPolicy(itemType, loanType, patronGroup, locationThatDoesNotExist), is(rp2));
   }
 
   @Test

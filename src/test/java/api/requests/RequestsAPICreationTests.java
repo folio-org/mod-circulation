@@ -67,6 +67,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.ItemStatus;
@@ -2918,6 +2919,46 @@ public class RequestsAPICreationTests extends APITests {
     var itemById = itemsFixture.getById(item.getId());
     assertThat(itemById.getResponse().getJson().getJsonObject("status").getString("name"),
       is(AVAILABLE.getValue()));
+  }
+
+  @Test
+  void itemCheckOutShouldNotAffectRequestAssociatedWithAnotherItemOfInstance() {
+    UUID instanceId = UUID.randomUUID();
+    configurationsFixture.enableTlrFeature();
+    ItemResource firstItem = buildItem(instanceId, "111");
+    ItemResource secondItem = buildItem(instanceId, "222");
+    ZonedDateTime requestDate = ZonedDateTime.of(2021, 7, 22, 10, 22, 54, 0, UTC);
+    IndividualResource request = requestsFixture.place(new RequestBuilder()
+      .withId(UUID.randomUUID())
+      .open()
+      .page()
+      .titleRequestLevel()
+      .withInstanceId(instanceId)
+      .withNoItemId()
+      .withNoHoldingsRecordId()
+      .by(usersFixture.steve())
+      .withRequestDate(requestDate)
+      .fulfilToHoldShelf()
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
+      .withTags(new RequestBuilder.Tags(asList("new", "important")))
+      .withPatronComments("I need this book"));
+
+    var firstItemUpdated = itemsFixture.getById(firstItem.getId());
+    var secondItemUpdated = itemsFixture.getById(secondItem.getId());
+    var availableItem = Stream.of(firstItemUpdated, secondItemUpdated)
+      .filter(this::isNotPaged)
+      .findFirst()
+      .orElse(null);
+
+    assertThat(requestsFixture.getById(request.getId()).getJson().getString("status"),
+      is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
+    checkOutFixture.checkOutByBarcode(availableItem);
+    assertThat(requestsFixture.getById(request.getId()).getJson().getString("status"),
+      is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
+  }
+
+  private boolean isNotPaged(IndividualResource item) {
+    return !PAGED.getValue().equals(item.getJson().getJsonObject("status").getString("name"));
   }
 
   private RequestBuilder buildPageRequest(UUID instanceId, UUID pickupServicePointId,
