@@ -13,15 +13,17 @@ import io.vertx.core.json.JsonObject;
 import lombok.NonNull;
 
 public class Location {
+  private final String id;
   private final JsonObject representation;
   private final @NonNull Institution institution;
   private final @NonNull Campus campus;
   private final @NonNull Library library;
   private final ServicePoint primaryServicePoint;
 
-  public Location(JsonObject representation, @NonNull Institution institution,
+  public Location(String id, JsonObject representation, @NonNull Institution institution,
     @NonNull Campus campus, @NonNull Library library, ServicePoint primaryServicePoint) {
 
+    this.id = id;
     this.representation = representation;
     this.institution = institution;
     this.campus = campus;
@@ -30,7 +32,7 @@ public class Location {
   }
 
   public String getId() {
-    return getProperty(representation, "id");
+    return id;
   }
 
   private List<String> getServicePointIds() {
@@ -89,22 +91,23 @@ public class Location {
   }
 
   public Location withInstitution(Institution institution) {
-    return new Location(representation, institution, campus, library,
+    return new Location(id, representation, institution, campus, library,
       primaryServicePoint);
   }
 
   public Location withCampus(Campus campus) {
-    return new Location(representation, institution, campus, library,
+    return new Location(id, representation, institution, campus, library,
       primaryServicePoint);
   }
 
   public Location withLibrary(Library library) {
-    return new Location(representation, institution, campus, library,
+    return new Location(id, representation, institution, campus, library,
       primaryServicePoint);
   }
 
   public Location withPrimaryServicePoint(ServicePoint servicePoint) {
-    return new Location(representation, institution, campus, library, servicePoint);
+    return new Location(id, representation, institution, campus, library,
+      servicePoint);
   }
 
   private boolean matchesPrimaryServicePoint(UUID servicePointId) {
@@ -114,7 +117,7 @@ public class Location {
   private boolean matchesAnyServingServicePoint(UUID servicePointId) {
     return getServicePointIds().stream()
       .map(UUID::fromString)
-      .anyMatch(id -> Objects.equals(servicePointId, id));
+      .anyMatch(otherServicePointId -> Objects.equals(servicePointId, otherServicePointId));
   }
 
   @Override
