@@ -1,35 +1,32 @@
 package org.folio.circulation.domain;
 
-import static org.folio.circulation.support.json.JsonPropertyFetcher.getArrayProperty;
-import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
-
-import java.util.List;
+import java.util.Collection;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
-import io.vertx.core.json.JsonObject;
 import lombok.NonNull;
 
 public class Location {
   private final String id;
   private final String name;
   private final String code;
-  private final JsonObject representation;
+  private final Collection<UUID> servicePointIds;
+  private final UUID primaryServicePointId;
   private final @NonNull Institution institution;
   private final @NonNull Campus campus;
   private final @NonNull Library library;
   private final ServicePoint primaryServicePoint;
 
-  public Location(String id, String name, String code, JsonObject representation,
+  public Location(String id, String name, String code,
+    Collection<UUID> servicePointIds, UUID primaryServicePointId,
     @NonNull Institution institution, @NonNull Campus campus,
     @NonNull Library library, ServicePoint primaryServicePoint) {
 
     this.id = id;
     this.name = name;
     this.code = code;
-    this.representation = representation;
+    this.servicePointIds = servicePointIds;
+    this.primaryServicePointId = primaryServicePointId;
     this.institution = institution;
     this.campus = campus;
     this.library = library;
@@ -40,17 +37,12 @@ public class Location {
     return id;
   }
 
-  private List<String> getServicePointIds() {
-    return getArrayProperty(representation, "servicePointIds")
-      .stream()
-      .map(String.class::cast)
-      .collect(Collectors.toList());
+  private Collection<UUID> getServicePointIds() {
+    return servicePointIds;
   }
 
   public UUID getPrimaryServicePointId() {
-    return Optional.ofNullable(getProperty(representation, "primaryServicePoint"))
-      .map(UUID::fromString)
-      .orElse(null);
+    return primaryServicePointId;
   }
 
   public boolean homeLocationIsServedBy(UUID servicePointId) {
@@ -96,23 +88,23 @@ public class Location {
   }
 
   public Location withInstitution(Institution institution) {
-    return new Location(id, name, code, representation, institution, campus, library,
-      primaryServicePoint);
+    return new Location(id, name, code, servicePointIds, primaryServicePointId,
+      institution, campus, library, primaryServicePoint);
   }
 
   public Location withCampus(Campus campus) {
-    return new Location(id, name, code, representation, institution, campus, library,
-      primaryServicePoint);
+    return new Location(id, name, code, servicePointIds, primaryServicePointId,
+      institution, campus, library, primaryServicePoint);
   }
 
   public Location withLibrary(Library library) {
-    return new Location(id, name, code, representation, institution, campus, library,
-      primaryServicePoint);
+    return new Location(id, name, code, servicePointIds, primaryServicePointId,
+      institution, campus, library, primaryServicePoint);
   }
 
   public Location withPrimaryServicePoint(ServicePoint servicePoint) {
-    return new Location(id, name, code, representation, institution, campus, library,
-      servicePoint);
+    return new Location(id, name, code, servicePointIds, primaryServicePointId,
+      institution, campus, library, servicePoint);
   }
 
   private boolean matchesPrimaryServicePoint(UUID servicePointId) {
@@ -121,7 +113,6 @@ public class Location {
 
   private boolean matchesAnyServingServicePoint(UUID servicePointId) {
     return getServicePointIds().stream()
-      .map(UUID::fromString)
       .anyMatch(otherServicePointId -> Objects.equals(servicePointId, otherServicePointId));
   }
 
