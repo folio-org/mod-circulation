@@ -247,7 +247,7 @@ class InstanceRequestItemsComparerTests {
     JsonObject itemRepresentation = new JsonObject();
     itemRepresentation.put("itemId", UUID.randomUUID().toString());
 
-    Location location = null;
+    Location location = Location.unknown(null);
 
     if (withServicePointId != null) {
       location = new Location(null, null, null,
@@ -256,7 +256,6 @@ class InstanceRequestItemsComparerTests {
         Library.unknown(null), ServicePoint.unknown(null));
     }
 
-    return Item.from(itemRepresentation)
-      .withLocation(location);
+    return Item.from(itemRepresentation).withLocation(location);
   }
 }

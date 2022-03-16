@@ -1,6 +1,7 @@
 package org.folio.circulation.domain;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -10,12 +11,18 @@ public class Location {
   private final String id;
   private final String name;
   private final String code;
-  private final Collection<UUID> servicePointIds;
+  private final @NonNull Collection<UUID> servicePointIds;
   private final UUID primaryServicePointId;
   private final @NonNull Institution institution;
   private final @NonNull Campus campus;
   private final @NonNull Library library;
   private final ServicePoint primaryServicePoint;
+
+  public static Location unknown(String id) {
+    return new Location(id, null, null, List.of(), null,
+      Institution.unknown(null), Campus.unknown(null), Library.unknown(null),
+      ServicePoint.unknown());
+  }
 
   public Location(String id, String name, String code,
     Collection<UUID> servicePointIds, UUID primaryServicePointId,

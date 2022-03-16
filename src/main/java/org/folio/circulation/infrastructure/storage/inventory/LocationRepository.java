@@ -69,7 +69,7 @@ public class LocationRepository {
 
   public CompletableFuture<Result<Location>> getLocation(Item item) {
     if (item == null || item.getEffectiveLocationId() == null) {
-      return ofAsync(() -> null);
+      return ofAsync(() -> Location.unknown(null));
     }
 
     return fetchLocationById(item.getEffectiveLocationId())
@@ -82,7 +82,7 @@ public class LocationRepository {
 
   public CompletableFuture<Result<Location>> fetchLocationById(String id) {
     if (isBlank(id)) {
-      return ofAsync(() -> null);
+      return ofAsync(() -> Location.unknown(null));
     }
 
     return SingleRecordFetcher.json(locationsStorageClient, "location",
@@ -114,7 +114,7 @@ public class LocationRepository {
 
   private CompletableFuture<Result<Location>> loadLibrary(Location location) {
     if(isNull(location) || isNull(location.getLibraryId())) {
-      return ofAsync(() -> null);
+      return ofAsync(() -> location);
     }
 
     return SingleRecordFetcher.json(librariesStorageClient, "library", response -> succeeded(null))
@@ -125,7 +125,7 @@ public class LocationRepository {
 
   public CompletableFuture<Result<Location>> loadCampus(Location location) {
     if(isNull(location) || isNull(location.getCampusId())) {
-      return ofAsync(() -> null);
+      return ofAsync(() -> location);
     }
 
     return SingleRecordFetcher.json(campusesStorageClient, "campus", response -> succeeded(null))
@@ -136,7 +136,7 @@ public class LocationRepository {
 
   public CompletableFuture<Result<Location>> loadInstitution(Location location) {
     if(isNull(location) || isNull(location.getInstitutionId())) {
-      return ofAsync(() -> null);
+      return ofAsync(() -> location);
     }
 
     return SingleRecordFetcher.json(institutionsStorageClient, "institution", response -> succeeded(null))

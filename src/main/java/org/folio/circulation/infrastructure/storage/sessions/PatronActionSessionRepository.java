@@ -276,7 +276,8 @@ public class PatronActionSessionRepository {
 
     Location oldLocation = item.getLocation();
 
-    final var campus = campuses.get(oldLocation.getCampusId());
+    final var campus = campuses.getOrDefault(oldLocation.getCampusId(),
+      Campus.unknown(oldLocation.getCampusId()));
     Location locationWithCampus = oldLocation.withCampus(campus);
 
     return loan.withItem(item.withLocation(locationWithCampus));
@@ -304,7 +305,8 @@ public class PatronActionSessionRepository {
 
     Location oldLocation = item.getLocation();
 
-    final var institution = institutions.get(oldLocation.getInstitutionId());
+    final var institution = institutions.getOrDefault(oldLocation.getInstitutionId(),
+      Institution.unknown(oldLocation.getInstitutionId()));
     Location locationWithInstitution = oldLocation.withInstitution(institution);
 
     return loan.withItem(item.withLocation(locationWithInstitution));

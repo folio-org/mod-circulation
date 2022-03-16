@@ -29,10 +29,10 @@ import lombok.NonNull;
 public class Item {
   private final String id;
   private final JsonObject itemRepresentation;
-  private final Location location;
+  @NonNull private final Location location;
   private final LastCheckIn lastCheckIn;
   private final CallNumberComponents callNumberComponents;
-  private final Location permanentLocation;
+  @NonNull private final Location permanentLocation;
   private final ServicePoint inTransitDestinationServicePoint;
 
   private boolean changed;
@@ -46,8 +46,6 @@ public class Item {
   private final String enumeration;
   private final String temporaryLoanTypeId;
   private final String permanentLoanTypeId;
-  private final String effectiveLocationId;
-  private final String permanentLocationId;
 
   public static Item from(JsonObject representation) {
     return new ItemMapper().toDomain(representation);
@@ -58,8 +56,7 @@ public class Item {
     boolean changed, Holdings holdings, Instance instance,
     MaterialType materialType, LoanType loanType, String barcode,
     String copyNumber, String enumeration, String temporaryLoanTypeId,
-    String permanentLoanTypeId, String effectiveLocationId,
-    String permanentLocationId) {
+    String permanentLoanTypeId) {
 
     this.id = id;
     this.itemRepresentation = itemRepresentation;
@@ -78,8 +75,6 @@ public class Item {
     this.enumeration = enumeration;
     this.temporaryLoanTypeId = temporaryLoanTypeId;
     this.permanentLoanTypeId = permanentLoanTypeId;
-    this.effectiveLocationId = effectiveLocationId;
-    this.permanentLocationId = permanentLocationId;
   }
 
   public boolean isCheckedOut() {
@@ -223,7 +218,7 @@ public class Item {
   }
 
   public String getEffectiveLocationId() {
-    return effectiveLocationId;
+    return location.getId();
   }
 
   public String getEnumeration() {
@@ -265,10 +260,6 @@ public class Item {
   }
 
   private ServicePoint getPrimaryServicePoint() {
-    if (location == null) {
-      return null;
-    }
-
     return location.getPrimaryServicePoint();
   }
 
@@ -347,7 +338,7 @@ public class Item {
   }
 
   public String getPermanentLocationId() {
-    return firstNonBlank(permanentLocationId, holdings.getPermanentLocationId());
+    return firstNonBlank(permanentLocation.getId(), holdings.getPermanentLocationId());
   }
 
   public Item withLocation(Location newLocation) {
@@ -356,7 +347,7 @@ public class Item {
       this.inTransitDestinationServicePoint, this.changed, this.holdings,
       this.instance, this.materialType, this.loanType, this.barcode,
       this.copyNumber, this.enumeration, this.temporaryLoanTypeId,
-      this.permanentLoanTypeId, this.effectiveLocationId, this.permanentLocationId);
+      this.permanentLoanTypeId);
   }
 
   public Item withMaterialType(@NonNull MaterialType materialType) {
@@ -365,7 +356,7 @@ public class Item {
       this.inTransitDestinationServicePoint, this.changed, this.holdings,
       this.instance, materialType, this.loanType, this.barcode,
       this.copyNumber, this.enumeration, this.temporaryLoanTypeId,
-      this.permanentLoanTypeId, this.effectiveLocationId, this.permanentLocationId);
+      this.permanentLoanTypeId);
   }
 
   public Item withHoldings(@NonNull Holdings holdings) {
@@ -374,7 +365,7 @@ public class Item {
       this.inTransitDestinationServicePoint, this.changed, holdings,
       this.instance, this.materialType, this.loanType, this.barcode,
       this.copyNumber, this.enumeration, this.temporaryLoanTypeId,
-      this.permanentLoanTypeId, this.effectiveLocationId, this.permanentLocationId);
+      this.permanentLoanTypeId);
   }
 
   public Item withInstance(@NonNull Instance instance) {
@@ -382,8 +373,7 @@ public class Item {
       this.lastCheckIn, this.callNumberComponents, this.permanentLocation,
       this.inTransitDestinationServicePoint, this.changed, this.holdings,
       instance, this.materialType, this.loanType, this.barcode, this.copyNumber,
-      this.enumeration, this.temporaryLoanTypeId, this.permanentLoanTypeId,
-      this.effectiveLocationId, this.permanentLocationId);
+      this.enumeration, this.temporaryLoanTypeId, this.permanentLoanTypeId);
   }
 
   public Item withLoanType(@NonNull LoanType loanType) {
@@ -391,8 +381,7 @@ public class Item {
       this.lastCheckIn, this.callNumberComponents, this.permanentLocation,
       this.inTransitDestinationServicePoint, this.changed, this.holdings,
       this.instance, this.materialType, loanType, this.barcode, this.copyNumber,
-      this.enumeration, this.temporaryLoanTypeId, this.permanentLoanTypeId,
-      this.effectiveLocationId, this.permanentLocationId);
+      this.enumeration, this.temporaryLoanTypeId, this.permanentLoanTypeId);
   }
 
   public Item withLastCheckIn(@NonNull LastCheckIn lastCheckIn) {
@@ -401,7 +390,7 @@ public class Item {
       this.inTransitDestinationServicePoint, this.changed, this.holdings,
       this.instance, this.materialType, this.loanType, this.barcode,
       this.copyNumber, this.enumeration, this.temporaryLoanTypeId,
-      this.permanentLoanTypeId, this.effectiveLocationId, this.permanentLocationId);
+      this.permanentLoanTypeId);
   }
 
   public Item withPermanentLocation(Location permanentLocation) {
@@ -410,7 +399,7 @@ public class Item {
       this.inTransitDestinationServicePoint, this.changed, this.holdings,
       this.instance, this.materialType, this.loanType, this.barcode,
       this.copyNumber, this.enumeration, this.temporaryLoanTypeId,
-      this.permanentLoanTypeId, this.effectiveLocationId, this.permanentLocationId);
+      this.permanentLoanTypeId);
   }
 
   public Item withInTransitDestinationServicePoint(ServicePoint servicePoint) {
@@ -418,7 +407,6 @@ public class Item {
       this.lastCheckIn, this.callNumberComponents, this.permanentLocation,
       servicePoint, this.changed, this.holdings, this.instance,
       this.materialType, this.loanType, this.barcode, this.copyNumber,
-      this.enumeration, this.temporaryLoanTypeId, this.permanentLoanTypeId,
-      this.effectiveLocationId, this.permanentLocationId);
+      this.enumeration, this.temporaryLoanTypeId, this.permanentLoanTypeId);
   }
 }

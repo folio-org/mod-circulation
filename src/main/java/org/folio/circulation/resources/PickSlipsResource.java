@@ -158,7 +158,8 @@ public class PickSlipsResource extends Resource {
 
     return succeeded(
       items.mapRecords(item -> item.withLocation(
-        locationsMap.getOrDefault(item.getEffectiveLocationId(), null)))
+        locationsMap.getOrDefault(item.getEffectiveLocationId(),
+          Location.unknown(item.getEffectiveLocationId()))))
       .getRecords());
   }
 
