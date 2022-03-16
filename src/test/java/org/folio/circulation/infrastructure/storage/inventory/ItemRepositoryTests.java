@@ -112,9 +112,11 @@ class ItemRepositoryTests {
   }
 
   private Item dummyItem() {
-    return new Item(null, null, null, null, null, null, null, false,
+    return new Item(null, null, Location.unknown(), null, null, Location.unknown(),
+      null, false,
       Holdings.unknown(), Instance.unknown(), MaterialType.unknown(),
-      LoanType.unknown(), ItemDescription.unknown());
+      LoanType.unknown(), ItemDescription.unknown(), null,
+      null, null, null, null);
   }
 
   @SneakyThrows

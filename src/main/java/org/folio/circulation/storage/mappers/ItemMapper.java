@@ -30,7 +30,11 @@ public class ItemMapper {
       Holdings.unknown(getProperty(representation, "holdingsRecordId")),
       Instance.unknown(),
       MaterialType.unknown(getProperty(representation, "materialTypeId")),
-      LoanType.unknown(getLoanTypeId(representation)), getDescription(representation));
+      LoanType.unknown(getLoanTypeId(representation)), getDescription(representation),
+      getProperty(representation, "barcode"), getProperty(representation,
+      "copyNumber"), getProperty(representation, "enumeration"),
+      getProperty(representation, "temporaryLoanTypeId"),
+      getProperty(representation, "permanentLoanTypeId"));
   }
 
   private ItemDescription getDescription(JsonObject representation) {

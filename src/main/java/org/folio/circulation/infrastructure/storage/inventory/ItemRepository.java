@@ -147,9 +147,9 @@ public class ItemRepository {
     return result.combineAfter(this::fetchLocations,
       (items, locations) -> items
         .combineRecords(locations, matchRecordsById(Item::getPermanentLocationId, Location::getId),
-          Item::withPermanentLocation, null)
+          Item::withPermanentLocation, Location.unknown())
         .combineRecords(locations, matchRecordsById(Item::getEffectiveLocationId, Location::getId),
-          Item::withLocation, null));
+          Item::withLocation, Location.unknown()));
   }
 
   private CompletableFuture<Result<MultipleRecords<Location>>> fetchLocations(
