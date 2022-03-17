@@ -402,8 +402,8 @@ public class RequestsAPICreationTests extends APITests {
 
     Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
       .withRequestType(requestType)
-      .titleRequestLevel()
-      .withItemId(null)
+      .itemRequestLevel()
+      .withNoItemId()
       .withInstanceId(UUID.randomUUID())
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(patronId));
