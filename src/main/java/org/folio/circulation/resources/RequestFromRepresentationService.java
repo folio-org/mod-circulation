@@ -149,7 +149,7 @@ class RequestFromRepresentationService {
 
   private CompletableFuture<Result<Request>> fetchItemAndLoan(Request request) {
     if (request.isTitleLevel() && request.isPage()) {
-      return fetchItemAndLoanForPageTlrRequest(request);
+      return fetchItemAndLoanForPageTlr(request);
     }
 
     if (request.isTitleLevel() && request.isRecall()) {
@@ -162,13 +162,13 @@ class RequestFromRepresentationService {
       .toCompletableFuture();
   }
 
-  private CompletableFuture<Result<Request>> fetchItemAndLoanForPageTlrRequest(Request request) {
+  private CompletableFuture<Result<Request>> fetchItemAndLoanForPageTlr(Request request) {
     return request.getOperation() == Request.Operation.CREATE
-      ? findItemForPageTlrCreateOperation(request)
-      : findItemForPageTlrReplaceOperation(request);
+      ? fetchItemAndLoanForPageTlrCreation(request)
+      : fetchItemAndLoanForPageTlrReplacement(request);
   }
 
-  private CompletableFuture<Result<Request>> findItemForPageTlrCreateOperation(Request request) {
+  private CompletableFuture<Result<Request>> fetchItemAndLoanForPageTlrCreation(Request request) {
     return fromFutureResult(completedFuture(findItemForPageTlr(request))
       .thenApply(r -> r.mapFailure(err -> errorHandler.handleValidationError(err,
         NO_AVAILABLE_ITEMS_FOR_TLR, r))))
@@ -177,7 +177,9 @@ class RequestFromRepresentationService {
       .toCompletableFuture();
   }
 
-  private CompletableFuture<Result<Request>> findItemForPageTlrReplaceOperation(Request request) {
+  private CompletableFuture<Result<Request>> fetchItemAndLoanForPageTlrReplacement(
+    Request request) {
+
     return fromFutureResult(findItemForRequest(request))
       .flatMapFuture(req -> succeeded(req).after(loanRepository::findOpenLoanForRequest)
         .thenApply(r -> r.map(req::withLoan)))
