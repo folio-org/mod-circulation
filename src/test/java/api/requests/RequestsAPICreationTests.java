@@ -2739,7 +2739,7 @@ public class RequestsAPICreationTests extends APITests {
 
     Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
       .page()
-      .withRequestLevel(RequestLevel.ITEM.getValue())
+      .itemRequestLevel()
       .forItem(item)
       .withNoInstanceId()
       .withRequesterId(usersFixture.steve().getId())
