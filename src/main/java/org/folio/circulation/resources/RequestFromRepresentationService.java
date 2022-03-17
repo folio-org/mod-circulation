@@ -106,7 +106,7 @@ class RequestFromRepresentationService {
       .thenComposeAsync(r -> r.after(when(
         this::shouldFetchInstance, this::fetchInstance, req -> ofAsync(() -> req))))
       .thenComposeAsync(r -> r.after(when(
-        this::shouldFetchInstanceItems, this::fetchInstanceItems, req -> ofAsync(() -> req))))
+        this::shouldFetchInstanceItems, this::findInstanceItems, req -> ofAsync(() -> req))))
       .thenApply(this::refuseHoldOrRecallTlrWhenAvailableItemExists)
       .thenComposeAsync(r -> r.after(when(
         this::shouldFetchItemAndLoan, this::fetchItemAndLoan, req -> ofAsync(() -> req))))
@@ -215,7 +215,7 @@ class RequestFromRepresentationService {
       .thenApply(r -> errorHandler.handleValidationResult(r, INSTANCE_DOES_NOT_EXIST, request));
   }
 
-  private CompletableFuture<Result<Request>> fetchInstanceItems(Request request) {
+  private CompletableFuture<Result<Request>> findInstanceItems(Request request) {
     return itemByInstanceIdFinder.getItemsByInstanceId(UUID.fromString(request.getInstanceId()))
       .thenApply(r -> r.map(request::withInstanceItems));
   }
