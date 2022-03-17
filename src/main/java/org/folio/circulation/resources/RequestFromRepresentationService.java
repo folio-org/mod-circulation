@@ -1,15 +1,18 @@
 package org.folio.circulation.resources;
 
 import static java.lang.String.join;
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.folio.circulation.domain.RequestLevel.ITEM;
 import static org.folio.circulation.domain.RequestLevel.TITLE;
 import static org.folio.circulation.domain.representations.RequestProperties.INSTANCE_ID;
+import static org.folio.circulation.domain.representations.RequestProperties.ITEM_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_DATE;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_LEVEL;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ATTEMPT_TO_CREATE_TLR_LINKED_TO_AN_ITEM;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ATTEMPT_HOLD_OR_RECALL_TLR_FOR_AVAILABLE_ITEM;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INSTANCE_DOES_NOT_EXIST;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_HOLDINGS_RECORD_ID;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_INSTANCE_ID;
@@ -32,12 +35,15 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.Item;
+import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.Request;
@@ -100,6 +106,9 @@ class RequestFromRepresentationService {
       .thenComposeAsync(r -> r.after(when(
         this::shouldFetchInstance, this::fetchInstance, req -> ofAsync(() -> req))))
       .thenComposeAsync(r -> r.after(when(
+        this::shouldFetchInstanceItems, this::findInstanceItems, req -> ofAsync(() -> req))))
+      .thenApply(this::refuseHoldOrRecallTlrWhenAvailableItemExists)
+      .thenComposeAsync(r -> r.after(when(
         this::shouldFetchItemAndLoan, this::fetchItemAndLoan, req -> ofAsync(() -> req))))
       .thenComposeAsync(r -> r.combineAfter(userRepository::getUser, Request::withRequester))
       .thenComposeAsync(r -> r.combineAfter(userRepository::getProxyUser, Request::withProxy))
@@ -124,6 +133,10 @@ class RequestFromRepresentationService {
     return ofAsync(() -> errorHandler.hasNone(INVALID_INSTANCE_ID));
   }
 
+  private CompletableFuture<Result<Boolean>> shouldFetchInstanceItems(Request request) {
+    return ofAsync(() -> request.isTitleLevel() && errorHandler.hasNone(INVALID_INSTANCE_ID));
+  }
+
   private CompletableFuture<Result<Boolean>> shouldFetchItemAndLoan(Request request) {
     return ofAsync(() -> errorHandler.hasNone(INVALID_ITEM_ID));
   }
@@ -136,47 +149,58 @@ class RequestFromRepresentationService {
 
   private CompletableFuture<Result<Request>> fetchItemAndLoan(Request request) {
     if (request.isTitleLevel() && request.isPage()) {
-      return fetchItemAndLoanForPageTlrRequest(request);
+      return fetchItemAndLoanForPageTlr(request);
     }
 
     if (request.isTitleLevel() && request.isRecall()) {
       return fetchItemAndLoanForRecallTlrRequest(request);
     }
 
-    return fromFutureResult(fetchItemForRequest(request))
+    return fromFutureResult(findItemForRequest(request))
       .flatMapFuture(this::fetchLoan)
       .flatMapFuture(this::fetchUserForLoan)
       .toCompletableFuture();
   }
 
-  private CompletableFuture<Result<Request>> fetchItemAndLoanForPageTlrRequest(Request request) {
-    if (request.getOperation() == Request.Operation.CREATE) {
-      return fromFutureResult(fetchItemForPageTlr(request)
-        .thenApply(r -> r.mapFailure(err -> errorHandler.handleValidationError(err,
-          NO_AVAILABLE_ITEMS_FOR_TLR, r))))
-        .flatMapFuture(this::fetchFirstLoanForUserWithTheSameInstanceId)
-        .flatMapFuture(this::fetchUserForLoan)
-        .toCompletableFuture();
-    } else {
-      return fromFutureResult(fetchItemForRequest(request))
-        .flatMapFuture(req -> succeeded(req).after(loanRepository::findOpenLoanForRequest)
-          .thenApply(r -> r.map(req::withLoan)))
-        .flatMapFuture(this::fetchUserForLoan)
-        .toCompletableFuture();
-    }
+  private CompletableFuture<Result<Request>> fetchItemAndLoanForPageTlr(Request request) {
+    return request.getOperation() == Request.Operation.CREATE
+      ? fetchItemAndLoanForPageTlrCreation(request)
+      : fetchItemAndLoanForPageTlrReplacement(request);
   }
 
-  private CompletableFuture<Result<Request>> fetchItemForPageTlr(Request request) {
-    return itemRepository.getFirstAvailableItemByInstanceId(request.getInstanceId())
-      .thenApply(r -> r.next(item -> {
-        if (item == null) {
-          return failedValidation(
-            "Cannot create page TLR for this instance ID - no available items found", INSTANCE_ID,
-            request.getInstanceId());
-        } else {
-          return succeeded(request.withItem(item));
-        }
-      }));
+  private CompletableFuture<Result<Request>> fetchItemAndLoanForPageTlrCreation(Request request) {
+    return fromFutureResult(completedFuture(findItemForPageTlr(request))
+      .thenApply(r -> r.mapFailure(err -> errorHandler.handleValidationError(err,
+        NO_AVAILABLE_ITEMS_FOR_TLR, r))))
+      .flatMapFuture(this::fetchFirstLoanForUserWithTheSameInstanceId)
+      .flatMapFuture(this::fetchUserForLoan)
+      .toCompletableFuture();
+  }
+
+  private CompletableFuture<Result<Request>> fetchItemAndLoanForPageTlrReplacement(
+    Request request) {
+
+    return fromFutureResult(findItemForRequest(request))
+      .flatMapFuture(req -> succeeded(req).after(loanRepository::findOpenLoanForRequest)
+        .thenApply(r -> r.map(req::withLoan)))
+      .flatMapFuture(this::fetchUserForLoan)
+      .toCompletableFuture();
+  }
+
+  private Result<Request> findItemForPageTlr(Request request) {
+    return getFirstAvailableItem(request)
+      .map(request::withItem)
+      .map(Result::succeeded)
+      .orElseGet(() -> failedValidation(
+        "Cannot create page TLR for this instance ID - no available items found", INSTANCE_ID,
+        request.getInstanceId()));
+  }
+
+  private Optional<Item> getFirstAvailableItem(Request request) {
+    return request.getInstanceItems().stream()
+        .filter(Objects::nonNull)
+        .filter(item -> ItemStatus.AVAILABLE == item.getStatus())
+        .findFirst();
   }
 
   private CompletableFuture<Result<Request>> fetchItemAndLoanForRecallTlrRequest(Request request) {
@@ -184,15 +208,18 @@ class RequestFromRepresentationService {
       return ofAsync(() -> request);
     }
 
-    return itemByInstanceIdFinder.getItemsByInstanceId(UUID.fromString(request.getInstanceId()))
-      .thenComposeAsync(r -> r.after(items -> loanRepository.findLoanWithClosestDueDate(
-        mapToItemIds(items)))
-        .thenApply(resultLoan -> resultLoan.map(request::withLoan))
-        .thenComposeAsync(requestResult -> requestResult.combineAfter(
-          rec -> itemRepository.fetchFor(rec.getLoan()), Request::withItem))
-        .thenComposeAsync(requestResult -> requestResult.combineAfter(
-          this::getUserForExistingLoan, this::addUserToLoan)))
+    return loanRepository.findLoanWithClosestDueDate(mapToItemIds(request.getInstanceItems()))
+      .thenApply(resultLoan -> resultLoan.map(request::withLoan))
+      .thenComposeAsync(requestResult -> requestResult.combineAfter(
+        r -> itemRepository.fetchFor(r.getLoan()), Request::withItem))
+      .thenComposeAsync(requestResult -> requestResult.combineAfter(
+        this::getUserForExistingLoan, this::addUserToLoan))
       .thenApply(r -> errorHandler.handleValidationResult(r, INSTANCE_DOES_NOT_EXIST, request));
+  }
+
+  private CompletableFuture<Result<Request>> findInstanceItems(Request request) {
+    return itemByInstanceIdFinder.getItemsByInstanceId(UUID.fromString(request.getInstanceId()))
+      .thenApply(r -> r.map(request::withInstanceItems));
   }
 
   private List<String> mapToItemIds(Collection<Item> items) {
@@ -262,6 +289,17 @@ class RequestFromRepresentationService {
     }
   }
 
+  private Result<Request> refuseHoldOrRecallTlrWhenAvailableItemExists(Request request) {
+    if (request.isTitleLevel() && (request.isHold() || request.isRecall())) {
+      Optional<Item> itemOptional = getFirstAvailableItem(request);
+      if (itemOptional.isPresent()) {
+        return failedValidation("Hold/Recall TLR not allowed: available item found for instance",
+          Map.of(ITEM_ID, itemOptional.get().getItemId(), INSTANCE_ID, request.getInstanceId()));
+      }
+    }
+    return succeeded(request);
+  }
+
   private Result<Request> validateRequestLevel(Request request) {
     JsonObject representation = request.getRequestRepresentation();
 
@@ -312,6 +350,12 @@ class RequestFromRepresentationService {
     else {
       return of(() -> context);
     }
+  }
+
+  private Result<Request> refuseHoldOrRecallTlrWhenAvailableItemExists(Result<Request> request) {
+    return request.next(this::refuseHoldOrRecallTlrWhenAvailableItemExists)
+      .mapFailure(err -> errorHandler.handleValidationError(err,
+        ATTEMPT_HOLD_OR_RECALL_TLR_FOR_AVAILABLE_ITEM, request));
   }
 
   private Result<Request> refuseWhenNoItemId(Result<Request> request) {
@@ -413,7 +457,7 @@ class RequestFromRepresentationService {
     return request;
   }
 
-  private CompletableFuture<Result<Request>> fetchItemForRequest(Request request) {
+  private CompletableFuture<Result<Request>> findItemForRequest(Request request) {
     return succeeded(request)
       .combineAfter(itemRepository::fetchFor, Request::withItem);
   }
