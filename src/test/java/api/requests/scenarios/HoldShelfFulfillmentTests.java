@@ -88,7 +88,7 @@ class HoldShelfFulfillmentTests extends APITests {
 
     final IndividualResource pickupServicePoint = servicePointsFixture.cd1();
 
-    List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(3);
+    List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
     ItemResource smallAngryPlanet1 = items.get(0);
     ItemResource smallAngryPlanet2 = items.get(1);
     UUID instanceId = smallAngryPlanet1.getInstanceId();

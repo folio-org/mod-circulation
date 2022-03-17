@@ -382,21 +382,18 @@ public class RequestsAPICreationTests extends APITests {
 
   @ParameterizedTest
   @CsvSource({
-    "NOT_CONFIGURED, Page, Item",
-    "NOT_CONFIGURED, Hold, Item",
-    "NOT_CONFIGURED, Recall, Item",
-    "DISABLED, Page, Item",
-    "DISABLED, Hold, Item",
-    "DISABLED, Recall, Item",
-    "ENABLED, Page, Item",
-    "ENABLED, Page, Title",
-    "ENABLED, Hold, Item",
-    "ENABLED, Hold, Title",
-    "ENABLED, Recall, Item",
-    "ENABLED, Recall, Title"
+    "NOT_CONFIGURED, Page",
+    "NOT_CONFIGURED, Hold",
+    "NOT_CONFIGURED, Recall",
+    "DISABLED, Page",
+    "DISABLED, Hold",
+    "DISABLED, Recall",
+    "ENABLED, Page",
+    "ENABLED, Hold",
+    "ENABLED, Recall"
   })
-  void cannotCreateTitleLevelRequestForUnknownInstance(String tlrFeatureStatus,
-    String requestType, String requestLevel) {
+  void cannotCreateItemLevelRequestForUnknownInstance(String tlrFeatureStatus,
+    String requestType) {
 
     reconfigureTlrFeature(TlrFeatureStatus.valueOf(tlrFeatureStatus));
 
@@ -405,14 +402,34 @@ public class RequestsAPICreationTests extends APITests {
 
     Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
       .withRequestType(requestType)
-      .withRequestLevel(requestLevel)
-      .withItemId(null)
+      .itemRequestLevel()
+      .withNoItemId()
       .withInstanceId(UUID.randomUUID())
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(patronId));
 
     assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(postResponse.getJson(), hasErrorWith(hasMessage("Instance does not exist")));
+  }
+
+  @ParameterizedTest
+  @CsvSource({"Page", "Hold", "Recall"})
+  void cannotCreateTitleLevelRequestForUnknownInstance(String requestType) {
+    configurationsFixture.enableTlrFeature();
+
+    UUID patronId = usersFixture.charlotte().getId();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+
+    Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
+      .withRequestType(requestType)
+      .titleRequestLevel()
+      .withNoItemId()
+      .withInstanceId(UUID.randomUUID())
+      .withPickupServicePointId(pickupServicePointId)
+      .withRequesterId(patronId));
+
+    assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(postResponse.getJson(), hasErrorWith(hasMessage("There are no holdings for this instance")));
   }
 
   @ParameterizedTest
@@ -592,7 +609,9 @@ public class RequestsAPICreationTests extends APITests {
     final IndividualResource james = usersFixture.james();
     UUID instanceId = instancesFixture.basedUponDunkirk().getId();
 
-    buildItem(instanceId, UUID.randomUUID().toString());
+    ItemResource itemResource = buildItem(instanceId, UUID.randomUUID().toString());
+    checkOutFixture.checkOutByBarcode(itemResource, usersFixture.jessica());
+
     requestsFixture.placeTitleLevelHoldShelfRequest(instanceId, james);
     Response postResponse = requestsFixture.attemptPlaceTitleLevelHoldShelfRequest(instanceId,
       james);
@@ -632,6 +651,28 @@ public class RequestsAPICreationTests extends APITests {
       hasMessage("This requester already has an open request for one of the instance's items"),
       hasParameter("requesterId", jessica.getId().toString()),
       hasParameter("instanceId", item1.getInstanceId().toString()))));
+  }
+
+  @ParameterizedTest
+  @EnumSource(value = RequestType.class, names = {"HOLD", "RECALL"})
+  void cannotCreateHoldTlrWhenAvailableItemForInstance(RequestType requestType) {
+    configurationsFixture.enableTlrFeature();
+
+    List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
+    ItemResource item = items.get(0);
+
+    checkOutFixture.checkOutByBarcode(item, usersFixture.charlotte());
+
+    // Hold TLR should be refused for the instance which has available item(s)
+    final Response response = requestsFixture.attemptPlaceHoldOrRecallTLR(
+      item.getInstanceId(), usersFixture.jessica(), requestType);
+
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(response.getJson(), hasErrors(1));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Hold/Recall TLR not allowed: available item found for instance"),
+      hasParameter("instanceId", item.getInstanceId().toString()),
+      hasParameter("itemId", items.get(1).getId().toString()))));
   }
 
   @Test
@@ -2690,35 +2731,48 @@ public class RequestsAPICreationTests extends APITests {
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 
-  @ParameterizedTest
-  @EnumSource(value = RequestLevel.class, names = {"ITEM", "TITLE"})
-  void cannotCreateRequestWithoutInstanceId(RequestLevel requestLevel) {
+  @Test
+  void cannotCreateItemLevelRequestWithoutInstanceId() {
     reconfigureTlrFeature(TlrFeatureStatus.ENABLED, null, null, null);
 
     ItemResource item = itemsFixture.basedUponNod();
 
     Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
       .page()
-      .withRequestLevel(requestLevel.getValue())
+      .itemRequestLevel()
       .forItem(item)
       .withNoInstanceId()
       .withRequesterId(usersFixture.steve().getId())
       .withPickupServicePointId(servicePointsFixture.cd1().getId()));
 
     assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
-    assertThat(postResponse.getJson(), hasErrors(requestLevel == RequestLevel.ITEM ? 1 : 2));
+    assertThat(postResponse.getJson(), hasErrors(1));
     assertThat(postResponse.getJson(), hasErrorWith(allOf(
       hasMessage("Cannot create a request with no instance ID"),
       hasNullParameter("instanceId")
     )));
+  }
 
-    if (requestLevel == RequestLevel.TITLE) {
-      assertThat(postResponse.getJson(), hasErrorWith(allOf(
-        hasMessage("Attempt to create TLR request linked to an item"),
-        hasUUIDParameter("itemId", item.getId()),
-        hasUUIDParameter("holdingsRecordId", item.getHoldingsRecordId())
-      )));
-    }
+  @Test
+  void cannotCreateTitleLevelRequestWithoutInstanceId() {
+   configurationsFixture.enableTlrFeature();
+
+    ItemResource item = itemsFixture.basedUponNod();
+
+    Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
+      .page()
+      .titleRequestLevel()
+      .forItem(item)
+      .withNoInstanceId()
+      .withRequesterId(usersFixture.steve().getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId()));
+
+    assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(postResponse.getJson(), hasErrors(1));
+    assertThat(postResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("Cannot create page TLR for this instance ID - no available items found"),
+      hasNullParameter("instanceId")
+    )));
   }
 
   @Test
