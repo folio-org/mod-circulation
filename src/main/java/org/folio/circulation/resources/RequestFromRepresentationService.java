@@ -287,7 +287,7 @@ class RequestFromRepresentationService {
     }
   }
 
-  private Result<Request> validateHoldAndRecallTlrAllowedToBeCreated(Request request) {
+  private Result<Request> refuseHoldOrRecallTlrWhenAvailableItemExists(Request request) {
     if (request.isTitleLevel() && (request.isHold() || request.isRecall())) {
       Optional<Item> itemOptional = getFirstAvailableItem(request);
       if (itemOptional.isPresent()) {
@@ -351,7 +351,7 @@ class RequestFromRepresentationService {
   }
 
   private Result<Request> refuseHoldOrRecallTlrWhenAvailableItemExists(Result<Request> request) {
-    return request.next(this::validateHoldAndRecallTlrAllowedToBeCreated)
+    return request.next(this::refuseHoldOrRecallTlrWhenAvailableItemExists)
       .mapFailure(err -> errorHandler.handleValidationError(err,
         ATTEMPT_HOLD_OR_RECALL_TLR_FOR_AVAILABLE_ITEM, request));
   }
