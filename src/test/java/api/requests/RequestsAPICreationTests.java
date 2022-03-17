@@ -402,7 +402,7 @@ public class RequestsAPICreationTests extends APITests {
 
     Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
       .withRequestType(requestType)
-      .withRequestLevel("Item")
+      .titleRequestLevel()
       .withItemId(null)
       .withInstanceId(UUID.randomUUID())
       .withPickupServicePointId(pickupServicePointId)
@@ -422,8 +422,8 @@ public class RequestsAPICreationTests extends APITests {
 
     Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
       .withRequestType(requestType)
-      .withRequestLevel("Title")
-      .withItemId(null)
+      .titleRequestLevel()
+      .withNoItemId()
       .withInstanceId(UUID.randomUUID())
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(patronId));
@@ -659,19 +659,19 @@ public class RequestsAPICreationTests extends APITests {
     configurationsFixture.enableTlrFeature();
 
     List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
-    ItemResource item1 = items.get(0);
+    ItemResource item = items.get(0);
 
-    checkOutFixture.checkOutByBarcode(item1, usersFixture.charlotte());
+    checkOutFixture.checkOutByBarcode(item, usersFixture.charlotte());
 
     // Hold TLR should be refused for the instance which has available item(s)
     final Response response = requestsFixture.attemptPlaceHoldOrRecallTLR(
-      item1.getInstanceId(), usersFixture.jessica(), requestType);
+      item.getInstanceId(), usersFixture.jessica(), requestType);
 
     assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(response.getJson(), hasErrors(1));
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Hold/Recall TLR not allowed: available item found for instance"),
-      hasParameter("instanceId", item1.getInstanceId().toString()),
+      hasParameter("instanceId", item.getInstanceId().toString()),
       hasParameter("itemId", items.get(1).getId().toString()))));
   }
 

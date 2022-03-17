@@ -156,7 +156,7 @@ class RequestFromRepresentationService {
       return fetchItemAndLoanForRecallTlrRequest(request);
     }
 
-    return fromFutureResult(fetchItemForRequest(request))
+    return fromFutureResult(findItemForRequest(request))
       .flatMapFuture(this::fetchLoan)
       .flatMapFuture(this::fetchUserForLoan)
       .toCompletableFuture();
@@ -164,12 +164,12 @@ class RequestFromRepresentationService {
 
   private CompletableFuture<Result<Request>> fetchItemAndLoanForPageTlrRequest(Request request) {
     return request.getOperation() == Request.Operation.CREATE
-      ? findItemForTlrCreateOperation(request)
-      : findItemForTlrReplaceOperation(request);
+      ? findItemForPageTlrCreateOperation(request)
+      : findItemForPageTlrReplaceOperation(request);
   }
 
-  private CompletableFuture<Result<Request>> findItemForTlrCreateOperation(Request request) {
-    return fromFutureResult(completedFuture(fetchItemForPageTlr(request))
+  private CompletableFuture<Result<Request>> findItemForPageTlrCreateOperation(Request request) {
+    return fromFutureResult(completedFuture(findItemForPageTlr(request))
       .thenApply(r -> r.mapFailure(err -> errorHandler.handleValidationError(err,
         NO_AVAILABLE_ITEMS_FOR_TLR, r))))
       .flatMapFuture(this::fetchFirstLoanForUserWithTheSameInstanceId)
@@ -177,15 +177,15 @@ class RequestFromRepresentationService {
       .toCompletableFuture();
   }
 
-  private CompletableFuture<Result<Request>> findItemForTlrReplaceOperation(Request request) {
-    return fromFutureResult(fetchItemForRequest(request))
+  private CompletableFuture<Result<Request>> findItemForPageTlrReplaceOperation(Request request) {
+    return fromFutureResult(findItemForRequest(request))
       .flatMapFuture(req -> succeeded(req).after(loanRepository::findOpenLoanForRequest)
         .thenApply(r -> r.map(req::withLoan)))
       .flatMapFuture(this::fetchUserForLoan)
       .toCompletableFuture();
   }
 
-  private Result<Request> fetchItemForPageTlr(Request request) {
+  private Result<Request> findItemForPageTlr(Request request) {
     return getFirstAvailableItem(request)
       .map(request::withItem)
       .map(Result::succeeded)
@@ -455,7 +455,7 @@ class RequestFromRepresentationService {
     return request;
   }
 
-  private CompletableFuture<Result<Request>> fetchItemForRequest(Request request) {
+  private CompletableFuture<Result<Request>> findItemForRequest(Request request) {
     return succeeded(request)
       .combineAfter(itemRepository::fetchFor, Request::withItem);
   }
