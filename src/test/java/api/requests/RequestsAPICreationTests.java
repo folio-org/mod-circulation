@@ -654,8 +654,8 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @ParameterizedTest
-  @CsvSource({"Hold", "Recall"})
-  void cannotCreateHoldTlrWhenAvailableItemForInstance(String requestType) {
+  @EnumSource(value = RequestType.class, names = {"HOLD", "RECALL"})
+  void cannotCreateHoldTlrWhenAvailableItemForInstance(RequestType requestType) {
     configurationsFixture.enableTlrFeature();
 
     List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);

@@ -307,16 +307,15 @@ class RequestQueueResourceTest extends APITests {
 
     UUID isbnIdentifierId = identifierTypesFixture.isbn().getId();
     String isbnValue = "9780866989427";
-    UUID localInstanceId = UUID.randomUUID();
     ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
       identity(),
-      instanceBuilder -> instanceBuilder.addIdentifier(isbnIdentifierId, isbnValue).withId(localInstanceId),
+      instanceBuilder -> instanceBuilder.addIdentifier(isbnIdentifierId, isbnValue).withId(instanceId),
       itemsFixture.addCallNumberStringComponents());
 
     requestsClient.create(new RequestBuilder()
       .page()
       .titleRequestLevel()
-      .withInstanceId(localInstanceId)
+      .withInstanceId(instanceId)
       .withNoItemId()
       .withNoHoldingsRecordId()
       .withPickupServicePointId(servicePointsFixture.cd1().getId())

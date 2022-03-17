@@ -16,6 +16,7 @@ import java.time.ZonedDateTime;
 import java.util.UUID;
 
 import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.support.http.client.Response;
 
 import api.support.MultipleJsonRecords;
@@ -217,7 +218,7 @@ public class RequestsFixture {
   }
 
   public Response attemptPlaceHoldOrRecallTLR(UUID instanceId,
-    IndividualResource requester, String requestType) {
+    IndividualResource requester, RequestType requestType) {
 
     RequestBuilder builder = new RequestBuilder()
       .hold()
@@ -229,7 +230,7 @@ public class RequestsFixture {
       .withRequesterId(requester.getId())
       .withPickupServicePointId(servicePointsFixture.cd1().getId());
 
-    return attemptPlace("Hold".equals(requestType) ? builder : builder.recall());
+    return attemptPlace(RequestType.HOLD == requestType ? builder : builder.recall());
   }
 
   public Response attemptToPlaceForInstance(JsonObject representation) {
