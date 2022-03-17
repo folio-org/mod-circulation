@@ -307,17 +307,14 @@ class RequestQueueResourceTest extends APITests {
 
     UUID isbnIdentifierId = identifierTypesFixture.isbn().getId();
     String isbnValue = "9780866989427";
-    var localInstanceId = UUID.randomUUID();
-    ItemResource itemResource = itemsFixture.basedUponSmallAngryPlanet(
+    UUID localInstanceId = UUID.randomUUID();
+    ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
       identity(),
       instanceBuilder -> instanceBuilder.addIdentifier(isbnIdentifierId, isbnValue).withId(localInstanceId),
       itemsFixture.addCallNumberStringComponents());
 
-    CheckOutResource checkOutResource = checkOutFixture.checkOutByBarcode(itemResource, usersFixture.jessica());
-    assertThat(checkOutResource.getResponse().getStatusCode(), is(201));
-
     requestsClient.create(new RequestBuilder()
-      .hold()
+      .page()
       .titleRequestLevel()
       .withInstanceId(localInstanceId)
       .withNoItemId()
@@ -327,7 +324,7 @@ class RequestQueueResourceTest extends APITests {
       .withRequesterId(usersFixture.steve().getId()));
 
     JsonObject request = requestQueueFixture.retrieveQueueForInstance(
-      itemResource.getInstanceId().toString()).getJsonArray("requests").getJsonObject(0);
+      smallAngryPlanet.getInstanceId().toString()).getJsonArray("requests").getJsonObject(0);
 
     assertThat(request.containsKey("instance"), is(true));
     JsonObject instance = request.getJsonObject("instance");

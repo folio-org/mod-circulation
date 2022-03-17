@@ -216,6 +216,22 @@ public class RequestsFixture {
       .withPickupServicePointId(servicePointsFixture.cd1().getId()));
   }
 
+  public Response attemptPlaceHoldOrRecallTLR(UUID instanceId,
+    IndividualResource requester, String requestType) {
+
+    RequestBuilder builder = new RequestBuilder()
+      .hold()
+      .fulfilToHoldShelf()
+      .titleRequestLevel()
+      .withInstanceId(instanceId)
+      .withNoItemId()
+      .withNoHoldingsRecordId()
+      .withRequesterId(requester.getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId());
+
+    return attemptPlace("Hold".equals(requestType) ? builder : builder.recall());
+  }
+
   public Response attemptToPlaceForInstance(JsonObject representation) {
     return restAssuredClient.post(representation, requestsUrl("/instances"),
       "attempt-to-create-instance-request");

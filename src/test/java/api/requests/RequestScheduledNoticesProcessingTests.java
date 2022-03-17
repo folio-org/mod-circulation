@@ -558,10 +558,7 @@ class RequestScheduledNoticesProcessingTests extends APITests {
     final LocalDate localDate = getLocalDate().minusDays(1);
     final var requestExpiration = LocalDate.of(localDate.getYear(),
       localDate.getMonthValue(), localDate.getDayOfMonth());
-    ItemResource smallAngryPlanet = itemsFixture.createMultipleItemsForTheSameInstance(1).get(0);
-    checkOutFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.james());
-    IndividualResource request = requestsFixture.place(
-      buildTitleLevelRequest(requestExpiration, smallAngryPlanet));
+    IndividualResource request = requestsFixture.place(buildTitleLevelRequest(requestExpiration).page());
 
     verifyNumberOfScheduledNotices(1);
 
@@ -602,10 +599,7 @@ class RequestScheduledNoticesProcessingTests extends APITests {
     final LocalDate localDate = getLocalDate().minusDays(1);
     final var requestExpiration = LocalDate.of(localDate.getYear(),
       localDate.getMonthValue(), localDate.getDayOfMonth());
-    ItemResource smallAngryPlanet = itemsFixture.createMultipleItemsForTheSameInstance(1).get(0);
-    checkOutFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.james());
-
-    requestsFixture.place(buildTitleLevelRequest(requestExpiration, smallAngryPlanet));
+    requestsFixture.place(buildTitleLevelRequest(requestExpiration).page());
 
     verifyNumberOfScheduledNotices(0);
   }
@@ -704,20 +698,6 @@ class RequestScheduledNoticesProcessingTests extends APITests {
   }
 
   private RequestBuilder buildTitleLevelRequest(LocalDate requestExpiration) {
-    return new RequestBuilder()
-      .hold()
-      .titleRequestLevel()
-      .withNoItemId()
-      .withNoHoldingsRecordId()
-      .withInstanceId(item.getInstanceId())
-      .withRequesterId(usersFixture.charlotte().getId())
-      .withRequestDate(getZonedDateTime())
-      .withStatus(OPEN_NOT_YET_FILLED)
-      .withPickupServicePoint(pickupServicePoint)
-      .withRequestExpiration(requestExpiration);
-  }
-
-  private RequestBuilder buildTitleLevelRequest(LocalDate requestExpiration, ItemResource item) {
     return new RequestBuilder()
       .hold()
       .titleRequestLevel()

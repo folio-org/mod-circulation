@@ -8,10 +8,11 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.folio.circulation.domain.RequestLevel.ITEM;
 import static org.folio.circulation.domain.RequestLevel.TITLE;
 import static org.folio.circulation.domain.representations.RequestProperties.INSTANCE_ID;
+import static org.folio.circulation.domain.representations.RequestProperties.ITEM_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_DATE;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_LEVEL;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ATTEMPT_TO_CREATE_TLR_LINKED_TO_AN_ITEM;
-import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ILLEGAL_REQUEST_TYPE;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ATTEMPT_HOLD_OR_RECALL_TLR_FOR_AVAILABLE_ITEM;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INSTANCE_DOES_NOT_EXIST;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_HOLDINGS_RECORD_ID;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_INSTANCE_ID;
@@ -106,7 +107,7 @@ class RequestFromRepresentationService {
         this::shouldFetchInstance, this::fetchInstance, req -> ofAsync(() -> req))))
       .thenComposeAsync(r -> r.after(when(
         this::shouldFetchInstanceItems, this::fetchInstanceItems, req -> ofAsync(() -> req))))
-      .thenApply(this::refuseWhenHoldOrRecallTlrDisallowed)
+      .thenApply(this::refuseHoldOrRecallTlrWhenAvailableItemExists)
       .thenComposeAsync(r -> r.after(when(
         this::shouldFetchItemAndLoan, this::fetchItemAndLoan, req -> ofAsync(() -> req))))
       .thenComposeAsync(r -> r.combineAfter(userRepository::getUser, Request::withRequester))
@@ -133,7 +134,7 @@ class RequestFromRepresentationService {
   }
 
   private CompletableFuture<Result<Boolean>> shouldFetchInstanceItems(Request request) {
-    return ofAsync(() -> (request.isTitleLevel() && errorHandler.hasNone(INVALID_INSTANCE_ID)));
+    return ofAsync(() -> request.isTitleLevel() && errorHandler.hasNone(INVALID_INSTANCE_ID));
   }
 
   private CompletableFuture<Result<Boolean>> shouldFetchItemAndLoan(Request request) {
@@ -163,11 +164,11 @@ class RequestFromRepresentationService {
 
   private CompletableFuture<Result<Request>> fetchItemAndLoanForPageTlrRequest(Request request) {
     return request.getOperation() == Request.Operation.CREATE
-      ? fetchDataForPageTlr(request)
-      : fetchDataForNonPageTlr(request);
+      ? findItemForTlrCreateOperation(request)
+      : findItemForTlrReplaceOperation(request);
   }
 
-  private CompletableFuture<Result<Request>> fetchDataForPageTlr(Request request) {
+  private CompletableFuture<Result<Request>> findItemForTlrCreateOperation(Request request) {
     return fromFutureResult(completedFuture(fetchItemForPageTlr(request))
       .thenApply(r -> r.mapFailure(err -> errorHandler.handleValidationError(err,
         NO_AVAILABLE_ITEMS_FOR_TLR, r))))
@@ -176,7 +177,7 @@ class RequestFromRepresentationService {
       .toCompletableFuture();
   }
 
-  private CompletableFuture<Result<Request>> fetchDataForNonPageTlr(Request request) {
+  private CompletableFuture<Result<Request>> findItemForTlrReplaceOperation(Request request) {
     return fromFutureResult(fetchItemForRequest(request))
       .flatMapFuture(req -> succeeded(req).after(loanRepository::findOpenLoanForRequest)
         .thenApply(r -> r.map(req::withLoan)))
@@ -208,7 +209,7 @@ class RequestFromRepresentationService {
     return loanRepository.findLoanWithClosestDueDate(mapToItemIds(request.getInstanceItems()))
       .thenApply(resultLoan -> resultLoan.map(request::withLoan))
       .thenComposeAsync(requestResult -> requestResult.combineAfter(
-        r2 -> itemRepository.fetchFor(r2.getLoan()), Request::withItem))
+        r -> itemRepository.fetchFor(r.getLoan()), Request::withItem))
       .thenComposeAsync(requestResult -> requestResult.combineAfter(
         this::getUserForExistingLoan, this::addUserToLoan))
       .thenApply(r -> errorHandler.handleValidationResult(r, INSTANCE_DOES_NOT_EXIST, request));
@@ -287,11 +288,14 @@ class RequestFromRepresentationService {
   }
 
   private Result<Request> validateHoldAndRecallTlrAllowedToBeCreated(Request request) {
-    return (request.isTitleLevel() && (request.isHold() || request.isRecall())
-      && getFirstAvailableItem(request).isPresent()) ?
-      failedValidation("Not allowed Hold/Recall TLR as Available item has been found for instance",
-        "instanceId", request.getInstanceId())
-      : succeeded(request);
+    if (request.isTitleLevel() && (request.isHold() || request.isRecall())) {
+      Optional<Item> itemOptional = getFirstAvailableItem(request);
+      if (itemOptional.isPresent()) {
+        return failedValidation("Hold/Recall TLR not allowed: available item found for instance",
+          Map.of(ITEM_ID, itemOptional.get().getItemId(), INSTANCE_ID, request.getInstanceId()));
+      }
+    }
+    return succeeded(request);
   }
 
   private Result<Request> validateRequestLevel(Request request) {
@@ -346,9 +350,10 @@ class RequestFromRepresentationService {
     }
   }
 
-  private Result<Request> refuseWhenHoldOrRecallTlrDisallowed(Result<Request> request) {
+  private Result<Request> refuseHoldOrRecallTlrWhenAvailableItemExists(Result<Request> request) {
     return request.next(this::validateHoldAndRecallTlrAllowedToBeCreated)
-      .mapFailure(err -> errorHandler.handleValidationError(err, ILLEGAL_REQUEST_TYPE, request));
+      .mapFailure(err -> errorHandler.handleValidationError(err,
+        ATTEMPT_HOLD_OR_RECALL_TLR_FOR_AVAILABLE_ITEM, request));
   }
 
   private Result<Request> refuseWhenNoItemId(Result<Request> request) {

@@ -89,7 +89,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   public static Request from(JsonObject representation) {
     // TODO: make sure that operation and TLR settings don't matter for all processes calling
     //  this constructor
-    return new Request(null, null, representation, null, null, null, null, null, null,
+    return new Request(null, null, representation, null, null, new ArrayList<>(), null, null, null,
       null, null, null, false, null, false);
   }
 
@@ -97,7 +97,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     JsonObject representation) {
 
     return new Request(tlrSettingsConfiguration, operation, representation, null, null,
-      null, null, null, null, null, null, null, false, null, false);
+      new ArrayList<>(), null, null, null, null, null, null, false, null, false);
   }
 
   public JsonObject asJson() {
@@ -359,9 +359,5 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
 
   public enum Operation {
     CREATE, REPLACE;
-  }
-
-  public Collection<Item> getInstanceItems() {
-    return instanceItems == null ? new ArrayList<>() : instanceItems;
   }
 }

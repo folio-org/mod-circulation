@@ -1544,11 +1544,13 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
   void requestsShouldChangePositionWhenTheyGoInFulfillmentOnCheckIn() {
     configurationsFixture.enableTlrFeature();
 
-    List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
+    List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(3);
     ItemResource firstItem = items.get(0);
     ItemResource secondItem = items.get(1);
+    ItemResource thirdItem = items.get(2);
 
     UUID instanceId = firstItem.getInstanceId();
+    checkOutFixture.checkOutByBarcode(thirdItem, usersFixture.rebecca());
 
     IndividualResource firstRequest = requestsFixture.placeItemLevelPageRequest(
       firstItem, instanceId, usersFixture.jessica());
@@ -1570,14 +1572,23 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     assertThat(requestsFixture.getById(thirdRequest.getId()).getJson(),
       allOf(isOpenNotYetFilled(), hasPosition(3)));
 
-    checkInFixture.checkInByBarcode(firstItem);
+    checkInFixture.checkInByBarcode(thirdItem);
 
     assertThat(requestsFixture.getById(firstRequest.getId()).getJson(),
-      allOf(isOpenAwaitingPickup(), hasPosition(2)));
+      allOf(isOpenNotYetFilled(), hasPosition(3)));
     assertThat(requestsFixture.getById(secondRequest.getId()).getJson(),
       allOf(isOpenAwaitingPickup(), hasPosition(1)));
     assertThat(requestsFixture.getById(thirdRequest.getId()).getJson(),
-      allOf(isOpenNotYetFilled(), hasPosition(3)));
+      allOf(isOpenAwaitingPickup(), hasPosition(2)));
+
+    checkInFixture.checkInByBarcode(firstItem);
+
+    assertThat(requestsFixture.getById(firstRequest.getId()).getJson(),
+      allOf(isOpenAwaitingPickup(), hasPosition(3)));
+    assertThat(requestsFixture.getById(secondRequest.getId()).getJson(),
+      allOf(isOpenAwaitingPickup(), hasPosition(1)));
+    assertThat(requestsFixture.getById(thirdRequest.getId()).getJson(),
+      allOf(isOpenAwaitingPickup(), hasPosition(2)));
   }
 
   @Test
