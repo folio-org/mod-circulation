@@ -54,7 +54,7 @@ public class RequestByInstanceIdRequest {
 
     final ZonedDateTime requestExpirationDate = getDateTimeProperty(json, REQUEST_EXPIRATION_DATE);
     final UUID pickupServicePointId = getUUIDProperty(json, PICKUP_SERVICE_POINT_ID);
-    final String requestLevel = json.getString("requestLevel");
+    final String requestLevel = json.getString(REQUEST_LEVEL);
 
     return succeeded(new RequestByInstanceIdRequest(requestDate, requesterId, instanceId,
       requestExpirationDate, pickupServicePointId, getProperty(json, "patronComments"),
