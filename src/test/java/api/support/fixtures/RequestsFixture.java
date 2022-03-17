@@ -221,7 +221,6 @@ public class RequestsFixture {
     IndividualResource requester, RequestType requestType) {
 
     RequestBuilder builder = new RequestBuilder()
-      .hold()
       .fulfilToHoldShelf()
       .titleRequestLevel()
       .withInstanceId(instanceId)
@@ -230,7 +229,11 @@ public class RequestsFixture {
       .withRequesterId(requester.getId())
       .withPickupServicePointId(servicePointsFixture.cd1().getId());
 
-    return attemptPlace(RequestType.HOLD == requestType ? builder : builder.recall());
+    if (RequestType.PAGE == requestType || RequestType.NONE == requestType) {
+      return attemptPlace(builder);
+    }
+
+    return attemptPlace(RequestType.HOLD == requestType ? builder.hold() : builder.recall());
   }
 
   public Response attemptToPlaceForInstance(JsonObject representation) {

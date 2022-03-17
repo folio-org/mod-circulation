@@ -2755,7 +2755,7 @@ public class RequestsAPICreationTests extends APITests {
 
   @Test
   void cannotCreateTitleLevelRequestWithoutInstanceId() {
-    reconfigureTlrFeature(TlrFeatureStatus.ENABLED, null, null, null);
+   configurationsFixture.enableTlrFeature();
 
     ItemResource item = itemsFixture.basedUponNod();
 
