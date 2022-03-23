@@ -2982,6 +2982,31 @@ public class RequestsAPICreationTests extends APITests {
       is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
   }
 
+  @Test
+  public void itemCheckOutRecallRequestCreatedShouldProduceNotices() {
+    configurationsFixture.enableTlrFeature();
+    ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.jessica());
+
+    IndividualResource requester = usersFixture.steve();
+    ZonedDateTime requestDate = ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC);
+
+    final IndividualResource request =
+      requestsFixture.place(new RequestBuilder()
+        .recall()
+        .fulfilToHoldShelf()
+        .withItemId(smallAngryPlanet.getId())
+        .withInstanceId(smallAngryPlanet.getInstanceId())
+        .withRequestDate(requestDate)
+        .withRequesterId(requester.getId())
+        .withPickupServicePointId(servicePointsFixture.cd1().getId()));
+
+    // notice for the recall is expected
+    verifyNumberOfSentNotices(1);
+    verifyNumberOfPublishedEvents(NOTICE, 1);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+  }
+
   private boolean isNotPaged(IndividualResource item) {
     return !PAGED.getValue().equals(item.getJson().getJsonObject("status").getString("name"));
   }
