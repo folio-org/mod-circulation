@@ -2985,10 +2985,10 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void itemCheckOutRecallRequestCreatedShouldProduceNotices() {
-    UUID recallToLoaneeTemplateId = UUID.randomUUID();
+  public void itemCheckOutRecallRequestCreatedShouldProduceNotice() {
+    configurationsFixture.enableTlrFeature();
     JsonObject recallToLoaneeConfiguration = new NoticeConfigurationBuilder()
-      .withTemplateId(recallToLoaneeTemplateId)
+      .withTemplateId(UUID.randomUUID())
       .withEventType(NoticeEventType.ITEM_RECALLED.getRepresentation())
       .create();
 
@@ -3003,25 +3003,15 @@ public class RequestsAPICreationTests extends APITests {
       overdueFinePoliciesFixture.facultyStandard().getId(),
       lostItemFeePoliciesFixture.facultyStandard().getId());
 
-    configurationsFixture.enableTlrFeature();
-    ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    checkOutFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.jessica());
-
+    ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource requester = usersFixture.steve();
     ZonedDateTime requestDate = ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC);
 
-    final IndividualResource request =
-      requestsFixture.place(new RequestBuilder()
-        .recall()
-        .fulfilToHoldShelf()
-        .withItemId(smallAngryPlanet.getId())
-        .withInstanceId(smallAngryPlanet.getInstanceId())
-        .withRequestDate(requestDate)
-        .withRequesterId(requester.getId())
-        .withPickupServicePointId(servicePointsFixture.cd1().getId()));
+    checkOutFixture.checkOutByBarcode(item, usersFixture.jessica());
+    requestsFixture.placeItemLevelHoldShelfRequest(item, requester, requestDate, "Recall");
 
     // notice for the recall is expected
-    verifyNumberOfSentNotices(1);//
+    verifyNumberOfSentNotices(1);
     verifyNumberOfPublishedEvents(NOTICE, 1);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
