@@ -608,7 +608,7 @@ class RequestQueueResourceTest extends APITests {
     verifyQueueUpdatedForItem(reorderQueue, response);
 
     // TODO: understand why
-    int numberOfPublishedEvents = tlrFeatureStatus == TlrFeatureStatus.ENABLED ? 15 : 17;
+    int numberOfPublishedEvents = 17;
     final var publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(FakePubSub::getPublishedEvents, hasSize(numberOfPublishedEvents));
