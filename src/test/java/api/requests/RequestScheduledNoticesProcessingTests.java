@@ -29,6 +29,7 @@ import static org.hamcrest.Matchers.empty;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -557,7 +558,7 @@ class RequestScheduledNoticesProcessingTests extends APITests {
     final LocalDate localDate = getLocalDate().minusDays(1);
     final var requestExpiration = LocalDate.of(localDate.getYear(),
       localDate.getMonthValue(), localDate.getDayOfMonth());
-    IndividualResource request = requestsFixture.place(buildTitleLevelRequest(requestExpiration));
+    IndividualResource request = requestsFixture.place(buildTitleLevelRequest(requestExpiration).page());
 
     verifyNumberOfScheduledNotices(1);
 
@@ -598,7 +599,7 @@ class RequestScheduledNoticesProcessingTests extends APITests {
     final LocalDate localDate = getLocalDate().minusDays(1);
     final var requestExpiration = LocalDate.of(localDate.getYear(),
       localDate.getMonthValue(), localDate.getDayOfMonth());
-    requestsFixture.place(buildTitleLevelRequest(requestExpiration));
+    requestsFixture.place(buildTitleLevelRequest(requestExpiration).page());
 
     verifyNumberOfScheduledNotices(0);
   }

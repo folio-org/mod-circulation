@@ -1550,6 +1550,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     ItemResource thirdItem = items.get(2);
 
     UUID instanceId = firstItem.getInstanceId();
+    checkOutFixture.checkOutByBarcode(thirdItem, usersFixture.rebecca());
 
     IndividualResource firstRequest = requestsFixture.placeItemLevelPageRequest(
       firstItem, instanceId, usersFixture.jessica());

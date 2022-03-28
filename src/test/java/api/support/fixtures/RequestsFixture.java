@@ -16,6 +16,7 @@ import java.time.ZonedDateTime;
 import java.util.UUID;
 
 import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.support.http.client.Response;
 
 import api.support.MultipleJsonRecords;
@@ -214,6 +215,25 @@ public class RequestsFixture {
       .withNoHoldingsRecordId()
       .withRequesterId(requester.getId())
       .withPickupServicePointId(servicePointsFixture.cd1().getId()));
+  }
+
+  public Response attemptPlaceHoldOrRecallTLR(UUID instanceId,
+    IndividualResource requester, RequestType requestType) {
+
+    if (requestType != RequestType.HOLD && requestType != RequestType.RECALL) {
+      throw new IllegalArgumentException("Only Hold and Recall request are allowed." +
+        " Provided request type: " + requestType);
+    }
+    RequestBuilder builder = new RequestBuilder()
+      .fulfilToHoldShelf()
+      .titleRequestLevel()
+      .withInstanceId(instanceId)
+      .withNoItemId()
+      .withNoHoldingsRecordId()
+      .withRequesterId(requester.getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId());
+
+    return attemptPlace(RequestType.HOLD == requestType ? builder.hold() : builder.recall());
   }
 
   public Response attemptToPlaceForInstance(JsonObject representation) {
