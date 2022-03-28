@@ -1370,6 +1370,89 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
   }
 
   @Test
+  void overdueRecallFineCalculatedCorrectlyWhenRecallRequestCreation() {
+    double maxOverdueFine = 5.0;
+    double maxOverdueRecallFineFine = 30.0;
+    double overdueRecallFineFine = 6.0;
+    configurationsFixture.enableTlrFeature();
+    useFallbackPolicies(loanPoliciesFixture.create(new LoanPolicyBuilder()
+      .withId(UUID.randomUUID())
+      .withName("1 minute policy")
+      .withDescription("Can circulate item")
+      .rolling(Period.minutes(1))
+      .withGracePeriod(Period.zeroDurationPeriod())
+      .unlimitedRenewals()
+      .renewFromSystemDate()).getId(),
+    requestPoliciesFixture.allowAllRequestPolicy().getId(),
+    noticePoliciesFixture.activeNotice().getId(),
+    overdueFinePoliciesFixture.create(new OverdueFinePolicyBuilder()
+      .withId(UUID.randomUUID())
+      .withName("One per minute overdue fine and overdue recall fine policy")
+      .withCountClosed(true)
+      .withGracePeriodRecall(false)
+      .withOverdueFine(
+        new JsonObject()
+          .put("quantity", 1.0)
+          .put("intervalId", "minute"))
+      .withMaxOverdueFine(maxOverdueFine)
+      .withOverdueRecallFine(new JsonObject()
+        .put("quantity", overdueRecallFineFine)
+        .put("intervalId", "minute"))
+      .withMaxOverdueRecallFine(maxOverdueRecallFineFine)
+      .withCountClosed(false)).getId(),
+    lostItemFeePoliciesFixture.facultyStandard().getId());
+
+    final IndividualResource james = usersFixture.james();
+    final IndividualResource requester = usersFixture.steve();
+    final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
+    final IndividualResource homeLocation = locationsFixture.basedUponExampleLocation(
+      item -> item.withPrimaryServicePoint(checkInServicePointId));
+    final IndividualResource nod = itemsFixture.basedUponNod(item ->
+      item.withPermanentLocation(homeLocation.getId()));
+
+    ZonedDateTime checkOutDate = ZonedDateTime.of(2020, 1, 18, 18, 0, 0, 0, UTC);
+    ZonedDateTime requestDate = ZonedDateTime.of(2020, 1, 19, 18, 0, 0, 0, UTC);
+    ZonedDateTime checkInDate = ZonedDateTime.of(2020, 1, 22, 15, 30, 0, 0, UTC);
+
+    checkOutFixture.checkOutByBarcode(nod, james, checkOutDate);
+    requestsFixture.placeItemLevelHoldShelfRequest(nod, requester, requestDate, "Recall");
+
+    JsonObject servicePointOwner = new JsonObject();
+    servicePointOwner.put("value", homeLocation.getJson().getString("primaryServicePoint"));
+    servicePointOwner.put("label", "label");
+    UUID ownerId = UUID.randomUUID();
+    feeFineOwnersClient.create(new FeeFineOwnerBuilder()
+      .withId(ownerId)
+      .withOwner("fee-fine-owner")
+      .withServicePointOwner(Collections.singletonList(servicePointOwner)));
+
+    UUID feeFineId = UUID.randomUUID();
+    feeFinesClient.create(new FeeFineBuilder()
+      .withId(feeFineId)
+      .withFeeFineType("Overdue fine")
+      .withOwnerId(ownerId)
+      .withAutomatic(true)
+      .withDefaultAmount(1.0));
+
+    CheckInByBarcodeResponse checkInResponse = checkInFixture.checkInByBarcode(
+      new CheckInByBarcodeRequestBuilder()
+        .forItem(nod)
+        .on(checkInDate)
+        .at(checkInServicePointId));
+
+    waitAtMost(1, SECONDS)
+      .until(accountsClient::getAll, hasSize(1));
+
+    List<JsonObject> createdAccounts = accountsClient.getAll();
+
+    assertThat("Fee/fine record should be created", createdAccounts, hasSize(1));
+    JsonObject account = createdAccounts.get(0);
+    JsonObject checkedInLoan = checkInResponse.getLoan();
+    assertThat(account, isValidOverdueFine(checkedInLoan, nod,
+      homeLocation.getJson().getString("name"), ownerId, feeFineId, maxOverdueRecallFineFine));
+  }
+
+  @Test
   void canCheckInLostAndPaidItem() {
     final ItemResource item = itemsFixture.basedUponNod();
     var checkOutResource = checkOutFixture.checkOutByBarcode(item, usersFixture.steve()).getJson();
