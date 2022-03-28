@@ -850,7 +850,8 @@
             "pubsub.events.post"
           ],
           "modulePermissions": [
-            "modperms.circulation.handlers.loan-related-fee-fine-closed.post"
+            "modperms.circulation.handlers.loan-related-fee-fine-closed.post",
+            "pubsub.publish.post"
           ]
         }
       ]

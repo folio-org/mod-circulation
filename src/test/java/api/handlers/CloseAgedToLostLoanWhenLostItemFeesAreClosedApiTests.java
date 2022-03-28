@@ -1,15 +1,21 @@
 package api.handlers;
 
+import static api.support.fakes.FakePubSub.getPublishedEvents;
+import static api.support.fakes.FakePubSub.getPublishedEventsAsList;
+import static api.support.fakes.PublishedEvents.byEventType;
 import static api.support.http.CqlQuery.exactMatch;
+import static api.support.matchers.EventMatchers.isValidLoanClosedEvent;
 import static api.support.matchers.ItemMatchers.isAgedToLost;
 import static api.support.matchers.ItemMatchers.isCheckedOut;
 import static api.support.matchers.ItemMatchers.isLostAndPaid;
 import static api.support.matchers.LoanMatchers.isClosed;
 import static api.support.matchers.LoanMatchers.isOpen;
+import static org.folio.circulation.domain.EventType.LOAN_CLOSED;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getUUIDProperty;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasSize;
 
 import java.util.UUID;
 
@@ -53,6 +59,12 @@ class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends APITests {
 
     assertThat(loansFixture.getLoanById(loan.getId()).getJson(), isClosed());
     assertThat(itemsClient.getById(item.getId()).getJson(), isLostAndPaid());
+
+    assertThat(getPublishedEventsAsList(byEventType(LOAN_CLOSED)), hasSize(1));
+
+    assertThat(
+      getPublishedEvents().findFirst(byEventType(LOAN_CLOSED)),
+      isValidLoanClosedEvent(loan.getJson()));
   }
 
   @Test

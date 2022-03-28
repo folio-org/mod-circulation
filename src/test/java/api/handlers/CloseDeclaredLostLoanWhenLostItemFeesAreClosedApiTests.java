@@ -1,5 +1,8 @@
 package api.handlers;
 
+import static api.support.fakes.FakePubSub.getPublishedEvents;
+import static api.support.fakes.PublishedEvents.byEventType;
+import static api.support.matchers.EventMatchers.isValidLoanClosedEvent;
 import static api.support.matchers.ItemMatchers.isAvailable;
 import static api.support.matchers.ItemMatchers.isCheckedOut;
 import static api.support.matchers.ItemMatchers.isDeclaredLost;
@@ -7,6 +10,7 @@ import static api.support.matchers.ItemMatchers.isLostAndPaid;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static api.support.matchers.LoanMatchers.isClosed;
 import static api.support.matchers.LoanMatchers.isOpen;
+import static org.folio.circulation.domain.EventType.LOAN_CLOSED;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -47,6 +51,10 @@ class CloseDeclaredLostLoanWhenLostItemFeesAreClosedApiTests extends APITests {
 
     assertThat(loansFixture.getLoanById(loan.getId()).getJson(), isClosed());
     assertThat(itemsClient.getById(item.getId()).getJson(), isLostAndPaid());
+
+    assertThat(
+      getPublishedEvents().findFirst(byEventType(LOAN_CLOSED)),
+      isValidLoanClosedEvent(loan.getJson()));
   }
 
   @Test

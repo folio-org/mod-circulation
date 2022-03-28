@@ -56,7 +56,7 @@ public class LoanRelatedFeeFineClosedHandlerResource extends Resource {
     final EventPublisher eventPublisher = new EventPublisher(routingContext);
 
     createAndValidateRequest(routingContext)
-      .after(request -> processEvent(context, request))
+      .after(request -> processEvent(context, request, eventPublisher))
       .thenCompose(r -> r.after(eventPublisher::publishClosedLoanEvent))
       .exceptionally(CommonFailures::failedDueToServerError)
       .thenApply(r -> r.map(toFixedValue(NoContentResponse::noContent)))
@@ -68,8 +68,8 @@ public class LoanRelatedFeeFineClosedHandlerResource extends Resource {
       }));
   }
 
-  private CompletableFuture<Result<Loan>> processEvent(
-    WebContext context, LoanRelatedFeeFineClosedEvent event) {
+  private CompletableFuture<Result<Loan>> processEvent(WebContext context,
+    LoanRelatedFeeFineClosedEvent event, EventPublisher eventPublisher) {
 
     final Clients clients = create(context, client);
     final var itemRepository = new ItemRepository(clients);
@@ -83,7 +83,7 @@ public class LoanRelatedFeeFineClosedHandlerResource extends Resource {
         if (loan.isItemLost()) {
           return closeLoanWithLostItemIfLostFeesResolved(loan,
             loanRepository, itemRepository, accountRepository,
-            lostItemPolicyRepository);
+            lostItemPolicyRepository, eventPublisher);
         }
 
         return completedFuture(succeeded(loan));
@@ -93,23 +93,25 @@ public class LoanRelatedFeeFineClosedHandlerResource extends Resource {
   private CompletableFuture<Result<Loan>> closeLoanWithLostItemIfLostFeesResolved(
     Loan loan, LoanRepository loanRepository,
     ItemRepository itemRepository, AccountRepository accountRepository,
-    LostItemPolicyRepository lostItemPolicyRepository) {
+    LostItemPolicyRepository lostItemPolicyRepository,
+    EventPublisher eventPublisher) {
 
     return accountRepository.findAccountsForLoan(loan)
       .thenComposeAsync(lostItemPolicyRepository::findLostItemPolicyForLoan)
       .thenCompose(loanResult -> closeLoanAndUpdateItem(loanResult,
-        loanRepository, itemRepository));
+        loanRepository, itemRepository, eventPublisher));
   }
 
   public CompletableFuture<Result<Loan>> closeLoanAndUpdateItem(
     Result<Loan> loanResult, LoanRepository loanRepository,
-    ItemRepository itemRepository) {
+    ItemRepository itemRepository, EventPublisher eventPublisher) {
 
     final var storeLoanAndItem = new StoreLoanAndItem(loanRepository, itemRepository);
     return loanResult.after(loan -> {
       if (allLostFeesClosed(loan)) {
         loan.closeLoanAsLostAndPaid();
-        return storeLoanAndItem.updateLoanAndItemInStorage(loan);
+        return storeLoanAndItem.updateLoanAndItemInStorage(loan)
+          .thenCompose(r -> r.after(eventPublisher::publishLoanClosedEvent));
       }
 
       return completedFuture(succeeded(loan));
