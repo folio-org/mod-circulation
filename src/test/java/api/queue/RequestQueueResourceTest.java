@@ -43,7 +43,6 @@ import api.support.TlrFeatureStatus;
 import api.support.builders.ReorderQueueBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.fakes.FakePubSub;
-import api.support.http.CheckOutResource;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import io.vertx.core.json.JsonArray;
@@ -609,7 +608,7 @@ class RequestQueueResourceTest extends APITests {
     verifyQueueUpdatedForItem(reorderQueue, response);
 
     // TODO: understand why
-    int numberOfPublishedEvents = tlrFeatureStatus == TlrFeatureStatus.ENABLED ? 15 : 17;
+    int numberOfPublishedEvents = 17;
     final var publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(FakePubSub::getPublishedEvents, hasSize(numberOfPublishedEvents));
