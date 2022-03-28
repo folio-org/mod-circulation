@@ -60,10 +60,7 @@ class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends APITests {
     assertThat(loansFixture.getLoanById(loan.getId()).getJson(), isClosed());
     assertThat(itemsClient.getById(item.getId()).getJson(), isLostAndPaid());
 
-    assertThat(getPublishedEventsAsList(byEventType(LOAN_CLOSED)), hasSize(1));
-
-    assertThat(
-      getPublishedEvents().findFirst(byEventType(LOAN_CLOSED)),
+    assertThat(getPublishedEvents().findFirst(byEventType(LOAN_CLOSED)),
       isValidLoanClosedEvent(loan.getJson()));
   }
 
