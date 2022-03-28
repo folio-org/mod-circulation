@@ -2985,7 +2985,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void itemCheckOutRecallRequestCreatedShouldProduceNotice() {
+  public void itemCheckOutRecallRequestCreationShouldProduceNotice() {
     configurationsFixture.enableTlrFeature();
     JsonObject recallToLoaneeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(UUID.randomUUID())
