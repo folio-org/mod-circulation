@@ -1,6 +1,7 @@
 package api.handlers;
 
 import static api.support.fakes.FakePubSub.getPublishedEvents;
+import static api.support.fakes.FakePubSub.getPublishedEventsAsList;
 import static api.support.fakes.PublishedEvents.byEventType;
 import static api.support.matchers.EventMatchers.isValidLoanClosedEvent;
 import static api.support.matchers.ItemMatchers.isAvailable;
@@ -14,6 +15,7 @@ import static org.folio.circulation.domain.EventType.LOAN_CLOSED;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.empty;
 
 import java.util.UUID;
 
@@ -24,6 +26,7 @@ import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.DeclareItemLostRequestBuilder;
+import io.vertx.core.json.JsonObject;
 
 class CloseDeclaredLostLoanWhenLostItemFeesAreClosedApiTests extends APITests {
   private IndividualResource loan;
@@ -154,5 +157,22 @@ class CloseDeclaredLostLoanWhenLostItemFeesAreClosedApiTests extends APITests {
         UUID.randomUUID());
 
     assertThat(response.getStatusCode(), is(204));
+  }
+
+  @Test
+  void shouldNotPublishLoanClosedEventWhenLoanIsOriginallyClosed() {
+    feeFineAccountFixture.payLostItemFee(loan.getId());
+    feeFineAccountFixture.payLostItemProcessingFee(loan.getId());
+
+    JsonObject loanToClose = loansStorageClient.get(loan).getJson();
+    loanToClose.getJsonObject("status").put("name", "Closed");
+    loansStorageClient.replace(loan.getId(), loanToClose);
+
+    eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loan.getId());
+
+    assertThat(loansFixture.getLoanById(loan.getId()).getJson(), isClosed());
+    assertThat(itemsClient.getById(item.getId()).getJson(), isLostAndPaid());
+
+    assertThat(getPublishedEventsAsList(byEventType(LOAN_CLOSED)), empty());
   }
 }

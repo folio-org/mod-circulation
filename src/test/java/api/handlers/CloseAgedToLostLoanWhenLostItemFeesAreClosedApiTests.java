@@ -1,7 +1,6 @@
 package api.handlers;
 
 import static api.support.fakes.FakePubSub.getPublishedEvents;
-import static api.support.fakes.FakePubSub.getPublishedEventsAsList;
 import static api.support.fakes.PublishedEvents.byEventType;
 import static api.support.http.CqlQuery.exactMatch;
 import static api.support.matchers.EventMatchers.isValidLoanClosedEvent;
@@ -15,7 +14,6 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getUUIDProp
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasSize;
 
 import java.util.UUID;
 
