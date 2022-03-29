@@ -6,7 +6,6 @@ import static org.folio.circulation.support.ValidationErrorFailure.singleValidat
 
 import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.Item;
-import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.notice.schedule.RequestScheduledNoticeService;
 import org.folio.circulation.domain.notice.session.PatronActionSessionService;
 import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;

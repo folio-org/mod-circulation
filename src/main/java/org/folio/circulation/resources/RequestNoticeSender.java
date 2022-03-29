@@ -1,7 +1,6 @@
 package org.folio.circulation.resources;
 
 import static java.util.concurrent.CompletableFuture.runAsync;
-import static org.folio.circulation.domain.RequestLevel.TITLE;
 import static org.folio.circulation.domain.notice.TemplateContextUtil.createRequestNoticeContext;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.ofAsync;
