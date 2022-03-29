@@ -1,3 +1,24 @@
+## 23.0.1 2022-03-28
+
+* For all passed parameters to /circulation/rules/request-policy endpoint behavioral consistency is achieved (CIRC-1169)
+* Remove optional fetching of records when fetching an item (CIRC-1418)
+* Remove clients dependency from store loan and item class (CIRC-1418)
+* Extract repository dependencies for loan repository (CIRC-1418)
+* Don't fetch loan type when ID is null (CIRC-1418)
+* Remove client dependency from overdue fine service (CIRC-1418)
+* Extract item repository constructor parameter for update item class (CIRC-1418)
+* Extract repository dependencies for update request queue class (CIRC-1418)
+* Extract repository dependencies for request repository (CIRC-1418)
+* Extract repository dependencies for request queue repository (CIRC-1418)
+* Remove item repository dependency in scheduled notice handlers (CIRC-1418)
+* Extract loan repository dependency for event publisher (CIRC-1418)
+* Change item representation when last check in information changes (CIRC-1418)
+* Choose request level and request type when creating instance requests (CIRC-1442)
+* Fix checkout closing request for different item of the same instance (CIRC-1450)
+* Define missed permissions in perm set and remove redundant permission (CIRC-1453)
+* Add get fixed due date schedules collection permission (CIRC-1456)
+* Notice not sending for notice trigger = Item recalled (CIRC-1464)
+
 ## 23.0.0 2022-02-22
 
 * Stop using Joda Time (CIRC-966)
