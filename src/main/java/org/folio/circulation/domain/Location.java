@@ -33,8 +33,7 @@ public class Location {
   }
 
   public static Location from(JsonObject locationRepresentation) {
-    return new Location(locationRepresentation, null, null, null,
-      null);
+    return new Location(locationRepresentation, null, null, null, null);
   }
 
   public String getId() {
