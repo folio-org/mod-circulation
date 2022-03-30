@@ -189,7 +189,7 @@ class RequestFromRepresentationService {
         mapToItemIds(items)))
         .thenApply(resultLoan -> resultLoan.map(request::withLoan))
         .thenComposeAsync(requestResult -> requestResult.combineAfter(
-          record -> itemRepository.fetchFor(record.getLoan()), Request::withItem))
+          rec -> itemRepository.fetchFor(rec.getLoan()), Request::withItem))
         .thenComposeAsync(requestResult -> requestResult.combineAfter(
           this::getUserForExistingLoan, this::addUserToLoan)))
       .thenApply(r -> errorHandler.handleValidationResult(r, INSTANCE_DOES_NOT_EXIST, request));
