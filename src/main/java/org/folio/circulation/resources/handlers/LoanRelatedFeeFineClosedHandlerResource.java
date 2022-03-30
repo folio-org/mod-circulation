@@ -1,6 +1,7 @@
 package org.folio.circulation.resources.handlers;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.EventType.LOAN_RELATED_FEE_FINE_CLOSED;
 import static org.folio.circulation.domain.FeeFine.lostItemFeeTypes;
 import static org.folio.circulation.domain.subscribers.LoanRelatedFeeFineClosedEvent.fromJson;
 import static org.folio.circulation.support.Clients.create;
@@ -53,8 +54,10 @@ public class LoanRelatedFeeFineClosedHandlerResource extends Resource {
     final WebContext context = new WebContext(routingContext);
     final EventPublisher eventPublisher = new EventPublisher(routingContext);
 
+    log.info("Event {} received: {}", LOAN_RELATED_FEE_FINE_CLOSED, routingContext.getBodyAsString());
+
     createAndValidateRequest(routingContext)
-      .after(request -> processEvent(context, request))
+      .after(request -> processEvent(context, request, eventPublisher))
       .thenCompose(r -> r.after(eventPublisher::publishClosedLoanEvent))
       .exceptionally(CommonFailures::failedDueToServerError)
       .thenApply(r -> r.map(toFixedValue(NoContentResponse::noContent)))
@@ -66,16 +69,15 @@ public class LoanRelatedFeeFineClosedHandlerResource extends Resource {
       }));
   }
 
-  private CompletableFuture<Result<Loan>> processEvent(
-    WebContext context, LoanRelatedFeeFineClosedEvent event) {
+  private CompletableFuture<Result<Loan>> processEvent(WebContext context,
+    LoanRelatedFeeFineClosedEvent event, EventPublisher eventPublisher) {
 
     final Clients clients = create(context, client);
-    final LoanRepository loanRepository = new LoanRepository(clients);
 
-    return loanRepository.getById(event.getLoanId())
+    return new LoanRepository(clients).getById(event.getLoanId())
       .thenCompose(r -> r.after(loan -> {
         if (loan.isItemLost()) {
-          return closeLoanWithLostItemIfLostFeesResolved(clients, loan);
+          return closeLoanWithLostItemIfLostFeesResolved(loan, clients, eventPublisher);
         }
 
         return completedFuture(succeeded(loan));
@@ -83,28 +85,35 @@ public class LoanRelatedFeeFineClosedHandlerResource extends Resource {
   }
 
   private CompletableFuture<Result<Loan>> closeLoanWithLostItemIfLostFeesResolved(
-    Clients clients, Loan loan) {
+    Loan loan, Clients clients, EventPublisher eventPublisher) {
 
-    final AccountRepository accountRepository = new AccountRepository(clients);
     final LostItemPolicyRepository lostItemPolicyRepository = new LostItemPolicyRepository(clients);
 
-    return accountRepository.findAccountsForLoan(loan)
+    return new AccountRepository(clients).findAccountsForLoan(loan)
       .thenComposeAsync(lostItemPolicyRepository::findLostItemPolicyForLoan)
-      .thenCompose(loanResult -> closeLoanAndUpdateItem(loanResult, clients));
+      .thenCompose(r -> r.after(l -> closeLoanAndUpdateItem(l, clients, eventPublisher)));
   }
 
-  public CompletableFuture<Result<Loan>> closeLoanAndUpdateItem(
-    Result<Loan> loanResult, Clients clients) {
+  public CompletableFuture<Result<Loan>> closeLoanAndUpdateItem(Loan loan, Clients clients,
+    EventPublisher eventPublisher) {
 
-    final StoreLoanAndItem storeLoanAndItem = new StoreLoanAndItem(clients);
-    return loanResult.after(loan -> {
-      if (allLostFeesClosed(loan)) {
-        loan.closeLoanAsLostAndPaid();
-        return storeLoanAndItem.updateLoanAndItemInStorage(loan);
-      }
-
+    if (!allLostFeesClosed(loan)) {
       return completedFuture(succeeded(loan));
-    });
+    }
+
+    boolean wasLoanOpen = loan.isOpen();
+    loan.closeLoanAsLostAndPaid();
+
+    return new StoreLoanAndItem(clients).updateLoanAndItemInStorage(loan)
+      .thenCompose(r -> r.after(l -> publishLoanClosedEvent(l, wasLoanOpen, eventPublisher)));
+  }
+
+  private CompletableFuture<Result<Loan>> publishLoanClosedEvent(Loan loan, boolean wasLoanOpen,
+    EventPublisher eventPublisher) {
+
+    return wasLoanOpen && loan.isClosed()
+      ? eventPublisher.publishLoanClosedEvent(loan)
+      : completedFuture(succeeded(loan));
   }
 
   private boolean allLostFeesClosed(Loan loan) {
