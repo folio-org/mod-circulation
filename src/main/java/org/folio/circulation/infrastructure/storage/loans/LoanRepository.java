@@ -406,6 +406,7 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
 
   public CompletableFuture<Result<Loan>> findLoanWithClosestDueDate(List<String> itemIds) {
     final Result<CqlQuery> cqlQuery = exactMatchAny(ITEM_ID, itemIds)
+      .combine(getStatusCQLQuery("Open"), CqlQuery::and)
       .map(cql -> cql.sortBy(ascending(DUE_DATE)));
 
     return queryLoanStorage(cqlQuery, one())
