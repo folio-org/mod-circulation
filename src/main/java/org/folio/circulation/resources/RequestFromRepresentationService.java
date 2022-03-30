@@ -189,7 +189,7 @@ class RequestFromRepresentationService {
         mapToItemIds(items)))
         .thenApply(resultLoan -> resultLoan.map(request::withLoan))
         .thenComposeAsync(requestResult -> requestResult.combineAfter(
-          record -> itemRepository.fetchFor(record.getLoan()), Request::withItem))
+          rec -> itemRepository.fetchFor(rec.getLoan()), Request::withItem))
         .thenComposeAsync(requestResult -> requestResult.combineAfter(
           this::getUserForExistingLoan, this::addUserToLoan)))
       .thenApply(r -> errorHandler.handleValidationResult(r, INSTANCE_DOES_NOT_EXIST, request));
@@ -202,7 +202,7 @@ class RequestFromRepresentationService {
   }
 
   private CompletableFuture<Result<Request>> fetchLoan(Request request) {
-    if (request.getTlrSettingsConfiguration().isTitleLevelRequestsFeatureEnabled()) {
+    if (request.isTitleLevel()) {
       // There can be multiple loans for items of the same title, but we're only saving one of
       // them because it is enough to determine whether the patron has open loans for any
       // of the title's items

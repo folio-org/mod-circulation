@@ -34,8 +34,7 @@ public class TitleLevelRequestNoticeSender extends RequestNoticeSender {
     if (tlrSettings.isTitleLevelRequestsFeatureEnabled()
       && tlrSettings.getConfirmationPatronNoticeTemplateId() != null) {
 
-      PatronNoticeEvent requestCreatedEvent = createPatronNoticeEvent(request,
-        eventType);
+      PatronNoticeEvent requestCreatedEvent = createPatronNoticeEvent(request, eventType);
       applyTlrConfirmationNotice(request.getTlrSettingsConfiguration(), requestCreatedEvent);
     }
 

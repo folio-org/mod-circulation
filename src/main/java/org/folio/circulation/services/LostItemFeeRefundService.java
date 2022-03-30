@@ -46,7 +46,6 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.results.CommonFailures;
 import org.folio.circulation.support.results.Result;
-import org.folio.circulation.support.utils.ClockUtil;
 import org.folio.circulation.support.utils.DateTimeUtil;
 
 public class LostItemFeeRefundService {

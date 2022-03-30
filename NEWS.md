@@ -1,3 +1,13 @@
+## 23.0.1 2022-03-30
+
+* Do not fail when nonexistent location ID is passed to GET /circulation/rules/request-policy (CIRC-1169)
+* POST /circulation/requests/instances must create "true" TLR when feature is enabled (CIRC-1442)
+* Fix checkout closing request for different item of the same instance (CIRC-1450)
+* Add missing permissions for circulation rules (CIRC-1453)
+* Add missing permission to POST /circulation/requests/instances (CIRC-1456)
+* Remove redundant notes permission (CIRC-1461)
+* Fix patron notices not going out for recalled loans (CIRC-1464)
+
 ## 23.0.0 2022-02-22
 
 * Stop using Joda Time (CIRC-966)
