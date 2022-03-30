@@ -19,8 +19,10 @@ public class Location {
 
   private final ServicePoint primaryServicePoint;
 
-  public Location(JsonObject representation, JsonObject libraryRepresentation,
-    JsonObject campusRepresentation, JsonObject institutionRepresentation,
+  public Location(JsonObject representation,
+    JsonObject libraryRepresentation,
+    JsonObject campusRepresentation,
+    JsonObject institutionRepresentation,
     ServicePoint primaryServicePoint) {
 
     this.representation = representation;
