@@ -60,6 +60,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDate;
@@ -1452,10 +1453,9 @@ public class RequestsAPICreationTests extends APITests {
     final ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requestPickupServicePoint = servicePointsFixture.cd1();
 
-    checkOutFixture.checkOutByBarcode(item, usersFixture.jessica());
+    IndividualResource initialLoan = checkOutFixture.checkOutByBarcode(item, usersFixture.jessica());
     checkInFixture.checkInByBarcode(item);
-
-    IndividualResource loan = checkOutFixture.checkOutByBarcode(item, usersFixture.jessica());
+    IndividualResource dueDateChangeLoan = checkOutFixture.checkOutByBarcode(item, usersFixture.jessica());
 
     requestsClient.create(new RequestBuilder()
       .recall()
@@ -1470,7 +1470,9 @@ public class RequestsAPICreationTests extends APITests {
       .atMost(1, TimeUnit.SECONDS)
       .until(FakePubSub::getPublishedEvents, hasSize(9));
 
-    JsonObject updatedLoan = loansClient.get(loan.getId()).getJson();
+    JsonObject loanWithoutChange = loansClient.get(initialLoan.getId()).getJson();
+    assertNull(loanWithoutChange.getString("dueDateChangedByRecall"));
+    JsonObject updatedLoan = loansClient.get(dueDateChangeLoan.getId()).getJson();
     assertThat(updatedLoan.getString("dueDateChangedByRecall"), true);
 
     JsonObject event = publishedEvents.findFirst(byEventType("LOAN_DUE_DATE_CHANGED"));
