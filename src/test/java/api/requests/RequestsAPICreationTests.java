@@ -32,6 +32,7 @@ import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfSentNotices;
 import static java.time.ZoneOffset.UTC;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.function.Function.identity;
 import static org.folio.HttpStatus.HTTP_BAD_REQUEST;
@@ -81,6 +82,7 @@ import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.RequestLevel;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
+import org.folio.circulation.domain.notice.NoticeEventType;
 import org.folio.circulation.domain.override.BlockOverrides;
 import org.folio.circulation.domain.override.PatronBlockOverride;
 import org.folio.circulation.domain.policy.DueDateManagement;
@@ -3022,6 +3024,38 @@ public class RequestsAPICreationTests extends APITests {
     checkOutFixture.checkOutByBarcode(availableItem);
     assertThat(requestsFixture.getById(request.getId()).getJson().getString("status"),
       is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
+  }
+
+  @Test
+  public void itemCheckOutRecallRequestCreationShouldProduceNotice() {
+    configurationsFixture.enableTlrFeature();
+    JsonObject recallToLoaneeConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(UUID.randomUUID())
+      .withEventType(NoticeEventType.ITEM_RECALLED.getRepresentation())
+      .create();
+
+    NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
+      .withName("Policy with recall notice")
+      .withLoanNotices(singletonList(recallToLoaneeConfiguration));
+
+    useFallbackPolicies(
+      loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.create(noticePolicy).getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
+
+    ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource requester = usersFixture.steve();
+    ZonedDateTime requestDate = ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC);
+
+    checkOutFixture.checkOutByBarcode(item, usersFixture.jessica());
+    requestsFixture.placeItemLevelHoldShelfRequest(item, requester, requestDate, "Recall");
+
+    // notice for the recall is expected
+    verifyNumberOfSentNotices(1);
+    verifyNumberOfPublishedEvents(NOTICE, 1);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 
   private boolean isNotPaged(IndividualResource item) {
