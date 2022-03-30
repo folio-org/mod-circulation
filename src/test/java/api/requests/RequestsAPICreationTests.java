@@ -1448,7 +1448,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  void canCreateTitleLevelRecallRequestWhenOneLoanIsClosed() {
+  void canCreateTlrRecallForInstanceWithSingleItemAndTwoLoans() {
     reconfigureTlrFeature(TlrFeatureStatus.ENABLED);
     final ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requestPickupServicePoint = servicePointsFixture.cd1();
