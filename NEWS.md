@@ -1,3 +1,12 @@
+## 23.0.1 2022-03-30
+
+* For all passed parameters to /circulation/rules/request-policy endpoint behavioral consistency is achieved (CIRC-1169)
+* Choose request level and request type when creating instance requests (CIRC-1442)
+* Fix checkout closing request for different item of the same instance (CIRC-1450)
+* Define missed permissions in perm set and remove redundant permission (CIRC-1453)
+* Add get fixed due date schedules collection permission (CIRC-1456)
+* Notice not sending for notice trigger = Item recalled (CIRC-1464)
+
 ## 23.0.0 2022-02-22
 
 * Stop using Joda Time (CIRC-966)
