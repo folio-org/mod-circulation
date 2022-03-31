@@ -3067,9 +3067,10 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   private void validateNoticeLogContextItem(JsonObject noticeLogContextItem, ItemResource item) {
-    JsonArray itemsJsonArray = new JsonObject(noticeLogContextItem.getString("eventPayload"))
-      .getJsonObject("payload").getJsonArray("items");
-    JsonObject itemJsonObject = itemsJsonArray.getJsonObject(0);
+    JsonObject itemJsonObject = new JsonObject(noticeLogContextItem.getString("eventPayload"))
+      .getJsonObject("payload")
+      .getJsonArray("items")
+      .getJsonObject(0);
 
     assertThat(itemJsonObject.getString("itemBarcode"), is(item.getBarcode()));
     assertThat(itemJsonObject.getString("itemId"), is(item.getId()));
