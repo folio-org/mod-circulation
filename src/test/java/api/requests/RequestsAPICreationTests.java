@@ -3,6 +3,7 @@ package api.requests;
 import static api.support.builders.RequestBuilder.OPEN_AWAITING_PICKUP;
 import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
 import static api.support.fakes.FakePubSub.getPublishedEventsAsList;
+import static api.support.fakes.PublishedEvents.byEventType;
 import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.fixtures.AutomatedPatronBlocksFixture.MAX_NUMBER_OF_ITEMS_CHARGED_OUT_MESSAGE;
 import static api.support.fixtures.AutomatedPatronBlocksFixture.MAX_OUTSTANDING_FEE_FINE_BALANCE_MESSAGE;
@@ -10,6 +11,7 @@ import static api.support.http.CqlQuery.exactMatch;
 import static api.support.http.CqlQuery.notEqual;
 import static api.support.http.Limit.limit;
 import static api.support.http.Offset.noOffset;
+import static api.support.matchers.EventMatchers.isValidLoanDueDateChangedEvent;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static api.support.matchers.JsonObjectMatcher.hasNoJsonPath;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
@@ -51,10 +53,13 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.emptyString;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDate;
@@ -65,6 +70,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -108,6 +114,7 @@ import api.support.builders.UserBuilder;
 import api.support.builders.UserManualBlockBuilder;
 import api.support.fakes.FakeModNotify;
 import api.support.fakes.FakePubSub;
+import api.support.fakes.PublishedEvents;
 import api.support.fixtures.CheckInFixture;
 import api.support.fixtures.ItemExamples;
 import api.support.fixtures.ItemsFixture;
@@ -1438,6 +1445,40 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(recallRequest.getJson().getString("requestType"), is(RequestType.RECALL.getValue()));
     assertThat(requestedItem.getString("status"), is(ItemStatus.CHECKED_OUT.getValue()));
     assertThat(recallRequest.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
+  }
+
+  @Test
+  void canCreateTlrRecallForInstanceWithSingleItemAndTwoLoans() {
+    reconfigureTlrFeature(TlrFeatureStatus.ENABLED);
+    final ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource requestPickupServicePoint = servicePointsFixture.cd1();
+
+    IndividualResource initialLoan = checkOutFixture.checkOutByBarcode(item, usersFixture.jessica());
+    checkInFixture.checkInByBarcode(item);
+    IndividualResource dueDateChangeLoan = checkOutFixture.checkOutByBarcode(item, usersFixture.jessica());
+
+    requestsClient.create(new RequestBuilder()
+      .recall()
+      .withNoHoldingsRecordId()
+      .withNoItemId()
+      .titleRequestLevel()
+      .withInstanceId(item.getInstanceId())
+      .withPickupServicePointId(requestPickupServicePoint.getId())
+      .withRequesterId(usersFixture.james().getId()));
+
+    PublishedEvents publishedEvents = Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(FakePubSub::getPublishedEvents, hasSize(9));
+
+    JsonObject loanWithoutChange = loansClient.get(initialLoan.getId()).getJson();
+    assertNull(loanWithoutChange.getString("dueDateChangedByRecall"));
+    JsonObject updatedLoan = loansClient.get(dueDateChangeLoan.getId()).getJson();
+    assertThat(updatedLoan.getString("dueDateChangedByRecall"), true);
+
+    JsonObject event = publishedEvents.findFirst(byEventType("LOAN_DUE_DATE_CHANGED"));
+    assertThat(event, isValidLoanDueDateChangedEvent(updatedLoan));
+    assertThat(new JsonObject(event.getString("eventPayload"))
+      .getBoolean("dueDateChangedByRecall"), equalTo(true));
   }
 
   @Test
@@ -3019,11 +3060,11 @@ public class RequestsAPICreationTests extends APITests {
     verifyNumberOfSentNotices(2);
     verifyNumberOfPublishedEvents(NOTICE, 2);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
-    List<JsonObject> noticeLogs = FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE));
+    List<JsonObject> noticeLogContextItemLogs = FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE));
 
     // verify item barcodes
-    validateNoticeLogContextItem(noticeLogs.get(0), item);
-    validateNoticeLogContextItem(noticeLogs.get(1), item);
+    validateNoticeLogContextItem(noticeLogContextItemLogs.get(0), item);
+    validateNoticeLogContextItem(noticeLogContextItemLogs.get(1), item);
   }
 
   private void validateNoticeLogContextItem(JsonObject noticeLogContextItem, ItemResource item) {
