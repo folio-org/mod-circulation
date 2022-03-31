@@ -10,7 +10,6 @@ import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -31,6 +30,7 @@ import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.representations.ItemsInTransitReport;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
+import org.folio.circulation.infrastructure.storage.inventory.InstanceRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemReportRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.inventory.LocationRepository;
@@ -55,17 +55,19 @@ public class ItemsInTransitReportService {
   private ItemRepository itemRepository;
   private UserRepository userRepository;
   private PatronGroupRepository patronGroupRepository;
+  private final InstanceRepository instanceRepository;
 
   public ItemsInTransitReportService(Clients clients) {
     this.itemReportRepository = new ItemReportRepository(clients);
     this.itemRepository = new ItemRepository(clients);
     this.userRepository = new UserRepository(clients);
     this.loanRepository = new LoanRepository(clients, itemRepository, userRepository);
-    this.locationRepository = LocationRepository.using(clients);
     this.servicePointRepository = new ServicePointRepository(clients);
+    this.locationRepository = LocationRepository.using(clients, servicePointRepository);
     this.requestRepository = new RequestRepository(clients, itemRepository, userRepository,
       loanRepository, servicePointRepository, patronGroupRepository);
     this.patronGroupRepository = new PatronGroupRepository(clients);
+    this.instanceRepository = new InstanceRepository(clients);
   }
 
   public CompletableFuture<Result<JsonObject>> buildReport() {
@@ -107,8 +109,8 @@ public class ItemsInTransitReportService {
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchInstances(
     ItemsInTransitReportContext context) {
 
-    return itemRepository.findInstancesByIds(mapToStrings(context.getItems().values(),
-        context::getInstanceId))
+    return instanceRepository.fetchByIds(mapToStrings(context.getItems().values(),
+          context::getInstanceId))
       .thenApply(mapResult(records -> toMap(records.getRecords(), Instance::getId)))
       .thenApply(mapResult(context::withInstances));
   }
@@ -117,7 +119,7 @@ public class ItemsInTransitReportService {
     ItemsInTransitReportContext context) {
 
     return locationRepository
-      .getItemLocations(context.getItems().values(), List.of(Item::getLocationId))
+      .getItemLocations(context.getItems().values())
       .thenApply(mapResult(context::withLocations));
   }
 

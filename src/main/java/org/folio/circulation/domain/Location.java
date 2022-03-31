@@ -17,18 +17,23 @@ public class Location {
   private final JsonObject campusRepresentation;
   private final JsonObject institutionRepresentation;
 
+  private final ServicePoint primaryServicePoint;
+
   public Location(JsonObject representation,
-                  JsonObject libraryRepresentation,
-                  JsonObject campusRepresentation,
-                  JsonObject institutionRepresentation) {
+    JsonObject libraryRepresentation,
+    JsonObject campusRepresentation,
+    JsonObject institutionRepresentation,
+    ServicePoint primaryServicePoint) {
+
     this.representation = representation;
     this.libraryRepresentation = libraryRepresentation;
     this.campusRepresentation = campusRepresentation;
     this.institutionRepresentation = institutionRepresentation;
+    this.primaryServicePoint = primaryServicePoint;
   }
 
   public static Location from(JsonObject locationRepresentation) {
-    return new Location(locationRepresentation, null, null, null);
+    return new Location(locationRepresentation, null, null, null, null);
   }
 
   public String getId() {
@@ -86,16 +91,28 @@ public class Location {
     return getProperty(institutionRepresentation, "name");
   }
 
+  public ServicePoint getPrimaryServicePoint() {
+    return primaryServicePoint;
+  }
+
   public Location withLibraryRepresentation(JsonObject libraryRepresentation) {
-    return new Location(representation, libraryRepresentation, campusRepresentation, institutionRepresentation);
+    return new Location(representation, libraryRepresentation, campusRepresentation,
+      institutionRepresentation, primaryServicePoint);
   }
 
   public Location withCampusRepresentation(JsonObject campusRepresentation) {
-    return new Location(representation, libraryRepresentation, campusRepresentation, institutionRepresentation);
+    return new Location(representation, libraryRepresentation, campusRepresentation,
+      institutionRepresentation, primaryServicePoint);
   }
 
   public Location withInstitutionRepresentation(JsonObject institutionRepresentation) {
-    return new Location(representation, libraryRepresentation, campusRepresentation, institutionRepresentation);
+    return new Location(representation, libraryRepresentation, campusRepresentation,
+      institutionRepresentation, primaryServicePoint);
+  }
+
+  public Location withPrimaryServicePoint(ServicePoint servicePoint) {
+    return new Location(representation, libraryRepresentation, campusRepresentation,
+      institutionRepresentation, servicePoint);
   }
 
   private boolean matchesPrimaryServicePoint(UUID servicePointId) {

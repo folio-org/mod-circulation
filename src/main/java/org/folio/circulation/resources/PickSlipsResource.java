@@ -89,7 +89,7 @@ public class PickSlipsResource extends Resource {
 
     fetchLocationsForServicePoint(servicePointId, clients)
       .thenComposeAsync(r -> r.after(locations -> fetchPagedItemsForLocations(locations,
-        clients, itemRepository)))
+        itemRepository, LocationRepository.using(clients, servicePointRepository))))
       .thenComposeAsync(r -> r.after(items -> fetchOpenPageRequestsForItems(items, clients)))
       .thenComposeAsync(r -> r.after(userRepository::findUsersForRequests))
       .thenComposeAsync(r -> r.after(addressTypeRepository::findAddressTypesForRequests))
@@ -107,8 +107,8 @@ public class PickSlipsResource extends Resource {
   }
 
   private CompletableFuture<Result<Collection<Item>>> fetchPagedItemsForLocations(
-    MultipleRecords<Location> multipleLocations, Clients clients,
-    ItemRepository itemRepository) {
+    MultipleRecords<Location> multipleLocations,
+    ItemRepository itemRepository, LocationRepository locationRepository) {
 
     Collection<Location> locations = multipleLocations.getRecords();
 
@@ -124,16 +124,15 @@ public class PickSlipsResource extends Resource {
     Result<CqlQuery> statusQuery = exactMatch(STATUS_NAME_KEY, ItemStatus.PAGED.getValue());
 
     return itemRepository.findByIndexNameAndQuery(locationIds, EFFECTIVE_LOCATION_ID_KEY, statusQuery)
-      .thenComposeAsync(r -> r.after(items -> fetchLocationDetailsForItems(items, locations, clients)));
+      .thenComposeAsync(r -> r.after(items -> fetchLocationDetailsForItems(items, locations,
+        locationRepository)));
   }
 
   private CompletableFuture<Result<Collection<Item>>> fetchLocationDetailsForItems(
-    Collection<Item> items, Collection<Location> locationsForServicePoint, Clients clients) {
+    MultipleRecords<Item> items, Collection<Location> locationsForServicePoint,
+    LocationRepository locationRepository) {
 
-    Set<String> locationIdsFromItems = items.stream()
-      .map(Item::getLocationId)
-      .filter(StringUtils::isNoneBlank)
-      .collect(toSet());
+    Set<String> locationIdsFromItems = items.toKeys(Item::getLocationId);
 
     Set<Location> locationsForItems = locationsForServicePoint.stream()
       .filter(location -> locationIdsFromItems.contains(location.getId()))
@@ -143,8 +142,6 @@ public class PickSlipsResource extends Resource {
       return completedFuture(succeeded(emptyList()));
     }
 
-    final LocationRepository locationRepository = LocationRepository.using(clients);
-
     return completedFuture(succeeded(locationsForItems))
       .thenComposeAsync(r -> r.after(locationRepository::fetchLibraries))
       .thenComposeAsync(r -> r.after(locationRepository::fetchInstitutions))
@@ -153,16 +150,14 @@ public class PickSlipsResource extends Resource {
   }
 
   private Result<Collection<Item>> matchLocationsToItems(
-    Collection<Item> items, Collection<Location> locations) {
+    MultipleRecords<Item> items, Collection<Location> locations) {
 
     Map<String, Location> locationsMap = locations.stream()
       .collect(toMap(Location::getId, identity()));
 
     return succeeded(
-      items.stream()
-        .map(item -> item.withLocation(locationsMap.getOrDefault(item.getLocationId(), null)))
-        .collect(toSet())
-    );
+      items.mapRecords(item -> item.withLocation(locationsMap.getOrDefault(item.getLocationId(), null)))
+        .getRecords());
   }
 
   private CompletableFuture<Result<MultipleRecords<Request>>> fetchOpenPageRequestsForItems(

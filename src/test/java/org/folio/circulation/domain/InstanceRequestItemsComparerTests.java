@@ -257,7 +257,8 @@ class InstanceRequestItemsComparerTests {
       servicePointsArray.add(withServicePointId.toString());
       homeLocation.put("servicePointIds", servicePointsArray);
 
-      location = new Location(homeLocation, null, null, null);
+      location = new Location(homeLocation, null, null, null,
+              null);
     }
 
     return Item.from(itemRepresentation)

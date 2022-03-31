@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -58,12 +59,26 @@ public class MultipleRecords<T> {
       wrappedRecords, totalRecords));
   }
 
+  public <R> MultipleRecords<T> combineRecords(MultipleRecords<R> otherRecords,
+    Function<T, Predicate<R>> matcher,
+    BiFunction<T, R, T> combiner, R defaultOtherRecord) {
+
+    return mapRecords(mainRecord -> combiner.apply(mainRecord, otherRecords
+      .filter(matcher.apply(mainRecord))
+      .firstOrElse(defaultOtherRecord)));
+  }
+
   public T firstOrNull() {
-    return getRecords().stream().findFirst().orElse(null);
+    return firstOrElse(null);
+  }
+
+  public T firstOrElse(T other) {
+    return getRecords().stream().findFirst().orElse(other);
   }
 
   public <R> Set<R> toKeys(Function<T, R> keyMapper) {
     return getRecords().stream()
+      .filter(Objects::nonNull)
       .map(keyMapper)
       .filter(Objects::nonNull)
       .collect(Collectors.toSet());
@@ -140,5 +155,17 @@ public class MultipleRecords<T> {
 
   public int size() {
     return records.size();
+  }
+
+  public static class CombinationMatchers {
+    private CombinationMatchers() { }
+
+    public static <T, R> Function<T, Predicate<R>> matchRecordsById(
+      Function<T, String> idFromMainRecord,
+      Function<R, String> idFromOtherRecord) {
+
+      return mainRecord -> otherRecord
+        -> Objects.equals(idFromMainRecord.apply(mainRecord), idFromOtherRecord.apply(otherRecord));
+    }
   }
 }
