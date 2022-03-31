@@ -11,6 +11,7 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 
@@ -143,7 +144,8 @@ class LostItemPolicyTest {
 
     final LostItemPolicy lostItemPolicy = LostItemPolicy.from(builder.create());
 
-    final ZonedDateTime now = getZonedDateTime();
+    final ZonedDateTime now
+      = ZonedDateTime.of(2022, 3, 27, 11, 25, 35, 0, ZoneId.of("UTC"));
     setClock(fixed(now.toInstant(), ZoneOffset.UTC));
 
     final ZonedDateTime lostDateTime = period.minusDate(now);
