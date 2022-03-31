@@ -47,34 +47,25 @@ class RequestsAPILoanHistoryTests extends APITests {
   void checkOutShouldNotRecallLoanIfRecallRequestExistsForAnotherItemOfTheSameInstanceIfTlrIsEnabled() {
     configurationsFixture.enableTlrFeature();
     final var items = itemsFixture.createMultipleItemsForTheSameInstance(2);
-    final var pickupServicePointId = servicePointsFixture.cd1().getId();
     var steve = usersFixture.steve();
     var charlotte = usersFixture.charlotte();
 
     ItemResource firstItem = items.get(0);
     checkOutFixture.checkOutByBarcode(firstItem, steve);
-    requestsClient.create(new RequestBuilder()
-      .recall()
-      .forItem(firstItem)
-      .withPickupServicePointId(pickupServicePointId)
-      .by(charlotte));
+    requestsFixture.recallItem(firstItem, charlotte);
 
     var secondItem = items.get(1);
-    var loanAfterCheckOut = checkOutFixture.checkOutByBarcode(secondItem, charlotte).getJson();
-    assertThat("Action was not updated", loanAfterCheckOut.getString("action"),
+    var loanAfterCheckOut = checkOutFixture.checkOutByBarcode(secondItem, charlotte);
+    var loanAfterCheckOutJson = loanAfterCheckOut.getJson();
+    assertThat("Action was not updated", loanAfterCheckOutJson.getString("action"),
       is("checkedout"));
 
-    requestsClient.create(new RequestBuilder()
-      .recall()
-      .forItem(secondItem)
-      .withPickupServicePointId(pickupServicePointId)
-      .by(steve)).getJson().getJsonObject("loan").getString("id");
+    requestsFixture.recallItem(secondItem, steve);
 
-    var loanAfterRecall = loansFixture.getLoanById(
-      UUID.fromString(loanAfterCheckOut.getString("id"))).getJson();
-    assertThat("Due date was not updated", loanAfterCheckOut.getInstant("dueDate"),
-      is(not(loanAfterRecall.getInstant("dueDate"))));
-    assertThat("Action was not updated", loanAfterRecall.getString("action"),
+    var loanAfterRecallJson = loansFixture.getLoanById(loanAfterCheckOut.getId()).getJson();
+    assertThat("Due date was not updated", loanAfterCheckOutJson.getInstant("dueDate"),
+      is(not(loanAfterRecallJson.getInstant("dueDate"))));
+    assertThat("Action was not updated", loanAfterRecallJson.getString("action"),
       is("recallrequested"));
   }
 
