@@ -30,7 +30,7 @@ public class LoanService {
       return completedFuture(succeeded(records));
     }
 
-    if (!requestQueue.containsRequestOfType(RequestType.RECALL)) {
+    if (!requestQueue.containsRequestOfTypeForItem(RequestType.RECALL, records.getItem())) {
       return completedFuture(succeeded(records));
     }
 

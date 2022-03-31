@@ -44,6 +44,32 @@ class RequestsAPILoanHistoryTests extends APITests {
   }
 
   @Test
+  void checkOutShouldNotTruncateLoanIfRecallRequestExistsForAnotherItemOfTheSameInstanceIfTlrIsEnabled() {
+    configurationsFixture.enableTlrFeature();
+    final var items = itemsFixture.createMultipleItemsForTheSameInstance(2);
+    var steve = usersFixture.steve();
+    var charlotte = usersFixture.charlotte();
+
+    ItemResource firstItem = items.get(0);
+    checkOutFixture.checkOutByBarcode(firstItem, steve);
+    requestsFixture.recallItem(firstItem, charlotte);
+
+    var secondItem = items.get(1);
+    var loanAfterCheckOut = checkOutFixture.checkOutByBarcode(secondItem, charlotte);
+    var loanAfterCheckOutJson = loanAfterCheckOut.getJson();
+    assertThat("Action was not updated", loanAfterCheckOutJson.getString("action"),
+      is("checkedout"));
+
+    requestsFixture.recallItem(secondItem, steve);
+
+    var loanAfterRecallJson = loansFixture.getLoanById(loanAfterCheckOut.getId()).getJson();
+    assertThat("Due date was not updated", loanAfterCheckOutJson.getInstant("dueDate"),
+      is(not(loanAfterRecallJson.getInstant("dueDate"))));
+    assertThat("Action was not updated", loanAfterRecallJson.getString("action"),
+      is("recallrequested"));
+  }
+
+  @Test
   void creatingHoldRequestDoesNotChangeClosedLoanForTheSameItem() {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
