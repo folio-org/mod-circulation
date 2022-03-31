@@ -8,7 +8,9 @@ import io.vertx.core.json.JsonObject;
 
 public class MaterialTypeMapper {
   public MaterialType toDomain(JsonObject representation) {
-    return new MaterialType(getProperty(representation, "name"),
+    return new MaterialType(
+      getProperty(representation, "id"),
+      getProperty(representation, "name"),
       getProperty(representation, "source"));
   }
 }

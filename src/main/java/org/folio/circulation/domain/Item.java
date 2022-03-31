@@ -38,7 +38,6 @@ import lombok.NonNull;
 public class Item {
   private final JsonObject itemRepresentation;
   private final Location location;
-  private final ServicePoint primaryServicePoint;
   private final LastCheckIn lastCheckIn;
   private final CallNumberComponents callNumberComponents;
   private final Location permanentLocation;
@@ -52,9 +51,7 @@ public class Item {
   @NonNull private final LoanType loanType;
 
   public static Item from(JsonObject representation) {
-    return new Item(representation,
-      null,
-      null,
+    return new Item(representation, null,
       LastCheckIn.fromItemJson(representation),
       CallNumberComponents.fromItemJson(representation),
       null,
@@ -250,7 +247,11 @@ public class Item {
   }
 
   private ServicePoint getPrimaryServicePoint() {
-    return primaryServicePoint;
+    if (location == null) {
+      return null;
+    }
+
+    return location.getPrimaryServicePoint();
   }
 
   public String getLoanTypeId() {
@@ -351,7 +352,6 @@ public class Item {
     return new Item(
       this.itemRepresentation,
       newLocation,
-      this.primaryServicePoint,
       this.lastCheckIn,
       this.callNumberComponents,
       this.permanentLocation,
@@ -363,7 +363,6 @@ public class Item {
     return new Item(
       this.itemRepresentation,
       this.location,
-      this.primaryServicePoint,
       this.lastCheckIn,
       this.callNumberComponents,
       this.permanentLocation,
@@ -376,7 +375,6 @@ public class Item {
     return new Item(
       this.itemRepresentation,
       this.location,
-      this.primaryServicePoint,
       this.lastCheckIn,
       this.callNumberComponents,
       this.permanentLocation,
@@ -389,7 +387,6 @@ public class Item {
     return new Item(
       this.itemRepresentation,
       this.location,
-      this.primaryServicePoint,
       this.lastCheckIn,
       this.callNumberComponents,
       this.permanentLocation,
@@ -398,24 +395,10 @@ public class Item {
       instance, this.materialType, loanType);
   }
 
-  public Item withPrimaryServicePoint(ServicePoint servicePoint) {
-    return new Item(
-      this.itemRepresentation,
-      this.location,
-      servicePoint,
-      this.lastCheckIn,
-      this.callNumberComponents,
-      this.permanentLocation,
-      this.inTransitDestinationServicePoint,
-      this.changed, holdings, this.instance, this.materialType, loanType);
-  }
-
-
   public Item withLoanType(LoanType loanType) {
     return new Item(
       this.itemRepresentation,
       this.location,
-      this.primaryServicePoint,
       this.lastCheckIn,
       this.callNumberComponents,
       this.permanentLocation,
@@ -432,7 +415,6 @@ public class Item {
     return new Item(
       changedItemRepresentation,
       this.location,
-      this.primaryServicePoint,
       lastCheckIn,
       this.callNumberComponents,
       this.permanentLocation,
@@ -444,7 +426,6 @@ public class Item {
     return new Item(
       this.itemRepresentation,
       this.location,
-      this.primaryServicePoint,
       this.lastCheckIn,
       this.callNumberComponents,
       permanentLocation,

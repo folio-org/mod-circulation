@@ -12,7 +12,6 @@ import java.util.Comparator;
 import java.util.List;
 
 import org.folio.circulation.domain.Holdings;
-import org.folio.circulation.domain.Instance;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.LastCheckIn;
@@ -71,8 +70,7 @@ public class ItemsInTransitReport {
       ServicePoint primaryServicePoint = reportContext.getServicePoints()
         .get(location.getPrimaryServicePointId().toString());
       item = item
-        .withLocation(location)
-        .withPrimaryServicePoint(primaryServicePoint);
+        .withLocation(location.withPrimaryServicePoint(primaryServicePoint));
     }
 
     ServicePoint inTransitDestinationServicePoint = reportContext.getServicePoints()
