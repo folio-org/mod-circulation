@@ -145,7 +145,6 @@ public class RequestsAPICreationTests extends APITests {
   public static final BlockOverrides PATRON_BLOCK_OVERRIDE =
     new BlockOverrides(null, new PatronBlockOverride(true), null, null, null, null);
   public static final String PATRON_BLOCK_NAME = "patronBlock";
-  public static final String ITEM_BARCODE = "itemBarcode";
 
   @AfterEach
   public void afterEach() {
@@ -3062,15 +3061,20 @@ public class RequestsAPICreationTests extends APITests {
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
     List<JsonObject> noticeLogContextItemLogs = FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE));
 
-    // verify item barcodes
+    // verify noticeLogContextItemLogs
     validateNoticeLogContextItem(noticeLogContextItemLogs.get(0), item);
     validateNoticeLogContextItem(noticeLogContextItemLogs.get(1), item);
   }
 
   private void validateNoticeLogContextItem(JsonObject noticeLogContextItem, ItemResource item) {
-    String noticeLogStr = noticeLogContextItem.toString();
-    assertTrue(noticeLogStr.indexOf(ITEM_BARCODE) > 0);
-    assertTrue(noticeLogStr.indexOf(item.getBarcode()) > 0);
+    JsonArray itemsJsonArray = new JsonObject(noticeLogContextItem.getString("eventPayload"))
+      .getJsonObject("payload").getJsonArray("items");
+    JsonObject itemJsonObject = itemsJsonArray.getJsonObject(0);
+
+    assertThat(itemJsonObject.getString("itemBarcode"), is(item.getBarcode()));
+    assertThat(itemJsonObject.getString("itemId"), is(item.getId()));
+    assertThat(itemJsonObject.getString("instanceId"), is(item.getInstanceId()));
+    assertThat(itemJsonObject.getString("holdingsRecordId"), is(item.getHoldingsRecordId()));
   }
 
   private boolean isNotPaged(IndividualResource item) {
