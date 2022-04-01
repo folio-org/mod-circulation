@@ -850,7 +850,8 @@
             "pubsub.events.post"
           ],
           "modulePermissions": [
-            "modperms.circulation.handlers.loan-related-fee-fine-closed.post"
+            "modperms.circulation.handlers.loan-related-fee-fine-closed.post",
+            "pubsub.publish.post"
           ]
         }
       ]
@@ -1211,6 +1212,26 @@
       "permissionName": "circulation.end-patron-action-session.post",
       "displayName": "circulation - end patron action session",
       "description": "end patron action session"
+    },
+    {
+      "permissionName": "circulation.override-renewal-block",
+      "displayName": "circulation - override renewal block",
+      "description": "renewal block override"
+    },
+    {
+      "permissionName": "circulation.override-item-limit-block",
+      "displayName": "circulation - override item limit block",
+      "description": "item limit block override"
+    },
+    {
+      "permissionName": "circulation.override-item-not-loanable-block",
+      "displayName": "circulation - override item not loanable block",
+      "description": "item not loanable block override"
+    },
+    {
+      "permissionName": "circulation.override-patron-block",
+      "displayName": "circulation - override patron block",
+      "description": "patron block override"
     },
     {
       "permissionName": "circulation.all",

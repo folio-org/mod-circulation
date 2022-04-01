@@ -67,16 +67,18 @@ public class NoticeLogContextItem {
   public static NoticeLogContextItem from(Request request) {
     Item item = request.getItem();
     NoticeLogContextItem logContextItem = new NoticeLogContextItem();
+
     if (item != null) {
-      logContextItem.withItemId(item.getItemId())
+      logContextItem = logContextItem.withItemId(item.getItemId())
         .withItemBarcode(item.getBarcode())
         .withInstanceId(item.getInstanceId())
         .withHoldingsRecordId(item.getHoldingsRecordId());
     }
 
     if (Objects.nonNull(request.getPickupServicePointId())) {
-      return logContextItem.withServicePointId(request.getPickupServicePointId());
+      logContextItem = logContextItem.withServicePointId(request.getPickupServicePointId());
     }
+
     return logContextItem;
   }
 

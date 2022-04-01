@@ -617,7 +617,7 @@ class OverdueFineServiceTest {
           .withPrimaryServicePoint(SERVICE_POINT_ID)
           .create()))
       .withInstance(new Instance(UUID.randomUUID().toString(), TITLE, emptyList(), contributors, emptyList(), emptyList()))
-      .withMaterialType(new MaterialType(ITEM_MATERIAL_TYPE_NAME, null));
+      .withMaterialType(new MaterialType(null, ITEM_MATERIAL_TYPE_NAME, null));
   }
 
   private OverdueFinePolicy createOverdueFinePolicy(

@@ -36,13 +36,24 @@ public class InstanceRepository {
     return fetchById(request.getInstanceId());
   }
 
-  private CompletableFuture<Result<Instance>> fetchById(String instanceId) {
+  public CompletableFuture<Result<Instance>> fetchById(String instanceId) {
     InstanceMapper mapper = new InstanceMapper();
 
     return SingleRecordFetcher.jsonOrNull(instancesClient, "instance")
       .fetch(instanceId)
       .thenApply(r -> r.map(mapper::toDomain));
   }
+
+  public CompletableFuture<Result<MultipleRecords<Instance>>> fetchByIds(
+    Collection<String> instanceIds) {
+
+    InstanceMapper mapper = new InstanceMapper();
+
+    return findWithMultipleCqlIndexValues(instancesClient, "instances",
+      mapper::toDomain)
+      .findByIds(instanceIds);
+  }
+
 
   public CompletableFuture<Result<MultipleRecords<Request>>> findInstancesForRequests(MultipleRecords<Request> multipleRequests) {
     Collection<Request> requests = multipleRequests.getRecords();
@@ -92,5 +103,4 @@ public class InstanceRepository {
     }
     return instance -> request.getInstanceId().equals(instance.getId());
   }
-
 }
