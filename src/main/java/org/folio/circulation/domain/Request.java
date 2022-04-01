@@ -227,7 +227,8 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   boolean allowedForItem() {
-    return RequestTypeItemStatusWhiteList.canCreateRequestForItem(getItem().getStatus(), getRequestType());
+    return RequestTypeItemStatusWhiteList.canCreateRequestForItem(
+      getItem().getStatus().getName(), getRequestType());
   }
 
   LoanAction actionOnCreateOrUpdate() {

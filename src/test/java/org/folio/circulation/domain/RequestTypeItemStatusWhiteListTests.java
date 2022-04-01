@@ -2,23 +2,24 @@ package org.folio.circulation.domain;
 
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
-import static org.folio.circulation.domain.ItemStatus.AGED_TO_LOST;
-import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
-import static org.folio.circulation.domain.ItemStatus.AWAITING_DELIVERY;
-import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
-import static org.folio.circulation.domain.ItemStatus.CLAIMED_RETURNED;
-import static org.folio.circulation.domain.ItemStatus.DECLARED_LOST;
-import static org.folio.circulation.domain.ItemStatus.INTELLECTUAL_ITEM;
-import static org.folio.circulation.domain.ItemStatus.IN_PROCESS;
-import static org.folio.circulation.domain.ItemStatus.IN_PROCESS_NON_REQUESTABLE;
-import static org.folio.circulation.domain.ItemStatus.LONG_MISSING;
-import static org.folio.circulation.domain.ItemStatus.LOST_AND_PAID;
-import static org.folio.circulation.domain.ItemStatus.ON_ORDER;
-import static org.folio.circulation.domain.ItemStatus.PAGED;
-import static org.folio.circulation.domain.ItemStatus.RESTRICTED;
-import static org.folio.circulation.domain.ItemStatus.UNAVAILABLE;
-import static org.folio.circulation.domain.ItemStatus.UNKNOWN;
-import static org.folio.circulation.domain.ItemStatus.WITHDRAWN;
+import static org.folio.circulation.domain.ItemStatusName.AGED_TO_LOST;
+import static org.folio.circulation.domain.ItemStatusName.AVAILABLE;
+import static org.folio.circulation.domain.ItemStatusName.AWAITING_DELIVERY;
+import static org.folio.circulation.domain.ItemStatusName.CHECKED_OUT;
+import static org.folio.circulation.domain.ItemStatusName.CLAIMED_RETURNED;
+import static org.folio.circulation.domain.ItemStatusName.DECLARED_LOST;
+import static org.folio.circulation.domain.ItemStatusName.INTELLECTUAL_ITEM;
+import static org.folio.circulation.domain.ItemStatusName.IN_PROCESS;
+import static org.folio.circulation.domain.ItemStatusName.IN_PROCESS_NON_REQUESTABLE;
+import static org.folio.circulation.domain.ItemStatusName.LONG_MISSING;
+import static org.folio.circulation.domain.ItemStatusName.LOST_AND_PAID;
+import static org.folio.circulation.domain.ItemStatusName.NONE;
+import static org.folio.circulation.domain.ItemStatusName.ON_ORDER;
+import static org.folio.circulation.domain.ItemStatusName.PAGED;
+import static org.folio.circulation.domain.ItemStatusName.RESTRICTED;
+import static org.folio.circulation.domain.ItemStatusName.UNAVAILABLE;
+import static org.folio.circulation.domain.ItemStatusName.UNKNOWN;
+import static org.folio.circulation.domain.ItemStatusName.WITHDRAWN;
 import static org.folio.circulation.domain.RequestType.HOLD;
 import static org.folio.circulation.domain.RequestType.PAGE;
 import static org.folio.circulation.domain.RequestType.RECALL;
@@ -89,7 +90,7 @@ class  RequestTypeItemStatusWhiteListTests {
 
   @Test
   void cannotCreatePagedRequestWhenItemStatusIsNone() {
-    assertFalse(canCreateRequestForItem(ItemStatus.NONE, PAGE));
+    assertFalse(canCreateRequestForItem(NONE, PAGE));
   }
 
   @Test

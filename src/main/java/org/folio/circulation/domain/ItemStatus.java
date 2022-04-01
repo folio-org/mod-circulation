@@ -56,6 +56,10 @@ public enum ItemStatus {
     return value;
   }
 
+  public ItemStatusName getName() {
+    return ItemStatusName.from(value);
+  }
+
   public String getDate() {
     return date;
   }

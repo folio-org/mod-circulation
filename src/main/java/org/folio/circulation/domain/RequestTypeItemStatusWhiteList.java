@@ -1,35 +1,35 @@
 package org.folio.circulation.domain;
 
-import static org.folio.circulation.domain.ItemStatus.AGED_TO_LOST;
-import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
-import static org.folio.circulation.domain.ItemStatus.AWAITING_DELIVERY;
-import static org.folio.circulation.domain.ItemStatus.AWAITING_PICKUP;
-import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
-import static org.folio.circulation.domain.ItemStatus.CLAIMED_RETURNED;
-import static org.folio.circulation.domain.ItemStatus.DECLARED_LOST;
-import static org.folio.circulation.domain.ItemStatus.INTELLECTUAL_ITEM;
-import static org.folio.circulation.domain.ItemStatus.IN_PROCESS;
-import static org.folio.circulation.domain.ItemStatus.IN_PROCESS_NON_REQUESTABLE;
-import static org.folio.circulation.domain.ItemStatus.IN_TRANSIT;
-import static org.folio.circulation.domain.ItemStatus.LONG_MISSING;
-import static org.folio.circulation.domain.ItemStatus.LOST_AND_PAID;
-import static org.folio.circulation.domain.ItemStatus.MISSING;
-import static org.folio.circulation.domain.ItemStatus.NONE;
-import static org.folio.circulation.domain.ItemStatus.ON_ORDER;
-import static org.folio.circulation.domain.ItemStatus.PAGED;
-import static org.folio.circulation.domain.ItemStatus.RESTRICTED;
-import static org.folio.circulation.domain.ItemStatus.UNAVAILABLE;
-import static org.folio.circulation.domain.ItemStatus.UNKNOWN;
-import static org.folio.circulation.domain.ItemStatus.WITHDRAWN;
+import static org.folio.circulation.domain.ItemStatusName.AGED_TO_LOST;
+import static org.folio.circulation.domain.ItemStatusName.AVAILABLE;
+import static org.folio.circulation.domain.ItemStatusName.AWAITING_DELIVERY;
+import static org.folio.circulation.domain.ItemStatusName.AWAITING_PICKUP;
+import static org.folio.circulation.domain.ItemStatusName.CHECKED_OUT;
+import static org.folio.circulation.domain.ItemStatusName.CLAIMED_RETURNED;
+import static org.folio.circulation.domain.ItemStatusName.DECLARED_LOST;
+import static org.folio.circulation.domain.ItemStatusName.INTELLECTUAL_ITEM;
+import static org.folio.circulation.domain.ItemStatusName.IN_PROCESS;
+import static org.folio.circulation.domain.ItemStatusName.IN_PROCESS_NON_REQUESTABLE;
+import static org.folio.circulation.domain.ItemStatusName.IN_TRANSIT;
+import static org.folio.circulation.domain.ItemStatusName.LONG_MISSING;
+import static org.folio.circulation.domain.ItemStatusName.LOST_AND_PAID;
+import static org.folio.circulation.domain.ItemStatusName.MISSING;
+import static org.folio.circulation.domain.ItemStatusName.NONE;
+import static org.folio.circulation.domain.ItemStatusName.ON_ORDER;
+import static org.folio.circulation.domain.ItemStatusName.PAGED;
+import static org.folio.circulation.domain.ItemStatusName.RESTRICTED;
+import static org.folio.circulation.domain.ItemStatusName.UNAVAILABLE;
+import static org.folio.circulation.domain.ItemStatusName.UNKNOWN;
+import static org.folio.circulation.domain.ItemStatusName.WITHDRAWN;
 
 import java.util.EnumMap;
 
 public class RequestTypeItemStatusWhiteList {
-  private static EnumMap<ItemStatus, Boolean> recallRules;
-  private static EnumMap<ItemStatus, Boolean> holdRules;
-  private static EnumMap<ItemStatus, Boolean> pageRules;
-  private static EnumMap<ItemStatus, Boolean> noneRules;
-  private static EnumMap<RequestType, EnumMap<ItemStatus, Boolean>> requestsRulesMap;
+  private static EnumMap<ItemStatusName, Boolean> recallRules;
+  private static EnumMap<ItemStatusName, Boolean> holdRules;
+  private static EnumMap<ItemStatusName, Boolean> pageRules;
+  private static EnumMap<ItemStatusName, Boolean> noneRules;
+  private static EnumMap<RequestType, EnumMap<ItemStatusName, Boolean>> requestsRulesMap;
 
   static {
     initRecallRules();
@@ -44,7 +44,7 @@ public class RequestTypeItemStatusWhiteList {
   }
 
   private static void initRecallRules() {
-    recallRules = new EnumMap<>(ItemStatus.class);
+    recallRules = new EnumMap<>(ItemStatusName.class);
     recallRules.put(CHECKED_OUT, true);
     recallRules.put(AVAILABLE, false);
     recallRules.put(AWAITING_PICKUP, true);
@@ -69,7 +69,7 @@ public class RequestTypeItemStatusWhiteList {
   }
 
   private static void initHoldRules() {
-    holdRules = new EnumMap<>(ItemStatus.class);
+    holdRules = new EnumMap<>(ItemStatusName.class);
     holdRules.put(CHECKED_OUT, true);
     holdRules.put(AVAILABLE, false);
     holdRules.put(AWAITING_PICKUP, true);
@@ -94,7 +94,7 @@ public class RequestTypeItemStatusWhiteList {
   }
 
   private static void initPageRules() {
-    pageRules = new EnumMap<>(ItemStatus.class);
+    pageRules = new EnumMap<>(ItemStatusName.class);
     pageRules.put(CHECKED_OUT, false);
     pageRules.put(AVAILABLE, true);
     pageRules.put(RESTRICTED, true);
@@ -119,7 +119,7 @@ public class RequestTypeItemStatusWhiteList {
   }
 
   private static void initNoneRules() {
-    noneRules = new EnumMap<>(ItemStatus.class);
+    noneRules = new EnumMap<>(ItemStatusName.class);
     noneRules.put(CHECKED_OUT, false);
     noneRules.put(AVAILABLE, false);
     noneRules.put(AWAITING_PICKUP, false);
@@ -150,7 +150,7 @@ public class RequestTypeItemStatusWhiteList {
     requestsRulesMap.put(RequestType.NONE, noneRules);
   }
 
-  public static boolean canCreateRequestForItem(ItemStatus itemStatus, RequestType requestType) {
+  public static boolean canCreateRequestForItem(ItemStatusName itemStatus, RequestType requestType) {
     return requestsRulesMap.get(requestType).get(itemStatus);
   }
 }
