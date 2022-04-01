@@ -77,6 +77,6 @@ public enum ItemStatus {
   }
 
   public boolean isLostNotResolved() {
-    return this == DECLARED_LOST || this == AGED_TO_LOST;
+    return getName().isLostNotResolved();
   }
 }
