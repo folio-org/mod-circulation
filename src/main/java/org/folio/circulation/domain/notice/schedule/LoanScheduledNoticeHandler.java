@@ -3,8 +3,8 @@ package org.folio.circulation.domain.notice.schedule;
 import static java.util.Collections.singletonList;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 import static org.folio.circulation.domain.FeeFine.lostItemFeeTypes;
-import static org.folio.circulation.domain.ItemStatus.CLAIMED_RETURNED;
-import static org.folio.circulation.domain.ItemStatus.DECLARED_LOST;
+import static org.folio.circulation.domain.ItemStatusName.CLAIMED_RETURNED;
+import static org.folio.circulation.domain.ItemStatusName.DECLARED_LOST;
 import static org.folio.circulation.domain.notice.NoticeTiming.BEFORE;
 import static org.folio.circulation.domain.notice.TemplateContextUtil.createLoanNoticeContext;
 import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.AGED_TO_LOST;
@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.commons.collections.CollectionUtils;
-import org.folio.circulation.domain.ItemStatus;
+import org.folio.circulation.domain.ItemStatusName;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.representations.logs.NoticeLogContext;
 import org.folio.circulation.domain.representations.logs.NoticeLogContextItem;
@@ -154,7 +154,9 @@ public class LoanScheduledNoticeHandler extends ScheduledNoticeHandler {
     if (noticeConfig.hasBeforeTiming() && isBeforeMillis(dueDate, systemTime)) {
       logMessages.add("Loan is overdue");
     }
-    if (loan.hasItemWithAnyStatus(DECLARED_LOST, ItemStatus.AGED_TO_LOST, CLAIMED_RETURNED)) {
+    if (loan.hasItemWithAnyStatus(DECLARED_LOST,
+        ItemStatusName.AGED_TO_LOST, CLAIMED_RETURNED)) {
+
       logMessages.add(String.format("Recurring overdue notice for item in status \"%s\"",
         loan.getItemStatus()));
     }

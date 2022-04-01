@@ -463,11 +463,11 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public boolean isDeclaredLost() {
-    return hasItemWithStatus(ItemStatus.DECLARED_LOST);
+    return hasItemWithStatus(ItemStatusName.DECLARED_LOST);
   }
 
   public boolean isAgedToLost() {
-    return hasItemWithStatus(ItemStatus.AGED_TO_LOST);
+    return hasItemWithStatus(ItemStatusName.AGED_TO_LOST);
   }
 
   public boolean isItemLost() {
@@ -475,7 +475,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public boolean isClaimedReturned() {
-    return hasItemWithStatus(ItemStatus.CLAIMED_RETURNED);
+    return hasItemWithStatus(ItemStatusName.CLAIMED_RETURNED);
   }
 
   public boolean isRenewed() {
@@ -487,11 +487,11 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return false;
   }
 
-  public boolean hasItemWithStatus(ItemStatus itemStatus) {
+  public boolean hasItemWithStatus(ItemStatusName itemStatus) {
     return hasItemWithAnyStatus(itemStatus);
   }
 
-  public boolean hasItemWithAnyStatus(ItemStatus... itemStatuses) {
+  public boolean hasItemWithAnyStatus(ItemStatusName... itemStatuses) {
     return item != null && Stream.of(itemStatuses).anyMatch(item::isInStatus);
   }
 
