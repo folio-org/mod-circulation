@@ -1,12 +1,12 @@
 package org.folio.circulation.domain;
 
 import static org.apache.commons.lang3.StringUtils.firstNonBlank;
-import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
-import static org.folio.circulation.domain.ItemStatus.IN_TRANSIT;
+import static org.folio.circulation.domain.ItemStatusName.AVAILABLE;
 import static org.folio.circulation.domain.ItemStatusName.AWAITING_PICKUP;
 import static org.folio.circulation.domain.ItemStatusName.CHECKED_OUT;
 import static org.folio.circulation.domain.ItemStatusName.CLAIMED_RETURNED;
 import static org.folio.circulation.domain.ItemStatusName.DECLARED_LOST;
+import static org.folio.circulation.domain.ItemStatusName.IN_TRANSIT;
 import static org.folio.circulation.domain.ItemStatusName.MISSING;
 import static org.folio.circulation.domain.ItemStatusName.PAGED;
 import static org.folio.circulation.domain.representations.ItemProperties.STATUS_PROPERTY;
@@ -98,19 +98,15 @@ public class Item {
   }
 
   public boolean isAvailable() {
-    return isInStatus(ItemStatusName.AVAILABLE);
+    return isInStatus(AVAILABLE);
   }
 
   private boolean isInTransit() {
-    return isInStatus(ItemStatusName.IN_TRANSIT);
+    return isInStatus(IN_TRANSIT);
   }
 
   public boolean isDeclaredLost() {
     return isInStatus(DECLARED_LOST);
-  }
-
-  private boolean isInStatus(ItemStatus status) {
-    return getStatus().equals(status);
   }
 
   public boolean isInStatus(ItemStatusName status) {
@@ -118,13 +114,13 @@ public class Item {
   }
 
   public boolean isNotInStatus(ItemStatus status) {
-    return !isInStatus(status);
+    return !getStatus().equals(status);
   }
 
   public boolean isNotInStatus(ItemStatusName status) {
     return !getStatus().is(status);
   }
-
+  
   public boolean hasChanged() {
     return changed;
   }
@@ -295,6 +291,23 @@ public class Item {
     }
   }
 
+  public Item changeStatus(ItemStatusName newStatus) {
+    if (isNotInStatus(newStatus)) {
+      changed = true;
+    }
+
+    write(itemRepresentation, STATUS_PROPERTY,
+      new JsonObject().put("name", newStatus.getName()));
+
+    //TODO: Remove this hack to remove destination service point
+    // needs refactoring of how in transit for pickup is done
+    if(!isInTransit()) {
+      return removeDestination();
+    }
+    else {
+      return this;
+    }
+  }
 
   Item available() {
     return changeStatus(AVAILABLE)
