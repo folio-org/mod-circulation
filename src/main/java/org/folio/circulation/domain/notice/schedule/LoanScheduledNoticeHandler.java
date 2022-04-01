@@ -158,7 +158,7 @@ public class LoanScheduledNoticeHandler extends ScheduledNoticeHandler {
         ItemStatusName.AGED_TO_LOST, CLAIMED_RETURNED)) {
 
       logMessages.add(String.format("Recurring overdue notice for item in status \"%s\"",
-        loan.getItemStatus()));
+        loan.getItemStatusName()));
     }
 
     if (logMessages.isEmpty()) {
@@ -180,7 +180,7 @@ public class LoanScheduledNoticeHandler extends ScheduledNoticeHandler {
 
     if (loan.hasItemWithAnyStatus(DECLARED_LOST, CLAIMED_RETURNED)) {
       logMessages.add(
-        String.format("Recurring notice for item in status \"%s\"", loan.getItemStatus()));
+        String.format("Recurring notice for item in status \"%s\"", loan.getItemStatusName()));
     }
     if (loan.isRenewed()) {
       logMessages.add("Loan was renewed");

@@ -689,12 +689,12 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return previousDueDate;
   }
 
-  public ItemStatus getItemStatus() {
+  public ItemStatusName getItemStatus() {
     if (item != null) {
-      return item.getStatus();
+      return item.getStatus().getName();
     }
 
-   return ItemStatus.from(getItemStatusName());
+   return ItemStatusName.from(getItemStatusName());
   }
 
   public String getItemStatusName() {

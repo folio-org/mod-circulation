@@ -1,10 +1,10 @@
 package org.folio.circulation.resources.renewal;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.domain.ItemStatus.AGED_TO_LOST;
-import static org.folio.circulation.domain.ItemStatus.CLAIMED_RETURNED;
-import static org.folio.circulation.domain.ItemStatus.DECLARED_LOST;
+import static org.folio.circulation.domain.ItemStatusName.AGED_TO_LOST;
 import static org.folio.circulation.domain.ItemStatusName.CHECKED_OUT;
+import static org.folio.circulation.domain.ItemStatusName.CLAIMED_RETURNED;
+import static org.folio.circulation.domain.ItemStatusName.DECLARED_LOST;
 import static org.folio.circulation.domain.RequestType.HOLD;
 import static org.folio.circulation.domain.RequestType.RECALL;
 import static org.folio.circulation.domain.override.OverridableBlockType.PATRON_BLOCK;
@@ -48,7 +48,7 @@ import java.util.function.Function;
 
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.StoreLoanAndItem;
-import org.folio.circulation.domain.ItemStatus;
+import org.folio.circulation.domain.ItemStatusName;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanRepresentation;
 import org.folio.circulation.domain.OverdueFineService;
@@ -111,9 +111,9 @@ public abstract class RenewalResource extends Resource {
   private static final String DUE_DATE = "dueDate";
   private static final String OVERRIDE_BLOCKS = "overrideBlocks";
   private static final String RENEWAL_DUE_DATE_REQUIRED_OVERRIDE_BLOCK = "renewalDueDateRequiredBlock";
-  private static final EnumSet<ItemStatus> ITEM_STATUSES_DISALLOWED_FOR_RENEW = EnumSet.of(
+  private static final EnumSet<ItemStatusName> ITEM_STATUSES_DISALLOWED_FOR_RENEW = EnumSet.of(
     AGED_TO_LOST, DECLARED_LOST);
-  private static final EnumSet<ItemStatus> ITEM_STATUSES_NOT_POSSIBLE_TO_RENEW = EnumSet.of(
+  private static final EnumSet<ItemStatusName> ITEM_STATUSES_NOT_POSSIBLE_TO_RENEW = EnumSet.of(
     CLAIMED_RETURNED);
   private boolean isRenewalBlockOverrideRequested;
 
