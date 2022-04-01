@@ -109,7 +109,7 @@ public class Item {
     return isInStatus(DECLARED_LOST);
   }
 
-  public boolean isInStatus(ItemStatus status) {
+  private boolean isInStatus(ItemStatus status) {
     return getStatus().equals(status);
   }
 
@@ -119,6 +119,10 @@ public class Item {
 
   public boolean isNotInStatus(ItemStatus status) {
     return !isInStatus(status);
+  }
+
+  public boolean isNotInStatus(ItemStatusName status) {
+    return !getStatus().is(status);
   }
 
   public boolean hasChanged() {

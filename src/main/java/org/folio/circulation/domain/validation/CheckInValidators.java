@@ -1,6 +1,6 @@
 package org.folio.circulation.domain.validation;
 
-import static org.folio.circulation.domain.ItemStatus.INTELLECTUAL_ITEM;
+import static org.folio.circulation.domain.ItemStatusName.INTELLECTUAL_ITEM;
 import static org.folio.circulation.domain.representations.CheckInByBarcodeRequest.CLAIMED_RETURNED_RESOLUTION;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.results.Result.succeeded;

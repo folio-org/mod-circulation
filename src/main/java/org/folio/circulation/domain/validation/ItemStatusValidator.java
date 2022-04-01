@@ -1,19 +1,19 @@
 package org.folio.circulation.domain.validation;
 
-import static org.folio.circulation.domain.ItemStatus.AGED_TO_LOST;
-import static org.folio.circulation.domain.ItemStatus.CLAIMED_RETURNED;
-import static org.folio.circulation.domain.ItemStatus.DECLARED_LOST;
-import static org.folio.circulation.domain.ItemStatus.INTELLECTUAL_ITEM;
-import static org.folio.circulation.domain.ItemStatus.MISSING;
+import static org.folio.circulation.domain.ItemStatusName.AGED_TO_LOST;
+import static org.folio.circulation.domain.ItemStatusName.CLAIMED_RETURNED;
+import static org.folio.circulation.domain.ItemStatusName.DECLARED_LOST;
+import static org.folio.circulation.domain.ItemStatusName.INTELLECTUAL_ITEM;
+import static org.folio.circulation.domain.ItemStatusName.MISSING;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.function.Function;
 
 import org.folio.circulation.domain.Item;
-import org.folio.circulation.domain.ItemStatus;
+import org.folio.circulation.domain.ItemStatusName;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
-import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.ValidationErrorFailure;
+import org.folio.circulation.support.results.Result;
 
 public class ItemStatusValidator {
   private final Function<Item, ValidationErrorFailure> itemStatusErrorFunction;
@@ -23,7 +23,7 @@ public class ItemStatusValidator {
   }
 
   private Result<LoanAndRelatedRecords> refuseWhenItemIs(
-    Result<LoanAndRelatedRecords> loanAndRelatedRecords, ItemStatus status) {
+    Result<LoanAndRelatedRecords> loanAndRelatedRecords, ItemStatusName status) {
 
     return loanAndRelatedRecords.failWhen(
       records -> succeeded(records.getLoan().getItem().isInStatus(status)),
