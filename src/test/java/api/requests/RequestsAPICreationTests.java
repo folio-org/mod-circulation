@@ -1,5 +1,6 @@
 package api.requests;
 
+import static api.support.PubsubPublisherTestUtils.assertThatPublishedNoticeLogRecordEventsAreValid;
 import static api.support.builders.RequestBuilder.OPEN_AWAITING_PICKUP;
 import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
 import static api.support.fakes.FakePubSub.getPublishedEventsAsList;
@@ -2741,8 +2742,8 @@ public class RequestsAPICreationTests extends APITests {
     reconfigureTlrFeature(TlrFeatureStatus.ENABLED, templateId, null, null);
 
     requestsFixture.place(buildTitleLevelRequest());
-    verifyNumberOfSentNotices(1);
-    verifyNumberOfPublishedEvents(NOTICE, 1);
+    var notices = verifyNumberOfSentNotices(1);
+    assertThatPublishedNoticeLogRecordEventsAreValid(notices.get(0));
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 
