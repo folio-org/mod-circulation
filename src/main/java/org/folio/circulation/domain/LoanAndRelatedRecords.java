@@ -42,7 +42,7 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
     this(loan, null, null, timeZone, new JsonObject(), null, null, null);
   }
 
-  public LoanAndRelatedRecords changeItemStatus(ItemStatus status) {
+  public LoanAndRelatedRecords changeItemStatus(ItemStatusName status) {
     return withItem(getItem().changeStatus(status));
   }
 

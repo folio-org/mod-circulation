@@ -2,7 +2,7 @@ package org.folio.circulation.resources.renewal;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
-import static org.folio.circulation.domain.ItemStatus.AGED_TO_LOST;
+import static org.folio.circulation.domain.ItemStatusName.AGED_TO_LOST;
 import static org.folio.circulation.domain.policy.Period.days;
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.hamcrest.CoreMatchers.is;
@@ -13,7 +13,7 @@ import static org.mockito.Mockito.spy;
 
 import java.util.UUID;
 
-import org.folio.circulation.domain.ItemStatus;
+import org.folio.circulation.domain.ItemStatusName;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestQueue;
@@ -179,7 +179,7 @@ class RegularRenewalTest {
     final var loanPolicy = new LoanPolicyBuilder().asDomainObject();
     final var loan = new LoanBuilder().asDomainObject()
       .withLoanPolicy(loanPolicy)
-      .changeItemStatusForItemAndLoan(ItemStatus.from(itemStatus));
+      .changeItemStatusForItemAndLoan(ItemStatusName.from(itemStatus));
 
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
     renew(loan, errorHandler);

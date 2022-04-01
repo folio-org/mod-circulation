@@ -1,7 +1,6 @@
 package org.folio.circulation.resources;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
 import static org.folio.circulation.domain.LoanAction.CHECKED_OUT_THROUGH_OVERRIDE;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_ITEM;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_PROXY_USER;
@@ -16,6 +15,7 @@ import static org.folio.circulation.support.results.Result.succeeded;
 import java.time.ZonedDateTime;
 import java.util.concurrent.CompletableFuture;
 
+import org.folio.circulation.domain.ItemStatusName;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.LoanRepresentation;
@@ -206,7 +206,7 @@ public class CheckOutByBarcodeResource extends Resource {
   }
 
   private LoanAndRelatedRecords checkOutItem(LoanAndRelatedRecords loanAndRelatedRecords) {
-    return loanAndRelatedRecords.changeItemStatus(CHECKED_OUT);
+    return loanAndRelatedRecords.changeItemStatus(ItemStatusName.CHECKED_OUT);
   }
 
   private Result<HttpResponse> createdLoanFrom(Result<JsonObject> result,

@@ -157,12 +157,12 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     write(representation, "checkinServicePointId", servicePointId);
   }
 
-  public Loan changeItemStatusForItemAndLoan(ItemStatus itemStatus) {
+  public Loan changeItemStatusForItemAndLoan(ItemStatusName itemStatus) {
     Item itemToChange = getItem();
 
     executeIfNotNull(itemToChange, f -> f.changeStatus(itemStatus));
 
-    changeItemStatus(itemStatus.getValue());
+    changeItemStatus(itemStatus.getName());
 
     return this;
   }
@@ -457,7 +457,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   public Loan declareItemLost(String comment, ZonedDateTime dateTime) {
     changeAction(DECLARED_LOST);
     changeActionComment(comment);
-    changeItemStatusForItemAndLoan(ItemStatus.DECLARED_LOST);
+    changeItemStatusForItemAndLoan(ItemStatusName.DECLARED_LOST);
     changeDeclaredLostDateTime(dateTime);
     return this;
   }
@@ -571,7 +571,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
       changeActionComment(comment);
     }
 
-    changeItemStatusForItemAndLoan(ItemStatus.CLAIMED_RETURNED);
+    changeItemStatusForItemAndLoan(ItemStatusName.CLAIMED_RETURNED);
     changeClaimedReturnedDate(claimedReturnedDate);
 
     return this;
@@ -600,7 +600,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Loan markItemMissing(String comment) {
-    changeItemStatusForItemAndLoan(ItemStatus.MISSING);
+    changeItemStatusForItemAndLoan(ItemStatusName.MISSING);
 
     return closeLoan(MISSING, comment);
   }
@@ -619,7 +619,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public void closeLoanAsLostAndPaid() {
     closeLoan(CLOSED_LOAN);
-    changeItemStatusForItemAndLoan(ItemStatus.LOST_AND_PAID);
+    changeItemStatusForItemAndLoan(ItemStatusName.LOST_AND_PAID);
   }
 
   public Loan copy() {
@@ -631,7 +631,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   public Loan ageOverdueItemToLost(ZonedDateTime ageToLostDate) {
     changeAction(ITEM_AGED_TO_LOST);
     removeActionComment();
-    changeItemStatusForItemAndLoan(ItemStatus.AGED_TO_LOST);
+    changeItemStatusForItemAndLoan(ItemStatusName.AGED_TO_LOST);
     setAgedToLostDate(ageToLostDate);
 
     return this;
