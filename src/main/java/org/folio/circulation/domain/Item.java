@@ -178,7 +178,7 @@ public class Item {
   }
 
   public ItemStatus getStatus() {
-    return ItemStatus.from(getStatusName(), getStatusDate());
+    return new ItemStatus(ItemStatusName.from(getStatusName()), getStatusDate());
   }
 
   public String getStatusName() {
