@@ -36,6 +36,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.waitAtMost;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.domain.EventType.ITEM_CHECKED_IN;
+import static org.folio.circulation.domain.ItemStatusName.AWAITING_PICKUP;
 import static org.folio.circulation.domain.RequestStatus.CLOSED_CANCELLED;
 import static org.folio.circulation.domain.RequestStatus.CLOSED_PICKUP_EXPIRED;
 import static org.folio.circulation.domain.RequestStatus.CLOSED_UNFILLED;
@@ -66,7 +67,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import org.folio.circulation.domain.ItemStatus;
+import org.folio.circulation.domain.ItemStatusName;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.User;
@@ -870,7 +871,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
 
     // check that both item and first request are awaiting pickup
 
-    assertThatItemStatusIs(item.getId(), ItemStatus.AWAITING_PICKUP);
+    assertThatItemStatusIs(item.getId(), AWAITING_PICKUP);
     assertThatRequestStatusIs(firstRequest.getId(), RequestStatus.OPEN_AWAITING_PICKUP);
 
     // verify that Request Awaiting Pickup notice was sent for first request
@@ -913,7 +914,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
 
     // verify that first request was closed, and that item is still awaiting pickup
 
-    assertThatItemStatusIs(item.getId(), ItemStatus.AWAITING_PICKUP);
+    assertThatItemStatusIs(item.getId(), AWAITING_PICKUP);
     assertThatRequestStatusIs(firstRequest.getId(), firstRequestUpdateStatus);
 
     // check the item in again
@@ -922,7 +923,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
 
     // verify that item is still awaiting pickup, and that second request is now awaiting pickup
 
-    assertThatItemStatusIs(item.getId(), ItemStatus.AWAITING_PICKUP);
+    assertThatItemStatusIs(item.getId(), AWAITING_PICKUP);
     assertThatRequestStatusIs(secondRequest.getId(), RequestStatus.OPEN_AWAITING_PICKUP);
 
     // verify that Request Awaiting Pickup notice was sent to second requester
@@ -1757,10 +1758,10 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     return LocalDate.of(dateTime.getYear(), dateTime.getMonthValue(), dateTime.getDayOfMonth());
   }
 
-  private void assertThatItemStatusIs(UUID itemId, ItemStatus status) {
+  private void assertThatItemStatusIs(UUID itemId, ItemStatusName status) {
     final var item = itemsFixture.getById(itemId);
 
-    assertThat(item.getStatusName(), is(status.getValue()));
+    assertThat(item.getStatusName(), is(status.getName()));
   }
 
   private void assertThatRequestStatusIs(UUID requestId, RequestStatus status) {

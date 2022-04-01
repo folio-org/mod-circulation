@@ -1,6 +1,7 @@
 package api.requests;
 
 import static api.support.JsonCollectionAssistant.getRecordById;
+import static api.support.builders.ItemBuilder.IN_TRANSIT;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static java.time.ZoneOffset.UTC;
 import static org.folio.circulation.support.StreamToListMapper.toList;
@@ -19,7 +20,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
-import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.support.json.JsonPropertyFetcher;
 import org.folio.circulation.support.utils.ClockUtil;
 import org.junit.jupiter.api.AfterEach;
@@ -490,8 +490,7 @@ class ItemsInTransitReportTests extends APITests {
     UUID secondServicePointId) {
 
     assertThat(itemJson.getString(BARCODE_KEY), is(item.getBarcode()));
-    assertThat(itemJson.getJsonObject(STATUS_KEY).getMap().get(NAME),
-      is(ItemStatus.IN_TRANSIT.getValue()));
+    assertThat(itemJson.getJsonObject(STATUS_KEY).getMap().get(NAME), is(IN_TRANSIT));
 
     assertThat(itemJson.getString(DESTINATION_SERVICE_POINT), is(secondServicePointId.toString()));
 

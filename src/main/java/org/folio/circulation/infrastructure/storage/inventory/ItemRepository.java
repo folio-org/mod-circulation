@@ -2,7 +2,7 @@ package org.folio.circulation.infrastructure.storage.inventory;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Function.identity;
-import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
+import static org.folio.circulation.domain.ItemStatusName.AVAILABLE;
 import static org.folio.circulation.domain.MultipleRecords.CombinationMatchers.matchRecordsById;
 import static org.folio.circulation.domain.representations.ItemProperties.LAST_CHECK_IN;
 import static org.folio.circulation.domain.representations.ItemProperties.STATUS_PROPERTY;
@@ -127,7 +127,7 @@ public class ItemRepository {
     }
 
     return findByIndexNameAndQuery(holdingsRecords.toKeys(Holdings::getId),
-      "holdingsRecordId", exactMatch("status.name", AVAILABLE.getValue()))
+      "holdingsRecordId", exactMatch("status.name", AVAILABLE.getName()))
       .thenApply(mapResult(MultipleRecords::firstOrNull));
   }
 

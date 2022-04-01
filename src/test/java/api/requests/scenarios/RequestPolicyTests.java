@@ -1,5 +1,6 @@
 package api.requests.scenarios;
 
+import static api.support.builders.ItemBuilder.PAGED;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
@@ -12,13 +13,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 
-import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.support.http.client.Response;
 import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
+import api.support.builders.ItemBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
@@ -67,7 +68,7 @@ class RequestPolicyTests extends APITests {
 
     JsonObject requestedItem = recallRequest.getJson().getJsonObject("item");
     assertThat(recallRequest.getJson().getString("requestType"), is(RequestType.RECALL.getValue()));
-    assertThat(requestedItem.getString("status"), is(ItemStatus.CHECKED_OUT.getValue()));
+    assertThat(requestedItem.getString("status"), is(ItemBuilder.CHECKED_OUT));
     assertThat(recallRequest.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
   }
 
@@ -149,7 +150,7 @@ class RequestPolicyTests extends APITests {
 
     JsonObject requestedItem = recallRequest.getJson().getJsonObject("item");
     assertThat(recallRequest.getJson().getString("requestType"), is(RequestType.HOLD.getValue()));
-    assertThat(requestedItem.getString("status"), is(ItemStatus.CHECKED_OUT.getValue()));
+    assertThat(requestedItem.getString("status"), is(ItemBuilder.CHECKED_OUT));
     assertThat(recallRequest.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
   }
 
@@ -223,7 +224,7 @@ class RequestPolicyTests extends APITests {
 
     JsonObject requestedItem = recallRequest.getJson().getJsonObject("item");
     assertThat(recallRequest.getJson().getString("requestType"), is(RequestType.PAGE.getValue()));
-    assertThat(requestedItem.getString("status"), is(ItemStatus.PAGED.getValue()));
+    assertThat(requestedItem.getString("status"), is(PAGED));
     assertThat(recallRequest.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
   }
 
@@ -295,7 +296,7 @@ class RequestPolicyTests extends APITests {
 
     JsonObject requestedItem = recallRequest.getJson().getJsonObject("item");
     assertThat(recallRequest.getJson().getString("requestType"), is(RequestType.RECALL.getValue()));
-    assertThat(requestedItem.getString("status"), is(ItemStatus.CHECKED_OUT.getValue()));
+    assertThat(requestedItem.getString("status"), is(ItemBuilder.CHECKED_OUT));
     assertThat(recallRequest.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
   }
 

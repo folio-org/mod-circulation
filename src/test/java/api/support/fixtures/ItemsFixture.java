@@ -1,9 +1,10 @@
 package api.support.fixtures;
 
+import static api.support.builders.ItemBuilder.DECLARED_LOST;
+import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static java.util.function.Function.identity;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
-import static org.hamcrest.core.Is.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.util.ArrayList;
@@ -14,12 +15,10 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import org.folio.circulation.domain.ItemStatus;
-import api.support.http.IndividualResource;
-
 import api.support.builders.HoldingBuilder;
 import api.support.builders.InstanceBuilder;
 import api.support.builders.ItemBuilder;
+import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
@@ -318,7 +317,7 @@ public class ItemsFixture {
 
   public IndividualResource setupDeclaredLostItem() {
     IndividualResource declaredLostItem = basedUponSmallAngryPlanet(ItemBuilder::declaredLost);
-    assertThat(declaredLostItem.getResponse().getJson().getJsonObject("status").getString("name"), is(ItemStatus.DECLARED_LOST.getValue()));
+    assertThat(declaredLostItem, hasItemStatus(DECLARED_LOST));
 
     return declaredLostItem;
   }

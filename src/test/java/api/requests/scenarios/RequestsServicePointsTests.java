@@ -1,5 +1,8 @@
 package api.requests.scenarios;
 
+import static api.support.builders.ItemBuilder.AWAITING_PICKUP;
+import static api.support.builders.ItemBuilder.IN_TRANSIT;
+import static api.support.builders.ItemBuilder.PAGED;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -7,7 +10,6 @@ import java.lang.invoke.MethodHandles;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.support.utils.ClockUtil;
@@ -36,7 +38,7 @@ class RequestsServicePointsTests extends APITests {
       .by(usersFixture.james()));
 
     JsonObject requestItem = firstRequest.getJson().getJsonObject("item");
-    assertThat(requestItem.getString("status"), is(ItemStatus.PAGED.getValue()));
+    assertThat(requestItem.getString("status"), is(PAGED));
     assertThat(firstRequest.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
 
     checkInFixture.checkInByBarcode(smallAngryPlanet, ClockUtil.getZonedDateTime(), servicePoint.getId());
@@ -44,7 +46,8 @@ class RequestsServicePointsTests extends APITests {
     MultipleRecords<JsonObject> requests = requestsFixture.getQueueFor(smallAngryPlanet);
     JsonObject pagedRequestRecord = requests.getRecords().iterator().next();
 
-    assertThat(pagedRequestRecord.getJsonObject("item").getString("status"), is(ItemStatus.AWAITING_PICKUP.getValue()));
+    assertThat(pagedRequestRecord.getJsonObject("item").getString("status"),
+      is(AWAITING_PICKUP));
     assertThat(pagedRequestRecord.getString("status"), is(RequestStatus.OPEN_AWAITING_PICKUP.getValue()));
   }
 
@@ -63,7 +66,8 @@ class RequestsServicePointsTests extends APITests {
     MultipleRecords<JsonObject> requests = requestsFixture.getQueueFor(inTransitItem);
     JsonObject pagedRequestRecord = requests.getRecords().iterator().next();
 
-    assertThat(pagedRequestRecord.getJsonObject("item").getString("status"), is(ItemStatus.AWAITING_PICKUP.getValue()));
+    assertThat(pagedRequestRecord.getJsonObject("item").getString("status"),
+      is(AWAITING_PICKUP));
     assertThat(pagedRequestRecord.getString("status"), is(RequestStatus.OPEN_AWAITING_PICKUP.getValue()));
   }
 
@@ -81,7 +85,7 @@ class RequestsServicePointsTests extends APITests {
       .by(usersFixture.james()));
 
     JsonObject requestItem = firstRequest.getJson().getJsonObject("item");
-    assertThat(requestItem.getString("status"), is(ItemStatus.PAGED.getValue()));
+    assertThat(requestItem.getString("status"), is(PAGED));
     assertThat(firstRequest.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
 
     log.info("requestServicePoint" + requestPickupServicePoint.getId());
@@ -92,7 +96,8 @@ class RequestsServicePointsTests extends APITests {
     MultipleRecords<JsonObject> requests = requestsFixture.getQueueFor(smallAngryPlanet);
     JsonObject pagedRequestRecord = requests.getRecords().iterator().next();
 
-    assertThat(pagedRequestRecord.getJsonObject("item").getString("status"), is(ItemStatus.IN_TRANSIT.getValue()));
+    assertThat(pagedRequestRecord.getJsonObject("item").getString("status"),
+      is(IN_TRANSIT));
     assertThat(pagedRequestRecord.getString("status"), is(RequestStatus.OPEN_IN_TRANSIT.getValue()));
   }
 }

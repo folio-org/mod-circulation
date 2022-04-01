@@ -4,7 +4,7 @@ import static java.util.stream.Collectors.toSet;
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_FEE_TYPE;
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_PROCESSING_FEE_TYPE;
 import static org.folio.circulation.domain.FeeFine.lostItemFeeTypes;
-import static org.folio.circulation.domain.ItemStatus.AGED_TO_LOST;
+import static org.folio.circulation.domain.ItemStatusName.AGED_TO_LOST;
 import static org.folio.circulation.domain.representations.LoanProperties.AGED_TO_LOST_DELAYED_BILLING;
 import static org.folio.circulation.domain.representations.LoanProperties.DATE_LOST_ITEM_SHOULD_BE_BILLED;
 import static org.folio.circulation.domain.representations.LoanProperties.ITEM_STATUS;
@@ -272,7 +272,7 @@ public class ChargeLostFeesWhenAgedToLostService {
     final ZonedDateTime currentDate = getZonedDateTime();
 
     final Result<CqlQuery> billingDateQuery = lessThanOrEqualTo(billingDateProperty, currentDate);
-    final Result<CqlQuery> agedToLostQuery = exactMatch(ITEM_STATUS, AGED_TO_LOST.getValue());
+    final Result<CqlQuery> agedToLostQuery = exactMatch(ITEM_STATUS, AGED_TO_LOST.getName());
     final Result<CqlQuery> hasNotBeenBilledQuery = exactMatch(
       lostItemHasBeenBilled, "false");
 

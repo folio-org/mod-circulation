@@ -3,7 +3,7 @@ package org.folio.circulation.infrastructure.storage.loans;
 import static java.lang.String.format;
 import static java.util.Objects.nonNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.domain.ItemStatus.IN_TRANSIT;
+import static org.folio.circulation.domain.ItemStatusName.IN_TRANSIT;
 import static org.folio.circulation.domain.representations.LoanProperties.BORROWER;
 import static org.folio.circulation.domain.representations.LoanProperties.DUE_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.FEESANDFINES;
@@ -44,6 +44,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Account;
 import org.folio.circulation.domain.Item;
+import org.folio.circulation.domain.ItemStatusName;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.MultipleRecords;
@@ -235,7 +236,7 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
   public CompletableFuture<Result<Collection<Loan>>> findByItemIds(
     Collection<String> itemIds) {
 
-    Result<CqlQuery> statusQuery = exactMatch(ITEM_STATUS, IN_TRANSIT.getValue());
+    Result<CqlQuery> statusQuery = exactMatch(ITEM_STATUS, IN_TRANSIT.getName());
     FindWithMultipleCqlIndexValues<Loan> fetcher = findWithMultipleCqlIndexValues(
       loansStorageClient, RECORDS_PROPERTY_NAME, Loan::from);
 

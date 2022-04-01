@@ -1,5 +1,6 @@
 package api.requests;
 
+import static api.support.builders.ItemBuilder.PAGED;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static java.time.ZoneOffset.UTC;
@@ -22,7 +23,6 @@ import java.util.stream.Stream;
 
 import org.folio.circulation.domain.CallNumberComponents;
 import org.folio.circulation.domain.Item;
-import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.User;
@@ -35,6 +35,7 @@ import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.Address;
+import api.support.builders.ItemBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.fixtures.AddressExamples;
 import api.support.http.IndividualResource;
@@ -184,7 +185,7 @@ class PickSlipsTests extends APITests {
 
     assertEquals(item.getTitle(), itemContext.getString("title"));
     assertEquals(item.getBarcode(), itemContext.getString("barcode"));
-    assertEquals(ItemStatus.PAGED.getValue(), itemContext.getString("status"));
+    assertEquals(PAGED, itemContext.getString("status"));
     assertEquals(item.getPrimaryContributorName(), itemContext.getString("primaryContributor"));
     assertEquals(contributorNames, itemContext.getString("allContributors"));
     assertEquals(item.getEnumeration(), itemContext.getString("enumeration"));

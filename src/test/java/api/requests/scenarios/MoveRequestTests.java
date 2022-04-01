@@ -1,6 +1,7 @@
 package api.requests.scenarios;
 
 import static api.support.builders.ItemBuilder.AVAILABLE;
+import static api.support.builders.ItemBuilder.CHECKED_OUT;
 import static api.support.builders.ItemBuilder.PAGED;
 import static api.support.builders.RequestBuilder.OPEN_AWAITING_PICKUP;
 import static api.support.fixtures.ConfigurationExample.timezoneConfigurationFor;
@@ -41,7 +42,6 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.awaitility.Awaitility;
-import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestStatus;
@@ -53,6 +53,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
+import api.support.builders.ItemBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.MoveRequestBuilder;
 import api.support.builders.RequestBuilder;
@@ -109,15 +110,15 @@ class MoveRequestTests extends APITests {
     IndividualResource steve = usersFixture.steve();
     IndividualResource charlotte = usersFixture.charlotte();
 
-    assertThat(itemCopyA.getJson().getJsonObject("status").getString("name"), is(ItemStatus.AVAILABLE.getValue()));
-    assertThat(itemCopyB.getJson().getJsonObject("status").getString("name"), is(ItemStatus.AVAILABLE.getValue()));
+    assertThat(itemCopyA, hasItemStatus(AVAILABLE));
+    assertThat(itemCopyB, hasItemStatus(AVAILABLE));
 
     IndividualResource itemCopyALoan = checkOutFixture.checkOutByBarcode(itemCopyA, james, getZonedDateTime());
     assertThat(itemCopyALoan.getJson().getString("userId"), is(james.getId().toString()));
 
     assertThat(itemCopyALoan.getJson().getString("itemId"), is(itemCopyA.getId().toString()));
 
-    assertThat(itemsClient.get(itemCopyA).getJson().getJsonObject("status").getString("name"), is(ItemStatus.CHECKED_OUT.getValue()));
+    assertThat(itemsClient.get(itemCopyA), hasItemStatus(CHECKED_OUT));
 
     IndividualResource pageRequestForItemCopyB = requestsFixture.placeItemLevelHoldShelfRequest(
       itemCopyB, jessica, getZonedDateTime().minusHours(3), RequestType.PAGE.getValue());
@@ -132,13 +133,14 @@ class MoveRequestTests extends APITests {
     assertThat(requestsFixture.getQueueFor(itemCopyB).getTotalRecords(), is(2));
 
     assertThat(pageRequestForItemCopyB.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
-    assertThat(pageRequestForItemCopyB.getJson().getJsonObject("item").getString("status"), is(ItemStatus.PAGED.getValue()));
+    assertThat(pageRequestForItemCopyB.getJson().getJsonObject("item").getString("status"), is(ItemBuilder.PAGED));
 
     assertThat(recallRequestForItemCopyB.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
-    assertThat(recallRequestForItemCopyB.getJson().getJsonObject("item").getString("status"), is(ItemStatus.PAGED.getValue()));
+    assertThat(recallRequestForItemCopyB.getJson().getJsonObject("item").getString("status"), is(ItemBuilder.PAGED));
 
     assertThat(holdRequestForItemCopyA.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
-    assertThat(holdRequestForItemCopyA.getJson().getJsonObject("item").getString("status"), is(ItemStatus.CHECKED_OUT.getValue()));
+    assertThat(holdRequestForItemCopyA.getJson().getJsonObject("item").getString("status"),
+      is(CHECKED_OUT));
 
     IndividualResource moveRecallRequestToItemCopyA = requestsFixture.move(new MoveRequestBuilder(
       recallRequestForItemCopyB.getId(),
@@ -151,7 +153,8 @@ class MoveRequestTests extends APITests {
     assertThat(moveRecallRequestToItemCopyA.getJson().getString("itemId"), is(itemCopyA.getId().toString()));
     assertThat(moveRecallRequestToItemCopyA.getJson().getString("requesterId"), is(steve.getId().toString()));
     assertThat(moveRecallRequestToItemCopyA.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
-    assertThat(moveRecallRequestToItemCopyA.getJson().getJsonObject("item").getString("status"), is(ItemStatus.CHECKED_OUT.getValue()));
+    assertThat(moveRecallRequestToItemCopyA.getJson().getJsonObject("item").getString("status"),
+      is(CHECKED_OUT));
     assertThat(moveRecallRequestToItemCopyA.getJson().getInteger("position"), is(2));
     retainsStoredSummaries(moveRecallRequestToItemCopyA);
 
@@ -159,7 +162,8 @@ class MoveRequestTests extends APITests {
     assertThat(holdRequestForItemCopyA.getJson().getString("itemId"), is(itemCopyA.getId().toString()));
     assertThat(holdRequestForItemCopyA.getJson().getString("requesterId"), is(charlotte.getId().toString()));
     assertThat(holdRequestForItemCopyA.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
-    assertThat(holdRequestForItemCopyA.getJson().getJsonObject("item").getString("status"), is(ItemStatus.CHECKED_OUT.getValue()));
+    assertThat(holdRequestForItemCopyA.getJson().getJsonObject("item").getString("status"),
+      is(CHECKED_OUT));
     assertThat(holdRequestForItemCopyA.getJson().getInteger("position"), is(1));
     retainsStoredSummaries(holdRequestForItemCopyA);
 
@@ -167,7 +171,8 @@ class MoveRequestTests extends APITests {
     assertThat(pageRequestForItemCopyB.getJson().getString("itemId"), is(itemCopyB.getId().toString()));
     assertThat(pageRequestForItemCopyB.getJson().getString("requesterId"), is(jessica.getId().toString()));
     assertThat(pageRequestForItemCopyB.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
-    assertThat(pageRequestForItemCopyB.getJson().getJsonObject("item").getString("status"), is(ItemStatus.PAGED.getValue()));
+    assertThat(pageRequestForItemCopyB.getJson().getJsonObject("item").getString("status"),
+      is(PAGED));
     assertThat(pageRequestForItemCopyB.getJson().getInteger("position"), is(1));
     retainsStoredSummaries(pageRequestForItemCopyB);
 
@@ -175,9 +180,8 @@ class MoveRequestTests extends APITests {
     assertThat(itemCopyALoan.getJson().getString("userId"), is(james.getId().toString()));
     assertThat(itemCopyALoan.getJson().getString("itemId"), is(itemCopyA.getId().toString()));
 
-    assertThat(itemsClient.get(itemCopyA).getJson().getJsonObject("status").getString("name"), is(ItemStatus.CHECKED_OUT.getValue()));
-
-    assertThat(itemsClient.get(itemCopyB).getJson().getJsonObject("status").getString("name"), is(ItemStatus.PAGED.getValue()));
+    assertThat(itemsClient.get(itemCopyA), hasItemStatus(CHECKED_OUT));
+    assertThat(itemsClient.get(itemCopyB), hasItemStatus(ItemBuilder.PAGED));
   }
 
   @Test
@@ -197,11 +201,11 @@ class MoveRequestTests extends APITests {
 
     requestsFixture.move(new MoveRequestBuilder(pageIlrForFirstItem.getId(), secondItem.getId(),
       RequestType.HOLD.value));
-    assertThat(itemsClient.get(firstItem), hasItemStatus(PAGED));
+    assertThat(itemsClient.get(firstItem), hasItemStatus(ItemBuilder.PAGED));
 
     requestsFixture.placeItemLevelHoldShelfRequest(firstItem, jessica);
 
-    assertThat(itemsClient.get(firstItem), hasItemStatus(PAGED));
+    assertThat(itemsClient.get(firstItem), hasItemStatus(ItemBuilder.PAGED));
   }
 
   @Test
@@ -493,7 +497,7 @@ class MoveRequestTests extends APITests {
 
     requestByJessica = requestsClient.get(requestByJessica);
     assertThat(requestByJessica.getJson().getString(REQUEST_TYPE), is(RequestType.PAGE.getValue()));
-    assertThat(requestByJessica.getJson().getJsonObject("item").getString("status"), is(ItemStatus.PAGED.getValue()));
+    assertThat(requestByJessica.getJson().getJsonObject("item").getString("status"), is(ItemBuilder.PAGED));
     assertThat(requestByJessica.getJson().getInteger("position"), is(1));
     assertThat(requestByJessica.getJson().getString("itemId"), is(itemToMoveTo.getId().toString()));
     assertThat(requestByJessica.getJson().getString("patronComments"),
@@ -1042,7 +1046,8 @@ class MoveRequestTests extends APITests {
 
     assertThat(stevesRequest.getJson().getInteger("position"), is(1));
     assertThat(stevesRequest.getJson().getJsonObject("item").getString("barcode"), is(itemCopyA.getBarcode()));
-    assertThat(stevesRequest.getJson().getJsonObject("item").getString("status"), is(ItemStatus.CHECKED_OUT.getValue()));
+    assertThat(stevesRequest.getJson().getJsonObject("item").getString("status"),
+      is(CHECKED_OUT));
     assertThat(stevesRequest.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
 
     // Jessica requests Item Copy B
@@ -1052,7 +1057,7 @@ class MoveRequestTests extends APITests {
     // Confirm Jessica's request is first on Item Copy B and is a paged request
     assertThat(jessicasRequest.getJson().getInteger("position"), is(1));
     assertThat(jessicasRequest.getJson().getJsonObject("item").getString("barcode"), is(itemCopyB.getBarcode()));
-    assertThat(jessicasRequest.getJson().getJsonObject("item").getString("status"), is(ItemStatus.PAGED.getValue()));
+    assertThat(jessicasRequest.getJson().getJsonObject("item").getString("status"), is(ItemBuilder.PAGED));
     assertThat(jessicasRequest.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
 
     // Move recallRequestForItemCopyA to Item Copy B
@@ -1062,13 +1067,13 @@ class MoveRequestTests extends APITests {
     jessicasRequest = requestsClient.get(jessicasRequest);
     assertThat(jessicasRequest.getJson().getInteger("position"), is(1));
     assertThat(jessicasRequest.getJson().getJsonObject("item").getString("barcode"), is(itemCopyB.getBarcode()));
-    assertThat(jessicasRequest.getJson().getJsonObject("item").getString("status"), is(ItemStatus.PAGED.getValue()));
+    assertThat(jessicasRequest.getJson().getJsonObject("item").getString("status"), is(ItemBuilder.PAGED));
 
     // Confirm Steves's request is second on Item Copy B and (is not a paged request (?))
     stevesRequest = requestsClient.get(stevesRequest);
     assertThat(stevesRequest.getJson().getInteger("position"), is(2));
     assertThat(stevesRequest.getJson().getJsonObject("item").getString("barcode"), is(itemCopyB.getBarcode()));
-    assertThat(stevesRequest.getJson().getJsonObject("item").getString("status"), is(ItemStatus.PAGED.getValue()));
+    assertThat(stevesRequest.getJson().getJsonObject("item").getString("status"), is(ItemBuilder.PAGED));
 
   }
 
@@ -1106,8 +1111,8 @@ class MoveRequestTests extends APITests {
         .withNoTemporaryLocation()
         .withBarcode("90806050402"));
 
-    assertThat(itemCopyA.getJson().getJsonObject("status").getString("name"), is(ItemStatus.AVAILABLE.getValue()));
-    assertThat(itemCopyB.getJson().getJsonObject("status").getString("name"), is(ItemStatus.AVAILABLE.getValue()));
+    assertThat(itemCopyA, hasItemStatus(AVAILABLE));
+    assertThat(itemCopyB, hasItemStatus(AVAILABLE));
 
     IndividualResource james = usersFixture.james(); //cate
     IndividualResource steve = usersFixture.steve(); //walker
@@ -1115,13 +1120,13 @@ class MoveRequestTests extends APITests {
 
     checkOutFixture.checkOutByBarcode(itemCopyA, james, getZonedDateTime());
 
-    assertThat(itemsClient.get(itemCopyA).getJson().getJsonObject("status").getString("name"), is(ItemStatus.CHECKED_OUT.getValue()));
+    assertThat(itemsClient.get(itemCopyA), hasItemStatus(CHECKED_OUT));
 
     // Steve requests Item Copy B
     IndividualResource stevesRequest = requestsFixture.placeItemLevelHoldShelfRequest(
       itemCopyB, steve, getZonedDateTime().minusHours(2), RequestType.PAGE.getValue());
 
-    assertThat(itemsClient.get(itemCopyB).getJson().getJsonObject("status").getString("name"), is(ItemStatus.PAGED.getValue()));
+    assertThat(itemsClient.get(itemCopyB), hasItemStatus(ItemBuilder.PAGED));
 
     // Jessica requests Item Copy A
     IndividualResource jessicasRequest = requestsFixture.placeItemLevelHoldShelfRequest(
@@ -1132,12 +1137,11 @@ class MoveRequestTests extends APITests {
 
     stevesRequest = requestsClient.get(stevesRequest);
     assertThat(stevesRequest.getJson().getInteger("position"), is(2));
-    assertThat(itemsClient.get(itemCopyB).getJson().getJsonObject("status").getString("name"), is(ItemStatus.AVAILABLE.getValue()));
+    assertThat(itemsClient.get(itemCopyB), hasItemStatus(AVAILABLE));
 
     requestsFixture.move(new MoveRequestBuilder(jessicasRequest.getId(), itemCopyB.getId()));
 
-    // Ensure that itemCopyA is still CHECKED_OUT
-    assertThat(itemsClient.get(itemCopyA).getJson().getJsonObject("status").getString("name"), is(ItemStatus.CHECKED_OUT.getValue()));
+    assertThat(itemsClient.get(itemCopyA), hasItemStatus(CHECKED_OUT));
   }
 
   /**
