@@ -1,9 +1,9 @@
 package org.folio.circulation.domain;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
-import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
-import static org.folio.circulation.domain.ItemStatus.PAGED;
+import static org.folio.circulation.domain.ItemStatusName.AVAILABLE;
+import static org.folio.circulation.domain.ItemStatusName.CHECKED_OUT;
+import static org.folio.circulation.domain.ItemStatusName.PAGED;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.results.MappingFunctions.when;
 import static org.folio.circulation.support.results.Result.of;
@@ -117,8 +117,7 @@ public class UpdateItem {
       .thenApply(itemResult -> itemResult.map(loanAndRelatedRecords::withItem));
   }
 
-  private CompletableFuture<Result<Item>> onLoanUpdate(
-    Loan loan,
+  private CompletableFuture<Result<Item>> onLoanUpdate(Loan loan,
     RequestQueue requestQueue) {
 
     return of(() -> itemStatusOnLoanUpdate(loan, requestQueue))
@@ -144,10 +143,9 @@ public class UpdateItem {
   }
 
   private CompletableFuture<Result<Item>> updateItemWhenNotSameStatus(
-    ItemStatus prospectiveStatus,
-    Item item) {
+    ItemStatusName prospectiveStatus, Item item) {
 
-    if(item.isNotInStatus(prospectiveStatus)) {
+    if (item.isNotInStatus(prospectiveStatus)) {
       item.changeStatus(prospectiveStatus);
 
       return storeItem(item);
@@ -171,7 +169,7 @@ public class UpdateItem {
     return completedFuture(succeeded(previousResult));
   }
 
-  private ItemStatus itemStatusOnRequestCreateOrUpdate(
+  private ItemStatusName itemStatusOnRequestCreateOrUpdate(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
     RequestType type = requestAndRelatedRecords.getRequest().getRequestType();
@@ -193,23 +191,23 @@ public class UpdateItem {
       : requestQueue.isEmpty();
   }
 
-  private ItemStatus pagedWhenRequested(RequestType type, Item item) {
+  private ItemStatusName pagedWhenRequested(RequestType type, Item item) {
     return (item.isAvailable() && type.isPage())
       ? PAGED
-      : item.getStatus();
+      : ItemStatusName.from(item.getStatus().getValue());
   }
 
-  private ItemStatus itemStatusOnLoanUpdate(Loan loan, RequestQueue requestQueue) {
-    if(loan.isClosed()) {
+  private ItemStatusName itemStatusOnLoanUpdate(Loan loan, RequestQueue requestQueue) {
+    if (loan.isClosed()) {
       return itemStatusOnCheckIn(requestQueue, loan.getItem());
     }
-    else if(loan.getItem().isDeclaredLost()) {
-      return loan.getItem().getStatus();
+    else if (loan.getItem().isDeclaredLost()) {
+      return ItemStatusName.from(loan.getItem().getStatus().getValue());
     }
     return CHECKED_OUT;
   }
 
-  private ItemStatus itemStatusOnCheckIn(RequestQueue requestQueue, Item item) {
+  private ItemStatusName itemStatusOnCheckIn(RequestQueue requestQueue, Item item) {
     return requestQueue.checkedInItemStatus(item);
   }
 }

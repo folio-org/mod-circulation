@@ -109,7 +109,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   boolean isFulfillable() {
     return getFulfilmentPreference() == HOLD_SHELF || getFulfilmentPreference() == DELIVERY;
   }
-  
+
   public boolean isPage() {
     return getRequestType() == RequestType.PAGE;
   }
@@ -289,7 +289,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return changedPosition;
   }
 
-  ItemStatus checkedInItemStatus() {
+  ItemStatusName checkedInItemStatus() {
     return getFulfilmentPreference().toCheckedInItemStatus();
   }
 

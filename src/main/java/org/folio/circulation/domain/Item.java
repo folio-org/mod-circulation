@@ -120,7 +120,7 @@ public class Item {
   public boolean isNotInStatus(ItemStatusName status) {
     return !getStatus().is(status);
   }
-  
+
   public boolean hasChanged() {
     return changed;
   }
@@ -271,24 +271,6 @@ public class Item {
       return getPermanentLocation().getName();
     }
     return "";
-  }
-
-  public Item changeStatus(ItemStatus newStatus) {
-    if (isNotInStatus(newStatus)) {
-      changed = true;
-    }
-
-    write(itemRepresentation, STATUS_PROPERTY,
-      new JsonObject().put("name", newStatus.getValue()));
-
-    //TODO: Remove this hack to remove destination service point
-    // needs refactoring of how in transit for pickup is done
-    if(!isInTransit()) {
-      return removeDestination();
-    }
-    else {
-      return this;
-    }
   }
 
   public Item changeStatus(ItemStatusName newStatus) {

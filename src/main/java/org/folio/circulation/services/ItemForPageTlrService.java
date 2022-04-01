@@ -4,6 +4,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
+import static org.folio.circulation.domain.ItemStatusName.AVAILABLE;
 import static org.folio.circulation.domain.representations.RequestProperties.INSTANCE_ID;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 
@@ -17,7 +18,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 import org.folio.circulation.domain.Item;
-import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.infrastructure.storage.inventory.LocationRepository;
@@ -38,7 +38,7 @@ public class ItemForPageTlrService {
   public CompletableFuture<Result<Request>> findItem(Request request) {
     List<Item> availableItems = request.getInstanceItems()
       .stream()
-      .filter(item -> ItemStatus.AVAILABLE == item.getStatus())
+      .filter(item -> item.getStatus().is(AVAILABLE))
       .collect(toList());
 
     if (availableItems.isEmpty()) {
