@@ -1,7 +1,5 @@
 package org.folio.circulation.domain;
 
-import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
-
 import java.util.Arrays;
 
 public enum ItemStatus {
@@ -27,6 +25,8 @@ public enum ItemStatus {
   RESTRICTED("Restricted"),
   AGED_TO_LOST("Aged to lost");
 
+  private final ItemStatusName name;
+
   public static ItemStatus from(String value) {
     return Arrays.stream(values())
       .filter(status -> status.valueMatches(value))
@@ -44,20 +44,19 @@ public enum ItemStatus {
       .orElse(NONE);
   }
 
-  private final String value;
   // FIXME: Enum constants are singletons, date must not be associated with it
   private String date;
 
   ItemStatus(String value) {
-    this.value = value;
+    name = ItemStatusName.from(value);
   }
 
   public String getValue() {
-    return value;
+    return name.getName();
   }
 
   public ItemStatusName getName() {
-    return ItemStatusName.from(value);
+    return name;
   }
 
   public String getDate() {
@@ -69,11 +68,11 @@ public enum ItemStatus {
   }
 
   private boolean valueMatches(String value) {
-    return equalsIgnoreCase(getValue(), value);
+    return name.equals(ItemStatusName.from(value));
   }
 
   public boolean is(ItemStatusName name) {
-    return equalsIgnoreCase(value, name.getName());
+    return this.name.equals(name);
   }
 
   public boolean isLostNotResolved() {
