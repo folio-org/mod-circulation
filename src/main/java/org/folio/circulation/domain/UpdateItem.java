@@ -147,7 +147,7 @@ public class UpdateItem {
     ItemStatus prospectiveStatus,
     Item item) {
 
-    if(item.isNotSameStatus(prospectiveStatus)) {
+    if(item.isNotInStatus(prospectiveStatus)) {
       item.changeStatus(prospectiveStatus);
 
       return storeItem(item);

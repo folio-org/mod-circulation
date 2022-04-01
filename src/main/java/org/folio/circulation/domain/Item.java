@@ -2,13 +2,13 @@ package org.folio.circulation.domain;
 
 import static org.apache.commons.lang3.StringUtils.firstNonBlank;
 import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
-import static org.folio.circulation.domain.ItemStatus.AWAITING_PICKUP;
-import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
-import static org.folio.circulation.domain.ItemStatus.CLAIMED_RETURNED;
-import static org.folio.circulation.domain.ItemStatus.DECLARED_LOST;
 import static org.folio.circulation.domain.ItemStatus.IN_TRANSIT;
-import static org.folio.circulation.domain.ItemStatus.MISSING;
-import static org.folio.circulation.domain.ItemStatus.PAGED;
+import static org.folio.circulation.domain.ItemStatusName.AWAITING_PICKUP;
+import static org.folio.circulation.domain.ItemStatusName.CHECKED_OUT;
+import static org.folio.circulation.domain.ItemStatusName.CLAIMED_RETURNED;
+import static org.folio.circulation.domain.ItemStatusName.DECLARED_LOST;
+import static org.folio.circulation.domain.ItemStatusName.MISSING;
+import static org.folio.circulation.domain.ItemStatusName.PAGED;
 import static org.folio.circulation.domain.representations.ItemProperties.STATUS_PROPERTY;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
@@ -98,23 +98,23 @@ public class Item {
   }
 
   public boolean isAvailable() {
-    return isInStatus(AVAILABLE);
+    return isInStatus(ItemStatusName.AVAILABLE);
   }
 
   private boolean isInTransit() {
-    return isInStatus(IN_TRANSIT);
+    return isInStatus(ItemStatusName.IN_TRANSIT);
   }
 
   public boolean isDeclaredLost() {
     return isInStatus(DECLARED_LOST);
   }
 
-  boolean isNotSameStatus(ItemStatus prospectiveStatus) {
-    return !isInStatus(prospectiveStatus);
-  }
-
   public boolean isInStatus(ItemStatus status) {
     return getStatus().equals(status);
+  }
+
+  public boolean isInStatus(ItemStatusName status) {
+    return getStatus().is(status);
   }
 
   public boolean isNotInStatus(ItemStatus status) {
@@ -274,7 +274,7 @@ public class Item {
   }
 
   public Item changeStatus(ItemStatus newStatus) {
-    if (isNotSameStatus(newStatus)) {
+    if (isNotInStatus(newStatus)) {
       changed = true;
     }
 
