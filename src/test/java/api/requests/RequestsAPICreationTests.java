@@ -3,6 +3,7 @@ package api.requests;
 import static api.support.builders.RequestBuilder.OPEN_AWAITING_PICKUP;
 import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
 import static api.support.fakes.FakePubSub.getPublishedEventsAsList;
+import static api.support.fakes.PublishedEvents.byEventType;
 import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.fixtures.AutomatedPatronBlocksFixture.MAX_NUMBER_OF_ITEMS_CHARGED_OUT_MESSAGE;
 import static api.support.fixtures.AutomatedPatronBlocksFixture.MAX_OUTSTANDING_FEE_FINE_BALANCE_MESSAGE;
@@ -10,6 +11,7 @@ import static api.support.http.CqlQuery.exactMatch;
 import static api.support.http.CqlQuery.notEqual;
 import static api.support.http.Limit.limit;
 import static api.support.http.Offset.noOffset;
+import static api.support.matchers.EventMatchers.isValidLoanDueDateChangedEvent;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static api.support.matchers.JsonObjectMatcher.hasNoJsonPath;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
@@ -51,10 +53,13 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.emptyString;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDate;
@@ -65,6 +70,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -75,6 +81,7 @@ import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.RequestLevel;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
+import org.folio.circulation.domain.notice.NoticeEventType;
 import org.folio.circulation.domain.override.BlockOverrides;
 import org.folio.circulation.domain.override.PatronBlockOverride;
 import org.folio.circulation.domain.policy.DueDateManagement;
@@ -106,6 +113,8 @@ import api.support.builders.RequestBuilder;
 import api.support.builders.UserBuilder;
 import api.support.builders.UserManualBlockBuilder;
 import api.support.fakes.FakeModNotify;
+import api.support.fakes.FakePubSub;
+import api.support.fakes.PublishedEvents;
 import api.support.fixtures.CheckInFixture;
 import api.support.fixtures.ItemExamples;
 import api.support.fixtures.ItemsFixture;
@@ -984,12 +993,12 @@ public class RequestsAPICreationTests extends APITests {
 
     final Response recallResponse = requestsClient.attemptCreateAtSpecificLocation(
       new RequestBuilder()
-      .withId(requestId)
-      .recall()
-      .forItem(smallAngryPlanet)
-      .withPickupServicePointId(pickupServicePointId)
-      .withRequestDate(requestDate)
-      .withRequesterId(inactiveCharlotte.getId()));
+        .withId(requestId)
+        .recall()
+        .forItem(smallAngryPlanet)
+        .withPickupServicePointId(pickupServicePointId)
+        .withRequestDate(requestDate)
+        .withRequesterId(inactiveCharlotte.getId()));
 
     assertThat(recallResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(recallResponse.getJson(), hasErrors(1));
@@ -1438,6 +1447,40 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
+  void canCreateTlrRecallForInstanceWithSingleItemAndTwoLoans() {
+    reconfigureTlrFeature(TlrFeatureStatus.ENABLED);
+    final ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource requestPickupServicePoint = servicePointsFixture.cd1();
+
+    IndividualResource initialLoan = checkOutFixture.checkOutByBarcode(item, usersFixture.jessica());
+    checkInFixture.checkInByBarcode(item);
+    IndividualResource dueDateChangeLoan = checkOutFixture.checkOutByBarcode(item, usersFixture.jessica());
+
+    requestsClient.create(new RequestBuilder()
+      .recall()
+      .withNoHoldingsRecordId()
+      .withNoItemId()
+      .titleRequestLevel()
+      .withInstanceId(item.getInstanceId())
+      .withPickupServicePointId(requestPickupServicePoint.getId())
+      .withRequesterId(usersFixture.james().getId()));
+
+    PublishedEvents publishedEvents = Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(FakePubSub::getPublishedEvents, hasSize(9));
+
+    JsonObject loanWithoutChange = loansClient.get(initialLoan.getId()).getJson();
+    assertNull(loanWithoutChange.getString("dueDateChangedByRecall"));
+    JsonObject updatedLoan = loansClient.get(dueDateChangeLoan.getId()).getJson();
+    assertThat(updatedLoan.getString("dueDateChangedByRecall"), true);
+
+    JsonObject event = publishedEvents.findFirst(byEventType("LOAN_DUE_DATE_CHANGED"));
+    assertThat(event, isValidLoanDueDateChangedEvent(updatedLoan));
+    assertThat(new JsonObject(event.getString("eventPayload"))
+      .getBoolean("dueDateChangedByRecall"), equalTo(true));
+  }
+
+  @Test
   void canCreateRecallRequestWhenItemIsAwaitingPickup() {
     //Setting up an item with AWAITING_PICKUP status
     final IndividualResource servicePoint = servicePointsFixture.cd1();
@@ -1524,9 +1567,9 @@ public class RequestsAPICreationTests extends APITests {
       .withPickupServicePointId(requestPickupServicePoint.getId())
       .by(usersFixture.jessica()));
 
-      assertThat(recallResponse.getJson().getString("requestType"), is(RECALL.getValue()));
-      assertThat(pagedItem.getResponse().getJson().getJsonObject("status").getString("name"), is(PAGED.getValue()));
-      assertThat(recallResponse.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
+    assertThat(recallResponse.getJson().getString("requestType"), is(RECALL.getValue()));
+    assertThat(pagedItem.getResponse().getJson().getJsonObject("status").getString("name"), is(PAGED.getValue()));
+    assertThat(recallResponse.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
   }
 
   @Test
@@ -2197,9 +2240,9 @@ public class RequestsAPICreationTests extends APITests {
     final ZonedDateTime now = ClockUtil.getZonedDateTime();
     final ZonedDateTime expirationDate = now.plusDays(4);
     final UserManualBlockBuilder userManualBlockBuilder = getManualBlockBuilder()
-        .withRequests(true)
-        .withExpirationDate(expirationDate)
-        .withUserId(String.valueOf(requester.getId()));
+      .withRequests(true)
+      .withExpirationDate(expirationDate)
+      .withUserId(String.valueOf(requester.getId()));
     final RequestBuilder requestBuilder = createRequestBuilder(item, requester, pickupServicePointId, requestDate);
 
     checkOutFixture.checkOutByBarcode(item, usersFixture.jessica());
@@ -2326,16 +2369,16 @@ public class RequestsAPICreationTests extends APITests {
     final ZonedDateTime now = ClockUtil.getZonedDateTime();
     final ZonedDateTime expirationDate = now.plusDays(4);
     final UserManualBlockBuilder requestUserManualBlockBuilder1 = getManualBlockBuilder()
-        .withRequests(true)
-        .withExpirationDate(expirationDate)
-        .withUserId(String.valueOf(requester.getId()));
+      .withRequests(true)
+      .withExpirationDate(expirationDate)
+      .withUserId(String.valueOf(requester.getId()));
     final UserManualBlockBuilder requestUserManualBlockBuilder2 = getManualBlockBuilder()
-        .withBorrowing(true)
-        .withRenewals(true)
-        .withRequests(true)
-        .withExpirationDate(expirationDate)
-        .withUserId(String.valueOf(requester.getId()))
-        .withDesc("Test");
+      .withBorrowing(true)
+      .withRenewals(true)
+      .withRequests(true)
+      .withExpirationDate(expirationDate)
+      .withUserId(String.valueOf(requester.getId()))
+      .withDesc("Test");
     final RequestBuilder requestBuilder = createRequestBuilder(item, requester, pickupServicePointId, requestDate);
 
     checkOutFixture.checkOutByBarcode(item, usersFixture.jessica());
@@ -2485,7 +2528,7 @@ public class RequestsAPICreationTests extends APITests {
       .withTags(new RequestBuilder.Tags(asList("new", "important"))));
 
     requestsFixture.move(new MoveRequestBuilder(recallRequest.getId(), itemToMoveTo.getId(),
-        RECALL.getValue()));
+      RECALL.getValue()));
 
     // Recall notice to loan owner should be sent twice without changing due date
     verifyNumberOfSentNotices(2);
@@ -2513,8 +2556,8 @@ public class RequestsAPICreationTests extends APITests {
       hasNullParameter("instanceId"))));
 
     assertThat(responseJson, hasErrorWith(allOf(
-        hasMessage("Cannot create an item level request with no item ID"),
-        hasNullParameter("itemId"))));
+      hasMessage("Cannot create an item level request with no item ID"),
+      hasNullParameter("itemId"))));
 
     assertThat(responseJson, hasErrorWith(allOf(
       hasMessage("A valid user and patron group are required. User is null"),
@@ -2755,7 +2798,7 @@ public class RequestsAPICreationTests extends APITests {
 
   @Test
   void cannotCreateTitleLevelRequestWithoutInstanceId() {
-   configurationsFixture.enableTlrFeature();
+    configurationsFixture.enableTlrFeature();
 
     ItemResource item = itemsFixture.basedUponNod();
 
@@ -2982,6 +3025,59 @@ public class RequestsAPICreationTests extends APITests {
       is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
   }
 
+  @Test
+  void itemCheckOutRecallRequestCreationShouldProduceNotice() {
+    configurationsFixture.enableTlrFeature();
+    JsonObject recallToLoaneeConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(UUID.randomUUID())
+      .withEventType(NoticeEventType.ITEM_RECALLED.getRepresentation())
+      .create();
+    JsonObject recallRequestToRequesterConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(UUID.randomUUID())
+      .withEventType(NoticeEventType.RECALL_REQUEST.getRepresentation())
+      .create();
+
+    NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
+      .withName("Policy with recall notice")
+      .withLoanNotices(List.of(recallToLoaneeConfiguration, recallRequestToRequesterConfiguration));
+
+    useFallbackPolicies(
+      loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.create(noticePolicy).getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
+
+    ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource requester = usersFixture.steve();
+    ZonedDateTime requestDate = ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC);
+
+    checkOutFixture.checkOutByBarcode(item, usersFixture.jessica());
+    requestsFixture.placeItemLevelHoldShelfRequest(item, requester, requestDate, "Recall");
+
+    // notice for the recall is expected
+    verifyNumberOfSentNotices(2);
+    verifyNumberOfPublishedEvents(NOTICE, 2);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+    List<JsonObject> noticeLogContextItemLogs = FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE));
+
+    // verify noticeLogContextItemLogs
+    validateNoticeLogContextItem(noticeLogContextItemLogs.get(0), item);
+    validateNoticeLogContextItem(noticeLogContextItemLogs.get(1), item);
+  }
+
+  private void validateNoticeLogContextItem(JsonObject noticeLogContextItem, ItemResource item) {
+    JsonObject itemJsonObject = new JsonObject(noticeLogContextItem.getString("eventPayload"))
+      .getJsonObject("payload")
+      .getJsonArray("items")
+      .getJsonObject(0);
+
+    assertThat(itemJsonObject.getString("itemBarcode"), is(item.getBarcode()));
+    assertThat(itemJsonObject.getString("itemId"), is(item.getId()));
+    assertThat(itemJsonObject.getString("instanceId"), is(item.getInstanceId()));
+    assertThat(itemJsonObject.getString("holdingsRecordId"), is(item.getHoldingsRecordId()));
+  }
+
   private boolean isNotPaged(IndividualResource item) {
     return !PAGED.getValue().equals(item.getJson().getJsonObject("status").getString("name"));
   }
@@ -3020,11 +3116,11 @@ public class RequestsAPICreationTests extends APITests {
     UUID isbnIdentifierId = identifierTypesFixture.isbn().getId();
 
     return itemsFixture.basedUponSmallAngryPlanet(
-        holdingBuilder -> holdingBuilder.forInstance(instanceId),
-        instanceBuilder -> instanceBuilder
-          .addIdentifier(isbnIdentifierId, "9780866989732")
-          .withId(instanceId),
-        itemBuilder -> itemBuilder.withBarcode(barcode));
+      holdingBuilder -> holdingBuilder.forInstance(instanceId),
+      instanceBuilder -> instanceBuilder
+        .addIdentifier(isbnIdentifierId, "9780866989732")
+        .withId(instanceId),
+      itemBuilder -> itemBuilder.withBarcode(barcode));
   }
 
   private static void assertOverrideResponseSuccess(Response response) {
@@ -3063,13 +3159,13 @@ public class RequestsAPICreationTests extends APITests {
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     return IntStream.range(0, 100).mapToObj(notUsed -> requestsFixture.place(
-      new RequestBuilder()
-        .open()
-        .page()
-        .forItem(itemsFixture.basedUponSmallAngryPlanet())
-        .by(usersFixture.charlotte())
-        .fulfilToHoldShelf()
-        .withPickupServicePointId(pickupServicePointId)))
+        new RequestBuilder()
+          .open()
+          .page()
+          .forItem(itemsFixture.basedUponSmallAngryPlanet())
+          .by(usersFixture.charlotte())
+          .fulfilToHoldShelf()
+          .withPickupServicePointId(pickupServicePointId)))
       .collect(Collectors.toList());
   }
 
@@ -3210,7 +3306,7 @@ public class RequestsAPICreationTests extends APITests {
       .withRequesterId(patronId);
   }
 
-  private void validateInstanceRepresentation(JsonObject requestInstance){
+  private void validateInstanceRepresentation(JsonObject requestInstance) {
     JsonArray contributors = requestInstance.getJsonArray("contributorNames");
     assertThat(contributors, notNullValue());
     assertThat(contributors.size(), is(1));

@@ -8,6 +8,7 @@ import io.vertx.core.json.JsonObject;
 
 public class LoanTypeMapper {
   public LoanType toDomain(JsonObject representation) {
-    return new LoanType(getProperty(representation, "name"));
+    return new LoanType(getProperty(representation, "id"),
+      getProperty(representation, "name"));
   }
 }
