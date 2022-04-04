@@ -1,3 +1,12 @@
+## 23.0.2 2022-04-04
+
+* Fix changing item status for POST /circulation/requests without request date (CIRC-1371)
+* Fix requested item barcode not getting listed in the Circ Log for Notice Send logs (CIRC-1465)
+* Add missing permissions to permission set (CIRC-1469)
+* Fix two recall-related automated patron blocks that do not enforce (CIRC-1471)
+* Add truncating loan due date during checkout only if there is a recall request on the same item (CIRC-1488)
+* Fix TLR notice circulation log record (CIRC-1495)
+
 ## 23.0.1 2022-03-30
 
 * Do not fail when nonexistent location ID is passed to GET /circulation/rules/request-policy (CIRC-1169)
