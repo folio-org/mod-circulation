@@ -61,7 +61,7 @@ public class TitleLevelRequestNoticeSender extends RequestNoticeSender {
 
     UUID confirmationTemplateId = tlrSettings.getConfirmationPatronNoticeTemplateId();
     if (confirmationTemplateId != null) {
-      NoticeLogContext noticeLogContext = new NoticeLogContext()
+      NoticeLogContext noticeLogContext = patronNoticeEvent.getNoticeLogContext()
         .withTriggeringEvent(patronNoticeEvent.getEventType().getRepresentation())
         .withTemplateId(confirmationTemplateId.toString());
       NoticeConfiguration noticeConfiguration = buildTlrNoticeConfiguration(patronNoticeEvent,
@@ -80,7 +80,7 @@ public class TitleLevelRequestNoticeSender extends RequestNoticeSender {
 
     UUID cancellationTemplateId = tlrSettings.getCancellationPatronNoticeTemplateId();
     if (cancellationTemplateId != null) {
-      NoticeLogContext noticeLogContext = new NoticeLogContext()
+      NoticeLogContext noticeLogContext = patronNoticeEvent.getNoticeLogContext()
         .withTriggeringEvent(patronNoticeEvent.getEventType().getRepresentation())
         .withTemplateId(cancellationTemplateId.toString());
       NoticeConfiguration noticeConfiguration = buildTlrNoticeConfiguration(patronNoticeEvent,
