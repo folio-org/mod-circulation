@@ -31,9 +31,7 @@ public class Item {
   private final CallNumberComponents callNumberComponents;
   @NonNull private final Location permanentLocation;
   private final ServicePoint inTransitDestinationServicePoint;
-
-  private boolean changed;
-
+  private final boolean changed;
   @NonNull private final Holdings holdings;
   @NonNull private final Instance instance;
   @NonNull private final MaterialType materialType;
@@ -111,10 +109,6 @@ public class Item {
 
   public boolean isAvailable() {
     return isInStatus(AVAILABLE);
-  }
-
-  private boolean isInTransit() {
-    return isInStatus(IN_TRANSIT);
   }
 
   public boolean isDeclaredLost() {
@@ -282,21 +276,24 @@ public class Item {
   }
 
   public Item changeStatus(ItemStatusName newStatus) {
-    if (isNotInStatus(newStatus)) {
-      changed = true;
-    }
+    final var newChanged = isNotInStatus(newStatus);
 
-    write(itemRepresentation, STATUS_PROPERTY,
+    final var changedRepresentation = itemRepresentation.copy();
+
+    write(changedRepresentation, STATUS_PROPERTY,
       new JsonObject().put("name", newStatus.getName()));
 
     //TODO: Remove this hack to remove destination service point
     // needs refactoring of how in transit for pickup is done
-    if (newStatus == IN_TRANSIT) {
-      return removeDestination();
-    }
-    else {
-      return this;
-    }
+    final var destinationServicePoint = newStatus == IN_TRANSIT
+      ? this.inTransitDestinationServicePoint
+      : null;
+
+    return new Item(this.id, changedRepresentation, this.location,
+      this.lastCheckIn, this.callNumberComponents, this.permanentLocation,
+      destinationServicePoint, newChanged, this.holdings,
+      this.instance, this.materialType, this.loanType, this.barcode, this.copyNumber,
+      this.enumeration, this.temporaryLoanTypeId, this.permanentLoanTypeId);
   }
 
   Item available() {

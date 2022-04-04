@@ -146,9 +146,7 @@ public class UpdateItem {
     ItemStatusName prospectiveStatus, Item item) {
 
     if (item.isNotInStatus(prospectiveStatus)) {
-      item.changeStatus(prospectiveStatus);
-
-      return storeItem(item);
+      return storeItem(item.changeStatus(prospectiveStatus));
     }
     else {
       return completedFuture(succeeded(item));
