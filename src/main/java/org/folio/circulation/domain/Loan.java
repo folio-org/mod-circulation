@@ -27,7 +27,6 @@ import static org.folio.circulation.domain.representations.LoanProperties.DATE_L
 import static org.folio.circulation.domain.representations.LoanProperties.DECLARED_LOST_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.DUE_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.ITEM_LOCATION_ID_AT_CHECKOUT;
-import static org.folio.circulation.domain.representations.LoanProperties.ITEM_STATUS;
 import static org.folio.circulation.domain.representations.LoanProperties.LOAN_POLICY_ID;
 import static org.folio.circulation.domain.representations.LoanProperties.LOST_ITEM_HAS_BEEN_BILLED;
 import static org.folio.circulation.domain.representations.LoanProperties.LOST_ITEM_POLICY_ID;
@@ -50,7 +49,6 @@ import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.json.JsonPropertyWriter.writeByPath;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 import static org.folio.circulation.support.results.Result.succeeded;
-import static org.folio.circulation.support.utils.CommonUtils.executeIfNotNull;
 import static org.folio.circulation.support.utils.DateTimeUtil.isBeforeMillis;
 import static org.folio.circulation.support.utils.DateTimeUtil.isSameMillis;
 import static org.folio.circulation.support.utils.DateTimeUtil.mostRecentDate;
@@ -71,11 +69,12 @@ import org.folio.circulation.support.utils.ClockUtil;
 
 import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
+import lombok.NonNull;
 
 @AllArgsConstructor(access = PRIVATE)
 public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   private final JsonObject representation;
-  private final Item item;
+  @NonNull private final Item item;
   private final User user;
   private final User proxy;
 
@@ -97,7 +96,8 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     final LostItemPolicy lostItemPolicy = LostItemPolicy.unknown(
       getProperty(representation, LOST_ITEM_POLICY_ID));
 
-    return new Loan(representation, null, null, null, null, null,
+    return new Loan(representation, Item.unknown(getProperty(representation, "itemId")),
+      null, null, null, null,
       getDateTimeProperty(representation, DUE_DATE), getDateTimeProperty(representation, DUE_DATE),
       new Policies(loanPolicy, overdueFinePolicy, lostItemPolicy), emptyList());
   }
@@ -157,10 +157,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Loan changeItemStatusForItemAndLoan(ItemStatusName itemStatus) {
-    Item itemToChange = getItem();
-
-    executeIfNotNull(itemToChange, f -> f.changeStatus(itemStatus));
-
+    item.changeStatus(itemStatus);
     changeItemStatus(itemStatus.getName());
 
     return this;
@@ -274,10 +271,10 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
       checkoutServicePoint, originalDueDate, previousDueDate, policies, accounts);
   }
 
-  public Loan withItem(Item newItem) {
+  public Loan withItem(@NonNull Item newItem) {
     JsonObject newRepresentation = representation.copy();
 
-    if (newItem != null && newItem.isFound()) {
+    if (newItem.isFound()) {
       newRepresentation.put("itemId", newItem.getItemId());
     }
 
@@ -491,7 +488,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public boolean hasItemWithAnyStatus(ItemStatusName... itemStatuses) {
-    return item != null && Stream.of(itemStatuses).anyMatch(item::isInStatus);
+    return Stream.of(itemStatuses).anyMatch(item::isInStatus);
   }
 
   private void incrementRenewalCount() {
@@ -690,18 +687,10 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public ItemStatusName getItemStatus() {
-    if (item != null) {
-      return item.getStatus().getName();
-    }
-
-   return ItemStatusName.from(getItemStatusName());
+    return item.getStatus().getName();
   }
 
   public String getItemStatusName() {
-    if (item != null) {
-      return item.getStatusName();
-    }
-
-    return getProperty(representation, ITEM_STATUS);
+    return item.getStatusName();
   }
 }

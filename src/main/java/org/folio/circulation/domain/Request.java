@@ -43,6 +43,7 @@ import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
 import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.With;
 
 @AllArgsConstructor
@@ -66,6 +67,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   @With
   private final Collection<Item> instanceItems;
 
+  @NonNull
   private final Item item;
 
   @With
@@ -91,15 +93,17 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   public static Request from(JsonObject representation) {
     // TODO: make sure that operation and TLR settings don't matter for all processes calling
     //  this constructor
-    return new Request(null, null, representation, null, null, new ArrayList<>(), null, null, null,
-      null, null, null, false, null, false);
+    return new Request(null, null, representation, null, null,
+      new ArrayList<>(), Item.unknown(), null, null, null, null, null, false,
+      null, false);
   }
 
   public static Request from(TlrSettingsConfiguration tlrSettingsConfiguration, Operation operation,
     JsonObject representation) {
 
     return new Request(tlrSettingsConfiguration, operation, representation, null, null,
-      new ArrayList<>(), null, null, null, null, null, null, false, null, false);
+      new ArrayList<>(), Item.unknown(), null, null, null, null, null, false,
+      null, false);
   }
 
   public JsonObject asJson() {
@@ -183,9 +187,8 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return requestRepresentation.getString(HOLDINGS_RECORD_ID);
   }
 
-  public Request withItem(Item newItem) {
-    // NOTE: this is null in RequestsAPIUpdatingTests.replacingAnExistingRequestRemovesItemInformationWhenItemDoesNotExist test
-    if (newItem != null && newItem.getItemId() != null && newItem.getHoldingsRecordId() != null) {
+  public Request withItem(@NonNull Item newItem) {
+    if (newItem.getItemId() != null && newItem.getHoldingsRecordId() != null) {
       requestRepresentation.put(ITEM_ID, newItem.getItemId());
       requestRepresentation.put(HOLDINGS_RECORD_ID, newItem.getHoldingsRecordId());
     }

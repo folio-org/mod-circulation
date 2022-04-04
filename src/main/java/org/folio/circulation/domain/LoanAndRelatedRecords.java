@@ -9,6 +9,7 @@ import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
 import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.With;
 
 @AllArgsConstructor
@@ -54,7 +55,7 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
     return withLoan(loan.withProxy(newProxy));
   }
 
-  public LoanAndRelatedRecords withItem(Item newItem) {
+  public LoanAndRelatedRecords withItem(@NonNull Item newItem) {
     return withLoan(loan.withItem(newItem));
   }
 

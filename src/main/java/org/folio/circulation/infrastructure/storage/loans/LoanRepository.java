@@ -44,7 +44,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Account;
 import org.folio.circulation.domain.Item;
-import org.folio.circulation.domain.ItemStatusName;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.MultipleRecords;
@@ -68,6 +67,7 @@ import org.folio.circulation.support.results.CommonFailures;
 import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.json.JsonObject;
+import lombok.NonNull;
 
 public class LoanRepository implements GetManyRecordsRepository<Loan> {
   private static final String RECORDS_PROPERTY_NAME = "loans";
@@ -144,13 +144,13 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
    * success with null if the no open loan is found,
    * failure if more than one open loan for the item found
    */
-  public CompletableFuture<Result<Loan>> findOpenLoanForItem(Item item) {
+  public CompletableFuture<Result<Loan>> findOpenLoanForItem(@NonNull Item item) {
     return findOpenLoans(item.getItemId())
       .thenApply(loansResult -> loansResult.next(loans -> {
         if (loans.getTotalRecords() == 0) {
           return succeeded(null);
         }
-        else if(loans.getTotalRecords() == 1) {
+        else if (loans.getTotalRecords() == 1) {
           final Optional<Loan> firstLoan = loans.getRecords().stream().findFirst();
 
           return firstLoan

@@ -45,6 +45,18 @@ public class Item {
   private final String temporaryLoanTypeId;
   private final String permanentLoanTypeId;
 
+  public static Item unknown() {
+    return unknown(null);
+  }
+
+  public static Item unknown(String id) {
+    return new Item(id, new JsonObject(), Location.unknown(),
+      LastCheckIn.unknown(), CallNumberComponents.unknown(), Location.unknown(),
+      ServicePoint.unknown(), false, Holdings.unknown(), Instance.unknown(),
+      MaterialType.unknown(), LoanType.unknown(), null, null, null,
+      null, null, null);
+  }
+
   public static Item from(JsonObject representation) {
     return new ItemMapper().toDomain(representation);
   }

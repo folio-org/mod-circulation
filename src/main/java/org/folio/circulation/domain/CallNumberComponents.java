@@ -5,11 +5,17 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty
 import java.util.Optional;
 
 import io.vertx.core.json.JsonObject;
+import lombok.Value;
 
+@Value
 public class CallNumberComponents {
-  private final String callNumber;
-  private final String prefix;
-  private final String suffix;
+  String callNumber;
+  String prefix;
+  String suffix;
+
+  public static CallNumberComponents unknown() {
+    return new CallNumberComponents(null, null, null);
+  }
 
   private CallNumberComponents(String callNumber, String prefix, String suffix) {
     this.callNumber = callNumber;
@@ -17,24 +23,11 @@ public class CallNumberComponents {
     this.suffix = suffix;
   }
 
-  public String getCallNumber() {
-    return callNumber;
-  }
-
-  public String getPrefix() {
-    return prefix;
-  }
-
-  public String getSuffix() {
-    return suffix;
-  }
-
   private static CallNumberComponents fromJson(JsonObject callNumberComponents) {
     return new CallNumberComponents(
       getProperty(callNumberComponents, "callNumber"),
       getProperty(callNumberComponents, "prefix"),
-      getProperty(callNumberComponents, "suffix")
-    );
+      getProperty(callNumberComponents, "suffix"));
   }
 
   /**
@@ -45,11 +38,11 @@ public class CallNumberComponents {
    */
   public static CallNumberComponents fromItemJson(JsonObject itemJson) {
     if (itemJson == null) {
-      return null;
+      return unknown();
     }
 
     return Optional.ofNullable(itemJson.getJsonObject("effectiveCallNumberComponents"))
       .map(CallNumberComponents::fromJson)
-      .orElse(null);
+      .orElse(unknown());
   }
 }
