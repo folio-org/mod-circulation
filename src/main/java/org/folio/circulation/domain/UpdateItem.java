@@ -3,6 +3,7 @@ package org.folio.circulation.domain;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.ItemStatusName.AVAILABLE;
 import static org.folio.circulation.domain.ItemStatusName.CHECKED_OUT;
+import static org.folio.circulation.domain.ItemStatusName.DECLARED_LOST;
 import static org.folio.circulation.domain.ItemStatusName.PAGED;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.results.MappingFunctions.when;
@@ -200,7 +201,7 @@ public class UpdateItem {
       return itemStatusOnCheckIn(requestQueue, loan.getItem());
     }
     else if (loan.getItem().isDeclaredLost()) {
-      return ItemStatusName.from(loan.getItem().getStatus().getValue());
+      return DECLARED_LOST;
     }
     return CHECKED_OUT;
   }
