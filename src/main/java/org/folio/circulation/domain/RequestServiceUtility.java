@@ -1,19 +1,19 @@
 package org.folio.circulation.domain;
 
-import static java.lang.String.format;
-import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_TYPE;
-import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
-import static org.folio.circulation.support.results.Result.of;
-import static org.folio.circulation.support.results.Result.succeeded;
+import org.folio.circulation.domain.policy.RequestPolicy;
+import org.folio.circulation.support.http.server.ValidationError;
+import org.folio.circulation.support.results.Result;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Predicate;
 
-import org.folio.circulation.domain.policy.RequestPolicy;
-import org.folio.circulation.support.http.server.ValidationError;
-import org.folio.circulation.support.results.Result;
+import static java.lang.String.format;
+import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_TYPE;
+import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
+import static org.folio.circulation.support.results.Result.of;
+import static org.folio.circulation.support.results.Result.succeeded;
 
 public class RequestServiceUtility {
   private static final String INSTANCE_ID = "instanceId";
@@ -21,7 +21,8 @@ public class RequestServiceUtility {
   private static final String REQUESTER_ID = "requesterId";
   private static final String REQUEST_ID = "requestId";
 
-  private RequestServiceUtility() { }
+  private RequestServiceUtility() {
+  }
 
   static Result<RequestAndRelatedRecords> refuseWhenInstanceDoesNotExist(
     RequestAndRelatedRecords requestAndRelatedRecords) {
@@ -141,8 +142,14 @@ public class RequestServiceUtility {
     if (requestAndRelatedRecords.isTlrFeatureEnabled() && request.isTitleLevel()) {
       isAlreadyRequested = req -> isTheSameRequester(requestAndRelatedRecords, req) && req.isOpen();
     } else {
-      isAlreadyRequested = req -> requestAndRelatedRecords.getItemId().equals(req.getItemId())
-        && isTheSameRequester(requestAndRelatedRecords, req) && req.isOpen();
+      isAlreadyRequested = req -> {
+        if (req.isTitleLevel()) {
+          return (request.getInstanceId().equals(req.getInstanceId()));
+        } else {
+          return (requestAndRelatedRecords.getItemId().equals(req.getItemId())
+            && isTheSameRequester(requestAndRelatedRecords, req) && req.isOpen());
+        }
+      };
     }
 
     return requestAndRelatedRecords.getRequestQueue().getRequests().stream()
@@ -150,6 +157,7 @@ public class RequestServiceUtility {
       .findFirst()
       .map(existingRequest -> alreadyRequestedFailure(requestAndRelatedRecords, existingRequest))
       .orElse(of(() -> requestAndRelatedRecords));
+
   }
 
   private static Result<RequestAndRelatedRecords> alreadyRequestedFailure(
